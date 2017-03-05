@@ -21,7 +21,11 @@ public class Launcher {
 
     Runtime.getRuntime().addShutdownHook(new Thread(() -> stop()));
 
-    start(new HashMap<>());
+    HashMap<String, Object> config = new HashMap<>();
+
+    putNonNullConfig("port", 9801, config);
+
+    start(config);
   }
 
   public static void start(Map<String, Object> config) throws
@@ -56,5 +60,13 @@ public class Launcher {
 
     all.join();
     System.out.println("Server Stopped");
+  }
+
+  private static void putNonNullConfig(String key,
+                                       Object value,
+                                       Map<String, Object> config) {
+    if(value != null) {
+      config.put(key, value);
+    }
   }
 }
