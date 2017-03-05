@@ -15,6 +15,10 @@ dependencies {
   testCompile 'org.hamcrest:hamcrest-junit:2.0.0.0'
 }
 
+compileJava {
+  options.compilerArgs += ["-Xlint:all"]
+}
+
 jar {
   manifest {
     attributes 'Main-Class': mainClassName
