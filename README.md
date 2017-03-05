@@ -8,6 +8,15 @@ Version 2.0. See the file "[LICENSE](LICENSE)" for more information.
 
 FOLIO compatible circulation capabilities, including loan items from the inventory.
 
+# Prerequisites
+
+# Required
+
+## Optional
+
+- Node.js 6.4 (for API linting)
+- NPM 3.10 (for API linting)
+
 # Preparation
 
 ## Git Submodules
@@ -19,3 +28,9 @@ To initialise these please run `git submodule init && git submodule update` in t
 If these are not initialised, the inventory-storage module will fail to build correctly, and other operations may also fail.
 
 More information is available on the [developer site](http://dev.folio.org/doc/setup#update-git-submodules).
+
+# Common activities
+
+## Checking the RAML and JSON.Schema definitions
+
+run `./lint.sh` to validate the RAML and JSON.Schema descriptions of the API (requires node.js and NPM)

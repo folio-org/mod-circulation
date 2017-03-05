@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "userId": {
+      "type": "string"
+    },
+    "itemId": {
+      "type": "string"
+    },
+    "loanDate": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "returnDate": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "userId",
+    "itemId",
+    "loanDate"
+  ]
+}
