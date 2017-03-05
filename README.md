@@ -12,6 +12,9 @@ FOLIO compatible circulation capabilities, including loan items from the invento
 
 # Required
 
+- Java 8 JDK
+- Gradle 3.3
+
 ## Optional
 
 - Node.js 6.4 (for API linting)
@@ -30,6 +33,14 @@ If these are not initialised, the inventory-storage module will fail to build co
 More information is available on the [developer site](http://dev.folio.org/doc/setup#update-git-submodules).
 
 # Common activities
+
+## Running a general build
+
+In order to run a general build (including the default tests), run `gradle build`.
+
+## Creating the circulation module JAR
+
+In order to build an executable Jar (e.g. for Okapi to deploy), run `gradle fatJar`.
 
 ## Checking the RAML and JSON.Schema definitions
 
