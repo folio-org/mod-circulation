@@ -7,6 +7,7 @@ import io.vertx.core.json.JsonObject;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class VertxAssistant {
 
@@ -14,6 +15,10 @@ public class VertxAssistant {
 
   public void useVertx(Consumer<Vertx> action) {
     action.accept(vertx);
+  }
+
+  public <T> T createUsingVertx(Function<Vertx, T> function) {
+    return function.apply(vertx);
   }
 
   public void start() {

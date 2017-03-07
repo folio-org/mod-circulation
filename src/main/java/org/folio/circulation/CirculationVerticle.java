@@ -5,6 +5,7 @@ import io.vertx.core.Future;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
+import org.folio.circulation.support.VertxCollectionResource;
 
 public class CirculationVerticle extends AbstractVerticle {
 
@@ -18,6 +19,8 @@ public class CirculationVerticle extends AbstractVerticle {
     this.server = vertx.createHttpServer();
 
     JsonObject config = vertx.getOrCreateContext().config();
+
+    new VertxCollectionResource("/circulation/loans").register(router);
 
     server.requestHandler(router::accept)
       .listen(config.getInteger("port"), result -> {

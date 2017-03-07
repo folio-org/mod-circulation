@@ -1,5 +1,6 @@
 package org.folio.circulation.api;
 
+import io.vertx.core.Vertx;
 import org.folio.circulation.CirculationVerticle;
 import org.folio.circulation.support.VertxAssistant;
 import org.junit.AfterClass;
@@ -14,6 +15,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 @RunWith(Suite.class)
 
@@ -30,10 +33,6 @@ public class APITestSuite {
 
   public static URL storageUrl(String path) throws MalformedURLException {
     return new URL("http", "localhost", port, path);
-  }
-
-  public static VertxAssistant getVertxAssistant() {
-    return vertxAssistant;
   }
 
   @BeforeClass
@@ -74,5 +73,13 @@ public class APITestSuite {
     vertxAssistant.stop(stopped);
 
     stopped.get(5, TimeUnit.SECONDS);
+  }
+
+  public static void useVertx(Consumer<Vertx> action) {
+    vertxAssistant.useVertx(action);
+  }
+
+  public static <T> T createUsingVertx(Function<Vertx, T> function) {
+    return vertxAssistant.createUsingVertx(function);
   }
 }

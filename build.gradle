@@ -13,6 +13,7 @@ dependencies {
 
   testCompile 'junit:junit:4.12'
   testCompile 'org.hamcrest:hamcrest-junit:2.0.0.0'
+  testCompile 'joda-time:joda-time:2.9.7'
 }
 
 compileJava {
