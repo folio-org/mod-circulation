@@ -44,7 +44,7 @@ public class Launcher {
 
     deployed.thenAccept(result -> System.out.println("Server Started"));
 
-    moduleDeploymentId = deployed.get(20, TimeUnit.SECONDS);
+    moduleDeploymentId = deployed.get(10, TimeUnit.SECONDS);
   }
 
   public static void stop() {
