@@ -22,13 +22,6 @@ public class HttpClient {
 
   public void post(URL url,
             Object body,
-            Handler<HttpClientResponse> responseHandler) {
-
-    post(url, body, null, responseHandler);
-  }
-
-  public void post(URL url,
-            Object body,
             String tenantId,
             Handler<HttpClientResponse> responseHandler) {
 
