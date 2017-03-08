@@ -1,4 +1,4 @@
-package org.folio.circulation.api.support;
+package org.folio.circulation.support.http.client;
 
 public class TextResponse extends Response {
     private final String body;

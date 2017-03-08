@@ -1,4 +1,4 @@
-package org.folio.circulation.api.support;
+package org.folio.circulation.support.http.client;
 
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -117,7 +117,6 @@ public class HttpClient {
 
     delete(url.toString(), tenantId, responseHandler);
   }
-
 
   public void delete(String url,
               String tenantId,

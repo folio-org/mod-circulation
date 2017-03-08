@@ -2,6 +2,7 @@ package org.folio.circulation.api;
 
 import io.vertx.core.Vertx;
 import org.folio.circulation.CirculationVerticle;
+import org.folio.circulation.support.http.client.modules.fakes.FakeLoanStorageModule;
 import org.folio.circulation.support.VertxAssistant;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -29,7 +30,8 @@ public class APITestSuite {
 
   private static VertxAssistant vertxAssistant;
   private static int port;
-  private static String deploymentId;
+  private static String circulationModuleDeploymentId;
+  private static String fakeLoanStorageModuleDeploymentId;
 
   public static URL storageUrl(String path) throws MalformedURLException {
     return new URL("http", "localhost", port, path);
@@ -49,12 +51,16 @@ public class APITestSuite {
 
     vertxAssistant.start();
 
-    CompletableFuture<String> deployed = new CompletableFuture<>();
+    CompletableFuture<String> fakeStorageModuleDeployed =
+      vertxAssistant.deployVerticle(FakeLoanStorageModule.class.getName(),
+      new HashMap<>());
 
-    vertxAssistant.deployVerticle(CirculationVerticle.class.getName(),
-      config, deployed);
+    CompletableFuture<String> circulationModuleDeployed =
+      vertxAssistant.deployVerticle(CirculationVerticle.class.getName(),
+        config);
 
-    deploymentId = deployed.get(10, TimeUnit.SECONDS);
+    fakeLoanStorageModuleDeploymentId = fakeStorageModuleDeployed.get(10, TimeUnit.SECONDS);
+    circulationModuleDeploymentId = circulationModuleDeployed.get(10, TimeUnit.SECONDS);
   }
 
   @AfterClass
@@ -62,11 +68,14 @@ public class APITestSuite {
     throws InterruptedException, ExecutionException,
     TimeoutException, MalformedURLException {
 
-    CompletableFuture<Void> undeploymentComplete = new CompletableFuture<>();
+    CompletableFuture<Void> circulationModuleUndeployed =
+      vertxAssistant.undeployVerticle(circulationModuleDeploymentId);
 
-    vertxAssistant.undeployVerticle(deploymentId, undeploymentComplete);
+    CompletableFuture<Void> fakeStorageModuleUndeployed =
+      vertxAssistant.undeployVerticle(fakeLoanStorageModuleDeploymentId);
 
-    undeploymentComplete.get(5, TimeUnit.SECONDS);
+    CompletableFuture.allOf(circulationModuleUndeployed,
+      fakeStorageModuleUndeployed).get(10, TimeUnit.SECONDS);
 
     CompletableFuture<Void> stopped = new CompletableFuture<>();
 

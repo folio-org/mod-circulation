@@ -5,14 +5,14 @@ import io.vertx.core.Future;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
-import org.folio.circulation.support.VertxCollectionResource;
+import org.folio.circulation.support.http.server.VertxCollectionResource;
 
 public class CirculationVerticle extends AbstractVerticle {
 
-  HttpServer server;
+  private HttpServer server;
 
   public void start(Future<Void> startFuture) {
-    System.out.println("Starting inventory module");
+    System.out.println("Starting circulation module");
 
     Router router = Router.router(vertx);
 
@@ -35,7 +35,7 @@ public class CirculationVerticle extends AbstractVerticle {
   }
 
   public void stop(Future<Void> stopFuture) {
-    System.out.println("Stopping inventory module");
+    System.out.println("Stopping circulation module");
 
     if(server != null) {
       server.close(result -> {

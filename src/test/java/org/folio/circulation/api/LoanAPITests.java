@@ -2,10 +2,10 @@ package org.folio.circulation.api;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.api.support.HttpClient;
-import org.folio.circulation.api.support.IndividualResource;
-import org.folio.circulation.api.support.JsonResponse;
-import org.folio.circulation.api.support.ResponseHandler;
+import org.folio.circulation.support.http.client.HttpClient;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.JsonResponse;
+import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.ISODateTimeFormat;

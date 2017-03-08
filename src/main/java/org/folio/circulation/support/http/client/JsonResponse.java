@@ -1,4 +1,4 @@
-package org.folio.circulation.api.support;
+package org.folio.circulation.support.http.client;
 
 import io.vertx.core.json.JsonObject;
 
@@ -16,5 +16,9 @@ public class JsonResponse extends TextResponse {
     else {
       return new JsonObject();
     }
+  }
+
+  public JsonObject copyJson() {
+    return getJson().copy();
   }
 }

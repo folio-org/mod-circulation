@@ -67,6 +67,16 @@ public class VertxAssistant {
     });
   }
 
+  public CompletableFuture<String> deployVerticle(String verticleClass,
+                             Map<String, Object> config) {
+
+    CompletableFuture<String> deployed = new CompletableFuture<>();
+
+    deployVerticle(verticleClass, config, deployed);
+
+    return deployed;
+  }
+
   public void undeployVerticle(String deploymentId,
                                CompletableFuture<Void> undeployed) {
 
@@ -77,5 +87,13 @@ public class VertxAssistant {
         undeployed.completeExceptionally(result.cause());
       }
     });
+  }
+
+  public CompletableFuture<Void> undeployVerticle(String moduleDeploymentId) {
+    CompletableFuture<Void> undeployed = new CompletableFuture<>();
+
+    undeployVerticle(moduleDeploymentId, undeployed);
+
+    return undeployed;
   }
 }

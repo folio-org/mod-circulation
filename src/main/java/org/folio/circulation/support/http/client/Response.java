@@ -1,4 +1,4 @@
-package org.folio.circulation.api.support;
+package org.folio.circulation.support.http.client;
 
 public class Response {
   private final int statusCode;
