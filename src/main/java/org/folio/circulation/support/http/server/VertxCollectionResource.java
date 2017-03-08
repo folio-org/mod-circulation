@@ -8,6 +8,7 @@ import org.folio.circulation.support.http.client.BufferHelper;
 import org.folio.circulation.support.http.client.HttpClient;
 
 import java.net.MalformedURLException;
+import java.net.URL;
 
 public class VertxCollectionResource {
 
@@ -24,11 +25,24 @@ public class VertxCollectionResource {
 
   private void create(RoutingContext routingContext) {
 
+    URL okapiLocation;
+    URL storageLocation;
+
     WebContext context = new WebContext(routingContext);
-    HttpClient client = new HttpClient(routingContext.vertx(), "");
 
     try {
-      client.post(context.getOkapiBasedUrl("/loan-storage/loans"),
+      okapiLocation = new URL(context.getOkapiLocation());
+      storageLocation = context.getOkapiBasedUrl("/loan-storage/loans");
+    }
+    catch (MalformedURLException e) {
+      ServerErrorResponse.internalError(routingContext.response(),
+        String.format("Invalid Okapi URL: %s", context.getOkapiLocation()));
+
+      return;
+    }
+
+    HttpClient client = new HttpClient(routingContext.vertx(), okapiLocation);
+      client.post(storageLocation,
         routingContext.getBodyAsJson(),
         context.getTenantId(), response -> {
           response.bodyHandler(buffer -> {
@@ -45,9 +59,5 @@ public class VertxCollectionResource {
             }
           });
       });
-    } catch (MalformedURLException e) {
-      ServerErrorResponse.internalError(routingContext.response(),
-        String.format("Invalid Okapi URL: %s", context.getOkapiLocation()));
-    }
   }
 }

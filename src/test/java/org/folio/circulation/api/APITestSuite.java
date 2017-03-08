@@ -33,8 +33,22 @@ public class APITestSuite {
   private static String circulationModuleDeploymentId;
   private static String fakeLoanStorageModuleDeploymentId;
 
-  public static URL storageUrl(String path) throws MalformedURLException {
-    return new URL("http", "localhost", port, path);
+  public static URL storageUrl() {
+    try {
+      return new URL(FakeLoanStorageModule.getAddress());
+    }
+    catch(MalformedURLException ex) {
+      return null;
+    }
+  }
+
+  public static URL moduleUrl(String path) {
+    try {
+      return new URL("http", "localhost", port, path);
+    }
+    catch(MalformedURLException ex) {
+      return null;
+    }
   }
 
   @BeforeClass

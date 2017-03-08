@@ -6,7 +6,6 @@ import org.folio.circulation.support.http.client.HttpClient;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.JsonResponse;
 import org.folio.circulation.support.http.client.ResponseHandler;
-import org.folio.circulation.api.fakes.FakeLoanStorageModule;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.ISODateTimeFormat;
@@ -28,7 +27,8 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 public class LoanAPITests {
 
   HttpClient client = APITestSuite.createUsingVertx(
-    (Vertx vertx) -> new HttpClient(vertx, FakeLoanStorageModule.getAddress()));
+    (Vertx vertx) -> new HttpClient(vertx,
+      APITestSuite.storageUrl()));
 
   @Test
   public void canCreateALoan()
@@ -135,6 +135,6 @@ public class LoanAPITests {
   private static URL loanUrl(String subPath)
     throws MalformedURLException {
 
-    return APITestSuite.storageUrl("/circulation/loans" + subPath);
+    return APITestSuite.moduleUrl("/circulation/loans" + subPath);
   }
 }
