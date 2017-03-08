@@ -28,7 +28,11 @@ public class LoanAPITests {
 
   HttpClient client = APITestSuite.createUsingVertx(
     (Vertx vertx) -> new HttpClient(vertx,
-      APITestSuite.storageUrl()));
+      APITestSuite.storageUrl(), exception -> {
+        System.out.println(
+          String.format("Request to circulation module failed: %s",
+            exception.toString()));
+    }));
 
   @Test
   public void canCreateALoan()

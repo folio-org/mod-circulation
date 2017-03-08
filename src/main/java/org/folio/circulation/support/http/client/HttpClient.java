@@ -9,6 +9,7 @@ import io.vertx.core.json.Json;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.function.Consumer;
 
 public class HttpClient {
 
@@ -17,10 +18,14 @@ public class HttpClient {
 
   private final io.vertx.core.http.HttpClient client;
   private final URL okapiUrl;
+  private final Consumer<Throwable> exceptionHandler;
 
-  public HttpClient(Vertx vertx, URL okapiUrl) {
+  public HttpClient(Vertx vertx,
+                    URL okapiUrl,
+                    Consumer<Throwable> exceptionHandler) {
     this.client = vertx.createHttpClient();
     this.okapiUrl = okapiUrl;
+    this.exceptionHandler = exceptionHandler;
   }
 
   public void post(URL url,
@@ -37,6 +42,12 @@ public class HttpClient {
     if(tenantId != null) {
       request.headers().add(TENANT_HEADER, tenantId);
     }
+
+    request.setTimeout(3000);
+
+    request.exceptionHandler(exception -> {
+      this.exceptionHandler.accept(exception);
+    });
 
     if(body != null) {
       String encodedBody = Json.encodePrettily(body);

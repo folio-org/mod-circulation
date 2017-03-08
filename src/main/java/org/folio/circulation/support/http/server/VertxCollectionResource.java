@@ -41,23 +41,29 @@ public class VertxCollectionResource {
       return;
     }
 
-    HttpClient client = new HttpClient(routingContext.vertx(), okapiLocation);
-      client.post(storageLocation,
-        routingContext.getBodyAsJson(),
-        context.getTenantId(), response -> {
-          response.bodyHandler(buffer -> {
-            String responseBody = BufferHelper.stringFromBuffer(buffer);
+    HttpClient client = new HttpClient(routingContext.vertx(), okapiLocation,
+      exception -> {
+        ServerErrorResponse.internalError(routingContext.response(),
+          String.format("Failed to contact storage module: %s",
+            exception.toString()));
+      });
 
-            if(response.statusCode() == 201) {
-              JsonResponse.created(routingContext.response(),
-                new JsonObject(responseBody));
-            }
-            else {
-              ServerErrorResponse.internalError(routingContext.response(),
-                String.format("Response From Storage Module: %s: %s",
-                  response.statusCode(), responseBody));
-            }
-          });
+    client.post(storageLocation,
+      routingContext.getBodyAsJson(),
+      context.getTenantId(), response -> {
+        response.bodyHandler(buffer -> {
+          String responseBody = BufferHelper.stringFromBuffer(buffer);
+
+          if(response.statusCode() == 201) {
+            JsonResponse.created(routingContext.response(),
+              new JsonObject(responseBody));
+          }
+          else {
+            ServerErrorResponse.internalError(routingContext.response(),
+              String.format("Response From Storage Module: %s: %s",
+                response.statusCode(), responseBody));
+          }
+        });
       });
   }
 }
