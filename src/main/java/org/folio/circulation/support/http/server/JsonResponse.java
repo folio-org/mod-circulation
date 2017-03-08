@@ -9,13 +9,12 @@ public class JsonResponse {
 
   //TODO: Needs a location
   public static void created(HttpServerResponse response,
-                      JsonObject body,
-                      Integer status) {
+                      JsonObject body) {
 
     String json = Json.encodePrettily(body);
     Buffer buffer = Buffer.buffer(json, "UTF-8");
 
-    response.setStatusCode(status);
+    response.setStatusCode(201);
     response.putHeader("content-type", "application/json; charset=utf-8");
     response.putHeader("content-length", Integer.toString(buffer.length()));
 

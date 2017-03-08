@@ -2,7 +2,7 @@ package org.folio.circulation.api;
 
 import io.vertx.core.Vertx;
 import org.folio.circulation.CirculationVerticle;
-import org.folio.circulation.support.http.client.modules.fakes.FakeLoanStorageModule;
+import org.folio.circulation.api.fakes.FakeLoanStorageModule;
 import org.folio.circulation.support.VertxAssistant;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;

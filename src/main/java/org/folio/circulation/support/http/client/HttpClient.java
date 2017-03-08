@@ -13,11 +13,14 @@ import java.net.URL;
 public class HttpClient {
 
   private static final String TENANT_HEADER = "X-Okapi-Tenant";
+  private static final String OKAPI_URL_HEADER = "X-Okapi-Url";
 
   private final io.vertx.core.http.HttpClient client;
+  private final String okapiUrl;
 
-  public HttpClient(Vertx vertx) {
-    client = vertx.createHttpClient();
+  public HttpClient(Vertx vertx, String okapiUrl) {
+    this.client = vertx.createHttpClient();
+    this.okapiUrl = okapiUrl;
   }
 
   public void post(URL url,
@@ -29,6 +32,7 @@ public class HttpClient {
 
     request.headers().add("Accept","application/json, text/plain");
     request.headers().add("Content-type","application/json");
+    request.headers().add(OKAPI_URL_HEADER, okapiUrl);
 
     if(tenantId != null) {
       request.headers().add(TENANT_HEADER, tenantId);
@@ -70,6 +74,7 @@ public class HttpClient {
 
     request.headers().add("Accept","application/json, text/plain");
     request.headers().add("Content-type","application/json");
+    request.headers().add(OKAPI_URL_HEADER, okapiUrl);
 
     if(tenantId != null) {
       request.headers().add(TENANT_HEADER, tenantId);
@@ -103,6 +108,7 @@ public class HttpClient {
     HttpClientRequest request = client.getAbs(url, responseHandler);
 
     request.headers().add("Accept","application/json");
+    request.headers().add(OKAPI_URL_HEADER, okapiUrl);
 
     if(tenantId != null) {
       request.headers().add(TENANT_HEADER, tenantId);
@@ -125,6 +131,7 @@ public class HttpClient {
     HttpClientRequest request = client.deleteAbs(url, responseHandler);
 
     request.headers().add("Accept","application/json, text/plain");
+    request.headers().add(OKAPI_URL_HEADER, okapiUrl);
 
     if(tenantId != null) {
       request.headers().add(TENANT_HEADER, tenantId);

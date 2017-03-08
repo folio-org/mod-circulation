@@ -1,4 +1,4 @@
-package org.folio.circulation.support.http.client.modules.fakes;
+package org.folio.circulation.api.fakes;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
@@ -58,7 +58,7 @@ public class FakeLoanStorageModule extends AbstractVerticle {
 
   private void create(RoutingContext routingContext) {
     JsonResponse.created(routingContext.response(),
-      routingContext.getBodyAsJson(), 201);
+      routingContext.getBodyAsJson());
   }
 
   public void stop(Future<Void> stopFuture) {

@@ -6,6 +6,7 @@ import org.folio.circulation.support.http.client.HttpClient;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.JsonResponse;
 import org.folio.circulation.support.http.client.ResponseHandler;
+import org.folio.circulation.api.fakes.FakeLoanStorageModule;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.ISODateTimeFormat;
@@ -27,7 +28,7 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 public class LoanAPITests {
 
   HttpClient client = APITestSuite.createUsingVertx(
-    (Vertx vertx) -> new HttpClient(vertx));
+    (Vertx vertx) -> new HttpClient(vertx, FakeLoanStorageModule.getAddress()));
 
   @Test
   public void canCreateALoan()
