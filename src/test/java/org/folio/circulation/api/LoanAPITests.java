@@ -1,5 +1,6 @@
 package org.folio.circulation.api;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.http.client.*;
 import org.joda.time.DateTime;
@@ -136,6 +137,55 @@ public class LoanAPITests {
   }
 
   @Test
+  public void canPageLoans()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException,
+    UnsupportedEncodingException {
+
+    createLoan(loanRequest());
+    createLoan(loanRequest());
+    createLoan(loanRequest());
+    createLoan(loanRequest());
+    createLoan(loanRequest());
+    createLoan(loanRequest());
+    createLoan(loanRequest());
+
+    CompletableFuture<JsonResponse> firstPageCompleted = new CompletableFuture<>();
+    CompletableFuture<JsonResponse> secondPageCompleted = new CompletableFuture<>();
+
+    client.get(loanUrl() + "?limit=4", APITestSuite.TENANT_ID,
+      ResponseHandler.json(firstPageCompleted));
+
+    client.get(loanUrl() + "?limit=4&offset=4", APITestSuite.TENANT_ID,
+      ResponseHandler.json(secondPageCompleted));
+
+    JsonResponse firstPageResponse = firstPageCompleted.get(5, TimeUnit.SECONDS);
+    JsonResponse secondPageResponse = secondPageCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Failed to get first page of loans: %s",
+      firstPageResponse.getBody()),
+      firstPageResponse.getStatusCode(), is(200));
+
+    assertThat(String.format("Failed to get second page of loans: %s",
+      secondPageResponse.getBody()),
+      secondPageResponse.getStatusCode(), is(200));
+
+    JsonObject firstPage = firstPageResponse.getJson();
+    JsonObject secondPage = secondPageResponse.getJson();
+
+    JsonArray firstPageLoans = firstPage.getJsonArray("loans");
+    JsonArray secondPageLoans = secondPage.getJsonArray("loans");
+
+    assertThat(firstPageLoans.size(), is(4));
+    assertThat(firstPage.getInteger("totalRecords"), is(7));
+
+    assertThat(secondPageLoans.size(), is(3));
+    assertThat(secondPage.getInteger("totalRecords"), is(7));
+  }
+
+  @Test
   public void canCompleteALoanByReturningTheItem()
     throws InterruptedException,
     MalformedURLException,
@@ -173,6 +223,112 @@ public class LoanAPITests {
 
     assertThat("status is not closed",
       updatedLoan.getJsonObject("status").getString("name"), is("Closed"));
+  }
+
+  @Test
+  public void canSearchByUserId()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    UnsupportedEncodingException {
+
+    UUID firstUserId = UUID.randomUUID();
+    UUID secondUserId = UUID.randomUUID();
+
+    String queryTemplate = loanUrl() + "?query=userId=\"%s\"";
+
+    createLoan(loanRequest().put("userId", firstUserId.toString()));
+    createLoan(loanRequest().put("userId", firstUserId.toString()));
+    createLoan(loanRequest().put("userId", firstUserId.toString()));
+    createLoan(loanRequest().put("userId", firstUserId.toString()));
+    createLoan(loanRequest().put("userId", secondUserId.toString()));
+    createLoan(loanRequest().put("userId", secondUserId.toString()));
+    createLoan(loanRequest().put("userId", secondUserId.toString()));
+
+    CompletableFuture<JsonResponse> firstUserSearchCompleted = new CompletableFuture<>();
+    CompletableFuture<JsonResponse> secondUserSeatchCompleted = new CompletableFuture<>();
+
+    client.get(String.format(queryTemplate, firstUserId), APITestSuite.TENANT_ID,
+      ResponseHandler.json(firstUserSearchCompleted));
+
+    client.get(String.format(queryTemplate, secondUserId), APITestSuite.TENANT_ID,
+      ResponseHandler.json(secondUserSeatchCompleted));
+
+    JsonResponse firstPageResponse = firstUserSearchCompleted.get(5, TimeUnit.SECONDS);
+    JsonResponse secondPageResponse = secondUserSeatchCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Failed to get loans for first user: %s",
+      firstPageResponse.getBody()),
+      firstPageResponse.getStatusCode(), is(200));
+
+    assertThat(String.format("Failed to get loans for second user: %s",
+      secondPageResponse.getBody()),
+      secondPageResponse.getStatusCode(), is(200));
+
+    JsonObject firstPage = firstPageResponse.getJson();
+    JsonObject secondPage = secondPageResponse.getJson();
+
+    JsonArray firstPageLoans = firstPage.getJsonArray("loans");
+    JsonArray secondPageLoans = secondPage.getJsonArray("loans");
+
+    assertThat(firstPageLoans.size(), is(4));
+    assertThat(firstPage.getInteger("totalRecords"), is(4));
+
+    assertThat(secondPageLoans.size(), is(3));
+    assertThat(secondPage.getInteger("totalRecords"), is(3));
+  }
+
+  @Test
+  public void canFilterByLoanStatus()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    UnsupportedEncodingException {
+
+    UUID userId = UUID.randomUUID();
+
+    String queryTemplate = "query=userId=\"%s\"+and+status.name=\"%s\"";
+
+    createLoan(loanRequest(userId, "Open"));
+    createLoan(loanRequest(userId, "Open"));
+    createLoan(loanRequest(userId, "Closed"));
+    createLoan(loanRequest(userId, "Closed"));
+    createLoan(loanRequest(userId, "Closed"));
+    createLoan(loanRequest(userId, "Closed"));
+
+    CompletableFuture<JsonResponse> openSearchComppleted = new CompletableFuture<>();
+    CompletableFuture<JsonResponse> closedSearchCompleted = new CompletableFuture<>();
+
+    client.get(loanUrl(), String.format(queryTemplate, userId, "Open"),
+      APITestSuite.TENANT_ID, ResponseHandler.json(openSearchComppleted));
+
+    client.get(loanUrl(), String.format(queryTemplate, userId, "Closed"),
+      APITestSuite.TENANT_ID, ResponseHandler.json(closedSearchCompleted));
+
+    JsonResponse openLoansResponse = openSearchComppleted.get(5, TimeUnit.SECONDS);
+    JsonResponse closedLoansResponse = closedSearchCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Failed to get open loans: %s",
+      openLoansResponse.getBody()),
+      openLoansResponse.getStatusCode(), is(200));
+
+    assertThat(String.format("Failed to get closed loans: %s",
+      closedLoansResponse.getBody()),
+      closedLoansResponse.getStatusCode(), is(200));
+
+    JsonObject openLoans = openLoansResponse.getJson();
+    JsonObject closedLoans = closedLoansResponse.getJson();
+
+    JsonArray firstPageLoans = openLoans.getJsonArray("loans");
+    JsonArray secondPageLoans = closedLoans.getJsonArray("loans");
+
+    assertThat(firstPageLoans.size(), is(2));
+    assertThat(openLoans.getInteger("totalRecords"), is(2));
+
+    assertThat(secondPageLoans.size(), is(4));
+    assertThat(closedLoans.getInteger("totalRecords"), is(4));
   }
 
   private JsonResponse getById(UUID id)

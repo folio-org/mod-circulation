@@ -32,6 +32,18 @@ public class WebContext {
     return routingContext.request().headers().contains(header);
   }
 
+  public Integer getIntegerParameter(String name, Integer defaultValue) {
+    String value = routingContext.request().getParam(name);
+
+    return value != null ? Integer.parseInt(value) : defaultValue;
+  }
+
+  public String getStringParameter(String name, String defaultValue) {
+    String value = routingContext.request().getParam(name);
+
+    return value != null ? value : defaultValue;
+  }
+
   public URL getOkapiBasedUrl(String path)
     throws MalformedURLException {
 
