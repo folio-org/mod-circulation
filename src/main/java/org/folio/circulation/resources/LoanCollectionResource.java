@@ -25,6 +25,7 @@ public class LoanCollectionResource {
     router.put(rootPath + "*").handler(BodyHandler.create());
 
     router.post(rootPath).handler(this::create);
+    router.delete(rootPath).handler(this::empty);
 
     router.route(HttpMethod.GET, rootPath + "/:id").handler(this::get);
     router.route(HttpMethod.PUT, rootPath + "/:id").handler(this::replace);
@@ -157,6 +158,45 @@ public class LoanCollectionResource {
               responseBody);
           }
         });
+      });
+  }
+
+  private void empty(RoutingContext routingContext) {
+    URL okapiLocation;
+    URL storageLocation;
+
+    WebContext context = new WebContext(routingContext);
+
+    try {
+      okapiLocation = new URL(context.getOkapiLocation());
+      storageLocation = context.getOkapiBasedUrl("/loan-storage/loans");
+    }
+    catch (MalformedURLException e) {
+      ServerErrorResponse.internalError(routingContext.response(),
+        String.format("Invalid Okapi URL: %s", context.getOkapiLocation()));
+
+      return;
+    }
+
+    HttpClient client = new HttpClient(routingContext.vertx(), okapiLocation,
+      exception -> {
+        ServerErrorResponse.internalError(routingContext.response(),
+          String.format("Failed to contact storage module: %s",
+            exception.toString()));
+      });
+
+    client.delete(storageLocation, context.getTenantId(), response -> {
+          if(response.statusCode() == 204) {
+            SuccessResponse.noContent(routingContext.response());
+          }
+          else {
+            response.bodyHandler(buffer -> {
+              String responseBody = BufferHelper.stringFromBuffer(buffer);
+
+            ForwardResponse.forward(routingContext.response(), response,
+              responseBody);
+          });
+        }
       });
   }
 }

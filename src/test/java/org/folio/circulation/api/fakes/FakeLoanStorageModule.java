@@ -51,6 +51,7 @@ public class FakeLoanStorageModule extends AbstractVerticle {
     router.put(rootPath + "*").handler(BodyHandler.create());
 
     router.post(rootPath).handler(this::create);
+    router.delete(rootPath).handler(this::empty);
 
     router.route(HttpMethod.PUT, rootPath + "/:id")
       .handler(this::replace);
@@ -115,6 +116,16 @@ public class FakeLoanStorageModule extends AbstractVerticle {
     else {
       ClientErrorResponse.notFound(routingContext.response());
     }
+  }
+
+  private void empty(RoutingContext routingContext) {
+    WebContext context = new WebContext(routingContext);
+
+    Map<String, JsonObject> loansForTenant = getLoansForTenant(context);
+
+    loansForTenant.clear();
+
+    SuccessResponse.noContent(routingContext.response());
   }
 
   private Map<String, JsonObject> getLoansForTenant(WebContext context) {
