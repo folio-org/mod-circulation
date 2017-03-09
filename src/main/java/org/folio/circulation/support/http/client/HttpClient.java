@@ -142,6 +142,7 @@ public class HttpClient {
       request.headers().add(TENANT_HEADER, tenantId);
     }
 
+    System.out.println(String.format("GET %s", request.uri()));
     request.end();
   }
 

@@ -13,6 +13,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -289,7 +290,7 @@ public class LoanAPITests {
 
     UUID userId = UUID.randomUUID();
 
-    String queryTemplate = "query=userId=%s+and+status.name=%s";
+    String queryTemplate = "userId=\"%s\" and status.name=\"%s\"";
 
     createLoan(loanRequest(userId, "Open"));
     createLoan(loanRequest(userId, "Open"));
@@ -301,10 +302,12 @@ public class LoanAPITests {
     CompletableFuture<JsonResponse> openSearchComppleted = new CompletableFuture<>();
     CompletableFuture<JsonResponse> closedSearchCompleted = new CompletableFuture<>();
 
-    client.get(loanUrl(), String.format(queryTemplate, userId, "Open"),
+    client.get(loanUrl(),
+      "query=" + URLEncoder.encode(String.format(queryTemplate, userId, "Open"), "UTF-8"),
       APITestSuite.TENANT_ID, ResponseHandler.json(openSearchComppleted));
 
-    client.get(loanUrl(), String.format(queryTemplate, userId, "Closed"),
+    client.get(loanUrl(),
+      "query=" + URLEncoder.encode(String.format(queryTemplate, userId, "Closed"), "UTF-8"),
       APITestSuite.TENANT_ID, ResponseHandler.json(closedSearchCompleted));
 
     JsonResponse openLoansResponse = openSearchComppleted.get(5, TimeUnit.SECONDS);
