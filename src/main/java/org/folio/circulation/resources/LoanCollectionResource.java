@@ -1,5 +1,6 @@
 package org.folio.circulation.resources;
 
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -24,6 +25,52 @@ public class LoanCollectionResource {
   public void register(Router router) {
     router.post(rootPath + "*").handler(BodyHandler.create());
     router.post(rootPath).handler(this::create);
+
+    router.route(HttpMethod.GET, rootPath + "/:id").handler(this::get);
+  }
+
+  private void get(RoutingContext routingContext) {
+    URL okapiLocation;
+    URL storageLocation;
+
+    WebContext context = new WebContext(routingContext);
+
+    String id = routingContext.request().getParam("id");
+
+    try {
+      okapiLocation = new URL(context.getOkapiLocation());
+      storageLocation = context.getOkapiBasedUrl("/loan-storage/loans");
+    }
+    catch (MalformedURLException e) {
+      ServerErrorResponse.internalError(routingContext.response(),
+        String.format("Invalid Okapi URL: %s", context.getOkapiLocation()));
+
+      return;
+    }
+
+    HttpClient client = new HttpClient(routingContext.vertx(), okapiLocation,
+      exception -> {
+        ServerErrorResponse.internalError(routingContext.response(),
+          String.format("Failed to contact storage module: %s",
+            exception.toString()));
+      });
+
+    client.get(storageLocation + String.format("/%s", id),
+      context.getTenantId(), response -> {
+        response.bodyHandler(buffer -> {
+          String responseBody = BufferHelper.stringFromBuffer(buffer);
+
+          if(response.statusCode() == 200) {
+            JsonResponse.success(routingContext.response(),
+              new JsonObject(responseBody));
+          }
+          else {
+            ServerErrorResponse.internalError(routingContext.response(),
+              String.format("Response From Storage Module: %s: %s",
+                response.statusCode(), responseBody));
+          }
+        });
+      });
   }
 
   private void create(RoutingContext routingContext) {

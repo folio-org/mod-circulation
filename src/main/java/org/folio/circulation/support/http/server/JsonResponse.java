@@ -11,10 +11,23 @@ public class JsonResponse {
   public static void created(HttpServerResponse response,
                       JsonObject body) {
 
+    response(response, body, 201);
+  }
+
+  public static void success(HttpServerResponse response,
+                             JsonObject body) {
+
+    response(response, body, 200);
+  }
+
+  private static void response(HttpServerResponse response,
+                               JsonObject body,
+                               int statusCode) {
+
     String json = Json.encodePrettily(body);
     Buffer buffer = Buffer.buffer(json, "UTF-8");
 
-    response.setStatusCode(201);
+    response.setStatusCode(statusCode);
     response.putHeader("content-type", "application/json; charset=utf-8");
     response.putHeader("content-length", Integer.toString(buffer.length()));
 

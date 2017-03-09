@@ -10,6 +10,7 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.format.ISODateTimeFormat;
 import org.junit.Test;
 
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -59,6 +60,63 @@ public class LoanAPITests {
 
     assertThat("status is not open",
       loan.getJsonObject("status").getString("name"), is("Open"));
+  }
+
+  @Test
+  public void canGetALoanById()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    UnsupportedEncodingException {
+
+    UUID id = UUID.randomUUID();
+    UUID itemId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
+
+    JsonObject loanRequest = loanRequest(id, itemId, userId,
+      new DateTime(2016, 10, 15, 8, 26, 53, DateTimeZone.UTC), "Open");
+
+    createLoan(loanRequest);
+
+    JsonResponse getResponse = getById(id);
+
+    assertThat(String.format("Failed to get loan: %s", getResponse.getBody()),
+      getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+
+    JsonObject loan = getResponse.getJson();
+
+    assertThat("id does not match",
+      loan.getString("id"), is(id.toString()));
+
+    assertThat("user id does not match",
+      loan.getString("userId"), is(userId.toString()));
+
+    assertThat("item id does not match",
+      loan.getString("itemId"), is(itemId.toString()));
+
+    assertThat("loan date does not match",
+      loan.getString("loanDate"), is("2016-10-15T08:26:53.000Z"));
+
+    assertThat("status is not open",
+      loan.getJsonObject("status").getString("name"), is("Open"));
+  }
+
+  private JsonResponse getById(UUID id)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    UnsupportedEncodingException {
+
+    URL getInstanceUrl = loanUrl(String.format("/%s", id));
+
+    CompletableFuture<JsonResponse> getCompleted = new CompletableFuture<>();
+
+    client.get(getInstanceUrl, APITestSuite.TENANT_ID,
+      ResponseHandler.json(getCompleted));
+
+    return getCompleted.get(5, TimeUnit.SECONDS);
   }
 
   private IndividualResource createLoan(JsonObject loanRequest)
