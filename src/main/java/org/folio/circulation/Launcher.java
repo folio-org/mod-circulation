@@ -23,7 +23,9 @@ public class Launcher {
 
     HashMap<String, Object> config = new HashMap<>();
 
-    putNonNullConfig("port", 9801, config);
+    Integer port = Integer.getInteger("port", 9801);
+
+    putNonNullConfig("port", port, config);
 
     start(config);
   }

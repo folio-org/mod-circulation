@@ -1,0 +1,6 @@
+{
+  "srvcId" : "circulation",
+  "descriptor" : {
+    "exec" : "java -Dport=%p -jar ../mod-circulation/build/libs/mod-circulation.jar"
+  }
+}
