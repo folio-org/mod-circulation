@@ -123,6 +123,19 @@ public class LoanAPITests {
   }
 
   @Test
+  public void loanNotFoundForUnknownId()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    UnsupportedEncodingException {
+
+    JsonResponse getResponse = getById(UUID.randomUUID());
+
+    assertThat(getResponse.getStatusCode(), is(HttpURLConnection.HTTP_NOT_FOUND));
+  }
+
+  @Test
   public void canCompleteALoanByReturningTheItem()
     throws InterruptedException,
     MalformedURLException,
