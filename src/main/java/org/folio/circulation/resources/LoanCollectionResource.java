@@ -7,10 +7,7 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import org.folio.circulation.support.http.client.BufferHelper;
 import org.folio.circulation.support.http.client.HttpClient;
-import org.folio.circulation.support.http.server.JsonResponse;
-import org.folio.circulation.support.http.server.ServerErrorResponse;
-import org.folio.circulation.support.http.server.SuccessResponse;
-import org.folio.circulation.support.http.server.WebContext;
+import org.folio.circulation.support.http.server.*;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -69,9 +66,8 @@ public class LoanCollectionResource {
               new JsonObject(responseBody));
           }
           else {
-            ServerErrorResponse.internalError(routingContext.response(),
-              String.format("Response From Storage Module: %s: %s",
-                response.statusCode(), responseBody));
+            ForwardResponse.forward(routingContext.response(), response,
+              responseBody);
           }
         });
       });
@@ -114,9 +110,8 @@ public class LoanCollectionResource {
             SuccessResponse.noContent(routingContext.response());
           }
           else {
-            ServerErrorResponse.internalError(routingContext.response(),
-              String.format("Response From Storage Module: %s: %s",
-                response.statusCode(), responseBody));
+            ForwardResponse.forward(routingContext.response(), response,
+              responseBody);
           }
         });
       });
@@ -158,9 +153,8 @@ public class LoanCollectionResource {
               new JsonObject(responseBody));
           }
           else {
-            ServerErrorResponse.internalError(routingContext.response(),
-              String.format("Response From Storage Module: %s: %s",
-                response.statusCode(), responseBody));
+            ForwardResponse.forward(routingContext.response(), response,
+              responseBody);
           }
         });
       });
