@@ -145,6 +145,8 @@ public class FakeLoanStorageModule extends AbstractVerticle {
     Integer offset = context.getIntegerParameter("offset", 0);
     String query = context.getStringParameter("query", null);
 
+    System.out.println("Query: " + query);
+
     Map<String, JsonObject> loansForTenant = getLoansForTenant(context);
 
     List<Predicate<JsonObject>> predicates = filterFromQuery(query);

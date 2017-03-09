@@ -236,7 +236,7 @@ public class LoanAPITests {
     UUID firstUserId = UUID.randomUUID();
     UUID secondUserId = UUID.randomUUID();
 
-    String queryTemplate = loanUrl() + "?query=userId=\"%s\"";
+    String queryTemplate = loanUrl() + "?query=userId=%s";
 
     createLoan(loanRequest().put("userId", firstUserId.toString()));
     createLoan(loanRequest().put("userId", firstUserId.toString()));
@@ -289,7 +289,7 @@ public class LoanAPITests {
 
     UUID userId = UUID.randomUUID();
 
-    String queryTemplate = "query=userId=\"%s\"+and+status.name=\"%s\"";
+    String queryTemplate = "query=userId=%s+and+status.name=%s";
 
     createLoan(loanRequest(userId, "Open"));
     createLoan(loanRequest(userId, "Open"));

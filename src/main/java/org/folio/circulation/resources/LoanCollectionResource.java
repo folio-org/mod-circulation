@@ -168,8 +168,6 @@ public class LoanCollectionResource {
 
     WebContext context = new WebContext(routingContext);
 
-    String id = routingContext.request().getParam("id");
-
     try {
       okapiLocation = new URL(context.getOkapiLocation());
       storageLocation = context.getOkapiBasedUrl("/loan-storage/loans");
@@ -181,6 +179,12 @@ public class LoanCollectionResource {
       return;
     }
 
+    String storageUrl = null;
+
+    String query = routingContext.request().query();
+
+    storageUrl = storageLocation + "?" + query;
+
     HttpClient client = new HttpClient(routingContext.vertx(), okapiLocation,
       exception -> {
         ServerErrorResponse.internalError(routingContext.response(),
@@ -188,7 +192,7 @@ public class LoanCollectionResource {
             exception.toString()));
       });
 
-    client.get(storageLocation + "?" + routingContext.request().query(),
+    client.get(storageUrl,
       context.getTenantId(), response -> {
         response.bodyHandler(buffer -> {
           String responseBody = BufferHelper.stringFromBuffer(buffer);
