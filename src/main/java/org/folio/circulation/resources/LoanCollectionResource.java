@@ -1,4 +1,4 @@
-package org.folio.circulation.support.http.server;
+package org.folio.circulation.resources;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
@@ -6,15 +6,18 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import org.folio.circulation.support.http.client.BufferHelper;
 import org.folio.circulation.support.http.client.HttpClient;
+import org.folio.circulation.support.http.server.JsonResponse;
+import org.folio.circulation.support.http.server.ServerErrorResponse;
+import org.folio.circulation.support.http.server.WebContext;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 
-public class VertxCollectionResource {
+public class LoanCollectionResource {
 
   private final String rootPath;
 
-  public VertxCollectionResource(String rootPath) {
+  public LoanCollectionResource(String rootPath) {
     this.rootPath = rootPath;
   }
 

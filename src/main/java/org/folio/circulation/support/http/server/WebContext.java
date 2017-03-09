@@ -8,27 +8,27 @@ import java.net.URL;
 public class WebContext {
   private final RoutingContext routingContext;
 
-  WebContext(RoutingContext routingContext) {
+  public WebContext(RoutingContext routingContext) {
     this.routingContext = routingContext;
   }
 
-  String getTenantId() {
+  public String getTenantId() {
     return getHeader("X-Okapi-Tenant", "");
   }
 
-  String getOkapiLocation() {
+  public String getOkapiLocation() {
     return getHeader("X-Okapi-Url", "");
   }
 
-  String getHeader(String header) {
+  public String getHeader(String header) {
     return routingContext.request().getHeader(header);
   }
 
-  String getHeader(String header, String defaultValue) {
+  public String getHeader(String header, String defaultValue) {
     return hasHeader(header) ? getHeader(header) : defaultValue;
   }
 
-  boolean hasHeader(String header) {
+  public boolean hasHeader(String header) {
     return routingContext.request().headers().contains(header);
   }
 
