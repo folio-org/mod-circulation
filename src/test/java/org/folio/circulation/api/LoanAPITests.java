@@ -1,6 +1,5 @@
 package org.folio.circulation.api;
 
-import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.http.client.HttpClient;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -26,13 +25,7 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class LoanAPITests {
 
-  HttpClient client = APITestSuite.createUsingVertx(
-    (Vertx vertx) -> new HttpClient(vertx,
-      APITestSuite.storageUrl(), exception -> {
-        System.out.println(
-          String.format("Request to circulation module failed: %s",
-            exception.toString()));
-    }));
+  HttpClient client = APITestSuite.createHttpClient();
 
   @Test
   public void canCreateALoan()

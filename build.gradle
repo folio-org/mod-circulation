@@ -8,6 +8,8 @@ repositories {
 }
 
 dependencies {
+  //Don't use the code gen directly but hoping to get rid of warnings in build
+  compile 'io.vertx:vertx-codegen:3.3.3'
   compile 'io.vertx:vertx-core:3.3.3'
   compile 'io.vertx:vertx-web:3.3.3'
   compile 'org.apache.httpcomponents:httpclient-osgi:4.5.2'
@@ -29,6 +31,12 @@ test {
   //Gradle runs tests designed to be run in a suite twice
   //See: https://discuss.gradle.org/t/how-to-prevent-junit-test-suite-classes-from-being-ran-twice/7107/4
   exclude '**/api/**Tests.class'
+}
+
+task testApiViaOkapi(type: Test) {
+  include '**/APITestSuite.class'
+
+  systemProperty 'okapi.useForStorage', 'true'
 }
 
 jar {

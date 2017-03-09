@@ -5,6 +5,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.json.Json;
+import org.folio.circulation.support.VertxAssistant;
 
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
@@ -28,6 +29,15 @@ public class HttpClient {
     this.exceptionHandler = exceptionHandler;
   }
 
+  public HttpClient(VertxAssistant vertxAssistant,
+                    URL okapiUrl,
+                    Consumer<Throwable> exceptionHandler) {
+    this.client = vertxAssistant
+      .createUsingVertx(vertx -> vertx.createHttpClient());
+    this.okapiUrl = okapiUrl;
+    this.exceptionHandler = exceptionHandler;
+  }
+
   public void post(URL url,
             Object body,
             String tenantId,
@@ -43,7 +53,7 @@ public class HttpClient {
       request.headers().add(TENANT_HEADER, tenantId);
     }
 
-    request.setTimeout(3000);
+    request.setTimeout(5000);
 
     request.exceptionHandler(exception -> {
       this.exceptionHandler.accept(exception);
