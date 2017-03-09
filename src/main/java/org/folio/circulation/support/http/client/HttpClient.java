@@ -90,8 +90,15 @@ public class HttpClient {
                   Object body,
                   String tenantId,
                   Handler<HttpClientResponse> responseHandler) {
+    put(url.toString(), body, tenantId, responseHandler);
+  }
 
-    HttpClientRequest request = client.putAbs(url.toString(), responseHandler);
+  public void put(String url,
+                  Object body,
+                  String tenantId,
+                  Handler<HttpClientResponse> responseHandler) {
+
+    HttpClientRequest request = client.putAbs(url, responseHandler);
 
     request.headers().add("Accept","application/json, text/plain");
     request.headers().add("Content-type","application/json");

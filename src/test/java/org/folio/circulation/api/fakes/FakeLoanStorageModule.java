@@ -11,6 +11,7 @@ import io.vertx.ext.web.handler.BodyHandler;
 import org.folio.circulation.api.APITestSuite;
 import org.folio.circulation.support.http.server.ClientErrorResponse;
 import org.folio.circulation.support.http.server.JsonResponse;
+import org.folio.circulation.support.http.server.SuccessResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
 import java.util.HashMap;
@@ -47,11 +48,15 @@ public class FakeLoanStorageModule extends AbstractVerticle {
     JsonObject config = vertx.getOrCreateContext().config();
 
     router.post(rootPath + "*").handler(BodyHandler.create());
+    router.put(rootPath + "*").handler(BodyHandler.create());
 
     router.post(rootPath).handler(this::create);
 
+    router.route(HttpMethod.PUT, rootPath + "/:id")
+      .handler(this::replace);
+
     router.route(HttpMethod.GET, rootPath + "/:id")
-      .handler(this::getLoan);
+      .handler(this::get);
 
     server.requestHandler(router::accept)
       .listen(PORT_TO_USE, result -> {
@@ -65,8 +70,38 @@ public class FakeLoanStorageModule extends AbstractVerticle {
       });
   }
 
-  private void getLoan(RoutingContext routingContext) {
+  private void create(RoutingContext routingContext) {
 
+    WebContext context = new WebContext(routingContext);
+
+    JsonObject body = getJsonFromBody(routingContext);
+
+    getLoansForTenant(context).put(body.getString("id"), body);
+
+    JsonResponse.created(routingContext.response(),
+      routingContext.getBodyAsJson());
+  }
+
+  private void replace(RoutingContext routingContext) {
+    WebContext context = new WebContext(routingContext);
+
+    String id = routingContext.request().getParam("id");
+
+    JsonObject body = getJsonFromBody(routingContext);
+
+    Map<String, JsonObject> loansForTenant = getLoansForTenant(context);
+
+    loansForTenant.replace(id, body);
+
+    if(loansForTenant.containsKey(id)) {
+      SuccessResponse.noContent(routingContext.response());
+    }
+    else {
+      ClientErrorResponse.notFound(routingContext.response());
+    }
+  }
+
+  private void get(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
 
     String id = routingContext.request().getParam("id");
@@ -80,18 +115,6 @@ public class FakeLoanStorageModule extends AbstractVerticle {
     else {
       ClientErrorResponse.notFound(routingContext.response());
     }
-  }
-
-  private void create(RoutingContext routingContext) {
-
-    WebContext context = new WebContext(routingContext);
-
-    JsonObject body = getJsonFromBody(routingContext);
-
-    getLoansForTenant(context).put(body.getString("id"), body);
-
-    JsonResponse.created(routingContext.response(),
-      routingContext.getBodyAsJson());
   }
 
   private Map<String, JsonObject> getLoansForTenant(WebContext context) {

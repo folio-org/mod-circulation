@@ -102,6 +102,46 @@ public class LoanAPITests {
       loan.getJsonObject("status").getString("name"), is("Open"));
   }
 
+  @Test
+  public void canCompleteALoanByReturningTheItem()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException,
+    UnsupportedEncodingException {
+
+    DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, 232, DateTimeZone.UTC);
+
+    IndividualResource loan = createLoan(loanRequest(loanDate));
+
+    JsonObject returnedLoan = loan.copyJson();
+
+    returnedLoan
+      .put("status", new JsonObject().put("name", "Closed"))
+      .put("returnDate", new DateTime(2017, 3, 5, 14, 23, 41, DateTimeZone.UTC)
+        .toString(ISODateTimeFormat.dateTime()));
+
+    CompletableFuture<JsonResponse> putCompleted = new CompletableFuture<>();
+
+    client.put(loanUrl(String.format("/%s", loan.getId())), returnedLoan,
+      APITestSuite.TENANT_ID, ResponseHandler.json(putCompleted));
+
+    JsonResponse putResponse = putCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Failed to update loan: %s", putResponse.getBody()),
+      putResponse.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
+
+    JsonResponse updatedLoanResponse = getById(UUID.fromString(loan.getId()));
+
+    JsonObject updatedLoan = updatedLoanResponse.getJson();
+
+    assertThat(updatedLoan.getString("returnDate"),
+      is("2017-03-05T14:23:41.000Z"));
+
+    assertThat("status is not closed",
+      updatedLoan.getJsonObject("status").getString("name"), is("Closed"));
+  }
+
   private JsonResponse getById(UUID id)
     throws MalformedURLException,
     InterruptedException,
