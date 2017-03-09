@@ -30,6 +30,7 @@ public class LoanCollectionResource {
 
     router.route(HttpMethod.GET, rootPath + "/:id").handler(this::get);
     router.route(HttpMethod.PUT, rootPath + "/:id").handler(this::replace);
+    router.route(HttpMethod.DELETE, rootPath + "/:id").handler(this::delete);
   }
 
   private void create(RoutingContext routingContext) {
@@ -153,6 +154,48 @@ public class LoanCollectionResource {
           if(response.statusCode() == 200) {
             JsonResponse.success(routingContext.response(),
               new JsonObject(responseBody));
+          }
+          else {
+            ForwardResponse.forward(routingContext.response(), response,
+              responseBody);
+          }
+        });
+      });
+  }
+
+  private void delete(RoutingContext routingContext) {
+    URL okapiLocation;
+    URL storageLocation;
+
+    WebContext context = new WebContext(routingContext);
+
+    String id = routingContext.request().getParam("id");
+
+    try {
+      okapiLocation = new URL(context.getOkapiLocation());
+      storageLocation = context.getOkapiBasedUrl("/loan-storage/loans");
+    }
+    catch (MalformedURLException e) {
+      ServerErrorResponse.internalError(routingContext.response(),
+        String.format("Invalid Okapi URL: %s", context.getOkapiLocation()));
+
+      return;
+    }
+
+    HttpClient client = new HttpClient(routingContext.vertx(), okapiLocation,
+      exception -> {
+        ServerErrorResponse.internalError(routingContext.response(),
+          String.format("Failed to contact storage module: %s",
+            exception.toString()));
+      });
+
+    client.delete(storageLocation + String.format("/%s", id),
+      context.getTenantId(), response -> {
+        response.bodyHandler(buffer -> {
+          String responseBody = BufferHelper.stringFromBuffer(buffer);
+
+          if(response.statusCode() == 204) {
+            SuccessResponse.noContent(routingContext.response());
           }
           else {
             ForwardResponse.forward(routingContext.response(), response,

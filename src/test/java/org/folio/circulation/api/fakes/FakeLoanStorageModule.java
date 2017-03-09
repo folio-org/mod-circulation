@@ -63,6 +63,9 @@ public class FakeLoanStorageModule extends AbstractVerticle {
     router.route(HttpMethod.GET, rootPath + "/:id")
       .handler(this::get);
 
+    router.route(HttpMethod.DELETE, rootPath + "/:id")
+      .handler(this::delete);
+
     server.requestHandler(router::accept)
       .listen(PORT_TO_USE, result -> {
         if (result.succeeded()) {
@@ -145,8 +148,6 @@ public class FakeLoanStorageModule extends AbstractVerticle {
     Integer offset = context.getIntegerParameter("offset", 0);
     String query = context.getStringParameter("query", null);
 
-    System.out.println("Query: " + query);
-
     Map<String, JsonObject> loansForTenant = getLoansForTenant(context);
 
     List<Predicate<JsonObject>> predicates = filterFromQuery(query);
@@ -176,6 +177,23 @@ public class FakeLoanStorageModule extends AbstractVerticle {
     loansForTenant.clear();
 
     SuccessResponse.noContent(routingContext.response());
+  }
+
+  private void delete(RoutingContext routingContext) {
+    WebContext context = new WebContext(routingContext);
+
+    String id = routingContext.request().getParam("id");
+
+    Map<String, JsonObject> loansForTenant = getLoansForTenant(context);
+
+    if(loansForTenant.containsKey(id)) {
+      loansForTenant.remove(id);
+
+      SuccessResponse.noContent(routingContext.response());
+    }
+    else {
+      ClientErrorResponse.notFound(routingContext.response());
+    }
   }
 
   private Map<String, JsonObject> getLoansForTenant(WebContext context) {

@@ -331,6 +331,38 @@ public class LoanAPITests {
     assertThat(closedLoans.getInteger("totalRecords"), is(4));
   }
 
+  @Test
+  public void canDeleteALoan()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException,
+    UnsupportedEncodingException {
+
+    UUID id = UUID.randomUUID();
+
+    createLoan(loanRequest(id, UUID.randomUUID(), UUID.randomUUID(),
+      DateTime.now(), "Open"));
+
+    CompletableFuture<TextResponse> deleteCompleted = new CompletableFuture<>();
+
+    client.delete(loanUrl(String.format("/%s", id)),
+      APITestSuite.TENANT_ID, ResponseHandler.text(deleteCompleted));
+
+    TextResponse deleteResponse = deleteCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(deleteResponse.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
+
+    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
+
+    client.get(loanUrl(String.format("/%s", id)),
+      APITestSuite.TENANT_ID, ResponseHandler.empty(getCompleted));
+
+    Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(getResponse.getStatusCode(), is(HttpURLConnection.HTTP_NOT_FOUND));
+  }
+
   private JsonResponse getById(UUID id)
     throws MalformedURLException,
     InterruptedException,
