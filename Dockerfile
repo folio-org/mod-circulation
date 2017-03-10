@@ -23,6 +23,6 @@ USER folio
 WORKDIR $VERTICLE_HOME
 
 # Expose this port locally in the container.
-EXPOSE 9403
+EXPOSE 9801
 
 ENTRYPOINT ["./docker-entrypoint.sh"]
