@@ -1,7 +1,7 @@
 package org.folio.circulation.api;
 
 import org.folio.circulation.CirculationVerticle;
-import org.folio.circulation.api.fakes.FakeLoanStorageModule;
+import org.folio.circulation.api.fakes.FakeOkapi;
 import org.folio.circulation.support.VertxAssistant;
 import org.folio.circulation.support.http.client.HttpClient;
 import org.junit.AfterClass;
@@ -16,6 +16,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 
 @RunWith(Suite.class)
 
@@ -29,17 +30,23 @@ public class APITestSuite {
   private static VertxAssistant vertxAssistant;
   private static int port;
   private static String circulationModuleDeploymentId;
-  private static String fakeLoanStorageModuleDeploymentId;
+  private static String fakeOkapiDeploymentId;
 
   private static Boolean useOkapiForStorage;
 
-  public static URL moduleUrl(String path) {
+  public static URL circulationModuleUrl(String path) {
     try {
       return new URL("http", "localhost", port, path);
     }
     catch(MalformedURLException ex) {
       return null;
     }
+  }
+
+  public static HttpClient createHttpClient(
+    Consumer<Throwable> exceptionHandler) {
+
+    return new HttpClient(vertxAssistant, okapiUrl(), exceptionHandler);
   }
 
   @BeforeClass
@@ -62,7 +69,7 @@ public class APITestSuite {
     CompletableFuture<String> fakeStorageModuleDeployed = new CompletableFuture<>();
 
     if(!useOkapiForStorage) {
-        vertxAssistant.deployVerticle(FakeLoanStorageModule.class.getName(),
+        vertxAssistant.deployVerticle(FakeOkapi.class.getName(),
         new HashMap<>(), fakeStorageModuleDeployed);
     }
     else {
@@ -73,7 +80,7 @@ public class APITestSuite {
       vertxAssistant.deployVerticle(CirculationVerticle.class.getName(),
         config);
 
-    fakeLoanStorageModuleDeploymentId = fakeStorageModuleDeployed.get(10, TimeUnit.SECONDS);
+    fakeOkapiDeploymentId = fakeStorageModuleDeployed.get(10, TimeUnit.SECONDS);
     circulationModuleDeploymentId = circulationModuleDeployed.get(10, TimeUnit.SECONDS);
   }
 
@@ -85,18 +92,18 @@ public class APITestSuite {
     CompletableFuture<Void> circulationModuleUndeployed =
       vertxAssistant.undeployVerticle(circulationModuleDeploymentId);
 
-    CompletableFuture<Void> fakeStorageModuleUndeployed = new CompletableFuture<>();
+    CompletableFuture<Void> fakeOkapiUndeployed = new CompletableFuture<>();
 
     if(!useOkapiForStorage) {
-      vertxAssistant.undeployVerticle(fakeLoanStorageModuleDeploymentId,
-        fakeStorageModuleUndeployed);
+      vertxAssistant.undeployVerticle(fakeOkapiDeploymentId,
+        fakeOkapiUndeployed);
     }
     else {
-      fakeStorageModuleUndeployed.complete(null);
+      fakeOkapiUndeployed.complete(null);
     }
 
     circulationModuleUndeployed.get(10, TimeUnit.SECONDS);
-    fakeStorageModuleUndeployed.get(10, TimeUnit.SECONDS);
+    fakeOkapiUndeployed.get(10, TimeUnit.SECONDS);
 
     CompletableFuture<Void> stopped = new CompletableFuture<>();
 
@@ -105,21 +112,13 @@ public class APITestSuite {
     stopped.get(5, TimeUnit.SECONDS);
   }
 
-  public static HttpClient createHttpClient() {
-    return new HttpClient(vertxAssistant, storageUrl(), exception -> {
-      System.out.println(
-        String.format("Request to circulation module failed: %s",
-          exception.toString()));
-    });
-  }
-
-  private static URL storageUrl() {
+  private static URL okapiUrl() {
     try {
       if(useOkapiForStorage) {
-        return new URL("http://localhost:9130/loan-storage/loans");
+        return new URL("http://localhost:9130");
       }
       else {
-        return new URL(FakeLoanStorageModule.getAddress());
+        return new URL(FakeOkapi.getAddress());
       }
     }
     catch(MalformedURLException ex) {

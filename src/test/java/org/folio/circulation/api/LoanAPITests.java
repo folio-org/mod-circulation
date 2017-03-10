@@ -26,11 +26,19 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class LoanAPITests {
 
-  HttpClient client = APITestSuite.createHttpClient();
+  HttpClient client = APITestSuite.createHttpClient(exception -> {
+    System.out.println(
+      String.format("Request to circulation module failed: %s",
+        exception.toString()));
+  });
 
   @Before
   public void beforeEach() {
-    HttpClient client = APITestSuite.createHttpClient();
+    HttpClient client = APITestSuite.createHttpClient(exception -> {
+      System.out.println(
+        String.format("Request to circulation module failed: %s",
+          exception.toString()));
+    });
 
     CompletableFuture<Response> deleteAllFinished = new CompletableFuture<>();
 
@@ -409,6 +417,6 @@ public class LoanAPITests {
   private static URL loanUrl(String subPath)
     throws MalformedURLException {
 
-    return APITestSuite.moduleUrl("/circulation/loans" + subPath);
+    return APITestSuite.circulationModuleUrl("/circulation/loans" + subPath);
   }
 }
