@@ -2,6 +2,7 @@ package org.folio.circulation.api;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.api.support.LoanRequest;
 import org.folio.circulation.support.http.client.*;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -14,7 +15,6 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -61,7 +61,7 @@ public class LoanAPITests {
     UUID itemId = UUID.randomUUID();
     UUID userId = UUID.randomUUID();
 
-    JsonObject loanRequest = loanRequest(id, itemId, userId,
+    JsonObject loanRequest = LoanRequest.create(id, itemId, userId,
       new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC), "Open");
 
     IndividualResource response = createLoan(loanRequest);
@@ -96,7 +96,7 @@ public class LoanAPITests {
     UUID itemId = UUID.randomUUID();
     UUID userId = UUID.randomUUID();
 
-    JsonObject loanRequest = loanRequest(id, itemId, userId,
+    JsonObject loanRequest = LoanRequest.create(id, itemId, userId,
       new DateTime(2016, 10, 15, 8, 26, 53, DateTimeZone.UTC), "Open");
 
     createLoan(loanRequest);
@@ -145,13 +145,13 @@ public class LoanAPITests {
     ExecutionException,
     UnsupportedEncodingException {
 
-    createLoan(loanRequest());
-    createLoan(loanRequest());
-    createLoan(loanRequest());
-    createLoan(loanRequest());
-    createLoan(loanRequest());
-    createLoan(loanRequest());
-    createLoan(loanRequest());
+    createLoan(LoanRequest.create());
+    createLoan(LoanRequest.create());
+    createLoan(LoanRequest.create());
+    createLoan(LoanRequest.create());
+    createLoan(LoanRequest.create());
+    createLoan(LoanRequest.create());
+    createLoan(LoanRequest.create());
 
     CompletableFuture<JsonResponse> firstPageCompleted = new CompletableFuture<>();
     CompletableFuture<JsonResponse> secondPageCompleted = new CompletableFuture<>();
@@ -196,7 +196,7 @@ public class LoanAPITests {
 
     DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, 232, DateTimeZone.UTC);
 
-    IndividualResource loan = createLoan(loanRequest(loanDate));
+    IndividualResource loan = createLoan(LoanRequest.loanRequest(loanDate));
 
     JsonObject returnedLoan = loan.copyJson();
 
@@ -239,13 +239,13 @@ public class LoanAPITests {
 
     String queryTemplate = loanUrl() + "?query=userId=%s";
 
-    createLoan(loanRequest().put("userId", firstUserId.toString()));
-    createLoan(loanRequest().put("userId", firstUserId.toString()));
-    createLoan(loanRequest().put("userId", firstUserId.toString()));
-    createLoan(loanRequest().put("userId", firstUserId.toString()));
-    createLoan(loanRequest().put("userId", secondUserId.toString()));
-    createLoan(loanRequest().put("userId", secondUserId.toString()));
-    createLoan(loanRequest().put("userId", secondUserId.toString()));
+    createLoan(LoanRequest.create().put("userId", firstUserId.toString()));
+    createLoan(LoanRequest.create().put("userId", firstUserId.toString()));
+    createLoan(LoanRequest.create().put("userId", firstUserId.toString()));
+    createLoan(LoanRequest.create().put("userId", firstUserId.toString()));
+    createLoan(LoanRequest.create().put("userId", secondUserId.toString()));
+    createLoan(LoanRequest.create().put("userId", secondUserId.toString()));
+    createLoan(LoanRequest.create().put("userId", secondUserId.toString()));
 
     CompletableFuture<JsonResponse> firstUserSearchCompleted = new CompletableFuture<>();
     CompletableFuture<JsonResponse> secondUserSeatchCompleted = new CompletableFuture<>();
@@ -292,12 +292,12 @@ public class LoanAPITests {
 
     String queryTemplate = "userId=\"%s\" and status.name=\"%s\"";
 
-    createLoan(loanRequest(userId, "Open"));
-    createLoan(loanRequest(userId, "Open"));
-    createLoan(loanRequest(userId, "Closed"));
-    createLoan(loanRequest(userId, "Closed"));
-    createLoan(loanRequest(userId, "Closed"));
-    createLoan(loanRequest(userId, "Closed"));
+    createLoan(LoanRequest.loanRequest(userId, "Open"));
+    createLoan(LoanRequest.loanRequest(userId, "Open"));
+    createLoan(LoanRequest.loanRequest(userId, "Closed"));
+    createLoan(LoanRequest.loanRequest(userId, "Closed"));
+    createLoan(LoanRequest.loanRequest(userId, "Closed"));
+    createLoan(LoanRequest.loanRequest(userId, "Closed"));
 
     CompletableFuture<JsonResponse> openSearchComppleted = new CompletableFuture<>();
     CompletableFuture<JsonResponse> closedSearchCompleted = new CompletableFuture<>();
@@ -344,7 +344,7 @@ public class LoanAPITests {
 
     UUID id = UUID.randomUUID();
 
-    createLoan(loanRequest(id, UUID.randomUUID(), UUID.randomUUID(),
+    createLoan(LoanRequest.create(id, UUID.randomUUID(), UUID.randomUUID(),
       DateTime.now(), "Open"));
 
     CompletableFuture<TextResponse> deleteCompleted = new CompletableFuture<>();
@@ -400,51 +400,6 @@ public class LoanAPITests {
       response.getStatusCode(), is(HttpURLConnection.HTTP_CREATED));
 
     return new IndividualResource(response);
-  }
-
-  private JsonObject loanRequest() {
-    return loanRequest(UUID.randomUUID(), UUID.randomUUID(),
-      UUID.randomUUID(), DateTime.parse("2017-03-06T16:04:43.000+02:00",
-        ISODateTimeFormat.dateTime()), "Open");
-  }
-
-  private JsonObject loanRequest(UUID userId, String statusName) {
-    Random random = new Random();
-
-    return loanRequest(UUID.randomUUID(), UUID.randomUUID(),
-      userId, DateTime.now().minusDays(random.nextInt(10)), statusName);
-  }
-
-  private JsonObject loanRequest(DateTime loanDate) {
-    return loanRequest(UUID.randomUUID(), UUID.randomUUID(),
-      UUID.randomUUID(), loanDate, "Open");
-  }
-
-  private JsonObject loanRequest(
-    UUID id,
-    UUID itemId,
-    UUID userId,
-    DateTime loanDate,
-    String statusName) {
-
-    JsonObject loanRequest = new JsonObject();
-
-    if(id != null) {
-      loanRequest.put("id", id.toString());
-    }
-
-    loanRequest
-      .put("userId", userId.toString())
-      .put("itemId", itemId.toString())
-      .put("loanDate", loanDate.toString(ISODateTimeFormat.dateTime()))
-      .put("status", new JsonObject().put("name", statusName));
-
-    if(statusName == "Closed") {
-      loanRequest.put("returnDate",
-        loanDate.plusDays(1).plusHours(4).toString(ISODateTimeFormat.dateTime()));
-    }
-
-    return loanRequest;
   }
 
   private static URL loanUrl() throws MalformedURLException {
