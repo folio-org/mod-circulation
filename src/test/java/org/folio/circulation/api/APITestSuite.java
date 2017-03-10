@@ -2,6 +2,7 @@ package org.folio.circulation.api;
 
 import org.folio.circulation.CirculationVerticle;
 import org.folio.circulation.api.fakes.FakeOkapi;
+import org.folio.circulation.api.support.URLHelper;
 import org.folio.circulation.support.VertxAssistant;
 import org.folio.circulation.support.http.client.HttpClient;
 import org.junit.AfterClass;
@@ -37,6 +38,15 @@ public class APITestSuite {
   public static URL circulationModuleUrl(String path) {
     try {
       return new URL("http", "localhost", port, path);
+    }
+    catch(MalformedURLException ex) {
+      return null;
+    }
+  }
+
+  public static URL viaOkapiModuleUrl(String path) {
+    try {
+      return URLHelper.joinPath(okapiUrl(), path);
     }
     catch(MalformedURLException ex) {
       return null;

@@ -11,11 +11,19 @@ echo "Create ${tenant_id} tenant"
 ./create-tenant.sh ${tenant_id}
 
 echo "Activate loan storage for ${tenant_id}"
-activate_json=$(cat ./activate-loan-storage.json)
+activate_loan_storage_json=$(cat ./activate-loan-storage.json)
 
 curl -w '\n' -X POST -D - \
      -H "Content-type: application/json" \
-     -d "${activate_json}"  \
+     -d "${activate_loan_storage_json}"  \
+     "${okapi_proxy_address}/_/proxy/tenants/${tenant_id}/modules"
+
+echo "Activate inventory storage for ${tenant_id}"
+activate_inventory_storage_json=$(cat ./activate-inventory-storage.json)
+
+curl -w '\n' -X POST -D - \
+     -H "Content-type: application/json" \
+     -d "${activate_inventory_storage_json}"  \
      "${okapi_proxy_address}/_/proxy/tenants/${tenant_id}/modules"
 
 echo "Run API tests"
@@ -25,6 +33,9 @@ test_results=$?
 
 echo "Deactivate loan storage for ${tenant_id}"
 curl -X DELETE -D - -w '\n' "${okapi_proxy_address}/_/proxy/tenants/${tenant_id}/modules/loan-storage"
+
+echo "Deactivate inventory storage for ${tenant_id}"
+curl -X DELETE -D - -w '\n' "${okapi_proxy_address}/_/proxy/tenants/${tenant_id}/modules/inventory-storage"
 
 echo "Deleting ${tenant_id}"
 ./delete-tenant.sh ${tenant_id}

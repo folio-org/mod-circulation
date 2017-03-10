@@ -4,6 +4,7 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpServer;
 import io.vertx.ext.web.Router;
+import org.folio.circulation.api.APITestSuite;
 
 public class FakeOkapi extends AbstractVerticle {
 
@@ -24,7 +25,8 @@ public class FakeOkapi extends AbstractVerticle {
 
     this.server = vertx.createHttpServer();
 
-    new FakeLoanStorageModule().register(router);
+    new FakeLoanStorageModule(APITestSuite.TENANT_ID).register(router);
+    new FakeItemStorageModule().register(router);
 
     server.requestHandler(router::accept)
       .listen(PORT_TO_USE, result -> {

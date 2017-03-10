@@ -33,29 +33,14 @@ public class LoanAPITests {
   });
 
   @Before
-  public void beforeEach() {
-    HttpClient client = APITestSuite.createHttpClient(exception -> {
-      System.out.println(
-        String.format("Request to circulation module failed: %s",
-          exception.toString()));
-    });
+  public void beforeEach()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
 
-    CompletableFuture<Response> deleteAllFinished = new CompletableFuture<>();
-
-    try {
-      client.delete(loanUrl(), APITestSuite.TENANT_ID,
-        ResponseHandler.empty(deleteAllFinished));
-
-      Response response = deleteAllFinished.get(5, TimeUnit.SECONDS);
-
-      if(response.getStatusCode() != 204) {
-        System.out.println("WARNING!!!!! Delete all resources preparation failed");
-      }
-    }
-    catch(Exception e) {
-      System.out.println("WARNING!!!!! Unable to delete all resources: " +
-        e.getMessage());
-    }
+    deleteAllLoans();
+    deleteAllItems();
   }
 
   @Test
@@ -410,7 +395,15 @@ public class LoanAPITests {
     return new IndividualResource(response);
   }
 
-  private static URL loanUrl() throws MalformedURLException {
+  private static URL itemsUrl()
+    throws MalformedURLException {
+
+    return APITestSuite.viaOkapiModuleUrl("/item-storage/items");
+  }
+
+  private static URL loanUrl()
+    throws MalformedURLException {
+
     return loanUrl("");
   }
 
@@ -418,5 +411,39 @@ public class LoanAPITests {
     throws MalformedURLException {
 
     return APITestSuite.circulationModuleUrl("/circulation/loans" + subPath);
+  }
+
+  private void deleteAllLoans()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    deleteAll(loanUrl());
+  }
+
+  private void deleteAllItems()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    deleteAll(itemsUrl());
+  }
+
+  private void deleteAll(URL collectionResourceUrl)
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    CompletableFuture<Response> deleteAllFinished = new CompletableFuture<>();
+
+    client.delete(collectionResourceUrl, APITestSuite.TENANT_ID,
+      ResponseHandler.empty(deleteAllFinished));
+
+    Response response = deleteAllFinished.get(5, TimeUnit.SECONDS);
+
+    assertThat("WARNING!!!!! Delete all resources preparation failed",
+      response.getStatusCode(), is(204));
   }
 }
