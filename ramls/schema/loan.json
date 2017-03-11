@@ -11,6 +11,14 @@
     "itemId": {
       "type": "string"
     },
+    "status": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    },
     "loanDate": {
       "type": "string",
       "format": "date-time"
