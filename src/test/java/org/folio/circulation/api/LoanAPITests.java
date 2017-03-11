@@ -2,6 +2,7 @@ package org.folio.circulation.api;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.api.support.ItemExamples;
 import org.folio.circulation.api.support.LoanRequest;
 import org.folio.circulation.support.http.client.*;
 import org.joda.time.DateTime;
@@ -86,7 +87,7 @@ public class LoanAPITests {
     UnsupportedEncodingException {
 
     UUID id = UUID.randomUUID();
-    UUID itemId = UUID.randomUUID();
+    UUID itemId = createItem(ItemExamples.smallAngryPlanet()).getId();
     UUID userId = UUID.randomUUID();
 
     JsonObject loanRequest = LoanRequest.create(id, itemId, userId,
@@ -115,6 +116,42 @@ public class LoanAPITests {
 
     assertThat("status is not open",
       loan.getJsonObject("status").getString("name"), is("Open"));
+
+    assertThat("title is taken from item",
+      loan.getJsonObject("item").getString("title"),
+      is("The Long Way to a Small, Angry Planet"));
+
+    assertThat("barcode is taken from item",
+      loan.getJsonObject("item").getString("barcode"),
+      is("036000291452"));
+  }
+
+  @Test
+  public void loanFoundByIdDoesNotProvideItemInformationForUnknownItem()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    UnsupportedEncodingException {
+
+    UUID id = UUID.randomUUID();
+    UUID itemId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
+
+    JsonObject loanRequest = LoanRequest.create(id, itemId, userId,
+      new DateTime(2016, 10, 15, 8, 26, 53, DateTimeZone.UTC), "Open");
+
+    createLoan(loanRequest);
+
+    JsonResponse getResponse = getById(id);
+
+    assertThat(String.format("Failed to get loan: %s", getResponse.getBody()),
+      getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+
+    JsonObject loan = getResponse.getJson();
+
+    assertThat("no item information available",
+      loan.containsKey("item"), is(false));
   }
 
   @Test
@@ -149,10 +186,10 @@ public class LoanAPITests {
     CompletableFuture<JsonResponse> firstPageCompleted = new CompletableFuture<>();
     CompletableFuture<JsonResponse> secondPageCompleted = new CompletableFuture<>();
 
-    client.get(loanUrl() + "?limit=4", APITestSuite.TENANT_ID,
+    client.get(loansUrl() + "?limit=4", APITestSuite.TENANT_ID,
       ResponseHandler.json(firstPageCompleted));
 
-    client.get(loanUrl() + "?limit=4&offset=4", APITestSuite.TENANT_ID,
+    client.get(loansUrl() + "?limit=4&offset=4", APITestSuite.TENANT_ID,
       ResponseHandler.json(secondPageCompleted));
 
     JsonResponse firstPageResponse = firstPageCompleted.get(5, TimeUnit.SECONDS);
@@ -189,7 +226,11 @@ public class LoanAPITests {
 
     DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, 232, DateTimeZone.UTC);
 
-    IndividualResource loan = createLoan(LoanRequest.loanRequest(loanDate));
+    UUID itemId = createItem(ItemExamples.nod()).getId();
+
+    IndividualResource loan = createLoan(LoanRequest.create(
+      UUID.randomUUID(), itemId,
+      UUID.randomUUID(), loanDate, "Open"));
 
     JsonObject returnedLoan = loan.copyJson();
 
@@ -200,7 +241,7 @@ public class LoanAPITests {
 
     CompletableFuture<JsonResponse> putCompleted = new CompletableFuture<>();
 
-    client.put(loanUrl(String.format("/%s", loan.getId())), returnedLoan,
+    client.put(loansUrl(String.format("/%s", loan.getId())), returnedLoan,
       APITestSuite.TENANT_ID, ResponseHandler.json(putCompleted));
 
     JsonResponse putResponse = putCompleted.get(5, TimeUnit.SECONDS);
@@ -208,7 +249,7 @@ public class LoanAPITests {
     assertThat(String.format("Failed to update loan: %s", putResponse.getBody()),
       putResponse.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
 
-    JsonResponse updatedLoanResponse = getById(UUID.fromString(loan.getId()));
+    JsonResponse updatedLoanResponse = getById(loan.getId());
 
     JsonObject updatedLoan = updatedLoanResponse.getJson();
 
@@ -217,6 +258,14 @@ public class LoanAPITests {
 
     assertThat("status is not closed",
       updatedLoan.getJsonObject("status").getString("name"), is("Closed"));
+
+    assertThat("title is taken from item",
+      updatedLoan.getJsonObject("item").getString("title"),
+      is("Nod"));
+
+    assertThat("barcode is taken from item",
+      updatedLoan.getJsonObject("item").getString("barcode"),
+      is("565578437802"));
   }
 
   @Test
@@ -230,7 +279,7 @@ public class LoanAPITests {
     UUID firstUserId = UUID.randomUUID();
     UUID secondUserId = UUID.randomUUID();
 
-    String queryTemplate = loanUrl() + "?query=userId=%s";
+    String queryTemplate = loansUrl() + "?query=userId=%s";
 
     createLoan(LoanRequest.create().put("userId", firstUserId.toString()));
     createLoan(LoanRequest.create().put("userId", firstUserId.toString()));
@@ -295,11 +344,11 @@ public class LoanAPITests {
     CompletableFuture<JsonResponse> openSearchComppleted = new CompletableFuture<>();
     CompletableFuture<JsonResponse> closedSearchCompleted = new CompletableFuture<>();
 
-    client.get(loanUrl(),
+    client.get(loansUrl(),
       "query=" + URLEncoder.encode(String.format(queryTemplate, userId, "Open"), "UTF-8"),
       APITestSuite.TENANT_ID, ResponseHandler.json(openSearchComppleted));
 
-    client.get(loanUrl(),
+    client.get(loansUrl(),
       "query=" + URLEncoder.encode(String.format(queryTemplate, userId, "Closed"), "UTF-8"),
       APITestSuite.TENANT_ID, ResponseHandler.json(closedSearchCompleted));
 
@@ -342,7 +391,7 @@ public class LoanAPITests {
 
     CompletableFuture<TextResponse> deleteCompleted = new CompletableFuture<>();
 
-    client.delete(loanUrl(String.format("/%s", id)),
+    client.delete(loansUrl(String.format("/%s", id)),
       APITestSuite.TENANT_ID, ResponseHandler.text(deleteCompleted));
 
     TextResponse deleteResponse = deleteCompleted.get(5, TimeUnit.SECONDS);
@@ -351,7 +400,7 @@ public class LoanAPITests {
 
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
-    client.get(loanUrl(String.format("/%s", id)),
+    client.get(loansUrl(String.format("/%s", id)),
       APITestSuite.TENANT_ID, ResponseHandler.empty(getCompleted));
 
     Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
@@ -366,7 +415,7 @@ public class LoanAPITests {
     TimeoutException,
     UnsupportedEncodingException {
 
-    URL getInstanceUrl = loanUrl(String.format("/%s", id));
+    URL getInstanceUrl = loansUrl(String.format("/%s", id));
 
     CompletableFuture<JsonResponse> getCompleted = new CompletableFuture<>();
 
@@ -382,14 +431,35 @@ public class LoanAPITests {
     ExecutionException,
     TimeoutException {
 
+    return createResource(loanRequest, loansUrl(),"loan");
+  }
+
+  private IndividualResource createItem(JsonObject itemRequest)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    return createResource(itemRequest, itemsUrl(), "item");
+  }
+
+  private IndividualResource createResource(
+    JsonObject request,
+    URL url,
+    String resourceName)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
     CompletableFuture<JsonResponse> createCompleted = new CompletableFuture<>();
 
-    client.post(loanUrl(), loanRequest, APITestSuite.TENANT_ID,
+    client.post(url, request, APITestSuite.TENANT_ID,
       ResponseHandler.json(createCompleted));
 
     JsonResponse response = createCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat(String.format("Failed to create loan: %s", response.getBody()),
+    assertThat(String.format("Failed to create %s: %s", resourceName, response.getBody()),
       response.getStatusCode(), is(HttpURLConnection.HTTP_CREATED));
 
     return new IndividualResource(response);
@@ -401,13 +471,13 @@ public class LoanAPITests {
     return APITestSuite.viaOkapiModuleUrl("/item-storage/items");
   }
 
-  private static URL loanUrl()
+  private static URL loansUrl()
     throws MalformedURLException {
 
-    return loanUrl("");
+    return loansUrl("");
   }
 
-  private static URL loanUrl(String subPath)
+  private static URL loansUrl(String subPath)
     throws MalformedURLException {
 
     return APITestSuite.circulationModuleUrl("/circulation/loans" + subPath);
@@ -419,7 +489,7 @@ public class LoanAPITests {
     ExecutionException,
     TimeoutException {
 
-    deleteAll(loanUrl());
+    deleteAll(loansUrl());
   }
 
   private void deleteAllItems()

@@ -2,6 +2,8 @@ package org.folio.circulation.support.http.client;
 
 import io.vertx.core.json.JsonObject;
 
+import java.util.UUID;
+
 public class IndividualResource {
 
   private final JsonResponse response;
@@ -10,8 +12,8 @@ public class IndividualResource {
     this.response = response;
   }
 
-  public String getId() {
-    return response.getJson().getString("id");
+  public UUID getId() {
+    return UUID.fromString(response.getJson().getString("id"));
   }
 
   public JsonObject getJson() {

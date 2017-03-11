@@ -36,13 +36,13 @@ public class LoanCollectionResource {
   private void create(RoutingContext routingContext) {
 
     URL okapiLocation;
-    URL storageLocation;
+    URL loanStorageLocation;
 
     WebContext context = new WebContext(routingContext);
 
     try {
       okapiLocation = new URL(context.getOkapiLocation());
-      storageLocation = context.getOkapiBasedUrl("/loan-storage/loans");
+      loanStorageLocation = context.getOkapiBasedUrl("/loan-storage/loans");
     }
     catch (MalformedURLException e) {
       ServerErrorResponse.internalError(routingContext.response(),
@@ -58,7 +58,7 @@ public class LoanCollectionResource {
             exception.toString()));
       });
 
-    client.post(storageLocation,
+    client.post(loanStorageLocation,
       routingContext.getBodyAsJson(),
       context.getTenantId(), response -> {
         response.bodyHandler(buffer -> {
@@ -78,7 +78,7 @@ public class LoanCollectionResource {
 
   private void replace(RoutingContext routingContext) {
     URL okapiLocation;
-    URL storageLocation;
+    URL loanStorageLocation;
 
     WebContext context = new WebContext(routingContext);
 
@@ -86,7 +86,7 @@ public class LoanCollectionResource {
 
     try {
       okapiLocation = new URL(context.getOkapiLocation());
-      storageLocation = context.getOkapiBasedUrl("/loan-storage/loans");
+      loanStorageLocation = context.getOkapiBasedUrl("/loan-storage/loans");
     }
     catch (MalformedURLException e) {
       ServerErrorResponse.internalError(routingContext.response(),
@@ -104,7 +104,7 @@ public class LoanCollectionResource {
 
     JsonObject requestBody = routingContext.getBodyAsJson();
 
-    client.put(storageLocation + String.format("/%s", id),
+    client.put(loanStorageLocation + String.format("/%s", id),
       requestBody, context.getTenantId(), response -> {
         response.bodyHandler(buffer -> {
           String responseBody = BufferHelper.stringFromBuffer(buffer);
@@ -122,7 +122,8 @@ public class LoanCollectionResource {
 
   private void get(RoutingContext routingContext) {
     URL okapiLocation;
-    URL storageLocation;
+    URL loanStorageLocation;
+    URL itemStorageLocation;
 
     WebContext context = new WebContext(routingContext);
 
@@ -130,7 +131,9 @@ public class LoanCollectionResource {
 
     try {
       okapiLocation = new URL(context.getOkapiLocation());
-      storageLocation = context.getOkapiBasedUrl("/loan-storage/loans");
+      loanStorageLocation = context.getOkapiBasedUrl("/loan-storage/loans");
+      itemStorageLocation = context.getOkapiBasedUrl("/item-storage/items");
+
     }
     catch (MalformedURLException e) {
       ServerErrorResponse.internalError(routingContext.response(),
@@ -146,18 +149,47 @@ public class LoanCollectionResource {
             exception.toString()));
       });
 
-    client.get(storageLocation + String.format("/%s", id),
-      context.getTenantId(), response -> {
-        response.bodyHandler(buffer -> {
-          String responseBody = BufferHelper.stringFromBuffer(buffer);
+    client.get(loanStorageLocation + String.format("/%s", id),
+      context.getTenantId(), loanResponse -> {
+        loanResponse.bodyHandler(loanBuffer -> {
+          String loanBody = BufferHelper.stringFromBuffer(loanBuffer);
 
-          if(response.statusCode() == 200) {
-            JsonResponse.success(routingContext.response(),
-              new JsonObject(responseBody));
+          if(loanResponse.statusCode() == 200) {
+            JsonObject loan = new JsonObject(loanBody);
+            String itemId = loan.getString("itemId");
+
+            client.get(itemStorageLocation +
+                String.format("/%s", itemId),
+              context.getTenantId(), itemResponse -> {
+                itemResponse.bodyHandler(itemBuffer -> {
+                  String itemBody = BufferHelper.stringFromBuffer(itemBuffer);
+
+                  if(itemResponse.statusCode() == 200) {
+                    JsonObject item = new JsonObject(itemBody);
+
+                    loan.put("item", new JsonObject()
+                      .put("title", item.getString("title"))
+                      .put("barcode", item.getString("barcode")));
+
+                    JsonResponse.success(routingContext.response(),
+                      loan);
+                  }
+                  else if(itemResponse.statusCode() == 404) {
+                    JsonResponse.success(routingContext.response(),
+                      loan);
+                  }
+                  else {
+                    ServerErrorResponse.internalError(routingContext.response(),
+                      String.format("Failed to item with ID: %s:, %s",
+                         itemId, itemBody));
+                  }
+                });
+
+              });
           }
           else {
-            ForwardResponse.forward(routingContext.response(), response,
-              responseBody);
+            ForwardResponse.forward(routingContext.response(), loanResponse,
+              loanBody);
           }
         });
       });

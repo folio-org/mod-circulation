@@ -11,6 +11,17 @@
     "itemId": {
       "type": "string"
     },
+    "item": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "barcode": {
+          "type": "string"
+        }
+      }
+    },
     "status": {
       "type": "object",
       "properties": {
