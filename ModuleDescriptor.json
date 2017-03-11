@@ -13,7 +13,7 @@
             "PUT",
             "DELETE"
           ],
-          "path": "/loan-storage",
+          "path": "/circulation",
           "type": "request-response",
           "level": "30"
         }
