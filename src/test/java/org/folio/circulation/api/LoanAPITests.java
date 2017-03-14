@@ -177,13 +177,28 @@ public class LoanAPITests {
     ExecutionException,
     UnsupportedEncodingException {
 
-    createLoan(new LoanRequestBuilder().create());
-    createLoan(new LoanRequestBuilder().create());
-    createLoan(new LoanRequestBuilder().create());
-    createLoan(new LoanRequestBuilder().create());
-    createLoan(new LoanRequestBuilder().create());
-    createLoan(new LoanRequestBuilder().create());
-    createLoan(new LoanRequestBuilder().create());
+    createLoan(new LoanRequestBuilder().withItemId(
+      createItem(ItemRequestExamples.smallAngryPlanet()).getId()).create());
+
+    createLoan(new LoanRequestBuilder().withItemId(
+      createItem(ItemRequestExamples.nod()).getId()).create());
+
+    createLoan(new LoanRequestBuilder().withItemId(createItem(
+        ItemRequestExamples.smallAngryPlanet("764853217647")).getId())
+      .create());
+
+    createLoan(new LoanRequestBuilder().withItemId(
+      createItem(ItemRequestExamples.temeraire()).getId()).create());
+
+    createLoan(new LoanRequestBuilder().withItemId(
+      createItem(ItemRequestExamples.uprooted()).getId()).create());
+
+    createLoan(new LoanRequestBuilder().withItemId(
+      createItem(ItemRequestExamples.nod("656450654364")).getId())
+      .create());
+
+    createLoan(new LoanRequestBuilder().withItemId(
+      createItem(ItemRequestExamples.interestingTimes()).getId()).create());
 
     CompletableFuture<JsonResponse> firstPageCompleted = new CompletableFuture<>();
     CompletableFuture<JsonResponse> secondPageCompleted = new CompletableFuture<>();
@@ -292,13 +307,41 @@ public class LoanAPITests {
 
     String queryTemplate = loansUrl() + "?query=userId=%s";
 
-    createLoan(new LoanRequestBuilder().withUserId(firstUserId).create());
-    createLoan(new LoanRequestBuilder().withUserId(firstUserId).create());
-    createLoan(new LoanRequestBuilder().withUserId(firstUserId).create());
-    createLoan(new LoanRequestBuilder().withUserId(firstUserId).create());
-    createLoan(new LoanRequestBuilder().withUserId(secondUserId).create());
-    createLoan(new LoanRequestBuilder().withUserId(secondUserId).create());
-    createLoan(new LoanRequestBuilder().withUserId(secondUserId).create());
+    createLoan(new LoanRequestBuilder()
+      .withItem(createItem(ItemRequestExamples.smallAngryPlanet()))
+      .withUserId(firstUserId)
+      .create());
+
+    createLoan(new LoanRequestBuilder()
+      .withItem(createItem(ItemRequestExamples.nod()))
+      .withUserId(firstUserId)
+      .create());
+
+    createLoan(new LoanRequestBuilder()
+      .withItem(
+        createItem(ItemRequestExamples.smallAngryPlanet("764853217647")))
+      .withUserId(firstUserId)
+      .create());
+
+    createLoan(new LoanRequestBuilder().withItem(
+      createItem(ItemRequestExamples.temeraire()))
+      .withUserId(firstUserId)
+      .create());
+
+    createLoan(new LoanRequestBuilder()
+      .withItem(createItem(ItemRequestExamples.uprooted()))
+      .withUserId(secondUserId)
+      .create());
+
+    createLoan(new LoanRequestBuilder()
+      .withItem(createItem(ItemRequestExamples.nod("656450654364")))
+      .withUserId(secondUserId)
+      .create());
+
+    createLoan(new LoanRequestBuilder().withItem(
+      createItem(ItemRequestExamples.interestingTimes()))
+      .withUserId(secondUserId)
+      .create());
 
     CompletableFuture<JsonResponse> firstUserSearchCompleted = new CompletableFuture<>();
     CompletableFuture<JsonResponse> secondUserSeatchCompleted = new CompletableFuture<>();
@@ -356,31 +399,38 @@ public class LoanAPITests {
     createLoan(new LoanRequestBuilder()
       .withUserId(userId)
       .withStatus("Open")
+      .withItem(createItem(ItemRequestExamples.smallAngryPlanet()))
       .withRandomPastLoanDate().create());
 
     createLoan(new LoanRequestBuilder()
       .withUserId(userId)
       .withStatus("Open")
+      .withItem(createItem(ItemRequestExamples.nod()))
       .withRandomPastLoanDate().create());
 
     createLoan(new LoanRequestBuilder()
       .withUserId(userId)
+      .withItem(
+        createItem(ItemRequestExamples.nod("764853217647")))
       .withStatus("Closed")
       .withRandomPastLoanDate().create());
 
     createLoan(new LoanRequestBuilder()
       .withUserId(userId)
       .withStatus("Closed")
+      .withItem(createItem(ItemRequestExamples.temeraire()))
       .withRandomPastLoanDate().create());
 
     createLoan(new LoanRequestBuilder()
       .withUserId(userId)
       .withStatus("Closed")
+      .withItem(createItem(ItemRequestExamples.uprooted()))
       .withRandomPastLoanDate().create());
 
     createLoan(new LoanRequestBuilder()
       .withUserId(userId)
       .withStatus("Closed")
+      .withItem(createItem(ItemRequestExamples.interestingTimes()))
       .withRandomPastLoanDate().create());
 
     CompletableFuture<JsonResponse> openSearchComppleted = new CompletableFuture<>();

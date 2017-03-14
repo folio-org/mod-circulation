@@ -6,27 +6,47 @@ import java.util.UUID;
 
 public class ItemRequestExamples {
   public static JsonObject smallAngryPlanet() {
+    return smallAngryPlanet("036000291452");
+  }
+
+  public static JsonObject smallAngryPlanet(String barcode) {
     return ItemRequest.create(UUID.randomUUID(), UUID.randomUUID(),
-      "The Long Way to a Small, Angry Planet", "036000291452");
+      "The Long Way to a Small, Angry Planet", barcode);
   }
 
   public static JsonObject nod() {
-    return ItemRequest.create(UUID.randomUUID(), UUID.randomUUID(),
-      "Nod", "565578437802");
+    return nod("565578437802");
   }
 
-  private JsonObject uprooted() {
+  public static JsonObject nod(String barcode) {
     return ItemRequest.create(UUID.randomUUID(), UUID.randomUUID(),
-      "Uprooted", "657670342075");
+      "Nod", barcode);
   }
 
-  private JsonObject temeraire() {
-    return ItemRequest.create(UUID.randomUUID(), UUID.randomUUID(),
-      "Temeraire", "232142443432");
+  public static JsonObject uprooted() {
+    return uprooted("657670342075");
   }
 
-  private JsonObject interestingTimes() {
+  public static JsonObject uprooted(String barcode) {
     return ItemRequest.create(UUID.randomUUID(), UUID.randomUUID(),
-      "Interesting Times", "56454543534");
+      "Uprooted", barcode);
+  }
+
+  public static JsonObject temeraire() {
+    return temeraire("232142443432");
+  }
+
+  public static JsonObject temeraire(String barcode) {
+    return ItemRequest.create(UUID.randomUUID(), UUID.randomUUID(),
+      "Temeraire", barcode);
+  }
+
+  public static JsonObject interestingTimes() {
+    return interestingTimes("56454543534");
+  }
+
+  public static JsonObject interestingTimes(String barcode) {
+    return ItemRequest.create(UUID.randomUUID(), UUID.randomUUID(),
+      "Interesting Times", barcode);
   }
 }

@@ -1,6 +1,7 @@
 package org.folio.circulation.api.support;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.format.ISODateTimeFormat;
 
@@ -85,6 +86,11 @@ public class LoanRequestBuilder {
 
   public LoanRequestBuilder withItemId(UUID itemId) {
     return new LoanRequestBuilder(this.id, itemId, this.userId,
+      this.loanDate, this.status);
+  }
+
+  public LoanRequestBuilder withItem(IndividualResource item) {
+    return new LoanRequestBuilder(this.id, item.getId(), this.userId,
       this.loanDate, this.status);
   }
 }
