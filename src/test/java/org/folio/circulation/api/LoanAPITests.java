@@ -3,6 +3,7 @@ package org.folio.circulation.api;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.support.ItemRequestExamples;
+import org.folio.circulation.api.support.JsonArrayHelper;
 import org.folio.circulation.api.support.LoanRequestBuilder;
 import org.folio.circulation.support.http.client.*;
 import org.joda.time.DateTime;
@@ -215,6 +216,14 @@ public class LoanAPITests {
 
     assertThat(secondPageLoans.size(), is(3));
     assertThat(secondPage.getInteger("totalRecords"), is(7));
+
+    JsonArrayHelper.toList(firstPageLoans).forEach(loan ->
+      loanHasExpectedProperties(loan)
+    );
+
+    JsonArrayHelper.toList(secondPageLoans).forEach(loan ->
+      loanHasExpectedProperties(loan)
+    );
   }
 
   @Test
@@ -322,6 +331,14 @@ public class LoanAPITests {
 
     assertThat(secondPageLoans.size(), is(3));
     assertThat(secondPage.getInteger("totalRecords"), is(3));
+
+    JsonArrayHelper.toList(firstPageLoans).forEach(loan ->
+      loanHasExpectedProperties(loan)
+    );
+
+    JsonArrayHelper.toList(secondPageLoans).forEach(loan ->
+      loanHasExpectedProperties(loan)
+    );
   }
 
   @Test
@@ -388,17 +405,27 @@ public class LoanAPITests {
       closedLoansResponse.getBody()),
       closedLoansResponse.getStatusCode(), is(200));
 
-    JsonObject openLoans = openLoansResponse.getJson();
-    JsonObject closedLoans = closedLoansResponse.getJson();
+    JsonObject open = openLoansResponse.getJson();
+    JsonObject closed = closedLoansResponse.getJson();
 
-    JsonArray firstPageLoans = openLoans.getJsonArray("loans");
-    JsonArray secondPageLoans = closedLoans.getJsonArray("loans");
+    JsonArray openLoans = open.getJsonArray("loans");
+    JsonArray closedLoans = closed.getJsonArray("loans");
 
-    assertThat(firstPageLoans.size(), is(2));
-    assertThat(openLoans.getInteger("totalRecords"), is(2));
+    assertThat(openLoans.size(), is(2));
+    assertThat(open.getInteger("totalRecords"), is(2));
 
-    assertThat(secondPageLoans.size(), is(4));
-    assertThat(closedLoans.getInteger("totalRecords"), is(4));
+    assertThat(closedLoans.size(), is(4));
+    assertThat(closed.getInteger("totalRecords"), is(4));
+
+    JsonArrayHelper.toList(openLoans).forEach(loan ->
+      loanHasExpectedProperties(loan)
+    );
+
+    JsonArrayHelper.toList(closedLoans).forEach(loan -> {
+        loanHasExpectedProperties(loan);
+        hasProperty("returnDate", loan, "loan");
+      }
+    );
   }
 
   @Test
@@ -537,5 +564,19 @@ public class LoanAPITests {
 
     assertThat("WARNING!!!!! Delete all resources preparation failed",
       response.getStatusCode(), is(204));
+  }
+
+  private void loanHasExpectedProperties(JsonObject loan) {
+    hasProperty("id", loan, "loan");
+    hasProperty("userId", loan, "loan");
+    hasProperty("itemId", loan, "loan");
+    hasProperty("loanDate", loan, "loan");
+    hasProperty("status", loan, "loan");
+  }
+
+  private void hasProperty(String property, JsonObject resource, String type) {
+    assertThat(String.format("%s should have an %s: %s",
+      type, property, resource),
+      resource.containsKey(property), is(true));
   }
 }
