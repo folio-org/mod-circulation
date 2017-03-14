@@ -4,7 +4,7 @@ import io.vertx.core.json.JsonObject;
 
 import java.util.UUID;
 
-public class ItemExamples {
+public class ItemRequestExamples {
   public static JsonObject smallAngryPlanet() {
     return ItemRequest.create(UUID.randomUUID(), UUID.randomUUID(),
       "The Long Way to a Small, Angry Planet", "036000291452");

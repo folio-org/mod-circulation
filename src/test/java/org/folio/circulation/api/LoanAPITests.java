@@ -2,8 +2,8 @@ package org.folio.circulation.api;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.api.support.ItemExamples;
-import org.folio.circulation.api.support.LoanRequest;
+import org.folio.circulation.api.support.ItemRequestExamples;
+import org.folio.circulation.api.support.LoanRequestBuilder;
 import org.folio.circulation.support.http.client.*;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -52,13 +52,16 @@ public class LoanAPITests {
     MalformedURLException {
 
     UUID id = UUID.randomUUID();
-    UUID itemId = UUID.randomUUID();
+    UUID itemId = createItem(ItemRequestExamples.smallAngryPlanet()).getId();
     UUID userId = UUID.randomUUID();
 
-    JsonObject loanRequest = LoanRequest.create(id, itemId, userId,
-      new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC), "Open");
-
-    IndividualResource response = createLoan(loanRequest);
+    IndividualResource response = createLoan(new LoanRequestBuilder()
+      .withId(id)
+      .withUserId(userId)
+      .withItemId(itemId)
+      .withLoanDate(new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC))
+      .withStatus("Open")
+      .create());
 
     JsonObject loan = response.getJson();
 
@@ -87,13 +90,16 @@ public class LoanAPITests {
     UnsupportedEncodingException {
 
     UUID id = UUID.randomUUID();
-    UUID itemId = createItem(ItemExamples.smallAngryPlanet()).getId();
+    UUID itemId = createItem(ItemRequestExamples.smallAngryPlanet()).getId();
     UUID userId = UUID.randomUUID();
 
-    JsonObject loanRequest = LoanRequest.create(id, itemId, userId,
-      new DateTime(2016, 10, 15, 8, 26, 53, DateTimeZone.UTC), "Open");
-
-    createLoan(loanRequest);
+    createLoan(new LoanRequestBuilder()
+      .withId(id)
+      .withUserId(userId)
+      .withItemId(itemId)
+      .withLoanDate(new DateTime(2016, 10, 15, 8, 26, 53, DateTimeZone.UTC))
+      .withStatus("Open")
+      .create());
 
     JsonResponse getResponse = getById(id);
 
@@ -134,14 +140,9 @@ public class LoanAPITests {
     TimeoutException,
     UnsupportedEncodingException {
 
-    UUID id = UUID.randomUUID();
-    UUID itemId = UUID.randomUUID();
-    UUID userId = UUID.randomUUID();
-
-    JsonObject loanRequest = LoanRequest.create(id, itemId, userId,
-      new DateTime(2016, 10, 15, 8, 26, 53, DateTimeZone.UTC), "Open");
-
-    createLoan(loanRequest);
+    UUID id = createLoan(new LoanRequestBuilder()
+      .withItemId(UUID.randomUUID())
+      .create()).getId();
 
     JsonResponse getResponse = getById(id);
 
@@ -175,13 +176,13 @@ public class LoanAPITests {
     ExecutionException,
     UnsupportedEncodingException {
 
-    createLoan(LoanRequest.create());
-    createLoan(LoanRequest.create());
-    createLoan(LoanRequest.create());
-    createLoan(LoanRequest.create());
-    createLoan(LoanRequest.create());
-    createLoan(LoanRequest.create());
-    createLoan(LoanRequest.create());
+    createLoan(new LoanRequestBuilder().create());
+    createLoan(new LoanRequestBuilder().create());
+    createLoan(new LoanRequestBuilder().create());
+    createLoan(new LoanRequestBuilder().create());
+    createLoan(new LoanRequestBuilder().create());
+    createLoan(new LoanRequestBuilder().create());
+    createLoan(new LoanRequestBuilder().create());
 
     CompletableFuture<JsonResponse> firstPageCompleted = new CompletableFuture<>();
     CompletableFuture<JsonResponse> secondPageCompleted = new CompletableFuture<>();
@@ -226,11 +227,12 @@ public class LoanAPITests {
 
     DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, 232, DateTimeZone.UTC);
 
-    UUID itemId = createItem(ItemExamples.nod()).getId();
+    UUID itemId = createItem(ItemRequestExamples.nod()).getId();
 
-    IndividualResource loan = createLoan(LoanRequest.create(
-      UUID.randomUUID(), itemId,
-      UUID.randomUUID(), loanDate, "Open"));
+    IndividualResource loan = createLoan(new LoanRequestBuilder()
+      .withLoanDate(loanDate)
+      .withItemId(itemId)
+      .create());
 
     JsonObject returnedLoan = loan.copyJson();
 
@@ -281,13 +283,13 @@ public class LoanAPITests {
 
     String queryTemplate = loansUrl() + "?query=userId=%s";
 
-    createLoan(LoanRequest.create().put("userId", firstUserId.toString()));
-    createLoan(LoanRequest.create().put("userId", firstUserId.toString()));
-    createLoan(LoanRequest.create().put("userId", firstUserId.toString()));
-    createLoan(LoanRequest.create().put("userId", firstUserId.toString()));
-    createLoan(LoanRequest.create().put("userId", secondUserId.toString()));
-    createLoan(LoanRequest.create().put("userId", secondUserId.toString()));
-    createLoan(LoanRequest.create().put("userId", secondUserId.toString()));
+    createLoan(new LoanRequestBuilder().withUserId(firstUserId).create());
+    createLoan(new LoanRequestBuilder().withUserId(firstUserId).create());
+    createLoan(new LoanRequestBuilder().withUserId(firstUserId).create());
+    createLoan(new LoanRequestBuilder().withUserId(firstUserId).create());
+    createLoan(new LoanRequestBuilder().withUserId(secondUserId).create());
+    createLoan(new LoanRequestBuilder().withUserId(secondUserId).create());
+    createLoan(new LoanRequestBuilder().withUserId(secondUserId).create());
 
     CompletableFuture<JsonResponse> firstUserSearchCompleted = new CompletableFuture<>();
     CompletableFuture<JsonResponse> secondUserSeatchCompleted = new CompletableFuture<>();
@@ -334,12 +336,35 @@ public class LoanAPITests {
 
     String queryTemplate = "userId=\"%s\" and status.name=\"%s\"";
 
-    createLoan(LoanRequest.loanRequest(userId, "Open"));
-    createLoan(LoanRequest.loanRequest(userId, "Open"));
-    createLoan(LoanRequest.loanRequest(userId, "Closed"));
-    createLoan(LoanRequest.loanRequest(userId, "Closed"));
-    createLoan(LoanRequest.loanRequest(userId, "Closed"));
-    createLoan(LoanRequest.loanRequest(userId, "Closed"));
+    createLoan(new LoanRequestBuilder()
+      .withUserId(userId)
+      .withStatus("Open")
+      .withRandomPastLoanDate().create());
+
+    createLoan(new LoanRequestBuilder()
+      .withUserId(userId)
+      .withStatus("Open")
+      .withRandomPastLoanDate().create());
+
+    createLoan(new LoanRequestBuilder()
+      .withUserId(userId)
+      .withStatus("Closed")
+      .withRandomPastLoanDate().create());
+
+    createLoan(new LoanRequestBuilder()
+      .withUserId(userId)
+      .withStatus("Closed")
+      .withRandomPastLoanDate().create());
+
+    createLoan(new LoanRequestBuilder()
+      .withUserId(userId)
+      .withStatus("Closed")
+      .withRandomPastLoanDate().create());
+
+    createLoan(new LoanRequestBuilder()
+      .withUserId(userId)
+      .withStatus("Closed")
+      .withRandomPastLoanDate().create());
 
     CompletableFuture<JsonResponse> openSearchComppleted = new CompletableFuture<>();
     CompletableFuture<JsonResponse> closedSearchCompleted = new CompletableFuture<>();
@@ -384,10 +409,7 @@ public class LoanAPITests {
     ExecutionException,
     UnsupportedEncodingException {
 
-    UUID id = UUID.randomUUID();
-
-    createLoan(LoanRequest.create(id, UUID.randomUUID(), UUID.randomUUID(),
-      DateTime.now(), "Open"));
+    UUID id = createLoan(new LoanRequestBuilder().create()).getId();
 
     CompletableFuture<TextResponse> deleteCompleted = new CompletableFuture<>();
 
