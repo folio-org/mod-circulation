@@ -1,16 +1,24 @@
 package org.folio.circulation.resources;
 
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
+import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.BufferHelper;
 import org.folio.circulation.support.http.client.HttpClient;
+import org.folio.circulation.support.http.client.ResponseHandler;
 import org.folio.circulation.support.http.server.*;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 public class LoanCollectionResource {
 
@@ -239,13 +247,15 @@ public class LoanCollectionResource {
 
   private void getMany(RoutingContext routingContext) {
     URL okapiLocation;
-    URL storageLocation;
+    URL loanStorageLocation;
+    URL itemStorageLocation;
 
     WebContext context = new WebContext(routingContext);
 
     try {
       okapiLocation = new URL(context.getOkapiLocation());
-      storageLocation = context.getOkapiBasedUrl("/loan-storage/loans");
+      loanStorageLocation = context.getOkapiBasedUrl("/loan-storage/loans");
+      itemStorageLocation = context.getOkapiBasedUrl("/item-storage/items");
     }
     catch (MalformedURLException e) {
       ServerErrorResponse.internalError(routingContext.response(),
@@ -254,11 +264,8 @@ public class LoanCollectionResource {
       return;
     }
 
-    String storageUrl = null;
-
-    String query = routingContext.request().query();
-
-    storageUrl = storageLocation + "?" + query;
+    String storageUrl = loanStorageLocation + "?"
+      + routingContext.request().query();
 
     HttpClient client = new HttpClient(routingContext.vertx(), okapiLocation,
       exception -> {
@@ -273,8 +280,54 @@ public class LoanCollectionResource {
           String responseBody = BufferHelper.stringFromBuffer(buffer);
 
           if(response.statusCode() == 200) {
-            JsonResponse.success(routingContext.response(),
-              new JsonObject(responseBody));
+            JsonObject loansResponse = new JsonObject(responseBody);
+
+            List<JsonObject> newLoans = JsonArrayHelper.toList(
+              loansResponse.getJsonArray("loans"));
+
+            List<CompletableFuture<org.folio.circulation.support.http.client.JsonResponse>>
+              allFutures = new ArrayList<>();
+
+            newLoans.forEach(loanResource -> {
+              CompletableFuture<org.folio.circulation.support.http.client.JsonResponse> newFuture
+                = new CompletableFuture<>();
+
+              allFutures.add(newFuture);
+
+              client.get(itemStorageLocation +
+                  String.format("/%s", loanResource.getString("itemId")),
+                context.getTenantId(), ResponseHandler.json(newFuture));
+            });
+
+            CompletableFuture<Void> allDoneFuture =
+              CompletableFuture.allOf(allFutures.toArray(new CompletableFuture<?>[] { }));
+
+            allDoneFuture.thenAccept(v -> {
+              List<org.folio.circulation.support.http.client.JsonResponse> itemResponses = allFutures.stream().
+                map(future -> future.join()).
+                collect(Collectors.toList());
+
+              newLoans.forEach( loan -> {
+                Optional<JsonObject> possibleItem = itemResponses.stream()
+                  .filter(itemResponse -> itemResponse.getStatusCode() == 200)
+                  .map(itemResponse -> itemResponse.getJson())
+                  .filter(item -> item.getString("id").equals(loan.getString("itemId")))
+                  .findFirst();
+
+                if(possibleItem.isPresent()) {
+                  loan.put("item", new JsonObject()
+                    .put("title", possibleItem.get().getString("title"))
+                    .put("barcode", possibleItem.get().getString("barcode")));
+                }
+              });
+
+              JsonObject loansWrapper = new JsonObject()
+                .put("loans", new JsonArray(newLoans))
+                .put("totalRecords", loansResponse.getInteger("totalRecords"));
+
+              JsonResponse.success(routingContext.response(),
+                loansWrapper);
+            });
           }
           else {
             ForwardResponse.forward(routingContext.response(), response,

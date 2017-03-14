@@ -1,10 +1,9 @@
 package org.folio.circulation.api;
 
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.support.ItemRequestExamples;
-import org.folio.circulation.api.support.JsonArrayHelper;
 import org.folio.circulation.api.support.LoanRequestBuilder;
+import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.*;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -17,12 +16,14 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -152,7 +153,7 @@ public class LoanAPITests {
 
     JsonObject loan = getResponse.getJson();
 
-    assertThat("no item information available",
+    assertThat("should be no item information available",
       loan.containsKey("item"), is(false));
   }
 
@@ -167,78 +168,6 @@ public class LoanAPITests {
     JsonResponse getResponse = getById(UUID.randomUUID());
 
     assertThat(getResponse.getStatusCode(), is(HttpURLConnection.HTTP_NOT_FOUND));
-  }
-
-  @Test
-  public void canPageLoans()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException,
-    UnsupportedEncodingException {
-
-    createLoan(new LoanRequestBuilder().withItemId(
-      createItem(ItemRequestExamples.smallAngryPlanet()).getId()).create());
-
-    createLoan(new LoanRequestBuilder().withItemId(
-      createItem(ItemRequestExamples.nod()).getId()).create());
-
-    createLoan(new LoanRequestBuilder().withItemId(createItem(
-        ItemRequestExamples.smallAngryPlanet("764853217647")).getId())
-      .create());
-
-    createLoan(new LoanRequestBuilder().withItemId(
-      createItem(ItemRequestExamples.temeraire()).getId()).create());
-
-    createLoan(new LoanRequestBuilder().withItemId(
-      createItem(ItemRequestExamples.uprooted()).getId()).create());
-
-    createLoan(new LoanRequestBuilder().withItemId(
-      createItem(ItemRequestExamples.nod("656450654364")).getId())
-      .create());
-
-    createLoan(new LoanRequestBuilder().withItemId(
-      createItem(ItemRequestExamples.interestingTimes()).getId()).create());
-
-    CompletableFuture<JsonResponse> firstPageCompleted = new CompletableFuture<>();
-    CompletableFuture<JsonResponse> secondPageCompleted = new CompletableFuture<>();
-
-    client.get(loansUrl() + "?limit=4", APITestSuite.TENANT_ID,
-      ResponseHandler.json(firstPageCompleted));
-
-    client.get(loansUrl() + "?limit=4&offset=4", APITestSuite.TENANT_ID,
-      ResponseHandler.json(secondPageCompleted));
-
-    JsonResponse firstPageResponse = firstPageCompleted.get(5, TimeUnit.SECONDS);
-    JsonResponse secondPageResponse = secondPageCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(String.format("Failed to get first page of loans: %s",
-      firstPageResponse.getBody()),
-      firstPageResponse.getStatusCode(), is(200));
-
-    assertThat(String.format("Failed to get second page of loans: %s",
-      secondPageResponse.getBody()),
-      secondPageResponse.getStatusCode(), is(200));
-
-    JsonObject firstPage = firstPageResponse.getJson();
-    JsonObject secondPage = secondPageResponse.getJson();
-
-    JsonArray firstPageLoans = firstPage.getJsonArray("loans");
-    JsonArray secondPageLoans = secondPage.getJsonArray("loans");
-
-    assertThat(firstPageLoans.size(), is(4));
-    assertThat(firstPage.getInteger("totalRecords"), is(7));
-
-    assertThat(secondPageLoans.size(), is(3));
-    assertThat(secondPage.getInteger("totalRecords"), is(7));
-
-    JsonArrayHelper.toList(firstPageLoans).forEach(loan ->
-      loanHasExpectedProperties(loan)
-    );
-
-    JsonArrayHelper.toList(secondPageLoans).forEach(loan ->
-      loanHasExpectedProperties(loan)
-    );
   }
 
   @Test
@@ -292,6 +221,107 @@ public class LoanAPITests {
     assertThat("barcode is taken from item",
       updatedLoan.getJsonObject("item").getString("barcode"),
       is("565578437802"));
+  }
+
+  @Test
+  public void loanInCollectionDoesNotProvideItemInformationForUnknownItem()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    UnsupportedEncodingException {
+
+    UUID id = createLoan(new LoanRequestBuilder()
+      .withItemId(UUID.randomUUID())
+      .create()).getId();
+
+    CompletableFuture<JsonResponse> pageCompleted = new CompletableFuture<>();
+
+    client.get(loansUrl(), APITestSuite.TENANT_ID,
+      ResponseHandler.json(pageCompleted));
+
+    JsonResponse pageResponse = pageCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Failed to get page of loans: %s",
+      pageResponse.getBody()),
+      pageResponse.getStatusCode(), is(200));
+
+    JsonObject firstPage = pageResponse.getJson();
+
+    JsonObject loan = getLoans(firstPage).get(0);
+
+    assertThat("should be no item information available",
+      loan.containsKey("item"), is(false));
+  }
+
+  @Test
+  public void canPageLoans()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException,
+    UnsupportedEncodingException {
+
+    createLoan(new LoanRequestBuilder().withItemId(
+      createItem(ItemRequestExamples.smallAngryPlanet()).getId()).create());
+
+    createLoan(new LoanRequestBuilder().withItemId(
+      createItem(ItemRequestExamples.nod()).getId()).create());
+
+    createLoan(new LoanRequestBuilder().withItemId(createItem(
+      ItemRequestExamples.smallAngryPlanet("764853217647")).getId())
+      .create());
+
+    createLoan(new LoanRequestBuilder().withItemId(
+      createItem(ItemRequestExamples.temeraire()).getId()).create());
+
+    createLoan(new LoanRequestBuilder().withItemId(
+      createItem(ItemRequestExamples.uprooted()).getId()).create());
+
+    createLoan(new LoanRequestBuilder().withItemId(
+      createItem(ItemRequestExamples.nod("656450654364")).getId())
+      .create());
+
+    createLoan(new LoanRequestBuilder().withItemId(
+      createItem(ItemRequestExamples.interestingTimes()).getId()).create());
+
+    CompletableFuture<JsonResponse> firstPageCompleted = new CompletableFuture<>();
+    CompletableFuture<JsonResponse> secondPageCompleted = new CompletableFuture<>();
+
+    client.get(loansUrl() + "?limit=4", APITestSuite.TENANT_ID,
+      ResponseHandler.json(firstPageCompleted));
+
+    client.get(loansUrl() + "?limit=4&offset=4", APITestSuite.TENANT_ID,
+      ResponseHandler.json(secondPageCompleted));
+
+    JsonResponse firstPageResponse = firstPageCompleted.get(5, TimeUnit.SECONDS);
+    JsonResponse secondPageResponse = secondPageCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Failed to get first page of loans: %s",
+      firstPageResponse.getBody()),
+      firstPageResponse.getStatusCode(), is(200));
+
+    assertThat(String.format("Failed to get second page of loans: %s",
+      secondPageResponse.getBody()),
+      secondPageResponse.getStatusCode(), is(200));
+
+    JsonObject firstPage = firstPageResponse.getJson();
+    JsonObject secondPage = secondPageResponse.getJson();
+
+    List<JsonObject> firstPageLoans = getLoans(firstPage);
+    List<JsonObject> secondPageLoans = getLoans(secondPage);
+
+    assertThat(firstPageLoans.size(), is(4));
+    assertThat(firstPage.getInteger("totalRecords"), is(7));
+
+    assertThat(secondPageLoans.size(), is(3));
+    assertThat(secondPage.getInteger("totalRecords"), is(7));
+
+    firstPageLoans.forEach(loan -> loanHasExpectedProperties(loan));
+    secondPageLoans.forEach(loan -> loanHasExpectedProperties(loan));
+
+    assertThat(countOfDistinctTitles(firstPageLoans), is(greaterThan(1)));
+    assertThat(countOfDistinctTitles(secondPageLoans), is(greaterThan(1)));
   }
 
   @Test
@@ -366,8 +396,8 @@ public class LoanAPITests {
     JsonObject firstPage = firstPageResponse.getJson();
     JsonObject secondPage = secondPageResponse.getJson();
 
-    JsonArray firstPageLoans = firstPage.getJsonArray("loans");
-    JsonArray secondPageLoans = secondPage.getJsonArray("loans");
+    List<JsonObject> firstPageLoans = getLoans(firstPage);
+    List<JsonObject> secondPageLoans = getLoans(secondPage);
 
     assertThat(firstPageLoans.size(), is(4));
     assertThat(firstPage.getInteger("totalRecords"), is(4));
@@ -375,13 +405,11 @@ public class LoanAPITests {
     assertThat(secondPageLoans.size(), is(3));
     assertThat(secondPage.getInteger("totalRecords"), is(3));
 
-    JsonArrayHelper.toList(firstPageLoans).forEach(loan ->
-      loanHasExpectedProperties(loan)
-    );
+    firstPageLoans.forEach(loan -> loanHasExpectedProperties(loan));
+    secondPageLoans.forEach(loan -> loanHasExpectedProperties(loan));
 
-    JsonArrayHelper.toList(secondPageLoans).forEach(loan ->
-      loanHasExpectedProperties(loan)
-    );
+    assertThat(countOfDistinctTitles(firstPageLoans), is(greaterThan(1)));
+    assertThat(countOfDistinctTitles(secondPageLoans), is(greaterThan(1)));
   }
 
   @Test
@@ -455,27 +483,28 @@ public class LoanAPITests {
       closedLoansResponse.getBody()),
       closedLoansResponse.getStatusCode(), is(200));
 
-    JsonObject open = openLoansResponse.getJson();
-    JsonObject closed = closedLoansResponse.getJson();
+    JsonObject openLoansPage = openLoansResponse.getJson();
+    JsonObject closedLoansPage = closedLoansResponse.getJson();
 
-    JsonArray openLoans = open.getJsonArray("loans");
-    JsonArray closedLoans = closed.getJsonArray("loans");
+    List<JsonObject> openLoans = getLoans(openLoansPage);
+    List<JsonObject> closedLoans = getLoans(closedLoansPage);
 
     assertThat(openLoans.size(), is(2));
-    assertThat(open.getInteger("totalRecords"), is(2));
+    assertThat(openLoansPage.getInteger("totalRecords"), is(2));
 
     assertThat(closedLoans.size(), is(4));
-    assertThat(closed.getInteger("totalRecords"), is(4));
+    assertThat(closedLoansPage.getInteger("totalRecords"), is(4));
 
-    JsonArrayHelper.toList(openLoans).forEach(loan ->
-      loanHasExpectedProperties(loan)
-    );
+    openLoans.forEach(loan -> loanHasExpectedProperties(loan));
 
-    JsonArrayHelper.toList(closedLoans).forEach(loan -> {
+    closedLoans.forEach(loan -> {
         loanHasExpectedProperties(loan);
         hasProperty("returnDate", loan, "loan");
       }
     );
+
+    assertThat(countOfDistinctTitles(openLoans), is(greaterThan(1)));
+    assertThat(countOfDistinctTitles(closedLoans), is(greaterThan(1)));
   }
 
   @Test
@@ -622,11 +651,28 @@ public class LoanAPITests {
     hasProperty("itemId", loan, "loan");
     hasProperty("loanDate", loan, "loan");
     hasProperty("status", loan, "loan");
+    hasProperty("item", loan, "loan");
+
+    JsonObject item = loan.getJsonObject("item");
+
+    hasProperty("title", item, "loan");
+    hasProperty("barcode", item, "loan");
   }
 
   private void hasProperty(String property, JsonObject resource, String type) {
     assertThat(String.format("%s should have an %s: %s",
       type, property, resource),
       resource.containsKey(property), is(true));
+  }
+
+  private Integer countOfDistinctTitles(List<JsonObject> loans) {
+    return new Long(loans.stream()
+      .map(loan -> loan.getJsonObject("item").getString("title"))
+      .distinct()
+      .count()).intValue();
+  }
+
+  private List<JsonObject> getLoans(JsonObject firstPage) {
+    return JsonArrayHelper.toList(firstPage.getJsonArray("loans"));
   }
 }
