@@ -13,7 +13,7 @@ public class ResponseHandler {
       try {
         int statusCode = response.statusCode();
 
-        completed.complete(new Response(statusCode));
+        completed.complete(new Response(statusCode, null));
       }
       catch(Exception e) {
         completed.completeExceptionally(e);
@@ -22,7 +22,7 @@ public class ResponseHandler {
   }
 
   public static Handler<HttpClientResponse> json(
-    CompletableFuture<JsonResponse> completed) {
+    CompletableFuture<Response> completed) {
 
     return response -> {
       response.bodyHandler(buffer -> {
@@ -32,7 +32,7 @@ public class ResponseHandler {
 
           System.out.println(String.format("Response: %s", body));
 
-          completed.complete(new JsonResponse(statusCode, body));
+          completed.complete(new Response(statusCode, body));
 
         } catch(Exception e) {
           completed.completeExceptionally(e);
@@ -42,7 +42,7 @@ public class ResponseHandler {
   }
 
   public static Handler<HttpClientResponse> text(
-    CompletableFuture<TextResponse> completed) {
+    CompletableFuture<Response> completed) {
 
     return response -> {
         int statusCode = response.statusCode();
@@ -51,7 +51,7 @@ public class ResponseHandler {
           try {
             String body = BufferHelper.stringFromBuffer(buffer);
 
-            completed.complete(new TextResponse(statusCode, body));
+            completed.complete(new Response(statusCode, body));
 
           } catch (Exception e) {
             completed.completeExceptionally(e);

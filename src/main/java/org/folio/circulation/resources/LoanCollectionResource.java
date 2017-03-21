@@ -7,9 +7,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import org.folio.circulation.support.JsonArrayHelper;
-import org.folio.circulation.support.http.client.BufferHelper;
-import org.folio.circulation.support.http.client.HttpClient;
-import org.folio.circulation.support.http.client.ResponseHandler;
+import org.folio.circulation.support.http.client.*;
 import org.folio.circulation.support.http.server.*;
 
 import java.net.MalformedURLException;
@@ -285,11 +283,11 @@ public class LoanCollectionResource {
             List<JsonObject> newLoans = JsonArrayHelper.toList(
               loansResponse.getJsonArray("loans"));
 
-            List<CompletableFuture<org.folio.circulation.support.http.client.JsonResponse>>
+            List<CompletableFuture<Response>>
               allFutures = new ArrayList<>();
 
             newLoans.forEach(loanResource -> {
-              CompletableFuture<org.folio.circulation.support.http.client.JsonResponse> newFuture
+              CompletableFuture<Response> newFuture
                 = new CompletableFuture<>();
 
               allFutures.add(newFuture);
@@ -303,7 +301,7 @@ public class LoanCollectionResource {
               CompletableFuture.allOf(allFutures.toArray(new CompletableFuture<?>[] { }));
 
             allDoneFuture.thenAccept(v -> {
-              List<org.folio.circulation.support.http.client.JsonResponse> itemResponses = allFutures.stream().
+              List<Response> itemResponses = allFutures.stream().
                 map(future -> future.join()).
                 collect(Collectors.toList());
 

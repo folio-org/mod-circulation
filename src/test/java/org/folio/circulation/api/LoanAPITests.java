@@ -103,7 +103,7 @@ public class LoanAPITests {
       .withStatus("Open")
       .create());
 
-    JsonResponse getResponse = getById(id);
+    Response getResponse = getById(id);
 
     assertThat(String.format("Failed to get loan: %s", getResponse.getBody()),
       getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
@@ -146,7 +146,7 @@ public class LoanAPITests {
       .withItemId(UUID.randomUUID())
       .create()).getId();
 
-    JsonResponse getResponse = getById(id);
+    Response getResponse = getById(id);
 
     assertThat(String.format("Failed to get loan: %s", getResponse.getBody()),
       getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
@@ -165,7 +165,7 @@ public class LoanAPITests {
     TimeoutException,
     UnsupportedEncodingException {
 
-    JsonResponse getResponse = getById(UUID.randomUUID());
+    Response getResponse = getById(UUID.randomUUID());
 
     assertThat(getResponse.getStatusCode(), is(HttpURLConnection.HTTP_NOT_FOUND));
   }
@@ -194,17 +194,17 @@ public class LoanAPITests {
       .put("returnDate", new DateTime(2017, 3, 5, 14, 23, 41, DateTimeZone.UTC)
         .toString(ISODateTimeFormat.dateTime()));
 
-    CompletableFuture<JsonResponse> putCompleted = new CompletableFuture<>();
+    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
 
     client.put(loansUrl(String.format("/%s", loan.getId())), returnedLoan,
       APITestSuite.TENANT_ID, ResponseHandler.json(putCompleted));
 
-    JsonResponse putResponse = putCompleted.get(5, TimeUnit.SECONDS);
+    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
 
     assertThat(String.format("Failed to update loan: %s", putResponse.getBody()),
       putResponse.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
 
-    JsonResponse updatedLoanResponse = getById(loan.getId());
+    Response updatedLoanResponse = getById(loan.getId());
 
     JsonObject updatedLoan = updatedLoanResponse.getJson();
 
@@ -235,12 +235,12 @@ public class LoanAPITests {
       .withItemId(UUID.randomUUID())
       .create()).getId();
 
-    CompletableFuture<JsonResponse> pageCompleted = new CompletableFuture<>();
+    CompletableFuture<Response> pageCompleted = new CompletableFuture<>();
 
     client.get(loansUrl(), APITestSuite.TENANT_ID,
       ResponseHandler.json(pageCompleted));
 
-    JsonResponse pageResponse = pageCompleted.get(5, TimeUnit.SECONDS);
+    Response pageResponse = pageCompleted.get(5, TimeUnit.SECONDS);
 
     assertThat(String.format("Failed to get page of loans: %s",
       pageResponse.getBody()),
@@ -285,8 +285,8 @@ public class LoanAPITests {
     createLoan(new LoanRequestBuilder().withItemId(
       createItem(ItemRequestExamples.interestingTimes()).getId()).create());
 
-    CompletableFuture<JsonResponse> firstPageCompleted = new CompletableFuture<>();
-    CompletableFuture<JsonResponse> secondPageCompleted = new CompletableFuture<>();
+    CompletableFuture<Response> firstPageCompleted = new CompletableFuture<>();
+    CompletableFuture<Response> secondPageCompleted = new CompletableFuture<>();
 
     client.get(loansUrl() + "?limit=4", APITestSuite.TENANT_ID,
       ResponseHandler.json(firstPageCompleted));
@@ -294,8 +294,8 @@ public class LoanAPITests {
     client.get(loansUrl() + "?limit=4&offset=4", APITestSuite.TENANT_ID,
       ResponseHandler.json(secondPageCompleted));
 
-    JsonResponse firstPageResponse = firstPageCompleted.get(5, TimeUnit.SECONDS);
-    JsonResponse secondPageResponse = secondPageCompleted.get(5, TimeUnit.SECONDS);
+    Response firstPageResponse = firstPageCompleted.get(5, TimeUnit.SECONDS);
+    Response secondPageResponse = secondPageCompleted.get(5, TimeUnit.SECONDS);
 
     assertThat(String.format("Failed to get first page of loans: %s",
       firstPageResponse.getBody()),
@@ -373,8 +373,8 @@ public class LoanAPITests {
       .withUserId(secondUserId)
       .create());
 
-    CompletableFuture<JsonResponse> firstUserSearchCompleted = new CompletableFuture<>();
-    CompletableFuture<JsonResponse> secondUserSeatchCompleted = new CompletableFuture<>();
+    CompletableFuture<Response> firstUserSearchCompleted = new CompletableFuture<>();
+    CompletableFuture<Response> secondUserSeatchCompleted = new CompletableFuture<>();
 
     client.get(String.format(queryTemplate, firstUserId), APITestSuite.TENANT_ID,
       ResponseHandler.json(firstUserSearchCompleted));
@@ -382,8 +382,8 @@ public class LoanAPITests {
     client.get(String.format(queryTemplate, secondUserId), APITestSuite.TENANT_ID,
       ResponseHandler.json(secondUserSeatchCompleted));
 
-    JsonResponse firstPageResponse = firstUserSearchCompleted.get(5, TimeUnit.SECONDS);
-    JsonResponse secondPageResponse = secondUserSeatchCompleted.get(5, TimeUnit.SECONDS);
+    Response firstPageResponse = firstUserSearchCompleted.get(5, TimeUnit.SECONDS);
+    Response secondPageResponse = secondUserSeatchCompleted.get(5, TimeUnit.SECONDS);
 
     assertThat(String.format("Failed to get loans for first user: %s",
       firstPageResponse.getBody()),
@@ -461,8 +461,8 @@ public class LoanAPITests {
       .withItem(createItem(ItemRequestExamples.interestingTimes()))
       .withRandomPastLoanDate().create());
 
-    CompletableFuture<JsonResponse> openSearchComppleted = new CompletableFuture<>();
-    CompletableFuture<JsonResponse> closedSearchCompleted = new CompletableFuture<>();
+    CompletableFuture<Response> openSearchComppleted = new CompletableFuture<>();
+    CompletableFuture<Response> closedSearchCompleted = new CompletableFuture<>();
 
     client.get(loansUrl(),
       "query=" + URLEncoder.encode(String.format(queryTemplate, userId, "Open"), "UTF-8"),
@@ -472,8 +472,8 @@ public class LoanAPITests {
       "query=" + URLEncoder.encode(String.format(queryTemplate, userId, "Closed"), "UTF-8"),
       APITestSuite.TENANT_ID, ResponseHandler.json(closedSearchCompleted));
 
-    JsonResponse openLoansResponse = openSearchComppleted.get(5, TimeUnit.SECONDS);
-    JsonResponse closedLoansResponse = closedSearchCompleted.get(5, TimeUnit.SECONDS);
+    Response openLoansResponse = openSearchComppleted.get(5, TimeUnit.SECONDS);
+    Response closedLoansResponse = closedSearchCompleted.get(5, TimeUnit.SECONDS);
 
     assertThat(String.format("Failed to get open loans: %s",
       openLoansResponse.getBody()),
@@ -517,12 +517,12 @@ public class LoanAPITests {
 
     UUID id = createLoan(new LoanRequestBuilder().create()).getId();
 
-    CompletableFuture<TextResponse> deleteCompleted = new CompletableFuture<>();
+    CompletableFuture<Response> deleteCompleted = new CompletableFuture<>();
 
     client.delete(loansUrl(String.format("/%s", id)),
       APITestSuite.TENANT_ID, ResponseHandler.text(deleteCompleted));
 
-    TextResponse deleteResponse = deleteCompleted.get(5, TimeUnit.SECONDS);
+    Response deleteResponse = deleteCompleted.get(5, TimeUnit.SECONDS);
 
     assertThat(deleteResponse.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
 
@@ -536,7 +536,7 @@ public class LoanAPITests {
     assertThat(getResponse.getStatusCode(), is(HttpURLConnection.HTTP_NOT_FOUND));
   }
 
-  private JsonResponse getById(UUID id)
+  private Response getById(UUID id)
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
@@ -545,7 +545,7 @@ public class LoanAPITests {
 
     URL getInstanceUrl = loansUrl(String.format("/%s", id));
 
-    CompletableFuture<JsonResponse> getCompleted = new CompletableFuture<>();
+    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
     client.get(getInstanceUrl, APITestSuite.TENANT_ID,
       ResponseHandler.json(getCompleted));
@@ -580,12 +580,12 @@ public class LoanAPITests {
     ExecutionException,
     TimeoutException {
 
-    CompletableFuture<JsonResponse> createCompleted = new CompletableFuture<>();
+    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
 
     client.post(url, request, APITestSuite.TENANT_ID,
       ResponseHandler.json(createCompleted));
 
-    JsonResponse response = createCompleted.get(5, TimeUnit.SECONDS);
+    Response response = createCompleted.get(5, TimeUnit.SECONDS);
 
     assertThat(String.format("Failed to create %s: %s", resourceName, response.getBody()),
       response.getStatusCode(), is(HttpURLConnection.HTTP_CREATED));

@@ -6,9 +6,9 @@ import java.util.UUID;
 
 public class IndividualResource {
 
-  private final JsonResponse response;
+  private final Response response;
 
-  public IndividualResource(JsonResponse response) {
+  public IndividualResource(Response response) {
     this.response = response;
   }
 
