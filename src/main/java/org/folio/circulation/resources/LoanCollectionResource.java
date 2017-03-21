@@ -294,7 +294,7 @@ public class LoanCollectionResource {
 
               client.get(itemStorageLocation +
                   String.format("/%s", loanResource.getString("itemId")),
-                context.getTenantId(), ResponseHandler.json(newFuture));
+                context.getTenantId(), ResponseHandler.any(newFuture));
             });
 
             CompletableFuture<Void> allDoneFuture =

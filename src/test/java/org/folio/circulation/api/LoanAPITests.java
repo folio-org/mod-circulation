@@ -197,7 +197,7 @@ public class LoanAPITests {
     CompletableFuture<Response> putCompleted = new CompletableFuture<>();
 
     client.put(loansUrl(String.format("/%s", loan.getId())), returnedLoan,
-      APITestSuite.TENANT_ID, ResponseHandler.json(putCompleted));
+      APITestSuite.TENANT_ID, ResponseHandler.any(putCompleted));
 
     Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
 
@@ -520,7 +520,7 @@ public class LoanAPITests {
     CompletableFuture<Response> deleteCompleted = new CompletableFuture<>();
 
     client.delete(loansUrl(String.format("/%s", id)),
-      APITestSuite.TENANT_ID, ResponseHandler.text(deleteCompleted));
+      APITestSuite.TENANT_ID, ResponseHandler.any(deleteCompleted));
 
     Response deleteResponse = deleteCompleted.get(5, TimeUnit.SECONDS);
 
@@ -529,7 +529,7 @@ public class LoanAPITests {
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
     client.get(loansUrl(String.format("/%s", id)),
-      APITestSuite.TENANT_ID, ResponseHandler.empty(getCompleted));
+      APITestSuite.TENANT_ID, ResponseHandler.any(getCompleted));
 
     Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
 
@@ -548,7 +548,7 @@ public class LoanAPITests {
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
     client.get(getInstanceUrl, APITestSuite.TENANT_ID,
-      ResponseHandler.json(getCompleted));
+      ResponseHandler.any(getCompleted));
 
     return getCompleted.get(5, TimeUnit.SECONDS);
   }
@@ -637,7 +637,7 @@ public class LoanAPITests {
     CompletableFuture<Response> deleteAllFinished = new CompletableFuture<>();
 
     client.delete(collectionResourceUrl, APITestSuite.TENANT_ID,
-      ResponseHandler.empty(deleteAllFinished));
+      ResponseHandler.any(deleteAllFinished));
 
     Response response = deleteAllFinished.get(5, TimeUnit.SECONDS);
 
