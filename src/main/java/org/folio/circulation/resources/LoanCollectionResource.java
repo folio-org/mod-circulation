@@ -244,9 +244,6 @@ public class LoanCollectionResource {
       return;
     }
 
-    String storageUrl = loanStorageLocation + "?"
-      + routingContext.request().query();
-
     HttpClient client = new HttpClient(routingContext.vertx(), okapiLocation,
       exception -> {
         ServerErrorResponse.internalError(routingContext.response(),
@@ -254,67 +251,63 @@ public class LoanCollectionResource {
             exception.toString()));
       });
 
-    client.get(storageUrl,
-      context.getTenantId(), response -> {
-        response.bodyHandler(buffer -> {
-          String responseBody = BufferHelper.stringFromBuffer(buffer);
+    CollectionResourceClient loanStorageClient = new CollectionResourceClient(
+      client, loanStorageLocation, context.getTenantId());
 
-          if(response.statusCode() == 200) {
-            JsonObject loansResponse = new JsonObject(responseBody);
+    CollectionResourceClient itemStorageClient = new CollectionResourceClient(
+      client, itemStorageLocation, context.getTenantId());
 
-            List<JsonObject> newLoans = JsonArrayHelper.toList(
-              loansResponse.getJsonArray("loans"));
+    loanStorageClient.getMany(routingContext.request().query(), loansResponse -> {
+      if(loansResponse.getStatusCode() == 200) {
+        JsonObject wrappedLoans = new JsonObject(loansResponse.getBody());
 
-            List<CompletableFuture<Response>>
-              allFutures = new ArrayList<>();
+        List<JsonObject> newLoans = JsonArrayHelper.toList(
+          wrappedLoans.getJsonArray("loans"));
 
-            newLoans.forEach(loanResource -> {
-              CompletableFuture<Response> newFuture
-                = new CompletableFuture<>();
+        List<CompletableFuture<Response>>
+          allFutures = new ArrayList<>();
 
-              allFutures.add(newFuture);
+        newLoans.forEach(loanResource -> {
+          CompletableFuture<Response> newFuture
+            = new CompletableFuture<>();
 
-              client.get(itemStorageLocation +
-                  String.format("/%s", loanResource.getString("itemId")),
-                context.getTenantId(), ResponseHandler.any(newFuture));
-            });
+          allFutures.add(newFuture);
 
-            CompletableFuture<Void> allDoneFuture =
-              CompletableFuture.allOf(allFutures.toArray(new CompletableFuture<?>[] { }));
-
-            allDoneFuture.thenAccept(v -> {
-              List<Response> itemResponses = allFutures.stream().
-                map(future -> future.join()).
-                collect(Collectors.toList());
-
-              newLoans.forEach( loan -> {
-                Optional<JsonObject> possibleItem = itemResponses.stream()
-                  .filter(itemResponse -> itemResponse.getStatusCode() == 200)
-                  .map(itemResponse -> itemResponse.getJson())
-                  .filter(item -> item.getString("id").equals(loan.getString("itemId")))
-                  .findFirst();
-
-                if(possibleItem.isPresent()) {
-                  loan.put("item", new JsonObject()
-                    .put("title", possibleItem.get().getString("title"))
-                    .put("barcode", possibleItem.get().getString("barcode")));
-                }
-              });
-
-              JsonObject loansWrapper = new JsonObject()
-                .put("loans", new JsonArray(newLoans))
-                .put("totalRecords", loansResponse.getInteger("totalRecords"));
-
-              JsonResponse.success(routingContext.response(),
-                loansWrapper);
-            });
-          }
-          else {
-            ForwardResponse.forward(routingContext.response(), response,
-              responseBody);
-          }
+          itemStorageClient.get(loanResource.getString("itemId"),
+            response -> newFuture.complete(response));
         });
-      });
+
+        CompletableFuture<Void> allDoneFuture =
+          CompletableFuture.allOf(allFutures.toArray(new CompletableFuture<?>[] { }));
+
+        allDoneFuture.thenAccept(v -> {
+          List<Response> itemResponses = allFutures.stream().
+            map(future -> future.join()).
+            collect(Collectors.toList());
+
+          newLoans.forEach( loan -> {
+            Optional<JsonObject> possibleItem = itemResponses.stream()
+              .filter(itemResponse -> itemResponse.getStatusCode() == 200)
+              .map(itemResponse -> itemResponse.getJson())
+              .filter(item -> item.getString("id").equals(loan.getString("itemId")))
+              .findFirst();
+
+            if(possibleItem.isPresent()) {
+              loan.put("item", new JsonObject()
+                .put("title", possibleItem.get().getString("title"))
+                .put("barcode", possibleItem.get().getString("barcode")));
+            }
+          });
+
+          JsonObject loansWrapper = new JsonObject()
+            .put("loans", new JsonArray(newLoans))
+            .put("totalRecords", wrappedLoans.getInteger("totalRecords"));
+
+          JsonResponse.success(routingContext.response(),
+            loansWrapper);
+        });
+      }
+    });
   }
 
   private void empty(RoutingContext routingContext) {

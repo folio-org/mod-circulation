@@ -54,4 +54,20 @@ public class CollectionResourceClient {
         response.bodyHandler(buffer ->
           responseHandler.accept(Response.from(response, buffer))));
   }
+
+  public void getMany(String query, Consumer<Response> responseHandler) {
+
+    String url = isProvided(query)
+      ? String.format(collectionRoot + "?%s", query)
+      : collectionRoot.toString();
+
+    client.get(url,
+      tenantId, response ->
+        response.bodyHandler(buffer ->
+          responseHandler.accept(Response.from(response, buffer))));
+  }
+
+  private boolean isProvided(String query) {
+    return query != null && query.trim() != "";
+  }
 }
