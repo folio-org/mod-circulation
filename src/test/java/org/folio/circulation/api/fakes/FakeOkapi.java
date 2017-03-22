@@ -25,8 +25,8 @@ public class FakeOkapi extends AbstractVerticle {
 
     this.server = vertx.createHttpServer();
 
-    new FakeLoanStorageModule(APITestSuite.TENANT_ID).register(router);
-    new FakeItemStorageModule(APITestSuite.TENANT_ID).register(router);
+    new FakeStorageModule("/loan-storage/loans", APITestSuite.TENANT_ID).register(router);
+    new FakeStorageModule("/item-storage/items", APITestSuite.TENANT_ID).register(router);
 
     server.requestHandler(router::accept)
       .listen(PORT_TO_USE, result -> {

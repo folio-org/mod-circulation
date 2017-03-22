@@ -17,15 +17,16 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class FakeLoanStorageModule extends AbstractVerticle {
+public class FakeStorageModule extends AbstractVerticle {
+  private final String rootPath;
 
-  private static final String rootPath = "/loan-storage/loans";
+  private final Map<String, Map<String, JsonObject>> storedResourcesByTenant;
 
-  private final Map<String, Map<String, JsonObject>> storedLoansByTenant;
+  public FakeStorageModule(String rootPath, String tenantId) {
+    this.rootPath = rootPath;
 
-  public FakeLoanStorageModule(String tenantId) {
-    storedLoansByTenant = new HashMap<>();
-    storedLoansByTenant.put(tenantId, new HashMap<>());
+    storedResourcesByTenant = new HashMap<>();
+    storedResourcesByTenant.put(tenantId, new HashMap<>());
   }
 
   public void register(Router router) {
@@ -52,7 +53,7 @@ public class FakeLoanStorageModule extends AbstractVerticle {
 
     JsonObject body = getJsonFromBody(routingContext);
 
-    getLoansForTenant(context).put(body.getString("id"), body);
+    getResourcesForTenant(context).put(body.getString("id"), body);
 
     JsonResponse.created(routingContext.response(),
       routingContext.getBodyAsJson());
@@ -65,11 +66,11 @@ public class FakeLoanStorageModule extends AbstractVerticle {
 
     JsonObject body = getJsonFromBody(routingContext);
 
-    Map<String, JsonObject> loansForTenant = getLoansForTenant(context);
+    Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
 
-    loansForTenant.replace(id, body);
+    resourcesForTenant.replace(id, body);
 
-    if(loansForTenant.containsKey(id)) {
+    if(resourcesForTenant.containsKey(id)) {
       SuccessResponse.noContent(routingContext.response());
     }
     else {
@@ -82,11 +83,11 @@ public class FakeLoanStorageModule extends AbstractVerticle {
 
     String id = routingContext.request().getParam("id");
 
-    Map<String, JsonObject> loansForTenant = getLoansForTenant(context);
+    Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
 
-    if(loansForTenant.containsKey(id)) {
+    if(resourcesForTenant.containsKey(id)) {
       JsonResponse.success(routingContext.response(),
-        loansForTenant.get(id));
+        resourcesForTenant.get(id));
     }
     else {
       ClientErrorResponse.notFound(routingContext.response());
@@ -100,11 +101,11 @@ public class FakeLoanStorageModule extends AbstractVerticle {
     Integer offset = context.getIntegerParameter("offset", 0);
     String query = context.getStringParameter("query", null);
 
-    Map<String, JsonObject> loansForTenant = getLoansForTenant(context);
+    Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
 
     List<Predicate<JsonObject>> predicates = filterFromQuery(query);
 
-    List<JsonObject> filteredItems = loansForTenant.values().stream()
+    List<JsonObject> filteredItems = resourcesForTenant.values().stream()
       .filter(predicates.stream().reduce(Predicate::and).orElse(t -> false))
       .collect(Collectors.toList());
 
@@ -124,9 +125,9 @@ public class FakeLoanStorageModule extends AbstractVerticle {
   private void empty(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
 
-    Map<String, JsonObject> loansForTenant = getLoansForTenant(context);
+    Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
 
-    loansForTenant.clear();
+    resourcesForTenant.clear();
 
     SuccessResponse.noContent(routingContext.response());
   }
@@ -136,10 +137,10 @@ public class FakeLoanStorageModule extends AbstractVerticle {
 
     String id = routingContext.request().getParam("id");
 
-    Map<String, JsonObject> loansForTenant = getLoansForTenant(context);
+    Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
 
-    if(loansForTenant.containsKey(id)) {
-      loansForTenant.remove(id);
+    if(resourcesForTenant.containsKey(id)) {
+      resourcesForTenant.remove(id);
 
       SuccessResponse.noContent(routingContext.response());
     }
@@ -148,8 +149,8 @@ public class FakeLoanStorageModule extends AbstractVerticle {
     }
   }
 
-  private Map<String, JsonObject> getLoansForTenant(WebContext context) {
-    return storedLoansByTenant.get(context.getTenantId());
+  private Map<String, JsonObject> getResourcesForTenant(WebContext context) {
+    return storedResourcesByTenant.get(context.getTenantId());
   }
 
   private static JsonObject getJsonFromBody(RoutingContext routingContext) {
@@ -173,7 +174,8 @@ public class FakeLoanStorageModule extends AbstractVerticle {
       return predicates;
     }
 
-    List<ImmutablePair<String, String>> pairs = Arrays.stream(query.split(" and "))
+    List<ImmutablePair<String, String>> pairs =
+      Arrays.stream(query.split(" and "))
       .map( pairText -> {
         String searchField = pairText.split("=")[0];
 
