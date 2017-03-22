@@ -108,7 +108,12 @@ public class HttpClient {
       request.headers().add(TENANT_HEADER, tenantId);
     }
 
-    request.end(Json.encodePrettily(body));
+    String encodedBody = Json.encodePrettily(body);
+
+    System.out.println(String.format("PUT %s, Request: %s",
+      url.toString(), encodedBody));
+
+    request.end(encodedBody);
   }
 
   public void get(URL url,
@@ -142,7 +147,7 @@ public class HttpClient {
       request.headers().add(TENANT_HEADER, tenantId);
     }
 
-    System.out.println(String.format("GET %s", request.uri()));
+    System.out.println(String.format("GET %s", url));
     request.end();
   }
 

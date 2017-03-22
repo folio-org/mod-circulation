@@ -25,12 +25,19 @@ public class FakeItemStorageModule {
 
   public void register(Router router) {
     router.post(rootPath + "*").handler(BodyHandler.create());
+    router.put(rootPath + "*").handler(BodyHandler.create());
 
     router.delete(rootPath).handler(this::empty);
     router.post(rootPath).handler(this::create);
 
     router.route(HttpMethod.GET, rootPath + "/:id")
       .handler(this::get);
+
+    router.route(HttpMethod.PUT, rootPath + "/:id")
+      .handler(this::replace);
+
+    router.route(HttpMethod.DELETE, rootPath + "/:id")
+      .handler(this::delete);
   }
 
   private void create(RoutingContext routingContext) {
@@ -50,11 +57,47 @@ public class FakeItemStorageModule {
 
     String id = routingContext.request().getParam("id");
 
-    Map<String, JsonObject> loansForTenant = getItemsForTenant(context);
+    Map<String, JsonObject> itemsForTenant = getItemsForTenant(context);
 
-    if(loansForTenant.containsKey(id)) {
+    if(itemsForTenant.containsKey(id)) {
       JsonResponse.success(routingContext.response(),
-        loansForTenant.get(id));
+        itemsForTenant.get(id));
+    }
+    else {
+      ClientErrorResponse.notFound(routingContext.response());
+    }
+  }
+
+  private void replace(RoutingContext routingContext) {
+    WebContext context = new WebContext(routingContext);
+
+    String id = routingContext.request().getParam("id");
+
+    JsonObject body = getJsonFromBody(routingContext);
+
+    Map<String, JsonObject> itemsForTenant = getItemsForTenant(context);
+
+    itemsForTenant.replace(id, body);
+
+    if(itemsForTenant.containsKey(id)) {
+      SuccessResponse.noContent(routingContext.response());
+    }
+    else {
+      ClientErrorResponse.notFound(routingContext.response());
+    }
+  }
+
+  private void delete(RoutingContext routingContext) {
+    WebContext context = new WebContext(routingContext);
+
+    String id = routingContext.request().getParam("id");
+
+    Map<String, JsonObject> itemsForTenant = getItemsForTenant(context);
+
+    if(itemsForTenant.containsKey(id)) {
+      itemsForTenant.remove(id);
+
+      SuccessResponse.noContent(routingContext.response());
     }
     else {
       ClientErrorResponse.notFound(routingContext.response());

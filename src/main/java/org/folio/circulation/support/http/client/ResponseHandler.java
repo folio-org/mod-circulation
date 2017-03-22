@@ -36,8 +36,9 @@ public class ResponseHandler {
       responseToCheck ->
         responseToCheck.getContentType().contains(expectedContentType),
       failingResponse -> new Exception(
-        String.format("Expected Content Type: %s Actual: %s", "",
-          failingResponse.getContentType(), expectedContentType)));
+        String.format("Expected Content Type: %s Actual: %s (Body: %s)",
+          expectedContentType, failingResponse.getContentType(),
+          failingResponse.getBody())));
   }
 
   private static Handler<HttpClientResponse> responseHandler(
@@ -50,6 +51,11 @@ public class ResponseHandler {
           try {
 
             Response response = Response.from(vertxResponse, buffer);
+
+            System.out.println(String.format("Received Response: %s: %s",
+              response.getStatusCode(), response.getContentType()));
+            System.out.println(String.format("Received Response Body: %s",
+              response.getBody()));
 
             if(expectation.test(response)) {
               completed.complete(response);

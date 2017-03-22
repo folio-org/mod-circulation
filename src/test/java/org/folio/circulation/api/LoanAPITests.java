@@ -51,7 +51,8 @@ public class LoanAPITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException {
+    MalformedURLException,
+    UnsupportedEncodingException {
 
     UUID id = UUID.randomUUID();
     UUID itemId = createItem(ItemRequestExamples.smallAngryPlanet()).getId();
@@ -81,6 +82,11 @@ public class LoanAPITests {
 
     assertThat("status is not open",
       loan.getJsonObject("status").getString("name"), is("Open"));
+
+    JsonObject item = getItemById(itemId).getJson();
+
+    assertThat("item status is not checked out",
+      item.getJsonObject("status").getString("name"), is("Checked Out"));
   }
 
   @Test
@@ -142,9 +148,13 @@ public class LoanAPITests {
     TimeoutException,
     UnsupportedEncodingException {
 
+    UUID itemId = createItem(ItemRequestExamples.nod()).getId();
+
     UUID id = createLoan(new LoanRequestBuilder()
-      .withItemId(UUID.randomUUID())
+      .withItemId(itemId)
       .create()).getId();
+
+    deleteItem(itemId);
 
     Response getResponse = getById(id);
 
@@ -231,9 +241,13 @@ public class LoanAPITests {
     TimeoutException,
     UnsupportedEncodingException {
 
-    UUID id = createLoan(new LoanRequestBuilder()
-      .withItemId(UUID.randomUUID())
-      .create()).getId();
+    UUID itemId = createItem(ItemRequestExamples.nod()).getId();
+
+    createLoan(new LoanRequestBuilder()
+      .withItemId(itemId)
+      .create());
+
+    deleteItem(itemId);
 
     CompletableFuture<Response> pageCompleted = new CompletableFuture<>();
 
@@ -515,7 +529,10 @@ public class LoanAPITests {
     ExecutionException,
     UnsupportedEncodingException {
 
-    UUID id = createLoan(new LoanRequestBuilder().create()).getId();
+    UUID itemId = createItem(ItemRequestExamples.nod()).getId();
+
+    UUID id = createLoan(new LoanRequestBuilder()
+      .withItemId(itemId).create()).getId();
 
     CompletableFuture<Response> deleteCompleted = new CompletableFuture<>();
 
@@ -544,6 +561,23 @@ public class LoanAPITests {
     UnsupportedEncodingException {
 
     URL getInstanceUrl = loansUrl(String.format("/%s", id));
+
+    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
+
+    client.get(getInstanceUrl, APITestSuite.TENANT_ID,
+      ResponseHandler.any(getCompleted));
+
+    return getCompleted.get(5, TimeUnit.SECONDS);
+  }
+
+  private Response getItemById(UUID id)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    UnsupportedEncodingException {
+
+    URL getInstanceUrl = itemsUrl(String.format("/%s", id));
 
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
@@ -596,7 +630,13 @@ public class LoanAPITests {
   private static URL itemsUrl()
     throws MalformedURLException {
 
-    return APITestSuite.viaOkapiModuleUrl("/item-storage/items");
+    return itemsUrl("");
+  }
+
+  private static URL itemsUrl(String subPath)
+    throws MalformedURLException {
+
+    return APITestSuite.viaOkapiModuleUrl("/item-storage/items" + subPath);
   }
 
   private static URL loansUrl()
@@ -674,5 +714,22 @@ public class LoanAPITests {
 
   private List<JsonObject> getLoans(JsonObject firstPage) {
     return JsonArrayHelper.toList(firstPage.getJsonArray("loans"));
+  }
+
+  private void deleteItem(UUID itemId)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    CompletableFuture<Response> deleteFinished = new CompletableFuture<>();
+
+    client.delete(itemsUrl(String.format("/%s", itemId)),
+      APITestSuite.TENANT_ID, ResponseHandler.any(deleteFinished));
+
+    Response response = deleteFinished.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Failed to delete item %s", itemId),
+      response.getStatusCode(), is(204));
   }
 }

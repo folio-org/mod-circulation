@@ -43,10 +43,12 @@ public class LoanCollectionResource {
   private void create(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
     CollectionResourceClient loansStorageClient;
+    CollectionResourceClient itemsStorageClient;
 
     try {
       HttpClient client = createHttpClient(routingContext, context);
       loansStorageClient = createLoansStorageClient(client, context);
+      itemsStorageClient = createItemsStorageClient(client, context);
     }
     catch (MalformedURLException e) {
       ServerErrorResponse.internalError(routingContext.response(),
@@ -55,10 +57,36 @@ public class LoanCollectionResource {
       return;
     }
 
+    JsonObject loan = routingContext.getBodyAsJson();
+    String itemId = loan.getString("itemId");
+
     loansStorageClient.post(routingContext.getBodyAsJson(), response -> {
       if(response.getStatusCode() == 201) {
-        JsonResponse.created(routingContext.response(),
-          new JsonObject(response.getBody()));
+        itemsStorageClient.get(itemId, getItemResponse -> {
+          if(getItemResponse.getStatusCode() == 200) {
+            JsonObject item = getItemResponse.getJson();
+
+            item.put("status", new JsonObject().put("name", "Checked Out"));
+
+            itemsStorageClient.put(itemId,
+              item, putItemResponse -> {
+                if(putItemResponse.getStatusCode() == 204) {
+                  JsonResponse.created(routingContext.response(),
+                    new JsonObject(response.getBody()));
+                }
+                else {
+                  ForwardResponse.forward(routingContext.response(), putItemResponse);
+                }
+              });
+            }
+            else if(getItemResponse.getStatusCode() == 404) {
+              ServerErrorResponse.internalError(routingContext.response(),
+                "Failed to handle creating a loan for an item that does not exist");
+            }
+            else {
+              ForwardResponse.forward(routingContext.response(), getItemResponse);
+            }
+          });
       }
       else {
         ForwardResponse.forward(routingContext.response(), response);

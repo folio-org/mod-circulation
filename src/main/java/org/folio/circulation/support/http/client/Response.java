@@ -20,7 +20,7 @@ public class Response {
   public static Response from(HttpClientResponse response, Buffer body) {
     return new Response(response.statusCode(),
       BufferHelper.stringFromBuffer(body),
-      response.getHeader(CONTENT_TYPE));
+      convertNullToEmpty(response.getHeader(CONTENT_TYPE)));
   }
 
   public boolean hasBody() {
@@ -48,5 +48,9 @@ public class Response {
 
   public String getContentType() {
     return contentType;
+  }
+
+  private static String convertNullToEmpty(String text) {
+    return text != null ? text : "";
   }
 }
