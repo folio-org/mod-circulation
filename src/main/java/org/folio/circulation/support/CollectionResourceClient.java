@@ -55,6 +55,13 @@ public class CollectionResourceClient {
           responseHandler.accept(Response.from(response, buffer))));
   }
 
+  public void delete(Consumer<Response> responseHandler) {
+    client.delete(collectionRoot,
+      tenantId, response ->
+        response.bodyHandler(buffer ->
+          responseHandler.accept(Response.from(response, buffer))));
+  }
+
   public void getMany(String query, Consumer<Response> responseHandler) {
 
     String url = isProvided(query)

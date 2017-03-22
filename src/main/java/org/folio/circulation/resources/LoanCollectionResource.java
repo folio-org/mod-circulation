@@ -312,13 +312,13 @@ public class LoanCollectionResource {
 
   private void empty(RoutingContext routingContext) {
     URL okapiLocation;
-    URL storageLocation;
+    URL loanStorageLocation;
 
     WebContext context = new WebContext(routingContext);
 
     try {
       okapiLocation = new URL(context.getOkapiLocation());
-      storageLocation = context.getOkapiBasedUrl("/loan-storage/loans");
+      loanStorageLocation = context.getOkapiBasedUrl("/loan-storage/loans");
     }
     catch (MalformedURLException e) {
       ServerErrorResponse.internalError(routingContext.response(),
@@ -334,18 +334,16 @@ public class LoanCollectionResource {
             exception.toString()));
       });
 
-    client.delete(storageLocation, context.getTenantId(), response -> {
-          if(response.statusCode() == 204) {
-            SuccessResponse.noContent(routingContext.response());
-          }
-          else {
-            response.bodyHandler(buffer -> {
-              String responseBody = BufferHelper.stringFromBuffer(buffer);
+    CollectionResourceClient loanStorageClient = new CollectionResourceClient(
+      client, loanStorageLocation, context.getTenantId());
 
-            ForwardResponse.forward(routingContext.response(), response,
-              responseBody);
-          });
-        }
-      });
+    loanStorageClient.delete(response -> {
+      if(response.getStatusCode() == 204) {
+        SuccessResponse.noContent(routingContext.response());
+      }
+      else {
+        ForwardResponse.forward(routingContext.response(), response);
+      }
+    });
   }
 }
