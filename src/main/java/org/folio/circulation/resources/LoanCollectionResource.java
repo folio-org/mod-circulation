@@ -147,50 +147,43 @@ public class LoanCollectionResource {
             exception.toString()));
       });
 
-    client.get(loanStorageLocation + String.format("/%s", id),
-      context.getTenantId(), loanResponse -> {
-        loanResponse.bodyHandler(loanBuffer -> {
-          String loanBody = BufferHelper.stringFromBuffer(loanBuffer);
+    CollectionResourceClient loanStorageClient = new CollectionResourceClient(
+      client, loanStorageLocation, context.getTenantId());
 
-          if(loanResponse.statusCode() == 200) {
-            JsonObject loan = new JsonObject(loanBody);
-            String itemId = loan.getString("itemId");
+    CollectionResourceClient itemStorageClient = new CollectionResourceClient(
+      client, itemStorageLocation, context.getTenantId());
 
-            client.get(itemStorageLocation +
-                String.format("/%s", itemId),
-              context.getTenantId(), itemResponse -> {
-                itemResponse.bodyHandler(itemBuffer -> {
-                  String itemBody = BufferHelper.stringFromBuffer(itemBuffer);
+    loanStorageClient.get(id, loanResponse -> {
+      if(loanResponse.getStatusCode() == 200) {
+        JsonObject loan = new JsonObject(loanResponse.getBody());
+        String itemId = loan.getString("itemId");
 
-                  if(itemResponse.statusCode() == 200) {
-                    JsonObject item = new JsonObject(itemBody);
+        itemStorageClient.get(itemId, itemResponse -> {
+          if(itemResponse.getStatusCode() == 200) {
+            JsonObject item = new JsonObject(itemResponse.getBody());
 
-                    loan.put("item", new JsonObject()
-                      .put("title", item.getString("title"))
-                      .put("barcode", item.getString("barcode")));
+            loan.put("item", new JsonObject()
+              .put("title", item.getString("title"))
+              .put("barcode", item.getString("barcode")));
 
-                    JsonResponse.success(routingContext.response(),
-                      loan);
-                  }
-                  else if(itemResponse.statusCode() == 404) {
-                    JsonResponse.success(routingContext.response(),
-                      loan);
-                  }
-                  else {
-                    ServerErrorResponse.internalError(routingContext.response(),
-                      String.format("Failed to item with ID: %s:, %s",
-                         itemId, itemBody));
-                  }
-                });
-
-              });
+            JsonResponse.success(routingContext.response(),
+              loan);
+          }
+          else if(itemResponse.getStatusCode() == 404) {
+            JsonResponse.success(routingContext.response(),
+              loan);
           }
           else {
-            ForwardResponse.forward(routingContext.response(), loanResponse,
-              loanBody);
+            ServerErrorResponse.internalError(routingContext.response(),
+              String.format("Failed to item with ID: %s:, %s",
+                itemId, itemResponse.getBody()));
           }
         });
-      });
+      }
+      else {
+        ForwardResponse.forward(routingContext.response(), loanResponse);
+      }
+    });
   }
 
   private void delete(RoutingContext routingContext) {

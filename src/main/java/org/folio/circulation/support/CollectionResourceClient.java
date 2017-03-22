@@ -40,4 +40,11 @@ public class CollectionResourceClient {
         response.bodyHandler(buffer ->
           responseHandler.accept(Response.from(response, buffer))));
   }
+
+  public void get(String id, Consumer<Response> responseHandler) {
+    client.get(String.format(collectionRoot + "/%s", id),
+      tenantId, response ->
+        response.bodyHandler(buffer ->
+          responseHandler.accept(Response.from(response, buffer))));
+  }
 }
