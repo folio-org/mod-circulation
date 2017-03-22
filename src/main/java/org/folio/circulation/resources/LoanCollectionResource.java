@@ -6,6 +6,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
+import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.*;
 import org.folio.circulation.support.http.server.*;
@@ -64,22 +65,18 @@ public class LoanCollectionResource {
             exception.toString()));
       });
 
-    client.post(loanStorageLocation,
-      routingContext.getBodyAsJson(),
-      context.getTenantId(), response -> {
-        response.bodyHandler(buffer -> {
-          String responseBody = BufferHelper.stringFromBuffer(buffer);
+    CollectionResourceClient loanStorageClient = new CollectionResourceClient(
+      client, loanStorageLocation, context.getTenantId());
 
-          if(response.statusCode() == 201) {
-            JsonResponse.created(routingContext.response(),
-              new JsonObject(responseBody));
-          }
-          else {
-            ForwardResponse.forward(routingContext.response(), response,
-              responseBody);
-          }
-        });
-      });
+    loanStorageClient.post(routingContext.getBodyAsJson(), response -> {
+      if(response.getStatusCode() == 201) {
+        JsonResponse.created(routingContext.response(),
+          new JsonObject(response.getBody()));
+      }
+      else {
+        ForwardResponse.forward(routingContext.response(), response);
+      }
+    });
   }
 
   private void replace(RoutingContext routingContext) {

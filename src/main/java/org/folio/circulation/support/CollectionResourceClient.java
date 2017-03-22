@@ -1,0 +1,33 @@
+package org.folio.circulation.support;
+
+import org.folio.circulation.support.http.client.HttpClient;
+import org.folio.circulation.support.http.client.Response;
+
+import java.net.URL;
+import java.util.function.Consumer;
+
+public class CollectionResourceClient {
+
+  private final HttpClient client;
+  private final URL collectionRoot;
+  private final String tenantId;
+
+  public CollectionResourceClient(HttpClient client,
+                                  URL collectionRoot,
+                                  String tenantId) {
+
+    this.client = client;
+    this.collectionRoot = collectionRoot;
+    this.tenantId = tenantId;
+  }
+
+  public void post(Object resourceRepresentation,
+                   Consumer<Response> responseHandler) {
+
+    client.post(collectionRoot,
+      resourceRepresentation,
+      tenantId, response ->
+        response.bodyHandler(buffer ->
+          responseHandler.accept(Response.from(response, buffer))));
+  }
+}

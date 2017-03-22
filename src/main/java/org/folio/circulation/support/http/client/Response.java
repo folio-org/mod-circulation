@@ -23,6 +23,10 @@ public class Response {
       response.getHeader(CONTENT_TYPE));
   }
 
+  public boolean hasBody() {
+    return getBody() != null && getBody().trim() != "";
+  }
+
   public int getStatusCode() {
     return statusCode;
   }
@@ -34,7 +38,7 @@ public class Response {
   public JsonObject getJson() {
     String body = getBody();
 
-    if(body != null && body != "") {
+    if(hasBody()) {
       return new JsonObject(body);
     }
     else {
