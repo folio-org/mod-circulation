@@ -1,5 +1,7 @@
 package org.folio.circulation.support;
 
+import io.vertx.core.Handler;
+import io.vertx.core.http.HttpClientResponse;
 import org.folio.circulation.support.http.client.HttpClient;
 import org.folio.circulation.support.http.client.Response;
 
@@ -26,9 +28,7 @@ public class CollectionResourceClient {
 
     client.post(collectionRoot,
       resourceRepresentation,
-      tenantId, response ->
-        response.bodyHandler(buffer ->
-          responseHandler.accept(Response.from(response, buffer))));
+      tenantId, responseConversationHandler(responseHandler));
   }
 
   public void put(String id, Object resourceRepresentation,
@@ -36,30 +36,22 @@ public class CollectionResourceClient {
 
     client.put(String.format(collectionRoot + "/%s", id),
       resourceRepresentation,
-      tenantId, response ->
-        response.bodyHandler(buffer ->
-          responseHandler.accept(Response.from(response, buffer))));
+      tenantId, responseConversationHandler(responseHandler));
   }
 
   public void get(String id, Consumer<Response> responseHandler) {
     client.get(String.format(collectionRoot + "/%s", id),
-      tenantId, response ->
-        response.bodyHandler(buffer ->
-          responseHandler.accept(Response.from(response, buffer))));
+      tenantId, responseConversationHandler(responseHandler));
   }
 
   public void delete(String id, Consumer<Response> responseHandler) {
     client.delete(String.format(collectionRoot + "/%s", id),
-      tenantId, response ->
-        response.bodyHandler(buffer ->
-          responseHandler.accept(Response.from(response, buffer))));
+      tenantId, responseConversationHandler(responseHandler));
   }
 
   public void delete(Consumer<Response> responseHandler) {
     client.delete(collectionRoot,
-      tenantId, response ->
-        response.bodyHandler(buffer ->
-          responseHandler.accept(Response.from(response, buffer))));
+      tenantId, responseConversationHandler(responseHandler));
   }
 
   public void getMany(String query, Consumer<Response> responseHandler) {
@@ -69,12 +61,18 @@ public class CollectionResourceClient {
       : collectionRoot.toString();
 
     client.get(url,
-      tenantId, response ->
-        response.bodyHandler(buffer ->
-          responseHandler.accept(Response.from(response, buffer))));
+      tenantId, responseConversationHandler(responseHandler));
   }
 
   private boolean isProvided(String query) {
     return query != null && query.trim() != "";
+  }
+
+  private Handler<HttpClientResponse> responseConversationHandler(
+    Consumer<Response> responseHandler) {
+
+    return response ->
+      response.bodyHandler(buffer ->
+        responseHandler.accept(Response.from(response, buffer)));
   }
 }
