@@ -105,21 +105,16 @@ public class LoanCollectionResource {
             exception.toString()));
       });
 
-    JsonObject requestBody = routingContext.getBodyAsJson();
+      CollectionResourceClient loanStorageClient = new CollectionResourceClient(
+        client, loanStorageLocation, context.getTenantId());
 
-    client.put(loanStorageLocation + String.format("/%s", id),
-      requestBody, context.getTenantId(), response -> {
-        response.bodyHandler(buffer -> {
-          String responseBody = BufferHelper.stringFromBuffer(buffer);
-
-          if(response.statusCode() == 204) {
-            SuccessResponse.noContent(routingContext.response());
-          }
-          else {
-            ForwardResponse.forward(routingContext.response(), response,
-              responseBody);
-          }
-        });
+      loanStorageClient.put(id, routingContext.getBodyAsJson(), response -> {
+        if(response.getStatusCode() == 204) {
+          SuccessResponse.noContent(routingContext.response());
+        }
+        else {
+          ForwardResponse.forward(routingContext.response(), response);
+        }
       });
   }
 

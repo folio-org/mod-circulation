@@ -30,4 +30,14 @@ public class CollectionResourceClient {
         response.bodyHandler(buffer ->
           responseHandler.accept(Response.from(response, buffer))));
   }
+
+  public void put(String id, Object resourceRepresentation,
+                     Consumer<Response> responseHandler) {
+
+    client.put(String.format(collectionRoot + "/%s", id),
+      resourceRepresentation,
+      tenantId, response ->
+        response.bodyHandler(buffer ->
+          responseHandler.accept(Response.from(response, buffer))));
+  }
 }
