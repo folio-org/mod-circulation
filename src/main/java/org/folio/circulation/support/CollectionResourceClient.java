@@ -47,4 +47,11 @@ public class CollectionResourceClient {
         response.bodyHandler(buffer ->
           responseHandler.accept(Response.from(response, buffer))));
   }
+
+  public void delete(String id, Consumer<Response> responseHandler) {
+    client.delete(String.format(collectionRoot + "/%s", id),
+      tenantId, response ->
+        response.bodyHandler(buffer ->
+          responseHandler.accept(Response.from(response, buffer))));
+  }
 }
