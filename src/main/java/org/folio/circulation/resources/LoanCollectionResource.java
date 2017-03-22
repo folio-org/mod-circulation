@@ -58,12 +58,7 @@ public class LoanCollectionResource {
       return;
     }
 
-    HttpClient client = new HttpClient(routingContext.vertx(), okapiLocation,
-      exception -> {
-        ServerErrorResponse.internalError(routingContext.response(),
-          String.format("Failed to contact storage module: %s",
-            exception.toString()));
-      });
+    HttpClient client = createHttpClient(routingContext, okapiLocation);
 
     CollectionResourceClient loanStorageClient = new CollectionResourceClient(
       client, loanStorageLocation, context.getTenantId());
@@ -98,12 +93,7 @@ public class LoanCollectionResource {
       return;
     }
 
-    HttpClient client = new HttpClient(routingContext.vertx(), okapiLocation,
-      exception -> {
-        ServerErrorResponse.internalError(routingContext.response(),
-          String.format("Failed to contact storage module: %s",
-            exception.toString()));
-      });
+    HttpClient client = createHttpClient(routingContext, okapiLocation);
 
       CollectionResourceClient loanStorageClient = new CollectionResourceClient(
         client, loanStorageLocation, context.getTenantId());
@@ -140,12 +130,7 @@ public class LoanCollectionResource {
       return;
     }
 
-    HttpClient client = new HttpClient(routingContext.vertx(), okapiLocation,
-      exception -> {
-        ServerErrorResponse.internalError(routingContext.response(),
-          String.format("Failed to contact storage module: %s",
-            exception.toString()));
-      });
+    HttpClient client = createHttpClient(routingContext, okapiLocation);
 
     CollectionResourceClient loanStorageClient = new CollectionResourceClient(
       client, loanStorageLocation, context.getTenantId());
@@ -205,12 +190,7 @@ public class LoanCollectionResource {
       return;
     }
 
-    HttpClient client = new HttpClient(routingContext.vertx(), okapiLocation,
-      exception -> {
-        ServerErrorResponse.internalError(routingContext.response(),
-          String.format("Failed to contact storage module: %s",
-            exception.toString()));
-      });
+    HttpClient client = createHttpClient(routingContext, okapiLocation);
 
     CollectionResourceClient loanStorageClient = new CollectionResourceClient(
       client, loanStorageLocation, context.getTenantId());
@@ -244,12 +224,7 @@ public class LoanCollectionResource {
       return;
     }
 
-    HttpClient client = new HttpClient(routingContext.vertx(), okapiLocation,
-      exception -> {
-        ServerErrorResponse.internalError(routingContext.response(),
-          String.format("Failed to contact storage module: %s",
-            exception.toString()));
-      });
+    HttpClient client = createHttpClient(routingContext, okapiLocation);
 
     CollectionResourceClient loanStorageClient = new CollectionResourceClient(
       client, loanStorageLocation, context.getTenantId());
@@ -327,12 +302,7 @@ public class LoanCollectionResource {
       return;
     }
 
-    HttpClient client = new HttpClient(routingContext.vertx(), okapiLocation,
-      exception -> {
-        ServerErrorResponse.internalError(routingContext.response(),
-          String.format("Failed to contact storage module: %s",
-            exception.toString()));
-      });
+    HttpClient client = createHttpClient(routingContext, okapiLocation);
 
     CollectionResourceClient loanStorageClient = new CollectionResourceClient(
       client, loanStorageLocation, context.getTenantId());
@@ -345,5 +315,16 @@ public class LoanCollectionResource {
         ForwardResponse.forward(routingContext.response(), response);
       }
     });
+  }
+
+  private HttpClient createHttpClient(RoutingContext routingContext,
+                                      URL okapiLocation) {
+    
+    return new HttpClient(routingContext.vertx(), okapiLocation,
+      exception -> {
+        ServerErrorResponse.internalError(routingContext.response(),
+          String.format("Failed to contact storage module: %s",
+            exception.toString()));
+      });
   }
 }
