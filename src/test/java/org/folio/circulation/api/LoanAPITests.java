@@ -231,6 +231,11 @@ public class LoanAPITests {
     assertThat("barcode is taken from item",
       updatedLoan.getJsonObject("item").getString("barcode"),
       is("565578437802"));
+
+    JsonObject item = getItemById(itemId).getJson();
+
+    assertThat("item status is not available",
+      item.getJsonObject("status").getString("name"), is("Available"));
   }
 
   @Test

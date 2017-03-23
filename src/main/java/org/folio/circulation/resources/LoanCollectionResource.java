@@ -1,6 +1,7 @@
 package org.folio.circulation.resources;
 
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
@@ -8,7 +9,8 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.JsonArrayHelper;
-import org.folio.circulation.support.http.client.*;
+import org.folio.circulation.support.http.client.HttpClient;
+import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.*;
 
 import java.net.MalformedURLException;
@@ -17,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class LoanCollectionResource {
@@ -60,31 +63,16 @@ public class LoanCollectionResource {
     JsonObject loan = routingContext.getBodyAsJson();
     String itemId = loan.getString("itemId");
 
-    loansStorageClient.post(routingContext.getBodyAsJson(), response -> {
+    loansStorageClient.post(loan, response -> {
       if(response.getStatusCode() == 201) {
-        itemsStorageClient.get(itemId, getItemResponse -> {
-          if(getItemResponse.getStatusCode() == 200) {
-            JsonObject item = getItemResponse.getJson();
-
-            item.put("status", new JsonObject().put("name", "Checked Out"));
-
-            itemsStorageClient.put(itemId,
-              item, putItemResponse -> {
-                if(putItemResponse.getStatusCode() == 204) {
-                  JsonResponse.created(routingContext.response(),
-                    new JsonObject(response.getBody()));
-                }
-                else {
-                  ForwardResponse.forward(routingContext.response(), putItemResponse);
-                }
-              });
-            }
-            else if(getItemResponse.getStatusCode() == 404) {
-              ServerErrorResponse.internalError(routingContext.response(),
-                "Failed to handle creating a loan for an item that does not exist");
+        updateItemWhenLoanChanges(itemId, "Checked Out", itemsStorageClient,
+          routingContext.response(), responseFromUpdate -> {
+            if(responseFromUpdate.getStatusCode() == 204) {
+              JsonResponse.created(routingContext.response(), loan);
             }
             else {
-              ForwardResponse.forward(routingContext.response(), getItemResponse);
+              ForwardResponse.forward(routingContext.response(),
+                responseFromUpdate);
             }
           });
       }
@@ -97,10 +85,12 @@ public class LoanCollectionResource {
   private void replace(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
     CollectionResourceClient loansStorageClient;
+    CollectionResourceClient itemsStorageClient;
 
     try {
       HttpClient client = createHttpClient(routingContext, context);
       loansStorageClient = createLoansStorageClient(client, context);
+      itemsStorageClient = createItemsStorageClient(client, context);
     }
     catch (MalformedURLException e) {
       ServerErrorResponse.internalError(routingContext.response(),
@@ -111,9 +101,21 @@ public class LoanCollectionResource {
 
     String id = routingContext.request().getParam("id");
 
+    JsonObject loan = routingContext.getBodyAsJson();
+    String itemId = loan.getString("itemId");
+
     loansStorageClient.put(id, routingContext.getBodyAsJson(), response -> {
       if(response.getStatusCode() == 204) {
-        SuccessResponse.noContent(routingContext.response());
+        updateItemWhenLoanChanges(itemId, "Available",
+          itemsStorageClient, routingContext.response(), responseFromUpdate -> {
+            if(responseFromUpdate.getStatusCode() == 204) {
+              SuccessResponse.noContent(routingContext.response());
+            }
+            else {
+              ForwardResponse.forward(routingContext.response(),
+                responseFromUpdate);
+            }
+          });
       }
       else {
         ForwardResponse.forward(routingContext.response(), response);
@@ -334,5 +336,31 @@ public class LoanCollectionResource {
       context.getTenantId());
 
     return loanStorageClient;
+  }
+
+  private void updateItemWhenLoanChanges(
+    String itemId, String newItemStatus, CollectionResourceClient itemsStorageClient,
+    HttpServerResponse responseToClient,
+    Consumer<Response> onUpdated) {
+
+    itemsStorageClient.get(itemId, getItemResponse -> {
+      if(getItemResponse.getStatusCode() == 200) {
+        JsonObject item = getItemResponse.getJson();
+
+        item.put("status", new JsonObject().put("name", newItemStatus));
+
+        itemsStorageClient.put(itemId,
+          item, putItemResponse -> {
+            onUpdated.accept(putItemResponse);
+          });
+      }
+      else if(getItemResponse.getStatusCode() == 404) {
+        ServerErrorResponse.internalError(responseToClient,
+          "Failed to handle updating an item which does not exist");
+      }
+      else {
+        ForwardResponse.forward(responseToClient, getItemResponse);
+      }
+    });
   }
 }
