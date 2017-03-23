@@ -86,6 +86,14 @@ public class LoanAPITests {
     assertThat("status is not open",
       loan.getJsonObject("status").getString("name"), is("Open"));
 
+    assertThat("title is taken from item",
+      loan.getJsonObject("item").getString("title"),
+      is("The Long Way to a Small, Angry Planet"));
+
+    assertThat("barcode is taken from item",
+      loan.getJsonObject("item").getString("barcode"),
+      is("036000291452"));
+
     JsonObject item = getItemById(itemId).getJson();
 
     assertThat("item status is not checked out",

@@ -65,9 +65,15 @@ public class LoanCollectionResource {
 
     loansStorageClient.post(loan, response -> {
       if(response.getStatusCode() == 201) {
-        updateItemWhenLoanChanges(itemId, itemStatusFrom(loan),
+        JsonObject createdLoan = response.getJson();
+
+        updateItemWhenLoanChanges(itemId, itemStatusFrom(createdLoan),
           itemsStorageClient, routingContext.response(), item -> {
-            JsonResponse.created(routingContext.response(), loan);
+            createdLoan.put("item", new JsonObject()
+              .put("title", item.getString("title"))
+              .put("barcode", item.getString("barcode")));
+
+            JsonResponse.created(routingContext.response(), createdLoan);
           });
       }
       else {
