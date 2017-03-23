@@ -15,11 +15,12 @@ public class LoanRequestBuilder {
   private final UUID userId;
   private final DateTime loanDate;
   private final String status;
+  private DateTime returnDate;
 
   public LoanRequestBuilder() {
     this(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(),
       DateTime.parse("2017-03-06T16:04:43.000+02:00",
-        ISODateTimeFormat.dateTime()), "Open");
+        ISODateTimeFormat.dateTime()), "Open", null);
   }
 
   private LoanRequestBuilder(
@@ -27,13 +28,15 @@ public class LoanRequestBuilder {
     UUID itemId,
     UUID userId,
     DateTime loanDate,
-    String status) {
+    String status,
+    DateTime returnDate) {
 
     this.id = id;
     this.itemId = itemId;
     this.userId = userId;
     this.loanDate = loanDate;
     this.status = status;
+    this.returnDate = returnDate;
   }
 
   public JsonObject create() {
@@ -52,7 +55,7 @@ public class LoanRequestBuilder {
 
     if(status == "Closed") {
       loanRequest.put("returnDate",
-        loanDate.plusDays(1).plusHours(4).toString(ISODateTimeFormat.dateTime()));
+        returnDate.toString(ISODateTimeFormat.dateTime()));
     }
 
     return loanRequest;
@@ -66,31 +69,43 @@ public class LoanRequestBuilder {
 
   public LoanRequestBuilder withLoanDate(DateTime loanDate) {
     return new LoanRequestBuilder(this.id, this.itemId, this.userId,
-      loanDate, this.status);
+      loanDate, this.status, this.returnDate);
   }
 
   public LoanRequestBuilder withUserId(UUID userId) {
     return new LoanRequestBuilder(this.id, this.itemId, userId,
-      this.loanDate, this.status);
+      this.loanDate, this.status, this.returnDate);
   }
 
   public LoanRequestBuilder withStatus(String status) {
+
+    DateTime defaultedReturnDate = this.returnDate != null
+      ? this.returnDate
+      : this.loanDate.plusDays(1).plusHours(4);
+
     return new LoanRequestBuilder(this.id, this.itemId, this.userId,
-      this.loanDate, status);
+      this.loanDate, status, defaultedReturnDate);
   }
 
   public LoanRequestBuilder withId(UUID id) {
     return new LoanRequestBuilder(id, this.itemId, this.userId,
-      this.loanDate, this.status);
+      this.loanDate, this.status, this.returnDate);
   }
 
   public LoanRequestBuilder withItemId(UUID itemId) {
     return new LoanRequestBuilder(this.id, itemId, this.userId,
-      this.loanDate, this.status);
+      this.loanDate, this.status, this.returnDate);
+  }
+
+  public LoanRequestBuilder withReturnDate(DateTime returnDate) {
+    return new LoanRequestBuilder(this.id, this.itemId, this.userId,
+      this.loanDate, this.status, returnDate);
   }
 
   public LoanRequestBuilder withItem(IndividualResource item) {
     return new LoanRequestBuilder(this.id, item.getId(), this.userId,
-      this.loanDate, this.status);
+      this.loanDate, this.status, this.returnDate);
   }
+
+
 }

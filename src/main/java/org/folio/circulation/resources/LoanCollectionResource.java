@@ -65,15 +65,9 @@ public class LoanCollectionResource {
 
     loansStorageClient.post(loan, response -> {
       if(response.getStatusCode() == 201) {
-        updateItemWhenLoanChanges(itemId, "Checked Out",
-          itemsStorageClient, routingContext.response(), responseFromUpdate -> {
-            if(responseFromUpdate.getStatusCode() == 204) {
-              JsonResponse.created(routingContext.response(), loan);
-            }
-            else {
-              ForwardResponse.forward(routingContext.response(),
-                responseFromUpdate);
-            }
+        updateItemWhenLoanChanges(itemId, itemStatusFrom(loan),
+          itemsStorageClient, routingContext.response(), item -> {
+            JsonResponse.created(routingContext.response(), loan);
           });
       }
       else {
@@ -107,14 +101,8 @@ public class LoanCollectionResource {
     loansStorageClient.put(id, routingContext.getBodyAsJson(), response -> {
       if(response.getStatusCode() == 204) {
         updateItemWhenLoanChanges(itemId, itemStatusFrom(loan),
-          itemsStorageClient, routingContext.response(), responseFromUpdate -> {
-            if(responseFromUpdate.getStatusCode() == 204) {
-              SuccessResponse.noContent(routingContext.response());
-            }
-            else {
-              ForwardResponse.forward(routingContext.response(),
-                responseFromUpdate);
-            }
+          itemsStorageClient, routingContext.response(), item -> {
+            SuccessResponse.noContent(routingContext.response());
           });
       }
       else {
@@ -339,29 +327,45 @@ public class LoanCollectionResource {
   }
 
   private void updateItemWhenLoanChanges(
-    String itemId, String newItemStatus, CollectionResourceClient itemsStorageClient,
+    String itemId,
+    String newItemStatus,
+    CollectionResourceClient itemsStorageClient,
     HttpServerResponse responseToClient,
-    Consumer<Response> onUpdated) {
+    Consumer<JsonObject> onSuccess) {
 
     itemsStorageClient.get(itemId, getItemResponse -> {
       if(getItemResponse.getStatusCode() == 200) {
-
         JsonObject item = getItemResponse.getJson();
-        item.put("status", new JsonObject().put("name", newItemStatus));
 
-        itemsStorageClient.put(itemId,
-          item, putItemResponse -> {
-            onUpdated.accept(putItemResponse);
-          });
-      }
-      else if(getItemResponse.getStatusCode() == 404) {
-        ServerErrorResponse.internalError(responseToClient,
-          "Failed to handle updating an item which does not exist");
-      }
-      else {
-        ForwardResponse.forward(responseToClient, getItemResponse);
-      }
-    });
+          if(itemStatusAlreadyMatches(item, newItemStatus)) {
+            onSuccess.accept(item);
+          }
+          else {
+            item.put("status", new JsonObject().put("name", newItemStatus));
+
+            itemsStorageClient.put(itemId,
+              item, putItemResponse -> {
+                if(putItemResponse.getStatusCode() == 204) {
+                  onSuccess.accept(item);
+                }
+                else {
+                  ForwardResponse.forward(responseToClient, putItemResponse);
+                }
+              });
+          }
+        }
+        else if(getItemResponse.getStatusCode() == 404) {
+          ServerErrorResponse.internalError(responseToClient,
+            "Failed to handle updating an item which does not exist");
+        }
+        else {
+          ForwardResponse.forward(responseToClient, getItemResponse);
+        }
+      });
+  }
+
+  private boolean itemStatusAlreadyMatches(JsonObject item, String newItemStatus) {
+    return item.getJsonObject("status").getString("name") == newItemStatus;
   }
 
   private String itemStatusFrom(JsonObject loan) {

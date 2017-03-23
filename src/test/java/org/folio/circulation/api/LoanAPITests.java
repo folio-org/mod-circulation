@@ -93,6 +93,50 @@ public class LoanAPITests {
   }
 
   @Test
+  public void creatingAReturnedLoanDoesNotChangeItemStatus()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException,
+    UnsupportedEncodingException {
+
+    UUID id = UUID.randomUUID();
+    UUID itemId = createItem(ItemRequestExamples.smallAngryPlanet()).getId();
+    UUID userId = UUID.randomUUID();
+
+    IndividualResource response = createLoan(new LoanRequestBuilder()
+      .withId(id)
+      .withUserId(userId)
+      .withItemId(itemId)
+      .withLoanDate(new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC))
+      .withReturnDate(new DateTime(2017, 3, 15, 11, 14, 36, DateTimeZone.UTC))
+      .withStatus("Closed")
+      .create());
+
+    JsonObject loan = response.getJson();
+
+    assertThat("id does not match",
+      loan.getString("id"), is(id.toString()));
+
+    assertThat("user id does not match",
+      loan.getString("userId"), is(userId.toString()));
+
+    assertThat("item id does not match",
+      loan.getString("itemId"), is(itemId.toString()));
+
+    assertThat("loan date does not match",
+      loan.getString("loanDate"), is("2017-02-27T10:23:43.000Z"));
+
+    assertThat("status is not open",
+      loan.getJsonObject("status").getString("name"), is("Closed"));
+
+    JsonObject item = getItemById(itemId).getJson();
+
+    assertThat("item status is not available",
+      item.getJsonObject("status").getString("name"), is("Available"));
+  }
+
+  @Test
   public void canGetALoanById()
     throws MalformedURLException,
     InterruptedException,
