@@ -65,8 +65,8 @@ public class LoanCollectionResource {
 
     loansStorageClient.post(loan, response -> {
       if(response.getStatusCode() == 201) {
-        updateItemWhenLoanChanges(itemId, "Checked Out", itemsStorageClient,
-          routingContext.response(), responseFromUpdate -> {
+        updateItemWhenLoanChanges(itemId, "Checked Out",
+          itemsStorageClient, routingContext.response(), responseFromUpdate -> {
             if(responseFromUpdate.getStatusCode() == 204) {
               JsonResponse.created(routingContext.response(), loan);
             }
@@ -106,7 +106,7 @@ public class LoanCollectionResource {
 
     loansStorageClient.put(id, routingContext.getBodyAsJson(), response -> {
       if(response.getStatusCode() == 204) {
-        updateItemWhenLoanChanges(itemId, "Available",
+        updateItemWhenLoanChanges(itemId, itemStatusFrom(loan),
           itemsStorageClient, routingContext.response(), responseFromUpdate -> {
             if(responseFromUpdate.getStatusCode() == 204) {
               SuccessResponse.noContent(routingContext.response());
@@ -345,8 +345,8 @@ public class LoanCollectionResource {
 
     itemsStorageClient.get(itemId, getItemResponse -> {
       if(getItemResponse.getStatusCode() == 200) {
-        JsonObject item = getItemResponse.getJson();
 
+        JsonObject item = getItemResponse.getJson();
         item.put("status", new JsonObject().put("name", newItemStatus));
 
         itemsStorageClient.put(itemId,
@@ -362,5 +362,19 @@ public class LoanCollectionResource {
         ForwardResponse.forward(responseToClient, getItemResponse);
       }
     });
+  }
+
+  private String itemStatusFrom(JsonObject loan) {
+    switch(loan.getJsonObject("status").getString("name")) {
+      case "Open":
+        return "Checked Out";
+
+      case "Closed":
+        return "Available";
+
+      default:
+        //TODO: Need to add validation to stop this situation
+        return "";
+    }
   }
 }

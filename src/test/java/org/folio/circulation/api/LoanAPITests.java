@@ -4,7 +4,10 @@ import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.support.ItemRequestExamples;
 import org.folio.circulation.api.support.LoanRequestBuilder;
 import org.folio.circulation.support.JsonArrayHelper;
-import org.folio.circulation.support.http.client.*;
+import org.folio.circulation.support.http.client.HttpClient;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.ISODateTimeFormat;
@@ -236,6 +239,45 @@ public class LoanAPITests {
 
     assertThat("item status is not available",
       item.getJsonObject("status").getString("name"), is("Available"));
+  }
+
+  @Test
+  public void updatingACurrentLoanDoesNotChangeItemStatus()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException,
+    UnsupportedEncodingException {
+
+    DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, 232, DateTimeZone.UTC);
+
+    UUID itemId = createItem(ItemRequestExamples.nod()).getId();
+
+    IndividualResource loan = createLoan(new LoanRequestBuilder()
+      .withLoanDate(loanDate)
+      .withItemId(itemId)
+      .create());
+
+    JsonObject item = getItemById(itemId).getJson();
+
+    assertThat("item status is not checked out",
+      item.getJsonObject("status").getString("name"), is("Checked Out"));
+
+    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
+
+    client.put(loansUrl(String.format("/%s", loan.getId())),
+      loan.getJson().copy(), APITestSuite.TENANT_ID,
+      ResponseHandler.any(putCompleted));
+
+    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Failed to update loan: %s", putResponse.getBody()),
+      putResponse.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
+
+    JsonObject changedItem = getItemById(itemId).getJson();
+
+    assertThat("item status is not checked out",
+      changedItem.getJsonObject("status").getString("name"), is("Checked Out"));
   }
 
   @Test
