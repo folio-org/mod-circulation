@@ -756,7 +756,7 @@ public class LoanAPITests {
     ExecutionException,
     TimeoutException {
 
-    deleteAll(loansUrl());
+    APITestSuite.deleteAll(loansUrl());
   }
 
   private void deleteAllItems()
@@ -765,23 +765,7 @@ public class LoanAPITests {
     ExecutionException,
     TimeoutException {
 
-    deleteAll(itemsUrl());
-  }
-
-  private void deleteAll(URL collectionResourceUrl)
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    CompletableFuture<Response> deleteAllFinished = new CompletableFuture<>();
-
-    client.delete(collectionResourceUrl, APITestSuite.TENANT_ID,
-      ResponseHandler.any(deleteAllFinished));
-
-    Response response = deleteAllFinished.get(5, TimeUnit.SECONDS);
-
-    assertThat("WARNING!!!!! Delete all resources preparation failed",
-      response.getStatusCode(), is(204));
+    APITestSuite.deleteAll(itemsUrl());
   }
 
   private void loanHasExpectedProperties(JsonObject loan) {

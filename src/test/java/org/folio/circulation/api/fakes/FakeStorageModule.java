@@ -21,12 +21,18 @@ public class FakeStorageModule extends AbstractVerticle {
   private final String rootPath;
 
   private final Map<String, Map<String, JsonObject>> storedResourcesByTenant;
+  private final String collectionPropertyName;
 
-  public FakeStorageModule(String rootPath, String tenantId) {
+  public FakeStorageModule(
+    String rootPath,
+    String collectionPropertyName,
+    String tenantId) {
+
     this.rootPath = rootPath;
 
     storedResourcesByTenant = new HashMap<>();
     storedResourcesByTenant.put(tenantId, new HashMap<>());
+    this.collectionPropertyName = collectionPropertyName;
   }
 
   public void register(Router router) {
@@ -53,10 +59,13 @@ public class FakeStorageModule extends AbstractVerticle {
 
     JsonObject body = getJsonFromBody(routingContext);
 
-    getResourcesForTenant(context).put(body.getString("id"), body);
+    String id = body.getString("id", UUID.randomUUID().toString());
 
-    JsonResponse.created(routingContext.response(),
-      routingContext.getBodyAsJson());
+    body.put("id", id);
+
+    getResourcesForTenant(context).put(id, body);
+
+    JsonResponse.created(routingContext.response(), body);
   }
 
   private void replace(RoutingContext routingContext) {
@@ -116,7 +125,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
     JsonObject result = new JsonObject();
 
-    result.put("loans", new JsonArray(pagedItems));
+    result.put(collectionPropertyName, new JsonArray(pagedItems));
     result.put("totalRecords", filteredItems.size());
 
     JsonResponse.success(routingContext.response(), result);

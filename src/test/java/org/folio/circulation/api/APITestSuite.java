@@ -1,10 +1,14 @@
 package org.folio.circulation.api;
 
+import io.vertx.core.json.JsonObject;
 import org.folio.circulation.CirculationVerticle;
 import org.folio.circulation.api.fakes.FakeOkapi;
 import org.folio.circulation.api.support.URLHelper;
+import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.VertxAssistant;
 import org.folio.circulation.support.http.client.HttpClient;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
@@ -13,11 +17,15 @@ import org.junit.runners.Suite;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 
 @RunWith(Suite.class)
 
@@ -32,8 +40,8 @@ public class APITestSuite {
   private static int port;
   private static String circulationModuleDeploymentId;
   private static String fakeOkapiDeploymentId;
-
   private static Boolean useOkapiForStorage;
+  private static String bookMaterialTypeId;
 
   public static URL circulationModuleUrl(String path) {
     try {
@@ -59,9 +67,34 @@ public class APITestSuite {
     return new HttpClient(vertxAssistant, okapiUrl(), exceptionHandler);
   }
 
+  public static void deleteAll(URL collectionResourceUrl)
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    HttpClient client = createHttpClient(exception -> {
+      System.out.println(
+        String.format("Request to delete all failed: %s",
+          exception.toString()));
+    });
+
+    CompletableFuture<Response> deleteAllFinished = new CompletableFuture<>();
+
+    client.delete(collectionResourceUrl, TENANT_ID,
+      ResponseHandler.any(deleteAllFinished));
+
+    Response response = deleteAllFinished.get(5, TimeUnit.SECONDS);
+
+    assertThat("WARNING!!!!! Delete all resources preparation failed",
+      response.getStatusCode(), is(204));
+  }
+
   @BeforeClass
   public static void before()
-    throws Exception {
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
 
     useOkapiForStorage = Boolean.parseBoolean(
       System.getProperty("okapi.useForStorage", "false"));
@@ -92,12 +125,19 @@ public class APITestSuite {
 
     fakeOkapiDeploymentId = fakeStorageModuleDeployed.get(10, TimeUnit.SECONDS);
     circulationModuleDeploymentId = circulationModuleDeployed.get(10, TimeUnit.SECONDS);
+
+    createMaterialTypes();
   }
 
   @AfterClass
   public static void after()
-    throws InterruptedException, ExecutionException,
-    TimeoutException, MalformedURLException {
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    deleteAll(viaOkapiModuleUrl("/item-storage/items"));
+    deleteMaterialTypes();
 
     CompletableFuture<Void> circulationModuleUndeployed =
       vertxAssistant.undeployVerticle(circulationModuleDeploymentId);
@@ -134,5 +174,77 @@ public class APITestSuite {
     catch(MalformedURLException ex) {
       return null;
     }
+  }
+
+  private static void createMaterialTypes()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    HttpClient client = APITestSuite.createHttpClient(exception -> {
+      System.out.println(
+        String.format("Request to material type storage module failed: %s",
+          exception.toString()));
+    });
+
+    URL materialTypesUrl = new URL(okapiUrl() + "/material-type");
+
+    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
+
+    client.get(materialTypesUrl, TENANT_ID, ResponseHandler.any(getCompleted));
+
+    Response getResponse = getCompleted.get(5 , TimeUnit.SECONDS);
+
+    assertThat("Material Type API Unavaiable",
+      getResponse.getStatusCode(), is(200));
+
+    List<JsonObject> existingMaterialTypes = JsonArrayHelper.toList(
+      getResponse.getJson().getJsonArray("mtypes"));
+
+    if(existingMaterialTypes.stream()
+      .noneMatch(materialType -> materialType.getString("name") == "Book")) {
+
+      CompletableFuture<Response> createCompleted = new CompletableFuture<>();
+
+      JsonObject bookMaterialType = new JsonObject().put("name", "Book");
+
+      client.post(materialTypesUrl, bookMaterialType, TENANT_ID,
+        ResponseHandler.json(createCompleted));
+
+      Response creationResponse = createCompleted.get(5, TimeUnit.SECONDS);
+
+      assertThat("Creation of Book material type resource failed",
+        creationResponse.getStatusCode(), is(201));
+
+      bookMaterialTypeId = creationResponse.getJson().getString("id");
+    }
+  }
+
+  private static void deleteMaterialTypes()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    HttpClient client = APITestSuite.createHttpClient(exception -> {
+      System.out.println(
+        String.format("Request to material type storage module failed: %s",
+          exception.toString()));
+    });
+
+    String materialTypeUrl = okapiUrl()
+      + String.format("/material-type/%s", bookMaterialTypeId);
+
+    CompletableFuture<Response> deleteCompleted = new CompletableFuture<>();
+
+    client.delete(materialTypeUrl, TENANT_ID, ResponseHandler.any(deleteCompleted));
+
+    Response deletionResponse = deleteCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format(
+        "WARNING!!!!! Deletion of Book material type resource failed: %s\n %s",
+        bookMaterialTypeId, deletionResponse.getBody()),
+      deletionResponse.getStatusCode(), is(204));
   }
 }

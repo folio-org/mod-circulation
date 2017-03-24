@@ -40,6 +40,8 @@ curl -X DELETE -D - -w '\n' "${okapi_proxy_address}/_/proxy/tenants/${tenant_id}
 echo "Deleting ${tenant_id}"
 ./delete-tenant.sh ${tenant_id}
 
+echo "Need to manually remove test_tenant storage as Tenant API no longer invoked on deactivation"
+
 if [ $test_results != 0 ]; then
     echo '--------------------------------------'
     echo 'BUILD FAILED'

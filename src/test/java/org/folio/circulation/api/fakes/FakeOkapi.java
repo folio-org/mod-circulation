@@ -25,8 +25,9 @@ public class FakeOkapi extends AbstractVerticle {
 
     this.server = vertx.createHttpServer();
 
-    new FakeStorageModule("/loan-storage/loans", APITestSuite.TENANT_ID).register(router);
-    new FakeStorageModule("/item-storage/items", APITestSuite.TENANT_ID).register(router);
+    RegisterFakeLoansStorageModule(router);
+    registerFakeItemsModule(router);
+    registerFakeMaterialTypesModule(router);
 
     server.requestHandler(router::accept)
       .listen(PORT_TO_USE, result -> {
@@ -56,4 +57,24 @@ public class FakeOkapi extends AbstractVerticle {
     }
   }
 
+  private void registerFakeMaterialTypesModule(Router router) {
+    registerFakeModule(router, "/material-type", "mtypes");
+  }
+
+  private void registerFakeItemsModule(Router router) {
+    registerFakeModule(router, "/item-storage/items", "items");
+  }
+
+  private void RegisterFakeLoansStorageModule(Router router) {
+    registerFakeModule(router, "/loan-storage/loans", "loans");
+  }
+
+  private void registerFakeModule(
+    Router router,
+    String rootPath,
+    String collectionPropertyName) {
+
+    new FakeStorageModule(rootPath, collectionPropertyName,
+      APITestSuite.TENANT_ID).register(router);
+  }
 }
