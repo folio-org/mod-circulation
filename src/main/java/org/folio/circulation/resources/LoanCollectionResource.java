@@ -63,22 +63,22 @@ public class LoanCollectionResource {
     JsonObject loan = routingContext.getBodyAsJson();
     String itemId = loan.getString("itemId");
 
-    loansStorageClient.post(loan, response -> {
-      if(response.getStatusCode() == 201) {
-        JsonObject createdLoan = response.getJson();
+    updateItemWhenLoanChanges(itemId, itemStatusFrom(loan),
+      itemsStorageClient, routingContext.response(), item -> {
+        loansStorageClient.post(loan, response -> {
+          if(response.getStatusCode() == 201) {
+            JsonObject createdLoan = response.getJson();
 
-        updateItemWhenLoanChanges(itemId, itemStatusFrom(createdLoan),
-          itemsStorageClient, routingContext.response(), item -> {
-            createdLoan.put("item", new JsonObject()
-              .put("title", item.getString("title"))
-              .put("barcode", item.getString("barcode")));
+        createdLoan.put("item", new JsonObject()
+          .put("title", item.getString("title"))
+          .put("barcode", item.getString("barcode")));
 
-            JsonResponse.created(routingContext.response(), createdLoan);
-          });
+        JsonResponse.created(routingContext.response(), createdLoan);
       }
       else {
         ForwardResponse.forward(routingContext.response(), response);
       }
+      });
     });
   }
 
@@ -104,17 +104,17 @@ public class LoanCollectionResource {
     JsonObject loan = routingContext.getBodyAsJson();
     String itemId = loan.getString("itemId");
 
-    loansStorageClient.put(id, routingContext.getBodyAsJson(), response -> {
-      if(response.getStatusCode() == 204) {
-        updateItemWhenLoanChanges(itemId, itemStatusFrom(loan),
-          itemsStorageClient, routingContext.response(), item -> {
+    updateItemWhenLoanChanges(itemId, itemStatusFrom(loan),
+      itemsStorageClient, routingContext.response(), item -> {
+        loansStorageClient.put(id, routingContext.getBodyAsJson(), response -> {
+          if(response.getStatusCode() == 204) {
             SuccessResponse.noContent(routingContext.response());
-          });
-      }
-      else {
-        ForwardResponse.forward(routingContext.response(), response);
-      }
-    });
+          }
+          else {
+            ForwardResponse.forward(routingContext.response(), response);
+          }
+        });
+      });
   }
 
   private void get(RoutingContext routingContext) {
