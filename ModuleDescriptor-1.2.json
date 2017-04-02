@@ -1,0 +1,41 @@
+{
+  "id": "circulation",
+  "name": "Circulation Module",
+  "provides": [
+    {
+      "id": "circulation",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": ["GET"],
+          "pathPattern": "/circulation/loans"
+        }, {
+          "methods": ["POST"],
+          "pathPattern": "/circulation/loans"
+        }, {
+          "methods": ["DELETE"],
+          "pathPattern": "/circulation/loans"
+        }, {
+          "methods": ["GET"],
+          "pathPattern": "/circulation/loans/{id}"
+        }, {
+          "methods": ["PUT"],
+          "pathPattern": "/circulation/loans/{id}"
+        }, {
+          "methods": ["DELETE"],
+          "pathPattern": "/circulation/loans/{id}"
+        }
+      ]
+    }
+  ],
+  "requires": [
+    {
+      "id": "loan-storage",
+      "version": "0.1"
+    },
+    {
+      "id": "item-storage",
+      "version": "1.3.1"
+    }
+  ]
+}
