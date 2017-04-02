@@ -2,6 +2,14 @@ apply plugin: 'java'
 apply plugin: 'application'
 
 mainClassName = "org.folio.circulation.Launcher"
+version = "0.1"
+
+ext.sharedManifest = manifest {
+  attributes(
+    "Main-Class": mainClassName,
+    "Implementation-Title": "circulation",
+    "Implementation-Version": version)
+}
 
 repositories {
   mavenCentral()
@@ -41,14 +49,14 @@ task testApiViaOkapi(type: Test) {
 }
 
 jar {
-  manifest {
-    attributes 'Main-Class': mainClassName
+  manifest = project.manifest {
+    from sharedManifest
   }
 }
 
 task fatJar(type: Jar) {
-  manifest {
-    attributes 'Main-Class': mainClassName
+  manifest = project.manifest {
+    from sharedManifest
   }
   from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
   with jar
