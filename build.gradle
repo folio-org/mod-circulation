@@ -58,6 +58,7 @@ task fatJar(type: Jar) {
   manifest = project.manifest {
     from sharedManifest
   }
+  archiveName 'mod-circulation.jar'
   from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
   with jar
 }
