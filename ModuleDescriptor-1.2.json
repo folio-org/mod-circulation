@@ -8,22 +8,28 @@
       "handlers": [
         {
           "methods": ["GET"],
-          "pathPattern": "/circulation/loans"
+          "pathPattern": "/circulation/loans",
+          "modulePermissions": ["loan-storage.loans.collection.get"]
         }, {
           "methods": ["POST"],
-          "pathPattern": "/circulation/loans"
+          "pathPattern": "/circulation/loans",
+          "modulePermissions": ["loan-storage.loans.item.post"]
         }, {
           "methods": ["DELETE"],
-          "pathPattern": "/circulation/loans"
+          "pathPattern": "/circulation/loans",
+          "modulePermissions": ["loan-storage.loans.collection.delete"]
         }, {
           "methods": ["GET"],
-          "pathPattern": "/circulation/loans/{id}"
+          "pathPattern": "/circulation/loans/{id}",
+          "modulePermissions": ["loan-storage.loans.item.get"]
         }, {
           "methods": ["PUT"],
-          "pathPattern": "/circulation/loans/{id}"
+          "pathPattern": "/circulation/loans/{id}",
+          "modulePermissions": ["loan-storage.loans.item.put"]
         }, {
           "methods": ["DELETE"],
-          "pathPattern": "/circulation/loans/{id}"
+          "pathPattern": "/circulation/loans/{id}",
+          "modulePermissions": ["loan-storage.loans.item.delete"]
         }
       ]
     }
