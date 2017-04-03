@@ -67,7 +67,7 @@ public class APITestSuite {
 
     return new OkapiHttpClient(
       vertxAssistant.createUsingVertx(vertx -> vertx.createHttpClient()),
-      okapiUrl(), TENANT_ID, exceptionHandler);
+      okapiUrl(), TENANT_ID, TOKEN, exceptionHandler);
   }
 
   public static void deleteAll(URL collectionResourceUrl)

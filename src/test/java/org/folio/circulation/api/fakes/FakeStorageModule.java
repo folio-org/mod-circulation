@@ -36,6 +36,9 @@ public class FakeStorageModule extends AbstractVerticle {
   }
 
   public void register(Router router) {
+
+    router.route().handler(this::checkTokenHeader);
+
     router.post(rootPath + "*").handler(BodyHandler.create());
     router.put(rootPath + "*").handler(BodyHandler.create());
 
@@ -218,5 +221,16 @@ public class FakeStorageModule extends AbstractVerticle {
         }
       }
     };
+  }
+
+  private void checkTokenHeader(RoutingContext routingContext) {
+    WebContext context = new WebContext(routingContext);
+
+    if(context.getOkapiToken() == null || context.getOkapiToken() == "") {
+      ClientErrorResponse.forbidden(routingContext.response());
+    }
+    else {
+      routingContext.next();
+    }
   }
 }

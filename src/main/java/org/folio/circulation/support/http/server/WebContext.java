@@ -16,6 +16,10 @@ public class WebContext {
     return getHeader("X-Okapi-Tenant", "");
   }
 
+  public String getOkapiToken() {
+    return getHeader("X-Okapi-Token", "");
+  }
+
   public String getOkapiLocation() {
     return getHeader("X-Okapi-Url", "");
   }
