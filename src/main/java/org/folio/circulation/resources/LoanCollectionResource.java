@@ -9,7 +9,7 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.JsonArrayHelper;
-import org.folio.circulation.support.http.client.HttpClient;
+import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.*;
 
@@ -49,7 +49,7 @@ public class LoanCollectionResource {
     CollectionResourceClient itemsStorageClient;
 
     try {
-      HttpClient client = createHttpClient(routingContext, context);
+      OkapiHttpClient client = createHttpClient(routingContext, context);
       loansStorageClient = createLoansStorageClient(client, context);
       itemsStorageClient = createItemsStorageClient(client, context);
     }
@@ -88,7 +88,7 @@ public class LoanCollectionResource {
     CollectionResourceClient itemsStorageClient;
 
     try {
-      HttpClient client = createHttpClient(routingContext, context);
+      OkapiHttpClient client = createHttpClient(routingContext, context);
       loansStorageClient = createLoansStorageClient(client, context);
       itemsStorageClient = createItemsStorageClient(client, context);
     }
@@ -123,7 +123,7 @@ public class LoanCollectionResource {
     CollectionResourceClient itemsStorageClient;
 
     try {
-      HttpClient client = createHttpClient(routingContext, context);
+      OkapiHttpClient client = createHttpClient(routingContext, context);
       loansStorageClient = createLoansStorageClient(client, context);
       itemsStorageClient = createItemsStorageClient(client, context);
     }
@@ -174,7 +174,7 @@ public class LoanCollectionResource {
     CollectionResourceClient loansStorageClient;
 
     try {
-      HttpClient client = createHttpClient(routingContext, context);
+      OkapiHttpClient client = createHttpClient(routingContext, context);
       loansStorageClient = createLoansStorageClient(client, context);
     }
     catch (MalformedURLException e) {
@@ -202,7 +202,7 @@ public class LoanCollectionResource {
     CollectionResourceClient itemsStorageClient;
 
     try {
-      HttpClient client = createHttpClient(routingContext, context);
+      OkapiHttpClient client = createHttpClient(routingContext, context);
       loansStorageClient = createLoansStorageClient(client, context);
       itemsStorageClient = createItemsStorageClient(client, context);
     }
@@ -271,7 +271,7 @@ public class LoanCollectionResource {
     CollectionResourceClient loansStorageClient;
 
     try {
-      HttpClient client = createHttpClient(routingContext, context);
+      OkapiHttpClient client = createHttpClient(routingContext, context);
       loansStorageClient = createLoansStorageClient(client, context);
     }
     catch (MalformedURLException e) {
@@ -291,11 +291,11 @@ public class LoanCollectionResource {
     });
   }
 
-  private HttpClient createHttpClient(RoutingContext routingContext,
-                                      WebContext context)
+  private OkapiHttpClient createHttpClient(RoutingContext routingContext,
+                                           WebContext context)
     throws MalformedURLException {
 
-    return new HttpClient(routingContext.vertx(),
+    return new OkapiHttpClient(routingContext.vertx().createHttpClient(),
       new URL(context.getOkapiLocation()),
       exception -> {
         ServerErrorResponse.internalError(routingContext.response(),
@@ -305,7 +305,7 @@ public class LoanCollectionResource {
   }
 
   private CollectionResourceClient createLoansStorageClient(
-    HttpClient client,
+    OkapiHttpClient client,
     WebContext context)
     throws MalformedURLException {
 
@@ -319,7 +319,7 @@ public class LoanCollectionResource {
   }
 
   private CollectionResourceClient createItemsStorageClient(
-    HttpClient client,
+    OkapiHttpClient client,
     WebContext context)
     throws MalformedURLException {
 

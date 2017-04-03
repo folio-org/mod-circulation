@@ -4,7 +4,7 @@ import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.support.ItemRequestExamples;
 import org.folio.circulation.api.support.LoanRequestBuilder;
 import org.folio.circulation.support.JsonArrayHelper;
-import org.folio.circulation.support.http.client.HttpClient;
+import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
@@ -32,7 +32,7 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class LoanAPITests {
 
-  HttpClient client = APITestSuite.createHttpClient(exception -> {
+  OkapiHttpClient client = APITestSuite.createClient(exception -> {
     System.out.println(
       String.format("Request to circulation module failed: %s",
         exception.toString()));

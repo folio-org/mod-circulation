@@ -6,7 +6,7 @@ import org.folio.circulation.api.fakes.FakeOkapi;
 import org.folio.circulation.api.support.URLHelper;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.VertxAssistant;
-import org.folio.circulation.support.http.client.HttpClient;
+import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
 import org.junit.AfterClass;
@@ -35,6 +35,7 @@ import static org.hamcrest.core.Is.is;
 public class APITestSuite {
 
   public static final String TENANT_ID = "test_tenant";
+  public static final String TOKEN = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsInRlbmFudCI6ImRlbW9fdGVuYW50In0.63jTgc15Kil946OdOGYZur_8xVWEUURANx87FAOQajh9TJbsnCMbjE164JQqNLMWShCyi9FOX0Kr1RFuiHTFAQ";
 
   private static VertxAssistant vertxAssistant;
   private static int port;
@@ -61,10 +62,12 @@ public class APITestSuite {
     }
   }
 
-  public static HttpClient createHttpClient(
+  public static OkapiHttpClient createClient(
     Consumer<Throwable> exceptionHandler) {
 
-    return new HttpClient(vertxAssistant, okapiUrl(), exceptionHandler);
+    return new OkapiHttpClient(
+      vertxAssistant.createUsingVertx(vertx -> vertx.createHttpClient()),
+      okapiUrl(), exceptionHandler);
   }
 
   public static void deleteAll(URL collectionResourceUrl)
@@ -72,7 +75,7 @@ public class APITestSuite {
     ExecutionException,
     TimeoutException {
 
-    HttpClient client = createHttpClient(exception -> {
+    OkapiHttpClient client = createClient(exception -> {
       System.out.println(
         String.format("Request to delete all failed: %s",
           exception.toString()));
@@ -182,7 +185,7 @@ public class APITestSuite {
     ExecutionException,
     TimeoutException {
 
-    HttpClient client = APITestSuite.createHttpClient(exception -> {
+    OkapiHttpClient client = APITestSuite.createClient(exception -> {
       System.out.println(
         String.format("Request to material type storage module failed: %s",
           exception.toString()));
@@ -227,7 +230,7 @@ public class APITestSuite {
     ExecutionException,
     TimeoutException {
 
-    HttpClient client = APITestSuite.createHttpClient(exception -> {
+    OkapiHttpClient client = APITestSuite.createClient(exception -> {
       System.out.println(
         String.format("Request to material type storage module failed: %s",
           exception.toString()));

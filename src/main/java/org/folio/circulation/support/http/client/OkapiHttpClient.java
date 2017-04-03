@@ -2,6 +2,7 @@ package org.folio.circulation.support.http.client;
 
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.json.Json;
@@ -12,28 +13,20 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.function.Consumer;
 
-public class HttpClient {
+public class OkapiHttpClient {
 
   private static final String TENANT_HEADER = "X-Okapi-Tenant";
   private static final String OKAPI_URL_HEADER = "X-Okapi-Url";
 
-  private final io.vertx.core.http.HttpClient client;
+  private final HttpClient client;
   private final URL okapiUrl;
   private final Consumer<Throwable> exceptionHandler;
 
-  public HttpClient(Vertx vertx,
-                    URL okapiUrl,
-                    Consumer<Throwable> exceptionHandler) {
-    this.client = vertx.createHttpClient();
-    this.okapiUrl = okapiUrl;
-    this.exceptionHandler = exceptionHandler;
-  }
+  public OkapiHttpClient(HttpClient httpClient,
+                         URL okapiUrl,
+                         Consumer<Throwable> exceptionHandler) {
 
-  public HttpClient(VertxAssistant vertxAssistant,
-                    URL okapiUrl,
-                    Consumer<Throwable> exceptionHandler) {
-    this.client = vertxAssistant
-      .createUsingVertx(vertx -> vertx.createHttpClient());
+    this.client = httpClient;
     this.okapiUrl = okapiUrl;
     this.exceptionHandler = exceptionHandler;
   }
