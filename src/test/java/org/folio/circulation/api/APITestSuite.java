@@ -67,7 +67,7 @@ public class APITestSuite {
 
     return new OkapiHttpClient(
       vertxAssistant.createUsingVertx(vertx -> vertx.createHttpClient()),
-      okapiUrl(), exceptionHandler);
+      okapiUrl(), TENANT_ID, exceptionHandler);
   }
 
   public static void deleteAll(URL collectionResourceUrl)
@@ -83,7 +83,7 @@ public class APITestSuite {
 
     CompletableFuture<Response> deleteAllFinished = new CompletableFuture<>();
 
-    client.delete(collectionResourceUrl, TENANT_ID,
+    client.delete(collectionResourceUrl,
       ResponseHandler.any(deleteAllFinished));
 
     Response response = deleteAllFinished.get(5, TimeUnit.SECONDS);
@@ -195,7 +195,7 @@ public class APITestSuite {
 
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
-    client.get(materialTypesUrl, TENANT_ID, ResponseHandler.any(getCompleted));
+    client.get(materialTypesUrl, ResponseHandler.any(getCompleted));
 
     Response getResponse = getCompleted.get(5 , TimeUnit.SECONDS);
 
@@ -212,7 +212,7 @@ public class APITestSuite {
 
       JsonObject bookMaterialType = new JsonObject().put("name", "Book");
 
-      client.post(materialTypesUrl, bookMaterialType, TENANT_ID,
+      client.post(materialTypesUrl, bookMaterialType,
         ResponseHandler.json(createCompleted));
 
       Response creationResponse = createCompleted.get(5, TimeUnit.SECONDS);
@@ -241,7 +241,7 @@ public class APITestSuite {
 
     CompletableFuture<Response> deleteCompleted = new CompletableFuture<>();
 
-    client.delete(materialTypeUrl, TENANT_ID, ResponseHandler.any(deleteCompleted));
+    client.delete(materialTypeUrl, ResponseHandler.any(deleteCompleted));
 
     Response deletionResponse = deleteCompleted.get(5, TimeUnit.SECONDS);
 

@@ -28,7 +28,7 @@ public class CollectionResourceClient {
 
     client.post(collectionRoot,
       resourceRepresentation,
-      tenantId, responseConversationHandler(responseHandler));
+      responseConversationHandler(responseHandler));
   }
 
   public void put(String id, Object resourceRepresentation,
@@ -36,22 +36,22 @@ public class CollectionResourceClient {
 
     client.put(String.format(collectionRoot + "/%s", id),
       resourceRepresentation,
-      tenantId, responseConversationHandler(responseHandler));
+      responseConversationHandler(responseHandler));
   }
 
   public void get(String id, Consumer<Response> responseHandler) {
     client.get(String.format(collectionRoot + "/%s", id),
-      tenantId, responseConversationHandler(responseHandler));
+      responseConversationHandler(responseHandler));
   }
 
   public void delete(String id, Consumer<Response> responseHandler) {
     client.delete(String.format(collectionRoot + "/%s", id),
-      tenantId, responseConversationHandler(responseHandler));
+      responseConversationHandler(responseHandler));
   }
 
   public void delete(Consumer<Response> responseHandler) {
     client.delete(collectionRoot,
-      tenantId, responseConversationHandler(responseHandler));
+      responseConversationHandler(responseHandler));
   }
 
   public void getMany(String query, Consumer<Response> responseHandler) {
@@ -61,7 +61,7 @@ public class CollectionResourceClient {
       : collectionRoot.toString();
 
     client.get(url,
-      tenantId, responseConversationHandler(responseHandler));
+      responseConversationHandler(responseHandler));
   }
 
   private boolean isProvided(String query) {

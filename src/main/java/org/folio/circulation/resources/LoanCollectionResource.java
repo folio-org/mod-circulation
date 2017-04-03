@@ -296,12 +296,10 @@ public class LoanCollectionResource {
     throws MalformedURLException {
 
     return new OkapiHttpClient(routingContext.vertx().createHttpClient(),
-      new URL(context.getOkapiLocation()),
-      exception -> {
-        ServerErrorResponse.internalError(routingContext.response(),
-          String.format("Failed to contact storage module: %s",
-            exception.toString()));
-      });
+      new URL(context.getOkapiLocation()), context.getTenantId(),
+      exception -> ServerErrorResponse.internalError(routingContext.response(),
+        String.format("Failed to contact storage module: %s",
+          exception.toString())));
   }
 
   private CollectionResourceClient createLoansStorageClient(

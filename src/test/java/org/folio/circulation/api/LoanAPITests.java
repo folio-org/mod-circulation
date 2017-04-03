@@ -262,7 +262,7 @@ public class LoanAPITests {
     CompletableFuture<Response> putCompleted = new CompletableFuture<>();
 
     client.put(loansUrl(String.format("/%s", loan.getId())), returnedLoan,
-      APITestSuite.TENANT_ID, ResponseHandler.any(putCompleted));
+      ResponseHandler.any(putCompleted));
 
     Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
 
@@ -318,7 +318,7 @@ public class LoanAPITests {
     CompletableFuture<Response> putCompleted = new CompletableFuture<>();
 
     client.put(loansUrl(String.format("/%s", loan.getId())),
-      loan.getJson().copy(), APITestSuite.TENANT_ID,
+      loan.getJson().copy(),
       ResponseHandler.any(putCompleted));
 
     Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
@@ -350,7 +350,7 @@ public class LoanAPITests {
 
     CompletableFuture<Response> pageCompleted = new CompletableFuture<>();
 
-    client.get(loansUrl(), APITestSuite.TENANT_ID,
+    client.get(loansUrl(),
       ResponseHandler.json(pageCompleted));
 
     Response pageResponse = pageCompleted.get(5, TimeUnit.SECONDS);
@@ -401,10 +401,10 @@ public class LoanAPITests {
     CompletableFuture<Response> firstPageCompleted = new CompletableFuture<>();
     CompletableFuture<Response> secondPageCompleted = new CompletableFuture<>();
 
-    client.get(loansUrl() + "?limit=4", APITestSuite.TENANT_ID,
+    client.get(loansUrl() + "?limit=4",
       ResponseHandler.json(firstPageCompleted));
 
-    client.get(loansUrl() + "?limit=4&offset=4", APITestSuite.TENANT_ID,
+    client.get(loansUrl() + "?limit=4&offset=4",
       ResponseHandler.json(secondPageCompleted));
 
     Response firstPageResponse = firstPageCompleted.get(5, TimeUnit.SECONDS);
@@ -489,10 +489,10 @@ public class LoanAPITests {
     CompletableFuture<Response> firstUserSearchCompleted = new CompletableFuture<>();
     CompletableFuture<Response> secondUserSeatchCompleted = new CompletableFuture<>();
 
-    client.get(String.format(queryTemplate, firstUserId), APITestSuite.TENANT_ID,
+    client.get(String.format(queryTemplate, firstUserId),
       ResponseHandler.json(firstUserSearchCompleted));
 
-    client.get(String.format(queryTemplate, secondUserId), APITestSuite.TENANT_ID,
+    client.get(String.format(queryTemplate, secondUserId),
       ResponseHandler.json(secondUserSeatchCompleted));
 
     Response firstPageResponse = firstUserSearchCompleted.get(5, TimeUnit.SECONDS);
@@ -579,11 +579,11 @@ public class LoanAPITests {
 
     client.get(loansUrl(),
       "query=" + URLEncoder.encode(String.format(queryTemplate, userId, "Open"), "UTF-8"),
-      APITestSuite.TENANT_ID, ResponseHandler.json(openSearchComppleted));
+      ResponseHandler.json(openSearchComppleted));
 
     client.get(loansUrl(),
       "query=" + URLEncoder.encode(String.format(queryTemplate, userId, "Closed"), "UTF-8"),
-      APITestSuite.TENANT_ID, ResponseHandler.json(closedSearchCompleted));
+      ResponseHandler.json(closedSearchCompleted));
 
     Response openLoansResponse = openSearchComppleted.get(5, TimeUnit.SECONDS);
     Response closedLoansResponse = closedSearchCompleted.get(5, TimeUnit.SECONDS);
@@ -636,7 +636,7 @@ public class LoanAPITests {
     CompletableFuture<Response> deleteCompleted = new CompletableFuture<>();
 
     client.delete(loansUrl(String.format("/%s", id)),
-      APITestSuite.TENANT_ID, ResponseHandler.any(deleteCompleted));
+      ResponseHandler.any(deleteCompleted));
 
     Response deleteResponse = deleteCompleted.get(5, TimeUnit.SECONDS);
 
@@ -645,7 +645,7 @@ public class LoanAPITests {
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
     client.get(loansUrl(String.format("/%s", id)),
-      APITestSuite.TENANT_ID, ResponseHandler.any(getCompleted));
+      ResponseHandler.any(getCompleted));
 
     Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
 
@@ -663,7 +663,7 @@ public class LoanAPITests {
 
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
-    client.get(getInstanceUrl, APITestSuite.TENANT_ID,
+    client.get(getInstanceUrl,
       ResponseHandler.any(getCompleted));
 
     return getCompleted.get(5, TimeUnit.SECONDS);
@@ -680,7 +680,7 @@ public class LoanAPITests {
 
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
-    client.get(getInstanceUrl, APITestSuite.TENANT_ID,
+    client.get(getInstanceUrl,
       ResponseHandler.any(getCompleted));
 
     return getCompleted.get(5, TimeUnit.SECONDS);
@@ -715,7 +715,7 @@ public class LoanAPITests {
 
     CompletableFuture<Response> createCompleted = new CompletableFuture<>();
 
-    client.post(url, request, APITestSuite.TENANT_ID,
+    client.post(url, request,
       ResponseHandler.json(createCompleted));
 
     Response response = createCompleted.get(5, TimeUnit.SECONDS);
@@ -808,7 +808,7 @@ public class LoanAPITests {
     CompletableFuture<Response> deleteFinished = new CompletableFuture<>();
 
     client.delete(itemsUrl(String.format("/%s", itemId)),
-      APITestSuite.TENANT_ID, ResponseHandler.any(deleteFinished));
+      ResponseHandler.any(deleteFinished));
 
     Response response = deleteFinished.get(5, TimeUnit.SECONDS);
 
