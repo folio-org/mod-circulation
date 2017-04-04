@@ -10,12 +10,19 @@
           "methods": ["GET"],
           "pathPattern": "/circulation/loans",
           "permissionsRequired": ["circulation.loans.collection.get"],
-          "modulePermissions": ["loan-storage.loans.collection.get"]
+          "modulePermissions": [
+            "loan-storage.loans.collection.get",
+            "inventory-storage.items.item.get"
+          ]
         }, {
           "methods": ["POST"],
           "pathPattern": "/circulation/loans",
           "permissionsRequired": ["circulation.loans.item.post"],
-          "modulePermissions": ["loan-storage.loans.item.post"]
+          "modulePermissions": [
+            "loan-storage.loans.item.post",
+            "inventory-storage.items.item.get",
+            "inventory-storage.items.item.put"
+          ]
         }, {
           "methods": ["DELETE"],
           "pathPattern": "/circulation/loans",
@@ -25,12 +32,20 @@
           "methods": ["GET"],
           "pathPattern": "/circulation/loans/{id}",
           "permissionsRequired": ["circulation.loans.item.get"],
-          "modulePermissions": ["loan-storage.loans.item.get"]
+          "modulePermissions": [
+            "loan-storage.loans.item.get",
+            "inventory-storage.items.item.get",
+            "inventory-storage.items.item.put"
+          ]
         }, {
           "methods": ["PUT"],
           "pathPattern": "/circulation/loans/{id}",
           "permissionsRequired": ["circulation.loans.item.put"],
-          "modulePermissions": ["loan-storage.loans.item.put"]
+          "modulePermissions": [
+            "loan-storage.loans.item.put",
+            "inventory-storage.items.item.get",
+            "inventory-storage.items.item.put"
+          ]
         }, {
           "methods": ["DELETE"],
           "pathPattern": "/circulation/loans/{id}",
