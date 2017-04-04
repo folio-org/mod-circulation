@@ -4,7 +4,7 @@
   "provides": [
     {
       "id": "circulation",
-      "version": "0.1",
+      "version": "1.0",
       "routingEntries": [
         {
           "methods": [
@@ -23,7 +23,7 @@
   "requires": [
     {
       "id": "loan-storage",
-      "version": "0.1"
+      "version": "1.0"
     },
     {
       "id": "item-storage",
