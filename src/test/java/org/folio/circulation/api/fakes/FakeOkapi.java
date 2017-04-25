@@ -58,7 +58,7 @@ public class FakeOkapi extends AbstractVerticle {
   }
 
   private void registerFakeMaterialTypesModule(Router router) {
-    registerFakeModule(router, "/material-type", "mtypes");
+    registerFakeModule(router, "/material-types", "mtypes");
   }
 
   private void registerFakeItemsModule(Router router) {

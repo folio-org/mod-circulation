@@ -191,7 +191,7 @@ public class APITestSuite {
           exception.toString()));
     });
 
-    URL materialTypesUrl = new URL(okapiUrl() + "/material-type");
+    URL materialTypesUrl = new URL(okapiUrl() + "/material-types");
 
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
@@ -237,7 +237,7 @@ public class APITestSuite {
     });
 
     String materialTypeUrl = okapiUrl()
-      + String.format("/material-type/%s", bookMaterialTypeId);
+      + String.format("/material-types/%s", bookMaterialTypeId);
 
     CompletableFuture<Response> deleteCompleted = new CompletableFuture<>();
 

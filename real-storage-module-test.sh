@@ -27,7 +27,7 @@ curl -w '\n' -X POST -D - \
      "${okapi_proxy_address}/_/proxy/tenants/${tenant_id}/modules"
 
 echo "Run API tests"
-gradle clean testApiViaOkapi
+gradle clean cleanTest testApiViaOkapi
 
 test_results=$?
 
