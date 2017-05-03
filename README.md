@@ -60,3 +60,9 @@ The test script will create a tenant and activate the module for that tenant.
 ### Checking the RAML and JSON.Schema definitions
 
 run `./lint.sh` to validate the RAML and JSON.Schema descriptions of the API (requires node.js and NPM)
+
+## Additional Information
+
+Other [modules](http://dev.folio.org/source-code/#server-side).
+
+Other FOLIO Developer documentation is at [dev.folio.org](http://dev.folio.org/)
