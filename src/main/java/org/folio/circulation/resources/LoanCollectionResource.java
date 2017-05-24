@@ -104,9 +104,16 @@ public class LoanCollectionResource {
     JsonObject loan = routingContext.getBodyAsJson();
     String itemId = loan.getString("itemId");
 
+    //TODO: Either converge the schema (based upon conversations about sharing
+    // schema and including referenced resources or switch to include properties
+    // rather than exclude properties
+
+    JsonObject storageLoan = loan.copy();
+    storageLoan.remove("item");
+
     updateItemWhenLoanChanges(itemId, itemStatusFrom(loan),
       itemsStorageClient, routingContext.response(), item -> {
-        loansStorageClient.put(id, routingContext.getBodyAsJson(), response -> {
+        loansStorageClient.put(id, storageLoan, response -> {
           if(response.getStatusCode() == 204) {
             SuccessResponse.noContent(routingContext.response());
           }
