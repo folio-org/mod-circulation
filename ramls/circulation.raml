@@ -9,7 +9,7 @@ documentation:
     content: <b>Storage for loans</b>
 
 schemas:
-  - loan: !include schema/loan.json
+  - loan.json: !include schema/loan.json
   - loans: !include schema/loans.json
 
 traits:
@@ -30,7 +30,7 @@ resourceTypes:
         exampleCollection: !include examples/loans.json
         exampleItem: !include examples/loan.json
         schemaCollection: loans
-        schemaItem: loan
+        schemaItem: loan.json
     get:
       is: [
         pageable,
@@ -54,7 +54,7 @@ resourceTypes:
       type:
         collection-item:
           exampleItem: !include examples/loan.json
-          schema: loan
+          schema: loan.json
       get:
         responses:
           501:
