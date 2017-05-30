@@ -100,6 +100,7 @@
       "permissionName": "circulation.all",
       "displayName": "circulation module - all permissions",
       "description": "Entire set of permissions needed to use the circulation module",
+      "visible": true,
       "subPermissions": [
         "circulation.loans.collection.get",
         "circulation.loans.item.get",
