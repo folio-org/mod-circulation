@@ -97,6 +97,11 @@
       "description": "delete individual loan"
     },
     {
+      "permissionName": "module.scan.enabled",
+      "displayName": "scan - enable the scan UI",
+      "description": "enable the scan UI"
+    },
+    {
       "permissionName": "circulation.all",
       "displayName": "circulation module - all permissions",
       "description": "Entire set of permissions needed to use the circulation module",
@@ -107,7 +112,8 @@
         "circulation.loans.item.post",
         "circulation.loans.item.put",
         "circulation.loans.item.delete",
-        "circulation.loans.collection.delete"
+        "circulation.loans.collection.delete",
+        "module.scan.enabled"
       ]
     }
   ]
