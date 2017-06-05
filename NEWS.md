@@ -1,6 +1,8 @@
 ## 3.0.0 Unreleased
 
+* Removes item representation from requests forwarded to storage
 * Requires loan-storage interface version 2.0
+* Requires item-storage interface version 3.0
 
 ## 2.1.0 2017-05-30
 
