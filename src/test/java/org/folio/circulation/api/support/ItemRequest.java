@@ -18,7 +18,11 @@ public class ItemRequest {
     }
 
     itemToCreate.put("title", title);
-    itemToCreate.put("barcode", barcode);
+
+    if(barcode != null) {
+      itemToCreate.put("barcode", barcode);
+    }
+
     itemToCreate.put("status", new JsonObject().put("name", "Available"));
     itemToCreate.put("materialTypeId", APITestSuite.bookMaterialTypeId());
     itemToCreate.put("permanentLoanTypeId", APITestSuite.canCirculateLoanTypeId());

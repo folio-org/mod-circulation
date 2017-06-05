@@ -152,9 +152,7 @@ public class LoanCollectionResource {
           if(itemResponse.getStatusCode() == 200) {
             JsonObject item = new JsonObject(itemResponse.getBody());
 
-            loan.put("item", new JsonObject()
-              .put("title", item.getString("title"))
-              .put("barcode", item.getString("barcode")));
+            loan.put("item", createItemSummary(item));
 
             JsonResponse.success(routingContext.response(),
               loan);
@@ -256,9 +254,9 @@ public class LoanCollectionResource {
               .findFirst();
 
             if(possibleItem.isPresent()) {
-              loan.put("item", new JsonObject()
-                .put("title", possibleItem.get().getString("title"))
-                .put("barcode", possibleItem.get().getString("barcode")));
+              JsonObject item = possibleItem.get();
+
+              loan.put("item", createItemSummary(item));
             }
           });
 
@@ -392,5 +390,16 @@ public class LoanCollectionResource {
         //TODO: Need to add validation to stop this situation
         return "";
     }
+  }
+
+  private JsonObject createItemSummary(JsonObject item) {
+    JsonObject itemSummary = new JsonObject();
+
+    itemSummary.put("title", item.getString("title"));
+
+    if(item.containsKey("barcode")) {
+      itemSummary.put("barcode", item.getString("barcode"));
+    }
+    return itemSummary;
   }
 }
