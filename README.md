@@ -51,7 +51,7 @@ In order to run the tests, using a fake loan storage module, run ./quick-test.sh
 
 #### Using a real loan storage module (via Okapi)
 
-In order to run the tests against a real storage module, run ./real-storage-module-test.sh.
+In order to run the tests against a real storage module, run ./test-storage.sh.
 
 This requires [Okapi](https://github.com/folio-org/okapi) to be running and a loan storage module be registered with it.
 

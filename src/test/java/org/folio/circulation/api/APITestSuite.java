@@ -42,12 +42,19 @@ public class APITestSuite {
   private static String circulationModuleDeploymentId;
   private static String fakeOkapiDeploymentId;
   private static Boolean useOkapiForStorage;
+  private static Boolean useOkapiForInitialRequests;
   private static String bookMaterialTypeId;
   private static String canCirculateLoanTypeId;
 
   public static URL circulationModuleUrl(String path) {
     try {
-      return new URL("http", "localhost", port, path);
+      if(useOkapiForInitialRequests) {
+        return URLHelper.joinPath(okapiUrl(), path);
+      }
+
+      else {
+        return new URL("http", "localhost", port, path);
+      }
     }
     catch(MalformedURLException ex) {
       return null;
@@ -109,7 +116,10 @@ public class APITestSuite {
     MalformedURLException {
 
     useOkapiForStorage = Boolean.parseBoolean(
-      System.getProperty("okapi.useForStorage", "false"));
+      System.getProperty("use.okapi.storage.requests", "false"));
+
+    useOkapiForInitialRequests = Boolean.parseBoolean(
+      System.getProperty("use.okapi.initial.requests", "false"));
 
     vertxAssistant = new VertxAssistant();
 
@@ -210,14 +220,14 @@ public class APITestSuite {
 
     Response getResponse = getCompleted.get(5 , TimeUnit.SECONDS);
 
-    assertThat("Material Type API Unavaiable",
+    assertThat("Material Type API Unavailable",
       getResponse.getStatusCode(), is(200));
 
     List<JsonObject> existingMaterialTypes = JsonArrayHelper.toList(
       getResponse.getJson().getJsonArray("mtypes"));
 
     if(existingMaterialTypes.stream()
-      .noneMatch(materialType -> materialType.getString("name") == "Book")) {
+      .noneMatch(materialType -> materialType.getString("name").equals("Book"))) {
 
       CompletableFuture<Response> createCompleted = new CompletableFuture<>();
 

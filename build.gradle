@@ -43,9 +43,25 @@ test {
 }
 
 task testApiViaOkapi(type: Test) {
-  include '**/APITestSuite.class'
+  include '**/api/APITestSuite.class'
 
-  systemProperty 'okapi.useForStorage', 'true'
+  systemProperty 'use.okapi.initial.requests', 'true'
+  systemProperty 'use.okapi.storage.requests', 'true'
+
+  def okapiAddress = System.getProperty('okapi.address') ?: 'http://localhost:9130'
+
+  systemProperty 'okapi.address', okapiAddress
+}
+
+task testStorageViaOkapi(type: Test) {
+  include '**/api/APITestSuite.class'
+
+  systemProperty 'use.okapi.initial.requests', 'false'
+  systemProperty 'use.okapi.storage.requests', 'true'
+
+  def okapiAddress = System.getProperty('okapi.address') ?: 'http://localhost:9130'
+
+  systemProperty 'okapi.address', okapiAddress
 }
 
 jar {
