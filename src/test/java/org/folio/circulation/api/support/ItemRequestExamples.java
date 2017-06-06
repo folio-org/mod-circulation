@@ -10,7 +10,7 @@ public class ItemRequestExamples {
   }
 
   public static JsonObject smallAngryPlanet(String barcode) {
-    return ItemRequest.create(UUID.randomUUID(), UUID.randomUUID(),
+    return ItemRequest.create(UUID.randomUUID(),
       "The Long Way to a Small, Angry Planet", barcode);
   }
 
@@ -19,8 +19,7 @@ public class ItemRequestExamples {
   }
 
   public static JsonObject nod(String barcode) {
-    return ItemRequest.create(UUID.randomUUID(), UUID.randomUUID(),
-      "Nod", barcode);
+    return ItemRequest.create(UUID.randomUUID(), "Nod", barcode);
   }
 
   public static JsonObject uprooted() {
@@ -28,8 +27,7 @@ public class ItemRequestExamples {
   }
 
   public static JsonObject uprooted(String barcode) {
-    return ItemRequest.create(UUID.randomUUID(), UUID.randomUUID(),
-      "Uprooted", barcode);
+    return ItemRequest.create(UUID.randomUUID(), "Uprooted", barcode);
   }
 
   public static JsonObject temeraire() {
@@ -37,8 +35,7 @@ public class ItemRequestExamples {
   }
 
   public static JsonObject temeraire(String barcode) {
-    return ItemRequest.create(UUID.randomUUID(), UUID.randomUUID(),
-      "Temeraire", barcode);
+    return ItemRequest.create(UUID.randomUUID(), "Temeraire", barcode);
   }
 
   public static JsonObject interestingTimes() {
@@ -46,7 +43,6 @@ public class ItemRequestExamples {
   }
 
   public static JsonObject interestingTimes(String barcode) {
-    return ItemRequest.create(UUID.randomUUID(), UUID.randomUUID(),
-      "Interesting Times", barcode);
+    return ItemRequest.create(UUID.randomUUID(), "Interesting Times", barcode);
   }
 }

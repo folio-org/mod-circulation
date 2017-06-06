@@ -104,9 +104,16 @@ public class LoanCollectionResource {
     JsonObject loan = routingContext.getBodyAsJson();
     String itemId = loan.getString("itemId");
 
+    //TODO: Either converge the schema (based upon conversations about sharing
+    // schema and including referenced resources or switch to include properties
+    // rather than exclude properties
+
+    JsonObject storageLoan = loan.copy();
+    storageLoan.remove("item");
+
     updateItemWhenLoanChanges(itemId, itemStatusFrom(loan),
       itemsStorageClient, routingContext.response(), item -> {
-        loansStorageClient.put(id, routingContext.getBodyAsJson(), response -> {
+        loansStorageClient.put(id, storageLoan, response -> {
           if(response.getStatusCode() == 204) {
             SuccessResponse.noContent(routingContext.response());
           }
@@ -145,9 +152,7 @@ public class LoanCollectionResource {
           if(itemResponse.getStatusCode() == 200) {
             JsonObject item = new JsonObject(itemResponse.getBody());
 
-            loan.put("item", new JsonObject()
-              .put("title", item.getString("title"))
-              .put("barcode", item.getString("barcode")));
+            loan.put("item", createItemSummary(item));
 
             JsonResponse.success(routingContext.response(),
               loan);
@@ -249,9 +254,9 @@ public class LoanCollectionResource {
               .findFirst();
 
             if(possibleItem.isPresent()) {
-              loan.put("item", new JsonObject()
-                .put("title", possibleItem.get().getString("title"))
-                .put("barcode", possibleItem.get().getString("barcode")));
+              JsonObject item = possibleItem.get();
+
+              loan.put("item", createItemSummary(item));
             }
           });
 
@@ -385,5 +390,16 @@ public class LoanCollectionResource {
         //TODO: Need to add validation to stop this situation
         return "";
     }
+  }
+
+  private JsonObject createItemSummary(JsonObject item) {
+    JsonObject itemSummary = new JsonObject();
+
+    itemSummary.put("title", item.getString("title"));
+
+    if(item.containsKey("barcode")) {
+      itemSummary.put("barcode", item.getString("barcode"));
+    }
+    return itemSummary;
   }
 }

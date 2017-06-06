@@ -1,13 +1,13 @@
 package org.folio.circulation.api.support;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.api.APITestSuite;
 
 import java.util.UUID;
 
 public class ItemRequest {
   public static JsonObject create(
     UUID id,
-    UUID instanceId,
     String title,
     String barcode) {
 
@@ -17,11 +17,15 @@ public class ItemRequest {
       itemToCreate.put("id", id.toString());
     }
 
-    itemToCreate.put("instanceId", instanceId.toString());
     itemToCreate.put("title", title);
-    itemToCreate.put("barcode", barcode);
+
+    if(barcode != null) {
+      itemToCreate.put("barcode", barcode);
+    }
+
     itemToCreate.put("status", new JsonObject().put("name", "Available"));
-    itemToCreate.put("materialType", new JsonObject().put("name", "Book"));
+    itemToCreate.put("materialTypeId", APITestSuite.bookMaterialTypeId());
+    itemToCreate.put("permanentLoanTypeId", APITestSuite.canCirculateLoanTypeId());
     itemToCreate.put("location", new JsonObject().put("name", "Main Library"));
 
     return itemToCreate;

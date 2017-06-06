@@ -42,11 +42,19 @@ public class APITestSuite {
   private static String circulationModuleDeploymentId;
   private static String fakeOkapiDeploymentId;
   private static Boolean useOkapiForStorage;
+  private static Boolean useOkapiForInitialRequests;
   private static String bookMaterialTypeId;
+  private static String canCirculateLoanTypeId;
 
   public static URL circulationModuleUrl(String path) {
     try {
-      return new URL("http", "localhost", port, path);
+      if(useOkapiForInitialRequests) {
+        return URLHelper.joinPath(okapiUrl(), path);
+      }
+
+      else {
+        return new URL("http", "localhost", port, path);
+      }
     }
     catch(MalformedURLException ex) {
       return null;
@@ -92,6 +100,14 @@ public class APITestSuite {
       response.getStatusCode(), is(204));
   }
 
+  public static String bookMaterialTypeId() {
+    return bookMaterialTypeId;
+  }
+
+  public static String canCirculateLoanTypeId() {
+    return canCirculateLoanTypeId;
+  }
+
   @BeforeClass
   public static void before()
     throws InterruptedException,
@@ -100,7 +116,10 @@ public class APITestSuite {
     MalformedURLException {
 
     useOkapiForStorage = Boolean.parseBoolean(
-      System.getProperty("okapi.useForStorage", "false"));
+      System.getProperty("use.okapi.storage.requests", "false"));
+
+    useOkapiForInitialRequests = Boolean.parseBoolean(
+      System.getProperty("use.okapi.initial.requests", "false"));
 
     vertxAssistant = new VertxAssistant();
 
@@ -130,6 +149,7 @@ public class APITestSuite {
     circulationModuleDeploymentId = circulationModuleDeployed.get(10, TimeUnit.SECONDS);
 
     createMaterialTypes();
+    createLoanTypes();
   }
 
   @AfterClass
@@ -141,6 +161,7 @@ public class APITestSuite {
 
     deleteAll(viaOkapiModuleUrl("/item-storage/items"));
     deleteMaterialTypes();
+    deleteLoanTypes();
 
     CompletableFuture<Void> circulationModuleUndeployed =
       vertxAssistant.undeployVerticle(circulationModuleDeploymentId);
@@ -199,14 +220,14 @@ public class APITestSuite {
 
     Response getResponse = getCompleted.get(5 , TimeUnit.SECONDS);
 
-    assertThat("Material Type API Unavaiable",
+    assertThat("Material Type API Unavailable",
       getResponse.getStatusCode(), is(200));
 
     List<JsonObject> existingMaterialTypes = JsonArrayHelper.toList(
       getResponse.getJson().getJsonArray("mtypes"));
 
     if(existingMaterialTypes.stream()
-      .noneMatch(materialType -> materialType.getString("name") == "Book")) {
+      .noneMatch(materialType -> materialType.getString("name").equals("Book"))) {
 
       CompletableFuture<Response> createCompleted = new CompletableFuture<>();
 
@@ -221,6 +242,13 @@ public class APITestSuite {
         creationResponse.getStatusCode(), is(201));
 
       bookMaterialTypeId = creationResponse.getJson().getString("id");
+    }
+    else {
+      bookMaterialTypeId = existingMaterialTypes.stream()
+        .filter(loanType -> loanType.getString("name").equals("Book"))
+        .findFirst()
+        .get()
+        .getString("id");
     }
   }
 
@@ -248,6 +276,85 @@ public class APITestSuite {
     assertThat(String.format(
         "WARNING!!!!! Deletion of Book material type resource failed: %s\n %s",
         bookMaterialTypeId, deletionResponse.getBody()),
+      deletionResponse.getStatusCode(), is(204));
+  }
+
+  private static void createLoanTypes()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    OkapiHttpClient client = APITestSuite.createClient(exception -> {
+      System.out.println(
+        String.format("Request to loan type storage module failed: %s",
+          exception.toString()));
+    });
+
+    URL loanTypesUrl = new URL(okapiUrl() + "/loan-types");
+
+    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
+
+    client.get(loanTypesUrl, ResponseHandler.any(getCompleted));
+
+    Response getResponse = getCompleted.get(5 , TimeUnit.SECONDS);
+
+    assertThat("Loan Type API Unavaiable",
+      getResponse.getStatusCode(), is(200));
+
+    List<JsonObject> existingLoanTypes = JsonArrayHelper.toList(
+      getResponse.getJson().getJsonArray("loantypes"));
+
+    if(existingLoanTypes.stream()
+      .noneMatch(loanType -> loanType.getString("name").equals("Can Circulate"))) {
+
+      CompletableFuture<Response> createCompleted = new CompletableFuture<>();
+
+      JsonObject canCirculateLoanType = new JsonObject().put("name", "Can Circulate");
+
+      client.post(loanTypesUrl, canCirculateLoanType,
+        ResponseHandler.json(createCompleted));
+
+      Response creationResponse = createCompleted.get(5, TimeUnit.SECONDS);
+
+      assertThat("Creation of can circulate loan type resource failed",
+        creationResponse.getStatusCode(), is(201));
+
+      canCirculateLoanTypeId = creationResponse.getJson().getString("id");
+    }
+    else {
+      canCirculateLoanTypeId = existingLoanTypes.stream()
+        .filter(loanType -> loanType.getString("name").equals("Can Circulate"))
+        .findFirst()
+        .get()
+        .getString("id");
+    }
+  }
+
+  private static void deleteLoanTypes()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    OkapiHttpClient client = APITestSuite.createClient(exception -> {
+      System.out.println(
+        String.format("Request to loan type storage module failed: %s",
+          exception.toString()));
+    });
+
+    String loanTypeUrl = okapiUrl()
+      + String.format("/loan-types/%s", canCirculateLoanTypeId);
+
+    CompletableFuture<Response> deleteCompleted = new CompletableFuture<>();
+
+    client.delete(loanTypeUrl, ResponseHandler.any(deleteCompleted));
+
+    Response deletionResponse = deleteCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format(
+      "WARNING!!!!! Deletion of can circulate loan type resource failed: %s\n %s",
+      canCirculateLoanTypeId, deletionResponse.getBody()),
       deletionResponse.getStatusCode(), is(204));
   }
 }

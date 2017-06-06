@@ -223,6 +223,39 @@ public class LoanAPITests {
   }
 
   @Test
+  public void barcodeIsNotIncludedWhenItemDoesNotHaveOne()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    UnsupportedEncodingException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = createResource(
+      ItemRequestExamples.smallAngryPlanet(null), itemsUrl(), "item").getId();
+    UUID userId = UUID.randomUUID();
+
+    createLoan(new LoanRequestBuilder()
+      .withId(id)
+      .withUserId(userId)
+      .withItemId(itemId)
+      .withLoanDate(new DateTime(2016, 10, 15, 8, 26, 53, DateTimeZone.UTC))
+      .withStatus("Open")
+      .create());
+
+    Response getResponse = getById(id);
+
+    assertThat(String.format("Failed to get loan: %s", getResponse.getBody()),
+      getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+
+    JsonObject loan = getResponse.getJson();
+
+    assertThat("barcode is not taken from item",
+      loan.getJsonObject("item").containsKey("barcode"), is(false));
+  }
+
+  @Test
   public void loanNotFoundForUnknownId()
     throws MalformedURLException,
     InterruptedException,
