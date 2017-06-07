@@ -61,6 +61,12 @@ The test script will create a tenant and activate the module for that tenant.
 
 run `./lint.sh` to validate the RAML and JSON.Schema descriptions of the API (requires node.js and NPM)
 
+## Notes
+
+### Permissions
+
+The circulation.all permission set currently represents all of the permissions need to use the circulation related parts of the system (e.g. the scan application and it's configuration). This means that it contains additional permissions than those directly needed by the circulation module itself.
+
 ## Additional Information
 
 Other [modules](http://dev.folio.org/source-code/#server-side).

@@ -1,6 +1,7 @@
 ## 3.0.0 Unreleased
 
 * Removes item representation from requests forwarded to storage
+* Circulation.all permission set includes permissions for related UI tasks
 * Requires loan-storage interface version 2.0
 * Requires item-storage interface version 3.0
 

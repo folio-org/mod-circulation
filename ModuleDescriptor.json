@@ -103,8 +103,8 @@
     },
     {
       "permissionName": "circulation.all",
-      "displayName": "circulation module - all permissions",
-      "description": "Entire set of permissions needed to use the circulation module",
+      "displayName": "circulation - all permissions",
+      "description": "Entire set of permissions needed to use the circulation",
       "visible": true,
       "subPermissions": [
         "circulation.loans.collection.get",
@@ -113,7 +113,12 @@
         "circulation.loans.item.put",
         "circulation.loans.item.delete",
         "circulation.loans.collection.delete",
-        "module.scan.enabled"
+        "module.scan.enabled",
+        "circulation-storage.all",
+        "configuration.all",
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.item.put",
+        "users.collection.get"
       ]
     }
   ]
