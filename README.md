@@ -65,7 +65,7 @@ run `./lint.sh` to validate the RAML and JSON.Schema descriptions of the API (re
 
 ### Permissions
 
-The circulation.all permission set currently represents all of the permissions need to use the circulation related parts of the system (e.g. the scan application and it's configuration). This means that it contains additional permissions than those directly needed by the circulation module itself.
+The circulation.all permission set currently represents all of the permissions needed to use the circulation related parts of the system (e.g. the scan application and its configuration). This means that it contains additional permissions than those directly needed by the circulation module itself.
 
 ## Additional Information
 
