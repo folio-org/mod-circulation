@@ -13,14 +13,14 @@ schemas:
   - loans: !include schema/loans.json
 
 traits:
-  - secured: !include ../raml-util/traits/auth.raml
-  - language: !include ../raml-util/traits/language.raml
-  - pageable: !include ../raml-util/traits/pageable.raml
-  - searchable: !include ../raml-util/traits/searchable.raml
+  - secured: !include raml-util/traits/auth.raml
+  - language: !include raml-util/traits/language.raml
+  - pageable: !include raml-util/traits/pageable.raml
+  - searchable: !include raml-util/traits/searchable.raml
 
 resourceTypes:
-  - collection: !include ../raml-util/rtypes/collection.raml
-  - collection-item: !include ../raml-util/rtypes/item-collection.raml
+  - collection: !include raml-util/rtypes/collection.raml
+  - collection-item: !include raml-util/rtypes/item-collection.raml
 
 /circulation:
   /loans:
