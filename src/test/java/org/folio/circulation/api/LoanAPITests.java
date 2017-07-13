@@ -86,6 +86,9 @@ public class LoanAPITests {
     assertThat("status is not open",
       loan.getJsonObject("status").getString("name"), is("Open"));
 
+    assertThat("action is not checkedout",
+      loan.getString("action"), is("checkedout"));
+
     assertThat("title is taken from item",
       loan.getJsonObject("item").getString("title"),
       is("The Long Way to a Small, Angry Planet"));
@@ -135,8 +138,11 @@ public class LoanAPITests {
     assertThat("loan date does not match",
       loan.getString("loanDate"), is("2017-02-27T10:23:43.000Z"));
 
-    assertThat("status is not open",
+    assertThat("status is not closed",
       loan.getJsonObject("status").getString("name"), is("Closed"));
+
+    assertThat("action is not checkedin",
+      loan.getString("action"), is("checkedin"));
 
     JsonObject item = getItemById(itemId).getJson();
 
@@ -185,6 +191,9 @@ public class LoanAPITests {
 
     assertThat("status is not open",
       loan.getJsonObject("status").getString("name"), is("Open"));
+
+    assertThat("action is not checkedout",
+      loan.getString("action"), is("checkedout"));
 
     assertThat("title is taken from item",
       loan.getJsonObject("item").getString("title"),
@@ -289,6 +298,7 @@ public class LoanAPITests {
 
     returnedLoan
       .put("status", new JsonObject().put("name", "Closed"))
+      .put("action", "checkedin")
       .put("returnDate", new DateTime(2017, 3, 5, 14, 23, 41, DateTimeZone.UTC)
         .toString(ISODateTimeFormat.dateTime()));
 
@@ -311,6 +321,9 @@ public class LoanAPITests {
 
     assertThat("status is not closed",
       updatedLoan.getJsonObject("status").getString("name"), is("Closed"));
+
+    assertThat("action is not checkedin",
+      updatedLoan.getString("action"), is("checkedin"));
 
     assertThat("title is taken from item",
       updatedLoan.getJsonObject("item").getString("title"),
@@ -807,6 +820,7 @@ public class LoanAPITests {
     hasProperty("itemId", loan, "loan");
     hasProperty("loanDate", loan, "loan");
     hasProperty("status", loan, "loan");
+    hasProperty("action", loan, "loan");
     hasProperty("item", loan, "loan");
 
     JsonObject item = loan.getJsonObject("item");

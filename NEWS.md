@@ -1,4 +1,7 @@
-## 3.0.1 Unreleased
+## 4.0.0 Unreleased
+
+* Add required action property to loan
+* Requires loan-storage interface version 3.0
 
 ## 3.0.0 2017-06-07
 

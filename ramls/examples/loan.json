@@ -9,5 +9,6 @@
   "loanDate": "2017-03-01T23:11:00-01:00",
   "status": {
     "name": "Open"
-  }
+  },
+  "action": "checkedout"
 }

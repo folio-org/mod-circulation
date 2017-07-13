@@ -4,7 +4,7 @@
   "provides": [
     {
       "id": "circulation",
-      "version": "1.0",
+      "version": "2.0",
       "handlers": [
         {
           "methods": ["GET"],
@@ -58,7 +58,7 @@
   "requires": [
     {
       "id": "loan-storage",
-      "version": "2.0"
+      "version": "3.0"
     },
     {
       "id": "item-storage",

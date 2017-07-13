@@ -8,10 +8,8 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.folio.circulation.support.http.server.ClientErrorResponse;
-import org.folio.circulation.support.http.server.JsonResponse;
-import org.folio.circulation.support.http.server.SuccessResponse;
-import org.folio.circulation.support.http.server.WebContext;
+import org.apache.commons.lang3.tuple.ImmutableTriple;
+import org.folio.circulation.support.http.server.*;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -19,6 +17,7 @@ import java.util.stream.Collectors;
 
 public class FakeStorageModule extends AbstractVerticle {
   private final String rootPath;
+  private final Collection<String> requiredProperties;
 
   private final Map<String, Map<String, JsonObject>> storedResourcesByTenant;
   private final String collectionPropertyName;
@@ -28,11 +27,21 @@ public class FakeStorageModule extends AbstractVerticle {
     String collectionPropertyName,
     String tenantId) {
 
+    this(rootPath, collectionPropertyName, tenantId, new ArrayList<>());
+  }
+
+  public FakeStorageModule(
+    String rootPath,
+    String collectionPropertyName,
+    String tenantId,
+    Collection<String> requiredProperties) {
+
     this.rootPath = rootPath;
+    this.collectionPropertyName = collectionPropertyName;
+    this.requiredProperties = requiredProperties;
 
     storedResourcesByTenant = new HashMap<>();
     storedResourcesByTenant.put(tenantId, new HashMap<>());
-    this.collectionPropertyName = collectionPropertyName;
   }
 
   public void register(Router router) {
@@ -42,18 +51,17 @@ public class FakeStorageModule extends AbstractVerticle {
     router.post(rootPath + "*").handler(BodyHandler.create());
     router.put(rootPath + "*").handler(BodyHandler.create());
 
+    router.post(rootPath).handler(this::checkRequiredProperties);
     router.post(rootPath).handler(this::create);
+
     router.get(rootPath).handler(this::getMany);
     router.delete(rootPath).handler(this::empty);
 
-    router.route(HttpMethod.PUT, rootPath + "/:id")
-      .handler(this::replace);
+    router.put(rootPath + "/:id").handler(this::checkRequiredProperties);
+    router.put(rootPath + "/:id").handler(this::replace);
 
-    router.route(HttpMethod.GET, rootPath + "/:id")
-      .handler(this::get);
-
-    router.route(HttpMethod.DELETE, rootPath + "/:id")
-      .handler(this::delete);
+    router.get(rootPath + "/:id").handler(this::get);
+    router.delete(rootPath + "/:id").handler(this::delete);
   }
 
   private void create(RoutingContext routingContext) {
@@ -80,13 +88,13 @@ public class FakeStorageModule extends AbstractVerticle {
 
     Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
 
-    resourcesForTenant.replace(id, body);
-
     if(resourcesForTenant.containsKey(id)) {
+      resourcesForTenant.replace(id, body);
       SuccessResponse.noContent(routingContext.response());
     }
     else {
-      ClientErrorResponse.notFound(routingContext.response());
+      resourcesForTenant.put(id, body);
+      SuccessResponse.noContent(routingContext.response());
     }
   }
 
@@ -186,38 +194,56 @@ public class FakeStorageModule extends AbstractVerticle {
       return predicates;
     }
 
-    List<ImmutablePair<String, String>> pairs =
+    List<ImmutableTriple<String, String, String>> pairs =
       Arrays.stream(query.split(" and "))
-      .map( pairText -> {
-        String searchField = pairText.split("=")[0];
+        .map( pairText -> {
+          String[] split = pairText.split("=|<>");
+          String searchField = split[0];
 
-        String searchTerm =
-          pairText.replace(String.format("%s=", searchField), "")
+          String searchTerm = split[1]
             .replaceAll("\"", "")
             .replaceAll("\\*", "");
 
-        return new ImmutablePair<>(searchField, searchTerm);
-      })
-      .collect(Collectors.toList());
+          if(pairText.contains("=")) {
+            return new ImmutableTriple<>(searchField, searchTerm, "=");
+          }
+          else {
+            return new ImmutableTriple<>(searchField, searchTerm, "<>");
+          }
+        })
+        .collect(Collectors.toList());
 
     return pairs.stream()
-      .map(pair -> filterByField(pair.getLeft(), pair.getRight()))
+      .map(pair -> filterByField(pair.getLeft(), pair.getMiddle(), pair.getRight()))
       .collect(Collectors.toList());
   }
 
-  private Predicate<JsonObject> filterByField(String field, String term) {
+  private Predicate<JsonObject> filterByField(String field, String term, String operator) {
     return loan -> {
       if (term == null || field == null) {
         return true;
       } else {
+
+        String propertyValue = "";
+
+        //TODO: Should bomb if property does not exist
         if(field.contains(".")) {
           String[] fields = field.split("\\.");
 
-          return loan.getJsonObject(String.format("%s", fields[0]))
-            .getString(String.format("%s", fields[1])).contains(term);
+          propertyValue = loan.getJsonObject(String.format("%s", fields[0]))
+            .getString(String.format("%s", fields[1]));
         }
         else {
-          return loan.getString(String.format("%s", field)).contains(term);
+          propertyValue = loan.getString(String.format("%s", field));
+        }
+
+        switch(operator) {
+          case "=":
+            return propertyValue.contains(term);
+          case "<>":
+            return !propertyValue.contains(term);
+          default:
+            return false;
         }
       }
     };
@@ -231,6 +257,25 @@ public class FakeStorageModule extends AbstractVerticle {
     }
     else {
       routingContext.next();
+    }
+  }
+
+  private void checkRequiredProperties(RoutingContext routingContext) {
+    JsonObject body = getJsonFromBody(routingContext);
+
+    ArrayList<ValidationError> errors = new ArrayList<>();
+
+    requiredProperties.stream().forEach(requiredProperty -> {
+      if(!body.getMap().containsKey(requiredProperty)) {
+        errors.add(new ValidationError(requiredProperty));
+      }
+    });
+
+    if(errors.isEmpty()) {
+      routingContext.next();
+    }
+    else {
+      JsonResponse.unprocessableEntity(routingContext.response(), errors);
     }
   }
 }
