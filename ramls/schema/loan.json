@@ -42,6 +42,7 @@
   "required": [
     "userId",
     "itemId",
-    "loanDate"
+    "loanDate",
+    "action"
   ]
 }
