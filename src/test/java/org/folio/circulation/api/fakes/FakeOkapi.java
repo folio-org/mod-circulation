@@ -4,6 +4,7 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpServer;
 import io.vertx.ext.web.Router;
+
 import org.folio.circulation.api.APITestSuite;
 
 public class FakeOkapi extends AbstractVerticle {
@@ -13,11 +14,13 @@ public class FakeOkapi extends AbstractVerticle {
     String.format("http://localhost:%s", PORT_TO_USE);
 
   private HttpServer server;
+  private String loanRules = "";
 
   public static String getAddress() {
     return address;
   }
 
+  @Override
   public void start(Future<Void> startFuture) {
     System.out.println("Starting fake loan storage module");
 
@@ -25,10 +28,11 @@ public class FakeOkapi extends AbstractVerticle {
 
     this.server = vertx.createHttpServer();
 
-    RegisterFakeLoansStorageModule(router);
-    registerFakeItemsModule(router);
-    registerFakeMaterialTypesModule(router);
-    registerFakeLoanTypesModule(router);
+    register(router, "/material-types", "mtypes");
+    register(router, "/loan-types", "loantypes");
+    register(router, "/item-storage/items", "items");
+    register(router, "/loan-storage/loans", "loans");
+    registerLoanRulesStorage(router);
 
     server.requestHandler(router::accept)
       .listen(PORT_TO_USE, result -> {
@@ -42,6 +46,7 @@ public class FakeOkapi extends AbstractVerticle {
       });
   }
 
+  @Override
   public void stop(Future<Void> stopFuture) {
     System.out.println("Stopping fake loan storage module");
 
@@ -58,28 +63,24 @@ public class FakeOkapi extends AbstractVerticle {
     }
   }
 
-  private void registerFakeMaterialTypesModule(Router router) {
-    registerFakeModule(router, "/material-types", "mtypes");
-  }
-
-  private void registerFakeLoanTypesModule(Router router) {
-    registerFakeModule(router, "/loan-types", "loantypes");
-  }
-
-  private void registerFakeItemsModule(Router router) {
-    registerFakeModule(router, "/item-storage/items", "items");
-  }
-
-  private void RegisterFakeLoansStorageModule(Router router) {
-    registerFakeModule(router, "/loan-storage/loans", "loans");
-  }
-
-  private void registerFakeModule(
+  private void register(
     Router router,
     String rootPath,
     String collectionPropertyName) {
 
     new FakeStorageModule(rootPath, collectionPropertyName,
       APITestSuite.TENANT_ID).register(router);
+  }
+
+  private void registerLoanRulesStorage(Router router) {
+    router.put("/loan-rules-storage").handler(routingContext -> {
+      routingContext.request().bodyHandler(body -> {
+        loanRules = body.toString();
+        routingContext.response().setStatusCode(204).end();
+      });
+    });
+    router.get("/loan-rules-storage").handler(routingContext -> {
+      routingContext.response().setStatusCode(200).end(loanRules);
+    });
   }
 }

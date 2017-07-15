@@ -6,11 +6,13 @@ import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import org.folio.circulation.resources.LoanCollectionResource;
+import org.folio.circulation.resources.LoanRulesResource;
 
 public class CirculationVerticle extends AbstractVerticle {
 
   private HttpServer server;
 
+  @Override
   public void start(Future<Void> startFuture) {
     System.out.println("Starting circulation module");
 
@@ -20,7 +22,8 @@ public class CirculationVerticle extends AbstractVerticle {
 
     JsonObject config = vertx.getOrCreateContext().config();
 
-    new LoanCollectionResource("/circulation/loans").register(router);
+    new LoanCollectionResource("/circulation/loans"     ).register(router);
+    new LoanRulesResource     ("/circulation/loan-rules").register(router);
 
     server.requestHandler(router::accept)
       .listen(config.getInteger("port"), result -> {
@@ -34,6 +37,7 @@ public class CirculationVerticle extends AbstractVerticle {
       });
   }
 
+  @Override
   public void stop(Future<Void> stopFuture) {
     System.out.println("Stopping circulation module");
 

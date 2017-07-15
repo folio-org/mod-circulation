@@ -12,7 +12,6 @@ public class CollectionResourceClient {
 
   private final OkapiHttpClient client;
   private final URL collectionRoot;
-  private final String tenantId;
 
   public CollectionResourceClient(OkapiHttpClient client,
                                   URL collectionRoot,
@@ -20,7 +19,6 @@ public class CollectionResourceClient {
 
     this.client = client;
     this.collectionRoot = collectionRoot;
-    this.tenantId = tenantId;
   }
 
   public void post(Object resourceRepresentation,
@@ -31,11 +29,24 @@ public class CollectionResourceClient {
       responseConversationHandler(responseHandler));
   }
 
+  public void put(Object resourceRepresentation,
+      Consumer<Response> responseHandler) {
+
+    client.put(collectionRoot,
+        resourceRepresentation,
+        responseConversationHandler(responseHandler));
+  }
+
   public void put(String id, Object resourceRepresentation,
                      Consumer<Response> responseHandler) {
 
     client.put(String.format(collectionRoot + "/%s", id),
       resourceRepresentation,
+      responseConversationHandler(responseHandler));
+  }
+
+  public void get(Consumer<Response> responseHandler) {
+    client.get(collectionRoot,
       responseConversationHandler(responseHandler));
   }
 

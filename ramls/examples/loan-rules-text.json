@@ -1,0 +1,3 @@
+{
+  "loanRulesAsTextFile": "fallback-policy: no-circulation\\npriority: t, a, b, c, s, m, g\\nm book cd dvd: in-house\\n"
+}

@@ -67,3 +67,38 @@ resourceTypes:
         responses:
           501:
             description: "Not implemented yet"
+  /loan-rules:
+    displayName: Loan rules
+    get:
+      description: Get the loan rules
+      is: [secured]
+      responses:
+        200:
+          body:
+            application/json:
+              schema: !include schema/loan-rules.json
+        500:
+          description: "Internal server error"
+          body:
+            text/plain:
+              example: "Internal server error"
+    put:
+      description: Set the loan rules using a text file
+      is: [secured]
+      body:
+        application/json:
+          schema: !include schema/loan-rules-text.json
+      responses:
+        204:
+          description: "Loan rules have been saved."
+        422:
+          description: "Validation error in the text file."
+          body:
+            application/json:
+              schema: !include schema/loan-rules-error.json
+              example: !include examples/loan-rules-error.json
+        500:
+          description: "Internal server error"
+          body:
+            text/plain:
+              example: "Internal server error"

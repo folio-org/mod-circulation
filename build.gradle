@@ -15,17 +15,22 @@ repositories {
   mavenCentral()
 }
 
+def vertxVersion = '3.4.2'
+def droolsVersion = '7.0.0.Final'
+
 dependencies {
   //Don't use the code gen directly but hoping to get rid of warnings in build
-  compile 'io.vertx:vertx-codegen:3.3.3'
-  compile 'io.vertx:vertx-core:3.3.3'
-  compile 'io.vertx:vertx-web:3.3.3'
-  compile 'org.apache.httpcomponents:httpclient-osgi:4.5.2'
+  compile "io.vertx:vertx-codegen:$vertxVersion"
+  compile "io.vertx:vertx-core:$vertxVersion"
+  compile "io.vertx:vertx-web:$vertxVersion"
+  compile 'org.apache.commons:commons-lang3:3.0'
+  compile "org.apache.httpcomponents:httpclient-osgi:4.5.2"
+  compile "org.drools:drools-core:$droolsVersion"
+  compile "org.drools:drools-compiler:$droolsVersion"
 
   testCompile 'junit:junit:4.12'
   testCompile 'org.hamcrest:hamcrest-junit:2.0.0.0'
   testCompile 'joda-time:joda-time:2.9.7'
-  testCompile 'org.apache.commons:commons-lang3:3.0'
 }
 
 compileJava {

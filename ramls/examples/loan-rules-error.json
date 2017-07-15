@@ -1,0 +1,5 @@
+{
+  "message": "One of the keywords t, a, b, c, s, m, g, fallback-policy, priority or the character # expected, but found: foobar",
+  "line": 1,
+  "column": 1
+}

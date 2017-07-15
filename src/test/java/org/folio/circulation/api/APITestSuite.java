@@ -30,7 +30,8 @@ import static org.hamcrest.core.Is.is;
 @RunWith(Suite.class)
 
 @Suite.SuiteClasses({
-  LoanAPITests.class
+  LoanAPITests.class,
+  LoanRulesAPITests.class
 })
 public class APITestSuite {
 
