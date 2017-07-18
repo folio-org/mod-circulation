@@ -2,7 +2,7 @@
 
 ## 4.0.0 2017-07-17
 
-* Adds required property action to loan
+* Adds required property `action` to loan
 * Provides circulation interface version 2.0
 * Requires loan-storage interface version 3.0
 
