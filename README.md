@@ -71,7 +71,7 @@ The circulation.all permission set currently represents all of the permissions n
 
 Other [modules](http://dev.folio.org/source-code/#server-side).
 
-See project [CIRC](https://issues.folio.org/browse/CIRC) 
+See project [CIRC](https://issues.folio.org/browse/CIRC)
 at the [FOLIO issue tracker](http://dev.folio.org/community/guide-issues).
 
 Other FOLIO Developer documentation is at [dev.folio.org](http://dev.folio.org/)

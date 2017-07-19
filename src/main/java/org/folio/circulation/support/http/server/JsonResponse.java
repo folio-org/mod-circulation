@@ -35,7 +35,7 @@ public class JsonResponse {
     JsonObject wrappedErrors = new JsonObject()
       .put("message", "Required properties missing")
       .put("parameters", parameters);
-    
+
     response(response, wrappedErrors, 422);
   }
 
