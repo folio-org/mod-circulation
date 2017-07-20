@@ -54,6 +54,12 @@ pipeline {
          }
       }
 
+      stage('Publish Unit Test Results') {
+         steps { 
+            junit 'build/test-results/**/*.xml'
+         }
+      }
+
       stage('Build Docker') {
          steps {
             echo 'Building Docker image'
@@ -97,7 +103,7 @@ pipeline {
          slackSend(color: '#FF0000',
                    message: "Build failed: ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)")
 
-         mail bcc: '', body: "${env.BUILD_URL}", cc: '', from: '', replyTo: '',
+         mail bcc: '', body: "${env.BUILD_URL}", cc: '', from: 'folio-jenkins@indexdata.com', replyTo: '',
                    subject: "Build failed: ${env.JOB_NAME} ${env.BUILD_NUMBER}",
                    to: 'folio-jenkins.backend@indexdata.com'
       }
@@ -106,7 +112,7 @@ pipeline {
          slackSend(color:'#008000',
                    message: "Build unstable: ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)")
 
-         mail bcc: '', body: "${env.BUILD_URL}", cc: '', from: '', replyTo: '',
+         mail bcc: '', body: "${env.BUILD_URL}", cc: '', from: 'folio-jenkins@indexdata.com', replyTo: '',
                    subject: "Build unstable: ${env.JOB_NAME} ${env.BUILD_NUMBER}",
                    to: 'folio-jenkins.backend@indexdata.com'
       }
@@ -114,7 +120,7 @@ pipeline {
       changed {
          slackSend(color:'#008000',
                    message: "Build back to normal: ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)")
-         mail bcc: '', body: "${env.BUILD_URL}", cc: '', from: '', replyTo: '',
+         mail bcc: '', body: "${env.BUILD_URL}", cc: '', from: 'folio-jenkins@indexdata.com', replyTo: '',
                   subject: "Build back to normal: ${env.JOB_NAME} ${env.BUILD_NUMBER}",
                   to: 'folio-jenkins.backend@indexdata.com'
       }
