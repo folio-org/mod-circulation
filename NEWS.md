@@ -1,4 +1,8 @@
-## 4.0.1 Unreleased
+## 4.1.0 Unreleased
+
+* Adds property `dueDate` to loan
+* Provides circulation interface version 2.1
+* Requires loan-storage interface version 3.1
 
 ## 4.0.0 2017-07-17
 
