@@ -6,7 +6,8 @@
     "title": "The Long Way to a Small, Angry Planet",
     "barcode": "036000291452"
   },
-  "loanDate": "2017-03-01T23:11:00-01:00",
+  "loanDate": "2017-03-01T23:11:00.000Z",
+  "dueDate": "2017-04-01T23:11:00.000Z",
   "status": {
     "name": "Open"
   },

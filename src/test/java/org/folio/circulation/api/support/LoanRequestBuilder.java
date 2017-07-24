@@ -3,6 +3,7 @@ package org.folio.circulation.api.support;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
+import org.joda.time.Period;
 import org.joda.time.format.ISODateTimeFormat;
 
 import java.util.Random;
@@ -17,11 +18,12 @@ public class LoanRequestBuilder {
   private final String status;
   private DateTime returnDate;
   private final String action;
+  private final DateTime dueDate;
 
   public LoanRequestBuilder() {
     this(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(),
-      DateTime.parse("2017-03-06T16:04:43.000+02:00",
-        ISODateTimeFormat.dateTime()), "Open", null, "checkedout");
+      new DateTime(2017, 03, 06, 16, 04, 43), null, "Open", null, "checkedout"
+    );
   }
 
   private LoanRequestBuilder(
@@ -29,8 +31,9 @@ public class LoanRequestBuilder {
     UUID itemId,
     UUID userId,
     DateTime loanDate,
-    String status,
-    DateTime returnDate, String action) {
+    DateTime dueDate, String status,
+    DateTime returnDate,
+    String action) {
 
     this.id = id;
     this.itemId = itemId;
@@ -39,6 +42,7 @@ public class LoanRequestBuilder {
     this.status = status;
     this.returnDate = returnDate;
     this.action = action;
+    this.dueDate = dueDate;
   }
 
   public JsonObject create() {
@@ -59,6 +63,11 @@ public class LoanRequestBuilder {
       loanRequest.put("action", action);
     }
 
+    if(dueDate != null) {
+      loanRequest.put("dueDate",
+        dueDate.toString(ISODateTimeFormat.dateTime()));
+    }
+
     if(status == "Closed") {
       loanRequest.put("returnDate",
         returnDate.toString(ISODateTimeFormat.dateTime()));
@@ -75,12 +84,12 @@ public class LoanRequestBuilder {
 
   public LoanRequestBuilder withLoanDate(DateTime loanDate) {
     return new LoanRequestBuilder(this.id, this.itemId, this.userId,
-      loanDate, this.status, this.returnDate, this.action);
+      loanDate, this.dueDate, this.status, this.returnDate, this.action);
   }
 
   public LoanRequestBuilder withUserId(UUID userId) {
     return new LoanRequestBuilder(this.id, this.itemId, userId,
-      this.loanDate, this.status, this.returnDate, this.action);
+      this.loanDate, this.dueDate, this.status, this.returnDate, this.action);
   }
 
   public LoanRequestBuilder withStatus(String status) {
@@ -101,28 +110,42 @@ public class LoanRequestBuilder {
     }
 
     return new LoanRequestBuilder(this.id, this.itemId, this.userId,
-      this.loanDate, status, defaultedReturnDate, action);
+      this.loanDate, this.dueDate, status, defaultedReturnDate, action);
   }
 
   public LoanRequestBuilder withId(UUID id) {
     return new LoanRequestBuilder(id, this.itemId, this.userId,
-      this.loanDate, this.status, this.returnDate, this.action);
+      this.loanDate, this.dueDate, this.status, this.returnDate, this.action);
   }
 
   public LoanRequestBuilder withItemId(UUID itemId) {
     return new LoanRequestBuilder(this.id, itemId, this.userId,
-      this.loanDate, this.status, this.returnDate, this.action);
+      this.loanDate, this.dueDate, this.status, this.returnDate, this.action);
   }
 
   public LoanRequestBuilder withReturnDate(DateTime returnDate) {
     return new LoanRequestBuilder(this.id, this.itemId, this.userId,
-      this.loanDate, this.status, returnDate, this.action);
+      this.loanDate, this.dueDate, this.status, returnDate, this.action);
   }
 
   public LoanRequestBuilder withItem(IndividualResource item) {
     return new LoanRequestBuilder(this.id, item.getId(), this.userId,
-      this.loanDate, this.status, this.returnDate, this.action);
+      this.loanDate, this.dueDate, this.status, this.returnDate, this.action);
   }
 
+  public LoanRequestBuilder withDueDate(DateTime dueDate) {
+    return new LoanRequestBuilder(this.id, this.itemId, this.userId,
+      this.loanDate, dueDate, this.status, this.returnDate, this.action);
+  }
 
+  public LoanRequestBuilder dueIn(Period period) {
+    if(this.loanDate == null) {
+      throw new IllegalStateException(
+        "Cannot use period to specify due when no loan date specified");
+    }
+
+    DateTime calculatedDueDate = this.loanDate.plus(period);
+
+    return withDueDate(calculatedDueDate);
+  }
 }

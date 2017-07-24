@@ -14,7 +14,7 @@ FOLIO compatible circulation capabilities, including loan items from the invento
 
 - Java 8 JDK
 - Gradle 3.3
-- [FOLIO Loan Storage Module](https://github.com/folio-org/mod-loan-storage)
+- Implementation of the loan-storage interface e.g. [FOLIO Loan Storage Module](https://github.com/folio-org/mod-loan-storage)
 
 ### Optional
 

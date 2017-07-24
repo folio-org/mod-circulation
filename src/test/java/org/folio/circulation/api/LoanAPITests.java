@@ -4,8 +4,8 @@ import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.support.ItemRequestExamples;
 import org.folio.circulation.api.support.LoanRequestBuilder;
 import org.folio.circulation.support.JsonArrayHelper;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
@@ -26,6 +26,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static org.folio.circulation.api.support.TextDateTimeMatcher.isEquivalentTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -61,11 +62,15 @@ public class LoanAPITests {
     UUID itemId = createItem(ItemRequestExamples.smallAngryPlanet()).getId();
     UUID userId = UUID.randomUUID();
 
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
     IndividualResource response = createLoan(new LoanRequestBuilder()
       .withId(id)
       .withUserId(userId)
       .withItemId(itemId)
-      .withLoanDate(new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC))
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate)
       .withStatus("Open")
       .create());
 
@@ -96,6 +101,9 @@ public class LoanAPITests {
     assertThat("barcode is taken from item",
       loan.getJsonObject("item").getString("barcode"),
       is("036000291452"));
+
+    assertThat("due date does not match",
+      loan.getString("dueDate"), isEquivalentTo(dueDate));
 
     JsonObject item = getItemById(itemId).getJson();
 
@@ -162,11 +170,14 @@ public class LoanAPITests {
     UUID itemId = createItem(ItemRequestExamples.smallAngryPlanet()).getId();
     UUID userId = UUID.randomUUID();
 
+    DateTime dueDate = new DateTime(2016, 11, 15, 8, 26, 53, DateTimeZone.UTC);
+
     createLoan(new LoanRequestBuilder()
       .withId(id)
       .withUserId(userId)
       .withItemId(itemId)
       .withLoanDate(new DateTime(2016, 10, 15, 8, 26, 53, DateTimeZone.UTC))
+      .withDueDate(dueDate)
       .withStatus("Open")
       .create());
 
@@ -188,6 +199,9 @@ public class LoanAPITests {
 
     assertThat("loan date does not match",
       loan.getString("loanDate"), is("2016-10-15T08:26:53.000Z"));
+
+    assertThat("due date does not match",
+      loan.getString("dueDate"), isEquivalentTo(dueDate));
 
     assertThat("status is not open",
       loan.getJsonObject("status").getString("name"), is("Open"));
