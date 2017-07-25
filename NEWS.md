@@ -3,6 +3,7 @@
 * Adds property `dueDate` to loan
 * Provides circulation interface version 2.1
 * Requires loan-storage interface version 3.1
+* Include implementation version in `id` in Module Descriptor
 
 ## 4.0.0 2017-07-17
 
