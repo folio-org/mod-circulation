@@ -54,6 +54,10 @@
       "description": "Date and time when the item was returned",
       "type": "string",
       "format": "date-time"
+    },
+    "action": {
+      "description": "Last action performed on a loan (currently can be any value, values commonly used are checkedout and checkedin)",
+      "type": "string"
     }
   },
   "required": [

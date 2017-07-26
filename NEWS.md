@@ -4,6 +4,7 @@
 * Provides circulation interface version 2.1
 * Requires loan-storage interface version 3.1
 * Include implementation version in `id` in Module Descriptor
+* Includes missing `action` property definition in loan schema 
 
 ## 4.0.0 2017-07-17
 
