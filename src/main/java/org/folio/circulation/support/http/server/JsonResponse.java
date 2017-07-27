@@ -3,7 +3,11 @@ package org.folio.circulation.support.http.server;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class JsonResponse {
 
@@ -18,6 +22,21 @@ public class JsonResponse {
                              JsonObject body) {
 
     response(response, body, 200);
+  }
+
+  public static void unprocessableEntity(
+    HttpServerResponse response,
+    List<ValidationError> errors) {
+
+    JsonArray parameters = new JsonArray(errors.stream()
+      .map(error -> new JsonObject().put("key", error.getPropertyName()).put("value", "null"))
+      .collect(Collectors.toList()));
+
+    JsonObject wrappedErrors = new JsonObject()
+      .put("message", "Required properties missing")
+      .put("parameters", parameters);
+
+    response(response, wrappedErrors, 422);
   }
 
   private static void response(HttpServerResponse response,

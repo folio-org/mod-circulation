@@ -2,7 +2,7 @@ apply plugin: 'java'
 apply plugin: 'application'
 
 mainClassName = "org.folio.circulation.Launcher"
-version = "3.0.1-SNAPSHOT"
+version = "4.1.0-SNAPSHOT"
 
 ext.sharedManifest = manifest {
   attributes(
@@ -23,7 +23,7 @@ dependencies {
   compile "io.vertx:vertx-codegen:$vertxVersion"
   compile "io.vertx:vertx-core:$vertxVersion"
   compile "io.vertx:vertx-web:$vertxVersion"
-  compile 'org.apache.commons:commons-lang3:3.0'
+  compile 'org.apache.commons:commons-lang3:3.5'
   compile "org.apache.httpcomponents:httpclient-osgi:4.5.2"
   compile "org.drools:drools-core:$droolsVersion"
   compile "org.drools:drools-compiler:$droolsVersion"

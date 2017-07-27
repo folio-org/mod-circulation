@@ -7,6 +7,8 @@ import io.vertx.ext.web.Router;
 
 import org.folio.circulation.api.APITestSuite;
 
+import java.util.Arrays;
+
 public class FakeOkapi extends AbstractVerticle {
 
   private static final int PORT_TO_USE = 9493;
@@ -31,7 +33,8 @@ public class FakeOkapi extends AbstractVerticle {
     register(router, "/material-types", "mtypes");
     register(router, "/loan-types", "loantypes");
     register(router, "/item-storage/items", "items");
-    register(router, "/loan-storage/loans", "loans");
+    register(router, "/loan-storage/loans", "loans",
+        "userId", "itemId", "loanDate", "action");
     registerLoanRulesStorage(router);
 
     server.requestHandler(router::accept)
@@ -63,13 +66,10 @@ public class FakeOkapi extends AbstractVerticle {
     }
   }
 
-  private void register(
-    Router router,
-    String rootPath,
-    String collectionPropertyName) {
-
+  private void register(Router router, String rootPath, String collectionPropertyName,
+      String... requiredProperties) {
     new FakeStorageModule(rootPath, collectionPropertyName,
-      APITestSuite.TENANT_ID).register(router);
+          APITestSuite.TENANT_ID, Arrays.asList(requiredProperties)).register(router);
   }
 
   private void registerLoanRulesStorage(Router router) {

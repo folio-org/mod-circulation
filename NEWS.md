@@ -1,4 +1,16 @@
-## 3.0.1 Unreleased
+## 4.1.0 Unreleased
+
+* Adds property `dueDate` to loan
+* Provides circulation interface version 2.1
+* Requires loan-storage interface version 3.1
+* Include implementation version in `id` in Module Descriptor
+* Includes missing `action` property definition in loan schema 
+
+## 4.0.0 2017-07-17
+
+* Adds required property `action` to loan
+* Provides circulation interface version 2.0
+* Requires loan-storage interface version 3.0
 
 ## 3.0.0 2017-06-07
 

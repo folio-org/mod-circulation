@@ -1,47 +1,69 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "type": "object",
+  "title": "Loan",
+  "description": "Links the item with the patron and applies certain conditions based on policies",
   "properties": {
     "id": {
+      "description": "Unique ID (generated UUID) of the loan",
       "type": "string"
     },
     "userId": {
+      "description": "ID of the user (representing the patron) the item was lent to",
       "type": "string"
     },
     "itemId": {
+      "description": "ID of the item lent to the patron",
       "type": "string"
     },
     "item": {
+      "description": "Additional information about the item lent to the patron",
       "type": "object",
       "properties": {
         "title": {
+          "description": "The title of the item lent to the patron",
           "type": "string"
         },
         "barcode": {
+          "description": "The barcode of the item lent to the patron",
           "type": "string"
         }
       }
     },
     "status": {
+      "description": "Overall status of the loan",
       "type": "object",
       "properties": {
         "name": {
+          "description": "Name of the status (currently can be any value, values commonly used are Open and Closed)",
           "type": "string"
         }
       }
     },
     "loanDate": {
+      "description": "Date and time when the loan began",
+      "type": "string",
+      "format": "date-time"
+    },
+    "dueDate": {
+      "description": "Date and time when the item is due to be returned",
       "type": "string",
       "format": "date-time"
     },
     "returnDate": {
+      "description": "Date and time when the item was returned",
       "type": "string",
       "format": "date-time"
+    },
+    "action": {
+      "description": "Last action performed on a loan (currently can be any value, values commonly used are checkedout and checkedin)",
+      "type": "string"
     }
   },
   "required": [
     "userId",
     "itemId",
-    "loanDate"
+    "loanDate",
+    "action"
   ]
 }

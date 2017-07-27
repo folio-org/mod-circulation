@@ -16,11 +16,8 @@
     "url": "https://issues.folio.org"
   },
   "homepage": "https://github.com/folio-org/mod-loan-storage#readme",
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
-    "eslint": "^3.12.2",
-    "eslint-plugin-json": "^1.2.0",
-    "eslint-plugin-raml": "^0.2.7"
+    "raml-cop": "^5.0.0"
   }
 }

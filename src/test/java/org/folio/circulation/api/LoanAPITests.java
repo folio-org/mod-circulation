@@ -4,8 +4,8 @@ import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.support.ItemRequestExamples;
 import org.folio.circulation.api.support.LoanRequestBuilder;
 import org.folio.circulation.support.JsonArrayHelper;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
@@ -26,6 +26,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static org.folio.circulation.api.support.TextDateTimeMatcher.isEquivalentTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -61,11 +62,15 @@ public class LoanAPITests {
     UUID itemId = createItem(ItemRequestExamples.smallAngryPlanet()).getId();
     UUID userId = UUID.randomUUID();
 
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
     IndividualResource response = createLoan(new LoanRequestBuilder()
       .withId(id)
       .withUserId(userId)
       .withItemId(itemId)
-      .withLoanDate(new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC))
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate)
       .withStatus("Open")
       .create());
 
@@ -86,6 +91,9 @@ public class LoanAPITests {
     assertThat("status is not open",
       loan.getJsonObject("status").getString("name"), is("Open"));
 
+    assertThat("action is not checkedout",
+      loan.getString("action"), is("checkedout"));
+
     assertThat("title is taken from item",
       loan.getJsonObject("item").getString("title"),
       is("The Long Way to a Small, Angry Planet"));
@@ -93,6 +101,9 @@ public class LoanAPITests {
     assertThat("barcode is taken from item",
       loan.getJsonObject("item").getString("barcode"),
       is("036000291452"));
+
+    assertThat("due date does not match",
+      loan.getString("dueDate"), isEquivalentTo(dueDate));
 
     JsonObject item = getItemById(itemId).getJson();
 
@@ -135,8 +146,11 @@ public class LoanAPITests {
     assertThat("loan date does not match",
       loan.getString("loanDate"), is("2017-02-27T10:23:43.000Z"));
 
-    assertThat("status is not open",
+    assertThat("status is not closed",
       loan.getJsonObject("status").getString("name"), is("Closed"));
+
+    assertThat("action is not checkedin",
+      loan.getString("action"), is("checkedin"));
 
     JsonObject item = getItemById(itemId).getJson();
 
@@ -156,11 +170,14 @@ public class LoanAPITests {
     UUID itemId = createItem(ItemRequestExamples.smallAngryPlanet()).getId();
     UUID userId = UUID.randomUUID();
 
+    DateTime dueDate = new DateTime(2016, 11, 15, 8, 26, 53, DateTimeZone.UTC);
+
     createLoan(new LoanRequestBuilder()
       .withId(id)
       .withUserId(userId)
       .withItemId(itemId)
       .withLoanDate(new DateTime(2016, 10, 15, 8, 26, 53, DateTimeZone.UTC))
+      .withDueDate(dueDate)
       .withStatus("Open")
       .create());
 
@@ -183,8 +200,14 @@ public class LoanAPITests {
     assertThat("loan date does not match",
       loan.getString("loanDate"), is("2016-10-15T08:26:53.000Z"));
 
+    assertThat("due date does not match",
+      loan.getString("dueDate"), isEquivalentTo(dueDate));
+
     assertThat("status is not open",
       loan.getJsonObject("status").getString("name"), is("Open"));
+
+    assertThat("action is not checkedout",
+      loan.getString("action"), is("checkedout"));
 
     assertThat("title is taken from item",
       loan.getJsonObject("item").getString("title"),
@@ -289,6 +312,7 @@ public class LoanAPITests {
 
     returnedLoan
       .put("status", new JsonObject().put("name", "Closed"))
+      .put("action", "checkedin")
       .put("returnDate", new DateTime(2017, 3, 5, 14, 23, 41, DateTimeZone.UTC)
         .toString(ISODateTimeFormat.dateTime()));
 
@@ -311,6 +335,9 @@ public class LoanAPITests {
 
     assertThat("status is not closed",
       updatedLoan.getJsonObject("status").getString("name"), is("Closed"));
+
+    assertThat("action is not checkedin",
+      updatedLoan.getString("action"), is("checkedin"));
 
     assertThat("title is taken from item",
       updatedLoan.getJsonObject("item").getString("title"),
@@ -807,6 +834,7 @@ public class LoanAPITests {
     hasProperty("itemId", loan, "loan");
     hasProperty("loanDate", loan, "loan");
     hasProperty("status", loan, "loan");
+    hasProperty("action", loan, "loan");
     hasProperty("item", loan, "loan");
 
     JsonObject item = loan.getJsonObject("item");
