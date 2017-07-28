@@ -58,6 +58,10 @@
     "action": {
       "description": "Last action performed on a loan (currently can be any value, values commonly used are checkedout and checkedin)",
       "type": "string"
+    },
+    "renewalCount": {
+      "description": "Count of how many times a loan has been renewed (incremented by the client)",
+      "type": "integer"
     }
   },
   "required": [
