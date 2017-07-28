@@ -13,7 +13,8 @@
       "status": {
         "name": "Open"
       },
-      "action": "checkedout"
+      "action": "checkedout",
+      "renewalCount": 1
     },
     {
       "id": "1d09af65-aeaa-499c-80cb-d52847b75a60",

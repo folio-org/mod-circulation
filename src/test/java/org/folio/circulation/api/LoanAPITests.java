@@ -10,6 +10,7 @@ import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.Period;
 import org.joda.time.format.ISODateTimeFormat;
 import org.junit.Before;
 import org.junit.Test;
@@ -299,7 +300,7 @@ public class LoanAPITests {
     ExecutionException,
     UnsupportedEncodingException {
 
-    DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, 232, DateTimeZone.UTC);
+    DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 
     UUID itemId = createItem(ItemRequestExamples.nod()).getId();
 
@@ -351,6 +352,77 @@ public class LoanAPITests {
 
     assertThat("item status is not available",
       item.getJsonObject("status").getString("name"), is("Available"));
+  }
+
+  @Test
+  public void canRenewALoanByExtendingTheDueDate()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException,
+    UnsupportedEncodingException {
+
+    DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, DateTimeZone.UTC);
+
+    UUID itemId = createItem(ItemRequestExamples.nod()).getId();
+
+    IndividualResource loan = createLoan(new LoanRequestBuilder()
+      .withLoanDate(loanDate)
+      .withItemId(itemId)
+      .withDueDate(loanDate.plus(Period.days(14)))
+      .create());
+
+    JsonObject returnedLoan = loan.copyJson();
+
+    DateTime dueDate = DateTime.parse(returnedLoan.getString("dueDate"));
+    DateTime newDueDate = dueDate.plus(Period.days(14));
+
+    returnedLoan
+      .put("action", "renewed")
+      .put("dueDate", newDueDate.toString(ISODateTimeFormat.dateTime()))
+      .put("renewalCount", 1);
+
+    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
+
+    client.put(loansUrl(String.format("/%s", loan.getId())), returnedLoan,
+      ResponseHandler.any(putCompleted));
+
+    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Failed to update loan: %s", putResponse.getBody()),
+      putResponse.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
+
+    Response updatedLoanResponse = getById(loan.getId());
+
+    JsonObject updatedLoan = updatedLoanResponse.getJson();
+
+    assertThat("status is not open",
+      updatedLoan.getJsonObject("status").getString("name"), is("Open"));
+
+    assertThat("action is not renewed",
+      updatedLoan.getString("action"), is("renewed"));
+
+    assertThat("should not contain a return date",
+      updatedLoan.containsKey("returnDate"), is(false));
+
+    assertThat("due date does not match",
+      updatedLoan.getString("dueDate"), isEquivalentTo(newDueDate));
+
+    assertThat("renewal count is not 1",
+      updatedLoan.getInteger("renewalCount"), is(1));
+    
+    assertThat("title is taken from item",
+      updatedLoan.getJsonObject("item").getString("title"),
+      is("Nod"));
+
+    assertThat("barcode is taken from item",
+      updatedLoan.getJsonObject("item").getString("barcode"),
+      is("565578437802"));
+
+    JsonObject item = getItemById(itemId).getJson();
+
+    assertThat("item status is not checked out",
+      item.getJsonObject("status").getString("name"), is("Checked Out"));
   }
 
   @Test
