@@ -1,3 +1,5 @@
+## 4.1.1 Unreleased
+
 ## 4.1.0 2017-08-01
 
 * Adds property `dueDate` to loan
