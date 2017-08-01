@@ -7,7 +7,7 @@ tenant_id="test_tenant"
 inventory_storage_module_id="inventory-storage-5.1.0-SNAPSHOT"
 
 #Needs to be the specific version of Circulation Storage you want to use for testing
-circulation_storage_module_id="circulation-storage-3.1.1-SNAPSHOT"
+circulation_storage_module_id="circulation-storage-3.1.0"
 
 echo "Check if Okapi is contactable"
 curl -w '\n' -X GET -D -   \
