@@ -1,5 +1,5 @@
 {
-  "id": "circulation-4.1.0-SNAPSHOT",
+  "id": "circulation-4.1.0",
   "name": "Circulation Module",
   "provides": [
     {
