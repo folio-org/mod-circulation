@@ -4,7 +4,7 @@ instance_id=${1:-}
 okapi_proxy_address=${2:-http://localhost:9130}
 
 tenant_id="demo_tenant"
-module_id="circulation-4.1.1-SNAPSHOT"
+module_id="circulation-4.2.0-SNAPSHOT"
 
 ./okapi-registration/managed-deployment/unregister.sh \
   ${module_id} \

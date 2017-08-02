@@ -103,6 +103,20 @@ public class LoanAPITests {
       loan.getJsonObject("item").getString("barcode"),
       is("036000291452"));
 
+    assertThat("has item status",
+      loan.getJsonObject("item").containsKey("status"), is(true));
+
+    assertThat("status is taken from item",
+      loan.getJsonObject("item").getJsonObject("status").getString("name"),
+      is("Checked Out"));
+
+    assertThat("has item location",
+      loan.getJsonObject("item").containsKey("location"), is(true));
+
+    assertThat("location is taken from item",
+      loan.getJsonObject("item").getJsonObject("location").getString("name"),
+      is("Main Library"));
+
     assertThat("due date does not match",
       loan.getString("dueDate"), isEquivalentTo(dueDate));
 
@@ -217,6 +231,20 @@ public class LoanAPITests {
     assertThat("barcode is taken from item",
       loan.getJsonObject("item").getString("barcode"),
       is("036000291452"));
+
+    assertThat("has item status",
+      loan.getJsonObject("item").containsKey("status"), is(true));
+
+    assertThat("status is taken from item",
+      loan.getJsonObject("item").getJsonObject("status").getString("name"),
+      is("Checked Out"));
+
+    assertThat("has item location",
+      loan.getJsonObject("item").containsKey("location"), is(true));
+
+    assertThat("location is taken from item",
+      loan.getJsonObject("item").getJsonObject("location").getString("name"),
+      is("Main Library"));
   }
 
   @Test
@@ -410,7 +438,7 @@ public class LoanAPITests {
 
     assertThat("renewal count is not 1",
       updatedLoan.getInteger("renewalCount"), is(1));
-    
+
     assertThat("title is taken from item",
       updatedLoan.getJsonObject("item").getString("title"),
       is("Nod"));
@@ -913,6 +941,8 @@ public class LoanAPITests {
 
     hasProperty("title", item, "loan");
     hasProperty("barcode", item, "loan");
+    hasProperty("status", item, "loan");
+    hasProperty("location", item, "loan");
   }
 
   private void hasProperty(String property, JsonObject resource, String type) {

@@ -27,6 +27,22 @@
         "barcode": {
           "description": "The barcode of the item lent to the patron",
           "type": "string"
+        },
+        "status": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            }
+          }
+        },
+        "location": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            }
+          }
         }
       }
     },

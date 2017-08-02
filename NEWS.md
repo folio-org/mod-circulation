@@ -1,4 +1,6 @@
-## 4.1.1 Unreleased
+## 4.2.0 Unreleased
+
+* Include item status and location in loans
 
 ## 4.1.0 2017-08-01
 

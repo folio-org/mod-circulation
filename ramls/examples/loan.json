@@ -4,7 +4,13 @@
   "itemId": "cb20f34f-b773-462f-a091-b233cc96b9e6",
   "item": {
     "title": "The Long Way to a Small, Angry Planet",
-    "barcode": "036000291452"
+    "barcode": "036000291452",
+    "status": {
+      "name": "Checked Out"
+    },
+    "location": {
+      "name": "Main Library"
+    }
   },
   "loanDate": "2017-03-01T23:11:00.000Z",
   "dueDate": "2017-04-01T23:11:00.000Z",
