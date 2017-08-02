@@ -1,6 +1,9 @@
+## 4.1.1 Unreleased
+
 ## 4.1.0 2017-08-01
 
 * Adds property `dueDate` to loan
+* Adds `renewalCount` property to loan
 * Provides circulation interface version 2.1
 * Requires loan-storage interface version 3.1
 * Include implementation version in `id` in Module Descriptor
