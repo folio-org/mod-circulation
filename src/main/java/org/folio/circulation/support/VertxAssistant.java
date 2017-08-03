@@ -4,12 +4,17 @@ import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class VertxAssistant {
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private Vertx vertx;
 
@@ -22,9 +27,12 @@ public class VertxAssistant {
   }
 
   public void start() {
-    if(this.vertx == null) {
-      this.vertx = Vertx.vertx();
+    if (vertx != null) {
+      return;
     }
+
+    vertx = Vertx.vertx();
+    vertx.exceptionHandler(ex -> log.error("Unhandled exception caught by vertx", ex));
   }
 
   public void stop(CompletableFuture<Void> stopped) {
@@ -57,8 +65,7 @@ public class VertxAssistant {
       if (result.succeeded()) {
         long elapsedTime = System.currentTimeMillis() - startTime;
 
-        System.out.println(String.format("%s deployed in %s milliseconds",
-          verticleClass, elapsedTime));
+        log.info("{} deployed in {} milliseconds", verticleClass, elapsedTime);
 
         deployed.complete(result.result());
       } else {

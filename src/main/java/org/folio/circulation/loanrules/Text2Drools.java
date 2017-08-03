@@ -49,21 +49,19 @@ public class Text2Drools {
   private StringBuilder drools = new StringBuilder(
       "package loanrules\n" +
       "import org.folio.circulation.loanrules.*\n" +
-      "\n" +
-      "rule \"halt on result\"\n" +
-      "  salience 99999\n" +
-      "  when\n" +
-      "    LoanPolicy()\n" +
-      "  then\n" +
-      "    drools.halt();\n" +
-      "end\n\n"
+      "global LoanPolicy loanPolicy\n" +
+      "\n"
       );
+
+  private enum MatcherType {
+    PatronGroup, ItemType, LoanType
+  }
 
   private class Matcher {
     int indentation;
-    String type;
+    MatcherType type;
     StringBuilder matcher;
-    public Matcher(int indentation, String type, StringBuilder matcher) {
+    public Matcher(int indentation, MatcherType type, StringBuilder matcher) {
       this.indentation = indentation;
       this.type = type;
       this.matcher = matcher;
@@ -75,6 +73,11 @@ public class Text2Drools {
   private Text2Drools() {
   }
 
+  /**
+   * Convert loan rules from FOLIO text format into a Drools file.
+   * @param text String with a loan rules file in FOLIO syntax.
+   * @return Drools file
+   */
   public static String convert(String text) {
     Text2Drools text2drools = new Text2Drools();
 
@@ -87,18 +90,39 @@ public class Text2Drools {
     return text2drools.drools.toString();
   }
 
+  /**
+   * Convert line to Drools syntax and add to drools.
+   * Use lineNumber for error reporting.
+   * @param lineNumber position of line in the input
+   * @param line String to convert
+   */
   private void convertLine(int lineNumber, String line) {
     int indentation = indentation(line);
     popObsoleteMatchers(indentation);
     LinkedList<String> tokens = parse(line);
+    boolean firstToken = true;
     while (! tokens.isEmpty()) {
       String token = tokens.removeFirst();
       switch (token) {
+      case "g":
+        convertNames(indentation, MatcherType.PatronGroup, tokens);
+        break;
       case "m":
-        convertNames(indentation, "ItemType", tokens);
+        convertNames(indentation, MatcherType.ItemType, tokens);
         break;
       case "t":
-        convertNames(indentation, "LoanType", tokens);
+        convertNames(indentation, MatcherType.LoanType, tokens);
+        break;
+      case "fallback-policy":
+        if (! stack.isEmpty()) {
+          throw new IllegalArgumentException(
+              "fallback-policy must be at top level but it is indented in line " + lineNumber);
+        }
+        if (! firstToken) {
+          throw new IllegalArgumentException(
+              "fallback-policy must be the first token in line " + lineNumber);
+        }
+        drools.append("// fallback-policy\n");
         break;
       case "+":
         // nothing to be done
@@ -114,15 +138,22 @@ public class Text2Drools {
         drools.append("  when\n");
         stack.descendingIterator().forEachRemaining(matcher -> drools.append(matcher.matcher));
         drools.append("  then\n");
-        drools.append("    insert(new LoanPolicy(");
+        drools.append("    loanPolicy.name = ");
         appendQuotedString(drools, loanPolicy);
-        drools.append("));\n");
+        drools.append(";\n");
+        drools.append("    drools.halt();\n");
         drools.append("end\n\n");
         break;
+      case "#":
+        tokens.clear();  // skip comment
+        break;
       default:
-        throw new IllegalArgumentException("Expected m or t or : or + but found \"" + token
+        throw new IllegalArgumentException(
+            "Expected f or m or t or fallback-policy or : or + or # but found \"" + token
             + "\" in line " + lineNumber + ": " + line);
       }
+
+      firstToken = false;
     }
   }
 
@@ -140,7 +171,7 @@ public class Text2Drools {
     }
   }
 
-  private void convertNames(int indentation, String type, LinkedList<String> tokens) {
+  private void convertNames(int indentation, MatcherType type, LinkedList<String> tokens) {
     List<String> names = new ArrayList<>();
 
     while (! tokens.isEmpty()) {

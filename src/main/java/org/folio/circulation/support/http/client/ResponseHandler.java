@@ -3,11 +3,17 @@ package org.folio.circulation.support.http.client;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpClientResponse;
 
+import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class ResponseHandler {
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
   public static Handler<HttpClientResponse> any(
     CompletableFuture<Response> completed) {
 
@@ -52,10 +58,8 @@ public class ResponseHandler {
 
             Response response = Response.from(vertxResponse, buffer);
 
-            System.out.println(String.format("Received Response: %s: %s",
-              response.getStatusCode(), response.getContentType()));
-            System.out.println(String.format("Received Response Body: %s",
-              response.getBody()));
+            log.debug("Received Response: {}: {}", response.getStatusCode(), response.getContentType());
+            log.debug("Received Response Body: {}", response.getBody());
 
             if(expectation.test(response)) {
               completed.complete(response);
@@ -64,7 +68,7 @@ public class ResponseHandler {
               completed.completeExceptionally(
                 expectationFailed.apply(response));
             }
-          } catch (Exception e) {
+          } catch (Throwable e) {
             completed.completeExceptionally(e);
           }
         });

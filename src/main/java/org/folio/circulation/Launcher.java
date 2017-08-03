@@ -1,7 +1,10 @@
 package org.folio.circulation;
 
 import org.folio.circulation.support.VertxAssistant;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.lang.invoke.MethodHandles;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -10,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public class Launcher {
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private static String moduleDeploymentId;
   private static VertxAssistant vertxAssistant = new VertxAssistant();
@@ -37,14 +41,14 @@ public class Launcher {
 
     vertxAssistant.start();
 
-    System.out.println("Server Starting");
+    log.info("Server Starting");
 
     CompletableFuture<String> deployed = new CompletableFuture<>();
 
     vertxAssistant.deployVerticle(CirculationVerticle.class.getName(),
       config, deployed);
 
-    deployed.thenAccept(result -> System.out.println("Server Started"));
+    deployed.thenAccept(result -> log.info("Server Started"));
 
     moduleDeploymentId = deployed.get(10, TimeUnit.SECONDS);
   }
@@ -54,14 +58,14 @@ public class Launcher {
     CompletableFuture<Void> stopped = new CompletableFuture<>();
     CompletableFuture<Void> all = CompletableFuture.allOf(undeployed, stopped);
 
-    System.out.println("Server Stopping");
+    log.info("Server Stopping");
 
     vertxAssistant.undeployVerticle(moduleDeploymentId, undeployed);
 
     undeployed.thenAccept(result -> vertxAssistant.stop(stopped));
 
     all.join();
-    System.out.println("Server Stopped");
+    log.info("Server Stopped");
   }
 
   private static void putNonNullConfig(String key,

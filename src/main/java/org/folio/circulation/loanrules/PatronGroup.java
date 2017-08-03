@@ -1,8 +1,8 @@
 package org.folio.circulation.loanrules;
 
-public class LoanType {
+public class PatronGroup {
   public String name;
-  public LoanType(String name) {
+  public PatronGroup(String name) {
     this.name = name;
   }
   @Override

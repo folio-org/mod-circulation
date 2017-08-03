@@ -5,7 +5,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 
-import org.folio.circulation.loanrules.Drools;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.folio.circulation.loanrules.Text2Drools;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
@@ -14,11 +14,15 @@ import org.folio.circulation.support.http.server.JsonResponse;
 import org.folio.circulation.support.http.server.ServerErrorResponse;
 import org.folio.circulation.support.http.server.SuccessResponse;
 import org.folio.circulation.support.http.server.WebContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
 import java.net.URL;
 
 public class LoanRulesResource {
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final String rootPath;
 
@@ -35,18 +39,24 @@ public class LoanRulesResource {
 
   private void get(RoutingContext routingContext) {
     CollectionResourceClient loansRulesClient = getLoanRulesClient(routingContext);
+    log.debug("get(RoutingContext) client={}", loansRulesClient);
 
     if (loansRulesClient == null) {
       return;
     }
 
     loansRulesClient.get(response -> {
-      if (response.getStatusCode() == 200) {
+      try {
+        if (response.getStatusCode() != 200) {
+          ForwardResponse.forward(routingContext.response(), response);
+          return;
+        }
         JsonObject loanRules = new JsonObject(response.getBody());
         loanRules.put("loanRulesAsDrools", Text2Drools.convert(loanRules.getString("loanRulesAsTextFile")));
         JsonResponse.success(routingContext.response(), loanRules);
-      } else {
-        ForwardResponse.forward(routingContext.response(), response);
+      }
+      catch (Throwable e) {
+        ServerErrorResponse.internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
       }
     });
   }
