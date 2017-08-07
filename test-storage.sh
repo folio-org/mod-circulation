@@ -4,7 +4,7 @@ okapi_proxy_address="http://localhost:9130"
 tenant_id="test_tenant"
 
 #Needs to be the specific version of Inventory Storage you want to use for testing
-inventory_storage_module_id="inventory-storage-5.1.0-SNAPSHOT"
+inventory_storage_module_id="inventory-storage-5.1.1-SNAPSHOT"
 
 #Needs to be the specific version of Circulation Storage you want to use for testing
 circulation_storage_module_id="circulation-storage-3.2.0-SNAPSHOT"
