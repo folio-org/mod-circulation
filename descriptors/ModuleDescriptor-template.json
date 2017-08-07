@@ -1,5 +1,5 @@
 {
-  "id": "circulation-4.2.0-SNAPSHOT",
+  "id": "${artifactId}-${version}",
   "name": "Circulation Module",
   "provides": [
     {
