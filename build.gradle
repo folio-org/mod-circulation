@@ -29,6 +29,8 @@ dependencies {
   testCompile 'joda-time:joda-time:2.9.7'
 }
 
+defaultTasks 'build', 'generateDescriptors'
+
 compileJava {
   options.compilerArgs += ["-Xlint:all"]
 }
