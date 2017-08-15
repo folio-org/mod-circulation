@@ -3,7 +3,7 @@ apply plugin: 'application'
 
 mainClassName = "org.folio.circulation.Launcher"
 project.ext.artifactId = "circulation"
-version = "4.2.0-SNAPSHOT"
+version = "4.2.0"
 
 ext.sharedManifest = manifest {
   attributes(
@@ -45,7 +45,6 @@ test {
   exclude '**/api/**Tests.class'
 }
 
-import org.apache.tools.ant.filters.ReplaceTokens
 task generateDescriptors(type: Copy) {
   from 'descriptors'
   into 'build'

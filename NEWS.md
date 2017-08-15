@@ -1,4 +1,4 @@
-## 4.2.0 Unreleased
+## 4.2.0 2017-08-15
 
 * Include item status and location in loans
 * Provides circulation interface version 2.2
