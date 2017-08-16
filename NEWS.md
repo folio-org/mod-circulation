@@ -1,5 +1,9 @@
 ## 4.2.1 Unreleased
 
+* Introduces proxy user ID for a loan (CIRCSTORE-20)
+* Requires loan-storage interface version 3.2
+* Provides circulation interface version 2.3
+
 ## 4.2.0 2017-08-15
 
 * Include item status and location in loans

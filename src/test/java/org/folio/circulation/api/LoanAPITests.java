@@ -62,6 +62,7 @@ public class LoanAPITests {
     UUID id = UUID.randomUUID();
     UUID itemId = createItem(ItemRequestExamples.smallAngryPlanet()).getId();
     UUID userId = UUID.randomUUID();
+    UUID proxyUserId = UUID.randomUUID();
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
@@ -69,6 +70,7 @@ public class LoanAPITests {
     IndividualResource response = createLoan(new LoanRequestBuilder()
       .withId(id)
       .withUserId(userId)
+      .withProxyUserId(proxyUserId)
       .withItemId(itemId)
       .withLoanDate(loanDate)
       .withDueDate(dueDate)
@@ -82,6 +84,9 @@ public class LoanAPITests {
 
     assertThat("user id does not match",
       loan.getString("userId"), is(userId.toString()));
+
+    assertThat("proxy user id does not match",
+      loan.getString("proxyUserId"), is(proxyUserId.toString()));
 
     assertThat("item id does not match",
       loan.getString("itemId"), is(itemId.toString()));
@@ -184,12 +189,14 @@ public class LoanAPITests {
     UUID id = UUID.randomUUID();
     UUID itemId = createItem(ItemRequestExamples.smallAngryPlanet()).getId();
     UUID userId = UUID.randomUUID();
+    UUID proxyUserId = UUID.randomUUID();
 
     DateTime dueDate = new DateTime(2016, 11, 15, 8, 26, 53, DateTimeZone.UTC);
 
     createLoan(new LoanRequestBuilder()
       .withId(id)
       .withUserId(userId)
+      .withProxyUserId(proxyUserId)
       .withItemId(itemId)
       .withLoanDate(new DateTime(2016, 10, 15, 8, 26, 53, DateTimeZone.UTC))
       .withDueDate(dueDate)
@@ -208,6 +215,9 @@ public class LoanAPITests {
 
     assertThat("user id does not match",
       loan.getString("userId"), is(userId.toString()));
+
+    assertThat("proxy user id does not match",
+      loan.getString("proxyUserId"), is(proxyUserId.toString()));
 
     assertThat("item id does not match",
       loan.getString("itemId"), is(itemId.toString()));
