@@ -83,6 +83,11 @@
     "renewalCount": {
       "description": "Count of how many times a loan has been renewed (incremented by the client)",
       "type": "integer"
+    },
+    "metaData": {
+      "description": "Metadata about creation and changes to loan, provided by the server (client should not provide)",
+      "type": "object",
+      "$ref": "raml-util/schemas/metadata.schema"
     }
   },
   "required": [

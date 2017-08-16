@@ -9,8 +9,9 @@ documentation:
     content: <b>Storage for loans</b>
 
 schemas:
-  - loan.json: !include schema/loan.json
-  - loans: !include schema/loans.json
+  - loan.json: !include loan.json
+  - loans: !include loans.json
+  - raml-util/schemas/metadata.schema: !include raml-util/schemas/metadata.schema
 
 traits:
   - secured: !include raml-util/traits/auth.raml
