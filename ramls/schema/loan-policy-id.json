@@ -1,0 +1,14 @@
+{
+  "$schema" : "http://json-schema.org/draft-04/schema#",
+  "title": "Loan policy id schema",
+  "type": "object",
+  "properties": {
+    "loanPolicyId": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "loanPolicyId"
+   ]
+}

@@ -101,6 +101,16 @@
           "pathPattern": "/circulation/loan-rules",
           "permissionsRequired": ["circulation.loans-rules.put"],
           "modulePermissions": ["circulation-storage.loans-rules.put"]
+        }, {
+          "methods": ["GET"],
+          "pathPattern": "/circulation/loan-rules/apply",
+          "permissionsRequired": ["circulation.loans-rules.get"],
+          "modulePermissions": ["circulation-storage.loans-rules.get"]
+        }, {
+          "methods": ["GET"],
+          "pathPattern": "/circulation/loan-rules/apply-all",
+          "permissionsRequired": ["circulation.loans-rules.get"],
+          "modulePermissions": ["circulation-storage.loans-rules.get"]
         }
       ]
     }

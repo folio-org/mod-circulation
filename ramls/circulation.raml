@@ -102,3 +102,74 @@ resourceTypes:
           body:
             text/plain:
               example: "Internal server error"
+    /apply:
+      displayName: Apply loan rules
+      get:
+        description: Get the loan policy when applying loan rules
+        is: [secured]
+        queryParameters:
+          item_type_id:
+            description: "Item type id"
+            required: true
+          loan_type_id:
+            description: "Loan type id"
+            required: true
+          patron_type_id:
+            description: "Patron type id"
+            required: true
+          shelving_location_id:
+            description: "Shelving location id"
+            required: true
+        responses:
+          200:
+            body:
+              application/json:
+                schema: !include schema/loan-policy.json
+          422:
+            description: "Invalid id error."
+            body:
+              application/json:
+                schema: !include raml-util/schemas/error.json
+                example: !include examples/loan-rules-id-error.json
+          500:
+            description: "Internal server error"
+            body:
+              text/plain:
+                example: "Internal server error"
+    /apply-all:
+      displayName: Apply loan rules and return all matching loan policies
+      get:
+        description: Get all loan policies when applying loan rules in the order they match
+        is: [secured]
+        queryParameters:
+          item_type_id:
+            description: "Item type id"
+            required: true
+          loan_type_id:
+            description: "Loan type id"
+            required: true
+          patron_type_id:
+            description: "Patron type id"
+            required: true
+          shelving_location_id:
+            description: "Shelving location id"
+            required: true
+          loan_rules:
+            description: "Loan rules if provided, otherwise use stored loan rules"
+            required: false
+        responses:
+          200:
+            body:
+              application/json:
+                schema: !include schema/loan-policies.json
+          422:
+            description: "Invalid id error."
+            body:
+              application/json:
+                schema: !include raml-util/schemas/error.json
+                example: !include examples/loan-rules-id-error.json
+          500:
+            description: "Internal server error"
+            body:
+              text/plain:
+                example: "Internal server error"
