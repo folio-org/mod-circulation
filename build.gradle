@@ -2,12 +2,13 @@ apply plugin: 'java'
 apply plugin: 'application'
 
 mainClassName = "org.folio.circulation.Launcher"
-version = "4.1.0-SNAPSHOT"
+project.ext.artifactId = "circulation"
+version = "4.2.1-SNAPSHOT"
 
 ext.sharedManifest = manifest {
   attributes(
     "Main-Class": mainClassName,
-    "Implementation-Title": "circulation",
+    "Implementation-Title": project.properties['artifactId'],
     "Implementation-Version": version)
 }
 
@@ -35,6 +36,8 @@ dependencies {
   testCompile 'joda-time:joda-time:2.9.7'
 }
 
+defaultTasks 'build', 'generateDescriptors'
+
 compileJava {
   options.compilerArgs += ["-Xlint:all"]
 }
@@ -47,6 +50,17 @@ test {
   //Gradle runs tests designed to be run in a suite twice
   //See: https://discuss.gradle.org/t/how-to-prevent-junit-test-suite-classes-from-being-ran-twice/7107/4
   exclude '**/api/**Tests.class'
+}
+
+task generateDescriptors(type: Copy) {
+  from 'descriptors'
+  into 'build'
+  include('*Descriptor*-template.json')
+  filteringCharset = 'UTF-8'
+  expand(project.properties)
+  rename { String fileName ->
+    fileName.replace('-template', '')
+  }
 }
 
 task testApiViaOkapi(type: Test) {

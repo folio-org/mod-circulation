@@ -69,9 +69,7 @@ public class LoanCollectionResource {
           if(response.getStatusCode() == 201) {
             JsonObject createdLoan = response.getJson();
 
-        createdLoan.put("item", new JsonObject()
-          .put("title", item.getString("title"))
-          .put("barcode", item.getString("barcode")));
+        createdLoan.put("item", createItemSummary(item));
 
         JsonResponse.created(routingContext.response(), createdLoan);
       }
@@ -400,6 +398,15 @@ public class LoanCollectionResource {
     if(item.containsKey("barcode")) {
       itemSummary.put("barcode", item.getString("barcode"));
     }
+
+    if(item.containsKey("status")) {
+      itemSummary.put("status", item.getJsonObject("status"));
+    }
+
+    if(item.containsKey("location")) {
+      itemSummary.put("location", item.getJsonObject("location"));
+    }
+
     return itemSummary;
   }
 }

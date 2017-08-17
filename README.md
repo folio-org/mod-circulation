@@ -37,7 +37,7 @@ More information is available on the [developer site](http://dev.folio.org/doc/s
 
 ### Running a general build
 
-In order to run a general build (including the default tests), run `gradle build`.
+In order to run a general build (including the default tests), run `gradle`.
 
 ### Creating the circulation module JAR
 

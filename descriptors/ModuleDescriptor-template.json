@@ -1,5 +1,5 @@
 {
-  "id": "circulation-4.2.1-SNAPSHOT",
+  "id": "${artifactId}-${version}",
   "name": "Circulation Module",
   "provides": [
     {
@@ -86,33 +86,12 @@
           ]
         }
       ]
-    },
-    {
-      "id": "circulation-loan-rules",
-      "version": "1.0",
-      "handlers": [
-        {
-          "methods": ["GET"],
-          "pathPattern": "/circulation/loan-rules",
-          "permissionsRequired": ["circulation.loans-rules.get"],
-          "modulePermissions": ["circulation-storage.loans-rules.get"]
-        }, {
-          "methods": ["PUT"],
-          "pathPattern": "/circulation/loan-rules",
-          "permissionsRequired": ["circulation.loans-rules.put"],
-          "modulePermissions": ["circulation-storage.loans-rules.put"]
-        }
-      ]
     }
   ],
   "requires": [
     {
       "id": "loan-storage",
       "version": "3.1"
-    },
-    {
-      "id": "loan-rules-storage",
-      "version": "1.0"
     },
     {
       "id": "item-storage",
@@ -151,16 +130,6 @@
       "description": "delete individual loan"
     },
     {
-      "permissionName": "circulation.loan-rules.get",
-      "displayName": "circulation - get the loan rules",
-      "description": "get the loan rules"
-    },
-    {
-      "permissionName": "circulation.loan-rules.put",
-      "displayName": "circulation - write new loan rules",
-      "description": "modify the loan rules"
-    },
-    {
       "permissionName": "module.scan.enabled",
       "displayName": "scan - enable the scan UI",
       "description": "enable the scan UI"
@@ -177,8 +146,6 @@
         "circulation.loans.item.put",
         "circulation.loans.item.delete",
         "circulation.loans.collection.delete",
-        "circulation.loans-rules.get",
-        "circulation.loans-rules.put",
         "module.scan.enabled",
         "circulation-storage.all",
         "configuration.all",

@@ -1,10 +1,18 @@
-## 4.1.0 Unreleased
+## 4.2.1 Unreleased
+
+## 4.2.0 2017-08-15
+
+* Include item status and location in loans
+* Provides circulation interface version 2.2
+
+## 4.1.0 2017-08-01
 
 * Adds property `dueDate` to loan
+* Adds `renewalCount` property to loan
 * Provides circulation interface version 2.1
 * Requires loan-storage interface version 3.1
 * Include implementation version in `id` in Module Descriptor
-* Includes missing `action` property definition in loan schema 
+* Includes missing `action` property definition in loan schema
 
 ## 4.0.0 2017-07-17
 
