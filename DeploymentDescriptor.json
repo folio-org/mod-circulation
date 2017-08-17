@@ -1,5 +1,5 @@
 {
-  "srvcId": "circulation-4.3.0",
+  "srvcId": "circulation-4.3.1-SNAPSHOT",
   "descriptor": {
     "exec": "java -Dport=%p -jar ../mod-circulation/build/libs/mod-circulation.jar"
   }
