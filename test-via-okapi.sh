@@ -4,13 +4,13 @@ okapi_proxy_address="http://localhost:9130"
 tenant_id="test_tenant"
 circulation_direct_address=http://localhost:9605
 circulation_instance_id=localhost-9605
-circulation_module_id="circulation-4.2.1-SNAPSHOT"
+circulation_module_id="circulation-4.3.0"
 
 #Needs to be the specific version of Inventory Storage you want to use for testing
 inventory_storage_module_id="inventory-storage-5.1.1-SNAPSHOT"
 
 #Needs to be the specific version of Circulation Storage you want to use for testing
-circulation_storage_module_id="circulation-storage-3.2.0-SNAPSHOT"
+circulation_storage_module_id="circulation-storage-3.2.0"
 
 echo "Check if Okapi is contactable"
 curl -w '\n' -X GET -D -   \
