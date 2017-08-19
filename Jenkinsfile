@@ -50,7 +50,7 @@ pipeline {
             }
 
             echo "Module Version: $version"
-            sh 'gradle build fatJar'
+            sh 'gradle build generateDescriptors fatJar'
          }
       }
 
