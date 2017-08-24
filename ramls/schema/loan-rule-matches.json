@@ -1,0 +1,19 @@
+{
+  "$schema" : "http://json-schema.org/draft-04/schema#",
+  "title": "Loan policy ids schema",
+  "type": "object",
+  "properties": {
+    "loanRuleMatches": {
+      "id": "loanRuleMatches",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "$ref": "loan-rule-match.json"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "loanRuleMatches"
+   ]
+}

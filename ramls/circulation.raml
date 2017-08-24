@@ -11,6 +11,8 @@ documentation:
 schemas:
   - loan.json: !include schema/loan.json
   - loans: !include schema/loans.json
+  - raml-util/schemas/error.schema: !include raml-util/schemas/error.schema
+  - raml-util/schemas/mod-circulation/loan-policy.json: !include raml-util/schemas/mod-circulation/loan-policy.json
 
 traits:
   - secured: !include raml-util/traits/auth.raml
@@ -110,26 +112,30 @@ resourceTypes:
         queryParameters:
           item_type_id:
             description: "Item type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
             required: true
           loan_type_id:
             description: "Loan type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
             required: true
           patron_type_id:
             description: "Patron type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
             required: true
           shelving_location_id:
             description: "Shelving location id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
             required: true
         responses:
           200:
             body:
               application/json:
-                schema: !include schema/loan-policy.json
+                schema: raml-util/schemas/mod-circulation/loan-policy.json
           422:
             description: "Invalid id error."
             body:
               application/json:
-                schema: !include raml-util/schemas/error.json
+                schema: raml-util/schemas/error.schema
                 example: !include examples/loan-rules-id-error.json
           500:
             description: "Internal server error"
@@ -137,22 +143,26 @@ resourceTypes:
               text/plain:
                 example: "Internal server error"
     /apply-all:
-      displayName: Apply loan rules and return all matching loan policies
+      displayName: Apply loan rules and return all matches
       get:
-        description: Get all loan policies when applying loan rules in the order they match
+        description: Get loan rule and loan policy for each match when applying loan rules
         is: [secured]
         queryParameters:
           item_type_id:
             description: "Item type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
             required: true
           loan_type_id:
             description: "Loan type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
             required: true
           patron_type_id:
             description: "Patron type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
             required: true
           shelving_location_id:
             description: "Shelving location id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
             required: true
           loan_rules:
             description: "Loan rules if provided, otherwise use stored loan rules"
@@ -161,12 +171,12 @@ resourceTypes:
           200:
             body:
               application/json:
-                schema: !include schema/loan-policies.json
+                schema: !include schema/loan-rule-matches.json
           422:
             description: "Invalid id error."
             body:
               application/json:
-                schema: !include raml-util/schemas/error.json
+                schema: raml-util/schemas/error.schema
                 example: !include examples/loan-rules-id-error.json
           500:
             description: "Internal server error"

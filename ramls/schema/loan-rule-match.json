@@ -1,0 +1,22 @@
+{
+  "$schema" : "http://json-schema.org/draft-04/schema#",
+  "title": "Loan rule match schema",
+  "type": "object",
+  "properties": {
+    "loanRuleLine": {
+      "description": "Line number of the matching rule",
+      "type": "integer"
+    },
+    "loanPolicy": {
+      "description": "Loan policy of the matching rule",
+      "type": "object",
+      "$ref" : "../raml-util/schemas/mod-circulation/loan-policy.json"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "loanRuleLine",
+    "loanPolicyId",
+    "loanPolicyName"
+   ]
+}
