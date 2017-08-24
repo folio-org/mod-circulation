@@ -1,4 +1,11 @@
-## 4.2.1 Unreleased
+## 4.3.1 Unreleased
+
+## 4.3.0 2017-08-17
+
+* Introduces proxy user ID for a loan (CIRC-23)
+* Adds `metaData` property to loan (for created and updated information, CIRC-24)
+* Requires loan-storage interface version 3.2
+* Provides circulation interface version 2.3
 
 ## 4.2.0 2017-08-15
 

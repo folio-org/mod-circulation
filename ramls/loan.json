@@ -12,6 +12,11 @@
       "description": "ID of the user (representing the patron) the item was lent to",
       "type": "string"
     },
+    "proxyUserId": {
+      "description": "ID of the user representing a proxy for the patron",
+      "type": "string",
+      "pattern": "^[a-f0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+    },
     "itemId": {
       "description": "ID of the item lent to the patron",
       "type": "string"
@@ -78,6 +83,11 @@
     "renewalCount": {
       "description": "Count of how many times a loan has been renewed (incremented by the client)",
       "type": "integer"
+    },
+    "metaData": {
+      "description": "Metadata about creation and changes to loan, provided by the server (client should not provide)",
+      "type": "object",
+      "$ref": "raml-util/schemas/metadata.schema"
     }
   },
   "required": [

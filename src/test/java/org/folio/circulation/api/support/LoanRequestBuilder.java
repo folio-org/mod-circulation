@@ -19,11 +19,12 @@ public class LoanRequestBuilder {
   private DateTime returnDate;
   private final String action;
   private final DateTime dueDate;
+  private final UUID proxyUserId;
 
   public LoanRequestBuilder() {
     this(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(),
-      new DateTime(2017, 03, 06, 16, 04, 43), null, "Open", null, "checkedout"
-    );
+      new DateTime(2017, 03, 06, 16, 04, 43), null, "Open", null, "checkedout",
+      null);
   }
 
   private LoanRequestBuilder(
@@ -33,11 +34,13 @@ public class LoanRequestBuilder {
     DateTime loanDate,
     DateTime dueDate, String status,
     DateTime returnDate,
-    String action) {
+    String action,
+    UUID proxyUserId) {
 
     this.id = id;
     this.itemId = itemId;
     this.userId = userId;
+    this.proxyUserId = proxyUserId;
     this.loanDate = loanDate;
     this.status = status;
     this.returnDate = returnDate;
@@ -58,6 +61,10 @@ public class LoanRequestBuilder {
       .put("itemId", itemId.toString())
       .put("loanDate", loanDate.toString(ISODateTimeFormat.dateTime()))
       .put("status", new JsonObject().put("name", status));
+
+    if(proxyUserId != null) {
+      loanRequest.put("proxyUserId", proxyUserId.toString());
+    }
 
     if(action != null) {
       loanRequest.put("action", action);
@@ -84,12 +91,14 @@ public class LoanRequestBuilder {
 
   public LoanRequestBuilder withLoanDate(DateTime loanDate) {
     return new LoanRequestBuilder(this.id, this.itemId, this.userId,
-      loanDate, this.dueDate, this.status, this.returnDate, this.action);
+      loanDate, this.dueDate, this.status, this.returnDate, this.action,
+      this.proxyUserId);
   }
 
   public LoanRequestBuilder withUserId(UUID userId) {
     return new LoanRequestBuilder(this.id, this.itemId, userId,
-      this.loanDate, this.dueDate, this.status, this.returnDate, this.action);
+      this.loanDate, this.dueDate, this.status, this.returnDate, this.action,
+      this.proxyUserId);
   }
 
   public LoanRequestBuilder withStatus(String status) {
@@ -110,32 +119,44 @@ public class LoanRequestBuilder {
     }
 
     return new LoanRequestBuilder(this.id, this.itemId, this.userId,
-      this.loanDate, this.dueDate, status, defaultedReturnDate, action);
+      this.loanDate, this.dueDate, status, defaultedReturnDate, action,
+      this.proxyUserId);
   }
 
   public LoanRequestBuilder withId(UUID id) {
     return new LoanRequestBuilder(id, this.itemId, this.userId,
-      this.loanDate, this.dueDate, this.status, this.returnDate, this.action);
+      this.loanDate, this.dueDate, this.status, this.returnDate, this.action,
+      this.proxyUserId);
   }
 
   public LoanRequestBuilder withItemId(UUID itemId) {
     return new LoanRequestBuilder(this.id, itemId, this.userId,
-      this.loanDate, this.dueDate, this.status, this.returnDate, this.action);
+      this.loanDate, this.dueDate, this.status, this.returnDate, this.action,
+      this.proxyUserId);
   }
 
   public LoanRequestBuilder withReturnDate(DateTime returnDate) {
     return new LoanRequestBuilder(this.id, this.itemId, this.userId,
-      this.loanDate, this.dueDate, this.status, returnDate, this.action);
+      this.loanDate, this.dueDate, this.status, returnDate, this.action,
+      this.proxyUserId);
   }
 
   public LoanRequestBuilder withItem(IndividualResource item) {
     return new LoanRequestBuilder(this.id, item.getId(), this.userId,
-      this.loanDate, this.dueDate, this.status, this.returnDate, this.action);
+      this.loanDate, this.dueDate, this.status, this.returnDate, this.action,
+      this.proxyUserId);
   }
 
   public LoanRequestBuilder withDueDate(DateTime dueDate) {
     return new LoanRequestBuilder(this.id, this.itemId, this.userId,
-      this.loanDate, dueDate, this.status, this.returnDate, this.action);
+      this.loanDate, dueDate, this.status, this.returnDate, this.action,
+      this.proxyUserId);
+  }
+
+  public LoanRequestBuilder withProxyUserId(UUID proxyUserId) {
+    return new LoanRequestBuilder(this.id, this.itemId, this.userId,
+      this.loanDate, dueDate, this.status, this.returnDate, this.action,
+      proxyUserId);
   }
 
   public LoanRequestBuilder dueIn(Period period) {
@@ -148,4 +169,5 @@ public class LoanRequestBuilder {
 
     return withDueDate(calculatedDueDate);
   }
+
 }

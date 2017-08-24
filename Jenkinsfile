@@ -50,7 +50,7 @@ pipeline {
             }
 
             echo "Module Version: $version"
-            sh 'gradle build fatJar'
+            sh 'gradle build generateDescriptors fatJar'
          }
       }
 
@@ -83,6 +83,16 @@ pipeline {
                }
             }
          }
+      }
+
+      stage('Publish Module Descriptor') {
+        when {
+          branch 'master'
+        }
+        steps {
+          sh "sed -i 's/\\(\\\"id\\\"\\s*:\\s*\\\".*-SNAPSHOT\\)/\\1.'\"${env.BUILD_NUMBER}\"'/' ${env.WORKSPACE}/build/ModuleDescriptor.json"
+          sh "curl -X POST -w '\n' -D - -d @${env.WORKSPACE}/build/ModuleDescriptor.json -f http://folio-registry.aws.indexdata.com:9130/_/proxy/modules"
+        }
       }
 
       stage('Clean Up') {

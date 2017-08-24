@@ -1,6 +1,6 @@
 #%RAML 0.8
 title: Circulation
-version: v2.2
+version: v2.3
 protocols: [ HTTP, HTTPS ]
 baseUri: http://localhost:9130
 
@@ -9,9 +9,10 @@ documentation:
     content: <b>Storage for loans</b>
 
 schemas:
-  - loan.json: !include schema/loan.json
-  - loans: !include schema/loans.json
+  - loan.json: !include loan.json
+  - loans: !include loans.json
   - raml-util/schemas/error.schema: !include raml-util/schemas/error.schema
+  - raml-util/schemas/metadata.schema: !include raml-util/schemas/metadata.schema
   - raml-util/schemas/mod-circulation/loan-policy.json: !include raml-util/schemas/mod-circulation/loan-policy.json
 
 traits:
