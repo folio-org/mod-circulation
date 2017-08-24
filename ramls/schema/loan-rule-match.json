@@ -16,7 +16,6 @@
   "additionalProperties": false,
   "required": [
     "loanRuleLine",
-    "loanPolicyId",
-    "loanPolicyName"
+    "loanPolicy"
    ]
 }

@@ -130,7 +130,8 @@ resourceTypes:
           200:
             body:
               application/json:
-                schema: raml-util/schemas/mod-circulation/loan-policy.json
+                schema: !include schema/loan-policy-id.json
+                example: !include examples/loan-policy-id.json
           422:
             description: "Invalid id error."
             body:
@@ -172,6 +173,7 @@ resourceTypes:
             body:
               application/json:
                 schema: !include schema/loan-rule-matches.json
+                example: !include examples/loan-rule-matches.json
           422:
             description: "Invalid id error."
             body:
