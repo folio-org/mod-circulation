@@ -14,8 +14,11 @@ import org.joda.time.Period;
 import org.joda.time.format.ISODateTimeFormat;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
+import java.lang.invoke.MethodHandles;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -33,11 +36,10 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class LoanAPITests {
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   OkapiHttpClient client = APITestSuite.createClient(exception -> {
-    System.out.println(
-      String.format("Request to circulation module failed: %s",
-        exception.toString()));
+    log.error("Request to circulation module failed:", exception);
   });
 
   @Before

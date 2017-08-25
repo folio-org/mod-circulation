@@ -1,16 +1,23 @@
 package org.folio.circulation.support.http.client;
 
+import io.vertx.core.Context;
 import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.json.Json;
 
+import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.function.Consumer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class OkapiHttpClient {
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private static final String TENANT_HEADER = "X-Okapi-Tenant";
   private static final String TOKEN_HEADER = "X-Okapi-Token";
@@ -56,8 +63,7 @@ public class OkapiHttpClient {
     if(body != null) {
       String encodedBody = Json.encodePrettily(body);
 
-      System.out.println(String.format("POST %s, Request: %s",
-        url.toString(), encodedBody));
+      log.info("POST {}, Request: {}", url, encodedBody);
 
       request.end(encodedBody);
     }
@@ -85,10 +91,13 @@ public class OkapiHttpClient {
 
     addMandatoryHeaders(request);
 
+    request.exceptionHandler(exception -> {
+      this.exceptionHandler.accept(exception);
+    });
+
     String encodedBody = Json.encodePrettily(body);
 
-    System.out.println(String.format("PUT %s, Request: %s",
-      url.toString(), encodedBody));
+    log.info("PUT {}, Request: {}", url, encodedBody);
 
     request.end(encodedBody);
   }
@@ -117,7 +126,10 @@ public class OkapiHttpClient {
 
     addMandatoryHeaders(request);
 
-    System.out.println(String.format("GET %s", url));
+    request.exceptionHandler(exception -> {
+      this.exceptionHandler.accept(exception);
+    });
+
     request.end();
   }
 
@@ -134,6 +146,10 @@ public class OkapiHttpClient {
     request.headers().add(OKAPI_URL_HEADER, okapiUrl.toString());
 
     addMandatoryHeaders(request);
+
+    request.exceptionHandler(exception -> {
+      this.exceptionHandler.accept(exception);
+    });
 
     request.end();
   }

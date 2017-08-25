@@ -5,28 +5,34 @@ import io.vertx.core.Future;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
+
+import java.lang.invoke.MethodHandles;
+
 import org.folio.circulation.resources.LoanCollectionResource;
+import org.folio.circulation.resources.LoanRulesResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CirculationVerticle extends AbstractVerticle {
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private HttpServer server;
 
+  @Override
   public void start(Future<Void> startFuture) {
-    System.out.println("Starting circulation module");
+    log.info("Starting circulation module");
 
     Router router = Router.router(vertx);
 
     this.server = vertx.createHttpServer();
 
-    JsonObject config = vertx.getOrCreateContext().config();
-
-    new LoanCollectionResource("/circulation/loans").register(router);
+    new LoanCollectionResource("/circulation/loans"     ).register(router);
+    new LoanRulesResource     ("/circulation/loan-rules").register(router);
 
     server.requestHandler(router::accept)
-      .listen(config.getInteger("port"), result -> {
+      .listen(config().getInteger("port"), result -> {
         if (result.succeeded()) {
-          System.out.println(
-            String.format("Listening on %s", server.actualPort()));
+          log.info("Listening on {}", server.actualPort());
           startFuture.complete();
         } else {
           startFuture.fail(result.cause());
@@ -34,14 +40,14 @@ public class CirculationVerticle extends AbstractVerticle {
       });
   }
 
+  @Override
   public void stop(Future<Void> stopFuture) {
-    System.out.println("Stopping circulation module");
+    log.info("Stopping circulation module");
 
     if(server != null) {
       server.close(result -> {
         if (result.succeeded()) {
-          System.out.println(
-            String.format("Stopped listening on %s", server.actualPort()));
+          log.info("Stopped listening on {}", server.actualPort());
           stopFuture.complete();
         } else {
           stopFuture.fail(result.cause());

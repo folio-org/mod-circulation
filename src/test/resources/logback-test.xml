@@ -1,0 +1,22 @@
+<configuration>
+  <!-- This is the logback configuration of src/test/*.
+
+       The logback configuration of src/main/* is in
+       src/main/java/org/folio/circulation/support/LogbackConfigurator.java
+       because parsing an xml file is too slow for production, see
+       https://logback.qos.ch/manual/configuration.html
+  -->
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <logger name="io.netty" level="WARN" />
+  <logger name="org.folio.circulation.loanrules" level="DEBUG" />
+
+  <root level="WARN">
+    <appender-ref ref="STDOUT" />
+  </root>
+
+</configuration>

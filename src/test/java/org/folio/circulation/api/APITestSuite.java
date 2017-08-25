@@ -4,6 +4,7 @@ import io.vertx.core.json.JsonObject;
 import org.folio.circulation.CirculationVerticle;
 import org.folio.circulation.api.fakes.FakeOkapi;
 import org.folio.circulation.api.support.URLHelper;
+import org.folio.circulation.loanrules.Text2DroolsTest;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.VertxAssistant;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
@@ -13,7 +14,10 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
@@ -30,9 +34,14 @@ import static org.hamcrest.core.Is.is;
 @RunWith(Suite.class)
 
 @Suite.SuiteClasses({
-  LoanAPITests.class
+  // org.folio.circulation.api
+  LoanAPITests.class,
+  LoanRulesAPITests.class,
+  // org.folio.circulation.loanrules
+  Text2DroolsTest.class
 })
 public class APITestSuite {
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   public static final String TENANT_ID = "test_tenant";
   public static final String TOKEN = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsInRlbmFudCI6ImRlbW9fdGVuYW50In0.63jTgc15Kil946OdOGYZur_8xVWEUURANx87FAOQajh9TJbsnCMbjE164JQqNLMWShCyi9FOX0Kr1RFuiHTFAQ";
@@ -84,9 +93,7 @@ public class APITestSuite {
     TimeoutException {
 
     OkapiHttpClient client = createClient(exception -> {
-      System.out.println(
-        String.format("Request to delete all failed: %s",
-          exception.toString()));
+      log.error("Request to delete all failed:", exception);
     });
 
     CompletableFuture<Response> deleteAllFinished = new CompletableFuture<>();
@@ -207,9 +214,7 @@ public class APITestSuite {
     TimeoutException {
 
     OkapiHttpClient client = APITestSuite.createClient(exception -> {
-      System.out.println(
-        String.format("Request to material type storage module failed: %s",
-          exception.toString()));
+      log.error("Request to material type storage module failed:", exception);
     });
 
     URL materialTypesUrl = new URL(okapiUrl() + "/material-types");
@@ -259,9 +264,7 @@ public class APITestSuite {
     TimeoutException {
 
     OkapiHttpClient client = APITestSuite.createClient(exception -> {
-      System.out.println(
-        String.format("Request to material type storage module failed: %s",
-          exception.toString()));
+      log.error("Request to material type storage module failed:", exception);
     });
 
     String materialTypeUrl = okapiUrl()
@@ -286,9 +289,7 @@ public class APITestSuite {
     TimeoutException {
 
     OkapiHttpClient client = APITestSuite.createClient(exception -> {
-      System.out.println(
-        String.format("Request to loan type storage module failed: %s",
-          exception.toString()));
+      log.error("Request to loan type storage module failed:", exception);
     });
 
     URL loanTypesUrl = new URL(okapiUrl() + "/loan-types");
@@ -338,9 +339,7 @@ public class APITestSuite {
     TimeoutException {
 
     OkapiHttpClient client = APITestSuite.createClient(exception -> {
-      System.out.println(
-        String.format("Request to loan type storage module failed: %s",
-          exception.toString()));
+      log.error("Request to loan type storage module failed:", exception);
     });
 
     String loanTypeUrl = okapiUrl()
