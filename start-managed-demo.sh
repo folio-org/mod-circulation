@@ -3,7 +3,7 @@
 okapi_proxy_address=${1:-http://localhost:9130}
 
 tenant_id="demo_tenant"
-deployment_descriptor="DeploymentDescriptor.json"
+deployment_descriptor="build/DeploymentDescriptor.json"
 
 echo "Check if Okapi is contactable"
 curl -w '\n' -X GET -D -   \
