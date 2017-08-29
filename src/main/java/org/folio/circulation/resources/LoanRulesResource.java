@@ -42,6 +42,8 @@ public class LoanRulesResource {
     log.debug("get(RoutingContext) client={}", loansRulesClient);
 
     if (loansRulesClient == null) {
+      ServerErrorResponse.internalError(routingContext.response(),
+        "Cannot initialise client to storage interface");
       return;
     }
 
@@ -65,6 +67,8 @@ public class LoanRulesResource {
     CollectionResourceClient loansRulesClient = getLoanRulesClient(routingContext);
 
     if (loansRulesClient == null) {
+      ServerErrorResponse.internalError(routingContext.response(),
+        "Cannot initialise client to storage interface");
       return;
     }
 
