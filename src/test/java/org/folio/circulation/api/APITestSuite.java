@@ -4,7 +4,6 @@ import io.vertx.core.json.JsonObject;
 import org.folio.circulation.CirculationVerticle;
 import org.folio.circulation.api.fakes.FakeOkapi;
 import org.folio.circulation.api.support.URLHelper;
-import org.folio.circulation.loanrules.Text2DroolsTest;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.VertxAssistant;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
@@ -34,11 +33,8 @@ import static org.hamcrest.core.Is.is;
 @RunWith(Suite.class)
 
 @Suite.SuiteClasses({
-  // org.folio.circulation.api
   LoanAPITests.class,
   LoanRulesAPITests.class,
-  // org.folio.circulation.loanrules
-  Text2DroolsTest.class
 })
 public class APITestSuite {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
