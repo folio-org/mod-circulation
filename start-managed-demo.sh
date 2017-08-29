@@ -10,7 +10,7 @@ curl -w '\n' -X GET -D -   \
      "${okapi_proxy_address}/_/env" || exit 1
 
 echo "Package circulation module"
-gradle fatJar
+gradle generateDescriptors fatJar
 
 ./create-tenant.sh
 
