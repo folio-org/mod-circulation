@@ -84,6 +84,30 @@
           "modulePermissions": [
             "circulation-storage.loans.item.delete"
           ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/loan-rules",
+          "permissionsRequired": [
+            "circulation.loan-rules.item.get"
+          ],
+          "modulePermissions": [
+            "circulation-storage.loan-rules.get"
+          ]
+        },
+        {
+          "methods": [
+            "PUT"
+          ],
+          "pathPattern": "/circulation/loan-rules",
+          "permissionsRequired": [
+            "circulation.loan-rules.item.put"
+          ],
+          "modulePermissions": [
+            "circulation-storage.loan-rules.put"
+          ]
         }
       ]
     }
@@ -92,6 +116,10 @@
     {
       "id": "loan-storage",
       "version": "3.2"
+    },
+    {
+      "id": "loan-rules-storage",
+      "version": "1.0"
     },
     {
       "id": "item-storage",
@@ -146,6 +174,8 @@
         "circulation.loans.item.put",
         "circulation.loans.item.delete",
         "circulation.loans.collection.delete",
+        "circulation.loan-rules.item.put",
+        "circulation.loan-rules.item.get",
         "module.scan.enabled",
         "circulation-storage.all",
         "configuration.all",
