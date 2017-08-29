@@ -1,10 +1,10 @@
 {
-  "id": "circulation-4.3.1-SNAPSHOT",
+  "id": "circulation-4.4.0-SNAPSHOT",
   "name": "Circulation Module",
   "provides": [
     {
       "id": "circulation",
-      "version": "2.3",
+      "version": "2.4",
       "handlers": [
         {
           "methods": [

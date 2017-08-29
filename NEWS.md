@@ -1,4 +1,8 @@
-## 4.3.1 Unreleased
+## 4.4.0 Unreleased
+
+* Introduces `/circulation/loan-rules` for getting and replacing loan rules (CIRC-11)
+* Provides circulation interface version 2.4
+* Requires loan-rules-storage interface version 1.0 (new dependency)
 
 ## 4.3.0 2017-08-17
 
