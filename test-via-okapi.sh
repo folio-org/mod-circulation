@@ -37,6 +37,8 @@ curl -w '\n' -X POST -D - \
      -d "${activate_inventory_storage_json}"  \
      "${okapi_proxy_address}/_/proxy/tenants/${tenant_id}/modules"
 
+gradle generateDescriptors
+
 echo "Register circulation module"
 ./register.sh ${circulation_direct_address} ${circulation_instance_id} ${tenant_id}
 
