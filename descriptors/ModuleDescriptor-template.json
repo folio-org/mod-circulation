@@ -158,15 +158,9 @@
       "description": "delete individual loan"
     },
     {
-      "permissionName": "module.scan.enabled",
-      "displayName": "scan - enable the scan UI",
-      "description": "enable the scan UI"
-    },
-    {
       "permissionName": "circulation.all",
       "displayName": "circulation - all permissions",
       "description": "Entire set of permissions needed to use the circulation",
-      "visible": true,
       "subPermissions": [
         "circulation.loans.collection.get",
         "circulation.loans.item.get",
@@ -175,13 +169,7 @@
         "circulation.loans.item.delete",
         "circulation.loans.collection.delete",
         "circulation.loan-rules.item.put",
-        "circulation.loan-rules.item.get",
-        "module.scan.enabled",
-        "circulation-storage.all",
-        "configuration.all",
-        "inventory-storage.items.item.get",
-        "inventory-storage.items.item.put",
-        "users.collection.get"
+        "circulation.loan-rules.item.get"
       ]
     }
   ]
