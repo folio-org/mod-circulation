@@ -13,7 +13,9 @@
   </appender>
 
   <logger name="io.netty" level="WARN" />
-  <logger name="org.folio.circulation.loanrules" level="DEBUG" />
+  <!--
+  <logger name="org.folio.circulation" level="DEBUG" />
+  -->
 
   <root level="WARN">
     <appender-ref ref="STDOUT" />

@@ -1,12 +1,12 @@
 package org.folio.circulation.loanrules;
 
 public class ItemType {
-  public String name;
-  public ItemType(String name) {
-    this.name = name;
+  public String id;
+  public ItemType(String id) {
+    this.id = id;
   }
   @Override
   public String toString() {
-    return name;
+    return id;
   }
 }

@@ -33,8 +33,9 @@ import static org.hamcrest.core.Is.is;
 @RunWith(Suite.class)
 
 @Suite.SuiteClasses({
-  LoanAPITests.class,
-  LoanRulesAPITests.class,
+  //LoanAPITests.class,
+  //LoanRulesAPITests.class,
+  LoanRulesEngineAPITests.class
 })
 public class APITestSuite {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
