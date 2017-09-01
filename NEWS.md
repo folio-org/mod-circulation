@@ -4,6 +4,7 @@
 * Introduces `/circulation/loan-rules/apply` for loan rules engine (CIRC-26)
 * Provides circulation interface version 2.4
 * Requires loan-rules-storage interface version 1.0 (new dependency)
+* Remove `module.scan.enabled`, storage and configuration permissions from circulation.all set, as part of moving permissions to UI modules (CIRC-32)
 
 ## 4.3.0 2017-08-17
 
