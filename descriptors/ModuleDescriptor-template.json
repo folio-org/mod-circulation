@@ -91,7 +91,7 @@
           ],
           "pathPattern": "/circulation/loan-rules",
           "permissionsRequired": [
-            "circulation.loan-rules.item.get"
+            "circulation.loan-rules.get"
           ],
           "modulePermissions": [
             "circulation-storage.loan-rules.get"
@@ -103,10 +103,34 @@
           ],
           "pathPattern": "/circulation/loan-rules",
           "permissionsRequired": [
-            "circulation.loan-rules.item.put"
+            "circulation.loan-rules.put"
           ],
           "modulePermissions": [
             "circulation-storage.loan-rules.put"
+          ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/loan-rules/apply",
+          "permissionsRequired": [
+            "circulation.loan-rules.apply.get"
+          ],
+          "modulePermissions": [
+            "circulation-storage.loan-rules.get"
+          ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/loan-rules/apply-all",
+          "permissionsRequired": [
+            "circulation.loan-rules.apply-all.get"
+          ],
+          "modulePermissions": [
+            "circulation-storage.loan-rules.get"
           ]
         }
       ]
@@ -149,13 +173,33 @@
     },
     {
       "permissionName": "circulation.loans.item.put",
-      "displayName": "circulation - modify loan in storage",
+      "displayName": "circulation - modify loan",
       "description": "modify loan in storage"
     },
     {
       "permissionName": "circulation.loans.item.delete",
       "displayName": "circulation - delete individual loan",
       "description": "delete individual loan"
+    },
+    {
+      "permissionName": "circulation.loan-rules.get",
+      "displayName": "Circulation - get loan rules",
+      "description": "Get loan rules"
+    },
+    {
+      "permissionName": "circulation.loan-rules.put",
+      "displayName": "Circulation - modify loan rules",
+      "description": "Modify loan rules"
+    },
+    {
+      "permissionName": "circulation.loan-rules.apply.get",
+      "displayName": "Circulation - apply loan rules",
+      "description": "Apply loan rules to get matching policy"
+    },
+    {
+      "permissionName": "circulation.loan-rules.apply-all.get",
+      "displayName": "Circulation - apply loan rules - all matching policies",
+      "description": "Apply loan rules to get all matching policies"
     },
     {
       "permissionName": "circulation.all",
@@ -168,8 +212,10 @@
         "circulation.loans.item.put",
         "circulation.loans.item.delete",
         "circulation.loans.collection.delete",
-        "circulation.loan-rules.item.put",
-        "circulation.loan-rules.item.get"
+        "circulation.loan-rules.put",
+        "circulation.loan-rules.get",
+        "circulation.loan-rules.apply.get",
+        "circulation.loan-rules.apply-all.get"
       ]
     }
   ]
