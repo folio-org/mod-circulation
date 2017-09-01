@@ -7,6 +7,7 @@ import io.vertx.ext.web.handler.BodyHandler;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.folio.circulation.loanrules.Text2Drools;
+import org.folio.circulation.support.ClientUtil;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.server.ForwardResponse;
@@ -38,7 +39,7 @@ public class LoanRulesResource {
   }
 
   private void get(RoutingContext routingContext) {
-    CollectionResourceClient loansRulesClient = getLoanRulesClient(routingContext);
+    CollectionResourceClient loansRulesClient = ClientUtil.getLoanRulesClient(routingContext);
     log.debug("get(RoutingContext) client={}", loansRulesClient);
 
     if (loansRulesClient == null) {
@@ -64,7 +65,7 @@ public class LoanRulesResource {
   }
 
   private void put(RoutingContext routingContext) {
-    CollectionResourceClient loansRulesClient = getLoanRulesClient(routingContext);
+    CollectionResourceClient loansRulesClient = ClientUtil.getLoanRulesClient(routingContext);
 
     if (loansRulesClient == null) {
       ServerErrorResponse.internalError(routingContext.response(),
@@ -73,6 +74,13 @@ public class LoanRulesResource {
     }
 
     JsonObject rulesInput = routingContext.getBodyAsJson();
+    try {
+      // try to convert, do not safe if conversion fails
+      Text2Drools.convert(rulesInput.getString("loanRulesAsTextFile"));
+    } catch (Exception e) {
+      ServerErrorResponse.internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
+      return;
+    }
     JsonObject rules = rulesInput.copy();
     rules.remove("loanRulesAsDrools");
     loansRulesClient.put(rules, response -> {
@@ -82,45 +90,5 @@ public class LoanRulesResource {
         ForwardResponse.forward(routingContext.response(), response);
       }
     });
-  }
-
-  private OkapiHttpClient createHttpClient(RoutingContext routingContext,
-                                           WebContext context)
-    throws MalformedURLException {
-
-    return new OkapiHttpClient(routingContext.vertx().createHttpClient(),
-      new URL(context.getOkapiLocation()), context.getTenantId(),
-      context.getOkapiToken(),
-      exception -> ServerErrorResponse.internalError(routingContext.response(),
-        String.format("Failed to contact storage module: %s",
-          exception.toString())));
-  }
-
-  private CollectionResourceClient createLoanRulesClient(
-    OkapiHttpClient client,
-    WebContext context)
-    throws MalformedURLException {
-
-    CollectionResourceClient loanRulesClient;
-
-    loanRulesClient = new CollectionResourceClient(
-      client, context.getOkapiBasedUrl("/loan-rules-storage"),
-      context.getTenantId());
-
-    return loanRulesClient;
-  }
-
-  private CollectionResourceClient getLoanRulesClient(RoutingContext routingContext) {
-    WebContext context = new WebContext(routingContext);
-
-    try {
-      OkapiHttpClient client = createHttpClient(routingContext, context);
-      return createLoanRulesClient(client, context);
-    }
-    catch (MalformedURLException e) {
-      ServerErrorResponse.internalError(routingContext.response(),
-        String.format("Invalid Okapi URL: %s", context.getOkapiLocation()));
-      return null;
-    }
   }
 }

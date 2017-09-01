@@ -1,8 +1,8 @@
 package org.folio.circulation.loanrules;
 
-public class PatronGroup {
+public class ShelvingLocation {
   public String id;
-  public PatronGroup(String id) {
+  public ShelvingLocation(String id) {
     this.id = id;
   }
   @Override

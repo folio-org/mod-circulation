@@ -14,34 +14,34 @@ public class Text2Drools {
 
   package loanrules
   import org.folio.circulation.loanrules.*
+  global LoanPolicy loanPolicy
 
-  rule "halt on result"
-    salience 99999
-    when
-      LoanPolicy()
-    then
-      drools.halt();
-  end
-
-  rule "default policy"
+  // fallback-policy
+  rule "line 0"
     salience 0
     when
     then
-      insert(new LoanPolicy("rule 3"));
+      loanPolicy.id = "ffffffff-2222-4b5e-a7bd-064b8d177231";
+      drools.halt();
   end
 
-  rule "1"
+  rule "line 1"
+    salience 1
     when
-      LoanType(name == "one-month")
+      ItemType(id == "aaaaaaaa-1111-4b5e-a7bd-064b8d177231")
     then
-      insert(new LoanPolicy("regular-loan"));
+      loanPolicy.id = "ffffffff-3333-4b5e-a7bd-064b8d177231";
+      drools.halt();
   end
 
-  rule "2"
+  rule "line 2"
+    salience 2
     when
-      LoanType(name == "one-week")
+      ItemType(id == "aaaaaaaa-1111-4b5e-a7bd-064b8d177231")
+      PatronGroup(id == "cccccccc-1111-4b5e-a7bd-064b8d177231")
     then
-      insert(new LoanPolicy("short-loan"));
+      loanPolicy.id = "ffffffff-4444-4b5e-a7bd-064b8d177231";
+      drools.halt();
   end
 
   */
@@ -138,7 +138,7 @@ public class Text2Drools {
         drools.append("  when\n");
         stack.descendingIterator().forEachRemaining(matcher -> drools.append(matcher.matcher));
         drools.append("  then\n");
-        drools.append("    loanPolicy.name = ");
+        drools.append("    loanPolicy.id = ");
         appendQuotedString(drools, loanPolicy);
         drools.append(";\n");
         drools.append("    drools.halt();\n");
@@ -187,7 +187,7 @@ public class Text2Drools {
       return;
     }
 
-    StringBuilder matcher = new StringBuilder("    ").append(type).append("(name ");
+    StringBuilder matcher = new StringBuilder("    ").append(type).append("(id ");
 
     if (names.size() == 1) {
       matcher.append("== ");

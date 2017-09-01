@@ -3,12 +3,12 @@ package org.folio.circulation;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpServer;
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 
 import java.lang.invoke.MethodHandles;
 
 import org.folio.circulation.resources.LoanCollectionResource;
+import org.folio.circulation.resources.LoanRulesEngineResource;
 import org.folio.circulation.resources.LoanRulesResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,8 +26,10 @@ public class CirculationVerticle extends AbstractVerticle {
 
     this.server = vertx.createHttpServer();
 
-    new LoanCollectionResource("/circulation/loans"     ).register(router);
-    new LoanRulesResource     ("/circulation/loan-rules").register(router);
+    new LoanCollectionResource ("/circulation/loans"     ).register(router);
+    new LoanRulesResource      ("/circulation/loan-rules").register(router);
+    new LoanRulesEngineResource("/circulation/loan-rules/apply",
+                                "/circulation/loan-rules/apply-all").register(router);
 
     server.requestHandler(router::accept)
       .listen(config().getInteger("port"), result -> {

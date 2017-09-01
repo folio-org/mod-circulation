@@ -1,12 +1,12 @@
 package org.folio.circulation.loanrules;
 
 public class LoanType {
-  public String name;
-  public LoanType(String name) {
-    this.name = name;
+  public String id;
+  public LoanType(String id) {
+    this.id = id;
   }
   @Override
   public String toString() {
-    return name;
+    return id;
   }
 }

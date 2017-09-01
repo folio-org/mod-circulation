@@ -42,7 +42,7 @@ public class Drools {
 
   private KieSession createSession(String itemTypeName, String loanTypeName, String patronGroupName) {
     KieSession kieSession = kieContainer.newKieSession();
-    loanPolicy.name = null;
+    loanPolicy.id = null;
     kieSession.setGlobal("loanPolicy", loanPolicy);
     kieSession.insert(new ItemType(itemTypeName));
     kieSession.insert(new LoanType(loanTypeName));
@@ -61,7 +61,7 @@ public class Drools {
     KieSession kieSession = createSession(itemTypeName, loanTypeName, patronGroupName);
     kieSession.fireAllRules();
     kieSession.dispose();
-    return loanPolicy.name;
+    return loanPolicy.id;
   }
 
   /**
@@ -75,7 +75,7 @@ public class Drools {
     KieSession kieSession = createSession(itemTypeName, loanTypeName, patronGroupName);
     List<String> list = new ArrayList<>();
     while (kieSession.fireAllRules() > 0) {
-      list.add(loanPolicy.name);
+      list.add(loanPolicy.id);
     }
     kieSession.dispose();
     return list;
