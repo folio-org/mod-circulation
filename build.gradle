@@ -3,7 +3,7 @@ apply plugin: 'application'
 
 mainClassName = "org.folio.circulation.Launcher"
 project.ext.artifactId = "circulation"
-version = "4.4.0-SNAPSHOT"
+version = "4.4.0"
 
 ext.sharedManifest = manifest {
   attributes(

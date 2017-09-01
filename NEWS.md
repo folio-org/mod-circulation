@@ -1,4 +1,4 @@
-## 4.4.0 Unreleased
+## 4.4.0 2017-09-01
 
 * Introduces `/circulation/loan-rules` for getting and replacing loan rules (CIRC-11)
 * Introduces `/circulation/loan-rules/apply` for loan rules engine (CIRC-26)
