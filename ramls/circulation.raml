@@ -1,6 +1,6 @@
 #%RAML 0.8
 title: Circulation
-version: v2.4
+version: v2.5
 protocols: [ HTTP, HTTPS ]
 baseUri: http://localhost:9130
 
@@ -11,6 +11,8 @@ documentation:
 schemas:
   - loan.json: !include loan.json
   - loans: !include loans.json
+  - request.json: !include request.json
+  - requests: !include requests.json
   - raml-util/schemas/error.schema: !include raml-util/schemas/error.schema
   - raml-util/schemas/metadata.schema: !include raml-util/schemas/metadata.schema
   - raml-util/schemas/mod-circulation/loan-policy.json: !include raml-util/schemas/mod-circulation/loan-policy.json
@@ -186,3 +188,48 @@ resourceTypes:
             body:
               text/plain:
                 example: "Internal server error"
+  /requests:
+    displayName: Requests
+    type:
+      collection:
+        exampleCollection: !include examples/requests.json
+        exampleItem: !include examples/request.json
+        schemaCollection: requests
+        schemaItem: request.json
+    get:
+      is: [pageable]
+      responses:
+        501:
+          description: "Not implemented yet"
+    post:
+      responses:
+        501:
+          description: "Not implemented yet"
+    delete:
+      responses:
+        204:
+          description: "All requests deleted"
+        500:
+          description: "Internal server error, e.g. due to misconfiguration"
+          body:
+            text/plain:
+              example: "Internal server error, contact administrator"
+        501:
+          description: "Not implemented yet"
+    /{requestId}:
+      type:
+        collection-item:
+          exampleItem: !include examples/request.json
+          schema: request.json
+      get:
+        responses:
+          501:
+            description: "Not implemented yet"
+      put:
+        responses:
+          501:
+            description: "Not implemented yet"
+      delete:
+        responses:
+          501:
+            description: "Not implemented yet"

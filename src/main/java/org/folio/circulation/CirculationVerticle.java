@@ -4,14 +4,14 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpServer;
 import io.vertx.ext.web.Router;
-
-import java.lang.invoke.MethodHandles;
-
 import org.folio.circulation.resources.LoanCollectionResource;
 import org.folio.circulation.resources.LoanRulesEngineResource;
 import org.folio.circulation.resources.LoanRulesResource;
+import org.folio.circulation.resources.RequestCollectionResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.lang.invoke.MethodHandles;
 
 public class CirculationVerticle extends AbstractVerticle {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -26,10 +26,11 @@ public class CirculationVerticle extends AbstractVerticle {
 
     this.server = vertx.createHttpServer();
 
-    new LoanCollectionResource ("/circulation/loans"     ).register(router);
-    new LoanRulesResource      ("/circulation/loan-rules").register(router);
-    new LoanRulesEngineResource("/circulation/loan-rules/apply",
-                                "/circulation/loan-rules/apply-all").register(router);
+    new LoanCollectionResource    ("/circulation/loans"     ).register(router);
+    new RequestCollectionResource ("/circulation/requests"  ).register(router);
+    new LoanRulesResource         ("/circulation/loan-rules").register(router);
+    new LoanRulesEngineResource   ("/circulation/loan-rules/apply",
+                                   "/circulation/loan-rules/apply-all").register(router);
 
     server.requestHandler(router::accept)
       .listen(config().getInteger("port"), result -> {

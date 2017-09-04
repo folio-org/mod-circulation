@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "UUID of the request",
+      "type": "string",
+      "pattern": "^[a-f0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+    },
+    "requestType": {
+      "description": "Whether the item should be held upon return, recalled or paged for",
+      "type": "string",
+      "enum": ["Hold", "Recall", "Page"]
+    },
+    "requestDate": {
+      "description": "Date the request was made",
+      "type": "string",
+      "format": "date-time"
+    },
+    "requesterId": {
+      "description": "ID of the user who made the request",
+      "type": "string",
+      "pattern": "^[a-f0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+    },
+    "itemId": {
+      "description": "ID of the item being requested",
+      "type": "string",
+      "pattern": "^[a-f0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+    },
+    "fulfilmentPreference": {
+      "description": "How should the request be fulfilled (whether the item should be kept on the hold shelf for collection or delivered to the requester)",
+      "type": "string",
+      "enum": ["Hold Shelf", "Delivery"]
+    },
+    "requestExpirationDate": {
+      "description": "Date when the request expires",
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "holdShelfExpirationDate": {
+      "description": "Date when an item returned to the hold shelf expires",
+      "type": "string",
+      "pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2}"
+    },
+    "metaData": {
+      "description": "Metadata about creation and changes to requests, provided by the server (client should not provide)",
+      "type": "object",
+      "$ref": "raml-util/schemas/metadata.schema"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "itemId",
+    "requesterId",
+    "requestType",
+    "requestDate",
+    "fulfilmentPreference"
+  ]
+}

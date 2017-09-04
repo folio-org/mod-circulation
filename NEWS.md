@@ -1,4 +1,7 @@
-## 4.4.1 Unreleased
+## 4.5.0 Unreleased
+
+* Introduces `circulation/requests` for making requests for items
+* Provides circulation interface version 2.5
 
 ## 4.4.0 2017-09-01
 

@@ -4,7 +4,7 @@
   "provides": [
     {
       "id": "circulation",
-      "version": "2.4",
+      "version": "2.5",
       "handlers": [
         {
           "methods": [
@@ -132,6 +132,78 @@
           "modulePermissions": [
             "circulation-storage.loan-rules.get"
           ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/requests",
+          "permissionsRequired": [
+            "circulation.requests.collection.get"
+          ],
+          "modulePermissions": [
+            "circulation-storage.requests.collection.get"
+          ]
+        },
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/circulation/requests",
+          "permissionsRequired": [
+            "circulation.requests.item.post"
+          ],
+          "modulePermissions": [
+            "circulation-storage.requests.item.post"
+          ]
+        },
+        {
+          "methods": [
+            "DELETE"
+          ],
+          "pathPattern": "/circulation/requests",
+          "permissionsRequired": [
+            "circulation.requests.collection.delete"
+          ],
+          "modulePermissions": [
+            "circulation-storage.requests.collection.delete"
+          ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/requests/{id}",
+          "permissionsRequired": [
+            "circulation.requests.item.get"
+          ],
+          "modulePermissions": [
+            "circulation-storage.requests.item.get"
+          ]
+        },
+        {
+          "methods": [
+            "PUT"
+          ],
+          "pathPattern": "/circulation/requests/{id}",
+          "permissionsRequired": [
+            "circulation.requests.item.put"
+          ],
+          "modulePermissions": [
+            "circulation-storage.requests.item.put"
+          ]
+        },
+        {
+          "methods": [
+            "DELETE"
+          ],
+          "pathPattern": "/circulation/requests/{id}",
+          "permissionsRequired": [
+            "circulation.requests.item.delete"
+          ],
+          "modulePermissions": [
+            "circulation-storage.requests.item.delete"
+          ]
         }
       ]
     }
@@ -148,6 +220,10 @@
     {
       "id": "item-storage",
       "version": "3.0"
+    },
+    {
+      "id": "request-storage",
+      "version": "1.0"
     }
   ],
   "permissionSets": [
@@ -174,7 +250,7 @@
     {
       "permissionName": "circulation.loans.item.put",
       "displayName": "circulation - modify loan",
-      "description": "modify loan in storage"
+      "description": "modify individual loan"
     },
     {
       "permissionName": "circulation.loans.item.delete",
@@ -202,6 +278,36 @@
       "description": "Apply loan rules to get all matching policies"
     },
     {
+      "permissionName": "circulation.requests.collection.get",
+      "displayName": "circulation - get request collection",
+      "description": "get request collection"
+    },
+    {
+      "permissionName": "circulation.requests.collection.delete",
+      "displayName": "circulation - delete entire request collection",
+      "description": "delete entire request collection"
+    },
+    {
+      "permissionName": "circulation.requests.item.get",
+      "displayName": "circulation - get individual request",
+      "description": "get individual request"
+    },
+    {
+      "permissionName": "circulation.requests.item.post",
+      "displayName": "circulation - create individual requests",
+      "description": "create individual request"
+    },
+    {
+      "permissionName": "circulation.requests.item.put",
+      "displayName": "circulation - modify request",
+      "description": "modify individual request"
+    },
+    {
+      "permissionName": "circulation.requests.item.delete",
+      "displayName": "circulation - delete individual request",
+      "description": "delete individual request"
+    },
+    {
       "permissionName": "circulation.all",
       "displayName": "circulation - all permissions",
       "description": "Entire set of permissions needed to use the circulation",
@@ -215,7 +321,13 @@
         "circulation.loan-rules.put",
         "circulation.loan-rules.get",
         "circulation.loan-rules.apply.get",
-        "circulation.loan-rules.apply-all.get"
+        "circulation.loan-rules.apply-all.get",
+        "circulation.requests.collection.get",
+        "circulation.requests.item.get",
+        "circulation.requests.item.post",
+        "circulation.requests.item.put",
+        "circulation.requests.item.delete",
+        "circulation.requests.collection.delete"
       ]
     }
   ]
