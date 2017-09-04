@@ -1,10 +1,16 @@
 package org.folio.circulation.resources;
 
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
-import org.folio.circulation.support.http.server.ServerErrorResponse;
+import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.http.client.OkapiHttpClient;
+import org.folio.circulation.support.http.server.*;
+
+import java.net.MalformedURLException;
+import java.net.URL;
 
 public class RequestCollectionResource {
 
@@ -28,7 +34,32 @@ public class RequestCollectionResource {
   }
 
   private void create(RoutingContext routingContext) {
-    ServerErrorResponse.notImplemented(routingContext.response());
+    WebContext context = new WebContext(routingContext);
+    CollectionResourceClient requestsStorageClient;
+
+    try {
+      OkapiHttpClient client = createHttpClient(routingContext, context);
+      requestsStorageClient = createRequestsStorageClient(client, context);
+    }
+    catch (MalformedURLException e) {
+      ServerErrorResponse.internalError(routingContext.response(),
+        String.format("Invalid Okapi URL: %s", context.getOkapiLocation()));
+
+      return;
+    }
+
+    JsonObject request = routingContext.getBodyAsJson();
+
+    requestsStorageClient.post(request, response -> {
+      if(response.getStatusCode() == 201) {
+        JsonObject createdRequest = response.getJson();
+
+        JsonResponse.created(routingContext.response(), createdRequest);
+      }
+      else {
+        ForwardResponse.forward(routingContext.response(), response);
+      }
+    });
   }
 
   private void replace(RoutingContext routingContext) {
@@ -48,6 +79,53 @@ public class RequestCollectionResource {
   }
 
   private void empty(RoutingContext routingContext) {
-    ServerErrorResponse.notImplemented(routingContext.response());
+    WebContext context = new WebContext(routingContext);
+    CollectionResourceClient requestsStorageClient;
+
+    try {
+      OkapiHttpClient client = createHttpClient(routingContext, context);
+      requestsStorageClient = createRequestsStorageClient(client, context);
+    }
+    catch (MalformedURLException e) {
+      ServerErrorResponse.internalError(routingContext.response(),
+        String.format("Invalid Okapi URL: %s", context.getOkapiLocation()));
+
+      return;
+    }
+
+    requestsStorageClient.delete(response -> {
+      if(response.getStatusCode() == 204) {
+        SuccessResponse.noContent(routingContext.response());
+      }
+      else {
+        ForwardResponse.forward(routingContext.response(), response);
+      }
+    });
+  }
+
+  private OkapiHttpClient createHttpClient(RoutingContext routingContext,
+                                           WebContext context)
+    throws MalformedURLException {
+
+    return new OkapiHttpClient(routingContext.vertx().createHttpClient(),
+      new URL(context.getOkapiLocation()), context.getTenantId(),
+      context.getOkapiToken(),
+      exception -> ServerErrorResponse.internalError(routingContext.response(),
+        String.format("Failed to contact storage module: %s",
+          exception.toString())));
+  }
+
+  private CollectionResourceClient createRequestsStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+
+    CollectionResourceClient requestStorageClient;
+
+    requestStorageClient = new CollectionResourceClient(
+      client, context.getOkapiBasedUrl("/request-storage/requests"),
+      context.getTenantId());
+
+    return requestStorageClient;
   }
 }
