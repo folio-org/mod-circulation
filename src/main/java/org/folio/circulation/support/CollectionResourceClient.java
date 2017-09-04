@@ -61,7 +61,7 @@ public class CollectionResourceClient {
     client.get(String.format(collectionRoot + "/%s", id),
       responseConversationHandler(responseHandler));
   }
-
+  
   public void delete(String id, Consumer<Response> responseHandler) {
     client.delete(String.format(collectionRoot + "/%s", id),
       responseConversationHandler(responseHandler));

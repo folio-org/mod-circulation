@@ -2,6 +2,7 @@ package org.folio.circulation.api;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.support.RequestRequestBuilder;
+import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
@@ -19,6 +20,7 @@ import java.lang.invoke.MethodHandles;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -154,20 +156,96 @@ public class RequestAPITests {
   }
 
   @Test
-  public void getAllRequestsIsNotImplemented()
+  public void canPageAllRequests()
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
     TimeoutException,
     UnsupportedEncodingException {
 
-    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
+    createRequest(new RequestRequestBuilder().create());
+    createRequest(new RequestRequestBuilder().create());
+    createRequest(new RequestRequestBuilder().create());
+    createRequest(new RequestRequestBuilder().create());
+    createRequest(new RequestRequestBuilder().create());
+    createRequest(new RequestRequestBuilder().create());
+    createRequest(new RequestRequestBuilder().create());
 
-    client.get(requestsUrl(), ResponseHandler.any(getCompleted));
+    CompletableFuture<Response> getFirstPageCompleted = new CompletableFuture<>();
 
-    Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
+    client.get(requestsUrl() + "?limit=4",
+      ResponseHandler.any(getFirstPageCompleted));
 
-    assertThat(getResponse.getStatusCode(), is(HttpURLConnection.HTTP_NOT_IMPLEMENTED));
+    CompletableFuture<Response> getSecondPageCompleted = new CompletableFuture<>();
+
+    client.get(requestsUrl() + "?limit=4&offset=4",
+      ResponseHandler.any(getSecondPageCompleted));
+
+    Response firstPageResponse = getFirstPageCompleted.get(5, TimeUnit.SECONDS);
+    Response secondPageResponse = getSecondPageCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Failed to get first page of requests: %s",
+      firstPageResponse.getBody()),
+      firstPageResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+
+    assertThat(String.format("Failed to get second page of requests: %s",
+      secondPageResponse.getBody()),
+      secondPageResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+
+    JsonObject firstPage = firstPageResponse.getJson();
+    JsonObject secondPage = secondPageResponse.getJson();
+
+    List<JsonObject> firstPageRequests = getRequests(firstPage);
+    List<JsonObject> secondPageRequests = getRequests(secondPage);
+
+    assertThat(firstPageRequests.size(), is(4));
+    assertThat(firstPage.getInteger("totalRecords"), is(7));
+
+    assertThat(secondPageRequests.size(), is(3));
+    assertThat(secondPage.getInteger("totalRecords"), is(7));
+
+    firstPageRequests.forEach(request -> requestHasExpectedProperties(request));
+    secondPageRequests.forEach(request -> requestHasExpectedProperties(request));
+  }
+
+  @Test
+  public void canSearchForRequestsByRequesterId()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    UnsupportedEncodingException {
+
+    UUID firstRequester = UUID.randomUUID();
+    UUID secondRequester = UUID.randomUUID();
+
+    createRequest(new RequestRequestBuilder().withRequesterId(firstRequester).create());
+    createRequest(new RequestRequestBuilder().withRequesterId(firstRequester).create());
+    createRequest(new RequestRequestBuilder().withRequesterId(secondRequester).create());
+    createRequest(new RequestRequestBuilder().withRequesterId(firstRequester).create());
+    createRequest(new RequestRequestBuilder().withRequesterId(firstRequester).create());
+    createRequest(new RequestRequestBuilder().withRequesterId(secondRequester).create());
+    createRequest(new RequestRequestBuilder().withRequesterId(secondRequester).create());
+
+    CompletableFuture<Response> getRequestsCompleted = new CompletableFuture<>();
+
+    client.get(requestsUrl() + String.format("?query=requesterId=%s", secondRequester),
+      ResponseHandler.any(getRequestsCompleted));
+
+    Response getRequestsResponse = getRequestsCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Failed to get requests: %s",
+      getRequestsResponse.getBody()),
+      getRequestsResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+
+    JsonObject wrappedRequests = getRequestsResponse.getJson();
+
+    List<JsonObject> requests = getRequests(wrappedRequests);
+
+    assertThat(requests.size(), is(3));
+    assertThat(wrappedRequests.getInteger("totalRecords"), is(3));
+
+    requests.forEach(request -> requestHasExpectedProperties(request));
   }
 
   @Test
@@ -210,6 +288,21 @@ public class RequestAPITests {
     Response deleteResponse = deleteCompleted.get(5, TimeUnit.SECONDS);
 
     assertThat(deleteResponse.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
+
+    CompletableFuture<Response> getAllCompleted = new CompletableFuture<>();
+
+    client.get(requestsUrl(), ResponseHandler.any(getAllCompleted));
+
+    Response getAllResponse = getAllCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(getAllResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+
+    JsonObject allRequests = getAllResponse.getJson();
+
+    List<JsonObject> requests = getRequests(allRequests);
+
+    assertThat(requests.size(), is(0));
+    assertThat(allRequests.getInteger("totalRecords"), is(0));
   }
 
   @Test
@@ -327,5 +420,24 @@ public class RequestAPITests {
       ResponseHandler.any(getCompleted));
 
     return getCompleted.get(5, TimeUnit.SECONDS);
+  }
+
+  private List<JsonObject> getRequests(JsonObject page) {
+    return JsonArrayHelper.toList(page.getJsonArray("requests"));
+  }
+
+  private void requestHasExpectedProperties(JsonObject request) {
+    hasProperty("id", request, "request");
+    hasProperty("requestType", request, "request");
+    hasProperty("requestDate", request, "request");
+    hasProperty("requesterId", request, "request");
+    hasProperty("itemId", request, "request");
+    hasProperty("fulfilmentPreference", request, "request");
+  }
+
+  private void hasProperty(String property, JsonObject resource, String type) {
+    assertThat(String.format("%s should have an %s: %s",
+      type, property, resource),
+      resource.containsKey(property), is(true));
   }
 }

@@ -951,10 +951,10 @@ public class LoanAPITests {
 
     JsonObject item = loan.getJsonObject("item");
 
-    hasProperty("title", item, "loan");
-    hasProperty("barcode", item, "loan");
-    hasProperty("status", item, "loan");
-    hasProperty("location", item, "loan");
+    hasProperty("title", item, "item");
+    hasProperty("barcode", item, "item");
+    hasProperty("status", item, "item");
+    hasProperty("location", item, "item");
   }
 
   private void hasProperty(String property, JsonObject resource, String type) {
@@ -970,8 +970,8 @@ public class LoanAPITests {
       .count()).intValue();
   }
 
-  private List<JsonObject> getLoans(JsonObject firstPage) {
-    return JsonArrayHelper.toList(firstPage.getJsonArray("loans"));
+  private List<JsonObject> getLoans(JsonObject page) {
+    return JsonArrayHelper.toList(page.getJsonArray("loans"));
   }
 
   private void deleteItem(UUID itemId)

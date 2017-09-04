@@ -1,20 +1,17 @@
 package org.folio.circulation.support.http.client;
 
-import io.vertx.core.Context;
 import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.json.Json;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.function.Consumer;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class OkapiHttpClient {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
