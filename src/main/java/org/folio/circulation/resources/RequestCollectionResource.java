@@ -67,7 +67,31 @@ public class RequestCollectionResource {
   }
 
   private void get(RoutingContext routingContext) {
-    ServerErrorResponse.notImplemented(routingContext.response());
+    WebContext context = new WebContext(routingContext);
+    CollectionResourceClient requestsStorageClient;
+
+    try {
+      OkapiHttpClient client = createHttpClient(routingContext, context);
+      requestsStorageClient = createRequestsStorageClient(client, context);
+    }
+    catch (MalformedURLException e) {
+      ServerErrorResponse.internalError(routingContext.response(),
+        String.format("Invalid Okapi URL: %s", context.getOkapiLocation()));
+
+      return;
+    }
+
+    String id = routingContext.request().getParam("id");
+
+    requestsStorageClient.get(id, requestResponse -> {
+      if(requestResponse.getStatusCode() == 200) {
+        JsonObject request = new JsonObject(requestResponse.getBody());
+        JsonResponse.success(routingContext.response(), request);
+      }
+      else {
+        ForwardResponse.forward(routingContext.response(), requestResponse);
+      }
+    });
   }
 
   private void delete(RoutingContext routingContext) {

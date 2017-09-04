@@ -77,12 +77,12 @@ public class RequestAPITests {
     client.post(requestsUrl(), requestRequest,
       ResponseHandler.json(postCompleted));
 
-    Response response = postCompleted.get(5, TimeUnit.SECONDS);
+    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat(String.format("Failed to create request: %s", response.getBody()),
-      response.getStatusCode(), is(HttpURLConnection.HTTP_CREATED));
+    assertThat(String.format("Failed to create request: %s", postResponse.getBody()),
+      postResponse.getStatusCode(), is(HttpURLConnection.HTTP_CREATED));
 
-    JsonObject representation = response.getJson();
+    JsonObject representation = postResponse.getJson();
 
     assertThat(representation.getString("id"), is(id.toString()));
     assertThat(representation.getString("requestType"), is("Recall"));
@@ -95,21 +95,62 @@ public class RequestAPITests {
   }
 
   @Test
-  public void getRequestByIdIsNotImplemented()
+  public void canGetARequestById()
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
     TimeoutException,
     UnsupportedEncodingException {
 
+    UUID id = UUID.randomUUID();
+    UUID itemId = UUID.randomUUID();
+    UUID requesterId = UUID.randomUUID();
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    createRequest(new RequestRequestBuilder()
+      .recall()
+      .withId(id)
+      .withRequestDate(requestDate)
+      .withItemId(itemId)
+      .withRequesterId(requesterId)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(new LocalDate(2017, 7, 30))
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
+      .create());
+
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
-    client.get(requestsUrl(String.format("/%s", UUID.randomUUID())),
+    client.get(requestsUrl(String.format("/%s", id)),
       ResponseHandler.any(getCompleted));
 
     Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat(getResponse.getStatusCode(), is(HttpURLConnection.HTTP_NOT_IMPLEMENTED));
+    assertThat(String.format("Failed to get request: %s", getResponse.getBody()),
+      getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+
+    JsonObject representation = getResponse.getJson();
+
+    assertThat(representation.getString("id"), is(id.toString()));
+    assertThat(representation.getString("requestType"), is("Recall"));
+    assertThat(representation.getString("requestDate"), isEquivalentTo(requestDate));
+    assertThat(representation.getString("itemId"), is(itemId.toString()));
+    assertThat(representation.getString("requesterId"), is(requesterId.toString()));
+    assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
+    assertThat(representation.getString("requestExpirationDate"), is("2017-07-30"));
+    assertThat(representation.getString("holdShelfExpirationDate"), is("2017-08-31"));
+  }
+
+  @Test
+  public void requestNotFoundForUnknownId()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    UnsupportedEncodingException {
+
+    Response getResponse = getById(UUID.randomUUID());
+
+    assertThat(getResponse.getStatusCode(), is(HttpURLConnection.HTTP_NOT_FOUND));
   }
 
   @Test
@@ -213,13 +254,13 @@ public class RequestAPITests {
     return APITestSuite.circulationModuleUrl("/circulation/requests" + subPath);
   }
 
-  private IndividualResource createRequest(JsonObject loanRequest)
+  private IndividualResource createRequest(JsonObject requestRequest)
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
     TimeoutException {
 
-    return createResource(loanRequest, requestsUrl(), "request");
+    return createResource(requestRequest, requestsUrl(), "request");
   }
 
   private IndividualResource createResource(
@@ -269,5 +310,22 @@ public class RequestAPITests {
     TimeoutException {
 
     APITestSuite.deleteAll(itemsUrl(""));
+  }
+
+  private Response getById(UUID id)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    UnsupportedEncodingException {
+
+    URL getRequestUrl = requestsUrl(String.format("/%s", id));
+
+    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
+
+    client.get(getRequestUrl,
+      ResponseHandler.any(getCompleted));
+
+    return getCompleted.get(5, TimeUnit.SECONDS);
   }
 }

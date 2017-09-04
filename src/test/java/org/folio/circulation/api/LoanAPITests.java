@@ -831,11 +831,11 @@ public class LoanAPITests {
     TimeoutException,
     UnsupportedEncodingException {
 
-    URL getInstanceUrl = loansUrl(String.format("/%s", id));
+    URL getLoanUrl = loansUrl(String.format("/%s", id));
 
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
-    client.get(getInstanceUrl,
+    client.get(getLoanUrl,
       ResponseHandler.any(getCompleted));
 
     return getCompleted.get(5, TimeUnit.SECONDS);

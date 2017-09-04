@@ -75,6 +75,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
     getResourcesForTenant(context).put(id, body);
 
+    System.out.println(String.format("Created resource: %s", id));
     JsonResponse.created(routingContext.response(), body);
   }
 
@@ -88,10 +89,12 @@ public class FakeStorageModule extends AbstractVerticle {
     Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
 
     if(resourcesForTenant.containsKey(id)) {
+      System.out.println(String.format("Created resource: %s", id));
       resourcesForTenant.replace(id, body);
       SuccessResponse.noContent(routingContext.response());
     }
     else {
+      System.out.println(String.format("Replaced resource: %s", id));
       resourcesForTenant.put(id, body);
       SuccessResponse.noContent(routingContext.response());
     }
@@ -105,10 +108,12 @@ public class FakeStorageModule extends AbstractVerticle {
     Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
 
     if(resourcesForTenant.containsKey(id)) {
+      System.out.println(String.format("Found resource: %s", id));
       JsonResponse.success(routingContext.response(),
         resourcesForTenant.get(id));
     }
     else {
+      System.out.println(String.format("Failed to find resource: %s", id));
       ClientErrorResponse.notFound(routingContext.response());
     }
   }
