@@ -249,21 +249,64 @@ public class RequestAPITests {
   }
 
   @Test
-  public void replaceRequestIsNotImplemented()
+  public void canReplaceAnExistingRequest()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException,
     UnsupportedEncodingException {
 
+    UUID id = UUID.randomUUID();
+    UUID itemId = UUID.randomUUID();
+    UUID requesterId = UUID.randomUUID();
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    JsonObject requestRequest = new RequestRequestBuilder()
+      .recall()
+      .withId(id)
+      .withRequestDate(requestDate)
+      .withItemId(itemId)
+      .withRequesterId(requesterId)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(new LocalDate(2017, 7, 30))
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
+      .create();
+
+    IndividualResource createdRequest = createRequest(requestRequest);
+
+    JsonObject updatedRequest = createdRequest.copyJson();
+
+    updatedRequest.put("requestType", "Hold");
+
     CompletableFuture<Response> putCompleted = new CompletableFuture<>();
 
-    client.put(requestsUrl(String.format("/%s", UUID.randomUUID())),
-      new JsonObject(), ResponseHandler.any(putCompleted));
+    client.put(requestsUrl(String.format("/%s", id)),
+      updatedRequest, ResponseHandler.any(putCompleted));
 
     Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat(putResponse.getStatusCode(), is(HttpURLConnection.HTTP_NOT_IMPLEMENTED));
+    assertThat(putResponse.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
+
+    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
+
+    client.get(requestsUrl(String.format("/%s", id)),
+      ResponseHandler.any(getCompleted));
+
+    Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Failed to get request: %s", getResponse.getBody()),
+      getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+
+    JsonObject representation = getResponse.getJson();
+
+    assertThat(representation.getString("id"), is(id.toString()));
+    assertThat(representation.getString("requestType"), is("Hold"));
+    assertThat(representation.getString("requestDate"), isEquivalentTo(requestDate));
+    assertThat(representation.getString("itemId"), is(itemId.toString()));
+    assertThat(representation.getString("requesterId"), is(requesterId.toString()));
+    assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
+    assertThat(representation.getString("requestExpirationDate"), is("2017-07-30"));
+    assertThat(representation.getString("holdShelfExpirationDate"), is("2017-08-31"));
   }
 
   @Test

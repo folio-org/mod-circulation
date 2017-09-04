@@ -89,12 +89,12 @@ public class FakeStorageModule extends AbstractVerticle {
     Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
 
     if(resourcesForTenant.containsKey(id)) {
-      System.out.println(String.format("Created resource: %s", id));
+      System.out.println(String.format("Replaced resource: %s", id));
       resourcesForTenant.replace(id, body);
       SuccessResponse.noContent(routingContext.response());
     }
     else {
-      System.out.println(String.format("Replaced resource: %s", id));
+      System.out.println(String.format("Created resource: %s", id));
       resourcesForTenant.put(id, body);
       SuccessResponse.noContent(routingContext.response());
     }
