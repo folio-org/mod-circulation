@@ -349,21 +349,48 @@ public class RequestAPITests {
   }
 
   @Test
-  public void deletingARequestIsNotImplemented()
+  public void canDeleteAnIndividualRequest()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException,
     UnsupportedEncodingException {
 
+    UUID firstId = UUID.randomUUID();
+    UUID secondId = UUID.randomUUID();
+    UUID thirdId = UUID.randomUUID();
+
+    createRequest(new RequestRequestBuilder().withId(firstId).create());
+    createRequest(new RequestRequestBuilder().withId(secondId).create());
+    createRequest(new RequestRequestBuilder().withId(thirdId).create());
+
     CompletableFuture<Response> deleteCompleted = new CompletableFuture<>();
 
-    client.delete(requestsUrl(String.format("/%s", UUID.randomUUID())),
+    client.delete(requestsUrl(String.format("/%s", secondId)),
       ResponseHandler.any(deleteCompleted));
 
     Response deleteResponse = deleteCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat(deleteResponse.getStatusCode(), is(HttpURLConnection.HTTP_NOT_IMPLEMENTED));
+    assertThat(deleteResponse.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
+
+    assertThat(getById(firstId).getStatusCode(), is(HttpURLConnection.HTTP_OK));
+    assertThat(getById(secondId).getStatusCode(), is(HttpURLConnection.HTTP_NOT_FOUND));
+    assertThat(getById(thirdId).getStatusCode(), is(HttpURLConnection.HTTP_OK));
+
+    CompletableFuture<Response> getAllCompleted = new CompletableFuture<>();
+
+    client.get(requestsUrl(), ResponseHandler.any(getAllCompleted));
+
+    Response getAllResponse = getAllCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(getAllResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+
+    JsonObject allRequests = getAllResponse.getJson();
+
+    List<JsonObject> requests = getRequests(allRequests);
+
+    assertThat(requests.size(), is(2));
+    assertThat(allRequests.getInteger("totalRecords"), is(2));
   }
 
   private static URL itemsUrl(String subPath)
