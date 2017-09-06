@@ -82,6 +82,7 @@ resourceTypes:
           body:
             application/json:
               schema: !include schema/loan-rules.json
+              example: !include examples/loan-rules.json
         500:
           description: "Internal server error"
           body:
@@ -93,6 +94,7 @@ resourceTypes:
       body:
         application/json:
           schema: !include schema/loan-rules-text.json
+          example: !include examples/loan-rules-text.json
       responses:
         204:
           description: "Loan rules have been saved."

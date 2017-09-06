@@ -1,3 +1,3 @@
 {
-  "loanRulesAsTextFile": "fallback-policy: ffffffff-2222-4b5e-a7bd-064b8d177231\\nm aaaaaaaa-1111-4b5e-a7bd-064b8d177231: ffffffff-3333-4b5e-a7bd-064b8d177231\\n    g cccccccc-1111-4b5e-a7bd-064b8d177231: ffffffff-4444-4b5e-a7bd-064b8d177231",
+  "loanRulesAsTextFile": "fallback-policy: ffffffff-2222-4b5e-a7bd-064b8d177231\\nm aaaaaaaa-1111-4b5e-a7bd-064b8d177231: ffffffff-3333-4b5e-a7bd-064b8d177231\\n    g cccccccc-1111-4b5e-a7bd-064b8d177231: ffffffff-4444-4b5e-a7bd-064b8d177231"
 }
