@@ -60,7 +60,7 @@ public class RequestAPITests {
     UnsupportedEncodingException {
 
     UUID id = UUID.randomUUID();
-    UUID itemId = createItem(ItemRequestExamples.smallAngryPlanet()).getId();
+    UUID itemId = createItem(ItemRequestExamples.smallAngryPlanet("036000291452")).getId();
     UUID requesterId = UUID.randomUUID();
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
@@ -109,7 +109,7 @@ public class RequestAPITests {
   }
 
   @Test
-  public void creatingARequestForMissingItemDoesNotStoreItemInformation()
+  public void creatingARequestDoesNotStoreItemInformationWhenItemNotFound()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -131,6 +131,50 @@ public class RequestAPITests {
       .withRequestExpiration(new LocalDate(2017, 7, 30))
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
       .create();
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(requestsUrl(), requestRequest,
+      ResponseHandler.json(postCompleted));
+
+    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Failed to create request: %s", postResponse.getBody()),
+      postResponse.getStatusCode(), is(HttpURLConnection.HTTP_CREATED));
+
+    JsonObject representation = postResponse.getJson();
+
+    assertThat("has no information for missing item",
+      representation.containsKey("item"), is(false));
+  }
+
+  @Test
+  public void creatingARequestIgnoresItemInformationProvidedByClient()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException,
+    UnsupportedEncodingException {
+
+    UUID id = UUID.randomUUID();
+    UUID itemId = UUID.randomUUID();
+    UUID requesterId = UUID.randomUUID();
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    JsonObject requestRequest = new RequestRequestBuilder()
+      .recall()
+      .withId(id)
+      .withRequestDate(requestDate)
+      .withItemId(itemId)
+      .withRequesterId(requesterId)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(new LocalDate(2017, 7, 30))
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
+      .create();
+
+    requestRequest.put("item", new JsonObject()
+      .put("title", "incorrect title information")
+      .put("barcode", "753856498321"));
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
 
@@ -367,7 +411,7 @@ public class RequestAPITests {
     UnsupportedEncodingException {
 
     UUID id = UUID.randomUUID();
-    UUID itemId = createItem(ItemRequestExamples.temeraire()).getId();
+    UUID itemId = createItem(ItemRequestExamples.temeraire("07295629642")).getId();
     UUID requesterId = UUID.randomUUID();
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
@@ -417,6 +461,77 @@ public class RequestAPITests {
     assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
     assertThat(representation.getString("requestExpirationDate"), is("2017-07-30"));
     assertThat(representation.getString("holdShelfExpirationDate"), is("2017-08-31"));
+
+    assertThat("has information taken from item",
+      representation.containsKey("item"), is(true));
+
+    assertThat("title is taken from item",
+      representation.getJsonObject("item").getString("title"),
+      is("Temeraire"));
+
+    assertThat("barcode is taken from item",
+      representation.getJsonObject("item").getString("barcode"),
+      is("07295629642"));
+  }
+
+  @Test
+  public void replacingAnExistingRequestRemovesItemInformationWhenItemDoesNotExist()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException,
+    UnsupportedEncodingException {
+
+    UUID id = UUID.randomUUID();
+    UUID itemId = createItem(ItemRequestExamples.temeraire("07295629642")).getId();
+    UUID requesterId = UUID.randomUUID();
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    JsonObject requestRequest = new RequestRequestBuilder()
+      .recall()
+      .withId(id)
+      .withRequestDate(requestDate)
+      .withItemId(itemId)
+      .withRequesterId(requesterId)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(new LocalDate(2017, 7, 30))
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
+      .create();
+
+    IndividualResource createdRequest = createRequest(requestRequest);
+
+    JsonObject updatedRequest = createdRequest.copyJson();
+
+    deleteItem(itemId);
+
+    updatedRequest
+      .put("requestType", "Hold");
+
+    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
+
+    client.put(requestsUrl(String.format("/%s", id)),
+      updatedRequest, ResponseHandler.any(putCompleted));
+
+    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(putResponse.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
+
+    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
+
+    client.get(requestsUrl(String.format("/%s", id)),
+      ResponseHandler.any(getCompleted));
+
+    Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Failed to get request: %s", getResponse.getBody()),
+      getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+
+    JsonObject representation = getResponse.getJson();
+
+    assertThat(representation.getString("itemId"), is(itemId.toString()));
+
+    assertThat("has no information for missing item",
+      representation.containsKey("item"), is(false));
   }
 
   @Test
@@ -651,5 +766,22 @@ public class RequestAPITests {
     assertThat(String.format("%s should have an %s: %s",
       type, property, resource),
       resource.containsKey(property), is(true));
+  }
+
+  private void deleteItem(UUID itemId)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    CompletableFuture<Response> deleteFinished = new CompletableFuture<>();
+
+    client.delete(itemsUrl(String.format("/%s", itemId)),
+      ResponseHandler.any(deleteFinished));
+
+    Response response = deleteFinished.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Failed to delete item %s", itemId),
+      response.getStatusCode(), is(204));
   }
 }

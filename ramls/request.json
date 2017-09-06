@@ -29,6 +29,7 @@
     },
     "item": {
       "description": "Copy of some item metadata (used for searching and sorting), will be taken from the item referred to by the itemId",
+      "readOnly": true,
       "type": "object",
       "properties": {
         "title": {
@@ -41,7 +42,8 @@
           "type": "string",
           "readOnly": true
         }
-      }
+      },
+      "additionalProperties": false
     },
     "fulfilmentPreference": {
       "description": "How should the request be fulfilled (whether the item should be kept on the hold shelf for collection or delivered to the requester)",

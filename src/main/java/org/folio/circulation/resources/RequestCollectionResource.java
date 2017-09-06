@@ -52,11 +52,9 @@ public class RequestCollectionResource {
 
     JsonObject request = routingContext.getBodyAsJson();
 
-    itemsStorageClient.get(request.getString("itemId"), itemResponse -> {
-      System.out.println("Response from item storage");
-      System.out.println(String.format("Status Code: %s", itemResponse.getStatusCode()));
-      System.out.println(String.format("Body: %s", itemResponse.getBody()));
+    request.remove("item");
 
+    itemsStorageClient.get(request.getString("itemId"), itemResponse -> {
       if (itemResponse.getStatusCode() == 200) {
         JsonObject requestWithItemInformation = request.copy();
 
@@ -92,10 +90,12 @@ public class RequestCollectionResource {
   private void replace(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
     CollectionResourceClient requestsStorageClient;
+    CollectionResourceClient itemsStorageClient;
 
     try {
       OkapiHttpClient client = createHttpClient(routingContext, context);
       requestsStorageClient = createRequestsStorageClient(client, context);
+      itemsStorageClient = createItemsStorageClient(client, context);
     }
     catch (MalformedURLException e) {
       ServerErrorResponse.internalError(routingContext.response(),
@@ -107,12 +107,35 @@ public class RequestCollectionResource {
     String id = routingContext.request().getParam("id");
     JsonObject request = routingContext.getBodyAsJson();
 
-    requestsStorageClient.put(id, request, response -> {
-      if(response.getStatusCode() == 204) {
-        SuccessResponse.noContent(routingContext.response());
-      }
-      else {
-        ForwardResponse.forward(routingContext.response(), response);
+    request.remove("item");
+
+    itemsStorageClient.get(request.getString("itemId"), itemResponse -> {
+      if (itemResponse.getStatusCode() == 200) {
+        JsonObject requestWithItemInformation = request.copy();
+
+        JsonObject item = itemResponse.getJson();
+
+        requestWithItemInformation.put("item", new JsonObject()
+          .put("title", item.getString("title"))
+          .put("barcode", item.getString("barcode")));
+
+        requestsStorageClient.put(id, requestWithItemInformation, response -> {
+          if(response.getStatusCode() == 204) {
+            SuccessResponse.noContent(routingContext.response());
+          }
+          else {
+            ForwardResponse.forward(routingContext.response(), response);
+          }
+        });
+      } else {
+        requestsStorageClient.put(id, request, response -> {
+          if(response.getStatusCode() == 204) {
+            SuccessResponse.noContent(routingContext.response());
+          }
+          else {
+            ForwardResponse.forward(routingContext.response(), response);
+          }
+        });
       }
     });
   }
