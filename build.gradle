@@ -2,7 +2,7 @@ apply plugin: 'java'
 apply plugin: 'application'
 
 mainClassName = "org.folio.circulation.Launcher"
-project.ext.artifactId = "circulation"
+project.ext.artifactId = "mod-circulation"
 version = "4.5.0-SNAPSHOT"
 
 ext.sharedManifest = manifest {
