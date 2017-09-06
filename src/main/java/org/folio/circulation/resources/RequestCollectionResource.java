@@ -36,10 +36,12 @@ public class RequestCollectionResource {
   private void create(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
     CollectionResourceClient requestsStorageClient;
+    CollectionResourceClient itemsStorageClient;
 
     try {
       OkapiHttpClient client = createHttpClient(routingContext, context);
       requestsStorageClient = createRequestsStorageClient(client, context);
+      itemsStorageClient = createItemsStorageClient(client, context);
     }
     catch (MalformedURLException e) {
       ServerErrorResponse.internalError(routingContext.response(),
@@ -50,14 +52,39 @@ public class RequestCollectionResource {
 
     JsonObject request = routingContext.getBodyAsJson();
 
-    requestsStorageClient.post(request, response -> {
-      if(response.getStatusCode() == 201) {
-        JsonObject createdRequest = response.getJson();
+    itemsStorageClient.get(request.getString("itemId"), itemResponse -> {
+      System.out.println("Response from item storage");
+      System.out.println(String.format("Status Code: %s", itemResponse.getStatusCode()));
+      System.out.println(String.format("Body: %s", itemResponse.getBody()));
 
-        JsonResponse.created(routingContext.response(), createdRequest);
-      }
-      else {
-        ForwardResponse.forward(routingContext.response(), response);
+      if (itemResponse.getStatusCode() == 200) {
+        JsonObject requestWithItemInformation = request.copy();
+
+        JsonObject item = itemResponse.getJson();
+
+        requestWithItemInformation.put("item", new JsonObject()
+          .put("title", item.getString("title"))
+          .put("barcode", item.getString("barcode")));
+
+        requestsStorageClient.post(requestWithItemInformation, requestResponse -> {
+          if (requestResponse.getStatusCode() == 201) {
+            JsonObject createdRequest = requestResponse.getJson();
+
+            JsonResponse.created(routingContext.response(), createdRequest);
+          } else {
+            ForwardResponse.forward(routingContext.response(), requestResponse);
+          }
+        });
+      } else {
+        requestsStorageClient.post(request, requestResponse -> {
+          if (requestResponse.getStatusCode() == 201) {
+            JsonObject createdRequest = requestResponse.getJson();
+
+            JsonResponse.created(routingContext.response(), createdRequest);
+          } else {
+            ForwardResponse.forward(routingContext.response(), requestResponse);
+          }
+        });
       }
     });
   }
@@ -223,5 +250,19 @@ public class RequestCollectionResource {
       context.getTenantId());
 
     return requestStorageClient;
+  }
+
+  private CollectionResourceClient createItemsStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+
+    CollectionResourceClient loanStorageClient;
+
+    loanStorageClient = new CollectionResourceClient(
+      client, context.getOkapiBasedUrl("/item-storage/items"),
+      context.getTenantId());
+
+    return loanStorageClient;
   }
 }
