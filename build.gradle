@@ -1,5 +1,20 @@
 apply plugin: 'java'
 apply plugin: 'application'
+apply plugin: 'jacoco'
+
+apply plugin: 'org.sonarqube'
+
+sonarqube {
+  properties {
+    
+    /*
+     * sonar.host.url property should be set up as a global gradle property on the sonarqube server 
+     * or the line below should be commented out and updated with correct url */  
+      
+    //property 'sonar.host.url', 'http://localhost:9000' 
+      property "sonar.jacoco.reportPaths", "${project.buildDir}/jacoco/test.exec"
+  }
+}
 
 mainClassName = "org.folio.circulation.Launcher"
 project.ext.artifactId = "mod-circulation"
@@ -10,6 +25,20 @@ ext.sharedManifest = manifest {
     "Main-Class": mainClassName,
     "Implementation-Title": project.properties['artifactId'],
     "Implementation-Version": version)
+}
+
+buildscript {
+  ext {
+    sonarGradlePluginVersion = '2.5'
+}
+  repositories {
+    maven {
+      url "https://plugins.gradle.org/m2/"
+    }
+  }
+  dependencies {
+    classpath "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:2.5"
+  }
 }
 
 repositories {
