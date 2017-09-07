@@ -6,6 +6,7 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.folio.circulation.loanrules.LoanRulesException;
 import org.folio.circulation.loanrules.Text2Drools;
 import org.folio.circulation.support.ClientUtil;
 import org.folio.circulation.support.CollectionResourceClient;
@@ -77,6 +78,8 @@ public class LoanRulesResource {
     try {
       // try to convert, do not safe if conversion fails
       Text2Drools.convert(rulesInput.getString("loanRulesAsTextFile"));
+    } catch (LoanRulesException e) {
+      JsonResponse.loanRulesError(routingContext.response(), e);
     } catch (Exception e) {
       ServerErrorResponse.internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
       return;

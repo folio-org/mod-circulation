@@ -6,6 +6,7 @@ import static org.junit.Assert.*;
 import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,6 +65,73 @@ public class Text2DroolsTest {
   public void test1list() {
     for (String [] s : test1) {
       assertThat(first3(s), drools1.loanPolicies(s[0], s[1], s[2]), contains(expected(s)));
+    }
+  }
+
+  @Test
+  public void tab() {
+    try {
+      Text2Drools.convert("fallback-policy: no-loan\n  \t m book: policy-a");
+      fail();
+    } catch (LoanRulesException e) {
+      assertThat(e.getMessage(), containsString("tab"));
+      assertThat(e.getLine(), is(1));
+      assertThat(e.getColumn(), is(2));
+    }
+  }
+
+  @Test
+  public void indentedFallbackPolicy() {
+    try {
+      Text2Drools.convert("m book: policy-a\n  fallback-policy: policy-b");
+      fail();
+    } catch (LoanRulesException e) {
+      assertThat(e.getMessage(), containsString("top level"));
+      assertThat(e.getLine(), is(1));
+      assertThat(e.getColumn(), is(2));
+    }
+  }
+
+  @Ignore("Requires ! operator")
+  @Test
+  public void fallbackPolicyNotFirstToken() {
+    try {
+      Text2Drools.convert("! fallback-policy: policy-a");
+      fail();
+    } catch (LoanRulesException e) {
+      assertThat(e.getMessage(), containsString("first token"));
+      assertThat(e.getLine(), is(0));
+      assertThat(e.getColumn(), is(2));
+    }
+  }
+
+  @Test
+  public void duplicateLoanPolicy() {
+    try {
+      Text2Drools.convert("m book: policy-a policy-b");
+      fail();
+    } catch (LoanRulesException e) {
+      assertThat(e.getMessage(), containsString("Unexpected token after loan policy: policy-b"));
+      assertThat(e.getLine(), is(0));
+      assertThat(e.getColumn(), is(17));
+    }
+  }
+
+  @Test
+  public void comment() {
+    String drools = Text2Drools.convert("fallback-policy: no-loan\n# fallback-policy: loan-anyhow");
+    assertThat(drools, not(containsString("loan-anyhow")));
+  }
+
+  @Test
+  public void invalidToken() {
+    try {
+      Text2Drools.convert("foo");
+      fail();
+    } catch (LoanRulesException e) {
+      assertThat(e.getMessage(), containsString("Expected"));
+      assertThat(e.getLine(), is(0));
+      assertThat(e.getColumn(), is(0));
     }
   }
 

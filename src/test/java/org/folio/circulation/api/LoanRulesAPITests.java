@@ -45,6 +45,16 @@ public class LoanRulesAPITests {
     assertThat(getText(), is(rule));
   }
 
+  @Test
+  public void canReportValidationError() throws Exception {
+    Response response = put(" \t");
+    assertThat(response.getStatusCode(), is(422));
+    JsonObject json = new JsonObject(response.getBody());
+    assertThat(json.getString("message"), containsString("tab"));
+    assertThat(json.getInteger("line"), is(0));
+    assertThat(json.getInteger("column"), is(1));
+  }
+
   private static URL loanRulesURL() {
     return APITestSuite.circulationModuleUrl("/circulation/loan-rules");
   }

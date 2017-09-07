@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.text.StrMatcher;
@@ -97,12 +98,14 @@ public class Text2Drools {
    * @param line String to convert
    */
   private void convertLine(int lineNumber, String line) {
+    int column = 0;
     int indentation = indentation(line);
     popObsoleteMatchers(indentation);
     LinkedList<String> tokens = parse(line);
     boolean firstToken = true;
     while (! tokens.isEmpty()) {
       String token = tokens.removeFirst();
+      column = line.indexOf(token, column);
       switch (token) {
       case "g":
         convertNames(indentation, MatcherType.PatronGroup, tokens);
@@ -115,12 +118,12 @@ public class Text2Drools {
         break;
       case "fallback-policy":
         if (! stack.isEmpty()) {
-          throw new IllegalArgumentException(
-              "fallback-policy must be at top level but it is indented in line " + lineNumber);
+          throw new LoanRulesException(
+              "fallback-policy must be at top level but it is indented", lineNumber, column);
         }
         if (! firstToken) {
-          throw new IllegalArgumentException(
-              "fallback-policy must be the first token in line " + lineNumber);
+          throw new LoanRulesException(
+              "fallback-policy must be the first token", lineNumber, column);
         }
         drools.append("// fallback-policy\n");
         break;
@@ -130,8 +133,11 @@ public class Text2Drools {
       case ":":
         String loanPolicy = tokens.removeFirst();
         if (! tokens.isEmpty()) {
-          throw new IllegalArgumentException("Unexpected token after loan policy in line "
-              + lineNumber + ": " + tokens.removeFirst());
+          String unexpectedToken = tokens.removeFirst();
+          column += token.length();
+          column = line.indexOf(unexpectedToken, column);
+          throw new LoanRulesException("Unexpected token after loan policy: " +
+              unexpectedToken, lineNumber, column);
         }
         drools.append("rule \"line ").append(lineNumber).append("\"\n");
         drools.append("  salience ").append(stack.size()).append("\n");
@@ -147,13 +153,17 @@ public class Text2Drools {
       case "#":
         tokens.clear();  // skip comment
         break;
+      case "\t":
+        throw new LoanRulesException("The tab character is not allowed, use the space character instead.",
+            lineNumber, column);
       default:
-        throw new IllegalArgumentException(
-            "Expected f or m or t or fallback-policy or : or + or # but found \"" + token
-            + "\" in line " + lineNumber + ": " + line);
+        throw new LoanRulesException(
+            "Expected f or m or t or fallback-policy or : or + or # but found \"" + token + "\"",
+            lineNumber, column);
       }
 
       firstToken = false;
+      column += token.length();
     }
   }
 
@@ -237,7 +247,9 @@ public class Text2Drools {
 
   /**
    * Parse line into tokens.
-   * @param line
+   * <p>
+   * A colon at the end of a word is a separate token.
+   * @param line  what to parse
    * @return array of tokens.
    */
   public static LinkedList<String> parse(String line) {
@@ -245,27 +257,18 @@ public class Text2Drools {
       .setDelimiterMatcher(StrMatcher.spaceMatcher())
       .setQuoteChar('"')
       .getTokenArray();
-    LinkedList<String> token = new LinkedList<>(Arrays.asList(tokenArray));
+    LinkedList<String> tokens = new LinkedList<>(Arrays.asList(tokenArray));
 
-    // make colon at end of token before circulation policy a token of its own.
-    // "t" "foobar:" "my-circulation-policy"
-    // becomes
-    // "t" "foobar" ":" "my-circulation-policy"
-
-    if (token.size() < 2) {
-      return token;
+    ListIterator<String> it = tokens.listIterator();
+    while (it.hasNext()) {
+      String token = it.next();
+      // if a token ends with colon, make the colon a separate token
+      if (token.length() > 1 && token.endsWith(":")) {
+        it.remove();
+        it.add(token.substring(0, token.length()-1));
+        it.add(":");
+      }
     }
-    String beforeLast = token.get(token.size()-2);
-    if (! beforeLast.endsWith(":") || beforeLast.equals(":")) {
-      return token;
-    }
-    String last = token.removeLast();
-    beforeLast = token.removeLast();
-    // remove : from end of String
-    beforeLast = beforeLast.substring(0, beforeLast.length()-1);
-    token.add(beforeLast);
-    token.add(":");
-    token.add(last);
-    return token;
+    return tokens;
   }
 }

@@ -57,7 +57,7 @@ public class LoanRulesEngineAPITests {
           + "&shelving_location_id=" + shelvingLocation.id
           );
       client.get(url, ResponseHandler.any(completed));
-      Response response = completed.get(5, TimeUnit.SECONDS);
+      Response response = completed.get(10, TimeUnit.SECONDS);
       JsonObject json = new JsonObject(response.getBody());
       String loanPolicyId = json.getString("loanPolicyId");
       assert loanPolicyId != null;

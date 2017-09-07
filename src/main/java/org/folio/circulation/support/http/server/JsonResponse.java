@@ -9,6 +9,8 @@ import io.vertx.core.json.JsonObject;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.folio.circulation.loanrules.LoanRulesException;
+
 public class JsonResponse {
 
   //TODO: Needs a location
@@ -37,6 +39,14 @@ public class JsonResponse {
       .put("parameters", parameters);
 
     response(response, wrappedErrors, 422);
+  }
+
+  public static void loanRulesError(HttpServerResponse response, LoanRulesException e) {
+    JsonObject body = new JsonObject();
+    body.put("message", e.getMessage());
+    body.put("line", e.getLine());
+    body.put("column", e.getColumn());
+    response(response, body, 422);
   }
 
   private static void response(HttpServerResponse response,
