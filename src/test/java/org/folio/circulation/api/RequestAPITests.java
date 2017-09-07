@@ -403,6 +403,63 @@ public class RequestAPITests {
   }
 
   @Test
+  public void canSearchForRequestsByItemTitle()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    UnsupportedEncodingException {
+
+    createRequest(new RequestRequestBuilder()
+      .withItemId(createItem(ItemRequestExamples.smallAngryPlanet()).getId())
+      .create());
+
+    createRequest(new RequestRequestBuilder()
+      .withItemId(createItem(ItemRequestExamples.nod()).getId())
+      .create());
+
+    createRequest(new RequestRequestBuilder()
+      .withItemId(createItem(ItemRequestExamples.interestingTimes()).getId())
+      .create());
+
+    createRequest(new RequestRequestBuilder()
+      .withItemId(createItem(ItemRequestExamples.temeraire()).getId())
+      .create());
+
+    createRequest(new RequestRequestBuilder()
+      .withItemId(createItem(ItemRequestExamples.nod()).getId())
+      .create());
+
+    createRequest(new RequestRequestBuilder()
+      .withItemId(createItem(ItemRequestExamples.uprooted()).getId())
+      .create());
+
+    createRequest(new RequestRequestBuilder()
+      .withItemId(createItem(ItemRequestExamples.temeraire()).getId())
+      .create());
+
+    CompletableFuture<Response> getRequestsCompleted = new CompletableFuture<>();
+
+    client.get(requestsUrl() + String.format("?query=item.title=Nod"),
+      ResponseHandler.any(getRequestsCompleted));
+
+    Response getRequestsResponse = getRequestsCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Failed to get requests: %s",
+      getRequestsResponse.getBody()),
+      getRequestsResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+
+    JsonObject wrappedRequests = getRequestsResponse.getJson();
+
+    List<JsonObject> requests = getRequests(wrappedRequests);
+
+    assertThat(requests.size(), is(2));
+    assertThat(wrappedRequests.getInteger("totalRecords"), is(2));
+
+    requests.forEach(request -> requestHasExpectedProperties(request));
+  }
+
+  @Test
   public void canReplaceAnExistingRequest()
     throws InterruptedException,
     MalformedURLException,
