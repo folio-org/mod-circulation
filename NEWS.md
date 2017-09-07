@@ -2,6 +2,7 @@
 
 * Introduces `circulation/requests` for making requests for items
 * Provides circulation interface version 2.5
+* Adds mod- prefix to names of the built artifacts (FOLIO-813)
 
 ## 4.4.0 2017-09-01
 
@@ -10,6 +11,7 @@
 * Provides circulation interface version 2.4
 * Requires loan-rules-storage interface version 1.0 (new dependency)
 * Remove `module.scan.enabled`, storage and configuration permissions from circulation.all set, as part of moving permissions to UI modules (CIRC-32)
+* Generates Descriptors at build time from templates in ./descriptors (FOLIO-701)
 
 ## 4.3.0 2017-08-17
 
