@@ -3,6 +3,7 @@
 * Introduces `circulation/requests` for making requests for items
 * Provides circulation interface version 2.5
 * Adds mod- prefix to names of the built artifacts (FOLIO-813)
+* Put loan rules validation error message into JSON (CIRC-34)
 
 ## 4.4.0 2017-09-01
 
