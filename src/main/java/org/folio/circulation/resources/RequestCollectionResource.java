@@ -37,11 +37,13 @@ public class RequestCollectionResource {
     WebContext context = new WebContext(routingContext);
     CollectionResourceClient requestsStorageClient;
     CollectionResourceClient itemsStorageClient;
+    CollectionResourceClient usersStorageClient;
 
     try {
       OkapiHttpClient client = createHttpClient(routingContext, context);
       requestsStorageClient = createRequestsStorageClient(client, context);
       itemsStorageClient = createItemsStorageClient(client, context);
+      usersStorageClient = createUsersStorageClient(client, context);
     }
     catch (MalformedURLException e) {
       ServerErrorResponse.internalError(routingContext.response(),
@@ -54,23 +56,46 @@ public class RequestCollectionResource {
 
     request.remove("item");
 
+    //TODO: resolve the sequencing issue, which means that item has to be found
+    // in order for requesting user to be looked for
     itemsStorageClient.get(request.getString("itemId"), itemResponse -> {
       if (itemResponse.getStatusCode() == 200) {
-        JsonObject requestWithItemInformation = request.copy();
+        usersStorageClient.get(request.getString("requesterId"), userResponse -> {
+          if (itemResponse.getStatusCode() == 200) {
+            JsonObject requestWithAdditionalInformation = request.copy();
 
-        JsonObject item = itemResponse.getJson();
+            JsonObject item = itemResponse.getJson();
+            JsonObject requester = userResponse.getJson();
 
-        requestWithItemInformation.put("item", new JsonObject()
-          .put("title", item.getString("title"))
-          .put("barcode", item.getString("barcode")));
+            requestWithAdditionalInformation
+              .put("item", new JsonObject()
+                .put("title", item.getString("title"))
+                .put("barcode", item.getString("barcode"))
+              ).put("requester", new JsonObject()
+                .put("lastName", requester.getJsonObject("personal").getString("lastName"))
+                .put("firstName", requester.getJsonObject("personal").getString("firstName"))
+              );
 
-        requestsStorageClient.post(requestWithItemInformation, requestResponse -> {
-          if (requestResponse.getStatusCode() == 201) {
-            JsonObject createdRequest = requestResponse.getJson();
+            requestsStorageClient.post(requestWithAdditionalInformation, requestResponse -> {
+              if (requestResponse.getStatusCode() == 201) {
+                JsonObject createdRequest = requestResponse.getJson();
 
-            JsonResponse.created(routingContext.response(), createdRequest);
-          } else {
-            ForwardResponse.forward(routingContext.response(), requestResponse);
+                JsonResponse.created(routingContext.response(), createdRequest);
+              } else {
+                ForwardResponse.forward(routingContext.response(), requestResponse);
+              }
+            });
+          }
+          else {
+            requestsStorageClient.post(request, requestResponse -> {
+              if (requestResponse.getStatusCode() == 201) {
+                JsonObject createdRequest = requestResponse.getJson();
+
+                JsonResponse.created(routingContext.response(), createdRequest);
+              } else {
+                ForwardResponse.forward(routingContext.response(), requestResponse);
+              }
+            });
           }
         });
       } else {
@@ -280,12 +305,26 @@ public class RequestCollectionResource {
     WebContext context)
     throws MalformedURLException {
 
-    CollectionResourceClient loanStorageClient;
+    CollectionResourceClient itemsStorageClient;
 
-    loanStorageClient = new CollectionResourceClient(
+    itemsStorageClient = new CollectionResourceClient(
       client, context.getOkapiBasedUrl("/item-storage/items"),
       context.getTenantId());
 
-    return loanStorageClient;
+    return itemsStorageClient;
+  }
+
+  private CollectionResourceClient createUsersStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+
+    CollectionResourceClient usersStorageClient;
+
+    usersStorageClient = new CollectionResourceClient(
+      client, context.getOkapiBasedUrl("/users"),
+      context.getTenantId());
+
+    return usersStorageClient;
   }
 }

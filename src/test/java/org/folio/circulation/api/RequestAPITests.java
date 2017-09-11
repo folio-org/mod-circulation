@@ -114,6 +114,17 @@ public class RequestAPITests {
     assertThat("barcode is taken from item",
       representation.getJsonObject("item").getString("barcode"),
       is("036000291452"));
+
+    assertThat("has information taken from requesting user",
+      representation.containsKey("requester"), is(true));
+
+    assertThat("last name is taken from requesting user",
+      representation.getJsonObject("requester").getString("lastName"),
+      is("Jones"));
+
+    assertThat("first name is taken from requesting user",
+      representation.getJsonObject("requester").getString("firstName"),
+      is("Steven"));
   }
 
   @Test
@@ -267,6 +278,17 @@ public class RequestAPITests {
     assertThat("barcode is taken from item",
       representation.getJsonObject("item").getString("barcode"),
       is("036000291452"));
+
+    assertThat("has information taken from requesting user",
+      representation.containsKey("requester"), is(true));
+
+    assertThat("last name is taken from requesting user",
+      representation.getJsonObject("requester").getString("lastName"),
+      is("Jones"));
+
+    assertThat("first name is taken from requesting user",
+      representation.getJsonObject("requester").getString("firstName"),
+      is("Steven"));
   }
 
   @Test
@@ -580,6 +602,17 @@ public class RequestAPITests {
     assertThat("barcode is taken from item",
       representation.getJsonObject("item").getString("barcode"),
       is("07295629642"));
+
+    assertThat("has information taken from requesting user",
+      representation.containsKey("requester"), is(true));
+
+    assertThat("last name is taken from requesting user",
+      representation.getJsonObject("requester").getString("lastName"),
+      is("Norton"));
+
+    assertThat("first name is taken from requesting user",
+      representation.getJsonObject("requester").getString("firstName"),
+      is("Jessica"));
   }
 
   @Test
@@ -914,10 +947,12 @@ public class RequestAPITests {
     hasProperty("requesterId", request, "request");
     hasProperty("itemId", request, "request");
     hasProperty("fulfilmentPreference", request, "request");
+    hasProperty("item", request, "request");
+    hasProperty("requester", request, "request");
   }
 
   private void hasProperty(String property, JsonObject resource, String type) {
-    assertThat(String.format("%s should have an %s: %s",
+    assertThat(String.format("%s should have %s: %s",
       type, property, resource),
       resource.containsKey(property), is(true));
   }
