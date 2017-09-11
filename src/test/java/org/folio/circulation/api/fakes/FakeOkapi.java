@@ -40,6 +40,7 @@ public class FakeOkapi extends AbstractVerticle {
     register(router, "/item-storage/items", "items");
     register(router, "/loan-storage/loans", "loans",
         "userId", "itemId", "loanDate", "action");
+    register(router, "/users", "users", "id", "username");
     register(router, "/request-storage/requests", "requests",
       "itemId", "requesterId", "requestType", "requestDate",
       "fulfilmentPreference");

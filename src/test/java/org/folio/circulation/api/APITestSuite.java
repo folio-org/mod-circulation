@@ -105,6 +105,47 @@ public class APITestSuite {
       response.getStatusCode(), is(204));
   }
 
+  public static void deleteAllIndividually(URL collectionResourceUrl, String collectionArrayName)
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    OkapiHttpClient client = createClient(exception -> {
+      log.error("Request to delete all individually failed:", exception);
+    });
+
+    CompletableFuture<Response> getFinished = new CompletableFuture<>();
+
+    client.get(collectionResourceUrl,
+      ResponseHandler.any(getFinished));
+
+    Response response = getFinished.get(5, TimeUnit.SECONDS);
+
+    assertThat("WARNING!!!!! Get all resources individually in order to delete failed",
+      response.getStatusCode(), is(200));
+
+    List<JsonObject> users = JsonArrayHelper.toList(response.getJson()
+      .getJsonArray(collectionArrayName));
+
+    users.stream().forEach(user -> {
+      try {
+        CompletableFuture<Response> deleteFinished = new CompletableFuture<>();
+
+        client.delete(URLHelper.joinPath(collectionResourceUrl, String.format("/%s",
+          user.getString("id"))),
+          ResponseHandler.any(deleteFinished));
+
+        Response deleteResponse = deleteFinished.get(5, TimeUnit.SECONDS);
+
+        assertThat("WARNING!!!!! Delete a resource individually failed",
+          deleteResponse.getStatusCode(), is(204));
+      } catch (Throwable e) {
+        assertThat("WARNING!!!!! Delete a resource individually failed",
+          true, is(false));
+      }
+    });
+  }
+
   public static String bookMaterialTypeId() {
     return bookMaterialTypeId;
   }

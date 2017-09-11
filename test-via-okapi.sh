@@ -6,11 +6,14 @@ circulation_direct_address=http://localhost:9605
 circulation_instance_id=localhost-9605
 circulation_module_id="mod-circulation-4.5.0-SNAPSHOT"
 
-#Needs to be the specific version of Inventory Storage you want to use for testing
+#Needs to be the specific version of mod-inventory-storage you want to use for testing
 inventory_storage_module_id="mod-inventory-storage-5.1.1-SNAPSHOT"
 
-#Needs to be the specific version of Circulation Storage you want to use for testing
+#Needs to be the specific version of mod-circulation-storage you want to use for testing
 circulation_storage_module_id="mod-circulation-storage-3.3.0-SNAPSHOT"
+
+#Needs to be the specific version of mod-users you want to use for testing
+users_storage_module_id="mod-users-14.2.1-SNAPSHOT"
 
 echo "Check if Okapi is contactable"
 curl -w '\n' -X GET -D -   \
@@ -28,6 +31,15 @@ curl -w '\n' -X POST -D - \
      -d "${activate_circulation_storage_json}"  \
      "${okapi_proxy_address}/_/proxy/tenants/${tenant_id}/modules"
 
+echo "Activate user storage for ${tenant_id}"
+activate_users_storage_json=$(cat ./activate.json)
+activate_users_storage_json="${activate_users_storage_json/moduleidhere/$users_storage_module_id}"
+
+curl -w '\n' -X POST -D - \
+     -H "Content-type: application/json" \
+     -d "${activate_users_storage_json}"  \
+     "${okapi_proxy_address}/_/proxy/tenants/${tenant_id}/modules"
+
 echo "Activate inventory storage for ${tenant_id}"
 activate_inventory_storage_json=$(cat ./activate.json)
 activate_inventory_storage_json="${activate_inventory_storage_json/moduleidhere/$inventory_storage_module_id}"
@@ -40,8 +52,6 @@ curl -w '\n' -X POST -D - \
 gradle generateDescriptors
 
 echo "Register circulation module"
-./register.sh ${circulation_direct_address} ${circulation_instance_id} ${tenant_id}
-
 ./okapi-registration/unmanaged-deployment/register.sh \
   ${circulation_direct_address} \
   ${circulation_instance_id} \
@@ -59,6 +69,9 @@ echo "Unregister circulation module"
   ${circulation_instance_id} \
   ${circulation_module_id} \
   ${tenant_id}
+
+echo "Deactivate user storage for ${tenant_id}"
+curl -X DELETE -D - -w '\n' "${okapi_proxy_address}/_/proxy/tenants/${tenant_id}/modules/${users_storage_module_id}"
 
 echo "Deactivate circulation storage for ${tenant_id}"
 curl -X DELETE -D - -w '\n' "${okapi_proxy_address}/_/proxy/tenants/${tenant_id}/modules/${circulation_storage_module_id}"
