@@ -106,6 +106,11 @@ public class Text2DroolsTest {
   }
 
   @Test
+  public void emptyNameList() {
+    Text2Drools.convert("m: policy-a");
+  }
+
+  @Test
   public void duplicateLoanPolicy() {
     try {
       Text2Drools.convert("m book: policy-a policy-b");
