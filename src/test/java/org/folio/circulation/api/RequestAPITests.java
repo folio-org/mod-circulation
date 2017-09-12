@@ -68,6 +68,7 @@ public class RequestAPITests {
 
     UUID requesterId = createUser(new UserRequestBuilder()
       .withName("Jones", "Steven")
+      .withBarcode("564376549214")
       .create()).getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
@@ -125,6 +126,10 @@ public class RequestAPITests {
     assertThat("first name is taken from requesting user",
       representation.getJsonObject("requester").getString("firstName"),
       is("Steven"));
+
+    assertThat("barcode is taken from requesting user",
+      representation.getJsonObject("requester").getString("barcode"),
+      is("564376549214"));
   }
 
   @Test
@@ -138,9 +143,7 @@ public class RequestAPITests {
     UUID id = UUID.randomUUID();
     UUID itemId = UUID.randomUUID();
 
-    UUID requesterId = createUser(new UserRequestBuilder()
-        .withName("Jones", "Steven")
-        .create()).getId();
+    UUID requesterId = createUser(new UserRequestBuilder().create()).getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
@@ -208,9 +211,6 @@ public class RequestAPITests {
     assertThat(String.format("Failed to create request: %s", postResponse.getBody()),
       postResponse.getStatusCode(), is(HttpURLConnection.HTTP_CREATED));
 
-    assertThat(String.format("Not JSON: %s", postResponse.getBody()),
-      postResponse.isJsonContent(), is(true));
-
     JsonObject representation = postResponse.getJson();
 
     assertThat("has no information for missing requesting user",
@@ -231,6 +231,7 @@ public class RequestAPITests {
 
     UUID requesterId = createUser(new UserRequestBuilder()
       .withName("Jones", "Steven")
+      .withBarcode("564376549214")
       .create()).getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
@@ -266,6 +267,65 @@ public class RequestAPITests {
   }
 
   @Test
+  public void canCreateARequestWithRequesterWithNoBarcode()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException,
+    UnsupportedEncodingException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = createItem(
+      ItemRequestExamples.smallAngryPlanet("036000291452")).getId();
+
+    UUID requesterId = createUser(new UserRequestBuilder()
+      .withName("Jones", "Steven")
+      .withNoBarcode()
+      .create()).getId();
+
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    JsonObject requestRequest = new RequestRequestBuilder()
+      .recall()
+      .withId(id)
+      .withRequestDate(requestDate)
+      .withItemId(itemId)
+      .withRequesterId(requesterId)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(new LocalDate(2017, 7, 30))
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
+      .create();
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(requestsUrl(), requestRequest,
+      ResponseHandler.json(postCompleted));
+
+    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Failed to create request: %s", postResponse.getBody()),
+      postResponse.getStatusCode(), is(HttpURLConnection.HTTP_CREATED));
+
+    JsonObject representation = postResponse.getJson();
+
+    assertThat("has information taken from requesting user",
+      representation.containsKey("requester"), is(true));
+
+    assertThat("last name is taken from requesting user",
+      representation.getJsonObject("requester").getString("lastName"),
+      is("Jones"));
+
+    assertThat("first name is taken from requesting user",
+      representation.getJsonObject("requester").getString("firstName"),
+      is("Steven"));
+
+    assertThat("no barcode when requesting user does not have one",
+      representation.getJsonObject("requester").containsKey("barcode"),
+      is(false));
+  }
+
+  @Test
   public void creatingARequestIgnoresReadOnlyInformationProvidedByClient()
     throws InterruptedException,
     ExecutionException,
@@ -281,6 +341,7 @@ public class RequestAPITests {
 
     UUID requesterId = createUser(new UserRequestBuilder()
       .withName("Jones", "Steven")
+      .withBarcode("564376549214")
       .create()).getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
@@ -302,7 +363,8 @@ public class RequestAPITests {
 
     requestRequest.put("requester", new JsonObject()
       .put("lastName", "incorrect")
-      .put("firstName", "information"));
+      .put("firstName", "information")
+      .put("barcode", "453956079534"));
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
 
@@ -337,6 +399,10 @@ public class RequestAPITests {
     assertThat("first name is taken from requesting user",
       representation.getJsonObject("requester").getString("firstName"),
       is("Steven"));
+
+    assertThat("barcode is taken from requesting user",
+      representation.getJsonObject("requester").getString("barcode"),
+      is("564376549214"));
   }
 
   @Test
@@ -352,6 +418,7 @@ public class RequestAPITests {
 
     UUID requesterId = createUser(new UserRequestBuilder()
       .withName("Jones", "Steven")
+      .withBarcode("564376549214")
       .create()).getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
@@ -409,6 +476,10 @@ public class RequestAPITests {
     assertThat("first name is taken from requesting user",
       representation.getJsonObject("requester").getString("firstName"),
       is("Steven"));
+
+    assertThat("barcode is taken from requesting user",
+      representation.getJsonObject("requester").getString("barcode"),
+      is("564376549214"));
   }
 
   @Test
@@ -433,7 +504,6 @@ public class RequestAPITests {
     UnsupportedEncodingException {
 
     UUID requesterId = createUser(new UserRequestBuilder()
-      .withName("Jones", "Steven")
       .create()).getId();
 
     createRequest(new RequestRequestBuilder()
@@ -518,10 +588,12 @@ public class RequestAPITests {
 
     UUID firstRequester = createUser(new UserRequestBuilder()
       .withName("Jones", "Steven")
+      .withBarcode("")
       .create()).getId();
 
     UUID secondRequester = createUser(new UserRequestBuilder()
       .withName("Norton", "Jessica")
+      .withBarcode("")
       .create()).getId();
 
     createRequest(new RequestRequestBuilder()
@@ -588,9 +660,7 @@ public class RequestAPITests {
     TimeoutException,
     UnsupportedEncodingException {
 
-    UUID requesterId = createUser(new UserRequestBuilder()
-      .withName("Jones", "Steven")
-      .create()).getId();
+    UUID requesterId = createUser(new UserRequestBuilder().create()).getId();
 
     createRequest(new RequestRequestBuilder()
       .withItemId(createItem(ItemRequestExamples.smallAngryPlanet()).getId())
@@ -661,6 +731,7 @@ public class RequestAPITests {
 
     UUID originalRequesterId = createUser(new UserRequestBuilder()
       .withName("Norton", "Jessica")
+      .withBarcode("764523186496")
       .create()).getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
@@ -680,6 +751,7 @@ public class RequestAPITests {
 
     UUID updatedRequester = createUser(new UserRequestBuilder()
       .withName("Campbell", "Fiona")
+      .withBarcode("679231693475")
       .create()).getId();
 
     JsonObject updatedRequest = createdRequest.copyJson();
@@ -739,6 +811,10 @@ public class RequestAPITests {
     assertThat("first name is taken from requesting user",
       representation.getJsonObject("requester").getString("firstName"),
       is("Fiona"));
+
+    assertThat("barcode is taken from requesting user",
+      representation.getJsonObject("requester").getString("barcode"),
+      is("679231693475"));
   }
 
   @Test
@@ -752,9 +828,7 @@ public class RequestAPITests {
     UUID id = UUID.randomUUID();
     UUID itemId = createItem(ItemRequestExamples.temeraire("07295629642")).getId();
 
-    UUID requesterId = createUser(new UserRequestBuilder()
-      .withName("Norton", "Jessica")
-      .create()).getId();
+    UUID requesterId = createUser(new UserRequestBuilder().create()).getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
@@ -818,6 +892,7 @@ public class RequestAPITests {
 
     UUID requester = createUser(new UserRequestBuilder()
       .withName("Norton", "Jessica")
+      .withBarcode("679231693475")
       .create()).getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
@@ -870,6 +945,105 @@ public class RequestAPITests {
   }
 
   @Test
+  public void replacingAnExistingRequestRemovesRequesterBarcodeWhenNonePresent()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException,
+    UnsupportedEncodingException {
+
+    UUID id = UUID.randomUUID();
+    UUID itemId = createItem(ItemRequestExamples.temeraire("07295629642")).getId();
+
+    UUID originalRequesterId = createUser(new UserRequestBuilder()
+      .withName("Norton", "Jessica")
+      .withBarcode("764523186496")
+      .create()).getId();
+
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    JsonObject requestRequest = new RequestRequestBuilder()
+      .recall()
+      .withId(id)
+      .withRequestDate(requestDate)
+      .withItemId(itemId)
+      .withRequesterId(originalRequesterId)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(new LocalDate(2017, 7, 30))
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
+      .create();
+
+    IndividualResource createdRequest = createRequest(requestRequest);
+
+    UUID updatedRequester = createUser(new UserRequestBuilder()
+      .withName("Campbell", "Fiona")
+      .withNoBarcode()
+      .create()).getId();
+
+    JsonObject updatedRequest = createdRequest.copyJson();
+
+    updatedRequest
+      .put("requestType", "Hold")
+      .put("requesterId", updatedRequester.toString());
+
+    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
+
+    client.put(requestsUrl(String.format("/%s", id)),
+      updatedRequest, ResponseHandler.any(putCompleted));
+
+    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(putResponse.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
+
+    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
+
+    client.get(requestsUrl(String.format("/%s", id)),
+      ResponseHandler.any(getCompleted));
+
+    Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Failed to get request: %s", getResponse.getBody()),
+      getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+
+    JsonObject representation = getResponse.getJson();
+
+    assertThat(representation.getString("id"), is(id.toString()));
+    assertThat(representation.getString("requestType"), is("Hold"));
+    assertThat(representation.getString("requestDate"), isEquivalentTo(requestDate));
+    assertThat(representation.getString("itemId"), is(itemId.toString()));
+    assertThat(representation.getString("requesterId"), is(updatedRequester.toString()));
+    assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
+    assertThat(representation.getString("requestExpirationDate"), is("2017-07-30"));
+    assertThat(representation.getString("holdShelfExpirationDate"), is("2017-08-31"));
+
+    assertThat("has information taken from item",
+      representation.containsKey("item"), is(true));
+
+    assertThat("title is taken from item",
+      representation.getJsonObject("item").getString("title"),
+      is("Temeraire"));
+
+    assertThat("barcode is taken from item",
+      representation.getJsonObject("item").getString("barcode"),
+      is("07295629642"));
+
+    assertThat("has information taken from requesting user",
+      representation.containsKey("requester"), is(true));
+
+    assertThat("last name is taken from requesting user",
+      representation.getJsonObject("requester").getString("lastName"),
+      is("Campbell"));
+
+    assertThat("first name is taken from requesting user",
+      representation.getJsonObject("requester").getString("firstName"),
+      is("Fiona"));
+
+    assertThat("barcode is not present when requesting user does not have one",
+      representation.getJsonObject("requester").containsKey("barcode"),
+      is(false));
+  }
+
+  @Test
   public void canDeleteAllRequests()
     throws InterruptedException,
     MalformedURLException,
@@ -877,9 +1051,7 @@ public class RequestAPITests {
     ExecutionException,
     UnsupportedEncodingException {
 
-    UUID requesterId = createUser(new UserRequestBuilder()
-      .withName("Norton", "Jessica")
-      .create()).getId();
+    UUID requesterId = createUser(new UserRequestBuilder().create()).getId();
 
     createRequest(new RequestRequestBuilder()
       .withItemId(createItem(ItemRequestExamples.smallAngryPlanet()).getId())
@@ -943,9 +1115,7 @@ public class RequestAPITests {
     UUID secondId = UUID.randomUUID();
     UUID thirdId = UUID.randomUUID();
 
-    UUID requesterId = createUser(new UserRequestBuilder()
-      .withName("Norton", "Jessica")
-      .create()).getId();
+    UUID requesterId = createUser(new UserRequestBuilder().create()).getId();
 
     createRequest(new RequestRequestBuilder()
       .withId(firstId)

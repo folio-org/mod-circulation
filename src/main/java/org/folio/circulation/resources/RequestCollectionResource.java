@@ -68,14 +68,19 @@ public class RequestCollectionResource {
             JsonObject item = itemResponse.getJson();
             JsonObject requester = userResponse.getJson();
 
+            JsonObject requesterSummary = new JsonObject()
+              .put("lastName", requester.getJsonObject("personal").getString("lastName"))
+              .put("firstName", requester.getJsonObject("personal").getString("firstName"));
+
+            if(requester.containsKey("barcode")) {
+              requesterSummary.put("barcode", requester.getString("barcode"));
+            }
+
             requestWithAdditionalInformation
               .put("item", new JsonObject()
                 .put("title", item.getString("title"))
                 .put("barcode", item.getString("barcode"))
-              ).put("requester", new JsonObject()
-                .put("lastName", requester.getJsonObject("personal").getString("lastName"))
-                .put("firstName", requester.getJsonObject("personal").getString("firstName"))
-              );
+              ).put("requester", requesterSummary);
 
             requestsStorageClient.post(requestWithAdditionalInformation, requestResponse -> {
               if (requestResponse.getStatusCode() == 201) {
@@ -149,14 +154,19 @@ public class RequestCollectionResource {
             JsonObject item = itemResponse.getJson();
             JsonObject requester = userResponse.getJson();
 
+            JsonObject requesterSummary = new JsonObject()
+              .put("lastName", requester.getJsonObject("personal").getString("lastName"))
+              .put("firstName", requester.getJsonObject("personal").getString("firstName"));
+
+            if(requester.containsKey("barcode")) {
+              requesterSummary.put("barcode", requester.getString("barcode"));
+            }
+
             requestWithAdditionalInformation
               .put("item", new JsonObject()
                 .put("title", item.getString("title"))
-                .put("barcode", item.getString("barcode"))
-              ).put("requester", new JsonObject()
-              .put("lastName", requester.getJsonObject("personal").getString("lastName"))
-              .put("firstName", requester.getJsonObject("personal").getString("firstName"))
-            );
+                .put("barcode", item.getString("barcode")))
+              .put("requester", requesterSummary);
 
             requestsStorageClient.put(id, requestWithAdditionalInformation, response -> {
               if(response.getStatusCode() == 204) {
