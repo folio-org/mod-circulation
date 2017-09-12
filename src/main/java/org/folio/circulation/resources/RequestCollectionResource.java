@@ -72,6 +72,11 @@ public class RequestCollectionResource {
               .put("lastName", requester.getJsonObject("personal").getString("lastName"))
               .put("firstName", requester.getJsonObject("personal").getString("firstName"));
 
+            if(requester.getJsonObject("personal").containsKey("middleName")) {
+              requesterSummary.put("middleName",
+                requester.getJsonObject("personal").getString("middleName"));
+            }
+
             if(requester.containsKey("barcode")) {
               requesterSummary.put("barcode", requester.getString("barcode"));
             }
@@ -157,6 +162,11 @@ public class RequestCollectionResource {
             JsonObject requesterSummary = new JsonObject()
               .put("lastName", requester.getJsonObject("personal").getString("lastName"))
               .put("firstName", requester.getJsonObject("personal").getString("firstName"));
+
+            if(requester.getJsonObject("personal").containsKey("middleName")) {
+              requesterSummary.put("middleName",
+                requester.getJsonObject("personal").getString("middleName"));
+            }
 
             if(requester.containsKey("barcode")) {
               requesterSummary.put("barcode", requester.getString("barcode"));
