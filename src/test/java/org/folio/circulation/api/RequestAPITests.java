@@ -172,7 +172,54 @@ public class RequestAPITests {
   }
 
   @Test
-  public void creatingARequestIgnoresItemInformationProvidedByClient()
+  public void creatingARequestDoesNotStoreRequesterInformationWhenUserNotFound()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException,
+    UnsupportedEncodingException {
+
+    UUID id = UUID.randomUUID();
+    UUID itemId = createItem(
+      ItemRequestExamples.smallAngryPlanet("036000291452")).getId();
+
+    UUID requesterId = UUID.randomUUID();
+
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    JsonObject requestRequest = new RequestRequestBuilder()
+      .recall()
+      .withId(id)
+      .withRequestDate(requestDate)
+      .withItemId(itemId)
+      .withRequesterId(requesterId)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(new LocalDate(2017, 7, 30))
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
+      .create();
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(requestsUrl(), requestRequest,
+      ResponseHandler.json(postCompleted));
+
+    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Failed to create request: %s", postResponse.getBody()),
+      postResponse.getStatusCode(), is(HttpURLConnection.HTTP_CREATED));
+
+    assertThat(String.format("Not JSON: %s", postResponse.getBody()),
+      postResponse.isJsonContent(), is(true));
+
+    JsonObject representation = postResponse.getJson();
+
+    assertThat("has no information for missing requesting user",
+      representation.containsKey("requester"), is(false));
+  }
+
+  @Test()
+  //Should start failing when sequential requesting of item and user information is sorted
+  public void creatingARequestDoesNotStoreRequestingUserInformationWhenItemNotFound()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -199,10 +246,6 @@ public class RequestAPITests {
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
       .create();
 
-    requestRequest.put("item", new JsonObject()
-      .put("title", "incorrect title information")
-      .put("barcode", "753856498321"));
-
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
 
     client.post(requestsUrl(), requestRequest,
@@ -217,6 +260,83 @@ public class RequestAPITests {
 
     assertThat("has no information for missing item",
       representation.containsKey("item"), is(false));
+
+    assertThat("has no information for requesting user, despite it existing",
+      representation.containsKey("requester"), is(false));
+  }
+
+  @Test
+  public void creatingARequestIgnoresReadOnlyInformationProvidedByClient()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException,
+    UnsupportedEncodingException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = createItem(
+      ItemRequestExamples.smallAngryPlanet("036000291452")).getId();
+
+
+    UUID requesterId = createUser(new UserRequestBuilder()
+      .withName("Jones", "Steven")
+      .create()).getId();
+
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    JsonObject requestRequest = new RequestRequestBuilder()
+      .recall()
+      .withId(id)
+      .withRequestDate(requestDate)
+      .withItemId(itemId)
+      .withRequesterId(requesterId)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(new LocalDate(2017, 7, 30))
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
+      .create();
+
+    requestRequest.put("item", new JsonObject()
+      .put("title", "incorrect title information")
+      .put("barcode", "753856498321"));
+
+    requestRequest.put("requester", new JsonObject()
+      .put("lastName", "incorrect")
+      .put("firstName", "information"));
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(requestsUrl(), requestRequest,
+      ResponseHandler.json(postCompleted));
+
+    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Failed to create request: %s", postResponse.getBody()),
+      postResponse.getStatusCode(), is(HttpURLConnection.HTTP_CREATED));
+
+    JsonObject representation = postResponse.getJson();
+
+    assertThat("has information taken from item",
+      representation.containsKey("item"), is(true));
+
+    assertThat("title is taken from item",
+      representation.getJsonObject("item").getString("title"),
+      is("The Long Way to a Small, Angry Planet"));
+
+    assertThat("barcode is taken from item",
+      representation.getJsonObject("item").getString("barcode"),
+      is("036000291452"));
+
+    assertThat("has information taken from requesting user",
+      representation.containsKey("requester"), is(true));
+
+    assertThat("last name is taken from requesting user",
+      representation.getJsonObject("requester").getString("lastName"),
+      is("Jones"));
+
+    assertThat("first name is taken from requesting user",
+      representation.getJsonObject("requester").getString("firstName"),
+      is("Steven"));
   }
 
   @Test
@@ -389,7 +509,7 @@ public class RequestAPITests {
   }
 
   @Test
-  public void canSearchForRequestsByRequesterId()
+  public void canSearchForRequestsByRequesterLastName()
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
@@ -441,7 +561,7 @@ public class RequestAPITests {
 
     CompletableFuture<Response> getRequestsCompleted = new CompletableFuture<>();
 
-    client.get(requestsUrl() + String.format("?query=requesterId=%s", secondRequester),
+    client.get(requestsUrl() + String.format("?query=requester.lastName=%s", "Norton"),
       ResponseHandler.any(getRequestsCompleted));
 
     Response getRequestsResponse = getRequestsCompleted.get(5, TimeUnit.SECONDS);
@@ -539,7 +659,7 @@ public class RequestAPITests {
     UUID id = UUID.randomUUID();
     UUID itemId = createItem(ItemRequestExamples.temeraire("07295629642")).getId();
 
-    UUID requesterId = createUser(new UserRequestBuilder()
+    UUID originalRequesterId = createUser(new UserRequestBuilder()
       .withName("Norton", "Jessica")
       .create()).getId();
 
@@ -550,7 +670,7 @@ public class RequestAPITests {
       .withId(id)
       .withRequestDate(requestDate)
       .withItemId(itemId)
-      .withRequesterId(requesterId)
+      .withRequesterId(originalRequesterId)
       .fulfilToHoldShelf()
       .withRequestExpiration(new LocalDate(2017, 7, 30))
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
@@ -558,9 +678,15 @@ public class RequestAPITests {
 
     IndividualResource createdRequest = createRequest(requestRequest);
 
+    UUID updatedRequester = createUser(new UserRequestBuilder()
+      .withName("Campbell", "Fiona")
+      .create()).getId();
+
     JsonObject updatedRequest = createdRequest.copyJson();
 
-    updatedRequest.put("requestType", "Hold");
+    updatedRequest
+      .put("requestType", "Hold")
+      .put("requesterId", updatedRequester.toString());
 
     CompletableFuture<Response> putCompleted = new CompletableFuture<>();
 
@@ -587,7 +713,7 @@ public class RequestAPITests {
     assertThat(representation.getString("requestType"), is("Hold"));
     assertThat(representation.getString("requestDate"), isEquivalentTo(requestDate));
     assertThat(representation.getString("itemId"), is(itemId.toString()));
-    assertThat(representation.getString("requesterId"), is(requesterId.toString()));
+    assertThat(representation.getString("requesterId"), is(updatedRequester.toString()));
     assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
     assertThat(representation.getString("requestExpirationDate"), is("2017-07-30"));
     assertThat(representation.getString("holdShelfExpirationDate"), is("2017-08-31"));
@@ -608,11 +734,11 @@ public class RequestAPITests {
 
     assertThat("last name is taken from requesting user",
       representation.getJsonObject("requester").getString("lastName"),
-      is("Norton"));
+      is("Campbell"));
 
     assertThat("first name is taken from requesting user",
       representation.getJsonObject("requester").getString("firstName"),
-      is("Jessica"));
+      is("Fiona"));
   }
 
   @Test
@@ -675,8 +801,72 @@ public class RequestAPITests {
 
     assertThat(representation.getString("itemId"), is(itemId.toString()));
 
-    assertThat("has no information for missing item",
+    assertThat("has no item information when item no longer exists",
       representation.containsKey("item"), is(false));
+  }
+
+  @Test
+  public void replacingAnExistingRequestRemovesRequesterInformationWhenUserDoesNotExist()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException,
+    UnsupportedEncodingException {
+
+    UUID id = UUID.randomUUID();
+    UUID itemId = createItem(ItemRequestExamples.temeraire("07295629642")).getId();
+
+    UUID requester = createUser(new UserRequestBuilder()
+      .withName("Norton", "Jessica")
+      .create()).getId();
+
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    JsonObject requestRequest = new RequestRequestBuilder()
+      .recall()
+      .withId(id)
+      .withRequestDate(requestDate)
+      .withItemId(itemId)
+      .withRequesterId(requester)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(new LocalDate(2017, 7, 30))
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
+      .create();
+
+    IndividualResource createdRequest = createRequest(requestRequest);
+
+    deleteUser(requester);
+
+    JsonObject updatedRequest = createdRequest.copyJson();
+
+    updatedRequest
+      .put("requestType", "Hold");
+
+    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
+
+    client.put(requestsUrl(String.format("/%s", id)),
+      updatedRequest, ResponseHandler.any(putCompleted));
+
+    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(putResponse.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
+
+    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
+
+    client.get(requestsUrl(String.format("/%s", id)),
+      ResponseHandler.any(getCompleted));
+
+    Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Failed to get request: %s", getResponse.getBody()),
+      getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+
+    JsonObject representation = getResponse.getJson();
+
+    assertThat(representation.getString("requesterId"), is(requester.toString()));
+
+    assertThat("has no requesting user information taken when user no longer exists",
+      representation.containsKey("requester"), is(false));
   }
 
   @Test
@@ -971,6 +1161,23 @@ public class RequestAPITests {
     Response response = deleteFinished.get(5, TimeUnit.SECONDS);
 
     assertThat(String.format("Failed to delete item %s", itemId),
+      response.getStatusCode(), is(204));
+  }
+
+  private void deleteUser(UUID userId)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    CompletableFuture<Response> deleteFinished = new CompletableFuture<>();
+
+    client.delete(usersUrl(String.format("/%s", userId)),
+      ResponseHandler.any(deleteFinished));
+
+    Response response = deleteFinished.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Failed to delete user %s", userId),
       response.getStatusCode(), is(204));
   }
 }

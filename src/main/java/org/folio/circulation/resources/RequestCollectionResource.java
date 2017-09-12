@@ -55,13 +55,14 @@ public class RequestCollectionResource {
     JsonObject request = routingContext.getBodyAsJson();
 
     request.remove("item");
+    request.remove("requester");
 
     //TODO: resolve the sequencing issue, which means that item has to be found
     // in order for requesting user to be looked for
     itemsStorageClient.get(request.getString("itemId"), itemResponse -> {
       if (itemResponse.getStatusCode() == 200) {
         usersStorageClient.get(request.getString("requesterId"), userResponse -> {
-          if (itemResponse.getStatusCode() == 200) {
+          if (userResponse.getStatusCode() == 200) {
             JsonObject requestWithAdditionalInformation = request.copy();
 
             JsonObject item = itemResponse.getJson();
@@ -116,11 +117,13 @@ public class RequestCollectionResource {
     WebContext context = new WebContext(routingContext);
     CollectionResourceClient requestsStorageClient;
     CollectionResourceClient itemsStorageClient;
+    CollectionResourceClient usersStorageClient;
 
     try {
       OkapiHttpClient client = createHttpClient(routingContext, context);
       requestsStorageClient = createRequestsStorageClient(client, context);
       itemsStorageClient = createItemsStorageClient(client, context);
+      usersStorageClient = createUsersStorageClient(client, context);
     }
     catch (MalformedURLException e) {
       ServerErrorResponse.internalError(routingContext.response(),
@@ -133,23 +136,46 @@ public class RequestCollectionResource {
     JsonObject request = routingContext.getBodyAsJson();
 
     request.remove("item");
+    request.remove("requester");
 
+    //TODO: resolve the sequencing issue, which means that item has to be found
+    // in order for requesting user to be looked for
     itemsStorageClient.get(request.getString("itemId"), itemResponse -> {
       if (itemResponse.getStatusCode() == 200) {
-        JsonObject requestWithItemInformation = request.copy();
+        usersStorageClient.get(request.getString("requesterId"), userResponse -> {
+          if (userResponse.getStatusCode() == 200) {
+            JsonObject requestWithAdditionalInformation = request.copy();
 
-        JsonObject item = itemResponse.getJson();
+            JsonObject item = itemResponse.getJson();
+            JsonObject requester = userResponse.getJson();
 
-        requestWithItemInformation.put("item", new JsonObject()
-          .put("title", item.getString("title"))
-          .put("barcode", item.getString("barcode")));
+            requestWithAdditionalInformation
+              .put("item", new JsonObject()
+                .put("title", item.getString("title"))
+                .put("barcode", item.getString("barcode"))
+              ).put("requester", new JsonObject()
+              .put("lastName", requester.getJsonObject("personal").getString("lastName"))
+              .put("firstName", requester.getJsonObject("personal").getString("firstName"))
+            );
 
-        requestsStorageClient.put(id, requestWithItemInformation, response -> {
-          if(response.getStatusCode() == 204) {
-            SuccessResponse.noContent(routingContext.response());
+            requestsStorageClient.put(id, requestWithAdditionalInformation, response -> {
+              if(response.getStatusCode() == 204) {
+                SuccessResponse.noContent(routingContext.response());
+              }
+              else {
+                ForwardResponse.forward(routingContext.response(), response);
+              }
+            });
           }
           else {
-            ForwardResponse.forward(routingContext.response(), response);
+            requestsStorageClient.put(id, request, response -> {
+              if(response.getStatusCode() == 204) {
+                SuccessResponse.noContent(routingContext.response());
+              }
+              else {
+                ForwardResponse.forward(routingContext.response(), response);
+              }
+            });
           }
         });
       } else {

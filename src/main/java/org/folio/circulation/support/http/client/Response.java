@@ -2,6 +2,7 @@ package org.folio.circulation.support.http.client;
 
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClientResponse;
+import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
 
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
@@ -36,13 +37,26 @@ public class Response {
   }
 
   public JsonObject getJson() {
-    String body = getBody();
-
     if(hasBody()) {
-      return new JsonObject(body);
+      return new JsonObject(getBody());
     }
     else {
       return new JsonObject();
+    }
+  }
+
+  public Boolean isJsonContent() {
+    if(!hasBody()) {
+      return false;
+    }
+
+    //Would prefer an explicit parsing way to check this
+    try {
+      new JsonObject(getBody());
+      return true;
+    }
+    catch(DecodeException e) {
+      return false;
     }
   }
 
