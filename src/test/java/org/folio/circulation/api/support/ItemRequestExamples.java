@@ -9,6 +9,10 @@ public class ItemRequestExamples {
     return smallAngryPlanet("036000291452");
   }
 
+  public static JsonObject smallAngryPlanetNoBarcode() {
+    return smallAngryPlanet(null);
+  }
+
   public static JsonObject smallAngryPlanet(String barcode) {
     return ItemRequest.create(UUID.randomUUID(),
       "The Long Way to a Small, Angry Planet", barcode);

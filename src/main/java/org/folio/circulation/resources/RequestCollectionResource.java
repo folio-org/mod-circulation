@@ -81,11 +81,16 @@ public class RequestCollectionResource {
               requesterSummary.put("barcode", requester.getString("barcode"));
             }
 
+            JsonObject itemSummary = new JsonObject()
+              .put("title", item.getString("title"));
+
+            if(item.containsKey("barcode")) {
+              itemSummary.put("barcode", item.getString("barcode"));
+            }
+
             requestWithAdditionalInformation
-              .put("item", new JsonObject()
-                .put("title", item.getString("title"))
-                .put("barcode", item.getString("barcode"))
-              ).put("requester", requesterSummary);
+              .put("item", itemSummary)
+              .put("requester", requesterSummary);
 
             requestsStorageClient.post(requestWithAdditionalInformation, requestResponse -> {
               if (requestResponse.getStatusCode() == 201) {
@@ -172,10 +177,15 @@ public class RequestCollectionResource {
               requesterSummary.put("barcode", requester.getString("barcode"));
             }
 
+            JsonObject itemSummary = new JsonObject()
+              .put("title", item.getString("title"));
+
+            if(item.containsKey("barcode")) {
+              itemSummary.put("barcode", item.getString("barcode"));
+            }
+
             requestWithAdditionalInformation
-              .put("item", new JsonObject()
-                .put("title", item.getString("title"))
-                .put("barcode", item.getString("barcode")))
+              .put("item", itemSummary)
               .put("requester", requesterSummary);
 
             requestsStorageClient.put(id, requestWithAdditionalInformation, response -> {
