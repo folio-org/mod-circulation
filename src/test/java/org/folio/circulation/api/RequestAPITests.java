@@ -222,8 +222,7 @@ public class RequestAPITests {
   }
 
   @Test()
-  //Should start failing when sequential requesting of item and user information is sorted
-  public void creatingARequestDoesNotStoreRequestingUserInformationWhenItemNotFound()
+  public void creatingARequestStoresRequestingUserInformationWhenItemNotFound()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -266,7 +265,77 @@ public class RequestAPITests {
     assertThat("has no information for missing item",
       representation.containsKey("item"), is(false));
 
-    assertThat("has no information for requesting user, despite it existing",
+    assertThat("has information for requesting user",
+      representation.containsKey("requester"), is(true));
+
+    assertThat("last name is taken from requesting user",
+      representation.getJsonObject("requester").getString("lastName"),
+      is("Jones"));
+
+    assertThat("first name is taken from requesting user",
+      representation.getJsonObject("requester").getString("firstName"),
+      is("Steven"));
+
+    assertThat("middle name is not taken from requesting user",
+      representation.getJsonObject("requester").containsKey("middleName"),
+      is(false));
+
+    assertThat("barcode is taken from requesting user",
+      representation.getJsonObject("requester").getString("barcode"),
+      is("564376549214"));
+  }
+
+  @Test
+  public void creatingARequestStoresItemInformationWhenRequestingUserNotFound()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException,
+    UnsupportedEncodingException {
+
+    UUID id = UUID.randomUUID();
+    UUID itemId = createItem(
+      ItemRequestExamples.smallAngryPlanet("036000291452")).getId();
+
+    UUID requesterId = UUID.randomUUID();
+
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    JsonObject requestRequest = new RequestRequestBuilder()
+      .recall()
+      .withId(id)
+      .withRequestDate(requestDate)
+      .withItemId(itemId)
+      .withRequesterId(requesterId)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(new LocalDate(2017, 7, 30))
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
+      .create();
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(requestsUrl(), requestRequest,
+      ResponseHandler.json(postCompleted));
+
+    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Failed to create request: %s", postResponse.getBody()),
+      postResponse.getStatusCode(), is(HttpURLConnection.HTTP_CREATED));
+
+    JsonObject representation = postResponse.getJson();
+
+    assertThat("has information taken from item",
+      representation.containsKey("item"), is(true));
+
+    assertThat("title is taken from item",
+      representation.getJsonObject("item").getString("title"),
+      is("The Long Way to a Small, Angry Planet"));
+
+    assertThat("barcode is taken from item",
+      representation.getJsonObject("item").getString("barcode"),
+      is("036000291452"));
+
+    assertThat("has no information for missing requesting user",
       representation.containsKey("requester"), is(false));
   }
 

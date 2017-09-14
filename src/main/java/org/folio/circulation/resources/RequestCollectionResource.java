@@ -7,10 +7,12 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
+import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.*;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.concurrent.CompletableFuture;
 
 public class RequestCollectionResource {
 
@@ -57,65 +59,57 @@ public class RequestCollectionResource {
     request.remove("item");
     request.remove("requester");
 
-    //TODO: resolve the sequencing issue, which means that item has to be found
-    // in order for requesting user to be looked for
+    CompletableFuture<Response> itemRequestCompleted = new CompletableFuture<>();
+    CompletableFuture<Response> requestingUserRequestCompleted = new CompletableFuture<>();
+
     itemsStorageClient.get(request.getString("itemId"), itemResponse -> {
-      if (itemResponse.getStatusCode() == 200) {
-        usersStorageClient.get(request.getString("requesterId"), userResponse -> {
-          if (userResponse.getStatusCode() == 200) {
-            JsonObject requestWithAdditionalInformation = request.copy();
+      itemRequestCompleted.complete(itemResponse);
+    });
 
-            JsonObject item = itemResponse.getJson();
-            JsonObject requester = userResponse.getJson();
+    usersStorageClient.get(request.getString("requesterId"), userResponse -> {
+      requestingUserRequestCompleted.complete(userResponse);
+    });
 
-            JsonObject requesterSummary = new JsonObject()
-              .put("lastName", requester.getJsonObject("personal").getString("lastName"))
-              .put("firstName", requester.getJsonObject("personal").getString("firstName"));
+    CompletableFuture.allOf(itemRequestCompleted, requestingUserRequestCompleted)
+      .thenAccept(v -> {
+        Response itemResponse = itemRequestCompleted.join();
+        Response requestingUserResponse = requestingUserRequestCompleted.join();
 
-            if(requester.getJsonObject("personal").containsKey("middleName")) {
-              requesterSummary.put("middleName",
-                requester.getJsonObject("personal").getString("middleName"));
-            }
+        JsonObject requestWithAdditionalInformation = request.copy();
 
-            if(requester.containsKey("barcode")) {
-              requesterSummary.put("barcode", requester.getString("barcode"));
-            }
+        if (itemResponse.getStatusCode() == 200) {
+          JsonObject item = itemResponse.getJson();
 
-            JsonObject itemSummary = new JsonObject()
-              .put("title", item.getString("title"));
+          JsonObject itemSummary = new JsonObject()
+            .put("title", item.getString("title"));
 
-            if(item.containsKey("barcode")) {
-              itemSummary.put("barcode", item.getString("barcode"));
-            }
-
-            requestWithAdditionalInformation
-              .put("item", itemSummary)
-              .put("requester", requesterSummary);
-
-            requestsStorageClient.post(requestWithAdditionalInformation, requestResponse -> {
-              if (requestResponse.getStatusCode() == 201) {
-                JsonObject createdRequest = requestResponse.getJson();
-
-                JsonResponse.created(routingContext.response(), createdRequest);
-              } else {
-                ForwardResponse.forward(routingContext.response(), requestResponse);
-              }
-            });
+          if(item.containsKey("barcode")) {
+            itemSummary.put("barcode", item.getString("barcode"));
           }
-          else {
-            requestsStorageClient.post(request, requestResponse -> {
-              if (requestResponse.getStatusCode() == 201) {
-                JsonObject createdRequest = requestResponse.getJson();
 
-                JsonResponse.created(routingContext.response(), createdRequest);
-              } else {
-                ForwardResponse.forward(routingContext.response(), requestResponse);
-              }
-            });
+          requestWithAdditionalInformation.put("item", itemSummary);
+        }
+
+        if (requestingUserResponse.getStatusCode() == 200) {
+          JsonObject requester = requestingUserResponse.getJson();
+
+          JsonObject requesterSummary = new JsonObject()
+            .put("lastName", requester.getJsonObject("personal").getString("lastName"))
+            .put("firstName", requester.getJsonObject("personal").getString("firstName"));
+
+          if(requester.getJsonObject("personal").containsKey("middleName")) {
+            requesterSummary.put("middleName",
+              requester.getJsonObject("personal").getString("middleName"));
           }
-        });
-      } else {
-        requestsStorageClient.post(request, requestResponse -> {
+
+          if(requester.containsKey("barcode")) {
+            requesterSummary.put("barcode", requester.getString("barcode"));
+          }
+
+          requestWithAdditionalInformation.put("requester", requesterSummary);
+        }
+
+        requestsStorageClient.post(requestWithAdditionalInformation, requestResponse -> {
           if (requestResponse.getStatusCode() == 201) {
             JsonObject createdRequest = requestResponse.getJson();
 
@@ -124,8 +118,7 @@ public class RequestCollectionResource {
             ForwardResponse.forward(routingContext.response(), requestResponse);
           }
         });
-      }
-    });
+      });
   }
 
   private void replace(RoutingContext routingContext) {
@@ -153,63 +146,57 @@ public class RequestCollectionResource {
     request.remove("item");
     request.remove("requester");
 
-    //TODO: resolve the sequencing issue, which means that item has to be found
-    // in order for requesting user to be looked for
+    CompletableFuture<Response> itemRequestCompleted = new CompletableFuture<>();
+    CompletableFuture<Response> requestingUserRequestCompleted = new CompletableFuture<>();
+
     itemsStorageClient.get(request.getString("itemId"), itemResponse -> {
-      if (itemResponse.getStatusCode() == 200) {
-        usersStorageClient.get(request.getString("requesterId"), userResponse -> {
-          if (userResponse.getStatusCode() == 200) {
-            JsonObject requestWithAdditionalInformation = request.copy();
+      itemRequestCompleted.complete(itemResponse);
+    });
 
-            JsonObject item = itemResponse.getJson();
-            JsonObject requester = userResponse.getJson();
+    usersStorageClient.get(request.getString("requesterId"), userResponse -> {
+      requestingUserRequestCompleted.complete(userResponse);
+    });
 
-            JsonObject requesterSummary = new JsonObject()
-              .put("lastName", requester.getJsonObject("personal").getString("lastName"))
-              .put("firstName", requester.getJsonObject("personal").getString("firstName"));
+    CompletableFuture.allOf(itemRequestCompleted, requestingUserRequestCompleted)
+      .thenAccept(v -> {
+        Response itemResponse = itemRequestCompleted.join();
+        Response requestingUserResponse = requestingUserRequestCompleted.join();
 
-            if(requester.getJsonObject("personal").containsKey("middleName")) {
-              requesterSummary.put("middleName",
-                requester.getJsonObject("personal").getString("middleName"));
-            }
+        JsonObject requestWithAdditionalInformation = request.copy();
 
-            if(requester.containsKey("barcode")) {
-              requesterSummary.put("barcode", requester.getString("barcode"));
-            }
+        if (itemResponse.getStatusCode() == 200) {
+          JsonObject item = itemResponse.getJson();
 
-            JsonObject itemSummary = new JsonObject()
-              .put("title", item.getString("title"));
+          JsonObject itemSummary = new JsonObject()
+            .put("title", item.getString("title"));
 
-            if(item.containsKey("barcode")) {
-              itemSummary.put("barcode", item.getString("barcode"));
-            }
-
-            requestWithAdditionalInformation
-              .put("item", itemSummary)
-              .put("requester", requesterSummary);
-
-            requestsStorageClient.put(id, requestWithAdditionalInformation, response -> {
-              if(response.getStatusCode() == 204) {
-                SuccessResponse.noContent(routingContext.response());
-              }
-              else {
-                ForwardResponse.forward(routingContext.response(), response);
-              }
-            });
+          if(item.containsKey("barcode")) {
+            itemSummary.put("barcode", item.getString("barcode"));
           }
-          else {
-            requestsStorageClient.put(id, request, response -> {
-              if(response.getStatusCode() == 204) {
-                SuccessResponse.noContent(routingContext.response());
-              }
-              else {
-                ForwardResponse.forward(routingContext.response(), response);
-              }
-            });
+
+          requestWithAdditionalInformation.put("item", itemSummary);
+        }
+
+        if (requestingUserResponse.getStatusCode() == 200) {
+          JsonObject requester = requestingUserResponse.getJson();
+
+          JsonObject requesterSummary = new JsonObject()
+            .put("lastName", requester.getJsonObject("personal").getString("lastName"))
+            .put("firstName", requester.getJsonObject("personal").getString("firstName"));
+
+          if(requester.getJsonObject("personal").containsKey("middleName")) {
+            requesterSummary.put("middleName",
+              requester.getJsonObject("personal").getString("middleName"));
           }
-        });
-      } else {
-        requestsStorageClient.put(id, request, response -> {
+
+          if(requester.containsKey("barcode")) {
+            requesterSummary.put("barcode", requester.getString("barcode"));
+          }
+
+          requestWithAdditionalInformation.put("requester", requesterSummary);
+        }
+
+        requestsStorageClient.put(id, requestWithAdditionalInformation, response -> {
           if(response.getStatusCode() == 204) {
             SuccessResponse.noContent(routingContext.response());
           }
@@ -217,8 +204,7 @@ public class RequestCollectionResource {
             ForwardResponse.forward(routingContext.response(), response);
           }
         });
-      }
-    });
+      });
   }
 
   private void get(RoutingContext routingContext) {
