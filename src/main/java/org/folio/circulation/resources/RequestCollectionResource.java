@@ -61,7 +61,6 @@ public class RequestCollectionResource {
       return;
     }
 
-
     addSummariesToRequest(
       request,
       itemsStorageClient,
@@ -76,6 +75,11 @@ public class RequestCollectionResource {
             ForwardResponse.forward(routingContext.response(), requestResponse);
           }
         });
+      },
+      throwable -> {
+        ServerErrorResponse.internalError(routingContext.response(),
+          String.format("At least one request for additional information failed: %s",
+            throwable));
       });
   }
 
@@ -114,6 +118,11 @@ public class RequestCollectionResource {
             ForwardResponse.forward(routingContext.response(), response);
           }
         });
+      },
+      throwable -> {
+        ServerErrorResponse.internalError(routingContext.response(),
+          String.format("At least one request for additional information failed: %s",
+            throwable));
       });
   }
 
@@ -230,7 +239,8 @@ public class RequestCollectionResource {
     JsonObject request,
     CollectionResourceClient itemsStorageClient,
     CollectionResourceClient usersStorageClient,
-    Consumer<JsonObject> onSuccess) {
+    Consumer<JsonObject> onSuccess,
+    Consumer<Throwable> onFailure) {
     CompletableFuture<Response> itemRequestCompleted = new CompletableFuture<>();
     CompletableFuture<Response> requestingUserRequestCompleted = new CompletableFuture<>();
 
@@ -242,46 +252,53 @@ public class RequestCollectionResource {
       requestingUserRequestCompleted.complete(userResponse);
     });
 
-    CompletableFuture.allOf(itemRequestCompleted, requestingUserRequestCompleted)
-      .thenAccept(v -> {
-        Response itemResponse = itemRequestCompleted.join();
-        Response requestingUserResponse = requestingUserRequestCompleted.join();
+    CompletableFuture<Void> allCompleted = CompletableFuture.allOf(
+      itemRequestCompleted, requestingUserRequestCompleted);
 
-        JsonObject requestWithAdditionalInformation = request.copy();
+    allCompleted.exceptionally(t -> {
+      onFailure.accept(t);
+      return null;
+    });
 
-        if (itemResponse.getStatusCode() == 200) {
-          JsonObject item = itemResponse.getJson();
+    allCompleted.thenAccept(v -> {
+      Response itemResponse = itemRequestCompleted.join();
+      Response requestingUserResponse = requestingUserRequestCompleted.join();
 
-          JsonObject itemSummary = new JsonObject()
-            .put("title", item.getString("title"));
+      JsonObject requestWithAdditionalInformation = request.copy();
 
-          if(item.containsKey("barcode")) {
-            itemSummary.put("barcode", item.getString("barcode"));
-          }
+      if (itemResponse.getStatusCode() == 200) {
+        JsonObject item = itemResponse.getJson();
 
-          requestWithAdditionalInformation.put("item", itemSummary);
+        JsonObject itemSummary = new JsonObject()
+          .put("title", item.getString("title"));
+
+        if(item.containsKey("barcode")) {
+          itemSummary.put("barcode", item.getString("barcode"));
         }
 
-        if (requestingUserResponse.getStatusCode() == 200) {
-          JsonObject requester = requestingUserResponse.getJson();
+        requestWithAdditionalInformation.put("item", itemSummary);
+      }
 
-          JsonObject requesterSummary = new JsonObject()
-            .put("lastName", requester.getJsonObject("personal").getString("lastName"))
-            .put("firstName", requester.getJsonObject("personal").getString("firstName"));
+      if (requestingUserResponse.getStatusCode() == 200) {
+        JsonObject requester = requestingUserResponse.getJson();
 
-          if(requester.getJsonObject("personal").containsKey("middleName")) {
-            requesterSummary.put("middleName",
-              requester.getJsonObject("personal").getString("middleName"));
-          }
+        JsonObject requesterSummary = new JsonObject()
+          .put("lastName", requester.getJsonObject("personal").getString("lastName"))
+          .put("firstName", requester.getJsonObject("personal").getString("firstName"));
 
-          if(requester.containsKey("barcode")) {
-            requesterSummary.put("barcode", requester.getString("barcode"));
-          }
-
-          requestWithAdditionalInformation.put("requester", requesterSummary);
+        if(requester.getJsonObject("personal").containsKey("middleName")) {
+          requesterSummary.put("middleName",
+            requester.getJsonObject("personal").getString("middleName"));
         }
 
-        onSuccess.accept(requestWithAdditionalInformation);
+        if(requester.containsKey("barcode")) {
+          requesterSummary.put("barcode", requester.getString("barcode"));
+        }
+
+        requestWithAdditionalInformation.put("requester", requesterSummary);
+      }
+
+      onSuccess.accept(requestWithAdditionalInformation);
       });
   }
 
