@@ -1,7 +1,6 @@
 package org.folio.circulation.api;
 
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.api.support.ItemRequestExamples;
 import org.folio.circulation.api.support.RequestRequestBuilder;
 import org.folio.circulation.api.support.UserRequestBuilder;
 import org.folio.circulation.support.JsonArrayHelper;
@@ -29,6 +28,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static org.folio.circulation.api.support.ItemRequestExamples.*;
 import static org.folio.circulation.api.support.TextDateTimeMatcher.isEquivalentTo;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -64,7 +64,9 @@ public class RequestAPITests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = createItem(
-      ItemRequestExamples.smallAngryPlanet("036000291452")).getId();
+      basedUponSmallAngryPlanet()
+        .withBarcode("036000291452")
+        .create()).getId();
 
     UUID requesterId = createUser(new UserRequestBuilder()
       .withName("Jones", "Steven")
@@ -188,7 +190,9 @@ public class RequestAPITests {
 
     UUID id = UUID.randomUUID();
     UUID itemId = createItem(
-      ItemRequestExamples.smallAngryPlanet("036000291452")).getId();
+      basedUponSmallAngryPlanet()
+        .withBarcode("036000291452")
+        .create()).getId();
 
     UUID requesterId = UUID.randomUUID();
 
@@ -295,7 +299,9 @@ public class RequestAPITests {
 
     UUID id = UUID.randomUUID();
     UUID itemId = createItem(
-      ItemRequestExamples.smallAngryPlanet("036000291452")).getId();
+      basedUponSmallAngryPlanet()
+        .withBarcode("036000291452")
+        .create()).getId();
 
     UUID requesterId = UUID.randomUUID();
 
@@ -350,7 +356,9 @@ public class RequestAPITests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = createItem(
-      ItemRequestExamples.smallAngryPlanet("036000291452")).getId();
+      basedUponSmallAngryPlanet()
+        .withBarcode("036000291452")
+        .create()).getId();
 
     UUID requesterId = createUser(new UserRequestBuilder()
       .withName("Jones", "Steven", "Anthony")
@@ -413,7 +421,9 @@ public class RequestAPITests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = createItem(
-      ItemRequestExamples.smallAngryPlanet("036000291452")).getId();
+      basedUponSmallAngryPlanet()
+        .withBarcode("036000291452")
+        .create()).getId();
 
     UUID requesterId = createUser(new UserRequestBuilder()
       .withName("Jones", "Steven")
@@ -471,7 +481,9 @@ public class RequestAPITests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = createItem(
-      ItemRequestExamples.smallAngryPlanetNoBarcode()).getId();
+      basedUponSmallAngryPlanet()
+        .withNoBarcode()
+        .create()).getId();
 
     UUID requesterId = createUser(new UserRequestBuilder().create()).getId();
 
@@ -525,7 +537,9 @@ public class RequestAPITests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = createItem(
-      ItemRequestExamples.smallAngryPlanet("036000291452")).getId();
+      basedUponSmallAngryPlanet()
+        .withBarcode("036000291452")
+        .create()).getId();
 
 
     UUID requesterId = createUser(new UserRequestBuilder()
@@ -604,7 +618,9 @@ public class RequestAPITests {
     UnsupportedEncodingException {
 
     UUID id = UUID.randomUUID();
-    UUID itemId = createItem(ItemRequestExamples.smallAngryPlanet()).getId();
+    UUID itemId = createItem(basedUponSmallAngryPlanet()
+      .withBarcode("036000291452")
+      .create()).getId();
 
     UUID requesterId = createUser(new UserRequestBuilder()
       .withName("Jones", "Steven")
@@ -701,37 +717,37 @@ public class RequestAPITests {
       .create()).getId();
 
     createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(ItemRequestExamples.smallAngryPlanet()).getId())
+      .withItemId(createItem(basedUponSmallAngryPlanet().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
     createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(ItemRequestExamples.nod()).getId())
+      .withItemId(createItem(basedUponNod().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
     createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(ItemRequestExamples.interestingTimes()).getId())
+      .withItemId(createItem(basedUponInterestingTimes().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
     createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(ItemRequestExamples.temeraire()).getId())
+      .withItemId(createItem(basedUponTemeraire().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
     createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(ItemRequestExamples.nod()).getId())
+      .withItemId(createItem(basedUponNod().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
     createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(ItemRequestExamples.uprooted()).getId())
+      .withItemId(createItem(basedUponUprooted().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
     createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(ItemRequestExamples.temeraire()).getId())
+      .withItemId(createItem(basedUponTemeraire().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
@@ -782,46 +798,50 @@ public class RequestAPITests {
 
     UUID firstRequester = createUser(new UserRequestBuilder()
       .withName("Jones", "Steven")
-      .withBarcode("")
       .create()).getId();
 
     UUID secondRequester = createUser(new UserRequestBuilder()
       .withName("Norton", "Jessica")
-      .withBarcode("")
       .create()).getId();
 
     createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(ItemRequestExamples.smallAngryPlanet()).getId())
+      .withItemId(createItem(basedUponSmallAngryPlanet().create()).getId())
       .withRequesterId(firstRequester)
       .create());
 
     createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(ItemRequestExamples.nod()).getId())
+      .withItemId(createItem(basedUponNod()
+        .create()).getId())
       .withRequesterId(firstRequester)
       .create());
 
     createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(ItemRequestExamples.interestingTimes()).getId())
+      .withItemId(createItem(basedUponInterestingTimes()
+        .create()).getId())
       .withRequesterId(secondRequester)
       .create());
 
     createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(ItemRequestExamples.temeraire()).getId())
+      .withItemId(createItem(basedUponTemeraire()
+        .create()).getId())
       .withRequesterId(firstRequester)
       .create());
 
     createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(ItemRequestExamples.nod()).getId())
+      .withItemId(createItem(basedUponNod()
+        .create()).getId())
       .withRequesterId(firstRequester)
       .create());
 
     createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(ItemRequestExamples.uprooted()).getId())
+      .withItemId(createItem(basedUponUprooted()
+        .create()).getId())
       .withRequesterId(secondRequester)
       .create());
 
     createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(ItemRequestExamples.temeraire()).getId())
+      .withItemId(createItem(basedUponTemeraire()
+        .create()).getId())
       .withRequesterId(secondRequester)
       .create());
 
@@ -857,37 +877,37 @@ public class RequestAPITests {
     UUID requesterId = createUser(new UserRequestBuilder().create()).getId();
 
     createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(ItemRequestExamples.smallAngryPlanet()).getId())
+      .withItemId(createItem(basedUponSmallAngryPlanet().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
     createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(ItemRequestExamples.nod()).getId())
+      .withItemId(createItem(basedUponNod().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
     createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(ItemRequestExamples.interestingTimes()).getId())
+      .withItemId(createItem(basedUponInterestingTimes().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
     createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(ItemRequestExamples.temeraire()).getId())
+      .withItemId(createItem(basedUponTemeraire().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
     createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(ItemRequestExamples.nod()).getId())
+      .withItemId(createItem(basedUponNod().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
     createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(ItemRequestExamples.uprooted()).getId())
+      .withItemId(createItem(basedUponUprooted().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
     createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(ItemRequestExamples.temeraire()).getId())
+      .withItemId(createItem(basedUponTemeraire().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
@@ -921,7 +941,9 @@ public class RequestAPITests {
     UnsupportedEncodingException {
 
     UUID id = UUID.randomUUID();
-    UUID itemId = createItem(ItemRequestExamples.temeraire("07295629642")).getId();
+    UUID itemId = createItem(basedUponTemeraire()
+      .withBarcode("07295629642")
+      .create()).getId();
 
     UUID originalRequesterId = createUser(new UserRequestBuilder()
       .withName("Norton", "Jessica")
@@ -1024,7 +1046,9 @@ public class RequestAPITests {
     UnsupportedEncodingException {
 
     UUID id = UUID.randomUUID();
-    UUID itemId = createItem(ItemRequestExamples.temeraire("07295629642")).getId();
+    UUID itemId = createItem(basedUponTemeraire()
+      .withBarcode("07295629642")
+      .create()).getId();
 
     UUID requesterId = createUser(new UserRequestBuilder().create()).getId();
 
@@ -1086,7 +1110,9 @@ public class RequestAPITests {
     UnsupportedEncodingException {
 
     UUID id = UUID.randomUUID();
-    UUID itemId = createItem(ItemRequestExamples.temeraire("07295629642")).getId();
+    UUID itemId = createItem(basedUponTemeraire()
+      .withBarcode("07295629642")
+      .create()).getId();
 
     UUID requester = createUser(new UserRequestBuilder()
       .withName("Norton", "Jessica")
@@ -1151,7 +1177,9 @@ public class RequestAPITests {
     UnsupportedEncodingException {
 
     UUID id = UUID.randomUUID();
-    UUID itemId = createItem(ItemRequestExamples.temeraire("07295629642")).getId();
+    UUID itemId = createItem(basedUponTemeraire()
+      .withBarcode("07295629642")
+      .create()).getId();
 
     UUID originalRequesterId = createUser(new UserRequestBuilder()
       .withName("Norton", "Jessica")
@@ -1232,7 +1260,9 @@ public class RequestAPITests {
     UnsupportedEncodingException {
 
     UUID id = UUID.randomUUID();
-    UUID itemId = createItem(ItemRequestExamples.temeraire("07295629642")).getId();
+    UUID itemId = createItem(basedUponTemeraire()
+      .withBarcode("07295629642")
+      .create()).getId();
 
     UUID originalRequesterId = createUser(new UserRequestBuilder()
       .withName("Norton", "Jessica")
@@ -1336,7 +1366,9 @@ public class RequestAPITests {
 
     UUID id = UUID.randomUUID();
     UUID originalItemId = createItem(
-      ItemRequestExamples.temeraire("07295629642")).getId();
+      basedUponTemeraire()
+        .withBarcode("07295629642")
+        .create()).getId();
 
     UUID requesterId = createUser(new UserRequestBuilder().create()).getId();
 
@@ -1356,7 +1388,9 @@ public class RequestAPITests {
     IndividualResource createdRequest = createRequest(requestRequest);
 
     UUID updatedItemId = createItem(
-      ItemRequestExamples.smallAngryPlanetNoBarcode()).getId();
+      basedUponSmallAngryPlanet()
+        .withNoBarcode()
+        .create()).getId();
 
     JsonObject updatedRequest = createdRequest.copyJson();
 
@@ -1409,27 +1443,27 @@ public class RequestAPITests {
     UUID requesterId = createUser(new UserRequestBuilder().create()).getId();
 
     createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(ItemRequestExamples.smallAngryPlanet()).getId())
+      .withItemId(createItem(basedUponSmallAngryPlanet().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
     createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(ItemRequestExamples.nod()).getId())
+      .withItemId(createItem(basedUponNod().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
     createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(ItemRequestExamples.interestingTimes()).getId())
+      .withItemId(createItem(basedUponInterestingTimes().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
     createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(ItemRequestExamples.temeraire()).getId())
+      .withItemId(createItem(basedUponTemeraire().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
     createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(ItemRequestExamples.uprooted()).getId())
+      .withItemId(createItem(basedUponUprooted().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
@@ -1474,19 +1508,19 @@ public class RequestAPITests {
 
     createRequest(new RequestRequestBuilder()
       .withId(firstId)
-      .withItemId(createItem(ItemRequestExamples.nod()).getId())
+      .withItemId(createItem(basedUponNod().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
     createRequest(new RequestRequestBuilder()
       .withId(secondId)
-      .withItemId(createItem(ItemRequestExamples.smallAngryPlanet()).getId())
+      .withItemId(createItem(basedUponSmallAngryPlanet().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
     createRequest(new RequestRequestBuilder()
       .withId(thirdId)
-      .withItemId(createItem(ItemRequestExamples.temeraire()).getId())
+      .withItemId(createItem(basedUponTemeraire().create()).getId())
       .withRequesterId(requesterId)
       .create());
 

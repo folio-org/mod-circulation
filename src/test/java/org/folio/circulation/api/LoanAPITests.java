@@ -1,7 +1,6 @@
 package org.folio.circulation.api;
 
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.api.support.ItemRequestExamples;
 import org.folio.circulation.api.support.LoanRequestBuilder;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -30,6 +29,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static org.folio.circulation.api.support.ItemRequestExamples.*;
 import static org.folio.circulation.api.support.TextDateTimeMatcher.isEquivalentTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
@@ -62,7 +62,10 @@ public class LoanAPITests {
     UnsupportedEncodingException {
 
     UUID id = UUID.randomUUID();
-    UUID itemId = createItem(ItemRequestExamples.smallAngryPlanet()).getId();
+    UUID itemId = createItem(basedUponSmallAngryPlanet()
+      .withBarcode("036000291452")
+      .create()).getId();
+
     UUID userId = UUID.randomUUID();
     UUID proxyUserId = UUID.randomUUID();
 
@@ -142,7 +145,8 @@ public class LoanAPITests {
     UnsupportedEncodingException {
 
     UUID id = UUID.randomUUID();
-    UUID itemId = createItem(ItemRequestExamples.smallAngryPlanet()).getId();
+    UUID itemId = createItem(basedUponSmallAngryPlanet()
+      .create()).getId();
     UUID userId = UUID.randomUUID();
 
     IndividualResource response = createLoan(new LoanRequestBuilder()
@@ -189,7 +193,10 @@ public class LoanAPITests {
     UnsupportedEncodingException {
 
     UUID id = UUID.randomUUID();
-    UUID itemId = createItem(ItemRequestExamples.smallAngryPlanet()).getId();
+    UUID itemId = createItem(basedUponSmallAngryPlanet()
+      .withBarcode("036000291452")
+      .create()).getId();
+
     UUID userId = UUID.randomUUID();
     UUID proxyUserId = UUID.randomUUID();
 
@@ -267,7 +274,8 @@ public class LoanAPITests {
     TimeoutException,
     UnsupportedEncodingException {
 
-    UUID itemId = createItem(ItemRequestExamples.nod()).getId();
+    UUID itemId = createItem(basedUponNod()
+      .create()).getId();
 
     UUID id = createLoan(new LoanRequestBuilder()
       .withItemId(itemId)
@@ -297,7 +305,9 @@ public class LoanAPITests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = createResource(
-      ItemRequestExamples.smallAngryPlanet(null), itemsUrl(), "item").getId();
+      basedUponSmallAngryPlanet()
+        .withNoBarcode()
+        .create(), itemsUrl(), "item").getId();
     UUID userId = UUID.randomUUID();
 
     createLoan(new LoanRequestBuilder()
@@ -342,7 +352,8 @@ public class LoanAPITests {
 
     DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 
-    UUID itemId = createItem(ItemRequestExamples.nod()).getId();
+    UUID itemId = createItem(basedUponNod()
+      .create()).getId();
 
     IndividualResource loan = createLoan(new LoanRequestBuilder()
       .withLoanDate(loanDate)
@@ -404,7 +415,8 @@ public class LoanAPITests {
 
     DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 
-    UUID itemId = createItem(ItemRequestExamples.nod()).getId();
+    UUID itemId = createItem(basedUponNod()
+      .create()).getId();
 
     IndividualResource loan = createLoan(new LoanRequestBuilder()
       .withLoanDate(loanDate)
@@ -475,7 +487,8 @@ public class LoanAPITests {
 
     DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, 232, DateTimeZone.UTC);
 
-    UUID itemId = createItem(ItemRequestExamples.nod()).getId();
+    UUID itemId = createItem(basedUponNod()
+      .create()).getId();
 
     IndividualResource loan = createLoan(new LoanRequestBuilder()
       .withLoanDate(loanDate)
@@ -512,7 +525,8 @@ public class LoanAPITests {
     TimeoutException,
     UnsupportedEncodingException {
 
-    UUID itemId = createItem(ItemRequestExamples.nod()).getId();
+    UUID itemId = createItem(basedUponNod()
+      .create()).getId();
 
     createLoan(new LoanRequestBuilder()
       .withItemId(itemId)
@@ -547,28 +561,33 @@ public class LoanAPITests {
     ExecutionException,
     UnsupportedEncodingException {
 
-    createLoan(new LoanRequestBuilder().withItemId(
-      createItem(ItemRequestExamples.smallAngryPlanet()).getId()).create());
-
-    createLoan(new LoanRequestBuilder().withItemId(
-      createItem(ItemRequestExamples.nod()).getId()).create());
-
-    createLoan(new LoanRequestBuilder().withItemId(createItem(
-      ItemRequestExamples.smallAngryPlanet("764853217647")).getId())
+    createLoan(new LoanRequestBuilder()
+      .withItemId(createItem(basedUponSmallAngryPlanet().create()).getId())
       .create());
 
-    createLoan(new LoanRequestBuilder().withItemId(
-      createItem(ItemRequestExamples.temeraire()).getId()).create());
-
-    createLoan(new LoanRequestBuilder().withItemId(
-      createItem(ItemRequestExamples.uprooted()).getId()).create());
-
-    createLoan(new LoanRequestBuilder().withItemId(
-      createItem(ItemRequestExamples.nod("656450654364")).getId())
+    createLoan(new LoanRequestBuilder()
+      .withItemId(createItem(basedUponNod().create()).getId())
       .create());
 
-    createLoan(new LoanRequestBuilder().withItemId(
-      createItem(ItemRequestExamples.interestingTimes()).getId()).create());
+    createLoan(new LoanRequestBuilder()
+      .withItemId(createItem(basedUponSmallAngryPlanet().create()).getId())
+      .create());
+
+    createLoan(new LoanRequestBuilder()
+      .withItemId(createItem(basedUponTemeraire().create()).getId())
+      .create());
+
+    createLoan(new LoanRequestBuilder()
+      .withItemId(createItem(basedUponUprooted().create()).getId())
+      .create());
+
+    createLoan(new LoanRequestBuilder()
+      .withItemId(createItem(basedUponNod().create()).getId())
+      .create());
+
+    createLoan(new LoanRequestBuilder()
+      .withItemId(createItem(basedUponInterestingTimes().create()).getId())
+      .create());
 
     CompletableFuture<Response> firstPageCompleted = new CompletableFuture<>();
     CompletableFuture<Response> secondPageCompleted = new CompletableFuture<>();
@@ -623,38 +642,38 @@ public class LoanAPITests {
     String queryTemplate = loansUrl() + "?query=userId=%s";
 
     createLoan(new LoanRequestBuilder()
-      .withItem(createItem(ItemRequestExamples.smallAngryPlanet()))
+      .withItem(createItem(basedUponSmallAngryPlanet().create()))
       .withUserId(firstUserId)
       .create());
 
     createLoan(new LoanRequestBuilder()
-      .withItem(createItem(ItemRequestExamples.nod()))
+      .withItem(createItem(basedUponNod().create()))
       .withUserId(firstUserId)
       .create());
 
     createLoan(new LoanRequestBuilder()
       .withItem(
-        createItem(ItemRequestExamples.smallAngryPlanet("764853217647")))
+        createItem(basedUponSmallAngryPlanet().create()))
       .withUserId(firstUserId)
       .create());
 
     createLoan(new LoanRequestBuilder().withItem(
-      createItem(ItemRequestExamples.temeraire()))
+      createItem(basedUponTemeraire().create()))
       .withUserId(firstUserId)
       .create());
 
     createLoan(new LoanRequestBuilder()
-      .withItem(createItem(ItemRequestExamples.uprooted()))
+      .withItem(createItem(basedUponUprooted().create()))
       .withUserId(secondUserId)
       .create());
 
     createLoan(new LoanRequestBuilder()
-      .withItem(createItem(ItemRequestExamples.nod("656450654364")))
+      .withItem(createItem(basedUponNod().create()))
       .withUserId(secondUserId)
       .create());
 
     createLoan(new LoanRequestBuilder().withItem(
-      createItem(ItemRequestExamples.interestingTimes()))
+      createItem(basedUponInterestingTimes().create()))
       .withUserId(secondUserId)
       .create());
 
@@ -712,38 +731,38 @@ public class LoanAPITests {
     createLoan(new LoanRequestBuilder()
       .withUserId(userId)
       .withStatus("Open")
-      .withItem(createItem(ItemRequestExamples.smallAngryPlanet()))
+      .withItem(createItem(basedUponSmallAngryPlanet().create()))
       .withRandomPastLoanDate().create());
 
     createLoan(new LoanRequestBuilder()
       .withUserId(userId)
       .withStatus("Open")
-      .withItem(createItem(ItemRequestExamples.nod()))
+      .withItem(createItem(basedUponNod().create()))
       .withRandomPastLoanDate().create());
 
     createLoan(new LoanRequestBuilder()
       .withUserId(userId)
       .withItem(
-        createItem(ItemRequestExamples.nod("764853217647")))
+        createItem(basedUponNod().create()))
       .withStatus("Closed")
       .withRandomPastLoanDate().create());
 
     createLoan(new LoanRequestBuilder()
       .withUserId(userId)
       .withStatus("Closed")
-      .withItem(createItem(ItemRequestExamples.temeraire()))
+      .withItem(createItem(basedUponTemeraire().create()))
       .withRandomPastLoanDate().create());
 
     createLoan(new LoanRequestBuilder()
       .withUserId(userId)
       .withStatus("Closed")
-      .withItem(createItem(ItemRequestExamples.uprooted()))
+      .withItem(createItem(basedUponUprooted().create()))
       .withRandomPastLoanDate().create());
 
     createLoan(new LoanRequestBuilder()
       .withUserId(userId)
       .withStatus("Closed")
-      .withItem(createItem(ItemRequestExamples.interestingTimes()))
+      .withItem(createItem(basedUponInterestingTimes().create()))
       .withRandomPastLoanDate().create());
 
     CompletableFuture<Response> openSearchComppleted = new CompletableFuture<>();
@@ -800,7 +819,8 @@ public class LoanAPITests {
     ExecutionException,
     UnsupportedEncodingException {
 
-    UUID itemId = createItem(ItemRequestExamples.nod()).getId();
+    UUID itemId = createItem(basedUponNod()
+      .create()).getId();
 
     UUID id = createLoan(new LoanRequestBuilder()
       .withItemId(itemId).create()).getId();
