@@ -37,7 +37,7 @@ public class RequestRequestBuilder {
     DateTime requestDate,
     UUID itemId,
     UUID requesterId,
-    String fulilmentPreference,
+    String fulfilmentPreference,
     LocalDate requestExpirationDate, LocalDate holdShelfExpirationDate) {
 
     this.id = id;
@@ -45,7 +45,7 @@ public class RequestRequestBuilder {
     this.requestDate = requestDate;
     this.itemId = itemId;
     this.requesterId = requesterId;
-    this.fulilmentPreference = fulilmentPreference;
+    this.fulilmentPreference = fulfilmentPreference;
     this.requestExpirationDate = requestExpirationDate;
     this.holdShelfExpirationDate = holdShelfExpirationDate;
   }
