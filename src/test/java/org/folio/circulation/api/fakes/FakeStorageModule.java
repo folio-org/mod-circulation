@@ -15,28 +15,22 @@ import java.util.stream.Collectors;
 
 public class FakeStorageModule extends AbstractVerticle {
   private final String rootPath;
-  private final Collection<String> requiredProperties;
-
-  private final Map<String, Map<String, JsonObject>> storedResourcesByTenant;
   private final String collectionPropertyName;
-
-  public FakeStorageModule(
-    String rootPath,
-    String collectionPropertyName,
-    String tenantId) {
-
-    this(rootPath, collectionPropertyName, tenantId, new ArrayList<>());
-  }
+  private final boolean hasCollectionDelete;
+  private final Collection<String> requiredProperties;
+  private final Map<String, Map<String, JsonObject>> storedResourcesByTenant;
 
   public FakeStorageModule(
     String rootPath,
     String collectionPropertyName,
     String tenantId,
-    Collection<String> requiredProperties) {
+    Collection<String> requiredProperties,
+    boolean hasCollectionDelete) {
 
     this.rootPath = rootPath;
     this.collectionPropertyName = collectionPropertyName;
     this.requiredProperties = requiredProperties;
+    this.hasCollectionDelete = hasCollectionDelete;
 
     storedResourcesByTenant = new HashMap<>();
     storedResourcesByTenant.put(tenantId, new HashMap<>());
@@ -149,7 +143,12 @@ public class FakeStorageModule extends AbstractVerticle {
   private void empty(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
 
-    Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
+    if(!hasCollectionDelete) {
+      ClientErrorResponse.notFound(routingContext.response());
+      return;
+    }
+
+    Map <String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
 
     resourcesForTenant.clear();
 

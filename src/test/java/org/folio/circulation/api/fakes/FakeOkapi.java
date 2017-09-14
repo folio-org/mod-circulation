@@ -4,14 +4,11 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpServer;
 import io.vertx.ext.web.Router;
-
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.folio.circulation.api.APITestSuite;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
-import java.util.Arrays;
 
 public class FakeOkapi extends AbstractVerticle {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -35,15 +32,40 @@ public class FakeOkapi extends AbstractVerticle {
 
     this.server = vertx.createHttpServer();
 
-    register(router, "/material-types", "mtypes");
-    register(router, "/loan-types", "loantypes");
-    register(router, "/item-storage/items", "items");
-    register(router, "/loan-storage/loans", "loans",
-        "userId", "itemId", "loanDate", "action");
-    register(router, "/users", "users", "id", "username");
-    register(router, "/request-storage/requests", "requests",
-      "itemId", "requesterId", "requestType", "requestDate",
-      "fulfilmentPreference");
+    new FakeStorageModuleBuilder()
+      .withRootPath("/material-types")
+      .withCollectionPropertyName("mtypes")
+      .create().register(router);
+
+    new FakeStorageModuleBuilder()
+      .withRootPath("/loan-types")
+      .withCollectionPropertyName("loantypes")
+      .create().register(router);
+
+    new FakeStorageModuleBuilder()
+      .withRootPath("/item-storage/items")
+      .withCollectionPropertyName("items")
+      .create().register(router);
+
+    new FakeStorageModuleBuilder()
+      .withRootPath("/loan-storage/loans")
+      .withCollectionPropertyName("loans")
+      .withRequiredProperties("userId", "itemId", "loanDate", "action")
+      .create().register(router);
+
+    new FakeStorageModuleBuilder()
+      .withRootPath("/users")
+      .withCollectionPropertyName("users")
+      .withRequiredProperties("id", "username")
+      .disallowCollectionDelete()
+      .create().register(router);
+
+    new FakeStorageModuleBuilder()
+      .withRootPath("/request-storage/requests")
+      .withCollectionPropertyName("requests")
+      .withRequiredProperties("itemId", "requesterId", "requestType",
+        "requestDate", "fulfilmentPreference")
+      .create().register(router);
 
     registerLoanRulesStorage(router);
 
@@ -60,7 +82,7 @@ public class FakeOkapi extends AbstractVerticle {
 
   @Override
   public void stop(Future<Void> stopFuture) {
-    log.debug("Stopping fake loan storage module");
+    log.debug("Stopping fake okapi");
 
     if(server != null) {
       server.close(result -> {
@@ -72,12 +94,6 @@ public class FakeOkapi extends AbstractVerticle {
         }
       });
     }
-  }
-
-  private void register(Router router, String rootPath, String collectionPropertyName,
-      String... requiredProperties) {
-    new FakeStorageModule(rootPath, collectionPropertyName,
-          APITestSuite.TENANT_ID, Arrays.asList(requiredProperties)).register(router);
   }
 
   private void registerLoanRulesStorage(Router router) {
