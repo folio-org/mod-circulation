@@ -16,7 +16,17 @@
       "itemId": "3e5d5433-a271-499c-94f4-5f3e4652e537",
       "fulfilmentPreference": "Delivery",
       "requestExpirationDate": "2017-08-31",
-      "holdShelfExpirationDate": "2017-09-01"
+      "holdShelfExpirationDate": "2017-09-01",
+      "item": {
+        "title": "Children of Time",
+        "barcode": "760932543816"
+      },
+      "requester": {
+        "firstName": "Stephen",
+        "lastName": "Jones",
+        "middleName": "Anthony",
+        "barcode": "567023127436"
+      }
     }
   ],
   "totalRecords": 2
