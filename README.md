@@ -46,23 +46,48 @@ In order to build an executable Jar (e.g. for Okapi to deploy), run `gradle fatJ
 
 ### Running the tests
 
-#### Using a fake loan storage module
+#### Using fake modules
 
 In order to run the tests, using a fake loan storage module, run ./quick-test.sh.
 
-#### Using a real loan storage module (via Okapi)
+#### Using real modules (via Okapi)
 
-In order to run the tests against a real storage module, run ./test-storage.sh.
+In order to run the tests against a real storage module, run ./test-via-okapi.sh.
 
-This requires [Okapi](https://github.com/folio-org/okapi) to be running and a loan storage module be registered with it.
+This requires [Okapi](https://github.com/folio-org/okapi) to be running and the relevant modules to be registered with it.
 
-The test script will create a tenant and activate the module for that tenant.
+The test script will create a tenant and activate the modules for that tenant.
+
+In order to change the specific versions of these dependencies, edit the test-via-okapi.sh script.
 
 ### Checking the RAML and JSON.Schema definitions
 
 run `./lint.sh` to validate the RAML and JSON.Schema descriptions of the API (requires node.js and NPM)
 
-## Notes
+## Design Notes
+
+### Storing Information from Other Records
+
+In order to facilitate the searching and sorting of requests by the properties of related records, a snapshot of some properties are stored with the request. 
+
+This snapshot is updated during POST or PUT requests by requesting the current state of those records. 
+It is possible for them to become out of sync with the referenced records.
+
+the request JSON.schema uses the readOnly property to indicate that these properties, from the perspective of the client, are read only. 
+
+#### Properties Stored 
+
+##### Requesting User (referenced by requesterId, held in requester property)
+
+* firstName
+* lastName
+* middleName
+* barcode
+
+##### Requested Item (referenced by itemId, held in item property)
+
+* title
+* barcode
 
 ### Permissions
 
