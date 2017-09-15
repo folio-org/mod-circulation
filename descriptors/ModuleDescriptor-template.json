@@ -154,7 +154,9 @@
             "circulation.requests.item.post"
           ],
           "modulePermissions": [
-            "circulation-storage.requests.item.post"
+            "circulation-storage.requests.item.post",
+            "inventory-storage.items.item.get",
+            "users.item.get"
           ]
         },
         {
@@ -190,7 +192,9 @@
             "circulation.requests.item.put"
           ],
           "modulePermissions": [
-            "circulation-storage.requests.item.put"
+            "circulation-storage.requests.item.put",
+            "inventory-storage.items.item.get",
+            "users.item.get"
           ]
         },
         {
@@ -224,6 +228,10 @@
     {
       "id": "request-storage",
       "version": "1.1"
+    },
+    {
+      "id": "users",
+      "version": "14.0"
     }
   ],
   "permissionSets": [
