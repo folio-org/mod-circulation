@@ -3,7 +3,7 @@
 * Introduces `circulation/requests` for making requests for items (CIRC-27)
 * Stores item and requesting user metadata with request, in order to aid searching / sorting (CIRC-28, CIRC-29)
 * Provides circulation interface version 2.5
-* Requires users interface 
+* Requires users interface
 * Adds mod- prefix to names of the built artifacts (FOLIO-813)
 * Put loan rules validation error message into JSON (CIRC-34)
 

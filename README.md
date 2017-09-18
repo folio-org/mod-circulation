@@ -68,14 +68,14 @@ run `./lint.sh` to validate the RAML and JSON.Schema descriptions of the API (re
 
 ### Storing Information from Other Records
 
-In order to facilitate the searching and sorting of requests by the properties of related records, a snapshot of some properties are stored with the request. 
+In order to facilitate the searching and sorting of requests by the properties of related records, a snapshot of some properties are stored with the request.
 
-This snapshot is updated during POST or PUT requests by requesting the current state of those records. 
+This snapshot is updated during POST or PUT requests by requesting the current state of those records.
 It is possible for them to become out of sync with the referenced records.
 
-the request JSON.schema uses the readOnly property to indicate that these properties, from the perspective of the client, are read only. 
+the request JSON.schema uses the readOnly property to indicate that these properties, from the perspective of the client, are read only.
 
-#### Properties Stored 
+#### Properties Stored
 
 ##### Requesting User (referenced by requesterId, held in requester property)
 
