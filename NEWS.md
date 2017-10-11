@@ -1,4 +1,4 @@
-## 4.5.0 Unreleased
+## 4.5.0 2017-10-11
 
 * Introduces `circulation/requests` for making requests for items (CIRC-27)
 * Stores item and requesting user metadata with request, in order to aid searching / sorting (CIRC-28, CIRC-29)
