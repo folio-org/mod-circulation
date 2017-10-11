@@ -15,6 +15,9 @@ circulation_storage_module_id="mod-circulation-storage-3.3.1-SNAPSHOT"
 #Needs to be the specific version of mod-users you want to use for testing
 users_storage_module_id="mod-users-14.2.2-SNAPSHOT"
 
+#clean the build
+gradle clean cleanTest
+
 echo "Check if Okapi is contactable"
 curl -w '\n' -X GET -D -   \
      "${okapi_proxy_address}/_/env" || exit 1
@@ -60,7 +63,7 @@ echo "Register circulation module"
   ${tenant_id}
 
 echo "Run API tests"
-gradle clean cleanTest testApiViaOkapi
+gradle testApiViaOkapi
 
 test_results=$?
 
