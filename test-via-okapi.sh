@@ -10,7 +10,7 @@ circulation_module_id="mod-circulation-4.5.1-SNAPSHOT"
 inventory_storage_module_id="mod-inventory-storage-5.1.1-SNAPSHOT"
 
 #Needs to be the specific version of mod-circulation-storage you want to use for testing
-circulation_storage_module_id="mod-circulation-storage-3.3.1-SNAPSHOT"
+circulation_storage_module_id="mod-circulation-storage-4.0.0-SNAPSHOT"
 
 #Needs to be the specific version of mod-users you want to use for testing
 users_storage_module_id="mod-users-14.2.2-SNAPSHOT"
