@@ -3,6 +3,7 @@ package org.folio.circulation.api;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.CirculationVerticle;
 import org.folio.circulation.api.fakes.FakeOkapi;
+import org.folio.circulation.api.requests.RequestAPITests;
 import org.folio.circulation.api.support.URLHelper;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.VertxAssistant;
