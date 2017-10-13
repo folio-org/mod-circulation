@@ -2,6 +2,7 @@ package org.folio.circulation.api.requests;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.APITestSuite;
+import org.folio.circulation.api.support.InterfaceUrls;
 import org.folio.circulation.api.support.RequestRequestBuilder;
 import org.folio.circulation.api.support.UserRequestBuilder;
 import org.folio.circulation.support.JsonArrayHelper;
@@ -89,7 +90,7 @@ public class RequestAPITests {
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
 
-    client.post(requestsUrl(), requestRequest,
+    client.post(InterfaceUrls.requestsUrl(), requestRequest,
       ResponseHandler.json(postCompleted));
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
@@ -167,7 +168,7 @@ public class RequestAPITests {
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
 
-    client.post(requestsUrl(), requestRequest,
+    client.post(InterfaceUrls.requestsUrl(), requestRequest,
       ResponseHandler.json(postCompleted));
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
@@ -212,7 +213,7 @@ public class RequestAPITests {
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
 
-    client.post(requestsUrl(), requestRequest,
+    client.post(InterfaceUrls.requestsUrl(), requestRequest,
       ResponseHandler.json(postCompleted));
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
@@ -257,7 +258,7 @@ public class RequestAPITests {
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
 
-    client.post(requestsUrl(), requestRequest,
+    client.post(InterfaceUrls.requestsUrl(), requestRequest,
       ResponseHandler.json(postCompleted));
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
@@ -321,7 +322,7 @@ public class RequestAPITests {
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
 
-    client.post(requestsUrl(), requestRequest,
+    client.post(InterfaceUrls.requestsUrl(), requestRequest,
       ResponseHandler.json(postCompleted));
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
@@ -381,7 +382,7 @@ public class RequestAPITests {
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
 
-    client.post(requestsUrl(), requestRequest,
+    client.post(InterfaceUrls.requestsUrl(), requestRequest,
       ResponseHandler.json(postCompleted));
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
@@ -445,7 +446,7 @@ public class RequestAPITests {
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
 
-    client.post(requestsUrl(), requestRequest,
+    client.post(InterfaceUrls.requestsUrl(), requestRequest,
       ResponseHandler.json(postCompleted));
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
@@ -503,7 +504,7 @@ public class RequestAPITests {
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
 
-    client.post(requestsUrl(), requestRequest,
+    client.post(InterfaceUrls.requestsUrl(), requestRequest,
       ResponseHandler.json(postCompleted));
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
@@ -573,7 +574,7 @@ public class RequestAPITests {
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
 
-    client.post(requestsUrl(), requestRequest,
+    client.post(InterfaceUrls.requestsUrl(), requestRequest,
       ResponseHandler.json(postCompleted));
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
@@ -643,7 +644,7 @@ public class RequestAPITests {
 
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
-    client.get(requestsUrl(String.format("/%s", id)),
+    client.get(InterfaceUrls.requestsUrl(String.format("/%s", id)),
       ResponseHandler.any(getCompleted));
 
     Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
@@ -754,12 +755,12 @@ public class RequestAPITests {
 
     CompletableFuture<Response> getFirstPageCompleted = new CompletableFuture<>();
 
-    client.get(requestsUrl() + "?limit=4",
+    client.get(InterfaceUrls.requestsUrl() + "?limit=4",
       ResponseHandler.any(getFirstPageCompleted));
 
     CompletableFuture<Response> getSecondPageCompleted = new CompletableFuture<>();
 
-    client.get(requestsUrl() + "?limit=4&offset=4",
+    client.get(InterfaceUrls.requestsUrl() + "?limit=4&offset=4",
       ResponseHandler.any(getSecondPageCompleted));
 
     Response firstPageResponse = getFirstPageCompleted.get(5, TimeUnit.SECONDS);
@@ -848,7 +849,7 @@ public class RequestAPITests {
 
     CompletableFuture<Response> getRequestsCompleted = new CompletableFuture<>();
 
-    client.get(requestsUrl() + String.format("?query=requester.lastName=%s", "Norton"),
+    client.get(InterfaceUrls.requestsUrl() + String.format("?query=requester.lastName=%s", "Norton"),
       ResponseHandler.any(getRequestsCompleted));
 
     Response getRequestsResponse = getRequestsCompleted.get(5, TimeUnit.SECONDS);
@@ -914,7 +915,7 @@ public class RequestAPITests {
 
     CompletableFuture<Response> getRequestsCompleted = new CompletableFuture<>();
 
-    client.get(requestsUrl() + String.format("?query=item.title=Nod"),
+    client.get(InterfaceUrls.requestsUrl() + String.format("?query=item.title=Nod"),
       ResponseHandler.any(getRequestsCompleted));
 
     Response getRequestsResponse = getRequestsCompleted.get(5, TimeUnit.SECONDS);
@@ -979,7 +980,7 @@ public class RequestAPITests {
 
     CompletableFuture<Response> putCompleted = new CompletableFuture<>();
 
-    client.put(requestsUrl(String.format("/%s", id)),
+    client.put(InterfaceUrls.requestsUrl(String.format("/%s", id)),
       updatedRequest, ResponseHandler.any(putCompleted));
 
     Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
@@ -988,7 +989,7 @@ public class RequestAPITests {
 
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
-    client.get(requestsUrl(String.format("/%s", id)),
+    client.get(InterfaceUrls.requestsUrl(String.format("/%s", id)),
       ResponseHandler.any(getCompleted));
 
     Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
@@ -1077,7 +1078,7 @@ public class RequestAPITests {
 
     CompletableFuture<Response> putCompleted = new CompletableFuture<>();
 
-    client.put(requestsUrl(String.format("/%s", id)),
+    client.put(InterfaceUrls.requestsUrl(String.format("/%s", id)),
       updatedRequest, ResponseHandler.any(putCompleted));
 
     Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
@@ -1086,7 +1087,7 @@ public class RequestAPITests {
 
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
-    client.get(requestsUrl(String.format("/%s", id)),
+    client.get(InterfaceUrls.requestsUrl(String.format("/%s", id)),
       ResponseHandler.any(getCompleted));
 
     Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
@@ -1144,7 +1145,7 @@ public class RequestAPITests {
 
     CompletableFuture<Response> putCompleted = new CompletableFuture<>();
 
-    client.put(requestsUrl(String.format("/%s", id)),
+    client.put(InterfaceUrls.requestsUrl(String.format("/%s", id)),
       updatedRequest, ResponseHandler.any(putCompleted));
 
     Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
@@ -1153,7 +1154,7 @@ public class RequestAPITests {
 
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
-    client.get(requestsUrl(String.format("/%s", id)),
+    client.get(InterfaceUrls.requestsUrl(String.format("/%s", id)),
       ResponseHandler.any(getCompleted));
 
     Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
@@ -1215,7 +1216,7 @@ public class RequestAPITests {
 
     CompletableFuture<Response> putCompleted = new CompletableFuture<>();
 
-    client.put(requestsUrl(String.format("/%s", id)),
+    client.put(InterfaceUrls.requestsUrl(String.format("/%s", id)),
       updatedRequest, ResponseHandler.any(putCompleted));
 
     Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
@@ -1224,7 +1225,7 @@ public class RequestAPITests {
 
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
-    client.get(requestsUrl(String.format("/%s", id)),
+    client.get(InterfaceUrls.requestsUrl(String.format("/%s", id)),
       ResponseHandler.any(getCompleted));
 
     Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
@@ -1298,7 +1299,7 @@ public class RequestAPITests {
 
     CompletableFuture<Response> putCompleted = new CompletableFuture<>();
 
-    client.put(requestsUrl(String.format("/%s", id)),
+    client.put(InterfaceUrls.requestsUrl(String.format("/%s", id)),
       updatedRequest, ResponseHandler.any(putCompleted));
 
     Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
@@ -1307,7 +1308,7 @@ public class RequestAPITests {
 
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
-    client.get(requestsUrl(String.format("/%s", id)),
+    client.get(InterfaceUrls.requestsUrl(String.format("/%s", id)),
       ResponseHandler.any(getCompleted));
 
     Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
@@ -1400,7 +1401,7 @@ public class RequestAPITests {
 
     CompletableFuture<Response> putCompleted = new CompletableFuture<>();
 
-    client.put(requestsUrl(String.format("/%s", id)),
+    client.put(InterfaceUrls.requestsUrl(String.format("/%s", id)),
       updatedRequest, ResponseHandler.any(putCompleted));
 
     Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
@@ -1409,7 +1410,7 @@ public class RequestAPITests {
 
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
-    client.get(requestsUrl(String.format("/%s", id)),
+    client.get(InterfaceUrls.requestsUrl(String.format("/%s", id)),
       ResponseHandler.any(getCompleted));
 
     Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
@@ -1470,7 +1471,7 @@ public class RequestAPITests {
 
     CompletableFuture<Response> deleteCompleted = new CompletableFuture<>();
 
-    client.delete(requestsUrl(),
+    client.delete(InterfaceUrls.requestsUrl(),
       ResponseHandler.any(deleteCompleted));
 
     Response deleteResponse = deleteCompleted.get(5, TimeUnit.SECONDS);
@@ -1479,7 +1480,7 @@ public class RequestAPITests {
 
     CompletableFuture<Response> getAllCompleted = new CompletableFuture<>();
 
-    client.get(requestsUrl(), ResponseHandler.any(getAllCompleted));
+    client.get(InterfaceUrls.requestsUrl(), ResponseHandler.any(getAllCompleted));
 
     Response getAllResponse = getAllCompleted.get(5, TimeUnit.SECONDS);
 
@@ -1527,7 +1528,7 @@ public class RequestAPITests {
 
     CompletableFuture<Response> deleteCompleted = new CompletableFuture<>();
 
-    client.delete(requestsUrl(String.format("/%s", secondId)),
+    client.delete(InterfaceUrls.requestsUrl(String.format("/%s", secondId)),
       ResponseHandler.any(deleteCompleted));
 
     Response deleteResponse = deleteCompleted.get(5, TimeUnit.SECONDS);
@@ -1540,7 +1541,7 @@ public class RequestAPITests {
 
     CompletableFuture<Response> getAllCompleted = new CompletableFuture<>();
 
-    client.get(requestsUrl(), ResponseHandler.any(getAllCompleted));
+    client.get(InterfaceUrls.requestsUrl(), ResponseHandler.any(getAllCompleted));
 
     Response getAllResponse = getAllCompleted.get(5, TimeUnit.SECONDS);
 
@@ -1554,43 +1555,13 @@ public class RequestAPITests {
     assertThat(allRequests.getInteger("totalRecords"), is(2));
   }
 
-  private static URL itemsUrl(String subPath)
-    throws MalformedURLException {
-
-    return APITestSuite.viaOkapiModuleUrl("/item-storage/items" + subPath);
-  }
-
-  private static URL loansUrl(String subPath)
-    throws MalformedURLException {
-
-    return APITestSuite.viaOkapiModuleUrl("/loan-storage/loans" + subPath);
-  }
-
-  private static URL usersUrl(String subPath)
-    throws MalformedURLException {
-
-    return APITestSuite.viaOkapiModuleUrl("/users" + subPath);
-  }
-
-  private static URL requestsUrl()
-    throws MalformedURLException {
-
-    return requestsUrl("");
-  }
-
-  private static URL requestsUrl(String subPath)
-    throws MalformedURLException {
-
-    return APITestSuite.circulationModuleUrl("/circulation/requests" + subPath);
-  }
-
   private IndividualResource createRequest(JsonObject requestRequest)
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
     TimeoutException {
 
-    return createResource(requestRequest, requestsUrl(), "request");
+    return createResource(requestRequest, InterfaceUrls.requestsUrl(), "request");
   }
 
   private IndividualResource createItem(JsonObject itemRequest)
@@ -1599,7 +1570,7 @@ public class RequestAPITests {
     ExecutionException,
     TimeoutException {
 
-    return createResource(itemRequest, itemsUrl(""), "item");
+    return createResource(itemRequest, InterfaceUrls.itemsStorageUrl(""), "item");
   }
 
   private IndividualResource createUser(JsonObject userRequest)
@@ -1608,7 +1579,7 @@ public class RequestAPITests {
     ExecutionException,
     TimeoutException {
 
-    return createResource(userRequest, usersUrl(""), "user");
+    return createResource(userRequest, InterfaceUrls.usersUrl(""), "user");
   }
 
   private IndividualResource createResource(
@@ -1639,7 +1610,7 @@ public class RequestAPITests {
     ExecutionException,
     TimeoutException {
 
-    APITestSuite.deleteAll(requestsUrl());
+    APITestSuite.deleteAll(InterfaceUrls.requestsUrl());
   }
 
   private void deleteAllLoans()
@@ -1648,7 +1619,7 @@ public class RequestAPITests {
     ExecutionException,
     TimeoutException {
 
-    APITestSuite.deleteAll(loansUrl(""));
+    APITestSuite.deleteAll(InterfaceUrls.loansStorageUrl(""));
   }
 
   private void deleteAllItems()
@@ -1657,7 +1628,7 @@ public class RequestAPITests {
     ExecutionException,
     TimeoutException {
 
-    APITestSuite.deleteAll(itemsUrl(""));
+    APITestSuite.deleteAll(InterfaceUrls.itemsStorageUrl(""));
   }
 
   private void deleteAllUsers()
@@ -1666,7 +1637,7 @@ public class RequestAPITests {
     ExecutionException,
     TimeoutException {
 
-    APITestSuite.deleteAllIndividually(usersUrl(""), "users");
+    APITestSuite.deleteAllIndividually(InterfaceUrls.usersUrl(""), "users");
   }
 
   private Response getById(UUID id)
@@ -1676,7 +1647,7 @@ public class RequestAPITests {
     TimeoutException,
     UnsupportedEncodingException {
 
-    URL getRequestUrl = requestsUrl(String.format("/%s", id));
+    URL getRequestUrl = InterfaceUrls.requestsUrl(String.format("/%s", id));
 
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
@@ -1715,7 +1686,7 @@ public class RequestAPITests {
 
     CompletableFuture<Response> deleteFinished = new CompletableFuture<>();
 
-    client.delete(itemsUrl(String.format("/%s", itemId)),
+    client.delete(InterfaceUrls.itemsStorageUrl(String.format("/%s", itemId)),
       ResponseHandler.any(deleteFinished));
 
     Response response = deleteFinished.get(5, TimeUnit.SECONDS);
@@ -1732,7 +1703,7 @@ public class RequestAPITests {
 
     CompletableFuture<Response> deleteFinished = new CompletableFuture<>();
 
-    client.delete(usersUrl(String.format("/%s", userId)),
+    client.delete(InterfaceUrls.usersUrl(String.format("/%s", userId)),
       ResponseHandler.any(deleteFinished));
 
     Response response = deleteFinished.get(5, TimeUnit.SECONDS);

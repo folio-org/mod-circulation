@@ -29,6 +29,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static org.folio.circulation.api.support.InterfaceUrls.itemsStorageUrl;
+import static org.folio.circulation.api.support.InterfaceUrls.loansUrl;
 import static org.folio.circulation.api.support.ItemRequestExamples.*;
 import static org.folio.circulation.api.support.TextDateTimeMatcher.isEquivalentTo;
 import static org.hamcrest.Matchers.greaterThan;
@@ -307,7 +309,7 @@ public class LoanAPITests {
     UUID itemId = createResource(
       basedUponSmallAngryPlanet()
         .withNoBarcode()
-        .create(), itemsUrl(), "item").getId();
+        .create(), itemsStorageUrl(), "item").getId();
     UUID userId = UUID.randomUUID();
 
     createLoan(new LoanRequestBuilder()
@@ -868,7 +870,7 @@ public class LoanAPITests {
     TimeoutException,
     UnsupportedEncodingException {
 
-    URL getInstanceUrl = itemsUrl(String.format("/%s", id));
+    URL getInstanceUrl = itemsStorageUrl(String.format("/%s", id));
 
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
@@ -893,7 +895,7 @@ public class LoanAPITests {
     ExecutionException,
     TimeoutException {
 
-    return createResource(itemRequest, itemsUrl(), "item");
+    return createResource(itemRequest, itemsStorageUrl(), "item");
   }
 
   private IndividualResource createResource(
@@ -918,30 +920,6 @@ public class LoanAPITests {
     return new IndividualResource(response);
   }
 
-  private static URL itemsUrl()
-    throws MalformedURLException {
-
-    return itemsUrl("");
-  }
-
-  private static URL itemsUrl(String subPath)
-    throws MalformedURLException {
-
-    return APITestSuite.viaOkapiModuleUrl("/item-storage/items" + subPath);
-  }
-
-  private static URL loansUrl()
-    throws MalformedURLException {
-
-    return loansUrl("");
-  }
-
-  private static URL loansUrl(String subPath)
-    throws MalformedURLException {
-
-    return APITestSuite.circulationModuleUrl("/circulation/loans" + subPath);
-  }
-
   private void deleteAllLoans()
     throws MalformedURLException,
     InterruptedException,
@@ -957,7 +935,7 @@ public class LoanAPITests {
     ExecutionException,
     TimeoutException {
 
-    APITestSuite.deleteAll(itemsUrl());
+    APITestSuite.deleteAll(itemsStorageUrl());
   }
 
   private void loanHasExpectedProperties(JsonObject loan) {
@@ -1002,7 +980,7 @@ public class LoanAPITests {
 
     CompletableFuture<Response> deleteFinished = new CompletableFuture<>();
 
-    client.delete(itemsUrl(String.format("/%s", itemId)),
+    client.delete(itemsStorageUrl(String.format("/%s", itemId)),
       ResponseHandler.any(deleteFinished));
 
     Response response = deleteFinished.get(5, TimeUnit.SECONDS);

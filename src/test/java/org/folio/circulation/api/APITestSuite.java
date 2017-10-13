@@ -28,6 +28,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
+import static org.folio.circulation.api.support.InterfaceUrls.itemsStorageUrl;
+import static org.folio.circulation.api.support.InterfaceUrls.loanTypesStorageUrl;
+import static org.folio.circulation.api.support.InterfaceUrls.materialTypesStorageUrl;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -106,7 +109,10 @@ public class APITestSuite {
       response.getStatusCode(), is(204));
   }
 
-  public static void deleteAllIndividually(URL collectionResourceUrl, String collectionArrayName)
+  public static void deleteAllIndividually(
+    URL collectionResourceUrl,
+    String collectionArrayName)
+
     throws InterruptedException,
     ExecutionException,
     TimeoutException {
@@ -206,7 +212,7 @@ public class APITestSuite {
     TimeoutException,
     MalformedURLException {
 
-    deleteAll(viaOkapiModuleUrl("/item-storage/items"));
+    deleteAll(itemsStorageUrl());
     deleteMaterialTypes();
     deleteLoanTypes();
 
@@ -257,7 +263,7 @@ public class APITestSuite {
       log.error("Request to material type storage module failed:", exception);
     });
 
-    URL materialTypesUrl = new URL(okapiUrl() + "/material-types");
+    URL materialTypesUrl = materialTypesStorageUrl();
 
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
@@ -307,8 +313,8 @@ public class APITestSuite {
       log.error("Request to material type storage module failed:", exception);
     });
 
-    String materialTypeUrl = okapiUrl()
-      + String.format("/material-types/%s", bookMaterialTypeId);
+    URL materialTypeUrl = materialTypesStorageUrl(
+      String.format("/%s", bookMaterialTypeId));
 
     CompletableFuture<Response> deleteCompleted = new CompletableFuture<>();
 
@@ -332,7 +338,7 @@ public class APITestSuite {
       log.error("Request to loan type storage module failed:", exception);
     });
 
-    URL loanTypesUrl = new URL(okapiUrl() + "/loan-types");
+    URL loanTypesUrl = loanTypesStorageUrl("");
 
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
@@ -340,7 +346,7 @@ public class APITestSuite {
 
     Response getResponse = getCompleted.get(5 , TimeUnit.SECONDS);
 
-    assertThat("Loan Type API Unavaiable",
+    assertThat("Loan Type API Unavailable",
       getResponse.getStatusCode(), is(200));
 
     List<JsonObject> existingLoanTypes = JsonArrayHelper.toList(
@@ -382,8 +388,8 @@ public class APITestSuite {
       log.error("Request to loan type storage module failed:", exception);
     });
 
-    String loanTypeUrl = okapiUrl()
-      + String.format("/loan-types/%s", canCirculateLoanTypeId);
+    URL loanTypeUrl = loanTypesStorageUrl(
+      String.format("/%s", canCirculateLoanTypeId));
 
     CompletableFuture<Response> deleteCompleted = new CompletableFuture<>();
 
