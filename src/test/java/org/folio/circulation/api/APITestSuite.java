@@ -4,6 +4,7 @@ import io.vertx.core.json.JsonObject;
 import org.folio.circulation.CirculationVerticle;
 import org.folio.circulation.api.fakes.FakeOkapi;
 import org.folio.circulation.api.requests.RequestAPITests;
+import org.folio.circulation.api.support.ResourceClient;
 import org.folio.circulation.api.support.URLHelper;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.VertxAssistant;
@@ -28,7 +29,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
-import static org.folio.circulation.api.support.InterfaceUrls.itemsStorageUrl;
 import static org.folio.circulation.api.support.InterfaceUrls.loanTypesStorageUrl;
 import static org.folio.circulation.api.support.InterfaceUrls.materialTypesStorageUrl;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -87,70 +87,6 @@ public class APITestSuite {
     return new OkapiHttpClient(
       vertxAssistant.createUsingVertx(vertx -> vertx.createHttpClient()),
       okapiUrl(), TENANT_ID, TOKEN, exceptionHandler);
-  }
-
-  public static void deleteAll(URL collectionResourceUrl)
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    OkapiHttpClient client = createClient(exception -> {
-      log.error("Request to delete all failed:", exception);
-    });
-
-    CompletableFuture<Response> deleteAllFinished = new CompletableFuture<>();
-
-    client.delete(collectionResourceUrl,
-      ResponseHandler.any(deleteAllFinished));
-
-    Response response = deleteAllFinished.get(5, TimeUnit.SECONDS);
-
-    assertThat("WARNING!!!!! Delete all resources preparation failed",
-      response.getStatusCode(), is(204));
-  }
-
-  public static void deleteAllIndividually(
-    URL collectionResourceUrl,
-    String collectionArrayName)
-
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    OkapiHttpClient client = createClient(exception -> {
-      log.error("Request to delete all individually failed:", exception);
-    });
-
-    CompletableFuture<Response> getFinished = new CompletableFuture<>();
-
-    client.get(collectionResourceUrl,
-      ResponseHandler.any(getFinished));
-
-    Response response = getFinished.get(5, TimeUnit.SECONDS);
-
-    assertThat("WARNING!!!!! Get all resources individually in order to delete failed",
-      response.getStatusCode(), is(200));
-
-    List<JsonObject> users = JsonArrayHelper.toList(response.getJson()
-      .getJsonArray(collectionArrayName));
-
-    users.stream().forEach(user -> {
-      try {
-        CompletableFuture<Response> deleteFinished = new CompletableFuture<>();
-
-        client.delete(URLHelper.joinPath(collectionResourceUrl, String.format("/%s",
-          user.getString("id"))),
-          ResponseHandler.any(deleteFinished));
-
-        Response deleteResponse = deleteFinished.get(5, TimeUnit.SECONDS);
-
-        assertThat("WARNING!!!!! Delete a resource individually failed",
-          deleteResponse.getStatusCode(), is(204));
-      } catch (Throwable e) {
-        assertThat("WARNING!!!!! Delete a resource individually failed",
-          true, is(false));
-      }
-    });
   }
 
   public static String bookMaterialTypeId() {
@@ -212,7 +148,15 @@ public class APITestSuite {
     TimeoutException,
     MalformedURLException {
 
-    deleteAll(itemsStorageUrl());
+    OkapiHttpClient client = APITestSuite.createClient(exception -> {
+      log.error("Requests to delete all for clean up failed:", exception);
+    });
+
+    ResourceClient.forRequests(client).deleteAll();
+    ResourceClient.forLoans(client).deleteAll();
+    ResourceClient.forItems(client).deleteAll();
+    ResourceClient.forUsers(client).deleteAllIndividually("users");
+
     deleteMaterialTypes();
     deleteLoanTypes();
 

@@ -2,9 +2,7 @@ package org.folio.circulation.api.requests;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.APITestSuite;
-import org.folio.circulation.api.support.InterfaceUrls;
-import org.folio.circulation.api.support.RequestRequestBuilder;
-import org.folio.circulation.api.support.UserRequestBuilder;
+import org.folio.circulation.api.support.*;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
@@ -22,7 +20,6 @@ import java.io.UnsupportedEncodingException;
 import java.lang.invoke.MethodHandles;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -38,9 +35,14 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 public class RequestAPITests {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  OkapiHttpClient client = APITestSuite.createClient(exception -> {
+  private final OkapiHttpClient client = APITestSuite.createClient(exception -> {
     log.error("Request to circulation module failed:", exception);
   });
+
+  private final ResourceClient usersClient = ResourceClient.forUsers(client);
+  private final ResourceClient requestsClient = ResourceClient.forRequests(client);
+  private final ResourceClient itemsClient = ResourceClient.forItems(client);
+  private final ResourceClient loansClient = ResourceClient.forLoans(client);
 
   @Before
   public void beforeEach()
@@ -49,10 +51,10 @@ public class RequestAPITests {
     ExecutionException,
     TimeoutException {
 
-    deleteAllRequests();
-    deleteAllLoans();
-    deleteAllItems();
-    deleteAllUsers();
+    requestsClient.deleteAll();
+    usersClient.deleteAllIndividually("users");
+    itemsClient.deleteAll();
+    loansClient.deleteAll();
   }
 
   @Test
@@ -65,12 +67,11 @@ public class RequestAPITests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = createItem(
-      basedUponSmallAngryPlanet()
-        .withBarcode("036000291452")
-        .create()).getId();
+    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
+      .withBarcode("036000291452")
+      .create()).getId();
 
-    UUID requesterId = createUser(new UserRequestBuilder()
+    UUID requesterId = usersClient.create(new UserRequestBuilder()
       .withName("Jones", "Steven")
       .withBarcode("564376549214")
       .create()).getId();
@@ -151,7 +152,7 @@ public class RequestAPITests {
     UUID id = UUID.randomUUID();
     UUID itemId = UUID.randomUUID();
 
-    UUID requesterId = createUser(new UserRequestBuilder().create()).getId();
+    UUID requesterId = usersClient.create(new UserRequestBuilder().create()).getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
@@ -191,10 +192,10 @@ public class RequestAPITests {
     UnsupportedEncodingException {
 
     UUID id = UUID.randomUUID();
-    UUID itemId = createItem(
-      basedUponSmallAngryPlanet()
-        .withBarcode("036000291452")
-        .create()).getId();
+
+    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
+      .withBarcode("036000291452")
+      .create()).getId();
 
     UUID requesterId = UUID.randomUUID();
 
@@ -238,7 +239,7 @@ public class RequestAPITests {
     UUID id = UUID.randomUUID();
     UUID itemId = UUID.randomUUID();
 
-    UUID requesterId = createUser(new UserRequestBuilder()
+    UUID requesterId = usersClient.create(new UserRequestBuilder()
       .withName("Jones", "Steven")
       .withBarcode("564376549214")
       .create()).getId();
@@ -300,10 +301,10 @@ public class RequestAPITests {
     UnsupportedEncodingException {
 
     UUID id = UUID.randomUUID();
-    UUID itemId = createItem(
-      basedUponSmallAngryPlanet()
-        .withBarcode("036000291452")
-        .create()).getId();
+
+    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
+      .withBarcode("036000291452")
+      .create()).getId();
 
     UUID requesterId = UUID.randomUUID();
 
@@ -357,12 +358,11 @@ public class RequestAPITests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = createItem(
-      basedUponSmallAngryPlanet()
-        .withBarcode("036000291452")
-        .create()).getId();
+    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
+      .withBarcode("036000291452")
+      .create()).getId();
 
-    UUID requesterId = createUser(new UserRequestBuilder()
+    UUID requesterId = usersClient.create(new UserRequestBuilder()
       .withName("Jones", "Steven", "Anthony")
       .withBarcode("564376549214")
       .create()).getId();
@@ -422,12 +422,11 @@ public class RequestAPITests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = createItem(
-      basedUponSmallAngryPlanet()
-        .withBarcode("036000291452")
-        .create()).getId();
+    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
+      .withBarcode("036000291452")
+      .create()).getId();
 
-    UUID requesterId = createUser(new UserRequestBuilder()
+    UUID requesterId = usersClient.create(new UserRequestBuilder()
       .withName("Jones", "Steven")
       .withNoBarcode().create()).getId();
 
@@ -482,12 +481,11 @@ public class RequestAPITests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = createItem(
-      basedUponSmallAngryPlanet()
-        .withNoBarcode()
-        .create()).getId();
+    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
+      .withNoBarcode()
+      .create()).getId();
 
-    UUID requesterId = createUser(new UserRequestBuilder().create()).getId();
+    UUID requesterId = usersClient.create(new UserRequestBuilder().create()).getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
@@ -538,13 +536,12 @@ public class RequestAPITests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = createItem(
-      basedUponSmallAngryPlanet()
-        .withBarcode("036000291452")
-        .create()).getId();
+    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
+      .withBarcode("036000291452")
+      .create()).getId();
 
 
-    UUID requesterId = createUser(new UserRequestBuilder()
+    UUID requesterId = usersClient.create(new UserRequestBuilder()
       .withName("Jones", "Steven")
       .withBarcode("564376549214")
       .create()).getId();
@@ -620,18 +617,19 @@ public class RequestAPITests {
     UnsupportedEncodingException {
 
     UUID id = UUID.randomUUID();
-    UUID itemId = createItem(basedUponSmallAngryPlanet()
+
+    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
       .withBarcode("036000291452")
       .create()).getId();
 
-    UUID requesterId = createUser(new UserRequestBuilder()
+    UUID requesterId = usersClient.create(new UserRequestBuilder()
       .withName("Jones", "Steven")
       .withBarcode("564376549214")
       .create()).getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
-    createRequest(new RequestRequestBuilder()
+    requestsClient.create(new RequestRequestBuilder()
       .recall()
       .withId(id)
       .withRequestDate(requestDate)
@@ -702,7 +700,7 @@ public class RequestAPITests {
     TimeoutException,
     UnsupportedEncodingException {
 
-    Response getResponse = getById(UUID.randomUUID());
+    Response getResponse = ResourceClient.forRequests(client).getById(UUID.randomUUID());
 
     assertThat(getResponse.getStatusCode(), is(HttpURLConnection.HTTP_NOT_FOUND));
   }
@@ -715,41 +713,41 @@ public class RequestAPITests {
     TimeoutException,
     UnsupportedEncodingException {
 
-    UUID requesterId = createUser(new UserRequestBuilder()
+    UUID requesterId = usersClient.create(new UserRequestBuilder()
       .create()).getId();
 
-    createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(basedUponSmallAngryPlanet().create()).getId())
+    requestsClient.create(new RequestRequestBuilder()
+      .withItemId(itemsClient.create(basedUponSmallAngryPlanet().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
-    createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(basedUponNod().create()).getId())
+    requestsClient.create(new RequestRequestBuilder()
+      .withItemId(itemsClient.create(basedUponNod().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
-    createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(basedUponInterestingTimes().create()).getId())
+    requestsClient.create(new RequestRequestBuilder()
+      .withItemId(itemsClient.create(basedUponInterestingTimes().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
-    createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(basedUponTemeraire().create()).getId())
+    requestsClient.create(new RequestRequestBuilder()
+      .withItemId(itemsClient.create(basedUponTemeraire().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
-    createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(basedUponNod().create()).getId())
+    requestsClient.create(new RequestRequestBuilder()
+      .withItemId(itemsClient.create(basedUponNod().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
-    createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(basedUponUprooted().create()).getId())
+    requestsClient.create(new RequestRequestBuilder()
+      .withItemId(itemsClient.create(basedUponUprooted().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
-    createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(basedUponTemeraire().create()).getId())
+    requestsClient.create(new RequestRequestBuilder()
+      .withItemId(itemsClient.create(basedUponTemeraire().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
@@ -798,51 +796,51 @@ public class RequestAPITests {
     TimeoutException,
     UnsupportedEncodingException {
 
-    UUID firstRequester = createUser(new UserRequestBuilder()
+    UUID firstRequester = usersClient.create(new UserRequestBuilder()
       .withName("Jones", "Steven")
       .create()).getId();
 
-    UUID secondRequester = createUser(new UserRequestBuilder()
+    UUID secondRequester = usersClient.create(new UserRequestBuilder()
       .withName("Norton", "Jessica")
       .create()).getId();
 
-    createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(basedUponSmallAngryPlanet().create()).getId())
+    requestsClient.create(new RequestRequestBuilder()
+      .withItemId(itemsClient.create(basedUponSmallAngryPlanet().create()).getId())
       .withRequesterId(firstRequester)
       .create());
 
-    createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(basedUponNod()
+    requestsClient.create(new RequestRequestBuilder()
+      .withItemId(itemsClient.create(basedUponNod()
         .create()).getId())
       .withRequesterId(firstRequester)
       .create());
 
-    createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(basedUponInterestingTimes()
+    requestsClient.create(new RequestRequestBuilder()
+      .withItemId(itemsClient.create(basedUponInterestingTimes()
         .create()).getId())
       .withRequesterId(secondRequester)
       .create());
 
-    createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(basedUponTemeraire()
+    requestsClient.create(new RequestRequestBuilder()
+      .withItemId(itemsClient.create(basedUponTemeraire()
         .create()).getId())
       .withRequesterId(firstRequester)
       .create());
 
-    createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(basedUponNod()
+    requestsClient.create(new RequestRequestBuilder()
+      .withItemId(itemsClient.create(basedUponNod()
         .create()).getId())
       .withRequesterId(firstRequester)
       .create());
 
-    createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(basedUponUprooted()
+    requestsClient.create(new RequestRequestBuilder()
+      .withItemId(itemsClient.create(basedUponUprooted()
         .create()).getId())
       .withRequesterId(secondRequester)
       .create());
 
-    createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(basedUponTemeraire()
+    requestsClient.create(new RequestRequestBuilder()
+      .withItemId(itemsClient.create(basedUponTemeraire()
         .create()).getId())
       .withRequesterId(secondRequester)
       .create());
@@ -876,40 +874,40 @@ public class RequestAPITests {
     TimeoutException,
     UnsupportedEncodingException {
 
-    UUID requesterId = createUser(new UserRequestBuilder().create()).getId();
+    UUID requesterId = usersClient.create(new UserRequestBuilder().create()).getId();
 
-    createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(basedUponSmallAngryPlanet().create()).getId())
+    requestsClient.create(new RequestRequestBuilder()
+      .withItemId(itemsClient.create(basedUponSmallAngryPlanet().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
-    createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(basedUponNod().create()).getId())
+    requestsClient.create(new RequestRequestBuilder()
+      .withItemId(itemsClient.create(basedUponNod().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
-    createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(basedUponInterestingTimes().create()).getId())
+    requestsClient.create(new RequestRequestBuilder()
+      .withItemId(itemsClient.create(basedUponInterestingTimes().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
-    createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(basedUponTemeraire().create()).getId())
+    requestsClient.create(new RequestRequestBuilder()
+      .withItemId(itemsClient.create(basedUponTemeraire().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
-    createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(basedUponNod().create()).getId())
+    requestsClient.create(new RequestRequestBuilder()
+      .withItemId(itemsClient.create(basedUponNod().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
-    createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(basedUponUprooted().create()).getId())
+    requestsClient.create(new RequestRequestBuilder()
+      .withItemId(itemsClient.create(basedUponUprooted().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
-    createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(basedUponTemeraire().create()).getId())
+    requestsClient.create(new RequestRequestBuilder()
+      .withItemId(itemsClient.create(basedUponTemeraire().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
@@ -943,11 +941,12 @@ public class RequestAPITests {
     UnsupportedEncodingException {
 
     UUID id = UUID.randomUUID();
-    UUID itemId = createItem(basedUponTemeraire()
+
+    UUID itemId = itemsClient.create(basedUponTemeraire()
       .withBarcode("07295629642")
       .create()).getId();
 
-    UUID originalRequesterId = createUser(new UserRequestBuilder()
+    UUID originalRequesterId = usersClient.create(new UserRequestBuilder()
       .withName("Norton", "Jessica")
       .withBarcode("764523186496")
       .create()).getId();
@@ -965,9 +964,9 @@ public class RequestAPITests {
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
       .create();
 
-    IndividualResource createdRequest = createRequest(requestRequest);
+    IndividualResource createdRequest = requestsClient.create(requestRequest);
 
-    UUID updatedRequester = createUser(new UserRequestBuilder()
+    UUID updatedRequester = usersClient.create(new UserRequestBuilder()
       .withName("Campbell", "Fiona")
       .withBarcode("679231693475")
       .create()).getId();
@@ -1048,11 +1047,12 @@ public class RequestAPITests {
     UnsupportedEncodingException {
 
     UUID id = UUID.randomUUID();
-    UUID itemId = createItem(basedUponTemeraire()
+
+    UUID itemId = itemsClient.create(basedUponTemeraire()
       .withBarcode("07295629642")
       .create()).getId();
 
-    UUID requesterId = createUser(new UserRequestBuilder().create()).getId();
+    UUID requesterId = usersClient.create(new UserRequestBuilder().create()).getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
@@ -1067,11 +1067,11 @@ public class RequestAPITests {
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
       .create();
 
-    IndividualResource createdRequest = createRequest(requestRequest);
+    IndividualResource createdRequest = requestsClient.create(requestRequest);
 
     JsonObject updatedRequest = createdRequest.copyJson();
 
-    deleteItem(itemId);
+    itemsClient.delete(itemId);
 
     updatedRequest
       .put("requestType", "Hold");
@@ -1112,11 +1112,12 @@ public class RequestAPITests {
     UnsupportedEncodingException {
 
     UUID id = UUID.randomUUID();
-    UUID itemId = createItem(basedUponTemeraire()
+
+    UUID itemId = itemsClient.create(basedUponTemeraire()
       .withBarcode("07295629642")
       .create()).getId();
 
-    UUID requester = createUser(new UserRequestBuilder()
+    UUID requester = usersClient.create(new UserRequestBuilder()
       .withName("Norton", "Jessica")
       .withBarcode("679231693475")
       .create()).getId();
@@ -1134,9 +1135,9 @@ public class RequestAPITests {
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
       .create();
 
-    IndividualResource createdRequest = createRequest(requestRequest);
+    IndividualResource createdRequest = requestsClient.create(requestRequest);
 
-    deleteUser(requester);
+    usersClient.delete(requester);
 
     JsonObject updatedRequest = createdRequest.copyJson();
 
@@ -1179,11 +1180,12 @@ public class RequestAPITests {
     UnsupportedEncodingException {
 
     UUID id = UUID.randomUUID();
-    UUID itemId = createItem(basedUponTemeraire()
+
+    UUID itemId = itemsClient.create(basedUponTemeraire()
       .withBarcode("07295629642")
       .create()).getId();
 
-    UUID originalRequesterId = createUser(new UserRequestBuilder()
+    UUID originalRequesterId = usersClient.create(new UserRequestBuilder()
       .withName("Norton", "Jessica")
       .withBarcode("764523186496")
       .create()).getId();
@@ -1201,9 +1203,9 @@ public class RequestAPITests {
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
       .create();
 
-    IndividualResource createdRequest = createRequest(requestRequest);
+    IndividualResource createdRequest = requestsClient.create(requestRequest);
 
-    UUID updatedRequester = createUser(new UserRequestBuilder()
+    UUID updatedRequester = usersClient.create(new UserRequestBuilder()
       .withName("Campbell", "Fiona")
       .withNoBarcode()
       .create()).getId();
@@ -1262,11 +1264,12 @@ public class RequestAPITests {
     UnsupportedEncodingException {
 
     UUID id = UUID.randomUUID();
-    UUID itemId = createItem(basedUponTemeraire()
+
+    UUID itemId = itemsClient.create(basedUponTemeraire()
       .withBarcode("07295629642")
       .create()).getId();
 
-    UUID originalRequesterId = createUser(new UserRequestBuilder()
+    UUID originalRequesterId = usersClient.create(new UserRequestBuilder()
       .withName("Norton", "Jessica")
       .withBarcode("764523186496")
       .create()).getId();
@@ -1284,9 +1287,9 @@ public class RequestAPITests {
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
       .create();
 
-    IndividualResource createdRequest = createRequest(requestRequest);
+    IndividualResource createdRequest = requestsClient.create(requestRequest);
 
-    UUID updatedRequester = createUser(new UserRequestBuilder()
+    UUID updatedRequester = usersClient.create(new UserRequestBuilder()
       .withName("Campbell", "Fiona", "Stella")
       .withBarcode("679231693475")
       .create()).getId();
@@ -1367,12 +1370,12 @@ public class RequestAPITests {
     UnsupportedEncodingException {
 
     UUID id = UUID.randomUUID();
-    UUID originalItemId = createItem(
-      basedUponTemeraire()
-        .withBarcode("07295629642")
-        .create()).getId();
 
-    UUID requesterId = createUser(new UserRequestBuilder().create()).getId();
+    UUID originalItemId = itemsClient.create(basedUponTemeraire()
+      .withBarcode("07295629642")
+      .create()).getId();
+
+    UUID requesterId = usersClient.create(new UserRequestBuilder().create()).getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
@@ -1387,12 +1390,11 @@ public class RequestAPITests {
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
       .create();
 
-    IndividualResource createdRequest = createRequest(requestRequest);
+    IndividualResource createdRequest = requestsClient.create(requestRequest);
 
-    UUID updatedItemId = createItem(
-      basedUponSmallAngryPlanet()
-        .withNoBarcode()
-        .create()).getId();
+    UUID updatedItemId = itemsClient.create(basedUponSmallAngryPlanet()
+      .withNoBarcode()
+      .create()).getId();
 
     JsonObject updatedRequest = createdRequest.copyJson();
 
@@ -1442,30 +1444,30 @@ public class RequestAPITests {
     ExecutionException,
     UnsupportedEncodingException {
 
-    UUID requesterId = createUser(new UserRequestBuilder().create()).getId();
+    UUID requesterId = usersClient.create(new UserRequestBuilder().create()).getId();
 
-    createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(basedUponSmallAngryPlanet().create()).getId())
+    requestsClient.create(new RequestRequestBuilder()
+      .withItemId(itemsClient.create(basedUponSmallAngryPlanet().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
-    createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(basedUponNod().create()).getId())
+    requestsClient.create(new RequestRequestBuilder()
+      .withItemId(itemsClient.create(basedUponNod().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
-    createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(basedUponInterestingTimes().create()).getId())
+    requestsClient.create(new RequestRequestBuilder()
+      .withItemId(itemsClient.create(basedUponInterestingTimes().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
-    createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(basedUponTemeraire().create()).getId())
+    requestsClient.create(new RequestRequestBuilder()
+      .withItemId(itemsClient.create(basedUponTemeraire().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
-    createRequest(new RequestRequestBuilder()
-      .withItemId(createItem(basedUponUprooted().create()).getId())
+    requestsClient.create(new RequestRequestBuilder()
+      .withItemId(itemsClient.create(basedUponUprooted().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
@@ -1506,23 +1508,23 @@ public class RequestAPITests {
     UUID secondId = UUID.randomUUID();
     UUID thirdId = UUID.randomUUID();
 
-    UUID requesterId = createUser(new UserRequestBuilder().create()).getId();
+    UUID requesterId = usersClient.create(new UserRequestBuilder().create()).getId();
 
-    createRequest(new RequestRequestBuilder()
+    requestsClient.create(new RequestRequestBuilder()
       .withId(firstId)
-      .withItemId(createItem(basedUponNod().create()).getId())
+      .withItemId(itemsClient.create(basedUponNod().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
-    createRequest(new RequestRequestBuilder()
+    requestsClient.create(new RequestRequestBuilder()
       .withId(secondId)
-      .withItemId(createItem(basedUponSmallAngryPlanet().create()).getId())
+      .withItemId(itemsClient.create(basedUponSmallAngryPlanet().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
-    createRequest(new RequestRequestBuilder()
+    requestsClient.create(new RequestRequestBuilder()
       .withId(thirdId)
-      .withItemId(createItem(basedUponTemeraire().create()).getId())
+      .withItemId(itemsClient.create(basedUponTemeraire().create()).getId())
       .withRequesterId(requesterId)
       .create());
 
@@ -1535,9 +1537,11 @@ public class RequestAPITests {
 
     assertThat(deleteResponse.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
 
-    assertThat(getById(firstId).getStatusCode(), is(HttpURLConnection.HTTP_OK));
-    assertThat(getById(secondId).getStatusCode(), is(HttpURLConnection.HTTP_NOT_FOUND));
-    assertThat(getById(thirdId).getStatusCode(), is(HttpURLConnection.HTTP_OK));
+    assertThat(ResourceClient.forRequests(client).getById(firstId).getStatusCode(), is(HttpURLConnection.HTTP_OK));
+
+    assertThat(ResourceClient.forRequests(client).getById(secondId).getStatusCode(), is(HttpURLConnection.HTTP_NOT_FOUND));
+
+    assertThat(ResourceClient.forRequests(client).getById(thirdId).getStatusCode(), is(HttpURLConnection.HTTP_OK));
 
     CompletableFuture<Response> getAllCompleted = new CompletableFuture<>();
 
@@ -1553,108 +1557,6 @@ public class RequestAPITests {
 
     assertThat(requests.size(), is(2));
     assertThat(allRequests.getInteger("totalRecords"), is(2));
-  }
-
-  private IndividualResource createRequest(JsonObject requestRequest)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    return createResource(requestRequest, InterfaceUrls.requestsUrl(), "request");
-  }
-
-  private IndividualResource createItem(JsonObject itemRequest)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    return createResource(itemRequest, InterfaceUrls.itemsStorageUrl(""), "item");
-  }
-
-  private IndividualResource createUser(JsonObject userRequest)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    return createResource(userRequest, InterfaceUrls.usersUrl(""), "user");
-  }
-
-  private IndividualResource createResource(
-    JsonObject request,
-    URL url,
-    String resourceName)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
-
-    client.post(url, request,
-      ResponseHandler.json(createCompleted));
-
-    Response response = createCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(String.format("Failed to create %s: %s", resourceName, response.getBody()),
-      response.getStatusCode(), is(HttpURLConnection.HTTP_CREATED));
-
-    return new IndividualResource(response);
-  }
-
-  private void deleteAllRequests()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    APITestSuite.deleteAll(InterfaceUrls.requestsUrl());
-  }
-
-  private void deleteAllLoans()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    APITestSuite.deleteAll(InterfaceUrls.loansStorageUrl(""));
-  }
-
-  private void deleteAllItems()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    APITestSuite.deleteAll(InterfaceUrls.itemsStorageUrl(""));
-  }
-
-  private void deleteAllUsers()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    APITestSuite.deleteAllIndividually(InterfaceUrls.usersUrl(""), "users");
-  }
-
-  private Response getById(UUID id)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    UnsupportedEncodingException {
-
-    URL getRequestUrl = InterfaceUrls.requestsUrl(String.format("/%s", id));
-
-    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
-
-    client.get(getRequestUrl,
-      ResponseHandler.any(getCompleted));
-
-    return getCompleted.get(5, TimeUnit.SECONDS);
   }
 
   private List<JsonObject> getRequests(JsonObject page) {
@@ -1676,39 +1578,5 @@ public class RequestAPITests {
     assertThat(String.format("%s should have %s: %s",
       type, property, resource),
       resource.containsKey(property), is(true));
-  }
-
-  private void deleteItem(UUID itemId)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    CompletableFuture<Response> deleteFinished = new CompletableFuture<>();
-
-    client.delete(InterfaceUrls.itemsStorageUrl(String.format("/%s", itemId)),
-      ResponseHandler.any(deleteFinished));
-
-    Response response = deleteFinished.get(5, TimeUnit.SECONDS);
-
-    assertThat(String.format("Failed to delete item %s", itemId),
-      response.getStatusCode(), is(204));
-  }
-
-  private void deleteUser(UUID userId)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    CompletableFuture<Response> deleteFinished = new CompletableFuture<>();
-
-    client.delete(InterfaceUrls.usersUrl(String.format("/%s", userId)),
-      ResponseHandler.any(deleteFinished));
-
-    Response response = deleteFinished.get(5, TimeUnit.SECONDS);
-
-    assertThat(String.format("Failed to delete user %s", userId),
-      response.getStatusCode(), is(204));
   }
 }
