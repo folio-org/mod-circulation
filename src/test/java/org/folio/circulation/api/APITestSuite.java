@@ -3,7 +3,10 @@ package org.folio.circulation.api;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.CirculationVerticle;
 import org.folio.circulation.api.fakes.FakeOkapi;
-import org.folio.circulation.api.requests.RequestAPITests;
+import org.folio.circulation.api.requests.RequestsAPICreationTests;
+import org.folio.circulation.api.requests.RequestsAPIDeletionTests;
+import org.folio.circulation.api.requests.RequestsAPIRetrievalTests;
+import org.folio.circulation.api.requests.RequestsAPIUpdatingTests;
 import org.folio.circulation.api.support.ResourceClient;
 import org.folio.circulation.api.support.URLHelper;
 import org.folio.circulation.support.JsonArrayHelper;
@@ -40,7 +43,10 @@ import static org.hamcrest.core.Is.is;
   LoanAPITests.class,
   LoanRulesAPITests.class,
   LoanRulesEngineAPITests.class,
-  RequestAPITests.class
+  RequestsAPICreationTests.class,
+  RequestsAPIDeletionTests.class,
+  RequestsAPIRetrievalTests.class,
+  RequestsAPIUpdatingTests.class
 })
 public class APITestSuite {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
