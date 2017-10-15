@@ -5,6 +5,8 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
+import org.folio.circulation.domain.ItemStatus;
+import org.folio.circulation.domain.ItemStatusAssistant;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
@@ -61,25 +63,30 @@ public class RequestCollectionResource {
       return;
     }
 
-    addSummariesToRequest(
-      request,
-      itemsStorageClient,
-      usersStorageClient,
-      requestWithAdditionalInformation -> {
-        requestsStorageClient.post(requestWithAdditionalInformation, requestResponse -> {
-          if (requestResponse.getStatusCode() == 201) {
-            JsonObject createdRequest = requestResponse.getJson();
+    String itemId = request.getString("itemId");
 
-            JsonResponse.created(routingContext.response(), createdRequest);
-          } else {
-            ForwardResponse.forward(routingContext.response(), requestResponse);
-          }
-        });
-      },
-      throwable -> {
-        ServerErrorResponse.internalError(routingContext.response(),
-          String.format("At least one request for additional information failed: %s",
-            throwable));
+    ItemStatusAssistant.updateItemWhenLoanChanges(itemId, ItemStatus.CHECKED_OUT_HELD,
+      itemsStorageClient, routingContext.response(), item -> {
+        addSummariesToRequest(
+          request,
+          itemsStorageClient,
+          usersStorageClient,
+          requestWithAdditionalInformation -> {
+            requestsStorageClient.post(requestWithAdditionalInformation, requestResponse -> {
+              if (requestResponse.getStatusCode() == 201) {
+                JsonObject createdRequest = requestResponse.getJson();
+
+                JsonResponse.created(routingContext.response(), createdRequest);
+              } else {
+                ForwardResponse.forward(routingContext.response(), requestResponse);
+              }
+            });
+          },
+          throwable -> {
+            ServerErrorResponse.internalError(routingContext.response(),
+              String.format("At least one request for additional information failed: %s",
+                throwable));
+          });
       });
   }
 

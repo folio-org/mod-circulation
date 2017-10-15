@@ -57,7 +57,6 @@ public class RequestsAPIUpdatingTests {
     usersClient.deleteAllIndividually("users");
     itemsClient.deleteAll();
     loansClient.deleteAll();
-
   }
 
   @Test

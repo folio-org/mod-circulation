@@ -1,7 +1,6 @@
 package org.folio.circulation.resources;
 
 import io.vertx.core.http.HttpMethod;
-import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
@@ -19,13 +18,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class LoanCollectionResource {
+import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
+import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
+import static org.folio.circulation.domain.ItemStatusAssistant.updateItemWhenLoanChanges;
 
-  private static final String CHECKED_OUT_ITEM_STATUS = "Checked out";
-  private static final String AVAILABLE_ITEM_STATUS = "Available";
+public class LoanCollectionResource {
 
   private final String rootPath;
 
@@ -337,55 +336,13 @@ public class LoanCollectionResource {
     return loanStorageClient;
   }
 
-  private void updateItemWhenLoanChanges(
-    String itemId,
-    String newItemStatus,
-    CollectionResourceClient itemsStorageClient,
-    HttpServerResponse responseToClient,
-    Consumer<JsonObject> onSuccess) {
-
-    itemsStorageClient.get(itemId, getItemResponse -> {
-      if(getItemResponse.getStatusCode() == 200) {
-        JsonObject item = getItemResponse.getJson();
-
-          if(itemStatusAlreadyMatches(item, newItemStatus)) {
-            onSuccess.accept(item);
-          }
-          else {
-            item.put("status", new JsonObject().put("name", newItemStatus));
-
-            itemsStorageClient.put(itemId,
-              item, putItemResponse -> {
-                if(putItemResponse.getStatusCode() == 204) {
-                  onSuccess.accept(item);
-                }
-                else {
-                  ForwardResponse.forward(responseToClient, putItemResponse);
-                }
-              });
-          }
-        }
-        else if(getItemResponse.getStatusCode() == 404) {
-          ServerErrorResponse.internalError(responseToClient,
-            "Failed to handle updating an item which does not exist");
-        }
-        else {
-          ForwardResponse.forward(responseToClient, getItemResponse);
-        }
-      });
-  }
-
-  private boolean itemStatusAlreadyMatches(JsonObject item, String newItemStatus) {
-    return item.getJsonObject("status").getString("name") == newItemStatus;
-  }
-
   private String itemStatusFrom(JsonObject loan) {
     switch(loan.getJsonObject("status").getString("name")) {
       case "Open":
-        return CHECKED_OUT_ITEM_STATUS;
+        return CHECKED_OUT;
 
       case "Closed":
-        return AVAILABLE_ITEM_STATUS;
+        return AVAILABLE;
 
       default:
         //TODO: Need to add validation to stop this situation

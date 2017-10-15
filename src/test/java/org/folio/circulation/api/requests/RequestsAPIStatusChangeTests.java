@@ -1,0 +1,80 @@
+package org.folio.circulation.api.requests;
+
+import io.vertx.core.json.JsonObject;
+import org.folio.circulation.api.APITestSuite;
+import org.folio.circulation.api.support.RequestRequestBuilder;
+import org.folio.circulation.api.support.ResourceClient;
+import org.folio.circulation.api.support.UserRequestBuilder;
+import org.folio.circulation.support.http.client.OkapiHttpClient;
+import org.folio.circulation.support.http.client.Response;
+import org.junit.Before;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.UnsupportedEncodingException;
+import java.lang.invoke.MethodHandles;
+import java.net.MalformedURLException;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+
+import static org.folio.circulation.api.support.ItemRequestExamples.basedUponSmallAngryPlanet;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+
+public class RequestsAPIStatusChangeTests {
+
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
+  private final OkapiHttpClient client = APITestSuite.createClient(exception -> {
+    log.error("Request to circulation module failed:", exception);
+  });
+
+  private final ResourceClient usersClient = ResourceClient.forUsers(client);
+  private final ResourceClient requestsClient = ResourceClient.forRequests(client);
+  private final ResourceClient itemsClient = ResourceClient.forItems(client);
+  private final ResourceClient loansClient = ResourceClient.forLoans(client);
+
+  @Before
+  public void beforeEach()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    requestsClient.deleteAll();
+    usersClient.deleteAllIndividually("users");
+    itemsClient.deleteAll();
+    loansClient.deleteAll();
+  }
+
+  @Test
+  public void creatingAHoldRequestChangesTheItemStatus()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException,
+    UnsupportedEncodingException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
+      .withBarcode("036000291452")
+      .create()).getId();
+
+    JsonObject requestRequest = new RequestRequestBuilder()
+      .hold()
+      .withId(id)
+      .withItemId(itemId)
+      .withRequesterId(usersClient.create(new UserRequestBuilder().create()).getId())
+      .create();
+
+    requestsClient.create(requestRequest);
+
+    Response changedItem = itemsClient.getById(itemId);
+
+    assertThat(changedItem.getJson().getJsonObject("status").getString("name"),
+      is("Checked out - Held"));
+  }
+}

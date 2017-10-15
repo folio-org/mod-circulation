@@ -57,7 +57,6 @@ public class RequestsAPIRetrievalTests {
     usersClient.deleteAllIndividually("users");
     itemsClient.deleteAll();
     loansClient.deleteAll();
-
   }
 
   @Test

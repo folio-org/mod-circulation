@@ -89,6 +89,18 @@ public class RequestRequestBuilder {
       this.holdShelfExpirationDate);
   }
 
+  public RequestRequestBuilder hold() {
+    return new RequestRequestBuilder(
+      this.id,
+      "Hold",
+      this.requestDate,
+      this.itemId,
+      this.requesterId,
+      this.fulilmentPreference,
+      this.requestExpirationDate,
+      this.holdShelfExpirationDate);
+  }
+
   public RequestRequestBuilder withId(UUID newId) {
     return new RequestRequestBuilder(
       newId,

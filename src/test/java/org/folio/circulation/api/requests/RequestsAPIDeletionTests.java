@@ -53,7 +53,6 @@ public class RequestsAPIDeletionTests {
     usersClient.deleteAllIndividually("users");
     itemsClient.deleteAll();
     loansClient.deleteAll();
-
   }
 
   @Test
