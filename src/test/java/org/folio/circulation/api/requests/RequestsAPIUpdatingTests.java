@@ -30,6 +30,7 @@ import java.util.concurrent.TimeoutException;
 
 import static org.folio.circulation.api.support.ItemRequestExamples.basedUponSmallAngryPlanet;
 import static org.folio.circulation.api.support.ItemRequestExamples.basedUponTemeraire;
+import static org.folio.circulation.api.support.LoanPreparation.checkOutItem;
 import static org.folio.circulation.api.support.TextDateTimeMatcher.isEquivalentTo;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -72,6 +73,8 @@ public class RequestsAPIUpdatingTests {
     UUID itemId = itemsClient.create(basedUponTemeraire()
       .withBarcode("07295629642")
       .create()).getId();
+
+    checkOutItem(itemId, loansClient);
 
     UUID originalRequesterId = usersClient.create(new UserRequestBuilder()
       .withName("Norton", "Jessica")
@@ -179,6 +182,8 @@ public class RequestsAPIUpdatingTests {
       .withBarcode("07295629642")
       .create()).getId();
 
+    checkOutItem(itemId, loansClient);
+
     UUID requesterId = usersClient.create(new UserRequestBuilder().create()).getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
@@ -243,6 +248,8 @@ public class RequestsAPIUpdatingTests {
     UUID itemId = itemsClient.create(basedUponTemeraire()
       .withBarcode("07295629642")
       .create()).getId();
+
+    checkOutItem(itemId, loansClient);
 
     UUID requester = usersClient.create(new UserRequestBuilder()
       .withName("Norton", "Jessica")
@@ -311,6 +318,8 @@ public class RequestsAPIUpdatingTests {
     UUID itemId = itemsClient.create(basedUponTemeraire()
       .withBarcode("07295629642")
       .create()).getId();
+
+    checkOutItem(itemId, loansClient);
 
     UUID originalRequesterId = usersClient.create(new UserRequestBuilder()
       .withName("Norton", "Jessica")
@@ -394,6 +403,8 @@ public class RequestsAPIUpdatingTests {
     UUID itemId = itemsClient.create(basedUponTemeraire()
       .withBarcode("07295629642")
       .create()).getId();
+
+    checkOutItem(itemId, loansClient);
 
     UUID originalRequesterId = usersClient.create(new UserRequestBuilder()
       .withName("Norton", "Jessica")
@@ -500,6 +511,8 @@ public class RequestsAPIUpdatingTests {
     UUID originalItemId = itemsClient.create(basedUponTemeraire()
       .withBarcode("07295629642")
       .create()).getId();
+
+    checkOutItem(originalItemId, loansClient);
 
     UUID requesterId = usersClient.create(new UserRequestBuilder().create()).getId();
 

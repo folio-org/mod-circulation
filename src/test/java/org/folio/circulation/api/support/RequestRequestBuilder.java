@@ -76,23 +76,22 @@ public class RequestRequestBuilder {
     return request;
   }
 
-
   public RequestRequestBuilder recall() {
-    return new RequestRequestBuilder(
-      this.id,
-      "Recall",
-      this.requestDate,
-      this.itemId,
-      this.requesterId,
-      this.fulilmentPreference,
-      this.requestExpirationDate,
-      this.holdShelfExpirationDate);
+    return withRequestType("Recall");
   }
 
   public RequestRequestBuilder hold() {
+    return withRequestType("Hold");
+  }
+
+  public RequestRequestBuilder page() {
+    return withRequestType("Page");
+  }
+
+  public RequestRequestBuilder withRequestType(String requestType) {
     return new RequestRequestBuilder(
       this.id,
-      "Hold",
+      requestType,
       this.requestDate,
       this.itemId,
       this.requesterId,
@@ -204,4 +203,5 @@ public class RequestRequestBuilder {
   private String formatDateOnly(LocalDate date) {
     return date.toString(DateTimeFormat.forPattern("yyyy-MM-dd"));
   }
+
 }

@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static org.folio.circulation.api.support.ItemRequestExamples.*;
+import static org.folio.circulation.api.support.LoanPreparation.checkOutItem;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -65,28 +66,26 @@ public class RequestsAPIDeletionTests {
 
     UUID requesterId = usersClient.create(new UserRequestBuilder().create()).getId();
 
+    UUID firstItemId = itemsClient.create(basedUponSmallAngryPlanet().create()).getId();
+    UUID secondItemId = itemsClient.create(basedUponNod().create()).getId();
+    UUID thirdItemId = itemsClient.create(basedUponInterestingTimes().create()).getId();
+
+    checkOutItem(firstItemId, loansClient);
+    checkOutItem(secondItemId, loansClient);
+    checkOutItem(thirdItemId, loansClient);
+
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponSmallAngryPlanet().create()).getId())
+      .withItemId(firstItemId)
       .withRequesterId(requesterId)
       .create());
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponNod().create()).getId())
+      .withItemId(secondItemId)
       .withRequesterId(requesterId)
       .create());
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponInterestingTimes().create()).getId())
-      .withRequesterId(requesterId)
-      .create());
-
-    requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponTemeraire().create()).getId())
-      .withRequesterId(requesterId)
-      .create());
-
-    requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponUprooted().create()).getId())
+      .withItemId(thirdItemId)
       .withRequesterId(requesterId)
       .create());
 
@@ -129,21 +128,29 @@ public class RequestsAPIDeletionTests {
 
     UUID requesterId = usersClient.create(new UserRequestBuilder().create()).getId();
 
+    UUID firstItemId = itemsClient.create(basedUponNod().create()).getId();
+    UUID secondItemId = itemsClient.create(basedUponSmallAngryPlanet().create()).getId();
+    UUID thirdItemId = itemsClient.create(basedUponTemeraire().create()).getId();
+
+    checkOutItem(firstItemId, loansClient);
+    checkOutItem(secondItemId, loansClient);
+    checkOutItem(thirdItemId, loansClient);
+
     requestsClient.create(new RequestRequestBuilder()
       .withId(firstId)
-      .withItemId(itemsClient.create(basedUponNod().create()).getId())
+      .withItemId(firstItemId)
       .withRequesterId(requesterId)
       .create());
 
     requestsClient.create(new RequestRequestBuilder()
       .withId(secondId)
-      .withItemId(itemsClient.create(basedUponSmallAngryPlanet().create()).getId())
+      .withItemId(secondItemId)
       .withRequesterId(requesterId)
       .create());
 
     requestsClient.create(new RequestRequestBuilder()
       .withId(thirdId)
-      .withItemId(itemsClient.create(basedUponTemeraire().create()).getId())
+      .withItemId(thirdItemId)
       .withRequesterId(requesterId)
       .create());
 

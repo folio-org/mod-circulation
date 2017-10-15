@@ -11,6 +11,9 @@ import java.util.UUID;
 
 public class LoanRequestBuilder {
 
+  private final static String OPEN_LOAN_STATUS = "Open";
+  private final static String CLOSED_LOAN_STATUS = "Closed";
+
   private final UUID id;
   private final UUID itemId;
   private final UUID userId;
@@ -75,7 +78,7 @@ public class LoanRequestBuilder {
         dueDate.toString(ISODateTimeFormat.dateTime()));
     }
 
-    if(status == "Closed") {
+    if(status == CLOSED_LOAN_STATUS) {
       loanRequest.put("returnDate",
         returnDate.toString(ISODateTimeFormat.dateTime()));
     }
@@ -110,10 +113,10 @@ public class LoanRequestBuilder {
     String action = null;
 
     switch(status) {
-      case "Open":
+      case OPEN_LOAN_STATUS:
         action = "checkedout";
         break;
-      case "Closed":
+      case CLOSED_LOAN_STATUS:
         action = "checkedin";
         break;
     }
@@ -121,6 +124,14 @@ public class LoanRequestBuilder {
     return new LoanRequestBuilder(this.id, this.itemId, this.userId,
       this.loanDate, this.dueDate, status, defaultedReturnDate, action,
       this.proxyUserId);
+  }
+
+  public LoanRequestBuilder open() {
+    return withStatus(OPEN_LOAN_STATUS);
+  }
+
+  public LoanRequestBuilder closed() {
+    return withStatus(CLOSED_LOAN_STATUS);
   }
 
   public LoanRequestBuilder withId(UUID id) {

@@ -5,7 +5,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
-import org.folio.circulation.domain.ItemStatusAssistant;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
@@ -17,8 +16,10 @@ import java.net.URL;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
+import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT_HELD;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT_RECALLED;
+import static org.folio.circulation.domain.ItemStatusAssistant.updateItemWhenLoanChanges;
 
 public class RequestCollectionResource {
 
@@ -68,29 +69,48 @@ public class RequestCollectionResource {
 
     String itemId = request.getString("itemId");
 
-    ItemStatusAssistant.updateItemWhenLoanChanges(itemId, itemStatusFrom(request),
-      itemsStorageClient, routingContext.response(), item -> {
-        addSummariesToRequest(
-          request,
-          itemsStorageClient,
-          usersStorageClient,
-          requestWithAdditionalInformation -> {
-            requestsStorageClient.post(requestWithAdditionalInformation, requestResponse -> {
-              if (requestResponse.getStatusCode() == 201) {
-                JsonObject createdRequest = requestResponse.getJson();
+    itemsStorageClient.get(itemId, getItemResponse -> {
+      if(getItemResponse.getStatusCode() == 200) {
+        JsonObject loadedItem = getItemResponse.getJson();
 
-                JsonResponse.created(routingContext.response(), createdRequest);
-              } else {
-                ForwardResponse.forward(routingContext.response(), requestResponse);
-              }
+        if (isOkStatus(loadedItem, request)) {
+          updateItemWhenLoanChanges(itemId, itemStatusFrom(request),
+            itemsStorageClient, routingContext.response(), item -> {
+              addSummariesToRequest(
+                request,
+                itemsStorageClient,
+                usersStorageClient,
+                requestWithAdditionalInformation -> {
+                  requestsStorageClient.post(requestWithAdditionalInformation, requestResponse -> {
+                    if (requestResponse.getStatusCode() == 201) {
+                      JsonObject createdRequest = requestResponse.getJson();
+
+                      JsonResponse.created(routingContext.response(), createdRequest);
+                    } else {
+                      ForwardResponse.forward(routingContext.response(), requestResponse);
+                    }
+                  });
+                },
+                throwable -> {
+                  ServerErrorResponse.internalError(routingContext.response(),
+                    String.format("At least one request for additional information failed: %s",
+                      throwable));
+                });
             });
-          },
-          throwable -> {
-            ServerErrorResponse.internalError(routingContext.response(),
-              String.format("At least one request for additional information failed: %s",
-                throwable));
-          });
-      });
+        }
+        else {
+          JsonResponse.unprocessableEntity(routingContext.response(),
+            "Item is not checked out", "itemId", itemId);
+        }
+      }
+      else if(getItemResponse.getStatusCode() == 404) {
+        JsonResponse.unprocessableEntity(routingContext.response(),
+          "Item does not exist", "itemId", itemId);
+      }
+      else {
+        ForwardResponse.forward(routingContext.response(), getItemResponse);
+      }
+    });
   }
 
   private void replace(RoutingContext routingContext) {
@@ -377,6 +397,20 @@ public class RequestCollectionResource {
       default:
         //TODO: Need to add validation to stop this situation
         return "";
+    }
+  }
+
+  private boolean isOkStatus(JsonObject item, JsonObject request) {
+    String status = item.getJsonObject("status").getString("name");
+
+    switch (request.getString("requestType")) {
+      case RequestType.HOLD:
+      case RequestType.RECALL:
+        return status.equals(CHECKED_OUT);
+
+      case RequestType.PAGE:
+      default:
+        return true;
     }
   }
 }

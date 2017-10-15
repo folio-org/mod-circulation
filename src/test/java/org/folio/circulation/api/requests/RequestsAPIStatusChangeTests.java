@@ -20,6 +20,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import static org.folio.circulation.api.support.ItemRequestExamples.basedUponSmallAngryPlanet;
+import static org.folio.circulation.api.support.LoanPreparation.checkOutItem;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -63,6 +64,8 @@ public class RequestsAPIStatusChangeTests {
       .withBarcode("036000291452")
       .create()).getId();
 
+    checkOutItem(itemId, loansClient);
+
     JsonObject requestRequest = new RequestRequestBuilder()
       .hold()
       .withId(id)
@@ -91,6 +94,8 @@ public class RequestsAPIStatusChangeTests {
     UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
       .withBarcode("6540962174061")
       .create()).getId();
+
+    checkOutItem(itemId, loansClient);
 
     JsonObject requestRequest = new RequestRequestBuilder()
       .recall()

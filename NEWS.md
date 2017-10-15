@@ -2,7 +2,8 @@
 
 * Item status `Checked Out` is now `Checked out` (CIRC-39)
 * Creating a hold or recall request changes the associated item's `status` (CIRC-39)
-* Creating a request for an item that does not exist will now fail (CIRC-39)
+* A hold or recall request will be rejected when associated item's `status` is not checked out (CIRC-39)
+* A request for an item that does not exist will be rejected (CIRC-39)
 
 ## 4.5.0 2017-10-11
 

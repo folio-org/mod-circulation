@@ -2,10 +2,7 @@ package org.folio.circulation.api.requests;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.APITestSuite;
-import org.folio.circulation.api.support.InterfaceUrls;
-import org.folio.circulation.api.support.RequestRequestBuilder;
-import org.folio.circulation.api.support.ResourceClient;
-import org.folio.circulation.api.support.UserRequestBuilder;
+import org.folio.circulation.api.support.*;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
@@ -27,7 +24,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static org.folio.circulation.api.support.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.api.support.ItemRequestExamples.basedUponSmallAngryPlanet;
+import static org.folio.circulation.api.support.LoanPreparation.checkOutItem;
 import static org.folio.circulation.api.support.TextDateTimeMatcher.isEquivalentTo;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -68,8 +67,10 @@ public class RequestsAPICreationTests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("036000291452")
-      .create()).getId();
+      .withBarcode("036000291452"))
+      .getId();
+
+    checkOutItem(itemId, loansClient);
 
     UUID requesterId = usersClient.create(new UserRequestBuilder()
       .withName("Jones", "Steven")
@@ -142,7 +143,7 @@ public class RequestsAPICreationTests {
   }
 
   @Test
-  public void creatingARequestFailsWhenItemNotFound()
+  public void cannotCreateRequestForUnknownItem()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -162,12 +163,99 @@ public class RequestsAPICreationTests {
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
 
     client.post(InterfaceUrls.requestsUrl(), requestRequest,
-      ResponseHandler.text(postCompleted));
+      ResponseHandler.json(postCompleted));
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
 
     assertThat(String.format("Should fail to create request: %s", postResponse.getBody()),
-      postResponse.getStatusCode(), is(HttpURLConnection.HTTP_INTERNAL_ERROR));
+      postResponse.getStatusCode(), is(UNPROCESSABLE_ENTITY));
+  }
+
+  @Test
+  public void cannotCreateRecallRequestWhenItemIsNotCheckedOut()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException,
+    UnsupportedEncodingException {
+
+    UUID id = UUID.randomUUID();
+    UUID itemId = itemsClient.create(new ItemRequestBuilder()).getId();
+
+    JsonObject requestRequest = new RequestRequestBuilder()
+      .recall()
+      .withId(id)
+      .withItemId(itemId)
+      .withRequesterId(usersClient.create(new UserRequestBuilder().create()).getId())
+      .create();
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(InterfaceUrls.requestsUrl(), requestRequest,
+      ResponseHandler.json(postCompleted));
+
+    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Should fail to create request: %s", postResponse.getBody()),
+      postResponse.getStatusCode(), is(UNPROCESSABLE_ENTITY));
+  }
+
+  @Test
+  public void cannotCreateHoldRequestWhenItemIsNotCheckedOut()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException,
+    UnsupportedEncodingException {
+
+    UUID id = UUID.randomUUID();
+    UUID itemId = itemsClient.create(new ItemRequestBuilder()).getId();
+
+    JsonObject requestRequest = new RequestRequestBuilder()
+      .hold()
+      .withId(id)
+      .withItemId(itemId)
+      .withRequesterId(usersClient.create(new UserRequestBuilder().create()).getId())
+      .create();
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(InterfaceUrls.requestsUrl(), requestRequest,
+      ResponseHandler.json(postCompleted));
+
+    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Should fail to create request: %s", postResponse.getBody()),
+      postResponse.getStatusCode(), is(UNPROCESSABLE_ENTITY));
+  }
+
+  @Test
+  public void canCreateAPageRequestForAvailableItem()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException,
+    UnsupportedEncodingException {
+
+    UUID id = UUID.randomUUID();
+    UUID itemId = itemsClient.create(new ItemRequestBuilder().available()).getId();
+
+    JsonObject requestRequest = new RequestRequestBuilder()
+      .page()
+      .withId(id)
+      .withItemId(itemId)
+      .withRequesterId(usersClient.create(new UserRequestBuilder().create()).getId())
+      .create();
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(InterfaceUrls.requestsUrl(), requestRequest,
+      ResponseHandler.json(postCompleted));
+
+    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Should be able to create request: %s", postResponse.getBody()),
+      postResponse.getStatusCode(), is(HttpURLConnection.HTTP_CREATED));
   }
 
   @Test
@@ -181,8 +269,10 @@ public class RequestsAPICreationTests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("036000291452")
-      .create()).getId();
+      .withBarcode("036000291452"))
+      .getId();
+
+    checkOutItem(itemId, loansClient);
 
     UUID requesterId = UUID.randomUUID();
 
@@ -226,8 +316,10 @@ public class RequestsAPICreationTests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("036000291452")
-      .create()).getId();
+      .withBarcode("036000291452"))
+      .getId();
+
+    checkOutItem(itemId, loansClient);
 
     UUID requesterId = UUID.randomUUID();
 
@@ -282,13 +374,15 @@ public class RequestsAPICreationTests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("036000291452")
-      .create()).getId();
+      .withBarcode("036000291452"))
+      .getId();
 
     UUID requesterId = usersClient.create(new UserRequestBuilder()
       .withName("Jones", "Steven", "Anthony")
       .withBarcode("564376549214")
       .create()).getId();
+
+    checkOutItem(itemId, loansClient);
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
@@ -346,8 +440,10 @@ public class RequestsAPICreationTests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("036000291452")
-      .create()).getId();
+      .withBarcode("036000291452"))
+      .getId();
+
+    checkOutItem(itemId, loansClient);
 
     UUID requesterId = usersClient.create(new UserRequestBuilder()
       .withName("Jones", "Steven")
@@ -405,22 +501,16 @@ public class RequestsAPICreationTests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withNoBarcode()
-      .create()).getId();
+      .withNoBarcode())
+      .getId();
 
-    UUID requesterId = usersClient.create(new UserRequestBuilder().create()).getId();
-
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    checkOutItem(itemId, loansClient);
 
     JsonObject requestRequest = new RequestRequestBuilder()
       .recall()
       .withId(id)
-      .withRequestDate(requestDate)
       .withItemId(itemId)
-      .withRequesterId(requesterId)
-      .fulfilToHoldShelf()
-      .withRequestExpiration(new LocalDate(2017, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
+      .withRequesterId(usersClient.create(new UserRequestBuilder().create()).getId())
       .create();
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
@@ -460,9 +550,10 @@ public class RequestsAPICreationTests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("036000291452")
-      .create()).getId();
+      .withBarcode("036000291452"))
+      .getId();
 
+    checkOutItem(itemId, loansClient);
 
     UUID requesterId = usersClient.create(new UserRequestBuilder()
       .withName("Jones", "Steven")

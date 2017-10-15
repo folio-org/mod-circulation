@@ -2,14 +2,11 @@ package org.folio.circulation.support.http.server;
 
 public class ValidationError {
 
-  private final String propertyName;
+  public final String propertyName;
+  public final String value;
 
-  public ValidationError(String propertyName) {
-
+  public ValidationError(String propertyName, String value) {
     this.propertyName = propertyName;
-  }
-
-  public String getPropertyName() {
-    return propertyName;
+    this.value = value;
   }
 }

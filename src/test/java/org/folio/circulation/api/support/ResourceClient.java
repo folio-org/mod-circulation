@@ -53,6 +53,15 @@ public class ResourceClient {
     this.resourceName = resourceName;
   }
 
+  public IndividualResource create(ItemRequestBuilder builder)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return create(builder.create());
+  }
+
   public IndividualResource create(JsonObject request)
     throws MalformedURLException,
     InterruptedException,

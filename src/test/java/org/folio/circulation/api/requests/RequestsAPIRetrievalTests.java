@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static org.folio.circulation.api.support.ItemRequestExamples.*;
+import static org.folio.circulation.api.support.LoanPreparation.checkOutItem;
 import static org.folio.circulation.api.support.TextDateTimeMatcher.isEquivalentTo;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -72,6 +73,8 @@ public class RequestsAPIRetrievalTests {
     UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
       .withBarcode("036000291452")
       .create()).getId();
+
+    checkOutItem(itemId, loansClient);
 
     UUID requesterId = usersClient.create(new UserRequestBuilder()
       .withName("Jones", "Steven")
@@ -168,37 +171,37 @@ public class RequestsAPIRetrievalTests {
       .create()).getId();
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponSmallAngryPlanet().create()).getId())
+      .withItemId(itemsClient.create(basedUponSmallAngryPlanet().checkOut()).getId())
       .withRequesterId(requesterId)
       .create());
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponNod().create()).getId())
+      .withItemId(itemsClient.create(basedUponNod().checkOut()).getId())
       .withRequesterId(requesterId)
       .create());
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponInterestingTimes().create()).getId())
+      .withItemId(itemsClient.create(basedUponInterestingTimes().checkOut()).getId())
       .withRequesterId(requesterId)
       .create());
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponTemeraire().create()).getId())
+      .withItemId(itemsClient.create(basedUponTemeraire().checkOut()).getId())
       .withRequesterId(requesterId)
       .create());
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponNod().create()).getId())
+      .withItemId(itemsClient.create(basedUponNod().checkOut()).getId())
       .withRequesterId(requesterId)
       .create());
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponUprooted().create()).getId())
+      .withItemId(itemsClient.create(basedUponUprooted().checkOut()).getId())
       .withRequesterId(requesterId)
       .create());
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponTemeraire().create()).getId())
+      .withItemId(itemsClient.create(basedUponTemeraire().checkOut()).getId())
       .withRequesterId(requesterId)
       .create());
 
@@ -256,49 +259,44 @@ public class RequestsAPIRetrievalTests {
       .create()).getId();
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponSmallAngryPlanet().create()).getId())
+      .withItemId(itemsClient.create(basedUponSmallAngryPlanet().checkOut()).getId())
       .withRequesterId(firstRequester)
       .create());
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponNod()
-        .create()).getId())
+      .withItemId(itemsClient.create(basedUponNod().checkOut()).getId())
       .withRequesterId(firstRequester)
       .create());
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponInterestingTimes()
-        .create()).getId())
+      .withItemId(itemsClient.create(basedUponInterestingTimes().checkOut()).getId())
       .withRequesterId(secondRequester)
       .create());
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponTemeraire()
-        .create()).getId())
+      .withItemId(itemsClient.create(basedUponTemeraire().checkOut()).getId())
       .withRequesterId(firstRequester)
       .create());
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponNod()
-        .create()).getId())
+      .withItemId(itemsClient.create(basedUponNod().checkOut()).getId())
       .withRequesterId(firstRequester)
       .create());
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponUprooted()
-        .create()).getId())
+      .withItemId(itemsClient.create(basedUponUprooted().checkOut()).getId())
       .withRequesterId(secondRequester)
       .create());
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponTemeraire()
-        .create()).getId())
+      .withItemId(itemsClient.create(basedUponTemeraire().checkOut()).getId())
       .withRequesterId(secondRequester)
       .create());
 
     CompletableFuture<Response> getRequestsCompleted = new CompletableFuture<>();
 
-    client.get(InterfaceUrls.requestsUrl() + String.format("?query=requester.lastName=%s", "Norton"),
+    client.get(InterfaceUrls.requestsUrl()
+        + String.format("?query=requester.lastName=%s", "Norton"),
       ResponseHandler.any(getRequestsCompleted));
 
     Response getRequestsResponse = getRequestsCompleted.get(5, TimeUnit.SECONDS);
@@ -328,37 +326,37 @@ public class RequestsAPIRetrievalTests {
     UUID requesterId = usersClient.create(new UserRequestBuilder().create()).getId();
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponSmallAngryPlanet().create()).getId())
+      .withItemId(itemsClient.create(basedUponSmallAngryPlanet().checkOut()).getId())
       .withRequesterId(requesterId)
       .create());
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponNod().create()).getId())
+      .withItemId(itemsClient.create(basedUponNod().checkOut()).getId())
       .withRequesterId(requesterId)
       .create());
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponInterestingTimes().create()).getId())
+      .withItemId(itemsClient.create(basedUponInterestingTimes().checkOut()).getId())
       .withRequesterId(requesterId)
       .create());
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponTemeraire().create()).getId())
+      .withItemId(itemsClient.create(basedUponTemeraire().checkOut()).getId())
       .withRequesterId(requesterId)
       .create());
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponNod().create()).getId())
+      .withItemId(itemsClient.create(basedUponNod().checkOut()).getId())
       .withRequesterId(requesterId)
       .create());
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponUprooted().create()).getId())
+      .withItemId(itemsClient.create(basedUponUprooted().checkOut()).getId())
       .withRequesterId(requesterId)
       .create());
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponTemeraire().create()).getId())
+      .withItemId(itemsClient.create(basedUponTemeraire().checkOut()).getId())
       .withRequesterId(requesterId)
       .create());
 
