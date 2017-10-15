@@ -77,4 +77,35 @@ public class RequestsAPIStatusChangeTests {
     assertThat(changedItem.getJson().getJsonObject("status").getString("name"),
       is("Checked out - Held"));
   }
+
+  @Test
+  public void creatingARecallRequestChangesTheItemStatus()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException,
+    UnsupportedEncodingException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
+      .withBarcode("6540962174061")
+      .create()).getId();
+
+    JsonObject requestRequest = new RequestRequestBuilder()
+      .recall()
+      .withId(id)
+      .withItemId(itemId)
+      .withRequesterId(usersClient.create(new UserRequestBuilder().create()).getId())
+      .create();
+
+    requestsClient.create(requestRequest);
+
+    Response changedItem = itemsClient.getById(itemId);
+
+    assertThat(changedItem.getJson().getJsonObject("status").getString("name"),
+      is("Checked out - Recalled"));
+  }
+
+
 }

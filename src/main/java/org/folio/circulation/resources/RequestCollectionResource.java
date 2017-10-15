@@ -5,8 +5,8 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
-import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.ItemStatusAssistant;
+import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
@@ -16,6 +16,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+
+import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT_HELD;
+import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT_RECALLED;
 
 public class RequestCollectionResource {
 
@@ -65,7 +68,7 @@ public class RequestCollectionResource {
 
     String itemId = request.getString("itemId");
 
-    ItemStatusAssistant.updateItemWhenLoanChanges(itemId, ItemStatus.CHECKED_OUT_HELD,
+    ItemStatusAssistant.updateItemWhenLoanChanges(itemId, itemStatusFrom(request),
       itemsStorageClient, routingContext.response(), item -> {
         addSummariesToRequest(
           request,
@@ -361,5 +364,19 @@ public class RequestCollectionResource {
       context.getTenantId());
 
     return usersStorageClient;
+  }
+
+  private String itemStatusFrom(JsonObject request) {
+    switch(request.getString("requestType")) {
+      case RequestType.HOLD:
+        return CHECKED_OUT_HELD;
+
+      case RequestType.RECALL:
+        return CHECKED_OUT_RECALLED;
+
+      default:
+        //TODO: Need to add validation to stop this situation
+        return "";
+    }
   }
 }
