@@ -24,6 +24,9 @@ import java.util.stream.Collectors;
 
 public class LoanCollectionResource {
 
+  private static final String CHECKED_OUT_ITEM_STATUS = "Checked out";
+  private static final String AVAILABLE_ITEM_STATUS = "Available";
+
   private final String rootPath;
 
   public LoanCollectionResource(String rootPath) {
@@ -379,10 +382,10 @@ public class LoanCollectionResource {
   private String itemStatusFrom(JsonObject loan) {
     switch(loan.getJsonObject("status").getString("name")) {
       case "Open":
-        return "Checked Out";
+        return CHECKED_OUT_ITEM_STATUS;
 
       case "Closed":
-        return "Available";
+        return AVAILABLE_ITEM_STATUS;
 
       default:
         //TODO: Need to add validation to stop this situation

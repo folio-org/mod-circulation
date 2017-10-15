@@ -123,7 +123,7 @@ public class LoanAPITests {
 
     assertThat("status is taken from item",
       loan.getJsonObject("item").getJsonObject("status").getString("name"),
-      is("Checked Out"));
+      is("Checked out"));
 
     assertThat("has item location",
       loan.getJsonObject("item").containsKey("location"), is(true));
@@ -138,7 +138,7 @@ public class LoanAPITests {
     JsonObject item = itemsClient.getById(itemId).getJson();
 
     assertThat("item status is not checked out",
-      item.getJsonObject("status").getString("name"), is("Checked Out"));
+      item.getJsonObject("status").getString("name"), is("Checked out"));
   }
 
   @Test
@@ -263,7 +263,7 @@ public class LoanAPITests {
 
     assertThat("status is taken from item",
       loan.getJsonObject("item").getJsonObject("status").getString("name"),
-      is("Checked Out"));
+      is("Checked out"));
 
     assertThat("has item location",
       loan.getJsonObject("item").containsKey("location"), is(true));
@@ -483,7 +483,7 @@ public class LoanAPITests {
     JsonObject item = itemsClient.getById(itemId).getJson();
 
     assertThat("item status is not checked out",
-      item.getJsonObject("status").getString("name"), is("Checked Out"));
+      item.getJsonObject("status").getString("name"), is("Checked out"));
   }
 
   @Test
@@ -507,7 +507,7 @@ public class LoanAPITests {
     JsonObject item = itemsClient.getById(itemId).getJson();
 
     assertThat("item status is not checked out",
-      item.getJsonObject("status").getString("name"), is("Checked Out"));
+      item.getJsonObject("status").getString("name"), is("Checked out"));
 
     CompletableFuture<Response> putCompleted = new CompletableFuture<>();
 
@@ -523,7 +523,7 @@ public class LoanAPITests {
     JsonObject changedItem = itemsClient.getById(itemId).getJson();
 
     assertThat("item status is not checked out",
-      changedItem.getJsonObject("status").getString("name"), is("Checked Out"));
+      changedItem.getJsonObject("status").getString("name"), is("Checked out"));
   }
 
   @Test
