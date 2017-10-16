@@ -19,11 +19,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import static org.folio.circulation.api.support.ItemRequestExamples.basedUponSmallAngryPlanet;
+import static org.folio.circulation.api.support.LoanPreparation.checkInLoan;
 import static org.folio.circulation.api.support.LoanPreparation.checkOutItem;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-public class RequestsAPIStatusChangeTests {
+public class RequestsAPILoanCheckInTests {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final OkapiHttpClient client = APITestSuite.createClient(exception -> {
@@ -49,7 +50,7 @@ public class RequestsAPIStatusChangeTests {
   }
 
   @Test
-  public void creatingAHoldRequestChangesTheItemStatus()
+  public void ItemIsAvailableAfterCheckingInLoanEvenWithOutstandingHoldRequest()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -62,7 +63,7 @@ public class RequestsAPIStatusChangeTests {
       .withBarcode("036000291452"))
       .getId();
 
-    checkOutItem(itemId, loansClient);
+    UUID loanId = checkOutItem(itemId, loansClient).getId();
 
     requestsClient.create(new RequestRequestBuilder()
       .hold()
@@ -70,14 +71,16 @@ public class RequestsAPIStatusChangeTests {
       .withItemId(itemId)
       .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
 
+    checkInLoan(loanId, loansClient);
+
     Response changedItem = itemsClient.getById(itemId);
 
     assertThat(changedItem.getJson().getJsonObject("status").getString("name"),
-      is("Checked out - Held"));
+      is("Available"));
   }
 
   @Test
-  public void creatingARecallRequestChangesTheItemStatus()
+  public void ItemIsAvailableAfterCheckingInLoanEvenWithOutstandingRecallRequest()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -87,10 +90,10 @@ public class RequestsAPIStatusChangeTests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("6540962174061"))
+      .withBarcode("036000291452"))
       .getId();
 
-    checkOutItem(itemId, loansClient);
+    UUID loanId = checkOutItem(itemId, loansClient).getId();
 
     requestsClient.create(new RequestRequestBuilder()
       .recall()
@@ -98,9 +101,11 @@ public class RequestsAPIStatusChangeTests {
       .withItemId(itemId)
       .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
 
+    checkInLoan(loanId, loansClient);
+
     Response changedItem = itemsClient.getById(itemId);
 
     assertThat(changedItem.getJson().getJsonObject("status").getString("name"),
-      is("Checked out - Recalled"));
+      is("Available"));
   }
 }

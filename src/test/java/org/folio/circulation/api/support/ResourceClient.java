@@ -8,7 +8,6 @@ import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
 import org.hamcrest.MatcherAssert;
 
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -81,12 +80,29 @@ public class ResourceClient {
     return new IndividualResource(response);
   }
 
+  public void replace(UUID id, JsonObject request)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
+
+    client.put(urlMaker.combine(String.format("/%s", id)), request,
+      ResponseHandler.any(putCompleted));
+
+    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(
+      String.format("Failed to update %s %s: %s", putResponse.getBody(), resourceName, id),
+      putResponse.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
+  }
+
   public Response getById(UUID id)
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
-    TimeoutException,
-    UnsupportedEncodingException {
+    TimeoutException {
 
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
@@ -146,15 +162,15 @@ public class ResourceClient {
     MatcherAssert.assertThat("WARNING!!!!! Get all resources individually in order to delete failed",
       response.getStatusCode(), is(200));
 
-    List<JsonObject> users = JsonArrayHelper.toList(response.getJson()
+    List<JsonObject> records = JsonArrayHelper.toList(response.getJson()
       .getJsonArray(collectionArrayName));
 
-    users.stream().forEach(user -> {
+    records.stream().forEach(record -> {
       try {
         CompletableFuture<Response> deleteFinished = new CompletableFuture<>();
 
         client.delete(urlMaker.combine(String.format("/%s",
-          user.getString("id"))),
+          record.getString("id"))),
           ResponseHandler.any(deleteFinished));
 
         Response deleteResponse = deleteFinished.get(5, TimeUnit.SECONDS);

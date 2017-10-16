@@ -44,7 +44,8 @@ import static org.hamcrest.core.Is.is;
   RequestsAPIDeletionTests.class,
   RequestsAPIRetrievalTests.class,
   RequestsAPIUpdatingTests.class,
-  RequestsAPIStatusChangeTests.class
+  RequestsAPIStatusChangeTests.class,
+  RequestsAPILoanCheckInTests.class,
 })
 public class APITestSuite {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
