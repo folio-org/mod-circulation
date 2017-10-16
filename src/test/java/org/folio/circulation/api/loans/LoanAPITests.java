@@ -1,6 +1,7 @@
-package org.folio.circulation.api;
+package org.folio.circulation.api.loans;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.api.APITestSuite;
 import org.folio.circulation.api.support.LoanRequestBuilder;
 import org.folio.circulation.api.support.ResourceClient;
 import org.folio.circulation.support.JsonArrayHelper;
