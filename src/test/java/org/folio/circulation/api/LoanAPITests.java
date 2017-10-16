@@ -422,19 +422,19 @@ public class LoanAPITests {
       .withItemId(itemId)
       .withDueDate(loanDate.plus(Period.days(14))));
 
-    JsonObject returnedLoan = loan.copyJson();
+    JsonObject renewedLoan = loan.copyJson();
 
-    DateTime dueDate = DateTime.parse(returnedLoan.getString("dueDate"));
+    DateTime dueDate = DateTime.parse(renewedLoan.getString("dueDate"));
     DateTime newDueDate = dueDate.plus(Period.days(14));
 
-    returnedLoan
+    renewedLoan
       .put("action", "renewed")
       .put("dueDate", newDueDate.toString(ISODateTimeFormat.dateTime()))
       .put("renewalCount", 1);
 
     CompletableFuture<Response> putCompleted = new CompletableFuture<>();
 
-    client.put(loansUrl(String.format("/%s", loan.getId())), returnedLoan,
+    client.put(loansUrl(String.format("/%s", loan.getId())), renewedLoan,
       ResponseHandler.any(putCompleted));
 
     Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);

@@ -19,7 +19,7 @@ import java.util.function.Consumer;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT_HELD;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT_RECALLED;
-import static org.folio.circulation.domain.ItemStatusAssistant.updateItemWhenLoanChanges;
+import static org.folio.circulation.domain.ItemStatusAssistant.updateItemStatus;
 
 public class RequestCollectionResource {
 
@@ -74,7 +74,7 @@ public class RequestCollectionResource {
         JsonObject loadedItem = getItemResponse.getJson();
 
         if (isOkStatus(loadedItem, request)) {
-          updateItemWhenLoanChanges(itemId, itemStatusFrom(request),
+          updateItemStatus(itemId, itemStatusFrom(request),
             itemsStorageClient, routingContext.response(), item -> {
               addSummariesToRequest(
                 request,

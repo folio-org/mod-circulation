@@ -34,10 +34,28 @@ public class LoanPreparation {
     Response getResponse = loansClient.getById(loanId);
 
     //TODO: Should also have a return date
-    JsonObject updatedLoan = getResponse.getJson().copy()
+    JsonObject closedLoan = getResponse.getJson().copy()
       .put("status", new JsonObject().put("name", "Closed"))
       .put("action", "checkedin");
 
-    loansClient.replace(loanId, updatedLoan);
+    loansClient.replace(loanId, closedLoan);
+  }
+
+  public static void renewLoan(
+    UUID loanId,
+    ResourceClient loansClient)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    Response getResponse = loansClient.getById(loanId);
+
+    //TODO: Should also change the due date
+    JsonObject renewedLoan = getResponse.getJson().copy()
+      .put("action", "renewed")
+      .put("renewalCount", 1);
+
+    loansClient.replace(loanId, renewedLoan);
   }
 }

@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
-import static org.folio.circulation.domain.ItemStatusAssistant.updateItemWhenLoanChanges;
+import static org.folio.circulation.domain.ItemStatusAssistant.updateItemStatus;
 
 public class LoanCollectionResource {
 
@@ -65,7 +65,7 @@ public class LoanCollectionResource {
     JsonObject loan = routingContext.getBodyAsJson();
     String itemId = loan.getString("itemId");
 
-    updateItemWhenLoanChanges(itemId, itemStatusFrom(loan),
+    updateItemStatus(itemId, itemStatusFrom(loan),
       itemsStorageClient, routingContext.response(), item -> {
         loansStorageClient.post(loan, response -> {
           if(response.getStatusCode() == 201) {
@@ -111,7 +111,7 @@ public class LoanCollectionResource {
     JsonObject storageLoan = loan.copy();
     storageLoan.remove("item");
 
-    updateItemWhenLoanChanges(itemId, itemStatusFrom(loan),
+    updateItemStatus(itemId, itemStatusFrom(loan),
       itemsStorageClient, routingContext.response(), item -> {
         loansStorageClient.put(id, storageLoan, response -> {
           if(response.getStatusCode() == 204) {
