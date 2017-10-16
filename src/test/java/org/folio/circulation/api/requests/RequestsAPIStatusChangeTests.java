@@ -1,6 +1,5 @@
 package org.folio.circulation.api.requests;
 
-import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.APITestSuite;
 import org.folio.circulation.api.support.RequestRequestBuilder;
 import org.folio.circulation.api.support.ResourceClient;
@@ -61,19 +60,16 @@ public class RequestsAPIStatusChangeTests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("036000291452")
-      .create()).getId();
+      .withBarcode("036000291452"))
+      .getId();
 
     checkOutItem(itemId, loansClient);
 
-    JsonObject requestRequest = new RequestRequestBuilder()
+    requestsClient.create(new RequestRequestBuilder()
       .hold()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder().create()).getId())
-      .create();
-
-    requestsClient.create(requestRequest);
+      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
 
     Response changedItem = itemsClient.getById(itemId);
 
@@ -92,25 +88,20 @@ public class RequestsAPIStatusChangeTests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("6540962174061")
-      .create()).getId();
+      .withBarcode("6540962174061"))
+      .getId();
 
     checkOutItem(itemId, loansClient);
 
-    JsonObject requestRequest = new RequestRequestBuilder()
+    requestsClient.create(new RequestRequestBuilder()
       .recall()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder().create()).getId())
-      .create();
-
-    requestsClient.create(requestRequest);
+      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
 
     Response changedItem = itemsClient.getById(itemId);
 
     assertThat(changedItem.getJson().getJsonObject("status").getString("name"),
       is("Checked out - Recalled"));
   }
-
-
 }

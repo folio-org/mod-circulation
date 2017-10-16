@@ -68,8 +68,8 @@ public class LoanAPITests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("036000291452")
-      .create()).getId();
+      .withBarcode("036000291452"))
+      .getId();
 
     UUID userId = UUID.randomUUID();
     UUID proxyUserId = UUID.randomUUID();
@@ -84,8 +84,7 @@ public class LoanAPITests {
       .withItemId(itemId)
       .withLoanDate(loanDate)
       .withDueDate(dueDate)
-      .withStatus("Open")
-      .create());
+      .withStatus("Open"));
 
     JsonObject loan = response.getJson();
 
@@ -151,8 +150,8 @@ public class LoanAPITests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .create()).getId();
+    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()).getId();
+
     UUID userId = UUID.randomUUID();
 
     IndividualResource response = loansClient.create(new LoanRequestBuilder()
@@ -161,8 +160,7 @@ public class LoanAPITests {
       .withItemId(itemId)
       .withLoanDate(new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC))
       .withReturnDate(new DateTime(2017, 3, 15, 11, 14, 36, DateTimeZone.UTC))
-      .withStatus("Closed")
-      .create());
+      .withStatus("Closed"));
 
     JsonObject loan = response.getJson();
 
@@ -201,8 +199,8 @@ public class LoanAPITests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("036000291452")
-      .create()).getId();
+      .withBarcode("036000291452"))
+      .getId();
 
     UUID userId = UUID.randomUUID();
     UUID proxyUserId = UUID.randomUUID();
@@ -216,8 +214,7 @@ public class LoanAPITests {
       .withItemId(itemId)
       .withLoanDate(new DateTime(2016, 10, 15, 8, 26, 53, DateTimeZone.UTC))
       .withDueDate(dueDate)
-      .withStatus("Open")
-      .create());
+      .withStatus("Open"));
 
     Response getResponse = loansClient.getById(id);
 
@@ -281,13 +278,11 @@ public class LoanAPITests {
     TimeoutException,
     UnsupportedEncodingException {
 
-    UUID itemId = itemsClient.create(basedUponNod()
-      .create()).getId();
+    UUID itemId = itemsClient.create(basedUponNod()).getId();
 
     UUID id = loansClient.create(new LoanRequestBuilder()
-      .withItemId(itemId)
-      .create()).getId();
-
+      .withItemId(itemId))
+      .getId();
 
     itemsClient.delete(itemId);
 
@@ -313,8 +308,7 @@ public class LoanAPITests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withNoBarcode()
-      .create())
+      .withNoBarcode())
       .getId();
 
     UUID userId = UUID.randomUUID();
@@ -324,8 +318,7 @@ public class LoanAPITests {
       .withUserId(userId)
       .withItemId(itemId)
       .withLoanDate(new DateTime(2016, 10, 15, 8, 26, 53, DateTimeZone.UTC))
-      .withStatus("Open")
-      .create());
+      .withStatus("Open"));
 
     Response getResponse = loansClient.getById(id);
 
@@ -361,13 +354,11 @@ public class LoanAPITests {
 
     DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 
-    UUID itemId = itemsClient.create(basedUponNod()
-      .create()).getId();
+    UUID itemId = itemsClient.create(basedUponNod()).getId();
 
     IndividualResource loan = loansClient.create(new LoanRequestBuilder()
       .withLoanDate(loanDate)
-      .withItemId(itemId)
-      .create());
+      .withItemId(itemId));
 
     JsonObject returnedLoan = loan.copyJson();
 
@@ -424,14 +415,12 @@ public class LoanAPITests {
 
     DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 
-    UUID itemId = itemsClient.create(basedUponNod()
-      .create()).getId();
+    UUID itemId = itemsClient.create(basedUponNod()).getId();
 
     IndividualResource loan = loansClient.create(new LoanRequestBuilder()
       .withLoanDate(loanDate)
       .withItemId(itemId)
-      .withDueDate(loanDate.plus(Period.days(14)))
-      .create());
+      .withDueDate(loanDate.plus(Period.days(14))));
 
     JsonObject returnedLoan = loan.copyJson();
 
@@ -496,13 +485,11 @@ public class LoanAPITests {
 
     DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, 232, DateTimeZone.UTC);
 
-    UUID itemId = itemsClient.create(basedUponNod()
-      .create()).getId();
+    UUID itemId = itemsClient.create(basedUponNod()).getId();
 
     IndividualResource loan = loansClient.create(new LoanRequestBuilder()
       .withLoanDate(loanDate)
-      .withItemId(itemId)
-      .create());
+      .withItemId(itemId));
 
     JsonObject item = itemsClient.getById(itemId).getJson();
 
@@ -534,12 +521,9 @@ public class LoanAPITests {
     TimeoutException,
     UnsupportedEncodingException {
 
-    UUID itemId = itemsClient.create(basedUponNod()
-      .create()).getId();
+    UUID itemId = itemsClient.create(basedUponNod()).getId();
 
-    loansClient.create(new LoanRequestBuilder()
-      .withItemId(itemId)
-      .create());
+    loansClient.create(new LoanRequestBuilder().withItemId(itemId));
 
     itemsClient.delete(itemId);
 
@@ -571,32 +555,25 @@ public class LoanAPITests {
     UnsupportedEncodingException {
 
     loansClient.create(new LoanRequestBuilder()
-      .withItemId(itemsClient.create(basedUponSmallAngryPlanet().create()).getId())
-      .create());
+      .withItemId(itemsClient.create(basedUponSmallAngryPlanet()).getId()));
 
     loansClient.create(new LoanRequestBuilder()
-      .withItemId(itemsClient.create(basedUponNod().create()).getId())
-      .create());
+      .withItemId(itemsClient.create(basedUponNod()).getId()));
 
     loansClient.create(new LoanRequestBuilder()
-      .withItemId(itemsClient.create(basedUponSmallAngryPlanet().create()).getId())
-      .create());
+      .withItemId(itemsClient.create(basedUponSmallAngryPlanet()).getId()));
 
     loansClient.create(new LoanRequestBuilder()
-      .withItemId(itemsClient.create(basedUponTemeraire().create()).getId())
-      .create());
+      .withItemId(itemsClient.create(basedUponTemeraire()).getId()));
 
     loansClient.create(new LoanRequestBuilder()
-      .withItemId(itemsClient.create(basedUponUprooted().create()).getId())
-      .create());
+      .withItemId(itemsClient.create(basedUponUprooted()).getId()));
 
     loansClient.create(new LoanRequestBuilder()
-      .withItemId(itemsClient.create(basedUponNod().create()).getId())
-      .create());
+      .withItemId(itemsClient.create(basedUponNod()).getId()));
 
     loansClient.create(new LoanRequestBuilder()
-      .withItemId(itemsClient.create(basedUponInterestingTimes().create()).getId())
-      .create());
+      .withItemId(itemsClient.create(basedUponInterestingTimes()).getId()));
 
     CompletableFuture<Response> firstPageCompleted = new CompletableFuture<>();
     CompletableFuture<Response> secondPageCompleted = new CompletableFuture<>();
@@ -651,40 +628,32 @@ public class LoanAPITests {
     String queryTemplate = loansUrl() + "?query=userId=%s";
 
     loansClient.create(new LoanRequestBuilder()
-      .withItem(itemsClient.create(basedUponSmallAngryPlanet().create()))
-      .withUserId(firstUserId)
-      .create());
+      .withItem(itemsClient.create(basedUponSmallAngryPlanet()))
+      .withUserId(firstUserId));
 
     loansClient.create(new LoanRequestBuilder()
-      .withItem(itemsClient.create(basedUponNod().create()))
-      .withUserId(firstUserId)
-      .create());
+      .withItem(itemsClient.create(basedUponNod()))
+      .withUserId(firstUserId));
 
     loansClient.create(new LoanRequestBuilder()
-      .withItem(
-        itemsClient.create(basedUponSmallAngryPlanet().create()))
-      .withUserId(firstUserId)
-      .create());
+      .withItem(itemsClient.create(basedUponSmallAngryPlanet()))
+      .withUserId(firstUserId));
+
+    loansClient.create(new LoanRequestBuilder()
+      .withItem(itemsClient.create(basedUponTemeraire()))
+      .withUserId(firstUserId));
+
+    loansClient.create(new LoanRequestBuilder()
+      .withItem(itemsClient.create(basedUponUprooted()))
+      .withUserId(secondUserId));
+
+    loansClient.create(new LoanRequestBuilder()
+      .withItem(itemsClient.create(basedUponNod()))
+      .withUserId(secondUserId));
 
     loansClient.create(new LoanRequestBuilder().withItem(
-      itemsClient.create(basedUponTemeraire().create()))
-      .withUserId(firstUserId)
-      .create());
-
-    loansClient.create(new LoanRequestBuilder()
-      .withItem(itemsClient.create(basedUponUprooted().create()))
-      .withUserId(secondUserId)
-      .create());
-
-    loansClient.create(new LoanRequestBuilder()
-      .withItem(itemsClient.create(basedUponNod().create()))
-      .withUserId(secondUserId)
-      .create());
-
-    loansClient.create(new LoanRequestBuilder().withItem(
-      itemsClient.create(basedUponInterestingTimes().create()))
-      .withUserId(secondUserId)
-      .create());
+      itemsClient.create(basedUponInterestingTimes()))
+      .withUserId(secondUserId));
 
     CompletableFuture<Response> firstUserSearchCompleted = new CompletableFuture<>();
     CompletableFuture<Response> secondUserSeatchCompleted = new CompletableFuture<>();
@@ -740,39 +709,39 @@ public class LoanAPITests {
     loansClient.create(new LoanRequestBuilder()
       .withUserId(userId)
       .withStatus("Open")
-      .withItem(itemsClient.create(basedUponSmallAngryPlanet().create()))
-      .withRandomPastLoanDate().create());
+      .withItem(itemsClient.create(basedUponSmallAngryPlanet()))
+      .withRandomPastLoanDate());
 
     loansClient.create(new LoanRequestBuilder()
       .withUserId(userId)
       .withStatus("Open")
-      .withItem(itemsClient.create(basedUponNod().create()))
-      .withRandomPastLoanDate().create());
+      .withItem(itemsClient.create(basedUponNod()))
+      .withRandomPastLoanDate());
 
     loansClient.create(new LoanRequestBuilder()
       .withUserId(userId)
       .withItem(
-        itemsClient.create(basedUponNod().create()))
+        itemsClient.create(basedUponNod()))
       .withStatus("Closed")
-      .withRandomPastLoanDate().create());
+      .withRandomPastLoanDate());
 
     loansClient.create(new LoanRequestBuilder()
       .withUserId(userId)
       .withStatus("Closed")
-      .withItem(itemsClient.create(basedUponTemeraire().create()))
-      .withRandomPastLoanDate().create());
+      .withItem(itemsClient.create(basedUponTemeraire()))
+      .withRandomPastLoanDate());
 
     loansClient.create(new LoanRequestBuilder()
       .withUserId(userId)
       .withStatus("Closed")
-      .withItem(itemsClient.create(basedUponUprooted().create()))
-      .withRandomPastLoanDate().create());
+      .withItem(itemsClient.create(basedUponUprooted()))
+      .withRandomPastLoanDate());
 
     loansClient.create(new LoanRequestBuilder()
       .withUserId(userId)
       .withStatus("Closed")
-      .withItem(itemsClient.create(basedUponInterestingTimes().create()))
-      .withRandomPastLoanDate().create());
+      .withItem(itemsClient.create(basedUponInterestingTimes()))
+      .withRandomPastLoanDate());
 
     CompletableFuture<Response> openSearchComppleted = new CompletableFuture<>();
     CompletableFuture<Response> closedSearchCompleted = new CompletableFuture<>();
@@ -828,11 +797,11 @@ public class LoanAPITests {
     ExecutionException,
     UnsupportedEncodingException {
 
-    UUID itemId = itemsClient.create(basedUponNod()
-      .create()).getId();
+    UUID itemId = itemsClient.create(basedUponNod()).getId();
 
     UUID id = loansClient.create(new LoanRequestBuilder()
-      .withItemId(itemId).create()).getId();
+      .withItemId(itemId))
+      .getId();
 
     CompletableFuture<Response> deleteCompleted = new CompletableFuture<>();
 

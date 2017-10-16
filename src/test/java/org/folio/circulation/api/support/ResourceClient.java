@@ -53,7 +53,7 @@ public class ResourceClient {
     this.resourceName = resourceName;
   }
 
-  public IndividualResource create(ItemRequestBuilder builder)
+  public IndividualResource create(Builder builder)
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,

@@ -71,15 +71,15 @@ public class RequestsAPIRetrievalTests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("036000291452")
-      .create()).getId();
+      .withBarcode("036000291452"))
+      .getId();
 
     checkOutItem(itemId, loansClient);
 
     UUID requesterId = usersClient.create(new UserRequestBuilder()
       .withName("Jones", "Steven")
-      .withBarcode("564376549214")
-      .create()).getId();
+      .withBarcode("564376549214"))
+      .getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
@@ -91,8 +91,7 @@ public class RequestsAPIRetrievalTests {
       .withRequesterId(requesterId)
       .fulfilToHoldShelf()
       .withRequestExpiration(new LocalDate(2017, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
-      .create());
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
@@ -167,43 +166,35 @@ public class RequestsAPIRetrievalTests {
     TimeoutException,
     UnsupportedEncodingException {
 
-    UUID requesterId = usersClient.create(new UserRequestBuilder()
-      .create()).getId();
+    UUID requesterId = usersClient.create(new UserRequestBuilder()).getId();
 
     requestsClient.create(new RequestRequestBuilder()
       .withItemId(itemsClient.create(basedUponSmallAngryPlanet().checkOut()).getId())
-      .withRequesterId(requesterId)
-      .create());
+      .withRequesterId(requesterId));
 
     requestsClient.create(new RequestRequestBuilder()
       .withItemId(itemsClient.create(basedUponNod().checkOut()).getId())
-      .withRequesterId(requesterId)
-      .create());
+      .withRequesterId(requesterId));
 
     requestsClient.create(new RequestRequestBuilder()
       .withItemId(itemsClient.create(basedUponInterestingTimes().checkOut()).getId())
-      .withRequesterId(requesterId)
-      .create());
+      .withRequesterId(requesterId));
 
     requestsClient.create(new RequestRequestBuilder()
       .withItemId(itemsClient.create(basedUponTemeraire().checkOut()).getId())
-      .withRequesterId(requesterId)
-      .create());
+      .withRequesterId(requesterId));
 
     requestsClient.create(new RequestRequestBuilder()
       .withItemId(itemsClient.create(basedUponNod().checkOut()).getId())
-      .withRequesterId(requesterId)
-      .create());
+      .withRequesterId(requesterId));
 
     requestsClient.create(new RequestRequestBuilder()
       .withItemId(itemsClient.create(basedUponUprooted().checkOut()).getId())
-      .withRequesterId(requesterId)
-      .create());
+      .withRequesterId(requesterId));
 
     requestsClient.create(new RequestRequestBuilder()
       .withItemId(itemsClient.create(basedUponTemeraire().checkOut()).getId())
-      .withRequesterId(requesterId)
-      .create());
+      .withRequesterId(requesterId));
 
     CompletableFuture<Response> getFirstPageCompleted = new CompletableFuture<>();
 
@@ -251,47 +242,40 @@ public class RequestsAPIRetrievalTests {
     UnsupportedEncodingException {
 
     UUID firstRequester = usersClient.create(new UserRequestBuilder()
-      .withName("Jones", "Steven")
-      .create()).getId();
+      .withName("Jones", "Steven"))
+      .getId();
 
     UUID secondRequester = usersClient.create(new UserRequestBuilder()
-      .withName("Norton", "Jessica")
-      .create()).getId();
+      .withName("Norton", "Jessica"))
+      .getId();
 
     requestsClient.create(new RequestRequestBuilder()
       .withItemId(itemsClient.create(basedUponSmallAngryPlanet().checkOut()).getId())
-      .withRequesterId(firstRequester)
-      .create());
+      .withRequesterId(firstRequester));
 
     requestsClient.create(new RequestRequestBuilder()
       .withItemId(itemsClient.create(basedUponNod().checkOut()).getId())
-      .withRequesterId(firstRequester)
-      .create());
+      .withRequesterId(firstRequester));
 
     requestsClient.create(new RequestRequestBuilder()
       .withItemId(itemsClient.create(basedUponInterestingTimes().checkOut()).getId())
-      .withRequesterId(secondRequester)
-      .create());
+      .withRequesterId(secondRequester));
 
     requestsClient.create(new RequestRequestBuilder()
       .withItemId(itemsClient.create(basedUponTemeraire().checkOut()).getId())
-      .withRequesterId(firstRequester)
-      .create());
+      .withRequesterId(firstRequester));
 
     requestsClient.create(new RequestRequestBuilder()
       .withItemId(itemsClient.create(basedUponNod().checkOut()).getId())
-      .withRequesterId(firstRequester)
-      .create());
+      .withRequesterId(firstRequester));
 
     requestsClient.create(new RequestRequestBuilder()
       .withItemId(itemsClient.create(basedUponUprooted().checkOut()).getId())
-      .withRequesterId(secondRequester)
-      .create());
+      .withRequesterId(secondRequester));
 
     requestsClient.create(new RequestRequestBuilder()
       .withItemId(itemsClient.create(basedUponTemeraire().checkOut()).getId())
-      .withRequesterId(secondRequester)
-      .create());
+      .withRequesterId(secondRequester));
 
     CompletableFuture<Response> getRequestsCompleted = new CompletableFuture<>();
 
@@ -323,42 +307,35 @@ public class RequestsAPIRetrievalTests {
     TimeoutException,
     UnsupportedEncodingException {
 
-    UUID requesterId = usersClient.create(new UserRequestBuilder().create()).getId();
+    UUID requesterId = usersClient.create(new UserRequestBuilder()).getId();
 
     requestsClient.create(new RequestRequestBuilder()
       .withItemId(itemsClient.create(basedUponSmallAngryPlanet().checkOut()).getId())
-      .withRequesterId(requesterId)
-      .create());
+      .withRequesterId(requesterId));
 
     requestsClient.create(new RequestRequestBuilder()
       .withItemId(itemsClient.create(basedUponNod().checkOut()).getId())
-      .withRequesterId(requesterId)
-      .create());
+      .withRequesterId(requesterId));
 
     requestsClient.create(new RequestRequestBuilder()
       .withItemId(itemsClient.create(basedUponInterestingTimes().checkOut()).getId())
-      .withRequesterId(requesterId)
-      .create());
+      .withRequesterId(requesterId));
 
     requestsClient.create(new RequestRequestBuilder()
       .withItemId(itemsClient.create(basedUponTemeraire().checkOut()).getId())
-      .withRequesterId(requesterId)
-      .create());
+      .withRequesterId(requesterId));
 
     requestsClient.create(new RequestRequestBuilder()
       .withItemId(itemsClient.create(basedUponNod().checkOut()).getId())
-      .withRequesterId(requesterId)
-      .create());
+      .withRequesterId(requesterId));
 
     requestsClient.create(new RequestRequestBuilder()
       .withItemId(itemsClient.create(basedUponUprooted().checkOut()).getId())
-      .withRequesterId(requesterId)
-      .create());
+      .withRequesterId(requesterId));
 
     requestsClient.create(new RequestRequestBuilder()
       .withItemId(itemsClient.create(basedUponTemeraire().checkOut()).getId())
-      .withRequesterId(requesterId)
-      .create());
+      .withRequesterId(requesterId));
 
     CompletableFuture<Response> getRequestsCompleted = new CompletableFuture<>();
 

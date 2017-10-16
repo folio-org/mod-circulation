@@ -4,8 +4,7 @@ import io.vertx.core.json.JsonObject;
 
 import java.util.UUID;
 
-public class UserRequestBuilder {
-
+public class UserRequestBuilder implements Builder {
   private final UUID id;
   private final String username;
   private final String lastName;

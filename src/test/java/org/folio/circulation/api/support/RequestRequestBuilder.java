@@ -9,8 +9,7 @@ import org.joda.time.format.ISODateTimeFormat;
 
 import java.util.UUID;
 
-public class RequestRequestBuilder {
-
+public class RequestRequestBuilder implements Builder {
   private final UUID id;
   private final String requestType;
   private final DateTime requestDate;

@@ -5,7 +5,7 @@ import org.folio.circulation.api.APITestSuite;
 
 import java.util.UUID;
 
-public class ItemRequestBuilder {
+public class ItemRequestBuilder implements Builder {
 
   private static final String AVAILABLE_STATUS = "Available";
   private static final String CHECKED_OUT_STATUS = "Checked out";

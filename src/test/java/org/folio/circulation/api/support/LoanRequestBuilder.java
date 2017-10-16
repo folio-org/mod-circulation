@@ -9,8 +9,7 @@ import org.joda.time.format.ISODateTimeFormat;
 import java.util.Random;
 import java.util.UUID;
 
-public class LoanRequestBuilder {
-
+public class LoanRequestBuilder implements Builder {
   private final static String OPEN_LOAN_STATUS = "Open";
   private final static String CLOSED_LOAN_STATUS = "Closed";
 

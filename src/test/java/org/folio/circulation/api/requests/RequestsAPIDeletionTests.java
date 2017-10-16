@@ -64,11 +64,11 @@ public class RequestsAPIDeletionTests {
     ExecutionException,
     UnsupportedEncodingException {
 
-    UUID requesterId = usersClient.create(new UserRequestBuilder().create()).getId();
+    UUID requesterId = usersClient.create(new UserRequestBuilder()).getId();
 
-    UUID firstItemId = itemsClient.create(basedUponSmallAngryPlanet().create()).getId();
-    UUID secondItemId = itemsClient.create(basedUponNod().create()).getId();
-    UUID thirdItemId = itemsClient.create(basedUponInterestingTimes().create()).getId();
+    UUID firstItemId = itemsClient.create(basedUponSmallAngryPlanet()).getId();
+    UUID secondItemId = itemsClient.create(basedUponNod()).getId();
+    UUID thirdItemId = itemsClient.create(basedUponInterestingTimes()).getId();
 
     checkOutItem(firstItemId, loansClient);
     checkOutItem(secondItemId, loansClient);
@@ -76,18 +76,15 @@ public class RequestsAPIDeletionTests {
 
     requestsClient.create(new RequestRequestBuilder()
       .withItemId(firstItemId)
-      .withRequesterId(requesterId)
-      .create());
+      .withRequesterId(requesterId));
 
     requestsClient.create(new RequestRequestBuilder()
       .withItemId(secondItemId)
-      .withRequesterId(requesterId)
-      .create());
+      .withRequesterId(requesterId));
 
     requestsClient.create(new RequestRequestBuilder()
       .withItemId(thirdItemId)
-      .withRequesterId(requesterId)
-      .create());
+      .withRequesterId(requesterId));
 
     CompletableFuture<Response> deleteCompleted = new CompletableFuture<>();
 
@@ -126,11 +123,11 @@ public class RequestsAPIDeletionTests {
     UUID secondId = UUID.randomUUID();
     UUID thirdId = UUID.randomUUID();
 
-    UUID requesterId = usersClient.create(new UserRequestBuilder().create()).getId();
+    UUID requesterId = usersClient.create(new UserRequestBuilder()).getId();
 
-    UUID firstItemId = itemsClient.create(basedUponNod().create()).getId();
-    UUID secondItemId = itemsClient.create(basedUponSmallAngryPlanet().create()).getId();
-    UUID thirdItemId = itemsClient.create(basedUponTemeraire().create()).getId();
+    UUID firstItemId = itemsClient.create(basedUponNod()).getId();
+    UUID secondItemId = itemsClient.create(basedUponSmallAngryPlanet()).getId();
+    UUID thirdItemId = itemsClient.create(basedUponTemeraire()).getId();
 
     checkOutItem(firstItemId, loansClient);
     checkOutItem(secondItemId, loansClient);
@@ -139,20 +136,17 @@ public class RequestsAPIDeletionTests {
     requestsClient.create(new RequestRequestBuilder()
       .withId(firstId)
       .withItemId(firstItemId)
-      .withRequesterId(requesterId)
-      .create());
+      .withRequesterId(requesterId));
 
     requestsClient.create(new RequestRequestBuilder()
       .withId(secondId)
       .withItemId(secondItemId)
-      .withRequesterId(requesterId)
-      .create());
+      .withRequesterId(requesterId));
 
     requestsClient.create(new RequestRequestBuilder()
       .withId(thirdId)
       .withItemId(thirdItemId)
-      .withRequesterId(requesterId)
-      .create());
+      .withRequesterId(requesterId));
 
     CompletableFuture<Response> deleteCompleted = new CompletableFuture<>();
 

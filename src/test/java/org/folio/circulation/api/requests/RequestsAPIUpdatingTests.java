@@ -71,19 +71,20 @@ public class RequestsAPIUpdatingTests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsClient.create(basedUponTemeraire()
-      .withBarcode("07295629642")
-      .create()).getId();
+      .withBarcode("07295629642"))
+      .getId();
 
     checkOutItem(itemId, loansClient);
 
     UUID originalRequesterId = usersClient.create(new UserRequestBuilder()
       .withName("Norton", "Jessica")
-      .withBarcode("764523186496")
-      .create()).getId();
+      .withBarcode("764523186496"))
+      .getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
-    JsonObject requestRequest = new RequestRequestBuilder()
+    IndividualResource createdRequest = requestsClient.create(
+      new RequestRequestBuilder()
       .recall()
       .withId(id)
       .withRequestDate(requestDate)
@@ -91,15 +92,12 @@ public class RequestsAPIUpdatingTests {
       .withRequesterId(originalRequesterId)
       .fulfilToHoldShelf()
       .withRequestExpiration(new LocalDate(2017, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
-      .create();
-
-    IndividualResource createdRequest = requestsClient.create(requestRequest);
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
     UUID updatedRequester = usersClient.create(new UserRequestBuilder()
       .withName("Campbell", "Fiona")
-      .withBarcode("679231693475")
-      .create()).getId();
+      .withBarcode("679231693475"))
+      .getId();
 
     JsonObject updatedRequest = createdRequest.copyJson();
 
@@ -179,27 +177,25 @@ public class RequestsAPIUpdatingTests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsClient.create(basedUponTemeraire()
-      .withBarcode("07295629642")
-      .create()).getId();
+      .withBarcode("07295629642"))
+      .getId();
 
     checkOutItem(itemId, loansClient);
 
-    UUID requesterId = usersClient.create(new UserRequestBuilder().create()).getId();
+    UUID requesterId = usersClient.create(new UserRequestBuilder()).getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
-    JsonObject requestRequest = new RequestRequestBuilder()
-      .recall()
-      .withId(id)
-      .withRequestDate(requestDate)
-      .withItemId(itemId)
-      .withRequesterId(requesterId)
-      .fulfilToHoldShelf()
-      .withRequestExpiration(new LocalDate(2017, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
-      .create();
-
-    IndividualResource createdRequest = requestsClient.create(requestRequest);
+    IndividualResource createdRequest = requestsClient.create(
+      new RequestRequestBuilder()
+        .recall()
+        .withId(id)
+        .withRequestDate(requestDate)
+        .withItemId(itemId)
+        .withRequesterId(requesterId)
+        .fulfilToHoldShelf()
+        .withRequestExpiration(new LocalDate(2017, 7, 30))
+        .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
     JsonObject updatedRequest = createdRequest.copyJson();
 
@@ -246,30 +242,28 @@ public class RequestsAPIUpdatingTests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsClient.create(basedUponTemeraire()
-      .withBarcode("07295629642")
-      .create()).getId();
+      .withBarcode("07295629642"))
+      .getId();
 
     checkOutItem(itemId, loansClient);
 
     UUID requester = usersClient.create(new UserRequestBuilder()
       .withName("Norton", "Jessica")
-      .withBarcode("679231693475")
-      .create()).getId();
+      .withBarcode("679231693475"))
+      .getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
-    JsonObject requestRequest = new RequestRequestBuilder()
-      .recall()
-      .withId(id)
-      .withRequestDate(requestDate)
-      .withItemId(itemId)
-      .withRequesterId(requester)
-      .fulfilToHoldShelf()
-      .withRequestExpiration(new LocalDate(2017, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
-      .create();
-
-    IndividualResource createdRequest = requestsClient.create(requestRequest);
+    IndividualResource createdRequest = requestsClient.create(
+      new RequestRequestBuilder()
+        .recall()
+        .withId(id)
+        .withRequestDate(requestDate)
+        .withItemId(itemId)
+        .withRequesterId(requester)
+        .fulfilToHoldShelf()
+        .withRequestExpiration(new LocalDate(2017, 7, 30))
+        .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
     usersClient.delete(requester);
 
@@ -316,35 +310,34 @@ public class RequestsAPIUpdatingTests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsClient.create(basedUponTemeraire()
-      .withBarcode("07295629642")
-      .create()).getId();
+      .withBarcode("07295629642"))
+      .getId();
 
     checkOutItem(itemId, loansClient);
 
     UUID originalRequesterId = usersClient.create(new UserRequestBuilder()
       .withName("Norton", "Jessica")
-      .withBarcode("764523186496")
-      .create()).getId();
+      .withBarcode("764523186496"))
+      .getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
-    JsonObject requestRequest = new RequestRequestBuilder()
-      .recall()
-      .withId(id)
-      .withRequestDate(requestDate)
-      .withItemId(itemId)
-      .withRequesterId(originalRequesterId)
-      .fulfilToHoldShelf()
-      .withRequestExpiration(new LocalDate(2017, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
-      .create();
-
-    IndividualResource createdRequest = requestsClient.create(requestRequest);
+    IndividualResource createdRequest = requestsClient.create(
+      new RequestRequestBuilder()
+        .recall()
+        .withId(id)
+        .withRequestDate(requestDate)
+        .withItemId(itemId)
+        .withRequesterId(originalRequesterId)
+        .fulfilToHoldShelf()
+        .withRequestExpiration(new LocalDate(2017, 7, 30))
+        .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
     UUID updatedRequester = usersClient.create(new UserRequestBuilder()
       .withName("Campbell", "Fiona")
-      .withNoBarcode()
-      .create()).getId();
+      .withNoBarcode())
+      .getId();
+
     JsonObject updatedRequest = createdRequest.copyJson();
 
     updatedRequest
@@ -401,19 +394,20 @@ public class RequestsAPIUpdatingTests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsClient.create(basedUponTemeraire()
-      .withBarcode("07295629642")
-      .create()).getId();
+      .withBarcode("07295629642"))
+      .getId();
 
     checkOutItem(itemId, loansClient);
 
     UUID originalRequesterId = usersClient.create(new UserRequestBuilder()
       .withName("Norton", "Jessica")
-      .withBarcode("764523186496")
-      .create()).getId();
+      .withBarcode("764523186496"))
+      .getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
-    JsonObject requestRequest = new RequestRequestBuilder()
+    IndividualResource createdRequest = requestsClient.create(
+      new RequestRequestBuilder()
       .recall()
       .withId(id)
       .withRequestDate(requestDate)
@@ -421,15 +415,11 @@ public class RequestsAPIUpdatingTests {
       .withRequesterId(originalRequesterId)
       .fulfilToHoldShelf()
       .withRequestExpiration(new LocalDate(2017, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
-      .create();
-
-    IndividualResource createdRequest = requestsClient.create(requestRequest);
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
     UUID updatedRequester = usersClient.create(new UserRequestBuilder()
       .withName("Campbell", "Fiona", "Stella")
-      .withBarcode("679231693475")
-      .create()).getId();
+      .withBarcode("679231693475")).getId();
 
     JsonObject updatedRequest = createdRequest.copyJson();
 
@@ -509,16 +499,16 @@ public class RequestsAPIUpdatingTests {
     UUID id = UUID.randomUUID();
 
     UUID originalItemId = itemsClient.create(basedUponTemeraire()
-      .withBarcode("07295629642")
-      .create()).getId();
+      .withBarcode("07295629642")).getId();
 
     checkOutItem(originalItemId, loansClient);
 
-    UUID requesterId = usersClient.create(new UserRequestBuilder().create()).getId();
+    UUID requesterId = usersClient.create(new UserRequestBuilder()).getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
-    JsonObject requestRequest = new RequestRequestBuilder()
+    IndividualResource createdRequest = requestsClient.create(
+      new RequestRequestBuilder()
       .recall()
       .withId(id)
       .withRequestDate(requestDate)
@@ -526,14 +516,11 @@ public class RequestsAPIUpdatingTests {
       .withRequesterId(requesterId)
       .fulfilToHoldShelf()
       .withRequestExpiration(new LocalDate(2017, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
-      .create();
-
-    IndividualResource createdRequest = requestsClient.create(requestRequest);
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
     UUID updatedItemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withNoBarcode()
-      .create()).getId();
+      .withNoBarcode())
+      .getId();
 
     JsonObject updatedRequest = createdRequest.copyJson();
 
@@ -574,5 +561,4 @@ public class RequestsAPIUpdatingTests {
       representation.getJsonObject("item").containsKey("barcode"),
       is(false));
   }
-
 }

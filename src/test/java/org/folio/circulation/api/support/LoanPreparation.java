@@ -14,7 +14,6 @@ public class LoanPreparation {
 
     loansClient.create(new LoanRequestBuilder()
       .open()
-      .withItemId(itemId)
-      .create());
+      .withItemId(itemId));
   }
 }

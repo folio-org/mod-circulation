@@ -74,8 +74,8 @@ public class RequestsAPICreationTests {
 
     UUID requesterId = usersClient.create(new UserRequestBuilder()
       .withName("Jones", "Steven")
-      .withBarcode("564376549214")
-      .create()).getId();
+      .withBarcode("564376549214"))
+      .getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
@@ -157,7 +157,7 @@ public class RequestsAPICreationTests {
       .recall()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder().create()).getId())
+      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId())
       .create();
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
@@ -186,7 +186,7 @@ public class RequestsAPICreationTests {
       .recall()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder().create()).getId())
+      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId())
       .create();
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
@@ -215,7 +215,7 @@ public class RequestsAPICreationTests {
       .hold()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder().create()).getId())
+      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId())
       .create();
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
@@ -244,7 +244,7 @@ public class RequestsAPICreationTests {
       .page()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder().create()).getId())
+      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId())
       .create();
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
@@ -379,8 +379,8 @@ public class RequestsAPICreationTests {
 
     UUID requesterId = usersClient.create(new UserRequestBuilder()
       .withName("Jones", "Steven", "Anthony")
-      .withBarcode("564376549214")
-      .create()).getId();
+      .withBarcode("564376549214"))
+      .getId();
 
     checkOutItem(itemId, loansClient);
 
@@ -447,7 +447,8 @@ public class RequestsAPICreationTests {
 
     UUID requesterId = usersClient.create(new UserRequestBuilder()
       .withName("Jones", "Steven")
-      .withNoBarcode().create()).getId();
+      .withNoBarcode())
+      .getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
@@ -510,7 +511,7 @@ public class RequestsAPICreationTests {
       .recall()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder().create()).getId())
+      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId())
       .create();
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
@@ -557,8 +558,8 @@ public class RequestsAPICreationTests {
 
     UUID requesterId = usersClient.create(new UserRequestBuilder()
       .withName("Jones", "Steven")
-      .withBarcode("564376549214")
-      .create()).getId();
+      .withBarcode("564376549214"))
+      .getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
