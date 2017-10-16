@@ -43,6 +43,10 @@ public class ResourceClient {
     return new ResourceClient(client, InterfaceUrls::usersUrl, "users");
   }
 
+  public static ResourceClient forLoansStorage(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::loansStorageUrl, "storage loans");
+  }
+
   private ResourceClient(
     OkapiHttpClient client,
     UrlMaker urlMaker, String resourceName) {

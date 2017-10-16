@@ -45,6 +45,7 @@ public class LoanAPITests {
   });
 
   private final ResourceClient loansClient = ResourceClient.forLoans(client);
+  private final ResourceClient loansStorageClient = ResourceClient.forLoansStorage(client);
   private final ResourceClient itemsClient = ResourceClient.forItems(client);
 
   @Before
@@ -139,6 +140,10 @@ public class LoanAPITests {
 
     assertThat("item status is not checked out",
       item.getJsonObject("status").getString("name"), is("Checked out"));
+
+    assertThat("item status snapshot in storage is not checked out",
+      loansStorageClient.getById(id).getJson().getString("itemStatus"),
+      is("Checked out"));
   }
 
   @Test
