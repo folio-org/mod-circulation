@@ -73,7 +73,7 @@ public class RequestCollectionResource {
       if(getItemResponse.getStatusCode() == 200) {
         JsonObject loadedItem = getItemResponse.getJson();
 
-        if (isOkStatus(loadedItem, request)) {
+        if (canCreateRequestForItem(loadedItem, request)) {
           updateItemStatus(itemId, itemStatusFrom(request),
             itemsStorageClient, routingContext.response(), item -> {
               addSummariesToRequest(
@@ -400,7 +400,7 @@ public class RequestCollectionResource {
     }
   }
 
-  private boolean isOkStatus(JsonObject item, JsonObject request) {
+  private boolean canCreateRequestForItem(JsonObject item, JsonObject request) {
     String status = item.getJsonObject("status").getString("name");
 
     switch (request.getString("requestType")) {
