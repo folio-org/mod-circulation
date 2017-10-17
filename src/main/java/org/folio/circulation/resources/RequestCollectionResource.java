@@ -19,9 +19,9 @@ import java.util.function.Consumer;
 
 import static org.folio.circulation.domain.ItemStatus.*;
 import static org.folio.circulation.domain.ItemStatusAssistant.updateItemStatus;
+import static org.folio.circulation.domain.LoanActionHistoryAssistant.updateLoanActionHistory;
 
 public class RequestCollectionResource {
-
   private final String rootPath;
 
   public RequestCollectionResource(String rootPath) {
@@ -52,12 +52,14 @@ public class RequestCollectionResource {
     CollectionResourceClient requestsStorageClient;
     CollectionResourceClient itemsStorageClient;
     CollectionResourceClient usersStorageClient;
+    CollectionResourceClient loansStorageClient;
 
     try {
       OkapiHttpClient client = createHttpClient(routingContext, context);
       requestsStorageClient = createRequestsStorageClient(client, context);
       itemsStorageClient = createItemsStorageClient(client, context);
       usersStorageClient = createUsersStorageClient(client, context);
+      loansStorageClient = createLoansStorageClient(client, context);
     }
     catch (MalformedURLException e) {
       ServerErrorResponse.internalError(routingContext.response(),
@@ -73,27 +75,32 @@ public class RequestCollectionResource {
         JsonObject loadedItem = getItemResponse.getJson();
 
         if (canCreateRequestForItem(loadedItem, request)) {
-          updateItemStatus(itemId, itemStatusFrom(request),
-            itemsStorageClient, routingContext.response(), item -> {
-              addSummariesToRequest(
-                request,
-                itemsStorageClient,
-                usersStorageClient,
-                requestWithAdditionalInformation -> {
-                  requestsStorageClient.post(requestWithAdditionalInformation, requestResponse -> {
-                    if (requestResponse.getStatusCode() == 201) {
-                      JsonObject createdRequest = requestResponse.getJson();
+          updateLoanActionHistory(itemId,
+            loanActionFromRequest(request), loansStorageClient,
+            routingContext.response(), v -> {
+              updateItemStatus(itemId, itemStatusFrom(request),
+                itemsStorageClient, routingContext.response(), item -> {
+                  addSummariesToRequest(
+                    request,
+                    itemsStorageClient,
+                    usersStorageClient,
+                    requestWithAdditionalInformation -> {
+                      requestsStorageClient.post(requestWithAdditionalInformation,
+                        requestResponse -> {
+                          if (requestResponse.getStatusCode() == 201) {
+                            JsonObject createdRequest = requestResponse.getJson();
 
-                      JsonResponse.created(routingContext.response(), createdRequest);
-                    } else {
-                      ForwardResponse.forward(routingContext.response(), requestResponse);
-                    }
-                  });
-                },
-                throwable -> {
-                  ServerErrorResponse.internalError(routingContext.response(),
-                    String.format("At least one request for additional information failed: %s",
-                      throwable));
+                            JsonResponse.created(routingContext.response(), createdRequest);
+                          } else {
+                            ForwardResponse.forward(routingContext.response(), requestResponse);
+                          }
+                      });
+                    },
+                    throwable -> {
+                      ServerErrorResponse.internalError(routingContext.response(),
+                        String.format("At least one request for additional information failed: %s",
+                          throwable));
+                    });
                 });
             });
         }
@@ -385,6 +392,20 @@ public class RequestCollectionResource {
     return usersStorageClient;
   }
 
+  private CollectionResourceClient createLoansStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+
+    CollectionResourceClient loansStorageClient;
+
+    loansStorageClient = new CollectionResourceClient(
+      client, context.getOkapiBasedUrl("/loan-storage/loans"),
+      context.getTenantId());
+
+    return loansStorageClient;
+  }
+
   private String itemStatusFrom(JsonObject request) {
     switch(request.getString("requestType")) {
       case RequestType.HOLD:
@@ -410,6 +431,19 @@ public class RequestCollectionResource {
       case RequestType.PAGE:
       default:
         return true;
+    }
+  }
+
+  private String loanActionFromRequest(JsonObject request) {
+    switch (request.getString("requestType")) {
+      case RequestType.HOLD:
+        return "holdrequested";
+      case RequestType.RECALL:
+        return "recallrequested";
+
+      case RequestType.PAGE:
+      default:
+        return null;
     }
   }
 }

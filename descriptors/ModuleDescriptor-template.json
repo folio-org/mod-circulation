@@ -157,7 +157,9 @@
             "circulation-storage.requests.item.post",
             "inventory-storage.items.item.get",
             "inventory-storage.items.item.put",
-            "users.item.get"
+            "users.item.get",
+            "circulation-storage.loans.item.put",
+            "circulation-storage.loans.collection.get"
           ]
         },
         {

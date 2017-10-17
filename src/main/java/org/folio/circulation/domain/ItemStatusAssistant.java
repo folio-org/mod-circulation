@@ -23,7 +23,6 @@ public class ItemStatusAssistant {
     itemsStorageClient.get(itemId, getItemResponse -> {
       if(getItemResponse.getStatusCode() == 200) {
         JsonObject item = getItemResponse.getJson();
-
         if (statusNeedsChanging(item, prospectiveNewStatus)) {
           item.put("status", new JsonObject().put("name", prospectiveNewStatus));
 
@@ -40,14 +39,14 @@ public class ItemStatusAssistant {
           onSuccess.accept(item);
         }
       }
-        else if(getItemResponse.getStatusCode() == 404) {
-          ServerErrorResponse.internalError(responseToClient,
-            "Failed to handle updating an item which does not exist");
-        }
-        else {
-          ForwardResponse.forward(responseToClient, getItemResponse);
-        }
-      });
+      else if(getItemResponse.getStatusCode() == 404) {
+        ServerErrorResponse.internalError(responseToClient,
+          "Failed to handle updating an item which does not exist");
+      }
+      else {
+        ForwardResponse.forward(responseToClient, getItemResponse);
+      }
+    });
   }
 
   public static boolean statusNeedsChanging(JsonObject item, String prospectiveNewStatus) {
