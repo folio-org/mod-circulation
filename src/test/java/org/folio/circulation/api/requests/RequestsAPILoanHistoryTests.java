@@ -19,9 +19,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import static org.folio.circulation.api.support.ItemRequestExamples.basedUponSmallAngryPlanet;
+import static org.folio.circulation.api.support.LoanPreparation.checkInLoan;
 import static org.folio.circulation.api.support.LoanPreparation.checkOutItem;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
+
 
 public class RequestsAPILoanHistoryTests {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -50,7 +52,7 @@ public class RequestsAPILoanHistoryTests {
   }
 
   @Test
-  public void creatingHoldRequestChangesTheAssociatedLoanInOrderToCreateActionHistory()
+  public void creatingHoldRequestChangesTheOpenLoanForTheSameItem()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -73,13 +75,12 @@ public class RequestsAPILoanHistoryTests {
 
     JsonObject loanFromStorage = loansStorageClient.getById(loanId).getJson();
 
-    //Loan action history is created indirectly by updating a loan
     assertThat("action snapshot in storage is not hold requested",
       loanFromStorage.getString("action"), is("holdrequested"));
   }
 
   @Test
-  public void creatingRecallRequestChangesTheAssociatedLoanInOrderToCreateActionHistory()
+  public void creatingRecallRequestChangesTheOpenLoanForTheSameItem()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -102,13 +103,12 @@ public class RequestsAPILoanHistoryTests {
 
     JsonObject loanFromStorage = loansStorageClient.getById(loanId).getJson();
 
-    //Loan action history is created indirectly by updating a loan
     assertThat("action snapshot in storage is not recall requested",
       loanFromStorage.getString("action"), is("recallrequested"));
   }
 
   @Test
-  public void creatingPageRequestDoesNotChangeTheAssociatedLoan()
+  public void creatingPageRequestDoesNotChangeTheOpenLoanForSameItem()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -131,8 +131,73 @@ public class RequestsAPILoanHistoryTests {
 
     JsonObject loanFromStorage = loansStorageClient.getById(loanId).getJson();
 
-    //Loan action history is created indirectly by updating a loan
     assertThat("action snapshot in storage is not still checked out",
       loanFromStorage.getString("action"), is("checkedout"));
+  }
+
+  @Test
+  public void creatingHoldRequestDoesNotChangeClosedLoanForTheSameItem()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException,
+    UnsupportedEncodingException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
+      .withBarcode("036000291452"))
+      .getId();
+
+    UUID closedLoanId = checkOutItem(itemId, loansClient).getId();
+
+    checkInLoan(closedLoanId, loansClient);
+
+    checkOutItem(itemId, loansClient).getId();
+
+    requestsClient.create(new RequestRequestBuilder()
+      .hold()
+      .withId(id)
+      .withItemId(itemId)
+      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
+
+    JsonObject closedLoanFromStorage = loansStorageClient.getById(closedLoanId)
+      .getJson();
+
+    assertThat("action snapshot for closed loan should not change",
+      closedLoanFromStorage.getString("action"), is("checkedin"));
+  }
+
+  @Test
+  public void creatingRecallRequestDoesNotChangeClosedLoanForTheSameItem()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException,
+    UnsupportedEncodingException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
+      .withBarcode("036000291452"))
+      .getId();
+
+    UUID closedLoanId = checkOutItem(itemId, loansClient).getId();
+
+    checkInLoan(closedLoanId, loansClient);
+
+    checkOutItem(itemId, loansClient).getId();
+
+    requestsClient.create(new RequestRequestBuilder()
+      .recall()
+      .withId(id)
+      .withItemId(itemId)
+      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
+
+    JsonObject closedLoanFromStorage = loansStorageClient.getById(closedLoanId)
+      .getJson();
+
+    assertThat("action snapshot for closed loan should not change",
+      closedLoanFromStorage.getString("action"), is("checkedin"));
   }
 }
