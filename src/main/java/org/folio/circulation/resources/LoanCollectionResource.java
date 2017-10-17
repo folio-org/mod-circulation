@@ -74,6 +74,10 @@ public class LoanCollectionResource {
 
         createdLoan.put("item", createItemSummary(item));
 
+        //No need to pass on the itemStatus property, as only used to populate the history
+        //and could be confused with aggregation of current status
+        createdLoan.remove("itemStatus");
+
         JsonResponse.created(routingContext.response(), createdLoan);
       }
       else {
@@ -111,9 +115,11 @@ public class LoanCollectionResource {
 
     JsonObject storageLoan = loan.copy();
     storageLoan.remove("item");
+    storageLoan.remove("itemStatus");
 
     updateItemStatus(itemId, itemStatusFrom(loan),
       itemsStorageClient, routingContext.response(), item -> {
+        storageLoan.put("itemStatus", item.getJsonObject("status").getString("name"));
         loansStorageClient.put(id, storageLoan, response -> {
           if(response.getStatusCode() == 204) {
             SuccessResponse.noContent(routingContext.response());
@@ -152,6 +158,10 @@ public class LoanCollectionResource {
         itemsStorageClient.get(itemId, itemResponse -> {
           if(itemResponse.getStatusCode() == 200) {
             JsonObject item = new JsonObject(itemResponse.getBody());
+
+            //No need to pass on the itemStatus property, as only used to populate the history
+            //and could be confused with aggregation of current status
+            loan.remove("itemStatus");
 
             loan.put("item", createItemSummary(item));
 
@@ -253,6 +263,10 @@ public class LoanCollectionResource {
               .map(itemResponse -> itemResponse.getJson())
               .filter(item -> item.getString("id").equals(loan.getString("itemId")))
               .findFirst();
+
+            //No need to pass on the itemStatus property, as only used to populate the history
+            //and could be confused with aggregation of current status
+            loan.remove("itemStatus");
 
             if(possibleItem.isPresent()) {
               JsonObject item = possibleItem.get();
