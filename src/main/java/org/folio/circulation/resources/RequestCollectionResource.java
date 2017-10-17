@@ -5,6 +5,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
+import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
@@ -16,9 +17,7 @@ import java.net.URL;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
-import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
-import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT_HELD;
-import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT_RECALLED;
+import static org.folio.circulation.domain.ItemStatus.*;
 import static org.folio.circulation.domain.ItemStatusAssistant.updateItemStatus;
 
 public class RequestCollectionResource {
@@ -406,7 +405,7 @@ public class RequestCollectionResource {
     switch (request.getString("requestType")) {
       case RequestType.HOLD:
       case RequestType.RECALL:
-        return status.equals(CHECKED_OUT);
+        return StringUtils.equalsIgnoreCase(status, CHECKED_OUT);
 
       case RequestType.PAGE:
       default:

@@ -3,6 +3,7 @@ package org.folio.circulation.api.requests;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.APITestSuite;
 import org.folio.circulation.api.support.*;
+import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
@@ -227,6 +228,58 @@ public class RequestsAPICreationTests {
 
     assertThat(String.format("Should fail to create request: %s", postResponse.getBody()),
       postResponse.getStatusCode(), is(UNPROCESSABLE_ENTITY));
+  }
+
+  //TODO: Remove this once sample data is updated, temporary to aid change of item status case
+  @Test()
+  public void canCreateARequestEvenWithDifferentCaseCheckedOutStatus()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException,
+    UnsupportedEncodingException {
+
+    UUID id = UUID.randomUUID();
+
+    IndividualResource itemResponse = itemsClient.create(basedUponSmallAngryPlanet()
+      .withBarcode("036000291452"));
+
+    UUID itemId = itemResponse.getId();
+
+    checkOutItem(itemId, loansClient);
+
+    JsonObject itemWithChangedStatus = itemResponse.copyJson()
+      .put("status", new JsonObject().put("name", "Checked Out"));
+
+    itemsClient.replace(itemId, itemWithChangedStatus);
+
+    UUID requesterId = usersClient.create(new UserRequestBuilder()
+      .withName("Jones", "Steven")
+      .withBarcode("564376549214"))
+      .getId();
+
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    JsonObject requestRequest = new RequestRequestBuilder()
+      .recall()
+      .withId(id)
+      .withRequestDate(requestDate)
+      .withItemId(itemId)
+      .withRequesterId(requesterId)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(new LocalDate(2017, 7, 30))
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
+      .create();
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(InterfaceUrls.requestsUrl(), requestRequest,
+      ResponseHandler.json(postCompleted));
+
+    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Failed to create request: %s", postResponse.getBody()),
+      postResponse.getStatusCode(), is(HttpURLConnection.HTTP_CREATED));
   }
 
   @Test
