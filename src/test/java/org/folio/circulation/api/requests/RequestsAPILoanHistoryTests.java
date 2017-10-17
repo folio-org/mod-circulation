@@ -18,6 +18,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import static org.folio.circulation.api.support.ItemRequestExamples.basedUponNod;
 import static org.folio.circulation.api.support.ItemRequestExamples.basedUponSmallAngryPlanet;
 import static org.folio.circulation.api.support.LoanPreparation.checkInLoan;
 import static org.folio.circulation.api.support.LoanPreparation.checkOutItem;
@@ -199,5 +200,73 @@ public class RequestsAPILoanHistoryTests {
 
     assertThat("action snapshot for closed loan should not change",
       closedLoanFromStorage.getString("action"), is("checkedin"));
+  }
+
+  @Test
+  public void creatingHoldRequestDoesNotChangeOpenLoanForDifferentItem()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException,
+    UnsupportedEncodingException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
+      .withBarcode("036000291452"))
+      .getId();
+
+    UUID otherItemId = itemsClient.create(basedUponNod()
+      .withBarcode("750453962104"))
+      .getId();
+
+    checkOutItem(itemId, loansClient).getId();
+    UUID loanForOtherItemId = checkOutItem(otherItemId, loansClient).getId();
+
+    requestsClient.create(new RequestRequestBuilder()
+      .hold()
+      .withId(id)
+      .withItemId(itemId)
+      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
+
+    JsonObject storageLoanForOtherItem = loansStorageClient.getById(loanForOtherItemId)
+      .getJson();
+
+    assertThat("action snapshot for open loan for other item should not change",
+      storageLoanForOtherItem.getString("action"), is("checkedout"));
+  }
+
+  @Test
+  public void creatingRecallRequestDoesNotChangeOpenLoanForDifferentItem()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException,
+    UnsupportedEncodingException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
+      .withBarcode("036000291452"))
+      .getId();
+
+    UUID otherItemId = itemsClient.create(basedUponNod()
+      .withBarcode("750453962104"))
+      .getId();
+
+    checkOutItem(itemId, loansClient).getId();
+    UUID loanForOtherItemId = checkOutItem(otherItemId, loansClient).getId();
+
+    requestsClient.create(new RequestRequestBuilder()
+      .recall()
+      .withId(id)
+      .withItemId(itemId)
+      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
+
+    JsonObject storageLoanForOtherItem = loansStorageClient.getById(loanForOtherItemId)
+      .getJson();
+
+    assertThat("action snapshot for open loan for other item should not change",
+      storageLoanForOtherItem.getString("action"), is("checkedout"));
   }
 }
