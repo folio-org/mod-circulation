@@ -108,4 +108,34 @@ public class RequestsAPILoanRenewalTests {
     assertThat(changedItem.getJson().getJsonObject("status").getString("name"),
       is("Checked out - Recalled"));
   }
+
+  @Test
+  public void RenewalWithOutstandingPageRequestDoesNotChangeItemStatus()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException,
+    UnsupportedEncodingException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
+      .withBarcode("036000291452"))
+      .getId();
+
+    UUID loanId = checkOutItem(itemId, loansClient).getId();
+
+    requestsClient.create(new RequestRequestBuilder()
+      .page()
+      .withId(id)
+      .withItemId(itemId)
+      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
+
+    renewLoan(loanId, loansClient);
+
+    Response changedItem = itemsClient.getById(itemId);
+
+    assertThat(changedItem.getJson().getJsonObject("status").getString("name"),
+      is("Checked out"));
+  }
 }
