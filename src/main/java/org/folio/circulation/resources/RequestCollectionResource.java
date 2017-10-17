@@ -76,7 +76,7 @@ public class RequestCollectionResource {
 
         if (canCreateRequestForItem(loadedItem, request)) {
           updateLoanActionHistory(itemId,
-            loanActionFromRequest(request), loansStorageClient,
+            loanActionFromRequest(request), itemStatusFrom(request), loansStorageClient,
             routingContext.response(), v -> {
               updateItemStatus(itemId, itemStatusFrom(request),
                 itemsStorageClient, routingContext.response(), item -> {

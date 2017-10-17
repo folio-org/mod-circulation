@@ -20,6 +20,7 @@ public class LoanActionHistoryAssistant {
   public static void updateLoanActionHistory(
     String itemId,
     String newAction,
+    String newItemStatus,
     CollectionResourceClient loansStorageClient,
     HttpServerResponse responseToClient,
     Consumer<Void> onSuccess) {
@@ -45,6 +46,7 @@ public class LoanActionHistoryAssistant {
           JsonObject changedLoan = loans.get(0).copy();
 
           changedLoan.put("action", newAction);
+          changedLoan.put("itemStatus", newItemStatus);
 
           loansStorageClient.put(changedLoan.getString("id"), changedLoan,
             putLoanResponse -> {

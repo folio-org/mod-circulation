@@ -78,6 +78,9 @@ public class RequestsAPILoanHistoryTests {
 
     assertThat("action snapshot in storage is not hold requested",
       loanFromStorage.getString("action"), is("holdrequested"));
+
+    assertThat("item status snapshot in storage is not checked out - held",
+      loanFromStorage.getString("itemStatus"), is("Checked out - Held"));
   }
 
   @Test
@@ -104,8 +107,8 @@ public class RequestsAPILoanHistoryTests {
 
     JsonObject loanFromStorage = loansStorageClient.getById(loanId).getJson();
 
-    assertThat("action snapshot in storage is not recall requested",
-      loanFromStorage.getString("action"), is("recallrequested"));
+    assertThat("item status snapshot in storage is not checked out - recalled",
+      loanFromStorage.getString("itemStatus"), is("Checked out - Recalled"));
   }
 
   @Test
@@ -134,6 +137,9 @@ public class RequestsAPILoanHistoryTests {
 
     assertThat("action snapshot in storage is not still checked out",
       loanFromStorage.getString("action"), is("checkedout"));
+
+    assertThat("item status snapshot in storage is not still checked out",
+      loanFromStorage.getString("itemStatus"), is("Checked out"));
   }
 
   @Test
@@ -167,6 +173,9 @@ public class RequestsAPILoanHistoryTests {
 
     assertThat("action snapshot for closed loan should not change",
       closedLoanFromStorage.getString("action"), is("checkedin"));
+
+    assertThat("item status snapshot for closed loan should not change",
+      closedLoanFromStorage.getString("itemStatus"), is("Available"));
   }
 
   @Test
@@ -200,6 +209,9 @@ public class RequestsAPILoanHistoryTests {
 
     assertThat("action snapshot for closed loan should not change",
       closedLoanFromStorage.getString("action"), is("checkedin"));
+
+    assertThat("item status snapshot for closed loan should not change",
+      closedLoanFromStorage.getString("itemStatus"), is("Available"));
   }
 
   @Test
@@ -234,6 +246,9 @@ public class RequestsAPILoanHistoryTests {
 
     assertThat("action snapshot for open loan for other item should not change",
       storageLoanForOtherItem.getString("action"), is("checkedout"));
+
+    assertThat("item status snapshot for open loan for other item should not change",
+      storageLoanForOtherItem.getString("itemStatus"), is("Checked out"));
   }
 
   @Test
@@ -268,5 +283,8 @@ public class RequestsAPILoanHistoryTests {
 
     assertThat("action snapshot for open loan for other item should not change",
       storageLoanForOtherItem.getString("action"), is("checkedout"));
+
+    assertThat("item status snapshot for open loan for other item should not change",
+      storageLoanForOtherItem.getString("itemStatus"), is("Checked out"));
   }
 }
