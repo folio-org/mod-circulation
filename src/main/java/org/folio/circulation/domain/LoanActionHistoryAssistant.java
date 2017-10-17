@@ -42,7 +42,8 @@ public class LoanActionHistoryAssistant {
         if(loans.size() == 0) {
           log.info(String.format("No open loans found for item", itemId));
           onSuccess.accept(null);
-        } else if(loans.size() == 1) {
+        }
+        else if(loans.size() == 1) {
           JsonObject changedLoan = loans.get(0).copy();
 
           changedLoan.put("action", newAction);

@@ -287,4 +287,54 @@ public class RequestsAPILoanHistoryTests {
     assertThat("item status snapshot for open loan for other item should not change",
       storageLoanForOtherItem.getString("itemStatus"), is("Checked out"));
   }
+
+  @Test
+  public void creatingHoldRequestStillSucceedsWhenThereIsNoLoan()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException,
+    UnsupportedEncodingException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
+      .withBarcode("036000291452"))
+      .getId();
+
+    UUID loanId = checkOutItem(itemId, loansClient).getId();
+
+    loansClient.delete(loanId);
+
+    requestsClient.create(new RequestRequestBuilder()
+      .hold()
+      .withId(id)
+      .withItemId(itemId)
+      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
+  }
+
+  @Test
+  public void creatingRecallRequestStillSucceedsWhenThereIsNoLoan()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException,
+    UnsupportedEncodingException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
+      .withBarcode("036000291452"))
+      .getId();
+
+    UUID loanId = checkOutItem(itemId, loansClient).getId();
+
+    loansClient.delete(loanId);
+
+    requestsClient.create(new RequestRequestBuilder()
+      .recall()
+      .withId(id)
+      .withItemId(itemId)
+      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
+  }
 }
