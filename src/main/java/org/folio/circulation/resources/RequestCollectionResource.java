@@ -75,11 +75,11 @@ public class RequestCollectionResource {
         JsonObject loadedItem = getItemResponse.getJson();
 
         if (canCreateRequestForItem(loadedItem, request)) {
-          updateLoanActionHistory(itemId,
-            loanActionFromRequest(request), itemStatusFrom(request), loansStorageClient,
-            routingContext.response(), v -> {
-              updateItemStatus(itemId, itemStatusFrom(request),
-                itemsStorageClient, routingContext.response(), item -> {
+          updateItemStatus(itemId, itemStatusFrom(request),
+            itemsStorageClient, routingContext.response(), item -> {
+              updateLoanActionHistory(itemId,
+                loanActionFromRequest(request), itemStatusFrom(request), loansStorageClient,
+                routingContext.response(), v -> {
                   addSummariesToRequest(
                     request,
                     itemsStorageClient,
@@ -102,11 +102,11 @@ public class RequestCollectionResource {
                           throwable));
                     });
                 });
-            });
+           });
         }
         else {
           JsonResponse.unprocessableEntity(routingContext.response(),
-            "Item is not checked out", "itemId", itemId);
+            String.format("Item is not %s", CHECKED_OUT), "itemId", itemId);
         }
       }
       else if(getItemResponse.getStatusCode() == 404) {
