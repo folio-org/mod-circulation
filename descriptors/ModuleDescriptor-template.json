@@ -216,7 +216,7 @@
   "requires": [
     {
       "id": "loan-storage",
-      "version": "3.2"
+      "version": "3.3"
     },
     {
       "id": "loan-rules-storage",

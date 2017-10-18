@@ -1,6 +1,7 @@
-package org.folio.circulation.api;
+package org.folio.circulation.api.loans;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.api.APITestSuite;
 import org.folio.circulation.api.support.LoanRequestBuilder;
 import org.folio.circulation.api.support.ResourceClient;
 import org.folio.circulation.support.JsonArrayHelper;
@@ -44,6 +45,7 @@ public class LoanAPITests {
   });
 
   private final ResourceClient loansClient = ResourceClient.forLoans(client);
+  private final ResourceClient loansStorageClient = ResourceClient.forLoansStorage(client);
   private final ResourceClient itemsClient = ResourceClient.forItems(client);
 
   @Before
@@ -134,10 +136,17 @@ public class LoanAPITests {
     assertThat("due date does not match",
       loan.getString("dueDate"), isEquivalentTo(dueDate));
 
+    assertThat("Should not have snapshot of item status, as current status is included",
+      loan.containsKey("itemStatus"), is(false));
+
     JsonObject item = itemsClient.getById(itemId).getJson();
 
     assertThat("item status is not checked out",
       item.getJsonObject("status").getString("name"), is("Checked out"));
+
+    assertThat("item status snapshot in storage is not checked out",
+      loansStorageClient.getById(id).getJson().getString("itemStatus"),
+      is("Checked out"));
   }
 
   @Test
@@ -182,10 +191,17 @@ public class LoanAPITests {
     assertThat("action is not checkedin",
       loan.getString("action"), is("checkedin"));
 
+    assertThat("Should not have snapshot of item status, as current status is included",
+      loan.containsKey("itemStatus"), is(false));
+
     JsonObject item = itemsClient.getById(itemId).getJson();
 
     assertThat("item status is not available",
       item.getJsonObject("status").getString("name"), is("Available"));
+
+    assertThat("item status snapshot in storage is not available",
+      loansStorageClient.getById(id).getJson().getString("itemStatus"),
+      is("Available"));
   }
 
   @Test
@@ -268,6 +284,9 @@ public class LoanAPITests {
     assertThat("location is taken from item",
       loan.getJsonObject("item").getJsonObject("location").getString("name"),
       is("Main Library"));
+
+    assertThat("Should not have snapshot of item status, as current status is included",
+      loan.containsKey("itemStatus"), is(false));
   }
 
   @Test
@@ -399,10 +418,17 @@ public class LoanAPITests {
       updatedLoan.getJsonObject("item").getString("barcode"),
       is("565578437802"));
 
+    assertThat("Should not have snapshot of item status, as current status is included",
+      updatedLoan.containsKey("itemStatus"), is(false));
+
     JsonObject item = itemsClient.getById(itemId).getJson();
 
     assertThat("item status is not available",
       item.getJsonObject("status").getString("name"), is("Available"));
+
+    assertThat("item status snapshot in storage is not Available",
+      loansStorageClient.getById(loan.getId()).getJson().getString("itemStatus"),
+      is("Available"));
   }
 
   @Test
@@ -469,10 +495,17 @@ public class LoanAPITests {
       updatedLoan.getJsonObject("item").getString("barcode"),
       is("565578437802"));
 
+    assertThat("Should not have snapshot of item status, as current status is included",
+      updatedLoan.containsKey("itemStatus"), is(false));
+
     JsonObject item = itemsClient.getById(itemId).getJson();
 
     assertThat("item status is not checked out",
       item.getJsonObject("status").getString("name"), is("Checked out"));
+
+    assertThat("item status snapshot in storage is not checked out",
+      loansStorageClient.getById(loan.getId()).getJson().getString("itemStatus"),
+      is("Checked out"));
   }
 
   @Test
@@ -511,6 +544,12 @@ public class LoanAPITests {
 
     assertThat("item status is not checked out",
       changedItem.getJsonObject("status").getString("name"), is("Checked out"));
+
+    Response loanFromStorage = loansStorageClient.getById(loan.getId());
+
+    assertThat("item status snapshot in storage is not checked out",
+      loanFromStorage.getJson().getString("itemStatus"),
+      is("Checked out"));
   }
 
   @Test
@@ -837,6 +876,9 @@ public class LoanAPITests {
     hasProperty("barcode", item, "item");
     hasProperty("status", item, "item");
     hasProperty("location", item, "item");
+
+    assertThat("Should not have snapshot of item status, as current status is included",
+      loan.containsKey("itemStatus"), is(false));
   }
 
   private void hasProperty(String property, JsonObject resource, String type) {
