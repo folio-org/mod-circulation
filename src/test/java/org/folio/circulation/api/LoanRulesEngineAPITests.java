@@ -1,12 +1,7 @@
 package org.folio.circulation.api;
 
 import io.vertx.core.json.JsonObject;
-
-import org.folio.circulation.loanrules.ItemType;
-import org.folio.circulation.loanrules.LoanPolicy;
-import org.folio.circulation.loanrules.LoanType;
-import org.folio.circulation.loanrules.PatronGroup;
-import org.folio.circulation.loanrules.ShelvingLocation;
+import org.folio.circulation.loanrules.*;
 import org.folio.circulation.resources.LoanRulesEngineResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
@@ -20,8 +15,8 @@ import java.net.URL;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+import static org.folio.circulation.api.support.InterfaceUrls.loanRulesURL;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.Is.is;
 
 public class LoanRulesEngineAPITests {
@@ -35,8 +30,7 @@ public class LoanRulesEngineAPITests {
     JsonObject json = new JsonObject();
     json.put("loanRulesAsTextFile", rules);
     CompletableFuture<Response> completed = new CompletableFuture<>();
-    URL url = APITestSuite.circulationModuleUrl("/circulation/loan-rules");
-    client.put(url, json, ResponseHandler.any(completed));
+    client.put(loanRulesURL(), json, ResponseHandler.any(completed));
     try {
       completed.get(5, TimeUnit.SECONDS);
       LoanRulesEngineResource.clearCache();
@@ -49,8 +43,8 @@ public class LoanRulesEngineAPITests {
       PatronGroup patronGroup, ShelvingLocation shelvingLocation) {
     try {
       CompletableFuture<Response> completed = new CompletableFuture<>();
-      URL url = APITestSuite.circulationModuleUrl(
-          "/circulation/loan-rules/apply"
+      URL url = loanRulesURL(
+          "/apply"
           + "?item_type_id="         + itemType.id
           + "&loan_type_id="         + loanType.id
           + "&patron_type_id="       + patronGroup.id

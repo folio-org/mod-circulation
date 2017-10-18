@@ -4,7 +4,7 @@ okapi_proxy_address="http://localhost:9130"
 tenant_id="test_tenant"
 circulation_direct_address=http://localhost:9605
 circulation_instance_id=localhost-9605
-circulation_module_id="mod-circulation-4.5.1-SNAPSHOT"
+circulation_module_id="mod-circulation-5.0.0-SNAPSHOT"
 
 #Needs to be the specific version of mod-inventory-storage you want to use for testing
 inventory_storage_module_id="mod-inventory-storage-5.1.1-SNAPSHOT"

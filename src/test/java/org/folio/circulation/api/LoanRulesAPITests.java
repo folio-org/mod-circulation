@@ -2,6 +2,7 @@ package org.folio.circulation.api;
 
 import io.vertx.core.json.JsonObject;
 
+import org.folio.circulation.api.support.InterfaceUrls;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
@@ -10,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
-import java.net.URL;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -55,13 +55,9 @@ public class LoanRulesAPITests {
     assertThat(json.getInteger("column"), is(1));
   }
 
-  private static URL loanRulesURL() {
-    return APITestSuite.circulationModuleUrl("/circulation/loan-rules");
-  }
-
   private Response get() throws Exception {
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
-    client.get(loanRulesURL(), ResponseHandler.any(getCompleted));
+    client.get(InterfaceUrls.loanRulesURL(), ResponseHandler.any(getCompleted));
     return getCompleted.get(5, TimeUnit.SECONDS);
   }
 
@@ -82,7 +78,7 @@ public class LoanRulesAPITests {
 
   private Response put(JsonObject rules) throws Exception {
     CompletableFuture<Response> completed = new CompletableFuture<>();
-    client.put(loanRulesURL(), rules, ResponseHandler.any(completed));
+    client.put(InterfaceUrls.loanRulesURL(), rules, ResponseHandler.any(completed));
     return completed.get(5, TimeUnit.SECONDS);
   }
 }

@@ -5,11 +5,11 @@ import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.loanrules.LoanRulesException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import org.folio.circulation.loanrules.LoanRulesException;
 
 public class JsonResponse {
 
@@ -28,14 +28,31 @@ public class JsonResponse {
 
   public static void unprocessableEntity(
     HttpServerResponse response,
-    List<ValidationError> errors) {
+    String message,
+    String propertyName,
+    String value) {
+
+    ArrayList<ValidationError> errors = new ArrayList<>();
+
+    ValidationError error = new ValidationError(propertyName, value);
+
+    errors.add(error);
+
+    unprocessableEntity(response, message, errors);
+  }
+
+  public static void unprocessableEntity(
+    HttpServerResponse response,
+    String message, List<ValidationError> errors) {
 
     JsonArray parameters = new JsonArray(errors.stream()
-      .map(error -> new JsonObject().put("key", error.getPropertyName()).put("value", "null"))
+      .map(error -> new JsonObject()
+        .put("key", error.propertyName)
+        .put("value", error.value))
       .collect(Collectors.toList()));
 
     JsonObject wrappedErrors = new JsonObject()
-      .put("message", "Required properties missing")
+      .put("message", message)
       .put("parameters", parameters);
 
     response(response, wrappedErrors, 422);

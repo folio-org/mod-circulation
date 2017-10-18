@@ -1,7 +1,6 @@
 package org.folio.circulation.resources;
 
 import io.vertx.core.http.HttpMethod;
-import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
@@ -19,8 +18,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
+
+import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
+import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
+import static org.folio.circulation.domain.ItemStatusAssistant.updateItemStatus;
 
 public class LoanCollectionResource {
 
@@ -63,7 +65,7 @@ public class LoanCollectionResource {
     JsonObject loan = routingContext.getBodyAsJson();
     String itemId = loan.getString("itemId");
 
-    updateItemWhenLoanChanges(itemId, itemStatusFrom(loan),
+    updateItemStatus(itemId, itemStatusFrom(loan),
       itemsStorageClient, routingContext.response(), item -> {
         loansStorageClient.post(loan, response -> {
           if(response.getStatusCode() == 201) {
@@ -109,7 +111,7 @@ public class LoanCollectionResource {
     JsonObject storageLoan = loan.copy();
     storageLoan.remove("item");
 
-    updateItemWhenLoanChanges(itemId, itemStatusFrom(loan),
+    updateItemStatus(itemId, itemStatusFrom(loan),
       itemsStorageClient, routingContext.response(), item -> {
         loansStorageClient.put(id, storageLoan, response -> {
           if(response.getStatusCode() == 204) {
@@ -334,55 +336,13 @@ public class LoanCollectionResource {
     return loanStorageClient;
   }
 
-  private void updateItemWhenLoanChanges(
-    String itemId,
-    String newItemStatus,
-    CollectionResourceClient itemsStorageClient,
-    HttpServerResponse responseToClient,
-    Consumer<JsonObject> onSuccess) {
-
-    itemsStorageClient.get(itemId, getItemResponse -> {
-      if(getItemResponse.getStatusCode() == 200) {
-        JsonObject item = getItemResponse.getJson();
-
-          if(itemStatusAlreadyMatches(item, newItemStatus)) {
-            onSuccess.accept(item);
-          }
-          else {
-            item.put("status", new JsonObject().put("name", newItemStatus));
-
-            itemsStorageClient.put(itemId,
-              item, putItemResponse -> {
-                if(putItemResponse.getStatusCode() == 204) {
-                  onSuccess.accept(item);
-                }
-                else {
-                  ForwardResponse.forward(responseToClient, putItemResponse);
-                }
-              });
-          }
-        }
-        else if(getItemResponse.getStatusCode() == 404) {
-          ServerErrorResponse.internalError(responseToClient,
-            "Failed to handle updating an item which does not exist");
-        }
-        else {
-          ForwardResponse.forward(responseToClient, getItemResponse);
-        }
-      });
-  }
-
-  private boolean itemStatusAlreadyMatches(JsonObject item, String newItemStatus) {
-    return item.getJsonObject("status").getString("name") == newItemStatus;
-  }
-
   private String itemStatusFrom(JsonObject loan) {
     switch(loan.getJsonObject("status").getString("name")) {
       case "Open":
-        return "Checked Out";
+        return CHECKED_OUT;
 
       case "Closed":
-        return "Available";
+        return AVAILABLE;
 
       default:
         //TODO: Need to add validation to stop this situation
