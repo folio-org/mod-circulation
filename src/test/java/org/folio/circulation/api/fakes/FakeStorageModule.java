@@ -201,7 +201,8 @@ public class FakeStorageModule extends AbstractVerticle {
       Arrays.stream(query.split(" and "))
         .map( pairText -> {
           String[] split = pairText.split("=|<>");
-          String searchField = split[0];
+          String searchField = split[0]
+            .replaceAll("\"", "");
 
           String searchTerm = split[1]
             .replaceAll("\"", "")
@@ -278,7 +279,8 @@ public class FakeStorageModule extends AbstractVerticle {
       routingContext.next();
     }
     else {
-      JsonResponse.unprocessableEntity(routingContext.response(), "Required properties missing", errors);
+      JsonResponse.unprocessableEntity(routingContext.response(),
+        "Required properties missing", errors);
     }
   }
 }
