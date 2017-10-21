@@ -1,9 +1,14 @@
 ## 5.0.0 Unreleased
 
 * Item status `Checked Out` is now `Checked out` (CIRC-39)
+* Creating or changing a loan updates the `itemStatus` snapshot (similar to `action`) in loan storage (CIRC-38)
 * Creating a hold or recall request changes the associated item's `status` (CIRC-39)
+* Creating a hold or recall request updates the `action` and `itemStatus` snapshots
+for an open loan for the same item in storage, in order to create a loan history entry (CIRC-40, CIRC-38) 
 * A hold or recall request will be rejected when associated item's `status` is not checked out (CIRC-39)
 * A request for an item that does not exist will be rejected (CIRC-39)
+* The `itemStatus` snapshot is not included in loan representation, as the current status
+is included from the item, and having both may be confusing (CIRC-38)
 * Requires loan-storage interface version 3.3 (CIRC-38)
 
 ## 4.5.0 2017-10-11

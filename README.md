@@ -66,6 +66,18 @@ run `./lint.sh` to validate the RAML and JSON.Schema descriptions of the API (re
 
 ## Design Notes
 
+### Item Status
+
+During the circulation process an item can change between a variety of states,
+below is a table describing the most common states defined at the moment.
+
+| Name | Description |
+|---|---| 
+| Available | This item is available to be lent to a patron |
+| Checked out | This item is currently checked out to a patron |
+| Checked out - Recalled | This item is currently checked out to a patron, another patron has requested it be returned as soon as possible |
+| Checked out - Held | This item is currently checked out to a patron, another patron has requested it be held upon it’s return |
+
 ### Storing Information from Other Records
 
 In order to facilitate the searching and sorting of requests by the properties of related records, a snapshot of some properties are stored with the request.
