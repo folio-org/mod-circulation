@@ -10,9 +10,6 @@
         "barcode": "036000291452",
         "status": {
           "name": "Checked Out"
-        },
-        "location": {
-          "name": "Main Library"
         }
       },
       "loanDate": "2017-03-01T22:34:11Z",
@@ -32,9 +29,6 @@
         "barcode": "565578437802",
         "status": {
           "name": "Available"
-        },
-        "location": {
-          "name": "Annex Library"
         }
       },
       "loanDate": "2017-01-14T19:14:36Z",

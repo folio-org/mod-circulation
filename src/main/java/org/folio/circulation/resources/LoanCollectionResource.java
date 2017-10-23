@@ -378,9 +378,9 @@ public class LoanCollectionResource {
       itemSummary.put("status", item.getJsonObject("status"));
     }
 
-    if(item.containsKey("location")) {
-      itemSummary.put("location", item.getJsonObject("location"));
-    }
+//    if(item.containsKey("location")) {
+//      itemSummary.put("location", item.getJsonObject("location"));
+//    }
 
     return itemSummary;
   }

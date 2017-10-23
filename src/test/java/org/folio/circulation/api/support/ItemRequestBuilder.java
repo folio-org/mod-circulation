@@ -47,7 +47,7 @@ public class ItemRequestBuilder implements Builder {
     itemRequest.put("status", new JsonObject().put("name", status));
     itemRequest.put("materialTypeId", APITestSuite.bookMaterialTypeId());
     itemRequest.put("permanentLoanTypeId", APITestSuite.canCirculateLoanTypeId());
-    itemRequest.put("location", new JsonObject().put("name", "Main Library"));
+//    itemRequest.put("location", new JsonObject().put("name", "Main Library"));
 
     return itemRequest;
   }

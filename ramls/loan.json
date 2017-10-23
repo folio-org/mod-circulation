@@ -40,14 +40,6 @@
               "type": "string"
             }
           }
-        },
-        "location": {
-          "type": "object",
-          "properties": {
-            "name": {
-              "type": "string"
-            }
-          }
         }
       }
     },
