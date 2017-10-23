@@ -31,6 +31,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 import static org.folio.circulation.api.support.InterfaceUrls.loanTypesStorageUrl;
+import static org.folio.circulation.api.support.InterfaceUrls.locationsStorageUrl;
 import static org.folio.circulation.api.support.InterfaceUrls.materialTypesStorageUrl;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -64,6 +65,7 @@ public class APITestSuite {
   private static Boolean useOkapiForInitialRequests;
   private static String bookMaterialTypeId;
   private static String canCirculateLoanTypeId;
+  private static String mainLibraryLocationId;
 
   public static URL circulationModuleUrl(String path) {
     try {
@@ -147,6 +149,7 @@ public class APITestSuite {
 
     createMaterialTypes();
     createLoanTypes();
+    createLocations();
   }
 
   @AfterClass
@@ -167,6 +170,7 @@ public class APITestSuite {
 
     deleteMaterialTypes();
     deleteLoanTypes();
+    deleteLocations();
 
     CompletableFuture<Void> circulationModuleUndeployed =
       vertxAssistant.undeployVerticle(circulationModuleDeploymentId);
@@ -354,4 +358,80 @@ public class APITestSuite {
       canCirculateLoanTypeId, deletionResponse.getBody()),
       deletionResponse.getStatusCode(), is(204));
   }
+
+  private static void createLocations()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    OkapiHttpClient client = APITestSuite.createClient(exception -> {
+      log.error("Request to location storage module failed:", exception);
+    });
+
+    URL locationsUrl = locationsStorageUrl("");
+
+    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
+
+    client.get(locationsUrl, ResponseHandler.any(getCompleted));
+
+    Response getResponse = getCompleted.get(5 , TimeUnit.SECONDS);
+
+    assertThat("Location API Unavailable",
+      getResponse.getStatusCode(), is(200));
+
+    List<JsonObject> existingLocations = JsonArrayHelper.toList(
+      getResponse.getJson().getJsonArray("shelflocations"));
+
+    if(existingLocations.stream()
+      .noneMatch(loanType -> loanType.getString("name").equals("Main Library"))) {
+
+      CompletableFuture<Response> createCompleted = new CompletableFuture<>();
+
+      JsonObject mainLibraryLocation = new JsonObject().put("name", "Main Library");
+
+      client.post(locationsUrl, mainLibraryLocation,
+        ResponseHandler.json(createCompleted));
+
+      Response creationResponse = createCompleted.get(5, TimeUnit.SECONDS);
+
+      assertThat("Creation of can circulate loan type resource failed",
+        creationResponse.getStatusCode(), is(201));
+
+      mainLibraryLocationId = creationResponse.getJson().getString("id");
+    }
+    else {
+      mainLibraryLocationId = existingLocations.stream()
+        .filter(location -> location.getString("name").equals("Main Library"))
+        .findFirst()
+        .get()
+        .getString("id");
+    }
+  }
+
+  private static void deleteLocations()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    OkapiHttpClient client = APITestSuite.createClient(exception -> {
+      log.error("Request to locations storage module failed:", exception);
+    });
+
+    URL locationsUrl = locationsStorageUrl(
+      String.format("/%s", mainLibraryLocationId));
+
+    CompletableFuture<Response> deleteCompleted = new CompletableFuture<>();
+
+    client.delete(locationsUrl, ResponseHandler.any(deleteCompleted));
+
+    Response deletionResponse = deleteCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format(
+      "WARNING!!!!! Deletion of location resource failed: %s\n %s",
+      mainLibraryLocationId, deletionResponse.getBody()),
+      deletionResponse.getStatusCode(), is(204));
+  }
+
 }
