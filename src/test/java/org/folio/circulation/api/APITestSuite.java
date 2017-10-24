@@ -107,6 +107,10 @@ public class APITestSuite {
     return canCirculateLoanTypeId;
   }
 
+  public static String mainLibraryLocationId() {
+    return mainLibraryLocationId;
+  }
+
   @BeforeClass
   public static void before()
     throws InterruptedException,
