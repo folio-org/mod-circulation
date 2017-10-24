@@ -33,6 +33,15 @@
           "description": "The barcode of the item lent to the patron",
           "type": "string"
         },
+        "location": {
+          "description": "The location of the item lent to the patron",
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            }
+          }
+        },
         "status": {
           "type": "object",
           "properties": {

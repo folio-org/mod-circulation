@@ -14,21 +14,25 @@ public class ItemRequestBuilder implements Builder {
   private final String title;
   private final String barcode;
   private final String status;
+  private final UUID permanentLocationId;
 
   public ItemRequestBuilder() {
-    this(UUID.randomUUID(), "Nod", "565578437802", AVAILABLE_STATUS);
+    this(UUID.randomUUID(), "Nod", "565578437802", AVAILABLE_STATUS,
+      UUID.fromString(APITestSuite.mainLibraryLocationId()));
   }
 
   public ItemRequestBuilder(
     UUID id,
     String title,
     String barcode,
-    String status) {
+    String status,
+    UUID permanentLocationId) {
 
     this.id = id;
     this.title = title;
     this.barcode = barcode;
     this.status = status;
+    this.permanentLocationId = permanentLocationId;
   }
 
   public JsonObject create() {
@@ -47,7 +51,10 @@ public class ItemRequestBuilder implements Builder {
     itemRequest.put("status", new JsonObject().put("name", status));
     itemRequest.put("materialTypeId", APITestSuite.bookMaterialTypeId());
     itemRequest.put("permanentLoanTypeId", APITestSuite.canCirculateLoanTypeId());
-    itemRequest.put("permanentLocationId", APITestSuite.mainLibraryLocationId());
+
+    if(permanentLocationId != null) {
+      itemRequest.put("permanentLocationId", permanentLocationId.toString());
+    }
 
     return itemRequest;
   }
@@ -65,7 +72,7 @@ public class ItemRequestBuilder implements Builder {
       this.id,
       this.title,
       this.barcode,
-      status);
+      status, this.permanentLocationId);
   }
 
   public ItemRequestBuilder withTitle(String title) {
@@ -73,7 +80,8 @@ public class ItemRequestBuilder implements Builder {
       this.id,
       title,
       this.barcode,
-      this.status);
+      this.status,
+      this.permanentLocationId);
   }
 
   public ItemRequestBuilder withBarcode(String barcode) {
@@ -81,14 +89,24 @@ public class ItemRequestBuilder implements Builder {
       this.id,
       this.title,
       barcode,
-      this.status);
+      this.status,
+      this.permanentLocationId);
   }
 
   public ItemRequestBuilder withNoBarcode() {
+    return withBarcode(null);
+  }
+
+  public ItemRequestBuilder withNoPermanentLocation() {
+    return withPermanentLocation(null);
+  }
+
+  public ItemRequestBuilder withPermanentLocation(UUID permanentLocationId) {
     return new ItemRequestBuilder(
       this.id,
       this.title,
-      null,
-      this.status);
+      this.barcode,
+      this.status,
+      permanentLocationId);
   }
 }

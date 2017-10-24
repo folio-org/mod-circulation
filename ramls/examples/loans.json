@@ -17,6 +17,9 @@
       "status": {
         "name": "Open"
       },
+      "location": {
+        "name": "Main Library"
+      },
       "action": "checkedout",
       "renewalCount": 1
     },
@@ -29,6 +32,9 @@
         "barcode": "565578437802",
         "status": {
           "name": "Available"
+        },
+        "location": {
+          "name": "Annex"
         }
       },
       "loanDate": "2017-01-14T19:14:36Z",

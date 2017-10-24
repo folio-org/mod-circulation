@@ -49,11 +49,13 @@ public class LoanCollectionResource {
     WebContext context = new WebContext(routingContext);
     CollectionResourceClient loansStorageClient;
     CollectionResourceClient itemsStorageClient;
+    CollectionResourceClient locationsStorageClient;
 
     try {
       OkapiHttpClient client = createHttpClient(routingContext, context);
       loansStorageClient = createLoansStorageClient(client, context);
       itemsStorageClient = createItemsStorageClient(client, context);
+      locationsStorageClient = createLocationsStorageClient(client, context);
     }
     catch (MalformedURLException e) {
       ServerErrorResponse.internalError(routingContext.response(),
@@ -72,17 +74,31 @@ public class LoanCollectionResource {
           if(response.getStatusCode() == 201) {
             JsonObject createdLoan = response.getJson();
 
-        createdLoan.put("item", createItemSummary(item));
+            if(item.containsKey("permanentLocationId")) {
+              String locationId = item.getString("permanentLocationId");
+              locationsStorageClient.get(locationId,
+                locationResponse -> {
+                  if(locationResponse.getStatusCode() == 200) {
+                    respondWith(routingContext, createdLoan, item,
+                      locationResponse.getJson());
+                  }
+                  else {
+                    //Replace this with log
+                    System.out.println(
+                      String.format("Could not get location %s for item %s",
+                        locationId, itemId ));
 
-        //No need to pass on the itemStatus property, as only used to populate the history
-        //and could be confused with aggregation of current status
-        createdLoan.remove("itemStatus");
-
-        JsonResponse.created(routingContext.response(), createdLoan);
-      }
-      else {
-        ForwardResponse.forward(routingContext.response(), response);
-      }
+                    respondWith(routingContext, createdLoan, item, null);
+                  }
+              });
+            }
+            else {
+              respondWith(routingContext, createdLoan, item, null);
+            }
+        }
+        else {
+          ForwardResponse.forward(routingContext.response(), response);
+        }
       });
     });
   }
@@ -163,7 +179,7 @@ public class LoanCollectionResource {
             //and could be confused with aggregation of current status
             loan.remove("itemStatus");
 
-            loan.put("item", createItemSummary(item));
+            loan.put("item", createItemSummary(item, null));
 
             JsonResponse.success(routingContext.response(),
               loan);
@@ -271,7 +287,7 @@ public class LoanCollectionResource {
             if(possibleItem.isPresent()) {
               JsonObject item = possibleItem.get();
 
-              loan.put("item", createItemSummary(item));
+              loan.put("item", createItemSummary(item, null));
             }
           });
 
@@ -351,6 +367,20 @@ public class LoanCollectionResource {
     return loanStorageClient;
   }
 
+  private CollectionResourceClient createLocationsStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+
+    CollectionResourceClient loanStorageClient;
+
+    loanStorageClient = new CollectionResourceClient(
+      client, context.getOkapiBasedUrl("/shelf-locations"),
+      context.getTenantId());
+
+    return loanStorageClient;
+  }
+
   private String itemStatusFrom(JsonObject loan) {
     switch(loan.getJsonObject("status").getString("name")) {
       case "Open":
@@ -365,7 +395,7 @@ public class LoanCollectionResource {
     }
   }
 
-  private JsonObject createItemSummary(JsonObject item) {
+  private JsonObject createItemSummary(JsonObject item, JsonObject location) {
     JsonObject itemSummary = new JsonObject();
 
     itemSummary.put("title", item.getString("title"));
@@ -378,10 +408,26 @@ public class LoanCollectionResource {
       itemSummary.put("status", item.getJsonObject("status"));
     }
 
-//    if(item.containsKey("location")) {
-//      itemSummary.put("location", item.getJsonObject("location"));
-//    }
+    if(location != null && location.containsKey("name")) {
+      itemSummary.put("location", new JsonObject()
+        .put("name", location.getString("name")));
+    }
 
     return itemSummary;
+  }
+
+  private void respondWith(
+    RoutingContext routingContext,
+    JsonObject loan,
+    JsonObject item,
+    JsonObject location) {
+
+    loan.put("item", createItemSummary(item, location));
+
+    //No need to pass on the itemStatus property, as only used to populate the history
+    //and could be confused with aggregation of current status
+    loan.remove("itemStatus");
+
+    JsonResponse.created(routingContext.response(), loan);
   }
 }

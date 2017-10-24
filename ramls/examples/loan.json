@@ -8,6 +8,9 @@
     "barcode": "036000291452",
     "status": {
       "name": "Checked Out"
+    },
+    "location": {
+      "name": "Main Library"
     }
   },
   "loanDate": "2017-03-01T23:11:00.000Z",

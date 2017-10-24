@@ -70,7 +70,8 @@ public class LoanAPITests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("036000291452"))
+      .withBarcode("036000291452")
+      .withPermanentLocation(UUID.fromString(APITestSuite.mainLibraryLocationId())))
       .getId();
 
     UUID userId = UUID.randomUUID();
@@ -126,12 +127,12 @@ public class LoanAPITests {
       loan.getJsonObject("item").getJsonObject("status").getString("name"),
       is("Checked out"));
 
-//    assertThat("has item location",
-//      loan.getJsonObject("item").containsKey("location"), is(true));
+    assertThat("has item location",
+      loan.getJsonObject("item").containsKey("location"), is(true));
 
-//    assertThat("location is taken from item",
-//      loan.getJsonObject("item").getJsonObject("location").getString("name"),
-//      is("Main Library"));
+    assertThat("location is taken from item",
+      loan.getJsonObject("item").getJsonObject("location").getString("name"),
+      is("Main Library"));
 
     assertThat("due date does not match",
       loan.getString("dueDate"), isEquivalentTo(dueDate));
@@ -147,6 +148,30 @@ public class LoanAPITests {
     assertThat("item status snapshot in storage is not checked out",
       loansStorageClient.getById(id).getJson().getString("itemStatus"),
       is("Checked out"));
+  }
+
+  @Test
+  public void canCreateALoanForItemWithoutAPermanentLocation()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException,
+    UnsupportedEncodingException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
+      .withNoPermanentLocation())
+      .getId();
+
+    IndividualResource response = loansClient.create(new LoanRequestBuilder()
+      .withId(id)
+      .withItemId(itemId));
+
+    JsonObject loan = response.getJson();
+
+    assertThat(String.format("has no item location (%s)", loan.encodePrettily()),
+      loan.getJsonObject("item").containsKey("location"), is(false));
   }
 
   @Test
