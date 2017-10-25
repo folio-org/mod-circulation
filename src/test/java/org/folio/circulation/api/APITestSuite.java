@@ -173,7 +173,7 @@ public class APITestSuite {
     ResourceClient.forRequests(client).deleteAll();
     ResourceClient.forLoans(client).deleteAll();
     ResourceClient.forItems(client).deleteAll();
-    ResourceClient.forUsers(client).deleteAllIndividually("users");
+    ResourceClient.forUsers(client).deleteAllIndividually();
 
     deleteMaterialTypes();
     deleteLoanTypes();
@@ -223,7 +223,7 @@ public class APITestSuite {
     TimeoutException {
 
     bookMaterialTypeId = createReferenceRecord(
-      ResourceClient.forMaterialTypes(createClient()), "mtypes", "Book");
+      ResourceClient.forMaterialTypes(createClient()), "Book");
   }
 
   private static void deleteMaterialTypes()
@@ -244,7 +244,7 @@ public class APITestSuite {
     TimeoutException {
 
     canCirculateLoanTypeId = createReferenceRecord(
-      ResourceClient.forLoanTypes(createClient()), "loantypes", "Can Circulate");
+      ResourceClient.forLoanTypes(createClient()), "Can Circulate");
   }
 
   private static void deleteLoanTypes()
@@ -265,10 +265,10 @@ public class APITestSuite {
     TimeoutException {
 
     mainLibraryLocationId = createReferenceRecord(
-      ResourceClient.forLocations(createClient()), "shelflocations", "Main Library");
+      ResourceClient.forLocations(createClient()), "Main Library");
 
     annexLocationId = createReferenceRecord(
-      ResourceClient.forLocations(createClient()), "shelflocations", "Annex");
+      ResourceClient.forLocations(createClient()), "Annex");
   }
 
   private static void deleteLocations()
@@ -285,7 +285,6 @@ public class APITestSuite {
 
   private static UUID createReferenceRecord(
     ResourceClient client,
-    String collectionArrayName,
     String name)
 
     throws MalformedURLException,
@@ -293,7 +292,7 @@ public class APITestSuite {
     ExecutionException,
     TimeoutException {
 
-    List<JsonObject> existingRecords = client.getAll(collectionArrayName);
+    List<JsonObject> existingRecords = client.getAll();
 
     if(existsInList(existingRecords, name)) {
 
