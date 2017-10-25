@@ -334,7 +334,15 @@ public class LoanCollectionResource {
 
               JsonObject item = itemResponse.getJson();
 
-              if(item.containsKey("permanentLocationId")) {
+              if(item.containsKey("temporaryLocationId")) {
+                CompletableFuture<Response> newFuture = new CompletableFuture<>();
+
+                allLocationFutures.add(newFuture);
+
+                locationsClient.get(item.getString("temporaryLocationId"),
+                  response -> newFuture.complete(response));
+              }
+              else if(item.containsKey("permanentLocationId")) {
                 CompletableFuture<Response> newFuture = new CompletableFuture<>();
 
                 allLocationFutures.add(newFuture);
@@ -366,13 +374,20 @@ public class LoanCollectionResource {
               if(possibleItem.isPresent()) {
                 JsonObject item = possibleItem.get();
 
-                Optional<JsonObject> possibleLocation = locationResponses.stream()
+                Optional<JsonObject> possiblePermanentLocation = locationResponses.stream()
                   .filter(locationResponse -> locationResponse.getStatusCode() == 200)
                   .map(locationResponse -> locationResponse.getJson())
                   .filter(location -> location.getString("id").equals(item.getString("permanentLocationId")))
                   .findFirst();
 
-                loan.put("item", createItemSummary(item, possibleLocation.orElse(null)));
+                Optional<JsonObject> possibleTemporaryLocation = locationResponses.stream()
+                  .filter(locationResponse -> locationResponse.getStatusCode() == 200)
+                  .map(locationResponse -> locationResponse.getJson())
+                  .filter(location -> location.getString("id").equals(item.getString("temporaryLocationId")))
+                  .findFirst();
+
+                loan.put("item", createItemSummary(item,
+                  possibleTemporaryLocation.orElse(possiblePermanentLocation.orElse(null))));
               }
             });
 

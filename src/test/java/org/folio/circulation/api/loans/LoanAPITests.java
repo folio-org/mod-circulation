@@ -844,14 +844,14 @@ public class LoanAPITests {
       loanWithPermanentLocation.getJsonObject("item").getJsonObject("location").getString("name"),
       is("Main Library"));
 
-//    assertThat(String.format("Temporary location should be included: %s",
-//      loanWithPermanentLocation.encodePrettily()),
-//      loanWithTemporaryLocation.getJsonObject("item").containsKey("location"), is(true));
-//
-//    assertThat(String.format("Temporary location should be included: %s",
-//      loanWithPermanentLocation.encodePrettily()),
-//      loanWithTemporaryLocation.getJsonObject("item").getJsonObject("location").getString("name"),
-//      is("Annex"));
+    assertThat(String.format("Temporary location should be included: %s",
+      loanWithPermanentLocation.encodePrettily()),
+      loanWithTemporaryLocation.getJsonObject("item").containsKey("location"), is(true));
+
+    assertThat(String.format("Temporary location should be included: %s",
+      loanWithPermanentLocation.encodePrettily()),
+      loanWithTemporaryLocation.getJsonObject("item").getJsonObject("location").getString("name"),
+      is("Annex"));
 
     assertThat(String.format("No location should be included: %s",
       loanWithPermanentLocation.encodePrettily()),
