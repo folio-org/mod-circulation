@@ -47,6 +47,18 @@ public class ResourceClient {
     return new ResourceClient(client, InterfaceUrls::loansStorageUrl, "storage loans");
   }
 
+  public static ResourceClient forMaterialTypes(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::materialTypesStorageUrl, "material types");
+  }
+
+  public static ResourceClient forLoanTypes(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::loanTypesStorageUrl, "loan types");
+  }
+
+  public static ResourceClient forLocations(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::locationsStorageUrl, "locations");
+  }
+
   private ResourceClient(
     OkapiHttpClient client,
     UrlMaker urlMaker, String resourceName) {
@@ -158,18 +170,7 @@ public class ResourceClient {
     ExecutionException,
     TimeoutException {
 
-    CompletableFuture<Response> getFinished = new CompletableFuture<>();
-
-    client.get(urlMaker.combine(""),
-      ResponseHandler.any(getFinished));
-
-    Response response = getFinished.get(5, TimeUnit.SECONDS);
-
-    MatcherAssert.assertThat("WARNING!!!!! Get all resources individually in order to delete failed",
-      response.getStatusCode(), is(200));
-
-    List<JsonObject> records = JsonArrayHelper.toList(response.getJson()
-      .getJsonArray(collectionArrayName));
+    List<JsonObject> records = getAll(collectionArrayName);
 
     records.stream().forEach(record -> {
       try {
@@ -184,10 +185,30 @@ public class ResourceClient {
         MatcherAssert.assertThat("WARNING!!!!! Delete a resource individually failed",
           deleteResponse.getStatusCode(), is(204));
       } catch (Throwable e) {
-        MatcherAssert.assertThat("WARNING!!!!! Delete a resource individually failed",
+        assertThat("WARNING!!!!! Delete a resource individually failed",
           true, is(false));
       }
     });
+  }
+
+  public List<JsonObject> getAll(String collectionArrayName)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    CompletableFuture<Response> getFinished = new CompletableFuture<>();
+
+    client.get(urlMaker.combine(""),
+      ResponseHandler.any(getFinished));
+
+    Response response = getFinished.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Get all records failed: %s", response.getBody()),
+      response.getStatusCode(), is(200));
+
+    return JsonArrayHelper.toList(response.getJson()
+      .getJsonArray(collectionArrayName));
   }
 
   @FunctionalInterface

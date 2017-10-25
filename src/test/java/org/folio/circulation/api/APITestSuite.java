@@ -7,11 +7,8 @@ import org.folio.circulation.api.loans.LoanAPITests;
 import org.folio.circulation.api.requests.*;
 import org.folio.circulation.api.support.ResourceClient;
 import org.folio.circulation.api.support.URLHelper;
-import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.VertxAssistant;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
@@ -24,17 +21,12 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
-
-import static org.folio.circulation.api.support.InterfaceUrls.loanTypesStorageUrl;
-import static org.folio.circulation.api.support.InterfaceUrls.locationsStorageUrl;
-import static org.folio.circulation.api.support.InterfaceUrls.materialTypesStorageUrl;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 
 @RunWith(Suite.class)
 
@@ -63,9 +55,9 @@ public class APITestSuite {
   private static String fakeOkapiDeploymentId;
   private static Boolean useOkapiForStorage;
   private static Boolean useOkapiForInitialRequests;
-  private static String bookMaterialTypeId;
-  private static String canCirculateLoanTypeId;
-  private static String mainLibraryLocationId;
+  private static UUID bookMaterialTypeId;
+  private static UUID canCirculateLoanTypeId;
+  private static UUID mainLibraryLocationId;
 
   public static URL circulationModuleUrl(String path) {
     try {
@@ -99,15 +91,21 @@ public class APITestSuite {
       okapiUrl(), TENANT_ID, TOKEN, exceptionHandler);
   }
 
-  public static String bookMaterialTypeId() {
+  public static OkapiHttpClient createClient() {
+    return APITestSuite.createClient(exception -> {
+      log.error("Request failed:", exception);
+    });
+  }
+
+  public static UUID bookMaterialTypeId() {
     return bookMaterialTypeId;
   }
 
-  public static String canCirculateLoanTypeId() {
+  public static UUID canCirculateLoanTypeId() {
     return canCirculateLoanTypeId;
   }
 
-  public static String mainLibraryLocationId() {
+  public static UUID mainLibraryLocationId() {
     return mainLibraryLocationId;
   }
 
@@ -219,48 +217,8 @@ public class APITestSuite {
     ExecutionException,
     TimeoutException {
 
-    OkapiHttpClient client = APITestSuite.createClient(exception -> {
-      log.error("Request to material type storage module failed:", exception);
-    });
-
-    URL materialTypesUrl = materialTypesStorageUrl();
-
-    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
-
-    client.get(materialTypesUrl, ResponseHandler.any(getCompleted));
-
-    Response getResponse = getCompleted.get(5 , TimeUnit.SECONDS);
-
-    assertThat("Material Type API Unavailable",
-      getResponse.getStatusCode(), is(200));
-
-    List<JsonObject> existingMaterialTypes = JsonArrayHelper.toList(
-      getResponse.getJson().getJsonArray("mtypes"));
-
-    if(existingMaterialTypes.stream()
-      .noneMatch(materialType -> materialType.getString("name").equals("Book"))) {
-
-      CompletableFuture<Response> createCompleted = new CompletableFuture<>();
-
-      JsonObject bookMaterialType = new JsonObject().put("name", "Book");
-
-      client.post(materialTypesUrl, bookMaterialType,
-        ResponseHandler.json(createCompleted));
-
-      Response creationResponse = createCompleted.get(5, TimeUnit.SECONDS);
-
-      assertThat("Creation of Book material type resource failed",
-        creationResponse.getStatusCode(), is(201));
-
-      bookMaterialTypeId = creationResponse.getJson().getString("id");
-    }
-    else {
-      bookMaterialTypeId = existingMaterialTypes.stream()
-        .filter(loanType -> loanType.getString("name").equals("Book"))
-        .findFirst()
-        .get()
-        .getString("id");
-    }
+    bookMaterialTypeId = createReferenceRecord(
+      ResourceClient.forMaterialTypes(createClient()), "mtypes", "Book");
   }
 
   private static void deleteMaterialTypes()
@@ -269,23 +227,9 @@ public class APITestSuite {
     ExecutionException,
     TimeoutException {
 
-    OkapiHttpClient client = APITestSuite.createClient(exception -> {
-      log.error("Request to material type storage module failed:", exception);
-    });
+    ResourceClient materialTypesClient = ResourceClient.forMaterialTypes(createClient());
 
-    URL materialTypeUrl = materialTypesStorageUrl(
-      String.format("/%s", bookMaterialTypeId));
-
-    CompletableFuture<Response> deleteCompleted = new CompletableFuture<>();
-
-    client.delete(materialTypeUrl, ResponseHandler.any(deleteCompleted));
-
-    Response deletionResponse = deleteCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(String.format(
-        "WARNING!!!!! Deletion of Book material type resource failed: %s\n %s",
-        bookMaterialTypeId, deletionResponse.getBody()),
-      deletionResponse.getStatusCode(), is(204));
+    materialTypesClient.delete(bookMaterialTypeId);
   }
 
   private static void createLoanTypes()
@@ -294,48 +238,8 @@ public class APITestSuite {
     ExecutionException,
     TimeoutException {
 
-    OkapiHttpClient client = APITestSuite.createClient(exception -> {
-      log.error("Request to loan type storage module failed:", exception);
-    });
-
-    URL loanTypesUrl = loanTypesStorageUrl("");
-
-    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
-
-    client.get(loanTypesUrl, ResponseHandler.any(getCompleted));
-
-    Response getResponse = getCompleted.get(5 , TimeUnit.SECONDS);
-
-    assertThat("Loan Type API Unavailable",
-      getResponse.getStatusCode(), is(200));
-
-    List<JsonObject> existingLoanTypes = JsonArrayHelper.toList(
-      getResponse.getJson().getJsonArray("loantypes"));
-
-    if(existingLoanTypes.stream()
-      .noneMatch(loanType -> loanType.getString("name").equals("Can Circulate"))) {
-
-      CompletableFuture<Response> createCompleted = new CompletableFuture<>();
-
-      JsonObject canCirculateLoanType = new JsonObject().put("name", "Can Circulate");
-
-      client.post(loanTypesUrl, canCirculateLoanType,
-        ResponseHandler.json(createCompleted));
-
-      Response creationResponse = createCompleted.get(5, TimeUnit.SECONDS);
-
-      assertThat("Creation of can circulate loan type resource failed",
-        creationResponse.getStatusCode(), is(201));
-
-      canCirculateLoanTypeId = creationResponse.getJson().getString("id");
-    }
-    else {
-      canCirculateLoanTypeId = existingLoanTypes.stream()
-        .filter(loanType -> loanType.getString("name").equals("Can Circulate"))
-        .findFirst()
-        .get()
-        .getString("id");
-    }
+    canCirculateLoanTypeId = createReferenceRecord(
+      ResourceClient.forLoanTypes(createClient()), "loantypes", "Can Circulate");
   }
 
   private static void deleteLoanTypes()
@@ -344,23 +248,9 @@ public class APITestSuite {
     ExecutionException,
     TimeoutException {
 
-    OkapiHttpClient client = APITestSuite.createClient(exception -> {
-      log.error("Request to loan type storage module failed:", exception);
-    });
+    ResourceClient loanTypesClient = ResourceClient.forLoanTypes(createClient());
 
-    URL loanTypeUrl = loanTypesStorageUrl(
-      String.format("/%s", canCirculateLoanTypeId));
-
-    CompletableFuture<Response> deleteCompleted = new CompletableFuture<>();
-
-    client.delete(loanTypeUrl, ResponseHandler.any(deleteCompleted));
-
-    Response deletionResponse = deleteCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(String.format(
-      "WARNING!!!!! Deletion of can circulate loan type resource failed: %s\n %s",
-      canCirculateLoanTypeId, deletionResponse.getBody()),
-      deletionResponse.getStatusCode(), is(204));
+    loanTypesClient.delete(canCirculateLoanTypeId);
   }
 
   private static void createLocations()
@@ -369,48 +259,8 @@ public class APITestSuite {
     ExecutionException,
     TimeoutException {
 
-    OkapiHttpClient client = APITestSuite.createClient(exception -> {
-      log.error("Request to location storage module failed:", exception);
-    });
-
-    URL locationsUrl = locationsStorageUrl("");
-
-    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
-
-    client.get(locationsUrl, ResponseHandler.any(getCompleted));
-
-    Response getResponse = getCompleted.get(5 , TimeUnit.SECONDS);
-
-    assertThat("Location API Unavailable",
-      getResponse.getStatusCode(), is(200));
-
-    List<JsonObject> existingLocations = JsonArrayHelper.toList(
-      getResponse.getJson().getJsonArray("shelflocations"));
-
-    if(existingLocations.stream()
-      .noneMatch(loanType -> loanType.getString("name").equals("Main Library"))) {
-
-      CompletableFuture<Response> createCompleted = new CompletableFuture<>();
-
-      JsonObject mainLibraryLocation = new JsonObject().put("name", "Main Library");
-
-      client.post(locationsUrl, mainLibraryLocation,
-        ResponseHandler.json(createCompleted));
-
-      Response creationResponse = createCompleted.get(5, TimeUnit.SECONDS);
-
-      assertThat("Creation of can circulate loan type resource failed",
-        creationResponse.getStatusCode(), is(201));
-
-      mainLibraryLocationId = creationResponse.getJson().getString("id");
-    }
-    else {
-      mainLibraryLocationId = existingLocations.stream()
-        .filter(location -> location.getString("name").equals("Main Library"))
-        .findFirst()
-        .get()
-        .getString("id");
-    }
+    mainLibraryLocationId = createReferenceRecord(
+      ResourceClient.forLocations(createClient()), "shelflocations", "Main Library");
   }
 
   private static void deleteLocations()
@@ -419,23 +269,44 @@ public class APITestSuite {
     ExecutionException,
     TimeoutException {
 
-    OkapiHttpClient client = APITestSuite.createClient(exception -> {
-      log.error("Request to locations storage module failed:", exception);
-    });
+    ResourceClient locationsClient = ResourceClient.forLocations(createClient());
 
-    URL locationsUrl = locationsStorageUrl(
-      String.format("/%s", mainLibraryLocationId));
-
-    CompletableFuture<Response> deleteCompleted = new CompletableFuture<>();
-
-    client.delete(locationsUrl, ResponseHandler.any(deleteCompleted));
-
-    Response deletionResponse = deleteCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(String.format(
-      "WARNING!!!!! Deletion of location resource failed: %s\n %s",
-      mainLibraryLocationId, deletionResponse.getBody()),
-      deletionResponse.getStatusCode(), is(204));
+    locationsClient.delete(mainLibraryLocationId);
   }
 
+  private static UUID createReferenceRecord(
+    ResourceClient client,
+    String collectionArrayName,
+    String name)
+
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    List<JsonObject> existingRecords = client.getAll(collectionArrayName);
+
+    if(existsInList(existingRecords, name)) {
+
+      JsonObject newReferenceRecord = new JsonObject().put("name", name);
+
+      return client.create(newReferenceRecord).getId();
+    }
+    else {
+      return findFirstByName(existingRecords, name);
+    }
+  }
+
+  private static UUID findFirstByName(List<JsonObject> existingRecords, String name) {
+    return UUID.fromString(existingRecords.stream()
+      .filter(record -> record.getString("name").equals(name))
+      .findFirst()
+      .get()
+      .getString("id"));
+  }
+
+  private static boolean existsInList(List<JsonObject> existingRecords, String name) {
+    return existingRecords.stream()
+      .noneMatch(materialType -> materialType.getString("name").equals(name));
+  }
 }

@@ -18,7 +18,7 @@ public class ItemRequestBuilder implements Builder {
 
   public ItemRequestBuilder() {
     this(UUID.randomUUID(), "Nod", "565578437802", AVAILABLE_STATUS,
-      UUID.fromString(APITestSuite.mainLibraryLocationId()));
+      APITestSuite.mainLibraryLocationId());
   }
 
   public ItemRequestBuilder(
@@ -49,8 +49,8 @@ public class ItemRequestBuilder implements Builder {
     }
 
     itemRequest.put("status", new JsonObject().put("name", status));
-    itemRequest.put("materialTypeId", APITestSuite.bookMaterialTypeId());
-    itemRequest.put("permanentLoanTypeId", APITestSuite.canCirculateLoanTypeId());
+    itemRequest.put("materialTypeId", APITestSuite.bookMaterialTypeId().toString());
+    itemRequest.put("permanentLoanTypeId", APITestSuite.canCirculateLoanTypeId().toString());
 
     if(permanentLocationId != null) {
       itemRequest.put("permanentLocationId", permanentLocationId.toString());

@@ -71,7 +71,7 @@ public class LoanAPITests {
 
     UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
       .withBarcode("036000291452")
-      .withPermanentLocation(UUID.fromString(APITestSuite.mainLibraryLocationId())))
+      .withPermanentLocation(APITestSuite.mainLibraryLocationId()))
       .getId();
 
     UUID userId = UUID.randomUUID();
@@ -161,7 +161,7 @@ public class LoanAPITests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withPermanentLocation(UUID.fromString(APITestSuite.mainLibraryLocationId())))
+      .withPermanentLocation(APITestSuite.mainLibraryLocationId()))
       .getId();
 
     IndividualResource response = loansClient.create(new LoanRequestBuilder()
