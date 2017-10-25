@@ -58,6 +58,7 @@ public class APITestSuite {
   private static UUID bookMaterialTypeId;
   private static UUID canCirculateLoanTypeId;
   private static UUID mainLibraryLocationId;
+  private static UUID annexLocationId;
 
   public static URL circulationModuleUrl(String path) {
     try {
@@ -107,6 +108,10 @@ public class APITestSuite {
 
   public static UUID mainLibraryLocationId() {
     return mainLibraryLocationId;
+  }
+
+  public static UUID annexLocationId() {
+    return annexLocationId;
   }
 
   @BeforeClass
@@ -261,6 +266,9 @@ public class APITestSuite {
 
     mainLibraryLocationId = createReferenceRecord(
       ResourceClient.forLocations(createClient()), "shelflocations", "Main Library");
+
+    annexLocationId = createReferenceRecord(
+      ResourceClient.forLocations(createClient()), "shelflocations", "Annex");
   }
 
   private static void deleteLocations()
@@ -272,6 +280,7 @@ public class APITestSuite {
     ResourceClient locationsClient = ResourceClient.forLocations(createClient());
 
     locationsClient.delete(mainLibraryLocationId);
+    locationsClient.delete(annexLocationId);
   }
 
   private static UUID createReferenceRecord(
