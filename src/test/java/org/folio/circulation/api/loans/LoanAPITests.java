@@ -151,6 +151,50 @@ public class LoanAPITests {
   }
 
   @Test
+  public void canCreateALoanForItemWithAPermanentLocation()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException,
+    UnsupportedEncodingException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
+      .withPermanentLocation(UUID.fromString(APITestSuite.mainLibraryLocationId())))
+      .getId();
+
+    IndividualResource response = loansClient.create(new LoanRequestBuilder()
+      .withId(id)
+      .withItemId(itemId));
+
+    JsonObject createdLoan = response.getJson();
+
+    assertThat(String.format("created loan has an item location (%s)",
+      createdLoan.encodePrettily()),
+      createdLoan.getJsonObject("item").containsKey("location"), is(true));
+
+    assertThat("location is taken from item",
+      createdLoan.getJsonObject("item").getJsonObject("location").getString("name"),
+      is("Main Library"));
+
+    Response fetchResponse = loansClient.getById(id);
+
+    assertThat(String.format("Failed to get loan: %s", fetchResponse.getBody()),
+      fetchResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+
+    JsonObject fetchedLoan = fetchResponse.getJson();
+
+    assertThat(String.format("fetched loan has an item location (%s)",
+      fetchedLoan.encodePrettily()),
+      fetchedLoan.getJsonObject("item").containsKey("location"), is(true));
+
+    assertThat("location is taken from item",
+      fetchedLoan.getJsonObject("item").getJsonObject("location").getString("name"),
+      is("Main Library"));
+  }
+
+  @Test
   public void canCreateALoanForItemWithoutAPermanentLocation()
     throws InterruptedException,
     ExecutionException,
@@ -168,10 +212,22 @@ public class LoanAPITests {
       .withId(id)
       .withItemId(itemId));
 
-    JsonObject loan = response.getJson();
+    JsonObject createdLoan = response.getJson();
 
-    assertThat(String.format("has no item location (%s)", loan.encodePrettily()),
-      loan.getJsonObject("item").containsKey("location"), is(false));
+    assertThat(String.format("created loan has no item location (%s)",
+      createdLoan.encodePrettily()),
+      createdLoan.getJsonObject("item").containsKey("location"), is(false));
+
+    Response fetchResponse = loansClient.getById(id);
+
+    assertThat(String.format("Failed to get loan: %s", fetchResponse.getBody()),
+      fetchResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+
+    JsonObject fetchedLoan = fetchResponse.getJson();
+
+    assertThat(String.format("fetched loan has no item location (%s)",
+      fetchedLoan.encodePrettily()),
+      fetchedLoan.getJsonObject("item").containsKey("location"), is(false));
   }
 
   @Test

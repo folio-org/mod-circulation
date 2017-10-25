@@ -79,21 +79,22 @@ public class LoanCollectionResource {
               locationsStorageClient.get(locationId,
                 locationResponse -> {
                   if(locationResponse.getStatusCode() == 200) {
-                    respondWith(routingContext, createdLoan, item,
-                      locationResponse.getJson());
+                    JsonResponse.created(routingContext.response(),
+                      extendedLoan(createdLoan, item, locationResponse.getJson()));
                   }
                   else {
                     //Replace this with log
                     System.out.println(
                       String.format("Could not get location %s for item %s",
                         locationId, itemId ));
-
-                    respondWith(routingContext, createdLoan, item, null);
+                    JsonResponse.created(routingContext.response(),
+                      extendedLoan(createdLoan, item, null));
                   }
               });
             }
             else {
-              respondWith(routingContext, createdLoan, item, null);
+              JsonResponse.created(routingContext.response(),
+                extendedLoan(createdLoan, item, null));
             }
         }
         else {
@@ -151,11 +152,13 @@ public class LoanCollectionResource {
     WebContext context = new WebContext(routingContext);
     CollectionResourceClient loansStorageClient;
     CollectionResourceClient itemsStorageClient;
+    CollectionResourceClient locationsStorageClient;
 
     try {
       OkapiHttpClient client = createHttpClient(routingContext, context);
       loansStorageClient = createLoansStorageClient(client, context);
       itemsStorageClient = createItemsStorageClient(client, context);
+      locationsStorageClient = createLocationsStorageClient(client, context);
     }
     catch (MalformedURLException e) {
       ServerErrorResponse.internalError(routingContext.response(),
@@ -175,14 +178,29 @@ public class LoanCollectionResource {
           if(itemResponse.getStatusCode() == 200) {
             JsonObject item = new JsonObject(itemResponse.getBody());
 
-            //No need to pass on the itemStatus property, as only used to populate the history
-            //and could be confused with aggregation of current status
-            loan.remove("itemStatus");
+            if(item.containsKey("permanentLocationId")) {
+              String locationId = item.getString("permanentLocationId");
+              locationsStorageClient.get(locationId,
+                locationResponse -> {
+                  if(locationResponse.getStatusCode() == 200) {
+                    JsonResponse.success(routingContext.response(),
+                      extendedLoan(loan, item, locationResponse.getJson()));
+                  }
+                  else {
+                    //Replace this with log
+                    System.out.println(
+                      String.format("Could not get location %s for item %s",
+                        locationId, itemId ));
 
-            loan.put("item", createItemSummary(item, null));
-
-            JsonResponse.success(routingContext.response(),
-              loan);
+                    JsonResponse.success(routingContext.response(),
+                      extendedLoan(loan, item, null));
+                  }
+                });
+            }
+            else {
+              JsonResponse.success(routingContext.response(),
+                extendedLoan(loan, item, null));
+            }
           }
           else if(itemResponse.getStatusCode() == 404) {
             JsonResponse.success(routingContext.response(),
@@ -416,8 +434,7 @@ public class LoanCollectionResource {
     return itemSummary;
   }
 
-  private void respondWith(
-    RoutingContext routingContext,
+  private JsonObject extendedLoan(
     JsonObject loan,
     JsonObject item,
     JsonObject location) {
@@ -428,6 +445,6 @@ public class LoanCollectionResource {
     //and could be confused with aggregation of current status
     loan.remove("itemStatus");
 
-    JsonResponse.created(routingContext.response(), loan);
+    return loan;
   }
 }

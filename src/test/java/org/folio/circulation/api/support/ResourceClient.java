@@ -113,7 +113,9 @@ public class ResourceClient {
     client.get(urlMaker.combine(String.format("/%s", id)),
       ResponseHandler.any(getCompleted));
 
-    return getCompleted.get(5, TimeUnit.SECONDS);
+    Response response = getCompleted.get(5, TimeUnit.SECONDS);
+
+    return response;
   }
 
   public void delete(UUID id)
