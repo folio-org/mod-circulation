@@ -286,11 +286,13 @@ public class LoanCollectionResource {
     WebContext context = new WebContext(routingContext);
     CollectionResourceClient loansStorageClient;
     CollectionResourceClient itemsStorageClient;
+    CollectionResourceClient locationsClient;
 
     try {
       OkapiHttpClient client = createHttpClient(routingContext, context);
       loansStorageClient = createLoansStorageClient(client, context);
       itemsStorageClient = createItemsStorageClient(client, context);
+      locationsClient = createLocationsStorageClient(client, context);
     }
     catch (MalformedURLException e) {
       ServerErrorResponse.internalError(routingContext.response(),
@@ -303,54 +305,85 @@ public class LoanCollectionResource {
       if(loansResponse.getStatusCode() == 200) {
         JsonObject wrappedLoans = new JsonObject(loansResponse.getBody());
 
-        List<JsonObject> newLoans = JsonArrayHelper.toList(
+        List<JsonObject> loans = JsonArrayHelper.toList(
           wrappedLoans.getJsonArray("loans"));
 
-        List<CompletableFuture<Response>>
-          allFutures = new ArrayList<>();
+        List<CompletableFuture<Response>> allItemFutures = new ArrayList<>();
+        List<CompletableFuture<Response>> allLocationFutures = new ArrayList<>();
 
-        newLoans.forEach(loanResource -> {
-          CompletableFuture<Response> newFuture
-            = new CompletableFuture<>();
+        loans.forEach(loanResource -> {
+          CompletableFuture<Response> newFuture = new CompletableFuture<>();
 
-          allFutures.add(newFuture);
+          allItemFutures.add(newFuture);
 
           itemsStorageClient.get(loanResource.getString("itemId"),
             response -> newFuture.complete(response));
         });
 
-        CompletableFuture<Void> allDoneFuture =
-          CompletableFuture.allOf(allFutures.toArray(new CompletableFuture<?>[] { }));
+        CompletableFuture<Void> allItemsFetchedFuture =
+          CompletableFuture.allOf(allItemFutures.toArray(new CompletableFuture<?>[] { }));
 
-        allDoneFuture.thenAccept(v -> {
-          List<Response> itemResponses = allFutures.stream().
+        allItemsFetchedFuture.thenAccept(v -> {
+          List<Response> itemResponses = allItemFutures.stream().
             map(future -> future.join()).
             collect(Collectors.toList());
 
-          newLoans.forEach( loan -> {
-            Optional<JsonObject> possibleItem = itemResponses.stream()
-              .filter(itemResponse -> itemResponse.getStatusCode() == 200)
-              .map(itemResponse -> itemResponse.getJson())
-              .filter(item -> item.getString("id").equals(loan.getString("itemId")))
-              .findFirst();
+          itemResponses.stream()
+            .filter(itemResponse -> itemResponse.getStatusCode() == 200)
+            .forEach(itemResponse -> {
 
-            //No need to pass on the itemStatus property, as only used to populate the history
-            //and could be confused with aggregation of current status
-            loan.remove("itemStatus");
+              JsonObject item = itemResponse.getJson();
 
-            if(possibleItem.isPresent()) {
-              JsonObject item = possibleItem.get();
+              if(item.containsKey("permanentLocationId")) {
+                CompletableFuture<Response> newFuture = new CompletableFuture<>();
 
-              loan.put("item", createItemSummary(item, null));
-            }
+                allLocationFutures.add(newFuture);
+
+                locationsClient.get(item.getString("permanentLocationId"),
+                  response -> newFuture.complete(response));
+              }
           });
 
-          JsonObject loansWrapper = new JsonObject()
-            .put("loans", new JsonArray(newLoans))
-            .put("totalRecords", wrappedLoans.getInteger("totalRecords"));
+          CompletableFuture<Void> allLocationsFetchedFuture =
+            CompletableFuture.allOf(allLocationFutures.toArray(new CompletableFuture<?>[] { }));
 
-          JsonResponse.success(routingContext.response(),
-            loansWrapper);
+          allLocationsFetchedFuture.thenAccept(w -> {
+            List<Response> locationResponses = allLocationFutures.stream().
+              map(future -> future.join()).
+              collect(Collectors.toList());
+
+            loans.forEach( loan -> {
+              Optional<JsonObject> possibleItem = itemResponses.stream()
+                .filter(itemResponse -> itemResponse.getStatusCode() == 200)
+                .map(itemResponse -> itemResponse.getJson())
+                .filter(item -> item.getString("id").equals(loan.getString("itemId")))
+                .findFirst();
+
+              //No need to pass on the itemStatus property, as only used to populate the history
+              //and could be confused with aggregation of current status
+              loan.remove("itemStatus");
+
+              if(possibleItem.isPresent()) {
+                JsonObject item = possibleItem.get();
+
+                Optional<JsonObject> possibleLocation = locationResponses.stream()
+                  .filter(locationResponse -> locationResponse.getStatusCode() == 200)
+                  .map(locationResponse -> locationResponse.getJson())
+                  .filter(location -> location.getString("id").equals(item.getString("permanentLocationId")))
+                  .findFirst();
+
+                loan.put("item", createItemSummary(item, possibleLocation.orElse(null)));
+              }
+            });
+
+            JsonObject loansWrapper = new JsonObject()
+              .put("loans", new JsonArray(loans))
+              .put("totalRecords", wrappedLoans.getInteger("totalRecords"));
+
+            JsonResponse.success(routingContext.response(),
+              loansWrapper);
+
+          });
         });
       }
     });
