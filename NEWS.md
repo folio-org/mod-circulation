@@ -1,6 +1,6 @@
 ## 5.0.0 Unreleased
 
-* Removes `location` property from item view in loans (CIRC-36)
+* Use item permanent and temporary locations for `location` property in loans (CIRC-36)
 * Item status `Checked Out` is now `Checked out` (CIRC-39)
 * Creating or changing a loan updates the `itemStatus` snapshot (similar to `action`) in loan storage (CIRC-38)
 * Creating a hold or recall request changes the associated item's `status` (CIRC-39)
@@ -12,6 +12,7 @@ for an open loan for the same item in storage, in order to create a loan history
 is included from the item, and having both may be confusing (CIRC-38)
 * Requires loan-storage interface version 3.3 (CIRC-38)
 * Requires item-storage interface version 4.0 (CIRC-36)
+* Requires shelf-locations interface version 1.0 (CIRC-36)
 
 ## 4.5.0 2017-10-11
 
