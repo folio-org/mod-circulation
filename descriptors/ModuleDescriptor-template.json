@@ -17,7 +17,7 @@
           "modulePermissions": [
             "circulation-storage.loans.collection.get",
             "inventory-storage.items.item.get",
-            "inventory-storage.shelf-locations.collection.get"
+            "inventory-storage.shelf-locations.item.get"
           ]
         },
         {
@@ -32,7 +32,7 @@
             "circulation-storage.loans.item.post",
             "inventory-storage.items.item.get",
             "inventory-storage.items.item.put",
-            "inventory-storage.shelf-locations.collection.get"
+            "inventory-storage.shelf-locations.item.get"
           ]
         },
         {
@@ -59,7 +59,7 @@
             "circulation-storage.loans.item.get",
             "inventory-storage.items.item.get",
             "inventory-storage.items.item.put",
-            "inventory-storage.shelf-locations.collection.get"
+            "inventory-storage.shelf-locations.item.get"
           ]
         },
         {
