@@ -74,7 +74,24 @@ public class LoanCollectionResource {
           if(response.getStatusCode() == 201) {
             JsonObject createdLoan = response.getJson();
 
-            if(item.containsKey("permanentLocationId")) {
+            if(item.containsKey("temporaryLocationId")) {
+              String locationId = item.getString("temporaryLocationId");
+              locationsStorageClient.get(locationId,
+                locationResponse -> {
+                  if(locationResponse.getStatusCode() == 200) {
+                    JsonResponse.created(routingContext.response(),
+                      extendedLoan(createdLoan, item, locationResponse.getJson()));
+                  }
+                  else {
+                    //Replace this with log
+                    System.out.println(
+                      String.format("Could not get location %s for item %s",
+                        locationId, itemId ));
+                    JsonResponse.created(routingContext.response(),
+                      extendedLoan(createdLoan, item, null));
+                  }
+                });
+            } else if(item.containsKey("permanentLocationId")) {
               String locationId = item.getString("permanentLocationId");
               locationsStorageClient.get(locationId,
                 locationResponse -> {
@@ -178,7 +195,26 @@ public class LoanCollectionResource {
           if(itemResponse.getStatusCode() == 200) {
             JsonObject item = new JsonObject(itemResponse.getBody());
 
-            if(item.containsKey("permanentLocationId")) {
+            if(item.containsKey("temporaryLocationId")) {
+              String locationId = item.getString("temporaryLocationId");
+              locationsStorageClient.get(locationId,
+                locationResponse -> {
+                  if(locationResponse.getStatusCode() == 200) {
+                    JsonResponse.success(routingContext.response(),
+                      extendedLoan(loan, item, locationResponse.getJson()));
+                  }
+                  else {
+                    //Replace this with log
+                    System.out.println(
+                      String.format("Could not get location %s for item %s",
+                        locationId, itemId ));
+
+                    JsonResponse.success(routingContext.response(),
+                      extendedLoan(loan, item, null));
+                  }
+                });
+            }
+            else if (item.containsKey("permanentLocationId")) {
               String locationId = item.getString("permanentLocationId");
               locationsStorageClient.get(locationId,
                 locationResponse -> {
