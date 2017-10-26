@@ -43,7 +43,7 @@ public class RequestsAPIStatusChangeTests {
     TimeoutException {
 
     requestsClient.deleteAll();
-    usersClient.deleteAllIndividually("users");
+    usersClient.deleteAllIndividually();
     itemsClient.deleteAll();
     loansClient.deleteAll();
   }

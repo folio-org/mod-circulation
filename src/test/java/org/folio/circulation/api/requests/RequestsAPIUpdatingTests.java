@@ -55,7 +55,7 @@ public class RequestsAPIUpdatingTests {
     TimeoutException {
 
     requestsClient.deleteAll();
-    usersClient.deleteAllIndividually("users");
+    usersClient.deleteAllIndividually();
     itemsClient.deleteAll();
     loansClient.deleteAll();
   }

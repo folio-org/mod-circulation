@@ -26,25 +26,57 @@ public class ResourceClient {
   private final OkapiHttpClient client;
   private final UrlMaker urlMaker;
   private final String resourceName;
+  private final String collectionArrayPropertyName;
 
   public static ResourceClient forItems(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::itemsStorageUrl, "item");
+    return new ResourceClient(client, InterfaceUrls::itemsStorageUrl,
+      "items");
   }
 
   public static ResourceClient forRequests(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::requestsUrl, "request");
+    return new ResourceClient(client, InterfaceUrls::requestsUrl,
+      "requests");
   }
 
   public static ResourceClient forLoans(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::loansUrl, "loans");
+    return new ResourceClient(client, InterfaceUrls::loansUrl,
+      "loans");
   }
 
   public static ResourceClient forUsers(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::usersUrl, "users");
+    return new ResourceClient(client, InterfaceUrls::usersUrl,
+      "users");
   }
 
   public static ResourceClient forLoansStorage(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::loansStorageUrl, "storage loans");
+    return new ResourceClient(client, InterfaceUrls::loansStorageUrl,
+      "storage loans", "loans");
+  }
+
+  public static ResourceClient forMaterialTypes(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::materialTypesStorageUrl,
+      "material types", "mtypes");
+  }
+
+  public static ResourceClient forLoanTypes(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::loanTypesStorageUrl,
+      "loan types", "loantypes");
+  }
+
+  public static ResourceClient forLocations(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::locationsStorageUrl,
+      "locations", "shelflocations");
+  }
+
+  private ResourceClient(
+    OkapiHttpClient client,
+    UrlMaker urlMaker, String resourceName,
+    String collectionArrayPropertyName) {
+
+    this.client = client;
+    this.urlMaker = urlMaker;
+    this.resourceName = resourceName;
+    this.collectionArrayPropertyName = collectionArrayPropertyName;
   }
 
   private ResourceClient(
@@ -54,6 +86,7 @@ public class ResourceClient {
     this.client = client;
     this.urlMaker = urlMaker;
     this.resourceName = resourceName;
+    this.collectionArrayPropertyName = resourceName;
   }
 
   public IndividualResource create(Builder builder)
@@ -113,7 +146,9 @@ public class ResourceClient {
     client.get(urlMaker.combine(String.format("/%s", id)),
       ResponseHandler.any(getCompleted));
 
-    return getCompleted.get(5, TimeUnit.SECONDS);
+    Response response = getCompleted.get(5, TimeUnit.SECONDS);
+
+    return response;
   }
 
   public void delete(UUID id)
@@ -150,24 +185,13 @@ public class ResourceClient {
       response.getStatusCode(), is(204));
   }
 
-  public void deleteAllIndividually(String collectionArrayName)
+  public void deleteAllIndividually()
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
     TimeoutException {
 
-    CompletableFuture<Response> getFinished = new CompletableFuture<>();
-
-    client.get(urlMaker.combine(""),
-      ResponseHandler.any(getFinished));
-
-    Response response = getFinished.get(5, TimeUnit.SECONDS);
-
-    MatcherAssert.assertThat("WARNING!!!!! Get all resources individually in order to delete failed",
-      response.getStatusCode(), is(200));
-
-    List<JsonObject> records = JsonArrayHelper.toList(response.getJson()
-      .getJsonArray(collectionArrayName));
+    List<JsonObject> records = getAll();
 
     records.stream().forEach(record -> {
       try {
@@ -182,10 +206,30 @@ public class ResourceClient {
         MatcherAssert.assertThat("WARNING!!!!! Delete a resource individually failed",
           deleteResponse.getStatusCode(), is(204));
       } catch (Throwable e) {
-        MatcherAssert.assertThat("WARNING!!!!! Delete a resource individually failed",
+        assertThat("WARNING!!!!! Delete a resource individually failed",
           true, is(false));
       }
     });
+  }
+
+  public List<JsonObject> getAll()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    CompletableFuture<Response> getFinished = new CompletableFuture<>();
+
+    client.get(urlMaker.combine(""),
+      ResponseHandler.any(getFinished));
+
+    Response response = getFinished.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Get all records failed: %s", response.getBody()),
+      response.getStatusCode(), is(200));
+
+    return JsonArrayHelper.toList(response.getJson()
+      .getJsonArray(collectionArrayPropertyName));
   }
 
   @FunctionalInterface

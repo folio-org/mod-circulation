@@ -16,7 +16,8 @@
           ],
           "modulePermissions": [
             "circulation-storage.loans.collection.get",
-            "inventory-storage.items.item.get"
+            "inventory-storage.items.item.get",
+            "inventory-storage.shelf-locations.item.get"
           ]
         },
         {
@@ -30,7 +31,8 @@
           "modulePermissions": [
             "circulation-storage.loans.item.post",
             "inventory-storage.items.item.get",
-            "inventory-storage.items.item.put"
+            "inventory-storage.items.item.put",
+            "inventory-storage.shelf-locations.item.get"
           ]
         },
         {
@@ -56,7 +58,8 @@
           "modulePermissions": [
             "circulation-storage.loans.item.get",
             "inventory-storage.items.item.get",
-            "inventory-storage.items.item.put"
+            "inventory-storage.items.item.put",
+            "inventory-storage.shelf-locations.item.get"
           ]
         },
         {
@@ -226,7 +229,7 @@
     },
     {
       "id": "item-storage",
-      "version": "3.0"
+      "version": "4.0"
     },
     {
       "id": "request-storage",
@@ -235,6 +238,10 @@
     {
       "id": "users",
       "version": "14.0"
+    },
+    {
+      "id": "shelf-locations",
+      "version": "1.0"
     }
   ],
   "permissionSets": [

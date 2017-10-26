@@ -70,7 +70,8 @@ public class LoanAPITests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("036000291452"))
+      .withBarcode("036000291452")
+      .withPermanentLocation(APITestSuite.mainLibraryLocationId()))
       .getId();
 
     UUID userId = UUID.randomUUID();
@@ -147,6 +148,132 @@ public class LoanAPITests {
     assertThat("item status snapshot in storage is not checked out",
       loansStorageClient.getById(id).getJson().getString("itemStatus"),
       is("Checked out"));
+  }
+
+  @Test
+  public void canCreateALoanForItemWithAPermanentLocation()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException,
+    UnsupportedEncodingException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
+      .withPermanentLocation(APITestSuite.mainLibraryLocationId())
+      .withNoTemporaryLocation())
+      .getId();
+
+    IndividualResource response = loansClient.create(new LoanRequestBuilder()
+      .withId(id)
+      .withItemId(itemId));
+
+    JsonObject createdLoan = response.getJson();
+
+    assertThat(String.format("created loan has an item location (%s)",
+      createdLoan.encodePrettily()),
+      createdLoan.getJsonObject("item").containsKey("location"), is(true));
+
+    assertThat("location is taken from item when created",
+      createdLoan.getJsonObject("item").getJsonObject("location").getString("name"),
+      is("Main Library"));
+
+    Response fetchResponse = loansClient.getById(id);
+
+    assertThat(String.format("Failed to get loan: %s", fetchResponse.getBody()),
+      fetchResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+
+    JsonObject fetchedLoan = fetchResponse.getJson();
+
+    assertThat(String.format("fetched loan has an item location (%s)",
+      fetchedLoan.encodePrettily()),
+      fetchedLoan.getJsonObject("item").containsKey("location"), is(true));
+
+    assertThat("location is taken from item when fetched",
+      fetchedLoan.getJsonObject("item").getJsonObject("location").getString("name"),
+      is("Main Library"));
+  }
+
+  @Test
+  public void canCreateALoanForItemWithoutAPermanentLocation()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException,
+    UnsupportedEncodingException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
+      .withNoPermanentLocation())
+      .getId();
+
+    IndividualResource response = loansClient.create(new LoanRequestBuilder()
+      .withId(id)
+      .withItemId(itemId));
+
+    JsonObject createdLoan = response.getJson();
+
+    assertThat(String.format("created loan has no item location (%s)",
+      createdLoan.encodePrettily()),
+      createdLoan.getJsonObject("item").containsKey("location"), is(false));
+
+    Response fetchResponse = loansClient.getById(id);
+
+    assertThat(String.format("Failed to get loan: %s", fetchResponse.getBody()),
+      fetchResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+
+    JsonObject fetchedLoan = fetchResponse.getJson();
+
+    assertThat(String.format("fetched loan has no item location (%s)",
+      fetchedLoan.encodePrettily()),
+      fetchedLoan.getJsonObject("item").containsKey("location"), is(false));
+  }
+
+  @Test
+  public void canCreateALoanForItemWithATemporaryLocation()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException,
+    UnsupportedEncodingException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
+      .withPermanentLocation(APITestSuite.mainLibraryLocationId())
+      .withTemporaryLocation(APITestSuite.annexLocationId()))
+      .getId();
+
+    IndividualResource response = loansClient.create(new LoanRequestBuilder()
+      .withId(id)
+      .withItemId(itemId));
+
+    JsonObject createdLoan = response.getJson();
+
+    assertThat(String.format("created loan has an item location (%s)",
+      createdLoan.encodePrettily()),
+      createdLoan.getJsonObject("item").containsKey("location"), is(true));
+
+    assertThat("temporary location is taken from item when created",
+      createdLoan.getJsonObject("item").getJsonObject("location").getString("name"),
+      is("Annex"));
+
+    Response fetchResponse = loansClient.getById(id);
+
+    assertThat(String.format("Failed to get loan: %s", fetchResponse.getBody()),
+      fetchResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+
+    JsonObject fetchedLoan = fetchResponse.getJson();
+
+    assertThat(String.format("fetched loan has an item location (%s)",
+      fetchedLoan.encodePrettily()),
+      fetchedLoan.getJsonObject("item").containsKey("location"), is(true));
+
+    assertThat("temporary location is taken from item when fetched",
+      fetchedLoan.getJsonObject("item").getJsonObject("location").getString("name"),
+      is("Annex"));
   }
 
   @Test
@@ -278,12 +405,12 @@ public class LoanAPITests {
       loan.getJsonObject("item").getJsonObject("status").getString("name"),
       is("Checked out"));
 
-    assertThat("has item location",
-      loan.getJsonObject("item").containsKey("location"), is(true));
-
-    assertThat("location is taken from item",
-      loan.getJsonObject("item").getJsonObject("location").getString("name"),
-      is("Main Library"));
+//    assertThat("has item location",
+//      loan.getJsonObject("item").containsKey("location"), is(true));
+//
+//    assertThat("location is taken from item",
+//      loan.getJsonObject("item").getJsonObject("location").getString("name"),
+//      is("Main Library"));
 
     assertThat("Should not have snapshot of item status, as current status is included",
       loan.containsKey("itemStatus"), is(false));
@@ -654,6 +781,84 @@ public class LoanAPITests {
   }
 
   @Test
+  public void locationIsIncludedWhenGettingAllLoans()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException,
+    UnsupportedEncodingException {
+
+    UUID permanentLocationItemId = itemsClient.create(basedUponSmallAngryPlanet()
+      .withPermanentLocation(APITestSuite.mainLibraryLocationId())
+      .withNoTemporaryLocation())
+      .getId();
+
+    loansClient.create(new LoanRequestBuilder()
+      .withItemId(permanentLocationItemId));
+
+    UUID temporaryLocationItemId = itemsClient.create(basedUponNod()
+      .withPermanentLocation(APITestSuite.mainLibraryLocationId())
+      .withTemporaryLocation(APITestSuite.annexLocationId()))
+      .getId();
+
+    loansClient.create(new LoanRequestBuilder()
+      .withItemId(temporaryLocationItemId));
+
+    UUID noLocationItemId = itemsClient.create(basedUponTemeraire()
+      .withNoPermanentLocation()
+      .withNoTemporaryLocation())
+      .getId();
+
+    loansClient.create(new LoanRequestBuilder()
+      .withItemId(noLocationItemId));
+
+    CompletableFuture<Response> getLoansCompleted = new CompletableFuture<>();
+
+    client.get(loansUrl(), ResponseHandler.json(getLoansCompleted));
+
+    Response loansResponse = getLoansCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Failed to get loans: %s",
+      loansResponse.getBody()),
+      loansResponse.getStatusCode(), is(200));
+
+    JsonObject firstPage = loansResponse.getJson();
+
+    List<JsonObject> loans = getLoans(firstPage);
+
+    assertThat(loans.size(), is(3));
+    assertThat(firstPage.getInteger("totalRecords"), is(3));
+
+    loans.forEach(loan -> loanHasExpectedProperties(loan));
+
+    JsonObject loanWithPermanentLocation = findLoanByItemId(loans, permanentLocationItemId);
+    JsonObject loanWithTemporaryLocation = findLoanByItemId(loans, temporaryLocationItemId);
+    JsonObject loanWithNoLocation = findLoanByItemId(loans, noLocationItemId);
+
+    assertThat(String.format("Permanent location should be included: %s",
+      loanWithPermanentLocation.encodePrettily()),
+      loanWithPermanentLocation.getJsonObject("item").containsKey("location"), is(true));
+
+    assertThat(String.format("Permanent location should be included: %s",
+      loanWithPermanentLocation.encodePrettily()),
+      loanWithPermanentLocation.getJsonObject("item").getJsonObject("location").getString("name"),
+      is("Main Library"));
+
+    assertThat(String.format("Temporary location should be included: %s",
+      loanWithPermanentLocation.encodePrettily()),
+      loanWithTemporaryLocation.getJsonObject("item").containsKey("location"), is(true));
+
+    assertThat(String.format("Temporary location should be included: %s",
+      loanWithPermanentLocation.encodePrettily()),
+      loanWithTemporaryLocation.getJsonObject("item").getJsonObject("location").getString("name"),
+      is("Annex"));
+
+    assertThat(String.format("No location should be included: %s",
+      loanWithPermanentLocation.encodePrettily()),
+      loanWithNoLocation.getJsonObject("item").containsKey("location"), is(false));
+  }
+
+  @Test
   public void canSearchByUserId()
     throws MalformedURLException,
     InterruptedException,
@@ -875,7 +1080,7 @@ public class LoanAPITests {
     hasProperty("title", item, "item");
     hasProperty("barcode", item, "item");
     hasProperty("status", item, "item");
-    hasProperty("location", item, "item");
+//    hasProperty("location", item, "item");
 
     assertThat("Should not have snapshot of item status, as current status is included",
       loan.containsKey("itemStatus"), is(false));
@@ -896,5 +1101,12 @@ public class LoanAPITests {
 
   private List<JsonObject> getLoans(JsonObject page) {
     return JsonArrayHelper.toList(page.getJsonArray("loans"));
+  }
+
+  private static JsonObject findLoanByItemId(List<JsonObject> loans, UUID itemId) {
+    return loans.stream()
+      .filter(record -> record.getString("itemId").equals(itemId.toString()))
+      .findFirst()
+      .get();
   }
 }

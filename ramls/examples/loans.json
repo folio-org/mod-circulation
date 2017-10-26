@@ -10,15 +10,15 @@
         "barcode": "036000291452",
         "status": {
           "name": "Checked Out"
-        },
-        "location": {
-          "name": "Main Library"
         }
       },
       "loanDate": "2017-03-01T22:34:11Z",
       "dueDate": "2017-04-01T22:34:11.000Z",
       "status": {
         "name": "Open"
+      },
+      "location": {
+        "name": "Main Library"
       },
       "action": "checkedout",
       "renewalCount": 1
@@ -34,7 +34,7 @@
           "name": "Available"
         },
         "location": {
-          "name": "Annex Library"
+          "name": "Annex"
         }
       },
       "loanDate": "2017-01-14T19:14:36Z",
