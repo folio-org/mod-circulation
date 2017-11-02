@@ -13,7 +13,7 @@ inventory_storage_module_id="mod-inventory-storage-6.0.0-SNAPSHOT"
 circulation_storage_module_id="mod-circulation-storage-4.0.0-SNAPSHOT"
 
 #Needs to be the specific version of mod-users you want to use for testing
-users_storage_module_id="mod-users-14.2.2-SNAPSHOT"
+users_storage_module_id="mod-users-14.3.0-SNAPSHOT"
 
 #clean the build
 gradle clean cleanTest
