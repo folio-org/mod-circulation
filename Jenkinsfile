@@ -64,7 +64,7 @@ pipeline {
          steps {
             echo 'Building Docker image'
             script {
-               docker.build("${env.docker_image}:${version}-${env.BUILD_NUMBER}", '--no-cache .')
+               docker.build("${env.docker_image}:${version}.${env.BUILD_NUMBER}", '--no-cache .')
             }
          }
       }
