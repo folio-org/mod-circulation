@@ -77,7 +77,7 @@ pipeline {
             echo "Pushing Docker image ${env.docker_image} to Docker Hub..."
             script {
                docker.withRegistry('https://index.docker.io/v1/', 'DockerHubIDJenkins') {
-                  def dockerImage =  docker.image("${env.docker_image}:${version}-${env.BUILD_NUMBER}")
+                  def dockerImage =  docker.image("${env.docker_image}:${version}.${env.BUILD_NUMBER}")
                   dockerImage.push()
                   dockerImage.push('latest')
                }
