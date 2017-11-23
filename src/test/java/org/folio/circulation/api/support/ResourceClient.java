@@ -37,6 +37,11 @@ public class ResourceClient {
       "holdingsRecords");
   }
 
+  public static ResourceClient forInstances(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::instancesStorageUrl,
+      "instances");
+  }
+
   public static ResourceClient forRequests(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::requestsUrl,
       "requests");
