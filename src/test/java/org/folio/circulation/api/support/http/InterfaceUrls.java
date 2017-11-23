@@ -1,4 +1,4 @@
-package org.folio.circulation.api.support;
+package org.folio.circulation.api.support.http;
 
 import org.folio.circulation.api.APITestSuite;
 

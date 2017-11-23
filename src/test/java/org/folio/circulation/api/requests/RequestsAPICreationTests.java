@@ -2,7 +2,11 @@ package org.folio.circulation.api.requests;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.APITestSuite;
-import org.folio.circulation.api.support.*;
+import org.folio.circulation.api.support.builders.ItemRequestBuilder;
+import org.folio.circulation.api.support.builders.RequestRequestBuilder;
+import org.folio.circulation.api.support.builders.UserRequestBuilder;
+import org.folio.circulation.api.support.http.InterfaceUrls;
+import org.folio.circulation.api.support.http.ResourceClient;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
@@ -25,10 +29,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.folio.circulation.api.support.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
-import static org.folio.circulation.api.support.ItemRequestExamples.basedUponSmallAngryPlanet;
-import static org.folio.circulation.api.support.LoanPreparation.checkOutItem;
-import static org.folio.circulation.api.support.TextDateTimeMatcher.isEquivalentTo;
+import static org.folio.circulation.api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
+import static org.folio.circulation.api.support.fixtures.ItemRequestExamples.basedUponSmallAngryPlanet;
+import static org.folio.circulation.api.support.fixtures.LoanFixture.checkOutItem;
+import static org.folio.circulation.api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 

@@ -2,8 +2,8 @@ package org.folio.circulation.api.loans;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.APITestSuite;
-import org.folio.circulation.api.support.LoanRequestBuilder;
-import org.folio.circulation.api.support.ResourceClient;
+import org.folio.circulation.api.support.builders.LoanRequestBuilder;
+import org.folio.circulation.api.support.http.ResourceClient;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
@@ -30,9 +30,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.folio.circulation.api.support.InterfaceUrls.loansUrl;
-import static org.folio.circulation.api.support.ItemRequestExamples.*;
-import static org.folio.circulation.api.support.TextDateTimeMatcher.isEquivalentTo;
+import static org.folio.circulation.api.support.http.InterfaceUrls.loansUrl;
+import static org.folio.circulation.api.support.fixtures.ItemRequestExamples.*;
+import static org.folio.circulation.api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;

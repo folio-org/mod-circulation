@@ -1,9 +1,9 @@
 package org.folio.circulation.api.requests;
 
 import org.folio.circulation.api.APITestSuite;
-import org.folio.circulation.api.support.RequestRequestBuilder;
-import org.folio.circulation.api.support.ResourceClient;
-import org.folio.circulation.api.support.UserRequestBuilder;
+import org.folio.circulation.api.support.builders.RequestRequestBuilder;
+import org.folio.circulation.api.support.http.ResourceClient;
+import org.folio.circulation.api.support.builders.UserRequestBuilder;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.Before;
@@ -18,8 +18,8 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import static org.folio.circulation.api.support.ItemRequestExamples.basedUponSmallAngryPlanet;
-import static org.folio.circulation.api.support.LoanPreparation.checkOutItem;
+import static org.folio.circulation.api.support.fixtures.ItemRequestExamples.basedUponSmallAngryPlanet;
+import static org.folio.circulation.api.support.fixtures.LoanFixture.checkOutItem;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 

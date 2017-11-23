@@ -2,7 +2,7 @@ package org.folio.circulation.api;
 
 import io.vertx.core.json.JsonObject;
 
-import org.folio.circulation.api.support.InterfaceUrls;
+import org.folio.circulation.api.support.http.InterfaceUrls;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;

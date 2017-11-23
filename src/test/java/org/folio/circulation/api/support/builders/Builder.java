@@ -1,4 +1,4 @@
-package org.folio.circulation.api.support;
+package org.folio.circulation.api.support.builders;
 
 import io.vertx.core.json.JsonObject;
 

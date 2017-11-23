@@ -1,6 +1,7 @@
-package org.folio.circulation.api.support;
+package org.folio.circulation.api.support.http;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.api.support.builders.Builder;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
