@@ -59,6 +59,7 @@ public class APITestSuite {
   private static UUID canCirculateLoanTypeId;
   private static UUID mainLibraryLocationId;
   private static UUID annexLocationId;
+  private static UUID booksInstanceTypeId;
 
   public static URL circulationModuleUrl(String path) {
     try {
@@ -114,6 +115,10 @@ public class APITestSuite {
     return annexLocationId;
   }
 
+  public static UUID booksInstanceTypeId() {
+    return booksInstanceTypeId;
+  }
+
   @BeforeClass
   public static void before()
     throws InterruptedException,
@@ -157,6 +162,7 @@ public class APITestSuite {
     createMaterialTypes();
     createLoanTypes();
     createLocations();
+    createInstanceTypes();
   }
 
   @AfterClass
@@ -178,6 +184,7 @@ public class APITestSuite {
     deleteMaterialTypes();
     deleteLoanTypes();
     deleteLocations();
+    deleteInstanceTypes();
 
     CompletableFuture<Void> circulationModuleUndeployed =
       vertxAssistant.undeployVerticle(circulationModuleDeploymentId);
@@ -281,6 +288,27 @@ public class APITestSuite {
 
     locationsClient.delete(mainLibraryLocationId);
     locationsClient.delete(annexLocationId);
+  }
+
+  private static void createInstanceTypes()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    booksInstanceTypeId = createReferenceRecord(
+      ResourceClient.forInstanceTypes(createClient()), "Books");
+  }
+
+  private static void deleteInstanceTypes()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    ResourceClient instanceTypesClient = ResourceClient.forInstanceTypes(createClient());
+
+    instanceTypesClient.delete(booksInstanceTypeId());
   }
 
   private static UUID createReferenceRecord(

@@ -68,6 +68,11 @@ public class ResourceClient {
       "locations", "shelflocations");
   }
 
+  public static ResourceClient forInstanceTypes(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::instanceTypesStorageUrl,
+      "instance types", "instanceTypes");
+  }
+
   private ResourceClient(
     OkapiHttpClient client,
     UrlMaker urlMaker, String resourceName,
