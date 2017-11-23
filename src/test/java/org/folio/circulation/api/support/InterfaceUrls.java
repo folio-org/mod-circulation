@@ -6,12 +6,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 public class InterfaceUrls {
-  public static URL materialTypesStorageUrl()
-    throws MalformedURLException {
-
-    return materialTypesStorageUrl("");
-  }
-
   public static URL materialTypesStorageUrl(String subPath)
     throws MalformedURLException {
 
@@ -36,10 +30,10 @@ public class InterfaceUrls {
     return APITestSuite.viaOkapiModuleUrl("/instance-types" + subPath);
   }
 
-  public static URL itemsStorageUrl()
+  public static URL creatorTypesStorageUrl(String subPath)
     throws MalformedURLException {
 
-    return itemsStorageUrl("");
+    return APITestSuite.viaOkapiModuleUrl("/creator-types" + subPath);
   }
 
   public static URL itemsStorageUrl(String subPath)

@@ -73,6 +73,11 @@ public class ResourceClient {
       "instance types", "instanceTypes");
   }
 
+  public static ResourceClient forCreatorTypes(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::creatorTypesStorageUrl,
+      "creator types", "creatorTypes");
+  }
+
   private ResourceClient(
     OkapiHttpClient client,
     UrlMaker urlMaker, String resourceName,
@@ -151,9 +156,7 @@ public class ResourceClient {
     client.get(urlMaker.combine(String.format("/%s", id)),
       ResponseHandler.any(getCompleted));
 
-    Response response = getCompleted.get(5, TimeUnit.SECONDS);
-
-    return response;
+    return getCompleted.get(5, TimeUnit.SECONDS);
   }
 
   public void delete(UUID id)

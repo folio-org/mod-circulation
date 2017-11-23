@@ -1,5 +1,6 @@
 package org.folio.circulation.api;
 
+import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.CirculationVerticle;
 import org.folio.circulation.api.fakes.FakeOkapi;
@@ -60,6 +61,7 @@ public class APITestSuite {
   private static UUID mainLibraryLocationId;
   private static UUID annexLocationId;
   private static UUID booksInstanceTypeId;
+  private static UUID personalCreatorTypeId;
 
   public static URL circulationModuleUrl(String path) {
     try {
@@ -89,7 +91,7 @@ public class APITestSuite {
     Consumer<Throwable> exceptionHandler) {
 
     return new OkapiHttpClient(
-      vertxAssistant.createUsingVertx(vertx -> vertx.createHttpClient()),
+      vertxAssistant.createUsingVertx(Vertx::createHttpClient),
       okapiUrl(), TENANT_ID, TOKEN, exceptionHandler);
   }
 
@@ -117,6 +119,10 @@ public class APITestSuite {
 
   public static UUID booksInstanceTypeId() {
     return booksInstanceTypeId;
+  }
+
+  public static UUID personalCreatorTypeId() {
+    return personalCreatorTypeId;
   }
 
   @BeforeClass
@@ -163,6 +169,7 @@ public class APITestSuite {
     createLoanTypes();
     createLocations();
     createInstanceTypes();
+    createCreatorTypes();
   }
 
   @AfterClass
@@ -185,6 +192,7 @@ public class APITestSuite {
     deleteLoanTypes();
     deleteLocations();
     deleteInstanceTypes();
+    deleteCreatorTypes();
 
     CompletableFuture<Void> circulationModuleUndeployed =
       vertxAssistant.undeployVerticle(circulationModuleDeploymentId);
@@ -309,6 +317,27 @@ public class APITestSuite {
     ResourceClient instanceTypesClient = ResourceClient.forInstanceTypes(createClient());
 
     instanceTypesClient.delete(booksInstanceTypeId());
+  }
+
+  private static void createCreatorTypes()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    personalCreatorTypeId = createReferenceRecord(
+      ResourceClient.forCreatorTypes(createClient()), "Personal name");
+  }
+
+  private static void deleteCreatorTypes()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    ResourceClient creatorTypesClient = ResourceClient.forCreatorTypes(createClient());
+
+    creatorTypesClient.delete(personalCreatorTypeId());
   }
 
   private static UUID createReferenceRecord(
