@@ -407,12 +407,12 @@ public class LoanAPITests {
       loan.getJsonObject("item").getJsonObject("status").getString("name"),
       is("Checked out"));
 
-//    assertThat("has item location",
-//      loan.getJsonObject("item").containsKey("location"), is(true));
-//
-//    assertThat("location is taken from item",
-//      loan.getJsonObject("item").getJsonObject("location").getString("name"),
-//      is("Main Library"));
+    assertThat("has item location",
+      loan.getJsonObject("item").containsKey("location"), is(true));
+
+    assertThat("location is taken from item",
+      loan.getJsonObject("item").getJsonObject("location").getString("name"),
+      is("Main Library"));
 
     assertThat("Should not have snapshot of item status, as current status is included",
       loan.containsKey("itemStatus"), is(false));
@@ -775,8 +775,8 @@ public class LoanAPITests {
     assertThat(secondPageLoans.size(), is(3));
     assertThat(secondPage.getInteger("totalRecords"), is(7));
 
-    firstPageLoans.forEach(loan -> loanHasExpectedProperties(loan));
-    secondPageLoans.forEach(loan -> loanHasExpectedProperties(loan));
+    firstPageLoans.forEach(this::loanHasExpectedProperties);
+    secondPageLoans.forEach(this::loanHasExpectedProperties);
 
     assertThat(countOfDistinctTitles(firstPageLoans), is(greaterThan(1)));
     assertThat(countOfDistinctTitles(secondPageLoans), is(greaterThan(1)));
@@ -831,7 +831,7 @@ public class LoanAPITests {
     assertThat(loans.size(), is(3));
     assertThat(firstPage.getInteger("totalRecords"), is(3));
 
-    loans.forEach(loan -> loanHasExpectedProperties(loan));
+    loans.forEach(this::loanHasExpectedProperties);
 
     JsonObject loanWithPermanentLocation = findLoanByItemId(loans, permanentLocationItemId);
     JsonObject loanWithTemporaryLocation = findLoanByItemId(loans, temporaryLocationItemId);
@@ -933,8 +933,8 @@ public class LoanAPITests {
     assertThat(secondPageLoans.size(), is(3));
     assertThat(secondPage.getInteger("totalRecords"), is(3));
 
-    firstPageLoans.forEach(loan -> loanHasExpectedProperties(loan));
-    secondPageLoans.forEach(loan -> loanHasExpectedProperties(loan));
+    firstPageLoans.forEach(this::loanHasExpectedProperties);
+    secondPageLoans.forEach(this::loanHasExpectedProperties);
 
     assertThat(countOfDistinctTitles(firstPageLoans), is(greaterThan(1)));
     assertThat(countOfDistinctTitles(secondPageLoans), is(greaterThan(1)));
@@ -1023,7 +1023,7 @@ public class LoanAPITests {
     assertThat(closedLoans.size(), is(4));
     assertThat(closedLoansPage.getInteger("totalRecords"), is(4));
 
-    openLoans.forEach(loan -> loanHasExpectedProperties(loan));
+    openLoans.forEach(this::loanHasExpectedProperties);
 
     closedLoans.forEach(loan -> {
         loanHasExpectedProperties(loan);
