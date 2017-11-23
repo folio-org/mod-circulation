@@ -6,7 +6,6 @@ import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
-import org.hamcrest.MatcherAssert;
 
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -31,6 +30,11 @@ public class ResourceClient {
   public static ResourceClient forItems(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::itemsStorageUrl,
       "items");
+  }
+
+  public static ResourceClient forHoldings(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::holdingsStorageUrl,
+      "holdingsRecords");
   }
 
   public static ResourceClient forRequests(OkapiHttpClient client) {
@@ -189,7 +193,7 @@ public class ResourceClient {
 
     Response response = deleteAllFinished.get(5, TimeUnit.SECONDS);
 
-    MatcherAssert.assertThat("WARNING!!!!! Delete all resources failed",
+    assertThat("WARNING!!!!! Delete all resources failed",
       response.getStatusCode(), is(204));
   }
 
@@ -211,8 +215,9 @@ public class ResourceClient {
 
         Response deleteResponse = deleteFinished.get(5, TimeUnit.SECONDS);
 
-        MatcherAssert.assertThat("WARNING!!!!! Delete a resource individually failed",
+        assertThat("WARNING!!!!! Delete a resource individually failed",
           deleteResponse.getStatusCode(), is(204));
+
       } catch (Throwable e) {
         assertThat("WARNING!!!!! Delete a resource individually failed",
           true, is(false));

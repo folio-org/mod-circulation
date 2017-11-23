@@ -47,6 +47,7 @@ public class LoanAPITests {
   private final ResourceClient loansClient = ResourceClient.forLoans(client);
   private final ResourceClient loansStorageClient = ResourceClient.forLoansStorage(client);
   private final ResourceClient itemsClient = ResourceClient.forItems(client);
+  private final ResourceClient holdingsClient = ResourceClient.forHoldings(client);
 
   @Before
   public void beforeEach()
@@ -57,6 +58,7 @@ public class LoanAPITests {
 
     loansClient.deleteAll();
     itemsClient.deleteAll();
+    holdingsClient.deleteAll();
   }
 
   @Test
