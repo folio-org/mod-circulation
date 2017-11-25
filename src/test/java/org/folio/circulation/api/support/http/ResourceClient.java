@@ -131,8 +131,9 @@ public class ResourceClient {
 
     Response response = createCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat(String.format("Failed to create %s: %s", resourceName,
-      response.getBody()), response.getStatusCode(), is(HttpURLConnection.HTTP_CREATED));
+    assertThat(
+      String.format("Failed to create %s: %s", resourceName, response.getBody()),
+      response.getStatusCode(), is(HttpURLConnection.HTTP_CREATED));
 
     return new IndividualResource(response);
   }
@@ -151,7 +152,7 @@ public class ResourceClient {
     Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
 
     assertThat(
-      String.format("Failed to update %s %s: %s", putResponse.getBody(), resourceName, id),
+      String.format("Failed to update %s %s: %s", resourceName, id, putResponse.getBody()),
       putResponse.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
   }
 
@@ -182,7 +183,8 @@ public class ResourceClient {
 
     Response response = deleteFinished.get(5, TimeUnit.SECONDS);
 
-    assertThat(String.format("Failed to delete %s %s", resourceName, id),
+    assertThat(String.format(
+      "Failed to delete %s %s: %s", resourceName, id, response.getBody()),
       response.getStatusCode(), is(204));
   }
 
@@ -199,7 +201,8 @@ public class ResourceClient {
 
     Response response = deleteAllFinished.get(5, TimeUnit.SECONDS);
 
-    assertThat("WARNING!!!!! Delete all resources failed",
+    assertThat(String.format(
+      "Failed to delete %s: %s", resourceName, response.getBody()),
       response.getStatusCode(), is(204));
   }
 
@@ -221,11 +224,13 @@ public class ResourceClient {
 
         Response deleteResponse = deleteFinished.get(5, TimeUnit.SECONDS);
 
-        assertThat("WARNING!!!!! Delete a resource individually failed",
+        assertThat(String.format(
+          "Failed to delete %s: %s", resourceName, deleteResponse.getBody()),
           deleteResponse.getStatusCode(), is(204));
 
       } catch (Throwable e) {
-        assertThat("WARNING!!!!! Delete a resource individually failed",
+        assertThat(String.format("Exception whilst deleting %s individually: %s",
+          resourceName, e.toString()),
           true, is(false));
       }
     });
