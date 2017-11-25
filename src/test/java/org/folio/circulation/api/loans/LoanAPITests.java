@@ -4,7 +4,7 @@ import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.APITestSuite;
 import org.folio.circulation.api.support.builders.ItemRequestBuilder;
 import org.folio.circulation.api.support.builders.LoanRequestBuilder;
-import org.folio.circulation.api.support.fixtures.ItemFixture;
+import org.folio.circulation.api.support.fixtures.ItemsFixture;
 import org.folio.circulation.api.support.http.ResourceClient;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -50,7 +50,7 @@ public class LoanAPITests {
   private final ResourceClient itemsClient = ResourceClient.forItems(client);
   private final ResourceClient holdingsClient = ResourceClient.forHoldings(client);
   private final ResourceClient instancesClient = ResourceClient.forInstances(client);
-  private final ItemFixture itemsFixture = new ItemFixture(client);
+  private final ItemsFixture itemsFixture = new ItemsFixture(client);
 
   @Before
   public void beforeEach()
@@ -60,6 +60,7 @@ public class LoanAPITests {
     TimeoutException {
 
     loansClient.deleteAll();
+
     itemsClient.deleteAll();
     holdingsClient.deleteAll();
     instancesClient.deleteAll();
@@ -815,8 +816,8 @@ public class LoanAPITests {
 
     UUID noLocationItemId = itemsFixture.basedUponTemeraire(
       itemRequestBuilder -> itemRequestBuilder
-        .withPermanentLocation(APITestSuite.mainLibraryLocationId())
-        .withTemporaryLocation(APITestSuite.annexLocationId()))
+        .withNoPermanentLocation()
+        .withNoTemporaryLocation())
       .getId();
 
     loansClient.create(new LoanRequestBuilder()
@@ -1088,7 +1089,6 @@ public class LoanAPITests {
     hasProperty("title", item, "item");
     hasProperty("barcode", item, "item");
     hasProperty("status", item, "item");
-    hasProperty("location", item, "item");
 
     assertThat("Should not have snapshot of item status, as current status is included",
       loan.containsKey("itemStatus"), is(false));

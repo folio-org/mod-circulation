@@ -1,26 +1,19 @@
 package org.folio.circulation.api.requests;
 
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.api.APITestSuite;
 import org.folio.circulation.api.support.builders.ItemRequestBuilder;
 import org.folio.circulation.api.support.builders.RequestRequestBuilder;
 import org.folio.circulation.api.support.builders.UserRequestBuilder;
 import org.folio.circulation.api.support.http.InterfaceUrls;
-import org.folio.circulation.api.support.http.ResourceClient;
 import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
-import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
-import java.lang.invoke.MethodHandles;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.util.UUID;
@@ -29,38 +22,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.folio.circulation.api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
-import static org.folio.circulation.api.support.fixtures.ItemRequestExamples.basedUponSmallAngryPlanet;
 import static org.folio.circulation.api.support.fixtures.LoanFixture.checkOutItem;
+import static org.folio.circulation.api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-public class RequestsAPICreationTests {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
-  private final OkapiHttpClient client = APITestSuite.createClient(exception -> {
-    log.error("Request to circulation module failed:", exception);
-  });
-
-  private final ResourceClient usersClient = ResourceClient.forUsers(client);
-  private final ResourceClient requestsClient = ResourceClient.forRequests(client);
-  private final ResourceClient itemsClient = ResourceClient.forItems(client);
-  private final ResourceClient loansClient = ResourceClient.forLoans(client);
-
-  @Before
-  public void beforeEach()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    requestsClient.deleteAll();
-    usersClient.deleteAllIndividually();
-    itemsClient.deleteAll();
-    loansClient.deleteAll();
-  }
-
+public class RequestsAPICreationTests extends RequestsAPITests {
   @Test
   public void canCreateARequest()
     throws InterruptedException,
@@ -71,8 +39,9 @@ public class RequestsAPICreationTests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("036000291452"))
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
+      itemBuilder -> itemBuilder
+        .withBarcode("036000291452"))
       .getId();
 
     checkOutItem(itemId, loansClient);
@@ -185,7 +154,9 @@ public class RequestsAPICreationTests {
     UnsupportedEncodingException {
 
     UUID id = UUID.randomUUID();
-    UUID itemId = itemsClient.create(new ItemRequestBuilder()).getId();
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
+      ItemRequestBuilder::available)
+      .getId();
 
     JsonObject requestRequest = new RequestRequestBuilder()
       .recall()
@@ -214,7 +185,9 @@ public class RequestsAPICreationTests {
     UnsupportedEncodingException {
 
     UUID id = UUID.randomUUID();
-    UUID itemId = itemsClient.create(new ItemRequestBuilder()).getId();
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
+      ItemRequestBuilder::available)
+      .getId();
 
     JsonObject requestRequest = new RequestRequestBuilder()
       .hold()
@@ -245,8 +218,7 @@ public class RequestsAPICreationTests {
 
     UUID id = UUID.randomUUID();
 
-    IndividualResource itemResponse = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("036000291452"));
+    IndividualResource itemResponse = itemsFixture.basedUponSmallAngryPlanet();
 
     UUID itemId = itemResponse.getId();
 
@@ -295,7 +267,9 @@ public class RequestsAPICreationTests {
     UnsupportedEncodingException {
 
     UUID id = UUID.randomUUID();
-    UUID itemId = itemsClient.create(new ItemRequestBuilder().available()).getId();
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
+      ItemRequestBuilder::available)
+      .getId();
 
     JsonObject requestRequest = new RequestRequestBuilder()
       .page()
@@ -325,9 +299,7 @@ public class RequestsAPICreationTests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("036000291452"))
-      .getId();
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
     checkOutItem(itemId, loansClient);
 
@@ -372,9 +344,7 @@ public class RequestsAPICreationTests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("036000291452"))
-      .getId();
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
     checkOutItem(itemId, loansClient);
 
@@ -430,9 +400,7 @@ public class RequestsAPICreationTests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("036000291452"))
-      .getId();
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
     UUID requesterId = usersClient.create(new UserRequestBuilder()
       .withName("Jones", "Steven", "Anthony")
@@ -496,9 +464,7 @@ public class RequestsAPICreationTests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("036000291452"))
-      .getId();
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
     checkOutItem(itemId, loansClient);
 
@@ -558,8 +524,8 @@ public class RequestsAPICreationTests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withNoBarcode())
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
+      ItemRequestBuilder::withNoBarcode)
       .getId();
 
     checkOutItem(itemId, loansClient);
@@ -607,9 +573,7 @@ public class RequestsAPICreationTests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("036000291452"))
-      .getId();
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
     checkOutItem(itemId, loansClient);
 

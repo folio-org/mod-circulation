@@ -1,25 +1,20 @@
 package org.folio.circulation.api.requests;
 
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.api.APITestSuite;
-import org.folio.circulation.api.support.http.InterfaceUrls;
+import org.folio.circulation.api.support.builders.ItemRequestBuilder;
 import org.folio.circulation.api.support.builders.RequestRequestBuilder;
-import org.folio.circulation.api.support.http.ResourceClient;
 import org.folio.circulation.api.support.builders.UserRequestBuilder;
+import org.folio.circulation.api.support.http.InterfaceUrls;
+import org.folio.circulation.api.support.http.ResourceClient;
 import org.folio.circulation.support.JsonArrayHelper;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
-import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
-import java.lang.invoke.MethodHandles;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.util.List;
@@ -35,31 +30,7 @@ import static org.folio.circulation.api.support.matchers.TextDateTimeMatcher.isE
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-public class RequestsAPIRetrievalTests {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
-  private final OkapiHttpClient client = APITestSuite.createClient(exception -> {
-    log.error("Request to circulation module failed:", exception);
-  });
-
-  private final ResourceClient usersClient = ResourceClient.forUsers(client);
-  private final ResourceClient requestsClient = ResourceClient.forRequests(client);
-  private final ResourceClient itemsClient = ResourceClient.forItems(client);
-  private final ResourceClient loansClient = ResourceClient.forLoans(client);
-
-  @Before
-  public void beforeEach()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    requestsClient.deleteAll();
-    usersClient.deleteAllIndividually();
-    itemsClient.deleteAll();
-    loansClient.deleteAll();
-  }
-
+public class RequestsAPIRetrievalTests extends RequestsAPITests {
   @Test
   public void canGetARequestById()
     throws MalformedURLException,
@@ -70,9 +41,7 @@ public class RequestsAPIRetrievalTests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("036000291452"))
-      .getId();
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
     checkOutItem(itemId, loansClient);
 
@@ -169,31 +138,31 @@ public class RequestsAPIRetrievalTests {
     UUID requesterId = usersClient.create(new UserRequestBuilder()).getId();
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponSmallAngryPlanet().checkOut()).getId())
+      .withItemId(itemsFixture.basedUponSmallAngryPlanet(ItemRequestBuilder::checkOut).getId())
       .withRequesterId(requesterId));
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponNod().checkOut()).getId())
+      .withItemId(itemsFixture.basedUponNod(ItemRequestBuilder::checkOut).getId())
       .withRequesterId(requesterId));
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponInterestingTimes().checkOut()).getId())
+      .withItemId(itemsFixture.basedUponInterestingTimes(ItemRequestBuilder::checkOut).getId())
       .withRequesterId(requesterId));
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponTemeraire().checkOut()).getId())
+      .withItemId(itemsFixture.basedUponTemeraire(ItemRequestBuilder::checkOut).getId())
       .withRequesterId(requesterId));
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponNod().checkOut()).getId())
+      .withItemId(itemsFixture.basedUponNod(ItemRequestBuilder::checkOut).getId())
       .withRequesterId(requesterId));
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponUprooted().checkOut()).getId())
+      .withItemId(itemsFixture.basedUponUprooted(ItemRequestBuilder::checkOut).getId())
       .withRequesterId(requesterId));
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponTemeraire().checkOut()).getId())
+      .withItemId(itemsFixture.basedUponTemeraire(ItemRequestBuilder::checkOut).getId())
       .withRequesterId(requesterId));
 
     CompletableFuture<Response> getFirstPageCompleted = new CompletableFuture<>();
@@ -229,8 +198,8 @@ public class RequestsAPIRetrievalTests {
     assertThat(secondPageRequests.size(), is(3));
     assertThat(secondPage.getInteger("totalRecords"), is(7));
 
-    firstPageRequests.forEach(request -> requestHasExpectedProperties(request));
-    secondPageRequests.forEach(request -> requestHasExpectedProperties(request));
+    firstPageRequests.forEach(this::requestHasExpectedProperties);
+    secondPageRequests.forEach(this::requestHasExpectedProperties);
   }
 
   @Test
@@ -250,31 +219,31 @@ public class RequestsAPIRetrievalTests {
       .getId();
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponSmallAngryPlanet().checkOut()).getId())
+      .withItemId(itemsFixture.basedUponSmallAngryPlanet(ItemRequestBuilder::checkOut).getId())
       .withRequesterId(firstRequester));
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponNod().checkOut()).getId())
+      .withItemId(itemsFixture.basedUponNod(ItemRequestBuilder::checkOut).getId())
       .withRequesterId(firstRequester));
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponInterestingTimes().checkOut()).getId())
+      .withItemId(itemsFixture.basedUponInterestingTimes(ItemRequestBuilder::checkOut).getId())
       .withRequesterId(secondRequester));
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponTemeraire().checkOut()).getId())
+      .withItemId(itemsFixture.basedUponTemeraire(ItemRequestBuilder::checkOut).getId())
       .withRequesterId(firstRequester));
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponNod().checkOut()).getId())
+      .withItemId(itemsFixture.basedUponNod(ItemRequestBuilder::checkOut).getId())
       .withRequesterId(firstRequester));
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponUprooted().checkOut()).getId())
+      .withItemId(itemsFixture.basedUponUprooted(ItemRequestBuilder::checkOut).getId())
       .withRequesterId(secondRequester));
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponTemeraire().checkOut()).getId())
+      .withItemId(itemsFixture.basedUponTemeraire(ItemRequestBuilder::checkOut).getId())
       .withRequesterId(secondRequester));
 
     CompletableFuture<Response> getRequestsCompleted = new CompletableFuture<>();
@@ -296,7 +265,7 @@ public class RequestsAPIRetrievalTests {
     assertThat(requests.size(), is(3));
     assertThat(wrappedRequests.getInteger("totalRecords"), is(3));
 
-    requests.forEach(request -> requestHasExpectedProperties(request));
+    requests.forEach(this::requestHasExpectedProperties);
   }
 
   @Test
@@ -310,36 +279,36 @@ public class RequestsAPIRetrievalTests {
     UUID requesterId = usersClient.create(new UserRequestBuilder()).getId();
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponSmallAngryPlanet().checkOut()).getId())
+      .withItemId(itemsFixture.basedUponSmallAngryPlanet(ItemRequestBuilder::checkOut).getId())
       .withRequesterId(requesterId));
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponNod().checkOut()).getId())
+      .withItemId(itemsFixture.basedUponNod(ItemRequestBuilder::checkOut).getId())
       .withRequesterId(requesterId));
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponInterestingTimes().checkOut()).getId())
+      .withItemId(itemsFixture.basedUponInterestingTimes(ItemRequestBuilder::checkOut).getId())
       .withRequesterId(requesterId));
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponTemeraire().checkOut()).getId())
+      .withItemId(itemsFixture.basedUponTemeraire(ItemRequestBuilder::checkOut).getId())
       .withRequesterId(requesterId));
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponNod().checkOut()).getId())
+      .withItemId(itemsFixture.basedUponNod(ItemRequestBuilder::checkOut).getId())
       .withRequesterId(requesterId));
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponUprooted().checkOut()).getId())
+      .withItemId(itemsFixture.basedUponUprooted(ItemRequestBuilder::checkOut).getId())
       .withRequesterId(requesterId));
 
     requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsClient.create(basedUponTemeraire().checkOut()).getId())
+      .withItemId(itemsFixture.basedUponTemeraire(ItemRequestBuilder::checkOut).getId())
       .withRequesterId(requesterId));
 
     CompletableFuture<Response> getRequestsCompleted = new CompletableFuture<>();
 
-    client.get(InterfaceUrls.requestsUrl() + String.format("?query=item.title=Nod"),
+    client.get(InterfaceUrls.requestsUrl() + "?query=item.title=Nod",
       ResponseHandler.any(getRequestsCompleted));
 
     Response getRequestsResponse = getRequestsCompleted.get(5, TimeUnit.SECONDS);
@@ -355,7 +324,7 @@ public class RequestsAPIRetrievalTests {
     assertThat(requests.size(), is(2));
     assertThat(wrappedRequests.getInteger("totalRecords"), is(2));
 
-    requests.forEach(request -> requestHasExpectedProperties(request));
+    requests.forEach(this::requestHasExpectedProperties);
   }
 
   private List<JsonObject> getRequests(JsonObject page) {

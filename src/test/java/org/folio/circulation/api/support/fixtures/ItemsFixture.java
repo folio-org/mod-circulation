@@ -14,14 +14,14 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
-public class ItemFixture {
+public class ItemsFixture {
 
   private final ResourceClient itemsClient;
   private final ResourceClient holdingsClient;
   private final ResourceClient instancesClient;
   private final UUID defaultPermanentLocation;
 
-  public ItemFixture(OkapiHttpClient client) {
+  public ItemsFixture(OkapiHttpClient client) {
     itemsClient = ResourceClient.forItems(client);
     holdingsClient = ResourceClient.forHoldings(client);
     instancesClient = ResourceClient.forInstances(client);
@@ -111,6 +111,19 @@ public class ItemFixture {
       ItemRequestExamples.basedUponUprooted());
   }
 
+  public IndividualResource basedUponUprooted(
+    Function<ItemRequestBuilder, ItemRequestBuilder> additionalItemProperties)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return applyAdditionalProperties(
+      additionalItemProperties,
+      InstanceRequestExamples.uprooted(),
+      ItemRequestExamples.basedUponUprooted());
+  }
+
   public IndividualResource basedUponInterestingTimes()
     throws InterruptedException,
     MalformedURLException,
@@ -118,6 +131,19 @@ public class ItemFixture {
     ExecutionException {
 
     return create(
+      InstanceRequestExamples.interestingTimes(),
+      ItemRequestExamples.basedUponInterestingTimes());
+  }
+
+  public IndividualResource basedUponInterestingTimes(
+    Function<ItemRequestBuilder, ItemRequestBuilder> additionalItemProperties)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return applyAdditionalProperties(
+      additionalItemProperties,
       InstanceRequestExamples.interestingTimes(),
       ItemRequestExamples.basedUponInterestingTimes());
   }
