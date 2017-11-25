@@ -185,7 +185,11 @@ public class APITestSuite {
 
     ResourceClient.forRequests(client).deleteAll();
     ResourceClient.forLoans(client).deleteAll();
+
     ResourceClient.forItems(client).deleteAll();
+    ResourceClient.forHoldings(client).deleteAll();
+    ResourceClient.forInstances(client).deleteAll();
+
     ResourceClient.forUsers(client).deleteAllIndividually();
 
     deleteMaterialTypes();

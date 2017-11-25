@@ -3,6 +3,7 @@ package org.folio.circulation.api.loans;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.APITestSuite;
 import org.folio.circulation.api.support.builders.LoanRequestBuilder;
+import org.folio.circulation.api.support.fixtures.ItemFixture;
 import org.folio.circulation.api.support.http.ResourceClient;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -49,6 +50,7 @@ public class LoanAPITests {
   private final ResourceClient itemsClient = ResourceClient.forItems(client);
   private final ResourceClient holdingsClient = ResourceClient.forHoldings(client);
   private final ResourceClient instancesClient = ResourceClient.forInstances(client);
+  private final ItemFixture itemFixture = new ItemFixture(client);
 
   @Before
   public void beforeEach()
@@ -73,8 +75,8 @@ public class LoanAPITests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("036000291452")
+    UUID itemId = itemFixture.basedUponSmallAngryPlanet(
+      b -> b.withBarcode("036000291452")
       .withPermanentLocation(APITestSuite.mainLibraryLocationId()))
       .getId();
 
