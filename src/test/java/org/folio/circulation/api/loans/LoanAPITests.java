@@ -2,6 +2,7 @@ package org.folio.circulation.api.loans;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.APITestSuite;
+import org.folio.circulation.api.support.builders.ItemRequestBuilder;
 import org.folio.circulation.api.support.builders.LoanRequestBuilder;
 import org.folio.circulation.api.support.fixtures.ItemFixture;
 import org.folio.circulation.api.support.http.ResourceClient;
@@ -32,7 +33,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static org.folio.circulation.api.support.http.InterfaceUrls.loansUrl;
-import static org.folio.circulation.api.support.fixtures.ItemRequestExamples.*;
 import static org.folio.circulation.api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
@@ -50,7 +50,7 @@ public class LoanAPITests {
   private final ResourceClient itemsClient = ResourceClient.forItems(client);
   private final ResourceClient holdingsClient = ResourceClient.forHoldings(client);
   private final ResourceClient instancesClient = ResourceClient.forInstances(client);
-  private final ItemFixture itemFixture = new ItemFixture(client);
+  private final ItemFixture itemsFixture = new ItemFixture(client);
 
   @Before
   public void beforeEach()
@@ -75,10 +75,7 @@ public class LoanAPITests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemFixture.basedUponSmallAngryPlanet(
-      b -> b.withBarcode("036000291452")
-      .withPermanentLocation(APITestSuite.mainLibraryLocationId()))
-      .getId();
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
     UUID userId = UUID.randomUUID();
     UUID proxyUserId = UUID.randomUUID();
@@ -166,9 +163,10 @@ public class LoanAPITests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withPermanentLocation(APITestSuite.mainLibraryLocationId())
-      .withNoTemporaryLocation())
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
+      itemBuilder -> itemBuilder
+        .withPermanentLocation(APITestSuite.mainLibraryLocationId())
+        .withNoTemporaryLocation())
       .getId();
 
     IndividualResource response = loansClient.create(new LoanRequestBuilder()
@@ -202,7 +200,7 @@ public class LoanAPITests {
   }
 
   @Test
-  public void canCreateALoanForItemWithoutAPermanentLocation()
+  public void canCreateALoanForItemWithNoLocation()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -211,8 +209,10 @@ public class LoanAPITests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withNoPermanentLocation())
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
+      itemBuilder -> itemBuilder
+        .withNoPermanentLocation()
+        .withNoTemporaryLocation())
       .getId();
 
     IndividualResource response = loansClient.create(new LoanRequestBuilder()
@@ -247,9 +247,10 @@ public class LoanAPITests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withPermanentLocation(APITestSuite.mainLibraryLocationId())
-      .withTemporaryLocation(APITestSuite.annexLocationId()))
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
+      itemBuilder -> itemBuilder
+        .withPermanentLocation(APITestSuite.mainLibraryLocationId())
+        .withTemporaryLocation(APITestSuite.annexLocationId()))
       .getId();
 
     IndividualResource response = loansClient.create(new LoanRequestBuilder()
@@ -292,7 +293,7 @@ public class LoanAPITests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()).getId();
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
     UUID userId = UUID.randomUUID();
 
@@ -347,8 +348,9 @@ public class LoanAPITests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("036000291452"))
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
+      itemBuilder -> itemBuilder
+        .withBarcode("036000291452"))
       .getId();
 
     UUID userId = UUID.randomUUID();
@@ -430,7 +432,7 @@ public class LoanAPITests {
     TimeoutException,
     UnsupportedEncodingException {
 
-    UUID itemId = itemsClient.create(basedUponNod()).getId();
+    UUID itemId = itemsFixture.basedUponNod().getId();
 
     UUID id = loansClient.create(new LoanRequestBuilder()
       .withItemId(itemId))
@@ -459,8 +461,8 @@ public class LoanAPITests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withNoBarcode())
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
+      ItemRequestBuilder::withNoBarcode)
       .getId();
 
     UUID userId = UUID.randomUUID();
@@ -506,11 +508,9 @@ public class LoanAPITests {
 
     DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 
-    UUID itemId = itemsClient.create(basedUponNod()).getId();
-
     IndividualResource loan = loansClient.create(new LoanRequestBuilder()
       .withLoanDate(loanDate)
-      .withItemId(itemId));
+      .withItem(itemsFixture.basedUponNod()));
 
     JsonObject returnedLoan = loan.copyJson();
 
@@ -554,7 +554,7 @@ public class LoanAPITests {
     assertThat("Should not have snapshot of item status, as current status is included",
       updatedLoan.containsKey("itemStatus"), is(false));
 
-    JsonObject item = itemsClient.getById(itemId).getJson();
+    JsonObject item = itemsClient.getById(itemsFixture.basedUponNod().getId()).getJson();
 
     assertThat("item status is not available",
       item.getJsonObject("status").getString("name"), is("Available"));
@@ -574,7 +574,7 @@ public class LoanAPITests {
 
     DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 
-    UUID itemId = itemsClient.create(basedUponNod()).getId();
+    UUID itemId = itemsFixture.basedUponNod().getId();
 
     IndividualResource loan = loansClient.create(new LoanRequestBuilder()
       .withLoanDate(loanDate)
@@ -651,7 +651,7 @@ public class LoanAPITests {
 
     DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, 232, DateTimeZone.UTC);
 
-    UUID itemId = itemsClient.create(basedUponNod()).getId();
+    UUID itemId = itemsFixture.basedUponNod().getId();
 
     IndividualResource loan = loansClient.create(new LoanRequestBuilder()
       .withLoanDate(loanDate)
@@ -693,9 +693,10 @@ public class LoanAPITests {
     TimeoutException,
     UnsupportedEncodingException {
 
-    UUID itemId = itemsClient.create(basedUponNod()).getId();
+    UUID itemId = itemsFixture.basedUponNod().getId();
 
-    loansClient.create(new LoanRequestBuilder().withItemId(itemId));
+    loansClient.create(new LoanRequestBuilder()
+      .withItemId(itemId));
 
     itemsClient.delete(itemId);
 
@@ -727,25 +728,25 @@ public class LoanAPITests {
     UnsupportedEncodingException {
 
     loansClient.create(new LoanRequestBuilder()
-      .withItemId(itemsClient.create(basedUponSmallAngryPlanet()).getId()));
+      .withItem(itemsFixture.basedUponSmallAngryPlanet()));
 
     loansClient.create(new LoanRequestBuilder()
-      .withItemId(itemsClient.create(basedUponNod()).getId()));
+      .withItem(itemsFixture.basedUponNod()));
 
     loansClient.create(new LoanRequestBuilder()
-      .withItemId(itemsClient.create(basedUponSmallAngryPlanet()).getId()));
+      .withItem(itemsFixture.basedUponSmallAngryPlanet()));
 
     loansClient.create(new LoanRequestBuilder()
-      .withItemId(itemsClient.create(basedUponTemeraire()).getId()));
+      .withItem(itemsFixture.basedUponTemeraire()));
 
     loansClient.create(new LoanRequestBuilder()
-      .withItemId(itemsClient.create(basedUponUprooted()).getId()));
+      .withItem(itemsFixture.basedUponUprooted()));
 
     loansClient.create(new LoanRequestBuilder()
-      .withItemId(itemsClient.create(basedUponNod()).getId()));
+      .withItem(itemsFixture.basedUponNod()));
 
     loansClient.create(new LoanRequestBuilder()
-      .withItemId(itemsClient.create(basedUponInterestingTimes()).getId()));
+      .withItem(itemsFixture.basedUponInterestingTimes()));
 
     CompletableFuture<Response> firstPageCompleted = new CompletableFuture<>();
     CompletableFuture<Response> secondPageCompleted = new CompletableFuture<>();
@@ -794,15 +795,17 @@ public class LoanAPITests {
     ExecutionException,
     UnsupportedEncodingException {
 
-    UUID permanentLocationItemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withPermanentLocation(APITestSuite.mainLibraryLocationId())
-      .withNoTemporaryLocation())
-      .getId();
+    UUID permanentLocationItemId = itemsFixture.basedUponSmallAngryPlanet(
+      itemRequestBuilder -> itemRequestBuilder
+        .withPermanentLocation(APITestSuite.mainLibraryLocationId())
+        .withNoTemporaryLocation()
+    ).getId();
 
     loansClient.create(new LoanRequestBuilder()
       .withItemId(permanentLocationItemId));
 
-    UUID temporaryLocationItemId = itemsClient.create(basedUponNod()
+    UUID temporaryLocationItemId = itemsFixture.basedUponNod(
+      itemRequestBuilder -> itemRequestBuilder
       .withPermanentLocation(APITestSuite.mainLibraryLocationId())
       .withTemporaryLocation(APITestSuite.annexLocationId()))
       .getId();
@@ -810,9 +813,10 @@ public class LoanAPITests {
     loansClient.create(new LoanRequestBuilder()
       .withItemId(temporaryLocationItemId));
 
-    UUID noLocationItemId = itemsClient.create(basedUponTemeraire()
-      .withNoPermanentLocation()
-      .withNoTemporaryLocation())
+    UUID noLocationItemId = itemsFixture.basedUponTemeraire(
+      itemRequestBuilder -> itemRequestBuilder
+        .withPermanentLocation(APITestSuite.mainLibraryLocationId())
+        .withTemporaryLocation(APITestSuite.annexLocationId()))
       .getId();
 
     loansClient.create(new LoanRequestBuilder()
@@ -878,31 +882,31 @@ public class LoanAPITests {
     String queryTemplate = loansUrl() + "?query=userId=%s";
 
     loansClient.create(new LoanRequestBuilder()
-      .withItem(itemsClient.create(basedUponSmallAngryPlanet()))
+      .withItem(itemsFixture.basedUponSmallAngryPlanet())
       .withUserId(firstUserId));
 
     loansClient.create(new LoanRequestBuilder()
-      .withItem(itemsClient.create(basedUponNod()))
+      .withItem(itemsFixture.basedUponNod())
       .withUserId(firstUserId));
 
     loansClient.create(new LoanRequestBuilder()
-      .withItem(itemsClient.create(basedUponSmallAngryPlanet()))
+      .withItem(itemsFixture.basedUponSmallAngryPlanet())
       .withUserId(firstUserId));
 
     loansClient.create(new LoanRequestBuilder()
-      .withItem(itemsClient.create(basedUponTemeraire()))
+      .withItem(itemsFixture.basedUponTemeraire())
       .withUserId(firstUserId));
 
     loansClient.create(new LoanRequestBuilder()
-      .withItem(itemsClient.create(basedUponUprooted()))
+      .withItem(itemsFixture.basedUponUprooted())
       .withUserId(secondUserId));
 
     loansClient.create(new LoanRequestBuilder()
-      .withItem(itemsClient.create(basedUponNod()))
+      .withItem(itemsFixture.basedUponNod())
       .withUserId(secondUserId));
 
     loansClient.create(new LoanRequestBuilder().withItem(
-      itemsClient.create(basedUponInterestingTimes()))
+      itemsFixture.basedUponInterestingTimes())
       .withUserId(secondUserId));
 
     CompletableFuture<Response> firstUserSearchCompleted = new CompletableFuture<>();
@@ -959,38 +963,38 @@ public class LoanAPITests {
     loansClient.create(new LoanRequestBuilder()
       .withUserId(userId)
       .withStatus("Open")
-      .withItem(itemsClient.create(basedUponSmallAngryPlanet()))
+      .withItem(itemsFixture.basedUponSmallAngryPlanet())
       .withRandomPastLoanDate());
 
     loansClient.create(new LoanRequestBuilder()
       .withUserId(userId)
       .withStatus("Open")
-      .withItem(itemsClient.create(basedUponNod()))
+      .withItem(itemsFixture.basedUponNod())
       .withRandomPastLoanDate());
 
     loansClient.create(new LoanRequestBuilder()
       .withUserId(userId)
       .withItem(
-        itemsClient.create(basedUponNod()))
+        itemsFixture.basedUponNod())
       .withStatus("Closed")
       .withRandomPastLoanDate());
 
     loansClient.create(new LoanRequestBuilder()
       .withUserId(userId)
       .withStatus("Closed")
-      .withItem(itemsClient.create(basedUponTemeraire()))
+      .withItem(itemsFixture.basedUponTemeraire())
       .withRandomPastLoanDate());
 
     loansClient.create(new LoanRequestBuilder()
       .withUserId(userId)
       .withStatus("Closed")
-      .withItem(itemsClient.create(basedUponUprooted()))
+      .withItem(itemsFixture.basedUponUprooted())
       .withRandomPastLoanDate());
 
     loansClient.create(new LoanRequestBuilder()
       .withUserId(userId)
       .withStatus("Closed")
-      .withItem(itemsClient.create(basedUponInterestingTimes()))
+      .withItem(itemsFixture.basedUponInterestingTimes())
       .withRandomPastLoanDate());
 
     CompletableFuture<Response> openSearchComppleted = new CompletableFuture<>();
@@ -1047,10 +1051,8 @@ public class LoanAPITests {
     ExecutionException,
     UnsupportedEncodingException {
 
-    UUID itemId = itemsClient.create(basedUponNod()).getId();
-
     UUID id = loansClient.create(new LoanRequestBuilder()
-      .withItemId(itemId))
+      .withItem(itemsFixture.basedUponNod()))
       .getId();
 
     CompletableFuture<Response> deleteCompleted = new CompletableFuture<>();
@@ -1086,7 +1088,7 @@ public class LoanAPITests {
     hasProperty("title", item, "item");
     hasProperty("barcode", item, "item");
     hasProperty("status", item, "item");
-//    hasProperty("location", item, "item");
+    hasProperty("location", item, "item");
 
     assertThat("Should not have snapshot of item status, as current status is included",
       loan.containsKey("itemStatus"), is(false));

@@ -10,9 +10,9 @@ public class HoldingRequestBuilder implements Builder {
   private final UUID instanceId;
   private final UUID permanentLocationId;
 
-  public HoldingRequestBuilder(UUID instanceId) {
+  public HoldingRequestBuilder() {
     this(
-      instanceId,
+      null,
       APITestSuite.mainLibraryLocationId());
   }
 
@@ -32,6 +32,14 @@ public class HoldingRequestBuilder implements Builder {
   }
 
   public HoldingRequestBuilder withPermanentLocation(UUID permanentLocationId) {
-    return new HoldingRequestBuilder(this.instanceId, permanentLocationId);
+    return new HoldingRequestBuilder(
+      this.instanceId,
+      permanentLocationId);
+  }
+
+  public HoldingRequestBuilder forInstance(UUID instanceId) {
+    return new HoldingRequestBuilder(
+      instanceId,
+      this.permanentLocationId);
   }
 }
