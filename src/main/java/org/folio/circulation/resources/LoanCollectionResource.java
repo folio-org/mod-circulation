@@ -316,16 +316,16 @@ public class LoanCollectionResource {
           allItemFutures.add(newFuture);
 
           itemsStorageClient.get(loanResource.getString("itemId"),
-            response -> newFuture.complete(response));
+            newFuture::complete);
         });
 
         CompletableFuture<Void> allItemsFetchedFuture =
           CompletableFuture.allOf(allItemFutures.toArray(new CompletableFuture<?>[] { }));
 
         allItemsFetchedFuture.thenAccept(v -> {
-          List<Response> itemResponses = allItemFutures.stream().
-            map(future -> future.join()).
-            collect(Collectors.toList());
+          List<Response> itemResponses = allItemFutures.stream()
+            .map(CompletableFuture::join)
+            .collect(Collectors.toList());
 
           itemResponses.stream()
             .filter(itemResponse -> itemResponse.getStatusCode() == 200)
@@ -339,7 +339,7 @@ public class LoanCollectionResource {
                 allLocationFutures.add(newFuture);
 
                 locationsClient.get(item.getString("temporaryLocationId"),
-                  response -> newFuture.complete(response));
+                  newFuture::complete);
               }
               else if(item.containsKey("permanentLocationId")) {
                 CompletableFuture<Response> newFuture = new CompletableFuture<>();
@@ -347,7 +347,7 @@ public class LoanCollectionResource {
                 allLocationFutures.add(newFuture);
 
                 locationsClient.get(item.getString("permanentLocationId"),
-                  response -> newFuture.complete(response));
+                  newFuture::complete);
               }
           });
 
@@ -356,13 +356,13 @@ public class LoanCollectionResource {
 
           allLocationsFetchedFuture.thenAccept(w -> {
             List<Response> locationResponses = allLocationFutures.stream().
-              map(future -> future.join()).
+              map(CompletableFuture::join).
               collect(Collectors.toList());
 
             loans.forEach( loan -> {
               Optional<JsonObject> possibleItem = itemResponses.stream()
                 .filter(itemResponse -> itemResponse.getStatusCode() == 200)
-                .map(itemResponse -> itemResponse.getJson())
+                .map(Response::getJson)
                 .filter(item -> item.getString("id").equals(loan.getString("itemId")))
                 .findFirst();
 
@@ -375,13 +375,13 @@ public class LoanCollectionResource {
 
                 Optional<JsonObject> possiblePermanentLocation = locationResponses.stream()
                   .filter(locationResponse -> locationResponse.getStatusCode() == 200)
-                  .map(locationResponse -> locationResponse.getJson())
+                  .map(Response::getJson)
                   .filter(location -> location.getString("id").equals(item.getString("permanentLocationId")))
                   .findFirst();
 
                 Optional<JsonObject> possibleTemporaryLocation = locationResponses.stream()
                   .filter(locationResponse -> locationResponse.getStatusCode() == 200)
-                  .map(locationResponse -> locationResponse.getJson())
+                  .map(Response::getJson)
                   .filter(location -> location.getString("id").equals(item.getString("temporaryLocationId")))
                   .findFirst();
 
