@@ -20,10 +20,10 @@ public class ItemRequestBuilder implements Builder {
 
   public ItemRequestBuilder() {
     this(UUID.randomUUID(), null, "Nod", "565578437802", AVAILABLE_STATUS,
-      APITestSuite.mainLibraryLocationId(), null);
+      null, null);
   }
 
-  public ItemRequestBuilder(
+  private ItemRequestBuilder(
     UUID id,
     UUID holdingId,
     String title,

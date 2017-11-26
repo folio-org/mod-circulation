@@ -134,7 +134,7 @@ public class LoanAPITests {
     assertThat("has item location",
       loan.getJsonObject("item").containsKey("location"), is(true));
 
-    assertThat("location is taken from item",
+    assertThat("location is taken from holding",
       loan.getJsonObject("item").getJsonObject("location").getString("name"),
       is("Main Library"));
 
@@ -201,7 +201,7 @@ public class LoanAPITests {
   }
 
   @Test
-  public void canCreateALoanForItemWithNoLocation()
+  public void createdLoanUsesPermanentLocationFromHolding()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -222,9 +222,10 @@ public class LoanAPITests {
 
     JsonObject createdLoan = response.getJson();
 
-    assertThat(String.format("created loan has no item location (%s)",
+    assertThat(String.format("created loan should have item location (%s) from holding",
       createdLoan.encodePrettily()),
-      createdLoan.getJsonObject("item").containsKey("location"), is(false));
+      createdLoan.getJsonObject("item").getJsonObject("location").getString("name"),
+      is("Main Library"));
 
     Response fetchResponse = loansClient.getById(id);
 
@@ -233,9 +234,10 @@ public class LoanAPITests {
 
     JsonObject fetchedLoan = fetchResponse.getJson();
 
-    assertThat(String.format("fetched loan has no item location (%s)",
+    assertThat(String.format("fetched loan should have item location (%s) from holding",
       fetchedLoan.encodePrettily()),
-      fetchedLoan.getJsonObject("item").containsKey("location"), is(false));
+      fetchedLoan.getJsonObject("item").getJsonObject("location").getString("name"),
+      is("Main Library"));
   }
 
   @Test
@@ -417,7 +419,7 @@ public class LoanAPITests {
     assertThat("has item location",
       loan.getJsonObject("item").containsKey("location"), is(true));
 
-    assertThat("location is taken from item",
+    assertThat("location is taken from holding",
       loan.getJsonObject("item").getJsonObject("location").getString("name"),
       is("Main Library"));
 
