@@ -11,7 +11,10 @@ import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -25,6 +28,7 @@ import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.ItemStatusAssistant.updateItemStatus;
 
 public class LoanCollectionResource {
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final String rootPath;
 
@@ -83,8 +87,7 @@ public class LoanCollectionResource {
                       extendedLoan(createdLoan, item, locationResponse.getJson()));
                   }
                   else {
-                    //Replace this with log
-                    System.out.println(
+                    log.warn(
                       String.format("Could not get location %s for item %s",
                         locationId, itemId ));
                     JsonResponse.created(routingContext.response(),
@@ -100,8 +103,7 @@ public class LoanCollectionResource {
                       extendedLoan(createdLoan, item, locationResponse.getJson()));
                   }
                   else {
-                    //Replace this with log
-                    System.out.println(
+                    log.warn(
                       String.format("Could not get location %s for item %s",
                         locationId, itemId ));
                     JsonResponse.created(routingContext.response(),
@@ -146,7 +148,6 @@ public class LoanCollectionResource {
     //TODO: Either converge the schema (based upon conversations about sharing
     // schema and including referenced resources or switch to include properties
     // rather than exclude properties
-
     JsonObject storageLoan = loan.copy();
     storageLoan.remove("item");
     storageLoan.remove("itemStatus");
@@ -204,8 +205,7 @@ public class LoanCollectionResource {
                       extendedLoan(loan, item, locationResponse.getJson()));
                   }
                   else {
-                    //Replace this with log
-                    System.out.println(
+                    log.warn(
                       String.format("Could not get location %s for item %s",
                         locationId, itemId ));
 
@@ -223,8 +223,7 @@ public class LoanCollectionResource {
                       extendedLoan(loan, item, locationResponse.getJson()));
                   }
                   else {
-                    //Replace this with log
-                    System.out.println(
+                    log.warn(
                       String.format("Could not get location %s for item %s",
                         locationId, itemId ));
 
