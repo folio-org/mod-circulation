@@ -101,13 +101,6 @@ public class LoanAPITests extends APITests {
       loan.getJsonObject("item").getJsonObject("status").getString("name"),
       is("Checked out"));
 
-    assertThat("has item location",
-      loan.getJsonObject("item").containsKey("location"), is(true));
-
-    assertThat("location is taken from holding",
-      loan.getJsonObject("item").getJsonObject("location").getString("name"),
-      is("Main Library"));
-
     assertThat("due date does not match",
       loan.getString("dueDate"), isEquivalentTo(dueDate));
 
@@ -168,92 +161,6 @@ public class LoanAPITests extends APITests {
     assertThat("location is taken from item when fetched",
       fetchedLoan.getJsonObject("item").getJsonObject("location").getString("name"),
       is("Main Library"));
-  }
-
-  @Test
-  public void createdLoanUsesPermanentLocationFromHolding()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
-
-    UUID id = UUID.randomUUID();
-
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
-      itemBuilder -> itemBuilder
-        .withNoPermanentLocation()
-        .withNoTemporaryLocation())
-      .getId();
-
-    IndividualResource response = loansClient.create(new LoanRequestBuilder()
-      .withId(id)
-      .withItemId(itemId));
-
-    JsonObject createdLoan = response.getJson();
-
-    assertThat(String.format("created loan should have item location (%s) from holding",
-      createdLoan.encodePrettily()),
-      createdLoan.getJsonObject("item").getJsonObject("location").getString("name"),
-      is("Main Library"));
-
-    Response fetchResponse = loansClient.getById(id);
-
-    assertThat(String.format("Failed to get loan: %s", fetchResponse.getBody()),
-      fetchResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
-
-    JsonObject fetchedLoan = fetchResponse.getJson();
-
-    assertThat(String.format("fetched loan should have item location (%s) from holding",
-      fetchedLoan.encodePrettily()),
-      fetchedLoan.getJsonObject("item").getJsonObject("location").getString("name"),
-      is("Main Library"));
-  }
-
-  @Test
-  public void canCreateALoanForItemWithATemporaryLocation()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
-
-    UUID id = UUID.randomUUID();
-
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
-      itemBuilder -> itemBuilder
-        .withPermanentLocation(APITestSuite.mainLibraryLocationId())
-        .withTemporaryLocation(APITestSuite.annexLocationId()))
-      .getId();
-
-    IndividualResource response = loansClient.create(new LoanRequestBuilder()
-      .withId(id)
-      .withItemId(itemId));
-
-    JsonObject createdLoan = response.getJson();
-
-    assertThat(String.format("created loan has an item location (%s)",
-      createdLoan.encodePrettily()),
-      createdLoan.getJsonObject("item").containsKey("location"), is(true));
-
-    assertThat("temporary location is taken from item when created",
-      createdLoan.getJsonObject("item").getJsonObject("location").getString("name"),
-      is("Annex"));
-
-    Response fetchResponse = loansClient.getById(id);
-
-    assertThat(String.format("Failed to get loan: %s", fetchResponse.getBody()),
-      fetchResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
-
-    JsonObject fetchedLoan = fetchResponse.getJson();
-
-    assertThat(String.format("fetched loan has an item location (%s)",
-      fetchedLoan.encodePrettily()),
-      fetchedLoan.getJsonObject("item").containsKey("location"), is(true));
-
-    assertThat("temporary location is taken from item when fetched",
-      fetchedLoan.getJsonObject("item").getJsonObject("location").getString("name"),
-      is("Annex"));
   }
 
   @Test

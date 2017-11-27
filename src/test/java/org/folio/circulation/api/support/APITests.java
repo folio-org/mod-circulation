@@ -25,9 +25,8 @@ public abstract class APITests {
   protected final ResourceClient requestsClient = ResourceClient.forRequests(client);
   protected final ResourceClient loansClient = ResourceClient.forLoans(client);
   protected final ItemsFixture itemsFixture = new ItemsFixture(client);
-
-  private final ResourceClient holdingsClient = ResourceClient.forHoldings(client);
-  private final ResourceClient instancesClient = ResourceClient.forInstances(client);
+  protected final ResourceClient holdingsClient = ResourceClient.forHoldings(client);
+  protected final ResourceClient instancesClient = ResourceClient.forInstances(client);
 
   @Before
   public void beforeEach()

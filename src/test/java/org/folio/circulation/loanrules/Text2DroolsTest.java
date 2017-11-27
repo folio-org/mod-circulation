@@ -1,15 +1,16 @@
 package org.folio.circulation.loanrules;
 
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
-
-import java.lang.invoke.MethodHandles;
-import java.util.Arrays;
-
 import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.lang.invoke.MethodHandles;
+import java.util.Arrays;
+
+import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
 public class Text2DroolsTest {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());

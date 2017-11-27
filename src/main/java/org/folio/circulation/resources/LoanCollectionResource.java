@@ -139,9 +139,7 @@ public class LoanCollectionResource {
                 JsonResponse.created(routingContext.response(),
                   extendedLoan(createdLoan, item, null));
               }
-
             });
-
         }
         else {
           ForwardResponse.forward(routingContext.response(), response);
