@@ -1,6 +1,7 @@
 package org.folio.circulation.api.requests;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.api.support.APITests;
 import org.folio.circulation.api.support.builders.ItemRequestBuilder;
 import org.folio.circulation.api.support.builders.RequestRequestBuilder;
 import org.folio.circulation.api.support.builders.UserRequestBuilder;
@@ -24,13 +25,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.folio.circulation.api.support.fixtures.ItemRequestExamples.*;
 import static org.folio.circulation.api.support.fixtures.LoanFixture.checkOutItem;
 import static org.folio.circulation.api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-public class RequestsAPIRetrievalTests extends RequestsAPITests {
+public class RequestsAPIRetrievalTests extends APITests {
   @Test
   public void canGetARequestById()
     throws MalformedURLException,

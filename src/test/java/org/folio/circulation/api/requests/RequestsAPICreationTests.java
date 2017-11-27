@@ -1,6 +1,7 @@
 package org.folio.circulation.api.requests;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.api.support.APITests;
 import org.folio.circulation.api.support.builders.ItemRequestBuilder;
 import org.folio.circulation.api.support.builders.RequestRequestBuilder;
 import org.folio.circulation.api.support.builders.UserRequestBuilder;
@@ -28,7 +29,7 @@ import static org.folio.circulation.api.support.matchers.TextDateTimeMatcher.isE
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-public class RequestsAPICreationTests extends RequestsAPITests {
+public class RequestsAPICreationTests extends APITests {
   @Test
   public void canCreateARequest()
     throws InterruptedException,

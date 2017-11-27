@@ -1,5 +1,6 @@
 package org.folio.circulation.api.requests;
 
+import org.folio.circulation.api.support.APITests;
 import org.folio.circulation.api.support.builders.RequestRequestBuilder;
 import org.folio.circulation.api.support.builders.UserRequestBuilder;
 import org.folio.circulation.support.http.client.Response;
@@ -15,7 +16,7 @@ import static org.folio.circulation.api.support.fixtures.LoanFixture.checkOutIte
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-public class RequestsAPIStatusChangeTests extends RequestsAPITests {
+public class RequestsAPIStatusChangeTests extends APITests {
   @Test
   public void creatingAHoldRequestChangesTheItemStatus()
     throws InterruptedException,

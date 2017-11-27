@@ -1,4 +1,4 @@
-package org.folio.circulation.api.requests;
+package org.folio.circulation.api.support;
 
 import org.folio.circulation.api.APITestSuite;
 import org.folio.circulation.api.support.fixtures.ItemsFixture;
@@ -13,18 +13,18 @@ import java.net.MalformedURLException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-public abstract class RequestsAPITests {
+public abstract class APITests {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  final OkapiHttpClient client = APITestSuite.createClient(exception -> {
+  protected final OkapiHttpClient client = APITestSuite.createClient(exception -> {
     log.error("Request to circulation module failed:", exception);
   });
 
-  final ResourceClient usersClient = ResourceClient.forUsers(client);
-  final ResourceClient itemsClient = ResourceClient.forItems(client);
-  final ResourceClient requestsClient = ResourceClient.forRequests(client);
-  final ResourceClient loansClient = ResourceClient.forLoans(client);
-  final ItemsFixture itemsFixture = new ItemsFixture(client);
+  protected final ResourceClient usersClient = ResourceClient.forUsers(client);
+  protected final ResourceClient itemsClient = ResourceClient.forItems(client);
+  protected final ResourceClient requestsClient = ResourceClient.forRequests(client);
+  protected final ResourceClient loansClient = ResourceClient.forLoans(client);
+  protected final ItemsFixture itemsFixture = new ItemsFixture(client);
 
   private final ResourceClient holdingsClient = ResourceClient.forHoldings(client);
   private final ResourceClient instancesClient = ResourceClient.forInstances(client);

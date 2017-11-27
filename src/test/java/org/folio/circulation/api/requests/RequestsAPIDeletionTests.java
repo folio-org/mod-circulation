@@ -1,6 +1,7 @@
 package org.folio.circulation.api.requests;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.api.support.APITests;
 import org.folio.circulation.api.support.builders.RequestRequestBuilder;
 import org.folio.circulation.api.support.builders.UserRequestBuilder;
 import org.folio.circulation.api.support.http.InterfaceUrls;
@@ -23,7 +24,7 @@ import static org.folio.circulation.api.support.fixtures.LoanFixture.checkOutIte
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-public class RequestsAPIDeletionTests extends RequestsAPITests {
+public class RequestsAPIDeletionTests extends APITests {
 
   @Test
   public void canDeleteAllRequests()

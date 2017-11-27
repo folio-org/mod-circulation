@@ -1,5 +1,6 @@
 package org.folio.circulation.api.requests;
 
+import org.folio.circulation.api.support.APITests;
 import org.folio.circulation.api.support.builders.RequestRequestBuilder;
 import org.folio.circulation.api.support.builders.UserRequestBuilder;
 import org.folio.circulation.support.http.client.Response;
@@ -16,7 +17,7 @@ import static org.folio.circulation.api.support.fixtures.LoanFixture.renewLoan;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-public class RequestsAPILoanRenewalTests extends RequestsAPITests {
+public class RequestsAPILoanRenewalTests extends APITests {
 
   @Test
   public void RenewalWithOutstandingHoldRequestDoesNotChangeItemStatus()

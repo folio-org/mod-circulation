@@ -1,6 +1,7 @@
 package org.folio.circulation.api.requests;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.api.support.APITests;
 import org.folio.circulation.api.support.builders.RequestRequestBuilder;
 import org.folio.circulation.api.support.builders.UserRequestBuilder;
 import org.folio.circulation.api.support.http.ResourceClient;
@@ -18,7 +19,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 
-public class RequestsAPILoanHistoryTests extends RequestsAPITests {
+public class RequestsAPILoanHistoryTests extends APITests {
   private final ResourceClient loansStorageClient = ResourceClient.forLoansStorage(client);
 
   @Test

@@ -2,26 +2,21 @@ package org.folio.circulation.api.loans;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.APITestSuite;
+import org.folio.circulation.api.support.APITests;
 import org.folio.circulation.api.support.builders.ItemRequestBuilder;
 import org.folio.circulation.api.support.builders.LoanRequestBuilder;
-import org.folio.circulation.api.support.fixtures.ItemsFixture;
 import org.folio.circulation.api.support.http.ResourceClient;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Period;
 import org.joda.time.format.ISODateTimeFormat;
-import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
-import java.lang.invoke.MethodHandles;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URLEncoder;
@@ -38,33 +33,8 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-public class LoanAPITests {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
-  private final OkapiHttpClient client = APITestSuite.createClient(exception -> {
-    log.error("Request to circulation module failed:", exception);
-  });
-
-  private final ResourceClient loansClient = ResourceClient.forLoans(client);
+public class LoanAPITests extends APITests {
   private final ResourceClient loansStorageClient = ResourceClient.forLoansStorage(client);
-  private final ResourceClient itemsClient = ResourceClient.forItems(client);
-  private final ResourceClient holdingsClient = ResourceClient.forHoldings(client);
-  private final ResourceClient instancesClient = ResourceClient.forInstances(client);
-  private final ItemsFixture itemsFixture = new ItemsFixture(client);
-
-  @Before
-  public void beforeEach()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    loansClient.deleteAll();
-
-    itemsClient.deleteAll();
-    holdingsClient.deleteAll();
-    instancesClient.deleteAll();
-  }
 
   @Test
   public void canCreateALoan()
