@@ -64,6 +64,7 @@ public class APITestSuite {
   private static UUID annexLocationId;
   private static UUID booksInstanceTypeId;
   private static UUID personalCreatorTypeId;
+  private static boolean initialised;
 
   public static URL circulationModuleUrl(String path) {
     try {
@@ -172,6 +173,8 @@ public class APITestSuite {
     createLocations();
     createInstanceTypes();
     createCreatorTypes();
+
+    initialised = true;
   }
 
   @AfterClass
@@ -379,5 +382,9 @@ public class APITestSuite {
   private static boolean existsInList(List<JsonObject> existingRecords, String name) {
     return existingRecords.stream()
       .noneMatch(materialType -> materialType.getString("name").equals(name));
+  }
+
+  public static boolean isNotInitialised() {
+    return !initialised;
   }
 }
