@@ -1,12 +1,14 @@
 package org.folio.circulation.api;
 
+import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.CirculationVerticle;
 import org.folio.circulation.api.fakes.FakeOkapi;
+import org.folio.circulation.api.loans.LoanAPIItemLocationTests;
 import org.folio.circulation.api.loans.LoanAPITests;
 import org.folio.circulation.api.requests.*;
-import org.folio.circulation.api.support.ResourceClient;
-import org.folio.circulation.api.support.URLHelper;
+import org.folio.circulation.api.support.http.ResourceClient;
+import org.folio.circulation.api.support.http.URLHelper;
 import org.folio.circulation.support.VertxAssistant;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.junit.AfterClass;
@@ -32,6 +34,7 @@ import java.util.function.Consumer;
 
 @Suite.SuiteClasses({
   LoanAPITests.class,
+  LoanAPIItemLocationTests.class,
   LoanRulesAPITests.class,
   LoanRulesEngineAPITests.class,
   RequestsAPICreationTests.class,
@@ -59,6 +62,9 @@ public class APITestSuite {
   private static UUID canCirculateLoanTypeId;
   private static UUID mainLibraryLocationId;
   private static UUID annexLocationId;
+  private static UUID booksInstanceTypeId;
+  private static UUID personalCreatorTypeId;
+  private static boolean initialised;
 
   public static URL circulationModuleUrl(String path) {
     try {
@@ -88,7 +94,7 @@ public class APITestSuite {
     Consumer<Throwable> exceptionHandler) {
 
     return new OkapiHttpClient(
-      vertxAssistant.createUsingVertx(vertx -> vertx.createHttpClient()),
+      vertxAssistant.createUsingVertx(Vertx::createHttpClient),
       okapiUrl(), TENANT_ID, TOKEN, exceptionHandler);
   }
 
@@ -112,6 +118,14 @@ public class APITestSuite {
 
   public static UUID annexLocationId() {
     return annexLocationId;
+  }
+
+  public static UUID booksInstanceTypeId() {
+    return booksInstanceTypeId;
+  }
+
+  public static UUID personalCreatorTypeId() {
+    return personalCreatorTypeId;
   }
 
   @BeforeClass
@@ -157,6 +171,10 @@ public class APITestSuite {
     createMaterialTypes();
     createLoanTypes();
     createLocations();
+    createInstanceTypes();
+    createCreatorTypes();
+
+    initialised = true;
   }
 
   @AfterClass
@@ -172,12 +190,18 @@ public class APITestSuite {
 
     ResourceClient.forRequests(client).deleteAll();
     ResourceClient.forLoans(client).deleteAll();
+
     ResourceClient.forItems(client).deleteAll();
+    ResourceClient.forHoldings(client).deleteAll();
+    ResourceClient.forInstances(client).deleteAll();
+
     ResourceClient.forUsers(client).deleteAllIndividually();
 
     deleteMaterialTypes();
     deleteLoanTypes();
     deleteLocations();
+    deleteInstanceTypes();
+    deleteCreatorTypes();
 
     CompletableFuture<Void> circulationModuleUndeployed =
       vertxAssistant.undeployVerticle(circulationModuleDeploymentId);
@@ -283,6 +307,48 @@ public class APITestSuite {
     locationsClient.delete(annexLocationId);
   }
 
+  private static void createInstanceTypes()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    booksInstanceTypeId = createReferenceRecord(
+      ResourceClient.forInstanceTypes(createClient()), "Books");
+  }
+
+  private static void deleteInstanceTypes()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    ResourceClient instanceTypesClient = ResourceClient.forInstanceTypes(createClient());
+
+    instanceTypesClient.delete(booksInstanceTypeId());
+  }
+
+  private static void createCreatorTypes()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    personalCreatorTypeId = createReferenceRecord(
+      ResourceClient.forCreatorTypes(createClient()), "Personal name");
+  }
+
+  private static void deleteCreatorTypes()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    ResourceClient creatorTypesClient = ResourceClient.forCreatorTypes(createClient());
+
+    creatorTypesClient.delete(personalCreatorTypeId());
+  }
+
   private static UUID createReferenceRecord(
     ResourceClient client,
     String name)
@@ -316,5 +382,9 @@ public class APITestSuite {
   private static boolean existsInList(List<JsonObject> existingRecords, String name) {
     return existingRecords.stream()
       .noneMatch(materialType -> materialType.getString("name").equals(name));
+  }
+
+  public static boolean isNotInitialised() {
+    return !initialised;
   }
 }

@@ -1,4 +1,4 @@
-package org.folio.circulation.api.support;
+package org.folio.circulation.api.support.matchers;
 
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;

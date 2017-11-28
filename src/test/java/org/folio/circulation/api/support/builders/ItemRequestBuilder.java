@@ -1,4 +1,4 @@
-package org.folio.circulation.api.support;
+package org.folio.circulation.api.support.builders;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.APITestSuite;
@@ -11,6 +11,7 @@ public class ItemRequestBuilder implements Builder {
   private static final String CHECKED_OUT_STATUS = "Checked out";
 
   private final UUID id;
+  private final UUID holdingId;
   private final String title;
   private final String barcode;
   private final String status;
@@ -18,18 +19,21 @@ public class ItemRequestBuilder implements Builder {
   private final UUID temporaryLocationId;
 
   public ItemRequestBuilder() {
-    this(UUID.randomUUID(), "Nod", "565578437802", AVAILABLE_STATUS,
-      APITestSuite.mainLibraryLocationId(), null);
+    this(UUID.randomUUID(), null, "Nod", "565578437802", AVAILABLE_STATUS,
+      null, null);
   }
 
-  public ItemRequestBuilder(
+  private ItemRequestBuilder(
     UUID id,
+    UUID holdingId,
     String title,
     String barcode,
     String status,
-    UUID permanentLocationId, UUID temporaryLocationId) {
+    UUID permanentLocationId,
+    UUID temporaryLocationId) {
 
     this.id = id;
+    this.holdingId = holdingId;
     this.title = title;
     this.barcode = barcode;
     this.status = status;
@@ -48,6 +52,10 @@ public class ItemRequestBuilder implements Builder {
 
     if(barcode != null) {
       itemRequest.put("barcode", barcode);
+    }
+
+    if(holdingId != null) {
+      itemRequest.put("holdingsRecordId", holdingId.toString());
     }
 
     itemRequest.put("status", new JsonObject().put("name", status));
@@ -76,6 +84,7 @@ public class ItemRequestBuilder implements Builder {
   public ItemRequestBuilder withStatus(String status) {
     return new ItemRequestBuilder(
       this.id,
+      this.holdingId,
       this.title,
       this.barcode,
       status,
@@ -86,6 +95,7 @@ public class ItemRequestBuilder implements Builder {
   public ItemRequestBuilder withTitle(String title) {
     return new ItemRequestBuilder(
       this.id,
+      this.holdingId,
       title,
       this.barcode,
       this.status,
@@ -96,6 +106,7 @@ public class ItemRequestBuilder implements Builder {
   public ItemRequestBuilder withBarcode(String barcode) {
     return new ItemRequestBuilder(
       this.id,
+      this.holdingId,
       this.title,
       barcode,
       this.status,
@@ -118,6 +129,7 @@ public class ItemRequestBuilder implements Builder {
   public ItemRequestBuilder withPermanentLocation(UUID permanentLocationId) {
     return new ItemRequestBuilder(
       this.id,
+      this.holdingId,
       this.title,
       this.barcode,
       this.status,
@@ -128,10 +140,22 @@ public class ItemRequestBuilder implements Builder {
   public ItemRequestBuilder withTemporaryLocation(UUID temporaryLocationId) {
     return new ItemRequestBuilder(
       this.id,
+      this.holdingId,
       this.title,
       this.barcode,
       this.status,
       this.permanentLocationId,
       temporaryLocationId);
+  }
+
+  public ItemRequestBuilder forHolding(UUID holdingId) {
+    return new ItemRequestBuilder(
+      this.id,
+      holdingId,
+      this.title,
+      this.barcode,
+      this.status,
+      this.permanentLocationId,
+      this.temporaryLocationId);
   }
 }

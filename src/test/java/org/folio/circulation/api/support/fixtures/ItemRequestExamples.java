@@ -1,4 +1,6 @@
-package org.folio.circulation.api.support;
+package org.folio.circulation.api.support.fixtures;
+
+import org.folio.circulation.api.support.builders.ItemRequestBuilder;
 
 public class ItemRequestExamples {
   public static ItemRequestBuilder basedUponSmallAngryPlanet() {

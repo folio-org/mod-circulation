@@ -2,24 +2,21 @@ package org.folio.circulation.api.loans;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.APITestSuite;
-import org.folio.circulation.api.support.LoanRequestBuilder;
-import org.folio.circulation.api.support.ResourceClient;
+import org.folio.circulation.api.support.APITests;
+import org.folio.circulation.api.support.builders.ItemRequestBuilder;
+import org.folio.circulation.api.support.builders.LoanRequestBuilder;
+import org.folio.circulation.api.support.http.ResourceClient;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Period;
 import org.joda.time.format.ISODateTimeFormat;
-import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
-import java.lang.invoke.MethodHandles;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URLEncoder;
@@ -30,34 +27,14 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.folio.circulation.api.support.InterfaceUrls.loansUrl;
-import static org.folio.circulation.api.support.ItemRequestExamples.*;
-import static org.folio.circulation.api.support.TextDateTimeMatcher.isEquivalentTo;
+import static org.folio.circulation.api.support.http.InterfaceUrls.loansUrl;
+import static org.folio.circulation.api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-public class LoanAPITests {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
-  private final OkapiHttpClient client = APITestSuite.createClient(exception -> {
-    log.error("Request to circulation module failed:", exception);
-  });
-
-  private final ResourceClient loansClient = ResourceClient.forLoans(client);
+public class LoanAPITests extends APITests {
   private final ResourceClient loansStorageClient = ResourceClient.forLoansStorage(client);
-  private final ResourceClient itemsClient = ResourceClient.forItems(client);
-
-  @Before
-  public void beforeEach()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    loansClient.deleteAll();
-    itemsClient.deleteAll();
-  }
 
   @Test
   public void canCreateALoan()
@@ -69,10 +46,7 @@ public class LoanAPITests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("036000291452")
-      .withPermanentLocation(APITestSuite.mainLibraryLocationId()))
-      .getId();
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
     UUID userId = UUID.randomUUID();
     UUID proxyUserId = UUID.randomUUID();
@@ -127,13 +101,6 @@ public class LoanAPITests {
       loan.getJsonObject("item").getJsonObject("status").getString("name"),
       is("Checked out"));
 
-    assertThat("has item location",
-      loan.getJsonObject("item").containsKey("location"), is(true));
-
-    assertThat("location is taken from item",
-      loan.getJsonObject("item").getJsonObject("location").getString("name"),
-      is("Main Library"));
-
     assertThat("due date does not match",
       loan.getString("dueDate"), isEquivalentTo(dueDate));
 
@@ -160,9 +127,10 @@ public class LoanAPITests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withPermanentLocation(APITestSuite.mainLibraryLocationId())
-      .withNoTemporaryLocation())
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
+      itemBuilder -> itemBuilder
+        .withPermanentLocation(APITestSuite.mainLibraryLocationId())
+        .withNoTemporaryLocation())
       .getId();
 
     IndividualResource response = loansClient.create(new LoanRequestBuilder()
@@ -196,87 +164,6 @@ public class LoanAPITests {
   }
 
   @Test
-  public void canCreateALoanForItemWithoutAPermanentLocation()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
-
-    UUID id = UUID.randomUUID();
-
-    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withNoPermanentLocation())
-      .getId();
-
-    IndividualResource response = loansClient.create(new LoanRequestBuilder()
-      .withId(id)
-      .withItemId(itemId));
-
-    JsonObject createdLoan = response.getJson();
-
-    assertThat(String.format("created loan has no item location (%s)",
-      createdLoan.encodePrettily()),
-      createdLoan.getJsonObject("item").containsKey("location"), is(false));
-
-    Response fetchResponse = loansClient.getById(id);
-
-    assertThat(String.format("Failed to get loan: %s", fetchResponse.getBody()),
-      fetchResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
-
-    JsonObject fetchedLoan = fetchResponse.getJson();
-
-    assertThat(String.format("fetched loan has no item location (%s)",
-      fetchedLoan.encodePrettily()),
-      fetchedLoan.getJsonObject("item").containsKey("location"), is(false));
-  }
-
-  @Test
-  public void canCreateALoanForItemWithATemporaryLocation()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
-
-    UUID id = UUID.randomUUID();
-
-    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withPermanentLocation(APITestSuite.mainLibraryLocationId())
-      .withTemporaryLocation(APITestSuite.annexLocationId()))
-      .getId();
-
-    IndividualResource response = loansClient.create(new LoanRequestBuilder()
-      .withId(id)
-      .withItemId(itemId));
-
-    JsonObject createdLoan = response.getJson();
-
-    assertThat(String.format("created loan has an item location (%s)",
-      createdLoan.encodePrettily()),
-      createdLoan.getJsonObject("item").containsKey("location"), is(true));
-
-    assertThat("temporary location is taken from item when created",
-      createdLoan.getJsonObject("item").getJsonObject("location").getString("name"),
-      is("Annex"));
-
-    Response fetchResponse = loansClient.getById(id);
-
-    assertThat(String.format("Failed to get loan: %s", fetchResponse.getBody()),
-      fetchResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
-
-    JsonObject fetchedLoan = fetchResponse.getJson();
-
-    assertThat(String.format("fetched loan has an item location (%s)",
-      fetchedLoan.encodePrettily()),
-      fetchedLoan.getJsonObject("item").containsKey("location"), is(true));
-
-    assertThat("temporary location is taken from item when fetched",
-      fetchedLoan.getJsonObject("item").getJsonObject("location").getString("name"),
-      is("Annex"));
-  }
-
-  @Test
   public void creatingAReturnedLoanDoesNotChangeItemStatus()
     throws InterruptedException,
     ExecutionException,
@@ -286,7 +173,7 @@ public class LoanAPITests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()).getId();
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
     UUID userId = UUID.randomUUID();
 
@@ -341,8 +228,9 @@ public class LoanAPITests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("036000291452"))
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
+      itemBuilder -> itemBuilder
+        .withBarcode("036000291452"))
       .getId();
 
     UUID userId = UUID.randomUUID();
@@ -405,12 +293,12 @@ public class LoanAPITests {
       loan.getJsonObject("item").getJsonObject("status").getString("name"),
       is("Checked out"));
 
-//    assertThat("has item location",
-//      loan.getJsonObject("item").containsKey("location"), is(true));
-//
-//    assertThat("location is taken from item",
-//      loan.getJsonObject("item").getJsonObject("location").getString("name"),
-//      is("Main Library"));
+    assertThat("has item location",
+      loan.getJsonObject("item").containsKey("location"), is(true));
+
+    assertThat("location is taken from holding",
+      loan.getJsonObject("item").getJsonObject("location").getString("name"),
+      is("Main Library"));
 
     assertThat("Should not have snapshot of item status, as current status is included",
       loan.containsKey("itemStatus"), is(false));
@@ -424,7 +312,7 @@ public class LoanAPITests {
     TimeoutException,
     UnsupportedEncodingException {
 
-    UUID itemId = itemsClient.create(basedUponNod()).getId();
+    UUID itemId = itemsFixture.basedUponNod().getId();
 
     UUID id = loansClient.create(new LoanRequestBuilder()
       .withItemId(itemId))
@@ -453,8 +341,8 @@ public class LoanAPITests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withNoBarcode())
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
+      ItemRequestBuilder::withNoBarcode)
       .getId();
 
     UUID userId = UUID.randomUUID();
@@ -500,11 +388,9 @@ public class LoanAPITests {
 
     DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 
-    UUID itemId = itemsClient.create(basedUponNod()).getId();
-
     IndividualResource loan = loansClient.create(new LoanRequestBuilder()
       .withLoanDate(loanDate)
-      .withItemId(itemId));
+      .withItem(itemsFixture.basedUponNod()));
 
     JsonObject returnedLoan = loan.copyJson();
 
@@ -548,7 +434,7 @@ public class LoanAPITests {
     assertThat("Should not have snapshot of item status, as current status is included",
       updatedLoan.containsKey("itemStatus"), is(false));
 
-    JsonObject item = itemsClient.getById(itemId).getJson();
+    JsonObject item = itemsClient.getById(itemsFixture.basedUponNod().getId()).getJson();
 
     assertThat("item status is not available",
       item.getJsonObject("status").getString("name"), is("Available"));
@@ -568,7 +454,7 @@ public class LoanAPITests {
 
     DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 
-    UUID itemId = itemsClient.create(basedUponNod()).getId();
+    UUID itemId = itemsFixture.basedUponNod().getId();
 
     IndividualResource loan = loansClient.create(new LoanRequestBuilder()
       .withLoanDate(loanDate)
@@ -645,7 +531,7 @@ public class LoanAPITests {
 
     DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, 232, DateTimeZone.UTC);
 
-    UUID itemId = itemsClient.create(basedUponNod()).getId();
+    UUID itemId = itemsFixture.basedUponNod().getId();
 
     IndividualResource loan = loansClient.create(new LoanRequestBuilder()
       .withLoanDate(loanDate)
@@ -687,9 +573,10 @@ public class LoanAPITests {
     TimeoutException,
     UnsupportedEncodingException {
 
-    UUID itemId = itemsClient.create(basedUponNod()).getId();
+    UUID itemId = itemsFixture.basedUponNod().getId();
 
-    loansClient.create(new LoanRequestBuilder().withItemId(itemId));
+    loansClient.create(new LoanRequestBuilder()
+      .withItemId(itemId));
 
     itemsClient.delete(itemId);
 
@@ -721,25 +608,25 @@ public class LoanAPITests {
     UnsupportedEncodingException {
 
     loansClient.create(new LoanRequestBuilder()
-      .withItemId(itemsClient.create(basedUponSmallAngryPlanet()).getId()));
+      .withItem(itemsFixture.basedUponSmallAngryPlanet()));
 
     loansClient.create(new LoanRequestBuilder()
-      .withItemId(itemsClient.create(basedUponNod()).getId()));
+      .withItem(itemsFixture.basedUponNod()));
 
     loansClient.create(new LoanRequestBuilder()
-      .withItemId(itemsClient.create(basedUponSmallAngryPlanet()).getId()));
+      .withItem(itemsFixture.basedUponSmallAngryPlanet()));
 
     loansClient.create(new LoanRequestBuilder()
-      .withItemId(itemsClient.create(basedUponTemeraire()).getId()));
+      .withItem(itemsFixture.basedUponTemeraire()));
 
     loansClient.create(new LoanRequestBuilder()
-      .withItemId(itemsClient.create(basedUponUprooted()).getId()));
+      .withItem(itemsFixture.basedUponUprooted()));
 
     loansClient.create(new LoanRequestBuilder()
-      .withItemId(itemsClient.create(basedUponNod()).getId()));
+      .withItem(itemsFixture.basedUponNod()));
 
     loansClient.create(new LoanRequestBuilder()
-      .withItemId(itemsClient.create(basedUponInterestingTimes()).getId()));
+      .withItem(itemsFixture.basedUponInterestingTimes()));
 
     CompletableFuture<Response> firstPageCompleted = new CompletableFuture<>();
     CompletableFuture<Response> secondPageCompleted = new CompletableFuture<>();
@@ -773,8 +660,8 @@ public class LoanAPITests {
     assertThat(secondPageLoans.size(), is(3));
     assertThat(secondPage.getInteger("totalRecords"), is(7));
 
-    firstPageLoans.forEach(loan -> loanHasExpectedProperties(loan));
-    secondPageLoans.forEach(loan -> loanHasExpectedProperties(loan));
+    firstPageLoans.forEach(this::loanHasExpectedProperties);
+    secondPageLoans.forEach(this::loanHasExpectedProperties);
 
     assertThat(countOfDistinctTitles(firstPageLoans), is(greaterThan(1)));
     assertThat(countOfDistinctTitles(secondPageLoans), is(greaterThan(1)));
@@ -788,15 +675,17 @@ public class LoanAPITests {
     ExecutionException,
     UnsupportedEncodingException {
 
-    UUID permanentLocationItemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withPermanentLocation(APITestSuite.mainLibraryLocationId())
-      .withNoTemporaryLocation())
-      .getId();
+    UUID permanentLocationItemId = itemsFixture.basedUponSmallAngryPlanet(
+      itemRequestBuilder -> itemRequestBuilder
+        .withPermanentLocation(APITestSuite.mainLibraryLocationId())
+        .withNoTemporaryLocation()
+    ).getId();
 
     loansClient.create(new LoanRequestBuilder()
       .withItemId(permanentLocationItemId));
 
-    UUID temporaryLocationItemId = itemsClient.create(basedUponNod()
+    UUID temporaryLocationItemId = itemsFixture.basedUponNod(
+      itemRequestBuilder -> itemRequestBuilder
       .withPermanentLocation(APITestSuite.mainLibraryLocationId())
       .withTemporaryLocation(APITestSuite.annexLocationId()))
       .getId();
@@ -804,9 +693,10 @@ public class LoanAPITests {
     loansClient.create(new LoanRequestBuilder()
       .withItemId(temporaryLocationItemId));
 
-    UUID noLocationItemId = itemsClient.create(basedUponTemeraire()
-      .withNoPermanentLocation()
-      .withNoTemporaryLocation())
+    UUID noLocationItemId = itemsFixture.basedUponTemeraire(
+      itemRequestBuilder -> itemRequestBuilder
+        .withNoPermanentLocation()
+        .withNoTemporaryLocation())
       .getId();
 
     loansClient.create(new LoanRequestBuilder()
@@ -829,7 +719,7 @@ public class LoanAPITests {
     assertThat(loans.size(), is(3));
     assertThat(firstPage.getInteger("totalRecords"), is(3));
 
-    loans.forEach(loan -> loanHasExpectedProperties(loan));
+    loans.forEach(this::loanHasExpectedProperties);
 
     JsonObject loanWithPermanentLocation = findLoanByItemId(loans, permanentLocationItemId);
     JsonObject loanWithTemporaryLocation = findLoanByItemId(loans, temporaryLocationItemId);
@@ -872,31 +762,31 @@ public class LoanAPITests {
     String queryTemplate = loansUrl() + "?query=userId=%s";
 
     loansClient.create(new LoanRequestBuilder()
-      .withItem(itemsClient.create(basedUponSmallAngryPlanet()))
+      .withItem(itemsFixture.basedUponSmallAngryPlanet())
       .withUserId(firstUserId));
 
     loansClient.create(new LoanRequestBuilder()
-      .withItem(itemsClient.create(basedUponNod()))
+      .withItem(itemsFixture.basedUponNod())
       .withUserId(firstUserId));
 
     loansClient.create(new LoanRequestBuilder()
-      .withItem(itemsClient.create(basedUponSmallAngryPlanet()))
+      .withItem(itemsFixture.basedUponSmallAngryPlanet())
       .withUserId(firstUserId));
 
     loansClient.create(new LoanRequestBuilder()
-      .withItem(itemsClient.create(basedUponTemeraire()))
+      .withItem(itemsFixture.basedUponTemeraire())
       .withUserId(firstUserId));
 
     loansClient.create(new LoanRequestBuilder()
-      .withItem(itemsClient.create(basedUponUprooted()))
+      .withItem(itemsFixture.basedUponUprooted())
       .withUserId(secondUserId));
 
     loansClient.create(new LoanRequestBuilder()
-      .withItem(itemsClient.create(basedUponNod()))
+      .withItem(itemsFixture.basedUponNod())
       .withUserId(secondUserId));
 
     loansClient.create(new LoanRequestBuilder().withItem(
-      itemsClient.create(basedUponInterestingTimes()))
+      itemsFixture.basedUponInterestingTimes())
       .withUserId(secondUserId));
 
     CompletableFuture<Response> firstUserSearchCompleted = new CompletableFuture<>();
@@ -931,8 +821,8 @@ public class LoanAPITests {
     assertThat(secondPageLoans.size(), is(3));
     assertThat(secondPage.getInteger("totalRecords"), is(3));
 
-    firstPageLoans.forEach(loan -> loanHasExpectedProperties(loan));
-    secondPageLoans.forEach(loan -> loanHasExpectedProperties(loan));
+    firstPageLoans.forEach(this::loanHasExpectedProperties);
+    secondPageLoans.forEach(this::loanHasExpectedProperties);
 
     assertThat(countOfDistinctTitles(firstPageLoans), is(greaterThan(1)));
     assertThat(countOfDistinctTitles(secondPageLoans), is(greaterThan(1)));
@@ -953,38 +843,38 @@ public class LoanAPITests {
     loansClient.create(new LoanRequestBuilder()
       .withUserId(userId)
       .withStatus("Open")
-      .withItem(itemsClient.create(basedUponSmallAngryPlanet()))
+      .withItem(itemsFixture.basedUponSmallAngryPlanet())
       .withRandomPastLoanDate());
 
     loansClient.create(new LoanRequestBuilder()
       .withUserId(userId)
       .withStatus("Open")
-      .withItem(itemsClient.create(basedUponNod()))
+      .withItem(itemsFixture.basedUponNod())
       .withRandomPastLoanDate());
 
     loansClient.create(new LoanRequestBuilder()
       .withUserId(userId)
       .withItem(
-        itemsClient.create(basedUponNod()))
+        itemsFixture.basedUponNod())
       .withStatus("Closed")
       .withRandomPastLoanDate());
 
     loansClient.create(new LoanRequestBuilder()
       .withUserId(userId)
       .withStatus("Closed")
-      .withItem(itemsClient.create(basedUponTemeraire()))
+      .withItem(itemsFixture.basedUponTemeraire())
       .withRandomPastLoanDate());
 
     loansClient.create(new LoanRequestBuilder()
       .withUserId(userId)
       .withStatus("Closed")
-      .withItem(itemsClient.create(basedUponUprooted()))
+      .withItem(itemsFixture.basedUponUprooted())
       .withRandomPastLoanDate());
 
     loansClient.create(new LoanRequestBuilder()
       .withUserId(userId)
       .withStatus("Closed")
-      .withItem(itemsClient.create(basedUponInterestingTimes()))
+      .withItem(itemsFixture.basedUponInterestingTimes())
       .withRandomPastLoanDate());
 
     CompletableFuture<Response> openSearchComppleted = new CompletableFuture<>();
@@ -1021,7 +911,7 @@ public class LoanAPITests {
     assertThat(closedLoans.size(), is(4));
     assertThat(closedLoansPage.getInteger("totalRecords"), is(4));
 
-    openLoans.forEach(loan -> loanHasExpectedProperties(loan));
+    openLoans.forEach(this::loanHasExpectedProperties);
 
     closedLoans.forEach(loan -> {
         loanHasExpectedProperties(loan);
@@ -1041,10 +931,8 @@ public class LoanAPITests {
     ExecutionException,
     UnsupportedEncodingException {
 
-    UUID itemId = itemsClient.create(basedUponNod()).getId();
-
     UUID id = loansClient.create(new LoanRequestBuilder()
-      .withItemId(itemId))
+      .withItem(itemsFixture.basedUponNod()))
       .getId();
 
     CompletableFuture<Response> deleteCompleted = new CompletableFuture<>();
@@ -1080,7 +968,6 @@ public class LoanAPITests {
     hasProperty("title", item, "item");
     hasProperty("barcode", item, "item");
     hasProperty("status", item, "item");
-//    hasProperty("location", item, "item");
 
     assertThat("Should not have snapshot of item status, as current status is included",
       loan.containsKey("itemStatus"), is(false));

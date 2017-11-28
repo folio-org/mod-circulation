@@ -1,4 +1,4 @@
-package org.folio.circulation.api.support;
+package org.folio.circulation.api.support.http;
 
 import org.folio.circulation.api.APITestSuite;
 
@@ -6,12 +6,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 public class InterfaceUrls {
-  public static URL materialTypesStorageUrl()
-    throws MalformedURLException {
-
-    return materialTypesStorageUrl("");
-  }
-
   public static URL materialTypesStorageUrl(String subPath)
     throws MalformedURLException {
 
@@ -30,16 +24,34 @@ public class InterfaceUrls {
     return APITestSuite.viaOkapiModuleUrl("/shelf-locations" + subPath);
   }
 
-  public static URL itemsStorageUrl()
+  public static URL instanceTypesStorageUrl(String subPath)
     throws MalformedURLException {
 
-    return itemsStorageUrl("");
+    return APITestSuite.viaOkapiModuleUrl("/instance-types" + subPath);
+  }
+
+  public static URL creatorTypesStorageUrl(String subPath)
+    throws MalformedURLException {
+
+    return APITestSuite.viaOkapiModuleUrl("/creator-types" + subPath);
   }
 
   public static URL itemsStorageUrl(String subPath)
     throws MalformedURLException {
 
     return APITestSuite.viaOkapiModuleUrl("/item-storage/items" + subPath);
+  }
+
+  public static URL holdingsStorageUrl(String subPath)
+    throws MalformedURLException {
+
+    return APITestSuite.viaOkapiModuleUrl("/holdings-storage/holdings" + subPath);
+  }
+
+  public static URL instancesStorageUrl(String subPath)
+    throws MalformedURLException {
+
+    return APITestSuite.viaOkapiModuleUrl("/instance-storage/instances" + subPath);
   }
 
   public static URL loansStorageUrl(String subPath)

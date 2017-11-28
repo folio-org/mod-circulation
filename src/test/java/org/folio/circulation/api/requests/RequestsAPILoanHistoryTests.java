@@ -1,56 +1,26 @@
 package org.folio.circulation.api.requests;
 
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.api.APITestSuite;
-import org.folio.circulation.api.support.RequestRequestBuilder;
-import org.folio.circulation.api.support.ResourceClient;
-import org.folio.circulation.api.support.UserRequestBuilder;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
-import org.junit.Before;
+import org.folio.circulation.api.support.APITests;
+import org.folio.circulation.api.support.builders.RequestRequestBuilder;
+import org.folio.circulation.api.support.builders.UserRequestBuilder;
+import org.folio.circulation.api.support.http.ResourceClient;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
-import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import static org.folio.circulation.api.support.ItemRequestExamples.basedUponNod;
-import static org.folio.circulation.api.support.ItemRequestExamples.basedUponSmallAngryPlanet;
-import static org.folio.circulation.api.support.LoanPreparation.checkInLoan;
-import static org.folio.circulation.api.support.LoanPreparation.checkOutItem;
+import static org.folio.circulation.api.support.fixtures.LoanFixture.checkInLoan;
+import static org.folio.circulation.api.support.fixtures.LoanFixture.checkOutItem;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 
-public class RequestsAPILoanHistoryTests {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
-  private final OkapiHttpClient client = APITestSuite.createClient(exception -> {
-    log.error("Request to circulation module failed:", exception);
-  });
-
-  private final ResourceClient usersClient = ResourceClient.forUsers(client);
-  private final ResourceClient requestsClient = ResourceClient.forRequests(client);
-  private final ResourceClient itemsClient = ResourceClient.forItems(client);
-  private final ResourceClient loansClient = ResourceClient.forLoans(client);
+public class RequestsAPILoanHistoryTests extends APITests {
   private final ResourceClient loansStorageClient = ResourceClient.forLoansStorage(client);
-
-  @Before
-  public void beforeEach()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    requestsClient.deleteAll();
-    usersClient.deleteAllIndividually();
-    itemsClient.deleteAll();
-    loansClient.deleteAll();
-  }
 
   @Test
   public void creatingHoldRequestChangesTheOpenLoanForTheSameItem()
@@ -62,9 +32,7 @@ public class RequestsAPILoanHistoryTests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("036000291452"))
-      .getId();
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
     UUID loanId = checkOutItem(itemId, loansClient).getId();
 
@@ -93,9 +61,7 @@ public class RequestsAPILoanHistoryTests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("6540962174061"))
-      .getId();
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
     UUID loanId = checkOutItem(itemId, loansClient).getId();
 
@@ -121,9 +87,7 @@ public class RequestsAPILoanHistoryTests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("6540962174061"))
-      .getId();
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
     UUID loanId = checkOutItem(itemId, loansClient).getId();
 
@@ -152,9 +116,7 @@ public class RequestsAPILoanHistoryTests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("036000291452"))
-      .getId();
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
     UUID closedLoanId = checkOutItem(itemId, loansClient).getId();
 
@@ -188,9 +150,7 @@ public class RequestsAPILoanHistoryTests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("036000291452"))
-      .getId();
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
     UUID closedLoanId = checkOutItem(itemId, loansClient).getId();
 
@@ -224,13 +184,9 @@ public class RequestsAPILoanHistoryTests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("036000291452"))
-      .getId();
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID otherItemId = itemsClient.create(basedUponNod()
-      .withBarcode("750453962104"))
-      .getId();
+    UUID otherItemId = itemsFixture.basedUponNod().getId();
 
     checkOutItem(itemId, loansClient).getId();
     UUID loanForOtherItemId = checkOutItem(otherItemId, loansClient).getId();
@@ -261,13 +217,9 @@ public class RequestsAPILoanHistoryTests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("036000291452"))
-      .getId();
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();;
 
-    UUID otherItemId = itemsClient.create(basedUponNod()
-      .withBarcode("750453962104"))
-      .getId();
+    UUID otherItemId = itemsFixture.basedUponNod().getId();
 
     checkOutItem(itemId, loansClient).getId();
     UUID loanForOtherItemId = checkOutItem(otherItemId, loansClient).getId();
@@ -298,9 +250,7 @@ public class RequestsAPILoanHistoryTests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("036000291452"))
-      .getId();
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
     UUID loanId = checkOutItem(itemId, loansClient).getId();
 
@@ -323,9 +273,7 @@ public class RequestsAPILoanHistoryTests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsClient.create(basedUponSmallAngryPlanet()
-      .withBarcode("036000291452"))
-      .getId();
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
     UUID loanId = checkOutItem(itemId, loansClient).getId();
 

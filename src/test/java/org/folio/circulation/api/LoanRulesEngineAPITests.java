@@ -15,7 +15,7 @@ import java.net.URL;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-import static org.folio.circulation.api.support.InterfaceUrls.loanRulesURL;
+import static org.folio.circulation.api.support.http.InterfaceUrls.loanRulesURL;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 

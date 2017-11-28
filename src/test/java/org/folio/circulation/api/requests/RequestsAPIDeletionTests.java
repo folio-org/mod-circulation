@@ -1,23 +1,16 @@
 package org.folio.circulation.api.requests;
 
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.api.APITestSuite;
-import org.folio.circulation.api.support.InterfaceUrls;
-import org.folio.circulation.api.support.RequestRequestBuilder;
-import org.folio.circulation.api.support.ResourceClient;
-import org.folio.circulation.api.support.UserRequestBuilder;
+import org.folio.circulation.api.support.APITests;
+import org.folio.circulation.api.support.builders.RequestRequestBuilder;
+import org.folio.circulation.api.support.builders.UserRequestBuilder;
+import org.folio.circulation.api.support.http.InterfaceUrls;
 import org.folio.circulation.support.JsonArrayHelper;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
-import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
-import java.lang.invoke.MethodHandles;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.util.List;
 import java.util.UUID;
@@ -26,35 +19,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.folio.circulation.api.support.ItemRequestExamples.*;
-import static org.folio.circulation.api.support.LoanPreparation.checkOutItem;
+import static java.net.HttpURLConnection.*;
+import static org.folio.circulation.api.support.fixtures.LoanFixture.checkOutItem;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-public class RequestsAPIDeletionTests {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
-  private final OkapiHttpClient client = APITestSuite.createClient(exception -> {
-    log.error("Request to circulation module failed:", exception);
-  });
-
-  private final ResourceClient usersClient = ResourceClient.forUsers(client);
-  private final ResourceClient requestsClient = ResourceClient.forRequests(client);
-  private final ResourceClient itemsClient = ResourceClient.forItems(client);
-  private final ResourceClient loansClient = ResourceClient.forLoans(client);
-
-  @Before
-  public void beforeEach()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    requestsClient.deleteAll();
-    usersClient.deleteAllIndividually();
-    itemsClient.deleteAll();
-    loansClient.deleteAll();
-  }
+public class RequestsAPIDeletionTests extends APITests {
 
   @Test
   public void canDeleteAllRequests()
@@ -66,9 +36,9 @@ public class RequestsAPIDeletionTests {
 
     UUID requesterId = usersClient.create(new UserRequestBuilder()).getId();
 
-    UUID firstItemId = itemsClient.create(basedUponSmallAngryPlanet()).getId();
-    UUID secondItemId = itemsClient.create(basedUponNod()).getId();
-    UUID thirdItemId = itemsClient.create(basedUponInterestingTimes()).getId();
+    UUID firstItemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    UUID secondItemId = itemsFixture.basedUponNod().getId();
+    UUID thirdItemId = itemsFixture.basedUponInterestingTimes().getId();
 
     checkOutItem(firstItemId, loansClient);
     checkOutItem(secondItemId, loansClient);
@@ -93,7 +63,7 @@ public class RequestsAPIDeletionTests {
 
     Response deleteResponse = deleteCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat(deleteResponse.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
+    assertThat(deleteResponse.getStatusCode(), is(HTTP_NO_CONTENT));
 
     CompletableFuture<Response> getAllCompleted = new CompletableFuture<>();
 
@@ -101,7 +71,7 @@ public class RequestsAPIDeletionTests {
 
     Response getAllResponse = getAllCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat(getAllResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+    assertThat(getAllResponse.getStatusCode(), is(HTTP_OK));
 
     JsonObject allRequests = getAllResponse.getJson();
 
@@ -125,9 +95,9 @@ public class RequestsAPIDeletionTests {
 
     UUID requesterId = usersClient.create(new UserRequestBuilder()).getId();
 
-    UUID firstItemId = itemsClient.create(basedUponNod()).getId();
-    UUID secondItemId = itemsClient.create(basedUponSmallAngryPlanet()).getId();
-    UUID thirdItemId = itemsClient.create(basedUponTemeraire()).getId();
+    UUID firstItemId = itemsFixture.basedUponNod().getId();
+    UUID secondItemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    UUID thirdItemId = itemsFixture.basedUponTemeraire().getId();
 
     checkOutItem(firstItemId, loansClient);
     checkOutItem(secondItemId, loansClient);
@@ -155,13 +125,13 @@ public class RequestsAPIDeletionTests {
 
     Response deleteResponse = deleteCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat(deleteResponse.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
+    assertThat(deleteResponse.getStatusCode(), is(HTTP_NO_CONTENT));
 
-    assertThat(ResourceClient.forRequests(client).getById(firstId).getStatusCode(), is(HttpURLConnection.HTTP_OK));
+    assertThat(requestsClient.getById(firstId).getStatusCode(), is(HTTP_OK));
 
-    assertThat(ResourceClient.forRequests(client).getById(secondId).getStatusCode(), is(HttpURLConnection.HTTP_NOT_FOUND));
+    assertThat(requestsClient.getById(secondId).getStatusCode(), is(HTTP_NOT_FOUND));
 
-    assertThat(ResourceClient.forRequests(client).getById(thirdId).getStatusCode(), is(HttpURLConnection.HTTP_OK));
+    assertThat(requestsClient.getById(thirdId).getStatusCode(), is(HTTP_OK));
 
     CompletableFuture<Response> getAllCompleted = new CompletableFuture<>();
 
@@ -169,7 +139,7 @@ public class RequestsAPIDeletionTests {
 
     Response getAllResponse = getAllCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat(getAllResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+    assertThat(getAllResponse.getStatusCode(), is(HTTP_OK));
 
     JsonObject allRequests = getAllResponse.getJson();
 

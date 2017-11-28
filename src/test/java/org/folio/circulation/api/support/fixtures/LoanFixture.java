@@ -1,6 +1,8 @@
-package org.folio.circulation.api.support;
+package org.folio.circulation.api.support.fixtures;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.api.support.http.ResourceClient;
+import org.folio.circulation.api.support.builders.LoanRequestBuilder;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 
@@ -9,7 +11,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-public class LoanPreparation {
+public class LoanFixture {
   public static IndividualResource checkOutItem(
     UUID itemId,
     ResourceClient loansClient)

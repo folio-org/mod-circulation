@@ -1,12 +1,12 @@
-package org.folio.circulation.api.support;
+package org.folio.circulation.api.support.http;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.api.support.builders.Builder;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
-import org.hamcrest.MatcherAssert;
 
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -31,6 +31,16 @@ public class ResourceClient {
   public static ResourceClient forItems(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::itemsStorageUrl,
       "items");
+  }
+
+  public static ResourceClient forHoldings(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::holdingsStorageUrl,
+      "holdingsRecords");
+  }
+
+  public static ResourceClient forInstances(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::instancesStorageUrl,
+      "instances");
   }
 
   public static ResourceClient forRequests(OkapiHttpClient client) {
@@ -66,6 +76,16 @@ public class ResourceClient {
   public static ResourceClient forLocations(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::locationsStorageUrl,
       "locations", "shelflocations");
+  }
+
+  public static ResourceClient forInstanceTypes(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::instanceTypesStorageUrl,
+      "instance types", "instanceTypes");
+  }
+
+  public static ResourceClient forCreatorTypes(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::creatorTypesStorageUrl,
+      "creator types", "creatorTypes");
   }
 
   private ResourceClient(
@@ -111,8 +131,9 @@ public class ResourceClient {
 
     Response response = createCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat(String.format("Failed to create %s: %s", resourceName,
-      response.getBody()), response.getStatusCode(), is(HttpURLConnection.HTTP_CREATED));
+    assertThat(
+      String.format("Failed to create %s: %s", resourceName, response.getBody()),
+      response.getStatusCode(), is(HttpURLConnection.HTTP_CREATED));
 
     return new IndividualResource(response);
   }
@@ -131,7 +152,7 @@ public class ResourceClient {
     Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
 
     assertThat(
-      String.format("Failed to update %s %s: %s", putResponse.getBody(), resourceName, id),
+      String.format("Failed to update %s %s: %s", resourceName, id, putResponse.getBody()),
       putResponse.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
   }
 
@@ -146,9 +167,7 @@ public class ResourceClient {
     client.get(urlMaker.combine(String.format("/%s", id)),
       ResponseHandler.any(getCompleted));
 
-    Response response = getCompleted.get(5, TimeUnit.SECONDS);
-
-    return response;
+    return getCompleted.get(5, TimeUnit.SECONDS);
   }
 
   public void delete(UUID id)
@@ -164,7 +183,8 @@ public class ResourceClient {
 
     Response response = deleteFinished.get(5, TimeUnit.SECONDS);
 
-    assertThat(String.format("Failed to delete %s %s", resourceName, id),
+    assertThat(String.format(
+      "Failed to delete %s %s: %s", resourceName, id, response.getBody()),
       response.getStatusCode(), is(204));
   }
 
@@ -181,7 +201,8 @@ public class ResourceClient {
 
     Response response = deleteAllFinished.get(5, TimeUnit.SECONDS);
 
-    MatcherAssert.assertThat("WARNING!!!!! Delete all resources failed",
+    assertThat(String.format(
+      "Failed to delete %s: %s", resourceName, response.getBody()),
       response.getStatusCode(), is(204));
   }
 
@@ -203,10 +224,13 @@ public class ResourceClient {
 
         Response deleteResponse = deleteFinished.get(5, TimeUnit.SECONDS);
 
-        MatcherAssert.assertThat("WARNING!!!!! Delete a resource individually failed",
+        assertThat(String.format(
+          "Failed to delete %s: %s", resourceName, deleteResponse.getBody()),
           deleteResponse.getStatusCode(), is(204));
+
       } catch (Throwable e) {
-        assertThat("WARNING!!!!! Delete a resource individually failed",
+        assertThat(String.format("Exception whilst deleting %s individually: %s",
+          resourceName, e.toString()),
           true, is(false));
       }
     });

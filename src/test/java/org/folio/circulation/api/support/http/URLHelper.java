@@ -1,4 +1,4 @@
-package org.folio.circulation.api.support;
+package org.folio.circulation.api.support.http;
 
 import java.net.MalformedURLException;
 import java.net.URL;
