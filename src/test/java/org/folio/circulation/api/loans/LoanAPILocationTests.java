@@ -21,7 +21,7 @@ import static org.folio.circulation.api.APITestSuite.mainLibraryLocationId;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-public class LoanAPIItemLocationTests extends APITests {
+public class LoanAPILocationTests extends APITests {
   @Test
   public void locationIsBasedUponHoldingWhenNoTemporaryLocation()
     throws InterruptedException,

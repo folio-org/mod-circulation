@@ -355,13 +355,7 @@ public class RequestCollectionResource {
     WebContext context)
     throws MalformedURLException {
 
-    CollectionResourceClient requestStorageClient;
-
-    requestStorageClient = new CollectionResourceClient(
-      client, context.getOkapiBasedUrl("/request-storage/requests"),
-      context.getTenantId());
-
-    return requestStorageClient;
+    return getCollectionResourceClient(client, context, "/request-storage/requests");
   }
 
   private CollectionResourceClient createItemsStorageClient(
@@ -369,13 +363,7 @@ public class RequestCollectionResource {
     WebContext context)
     throws MalformedURLException {
 
-    CollectionResourceClient itemsStorageClient;
-
-    itemsStorageClient = new CollectionResourceClient(
-      client, context.getOkapiBasedUrl("/item-storage/items"),
-      context.getTenantId());
-
-    return itemsStorageClient;
+    return getCollectionResourceClient(client, context, "/item-storage/items");
   }
 
   private CollectionResourceClient createUsersStorageClient(
@@ -383,13 +371,7 @@ public class RequestCollectionResource {
     WebContext context)
     throws MalformedURLException {
 
-    CollectionResourceClient usersStorageClient;
-
-    usersStorageClient = new CollectionResourceClient(
-      client, context.getOkapiBasedUrl("/users"),
-      context.getTenantId());
-
-    return usersStorageClient;
+    return getCollectionResourceClient(client, context, "/users");
   }
 
   private CollectionResourceClient createLoansStorageClient(
@@ -397,13 +379,7 @@ public class RequestCollectionResource {
     WebContext context)
     throws MalformedURLException {
 
-    CollectionResourceClient loansStorageClient;
-
-    loansStorageClient = new CollectionResourceClient(
-      client, context.getOkapiBasedUrl("/loan-storage/loans"),
-      context.getTenantId());
-
-    return loansStorageClient;
+    return getCollectionResourceClient(client, context, "/loan-storage/loans");
   }
 
   private String itemStatusFrom(JsonObject request) {
@@ -445,5 +421,13 @@ public class RequestCollectionResource {
       default:
         return null;
     }
+  }
+
+  private CollectionResourceClient getCollectionResourceClient(
+    OkapiHttpClient client,
+    WebContext context, String path) throws MalformedURLException {
+
+    return new CollectionResourceClient(
+      client, context.getOkapiBasedUrl(path));
   }
 }
