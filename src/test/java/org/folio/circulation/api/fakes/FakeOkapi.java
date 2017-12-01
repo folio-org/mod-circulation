@@ -33,56 +33,67 @@ public class FakeOkapi extends AbstractVerticle {
     this.server = vertx.createHttpServer();
 
     new FakeStorageModuleBuilder()
+      .withRecordName("material type")
       .withRootPath("/material-types")
       .withCollectionPropertyName("mtypes")
       .create().register(router);
 
     new FakeStorageModuleBuilder()
+      .withRecordName("loan type")
       .withRootPath("/loan-types")
       .withCollectionPropertyName("loantypes")
       .create().register(router);
 
     new FakeStorageModuleBuilder()
+      .withRecordName("location")
       .withRootPath("/shelf-locations")
       .withCollectionPropertyName("shelflocations")
       .create().register(router);
 
     new FakeStorageModuleBuilder()
+      .withRecordName("instance type")
       .withRootPath("/instance-types")
       .withCollectionPropertyName("instanceTypes")
       .create().register(router);
 
     new FakeStorageModuleBuilder()
+      .withRecordName("creator type")
       .withRootPath("/creator-types")
       .withCollectionPropertyName("creatorTypes")
       .create().register(router);
 
     new FakeStorageModuleBuilder()
+      .withRecordName("item")
       .withRootPath("/item-storage/items")
       .create().register(router);
 
     new FakeStorageModuleBuilder()
+      .withRecordName("holding")
       .withRootPath("/holdings-storage/holdings")
       .withRequiredProperties("instanceId", "permanentLocationId")
       .create().register(router);
 
     new FakeStorageModuleBuilder()
+      .withRecordName("instance")
       .withRootPath("/instance-storage/instances")
       .withRequiredProperties("source", "title", "creators", "instanceTypeId")
       .create().register(router);
 
     new FakeStorageModuleBuilder()
+      .withRecordName("loan")
       .withRootPath("/loan-storage/loans")
       .withRequiredProperties("userId", "itemId", "loanDate", "action")
       .create().register(router);
 
     new FakeStorageModuleBuilder()
+      .withRecordName("user")
       .withRootPath("/users")
       .withRequiredProperties("id", "username")
       .disallowCollectionDelete()
       .create().register(router);
 
     new FakeStorageModuleBuilder()
+      .withRecordName("request")
       .withRootPath("/request-storage/requests")
       .withRequiredProperties("itemId", "requesterId", "requestType",
         "requestDate", "fulfilmentPreference")

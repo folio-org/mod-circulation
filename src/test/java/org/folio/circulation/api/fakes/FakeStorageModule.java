@@ -6,6 +6,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.folio.circulation.support.http.server.*;
 
@@ -19,18 +20,21 @@ public class FakeStorageModule extends AbstractVerticle {
   private final boolean hasCollectionDelete;
   private final Collection<String> requiredProperties;
   private final Map<String, Map<String, JsonObject>> storedResourcesByTenant;
+  private final String recordTypeName;
 
   public FakeStorageModule(
     String rootPath,
     String collectionPropertyName,
     String tenantId,
     Collection<String> requiredProperties,
-    boolean hasCollectionDelete) {
+    boolean hasCollectionDelete,
+    String recordTypeName) {
 
     this.rootPath = rootPath;
     this.collectionPropertyName = collectionPropertyName;
     this.requiredProperties = requiredProperties;
     this.hasCollectionDelete = hasCollectionDelete;
+    this.recordTypeName = recordTypeName;
 
     storedResourcesByTenant = new HashMap<>();
     storedResourcesByTenant.put(tenantId, new HashMap<>());
@@ -69,7 +73,8 @@ public class FakeStorageModule extends AbstractVerticle {
 
     getResourcesForTenant(context).put(id, body);
 
-    System.out.println(String.format("Created resource: %s", id));
+    System.out.println(
+      String.format("Created %s resource: %s", recordTypeName, id));
     JsonResponse.created(routingContext.response(), body);
   }
 
@@ -83,12 +88,15 @@ public class FakeStorageModule extends AbstractVerticle {
     Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
 
     if(resourcesForTenant.containsKey(id)) {
-      System.out.println(String.format("Replaced resource: %s", id));
+      System.out.println(
+        String.format("Replaced %s resource: %s", recordTypeName, id));
+
       resourcesForTenant.replace(id, body);
       SuccessResponse.noContent(routingContext.response());
     }
     else {
-      System.out.println(String.format("Created resource: %s", id));
+      System.out.println(
+        String.format("Created %s resource: %s", recordTypeName, id));
       resourcesForTenant.put(id, body);
       SuccessResponse.noContent(routingContext.response());
     }
@@ -102,12 +110,14 @@ public class FakeStorageModule extends AbstractVerticle {
     Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
 
     if(resourcesForTenant.containsKey(id)) {
-      System.out.println(String.format("Found resource: %s", id));
+      System.out.println(
+        String.format("Found %s resource: %s", recordTypeName, id));
       JsonResponse.success(routingContext.response(),
         resourcesForTenant.get(id));
     }
     else {
-      System.out.println(String.format("Failed to find resource: %s", id));
+      System.out.println(
+        String.format("Failed to find %s resource: %s", recordTypeName, id));
       ClientErrorResponse.notFound(routingContext.response());
     }
   }
@@ -185,13 +195,12 @@ public class FakeStorageModule extends AbstractVerticle {
   }
 
   private static boolean hasBody(RoutingContext routingContext) {
-    return routingContext.getBodyAsString() != null &&
-      routingContext.getBodyAsString().trim() != "";
+    return StringUtils.isNotBlank(routingContext.getBodyAsString());
   }
 
   private List<Predicate<JsonObject>> filterFromQuery(String query) {
 
-    if(query == null || query.trim() == "") {
+    if(StringUtils.isBlank(query)) {
       ArrayList<Predicate<JsonObject>> predicates = new ArrayList<>();
       predicates.add(t -> true);
       return predicates;
@@ -256,7 +265,7 @@ public class FakeStorageModule extends AbstractVerticle {
   private void checkTokenHeader(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
 
-    if(context.getOkapiToken() == null || context.getOkapiToken() == "") {
+    if(StringUtils.isBlank(context.getOkapiToken())) {
       ClientErrorResponse.forbidden(routingContext.response());
     }
     else {
