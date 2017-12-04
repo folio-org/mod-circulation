@@ -2,7 +2,6 @@ package org.folio.circulation.support;
 
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpClientResponse;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.http.entity.ContentType;
@@ -73,13 +72,26 @@ public class CollectionResourceClient {
   }
 
   public void getMany(String query, Consumer<Response> responseHandler) {
+      String url = isProvided(query)
+        ? String.format("%s?%s", collectionRoot, query)
+        : collectionRoot.toString();
 
-    String url = isProvided(query)
-      ? String.format("%s?%s", collectionRoot, query)
+      client.get(url, responseConversationHandler(responseHandler));
+  }
+
+  public void getMany(
+    String cqlQuery,
+    Integer pageLimit,
+    Integer pageOffset,
+    Consumer<Response> responseHandler) {
+
+    //TODO: Replace with query string creator that checks each parameter
+    String url = isProvided(cqlQuery)
+      ? String.format("%s?query=%s&limit=%s&offset=%s", collectionRoot, cqlQuery,
+      pageLimit, pageOffset)
       : collectionRoot.toString();
 
-    client.get(url,
-      responseConversationHandler(responseHandler));
+    client.get(url, responseConversationHandler(responseHandler));
   }
 
   private boolean isProvided(String query) {

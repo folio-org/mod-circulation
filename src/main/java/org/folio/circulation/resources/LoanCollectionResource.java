@@ -14,9 +14,11 @@ import org.folio.circulation.support.http.server.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.UnsupportedEncodingException;
 import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -392,7 +394,6 @@ public class LoanCollectionResource {
           wrappedLoans.getJsonArray("loans"));
 
         List<CompletableFuture<Response>> allItemFutures = new ArrayList<>();
-        List<CompletableFuture<Response>> allLocationFutures = new ArrayList<>();
 
         loans.forEach(loanResource -> {
           CompletableFuture<Response> newFuture = new CompletableFuture<>();
@@ -411,6 +412,8 @@ public class LoanCollectionResource {
             .map(CompletableFuture::join)
             .collect(Collectors.toList());
 
+          List<String> locationIds = new ArrayList<>();
+
           itemResponses.stream()
             .filter(itemResponse -> itemResponse.getStatusCode() == 200)
             .forEach(itemResponse -> {
@@ -418,30 +421,27 @@ public class LoanCollectionResource {
               JsonObject item = itemResponse.getJson();
 
               if(item.containsKey("temporaryLocationId")) {
-                CompletableFuture<Response> newFuture = new CompletableFuture<>();
-
-                allLocationFutures.add(newFuture);
-
-                locationsClient.get(item.getString("temporaryLocationId"),
-                  newFuture::complete);
+                locationIds.add(item.getString("temporaryLocationId"));
               }
               else if(item.containsKey("permanentLocationId")) {
-                CompletableFuture<Response> newFuture = new CompletableFuture<>();
-
-                allLocationFutures.add(newFuture);
-
-                locationsClient.get(item.getString("permanentLocationId"),
-                  newFuture::complete);
+                locationIds.add(item.getString("permanentLocationId"));
               }
           });
 
-          CompletableFuture<Void> allLocationsFetchedFuture =
-            CompletableFuture.allOf(allLocationFutures.toArray(new CompletableFuture<?>[] { }));
+          CompletableFuture<Response> locationsFetched =
+            new CompletableFuture<>();
 
-          allLocationsFetchedFuture.thenAccept(w -> {
-            List<Response> locationResponses = allLocationFutures.stream().
-              map(CompletableFuture::join).
-              collect(Collectors.toList());
+          String query = multipleRecordsCqlQuery(locationIds);
+
+          locationsClient.getMany(query, locationIds.size(), 0,
+            locationsFetched::complete);
+
+          locationsFetched.thenAccept(locationsResponse -> {
+            if(locationsResponse.getStatusCode() != 200) {
+              ServerErrorResponse.internalError(routingContext.response(),
+                String.format("Locations request (%s) failed %s: %s",
+                  query, locationsResponse.getStatusCode(), locationsResponse.getBody()));
+            }
 
             loans.forEach( loan -> {
               Optional<JsonObject> possibleItem = itemResponses.stream()
@@ -457,16 +457,17 @@ public class LoanCollectionResource {
               if(possibleItem.isPresent()) {
                 JsonObject item = possibleItem.get();
 
-                Optional<JsonObject> possiblePermanentLocation = locationResponses.stream()
-                  .filter(locationResponse -> locationResponse.getStatusCode() == 200)
-                  .map(Response::getJson)
-                  .filter(location -> location.getString("id").equals(item.getString("permanentLocationId")))
+                List<JsonObject> locations = JsonArrayHelper.toList(locationsResponse
+                  .getJson().getJsonArray("shelflocations"));
+
+                Optional<JsonObject> possiblePermanentLocation = locations.stream()
+                  .filter(location -> location.getString("id").equals(
+                    item.getString("permanentLocationId")))
                   .findFirst();
 
-                Optional<JsonObject> possibleTemporaryLocation = locationResponses.stream()
-                  .filter(locationResponse -> locationResponse.getStatusCode() == 200)
-                  .map(Response::getJson)
-                  .filter(location -> location.getString("id").equals(item.getString("temporaryLocationId")))
+                Optional<JsonObject> possibleTemporaryLocation = locations.stream()
+                  .filter(location -> location.getString("id").equals(
+                    item.getString("temporaryLocationId")))
                   .findFirst();
 
                 loan.put("item", createItemSummary(item, null,
@@ -648,5 +649,25 @@ public class LoanCollectionResource {
     loan.remove("itemStatus");
 
     return loan;
+  }
+
+  private static String multipleRecordsCqlQuery(List<String> recordIds) {
+    if(recordIds.isEmpty()) {
+      return null;
+    }
+    else {
+      String query = String.format("id=(%s)", recordIds.stream()
+        .map(String::toString)
+        .distinct()
+        .collect(Collectors.joining(" or ")));
+
+      try {
+        return URLEncoder.encode(query, "UTF-8");
+
+      } catch (UnsupportedEncodingException e) {
+        log.error(String.format("Cannot encode query %s", query));
+        return null;
+      }
+    }
   }
 }

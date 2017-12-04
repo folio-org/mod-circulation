@@ -56,7 +56,7 @@ public class FakeCQLToJSONInterpreterTests {
 
   @Test
   public void canFilterByMultipleValues() {
-    FakeCQLToJSONInterpreter interpreter = new FakeCQLToJSONInterpreter();
+    FakeCQLToJSONInterpreter interpreter = new FakeCQLToJSONInterpreter(true);
 
     Collection<JsonObject> records = new ArrayList<>();
 
