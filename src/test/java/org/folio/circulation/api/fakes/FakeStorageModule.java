@@ -7,11 +7,9 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.folio.circulation.support.http.server.*;
 
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class FakeStorageModule extends AbstractVerticle {
@@ -131,11 +129,8 @@ public class FakeStorageModule extends AbstractVerticle {
 
     Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
 
-    List<Predicate<JsonObject>> predicates = filterFromQuery(query);
-
-    List<JsonObject> filteredItems = resourcesForTenant.values().stream()
-      .filter(predicates.stream().reduce(Predicate::and).orElse(t -> false))
-      .collect(Collectors.toList());
+    List<JsonObject> filteredItems = new FakeCQLToJSONInterpreter()
+      .filterByQuery(resourcesForTenant.values(), query);
 
     List<JsonObject> pagedItems = filteredItems.stream()
       .skip(offset)
@@ -196,70 +191,6 @@ public class FakeStorageModule extends AbstractVerticle {
 
   private static boolean hasBody(RoutingContext routingContext) {
     return StringUtils.isNotBlank(routingContext.getBodyAsString());
-  }
-
-  private List<Predicate<JsonObject>> filterFromQuery(String query) {
-
-    if(StringUtils.isBlank(query)) {
-      ArrayList<Predicate<JsonObject>> predicates = new ArrayList<>();
-      predicates.add(t -> true);
-      return predicates;
-    }
-
-    List<ImmutableTriple<String, String, String>> pairs =
-      Arrays.stream(query.split(" and "))
-        .map( pairText -> {
-          String[] split = pairText.split("=|<>");
-          String searchField = split[0]
-            .replaceAll("\"", "");
-
-          String searchTerm = split[1]
-            .replaceAll("\"", "")
-            .replaceAll("\\*", "");
-
-          if(pairText.contains("=")) {
-            return new ImmutableTriple<>(searchField, searchTerm, "=");
-          }
-          else {
-            return new ImmutableTriple<>(searchField, searchTerm, "<>");
-          }
-        })
-        .collect(Collectors.toList());
-
-    return pairs.stream()
-      .map(pair -> filterByField(pair.getLeft(), pair.getMiddle(), pair.getRight()))
-      .collect(Collectors.toList());
-  }
-
-  private Predicate<JsonObject> filterByField(String field, String term, String operator) {
-    return loan -> {
-      if (term == null || field == null) {
-        return true;
-      } else {
-
-        String propertyValue = "";
-
-        //TODO: Should bomb if property does not exist
-        if(field.contains(".")) {
-          String[] fields = field.split("\\.");
-
-          propertyValue = loan.getJsonObject(String.format("%s", fields[0]))
-            .getString(String.format("%s", fields[1]));
-        }
-        else {
-          propertyValue = loan.getString(String.format("%s", field));
-        }
-
-        switch(operator) {
-          case "=":
-            return propertyValue.contains(term);
-          case "<>":
-            return !propertyValue.contains(term);
-          default:
-            return false;
-        }
-      }
-    };
   }
 
   private void checkTokenHeader(RoutingContext routingContext) {
