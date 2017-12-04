@@ -37,19 +37,20 @@ public class FakeCQLToJSONInterpreter {
         })
         .collect(Collectors.toList());
 
-    return consolidateToSinglePredicate(pairs.stream()
+    return consolidateToSinglePredicate(
+      pairs.stream()
       .map(pair -> filterByField(pair.getLeft(), pair.getMiddle(), pair.getRight()))
       .collect(Collectors.toList()));
   }
 
   private Predicate<JsonObject> filterByField(String field, String term, String operator) {
     return loan -> {
+      boolean result = false;
+      String propertyValue = "";
+
       if (term == null || field == null) {
-        return true;
+        result = true;
       } else {
-
-        String propertyValue = "";
-
         //TODO: Should bomb if property does not exist
         if(field.contains(".")) {
           String[] fields = field.split("\\.");
@@ -63,13 +64,20 @@ public class FakeCQLToJSONInterpreter {
 
         switch(operator) {
           case "=":
-            return propertyValue.contains(term);
+            result = propertyValue.contains(term);
+            break;
           case "<>":
-            return !propertyValue.contains(term);
+            result = !propertyValue.contains(term);
+            break;
           default:
-            return false;
+            result = false;
         }
       }
+
+      System.out.println(String.format("Filtering %s by %s %s %s: %s (value: %s)",
+        loan.encodePrettily(), field, operator, term, result, propertyValue));
+
+      return result;
     };
   }
 
