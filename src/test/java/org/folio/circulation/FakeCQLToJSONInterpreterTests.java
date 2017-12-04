@@ -34,10 +34,6 @@ public class FakeCQLToJSONInterpreterTests {
 
     Collection<JsonObject> records = new ArrayList<>();
 
-    JsonObject shouldMatch = new JsonObject()
-      .put("myProperty", "foo")
-      .put("otherProperty", "match");
-
     records.add(new JsonObject()
       .put("myProperty", "foo")
       .put("otherProperty", "nope"));
@@ -46,11 +42,40 @@ public class FakeCQLToJSONInterpreterTests {
       .put("myProperty", "bar")
       .put("otherProperty", "match"));
 
+    JsonObject shouldMatch = new JsonObject()
+      .put("myProperty", "foo")
+      .put("otherProperty", "match");
+
     records.add(shouldMatch);
 
     List<JsonObject> matchedRecords =
       interpreter.filterByQuery(records, "myProperty=foo and otherProperty=match");
 
     assertThat(matchedRecords.size(), is(1));
+  }
+
+  @Test
+  public void canFilterByMultipleValues() {
+    FakeCQLToJSONInterpreter interpreter = new FakeCQLToJSONInterpreter();
+
+    Collection<JsonObject> records = new ArrayList<>();
+
+    records.add(new JsonObject()
+      .put("myProperty", "baz"));
+
+    JsonObject shouldMatch = new JsonObject()
+      .put("myProperty", "bar");
+
+    records.add(shouldMatch);
+
+    JsonObject shouldAlsoMatch = new JsonObject()
+      .put("myProperty", "foo");
+
+    records.add(shouldAlsoMatch);
+
+    List<JsonObject> matchedRecords =
+      interpreter.filterByQuery(records, "myProperty=(foo or bar)");
+
+    assertThat(matchedRecords.size(), is(2));
   }
 }

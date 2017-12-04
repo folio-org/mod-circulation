@@ -11,6 +11,16 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class FakeCQLToJSONInterpreter {
+  private final boolean diagnosticsEnabled;
+
+  public FakeCQLToJSONInterpreter() {
+    this(false);
+  }
+
+  public FakeCQLToJSONInterpreter(boolean diagnosticsEnabled) {
+    this.diagnosticsEnabled = diagnosticsEnabled;
+  }
+
   Predicate<JsonObject> filterForQuery(String query) {
 
     if(StringUtils.isBlank(query)) {
@@ -51,34 +61,57 @@ public class FakeCQLToJSONInterpreter {
       if (term == null || field == null) {
         result = true;
       } else {
-        //TODO: Should bomb if property does not exist
-        if(field.contains(".")) {
-          String[] fields = field.split("\\.");
+        propertyValue = getPropertyValue(loan, field);
 
-          propertyValue = loan.getJsonObject(String.format("%s", fields[0]))
-            .getString(String.format("%s", fields[1]));
-        }
-        else {
-          propertyValue = loan.getString(String.format("%s", field));
-        }
+        if (term.contains("or")) {
+          Collection<String> acceptableValues = Arrays.stream(term.split(" or "))
+            .map(subTerm -> subTerm.replace("(", "").replace(")", ""))
+            .collect(Collectors.toList());
 
-        switch(operator) {
-          case "=":
-            result = propertyValue.contains(term);
-            break;
-          case "<>":
-            result = !propertyValue.contains(term);
-            break;
-          default:
-            result = false;
+          Predicate<String> predicate = acceptableValues.stream()
+            .map(this::filter)
+            .reduce(Predicate::or)
+            .orElse(t -> false);
+
+          result = predicate.test(propertyValue);
+        } else {
+          switch (operator) {
+            case "=":
+              result = propertyValue.contains(term);
+              break;
+            case "<>":
+              result = !propertyValue.contains(term);
+              break;
+            default:
+              result = false;
+          }
         }
       }
 
-      System.out.println(String.format("Filtering %s by %s %s %s: %s (value: %s)",
-        loan.encodePrettily(), field, operator, term, result, propertyValue));
+      if(diagnosticsEnabled) {
+        System.out.println(String.format("Filtering %s by %s %s %s: %s (value: %s)",
+          loan.encodePrettily(), field, operator, term, result, propertyValue));
+      }
 
       return result;
     };
+  }
+
+  private Predicate<String> filter(String term) {
+    return v -> v.contains(term);
+  }
+
+  private String getPropertyValue(JsonObject loan, String field) {
+    //TODO: Should bomb if property does not exist
+    if(field.contains(".")) {
+      String[] fields = field.split("\\.");
+
+      return loan.getJsonObject(String.format("%s", fields[0]))
+        .getString(String.format("%s", fields[1]));
+    }
+    else {
+      return loan.getString(String.format("%s", field));
+    }
   }
 
   private Predicate<JsonObject> consolidateToSinglePredicate(
