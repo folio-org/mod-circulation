@@ -1,6 +1,7 @@
 package org.folio.circulation.api.loans;
 
 import io.vertx.core.json.JsonObject;
+import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.api.support.APITests;
 import org.folio.circulation.api.support.builders.HoldingRequestBuilder;
 import org.folio.circulation.api.support.builders.LoanRequestBuilder;
@@ -12,6 +13,7 @@ import org.junit.Test;
 
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -122,7 +124,7 @@ public class LoanAPITitleTests extends APITests {
     assertThat("has item title",
       fetchedLoan.getJsonObject("item").containsKey("title"), is(true));
 
-    assertThat("title is taken from instance",
+    assertThat("title is taken from item",
       fetchedLoan.getJsonObject("item").getString("title"),
       is("A different title"));
   }
@@ -176,8 +178,153 @@ public class LoanAPITitleTests extends APITests {
     assertThat("has item title",
       fetchedLoan.getJsonObject("item").containsKey("title"), is(true));
 
-    assertThat("title is taken from instance",
+    assertThat("title is taken from item",
       fetchedLoan.getJsonObject("item").getString("title"),
       is("A different title"));
+  }
+
+  @Test
+  public void titlesComeFromMultipleInstancesForMultipleLoans()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    UUID firstInstanceId = instancesClient.create(
+      InstanceRequestExamples.smallAngryPlanet()).getId();
+
+    UUID firstHoldingId = holdingsClient.create(
+      new HoldingRequestBuilder()
+        .forInstance(firstInstanceId)
+        .create())
+      .getId();
+
+    UUID firstItemId = itemsClient.create(
+      ItemRequestExamples.basedUponSmallAngryPlanet()
+        .withTitle("A different title") // deliberately different to demonstrate behaviour
+        .forHolding(firstHoldingId))
+      .getId();
+
+    UUID secondInstanceId = instancesClient.create(
+      InstanceRequestExamples.temeraire()).getId();
+
+    UUID secondHoldingId = holdingsClient.create(
+      new HoldingRequestBuilder()
+        .forInstance(secondInstanceId)
+        .create())
+      .getId();
+
+    UUID secondItemId = itemsClient.create(
+      ItemRequestExamples.basedUponTemeraire()
+        .withTitle("Another different title") // deliberately different to demonstrate behaviour
+        .forHolding(secondHoldingId))
+      .getId();
+
+    UUID firstLoanId = loansClient.create(new LoanRequestBuilder()
+      .withItemId(firstItemId)).getId();
+
+    UUID secondLoanId = loansClient.create(new LoanRequestBuilder()
+      .withItemId(secondItemId)).getId();
+
+    List<JsonObject> fetchedLoansResponse = loansClient.getAll();
+
+    JsonObject firstFetchedLoan = fetchedLoansResponse.stream()
+      .filter(loan -> StringUtils.equals(loan.getString("id"), firstLoanId.toString()))
+      .findFirst()
+      .get();
+
+    JsonObject secondFetchedLoan = fetchedLoansResponse.stream()
+      .filter(loan -> StringUtils.equals(loan.getString("id"), secondLoanId.toString()))
+      .findFirst()
+      .get();
+
+    assertThat("has item title",
+      firstFetchedLoan.getJsonObject("item").containsKey("title"), is(true));
+
+    assertThat("title is taken from instance",
+      firstFetchedLoan.getJsonObject("item").getString("title"),
+      is("The Long Way to a Small, Angry Planet"));
+
+    assertThat("has item title",
+      secondFetchedLoan.getJsonObject("item").containsKey("title"), is(true));
+
+    assertThat("title is taken from instance",
+      secondFetchedLoan.getJsonObject("item").getString("title"),
+      is("Temeraire"));
+  }
+
+  @Test
+  public void titlesComeFromItemForMultipleLoansWhenHoldingOrInstanceNotFound()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    UUID firstInstanceId = instancesClient.create(
+      InstanceRequestExamples.smallAngryPlanet()).getId();
+
+    UUID firstHoldingId = holdingsClient.create(
+      new HoldingRequestBuilder()
+        .forInstance(firstInstanceId)
+        .create())
+      .getId();
+
+    UUID firstItemId = itemsClient.create(
+      ItemRequestExamples.basedUponSmallAngryPlanet()
+        .withTitle("A different title") // deliberately different to demonstrate behaviour
+        .forHolding(firstHoldingId))
+      .getId();
+
+    UUID secondInstanceId = instancesClient.create(
+      InstanceRequestExamples.temeraire()).getId();
+
+    UUID secondHoldingId = holdingsClient.create(
+      new HoldingRequestBuilder()
+        .forInstance(secondInstanceId)
+        .create())
+      .getId();
+
+    UUID secondItemId = itemsClient.create(
+      ItemRequestExamples.basedUponTemeraire()
+        .withTitle("Another different title") // deliberately different to demonstrate behaviour
+        .forHolding(secondHoldingId))
+      .getId();
+
+    UUID firstLoanId = loansClient.create(new LoanRequestBuilder()
+      .withItemId(firstItemId)).getId();
+
+    UUID secondLoanId = loansClient.create(new LoanRequestBuilder()
+      .withItemId(secondItemId)).getId();
+
+    //Delete instance or holding
+    instancesClient.delete(firstInstanceId);
+
+    holdingsClient.delete(secondHoldingId);
+
+    List<JsonObject> fetchedLoansResponse = loansClient.getAll();
+
+    JsonObject firstFetchedLoan = fetchedLoansResponse.stream()
+      .filter(loan -> StringUtils.equals(loan.getString("id"), firstLoanId.toString()))
+      .findFirst()
+      .get();
+
+    JsonObject secondFetchedLoan = fetchedLoansResponse.stream()
+      .filter(loan -> StringUtils.equals(loan.getString("id"), secondLoanId.toString()))
+      .findFirst()
+      .get();
+
+    assertThat("has item title",
+      firstFetchedLoan.getJsonObject("item").containsKey("title"), is(true));
+
+    assertThat("title is taken from item",
+      firstFetchedLoan.getJsonObject("item").getString("title"),
+      is("A different title"));
+
+    assertThat("has item title",
+      secondFetchedLoan.getJsonObject("item").containsKey("title"), is(true));
+
+    assertThat("title is taken from item",
+      secondFetchedLoan.getJsonObject("item").getString("title"),
+      is("Another different title"));
   }
 }

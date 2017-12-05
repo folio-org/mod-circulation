@@ -6,6 +6,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
+import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
@@ -19,7 +20,6 @@ import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -371,6 +371,8 @@ public class LoanCollectionResource {
     WebContext context = new WebContext(routingContext);
     CollectionResourceClient loansStorageClient;
     CollectionResourceClient itemsStorageClient;
+    CollectionResourceClient holdingsClient;
+    CollectionResourceClient instancesClient;
     CollectionResourceClient locationsClient;
 
     try {
@@ -378,6 +380,8 @@ public class LoanCollectionResource {
       loansStorageClient = createLoansStorageClient(client, context);
       itemsStorageClient = createItemsStorageClient(client, context);
       locationsClient = createLocationsStorageClient(client, context);
+      holdingsClient = createHoldingsStorageClient(client, context);
+      instancesClient = createInstanceStorageClient(client, context);
     }
     catch (MalformedURLException e) {
       ServerErrorResponse.internalError(routingContext.response(),
@@ -411,71 +415,143 @@ public class LoanCollectionResource {
                 itemsQuery, itemsResponse.getStatusCode(), itemsResponse.getBody()));
           }
 
-          List<String> locationIds = new ArrayList<>();
-
           List<JsonObject> items = JsonArrayHelper.toList(
             itemsResponse.getJson().getJsonArray("items"));
 
-          items.stream().forEach(item -> {
-              if(item.containsKey("temporaryLocationId")) {
-                locationIds.add(item.getString("temporaryLocationId"));
-              }
-              else if(item.containsKey("permanentLocationId")) {
-                locationIds.add(item.getString("permanentLocationId"));
-              }
-          });
+          List<String> holdingsIds = items.stream()
+            .map(item -> item.getString("holdingsRecordId"))
+            .collect(Collectors.toList());
 
-          CompletableFuture<Response> locationsFetched =
+          CompletableFuture<Response> holdingsFetched =
             new CompletableFuture<>();
 
-          String query = multipleRecordsCqlQuery(locationIds);
+          String holdingsQuery = multipleRecordsCqlQuery(holdingsIds);
 
-          locationsClient.getMany(query, locationIds.size(), 0,
-            locationsFetched::complete);
+          holdingsClient.getMany(holdingsQuery, holdingsIds.size(), 0,
+            holdingsFetched::complete);
 
-          locationsFetched.thenAccept(locationsResponse -> {
-            if(locationsResponse.getStatusCode() != 200) {
+          holdingsFetched.thenAccept(holdingsResponse -> {
+            if(holdingsResponse.getStatusCode() != 200) {
               ServerErrorResponse.internalError(routingContext.response(),
-                String.format("Locations request (%s) failed %s: %s",
-                  query, locationsResponse.getStatusCode(), locationsResponse.getBody()));
+                String.format("Holdings request (%s) failed %s: %s",
+                  holdingsQuery, holdingsResponse.getStatusCode(),
+                  holdingsResponse.getBody()));
             }
 
-            loans.forEach( loan -> {
-              Optional<JsonObject> possibleItem = items.stream()
-                .filter(item -> item.getString("id").equals(loan.getString("itemId")))
-                .findFirst();
+            List<JsonObject> holdings = JsonArrayHelper.toList(
+              holdingsResponse.getJson().getJsonArray("holdingsRecords"));
 
-              //No need to pass on the itemStatus property, as only used to populate the history
-              //and could be confused with aggregation of current status
-              loan.remove("itemStatus");
+            List<String> instanceIds = holdings.stream()
+              .map(holding -> holding.getString("instanceId"))
+              .collect(Collectors.toList());
 
-              if(possibleItem.isPresent()) {
-                JsonObject item = possibleItem.get();
+            CompletableFuture<Response> instancesFetched =
+              new CompletableFuture<>();
 
-                List<JsonObject> locations = JsonArrayHelper.toList(locationsResponse
-                  .getJson().getJsonArray("shelflocations"));
+            String instancesQuery = multipleRecordsCqlQuery(instanceIds);
 
-                Optional<JsonObject> possiblePermanentLocation = locations.stream()
-                  .filter(location -> location.getString("id").equals(
-                    item.getString("permanentLocationId")))
-                  .findFirst();
+            instancesClient.getMany(instancesQuery, instanceIds.size(), 0,
+              instancesFetched::complete);
 
-                Optional<JsonObject> possibleTemporaryLocation = locations.stream()
-                  .filter(location -> location.getString("id").equals(
-                    item.getString("temporaryLocationId")))
-                  .findFirst();
+            instancesFetched.thenAccept(instancesResponse -> {
+                if (instancesResponse.getStatusCode() != 200) {
+                  ServerErrorResponse.internalError(routingContext.response(),
+                    String.format("Instances request (%s) failed %s: %s",
+                      instancesQuery, instancesResponse.getStatusCode(),
+                      instancesResponse.getBody()));
+                }
 
-                loan.put("item", createItemSummary(item, null,
-                  possibleTemporaryLocation.orElse(possiblePermanentLocation.orElse(null))));
-              }
-            });
+              List<JsonObject> instances = JsonArrayHelper.toList(
+                instancesResponse.getJson().getJsonArray("instances"));
 
-            JsonObject loansWrapper = new JsonObject()
-              .put("loans", new JsonArray(loans))
-              .put("totalRecords", wrappedLoans.getInteger("totalRecords"));
+                List<String> locationIds = items.stream()
+                  .map(item -> {
+                    if(item.containsKey("temporaryLocationId")) {
+                      return item.getString("temporaryLocationId");
+                    }
+                    else if(item.containsKey("permanentLocationId")) {
+                      return item.getString("permanentLocationId");
+                    }
+                    else {
+                      return null;
+                    }
+                  })
+                  .filter(StringUtils::isNotBlank)
+                  .collect(Collectors.toList());
 
-            JsonResponse.success(routingContext.response(),
-              loansWrapper);
+                CompletableFuture<Response> locationsFetched =
+                  new CompletableFuture<>();
+
+                String locationsQuery = multipleRecordsCqlQuery(locationIds);
+
+                locationsClient.getMany(locationsQuery, locationIds.size(), 0,
+                  locationsFetched::complete);
+
+                locationsFetched.thenAccept(locationsResponse -> {
+                  if(locationsResponse.getStatusCode() != 200) {
+                    ServerErrorResponse.internalError(routingContext.response(),
+                      String.format("Locations request (%s) failed %s: %s",
+                        locationsQuery, locationsResponse.getStatusCode(),
+                        locationsResponse.getBody()));
+                  }
+
+                  loans.forEach( loan -> {
+                    Optional<JsonObject> possibleItem = items.stream()
+                      .filter(item -> item.getString("id").equals(loan.getString("itemId")))
+                      .findFirst();
+
+                    //No need to pass on the itemStatus property,
+                    // as only used to populate the history
+                    //and could be confused with aggregation of current status
+                    loan.remove("itemStatus");
+
+                    Optional<JsonObject> possibleInstance = Optional.empty();
+
+                    if(possibleItem.isPresent()) {
+                      JsonObject item = possibleItem.get();
+
+                      Optional<JsonObject> possibleHolding = holdings.stream()
+                        .filter(holding -> holding.getString("id")
+                          .equals(item.getString("holdingsRecordId")))
+                        .findFirst();
+
+                      if(possibleHolding.isPresent()) {
+                        JsonObject holding = possibleHolding.get();
+
+                        possibleInstance = instances.stream()
+                          .filter(instance -> instance.getString("id")
+                            .equals(holding.getString("instanceId")))
+                          .findFirst();
+                      }
+
+                      List<JsonObject> locations = JsonArrayHelper.toList(
+                        locationsResponse.getJson().getJsonArray("shelflocations"));
+
+                      Optional<JsonObject> possiblePermanentLocation = locations.stream()
+                        .filter(location -> location.getString("id").equals(
+                          item.getString("permanentLocationId")))
+                        .findFirst();
+
+                      Optional<JsonObject> possibleTemporaryLocation = locations.stream()
+                        .filter(location -> location.getString("id").equals(
+                          item.getString("temporaryLocationId")))
+                        .findFirst();
+
+                      loan.put("item", createItemSummary(item,
+                        possibleInstance.orElse(null),
+                        possibleTemporaryLocation.orElse(
+                          possiblePermanentLocation.orElse(null))));
+                    }
+                  });
+
+                  JsonObject loansWrapper = new JsonObject()
+                    .put("loans", new JsonArray(loans))
+                    .put("totalRecords", wrappedLoans.getInteger("totalRecords"));
+
+                  JsonResponse.success(routingContext.response(),
+                    loansWrapper);
+                });
+              });
           });
         });
       }
