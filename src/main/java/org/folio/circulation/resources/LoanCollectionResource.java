@@ -393,33 +393,30 @@ public class LoanCollectionResource {
         List<JsonObject> loans = JsonArrayHelper.toList(
           wrappedLoans.getJsonArray("loans"));
 
-        List<CompletableFuture<Response>> allItemFutures = new ArrayList<>();
+        List<String> itemIds = loans.stream()
+          .map(loan -> loan.getString("itemId"))
+          .collect(Collectors.toList());
 
-        loans.forEach(loanResource -> {
-          CompletableFuture<Response> newFuture = new CompletableFuture<>();
+        CompletableFuture<Response> itemsFetched = new CompletableFuture<>();
 
-          allItemFutures.add(newFuture);
+        String itemsQuery = multipleRecordsCqlQuery(itemIds);
 
-          itemsStorageClient.get(loanResource.getString("itemId"),
-            newFuture::complete);
-        });
+        itemsStorageClient.getMany(itemsQuery, itemIds.size(), 0,
+          itemsFetched::complete);
 
-        CompletableFuture<Void> allItemsFetchedFuture =
-          CompletableFuture.allOf(allItemFutures.toArray(new CompletableFuture<?>[] { }));
-
-        allItemsFetchedFuture.thenAccept(v -> {
-          List<Response> itemResponses = allItemFutures.stream()
-            .map(CompletableFuture::join)
-            .collect(Collectors.toList());
+        itemsFetched.thenAccept(itemsResponse -> {
+          if(itemsResponse.getStatusCode() != 200) {
+            ServerErrorResponse.internalError(routingContext.response(),
+              String.format("Items request (%s) failed %s: %s",
+                itemsQuery, itemsResponse.getStatusCode(), itemsResponse.getBody()));
+          }
 
           List<String> locationIds = new ArrayList<>();
 
-          itemResponses.stream()
-            .filter(itemResponse -> itemResponse.getStatusCode() == 200)
-            .forEach(itemResponse -> {
+          List<JsonObject> items = JsonArrayHelper.toList(
+            itemsResponse.getJson().getJsonArray("items"));
 
-              JsonObject item = itemResponse.getJson();
-
+          items.stream().forEach(item -> {
               if(item.containsKey("temporaryLocationId")) {
                 locationIds.add(item.getString("temporaryLocationId"));
               }
@@ -444,9 +441,7 @@ public class LoanCollectionResource {
             }
 
             loans.forEach( loan -> {
-              Optional<JsonObject> possibleItem = itemResponses.stream()
-                .filter(itemResponse -> itemResponse.getStatusCode() == 200)
-                .map(Response::getJson)
+              Optional<JsonObject> possibleItem = items.stream()
                 .filter(item -> item.getString("id").equals(loan.getString("itemId")))
                 .findFirst();
 
@@ -481,7 +476,6 @@ public class LoanCollectionResource {
 
             JsonResponse.success(routingContext.response(),
               loansWrapper);
-
           });
         });
       }
