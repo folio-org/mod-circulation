@@ -98,64 +98,28 @@ public class LoanCollectionResource {
                   ? instanceResponse.getJson()
                   : null;
 
-                if(item.containsKey("temporaryLocationId")) {
-                  String locationId = item.getString("temporaryLocationId");
-                  locationsStorageClient.get(locationId,
-                    locationResponse -> {
-                      if (locationResponse.getStatusCode() == 200) {
-                        JsonResponse.created(routingContext.response(),
-                          extendedLoan(createdLoan, item, instance, locationResponse.getJson()));
-                      } else {
-                        log.warn(
-                          String.format("Could not get location %s for item %s",
-                            locationId, itemId));
-                        JsonResponse.created(routingContext.response(),
-                          extendedLoan(createdLoan, item, instance, null));
-                      }
-                    });
-                } else if(holdingResponse.getStatusCode() == 200
-                  && holdingResponse.getJson().containsKey("permanentLocationId")) {
+                final JsonObject holding = holdingResponse.getStatusCode() == 200
+                  ? holdingResponse.getJson()
+                  : null;
 
-                  String locationId = holdingResponse.getJson().getString("permanentLocationId");
+                final String locationId = determineLocationIdForItem(item, holding);
 
-                  locationsStorageClient.get(locationId,
-                    locationResponse -> {
-                      if(locationResponse.getStatusCode() == 200) {
-                        JsonResponse.created(routingContext.response(),
-                          extendedLoan(createdLoan, item,
-                            instance, locationResponse.getJson()));
-                      }
-                      else {
-                        log.warn(
-                          String.format(
-                            "Could not get location %s for item %s from holding %s",
-                            locationId, itemId, holdingId));
-                        JsonResponse.created(routingContext.response(),
-                          extendedLoan(createdLoan, item, instance, null));
-                      }
-                    });
-                } else if(item.containsKey("permanentLocationId")) {
-                  String locationId = item.getString("permanentLocationId");
-                  locationsStorageClient.get(locationId,
-                    locationResponse -> {
-                      if(locationResponse.getStatusCode() == 200) {
-                        JsonResponse.created(routingContext.response(),
-                          extendedLoan(createdLoan, item, instance,
-                            locationResponse.getJson()));
-                      }
-                      else {
-                        log.warn(
-                          String.format("Could not get location %s for item %s",
-                            locationId, itemId ));
-                        JsonResponse.created(routingContext.response(),
-                          extendedLoan(createdLoan, item, instance, null));
-                      }
+                locationsStorageClient.get(locationId,
+                  locationResponse -> {
+                    if(locationResponse.getStatusCode() == 200) {
+                      JsonResponse.created(routingContext.response(),
+                        extendedLoan(createdLoan, item, instance,
+                          locationResponse.getJson()));
+                    }
+                    else {
+                      log.warn(
+                        String.format("Could not get location %s for item %s",
+                          locationId, itemId ));
+
+                      JsonResponse.created(routingContext.response(),
+                        extendedLoan(createdLoan, item, instance, null));
+                    }
                   });
-                }
-                else {
-                  JsonResponse.created(routingContext.response(),
-                    extendedLoan(createdLoan, item, instance, null));
-                }
               });
             });
         }
@@ -254,74 +218,30 @@ public class LoanCollectionResource {
                 final JsonObject instance = instanceResponse.getStatusCode() == 200
                   ? instanceResponse.getJson()
                   : null;
-                
-                if(item.containsKey("temporaryLocationId")) {
-                  String locationId = item.getString("temporaryLocationId");
-                  locationsStorageClient.get(locationId,
-                    locationResponse -> {
-                      if(locationResponse.getStatusCode() == 200) {
-                        JsonResponse.success(routingContext.response(),
-                          extendedLoan(loan, item, instance,
-                            locationResponse.getJson()));
-                      }
-                      else {
-                        log.warn(
-                          String.format("Could not get location %s for item %s",
-                            locationId, itemId ));
 
-                        JsonResponse.success(routingContext.response(),
-                          extendedLoan(loan, item, instance, null));
-                      }
-                    });
-                }
-                else if(holdingResponse.getStatusCode() == 200
-                  && holdingResponse.getJson().containsKey("permanentLocationId")) {
+                final JsonObject holding = holdingResponse.getStatusCode() == 200
+                  ? holdingResponse.getJson()
+                  : null;
 
-                  String locationId = holdingResponse.getJson().getString("permanentLocationId");
+                final String locationId = determineLocationIdForItem(item, holding);
 
-                  locationsStorageClient.get(locationId,
-                    locationResponse -> {
-                      if(locationResponse.getStatusCode() == 200) {
-                        JsonResponse.success(routingContext.response(),
-                          extendedLoan(loan, item, instance,
-                            locationResponse.getJson()));
-                      }
-                      else {
-                        log.warn(
-                          String.format("Could not get location %s for item %s",
-                            locationId, itemId ));
+                locationsStorageClient.get(locationId,
+                  locationResponse -> {
+                    if(locationResponse.getStatusCode() == 200) {
+                      JsonResponse.success(routingContext.response(),
+                        extendedLoan(loan, item, instance,
+                          locationResponse.getJson()));
+                    }
+                    else {
+                      log.warn(
+                        String.format("Could not get location %s for item %s",
+                          locationId, itemId ));
 
-                        JsonResponse.success(routingContext.response(),
-                          extendedLoan(loan, item, instance, null));
-                      }
-                    });
-                }
-                else if (item.containsKey("permanentLocationId")) {
-                  String locationId = item.getString("permanentLocationId");
-                  locationsStorageClient.get(locationId,
-                    locationResponse -> {
-                      if(locationResponse.getStatusCode() == 200) {
-                        JsonResponse.success(routingContext.response(),
-                          extendedLoan(loan, item, instance,
-                            locationResponse.getJson()));
-                      }
-                      else {
-                        log.warn(
-                          String.format("Could not get location %s for item %s",
-                            locationId, itemId ));
-
-                        JsonResponse.success(routingContext.response(),
-                          extendedLoan(loan, item, instance, null));
-                      }
-                    });
-                }
-                else {
-                  JsonResponse.success(routingContext.response(),
-                    extendedLoan(loan, item, null, null));
-                }
+                      JsonResponse.success(routingContext.response(),
+                        extendedLoan(loan, item, instance, null));
+                    }
+                  });
               });
-
-
             });
           }
           else if(itemResponse.getStatusCode() == 404) {
