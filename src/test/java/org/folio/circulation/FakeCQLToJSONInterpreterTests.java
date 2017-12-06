@@ -78,4 +78,29 @@ public class FakeCQLToJSONInterpreterTests {
 
     assertThat(matchedRecords.size(), is(2));
   }
+
+  @Test
+  public void canFilterBySingleValueWithBrackets() {
+    FakeCQLToJSONInterpreter interpreter = new FakeCQLToJSONInterpreter(true);
+
+    Collection<JsonObject> records = new ArrayList<>();
+
+    records.add(new JsonObject()
+      .put("myProperty", "baz"));
+
+    JsonObject shouldMatch = new JsonObject()
+      .put("myProperty", "bar");
+
+    records.add(shouldMatch);
+
+    JsonObject shouldAlsoMatch = new JsonObject()
+      .put("myProperty", "foo");
+
+    records.add(shouldAlsoMatch);
+
+    List<JsonObject> matchedRecords =
+      interpreter.filterByQuery(records, "myProperty=(foo)");
+
+    assertThat(matchedRecords.size(), is(1));
+  }
 }

@@ -63,9 +63,10 @@ public class FakeCQLToJSONInterpreter {
       } else {
         propertyValue = getPropertyValue(loan, field);
 
-        if (term.contains("or")) {
-          Collection<String> acceptableValues = Arrays.stream(term.split(" or "))
-            .map(subTerm -> subTerm.replace("(", "").replace(")", ""))
+        String cleanTerm = removeBrackets(term);
+
+        if (cleanTerm.contains("or")) {
+          Collection<String> acceptableValues = Arrays.stream(cleanTerm.split(" or "))
             .collect(Collectors.toList());
 
           Predicate<String> predicate = acceptableValues.stream()
@@ -77,10 +78,10 @@ public class FakeCQLToJSONInterpreter {
         } else {
           switch (operator) {
             case "=":
-              result = propertyValue.contains(term);
+              result = propertyValue.contains(cleanTerm);
               break;
             case "<>":
-              result = !propertyValue.contains(term);
+              result = !propertyValue.contains(cleanTerm);
               break;
             default:
               result = false;
@@ -95,6 +96,10 @@ public class FakeCQLToJSONInterpreter {
 
       return result;
     };
+  }
+
+  private String removeBrackets(String term) {
+    return term.replace("(", "").replace(")", "");
   }
 
   private Predicate<String> filter(String term) {

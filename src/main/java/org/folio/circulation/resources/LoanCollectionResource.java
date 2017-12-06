@@ -20,6 +20,7 @@ import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -253,7 +254,7 @@ public class LoanCollectionResource {
                 final JsonObject instance = instanceResponse.getStatusCode() == 200
                   ? instanceResponse.getJson()
                   : null;
-
+                
                 if(item.containsKey("temporaryLocationId")) {
                   String locationId = item.getString("temporaryLocationId");
                   locationsStorageClient.get(locationId,
@@ -394,7 +395,7 @@ public class LoanCollectionResource {
       if(loansResponse.getStatusCode() == 200) {
         JsonObject wrappedLoans = new JsonObject(loansResponse.getBody());
 
-        List<JsonObject> loans = JsonArrayHelper.toList(
+        final List<JsonObject> loans = JsonArrayHelper.toList(
           wrappedLoans.getJsonArray("loans"));
 
         List<String> itemIds = loans.stream()
@@ -415,7 +416,7 @@ public class LoanCollectionResource {
                 itemsQuery, itemsResponse.getStatusCode(), itemsResponse.getBody()));
           }
 
-          List<JsonObject> items = JsonArrayHelper.toList(
+          final List<JsonObject> items = JsonArrayHelper.toList(
             itemsResponse.getJson().getJsonArray("items"));
 
           List<String> holdingsIds = items.stream()
@@ -438,15 +439,14 @@ public class LoanCollectionResource {
                   holdingsResponse.getBody()));
             }
 
-            List<JsonObject> holdings = JsonArrayHelper.toList(
+            final List<JsonObject> holdings = JsonArrayHelper.toList(
               holdingsResponse.getJson().getJsonArray("holdingsRecords"));
 
             List<String> instanceIds = holdings.stream()
               .map(holding -> holding.getString("instanceId"))
               .collect(Collectors.toList());
 
-            CompletableFuture<Response> instancesFetched =
-              new CompletableFuture<>();
+            CompletableFuture<Response> instancesFetched = new CompletableFuture<>();
 
             String instancesQuery = multipleRecordsCqlQuery(instanceIds);
 
@@ -461,26 +461,16 @@ public class LoanCollectionResource {
                       instancesResponse.getBody()));
                 }
 
-              List<JsonObject> instances = JsonArrayHelper.toList(
-                instancesResponse.getJson().getJsonArray("instances"));
+                final List<JsonObject> instances = JsonArrayHelper.toList(
+                  instancesResponse.getJson().getJsonArray("instances"));
 
                 List<String> locationIds = items.stream()
-                  .map(item -> {
-                    if(item.containsKey("temporaryLocationId")) {
-                      return item.getString("temporaryLocationId");
-                    }
-                    else if(item.containsKey("permanentLocationId")) {
-                      return item.getString("permanentLocationId");
-                    }
-                    else {
-                      return null;
-                    }
-                  })
+                  .map(item -> determineLocationIdForItem(item,
+                    holdingForItem(item, holdings).orElse(null)))
                   .filter(StringUtils::isNotBlank)
                   .collect(Collectors.toList());
 
-                CompletableFuture<Response> locationsFetched =
-                  new CompletableFuture<>();
+                CompletableFuture<Response> locationsFetched = new CompletableFuture<>();
 
                 String locationsQuery = multipleRecordsCqlQuery(locationIds);
 
@@ -510,10 +500,7 @@ public class LoanCollectionResource {
                     if(possibleItem.isPresent()) {
                       JsonObject item = possibleItem.get();
 
-                      Optional<JsonObject> possibleHolding = holdings.stream()
-                        .filter(holding -> holding.getString("id")
-                          .equals(item.getString("holdingsRecordId")))
-                        .findFirst();
+                      Optional<JsonObject> possibleHolding = holdingForItem(item, holdings);
 
                       if(possibleHolding.isPresent()) {
                         JsonObject holding = possibleHolding.get();
@@ -527,20 +514,14 @@ public class LoanCollectionResource {
                       List<JsonObject> locations = JsonArrayHelper.toList(
                         locationsResponse.getJson().getJsonArray("shelflocations"));
 
-                      Optional<JsonObject> possiblePermanentLocation = locations.stream()
+                      Optional<JsonObject> possibleLocation = locations.stream()
                         .filter(location -> location.getString("id").equals(
-                          item.getString("permanentLocationId")))
-                        .findFirst();
-
-                      Optional<JsonObject> possibleTemporaryLocation = locations.stream()
-                        .filter(location -> location.getString("id").equals(
-                          item.getString("temporaryLocationId")))
+                          determineLocationIdForItem(item, possibleHolding.orElse(null))))
                         .findFirst();
 
                       loan.put("item", createItemSummary(item,
                         possibleInstance.orElse(null),
-                        possibleTemporaryLocation.orElse(
-                          possiblePermanentLocation.orElse(null))));
+                          possibleLocation.orElse(null)));
                     }
                   });
 
@@ -739,5 +720,31 @@ public class LoanCollectionResource {
         return null;
       }
     }
+  }
+
+  private String determineLocationIdForItem(JsonObject item, JsonObject holding) {
+    if(item.containsKey("temporaryLocationId")) {
+      return item.getString("temporaryLocationId");
+    }
+    else if(holding != null && holding.containsKey("permanentLocationId")) {
+      return holding.getString("permanentLocationId");
+    }
+    else if(item.containsKey("permanentLocationId")) {
+      return item.getString("permanentLocationId");
+    }
+    else {
+      return null;
+    }
+  }
+
+  private Optional<JsonObject> holdingForItem(
+    JsonObject item,
+    Collection<JsonObject> holdings) {
+
+    String holdingsRecordId = item.getString("holdingsRecordId");
+
+    return holdings.stream()
+      .filter(holding -> holding.getString("id").equals(holdingsRecordId))
+      .findFirst();
   }
 }
