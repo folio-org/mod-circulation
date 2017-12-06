@@ -1,7 +1,6 @@
 package org.folio.circulation.api.loans;
 
 import io.vertx.core.json.JsonObject;
-import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.api.APITestSuite;
 import org.folio.circulation.api.support.APITests;
 import org.folio.circulation.api.support.builders.HoldingRequestBuilder;
@@ -21,6 +20,7 @@ import java.util.concurrent.TimeoutException;
 
 import static org.folio.circulation.api.APITestSuite.annexLocationId;
 import static org.folio.circulation.api.APITestSuite.mainLibraryLocationId;
+import static org.folio.circulation.api.support.JsonCollectionAssistant.getRecordById;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -261,10 +261,8 @@ public class LoanAPILocationTests extends APITests {
 
     assertThat(fetchedLoansResponse.size(), is(2));
 
-    JsonObject firstFetchedLoan = fetchedLoansResponse.stream()
-      .filter(loan -> StringUtils.equals(loan.getString("id"), firstLoanId.toString()))
-      .findFirst()
-      .get();
+    JsonObject firstFetchedLoan = getRecordById(
+      fetchedLoansResponse, firstLoanId).get();
 
     assertThat("has item",
       firstFetchedLoan.containsKey("item"), is(true));
@@ -276,10 +274,8 @@ public class LoanAPILocationTests extends APITests {
       firstFetchedLoan.getJsonObject("item").getJsonObject("location").getString("name"),
       is("Main Library"));
 
-    JsonObject secondFetchedLoan = fetchedLoansResponse.stream()
-      .filter(loan -> StringUtils.equals(loan.getString("id"), secondLoanId.toString()))
-      .findFirst()
-      .get();
+    JsonObject secondFetchedLoan = getRecordById(
+      fetchedLoansResponse, secondLoanId).get();
 
     assertThat("has item",
       secondFetchedLoan.containsKey("item"), is(true));
@@ -345,10 +341,8 @@ public class LoanAPILocationTests extends APITests {
 
     assertThat(fetchedLoansResponse.size(), is(2));
 
-    JsonObject firstFetchedLoan = fetchedLoansResponse.stream()
-      .filter(loan -> StringUtils.equals(loan.getString("id"), firstLoanId.toString()))
-      .findFirst()
-      .get();
+    JsonObject firstFetchedLoan = getRecordById(
+      fetchedLoansResponse, firstLoanId).get();
 
     assertThat("has item",
       firstFetchedLoan.containsKey("item"), is(true));
@@ -360,10 +354,8 @@ public class LoanAPILocationTests extends APITests {
       firstFetchedLoan.getJsonObject("item").getJsonObject("location").getString("name"),
       is("Annex"));
 
-    JsonObject secondFetchedLoan = fetchedLoansResponse.stream()
-      .filter(loan -> StringUtils.equals(loan.getString("id"), secondLoanId.toString()))
-      .findFirst()
-      .get();
+    JsonObject secondFetchedLoan = getRecordById(
+      fetchedLoansResponse, secondLoanId).get();
 
     assertThat("has item",
       secondFetchedLoan.containsKey("item"), is(true));
@@ -407,10 +399,8 @@ public class LoanAPILocationTests extends APITests {
 
     assertThat(fetchedLoansResponse.size(), is(1));
 
-    JsonObject firstFetchedLoan = fetchedLoansResponse.stream()
-      .filter(loan -> StringUtils.equals(loan.getString("id"), firstLoanId.toString()))
-      .findFirst()
-      .get();
+    JsonObject firstFetchedLoan = getRecordById(
+      fetchedLoansResponse, firstLoanId).get();
 
     assertThat("has item",
       firstFetchedLoan.containsKey("item"), is(true));

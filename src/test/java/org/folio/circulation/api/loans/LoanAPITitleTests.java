@@ -1,7 +1,6 @@
 package org.folio.circulation.api.loans;
 
 import io.vertx.core.json.JsonObject;
-import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.api.support.APITests;
 import org.folio.circulation.api.support.builders.HoldingRequestBuilder;
 import org.folio.circulation.api.support.builders.LoanRequestBuilder;
@@ -18,6 +17,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import static org.folio.circulation.api.support.JsonCollectionAssistant.getRecordById;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -228,15 +228,11 @@ public class LoanAPITitleTests extends APITests {
 
     List<JsonObject> fetchedLoansResponse = loansClient.getAll();
 
-    JsonObject firstFetchedLoan = fetchedLoansResponse.stream()
-      .filter(loan -> StringUtils.equals(loan.getString("id"), firstLoanId.toString()))
-      .findFirst()
-      .get();
+    JsonObject firstFetchedLoan = getRecordById(
+      fetchedLoansResponse, firstLoanId).get();
 
-    JsonObject secondFetchedLoan = fetchedLoansResponse.stream()
-      .filter(loan -> StringUtils.equals(loan.getString("id"), secondLoanId.toString()))
-      .findFirst()
-      .get();
+    JsonObject secondFetchedLoan = getRecordById(
+      fetchedLoansResponse, secondLoanId).get();
 
     assertThat("has item title",
       firstFetchedLoan.getJsonObject("item").containsKey("title"), is(true));
@@ -303,15 +299,11 @@ public class LoanAPITitleTests extends APITests {
 
     List<JsonObject> fetchedLoansResponse = loansClient.getAll();
 
-    JsonObject firstFetchedLoan = fetchedLoansResponse.stream()
-      .filter(loan -> StringUtils.equals(loan.getString("id"), firstLoanId.toString()))
-      .findFirst()
-      .get();
+    JsonObject firstFetchedLoan = getRecordById(
+      fetchedLoansResponse, firstLoanId).get();
 
-    JsonObject secondFetchedLoan = fetchedLoansResponse.stream()
-      .filter(loan -> StringUtils.equals(loan.getString("id"), secondLoanId.toString()))
-      .findFirst()
-      .get();
+    JsonObject secondFetchedLoan = getRecordById(
+      fetchedLoansResponse, secondLoanId).get();
 
     assertThat("has item title",
       firstFetchedLoan.getJsonObject("item").containsKey("title"), is(true));
