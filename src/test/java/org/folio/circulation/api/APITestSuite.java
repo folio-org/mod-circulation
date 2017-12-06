@@ -47,6 +47,7 @@ import java.util.function.Consumer;
   RequestsAPILoanCheckInTests.class,
   RequestsAPILoanRenewalTests.class,
   RequestsAPILoanHistoryTests.class,
+  RequestsAPITitleTests.class,
 })
 public class APITestSuite {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());

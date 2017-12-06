@@ -65,8 +65,8 @@ public class LoanCollectionResource {
       loansStorageClient = createLoansStorageClient(client, context);
       itemsStorageClient = createItemsStorageClient(client, context);
       holdingsStorageClient = createHoldingsStorageClient(client, context);
-      locationsStorageClient = createLocationsStorageClient(client, context);
       instancesStorageClient = createInstanceStorageClient(client, context);
+      locationsStorageClient = createLocationsStorageClient(client, context);
     }
     catch (MalformedURLException e) {
       ServerErrorResponse.internalError(routingContext.response(),
@@ -501,12 +501,8 @@ public class LoanCollectionResource {
     WebContext context)
     throws MalformedURLException {
 
-    CollectionResourceClient loanStorageClient;
-
-    loanStorageClient = new CollectionResourceClient(
+    return new CollectionResourceClient(
       client, context.getOkapiBasedUrl("/loan-storage/loans"));
-
-    return loanStorageClient;
   }
 
   private CollectionResourceClient createItemsStorageClient(
@@ -514,12 +510,8 @@ public class LoanCollectionResource {
     WebContext context)
     throws MalformedURLException {
 
-    CollectionResourceClient itemsStorageClient;
-
-    itemsStorageClient = new CollectionResourceClient(
+    return new CollectionResourceClient(
       client, context.getOkapiBasedUrl("/item-storage/items"));
-
-    return itemsStorageClient;
   }
 
   private CollectionResourceClient createHoldingsStorageClient(
@@ -527,25 +519,8 @@ public class LoanCollectionResource {
     WebContext context)
     throws MalformedURLException {
 
-    CollectionResourceClient holdingsStorageClient;
-
-    holdingsStorageClient = new CollectionResourceClient(
+    return new CollectionResourceClient(
       client, context.getOkapiBasedUrl("/holdings-storage/holdings"));
-
-    return holdingsStorageClient;
-  }
-
-  private CollectionResourceClient createLocationsStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
-    throws MalformedURLException {
-
-    CollectionResourceClient locationStorageClient;
-
-    locationStorageClient = new CollectionResourceClient(
-      client, context.getOkapiBasedUrl("/shelf-locations"));
-
-    return locationStorageClient;
   }
 
   private CollectionResourceClient createInstanceStorageClient(
@@ -553,12 +528,17 @@ public class LoanCollectionResource {
     WebContext context)
     throws MalformedURLException {
 
-    CollectionResourceClient instancesStorageClient;
-
-    instancesStorageClient = new CollectionResourceClient(
+    return new CollectionResourceClient(
       client, context.getOkapiBasedUrl("/instance-storage/instances"));
+  }
 
-    return instancesStorageClient;
+  private CollectionResourceClient createLocationsStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+
+    return new CollectionResourceClient(
+      client, context.getOkapiBasedUrl("/shelf-locations"));
   }
 
   private String itemStatusFrom(JsonObject loan) {

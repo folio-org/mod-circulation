@@ -138,6 +138,15 @@ public class ResourceClient {
     return new IndividualResource(response);
   }
 
+  public void replace(UUID id, Builder builder)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    replace(id, builder.create());
+  }
+
   public void replace(UUID id, JsonObject request)
     throws MalformedURLException,
     InterruptedException,
