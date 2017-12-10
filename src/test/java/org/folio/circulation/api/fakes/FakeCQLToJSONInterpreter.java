@@ -76,6 +76,10 @@ public class FakeCQLToJSONInterpreter {
 
           result = predicate.test(propertyValue);
         } else {
+          if(propertyValue == null) {
+            return false;
+          }
+
           switch (operator) {
             case "=":
               result = propertyValue.contains(cleanTerm);

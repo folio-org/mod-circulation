@@ -29,6 +29,22 @@ public class FakeCQLToJSONInterpreterTests {
   }
 
   @Test
+  public void canFilterBySingleOptionalProperty() {
+
+    FakeCQLToJSONInterpreter interpreter = new FakeCQLToJSONInterpreter();
+
+    Collection<JsonObject> records = new ArrayList<>();
+
+    records.add(new JsonObject().put("myProperty", "foo"));
+    records.add(new JsonObject());
+
+    List<JsonObject> matchedRecords =
+      interpreter.filterByQuery(records, "myProperty=foo");
+
+    assertThat(matchedRecords.size(), is(1));
+  }
+
+  @Test
   public void canFilterByMultipleProperties() {
     FakeCQLToJSONInterpreter interpreter = new FakeCQLToJSONInterpreter();
 
