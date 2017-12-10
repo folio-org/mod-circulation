@@ -8,6 +8,7 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.CqlHelper;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
@@ -15,11 +16,9 @@ import org.folio.circulation.support.http.server.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.UnsupportedEncodingException;
 import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -324,7 +323,7 @@ public class LoanCollectionResource {
 
         CompletableFuture<Response> itemsFetched = new CompletableFuture<>();
 
-        String itemsQuery = multipleRecordsCqlQuery(itemIds);
+        String itemsQuery = CqlHelper.multipleRecordsCqlQuery(itemIds);
 
         itemsStorageClient.getMany(itemsQuery, itemIds.size(), 0,
           itemsFetched::complete);
@@ -346,7 +345,7 @@ public class LoanCollectionResource {
           CompletableFuture<Response> holdingsFetched =
             new CompletableFuture<>();
 
-          String holdingsQuery = multipleRecordsCqlQuery(holdingsIds);
+          String holdingsQuery = CqlHelper.multipleRecordsCqlQuery(holdingsIds);
 
           holdingsClient.getMany(holdingsQuery, holdingsIds.size(), 0,
             holdingsFetched::complete);
@@ -368,7 +367,7 @@ public class LoanCollectionResource {
 
             CompletableFuture<Response> instancesFetched = new CompletableFuture<>();
 
-            String instancesQuery = multipleRecordsCqlQuery(instanceIds);
+            String instancesQuery = CqlHelper.multipleRecordsCqlQuery(instanceIds);
 
             instancesClient.getMany(instancesQuery, instanceIds.size(), 0,
               instancesFetched::complete);
@@ -392,7 +391,7 @@ public class LoanCollectionResource {
 
                 CompletableFuture<Response> locationsFetched = new CompletableFuture<>();
 
-                String locationsQuery = multipleRecordsCqlQuery(locationIds);
+                String locationsQuery = CqlHelper.multipleRecordsCqlQuery(locationIds);
 
                 locationsClient.getMany(locationsQuery, locationIds.size(), 0,
                   locationsFetched::complete);
@@ -600,26 +599,6 @@ public class LoanCollectionResource {
     loan.remove("itemStatus");
 
     return loan;
-  }
-
-  private static String multipleRecordsCqlQuery(List<String> recordIds) {
-    if(recordIds.isEmpty()) {
-      return null;
-    }
-    else {
-      String query = String.format("id=(%s)", recordIds.stream()
-        .map(String::toString)
-        .distinct()
-        .collect(Collectors.joining(" or ")));
-
-      try {
-        return URLEncoder.encode(query, "UTF-8");
-
-      } catch (UnsupportedEncodingException e) {
-        log.error(String.format("Cannot encode query %s", query));
-        return null;
-      }
-    }
   }
 
   private String determineLocationIdForItem(JsonObject item, JsonObject holding) {
