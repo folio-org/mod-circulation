@@ -51,6 +51,8 @@ public class RequestCollectionResource {
 
     CollectionResourceClient requestsStorageClient;
     CollectionResourceClient itemsStorageClient;
+    CollectionResourceClient holdingsStorageClient;
+    CollectionResourceClient instancesStorageClient;
     CollectionResourceClient usersStorageClient;
     CollectionResourceClient loansStorageClient;
 
@@ -58,6 +60,8 @@ public class RequestCollectionResource {
       OkapiHttpClient client = createHttpClient(routingContext, context);
       requestsStorageClient = createRequestsStorageClient(client, context);
       itemsStorageClient = createItemsStorageClient(client, context);
+      holdingsStorageClient = createHoldingsStorageClient(client, context);
+      instancesStorageClient = createInstanceStorageClient(client, context);
       usersStorageClient = createUsersStorageClient(client, context);
       loansStorageClient = createLoansStorageClient(client, context);
     }
@@ -83,6 +87,8 @@ public class RequestCollectionResource {
                   addSummariesToRequest(
                     request,
                     itemsStorageClient,
+                    holdingsStorageClient,
+                    instancesStorageClient,
                     usersStorageClient,
                     requestWithAdditionalInformation -> {
                       requestsStorageClient.post(requestWithAdditionalInformation,
@@ -123,12 +129,16 @@ public class RequestCollectionResource {
     WebContext context = new WebContext(routingContext);
     CollectionResourceClient requestsStorageClient;
     CollectionResourceClient itemsStorageClient;
+    CollectionResourceClient holdingsStorageClient;
+    CollectionResourceClient instancesStorageClient;
     CollectionResourceClient usersStorageClient;
 
     try {
       OkapiHttpClient client = createHttpClient(routingContext, context);
       requestsStorageClient = createRequestsStorageClient(client, context);
       itemsStorageClient = createItemsStorageClient(client, context);
+      holdingsStorageClient = createHoldingsStorageClient(client, context);
+      instancesStorageClient = createInstanceStorageClient(client, context);
       usersStorageClient = createUsersStorageClient(client, context);
     }
     catch (MalformedURLException e) {
@@ -144,7 +154,8 @@ public class RequestCollectionResource {
     request.remove("item");
     request.remove("requester");
 
-    addSummariesToRequest(request, itemsStorageClient, usersStorageClient,
+    addSummariesToRequest(request, itemsStorageClient, holdingsStorageClient,
+      instancesStorageClient, usersStorageClient,
       requestWithAdditionalInformation -> {
         requestsStorageClient.put(id, requestWithAdditionalInformation, response -> {
           if(response.getStatusCode() == 204) {
@@ -274,22 +285,52 @@ public class RequestCollectionResource {
   private void addSummariesToRequest(
     JsonObject request,
     CollectionResourceClient itemsStorageClient,
+    CollectionResourceClient holdingsStorageClient,
+    CollectionResourceClient instancesStorageClient,
     CollectionResourceClient usersStorageClient,
     Consumer<JsonObject> onSuccess,
     Consumer<Throwable> onFailure) {
+
     CompletableFuture<Response> itemRequestCompleted = new CompletableFuture<>();
+    CompletableFuture<Response> holdingRequestCompleted = new CompletableFuture<>();
+    CompletableFuture<Response> instanceRequestCompleted = new CompletableFuture<>();
     CompletableFuture<Response> requestingUserRequestCompleted = new CompletableFuture<>();
 
-    itemsStorageClient.get(request.getString("itemId"), itemResponse -> {
-      itemRequestCompleted.complete(itemResponse);
+    itemsStorageClient.get(request.getString("itemId"),
+      itemRequestCompleted::complete);
+
+    itemRequestCompleted.thenAccept(itemResponse -> {
+      if(itemResponse != null && itemResponse.getStatusCode() == 200) {
+
+        JsonObject item = itemResponse.getJson();
+
+        holdingsStorageClient.get(item.getString("holdingsRecordId"),
+          holdingRequestCompleted::complete);
+      }
+      else {
+        holdingRequestCompleted.complete(null);
+      }
     });
 
-    usersStorageClient.get(request.getString("requesterId"), userResponse -> {
-      requestingUserRequestCompleted.complete(userResponse);
+    holdingRequestCompleted.thenAccept(holdingResponse -> {
+      if(holdingResponse != null && holdingResponse.getStatusCode() == 200) {
+
+        JsonObject holding = holdingResponse.getJson();
+
+        instancesStorageClient.get(holding.getString("instanceId"),
+          instanceRequestCompleted::complete);
+      }
+      else {
+        instanceRequestCompleted.complete(null);
+      }
     });
+
+    usersStorageClient.get(request.getString("requesterId"),
+      requestingUserRequestCompleted::complete);
 
     CompletableFuture<Void> allCompleted = CompletableFuture.allOf(
-      itemRequestCompleted, requestingUserRequestCompleted);
+      itemRequestCompleted, holdingRequestCompleted, instanceRequestCompleted,
+      requestingUserRequestCompleted);
 
     allCompleted.exceptionally(t -> {
       onFailure.accept(t);
@@ -298,15 +339,25 @@ public class RequestCollectionResource {
 
     allCompleted.thenAccept(v -> {
       Response itemResponse = itemRequestCompleted.join();
+      Response instanceResponse = instanceRequestCompleted.join();
       Response requestingUserResponse = requestingUserRequestCompleted.join();
 
       JsonObject requestWithAdditionalInformation = request.copy();
 
-      if (itemResponse.getStatusCode() == 200) {
+      if (itemResponse != null && itemResponse.getStatusCode() == 200) {
         JsonObject item = itemResponse.getJson();
 
+        JsonObject instance = instanceResponse != null
+          && instanceResponse.getStatusCode() == 200
+          ? instanceResponse.getJson()
+          : null;
+
+        String title = instance != null && instance.containsKey("title")
+          ? instance.getString("title")
+          : item.getString("title");
+
         JsonObject itemSummary = new JsonObject()
-          .put("title", item.getString("title"));
+          .put("title", title);
 
         if(item.containsKey("barcode")) {
           itemSummary.put("barcode", item.getString("barcode"));
@@ -335,7 +386,7 @@ public class RequestCollectionResource {
       }
 
       onSuccess.accept(requestWithAdditionalInformation);
-      });
+    });
   }
 
   private OkapiHttpClient createHttpClient(RoutingContext routingContext,
@@ -355,13 +406,7 @@ public class RequestCollectionResource {
     WebContext context)
     throws MalformedURLException {
 
-    CollectionResourceClient requestStorageClient;
-
-    requestStorageClient = new CollectionResourceClient(
-      client, context.getOkapiBasedUrl("/request-storage/requests"),
-      context.getTenantId());
-
-    return requestStorageClient;
+    return getCollectionResourceClient(client, context, "/request-storage/requests");
   }
 
   private CollectionResourceClient createItemsStorageClient(
@@ -369,13 +414,25 @@ public class RequestCollectionResource {
     WebContext context)
     throws MalformedURLException {
 
-    CollectionResourceClient itemsStorageClient;
+    return getCollectionResourceClient(client, context, "/item-storage/items");
+  }
 
-    itemsStorageClient = new CollectionResourceClient(
-      client, context.getOkapiBasedUrl("/item-storage/items"),
-      context.getTenantId());
+  private CollectionResourceClient createHoldingsStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
 
-    return itemsStorageClient;
+    return new CollectionResourceClient(
+      client, context.getOkapiBasedUrl("/holdings-storage/holdings"));
+  }
+
+  private CollectionResourceClient createInstanceStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+
+    return new CollectionResourceClient(
+      client, context.getOkapiBasedUrl("/instance-storage/instances"));
   }
 
   private CollectionResourceClient createUsersStorageClient(
@@ -383,13 +440,7 @@ public class RequestCollectionResource {
     WebContext context)
     throws MalformedURLException {
 
-    CollectionResourceClient usersStorageClient;
-
-    usersStorageClient = new CollectionResourceClient(
-      client, context.getOkapiBasedUrl("/users"),
-      context.getTenantId());
-
-    return usersStorageClient;
+    return getCollectionResourceClient(client, context, "/users");
   }
 
   private CollectionResourceClient createLoansStorageClient(
@@ -397,13 +448,7 @@ public class RequestCollectionResource {
     WebContext context)
     throws MalformedURLException {
 
-    CollectionResourceClient loansStorageClient;
-
-    loansStorageClient = new CollectionResourceClient(
-      client, context.getOkapiBasedUrl("/loan-storage/loans"),
-      context.getTenantId());
-
-    return loansStorageClient;
+    return getCollectionResourceClient(client, context, "/loan-storage/loans");
   }
 
   private String itemStatusFrom(JsonObject request) {
@@ -445,5 +490,13 @@ public class RequestCollectionResource {
       default:
         return null;
     }
+  }
+
+  private CollectionResourceClient getCollectionResourceClient(
+    OkapiHttpClient client,
+    WebContext context, String path) throws MalformedURLException {
+
+    return new CollectionResourceClient(
+      client, context.getOkapiBasedUrl(path));
   }
 }

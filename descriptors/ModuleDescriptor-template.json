@@ -17,7 +17,13 @@
           "modulePermissions": [
             "circulation-storage.loans.collection.get",
             "inventory-storage.items.item.get",
-            "inventory-storage.shelf-locations.item.get"
+            "inventory-storage.items.collection.get",
+            "inventory-storage.shelf-locations.item.get",
+            "inventory-storage.shelf-locations.collection.get",
+            "inventory-storage.holdings.collection.get",
+            "inventory-storage.holdings.item.get",
+            "inventory-storage.instances.collection.get",
+            "inventory-storage.instances.item.get"
           ]
         },
         {
@@ -30,9 +36,15 @@
           ],
           "modulePermissions": [
             "circulation-storage.loans.item.post",
-            "inventory-storage.items.item.get",
             "inventory-storage.items.item.put",
-            "inventory-storage.shelf-locations.item.get"
+            "inventory-storage.items.item.get",
+            "inventory-storage.items.collection.get",
+            "inventory-storage.shelf-locations.item.get",
+            "inventory-storage.shelf-locations.collection.get",
+            "inventory-storage.holdings.collection.get",
+            "inventory-storage.holdings.item.get",
+            "inventory-storage.instances.collection.get",
+            "inventory-storage.instances.item.get"
           ]
         },
         {
@@ -58,8 +70,13 @@
           "modulePermissions": [
             "circulation-storage.loans.item.get",
             "inventory-storage.items.item.get",
-            "inventory-storage.items.item.put",
-            "inventory-storage.shelf-locations.item.get"
+            "inventory-storage.items.collection.get",
+            "inventory-storage.shelf-locations.item.get",
+            "inventory-storage.shelf-locations.collection.get",
+            "inventory-storage.holdings.collection.get",
+            "inventory-storage.holdings.item.get",
+            "inventory-storage.instances.collection.get",
+            "inventory-storage.instances.item.get"
           ]
         },
         {
@@ -159,10 +176,15 @@
           "modulePermissions": [
             "circulation-storage.requests.item.post",
             "inventory-storage.items.item.get",
+            "inventory-storage.items.collection.get",
             "inventory-storage.items.item.put",
             "users.item.get",
             "circulation-storage.loans.item.put",
-            "circulation-storage.loans.collection.get"
+            "circulation-storage.loans.collection.get",
+            "inventory-storage.holdings.collection.get",
+            "inventory-storage.holdings.item.get",
+            "inventory-storage.instances.collection.get",
+            "inventory-storage.instances.item.get"
           ]
         },
         {
@@ -199,8 +221,17 @@
           ],
           "modulePermissions": [
             "circulation-storage.requests.item.put",
+            "circulation-storage.requests.item.post",
             "inventory-storage.items.item.get",
-            "users.item.get"
+            "inventory-storage.items.collection.get",
+            "inventory-storage.items.item.put",
+            "users.item.get",
+            "circulation-storage.loans.item.put",
+            "circulation-storage.loans.collection.get",
+            "inventory-storage.holdings.collection.get",
+            "inventory-storage.holdings.item.get",
+            "inventory-storage.instances.collection.get",
+            "inventory-storage.instances.item.get"
           ]
         },
         {

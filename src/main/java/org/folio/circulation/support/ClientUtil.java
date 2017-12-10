@@ -1,13 +1,12 @@
 package org.folio.circulation.support;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-
+import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.server.ServerErrorResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
-import io.vertx.ext.web.RoutingContext;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 public final class ClientUtil {
 
@@ -30,8 +29,7 @@ public final class ClientUtil {
           throws MalformedURLException {
 
     return new CollectionResourceClient(
-      client, context.getOkapiBasedUrl(path),
-      context.getTenantId());
+      client, context.getOkapiBasedUrl(path));
   }
 
   public static CollectionResourceClient createLoanRulesClient(
