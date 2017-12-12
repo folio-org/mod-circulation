@@ -459,6 +459,9 @@ public class RequestCollectionResource {
       case RequestType.RECALL:
         return CHECKED_OUT_RECALLED;
 
+      case RequestType.PAGE:
+        return CHECKED_OUT;
+
       default:
         //TODO: Need to add validation to stop this situation
         return "";
@@ -471,7 +474,9 @@ public class RequestCollectionResource {
     switch (request.getString("requestType")) {
       case RequestType.HOLD:
       case RequestType.RECALL:
-        return StringUtils.equalsIgnoreCase(status, CHECKED_OUT);
+        return StringUtils.equalsIgnoreCase(status, CHECKED_OUT) ||
+          StringUtils.equalsIgnoreCase(status, CHECKED_OUT_HELD) ||
+            StringUtils.equalsIgnoreCase(status, CHECKED_OUT_RECALLED);
 
       case RequestType.PAGE:
       default:

@@ -40,6 +40,7 @@ import java.util.function.Consumer;
   LoanRulesAPITests.class,
   LoanRulesEngineAPITests.class,
   RequestsAPICreationTests.class,
+  RequestsAPICreateMultipleRequestsTests.class,
   RequestsAPIDeletionTests.class,
   RequestsAPIRetrievalTests.class,
   RequestsAPIUpdatingTests.class,
