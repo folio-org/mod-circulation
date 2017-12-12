@@ -318,6 +318,17 @@ public class LoanCollectionResource {
         final List<JsonObject> loans = JsonArrayHelper.toList(
           wrappedLoans.getJsonArray("loans"));
 
+        if(wrappedLoans.isEmpty()) {
+          JsonObject loansWrapper = new JsonObject()
+            .put("loans", new JsonArray(loans))
+            .put("totalRecords", wrappedLoans.getInteger("totalRecords"));
+
+          JsonResponse.success(routingContext.response(),
+            loansWrapper);
+
+          return;
+        }
+
         List<String> itemIds = loans.stream()
           .map(loan -> loan.getString("itemId"))
           .filter(Objects::nonNull)
@@ -335,6 +346,7 @@ public class LoanCollectionResource {
             ServerErrorResponse.internalError(routingContext.response(),
               String.format("Items request (%s) failed %s: %s",
                 itemsQuery, itemsResponse.getStatusCode(), itemsResponse.getBody()));
+            return;
           }
 
           final List<JsonObject> items = JsonArrayHelper.toList(
@@ -359,6 +371,7 @@ public class LoanCollectionResource {
                 String.format("Holdings request (%s) failed %s: %s",
                   holdingsQuery, holdingsResponse.getStatusCode(),
                   holdingsResponse.getBody()));
+              return;
             }
 
             final List<JsonObject> holdings = JsonArrayHelper.toList(
@@ -382,6 +395,7 @@ public class LoanCollectionResource {
                     String.format("Instances request (%s) failed %s: %s",
                       instancesQuery, instancesResponse.getStatusCode(),
                       instancesResponse.getBody()));
+                  return;
                 }
 
                 final List<JsonObject> instances = JsonArrayHelper.toList(
@@ -406,6 +420,7 @@ public class LoanCollectionResource {
                       String.format("Locations request (%s) failed %s: %s",
                         locationsQuery, locationsResponse.getStatusCode(),
                         locationsResponse.getBody()));
+                    return;
                   }
 
                   loans.forEach( loan -> {
@@ -458,6 +473,11 @@ public class LoanCollectionResource {
               });
           });
         });
+      }
+      else {
+        ServerErrorResponse.internalError(routingContext.response(),
+          "Failed to fetch loans from storage");
+        return;
       }
     });
   }

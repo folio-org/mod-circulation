@@ -748,6 +748,52 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
+  public void canFindNoResultsFromSearch()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    UnsupportedEncodingException {
+
+    UUID firstUserId = UUID.randomUUID();
+    UUID secondUserId = UUID.randomUUID();
+
+    String queryTemplate = loansUrl() + "?query=userId=%s";
+
+    CompletableFuture<Response> firstUserSearchCompleted = new CompletableFuture<>();
+    CompletableFuture<Response> secondUserSeatchCompleted = new CompletableFuture<>();
+
+    client.get(String.format(queryTemplate, firstUserId),
+      ResponseHandler.json(firstUserSearchCompleted));
+
+    client.get(String.format(queryTemplate, secondUserId),
+      ResponseHandler.json(secondUserSeatchCompleted));
+
+    Response firstPageResponse = firstUserSearchCompleted.get(5, TimeUnit.SECONDS);
+    Response secondPageResponse = secondUserSeatchCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Failed to get loans for first user: %s",
+      firstPageResponse.getBody()),
+      firstPageResponse.getStatusCode(), is(200));
+
+    assertThat(String.format("Failed to get loans for second user: %s",
+      secondPageResponse.getBody()),
+      secondPageResponse.getStatusCode(), is(200));
+
+    JsonObject firstPage = firstPageResponse.getJson();
+    JsonObject secondPage = secondPageResponse.getJson();
+
+    List<JsonObject> firstPageLoans = getLoans(firstPage);
+    List<JsonObject> secondPageLoans = getLoans(secondPage);
+
+    assertThat(firstPageLoans.size(), is(0));
+    assertThat(firstPage.getInteger("totalRecords"), is(0));
+
+    assertThat(secondPageLoans.size(), is(0));
+    assertThat(secondPage.getInteger("totalRecords"), is(0));
+  }
+
+  @Test
   public void canFilterByLoanStatus()
     throws MalformedURLException,
     InterruptedException,
