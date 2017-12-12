@@ -48,7 +48,9 @@ public class ItemRequestBuilder implements Builder {
       itemRequest.put("id", id.toString());
     }
 
-    itemRequest.put("title", title);
+    if(title != null) {
+      itemRequest.put("title", title);
+    }
 
     if(barcode != null) {
       itemRequest.put("barcode", barcode);
@@ -101,6 +103,10 @@ public class ItemRequestBuilder implements Builder {
       this.status,
       this.permanentLocationId,
       this.temporaryLocationId);
+  }
+
+  public ItemRequestBuilder withNoTitle() {
+    return withTitle(null);
   }
 
   public ItemRequestBuilder withBarcode(String barcode) {

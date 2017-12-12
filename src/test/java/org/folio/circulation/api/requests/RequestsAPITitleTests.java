@@ -309,6 +309,47 @@ public class RequestsAPITitleTests extends APITests {
     MalformedURLException,
     UnsupportedEncodingException {
 
+    UUID itemId = itemsClient.create(
+      ItemRequestExamples.basedUponSmallAngryPlanet()
+        .withTitle("A different title on item") // deliberately different to demonstrate behaviour
+        .forHolding(null))
+      .getId();
+
+    checkOutItem(itemId, loansClient);
+
+    UUID requestId = UUID.randomUUID();
+
+    IndividualResource response = requestsClient.create(new RequestRequestBuilder()
+      .withId(requestId)
+      .withRequesterId(usersClient.create(new UserRequestBuilder().create()).getId())
+      .withItemId(itemId));
+
+    JsonObject createdRequest = response.getJson();
+
+    requestsClient.replace(requestId, createdRequest);
+
+    Response fetchedRequestResponse = requestsClient.getById(requestId);
+
+    assertThat(fetchedRequestResponse.getStatusCode(), is(200));
+
+    JsonObject fetchedRequest = fetchedRequestResponse.getJson();
+
+    assertThat("has item title",
+      fetchedRequest.getJsonObject("item").containsKey("title"), is(true));
+
+    assertThat("title is taken from item",
+      fetchedRequest.getJsonObject("item").getString("title"),
+      is("A different title on item"));
+  }
+
+  @Test
+  public void titleIsChangedWhenRequestUpdatedAndHoldingNotFound()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException,
+    UnsupportedEncodingException {
+
     UUID instanceId = instancesClient.create(
       InstanceRequestExamples.smallAngryPlanet()).getId();
 

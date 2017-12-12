@@ -21,6 +21,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -319,6 +320,7 @@ public class LoanCollectionResource {
 
         List<String> itemIds = loans.stream()
           .map(loan -> loan.getString("itemId"))
+          .filter(Objects::nonNull)
           .collect(Collectors.toList());
 
         CompletableFuture<Response> itemsFetched = new CompletableFuture<>();
@@ -340,6 +342,7 @@ public class LoanCollectionResource {
 
           List<String> holdingsIds = items.stream()
             .map(item -> item.getString("holdingsRecordId"))
+            .filter(Objects::nonNull)
             .collect(Collectors.toList());
 
           CompletableFuture<Response> holdingsFetched =
@@ -363,6 +366,7 @@ public class LoanCollectionResource {
 
             List<String> instanceIds = holdings.stream()
               .map(holding -> holding.getString("instanceId"))
+              .filter(Objects::nonNull)
               .collect(Collectors.toList());
 
             CompletableFuture<Response> instancesFetched = new CompletableFuture<>();
