@@ -318,7 +318,7 @@ public class LoanCollectionResource {
         final List<JsonObject> loans = JsonArrayHelper.toList(
           wrappedLoans.getJsonArray("loans"));
 
-        if(wrappedLoans.isEmpty()) {
+        if(loans.isEmpty()) {
           JsonObject loansWrapper = new JsonObject()
             .put("loans", new JsonArray(loans))
             .put("totalRecords", wrappedLoans.getInteger("totalRecords"));
