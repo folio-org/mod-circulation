@@ -6,7 +6,7 @@ ENV VERTICLE_FILE mod-circulation.jar
 ENV VERTICLE_HOME /usr/verticles
 
 # Copy your fat jar to the container
-COPY target/$VERTICLE_FILE $VERTICLE_HOME/$VERTICLE_FILE
+COPY build/libs/${VERTICLE_FILE} ${VERTICLE_HOME}/${VERTICLE_FILE}
 
 # Expose this port locally in the container.
 EXPOSE 9801
