@@ -29,6 +29,7 @@ import java.util.concurrent.TimeoutException;
 
 import static org.folio.circulation.api.support.http.InterfaceUrls.loansUrl;
 import static org.folio.circulation.api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -115,6 +116,9 @@ public class LoanAPITests extends APITests {
     assertThat("item status snapshot in storage is not checked out",
       loansStorageClient.getById(id).getJson().getString("itemStatus"),
       is("Checked out"));
+    
+    assertThat("loan policy id is present",
+      loan.getString("loanPolicyId"), is(notNullValue()));
   }
 
   @Test

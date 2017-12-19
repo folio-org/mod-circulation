@@ -21,6 +21,10 @@
       "description": "ID of the item lent to the patron",
       "type": "string"
     },
+    "loanPolicyId" : {
+      "description" : "ID of the policy determining the duration of the loan",
+      "type" : "string"
+	},
     "item": {
       "description": "Additional information about the item lent to the patron",
       "type": "object",
