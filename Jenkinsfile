@@ -97,7 +97,7 @@ pipeline {
 
       stage('Clean Up') {
          steps {
-            sh "docker rmi ${docker_image}:${version}-${env.BUILD_NUMBER} || exit 0"
+            sh "docker rmi ${docker_image}:${version}.${env.BUILD_NUMBER} || exit 0"
             sh "docker rmi ${docker_image}:latest || exit 0"
          }
       }
