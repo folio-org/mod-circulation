@@ -1,4 +1,6 @@
-## 5.0.0 Unreleased
+## 5.0.1 Unreleased
+
+## 5.0.0 2017-12-20
 
 * Use item permanent and temporary locations for `location` property in loans (CIRC-36)
 * Item status `Checked Out` is now `Checked out` (CIRC-39)

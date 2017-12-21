@@ -4,8 +4,9 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.CirculationVerticle;
 import org.folio.circulation.api.fakes.FakeOkapi;
-import org.folio.circulation.api.loans.LoanAPIItemLocationTests;
+import org.folio.circulation.api.loans.LoanAPILocationTests;
 import org.folio.circulation.api.loans.LoanAPITests;
+import org.folio.circulation.api.loans.LoanAPITitleTests;
 import org.folio.circulation.api.requests.*;
 import org.folio.circulation.api.support.http.ResourceClient;
 import org.folio.circulation.api.support.http.URLHelper;
@@ -34,10 +35,12 @@ import java.util.function.Consumer;
 
 @Suite.SuiteClasses({
   LoanAPITests.class,
-  LoanAPIItemLocationTests.class,
+  LoanAPILocationTests.class,
+  LoanAPITitleTests.class,
   LoanRulesAPITests.class,
   LoanRulesEngineAPITests.class,
   RequestsAPICreationTests.class,
+  RequestsAPICreateMultipleRequestsTests.class,
   RequestsAPIDeletionTests.class,
   RequestsAPIRetrievalTests.class,
   RequestsAPIUpdatingTests.class,
@@ -45,6 +48,7 @@ import java.util.function.Consumer;
   RequestsAPILoanCheckInTests.class,
   RequestsAPILoanRenewalTests.class,
   RequestsAPILoanHistoryTests.class,
+  RequestsAPITitleTests.class,
 })
 public class APITestSuite {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());

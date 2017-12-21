@@ -672,87 +672,6 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void locationIsIncludedWhenGettingAllLoans()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException,
-    UnsupportedEncodingException {
-
-    UUID permanentLocationItemId = itemsFixture.basedUponSmallAngryPlanet(
-      itemRequestBuilder -> itemRequestBuilder
-        .withPermanentLocation(APITestSuite.mainLibraryLocationId())
-        .withNoTemporaryLocation()
-    ).getId();
-
-    loansClient.create(new LoanRequestBuilder()
-      .withItemId(permanentLocationItemId));
-
-    UUID temporaryLocationItemId = itemsFixture.basedUponNod(
-      itemRequestBuilder -> itemRequestBuilder
-      .withPermanentLocation(APITestSuite.mainLibraryLocationId())
-      .withTemporaryLocation(APITestSuite.annexLocationId()))
-      .getId();
-
-    loansClient.create(new LoanRequestBuilder()
-      .withItemId(temporaryLocationItemId));
-
-    UUID noLocationItemId = itemsFixture.basedUponTemeraire(
-      itemRequestBuilder -> itemRequestBuilder
-        .withNoPermanentLocation()
-        .withNoTemporaryLocation())
-      .getId();
-
-    loansClient.create(new LoanRequestBuilder()
-      .withItemId(noLocationItemId));
-
-    CompletableFuture<Response> getLoansCompleted = new CompletableFuture<>();
-
-    client.get(loansUrl(), ResponseHandler.json(getLoansCompleted));
-
-    Response loansResponse = getLoansCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(String.format("Failed to get loans: %s",
-      loansResponse.getBody()),
-      loansResponse.getStatusCode(), is(200));
-
-    JsonObject firstPage = loansResponse.getJson();
-
-    List<JsonObject> loans = getLoans(firstPage);
-
-    assertThat(loans.size(), is(3));
-    assertThat(firstPage.getInteger("totalRecords"), is(3));
-
-    loans.forEach(this::loanHasExpectedProperties);
-
-    JsonObject loanWithPermanentLocation = findLoanByItemId(loans, permanentLocationItemId);
-    JsonObject loanWithTemporaryLocation = findLoanByItemId(loans, temporaryLocationItemId);
-    JsonObject loanWithNoLocation = findLoanByItemId(loans, noLocationItemId);
-
-    assertThat(String.format("Permanent location should be included: %s",
-      loanWithPermanentLocation.encodePrettily()),
-      loanWithPermanentLocation.getJsonObject("item").containsKey("location"), is(true));
-
-    assertThat(String.format("Permanent location should be included: %s",
-      loanWithPermanentLocation.encodePrettily()),
-      loanWithPermanentLocation.getJsonObject("item").getJsonObject("location").getString("name"),
-      is("Main Library"));
-
-    assertThat(String.format("Temporary location should be included: %s",
-      loanWithPermanentLocation.encodePrettily()),
-      loanWithTemporaryLocation.getJsonObject("item").containsKey("location"), is(true));
-
-    assertThat(String.format("Temporary location should be included: %s",
-      loanWithPermanentLocation.encodePrettily()),
-      loanWithTemporaryLocation.getJsonObject("item").getJsonObject("location").getString("name"),
-      is("Annex"));
-
-    assertThat(String.format("No location should be included: %s",
-      loanWithPermanentLocation.encodePrettily()),
-      loanWithNoLocation.getJsonObject("item").containsKey("location"), is(false));
-  }
-
-  @Test
   public void canSearchByUserId()
     throws MalformedURLException,
     InterruptedException,
@@ -830,6 +749,52 @@ public class LoanAPITests extends APITests {
 
     assertThat(countOfDistinctTitles(firstPageLoans), is(greaterThan(1)));
     assertThat(countOfDistinctTitles(secondPageLoans), is(greaterThan(1)));
+  }
+
+  @Test
+  public void canFindNoResultsFromSearch()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    UnsupportedEncodingException {
+
+    UUID firstUserId = UUID.randomUUID();
+    UUID secondUserId = UUID.randomUUID();
+
+    String queryTemplate = loansUrl() + "?query=userId=%s";
+
+    CompletableFuture<Response> firstUserSearchCompleted = new CompletableFuture<>();
+    CompletableFuture<Response> secondUserSeatchCompleted = new CompletableFuture<>();
+
+    client.get(String.format(queryTemplate, firstUserId),
+      ResponseHandler.json(firstUserSearchCompleted));
+
+    client.get(String.format(queryTemplate, secondUserId),
+      ResponseHandler.json(secondUserSeatchCompleted));
+
+    Response firstPageResponse = firstUserSearchCompleted.get(5, TimeUnit.SECONDS);
+    Response secondPageResponse = secondUserSeatchCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Failed to get loans for first user: %s",
+      firstPageResponse.getBody()),
+      firstPageResponse.getStatusCode(), is(200));
+
+    assertThat(String.format("Failed to get loans for second user: %s",
+      secondPageResponse.getBody()),
+      secondPageResponse.getStatusCode(), is(200));
+
+    JsonObject firstPage = firstPageResponse.getJson();
+    JsonObject secondPage = secondPageResponse.getJson();
+
+    List<JsonObject> firstPageLoans = getLoans(firstPage);
+    List<JsonObject> secondPageLoans = getLoans(secondPage);
+
+    assertThat(firstPageLoans.size(), is(0));
+    assertThat(firstPage.getInteger("totalRecords"), is(0));
+
+    assertThat(secondPageLoans.size(), is(0));
+    assertThat(secondPage.getInteger("totalRecords"), is(0));
   }
 
   @Test

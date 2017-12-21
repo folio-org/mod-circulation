@@ -2,7 +2,7 @@ package org.folio.circulation.support;
 
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpClientResponse;
-
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.http.entity.ContentType;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
@@ -21,8 +21,7 @@ public class CollectionResourceClient {
   private final URL collectionRoot;
 
   public CollectionResourceClient(OkapiHttpClient client,
-                                  URL collectionRoot,
-                                  String tenantId) {
+                                  URL collectionRoot) {
 
     this.client = client;
     this.collectionRoot = collectionRoot;
@@ -47,7 +46,7 @@ public class CollectionResourceClient {
   public void put(String id, Object resourceRepresentation,
                      Consumer<Response> responseHandler) {
 
-    client.put(String.format(collectionRoot + "/%s", id),
+    client.put(individualRecordUrl(id),
       resourceRepresentation,
       responseConversationHandler(responseHandler));
   }
@@ -58,12 +57,12 @@ public class CollectionResourceClient {
   }
 
   public void get(String id, Consumer<Response> responseHandler) {
-    client.get(String.format(collectionRoot + "/%s", id),
+    client.get(individualRecordUrl(id),
       responseConversationHandler(responseHandler));
   }
 
   public void delete(String id, Consumer<Response> responseHandler) {
-    client.delete(String.format(collectionRoot + "/%s", id),
+    client.delete(individualRecordUrl(id),
       responseConversationHandler(responseHandler));
   }
 
@@ -73,17 +72,30 @@ public class CollectionResourceClient {
   }
 
   public void getMany(String query, Consumer<Response> responseHandler) {
+      String url = isProvided(query)
+        ? String.format("%s?%s", collectionRoot, query)
+        : collectionRoot.toString();
 
-    String url = isProvided(query)
-      ? String.format(collectionRoot + "?%s", query)
+      client.get(url, responseConversationHandler(responseHandler));
+  }
+
+  public void getMany(
+    String cqlQuery,
+    Integer pageLimit,
+    Integer pageOffset,
+    Consumer<Response> responseHandler) {
+
+    //TODO: Replace with query string creator that checks each parameter
+    String url = isProvided(cqlQuery)
+      ? String.format("%s?query=%s&limit=%s&offset=%s", collectionRoot, cqlQuery,
+      pageLimit, pageOffset)
       : collectionRoot.toString();
 
-    client.get(url,
-      responseConversationHandler(responseHandler));
+    client.get(url, responseConversationHandler(responseHandler));
   }
 
   private boolean isProvided(String query) {
-    return query != null && query.trim() != "";
+    return StringUtils.isNotBlank(query);
   }
 
   private Handler<HttpClientResponse> responseConversationHandler(
@@ -97,5 +109,9 @@ public class CollectionResourceClient {
         String trace = ExceptionUtils.getStackTrace(ex);
         responseHandler.accept(new Response(500, trace, ContentType.TEXT_PLAIN.toString()));
       });
+  }
+
+  private String individualRecordUrl(String id) {
+    return String.format("%s/%s", collectionRoot, id);
   }
 }
