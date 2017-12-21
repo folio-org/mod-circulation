@@ -46,7 +46,6 @@ public class LoanAPILocationTests extends APITests {
     UUID itemId = itemsClient.create(
       ItemRequestExamples.basedUponSmallAngryPlanet()
         .forHolding(holdingId)
-        .withPermanentLocation(annexLocationId()) //Deliberately different to demonstrate precedence
         .withNoTemporaryLocation())
       .getId();
 
@@ -99,7 +98,6 @@ public class LoanAPILocationTests extends APITests {
 
     UUID itemId = itemsClient.create(ItemRequestExamples.basedUponSmallAngryPlanet()
       .forHolding(holdingId)
-      .withPermanentLocation(mainLibraryLocationId())
       .withTemporaryLocation(annexLocationId()))
       .getId();
 
@@ -133,86 +131,6 @@ public class LoanAPILocationTests extends APITests {
   }
 
   @Test
-  public void locationIsBasedUponItemPermanentLocationWhenNoHolding()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
-
-    UUID itemId = itemsClient.create(
-      ItemRequestExamples.basedUponSmallAngryPlanet()
-        .forHolding(null)
-        .withPermanentLocation(mainLibraryLocationId())
-        .withNoTemporaryLocation())
-      .getId();
-
-    UUID loanId = UUID.randomUUID();
-
-    IndividualResource response = loansClient.create(new LoanRequestBuilder()
-      .withId(loanId)
-      .withItemId(itemId));
-
-    JsonObject createdLoan = response.getJson();
-
-    assertThat("has item location",
-      createdLoan.getJsonObject("item").containsKey("location"), is(true));
-
-    assertThat("location is taken from item",
-      createdLoan.getJsonObject("item").getJsonObject("location").getString("name"),
-      is("Main Library"));
-
-    Response fetchedLoanResponse = loansClient.getById(loanId);
-
-    assertThat(fetchedLoanResponse.getStatusCode(), is(200));
-
-    JsonObject fetchedLoan = fetchedLoanResponse.getJson();
-
-    assertThat("has item location",
-      fetchedLoan.getJsonObject("item").containsKey("location"), is(true));
-
-    assertThat("location is taken from item",
-      fetchedLoan.getJsonObject("item").getJsonObject("location").getString("name"),
-      is("Main Library"));
-  }
-
-  @Test
-  public void noLocationNoHoldingAndNoLocationsOnItem()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
-
-    UUID itemId = itemsClient.create(
-      ItemRequestExamples.basedUponSmallAngryPlanet()
-        .forHolding(null)
-        .withNoPermanentLocation()
-        .withNoTemporaryLocation())
-      .getId();
-
-    UUID loanId = UUID.randomUUID();
-
-    IndividualResource response = loansClient.create(new LoanRequestBuilder()
-      .withId(loanId)
-      .withItemId(itemId));
-
-    JsonObject createdLoan = response.getJson();
-
-    assertThat("has item location",
-      createdLoan.getJsonObject("item").containsKey("location"), is(false));
-
-    Response fetchedLoanResponse = loansClient.getById(loanId);
-
-    assertThat(fetchedLoanResponse.getStatusCode(), is(200));
-
-    JsonObject fetchedLoan = fetchedLoanResponse.getJson();
-
-    assertThat("has item location",
-      fetchedLoan.getJsonObject("item").containsKey("location"), is(false));
-  }
-
-  @Test
   public void locationsComeFromHoldingsForMultipleLoans()
     throws InterruptedException,
     MalformedURLException,
@@ -231,7 +149,6 @@ public class LoanAPILocationTests extends APITests {
 
     UUID firstItemId = itemsClient.create(
       ItemRequestExamples.basedUponSmallAngryPlanet()
-        .withPermanentLocation(APITestSuite.annexLocationId()) // deliberately different to demonstrate behaviour
         .forHolding(firstHoldingId))
       .getId();
 
@@ -250,7 +167,6 @@ public class LoanAPILocationTests extends APITests {
 
     UUID secondItemId = itemsClient.create(
       ItemRequestExamples.basedUponTemeraire()
-        .withPermanentLocation(APITestSuite.mainLibraryLocationId()) // deliberately different to demonstrate behaviour
         .forHolding(secondHoldingId))
       .getId();
 
@@ -289,7 +205,7 @@ public class LoanAPILocationTests extends APITests {
   }
 
   @Test
-  public void locationsComeFromItemForMultipleLoansWhenNoHolding()
+  public void noLocationsForMultipleLoansWhenNoHoldingAndNoTemporaryLocation()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -307,7 +223,6 @@ public class LoanAPILocationTests extends APITests {
 
     UUID firstItemId = itemsClient.create(
       ItemRequestExamples.basedUponSmallAngryPlanet()
-        .withPermanentLocation(APITestSuite.annexLocationId()) // deliberately different to demonstrate behaviour
         .forHolding(firstHoldingId))
       .getId();
 
@@ -326,7 +241,6 @@ public class LoanAPILocationTests extends APITests {
 
     UUID secondItemId = itemsClient.create(
       ItemRequestExamples.basedUponTemeraire()
-        .withPermanentLocation(APITestSuite.mainLibraryLocationId()) // deliberately different to demonstrate behaviour
         .forHolding(secondHoldingId))
       .getId();
 
@@ -347,12 +261,8 @@ public class LoanAPILocationTests extends APITests {
     assertThat("has item",
       firstFetchedLoan.containsKey("item"), is(true));
 
-    assertThat("has item location",
-      firstFetchedLoan.getJsonObject("item").containsKey("location"), is(true));
-
-    assertThat("location is taken from item",
-      firstFetchedLoan.getJsonObject("item").getJsonObject("location").getString("name"),
-      is("Annex"));
+    assertThat("has no item location",
+      firstFetchedLoan.getJsonObject("item").containsKey("location"), is(false));
 
     JsonObject secondFetchedLoan = getRecordById(
       fetchedLoansResponse, secondLoanId).get();
@@ -360,12 +270,8 @@ public class LoanAPILocationTests extends APITests {
     assertThat("has item",
       secondFetchedLoan.containsKey("item"), is(true));
 
-    assertThat("has item location",
-      secondFetchedLoan.getJsonObject("item").containsKey("location"), is(true));
-
-    assertThat("location is taken from item",
-      secondFetchedLoan.getJsonObject("item").getJsonObject("location").getString("name"),
-      is("Main Library"));
+    assertThat("has no location",
+      secondFetchedLoan.getJsonObject("item").containsKey("location"), is(false));
   }
 
   @Test
@@ -387,7 +293,6 @@ public class LoanAPILocationTests extends APITests {
 
     UUID firstItemId = itemsClient.create(
       ItemRequestExamples.basedUponSmallAngryPlanet()
-        .withNoPermanentLocation()
         .withTemporaryLocation(APITestSuite.annexLocationId())
         .forHolding(firstHoldingId))
       .getId();

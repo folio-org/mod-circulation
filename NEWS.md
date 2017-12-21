@@ -1,7 +1,14 @@
-## 5.0.1 Unreleased
+## 6.0.0 Unreleased
+
+* Requires item-storage interface version 4.0 or 5.0 (CIRC-57)
+* Requires instance-storage interface version 3.3 or 4.0 (CIRC-57)
+* Requires holdings-storage interface version 1.0 (CIRC-57)
 
 ## 5.0.0 2017-12-20
 
+* Allow multiple requests for the same item (CIRC-54)
+* Use permanent location from holding or item (CIRC-49)
+* Use title from instance or item (CIRC-50) 
 * Use item permanent and temporary locations for `location` property in loans (CIRC-36)
 * Item status `Checked Out` is now `Checked out` (CIRC-39)
 * Creating or changing a loan updates the `itemStatus` snapshot (similar to `action`) in loan storage (CIRC-38)
@@ -14,6 +21,7 @@ for an open loan for the same item in storage, in order to create a loan history
 is included from the item, and having both may be confusing (CIRC-38)
 * Requires loan-storage interface version 3.3 (CIRC-38)
 * Requires item-storage interface version 4.0 (CIRC-36)
+* Requires holdings-storage interface version 1.0 (CIRC-49, CIRC-50)
 * Requires shelf-locations interface version 1.0 (CIRC-36)
 
 ## 4.5.0 2017-10-11

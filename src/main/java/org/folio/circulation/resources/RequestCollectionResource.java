@@ -352,12 +352,15 @@ public class RequestCollectionResource {
           ? instanceResponse.getJson()
           : null;
 
-        String title = instance != null && instance.containsKey("title")
-          ? instance.getString("title")
-          : item.getString("title");
+        JsonObject itemSummary = new JsonObject();
 
-        JsonObject itemSummary = new JsonObject()
-          .put("title", title);
+        final String titleProperty = "title";
+
+        if(instance != null && instance.containsKey(titleProperty)) {
+          itemSummary.put(titleProperty, instance.getString(titleProperty));
+        } else if (item.containsKey("title")) {
+          itemSummary.put(titleProperty, item.getString(titleProperty));
+        }
 
         if(item.containsKey("barcode")) {
           itemSummary.put("barcode", item.getString("barcode"));
