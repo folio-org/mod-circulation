@@ -54,7 +54,8 @@ public class APITestSuite {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   public static final String TENANT_ID = "test_tenant";
-  public static final String TOKEN = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsInRlbmFudCI6ImRlbW9fdGVuYW50In0.63jTgc15Kil946OdOGYZur_8xVWEUURANx87FAOQajh9TJbsnCMbjE164JQqNLMWShCyi9FOX0Kr1RFuiHTFAQ";
+
+  private static final String TOKEN = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsInRlbmFudCI6ImRlbW9fdGVuYW50In0.63jTgc15Kil946OdOGYZur_8xVWEUURANx87FAOQajh9TJbsnCMbjE164JQqNLMWShCyi9FOX0Kr1RFuiHTFAQ";
 
   private static VertxAssistant vertxAssistant;
   private static int port;
@@ -67,7 +68,6 @@ public class APITestSuite {
   private static UUID mainLibraryLocationId;
   private static UUID annexLocationId;
   private static UUID booksInstanceTypeId;
-  private static UUID personalCreatorTypeId;
   private static boolean initialised;
 
   public static URL circulationModuleUrl(String path) {
@@ -128,10 +128,6 @@ public class APITestSuite {
     return booksInstanceTypeId;
   }
 
-  public static UUID personalCreatorTypeId() {
-    return personalCreatorTypeId;
-  }
-
   @BeforeClass
   public static void before()
     throws InterruptedException,
@@ -176,7 +172,6 @@ public class APITestSuite {
     createLoanTypes();
     createLocations();
     createInstanceTypes();
-    createCreatorTypes();
 
     initialised = true;
   }
@@ -205,7 +200,6 @@ public class APITestSuite {
     deleteLoanTypes();
     deleteLocations();
     deleteInstanceTypes();
-    deleteCreatorTypes();
 
     CompletableFuture<Void> circulationModuleUndeployed =
       vertxAssistant.undeployVerticle(circulationModuleDeploymentId);
@@ -330,27 +324,6 @@ public class APITestSuite {
     ResourceClient instanceTypesClient = ResourceClient.forInstanceTypes(createClient());
 
     instanceTypesClient.delete(booksInstanceTypeId());
-  }
-
-  private static void createCreatorTypes()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    personalCreatorTypeId = createReferenceRecord(
-      ResourceClient.forCreatorTypes(createClient()), "Personal name");
-  }
-
-  private static void deleteCreatorTypes()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    ResourceClient creatorTypesClient = ResourceClient.forCreatorTypes(createClient());
-
-    creatorTypesClient.delete(personalCreatorTypeId());
   }
 
   private static UUID createReferenceRecord(

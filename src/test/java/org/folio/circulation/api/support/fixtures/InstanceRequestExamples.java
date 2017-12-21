@@ -4,31 +4,26 @@ import org.folio.circulation.api.support.builders.InstanceRequestBuilder;
 
 public class InstanceRequestExamples {
   public static InstanceRequestBuilder smallAngryPlanet() {
-    return create("The Long Way to a Small, Angry Planet", "Chambers, Becky");
+    return create("The Long Way to a Small, Angry Planet");
   }
 
   public static InstanceRequestBuilder nod() {
-    return create("Nod", "Barnes, Adrian");
+    return create("Nod");
   }
 
   public static InstanceRequestBuilder uprooted() {
-    return create("Uprooted", "Novik, Naomi");
+    return create("Uprooted");
   }
 
   public static InstanceRequestBuilder temeraire() {
-    return create("Temeraire", "Novik, Naomi");
+    return create("Temeraire");
   }
 
   public static InstanceRequestBuilder interestingTimes() {
-    return create("Interesting Times", "Pratchett, Terry");
+    return create("Interesting Times");
   }
 
-  private static InstanceRequestBuilder create(
-    String title,
-    String creator) {
-
-    return new InstanceRequestBuilder(
-      title,
-      creator);
+  private static InstanceRequestBuilder create(String title) {
+    return new InstanceRequestBuilder(title);
   }
 }
