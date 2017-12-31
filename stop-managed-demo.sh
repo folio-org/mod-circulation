@@ -10,5 +10,3 @@ module_id="mod-circulation-6.0.0-SNAPSHOT"
   ${module_id} \
   ${okapi_proxy_address} \
   ${tenant_id}
-
-./delete-tenant.sh
