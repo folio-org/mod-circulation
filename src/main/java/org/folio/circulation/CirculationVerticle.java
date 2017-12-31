@@ -14,12 +14,14 @@ import org.slf4j.LoggerFactory;
 import java.lang.invoke.MethodHandles;
 
 public class CirculationVerticle extends AbstractVerticle {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
   private HttpServer server;
 
   @Override
   public void start(Future<Void> startFuture) {
+    Logging.initialiseFormat();
+
+    final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
     log.info("Starting circulation module");
 
     Router router = Router.router(vertx);
@@ -45,6 +47,8 @@ public class CirculationVerticle extends AbstractVerticle {
 
   @Override
   public void stop(Future<Void> stopFuture) {
+    final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
     log.info("Stopping circulation module");
 
     if(server != null) {
