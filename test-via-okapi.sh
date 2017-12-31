@@ -15,8 +15,8 @@ circulation_storage_module_id="mod-circulation-storage-4.0.1-SNAPSHOT"
 #Needs to be the specific version of mod-users you want to use for testing
 users_storage_module_id="mod-users-14.3.0-SNAPSHOT"
 
-#clean the build
-gradle clean cleanTest
+#remove log output
+rm test-via-okapi.log
 
 echo "Check if Okapi is contactable"
 curl -w '\n' -X GET -D -   \
@@ -52,7 +52,8 @@ curl -w '\n' -X POST -D - \
      -d "${activate_inventory_storage_json}"  \
      "${okapi_proxy_address}/_/proxy/tenants/${tenant_id}/modules"
 
-gradle generateDescriptors
+echo "Generate Descriptors from Templates"
+mvn clean compile -Dmaven.test.skip=true -q
 
 echo "Register circulation module"
 ./okapi-registration/unmanaged-deployment/register.sh \
@@ -63,7 +64,10 @@ echo "Register circulation module"
   ${tenant_id}
 
 echo "Run API tests"
-gradle testApiViaOkapi
+echo "Run tests via Okapi"
+#Potentially move to use integration test phase
+mvn -Dokapi.address="${okapi_proxy_address}" -Duse.okapi.initial.requests="true" \
+-Duse.okapi.storage.requests="true" clean test | tee -a test-via-okapi.log
 
 test_results=$?
 
@@ -94,7 +98,7 @@ if [ $test_results != 0 ]; then
     exit 1;
 else
     echo '--------------------------------------'
-    echo 'BUILD SUCCEEDED'
+    echo 'BUILD REPORTED SUCCESS - Check test results via log (test-via-okapi.log)'
     echo '--------------------------------------'
     exit 1;
 fi
