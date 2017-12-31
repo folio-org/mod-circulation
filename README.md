@@ -14,6 +14,7 @@ FOLIO compatible circulation capabilities, including loan items from the invento
 ### Required
 
 - Java 8 JDK
+- Maven 3.5.0
 - Gradle 3.3
 - Implementation of the loan-storage interface e.g. [FOLIO Loan Storage Module](https://github.com/folio-org/mod-loan-storage)
 
