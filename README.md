@@ -19,7 +19,7 @@ FOLIO compatible circulation capabilities, including loan items from the invento
 
 ### Optional
 
-- Python 3 (for un-registering module during managed demo)
+- Python 3 (for un-registering module during managed demo and tests via Okapi)
 - Node.js 6.4 (for API linting)
 - NPM 3.10 (for API linting)
 - Gradle 3.3 (previous build mechanism)

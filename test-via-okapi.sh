@@ -4,7 +4,6 @@ okapi_proxy_address="http://localhost:9130"
 tenant_id="test_tenant"
 circulation_direct_address=http://localhost:9605
 circulation_instance_id=localhost-9605
-circulation_module_id="mod-circulation-6.0.0-SNAPSHOT"
 
 #Needs to be the specific version of mod-inventory-storage you want to use for testing
 inventory_storage_module_id="mod-inventory-storage-7.0.0-SNAPSHOT"
@@ -71,10 +70,7 @@ mvn -Dokapi.address="${okapi_proxy_address}" -Duse.okapi.initial.requests="true"
 test_results=$?
 
 echo "Unregister circulation module"
-./okapi-registration/unmanaged-deployment/unregister.sh \
-  ${circulation_instance_id} \
-  ${circulation_module_id} \
-  ${tenant_id}
+./okapi-registration/unmanaged-deployment/unregister.sh ${tenant_id}
 
 echo "Deactivate user storage for ${tenant_id}"
 curl -X DELETE -D - -w '\n' "${okapi_proxy_address}/_/proxy/tenants/${tenant_id}/modules/${users_storage_module_id}"
