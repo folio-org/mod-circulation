@@ -2,13 +2,11 @@
 
 module_direct_address=${1}
 module_instance_id=${2}
-module_id=${3}
-okapi_proxy_address=${4:-http://localhost:9130}
-tenant_id=${5:-demo_tenant}
+okapi_proxy_address=${3:-http://localhost:9130}
+tenant_id=${4:-demo_tenant}
 
 discovery_json=$(cat ./target/Discovery.json)
 
-discovery_json="${discovery_json/moduleidhere/$module_id}"
 discovery_json="${discovery_json/directaddresshere/$module_direct_address}"
 discovery_json="${discovery_json/instanceidhere/$module_instance_id}"
 

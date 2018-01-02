@@ -59,7 +59,6 @@ echo "Register circulation module"
 ./okapi-registration/unmanaged-deployment/register.sh \
   ${circulation_direct_address} \
   ${circulation_instance_id} \
-  ${circulation_module_id} \
   ${okapi_proxy_address} \
   ${tenant_id}
 
