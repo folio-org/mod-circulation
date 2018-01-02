@@ -18,6 +18,16 @@ def get_instances(okapi_address, module_id):
           module_id, instances_response.status_code))
         return list()
 
+def un_deploy_instances():
+    for instance_id in get_instances(okapi_address, module_id):
+        instance_url = '{0}/_/discovery/modules/{1}/{2}'.format(
+          okapi_address, module_id, instance_id)
+
+        delete_response = requests.delete(instance_url)
+
+        print('Delete Response for {0}: {1}'.format(
+          instance_url, delete_response.status_code))
+
 args = sys.argv
 
 module_id = find_module_id()
@@ -29,7 +39,4 @@ else:
     sys.stderr.write('Tenant ID must be passed on the command line')
     sys.exit()
 
-for instance_id in get_instances(okapi_address, module_id):
-    instance_url = '{0}/_/discovery/modules/{1}/{2}'.format(okapi_address, module_id, instance_id)
-    delete_response = requests.delete(instance_url)
-    print('Delete Response for {0}: {1}'.format(instance_url, delete_response.status_code))
+un_deploy_instances()
