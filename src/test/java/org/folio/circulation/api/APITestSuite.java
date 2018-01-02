@@ -69,6 +69,7 @@ public class APITestSuite {
   private static UUID booksInstanceTypeId;
   private static UUID personalCreatorTypeId;
   private static boolean initialised;
+  private static UUID userId;
 
   public static URL circulationModuleUrl(String path) {
     try {
@@ -131,6 +132,10 @@ public class APITestSuite {
   public static UUID personalCreatorTypeId() {
     return personalCreatorTypeId;
   }
+  
+  public static UUID userId() {
+    return userId;
+  }
 
   @BeforeClass
   public static void before()
@@ -177,6 +182,7 @@ public class APITestSuite {
     createLocations();
     createInstanceTypes();
     createCreatorTypes();
+    createUsers();
 
     initialised = true;
   }
@@ -206,6 +212,7 @@ public class APITestSuite {
     deleteLocations();
     deleteInstanceTypes();
     deleteCreatorTypes();
+    deleteUsers();
 
     CompletableFuture<Void> circulationModuleUndeployed =
       vertxAssistant.undeployVerticle(circulationModuleDeploymentId);
@@ -244,6 +251,25 @@ public class APITestSuite {
     }
   }
 
+  private static void createUsers()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+    userId = createReferenceRecord(ResourceClient.forUsers(createClient()), "User");
+    
+  }
+  
+  private static void deleteUsers()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+    
+    ResourceClient usersClient = ResourceClient.forUsers(createClient());
+    usersClient.delete(userId);
+  }
+  
   private static void createMaterialTypes()
     throws MalformedURLException,
     InterruptedException,

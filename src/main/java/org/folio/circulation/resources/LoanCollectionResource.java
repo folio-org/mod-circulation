@@ -7,11 +7,8 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
-<<<<<<< HEAD
 import java.io.UnsupportedEncodingException;
-=======
 import org.apache.commons.lang3.StringUtils;
->>>>>>> master
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlHelper;
 import org.folio.circulation.support.JsonArrayHelper;
@@ -81,7 +78,6 @@ public class LoanCollectionResource {
       instancesStorageClient = createInstanceStorageClient(client, context);
       locationsStorageClient = createLocationsStorageClient(client, context);
       usersStorageClient = createUsersStorageClient(client, context);
-      instancesStorageClient = createInstancesStorageClient(client, context);
               
     }
     catch (MalformedURLException e) {
@@ -97,31 +93,31 @@ public class LoanCollectionResource {
     updateItemStatus(itemId, itemStatusFrom(loan),
       itemsStorageClient, routingContext.response(), item -> {
         loan.put("itemStatus", item.getJsonObject("status").getString("name"));
-        loansStorageClient.post(loan, response -> {
-          if(response.getStatusCode() == 201) {
-            JsonObject createdLoan = response.getJson();
-
-            String holdingId = item.getString("holdingsRecordId");
-
-            holdingsStorageClient.get(holdingId, holdingResponse -> {
-
-              final String instanceId = holdingResponse.getStatusCode() == 200
-                ? holdingResponse.getJson().getString("instanceId")
-                : null;
-
-              instancesStorageClient.get(instanceId, instanceResponse -> {
-                final JsonObject instance = instanceResponse.getStatusCode() == 200
-                  ? instanceResponse.getJson()
-                  : null;
-
-                final JsonObject holding = holdingResponse.getStatusCode() == 200
+        String holdingId = item.getString("holdingsRecordId");
+        holdingsStorageClient.get(holdingId, holdingResponse -> {
+          final String instanceId = holdingResponse.getStatusCode() == 200
+            ? holdingResponse.getJson().getString("instanceId")
+            : null;
+        
+          instancesStorageClient.get(instanceId, instanceResponse -> {
+            final JsonObject instance = instanceResponse.getStatusCode() == 200
+              ? instanceResponse.getJson()
+              : null;
+            
+            final JsonObject holding = holdingResponse.getStatusCode() == 200
                   ? holdingResponse.getJson()
                   : null;
+            
+            lookupLoanPolicyId(loan, item, instance, usersStorageClient, client,
+                    routingContext.response(), context, loanPolicyIdJson -> {
+              loan.put("loanPolicyId", loanPolicyIdJson.getString("loanPolicyId"));  
+              loansStorageClient.post(loan, response -> {
+                if(response.getStatusCode() == 201) {
+                  JsonObject createdLoan = response.getJson();
 
-                final String locationId = determineLocationIdForItem(item, holding);
+                  final String locationId = determineLocationIdForItem(item, holding);
 
-                locationsStorageClient.get(locationId,
-                  locationResponse -> {
+                  locationsStorageClient.get(locationId, locationResponse -> {
                     if(locationResponse.getStatusCode() == 200) {
                       JsonResponse.created(routingContext.response(),
                         extendedLoan(createdLoan, item, instance,
@@ -136,13 +132,14 @@ public class LoanCollectionResource {
                         extendedLoan(createdLoan, item, instance, null));
                     }
                   });
+                }
+                else {
+                    ForwardResponse.forward(routingContext.response(), response);
+                }
               });
-            });
-        }
-        else {
-          ForwardResponse.forward(routingContext.response(), response);
-        }
-      });
+          });            
+        });       
+      });        
     });
   }
 
@@ -588,7 +585,7 @@ public class LoanCollectionResource {
     CollectionResourceClient usersStorageClient;
     
     usersStorageClient = new CollectionResourceClient(
-      client, context.getOkapiBasedUrl("/users"), context.getTenantId());
+      client, context.getOkapiBasedUrl("/users"));
     
     return usersStorageClient;
   }
@@ -599,7 +596,7 @@ public class LoanCollectionResource {
     throws MalformedURLException {
     CollectionResourceClient instancesStorageClient;
     instancesStorageClient = new CollectionResourceClient(client,
-      context.getOkapiBasedUrl("/instance-storage/instances"), context.getTenantId());
+      context.getOkapiBasedUrl("/instance-storage/instances"));
     
     return instancesStorageClient;
   }
@@ -668,7 +665,7 @@ public class LoanCollectionResource {
   private void lookupLoanPolicyId(
     JsonObject loan,
     JsonObject item,
-    CollectionResourceClient instancesStorageClient,
+    JsonObject instance,
     CollectionResourceClient usersStorageClient,
     OkapiHttpClient client,
     HttpServerResponse responseToClient,
@@ -688,55 +685,43 @@ public class LoanCollectionResource {
       } else {
         locationId[0] = item.getString("permanentLocationId");
       }
-      instancesStorageClient.get(instanceId, getInstanceResponse -> {
-        if(getInstanceResponse.getStatusCode() != 200) {
-          if(getInstanceResponse.getStatusCode() == 404) {
-            ServerErrorResponse.internalError(responseToClient, "Unable to locate Instance");
+      //Got instance record, we're good to continue
+      String[] instanceTypeId = { instance.getString("instanceTypeId") };
+      usersStorageClient.get(userId, getUserResponse -> {
+        if(getUserResponse.getStatusCode() != 200) {
+          if(getUserResponse.getStatusCode() == 404) {
+            ServerErrorResponse.internalError(responseToClient, "Unable to locate User");
           } else {
-            ForwardResponse.forward(responseToClient, getInstanceResponse);
-          }          
+             ForwardResponse.forward(responseToClient, getUserResponse);
+          }
         } else {
-          //Got instance record, we're good to continue
-          JsonObject instance = getInstanceResponse.getJson();
-          String[] instanceTypeId = { instance.getString("instanceTypeId") };
-          usersStorageClient.get(userId, getUserResponse -> {
-            if(getUserResponse.getStatusCode() != 200) {
-              if(getUserResponse.getStatusCode() == 404) {
-                ServerErrorResponse.internalError(responseToClient, "Unable to locate User");
-              } else {
-                 ForwardResponse.forward(responseToClient, getUserResponse);
-              }
-            } else {
-              //Got user record, we're good to continue
-              JsonObject user = getUserResponse.getJson();
-              try {
-                client.get(context.getOkapiBasedUrl("/circulation/loan-rules/apply") + 
-                  String.format(
-                    "item_type_id=%s&loan_type_id=%s&patron_type_id=%s&shelving_location_id=%s",
-                    instanceTypeId[0], loanTypeId[0], user.getString("patronGroup"), locationId[0]),
-                    response -> {
-                      response.bodyHandler( body -> {
-                        Response getPolicyResponse = Response.from(response, body);
-                        if(getPolicyResponse.getStatusCode() != 200) {
-                          if(getPolicyResponse.getStatusCode() != 404) {
-                            ServerErrorResponse.internalError(responseToClient, "Unable to locate loan policy");
-                          } else {
-                             ForwardResponse.forward(responseToClient, getPolicyResponse);
-                          }
-                        } else {
-                          JsonObject policyIdJson = getPolicyResponse.getJson();
-                           onSuccess.accept(policyIdJson);
-                        }
-                      });
-                });
-              } catch(MalformedURLException m) {
-                ServerErrorResponse.internalError(responseToClient, "Error forming URL to loan-rules endpoint");
-              }
-            }
-          });
+          //Got user record, we're good to continue
+          JsonObject user = getUserResponse.getJson();
+          try {
+            client.get(context.getOkapiBasedUrl("/circulation/loan-rules/apply") + 
+              String.format(
+                "item_type_id=%s&loan_type_id=%s&patron_type_id=%s&shelving_location_id=%s",
+                instanceTypeId[0], loanTypeId[0], user.getString("patronGroup"), locationId[0]),
+                response -> {
+                  response.bodyHandler( body -> {
+                    Response getPolicyResponse = Response.from(response, body);
+                    if(getPolicyResponse.getStatusCode() != 200) {
+                      if(getPolicyResponse.getStatusCode() != 404) {
+                        ServerErrorResponse.internalError(responseToClient, "Unable to locate loan policy");
+                      } else {
+                         ForwardResponse.forward(responseToClient, getPolicyResponse);
+                      }
+                    } else {
+                      JsonObject policyIdJson = getPolicyResponse.getJson();
+                       onSuccess.accept(policyIdJson);
+                    }
+                  });
+            });
+          } catch(MalformedURLException m) {
+            ServerErrorResponse.internalError(responseToClient, "Error forming URL to loan-rules endpoint");
+          }
         }
-      });
-  
+      });  
   }
   
   static String urlEncodeUTF8(String s) {
@@ -745,6 +730,7 @@ public class LoanCollectionResource {
     } catch (UnsupportedEncodingException e) {
       throw new UnsupportedOperationException(e);
     }
+  }
 
   private String determineLocationIdForItem(JsonObject item, JsonObject holding) {
     if(item.containsKey("temporaryLocationId")) {
