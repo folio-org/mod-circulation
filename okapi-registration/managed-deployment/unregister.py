@@ -28,6 +28,29 @@ def un_deploy_instances():
         print('Delete Response for {0}: {1}'.format(
           instance_url, delete_response.status_code))
 
+def deactivate_for_tenant(module_id, tenant_id):
+    activation_url = '{0}/_/proxy/tenants/{1}/modules/{2}'.format(
+        okapi_address, tenant_id, module_id)
+
+    delete_response = requests.delete(activation_url)
+
+    if(delete_response.status_code == 204):
+        print('Module {0} deactivated for {1}'.format(module_id, tenant_id))
+    else:
+        print('Could not deactivate module {0}, status: {1}'.format(
+            module_id, delete_response.status_code))
+
+def remove_from_proxy(module_id):
+    proxy_url = '{0}/_/proxy/modules/{1}'.format(okapi_address, module_id)
+
+    delete_response = requests.delete(proxy_url)
+
+    if(delete_response.status_code == 204):
+        print('Module {0} removed from proxy'.format(module_id))
+    else:
+        print('Could not remove module {0} from proxy, status: {1}'.format(
+            module_id, delete_response.status_code))
+
 args = sys.argv
 
 module_id = find_module_id()
@@ -39,4 +62,6 @@ else:
     sys.stderr.write('Tenant ID must be passed on the command line')
     sys.exit()
 
+deactivate_for_tenant(module_id, tenant_id)
+remove_from_proxy(module_id)
 un_deploy_instances()

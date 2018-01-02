@@ -1,11 +1,7 @@
 #!/usr/bin/env bash
 
-module_id=${1}
-okapi_proxy_address=${2:-http://localhost:9130}
-tenant_id=${3:-demo_tenant}
-
-curl -X DELETE -D - -w '\n' "${okapi_proxy_address}/_/proxy/tenants/${tenant_id}/modules/${module_id}"
-curl -X DELETE -D - -w '\n' "${okapi_proxy_address}/_/proxy/modules/${module_id}"
+okapi_proxy_address=${1:-http://localhost:9130}
+tenant_id=${2:-demo_tenant}
 
 if which python3
 then
