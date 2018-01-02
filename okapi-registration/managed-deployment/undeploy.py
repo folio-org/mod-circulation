@@ -1,14 +1,20 @@
 import requests
 import sys
+import json
+
+def find_module_id():
+    with open('target/ModuleDescriptor.json') as descriptor_file:
+        return json.load(descriptor_file)['id']
 
 args = sys.argv
 
-if(len(args) >= 3):
-    module_id = args[1]
-    tenant_id = args[2]
-    okapi_address = args[3] or 'http://localhost:9130'
+module_id = find_module_id()
+
+if(len(args) >= 2):
+    tenant_id = args[1]
+    okapi_address = args[2] or 'http://localhost:9130'
 else:
-    sys.stderr.write('Module and Tenant IDs must be passed on the command line')
+    sys.stderr.write('Tenant ID must be passed on the command line')
     sys.exit()
 
 url = '{0}/_/discovery/modules/{1}'.format(okapi_address, module_id)
