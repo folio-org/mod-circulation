@@ -7,7 +7,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
-import java.io.UnsupportedEncodingException;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlHelper;
@@ -15,18 +14,15 @@ import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.*;
-import org.folio.circulation.support.http.server.ForwardResponse;
-import org.folio.circulation.support.http.server.ServerErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.UnsupportedEncodingException;
 import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.ArrayList;
 import java.util.Collection;
-
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -78,7 +74,7 @@ public class LoanCollectionResource {
       instancesStorageClient = createInstanceStorageClient(client, context);
       locationsStorageClient = createLocationsStorageClient(client, context);
       usersStorageClient = createUsersStorageClient(client, context);
-              
+
     }
     catch (MalformedURLException e) {
       ServerErrorResponse.internalError(routingContext.response(),
@@ -98,19 +94,19 @@ public class LoanCollectionResource {
           final String instanceId = holdingResponse.getStatusCode() == 200
             ? holdingResponse.getJson().getString("instanceId")
             : null;
-        
+
           instancesStorageClient.get(instanceId, instanceResponse -> {
             final JsonObject instance = instanceResponse.getStatusCode() == 200
               ? instanceResponse.getJson()
               : null;
-            
+
             final JsonObject holding = holdingResponse.getStatusCode() == 200
                   ? holdingResponse.getJson()
                   : null;
-            
+
             lookupLoanPolicyId(loan, item, instance, usersStorageClient, client,
                     routingContext.response(), context, loanPolicyIdJson -> {
-              loan.put("loanPolicyId", loanPolicyIdJson.getString("loanPolicyId"));  
+              loan.put("loanPolicyId", loanPolicyIdJson.getString("loanPolicyId"));
               loansStorageClient.post(loan, response -> {
                 if(response.getStatusCode() == 201) {
                   JsonObject createdLoan = response.getJson();
@@ -137,9 +133,9 @@ public class LoanCollectionResource {
                     ForwardResponse.forward(routingContext.response(), response);
                 }
               });
-          });            
-        });       
-      });        
+          });
+        });
+      });
     });
   }
 
@@ -576,20 +572,20 @@ public class LoanCollectionResource {
     return new CollectionResourceClient(
       client, context.getOkapiBasedUrl("/shelf-locations"));
   }
-  
+
   private CollectionResourceClient createUsersStorageClient(
     OkapiHttpClient client,
     WebContext context)
     throws MalformedURLException {
-    
+
     CollectionResourceClient usersStorageClient;
-    
+
     usersStorageClient = new CollectionResourceClient(
       client, context.getOkapiBasedUrl("/users"));
-    
+
     return usersStorageClient;
   }
-  
+
   private CollectionResourceClient createInstancesStorageClient(
     OkapiHttpClient client,
     WebContext context)
@@ -597,7 +593,7 @@ public class LoanCollectionResource {
     CollectionResourceClient instancesStorageClient;
     instancesStorageClient = new CollectionResourceClient(client,
       context.getOkapiBasedUrl("/instance-storage/instances"));
-    
+
     return instancesStorageClient;
   }
 
@@ -661,7 +657,7 @@ public class LoanCollectionResource {
 
     return loan;
   }
-  
+
   private void lookupLoanPolicyId(
     JsonObject loan,
     JsonObject item,
@@ -698,9 +694,10 @@ public class LoanCollectionResource {
           //Got user record, we're good to continue
           JsonObject user = getUserResponse.getJson();
           try {
-            client.get(context.getOkapiBasedUrl("/circulation/loan-rules/apply") + 
+//            client.get(context.getOkapiBasedUrl("/circulation/loan-rules/apply") +
+            client.get(new URL("http://localhost:9605/circulation/loan-rules/apply") +
               String.format(
-                "item_type_id=%s&loan_type_id=%s&patron_type_id=%s&shelving_location_id=%s",
+                "?item_type_id=%s&loan_type_id=%s&patron_type_id=%s&shelving_location_id=%s",
                 instanceTypeId[0], loanTypeId[0], user.getString("patronGroup"), locationId[0]),
                 response -> {
                   response.bodyHandler( body -> {
@@ -721,9 +718,9 @@ public class LoanCollectionResource {
             ServerErrorResponse.internalError(responseToClient, "Error forming URL to loan-rules endpoint");
           }
         }
-      });  
+      });
   }
-  
+
   static String urlEncodeUTF8(String s) {
     try {
       return URLEncoder.encode(s, "UTF-8");
