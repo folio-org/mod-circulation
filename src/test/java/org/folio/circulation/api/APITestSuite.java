@@ -69,7 +69,13 @@ public class APITestSuite {
   private static UUID booksInstanceTypeId;
   private static UUID personalCreatorTypeId;
   private static boolean initialised;
-  private static UUID userId;
+  private static UUID userId1;
+  private static UUID userId2;
+  private static JsonObject userRecord1 = new JsonObject().put("username", "bfrederi")
+          .put("id", "25ff4681-ddb2-45c2-b855-6290871dfaf9");
+  private static JsonObject userRecord2  = new JsonObject().put("username", "lko")
+          .put("id", "93771903-3a91-4a05-bbf3-f1479c7f3b78");
+
 
   public static URL circulationModuleUrl(String path) {
     try {
@@ -134,7 +140,7 @@ public class APITestSuite {
   }
   
   public static UUID userId() {
-    return userId;
+    return userId1;
   }
 
   @BeforeClass
@@ -256,8 +262,9 @@ public class APITestSuite {
     InterruptedException,
     ExecutionException,
     TimeoutException {
-    userId = createReferenceRecord(ResourceClient.forUsers(createClient()), "User");
-    
+    ResourceClient usersClient = ResourceClient.forUsers(createClient());
+    userId1 = createUserRecord(usersClient, userRecord1);
+    userId2 = createUserRecord(usersClient, userRecord2);    
   }
   
   private static void deleteUsers()
@@ -267,7 +274,8 @@ public class APITestSuite {
     TimeoutException {
     
     ResourceClient usersClient = ResourceClient.forUsers(createClient());
-    usersClient.delete(userId);
+    usersClient.delete(userId1);
+    usersClient.delete(userId2);
   }
   
   private static void createMaterialTypes()
@@ -399,6 +407,25 @@ public class APITestSuite {
     else {
       return findFirstByName(existingRecords, name);
     }
+  }
+  
+  public static UUID createUserRecord(
+    ResourceClient client,
+    JsonObject record)
+    
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+    List<JsonObject> existingRecords = client.getAll();
+    /*
+    for(JsonObject j : existingRecords) {
+      if(j.getString("id").equals(record.getString("id"))) {
+        return UUID.fromString(j.getString("id"));
+      }
+    }
+    */
+    return client.create(record).getId();
   }
 
   private static UUID findFirstByName(List<JsonObject> existingRecords, String name) {
