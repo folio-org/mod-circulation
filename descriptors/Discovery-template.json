@@ -1,5 +1,5 @@
 {
-  "srvcId": "moduleidhere",
+  "srvcId": "${artifactId}-${version}",
   "instId": "instanceidhere",
   "url": "directaddresshere"
 }

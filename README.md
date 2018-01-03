@@ -14,13 +14,15 @@ FOLIO compatible circulation capabilities, including loan items from the invento
 ### Required
 
 - Java 8 JDK
-- Gradle 3.3
+- Maven 3.5.0
 - Implementation of the loan-storage interface e.g. [FOLIO Loan Storage Module](https://github.com/folio-org/mod-loan-storage)
 
 ### Optional
 
+- Python 3 (for un-registering module during managed demo and tests via Okapi)
 - Node.js 6.4 (for API linting)
 - NPM 3.10 (for API linting)
+- Gradle 3.3 (previous build mechanism)
 
 ## Preparation
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-gradle fatJar
+mvn clean package -q -Dmaven.test.skip=true || exit 1
 
 docker build -t mod-circulation .
 
