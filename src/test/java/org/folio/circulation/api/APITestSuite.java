@@ -138,7 +138,7 @@ public class APITestSuite {
   public static UUID personalCreatorTypeId() {
     return personalCreatorTypeId;
   }
-  
+
   public static UUID userId() {
     return userId1;
   }
@@ -218,7 +218,7 @@ public class APITestSuite {
     deleteLocations();
     deleteInstanceTypes();
     deleteCreatorTypes();
-    deleteUsers();
+//    deleteUsers();
 
     CompletableFuture<Void> circulationModuleUndeployed =
       vertxAssistant.undeployVerticle(circulationModuleDeploymentId);
@@ -257,27 +257,27 @@ public class APITestSuite {
     }
   }
 
-  private static void createUsers()
+  public static void createUsers()
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
     TimeoutException {
     ResourceClient usersClient = ResourceClient.forUsers(createClient());
     userId1 = createUserRecord(usersClient, userRecord1);
-    userId2 = createUserRecord(usersClient, userRecord2);    
+    userId2 = createUserRecord(usersClient, userRecord2);
   }
-  
+
   private static void deleteUsers()
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
     TimeoutException {
-    
+
     ResourceClient usersClient = ResourceClient.forUsers(createClient());
     usersClient.delete(userId1);
     usersClient.delete(userId2);
   }
-  
+
   private static void createMaterialTypes()
     throws MalformedURLException,
     InterruptedException,
@@ -408,11 +408,11 @@ public class APITestSuite {
       return findFirstByName(existingRecords, name);
     }
   }
-  
+
   public static UUID createUserRecord(
     ResourceClient client,
     JsonObject record)
-    
+
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,

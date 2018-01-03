@@ -73,6 +73,6 @@ public abstract class APITests {
     holdingsClient.deleteAll();
     instancesClient.deleteAll();
 
-    usersClient.deleteAllIndividually();
+//    usersClient.deleteAllIndividually();
   }
 }
