@@ -1,6 +1,7 @@
 package org.folio.circulation.api.support.builders;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.api.APITestSuite;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
@@ -24,7 +25,7 @@ public class LoanRequestBuilder implements Builder {
   private final UUID proxyUserId;
 
   public LoanRequestBuilder() {
-    this(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(),
+    this(UUID.randomUUID(), UUID.randomUUID(), APITestSuite.userId(),
       new DateTime(2017, 03, 06, 16, 04, 43), null, "Open", null, "checkedout",
       null);
   }
