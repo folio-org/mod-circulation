@@ -76,6 +76,7 @@ public class APITestSuite {
   private static JsonObject userRecord2  = new JsonObject().put("username", "lko")
           .put("id", "93771903-3a91-4a05-bbf3-f1479c7f3b78");
 
+  private static UUID cannotCirculateLoanPolicyId;
 
   public static URL circulationModuleUrl(String path) {
     try {
@@ -143,6 +144,8 @@ public class APITestSuite {
     return userId1;
   }
 
+  public static UUID cannotCirculateLoanPolicyId() { return cannotCirculateLoanPolicyId; }
+
   @BeforeClass
   public static void before()
     throws InterruptedException,
@@ -189,6 +192,7 @@ public class APITestSuite {
     createInstanceTypes();
     createCreatorTypes();
     createUsers();
+    createLoanPolicies();
 
     initialised = true;
   }
@@ -218,6 +222,8 @@ public class APITestSuite {
     deleteLocations();
     deleteInstanceTypes();
     deleteCreatorTypes();
+    deleteLoanPolicies();
+
 //    deleteUsers();
 
     CompletableFuture<Void> circulationModuleUndeployed =
@@ -385,6 +391,34 @@ public class APITestSuite {
     ResourceClient creatorTypesClient = ResourceClient.forCreatorTypes(createClient());
 
     creatorTypesClient.delete(personalCreatorTypeId());
+  }
+
+  private static void createLoanPolicies()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    ResourceClient client = ResourceClient.forLoanPolicies(createClient());
+
+    JsonObject cannotCirculateLoanPolicy = new JsonObject()
+      .put("name", "No Circulation")
+      .put("description", "Cannot circulate item")
+      .put("loanable", false)
+      .put("renewable", false);
+
+    cannotCirculateLoanPolicyId = client.create(cannotCirculateLoanPolicy).getId();
+  }
+
+  private static void deleteLoanPolicies()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    ResourceClient client = ResourceClient.forLoanPolicies(createClient());
+
+    client.delete(cannotCirculateLoanPolicyId());
   }
 
   private static UUID createReferenceRecord(
