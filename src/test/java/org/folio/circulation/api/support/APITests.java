@@ -1,9 +1,13 @@
 package org.folio.circulation.api.support;
 
+import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.APITestSuite;
 import org.folio.circulation.api.support.fixtures.ItemsFixture;
+import org.folio.circulation.api.support.http.InterfaceUrls;
 import org.folio.circulation.api.support.http.ResourceClient;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -12,8 +16,13 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public abstract class APITests {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -73,6 +82,31 @@ public abstract class APITests {
     holdingsClient.deleteAll();
     instancesClient.deleteAll();
 
+    setDefaultLoanRules();
+
 //    usersClient.deleteAllIndividually();
+  }
+
+  //Needs to be done each time as some tests manipulate the rules
+  private void setDefaultLoanRules()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    String rule = String.format("fallback-policy: %s\n", APITestSuite.cannotCirculateLoanPolicyId());
+
+    JsonObject loanRulesRequest = new JsonObject()
+      .put("loanRulesAsTextFile", rule);
+
+    CompletableFuture<Response> completed = new CompletableFuture<>();
+
+    client.put(InterfaceUrls.loanRulesUrl(), loanRulesRequest,
+      ResponseHandler.any(completed));
+
+    Response response = completed.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format(
+      "Failed to set loan rules: %s", response.getBody()),
+      response.getStatusCode(), is(204));
   }
 }

@@ -57,7 +57,7 @@ public class LoanRulesAPITests {
 
   private Response get() throws Exception {
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
-    client.get(InterfaceUrls.loanRulesURL(), ResponseHandler.any(getCompleted));
+    client.get(InterfaceUrls.loanRulesUrl(), ResponseHandler.any(getCompleted));
     return getCompleted.get(5, TimeUnit.SECONDS);
   }
 
@@ -78,7 +78,7 @@ public class LoanRulesAPITests {
 
   private Response put(JsonObject rules) throws Exception {
     CompletableFuture<Response> completed = new CompletableFuture<>();
-    client.put(InterfaceUrls.loanRulesURL(), rules, ResponseHandler.any(completed));
+    client.put(InterfaceUrls.loanRulesUrl(), rules, ResponseHandler.any(completed));
     return completed.get(5, TimeUnit.SECONDS);
   }
 }

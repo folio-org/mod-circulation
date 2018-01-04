@@ -96,11 +96,11 @@ public class InterfaceUrls {
     return APITestSuite.circulationModuleUrl("/circulation/loans" + subPath);
   }
 
-  public static URL loanRulesURL() {
-    return loanRulesURL("");
+  public static URL loanRulesUrl() {
+    return loanRulesUrl("");
   }
 
-  public static URL loanRulesURL(String subPath) {
+  public static URL loanRulesUrl(String subPath) {
     return APITestSuite.circulationModuleUrl("/circulation/loan-rules" + subPath);
   }
 }
