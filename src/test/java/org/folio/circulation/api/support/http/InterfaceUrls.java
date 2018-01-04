@@ -30,12 +30,6 @@ public class InterfaceUrls {
     return APITestSuite.viaOkapiModuleUrl("/instance-types" + subPath);
   }
 
-  public static URL creatorTypesStorageUrl(String subPath)
-    throws MalformedURLException {
-
-    return APITestSuite.viaOkapiModuleUrl("/creator-types" + subPath);
-  }
-
   public static URL itemsStorageUrl(String subPath)
     throws MalformedURLException {
 

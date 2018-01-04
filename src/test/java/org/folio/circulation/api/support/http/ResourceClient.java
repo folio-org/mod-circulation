@@ -88,11 +88,6 @@ public class ResourceClient {
       "instance types", "instanceTypes");
   }
 
-  public static ResourceClient forCreatorTypes(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::creatorTypesStorageUrl,
-      "creator types", "creatorTypes");
-  }
-
   private ResourceClient(
     OkapiHttpClient client,
     UrlMaker urlMaker, String resourceName,

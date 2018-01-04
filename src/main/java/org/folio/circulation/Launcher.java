@@ -1,8 +1,7 @@
 package org.folio.circulation;
 
+import io.vertx.core.logging.Logger;
 import org.folio.circulation.support.VertxAssistant;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
 import java.util.HashMap;
@@ -12,9 +11,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-public class Launcher {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+import static io.vertx.core.logging.LoggerFactory.getLogger;
 
+public class Launcher {
   private static String moduleDeploymentId;
   private static VertxAssistant vertxAssistant = new VertxAssistant();
 
@@ -23,7 +22,9 @@ public class Launcher {
     ExecutionException,
     TimeoutException {
 
-    Runtime.getRuntime().addShutdownHook(new Thread(() -> stop()));
+    Logging.initialiseFormat();
+
+    Runtime.getRuntime().addShutdownHook(new Thread(Launcher::stop));
 
     HashMap<String, Object> config = new HashMap<>();
 
@@ -41,6 +42,8 @@ public class Launcher {
 
     vertxAssistant.start();
 
+    final Logger log = getLogger(MethodHandles.lookup().lookupClass());
+
     log.info("Server Starting");
 
     CompletableFuture<String> deployed = new CompletableFuture<>();
@@ -57,6 +60,8 @@ public class Launcher {
     CompletableFuture<Void> undeployed = new CompletableFuture<>();
     CompletableFuture<Void> stopped = new CompletableFuture<>();
     CompletableFuture<Void> all = CompletableFuture.allOf(undeployed, stopped);
+
+    final Logger log = getLogger(MethodHandles.lookup().lookupClass());
 
     log.info("Server Stopping");
 

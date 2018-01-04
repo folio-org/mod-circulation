@@ -623,7 +623,7 @@ public class LoanCollectionResource {
 
     if(instance != null && instance.containsKey(titleProperty)) {
       itemSummary.put(titleProperty, instance.getString(titleProperty));
-    } else {
+    } else if (item.containsKey("title")) {
       itemSummary.put(titleProperty, item.getString(titleProperty));
     }
 

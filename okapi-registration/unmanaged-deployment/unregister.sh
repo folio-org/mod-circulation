@@ -1,9 +1,18 @@
 #!/usr/bin/env bash
 
-instance_id=${1}
-module_id=${2}
-tenant_id=${3:-demo_tenant}
+tenant_id=${1:-demo_tenant}
+okapi_proxy_address=${2:-http://localhost:9130}
 
-curl -X DELETE -D - -w '\n' "http://localhost:9130/_/proxy/tenants/${tenant_id}/modules/${module_id}"
-curl -X DELETE -D - -w '\n' "http://localhost:9130/_/discovery/modules/${module_id}/${instance_id}"
-curl -X DELETE -D - -w '\n' "http://localhost:9130/_/proxy/modules/${module_id}"
+if which python3
+then
+  echo "Un-registering module from Okapi using Python"
+
+  pip3 install requests
+
+  script_directory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+  python3 ${script_directory}/unregister.py ${tenant_id} ${okapi_proxy_address}
+
+else
+  echo "Install Python3 to un-register module from Okapi automatically"
+fi

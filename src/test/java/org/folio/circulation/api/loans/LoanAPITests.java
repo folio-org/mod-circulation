@@ -1,7 +1,6 @@
 package org.folio.circulation.api.loans;
 
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.api.APITestSuite;
 import org.folio.circulation.api.support.APITests;
 import org.folio.circulation.api.support.builders.ItemRequestBuilder;
 import org.folio.circulation.api.support.builders.LoanRequestBuilder;
@@ -15,7 +14,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Period;
 import org.joda.time.format.ISODateTimeFormat;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.UnsupportedEncodingException;
@@ -31,7 +29,6 @@ import java.util.concurrent.TimeoutException;
 
 import static org.folio.circulation.api.support.http.InterfaceUrls.loansUrl;
 import static org.folio.circulation.api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -51,8 +48,8 @@ public class LoanAPITests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID userId = ResourceClient.forUsers(client).create(new UserRequestBuilder()).getId();;
-    UUID proxyUserId = ResourceClient.forUsers(client).create(new UserRequestBuilder()).getId();;
+    UUID userId = usersClient.create(new UserRequestBuilder()).getId();
+    UUID proxyUserId = UUID.randomUUID();
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
@@ -118,55 +115,6 @@ public class LoanAPITests extends APITests {
     assertThat("item status snapshot in storage is not checked out",
       loansStorageClient.getById(id).getJson().getString("itemStatus"),
       is("Checked out"));
-
-    assertThat("loan policy id is present",
-      loan.getString("loanPolicyId"), is(notNullValue()));
-  }
-
-  @Test
-  public void canCreateALoanForItemWithAPermanentLocation()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
-
-    UUID id = UUID.randomUUID();
-
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
-      itemBuilder -> itemBuilder
-        .withPermanentLocation(APITestSuite.mainLibraryLocationId())
-        .withNoTemporaryLocation())
-      .getId();
-
-    IndividualResource response = loansClient.create(new LoanRequestBuilder()
-      .withId(id)
-      .withItemId(itemId));
-
-    JsonObject createdLoan = response.getJson();
-
-    assertThat(String.format("created loan has an item location (%s)",
-      createdLoan.encodePrettily()),
-      createdLoan.getJsonObject("item").containsKey("location"), is(true));
-
-    assertThat("location is taken from item when created",
-      createdLoan.getJsonObject("item").getJsonObject("location").getString("name"),
-      is("Main Library"));
-
-    Response fetchResponse = loansClient.getById(id);
-
-    assertThat(String.format("Failed to get loan: %s", fetchResponse.getBody()),
-      fetchResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
-
-    JsonObject fetchedLoan = fetchResponse.getJson();
-
-    assertThat(String.format("fetched loan has an item location (%s)",
-      fetchedLoan.encodePrettily()),
-      fetchedLoan.getJsonObject("item").containsKey("location"), is(true));
-
-    assertThat("location is taken from item when fetched",
-      fetchedLoan.getJsonObject("item").getJsonObject("location").getString("name"),
-      is("Main Library"));
   }
 
   @Test
@@ -181,7 +129,7 @@ public class LoanAPITests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID userId = ResourceClient.forUsers(client).create(new UserRequestBuilder()).getId();;
+    UUID userId = usersClient.create(new UserRequestBuilder()).getId();
 
     IndividualResource response = loansClient.create(new LoanRequestBuilder()
       .withId(id)
@@ -239,8 +187,8 @@ public class LoanAPITests extends APITests {
         .withBarcode("036000291452"))
       .getId();
 
-    UUID userId = ResourceClient.forUsers(client).create(new UserRequestBuilder()).getId();;
-    UUID proxyUserId = ResourceClient.forUsers(client).create(new UserRequestBuilder()).getId();;
+    UUID userId = usersClient.create(new UserRequestBuilder()).getId();
+    UUID proxyUserId = UUID.randomUUID();
 
     DateTime dueDate = new DateTime(2016, 11, 15, 8, 26, 53, DateTimeZone.UTC);
 
@@ -351,7 +299,7 @@ public class LoanAPITests extends APITests {
       ItemRequestBuilder::withNoBarcode)
       .getId();
 
-    UUID userId = ResourceClient.forUsers(client).create(new UserRequestBuilder()).getId();;
+    UUID userId = usersClient.create(new UserRequestBuilder()).getId();
 
     loansClient.create(new LoanRequestBuilder()
       .withId(id)
@@ -572,7 +520,6 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  @Ignore("Cannot create a loan when item is not found")
   public void loanInCollectionDoesNotProvideItemInformationForUnknownItem()
     throws MalformedURLException,
     InterruptedException,
@@ -682,8 +629,8 @@ public class LoanAPITests extends APITests {
     TimeoutException,
     UnsupportedEncodingException {
 
-    UUID firstUserId = ResourceClient.forUsers(client).create(new UserRequestBuilder()).getId();
-    UUID secondUserId = ResourceClient.forUsers(client).create(new UserRequestBuilder()).getId();;
+    UUID firstUserId = usersClient.create(new UserRequestBuilder()).getId();
+    UUID secondUserId = usersClient.create(new UserRequestBuilder()).getId();
 
     String queryTemplate = loansUrl() + "?query=userId=%s";
 
@@ -808,7 +755,7 @@ public class LoanAPITests extends APITests {
     TimeoutException,
     UnsupportedEncodingException {
 
-    UUID userId = ResourceClient.forUsers(client).create(new UserRequestBuilder()).getId();
+    UUID userId = usersClient.create(new UserRequestBuilder()).getId();
 
     String queryTemplate = "userId=\"%s\" and status.name=\"%s\"";
 
@@ -960,5 +907,12 @@ public class LoanAPITests extends APITests {
 
   private List<JsonObject> getLoans(JsonObject page) {
     return JsonArrayHelper.toList(page.getJsonArray("loans"));
+  }
+
+  private static JsonObject findLoanByItemId(List<JsonObject> loans, UUID itemId) {
+    return loans.stream()
+      .filter(record -> record.getString("itemId").equals(itemId.toString()))
+      .findFirst()
+      .get();
   }
 }

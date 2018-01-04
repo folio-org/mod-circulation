@@ -260,7 +260,15 @@
     },
     {
       "id": "item-storage",
+      "version": "5.0"
+    },
+    {
+      "id": "instance-storage",
       "version": "4.0"
+    },
+    {
+      "id": "holdings-storage",
+      "version": "1.0"
     },
     {
       "id": "request-storage",

@@ -19,7 +19,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import static org.folio.circulation.api.support.JsonCollectionAssistant.getRecordById;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -44,7 +43,6 @@ public class LoanAPITitleTests extends APITests {
 
     UUID itemId = itemsClient.create(
       ItemRequestExamples.basedUponSmallAngryPlanet()
-        .withTitle("A different title") // deliberately different to demonstrate behaviour
         .forHolding(holdingId))
       .getId();
 
@@ -78,52 +76,8 @@ public class LoanAPITitleTests extends APITests {
   }
 
   @Test
-  @Ignore("Cannot create a loan when holding is not found")
-  public void titleIsFromItemWhenNoHolding()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
-
-    UUID itemId = itemsClient.create(
-      ItemRequestExamples.basedUponSmallAngryPlanet()
-        .withTitle("A different title") // deliberately different to demonstrate behaviour
-        .forHolding(null))
-      .getId();
-
-    UUID loanId = UUID.randomUUID();
-
-    IndividualResource response = loansClient.create(new LoanRequestBuilder()
-      .withId(loanId)
-      .withItemId(itemId));
-
-    JsonObject createdLoan = response.getJson();
-
-    assertThat("has item title",
-      createdLoan.getJsonObject("item").containsKey("title"), is(true));
-
-    assertThat("title is taken from item",
-      createdLoan.getJsonObject("item").getString("title"),
-      is("A different title"));
-
-    Response fetchedLoanResponse = loansClient.getById(loanId);
-
-    assertThat(fetchedLoanResponse.getStatusCode(), is(200));
-
-    JsonObject fetchedLoan = fetchedLoanResponse.getJson();
-
-    assertThat("has item title",
-      fetchedLoan.getJsonObject("item").containsKey("title"), is(true));
-
-    assertThat("title is taken from item",
-      fetchedLoan.getJsonObject("item").getString("title"),
-      is("A different title"));
-  }
-
-  @Test
-  @Ignore("Cannot create a loan when holding is not found")
-  public void titleIsFromItemWhenHoldingNotFound()
+  @Ignore("Cannot create loan when holding not found, due to applying loan rules")
+  public void noTitleWhenHoldingNotFound()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -141,7 +95,6 @@ public class LoanAPITitleTests extends APITests {
 
     UUID itemId = itemsClient.create(
       ItemRequestExamples.basedUponSmallAngryPlanet()
-        .withTitle("A different title") // deliberately different to demonstrate behaviour
         .forHolding(holdingId))
       .getId();
 
@@ -155,12 +108,8 @@ public class LoanAPITitleTests extends APITests {
 
     JsonObject createdLoan = response.getJson();
 
-    assertThat("has item title",
-      createdLoan.getJsonObject("item").containsKey("title"), is(true));
-
-    assertThat("title is taken from item",
-      createdLoan.getJsonObject("item").getString("title"),
-      is("A different title"));
+    assertThat("has no title",
+      createdLoan.getJsonObject("item").containsKey("title"), is(false));
 
     Response fetchedLoanResponse = loansClient.getById(loanId);
 
@@ -168,17 +117,13 @@ public class LoanAPITitleTests extends APITests {
 
     JsonObject fetchedLoan = fetchedLoanResponse.getJson();
 
-    assertThat("has item title",
-      fetchedLoan.getJsonObject("item").containsKey("title"), is(true));
-
-    assertThat("title is taken from item",
-      fetchedLoan.getJsonObject("item").getString("title"),
-      is("A different title"));
+    assertThat("has no title",
+      fetchedLoan.getJsonObject("item").containsKey("title"), is(false));
   }
 
   @Test
-  @Ignore("Cannot create a loan when instance is not found")
-  public void titleIsFromItemWhenInstanceNotFound()
+  @Ignore("Cannot create loan when instance not found, due to applying loan rules")
+  public void noTitleWhenInstanceNotFound()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -196,7 +141,6 @@ public class LoanAPITitleTests extends APITests {
 
     UUID itemId = itemsClient.create(
       ItemRequestExamples.basedUponSmallAngryPlanet()
-        .withTitle("A different title") // deliberately different to demonstrate behaviour
         .forHolding(holdingId))
       .getId();
 
@@ -210,12 +154,8 @@ public class LoanAPITitleTests extends APITests {
 
     JsonObject createdLoan = response.getJson();
 
-    assertThat("has item title",
-      createdLoan.getJsonObject("item").containsKey("title"), is(true));
-
-    assertThat("title is taken from item",
-      createdLoan.getJsonObject("item").getString("title"),
-      is("A different title"));
+    assertThat("has no title",
+      createdLoan.getJsonObject("item").containsKey("title"), is(false));
 
     Response fetchedLoanResponse = loansClient.getById(loanId);
 
@@ -223,12 +163,8 @@ public class LoanAPITitleTests extends APITests {
 
     JsonObject fetchedLoan = fetchedLoanResponse.getJson();
 
-    assertThat("has item title",
-      fetchedLoan.getJsonObject("item").containsKey("title"), is(true));
-
-    assertThat("title is taken from item",
-      fetchedLoan.getJsonObject("item").getString("title"),
-      is("A different title"));
+    assertThat("has no title",
+      fetchedLoan.getJsonObject("item").containsKey("title"), is(false));
   }
 
   @Test
@@ -249,7 +185,6 @@ public class LoanAPITitleTests extends APITests {
 
     UUID firstItemId = itemsClient.create(
       ItemRequestExamples.basedUponSmallAngryPlanet()
-        .withTitle("A different title") // deliberately different to demonstrate behaviour
         .forHolding(firstHoldingId))
       .getId();
 
@@ -264,7 +199,6 @@ public class LoanAPITitleTests extends APITests {
 
     UUID secondItemId = itemsClient.create(
       ItemRequestExamples.basedUponTemeraire()
-        .withTitle("Another different title") // deliberately different to demonstrate behaviour
         .forHolding(secondHoldingId))
       .getId();
 
@@ -298,7 +232,7 @@ public class LoanAPITitleTests extends APITests {
   }
 
   @Test
-  public void titlesComeFromItemForMultipleLoansWhenHoldingOrInstanceNotFound()
+  public void noTitlesForMultipleLoansWhenHoldingOrInstanceNotFound()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -315,7 +249,6 @@ public class LoanAPITitleTests extends APITests {
 
     UUID firstItemId = itemsClient.create(
       ItemRequestExamples.basedUponSmallAngryPlanet()
-        .withTitle("A different title") // deliberately different to demonstrate behaviour
         .forHolding(firstHoldingId))
       .getId();
 
@@ -330,7 +263,6 @@ public class LoanAPITitleTests extends APITests {
 
     UUID secondItemId = itemsClient.create(
       ItemRequestExamples.basedUponTemeraire()
-        .withTitle("Another different title") // deliberately different to demonstrate behaviour
         .forHolding(secondHoldingId))
       .getId();
 
@@ -353,77 +285,10 @@ public class LoanAPITitleTests extends APITests {
     JsonObject secondFetchedLoan = getRecordById(
       fetchedLoansResponse, secondLoanId).get();
 
-    assertThat("has item title",
-      firstFetchedLoan.getJsonObject("item").containsKey("title"), is(true));
+    assertThat("has no title",
+      firstFetchedLoan.getJsonObject("item").containsKey("title"), is(false));
 
-    assertThat("title is taken from item",
-      firstFetchedLoan.getJsonObject("item").getString("title"),
-      is("A different title"));
-
-    assertThat("has item title",
-      secondFetchedLoan.getJsonObject("item").containsKey("title"), is(true));
-
-    assertThat("title is taken from item",
-      secondFetchedLoan.getJsonObject("item").getString("title"),
-      is("Another different title"));
-  }
-
-  @Test
-  @Ignore("Cannot create a loan when holding is not found")
-  public void titlesComeFromItemForMultipleLoansWhenNoHolding()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    UUID firstItemId = itemsClient.create(
-      ItemRequestExamples.basedUponSmallAngryPlanet()
-        .withTitle("A different title")
-        .forHolding(null))
-      .getId();
-
-    UUID firstLoanId = loansClient.create(new LoanRequestBuilder()
-      .withItemId(firstItemId)).getId();
-
-    List<JsonObject> fetchedLoansResponse = loansClient.getAll();
-
-    JsonObject firstFetchedLoan = getRecordById(
-      fetchedLoansResponse, firstLoanId).get();
-
-    assertThat("has item title",
-      firstFetchedLoan.getJsonObject("item").containsKey("title"), is(true));
-
-    assertThat("title is taken from item",
-      firstFetchedLoan.getJsonObject("item").getString("title"),
-      is("A different title"));
-  }
-
-  @Test
-  @Ignore("Cannot create a loan when holding is not found")
-  public void noTitleWhenForMultipleLoansWhenItemHasNoTitleAndNoHolding()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    UUID firstItemId = itemsClient.create(
-      ItemRequestExamples.basedUponSmallAngryPlanet()
-        .withNoTitle()
-        .forHolding(null))
-      .getId();
-
-    UUID firstLoanId = loansClient.create(new LoanRequestBuilder()
-      .withItemId(firstItemId)).getId();
-
-    List<JsonObject> fetchedLoansResponse = loansClient.getAll();
-
-    JsonObject firstFetchedLoan = getRecordById(
-      fetchedLoansResponse, firstLoanId).get();
-
-    assertThat("has item title",
-      firstFetchedLoan.getJsonObject("item").containsKey("title"), is(true));
-
-    assertThat("has blank item title",
-      firstFetchedLoan.getJsonObject("item").getString("title"), is(nullValue()));
+    assertThat("has no title",
+      secondFetchedLoan.getJsonObject("item").containsKey("title"), is(false));
   }
 }

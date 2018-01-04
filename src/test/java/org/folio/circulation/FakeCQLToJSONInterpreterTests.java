@@ -72,7 +72,7 @@ public class FakeCQLToJSONInterpreterTests {
 
   @Test
   public void canFilterByMultipleValues() {
-    FakeCQLToJSONInterpreter interpreter = new FakeCQLToJSONInterpreter(true);
+    FakeCQLToJSONInterpreter interpreter = new FakeCQLToJSONInterpreter();
 
     Collection<JsonObject> records = new ArrayList<>();
 
@@ -97,7 +97,7 @@ public class FakeCQLToJSONInterpreterTests {
 
   @Test
   public void canFilterBySingleValueWithBrackets() {
-    FakeCQLToJSONInterpreter interpreter = new FakeCQLToJSONInterpreter(true);
+    FakeCQLToJSONInterpreter interpreter = new FakeCQLToJSONInterpreter();
 
     Collection<JsonObject> records = new ArrayList<>();
 
