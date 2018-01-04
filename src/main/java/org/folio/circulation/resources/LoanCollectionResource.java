@@ -104,7 +104,7 @@ public class LoanCollectionResource {
                   ? holdingResponse.getJson()
                   : null;
 
-            lookupLoanPolicyId(loan, item, holding, instance, usersStorageClient, client,
+            lookupLoanPolicyId(loan, item, holding, usersStorageClient, client,
                     routingContext.response(), context, loanPolicyIdJson -> {
               loan.put("loanPolicyId", loanPolicyIdJson.getString("loanPolicyId"));
               loansStorageClient.post(loan, response -> {
@@ -662,7 +662,6 @@ public class LoanCollectionResource {
     JsonObject loan,
     JsonObject item,
     JsonObject holding,
-    JsonObject instance,
     CollectionResourceClient usersStorageClient,
     OkapiHttpClient client,
     HttpServerResponse responseToClient,
@@ -677,11 +676,6 @@ public class LoanCollectionResource {
         ServerErrorResponse.internalError(responseToClient, "Unable to process claim for unknown holding");
       }
 
-      if(instance == null) {
-        ServerErrorResponse.internalError(responseToClient, "Unable to process claim for unknown instance");
-      }
-
-      String instanceId = item.getString("instanceId");
       String userId = loan.getString("userId");
       String[] loanTypeId =  { null };
       if(item.containsKey("temporaryLoanTypeId") && !item.getString("temporaryLoanTypeId").isEmpty()) {
@@ -696,7 +690,7 @@ public class LoanCollectionResource {
         locationId[0] = holding.getString("permanentLocationId");
       }
       //Got instance record, we're good to continue
-      String[] instanceTypeId = { instance.getString("instanceTypeId") };
+      String[] materialTypeId = { item.getString("materialTypeId") };
       usersStorageClient.get(userId, getUserResponse -> {
         if(getUserResponse.getStatusCode() != 200) {
           if(getUserResponse.getStatusCode() == 404) {
@@ -712,7 +706,7 @@ public class LoanCollectionResource {
             client.get(new URL("http://localhost:9605/circulation/loan-rules/apply") +
               String.format(
                 "?item_type_id=%s&loan_type_id=%s&patron_type_id=%s&shelving_location_id=%s",
-                instanceTypeId[0], loanTypeId[0], user.getString("patronGroup"), locationId[0]),
+                materialTypeId[0], loanTypeId[0], user.getString("patronGroup"), locationId[0]),
                 response -> {
                   response.bodyHandler( body -> {
                     Response getPolicyResponse = Response.from(response, body);
