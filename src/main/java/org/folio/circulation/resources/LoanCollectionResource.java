@@ -104,7 +104,7 @@ public class LoanCollectionResource {
                   ? holdingResponse.getJson()
                   : null;
 
-            lookupLoanPolicyId(loan, item, instance, usersStorageClient, client,
+            lookupLoanPolicyId(loan, item, holding, instance, usersStorageClient, client,
                     routingContext.response(), context, loanPolicyIdJson -> {
               loan.put("loanPolicyId", loanPolicyIdJson.getString("loanPolicyId"));
               loansStorageClient.post(loan, response -> {
@@ -661,12 +661,26 @@ public class LoanCollectionResource {
   private void lookupLoanPolicyId(
     JsonObject loan,
     JsonObject item,
+    JsonObject holding,
     JsonObject instance,
     CollectionResourceClient usersStorageClient,
     OkapiHttpClient client,
     HttpServerResponse responseToClient,
     WebContext context,
     Consumer<JsonObject> onSuccess ) {
+
+      if(item == null) {
+        ServerErrorResponse.internalError(responseToClient, "Unable to process claim for unknown item");
+      }
+
+      if(holding == null) {
+        ServerErrorResponse.internalError(responseToClient, "Unable to process claim for unknown holding");
+      }
+
+      if(instance == null) {
+        ServerErrorResponse.internalError(responseToClient, "Unable to process claim for unknown instance");
+      }
+
       String instanceId = item.getString("instanceId");
       String userId = loan.getString("userId");
       String[] loanTypeId =  { null };
@@ -679,7 +693,7 @@ public class LoanCollectionResource {
       if(item.containsKey("temporaryLocationId") && !item.getString("temporaryLocationId").isEmpty()) {
         locationId[0] = item.getString("temporaryLocationId");
       } else {
-        locationId[0] = item.getString("permanentLocationId");
+        locationId[0] = holding.getString("permanentLocationId");
       }
       //Got instance record, we're good to continue
       String[] instanceTypeId = { instance.getString("instanceTypeId") };

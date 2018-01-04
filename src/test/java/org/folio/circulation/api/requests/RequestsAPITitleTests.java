@@ -9,6 +9,7 @@ import org.folio.circulation.api.support.fixtures.InstanceRequestExamples;
 import org.folio.circulation.api.support.fixtures.ItemRequestExamples;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.UnsupportedEncodingException;
@@ -302,6 +303,7 @@ public class RequestsAPITitleTests extends APITests {
   }
 
   @Test
+  @Ignore("Cannot create a loan when holding is not found")
   public void titleIsChangedWhenRequestUpdatedAndNoHolding()
     throws InterruptedException,
     ExecutionException,

@@ -15,6 +15,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Period;
 import org.joda.time.format.ISODateTimeFormat;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.UnsupportedEncodingException;
@@ -571,6 +572,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
+  @Ignore("Cannot create a loan when item is not found")
   public void loanInCollectionDoesNotProvideItemInformationForUnknownItem()
     throws MalformedURLException,
     InterruptedException,
