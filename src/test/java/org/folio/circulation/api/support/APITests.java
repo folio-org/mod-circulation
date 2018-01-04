@@ -93,7 +93,7 @@ public abstract class APITests {
     ExecutionException,
     TimeoutException {
 
-    String rule = String.format("fallback-policy: %s\n", APITestSuite.cannotCirculateLoanPolicyId());
+    String rule = String.format("fallback-policy: %s\n", APITestSuite.canCirculateLoanPolicyId());
 
     JsonObject loanRulesRequest = new JsonObject()
       .put("loanRulesAsTextFile", rule);

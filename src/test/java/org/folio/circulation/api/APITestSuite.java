@@ -76,7 +76,7 @@ public class APITestSuite {
   private static JsonObject userRecord2  = new JsonObject().put("username", "lko")
           .put("id", "93771903-3a91-4a05-bbf3-f1479c7f3b78");
 
-  private static UUID cannotCirculateLoanPolicyId;
+  private static UUID canCirculateLoanPolicyId;
 
   public static URL circulationModuleUrl(String path) {
     try {
@@ -140,7 +140,7 @@ public class APITestSuite {
     return userId1;
   }
 
-  public static UUID cannotCirculateLoanPolicyId() { return cannotCirculateLoanPolicyId; }
+  public static UUID canCirculateLoanPolicyId() { return canCirculateLoanPolicyId; }
 
   @BeforeClass
   public static void before()
@@ -374,13 +374,19 @@ public class APITestSuite {
 
     ResourceClient client = ResourceClient.forLoanPolicies(createClient());
 
-    JsonObject cannotCirculateLoanPolicy = new JsonObject()
-      .put("name", "No Circulation")
-      .put("description", "Cannot circulate item")
-      .put("loanable", false)
-      .put("renewable", false);
+    JsonObject canCirculateLoanPolicy = new JsonObject()
+      .put("name", "Can Circulate")
+      .put("description", "Can circulate item")
+      .put("loanable", true)
+      .put("renewable", true)
+      .put("loansPolicy", new JsonObject()
+        .put("profileId", "ROLLING")
+        .put("closedLibraryDueDateManagementId", "KEEP_CURRENT_DATE"))
+      .put("renewalsPolicy", new JsonObject()
+        .put("renewFromId", "CURRENT_DUE_DATE")
+        .put("differentPeriod", false));
 
-    cannotCirculateLoanPolicyId = client.create(cannotCirculateLoanPolicy).getId();
+    canCirculateLoanPolicyId = client.create(canCirculateLoanPolicy).getId();
   }
 
   private static void deleteLoanPolicies()
@@ -391,7 +397,7 @@ public class APITestSuite {
 
     ResourceClient client = ResourceClient.forLoanPolicies(createClient());
 
-    client.delete(cannotCirculateLoanPolicyId());
+    client.delete(canCirculateLoanPolicyId());
   }
 
   private static UUID createReferenceRecord(
