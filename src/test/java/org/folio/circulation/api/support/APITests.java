@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -83,6 +84,7 @@ public abstract class APITests {
     instancesClient.deleteAll();
 
     setDefaultLoanRules();
+    warmUpApplyEndpoint();
 
 //    usersClient.deleteAllIndividually();
   }
@@ -108,5 +110,24 @@ public abstract class APITests {
     assertThat(String.format(
       "Failed to set loan rules: %s", response.getBody()),
       response.getStatusCode(), is(204));
+  }
+
+  private void warmUpApplyEndpoint()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    CompletableFuture<Response> completed = new CompletableFuture<>();
+
+    client.get(InterfaceUrls.loanRulesUrl("/apply"
+        + String.format("?item_type_id=%s&loan_type_id=%s&patron_type_id=%s&shelving_location_id=%s",
+      UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID())),
+      ResponseHandler.any(completed));
+
+    Response response = completed.get(10, TimeUnit.SECONDS);
+
+    assertThat(String.format(
+      "Failed to apply loan rules: %s", response.getBody()),
+      response.getStatusCode(), is(200));
   }
 }
