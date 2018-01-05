@@ -83,10 +83,12 @@ public abstract class APITests {
     holdingsClient.deleteAll();
     instancesClient.deleteAll();
 
+    usersClient.deleteAllIndividually();
+
+    APITestSuite.createUsers();
+
     setDefaultLoanRules();
     warmUpApplyEndpoint();
-
-//    usersClient.deleteAllIndividually();
   }
 
   //Needs to be done each time as some tests manipulate the rules

@@ -19,6 +19,7 @@ public class FakeStorageModule extends AbstractVerticle {
   private final Collection<String> requiredProperties;
   private final Map<String, Map<String, JsonObject>> storedResourcesByTenant;
   private final String recordTypeName;
+  private final Collection<String> uniqueProperties;
 
   public FakeStorageModule(
     String rootPath,
@@ -26,13 +27,15 @@ public class FakeStorageModule extends AbstractVerticle {
     String tenantId,
     Collection<String> requiredProperties,
     boolean hasCollectionDelete,
-    String recordTypeName) {
+    String recordTypeName,
+    Collection<String> uniqueProperties) {
 
     this.rootPath = rootPath;
     this.collectionPropertyName = collectionPropertyName;
     this.requiredProperties = requiredProperties;
     this.hasCollectionDelete = hasCollectionDelete;
     this.recordTypeName = recordTypeName;
+    this.uniqueProperties = uniqueProperties;
 
     storedResourcesByTenant = new HashMap<>();
     storedResourcesByTenant.put(tenantId, new HashMap<>());
@@ -47,6 +50,7 @@ public class FakeStorageModule extends AbstractVerticle {
     router.put(pathTree).handler(BodyHandler.create());
 
     router.post(rootPath).handler(this::checkRequiredProperties);
+    router.post(rootPath).handler(this::checkUniqueProperties);
     router.post(rootPath).handler(this::create);
 
     router.get(rootPath).handler(this::getMany);
@@ -223,6 +227,38 @@ public class FakeStorageModule extends AbstractVerticle {
     else {
       JsonResponse.unprocessableEntity(routingContext.response(),
         "Required properties missing", errors);
+    }
+  }
+
+  private void checkUniqueProperties(RoutingContext routingContext) {
+    if(uniqueProperties.isEmpty()) {
+      routingContext.next();
+      return;
+    }
+
+    JsonObject body = getJsonFromBody(routingContext);
+
+    ArrayList<ValidationError> errors = new ArrayList<>();
+
+    uniqueProperties.stream().forEach(uniqueProperty -> {
+      String proposedValue = body.getString(uniqueProperty);
+
+      Map<String, JsonObject> records = getResourcesForTenant(new WebContext(routingContext));
+
+      if(records.values().stream()
+        .map(record -> record.getString(uniqueProperty))
+        .anyMatch(usedValue -> usedValue.equals(proposedValue))) {
+
+        errors.add(new ValidationError(uniqueProperty, proposedValue));
+
+        JsonResponse.unprocessableEntity(routingContext.response(),
+          String.format("%s with this %s already exists", recordTypeName, uniqueProperty),
+          errors);
+      }
+    });
+
+    if(errors.isEmpty()) {
+      routingContext.next();
     }
   }
 }

@@ -27,6 +27,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static org.folio.circulation.api.support.fixtures.UserRequestExamples.basedUponJessicaPontefract;
+import static org.folio.circulation.api.support.fixtures.UserRequestExamples.basedUponStevenJones;
 import static org.folio.circulation.api.support.http.InterfaceUrls.loansUrl;
 import static org.folio.circulation.api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static org.hamcrest.Matchers.greaterThan;
@@ -629,8 +631,8 @@ public class LoanAPITests extends APITests {
     TimeoutException,
     UnsupportedEncodingException {
 
-    UUID firstUserId = usersClient.create(new UserRequestBuilder()).getId();
-    UUID secondUserId = usersClient.create(new UserRequestBuilder()).getId();
+    UUID firstUserId = usersClient.create(basedUponStevenJones()).getId();
+    UUID secondUserId = usersClient.create(basedUponJessicaPontefract()).getId();
 
     String queryTemplate = loansUrl() + "?query=userId=%s";
 

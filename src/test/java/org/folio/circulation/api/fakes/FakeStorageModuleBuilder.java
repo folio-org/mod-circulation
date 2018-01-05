@@ -11,11 +11,13 @@ public class FakeStorageModuleBuilder {
   private final String collectionPropertyName;
   private final String tenantId;
   private final Collection<String> requiredProperties;
+  private final Collection<String> uniqueProperties;
   private final Boolean hasCollectionDelete;
   private final String recordName;
 
   public FakeStorageModuleBuilder() {
-    this(null, null, APITestSuite.TENANT_ID, new ArrayList<>(), true, "");
+    this(null, null, APITestSuite.TENANT_ID, new ArrayList<>(), true, "",
+      new ArrayList<>());
   }
 
   private FakeStorageModuleBuilder(
@@ -24,7 +26,8 @@ public class FakeStorageModuleBuilder {
     String tenantId,
     Collection<String> requiredProperties,
     boolean hasCollectionDelete,
-    String recordName) {
+    String recordName,
+    Collection<String> uniqueProperties) {
 
     this.rootPath = rootPath;
     this.collectionPropertyName = collectionPropertyName;
@@ -32,11 +35,12 @@ public class FakeStorageModuleBuilder {
     this.requiredProperties = requiredProperties;
     this.hasCollectionDelete = hasCollectionDelete;
     this.recordName = recordName;
+    this.uniqueProperties = uniqueProperties;
   }
 
   public FakeStorageModule create() {
     return new FakeStorageModule(rootPath, collectionPropertyName, tenantId,
-      requiredProperties, hasCollectionDelete, recordName);
+      requiredProperties, hasCollectionDelete, recordName, uniqueProperties);
   }
 
   public FakeStorageModuleBuilder withRootPath(String rootPath) {
@@ -46,7 +50,8 @@ public class FakeStorageModuleBuilder {
       this.tenantId,
       this.requiredProperties,
       this.hasCollectionDelete,
-      this.recordName);
+      this.recordName,
+      this.uniqueProperties);
   }
 
   public FakeStorageModuleBuilder withCollectionPropertyName(String collectionPropertyName) {
@@ -56,7 +61,8 @@ public class FakeStorageModuleBuilder {
       this.tenantId,
       this.requiredProperties,
       this.hasCollectionDelete,
-      this.recordName);
+      this.recordName,
+      this.uniqueProperties);
   }
 
   public FakeStorageModuleBuilder withRecordName(String recordName) {
@@ -66,7 +72,8 @@ public class FakeStorageModuleBuilder {
       this.tenantId,
       this.requiredProperties,
       this.hasCollectionDelete,
-      recordName);
+      recordName,
+      this.uniqueProperties);
   }
 
   public FakeStorageModuleBuilder withRequiredProperties(Collection<String> requiredProperties) {
@@ -76,7 +83,27 @@ public class FakeStorageModuleBuilder {
       this.tenantId,
       requiredProperties,
       this.hasCollectionDelete,
-      this.recordName);
+      this.recordName,
+      this.uniqueProperties);
+  }
+
+  public FakeStorageModuleBuilder withRequiredProperties(String... requiredProperties) {
+    return withRequiredProperties(Arrays.asList(requiredProperties));
+  }
+
+  public FakeStorageModuleBuilder withUniqueProperties(Collection<String> uniqueProperties) {
+    return new FakeStorageModuleBuilder(
+      this.rootPath,
+      this.collectionPropertyName,
+      this.tenantId,
+      this.requiredProperties,
+      this.hasCollectionDelete,
+      this.recordName,
+      uniqueProperties);
+  }
+
+  public FakeStorageModuleBuilder withUniqueProperties(String... uniqueProperties) {
+    return withUniqueProperties(Arrays.asList(uniqueProperties));
   }
 
   public FakeStorageModuleBuilder disallowCollectionDelete() {
@@ -86,10 +113,7 @@ public class FakeStorageModuleBuilder {
       this.tenantId,
       this.requiredProperties,
       false,
-      this.recordName);
-  }
-
-  public FakeStorageModuleBuilder withRequiredProperties(String... requiredProperties) {
-    return withRequiredProperties(Arrays.asList(requiredProperties));
+      this.recordName,
+      this.uniqueProperties);
   }
 }

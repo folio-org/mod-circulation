@@ -92,6 +92,7 @@ public class FakeOkapi extends AbstractVerticle {
       .withRecordName("user")
       .withRootPath("/users")
       .withRequiredProperties("id", "username")
+      .withUniqueProperties("username")
       .disallowCollectionDelete()
       .create().register(router);
 
