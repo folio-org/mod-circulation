@@ -702,8 +702,7 @@ public class LoanCollectionResource {
           //Got user record, we're good to continue
           JsonObject user = getUserResponse.getJson();
           try {
-//            client.get(context.getOkapiBasedUrl("/circulation/loan-rules/apply") +
-            client.get(new URL("http://localhost:9605/circulation/loan-rules/apply") +
+            client.get(context.getOkapiBasedUrl("/circulation/loan-rules/apply") +
               String.format(
                 "?item_type_id=%s&loan_type_id=%s&patron_type_id=%s&shelving_location_id=%s",
                 materialTypeId[0], loanTypeId[0], user.getString("patronGroup"), locationId[0]),
@@ -714,7 +713,7 @@ public class LoanCollectionResource {
                       if(getPolicyResponse.getStatusCode() != 404) {
                         ServerErrorResponse.internalError(responseToClient, "Unable to locate loan policy");
                       } else {
-                         ForwardResponse.forward(responseToClient, getPolicyResponse);
+                        ForwardResponse.forward(responseToClient, getPolicyResponse);
                       }
                     } else {
                       JsonObject policyIdJson = getPolicyResponse.getJson();

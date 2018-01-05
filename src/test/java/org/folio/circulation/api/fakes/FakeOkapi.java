@@ -3,8 +3,14 @@ package org.folio.circulation.api.fakes;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpServer;
+import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.folio.circulation.api.APITestSuite;
+import org.folio.circulation.support.http.client.BufferHelper;
+import org.folio.circulation.support.http.client.OkapiHttpClient;
+import org.folio.circulation.support.http.server.ForwardResponse;
+import org.folio.circulation.support.http.server.ServerErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +37,8 @@ public class FakeOkapi extends AbstractVerticle {
     Router router = Router.router(vertx);
 
     this.server = vertx.createHttpServer();
+
+    forwardRequestsToApplyLoanRulesBackToCirculationModule(router);
 
     new FakeStorageModuleBuilder()
       .withRecordName("material type")
@@ -114,6 +122,28 @@ public class FakeOkapi extends AbstractVerticle {
           startFuture.fail(result.cause());
         }
       });
+  }
+
+  private Route forwardRequestsToApplyLoanRulesBackToCirculationModule(Router router) {
+
+    //During loan creation, a request to /circulation/loan-rules/apply is made,
+    //which is effectively to itself, so needs to be routed back
+    return router.get("/circulation/loan-rules/apply").handler(context -> {
+      OkapiHttpClient client = APITestSuite.createClient(throwable -> {
+        ServerErrorResponse.internalError(context.response(),
+          String.format("Exception when forward loan rules apply request: %s",
+            throwable.getMessage()));
+      });
+
+      client.get(String.format("http://localhost:%s/circulation/loan-rules/apply?%s"
+        , APITestSuite.circulationModulePort(), context.request().query()),
+        httpClientResponse -> {
+          httpClientResponse.bodyHandler(buffer -> {
+            ForwardResponse.forward(context.response(), httpClientResponse,
+              BufferHelper.stringFromBuffer(buffer));
+          });
+        });
+    });
   }
 
   @Override

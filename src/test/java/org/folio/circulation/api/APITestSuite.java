@@ -78,6 +78,10 @@ public class APITestSuite {
 
   private static UUID canCirculateLoanPolicyId;
 
+  public static int circulationModulePort() {
+    return port;
+  }
+
   public static URL circulationModuleUrl(String path) {
     try {
       if(useOkapiForInitialRequests) {
