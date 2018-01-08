@@ -1,6 +1,7 @@
 package org.folio.circulation.api.loans;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.api.APITestSuite;
 import org.folio.circulation.api.support.APITests;
 import org.folio.circulation.api.support.builders.ItemRequestBuilder;
 import org.folio.circulation.api.support.builders.LoanRequestBuilder;
@@ -88,6 +89,9 @@ public class LoanAPITests extends APITests {
     assertThat("action is not checkedout",
       loan.getString("action"), is("checkedout"));
 
+    assertThat("last loan policy should be stored",
+      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateLoanPolicyId().toString()));
+
     assertThat("title is taken from item",
       loan.getJsonObject("item").getString("title"),
       is("The Long Way to a Small, Angry Planet"));
@@ -117,6 +121,7 @@ public class LoanAPITests extends APITests {
     assertThat("item status snapshot in storage is not checked out",
       loansStorageClient.getById(id).getJson().getString("itemStatus"),
       is("Checked out"));
+
   }
 
   @Test
@@ -233,6 +238,9 @@ public class LoanAPITests extends APITests {
 
     assertThat("action is not checkedout",
       loan.getString("action"), is("checkedout"));
+
+    assertThat("last loan policy should be stored",
+      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateLoanPolicyId().toString()));
 
     assertThat("title is taken from item",
       loan.getJsonObject("item").getString("title"),
