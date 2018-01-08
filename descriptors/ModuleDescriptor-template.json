@@ -36,6 +36,7 @@
           ],
           "modulePermissions": [
             "circulation-storage.loans.item.post",
+            "circulation.loan-rules.apply.get",
             "inventory-storage.items.item.put",
             "inventory-storage.items.item.get",
             "inventory-storage.items.collection.get",
