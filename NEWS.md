@@ -1,3 +1,5 @@
+7.0.0 Unreleased
+
 ## 6.0.0 Unreleased
 
 * Requires item-storage interface version 4.0 or 5.0 (CIRC-57)
