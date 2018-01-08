@@ -1,5 +1,7 @@
 7.0.0 Unreleased
 
+* Requires loan-storage interface version 3.4 (CIRC-51)
+
 ## 6.0.0 Unreleased
 
 * Requires item-storage interface version 4.0 or 5.0 (CIRC-57)
