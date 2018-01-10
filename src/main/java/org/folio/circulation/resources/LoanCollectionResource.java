@@ -702,10 +702,15 @@ public class LoanCollectionResource {
           //Got user record, we're good to continue
           JsonObject user = getUserResponse.getJson();
           try {
+
+            String loanRulesQuery = String.format(
+              "?item_type_id=%s&loan_type_id=%s&patron_type_id=%s&shelving_location_id=%s",
+              materialTypeId[0], loanTypeId[0], user.getString("patronGroup"), locationId[0]);
+
+            log.info(String.format("Applying loan rules for %s", loanRulesQuery));
+
             client.get(context.getOkapiBasedUrl("/circulation/loan-rules/apply") +
-              String.format(
-                "?item_type_id=%s&loan_type_id=%s&patron_type_id=%s&shelving_location_id=%s",
-                materialTypeId[0], loanTypeId[0], user.getString("patronGroup"), locationId[0]),
+                loanRulesQuery,
                 response -> {
                   response.bodyHandler( body -> {
                     Response getPolicyResponse = Response.from(response, body);

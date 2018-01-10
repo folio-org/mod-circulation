@@ -150,23 +150,23 @@ public class APITestSuite {
   public static UUID userId() {
     return userId1;
   }
-  
+
   public static JsonObject userRecord1() {
     return userRecord1;
   }
-  
+
   public static JsonObject userRecord2() {
     return userRecord2;
   }
-  
+
   public static UUID regularGroupId() {
     return regularGroupId;
   }
-  
+
   public static UUID alternateGroupId() {
     return alternateGroupId;
-  }  
-  
+  }
+
   public static UUID canCirculateLoanPolicyId() { return canCirculateLoanPolicyId; }
 
   @BeforeClass

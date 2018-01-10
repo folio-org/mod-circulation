@@ -34,6 +34,7 @@ public abstract class APITests {
     log.error("Request to circulation module failed:", exception);
   });
 
+  private final boolean initialiseLoanRules;
   protected final ResourceClient usersClient = ResourceClient.forUsers(client);
   protected final ResourceClient itemsClient = ResourceClient.forItems(client);
   protected final ResourceClient requestsClient = ResourceClient.forRequests(client);
@@ -41,6 +42,15 @@ public abstract class APITests {
   protected final ItemsFixture itemsFixture = new ItemsFixture(client);
   protected final ResourceClient holdingsClient = ResourceClient.forHoldings(client);
   protected final ResourceClient instancesClient = ResourceClient.forInstances(client);
+
+
+  protected APITests() {
+    this(true);
+  }
+
+  protected APITests(boolean initialiseLoanRules) {
+    this.initialiseLoanRules = initialiseLoanRules;
+  }
 
   @BeforeClass
   public static void before()
@@ -87,8 +97,10 @@ public abstract class APITests {
 
     APITestSuite.createUsers();
 
-    setDefaultLoanRules();
-    warmUpApplyEndpoint();
+    if(initialiseLoanRules) {
+      setDefaultLoanRules();
+      warmUpApplyEndpoint();
+    }
   }
 
   //Needs to be done each time as some tests manipulate the rules
@@ -114,7 +126,7 @@ public abstract class APITests {
       response.getStatusCode(), is(204));
   }
 
-  private void warmUpApplyEndpoint()
+  protected void warmUpApplyEndpoint()
     throws InterruptedException,
     ExecutionException,
     TimeoutException {
