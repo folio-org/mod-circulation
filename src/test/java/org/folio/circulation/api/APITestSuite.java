@@ -78,10 +78,10 @@ public class APITestSuite {
   private static UUID userId2;
   private static JsonObject userRecord1 = new JsonObject().put("username", "bfrederi")
           .put("id", "25ff4681-ddb2-45c2-b855-6290871dfaf9")
-          .put("group", regularGroupId.toString());
+          .put("patronGroup", regularGroupId.toString());
   private static JsonObject userRecord2  = new JsonObject().put("username", "lko")
           .put("id", "93771903-3a91-4a05-bbf3-f1479c7f3b78")
-          .put("group", alternateGroupId.toString());
+          .put("patronGroup", alternateGroupId.toString());
 
   private static UUID canCirculateLoanPolicyId;
 
@@ -150,23 +150,23 @@ public class APITestSuite {
   public static UUID userId() {
     return userId1;
   }
-  
+
   public static JsonObject userRecord1() {
     return userRecord1;
   }
-  
+
   public static JsonObject userRecord2() {
     return userRecord2;
   }
-  
+
   public static UUID regularGroupId() {
     return regularGroupId;
   }
-  
+
   public static UUID alternateGroupId() {
     return alternateGroupId;
-  }  
-  
+  }
+
   public static UUID canCirculateLoanPolicyId() { return canCirculateLoanPolicyId; }
 
   @BeforeClass
