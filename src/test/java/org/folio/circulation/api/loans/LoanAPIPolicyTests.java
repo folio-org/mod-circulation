@@ -62,8 +62,8 @@ public class LoanAPIPolicyTests extends APITests {
     JsonObject itemJson2 = itemsFixture.basedUponSmallAngryPlanet().getJson();
     JsonObject user1 = APITestSuite.userRecord1();
     JsonObject user2 = APITestSuite.userRecord2();
-    UUID group1 = UUID.fromString(user1.getString("group"));
-    UUID group2 = UUID.fromString(user2.getString("group"));
+    UUID group1 = UUID.fromString(user1.getString("patronGroup"));
+    UUID group2 = UUID.fromString(user2.getString("patronGroup"));
     UUID itemId1 = UUID.fromString(itemJson1.getString("id"));
     UUID itemId2 = UUID.fromString(itemJson2.getString("id"));
     UUID materialType1 = UUID.fromString(itemJson1.getString("materialTypeId"));
@@ -79,7 +79,6 @@ public class LoanAPIPolicyTests extends APITests {
       "m " + materialType1 + ": " + p1,
       "m " + materialType1 + " + t " + loanType1 + " : " + p2,
       "m " + materialType1 + " + t " + loanType1 + " + g " + group1 + " : " + p3//,
-      //"m " + mDefault + " + t " + tDefault + " + g " + gDefault + " + s " +  sDefault + " : " + pFourth
       );
     JsonObject newRulesRequest = new JsonObject().put("loanRulesAsTextFile", rules);
     CompletableFuture<Response> completed = new CompletableFuture<>();
