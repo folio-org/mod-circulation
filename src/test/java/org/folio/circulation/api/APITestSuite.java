@@ -72,7 +72,7 @@ public class APITestSuite {
   private static UUID annexLocationId;
   private static UUID booksInstanceTypeId;
   private static UUID regularGroupId = UUID.fromString("4809963d-78fc-4260-8a05-0b76254c07ba");
-  private static UUID alternateGroupId = UUID.fromString("4809963d-78fc-4260-8a05-0b76254c07ba");
+  private static UUID alternateGroupId = UUID.fromString("3748ec8d-8dbc-4717-819d-87c839e6905e");
   private static boolean initialised;
   private static UUID userId1;
   private static UUID userId2;
