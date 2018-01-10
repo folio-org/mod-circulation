@@ -7,6 +7,7 @@ import org.folio.circulation.api.fakes.FakeOkapi;
 import org.folio.circulation.api.loans.LoanAPILocationTests;
 import org.folio.circulation.api.loans.LoanAPITests;
 import org.folio.circulation.api.loans.LoanAPITitleTests;
+import org.folio.circulation.api.loans.LoanAPIPolicyTests;
 import org.folio.circulation.api.requests.*;
 import org.folio.circulation.api.support.http.ResourceClient;
 import org.folio.circulation.api.support.http.URLHelper;
@@ -31,12 +32,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
+
 @RunWith(Suite.class)
 
 @Suite.SuiteClasses({
   LoanAPITests.class,
   LoanAPILocationTests.class,
   LoanAPITitleTests.class,
+  LoanAPIPolicyTests.class,
   LoanRulesAPITests.class,
   LoanRulesEngineAPITests.class,
   RequestsAPICreationTests.class,
@@ -68,13 +71,17 @@ public class APITestSuite {
   private static UUID mainLibraryLocationId;
   private static UUID annexLocationId;
   private static UUID booksInstanceTypeId;
+  private static UUID regularGroupId = UUID.fromString("4809963d-78fc-4260-8a05-0b76254c07ba");
+  private static UUID alternateGroupId = UUID.fromString("4809963d-78fc-4260-8a05-0b76254c07ba");
   private static boolean initialised;
   private static UUID userId1;
   private static UUID userId2;
   private static JsonObject userRecord1 = new JsonObject().put("username", "bfrederi")
-          .put("id", "25ff4681-ddb2-45c2-b855-6290871dfaf9");
+          .put("id", "25ff4681-ddb2-45c2-b855-6290871dfaf9")
+          .put("group", regularGroupId.toString());
   private static JsonObject userRecord2  = new JsonObject().put("username", "lko")
-          .put("id", "93771903-3a91-4a05-bbf3-f1479c7f3b78");
+          .put("id", "93771903-3a91-4a05-bbf3-f1479c7f3b78")
+          .put("group", alternateGroupId.toString());
 
   private static UUID canCirculateLoanPolicyId;
 
@@ -143,7 +150,23 @@ public class APITestSuite {
   public static UUID userId() {
     return userId1;
   }
-
+  
+  public static JsonObject userRecord1() {
+    return userRecord1;
+  }
+  
+  public static JsonObject userRecord2() {
+    return userRecord2;
+  }
+  
+  public static UUID regularGroupId() {
+    return regularGroupId;
+  }
+  
+  public static UUID alternateGroupId() {
+    return alternateGroupId;
+  }  
+  
   public static UUID canCirculateLoanPolicyId() { return canCirculateLoanPolicyId; }
 
   @BeforeClass
