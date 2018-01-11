@@ -64,12 +64,16 @@ public class LoanAPIPolicyTests extends APITests {
     ExecutionException {
     JsonObject itemJson1 = itemsFixture.basedUponInterestingTimes().getJson();
     JsonObject itemJson2 = itemsFixture.basedUponDunkirk().getJson();
+    JsonObject itemJson3 = itemsFixture.basedUponInterestingTimes().getJson();
+    JsonObject itemJson4 = itemsFixture.basedUponDunkirk().getJson();
 
     JsonObject user1 = APITestSuite.userRecord1();
     JsonObject user2 = APITestSuite.userRecord2();
     UUID group1 = UUID.fromString(user1.getString("patronGroup"));
     UUID itemId1 = UUID.fromString(itemJson1.getString("id"));
     UUID itemId2 = UUID.fromString(itemJson2.getString("id"));
+    UUID itemId3 = UUID.fromString(itemJson3.getString("id"));
+    UUID itemId4 = UUID.fromString(itemJson4.getString("id"));
     UUID materialType1 = UUID.fromString(itemJson1.getString("materialTypeId"));
     UUID loanType1 = UUID.fromString(itemJson1.getString("permanentLoanTypeId"));
 
@@ -117,15 +121,13 @@ public class LoanAPIPolicyTests extends APITests {
       not(user2.getString("patronGroup")));
 
     testLoanPolicy(UUID.randomUUID(), UUID.fromString(user2.getString("id")),
-      itemId1, loanDate, dueDate, "Open", "Policy 2");
+      itemId3, loanDate, dueDate, "Open", "Policy 2");
 
     testLoanPolicy(UUID.randomUUID(), UUID.fromString(user1.getString("id")),
       itemId2, loanDate, dueDate, "Open", "Policy 1");
 
     testLoanPolicy(UUID.randomUUID(), UUID.fromString(user2.getString("id")),
-      itemId2, loanDate, dueDate, "Open", "Fallback");
-
-
+      itemId4, loanDate, dueDate, "Open", "Fallback");
   }
 
   private void testLoanPolicy(UUID id, UUID userId, UUID itemId, DateTime loanDate,
