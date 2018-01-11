@@ -70,6 +70,7 @@ public class APITestSuite {
   private static UUID bookMaterialTypeId;
   private static UUID videoRecordingMaterialTypeId;
   private static UUID canCirculateLoanTypeId;
+  private static UUID readingRoomLoanTypeId;
   private static UUID mainLibraryLocationId;
   private static UUID annexLocationId;
   private static UUID booksInstanceTypeId;
@@ -135,6 +136,10 @@ public class APITestSuite {
 
   public static UUID canCirculateLoanTypeId() {
     return canCirculateLoanTypeId;
+  }
+
+  public static UUID readingRoomLoanTypeId() {
+    return readingRoomLoanTypeId;
   }
 
   public static UUID mainLibraryLocationId() {
@@ -370,6 +375,9 @@ public class APITestSuite {
 
     canCirculateLoanTypeId = createReferenceRecord(
       ResourceClient.forLoanTypes(createClient()), "Can Circulate");
+
+    readingRoomLoanTypeId = createReferenceRecord(
+      ResourceClient.forLoanTypes(createClient()), "Reading Room");
   }
 
   private static void deleteLoanTypes()
@@ -381,6 +389,7 @@ public class APITestSuite {
     ResourceClient loanTypesClient = ResourceClient.forLoanTypes(createClient());
 
     loanTypesClient.delete(canCirculateLoanTypeId);
+    loanTypesClient.delete(readingRoomLoanTypeId);
   }
 
   private static void createLocations()
