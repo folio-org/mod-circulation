@@ -5,10 +5,11 @@ import io.vertx.core.json.JsonObject;
 import org.folio.circulation.CirculationVerticle;
 import org.folio.circulation.api.fakes.FakeOkapi;
 import org.folio.circulation.api.loans.LoanAPILocationTests;
+import org.folio.circulation.api.loans.LoanAPIPolicyTests;
 import org.folio.circulation.api.loans.LoanAPITests;
 import org.folio.circulation.api.loans.LoanAPITitleTests;
-import org.folio.circulation.api.loans.LoanAPIPolicyTests;
 import org.folio.circulation.api.requests.*;
+import org.folio.circulation.api.support.builders.UserRequestBuilder;
 import org.folio.circulation.api.support.http.ResourceClient;
 import org.folio.circulation.api.support.http.URLHelper;
 import org.folio.circulation.support.VertxAssistant;
@@ -72,17 +73,13 @@ public class APITestSuite {
   private static UUID mainLibraryLocationId;
   private static UUID annexLocationId;
   private static UUID booksInstanceTypeId;
-  private static UUID regularGroupId = UUID.fromString("4809963d-78fc-4260-8a05-0b76254c07ba");
-  private static UUID alternateGroupId = UUID.fromString("3748ec8d-8dbc-4717-819d-87c839e6905e");
+  private static UUID regularGroupId;
+  private static UUID alternateGroupId;
   private static boolean initialised;
   private static UUID userId1;
   private static UUID userId2;
-  private static JsonObject userRecord1 = new JsonObject().put("username", "bfrederi")
-          .put("id", "25ff4681-ddb2-45c2-b855-6290871dfaf9")
-          .put("patronGroup", regularGroupId.toString());
-  private static JsonObject userRecord2  = new JsonObject().put("username", "lko")
-          .put("id", "93771903-3a91-4a05-bbf3-f1479c7f3b78")
-          .put("patronGroup", alternateGroupId.toString());
+  private static JsonObject userRecord1;
+  private static JsonObject userRecord2;
 
   private static UUID canCirculateLoanPolicyId;
 
@@ -218,6 +215,7 @@ public class APITestSuite {
     createLoanTypes();
     createLocations();
     createInstanceTypes();
+    createGroups();
     createUsers();
     createLoanPolicies();
 
@@ -243,14 +241,13 @@ public class APITestSuite {
     ResourceClient.forInstances(client).deleteAll();
 
     ResourceClient.forUsers(client).deleteAllIndividually();
+    deleteGroups();
 
     deleteMaterialTypes();
     deleteLoanTypes();
     deleteLocations();
     deleteInstanceTypes();
     deleteLoanPolicies();
-
-//    deleteUsers();
 
     CompletableFuture<Void> circulationModuleUndeployed =
       vertxAssistant.undeployVerticle(circulationModuleDeploymentId);
@@ -295,19 +292,49 @@ public class APITestSuite {
     ExecutionException,
     TimeoutException {
     ResourceClient usersClient = ResourceClient.forUsers(createClient());
-    userId1 = createUserRecord(usersClient, userRecord1);
-    userId2 = createUserRecord(usersClient, userRecord2);
+
+    userRecord1 = new UserRequestBuilder()
+      .withUsername("bfrederi")
+      .withPatronGroupId(regularGroupId)
+      .create();
+
+    userId1 = usersClient.create(userRecord1).getId();
+
+    userRecord2 = new UserRequestBuilder()
+      .withUsername("lko")
+      .withPatronGroupId(alternateGroupId)
+      .create();
+
+    userId2 = usersClient.create(userRecord2).getId();
   }
 
-  private static void deleteUsers()
+  public static void createGroups()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+    ResourceClient groupsClient = ResourceClient.forGroups(createClient());
+
+    regularGroupId = groupsClient.create(new JsonObject()
+      .put("group", "Regular Group")
+      .put("desc", "Regular group")
+    ).getId();
+
+    alternateGroupId = groupsClient.create(new JsonObject()
+      .put("group", "Alternative Group")
+      .put("desc", "Regular group")
+    ).getId();
+  }
+
+  private static void deleteGroups()
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
     TimeoutException {
 
-    ResourceClient usersClient = ResourceClient.forUsers(createClient());
-    usersClient.delete(userId1);
-    usersClient.delete(userId2);
+    ResourceClient groupsClient = ResourceClient.forGroups(createClient());
+    groupsClient.delete(regularGroupId);
+    groupsClient.delete(alternateGroupId);
   }
 
   private static void createMaterialTypes()
@@ -456,18 +483,6 @@ public class APITestSuite {
     else {
       return findFirstByName(existingRecords, name);
     }
-  }
-
-  public static UUID createUserRecord(
-    ResourceClient client,
-    JsonObject record)
-
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    return client.create(record).getId();
   }
 
   private static UUID findFirstByName(List<JsonObject> existingRecords, String name) {

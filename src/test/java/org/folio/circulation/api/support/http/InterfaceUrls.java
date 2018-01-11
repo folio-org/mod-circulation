@@ -66,6 +66,12 @@ public class InterfaceUrls {
     return APITestSuite.viaOkapiModuleUrl("/users" + subPath);
   }
 
+  public static URL groupsUrl(String subPath)
+    throws MalformedURLException {
+
+    return APITestSuite.viaOkapiModuleUrl("/groups" + subPath);
+  }
+
   public static URL requestsUrl()
     throws MalformedURLException {
 

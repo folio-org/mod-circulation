@@ -109,25 +109,25 @@ public class LoanAPIPolicyTests extends APITests {
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
-    
+
     testLoanPolicy(UUID.randomUUID(), UUID.fromString(user1.getString("id")),
       itemId1, loanDate, dueDate, "Open", "Policy 3");
-    
-    assertThat("We have different group ids", user1.getString("patronGroup"), 
+
+    assertThat("We have different group ids", user1.getString("patronGroup"),
       not(user2.getString("patronGroup")));
-    
+
     testLoanPolicy(UUID.randomUUID(), UUID.fromString(user2.getString("id")),
       itemId1, loanDate, dueDate, "Open", "Policy 2");
-    
+
     testLoanPolicy(UUID.randomUUID(), UUID.fromString(user1.getString("id")),
       itemId2, loanDate, dueDate, "Open", "Policy 1");
-    
+
     testLoanPolicy(UUID.randomUUID(), UUID.fromString(user2.getString("id")),
       itemId2, loanDate, dueDate, "Open", "Fallback");
-    
-    
+
+
   }
-  
+
   private void testLoanPolicy(UUID id, UUID userId, UUID itemId, DateTime loanDate,
     DateTime dueDate, String status, String policyName)
     throws MalformedURLException,
@@ -203,8 +203,8 @@ public class LoanAPIPolicyTests extends APITests {
     JsonObject pFallbackJson = new JsonObject()
        .put("name", "Fallback")
        .put("description", "Fallback!!!")
-       .put("loanable", false)
-       .put("renewable", false)
+       .put("loanable", true) //Workaround for policy validation in mod-circulation-storage
+       .put("renewable", true) //Workaround for policy validation in mod-circulation-storage
        .put("loansPolicy", new JsonObject()
          .put("profileId", "ROLLING")
          .put("closedLibraryDueDateManagementId", "KEEP_CURRENT_DATE"))

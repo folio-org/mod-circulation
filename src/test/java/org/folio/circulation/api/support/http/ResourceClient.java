@@ -63,6 +63,11 @@ public class ResourceClient {
       "users");
   }
 
+  public static ResourceClient forGroups(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::groupsUrl,
+      "groups");
+  }
+
   public static ResourceClient forLoansStorage(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::loansStorageUrl,
       "storage loans", "loans");
@@ -134,6 +139,9 @@ public class ResourceClient {
     assertThat(
       String.format("Failed to create %s: %s", resourceName, response.getBody()),
       response.getStatusCode(), is(HttpURLConnection.HTTP_CREATED));
+
+    System.out.println(String.format("Created resource %s: %s", resourceName,
+      response.getJson().encodePrettily()));
 
     return new IndividualResource(response);
   }
