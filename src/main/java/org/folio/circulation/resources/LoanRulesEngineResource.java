@@ -23,6 +23,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * The loan rules engine calculates the loan policy based on
+ * item type, loan type, patron type and shelving location.
+ */
 public class LoanRulesEngineResource {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -30,9 +34,9 @@ public class LoanRulesEngineResource {
   private final String applyAllPath;
 
   /** after this time the rules get loaded before executing the loan rules engine */
-  static long MAX_AGE_IN_MILLISECONDS = 5000;
+  static long maxAgeInMilliseconds = 5000;
   /** after this time the loan rules engine is executed first and the the loan rules get reloaded */
-  static long TRIGGER_AGE_IN_MILLISECONDS = 4000;
+  static long triggerAgeInMilliseconds = 4000;
 
   private class Rules {
     String loanRulesAsTextFile = "";
@@ -41,22 +45,46 @@ public class LoanRulesEngineResource {
     /** System.currentTimeMillis() of the last load/reload of the rules from the storage */
     long reloadTimestamp;
     boolean reloadInitiated = false;
-  };
+  }
   /** rules and Drools for each tenantId */
-  static private Map<String,Rules> rulesMap = new HashMap<>();
+  private static Map<String,Rules> rulesMap = new HashMap<>();
 
   /**
-   * Enforce reload of all loan rules of all tenants
+   * Enforce reload of all loan rules of all tenants.
    */
-  static public void clearCache() {
-    rulesMap.clear();
+  public static void clearCache() {
+    for (Rules rules: rulesMap.values()) {
+      // timestamp in the past enforces reload
+      rules.reloadTimestamp = 0;
+    }
   }
 
+  /**
+   * Enforce reload of the tenant's loan rules.
+   * @param tenantId  id of the tenant
+   */
+  public static void clearCache(String tenantId) {
+    Rules rules = rulesMap.get(tenantId);
+    if (rules == null) {
+      return;
+    }
+    rules.reloadTimestamp = 0;
+  }
+
+  /**
+   * Create a loan rules engine that listens at applyPath and applyAllPath.
+   * @param applyPath  URL path for loan rules triggering that returns the first match
+   * @param applyAllPath  URL path for loan rules triggering that returns all matches
+   */
   public LoanRulesEngineResource(String applyPath, String applyAllPath) {
     this.applyPath = applyPath;
     this.applyAllPath = applyAllPath;
   }
 
+  /**
+   * Register the paths set in the constructor.
+   * @param router  where to register
+   */
   public void register(Router router) {
     router.get(applyPath   ).handler(this::apply);
     router.get(applyAllPath).handler(this::applyAll);
@@ -74,7 +102,7 @@ public class LoanRulesEngineResource {
     if (rules == null) {
       return false;
     }
-    return rules.reloadTimestamp + MAX_AGE_IN_MILLISECONDS > System.currentTimeMillis();
+    return rules.reloadTimestamp + maxAgeInMilliseconds > System.currentTimeMillis();
   }
 
   /**
@@ -87,7 +115,7 @@ public class LoanRulesEngineResource {
     if (rules.reloadInitiated) {
       return false;
     }
-    return rules.reloadTimestamp + TRIGGER_AGE_IN_MILLISECONDS < System.currentTimeMillis();
+    return rules.reloadTimestamp + triggerAgeInMilliseconds < System.currentTimeMillis();
   }
 
   /**
@@ -129,7 +157,7 @@ public class LoanRulesEngineResource {
         rules.drools = new Drools(rules.loanRulesAsDrools);
         done.handle(null);
       }
-      catch (Throwable e) {
+      catch (Exception e) {
         log.error("reloadRules", e);
         if (routingContext.response().ended()) {
           return;
@@ -210,7 +238,6 @@ public class LoanRulesEngineResource {
         String patronGroupId = request.getParam("patron_type_id");
         String shelvingLocationId = request.getParam("shelving_location_id");
         List<String> loanPolicyIds = drools.loanPolicies(itemTypeId, loanTypeId, patronGroupId);
-        Map<String,JsonObject> loanPolicyMap = new HashMap<>();
         JsonArray loanPolicies = new JsonArray();
         loanPolicyIds.forEach(id -> {
           JsonObject loanPolicy = new JsonObject().put("id", id);
