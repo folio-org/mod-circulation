@@ -2,10 +2,11 @@
 
 * Applies loan rules to determine the policy to use whilst handling loan requests (CIRC-51)
 * Adds `loanPolicyId` property to a loan, to keep the last policy that was applied to the loan (CIRC-51)
+* Clear cache of loan rules engine when changing loan rules (CIRC-59)
 * Provides circulation interface 2.6 (CIRC-51)
 * Requires loan-storage interface version 3.4 (CIRC-51)
 
-## 6.0.0 Unreleased
+## 6.0.0 2018-01-08
 
 * Requires item-storage interface version 4.0 or 5.0 (CIRC-57)
 * Requires instance-storage interface version 3.3 or 4.0 (CIRC-57)
