@@ -106,11 +106,6 @@ public class LoanAPIPolicyTests extends APITests {
     String loanRules = rulesJson.getString("loanRulesAsTextFile");
     assertThat("Returned rules match submitted rules", loanRules, is(rules));
 
-    System.out.println(String.format("Loan rules: %s", loanRules));
-
-    //Temporarily, wait for as long as the rules take to reload
-    TimeUnit.SECONDS.sleep(5);
-
     warmUpApplyEndpoint();
 
     //Make a request for a new loan
