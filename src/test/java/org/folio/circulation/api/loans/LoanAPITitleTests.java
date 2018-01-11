@@ -33,7 +33,7 @@ public class LoanAPITitleTests extends APITests {
     UnsupportedEncodingException {
 
     UUID instanceId = instancesClient.create(
-      InstanceRequestExamples.smallAngryPlanet()).getId();
+      InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID holdingId = holdingsClient.create(
       new HoldingRequestBuilder()
@@ -85,7 +85,7 @@ public class LoanAPITitleTests extends APITests {
     UnsupportedEncodingException {
 
     UUID instanceId = instancesClient.create(
-      InstanceRequestExamples.smallAngryPlanet()).getId();
+      InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID holdingId = holdingsClient.create(
       new HoldingRequestBuilder()
@@ -131,7 +131,7 @@ public class LoanAPITitleTests extends APITests {
     UnsupportedEncodingException {
 
     UUID instanceId = instancesClient.create(
-      InstanceRequestExamples.smallAngryPlanet()).getId();
+      InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID holdingId = holdingsClient.create(
       new HoldingRequestBuilder()
@@ -175,7 +175,7 @@ public class LoanAPITitleTests extends APITests {
     ExecutionException {
 
     UUID firstInstanceId = instancesClient.create(
-      InstanceRequestExamples.smallAngryPlanet()).getId();
+      InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID firstHoldingId = holdingsClient.create(
       new HoldingRequestBuilder()
@@ -189,7 +189,7 @@ public class LoanAPITitleTests extends APITests {
       .getId();
 
     UUID secondInstanceId = instancesClient.create(
-      InstanceRequestExamples.temeraire()).getId();
+      InstanceRequestExamples.basedUponTemeraire()).getId();
 
     UUID secondHoldingId = holdingsClient.create(
       new HoldingRequestBuilder()
@@ -239,7 +239,7 @@ public class LoanAPITitleTests extends APITests {
     ExecutionException {
 
     UUID firstInstanceId = instancesClient.create(
-      InstanceRequestExamples.smallAngryPlanet()).getId();
+      InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID firstHoldingId = holdingsClient.create(
       new HoldingRequestBuilder()
@@ -253,7 +253,7 @@ public class LoanAPITitleTests extends APITests {
       .getId();
 
     UUID secondInstanceId = instancesClient.create(
-      InstanceRequestExamples.temeraire()).getId();
+      InstanceRequestExamples.basedUponTemeraire()).getId();
 
     UUID secondHoldingId = holdingsClient.create(
       new HoldingRequestBuilder()

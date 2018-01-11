@@ -15,10 +15,11 @@ public class ItemRequestBuilder implements Builder {
   private final String barcode;
   private final String status;
   private final UUID temporaryLocationId;
+  private final UUID materialTypeId;
 
   public ItemRequestBuilder() {
     this(UUID.randomUUID(), null, "565578437802", AVAILABLE_STATUS,
-      null);
+      null, null);
   }
 
   private ItemRequestBuilder(
@@ -26,13 +27,14 @@ public class ItemRequestBuilder implements Builder {
     UUID holdingId,
     String barcode,
     String status,
-    UUID temporaryLocationId) {
+    UUID temporaryLocationId, UUID materialTypeId) {
 
     this.id = id;
     this.holdingId = holdingId;
     this.barcode = barcode;
     this.status = status;
     this.temporaryLocationId = temporaryLocationId;
+    this.materialTypeId = materialTypeId;
   }
 
   public JsonObject create() {
@@ -50,8 +52,11 @@ public class ItemRequestBuilder implements Builder {
       itemRequest.put("holdingsRecordId", holdingId.toString());
     }
 
+    if(materialTypeId != null) {
+      itemRequest.put("materialTypeId", materialTypeId.toString());
+    }
+
     itemRequest.put("status", new JsonObject().put("name", status));
-    itemRequest.put("materialTypeId", APITestSuite.bookMaterialTypeId().toString());
     itemRequest.put("permanentLoanTypeId", APITestSuite.canCirculateLoanTypeId().toString());
 
     if(temporaryLocationId != null) {
@@ -75,7 +80,7 @@ public class ItemRequestBuilder implements Builder {
       this.holdingId,
       this.barcode,
       status,
-      this.temporaryLocationId);
+      this.temporaryLocationId, this.materialTypeId);
   }
 
   public ItemRequestBuilder withBarcode(String barcode) {
@@ -84,7 +89,8 @@ public class ItemRequestBuilder implements Builder {
       this.holdingId,
       barcode,
       this.status,
-      this.temporaryLocationId);
+      this.temporaryLocationId,
+      this.materialTypeId);
   }
 
   public ItemRequestBuilder withNoBarcode() {
@@ -101,7 +107,8 @@ public class ItemRequestBuilder implements Builder {
       this.holdingId,
       this.barcode,
       this.status,
-      temporaryLocationId);
+      temporaryLocationId,
+      this.materialTypeId);
   }
 
   public ItemRequestBuilder forHolding(UUID holdingId) {
@@ -110,6 +117,17 @@ public class ItemRequestBuilder implements Builder {
       holdingId,
       this.barcode,
       this.status,
-      this.temporaryLocationId);
+      this.temporaryLocationId,
+      this.materialTypeId);
+  }
+
+  public ItemRequestBuilder withMaterialType(UUID materialTypeId) {
+    return new ItemRequestBuilder(
+      this.id,
+      this.holdingId,
+      this.barcode,
+      this.status,
+      this.temporaryLocationId,
+      materialTypeId);
   }
 }

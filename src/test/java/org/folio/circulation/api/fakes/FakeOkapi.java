@@ -67,7 +67,7 @@ public class FakeOkapi extends AbstractVerticle {
     new FakeStorageModuleBuilder()
       .withRecordName("item")
       .withRootPath("/item-storage/items")
-      .withRequiredProperties("holdingsRecordId")
+      .withRequiredProperties("holdingsRecordId", "materialTypeId", "permanentLoanTypeId")
       .create().register(router);
 
     new FakeStorageModuleBuilder()

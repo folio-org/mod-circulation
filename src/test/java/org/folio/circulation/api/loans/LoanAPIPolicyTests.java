@@ -62,7 +62,7 @@ public class LoanAPIPolicyTests extends APITests {
     UnsupportedEncodingException,
     ExecutionException {
     JsonObject itemJson1 = itemsFixture.basedUponInterestingTimes().getJson();
-    JsonObject itemJson2 = itemsFixture.basedUponSmallAngryPlanet().getJson();
+    JsonObject itemJson2 = itemsFixture.basedUponDunkirk().getJson();
     JsonObject user1 = APITestSuite.userRecord1();
     JsonObject user2 = APITestSuite.userRecord2();
     UUID group1 = UUID.fromString(user1.getString("patronGroup"));
@@ -80,7 +80,8 @@ public class LoanAPIPolicyTests extends APITests {
     String rules = String.join("\n",
       "fallback-policy: " + pFallback,
       "m " + APITestSuite.bookMaterialTypeId() + ": " + p1,
-      "m " + materialType1 + " + t " + loanType1 + " : " + p2,
+//      "m " + APITestSuite.videoRecordingMaterialTypeId() + ": " + p2,
+      "m " + APITestSuite.bookMaterialTypeId() + " + t " + loanType1 + " : " + p2,
       "m " + APITestSuite.bookMaterialTypeId() + " + t " + loanType1 + " + g " + group1 + " : " + p3//,
       //"m " + mDefault + " + t " + tDefault + " + g " + gDefault + " + s " +  sDefault + " : " + pFourth
       );

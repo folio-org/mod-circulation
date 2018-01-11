@@ -67,6 +67,7 @@ public class APITestSuite {
   private static Boolean useOkapiForStorage;
   private static Boolean useOkapiForInitialRequests;
   private static UUID bookMaterialTypeId;
+  private static UUID videoRecordingMaterialTypeId;
   private static UUID canCirculateLoanTypeId;
   private static UUID mainLibraryLocationId;
   private static UUID annexLocationId;
@@ -129,6 +130,10 @@ public class APITestSuite {
 
   public static UUID bookMaterialTypeId() {
     return bookMaterialTypeId;
+  }
+
+  public static UUID videoRecordingMaterialTypeId() {
+    return videoRecordingMaterialTypeId;
   }
 
   public static UUID canCirculateLoanTypeId() {
@@ -313,6 +318,9 @@ public class APITestSuite {
 
     bookMaterialTypeId = createReferenceRecord(
       ResourceClient.forMaterialTypes(createClient()), "Book");
+
+    videoRecordingMaterialTypeId = createReferenceRecord(
+      ResourceClient.forMaterialTypes(createClient()), "Video Recording");
   }
 
   private static void deleteMaterialTypes()
@@ -324,6 +332,7 @@ public class APITestSuite {
     ResourceClient materialTypesClient = ResourceClient.forMaterialTypes(createClient());
 
     materialTypesClient.delete(bookMaterialTypeId);
+    materialTypesClient.delete(videoRecordingMaterialTypeId);
   }
 
   private static void createLoanTypes()
@@ -457,14 +466,7 @@ public class APITestSuite {
     InterruptedException,
     ExecutionException,
     TimeoutException {
-    List<JsonObject> existingRecords = client.getAll();
-    /*
-    for(JsonObject j : existingRecords) {
-      if(j.getString("id").equals(record.getString("id"))) {
-        return UUID.fromString(j.getString("id"));
-      }
-    }
-    */
+
     return client.create(record).getId();
   }
 

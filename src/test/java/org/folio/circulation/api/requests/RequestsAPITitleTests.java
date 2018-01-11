@@ -34,7 +34,7 @@ public class RequestsAPITitleTests extends APITests {
     UnsupportedEncodingException {
 
     UUID instanceId = instancesClient.create(
-      InstanceRequestExamples.smallAngryPlanet()).getId();
+      InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID holdingId = holdingsClient.create(
       new HoldingRequestBuilder()
@@ -88,7 +88,7 @@ public class RequestsAPITitleTests extends APITests {
     UnsupportedEncodingException {
 
     UUID instanceId = instancesClient.create(
-      InstanceRequestExamples.smallAngryPlanet()).getId();
+      InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID holdingId = holdingsClient.create(
       new HoldingRequestBuilder()
@@ -136,7 +136,7 @@ public class RequestsAPITitleTests extends APITests {
     UnsupportedEncodingException {
 
     UUID instanceId = instancesClient.create(
-      InstanceRequestExamples.smallAngryPlanet()).getId();
+      InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID holdingId = holdingsClient.create(
       new HoldingRequestBuilder()
@@ -184,7 +184,7 @@ public class RequestsAPITitleTests extends APITests {
     UnsupportedEncodingException {
 
     UUID instanceId = instancesClient.create(
-      InstanceRequestExamples.smallAngryPlanet()).getId();
+      InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID holdingId = holdingsClient.create(
       new HoldingRequestBuilder()
@@ -209,7 +209,7 @@ public class RequestsAPITitleTests extends APITests {
     JsonObject createdRequest = response.getJson();
 
     instancesClient.replace(instanceId,
-      InstanceRequestExamples.smallAngryPlanet()
+      InstanceRequestExamples.basedUponSmallAngryPlanet()
         .withId(instanceId)
         .withTitle("A new instance title"));
 
@@ -238,7 +238,7 @@ public class RequestsAPITitleTests extends APITests {
     UnsupportedEncodingException {
 
     UUID instanceId = instancesClient.create(
-      InstanceRequestExamples.smallAngryPlanet()).getId();
+      InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID holdingId = holdingsClient.create(
       new HoldingRequestBuilder()
@@ -285,7 +285,7 @@ public class RequestsAPITitleTests extends APITests {
     UnsupportedEncodingException {
 
     UUID instanceId = instancesClient.create(
-      InstanceRequestExamples.smallAngryPlanet()).getId();
+      InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID holdingId = holdingsClient.create(
       new HoldingRequestBuilder()
@@ -331,7 +331,7 @@ public class RequestsAPITitleTests extends APITests {
     ExecutionException {
 
     UUID firstInstanceId = instancesClient.create(
-      InstanceRequestExamples.smallAngryPlanet()).getId();
+      InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID firstHoldingId = holdingsClient.create(
       new HoldingRequestBuilder()
@@ -345,7 +345,7 @@ public class RequestsAPITitleTests extends APITests {
       .getId();
 
     UUID secondInstanceId = instancesClient.create(
-      InstanceRequestExamples.temeraire()).getId();
+      InstanceRequestExamples.basedUponTemeraire()).getId();
 
     UUID secondHoldingId = holdingsClient.create(
       new HoldingRequestBuilder()
@@ -403,7 +403,7 @@ public class RequestsAPITitleTests extends APITests {
     ExecutionException {
 
     UUID firstInstanceId = instancesClient.create(
-      InstanceRequestExamples.smallAngryPlanet()).getId();
+      InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID firstHoldingId = holdingsClient.create(
       new HoldingRequestBuilder()
@@ -417,7 +417,7 @@ public class RequestsAPITitleTests extends APITests {
       .getId();
 
     UUID secondInstanceId = instancesClient.create(
-      InstanceRequestExamples.temeraire()).getId();
+      InstanceRequestExamples.basedUponTemeraire()).getId();
 
     UUID secondHoldingId = holdingsClient.create(
       new HoldingRequestBuilder()

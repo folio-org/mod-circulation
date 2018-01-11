@@ -28,6 +28,17 @@ public class ItemsFixture {
     defaultPermanentLocation = APITestSuite.mainLibraryLocationId();
   }
 
+  public IndividualResource basedUponDunkirk()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return create(
+      InstanceRequestExamples.basedUponDunkirk(),
+      ItemRequestExamples.basedUponDunkirk());
+  }
+
   public IndividualResource basedUponSmallAngryPlanet()
     throws InterruptedException,
     MalformedURLException,
@@ -35,7 +46,7 @@ public class ItemsFixture {
     ExecutionException {
 
     return create(
-      InstanceRequestExamples.smallAngryPlanet(),
+      InstanceRequestExamples.basedUponSmallAngryPlanet(),
       ItemRequestExamples.basedUponSmallAngryPlanet());
   }
 
@@ -48,7 +59,7 @@ public class ItemsFixture {
 
     return applyAdditionalProperties(
       additionalItemProperties,
-      InstanceRequestExamples.smallAngryPlanet(),
+      InstanceRequestExamples.basedUponSmallAngryPlanet(),
       ItemRequestExamples.basedUponSmallAngryPlanet());
   }
 
@@ -59,7 +70,7 @@ public class ItemsFixture {
     ExecutionException {
 
     return create(
-      InstanceRequestExamples.nod(),
+      InstanceRequestExamples.basedUponNod(),
       ItemRequestExamples.basedUponNod());
   }
 
@@ -72,7 +83,7 @@ public class ItemsFixture {
 
     return applyAdditionalProperties(
       additionalItemProperties,
-      InstanceRequestExamples.nod(),
+      InstanceRequestExamples.basedUponNod(),
       ItemRequestExamples.basedUponNod());
   }
 
@@ -83,7 +94,7 @@ public class ItemsFixture {
     ExecutionException {
 
     return create(
-      InstanceRequestExamples.temeraire(),
+      InstanceRequestExamples.basedUponTemeraire(),
       ItemRequestExamples.basedUponTemeraire());
   }
 
@@ -96,7 +107,7 @@ public class ItemsFixture {
 
     return applyAdditionalProperties(
       additionalItemProperties,
-      InstanceRequestExamples.temeraire(),
+      InstanceRequestExamples.basedUponTemeraire(),
       ItemRequestExamples.basedUponTemeraire());
   }
 
@@ -107,7 +118,7 @@ public class ItemsFixture {
     ExecutionException {
 
     return create(
-      InstanceRequestExamples.uprooted(),
+      InstanceRequestExamples.basedUponUprooted(),
       ItemRequestExamples.basedUponUprooted());
   }
 
@@ -120,7 +131,7 @@ public class ItemsFixture {
 
     return applyAdditionalProperties(
       additionalItemProperties,
-      InstanceRequestExamples.uprooted(),
+      InstanceRequestExamples.basedUponUprooted(),
       ItemRequestExamples.basedUponUprooted());
   }
 
@@ -131,7 +142,7 @@ public class ItemsFixture {
     ExecutionException {
 
     return create(
-      InstanceRequestExamples.interestingTimes(),
+      InstanceRequestExamples.basedUponInterestingTimes(),
       ItemRequestExamples.basedUponInterestingTimes());
   }
 
@@ -144,7 +155,7 @@ public class ItemsFixture {
 
     return applyAdditionalProperties(
       additionalItemProperties,
-      InstanceRequestExamples.interestingTimes(),
+      InstanceRequestExamples.basedUponInterestingTimes(),
       ItemRequestExamples.basedUponInterestingTimes());
   }
 
