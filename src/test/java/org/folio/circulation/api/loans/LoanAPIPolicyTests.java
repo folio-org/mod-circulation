@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNot.not;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 
@@ -63,27 +64,24 @@ public class LoanAPIPolicyTests extends APITests {
     ExecutionException {
     JsonObject itemJson1 = itemsFixture.basedUponInterestingTimes().getJson();
     JsonObject itemJson2 = itemsFixture.basedUponDunkirk().getJson();
+
     JsonObject user1 = APITestSuite.userRecord1();
     JsonObject user2 = APITestSuite.userRecord2();
     UUID group1 = UUID.fromString(user1.getString("patronGroup"));
-    UUID group2 = UUID.fromString(user2.getString("patronGroup"));
     UUID itemId1 = UUID.fromString(itemJson1.getString("id"));
     UUID itemId2 = UUID.fromString(itemJson2.getString("id"));
     UUID materialType1 = UUID.fromString(itemJson1.getString("materialTypeId"));
-    UUID materialType2 = UUID.fromString(itemJson1.getString("materialTypeId"));
     UUID loanType1 = UUID.fromString(itemJson1.getString("permanentLoanTypeId"));
-    UUID loanType2 = UUID.fromString(itemJson1.getString("permanentLoanTypeId"));
 
     createLoanPolicies();
 
     //Set the loan rules
     String rules = String.join("\n",
       "fallback-policy: " + pFallback,
-      "m " + APITestSuite.bookMaterialTypeId() + ": " + p1,
-//      "m " + APITestSuite.videoRecordingMaterialTypeId() + ": " + p2,
+//      "m " + APITestSuite.bookMaterialTypeId() + ": " + p1,
+      "m " + APITestSuite.videoRecordingMaterialTypeId() + " + g " + group1 + " : " + p1,
       "m " + APITestSuite.bookMaterialTypeId() + " + t " + loanType1 + " : " + p2,
       "m " + APITestSuite.bookMaterialTypeId() + " + t " + loanType1 + " + g " + group1 + " : " + p3//,
-      //"m " + mDefault + " + t " + tDefault + " + g " + gDefault + " + s " +  sDefault + " : " + pFourth
       );
     JsonObject newRulesRequest = new JsonObject().put("loanRulesAsTextFile", rules);
     CompletableFuture<Response> completed = new CompletableFuture<>();
@@ -109,19 +107,45 @@ public class LoanAPIPolicyTests extends APITests {
 
     warmUpApplyEndpoint();
 
-    //Make a request for a new loan
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+    
+    testLoanPolicy(UUID.randomUUID(), UUID.fromString(user1.getString("id")),
+      itemId1, loanDate, dueDate, "Open", "Policy 3");
+    
+    assertThat("We have different group ids", user1.getString("patronGroup"), 
+      not(user2.getString("patronGroup")));
+    
+    testLoanPolicy(UUID.randomUUID(), UUID.fromString(user2.getString("id")),
+      itemId1, loanDate, dueDate, "Open", "Policy 2");
+    
+    testLoanPolicy(UUID.randomUUID(), UUID.fromString(user1.getString("id")),
+      itemId2, loanDate, dueDate, "Open", "Policy 1");
+    
+    testLoanPolicy(UUID.randomUUID(), UUID.fromString(user2.getString("id")),
+      itemId2, loanDate, dueDate, "Open", "Fallback");
+    
+    
+  }
+  
+  private void testLoanPolicy(UUID id, UUID userId, UUID itemId, DateTime loanDate,
+    DateTime dueDate, String status, String policyName)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
     IndividualResource loanResponse = loansClient.create(new LoanRequestBuilder()
-      .withId(UUID.randomUUID())
-      .withUserId(UUID.fromString(user1.getString("id")))
-      .withItemId(itemId1)
-      .withLoanDate(new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC))
-      .withDueDate(new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC))
-      .withStatus("Open"));
+      .withId(id)
+      .withUserId(userId)
+      .withItemId(itemId)
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate)
+      .withStatus(status));
 
     JsonObject loanJson = loanResponse.getJson();
     ResourceClient policyResourceClient = ResourceClient.forLoanPolicies(client);
     JsonObject policyJson = policyResourceClient.getById(UUID.fromString(loanJson.getString("loanPolicyId"))).getJson();
-    assertThat("policy is third policy", policyJson.getString("name"), is("Policy 3"));
+    assertThat("policy is " + policyName, policyJson.getString("name"), is(policyName));
   }
 
   private static void createLoanPolicies()
