@@ -10,7 +10,6 @@ import org.folio.circulation.loanrules.LoanRulesException;
 import org.folio.circulation.loanrules.Text2Drools;
 import org.folio.circulation.support.ClientUtil;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.server.ForwardResponse;
 import org.folio.circulation.support.http.server.JsonResponse;
 import org.folio.circulation.support.http.server.ServerErrorResponse;
@@ -20,18 +19,27 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
-import java.net.MalformedURLException;
-import java.net.URL;
 
+/**
+ * Write and read the loan rules.
+ */
 public class LoanRulesResource {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final String rootPath;
 
+  /**
+   * Set the URL path.
+   * @param rootPath  URL path
+   */
   public LoanRulesResource(String rootPath) {
     this.rootPath = rootPath;
   }
 
+  /**
+   * Register the path set in the constructor.
+   * @param router  where to register
+   */
   public void register(Router router) {
     router.put(rootPath).handler(BodyHandler.create());
 
@@ -59,7 +67,7 @@ public class LoanRulesResource {
         loanRules.put("loanRulesAsDrools", Text2Drools.convert(loanRules.getString("loanRulesAsTextFile")));
         JsonResponse.success(routingContext.response(), loanRules);
       }
-      catch (Throwable e) {
+      catch (Exception e) {
         ServerErrorResponse.internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
       }
     });
@@ -84,6 +92,7 @@ public class LoanRulesResource {
       ServerErrorResponse.internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
       return;
     }
+    LoanRulesEngineResource.clearCache(new WebContext(routingContext).getTenantId());
     JsonObject rules = rulesInput.copy();
     rules.remove("loanRulesAsDrools");
     loansRulesClient.put(rules, response -> {

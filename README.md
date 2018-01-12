@@ -68,6 +68,12 @@ run `./lint.sh` to validate the RAML and JSON.Schema descriptions of the API (re
 
 ## Design Notes
 
+### Loan Rules Caching
+
+The loan rules engine used for applying loan rules has an internal, local cache which is refreshed every 5 seconds.
+
+This is per module instance, and so may result in different responses during this window after the loan rules are changed.
+
 ### Item Status
 
 During the circulation process an item can change between a variety of states,
@@ -111,10 +117,6 @@ In order to reduce the amount of requests a client needs to make, some propertie
 
 Loans include information from the item, including locations. 
 As this requires a second set of requests after the items have been fetched, responses may take longer than other requests.
-
-### Permissions
-
-The circulation.all permission set currently represents all of the permissions needed to use the circulation related parts of the system (e.g. the scan application and its configuration). This means that it contains additional permissions than those directly needed by the circulation module itself.
 
 ## Additional Information
 

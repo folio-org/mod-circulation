@@ -5,9 +5,11 @@ import io.vertx.core.json.JsonObject;
 import org.folio.circulation.CirculationVerticle;
 import org.folio.circulation.api.fakes.FakeOkapi;
 import org.folio.circulation.api.loans.LoanAPILocationTests;
+import org.folio.circulation.api.loans.LoanAPIPolicyTests;
 import org.folio.circulation.api.loans.LoanAPITests;
 import org.folio.circulation.api.loans.LoanAPITitleTests;
 import org.folio.circulation.api.requests.*;
+import org.folio.circulation.api.support.builders.UserRequestBuilder;
 import org.folio.circulation.api.support.http.ResourceClient;
 import org.folio.circulation.api.support.http.URLHelper;
 import org.folio.circulation.support.VertxAssistant;
@@ -31,12 +33,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
+
 @RunWith(Suite.class)
 
 @Suite.SuiteClasses({
   LoanAPITests.class,
   LoanAPILocationTests.class,
   LoanAPITitleTests.class,
+  LoanAPIPolicyTests.class,
   LoanRulesAPITests.class,
   LoanRulesEngineAPITests.class,
   RequestsAPICreationTests.class,
@@ -64,11 +68,25 @@ public class APITestSuite {
   private static Boolean useOkapiForStorage;
   private static Boolean useOkapiForInitialRequests;
   private static UUID bookMaterialTypeId;
+  private static UUID videoRecordingMaterialTypeId;
   private static UUID canCirculateLoanTypeId;
+  private static UUID readingRoomLoanTypeId;
   private static UUID mainLibraryLocationId;
   private static UUID annexLocationId;
   private static UUID booksInstanceTypeId;
+  private static UUID regularGroupId;
+  private static UUID alternateGroupId;
   private static boolean initialised;
+  private static UUID userId1;
+  private static UUID userId2;
+  private static JsonObject userRecord1;
+  private static JsonObject userRecord2;
+
+  private static UUID canCirculateLoanPolicyId;
+
+  public static int circulationModulePort() {
+    return port;
+  }
 
   public static URL circulationModuleUrl(String path) {
     try {
@@ -112,8 +130,16 @@ public class APITestSuite {
     return bookMaterialTypeId;
   }
 
+  public static UUID videoRecordingMaterialTypeId() {
+    return videoRecordingMaterialTypeId;
+  }
+
   public static UUID canCirculateLoanTypeId() {
     return canCirculateLoanTypeId;
+  }
+
+  public static UUID readingRoomLoanTypeId() {
+    return readingRoomLoanTypeId;
   }
 
   public static UUID mainLibraryLocationId() {
@@ -127,6 +153,28 @@ public class APITestSuite {
   public static UUID booksInstanceTypeId() {
     return booksInstanceTypeId;
   }
+
+  public static UUID userId() {
+    return userId1;
+  }
+
+  public static JsonObject userRecord1() {
+    return userRecord1;
+  }
+
+  public static JsonObject userRecord2() {
+    return userRecord2;
+  }
+
+  public static UUID regularGroupId() {
+    return regularGroupId;
+  }
+
+  public static UUID alternateGroupId() {
+    return alternateGroupId;
+  }
+
+  public static UUID canCirculateLoanPolicyId() { return canCirculateLoanPolicyId; }
 
   @BeforeClass
   public static void before()
@@ -172,6 +220,9 @@ public class APITestSuite {
     createLoanTypes();
     createLocations();
     createInstanceTypes();
+    createGroups();
+    createUsers();
+    createLoanPolicies();
 
     initialised = true;
   }
@@ -195,11 +246,13 @@ public class APITestSuite {
     ResourceClient.forInstances(client).deleteAll();
 
     ResourceClient.forUsers(client).deleteAllIndividually();
+    deleteGroups();
 
     deleteMaterialTypes();
     deleteLoanTypes();
     deleteLocations();
     deleteInstanceTypes();
+    deleteLoanPolicies();
 
     CompletableFuture<Void> circulationModuleUndeployed =
       vertxAssistant.undeployVerticle(circulationModuleDeploymentId);
@@ -238,6 +291,57 @@ public class APITestSuite {
     }
   }
 
+  public static void createUsers()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+    ResourceClient usersClient = ResourceClient.forUsers(createClient());
+
+    userRecord1 = new UserRequestBuilder()
+      .withUsername("bfrederi")
+      .withPatronGroupId(regularGroupId)
+      .create();
+
+    userId1 = usersClient.create(userRecord1).getId();
+
+    userRecord2 = new UserRequestBuilder()
+      .withUsername("lko")
+      .withPatronGroupId(alternateGroupId)
+      .create();
+
+    userId2 = usersClient.create(userRecord2).getId();
+  }
+
+  public static void createGroups()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+    ResourceClient groupsClient = ResourceClient.forGroups(createClient());
+
+    regularGroupId = groupsClient.create(new JsonObject()
+      .put("group", "Regular Group")
+      .put("desc", "Regular group")
+    ).getId();
+
+    alternateGroupId = groupsClient.create(new JsonObject()
+      .put("group", "Alternative Group")
+      .put("desc", "Regular group")
+    ).getId();
+  }
+
+  private static void deleteGroups()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    ResourceClient groupsClient = ResourceClient.forGroups(createClient());
+    groupsClient.delete(regularGroupId);
+    groupsClient.delete(alternateGroupId);
+  }
+
   private static void createMaterialTypes()
     throws MalformedURLException,
     InterruptedException,
@@ -246,6 +350,9 @@ public class APITestSuite {
 
     bookMaterialTypeId = createReferenceRecord(
       ResourceClient.forMaterialTypes(createClient()), "Book");
+
+    videoRecordingMaterialTypeId = createReferenceRecord(
+      ResourceClient.forMaterialTypes(createClient()), "Video Recording");
   }
 
   private static void deleteMaterialTypes()
@@ -257,6 +364,7 @@ public class APITestSuite {
     ResourceClient materialTypesClient = ResourceClient.forMaterialTypes(createClient());
 
     materialTypesClient.delete(bookMaterialTypeId);
+    materialTypesClient.delete(videoRecordingMaterialTypeId);
   }
 
   private static void createLoanTypes()
@@ -267,6 +375,9 @@ public class APITestSuite {
 
     canCirculateLoanTypeId = createReferenceRecord(
       ResourceClient.forLoanTypes(createClient()), "Can Circulate");
+
+    readingRoomLoanTypeId = createReferenceRecord(
+      ResourceClient.forLoanTypes(createClient()), "Reading Room");
   }
 
   private static void deleteLoanTypes()
@@ -278,6 +389,7 @@ public class APITestSuite {
     ResourceClient loanTypesClient = ResourceClient.forLoanTypes(createClient());
 
     loanTypesClient.delete(canCirculateLoanTypeId);
+    loanTypesClient.delete(readingRoomLoanTypeId);
   }
 
   private static void createLocations()
@@ -324,6 +436,40 @@ public class APITestSuite {
     ResourceClient instanceTypesClient = ResourceClient.forInstanceTypes(createClient());
 
     instanceTypesClient.delete(booksInstanceTypeId());
+  }
+
+  private static void createLoanPolicies()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    ResourceClient client = ResourceClient.forLoanPolicies(createClient());
+
+    JsonObject canCirculateLoanPolicy = new JsonObject()
+      .put("name", "Can Circulate")
+      .put("description", "Can circulate item")
+      .put("loanable", true)
+      .put("renewable", true)
+      .put("loansPolicy", new JsonObject()
+        .put("profileId", "ROLLING")
+        .put("closedLibraryDueDateManagementId", "KEEP_CURRENT_DATE"))
+      .put("renewalsPolicy", new JsonObject()
+        .put("renewFromId", "CURRENT_DUE_DATE")
+        .put("differentPeriod", false));
+
+    canCirculateLoanPolicyId = client.create(canCirculateLoanPolicy).getId();
+  }
+
+  private static void deleteLoanPolicies()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    ResourceClient client = ResourceClient.forLoanPolicies(createClient());
+
+    client.delete(canCirculateLoanPolicyId());
   }
 
   private static UUID createReferenceRecord(

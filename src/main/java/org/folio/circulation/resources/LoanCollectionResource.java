@@ -1,6 +1,7 @@
 package org.folio.circulation.resources;
 
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
@@ -16,14 +17,17 @@ import org.folio.circulation.support.http.server.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.UnsupportedEncodingException;
 import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
@@ -58,15 +62,19 @@ public class LoanCollectionResource {
     CollectionResourceClient itemsStorageClient;
     CollectionResourceClient holdingsStorageClient;
     CollectionResourceClient locationsStorageClient;
+    CollectionResourceClient usersStorageClient;
     CollectionResourceClient instancesStorageClient;
+    OkapiHttpClient client;
 
     try {
-      OkapiHttpClient client = createHttpClient(routingContext, context);
+      client = createHttpClient(routingContext, context);
       loansStorageClient = createLoansStorageClient(client, context);
       itemsStorageClient = createItemsStorageClient(client, context);
       holdingsStorageClient = createHoldingsStorageClient(client, context);
       instancesStorageClient = createInstanceStorageClient(client, context);
       locationsStorageClient = createLocationsStorageClient(client, context);
+      usersStorageClient = createUsersStorageClient(client, context);
+
     }
     catch (MalformedURLException e) {
       ServerErrorResponse.internalError(routingContext.response(),
@@ -81,31 +89,31 @@ public class LoanCollectionResource {
     updateItemStatus(itemId, itemStatusFrom(loan),
       itemsStorageClient, routingContext.response(), item -> {
         loan.put("itemStatus", item.getJsonObject("status").getString("name"));
-        loansStorageClient.post(loan, response -> {
-          if(response.getStatusCode() == 201) {
-            JsonObject createdLoan = response.getJson();
+        String holdingId = item.getString("holdingsRecordId");
+        holdingsStorageClient.get(holdingId, holdingResponse -> {
+          final String instanceId = holdingResponse.getStatusCode() == 200
+            ? holdingResponse.getJson().getString("instanceId")
+            : null;
 
-            String holdingId = item.getString("holdingsRecordId");
+          instancesStorageClient.get(instanceId, instanceResponse -> {
+            final JsonObject instance = instanceResponse.getStatusCode() == 200
+              ? instanceResponse.getJson()
+              : null;
 
-            holdingsStorageClient.get(holdingId, holdingResponse -> {
-
-              final String instanceId = holdingResponse.getStatusCode() == 200
-                ? holdingResponse.getJson().getString("instanceId")
-                : null;
-
-              instancesStorageClient.get(instanceId, instanceResponse -> {
-                final JsonObject instance = instanceResponse.getStatusCode() == 200
-                  ? instanceResponse.getJson()
-                  : null;
-
-                final JsonObject holding = holdingResponse.getStatusCode() == 200
+            final JsonObject holding = holdingResponse.getStatusCode() == 200
                   ? holdingResponse.getJson()
                   : null;
 
-                final String locationId = determineLocationIdForItem(item, holding);
+            lookupLoanPolicyId(loan, item, holding, usersStorageClient, client,
+                    routingContext.response(), context, loanPolicyIdJson -> {
+              loan.put("loanPolicyId", loanPolicyIdJson.getString("loanPolicyId"));
+              loansStorageClient.post(loan, response -> {
+                if(response.getStatusCode() == 201) {
+                  JsonObject createdLoan = response.getJson();
 
-                locationsStorageClient.get(locationId,
-                  locationResponse -> {
+                  final String locationId = determineLocationIdForItem(item, holding);
+
+                  locationsStorageClient.get(locationId, locationResponse -> {
                     if(locationResponse.getStatusCode() == 200) {
                       JsonResponse.created(routingContext.response(),
                         extendedLoan(createdLoan, item, instance,
@@ -120,12 +128,13 @@ public class LoanCollectionResource {
                         extendedLoan(createdLoan, item, instance, null));
                     }
                   });
+                }
+                else {
+                    ForwardResponse.forward(routingContext.response(), response);
+                }
               });
-            });
-        }
-        else {
-          ForwardResponse.forward(routingContext.response(), response);
-        }
+          });
+        });
       });
     });
   }
@@ -564,6 +573,30 @@ public class LoanCollectionResource {
       client, context.getOkapiBasedUrl("/shelf-locations"));
   }
 
+  private CollectionResourceClient createUsersStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+
+    CollectionResourceClient usersStorageClient;
+
+    usersStorageClient = new CollectionResourceClient(
+      client, context.getOkapiBasedUrl("/users"));
+
+    return usersStorageClient;
+  }
+
+  private CollectionResourceClient createInstancesStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+    CollectionResourceClient instancesStorageClient;
+    instancesStorageClient = new CollectionResourceClient(client,
+      context.getOkapiBasedUrl("/instance-storage/instances"));
+
+    return instancesStorageClient;
+  }
+
   private String itemStatusFrom(JsonObject loan) {
     switch(loan.getJsonObject("status").getString("name")) {
       case "Open":
@@ -623,6 +656,89 @@ public class LoanCollectionResource {
     loan.remove("itemStatus");
 
     return loan;
+  }
+
+  private void lookupLoanPolicyId(
+    JsonObject loan,
+    JsonObject item,
+    JsonObject holding,
+    CollectionResourceClient usersStorageClient,
+    OkapiHttpClient client,
+    HttpServerResponse responseToClient,
+    WebContext context,
+    Consumer<JsonObject> onSuccess ) {
+
+      if(item == null) {
+        ServerErrorResponse.internalError(responseToClient, "Unable to process claim for unknown item");
+      }
+
+      if(holding == null) {
+        ServerErrorResponse.internalError(responseToClient, "Unable to process claim for unknown holding");
+      }
+
+      String userId = loan.getString("userId");
+      String[] loanTypeId =  { null };
+      if(item.containsKey("temporaryLoanTypeId") && !item.getString("temporaryLoanTypeId").isEmpty()) {
+        loanTypeId[0] = item.getString("temporaryLoanTypeId");
+      } else {
+        loanTypeId[0] = item.getString("permanentLoanTypeId");
+      }
+      String[] locationId = { null };
+      if(item.containsKey("temporaryLocationId") && !item.getString("temporaryLocationId").isEmpty()) {
+        locationId[0] = item.getString("temporaryLocationId");
+      } else {
+        locationId[0] = holding.getString("permanentLocationId");
+      }
+      //Got instance record, we're good to continue
+      String[] materialTypeId = { item.getString("materialTypeId") };
+      usersStorageClient.get(userId, getUserResponse -> {
+        if(getUserResponse.getStatusCode() != 200) {
+          if(getUserResponse.getStatusCode() == 404) {
+            ServerErrorResponse.internalError(responseToClient, "Unable to locate User");
+          } else {
+             ForwardResponse.forward(responseToClient, getUserResponse);
+          }
+        } else {
+          //Got user record, we're good to continue
+          JsonObject user = getUserResponse.getJson();
+          try {
+
+            String loanRulesQuery = String.format(
+              "?item_type_id=%s&loan_type_id=%s&patron_type_id=%s&shelving_location_id=%s",
+              materialTypeId[0], loanTypeId[0], user.getString("patronGroup"), locationId[0]);
+
+            log.info(String.format("Applying loan rules for %s", loanRulesQuery));
+
+            client.get(context.getOkapiBasedUrl("/circulation/loan-rules/apply") +
+                loanRulesQuery,
+                response -> {
+                  response.bodyHandler( body -> {
+                    Response getPolicyResponse = Response.from(response, body);
+                    if(getPolicyResponse.getStatusCode() != 200) {
+                      if(getPolicyResponse.getStatusCode() != 404) {
+                        ServerErrorResponse.internalError(responseToClient, "Unable to locate loan policy");
+                      } else {
+                        ForwardResponse.forward(responseToClient, getPolicyResponse);
+                      }
+                    } else {
+                      JsonObject policyIdJson = getPolicyResponse.getJson();
+                       onSuccess.accept(policyIdJson);
+                    }
+                  });
+            });
+          } catch(MalformedURLException m) {
+            ServerErrorResponse.internalError(responseToClient, "Error forming URL to loan-rules endpoint");
+          }
+        }
+      });
+  }
+
+  static String urlEncodeUTF8(String s) {
+    try {
+      return URLEncoder.encode(s, "UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      throw new UnsupportedOperationException(e);
+    }
   }
 
   private String determineLocationIdForItem(JsonObject item, JsonObject holding) {

@@ -54,10 +54,22 @@ public class InterfaceUrls {
     return APITestSuite.viaOkapiModuleUrl("/loan-storage/loans" + subPath);
   }
 
+  public static URL loanPoliciesStorageUrl(String subPath)
+    throws MalformedURLException {
+
+    return APITestSuite.viaOkapiModuleUrl("/loan-policy-storage/loan-policies" + subPath);
+  }
+
   public static URL usersUrl(String subPath)
     throws MalformedURLException {
 
     return APITestSuite.viaOkapiModuleUrl("/users" + subPath);
+  }
+
+  public static URL groupsUrl(String subPath)
+    throws MalformedURLException {
+
+    return APITestSuite.viaOkapiModuleUrl("/groups" + subPath);
   }
 
   public static URL requestsUrl()
@@ -84,11 +96,11 @@ public class InterfaceUrls {
     return APITestSuite.circulationModuleUrl("/circulation/loans" + subPath);
   }
 
-  public static URL loanRulesURL() {
-    return loanRulesURL("");
+  public static URL loanRulesUrl() {
+    return loanRulesUrl("");
   }
 
-  public static URL loanRulesURL(String subPath) {
+  public static URL loanRulesUrl(String subPath) {
     return APITestSuite.circulationModuleUrl("/circulation/loan-rules" + subPath);
   }
 }

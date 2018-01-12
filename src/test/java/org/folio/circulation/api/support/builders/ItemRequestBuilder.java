@@ -14,11 +14,13 @@ public class ItemRequestBuilder implements Builder {
   private final UUID holdingId;
   private final String barcode;
   private final String status;
+  private final UUID materialTypeId;
   private final UUID temporaryLocationId;
+  private final UUID temporaryLoanTypeId;
 
   public ItemRequestBuilder() {
     this(UUID.randomUUID(), null, "565578437802", AVAILABLE_STATUS,
-      null);
+      null, null, null);
   }
 
   private ItemRequestBuilder(
@@ -26,13 +28,17 @@ public class ItemRequestBuilder implements Builder {
     UUID holdingId,
     String barcode,
     String status,
-    UUID temporaryLocationId) {
+    UUID temporaryLocationId,
+    UUID materialTypeId,
+    UUID temporaryLoanTypeId) {
 
     this.id = id;
     this.holdingId = holdingId;
     this.barcode = barcode;
     this.status = status;
     this.temporaryLocationId = temporaryLocationId;
+    this.materialTypeId = materialTypeId;
+    this.temporaryLoanTypeId = temporaryLoanTypeId;
   }
 
   public JsonObject create() {
@@ -50,12 +56,19 @@ public class ItemRequestBuilder implements Builder {
       itemRequest.put("holdingsRecordId", holdingId.toString());
     }
 
+    if(materialTypeId != null) {
+      itemRequest.put("materialTypeId", materialTypeId.toString());
+    }
+
     itemRequest.put("status", new JsonObject().put("name", status));
-    itemRequest.put("materialTypeId", APITestSuite.bookMaterialTypeId().toString());
     itemRequest.put("permanentLoanTypeId", APITestSuite.canCirculateLoanTypeId().toString());
 
     if(temporaryLocationId != null) {
       itemRequest.put("temporaryLocationId", temporaryLocationId.toString());
+    }
+
+    if(temporaryLoanTypeId != null) {
+      itemRequest.put("temporaryLoanTypeId", temporaryLoanTypeId.toString());
     }
 
     return itemRequest;
@@ -75,7 +88,9 @@ public class ItemRequestBuilder implements Builder {
       this.holdingId,
       this.barcode,
       status,
-      this.temporaryLocationId);
+      this.temporaryLocationId,
+      this.materialTypeId,
+      this.temporaryLoanTypeId);
   }
 
   public ItemRequestBuilder withBarcode(String barcode) {
@@ -84,7 +99,9 @@ public class ItemRequestBuilder implements Builder {
       this.holdingId,
       barcode,
       this.status,
-      this.temporaryLocationId);
+      this.temporaryLocationId,
+      this.materialTypeId,
+      this.temporaryLoanTypeId);
   }
 
   public ItemRequestBuilder withNoBarcode() {
@@ -101,7 +118,9 @@ public class ItemRequestBuilder implements Builder {
       this.holdingId,
       this.barcode,
       this.status,
-      temporaryLocationId);
+      temporaryLocationId,
+      this.materialTypeId,
+      this.temporaryLoanTypeId);
   }
 
   public ItemRequestBuilder forHolding(UUID holdingId) {
@@ -110,6 +129,31 @@ public class ItemRequestBuilder implements Builder {
       holdingId,
       this.barcode,
       this.status,
-      this.temporaryLocationId);
+      this.temporaryLocationId,
+      this.materialTypeId,
+      this.temporaryLoanTypeId);
+  }
+
+  public ItemRequestBuilder withMaterialType(UUID materialTypeId) {
+    return new ItemRequestBuilder(
+      this.id,
+      this.holdingId,
+      this.barcode,
+      this.status,
+      this.temporaryLocationId,
+      materialTypeId,
+      this.temporaryLoanTypeId);
+  }
+
+  public ItemRequestBuilder withTemporaryLoanType(UUID loanTypeId) {
+    return new ItemRequestBuilder(
+      this.id,
+      this.holdingId,
+      this.barcode,
+      this.status,
+      this.temporaryLocationId,
+      this.materialTypeId,
+      loanTypeId);
+
   }
 }

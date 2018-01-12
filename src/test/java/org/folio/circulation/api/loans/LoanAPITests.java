@@ -1,9 +1,11 @@
 package org.folio.circulation.api.loans;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.api.APITestSuite;
 import org.folio.circulation.api.support.APITests;
 import org.folio.circulation.api.support.builders.ItemRequestBuilder;
 import org.folio.circulation.api.support.builders.LoanRequestBuilder;
+import org.folio.circulation.api.support.builders.UserRequestBuilder;
 import org.folio.circulation.api.support.http.ResourceClient;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -26,6 +28,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static org.folio.circulation.api.support.fixtures.UserRequestExamples.basedUponJessicaPontefract;
+import static org.folio.circulation.api.support.fixtures.UserRequestExamples.basedUponStevenJones;
 import static org.folio.circulation.api.support.http.InterfaceUrls.loansUrl;
 import static org.folio.circulation.api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static org.hamcrest.Matchers.greaterThan;
@@ -47,7 +51,7 @@ public class LoanAPITests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID userId = UUID.randomUUID();
+    UUID userId = usersClient.create(new UserRequestBuilder()).getId();
     UUID proxyUserId = UUID.randomUUID();
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
@@ -85,6 +89,9 @@ public class LoanAPITests extends APITests {
     assertThat("action is not checkedout",
       loan.getString("action"), is("checkedout"));
 
+    assertThat("last loan policy should be stored",
+      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateLoanPolicyId().toString()));
+
     assertThat("title is taken from item",
       loan.getJsonObject("item").getString("title"),
       is("The Long Way to a Small, Angry Planet"));
@@ -114,6 +121,7 @@ public class LoanAPITests extends APITests {
     assertThat("item status snapshot in storage is not checked out",
       loansStorageClient.getById(id).getJson().getString("itemStatus"),
       is("Checked out"));
+
   }
 
   @Test
@@ -128,7 +136,7 @@ public class LoanAPITests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID userId = UUID.randomUUID();
+    UUID userId = usersClient.create(new UserRequestBuilder()).getId();
 
     IndividualResource response = loansClient.create(new LoanRequestBuilder()
       .withId(id)
@@ -186,7 +194,7 @@ public class LoanAPITests extends APITests {
         .withBarcode("036000291452"))
       .getId();
 
-    UUID userId = UUID.randomUUID();
+    UUID userId = usersClient.create(new UserRequestBuilder()).getId();
     UUID proxyUserId = UUID.randomUUID();
 
     DateTime dueDate = new DateTime(2016, 11, 15, 8, 26, 53, DateTimeZone.UTC);
@@ -230,6 +238,9 @@ public class LoanAPITests extends APITests {
 
     assertThat("action is not checkedout",
       loan.getString("action"), is("checkedout"));
+
+    assertThat("last loan policy should be stored",
+      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateLoanPolicyId().toString()));
 
     assertThat("title is taken from item",
       loan.getJsonObject("item").getString("title"),
@@ -298,7 +309,7 @@ public class LoanAPITests extends APITests {
       ItemRequestBuilder::withNoBarcode)
       .getId();
 
-    UUID userId = UUID.randomUUID();
+    UUID userId = usersClient.create(new UserRequestBuilder()).getId();
 
     loansClient.create(new LoanRequestBuilder()
       .withId(id)
@@ -628,8 +639,8 @@ public class LoanAPITests extends APITests {
     TimeoutException,
     UnsupportedEncodingException {
 
-    UUID firstUserId = UUID.randomUUID();
-    UUID secondUserId = UUID.randomUUID();
+    UUID firstUserId = usersClient.create(basedUponStevenJones()).getId();
+    UUID secondUserId = usersClient.create(basedUponJessicaPontefract()).getId();
 
     String queryTemplate = loansUrl() + "?query=userId=%s";
 
@@ -754,7 +765,7 @@ public class LoanAPITests extends APITests {
     TimeoutException,
     UnsupportedEncodingException {
 
-    UUID userId = UUID.randomUUID();
+    UUID userId = usersClient.create(new UserRequestBuilder()).getId();
 
     String queryTemplate = "userId=\"%s\" and status.name=\"%s\"";
 
