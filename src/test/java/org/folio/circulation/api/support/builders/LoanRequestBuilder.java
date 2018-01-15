@@ -5,12 +5,12 @@ import org.folio.circulation.api.APITestSuite;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
-import org.joda.time.format.ISODateTimeFormat;
 
+import java.util.Objects;
 import java.util.Random;
 import java.util.UUID;
 
-public class LoanRequestBuilder implements Builder {
+public class LoanRequestBuilder extends JsonRequestBuilder implements Builder {
   private final static String OPEN_LOAN_STATUS = "Open";
   private final static String CLOSED_LOAN_STATUS = "Closed";
 
@@ -56,31 +56,21 @@ public class LoanRequestBuilder implements Builder {
     JsonObject loanRequest = new JsonObject();
 
     if(id != null) {
-      loanRequest.put("id", id.toString());
+      put(loanRequest, "id", id);
     }
 
-    loanRequest
-      .put("userId", userId.toString())
-      .put("itemId", itemId.toString())
-      .put("loanDate", loanDate.toString(ISODateTimeFormat.dateTime()))
-      .put("status", new JsonObject().put("name", status));
+    put(loanRequest, "userId", userId);
+    put(loanRequest, "itemId", itemId);
+    put(loanRequest, "loanDate", loanDate);
 
-    if(proxyUserId != null) {
-      loanRequest.put("proxyUserId", proxyUserId.toString());
-    }
+    put(loanRequest, "status", status, new JsonObject().put("name", status));
 
-    if(action != null) {
-      loanRequest.put("action", action);
-    }
+    put(loanRequest, "proxyUserId", proxyUserId);
+    put(loanRequest, "action", action);
+    put(loanRequest, "dueDate", dueDate);
 
-    if(dueDate != null) {
-      loanRequest.put("dueDate",
-        dueDate.toString(ISODateTimeFormat.dateTime()));
-    }
-
-    if(status == CLOSED_LOAN_STATUS) {
-      loanRequest.put("returnDate",
-        returnDate.toString(ISODateTimeFormat.dateTime()));
+    if(Objects.equals(status, CLOSED_LOAN_STATUS)) {
+      put(loanRequest, "returnDate", returnDate);
     }
 
     return loanRequest;
@@ -105,7 +95,6 @@ public class LoanRequestBuilder implements Builder {
   }
 
   public LoanRequestBuilder withStatus(String status) {
-
     DateTime defaultedReturnDate = this.returnDate != null
       ? this.returnDate
       : this.loanDate.plusDays(1).plusHours(4);
@@ -132,6 +121,19 @@ public class LoanRequestBuilder implements Builder {
 
   public LoanRequestBuilder closed() {
     return withStatus(CLOSED_LOAN_STATUS);
+  }
+
+  public LoanRequestBuilder withNoStatus() {
+    return new LoanRequestBuilder(
+      this.id,
+      this.itemId,
+      this.userId,
+      this.loanDate,
+      this.dueDate,
+      null,
+      this.returnDate,
+      null,
+      this.proxyUserId);
   }
 
   public LoanRequestBuilder withId(UUID id) {
@@ -180,5 +182,4 @@ public class LoanRequestBuilder implements Builder {
 
     return withDueDate(calculatedDueDate);
   }
-
 }

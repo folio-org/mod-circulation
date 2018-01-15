@@ -84,6 +84,9 @@ public class LoanCollectionResource {
     }
 
     JsonObject loan = routingContext.getBodyAsJson();
+
+    defaultStatusAndAction(loan);
+
     String itemId = loan.getString("itemId");
 
     updateItemStatus(itemId, itemStatusFrom(loan),
@@ -159,6 +162,9 @@ public class LoanCollectionResource {
     String id = routingContext.request().getParam("id");
 
     JsonObject loan = routingContext.getBodyAsJson();
+
+    defaultStatusAndAction(loan);
+
     String itemId = loan.getString("itemId");
 
     //TODO: Either converge the schema (based upon conversations about sharing
@@ -586,17 +592,6 @@ public class LoanCollectionResource {
     return usersStorageClient;
   }
 
-  private CollectionResourceClient createInstancesStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
-    throws MalformedURLException {
-    CollectionResourceClient instancesStorageClient;
-    instancesStorageClient = new CollectionResourceClient(client,
-      context.getOkapiBasedUrl("/instance-storage/instances"));
-
-    return instancesStorageClient;
-  }
-
   private String itemStatusFrom(JsonObject loan) {
     switch(loan.getJsonObject("status").getString("name")) {
       case "Open":
@@ -608,6 +603,16 @@ public class LoanCollectionResource {
       default:
         //TODO: Need to add validation to stop this situation
         return "";
+    }
+  }
+
+  private void defaultStatusAndAction(JsonObject loan) {
+    if(!loan.containsKey("status")) {
+      loan.put("status", new JsonObject().put("name", "Open"));
+
+      if(!loan.containsKey("action")) {
+        loan.put("action", "checkedout");
+      }
     }
   }
 

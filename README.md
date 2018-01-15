@@ -22,7 +22,6 @@ FOLIO compatible circulation capabilities, including loan items from the invento
 - Python 3 (for un-registering module during managed demo and tests via Okapi)
 - Node.js 6.4 (for API linting)
 - NPM 3.10 (for API linting)
-- Gradle 3.3 (previous build mechanism)
 
 ## Preparation
 
@@ -40,11 +39,11 @@ More information is available on the [developer site](http://dev.folio.org/doc/s
 
 ### Running a general build
 
-In order to run a general build (including the default tests), run `gradle`.
+In order to run a general build (including the default tests), run `mvn test`.
 
 ### Creating the circulation module JAR
 
-In order to build an executable Jar (e.g. for Okapi to deploy), run `gradle fatJar`.
+In order to build an executable Jar (e.g. for Okapi to deploy), run `mvn package`.
 
 ### Running the tests
 
