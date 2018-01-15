@@ -1,10 +1,8 @@
 *.class
 
-build/
 target/
 .vertx/
 metrics/
-.gradle/
 *.log
 
 node_modules/
