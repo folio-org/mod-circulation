@@ -125,6 +125,59 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
+  public void canCreateALoanWithoutStatus()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+
+    UUID userId = usersClient.create(new UserRequestBuilder()).getId();
+
+    IndividualResource response = loansClient.create(new LoanRequestBuilder()
+      .withId(id)
+      .withUserId(userId)
+      .withItemId(itemId)
+      .withNoStatus());
+
+    JsonObject loan = response.getJson();
+
+    assertThat("status is not open",
+      loan.getJsonObject("status").getString("name"), is("Open"));
+
+    assertThat("action is not checkedout",
+      loan.getString("action"), is("checkedout"));
+
+    assertThat("last loan policy should be stored",
+      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateLoanPolicyId().toString()));
+
+    assertThat("title is taken from item",
+      loan.getJsonObject("item").containsKey("title"), is(true));
+
+    assertThat("barcode is taken from item",
+      loan.getJsonObject("item").containsKey("barcode"), is(true));
+
+    assertThat("has item status",
+      loan.getJsonObject("item").containsKey("status"), is(true));
+
+    assertThat("status is taken from item",
+      loan.getJsonObject("item").getJsonObject("status").getString("name"),
+      is("Checked out"));
+
+    JsonObject item = itemsClient.getById(itemId).getJson();
+
+    assertThat("item status is not checked out",
+      item.getJsonObject("status").getString("name"), is("Checked out"));
+
+    assertThat("item status snapshot in storage is not checked out",
+      loansStorageClient.getById(id).getJson().getString("itemStatus"),
+      is("Checked out"));
+  }
+
+  @Test
   public void creatingAReturnedLoanDoesNotChangeItemStatus()
     throws InterruptedException,
     ExecutionException,
