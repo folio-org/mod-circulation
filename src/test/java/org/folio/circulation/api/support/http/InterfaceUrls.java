@@ -60,6 +60,12 @@ public class InterfaceUrls {
     return APITestSuite.viaOkapiModuleUrl("/loan-policy-storage/loan-policies" + subPath);
   }
 
+  public static URL loanRulesStorageUrl(String subPath)
+      throws MalformedURLException {
+
+    return APITestSuite.viaOkapiModuleUrl("/loan-rules-storage" + subPath);
+  }
+
   public static URL usersUrl(String subPath)
     throws MalformedURLException {
 

@@ -58,6 +58,11 @@ public class ResourceClient {
       "loan policies", "loanPolicies");
   }
 
+  public static ResourceClient forLoanRules(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::loanRulesStorageUrl,
+      "loan rules", "loanRules");
+  }
+
   public static ResourceClient forUsers(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::usersUrl,
       "users");
@@ -163,7 +168,11 @@ public class ResourceClient {
 
     CompletableFuture<Response> putCompleted = new CompletableFuture<>();
 
-    client.put(urlMaker.combine(String.format("/%s", id)), request,
+    String path = "";
+    if (id != null) {
+      path = String.format("/%s", id);
+    }
+    client.put(urlMaker.combine(path), request,
       ResponseHandler.any(putCompleted));
 
     Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);

@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static org.folio.circulation.api.support.fixtures.LoanFixture.checkOutItem;
-import static org.folio.circulation.api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
+import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
 import static org.folio.circulation.api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -143,7 +143,7 @@ public class RequestsAPICreationTests extends APITests {
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
 
     assertThat(String.format("Should fail to create request: %s", postResponse.getBody()),
-      postResponse.getStatusCode(), is(UNPROCESSABLE_ENTITY));
+      postResponse.getStatusCode(), is(HTTP_VALIDATION_ERROR));
   }
 
   @Test
@@ -174,7 +174,7 @@ public class RequestsAPICreationTests extends APITests {
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
 
     assertThat(String.format("Should fail to create request: %s", postResponse.getBody()),
-      postResponse.getStatusCode(), is(UNPROCESSABLE_ENTITY));
+      postResponse.getStatusCode(), is(HTTP_VALIDATION_ERROR));
   }
 
   @Test
@@ -205,7 +205,7 @@ public class RequestsAPICreationTests extends APITests {
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
 
     assertThat(String.format("Should fail to create request: %s", postResponse.getBody()),
-      postResponse.getStatusCode(), is(UNPROCESSABLE_ENTITY));
+      postResponse.getStatusCode(), is(HTTP_VALIDATION_ERROR));
   }
 
   //TODO: Remove this once sample data is updated, temporary to aid change of item status case
