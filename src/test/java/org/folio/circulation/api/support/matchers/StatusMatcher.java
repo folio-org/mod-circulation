@@ -41,7 +41,7 @@ public class StatusMatcher extends TypeSafeDiagnosingMatcher<Response> {
 
   /**
    * Match Response.getStatusCode() against a httpStatus.
-   * @param httpStatus  that code to match against.
+   * @param httpStatus  the code to match against.
    * @return the matcher
    */
   public static StatusMatcher hasStatus(HttpStatus httpStatus) {
