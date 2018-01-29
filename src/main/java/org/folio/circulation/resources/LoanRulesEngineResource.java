@@ -226,8 +226,8 @@ public class LoanRulesEngineResource {
   }
 
   private void applyAll(RoutingContext routingContext) {
-    if (routingContext.pathParam("loan_rules") == null) {
-      ServerErrorResponse.internalError(routingContext.response(), "parameter loan_rules not implemented");
+    if (routingContext.pathParam("loan_rules") != null) {
+      ServerErrorResponse.internalError(routingContext.response(), "parameter loan_rules not implemented yet");
       return;
     }
     drools(routingContext, drools -> {

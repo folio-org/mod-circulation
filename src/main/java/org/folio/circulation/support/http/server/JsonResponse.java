@@ -2,6 +2,7 @@ package org.folio.circulation.support.http.server;
 
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -63,6 +64,12 @@ public class JsonResponse {
     body.put("message", e.getMessage());
     body.put("line", e.getLine());
     body.put("column", e.getColumn());
+    response(response, body, 422);
+  }
+
+  public static void loanRulesError(HttpServerResponse response, DecodeException e) {
+    JsonObject body = new JsonObject();
+    body.put("message", e.getMessage());  // already contains line and column number
     response(response, body, 422);
   }
 
