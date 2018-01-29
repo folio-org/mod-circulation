@@ -130,6 +130,12 @@ public class Text2DroolsTest {
   }
 
   @Test
+  public void commentWithoutSpace() {
+    String drools = Text2Drools.convert("fallback-policy: no-loan\n#fallback-policy: loan-anyhow");
+    assertThat(drools, not(containsString("loan-anyhow")));
+  }
+
+  @Test
   public void invalidToken() {
     try {
       Text2Drools.convert("foo");
