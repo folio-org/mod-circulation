@@ -196,10 +196,6 @@ lrucache@1.0.3:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/lrucache/-/lrucache-1.0.3.tgz#3b1ded0d1ba82e188b9bdaba9eee6486f864a434"
 
-marked@0.3.6, marked@^0.3.12:
-  version "0.3.12"
-  resolved "https://registry.yarnpkg.com/marked/-/marked-0.3.12.tgz#7cf25ff2252632f3fe2406bde258e94eee927519"
-
 media-typer@0.3.0:
   version "0.3.0"
   resolved "https://registry.yarnpkg.com/media-typer/-/media-typer-0.3.0.tgz#8710d7af0aa626f8fffa1ce00168545263255748"
@@ -252,8 +248,8 @@ q@1.5.0:
   resolved "https://registry.yarnpkg.com/q/-/q-1.5.0.tgz#dd01bac9d06d30e6f219aecb8253ee9ebdc308f1"
 
 raml-1-parser@^1.1.15:
-  version "1.1.39"
-  resolved "https://registry.yarnpkg.com/raml-1-parser/-/raml-1-parser-1.1.39.tgz#3b36c46ea543f5ffcb53d0c94b55e70936e2804c"
+  version "1.1.40"
+  resolved "https://registry.yarnpkg.com/raml-1-parser/-/raml-1-parser-1.1.40.tgz#21d3988ec7fe2d9b45a5dced241c23cfe13866a1"
   dependencies:
     base64url "2.0.0"
     change-case "3.0.1"
@@ -265,13 +261,12 @@ raml-1-parser@^1.1.15:
     json-stable-stringify "1.0.1"
     loophole "1.1.0"
     lrucache "1.0.3"
-    marked "0.3.6"
     media-typer "0.3.0"
     mkdirp "0.5.1"
     pluralize "7.0.0"
     promise-polyfill "6.0.2"
     q "1.5.0"
-    raml-definition-system "0.0.77"
+    raml-definition-system "0.0.78"
     ts-model "0.0.17"
     ts-structure-parser "0.0.16"
     typescript-compiler "1.4.1-2"
@@ -291,12 +286,12 @@ raml-cop@^5.0.0:
     commander "^2.9.0"
     raml-1-parser "^1.1.15"
 
-raml-definition-system@0.0.77:
-  version "0.0.77"
-  resolved "https://registry.yarnpkg.com/raml-definition-system/-/raml-definition-system-0.0.77.tgz#e6583218b1d58fc26528393421423478b453d1d1"
+raml-definition-system@0.0.78:
+  version "0.0.78"
+  resolved "https://registry.yarnpkg.com/raml-definition-system/-/raml-definition-system-0.0.78.tgz#37d1fba3cb527c5d27f6446e17cd45bb05379f98"
   dependencies:
     know-your-http-well "0.5.0"
-    raml-typesystem "0.0.82"
+    raml-typesystem "0.0.83"
     ts-structure-parser "0.0.16"
     underscore "1.8.3"
 
@@ -306,9 +301,9 @@ raml-json-validation@0.0.16:
   dependencies:
     z-schema "3.18.4"
 
-raml-typesystem@0.0.82:
-  version "0.0.82"
-  resolved "https://registry.yarnpkg.com/raml-typesystem/-/raml-typesystem-0.0.82.tgz#75c7d0fe8474603b4eaf7c568b3efc5797687409"
+raml-typesystem@0.0.83:
+  version "0.0.83"
+  resolved "https://registry.yarnpkg.com/raml-typesystem/-/raml-typesystem-0.0.83.tgz#fa4f49e305f7b721b1a929be4115b5d5bdfd5401"
   dependencies:
     bignumber.js "4.1.0"
     date-and-time "0.5.0"
