@@ -1,10 +1,11 @@
-7.0.1 Unreleased
+7.1.0 Unreleased
 
 * Applies loan rules to determine the policy to use whilst handling loan requests (CIRC-51)
 * Adds `loanPolicyId` property to a loan, to keep the last policy that was applied to the loan (CIRC-51)
+* Adds `holdingsRecordId` property to the item for a loan (CIRC-61)
 * Clear cache of loan rules engine when changing loan rules (CIRC-59)
 * Default loan status to `Open` (and action to `checkedout`) if not provided (CIRC-60) 
-* Provides circulation interface 2.6 (CIRC-51)
+* Provides circulation interface 2.7 (CIRC-51, CIRC-61)
 * Requires loan-storage interface version 3.4 (CIRC-51)
 
 ## 6.0.0 2018-01-08
