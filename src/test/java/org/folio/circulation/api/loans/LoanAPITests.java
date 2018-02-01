@@ -44,8 +44,7 @@ public class LoanAPITests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 
@@ -92,13 +91,15 @@ public class LoanAPITests extends APITests {
     assertThat("last loan policy should be stored",
       loan.getString("loanPolicyId"), is(APITestSuite.canCirculateLoanPolicyId().toString()));
 
-    assertThat("title is taken from item",
+    assertThat("title is taken from instance",
       loan.getJsonObject("item").getString("title"),
       is("The Long Way to a Small, Angry Planet"));
 
     assertThat("barcode is taken from item",
       loan.getJsonObject("item").getString("barcode"),
       is("036000291452"));
+
+
 
     assertThat("has item status",
       loan.getJsonObject("item").containsKey("status"), is(true));

@@ -17,11 +17,9 @@ import org.folio.circulation.support.http.server.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.UnsupportedEncodingException;
 import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -625,6 +623,7 @@ public class LoanCollectionResource {
     final String titleProperty = "title";
     final String barcodeProperty = "barcode";
     final String statusProperty = "status";
+    final String holdingsRecordIdProperty = "holdingsRecordId";
 
     if(instance != null && instance.containsKey(titleProperty)) {
       itemSummary.put(titleProperty, instance.getString(titleProperty));
@@ -634,6 +633,10 @@ public class LoanCollectionResource {
 
     if(item.containsKey(barcodeProperty)) {
       itemSummary.put(barcodeProperty, item.getString(barcodeProperty));
+    }
+
+    if(item.containsKey(holdingsRecordIdProperty)) {
+      itemSummary.put(holdingsRecordIdProperty, item.getString(holdingsRecordIdProperty));
     }
 
     if(item.containsKey(statusProperty)) {
@@ -736,14 +739,6 @@ public class LoanCollectionResource {
           }
         }
       });
-  }
-
-  static String urlEncodeUTF8(String s) {
-    try {
-      return URLEncoder.encode(s, "UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      throw new UnsupportedOperationException(e);
-    }
   }
 
   private String determineLocationIdForItem(JsonObject item, JsonObject holding) {

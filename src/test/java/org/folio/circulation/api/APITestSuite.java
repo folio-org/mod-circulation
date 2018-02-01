@@ -4,10 +4,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.CirculationVerticle;
 import org.folio.circulation.api.fakes.FakeOkapi;
-import org.folio.circulation.api.loans.LoanAPILocationTests;
-import org.folio.circulation.api.loans.LoanAPIPolicyTests;
-import org.folio.circulation.api.loans.LoanAPITests;
-import org.folio.circulation.api.loans.LoanAPITitleTests;
+import org.folio.circulation.api.loans.*;
 import org.folio.circulation.api.requests.*;
 import org.folio.circulation.api.support.builders.UserRequestBuilder;
 import org.folio.circulation.api.support.http.ResourceClient;
@@ -40,6 +37,7 @@ import java.util.function.Consumer;
   LoanAPITests.class,
   LoanAPILocationTests.class,
   LoanAPITitleTests.class,
+  LoanAPIRelatedRecordsTests.class,
   LoanAPIPolicyTests.class,
   LoanRulesAPITests.class,
   LoanRulesEngineAPITests.class,
