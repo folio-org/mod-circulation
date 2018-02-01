@@ -34,7 +34,11 @@
           "type": "string"
         },
         "holdingsRecordId": {
-          "description": "The ID of the holdings the item lent to the patron belongs to",
+          "description": "The ID of the holdings for the item lent to the patron",
+          "type": "string"
+        },
+        "instanceId": {
+          "description": "The ID of the instance for the item lent to the patron",
           "type": "string"
         },
         "barcode": {

@@ -1,6 +1,6 @@
 ## 7.1.0 Unreleased
 
-* Adds `holdingsRecordId` property to the item for a loan (CIRC-61)
+* Adds `holdingsRecordId` and `instanceId` properties to the item for a loan (CIRC-61)
 * Request to PUT loan rules will respond with 422 when invalid (CIRC-68)
 * Accept comments in loan rules without a space (CIRC-69)
 * Provides circulation interface 2.7 (CIRC-61)

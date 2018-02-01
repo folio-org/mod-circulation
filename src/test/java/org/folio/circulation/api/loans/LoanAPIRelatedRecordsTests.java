@@ -23,7 +23,7 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 public class LoanAPIRelatedRecordsTests extends APITests {
 
   @Test
-  public void holdingIdIncludedWhenHoldingAndInstanceAreAvailable()
+  public void holdingIdAndInstanceIdIncludedWhenHoldingAndInstanceAreAvailable()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -58,6 +58,13 @@ public class LoanAPIRelatedRecordsTests extends APITests {
       createdLoan.getJsonObject("item").getString("holdingsRecordId"),
       is(holdingId.toString()));
 
+    assertThat("has instance ID",
+      createdLoan.getJsonObject("item").containsKey("instanceId"), is(true));
+
+    assertThat("has correct instance ID",
+      createdLoan.getJsonObject("item").getString("instanceId"),
+      is(instanceId.toString()));
+
     Response fetchedLoanResponse = loansClient.getById(loanId);
 
     assertThat(fetchedLoanResponse.getStatusCode(), is(200));
@@ -70,10 +77,17 @@ public class LoanAPIRelatedRecordsTests extends APITests {
     assertThat("has correct holdings record ID",
       fetchedLoan.getJsonObject("item").getString("holdingsRecordId"),
       is(holdingId.toString()));
+
+    assertThat("has instance ID",
+      fetchedLoan.getJsonObject("item").containsKey("instanceId"), is(true));
+
+    assertThat("has correct instance ID",
+      fetchedLoan.getJsonObject("item").getString("instanceId"),
+      is(instanceId.toString()));
   }
 
   @Test
-  public void holdingIdComesFromMultipleRecordsForMultipleLoans()
+  public void holdingAndInstanceIdComesFromMultipleRecordsForMultipleLoans()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -128,11 +142,25 @@ public class LoanAPIRelatedRecordsTests extends APITests {
       firstFetchedLoan.getJsonObject("item").getString("holdingsRecordId"),
       is(firstHoldingId.toString()));
 
+    assertThat("has instance ID",
+      firstFetchedLoan.getJsonObject("item").containsKey("instanceId"), is(true));
+
+    assertThat("has correct instance ID",
+      firstFetchedLoan.getJsonObject("item").getString("instanceId"),
+      is(firstInstanceId.toString()));
+
     assertThat("has holdings record ID",
       secondFetchedLoan.getJsonObject("item").containsKey("holdingsRecordId"), is(true));
 
     assertThat("has correct holdings record ID",
       secondFetchedLoan.getJsonObject("item").getString("holdingsRecordId"),
       is(secondHoldingId.toString()));
+
+    assertThat("has instance ID",
+      secondFetchedLoan.getJsonObject("item").containsKey("instanceId"), is(true));
+
+    assertThat("has correct instance ID",
+      secondFetchedLoan.getJsonObject("item").getString("instanceId"),
+      is(secondInstanceId.toString()));
   }
 }
