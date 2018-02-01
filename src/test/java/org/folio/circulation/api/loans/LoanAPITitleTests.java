@@ -11,7 +11,6 @@ import org.folio.circulation.support.http.client.Response;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.util.List;
 import java.util.UUID;
@@ -25,12 +24,11 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 public class LoanAPITitleTests extends APITests {
 
   @Test
-  public void titleIsFromInstanceWhenHoldingAndInstance()
+  public void titleIsFromInstanceWhenHoldingAndInstanceAreAvailable()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID instanceId = instancesClient.create(
       InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
@@ -81,8 +79,7 @@ public class LoanAPITitleTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID instanceId = instancesClient.create(
       InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
@@ -127,8 +124,7 @@ public class LoanAPITitleTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID instanceId = instancesClient.create(
       InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
