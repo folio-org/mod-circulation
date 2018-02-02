@@ -89,8 +89,11 @@ public class LoanCollectionResource {
 
     updateItemStatus(itemId, itemStatusFrom(loan),
       itemsStorageClient, routingContext.response(), item -> {
+
         loan.put("itemStatus", item.getJsonObject("status").getString("name"));
+
         String holdingId = item.getString("holdingsRecordId");
+
         holdingsStorageClient.get(holdingId, holdingResponse -> {
           final String instanceId = holdingResponse.getStatusCode() == 200
             ? holdingResponse.getJson().getString("instanceId")
@@ -102,8 +105,8 @@ public class LoanCollectionResource {
               : null;
 
             final JsonObject holding = holdingResponse.getStatusCode() == 200
-                  ? holdingResponse.getJson()
-                  : null;
+              ? holdingResponse.getJson()
+              : null;
 
             lookupLoanPolicyId(loan, item, holding, usersStorageClient, client,
                     routingContext.response(), context, loanPolicyIdJson -> {
