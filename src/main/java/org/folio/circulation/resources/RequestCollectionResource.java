@@ -282,6 +282,32 @@ public class RequestCollectionResource {
     });
   }
 
+  private void addStoredItemPropertiesToRequest(
+    JsonObject request,
+    JsonObject item,
+    JsonObject instance) {
+
+    if(item == null) {
+      return;
+    }
+
+    JsonObject itemSummary = new JsonObject();
+
+    final String titleProperty = "title";
+
+    if(instance != null && instance.containsKey(titleProperty)) {
+      itemSummary.put(titleProperty, instance.getString(titleProperty));
+    } else if (item.containsKey("title")) {
+      itemSummary.put(titleProperty, item.getString(titleProperty));
+    }
+
+    if(item.containsKey("barcode")) {
+      itemSummary.put("barcode", item.getString("barcode"));
+    }
+
+    request.put("item", itemSummary);
+  }
+
   private void addSummariesToRequest(
     JsonObject request,
     CollectionResourceClient itemsStorageClient,
@@ -344,30 +370,15 @@ public class RequestCollectionResource {
 
       JsonObject requestWithAdditionalInformation = request.copy();
 
-      if (itemResponse != null && itemResponse.getStatusCode() == 200) {
-        JsonObject item = itemResponse.getJson();
+      JsonObject item = itemResponse != null && itemResponse.getStatusCode() == 200
+        ? itemResponse.getJson()
+        : null;
 
-        JsonObject instance = instanceResponse != null
-          && instanceResponse.getStatusCode() == 200
-          ? instanceResponse.getJson()
-          : null;
+      JsonObject instance = instanceResponse != null && instanceResponse.getStatusCode() == 200
+        ? instanceResponse.getJson()
+        : null;
 
-        JsonObject itemSummary = new JsonObject();
-
-        final String titleProperty = "title";
-
-        if(instance != null && instance.containsKey(titleProperty)) {
-          itemSummary.put(titleProperty, instance.getString(titleProperty));
-        } else if (item.containsKey("title")) {
-          itemSummary.put(titleProperty, item.getString(titleProperty));
-        }
-
-        if(item.containsKey("barcode")) {
-          itemSummary.put("barcode", item.getString("barcode"));
-        }
-
-        requestWithAdditionalInformation.put("item", itemSummary);
-      }
+      addStoredItemPropertiesToRequest(requestWithAdditionalInformation, item, instance);
 
       if (requestingUserResponse.getStatusCode() == 200) {
         JsonObject requester = requestingUserResponse.getJson();
@@ -502,7 +513,9 @@ public class RequestCollectionResource {
 
   private CollectionResourceClient getCollectionResourceClient(
     OkapiHttpClient client,
-    WebContext context, String path) throws MalformedURLException {
+    WebContext context,
+    String path)
+    throws MalformedURLException {
 
     return new CollectionResourceClient(
       client, context.getOkapiBasedUrl(path));
