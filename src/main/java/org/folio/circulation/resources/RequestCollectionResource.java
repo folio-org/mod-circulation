@@ -282,32 +282,6 @@ public class RequestCollectionResource {
     });
   }
 
-  private void addStoredItemPropertiesToRequest(
-    JsonObject request,
-    JsonObject item,
-    JsonObject instance) {
-
-    if(item == null) {
-      return;
-    }
-
-    JsonObject itemSummary = new JsonObject();
-
-    final String titleProperty = "title";
-
-    if(instance != null && instance.containsKey(titleProperty)) {
-      itemSummary.put(titleProperty, instance.getString(titleProperty));
-    } else if (item.containsKey("title")) {
-      itemSummary.put(titleProperty, item.getString(titleProperty));
-    }
-
-    if(item.containsKey("barcode")) {
-      itemSummary.put("barcode", item.getString("barcode"));
-    }
-
-    request.put("item", itemSummary);
-  }
-
   private void addSummariesToRequest(
     JsonObject request,
     CollectionResourceClient itemsStorageClient,
@@ -378,29 +352,70 @@ public class RequestCollectionResource {
         ? instanceResponse.getJson()
         : null;
 
-      addStoredItemPropertiesToRequest(requestWithAdditionalInformation, item, instance);
+      addStoredItemProperties(requestWithAdditionalInformation, item, instance);
 
-      if (requestingUserResponse.getStatusCode() == 200) {
-        JsonObject requester = requestingUserResponse.getJson();
+      JsonObject requester = requestingUserResponse != null
+        && requestingUserResponse.getStatusCode() == 200
+        ? requestingUserResponse.getJson()
+        : null;
 
-        JsonObject requesterSummary = new JsonObject()
-          .put("lastName", requester.getJsonObject("personal").getString("lastName"))
-          .put("firstName", requester.getJsonObject("personal").getString("firstName"));
-
-        if(requester.getJsonObject("personal").containsKey("middleName")) {
-          requesterSummary.put("middleName",
-            requester.getJsonObject("personal").getString("middleName"));
-        }
-
-        if(requester.containsKey("barcode")) {
-          requesterSummary.put("barcode", requester.getString("barcode"));
-        }
-
-        requestWithAdditionalInformation.put("requester", requesterSummary);
-      }
+      addStoredRequesterProperties(requestWithAdditionalInformation, requester);
 
       onSuccess.accept(requestWithAdditionalInformation);
     });
+  }
+
+  private void addStoredItemProperties(
+    JsonObject request,
+    JsonObject item,
+    JsonObject instance) {
+
+    if(item == null) {
+      return;
+    }
+
+    JsonObject itemSummary = new JsonObject();
+
+    final String titleProperty = "title";
+
+    if(instance != null && instance.containsKey(titleProperty)) {
+      itemSummary.put(titleProperty, instance.getString(titleProperty));
+    } else if (item.containsKey("title")) {
+      itemSummary.put(titleProperty, item.getString(titleProperty));
+    }
+
+    if(item.containsKey("barcode")) {
+      itemSummary.put("barcode", item.getString("barcode"));
+    }
+
+    request.put("item", itemSummary);
+  }
+
+  private void addStoredRequesterProperties
+    (JsonObject requestWithAdditionalInformation,
+     JsonObject requester) {
+
+    if(requester == null) {
+      return;
+    }
+
+    JsonObject requesterSummary = new JsonObject();
+
+    if(requester.containsKey("personal")) {
+      requesterSummary.put("lastName", requester.getJsonObject("personal").getString("lastName"));
+      requesterSummary.put("firstName", requester.getJsonObject("personal").getString("firstName"));
+
+      if(requester.getJsonObject("personal").containsKey("middleName")) {
+        requesterSummary.put("middleName",
+          requester.getJsonObject("personal").getString("middleName"));
+      }
+    }
+
+    if(requester.containsKey("barcode")) {
+      requesterSummary.put("barcode", requester.getString("barcode"));
+    }
+
+    requestWithAdditionalInformation.put("requester", requesterSummary);
   }
 
   private OkapiHttpClient createHttpClient(RoutingContext routingContext,
