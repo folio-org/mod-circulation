@@ -87,6 +87,102 @@ public class LoanAPIRelatedRecordsTests extends APITests {
   }
 
   @Test
+  public void holdingIdAndInstanceIdIncludedWhenInstanceNotAvailable()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID instanceId = instancesClient.create(
+      InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
+
+    UUID holdingId = holdingsClient.create(
+      new HoldingRequestBuilder()
+        .forInstance(instanceId)
+        .create())
+      .getId();
+
+    UUID itemId = itemsClient.create(
+      ItemRequestExamples.basedUponSmallAngryPlanet()
+        .forHolding(holdingId))
+      .getId();
+
+    UUID loanId = UUID.randomUUID();
+
+    loansClient.create(new LoanRequestBuilder()
+      .withId(loanId)
+      .withItemId(itemId));
+
+    instancesClient.delete(instanceId);
+
+    Response fetchedLoanResponse = loansClient.getById(loanId);
+
+    assertThat(fetchedLoanResponse.getStatusCode(), is(200));
+
+    JsonObject fetchedLoan = fetchedLoanResponse.getJson();
+
+    assertThat("has holdings record ID",
+      fetchedLoan.getJsonObject("item").containsKey("holdingsRecordId"), is(true));
+
+    assertThat("has correct holdings record ID",
+      fetchedLoan.getJsonObject("item").getString("holdingsRecordId"),
+      is(holdingId.toString()));
+
+    assertThat("has instance ID",
+      fetchedLoan.getJsonObject("item").containsKey("instanceId"), is(true));
+
+    assertThat("has correct instance ID",
+      fetchedLoan.getJsonObject("item").getString("instanceId"),
+      is(instanceId.toString()));
+  }
+
+  @Test
+  public void noInstanceIdIncludedWhenHoldingNotAvailable()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID instanceId = instancesClient.create(
+      InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
+
+    UUID holdingId = holdingsClient.create(
+      new HoldingRequestBuilder()
+        .forInstance(instanceId)
+        .create())
+      .getId();
+
+    UUID itemId = itemsClient.create(
+      ItemRequestExamples.basedUponSmallAngryPlanet()
+        .forHolding(holdingId))
+      .getId();
+
+    UUID loanId = UUID.randomUUID();
+
+    loansClient.create(new LoanRequestBuilder()
+      .withId(loanId)
+      .withItemId(itemId));
+
+    holdingsClient.delete(holdingId);
+
+    Response fetchedLoanResponse = loansClient.getById(loanId);
+
+    assertThat(fetchedLoanResponse.getStatusCode(), is(200));
+
+    JsonObject fetchedLoan = fetchedLoanResponse.getJson();
+
+    assertThat("has holdings record ID",
+      fetchedLoan.getJsonObject("item").containsKey("holdingsRecordId"), is(true));
+
+    assertThat("has correct holdings record ID",
+      fetchedLoan.getJsonObject("item").getString("holdingsRecordId"),
+      is(holdingId.toString()));
+
+    assertThat("has no instance ID",
+      fetchedLoan.getJsonObject("item").containsKey("instanceId"), is(false));
+  }
+
+  @Test
   public void holdingAndInstanceIdComesFromMultipleRecordsForMultipleLoans()
     throws InterruptedException,
     MalformedURLException,
@@ -162,5 +258,123 @@ public class LoanAPIRelatedRecordsTests extends APITests {
     assertThat("has correct instance ID",
       secondFetchedLoan.getJsonObject("item").getString("instanceId"),
       is(secondInstanceId.toString()));
+  }
+
+  @Test
+  public void noInstanceIdForMultipleLoansWhenHoldingNotFound()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    UUID firstInstanceId = instancesClient.create(
+      InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
+
+    UUID firstHoldingId = holdingsClient.create(
+      new HoldingRequestBuilder()
+        .forInstance(firstInstanceId)
+        .create())
+      .getId();
+
+    UUID firstItemId = itemsClient.create(
+      ItemRequestExamples.basedUponSmallAngryPlanet()
+        .forHolding(firstHoldingId))
+      .getId();
+
+    UUID secondInstanceId = instancesClient.create(
+      InstanceRequestExamples.basedUponTemeraire()).getId();
+
+    UUID secondHoldingId = holdingsClient.create(
+      new HoldingRequestBuilder()
+        .forInstance(secondInstanceId)
+        .create())
+      .getId();
+
+    UUID secondItemId = itemsClient.create(
+      ItemRequestExamples.basedUponTemeraire()
+        .forHolding(secondHoldingId))
+      .getId();
+
+    UUID firstLoanId = loansClient.create(new LoanRequestBuilder()
+      .withItemId(firstItemId)).getId();
+
+    UUID secondLoanId = loansClient.create(new LoanRequestBuilder()
+      .withItemId(secondItemId)).getId();
+
+    //Delete a holding
+    holdingsClient.delete(secondHoldingId);
+
+    List<JsonObject> fetchedLoansResponse = loansClient.getAll();
+
+    JsonObject firstFetchedLoan = getRecordById(
+      fetchedLoansResponse, firstLoanId).get();
+
+    JsonObject secondFetchedLoan = getRecordById(
+      fetchedLoansResponse, secondLoanId).get();
+
+    assertThat("first loan has instance ID",
+      firstFetchedLoan.getJsonObject("item").containsKey("instanceId"), is(true));
+
+    assertThat("second loan does not have instance ID",
+      secondFetchedLoan.getJsonObject("item").containsKey("instanceId"), is(false));
+  }
+
+  @Test
+  public void instanceIdAndHoldingIdForMultipleLoansWhenInstanceNotFound()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    UUID firstInstanceId = instancesClient.create(
+      InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
+
+    UUID firstHoldingId = holdingsClient.create(
+      new HoldingRequestBuilder()
+        .forInstance(firstInstanceId)
+        .create())
+      .getId();
+
+    UUID firstItemId = itemsClient.create(
+      ItemRequestExamples.basedUponSmallAngryPlanet()
+        .forHolding(firstHoldingId))
+      .getId();
+
+    UUID secondInstanceId = instancesClient.create(
+      InstanceRequestExamples.basedUponTemeraire()).getId();
+
+    UUID secondHoldingId = holdingsClient.create(
+      new HoldingRequestBuilder()
+        .forInstance(secondInstanceId)
+        .create())
+      .getId();
+
+    UUID secondItemId = itemsClient.create(
+      ItemRequestExamples.basedUponTemeraire()
+        .forHolding(secondHoldingId))
+      .getId();
+
+    UUID firstLoanId = loansClient.create(new LoanRequestBuilder()
+      .withItemId(firstItemId)).getId();
+
+    UUID secondLoanId = loansClient.create(new LoanRequestBuilder()
+      .withItemId(secondItemId)).getId();
+
+    instancesClient.delete(firstInstanceId);
+    instancesClient.delete(secondInstanceId);
+
+    List<JsonObject> fetchedLoansResponse = loansClient.getAll();
+
+    JsonObject firstFetchedLoan = getRecordById(
+      fetchedLoansResponse, firstLoanId).get();
+
+    JsonObject secondFetchedLoan = getRecordById(
+      fetchedLoansResponse, secondLoanId).get();
+
+    assertThat("first loan has instance ID",
+      firstFetchedLoan.getJsonObject("item").containsKey("instanceId"), is(true));
+
+    assertThat("second loan has instance ID",
+      secondFetchedLoan.getJsonObject("item").containsKey("instanceId"), is(true));
   }
 }
