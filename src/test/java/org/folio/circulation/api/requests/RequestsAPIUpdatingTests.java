@@ -140,8 +140,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
-    ExecutionException,
-    UnsupportedEncodingException {
+    ExecutionException {
 
     UUID id = UUID.randomUUID();
 
