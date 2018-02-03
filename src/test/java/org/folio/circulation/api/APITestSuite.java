@@ -232,6 +232,8 @@ public class APITestSuite {
     TimeoutException,
     MalformedURLException {
 
+    initialised = false;
+
     OkapiHttpClient client = APITestSuite.createClient(exception -> {
       log.error("Requests to delete all for clean up failed:", exception);
     });
