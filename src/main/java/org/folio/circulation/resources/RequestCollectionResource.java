@@ -17,7 +17,6 @@ import org.folio.circulation.support.http.server.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 
 import static org.folio.circulation.domain.ItemStatus.*;
 import static org.folio.circulation.domain.ItemStatusAssistant.updateItemStatus;
@@ -75,7 +74,7 @@ public class RequestCollectionResource {
     }
 
     String itemId = request.getString("itemId");
-    
+
     InventoryFetcher inventoryFetcher = new InventoryFetcher(
       itemsStorageClient, holdingsStorageClient, instancesStorageClient);
 
@@ -145,6 +144,13 @@ public class RequestCollectionResource {
 
   private void replace(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
+
+    String id = routingContext.request().getParam("id");
+    JsonObject request = routingContext.getBodyAsJson();
+
+    request.remove("item");
+    request.remove("requester");
+
     CollectionResourceClient requestsStorageClient;
     CollectionResourceClient itemsStorageClient;
     CollectionResourceClient holdingsStorageClient;
@@ -166,29 +172,55 @@ public class RequestCollectionResource {
       return;
     }
 
-    String id = routingContext.request().getParam("id");
-    JsonObject request = routingContext.getBodyAsJson();
+    String itemId = request.getString("itemId");
 
-    request.remove("item");
-    request.remove("requester");
+    InventoryFetcher inventoryFetcher = new InventoryFetcher(
+      itemsStorageClient, holdingsStorageClient, instancesStorageClient);
 
-    addStoredSummaryPropertiesToRequest(request, itemsStorageClient, holdingsStorageClient,
-      instancesStorageClient, usersStorageClient,
-      requestWithAdditionalInformation -> {
-        requestsStorageClient.put(id, requestWithAdditionalInformation, response -> {
-          if(response.getStatusCode() == 204) {
-            SuccessResponse.noContent(routingContext.response());
-          }
-          else {
-            ForwardResponse.forward(routingContext.response(), response);
-          }
-        });
-      },
-      throwable -> {
-        ServerErrorResponse.internalError(routingContext.response(),
-          String.format("At least one request for additional information failed: %s",
-            throwable));
+    CompletableFuture<InventoryRecords> inventoryRecordsCompleted
+      = inventoryFetcher.fetch(itemId, t -> {
+      ServerErrorResponse.internalError(routingContext.response(),
+        String.format(
+          "Could not get inventory records related to request: %s", t));
+    });
+
+    CompletableFuture<Response> requestingUserRequestCompleted = new CompletableFuture<>();
+
+    usersStorageClient.get(request.getString("requesterId"),
+      requestingUserRequestCompleted::complete);
+
+    CompletableFuture<Void> allCompleted = CompletableFuture.allOf(
+      inventoryRecordsCompleted, requestingUserRequestCompleted);
+
+    allCompleted.exceptionally(t -> {
+      ServerErrorResponse.internalError(routingContext.response(),
+        String.format("At least one request for additional information failed: %s", t));
+
+      return null;
+    });
+
+    allCompleted.thenAccept(v -> {
+      Response requestingUserResponse = requestingUserRequestCompleted.join();
+
+      InventoryRecords inventoryRecords = inventoryRecordsCompleted.join();
+
+      JsonObject item = inventoryRecords.getItem();
+      JsonObject instance = inventoryRecords.getInstance();
+
+      JsonObject requester = getRecordFromResponse(requestingUserResponse);
+
+      addStoredItemProperties(request, item, instance);
+      addStoredRequesterProperties(request, requester);
+
+      requestsStorageClient.put(id, request, response -> {
+        if(response.getStatusCode() == 204) {
+          SuccessResponse.noContent(routingContext.response());
+        }
+        else {
+          ForwardResponse.forward(routingContext.response(), response);
+        }
       });
+    });
   }
 
   private void get(RoutingContext routingContext) {
@@ -298,86 +330,6 @@ public class RequestCollectionResource {
         ForwardResponse.forward(routingContext.response(), response);
       }
     });
-  }
-
-  private void addStoredSummaryPropertiesToRequest(
-    JsonObject request,
-    CollectionResourceClient itemsStorageClient,
-    CollectionResourceClient holdingsStorageClient,
-    CollectionResourceClient instancesStorageClient,
-    CollectionResourceClient usersStorageClient,
-    Consumer<JsonObject> onSuccess,
-    Consumer<Throwable> onFailure) {
-
-    CompletableFuture<Response> itemRequestCompleted = new CompletableFuture<>();
-    CompletableFuture<Response> holdingRequestCompleted = new CompletableFuture<>();
-    CompletableFuture<Response> instanceRequestCompleted = new CompletableFuture<>();
-    CompletableFuture<Response> requestingUserRequestCompleted = new CompletableFuture<>();
-
-    itemsStorageClient.get(request.getString("itemId"),
-      itemRequestCompleted::complete);
-
-    itemRequestCompleted.thenAccept(itemResponse -> {
-      if(itemResponse != null && itemResponse.getStatusCode() == 200) {
-
-        JsonObject item = itemResponse.getJson();
-
-        holdingsStorageClient.get(item.getString("holdingsRecordId"),
-          holdingRequestCompleted::complete);
-      }
-      else {
-        holdingRequestCompleted.complete(null);
-      }
-    });
-
-    holdingRequestCompleted.thenAccept(holdingResponse -> {
-      if(holdingResponse != null && holdingResponse.getStatusCode() == 200) {
-
-        JsonObject holding = holdingResponse.getJson();
-
-        instancesStorageClient.get(holding.getString("instanceId"),
-          instanceRequestCompleted::complete);
-      }
-      else {
-        instanceRequestCompleted.complete(null);
-      }
-    });
-
-    usersStorageClient.get(request.getString("requesterId"),
-      requestingUserRequestCompleted::complete);
-
-    CompletableFuture<Void> allCompleted = CompletableFuture.allOf(
-      itemRequestCompleted, holdingRequestCompleted, instanceRequestCompleted,
-      requestingUserRequestCompleted);
-
-    allCompleted.exceptionally(t -> {
-      onFailure.accept(t);
-      return null;
-    });
-
-    allCompleted.thenAccept(v -> {
-      Response itemResponse = itemRequestCompleted.join();
-      Response instanceResponse = instanceRequestCompleted.join();
-
-      JsonObject item = getRecordFromResponse(itemResponse);
-      JsonObject instance = getRecordFromResponse(instanceResponse);
-
-      addStoredItemProperties(request, item, instance);
-
-      Response requestingUserResponse = requestingUserRequestCompleted.join();
-
-      JsonObject requester = getRecordFromResponse(requestingUserResponse);
-
-      addStoredRequesterProperties(request, requester);
-
-      onSuccess.accept(request);
-    });
-  }
-
-  private JsonObject getRecordFromResponse(Response itemResponse) {
-    return itemResponse != null && itemResponse.getStatusCode() == 200
-      ? itemResponse.getJson()
-      : null;
   }
 
   private void addStoredItemProperties(
@@ -549,5 +501,11 @@ public class RequestCollectionResource {
 
     return new CollectionResourceClient(
       client, context.getOkapiBasedUrl(path));
+  }
+
+  private JsonObject getRecordFromResponse(Response itemResponse) {
+    return itemResponse != null && itemResponse.getStatusCode() == 200
+      ? itemResponse.getJson()
+      : null;
   }
 }
