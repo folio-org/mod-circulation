@@ -8,6 +8,8 @@ import io.vertx.ext.web.handler.BodyHandler;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.InventoryFetcher;
+import org.folio.circulation.support.InventoryRecords;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.*;
@@ -73,48 +75,24 @@ public class RequestCollectionResource {
     }
 
     String itemId = request.getString("itemId");
+    
+    InventoryFetcher inventoryFetcher = new InventoryFetcher(
+      itemsStorageClient, holdingsStorageClient, instancesStorageClient);
 
-    CompletableFuture<Response> itemRequestCompleted = new CompletableFuture<>();
-    CompletableFuture<Response> holdingRequestCompleted = new CompletableFuture<>();
-    CompletableFuture<Response> instanceRequestCompleted = new CompletableFuture<>();
+    CompletableFuture<InventoryRecords> inventoryRecordsCompleted
+      = inventoryFetcher.fetch(itemId, t -> {
+          ServerErrorResponse.internalError(routingContext.response(),
+            String.format(
+              "Could not get inventory records related to request: %s", t));
+    });
+
     CompletableFuture<Response> requestingUserRequestCompleted = new CompletableFuture<>();
-
-    itemsStorageClient.get(itemId, itemRequestCompleted::complete);
-
-    itemRequestCompleted.thenAccept(itemResponse -> {
-      if(itemResponse != null && itemResponse.getStatusCode() == 200) {
-
-        JsonObject item = itemResponse.getJson();
-
-        holdingsStorageClient.get(item.getString("holdingsRecordId"),
-          holdingRequestCompleted::complete);
-      }
-      else {
-        holdingRequestCompleted.complete(null);
-      }
-    });
-
-    holdingRequestCompleted.thenAccept(holdingResponse -> {
-      if(holdingResponse != null && holdingResponse.getStatusCode() == 200) {
-
-        JsonObject holding = holdingResponse.getJson();
-
-        instancesStorageClient.get(holding.getString("instanceId"),
-          instanceRequestCompleted::complete);
-      }
-      else {
-        instanceRequestCompleted.complete(null);
-      }
-    });
-
-    CompletableFuture<Void> allInventoryCompleted = CompletableFuture.allOf(
-      itemRequestCompleted, holdingRequestCompleted, instanceRequestCompleted);
 
     usersStorageClient.get(request.getString("requesterId"),
       requestingUserRequestCompleted::complete);
 
     CompletableFuture<Void> allCompleted = CompletableFuture.allOf(
-      allInventoryCompleted, requestingUserRequestCompleted);
+      inventoryRecordsCompleted, requestingUserRequestCompleted);
 
     allCompleted.exceptionally(t -> {
       ServerErrorResponse.internalError(routingContext.response(),
@@ -124,30 +102,18 @@ public class RequestCollectionResource {
     });
 
     allCompleted.thenAccept(v -> {
-      Response itemResponse = itemRequestCompleted.join();
-      Response instanceResponse = instanceRequestCompleted.join();
       Response requestingUserResponse = requestingUserRequestCompleted.join();
 
-      JsonObject item = getRecordFromResponse(itemResponse);
+      InventoryRecords inventoryRecords = inventoryRecordsCompleted.join();
 
-      JsonObject instance = getRecordFromResponse(instanceResponse);
+      JsonObject item = inventoryRecords.getItem();
+      JsonObject instance = inventoryRecords.getInstance();
 
       JsonObject requester = getRecordFromResponse(requestingUserResponse);
 
       if(item == null) {
-        if(itemResponse != null) {
-          if(itemResponse.getStatusCode() == 404) {
-            JsonResponse.unprocessableEntity(routingContext.response(),
-              "Item does not exist", "itemId", itemId);
-          }
-          else {
-            ForwardResponse.forward(routingContext.response(), itemResponse);
-          }
-        }
-        else {
-          ServerErrorResponse.internalError(routingContext.response(),
-            "Could not get item related to request");
-        }
+        JsonResponse.unprocessableEntity(routingContext.response(),
+          "Item does not exist", "itemId", itemId);
       }
       else if (canCreateRequestForItem(item, request)) {
         updateItemStatus(itemId, itemStatusFrom(request),
