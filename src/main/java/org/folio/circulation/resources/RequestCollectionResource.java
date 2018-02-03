@@ -74,53 +74,110 @@ public class RequestCollectionResource {
 
     String itemId = request.getString("itemId");
 
-    itemsStorageClient.get(itemId, getItemResponse -> {
-      if(getItemResponse.getStatusCode() == 200) {
-        JsonObject loadedItem = getItemResponse.getJson();
+    CompletableFuture<Response> itemRequestCompleted = new CompletableFuture<>();
+    CompletableFuture<Response> holdingRequestCompleted = new CompletableFuture<>();
+    CompletableFuture<Response> instanceRequestCompleted = new CompletableFuture<>();
+    CompletableFuture<Response> requestingUserRequestCompleted = new CompletableFuture<>();
 
-        if (canCreateRequestForItem(loadedItem, request)) {
-          updateItemStatus(itemId, itemStatusFrom(request),
-            itemsStorageClient, routingContext.response(), item -> {
-              updateLoanActionHistory(itemId,
-                loanActionFromRequest(request), itemStatusFrom(request), loansStorageClient,
-                routingContext.response(), v -> {
-                  addSummariesToRequest(
-                    request,
-                    itemsStorageClient,
-                    holdingsStorageClient,
-                    instancesStorageClient,
-                    usersStorageClient,
-                    requestWithAdditionalInformation -> {
-                      requestsStorageClient.post(requestWithAdditionalInformation,
-                        requestResponse -> {
-                          if (requestResponse.getStatusCode() == 201) {
-                            JsonObject createdRequest = requestResponse.getJson();
+    itemsStorageClient.get(itemId, itemRequestCompleted::complete);
 
-                            JsonResponse.created(routingContext.response(), createdRequest);
-                          } else {
-                            ForwardResponse.forward(routingContext.response(), requestResponse);
-                          }
-                      });
-                    },
-                    throwable -> {
-                      ServerErrorResponse.internalError(routingContext.response(),
-                        String.format("At least one request for additional information failed: %s",
-                          throwable));
-                    });
-                });
-           });
-        }
-        else {
-          JsonResponse.unprocessableEntity(routingContext.response(),
-            String.format("Item is not %s", CHECKED_OUT), "itemId", itemId);
-        }
-      }
-      else if(getItemResponse.getStatusCode() == 404) {
-        JsonResponse.unprocessableEntity(routingContext.response(),
-          "Item does not exist", "itemId", itemId);
+    itemRequestCompleted.thenAccept(itemResponse -> {
+      if(itemResponse != null && itemResponse.getStatusCode() == 200) {
+
+        JsonObject item = itemResponse.getJson();
+
+        holdingsStorageClient.get(item.getString("holdingsRecordId"),
+          holdingRequestCompleted::complete);
       }
       else {
-        ForwardResponse.forward(routingContext.response(), getItemResponse);
+        holdingRequestCompleted.complete(null);
+      }
+    });
+
+    holdingRequestCompleted.thenAccept(holdingResponse -> {
+      if(holdingResponse != null && holdingResponse.getStatusCode() == 200) {
+
+        JsonObject holding = holdingResponse.getJson();
+
+        instancesStorageClient.get(holding.getString("instanceId"),
+          instanceRequestCompleted::complete);
+      }
+      else {
+        instanceRequestCompleted.complete(null);
+      }
+    });
+
+    usersStorageClient.get(request.getString("requesterId"),
+      requestingUserRequestCompleted::complete);
+
+    CompletableFuture<Void> allCompleted = CompletableFuture.allOf(
+      itemRequestCompleted, holdingRequestCompleted, instanceRequestCompleted,
+      requestingUserRequestCompleted);
+
+    allCompleted.exceptionally(t -> {
+      ServerErrorResponse.internalError(routingContext.response(),
+        String.format("At least one request for additional information failed: %s", t));
+
+      return null;
+    });
+
+    allCompleted.thenAccept(v -> {
+      Response itemResponse = itemRequestCompleted.join();
+      Response instanceResponse = instanceRequestCompleted.join();
+      Response requestingUserResponse = requestingUserRequestCompleted.join();
+
+      JsonObject item = itemResponse != null && itemResponse.getStatusCode() == 200
+        ? itemResponse.getJson()
+        : null;
+
+      JsonObject instance = instanceResponse != null && instanceResponse.getStatusCode() == 200
+        ? instanceResponse.getJson()
+        : null;
+
+      JsonObject requester = requestingUserResponse != null
+        && requestingUserResponse.getStatusCode() == 200
+        ? requestingUserResponse.getJson()
+        : null;
+
+      if(item == null) {
+        if(itemResponse != null) {
+          if(itemResponse.getStatusCode() == 404) {
+            JsonResponse.unprocessableEntity(routingContext.response(),
+              "Item does not exist", "itemId", itemId);
+          }
+          else {
+            ForwardResponse.forward(routingContext.response(), itemResponse);
+          }
+        }
+        else {
+          ServerErrorResponse.internalError(routingContext.response(),
+            "Could not get item related to request");
+        }
+      }
+      else if (canCreateRequestForItem(item, request)) {
+        updateItemStatus(itemId, itemStatusFrom(request),
+          itemsStorageClient, routingContext.response(), updatedItem -> {
+            updateLoanActionHistory(itemId,
+              loanActionFromRequest(request), itemStatusFrom(request), loansStorageClient,
+              routingContext.response(), vo -> {
+                addStoredItemProperties(request, item, instance);
+                addStoredRequesterProperties(request, requester);
+
+                requestsStorageClient.post(request, requestResponse -> {
+                  if (requestResponse.getStatusCode() == 201) {
+                    JsonObject createdRequest = requestResponse.getJson();
+
+                    JsonResponse.created(routingContext.response(), createdRequest);
+                  } else {
+                    ForwardResponse.forward(routingContext.response(), requestResponse);
+                  }
+                });
+              });
+          });
+      }
+      else {
+        JsonResponse.unprocessableEntity(routingContext.response(),
+          String.format("Item is not %s", CHECKED_OUT), "itemId", itemId);
       }
     });
   }
@@ -154,7 +211,7 @@ public class RequestCollectionResource {
     request.remove("item");
     request.remove("requester");
 
-    addSummariesToRequest(request, itemsStorageClient, holdingsStorageClient,
+    addStoredSummaryPropertiesToRequest(request, itemsStorageClient, holdingsStorageClient,
       instancesStorageClient, usersStorageClient,
       requestWithAdditionalInformation -> {
         requestsStorageClient.put(id, requestWithAdditionalInformation, response -> {
@@ -282,7 +339,7 @@ public class RequestCollectionResource {
     });
   }
 
-  private void addSummariesToRequest(
+  private void addStoredSummaryPropertiesToRequest(
     JsonObject request,
     CollectionResourceClient itemsStorageClient,
     CollectionResourceClient holdingsStorageClient,
