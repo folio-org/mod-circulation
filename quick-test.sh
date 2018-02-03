@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-mvn clean test
+mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent test
