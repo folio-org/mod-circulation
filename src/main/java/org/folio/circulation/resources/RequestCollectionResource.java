@@ -126,18 +126,11 @@ public class RequestCollectionResource {
       Response instanceResponse = instanceRequestCompleted.join();
       Response requestingUserResponse = requestingUserRequestCompleted.join();
 
-      JsonObject item = itemResponse != null && itemResponse.getStatusCode() == 200
-        ? itemResponse.getJson()
-        : null;
+      JsonObject item = getRecordFromResponse(itemResponse);
 
-      JsonObject instance = instanceResponse != null && instanceResponse.getStatusCode() == 200
-        ? instanceResponse.getJson()
-        : null;
+      JsonObject instance = getRecordFromResponse(instanceResponse);
 
-      JsonObject requester = requestingUserResponse != null
-        && requestingUserResponse.getStatusCode() == 200
-        ? requestingUserResponse.getJson()
-        : null;
+      JsonObject requester = getRecordFromResponse(requestingUserResponse);
 
       if(item == null) {
         if(itemResponse != null) {
@@ -397,29 +390,26 @@ public class RequestCollectionResource {
     allCompleted.thenAccept(v -> {
       Response itemResponse = itemRequestCompleted.join();
       Response instanceResponse = instanceRequestCompleted.join();
+
+      JsonObject item = getRecordFromResponse(itemResponse);
+      JsonObject instance = getRecordFromResponse(instanceResponse);
+
+      addStoredItemProperties(request, item, instance);
+
       Response requestingUserResponse = requestingUserRequestCompleted.join();
 
-      JsonObject requestWithAdditionalInformation = request.copy();
+      JsonObject requester = getRecordFromResponse(requestingUserResponse);
 
-      JsonObject item = itemResponse != null && itemResponse.getStatusCode() == 200
-        ? itemResponse.getJson()
-        : null;
+      addStoredRequesterProperties(request, requester);
 
-      JsonObject instance = instanceResponse != null && instanceResponse.getStatusCode() == 200
-        ? instanceResponse.getJson()
-        : null;
-
-      addStoredItemProperties(requestWithAdditionalInformation, item, instance);
-
-      JsonObject requester = requestingUserResponse != null
-        && requestingUserResponse.getStatusCode() == 200
-        ? requestingUserResponse.getJson()
-        : null;
-
-      addStoredRequesterProperties(requestWithAdditionalInformation, requester);
-
-      onSuccess.accept(requestWithAdditionalInformation);
+      onSuccess.accept(request);
     });
+  }
+
+  private JsonObject getRecordFromResponse(Response itemResponse) {
+    return itemResponse != null && itemResponse.getStatusCode() == 200
+      ? itemResponse.getJson()
+      : null;
   }
 
   private void addStoredItemProperties(
