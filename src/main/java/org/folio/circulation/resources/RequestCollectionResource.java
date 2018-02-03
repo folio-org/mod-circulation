@@ -107,12 +107,14 @@ public class RequestCollectionResource {
       }
     });
 
+    CompletableFuture<Void> allInventoryCompleted = CompletableFuture.allOf(
+      itemRequestCompleted, holdingRequestCompleted, instanceRequestCompleted);
+
     usersStorageClient.get(request.getString("requesterId"),
       requestingUserRequestCompleted::complete);
 
     CompletableFuture<Void> allCompleted = CompletableFuture.allOf(
-      itemRequestCompleted, holdingRequestCompleted, instanceRequestCompleted,
-      requestingUserRequestCompleted);
+      allInventoryCompleted, requestingUserRequestCompleted);
 
     allCompleted.exceptionally(t -> {
       ServerErrorResponse.internalError(routingContext.response(),
