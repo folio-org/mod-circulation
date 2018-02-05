@@ -17,11 +17,9 @@ import org.folio.circulation.support.http.server.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.UnsupportedEncodingException;
 import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -91,8 +89,11 @@ public class LoanCollectionResource {
 
     updateItemStatus(itemId, itemStatusFrom(loan),
       itemsStorageClient, routingContext.response(), item -> {
+
         loan.put("itemStatus", item.getJsonObject("status").getString("name"));
+
         String holdingId = item.getString("holdingsRecordId");
+
         holdingsStorageClient.get(holdingId, holdingResponse -> {
           final String instanceId = holdingResponse.getStatusCode() == 200
             ? holdingResponse.getJson().getString("instanceId")
@@ -104,8 +105,8 @@ public class LoanCollectionResource {
               : null;
 
             final JsonObject holding = holdingResponse.getStatusCode() == 200
-                  ? holdingResponse.getJson()
-                  : null;
+              ? holdingResponse.getJson()
+              : null;
 
             lookupLoanPolicyId(loan, item, holding, usersStorageClient, client,
                     routingContext.response(), context, loanPolicyIdJson -> {
@@ -119,7 +120,7 @@ public class LoanCollectionResource {
                   locationsStorageClient.get(locationId, locationResponse -> {
                     if(locationResponse.getStatusCode() == 200) {
                       JsonResponse.created(routingContext.response(),
-                        extendedLoan(createdLoan, item, instance,
+                        extendedLoan(createdLoan, item, holding, instance,
                           locationResponse.getJson()));
                     }
                     else {
@@ -128,7 +129,7 @@ public class LoanCollectionResource {
                           locationId, itemId ));
 
                       JsonResponse.created(routingContext.response(),
-                        extendedLoan(createdLoan, item, instance, null));
+                        extendedLoan(createdLoan, item, holding, instance, null));
                     }
                   });
                 }
@@ -244,7 +245,7 @@ public class LoanCollectionResource {
                   locationResponse -> {
                     if(locationResponse.getStatusCode() == 200) {
                       JsonResponse.success(routingContext.response(),
-                        extendedLoan(loan, item, instance,
+                        extendedLoan(loan, item, holding, instance,
                           locationResponse.getJson()));
                     }
                     else {
@@ -253,7 +254,7 @@ public class LoanCollectionResource {
                           locationId, itemId ));
 
                       JsonResponse.success(routingContext.response(),
-                        extendedLoan(loan, item, instance, null));
+                        extendedLoan(loan, item, holding, instance, null));
                     }
                   });
               });
@@ -474,6 +475,7 @@ public class LoanCollectionResource {
 
                       loan.put("item", createItemSummary(item,
                         possibleInstance.orElse(null),
+                          possibleHolding.orElse(null),
                           possibleLocation.orElse(null)));
                     }
                   });
@@ -619,12 +621,15 @@ public class LoanCollectionResource {
   private JsonObject createItemSummary(
     JsonObject item,
     JsonObject instance,
+    JsonObject holding,
     JsonObject location) {
     JsonObject itemSummary = new JsonObject();
 
     final String titleProperty = "title";
     final String barcodeProperty = "barcode";
     final String statusProperty = "status";
+    final String holdingsRecordIdProperty = "holdingsRecordId";
+    final String instanceIdProperty = "instanceId";
 
     if(instance != null && instance.containsKey(titleProperty)) {
       itemSummary.put(titleProperty, instance.getString(titleProperty));
@@ -634,6 +639,14 @@ public class LoanCollectionResource {
 
     if(item.containsKey(barcodeProperty)) {
       itemSummary.put(barcodeProperty, item.getString(barcodeProperty));
+    }
+
+    if(item.containsKey(holdingsRecordIdProperty)) {
+      itemSummary.put(holdingsRecordIdProperty, item.getString(holdingsRecordIdProperty));
+    }
+
+    if(holding != null && holding.containsKey(instanceIdProperty)) {
+      itemSummary.put(instanceIdProperty, holding.getString(instanceIdProperty));
     }
 
     if(item.containsKey(statusProperty)) {
@@ -651,10 +664,11 @@ public class LoanCollectionResource {
   private JsonObject extendedLoan(
     JsonObject loan,
     JsonObject item,
+    JsonObject holding,
     JsonObject instance,
     JsonObject location) {
 
-    loan.put("item", createItemSummary(item, instance, location));
+    loan.put("item", createItemSummary(item, instance, holding, location));
 
     //No need to pass on the itemStatus property, as only used to populate the history
     //and could be confused with aggregation of current status
@@ -736,14 +750,6 @@ public class LoanCollectionResource {
           }
         }
       });
-  }
-
-  static String urlEncodeUTF8(String s) {
-    try {
-      return URLEncoder.encode(s, "UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      throw new UnsupportedOperationException(e);
-    }
   }
 
   private String determineLocationIdForItem(JsonObject item, JsonObject holding) {

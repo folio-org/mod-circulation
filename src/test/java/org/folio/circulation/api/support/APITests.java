@@ -43,7 +43,6 @@ public abstract class APITests {
   protected final ResourceClient holdingsClient = ResourceClient.forHoldings(client);
   protected final ResourceClient instancesClient = ResourceClient.forInstances(client);
 
-
   protected APITests() {
     this(true);
   }
