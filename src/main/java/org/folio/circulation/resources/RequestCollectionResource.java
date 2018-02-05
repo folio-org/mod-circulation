@@ -1,22 +1,26 @@
 package org.folio.circulation.resources;
 
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.RequestType;
-import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.InventoryFetcher;
-import org.folio.circulation.support.InventoryRecords;
+import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.*;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import static org.folio.circulation.domain.ItemStatus.*;
 import static org.folio.circulation.domain.ItemStatusAssistant.updateItemStatus;
@@ -306,11 +310,18 @@ public class RequestCollectionResource {
 
   private void getMany(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
+
     CollectionResourceClient requestsStorageClient;
+    CollectionResourceClient itemsStorageClient;
+    CollectionResourceClient holdingsStorageClient;
+    CollectionResourceClient instancesStorageClient;
 
     try {
       OkapiHttpClient client = createHttpClient(routingContext, context);
       requestsStorageClient = createRequestsStorageClient(client, context);
+      itemsStorageClient = createItemsStorageClient(client, context);
+      holdingsStorageClient = createHoldingsStorageClient(client, context);
+      instancesStorageClient = createInstanceStorageClient(client, context);
     }
     catch (MalformedURLException e) {
       ServerErrorResponse.internalError(routingContext.response(),
@@ -323,12 +334,128 @@ public class RequestCollectionResource {
       if(requestsResponse.getStatusCode() == 200) {
         JsonObject wrappedRequests = new JsonObject(requestsResponse.getBody());
 
-        JsonObject requestsWrapper = new JsonObject()
-          .put("requests", wrappedRequests.getJsonArray("requests"))
-          .put("totalRecords", wrappedRequests.getInteger("totalRecords"));
+        final List<JsonObject> requests = JsonArrayHelper.toList(
+          wrappedRequests.getJsonArray("requests"));
 
-        JsonResponse.success(routingContext.response(),
-          requestsWrapper);
+        if(requests.isEmpty()) {
+          JsonObject requestsWrapper = new JsonObject()
+            .put("requests", new JsonArray(requests))
+            .put("totalRecords", wrappedRequests.getInteger("totalRecords"));
+
+          JsonResponse.success(routingContext.response(),
+            requestsWrapper);
+
+          return;
+        }
+
+        List<String> itemIds = requests.stream()
+          .map(request -> request.getString("itemId"))
+          .filter(Objects::nonNull)
+          .collect(Collectors.toList());
+
+        CompletableFuture<Response> itemsFetched = new CompletableFuture<>();
+
+        String itemsQuery = CqlHelper.multipleRecordsCqlQuery(itemIds);
+
+        itemsStorageClient.getMany(itemsQuery, itemIds.size(), 0,
+          itemsFetched::complete);
+
+        itemsFetched.thenAccept(itemsResponse -> {
+          if(itemsResponse.getStatusCode() != 200) {
+            ServerErrorResponse.internalError(routingContext.response(),
+              String.format("Items request (%s) failed %s: %s",
+                itemsQuery, itemsResponse.getStatusCode(), itemsResponse.getBody()));
+            return;
+          }
+
+          final List<JsonObject> items = JsonArrayHelper.toList(
+            itemsResponse.getJson().getJsonArray("items"));
+
+          List<String> holdingsIds = items.stream()
+            .map(item -> item.getString("holdingsRecordId"))
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
+
+          CompletableFuture<Response> holdingsFetched =
+            new CompletableFuture<>();
+
+          String holdingsQuery = CqlHelper.multipleRecordsCqlQuery(holdingsIds);
+
+          holdingsStorageClient.getMany(holdingsQuery, holdingsIds.size(), 0,
+            holdingsFetched::complete);
+
+          holdingsFetched.thenAccept(holdingsResponse -> {
+            if(holdingsResponse.getStatusCode() != 200) {
+              ServerErrorResponse.internalError(routingContext.response(),
+                String.format("Holdings request (%s) failed %s: %s",
+                  holdingsQuery, holdingsResponse.getStatusCode(),
+                  holdingsResponse.getBody()));
+              return;
+            }
+
+            final List<JsonObject> holdings = JsonArrayHelper.toList(
+              holdingsResponse.getJson().getJsonArray("holdingsRecords"));
+
+            List<String> instanceIds = holdings.stream()
+              .map(holding -> holding.getString("instanceId"))
+              .filter(Objects::nonNull)
+              .collect(Collectors.toList());
+
+            CompletableFuture<Response> instancesFetched = new CompletableFuture<>();
+
+            String instancesQuery = CqlHelper.multipleRecordsCqlQuery(instanceIds);
+
+            instancesStorageClient.getMany(instancesQuery, instanceIds.size(), 0,
+              instancesFetched::complete);
+
+            instancesFetched.thenAccept(instancesResponse -> {
+              if (instancesResponse.getStatusCode() != 200) {
+                ServerErrorResponse.internalError(routingContext.response(),
+                  String.format("Instances request (%s) failed %s: %s",
+                    instancesQuery, instancesResponse.getStatusCode(),
+                    instancesResponse.getBody()));
+                return;
+              }
+
+              final List<JsonObject> instances = JsonArrayHelper.toList(
+                instancesResponse.getJson().getJsonArray("instances"));
+
+                requests.forEach( request -> {
+                  Optional<JsonObject> possibleItem = items.stream()
+                    .filter(item -> item.getString("id").equals(request.getString("itemId")))
+                    .findFirst();
+
+                  Optional<JsonObject> possibleInstance = Optional.empty();
+
+                  if(possibleItem.isPresent()) {
+                    JsonObject item = possibleItem.get();
+
+                    Optional<JsonObject> possibleHolding = holdingForItem(item, holdings);
+
+                    if(possibleHolding.isPresent()) {
+                      JsonObject holding = possibleHolding.get();
+
+                      possibleInstance = instances.stream()
+                        .filter(instance -> instance.getString("id")
+                          .equals(holding.getString("instanceId")))
+                        .findFirst();
+                    }
+
+                    addAdditionalItemProperties(request,
+                      possibleHolding.orElse(null),
+                      possibleItem.orElse(null));
+                  }
+                });
+
+                JsonObject requestsWrapper = new JsonObject()
+                  .put("requests", new JsonArray(requests))
+                  .put("totalRecords", wrappedRequests.getInteger("totalRecords"));
+
+                JsonResponse.success(routingContext.response(),
+                  requestsWrapper);
+              });
+            });
+        });
       }
     });
   }
@@ -554,5 +681,16 @@ public class RequestCollectionResource {
     return itemResponse != null && itemResponse.getStatusCode() == 200
       ? itemResponse.getJson()
       : null;
+  }
+
+  private Optional<JsonObject> holdingForItem(
+    JsonObject item,
+    Collection<JsonObject> holdings) {
+
+    String holdingsRecordId = item.getString("holdingsRecordId");
+
+    return holdings.stream()
+      .filter(holding -> holding.getString("id").equals(holdingsRecordId))
+      .findFirst();
   }
 }
