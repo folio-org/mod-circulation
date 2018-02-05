@@ -106,6 +106,7 @@ public class RequestCollectionResource {
       InventoryRecords inventoryRecords = inventoryRecordsCompleted.join();
 
       JsonObject item = inventoryRecords.getItem();
+      JsonObject holding = inventoryRecords.getHolding();
       JsonObject instance = inventoryRecords.getInstance();
 
       JsonObject requester = getRecordFromResponse(requestingUserResponse);
@@ -126,6 +127,8 @@ public class RequestCollectionResource {
                 requestsStorageClient.post(request, requestResponse -> {
                   if (requestResponse.getStatusCode() == 201) {
                     JsonObject createdRequest = requestResponse.getJson();
+
+                    addAdditionalItemProperties(createdRequest, holding, item);
 
                     JsonResponse.created(routingContext.response(), createdRequest);
                   } else {
@@ -225,11 +228,18 @@ public class RequestCollectionResource {
 
   private void get(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
+
     CollectionResourceClient requestsStorageClient;
+    CollectionResourceClient itemsStorageClient;
+    CollectionResourceClient holdingsStorageClient;
+    CollectionResourceClient instancesStorageClient;
 
     try {
       OkapiHttpClient client = createHttpClient(routingContext, context);
       requestsStorageClient = createRequestsStorageClient(client, context);
+      itemsStorageClient = createItemsStorageClient(client, context);
+      holdingsStorageClient = createHoldingsStorageClient(client, context);
+      instancesStorageClient = createInstanceStorageClient(client, context);
     }
     catch (MalformedURLException e) {
       ServerErrorResponse.internalError(routingContext.response(),
@@ -242,8 +252,24 @@ public class RequestCollectionResource {
 
     requestsStorageClient.get(id, requestResponse -> {
       if(requestResponse.getStatusCode() == 200) {
-        JsonObject request = new JsonObject(requestResponse.getBody());
-        JsonResponse.success(routingContext.response(), request);
+        InventoryFetcher fetcher = new InventoryFetcher(itemsStorageClient,
+          holdingsStorageClient, instancesStorageClient);
+
+        JsonObject request = requestResponse.getJson();
+
+        CompletableFuture<InventoryRecords> inventoryRecordsCompleted =
+          fetcher.fetch(request.getString("itemId"), t -> {
+          ServerErrorResponse.internalError(routingContext.response(),
+            String.format(
+              "Could not get inventory records related to request: %s", t));
+        });
+
+        inventoryRecordsCompleted.thenAccept(r -> {
+          addAdditionalItemProperties(request, r.getHolding(), r.getItem());
+
+          JsonResponse.success(routingContext.response(), request);
+        });
+
       }
       else {
         ForwardResponse.forward(routingContext.response(), requestResponse);
@@ -353,6 +379,27 @@ public class RequestCollectionResource {
 
     if(item.containsKey("barcode")) {
       itemSummary.put("barcode", item.getString("barcode"));
+    }
+
+    request.put("item", itemSummary);
+  }
+
+  private void addAdditionalItemProperties(
+    JsonObject request,
+    JsonObject holding,
+    JsonObject item) {
+
+    if(item == null)
+      return;
+
+    JsonObject itemSummary = request.containsKey("item")
+      ? request.getJsonObject("item")
+      : new JsonObject();
+
+    itemSummary.put("holdingsRecordId", item.getString("holdingsRecordId"));
+
+    if(holding != null) {
+      itemSummary.put("instanceId", holding.getString("instanceId"));
     }
 
     request.put("item", itemSummary);

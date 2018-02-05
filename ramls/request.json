@@ -28,47 +28,57 @@
       "pattern": "^[a-fA-Z0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
     },
     "item": {
-      "description": "Copy of some item metadata (used for searching and sorting), will be taken from the item referred to by the itemId",
+      "description": "Information about the requested item (some of which is stored and used for searching and sorting)",
       "readOnly": true,
       "type": "object",
       "properties": {
         "title": {
-          "description": "title of the item (read only, defined by the server)",
+          "description": "title of the item (stored)",
           "type": "string",
-          "readOnly": true
+          "readonly": true
         },
         "barcode": {
-          "description": "barcode of the item (read only, defined by the server)",
+          "description": "barcode of the item (stored)",
           "type": "string",
-          "readOnly": true
+          "readonly": true
+        },
+        "holdingsRecordId": {
+          "description": "The ID of the holdings for the item",
+          "type": "string",
+          "readonly": true
+        },
+        "instanceId": {
+          "description": "The ID of the instance for the item",
+          "type": "string",
+          "readonly": true
         }
       },
       "additionalProperties": false
     },
     "requester": {
-      "description": "Copy of some requesting patron metadata (used for searching and sorting), , will be taken from the user referred to by the requesterId",
+      "description": "Copy of some requesting patron metadata (used for searching and sorting), will be taken from the user referred to by the requesterId",
       "readOnly": true,
       "type": "object",
       "properties": {
         "firstName": {
           "description": "first name of the patron (read only, defined by the server)",
           "type": "string",
-          "readOnly": true
+          "readonly": true
         },
         "lastName": {
           "description": "last name of the patron (read only, defined by the server)",
           "type": "string",
-          "readOnly": true
+          "readonly": true
         },
         "middleName": {
           "description": "middle name of the patron (read only, defined by the server)",
           "type": "string",
-          "readOnly": true
+          "readonly": true
         },
         "barcode": {
           "description": "barcode of the patron (read only, defined by the server)",
           "type": "string",
-          "readOnly": true
+          "readonly": true
         }
       },
       "additionalProperties": false
