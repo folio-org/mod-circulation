@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 import java.io.UnsupportedEncodingException;
 import java.lang.invoke.MethodHandles;
 import java.net.URLEncoder;
-import java.util.List;
+import java.util.Collection;
 import java.util.stream.Collectors;
 
 public class CqlHelper {
@@ -14,7 +14,7 @@ public class CqlHelper {
 
   private CqlHelper() { }
 
-  public static String multipleRecordsCqlQuery(List<String> recordIds) {
+  public static String multipleRecordsCqlQuery(Collection<String> recordIds) {
     if(recordIds.isEmpty()) {
       return null;
     }
