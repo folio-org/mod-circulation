@@ -15,7 +15,6 @@ import org.folio.circulation.support.http.server.*;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -353,108 +352,37 @@ public class RequestCollectionResource {
           .filter(Objects::nonNull)
           .collect(Collectors.toList());
 
-        CompletableFuture<Response> itemsFetched = new CompletableFuture<>();
+        InventoryFetcher inventoryFetcher = new InventoryFetcher(itemsStorageClient,
+          holdingsStorageClient, instancesStorageClient);
 
-        String itemsQuery = CqlHelper.multipleRecordsCqlQuery(itemIds);
+        CompletableFuture<MultipleInventoryRecords> inventoryRecordsFetched =
+          inventoryFetcher.fetch(itemIds, e -> {
+            ServerErrorResponse.internalError(routingContext.response(), e.toString());
+        });
 
-        itemsStorageClient.getMany(itemsQuery, itemIds.size(), 0,
-          itemsFetched::complete);
+        inventoryRecordsFetched.thenAccept(records -> {
+          requests.forEach( request -> {
+              Optional<JsonObject> possibleItem = records.findItemById(
+                request.getString("itemId"));
 
-        itemsFetched.thenAccept(itemsResponse -> {
-          if(itemsResponse.getStatusCode() != 200) {
-            ServerErrorResponse.internalError(routingContext.response(),
-              String.format("Items request (%s) failed %s: %s",
-                itemsQuery, itemsResponse.getStatusCode(), itemsResponse.getBody()));
-            return;
-          }
+              if(possibleItem.isPresent()) {
+                JsonObject item = possibleItem.get();
 
-          final List<JsonObject> items = JsonArrayHelper.toList(
-            itemsResponse.getJson().getJsonArray("items"));
+                Optional<JsonObject> possibleHolding = records.findHoldingById(
+                  item.getString("holdingsRecordId"));
 
-          List<String> holdingsIds = items.stream()
-            .map(item -> item.getString("holdingsRecordId"))
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList());
-
-          CompletableFuture<Response> holdingsFetched =
-            new CompletableFuture<>();
-
-          String holdingsQuery = CqlHelper.multipleRecordsCqlQuery(holdingsIds);
-
-          holdingsStorageClient.getMany(holdingsQuery, holdingsIds.size(), 0,
-            holdingsFetched::complete);
-
-          holdingsFetched.thenAccept(holdingsResponse -> {
-            if(holdingsResponse.getStatusCode() != 200) {
-              ServerErrorResponse.internalError(routingContext.response(),
-                String.format("Holdings request (%s) failed %s: %s",
-                  holdingsQuery, holdingsResponse.getStatusCode(),
-                  holdingsResponse.getBody()));
-              return;
-            }
-
-            final List<JsonObject> holdings = JsonArrayHelper.toList(
-              holdingsResponse.getJson().getJsonArray("holdingsRecords"));
-
-            List<String> instanceIds = holdings.stream()
-              .map(holding -> holding.getString("instanceId"))
-              .filter(Objects::nonNull)
-              .collect(Collectors.toList());
-
-            CompletableFuture<Response> instancesFetched = new CompletableFuture<>();
-
-            String instancesQuery = CqlHelper.multipleRecordsCqlQuery(instanceIds);
-
-            instancesStorageClient.getMany(instancesQuery, instanceIds.size(), 0,
-              instancesFetched::complete);
-
-            instancesFetched.thenAccept(instancesResponse -> {
-              if (instancesResponse.getStatusCode() != 200) {
-                ServerErrorResponse.internalError(routingContext.response(),
-                  String.format("Instances request (%s) failed %s: %s",
-                    instancesQuery, instancesResponse.getStatusCode(),
-                    instancesResponse.getBody()));
-                return;
+                addAdditionalItemProperties(request,
+                  possibleHolding.orElse(null),
+                  possibleItem.orElse(null));
               }
-
-              final List<JsonObject> instances = JsonArrayHelper.toList(
-                instancesResponse.getJson().getJsonArray("instances"));
-
-                requests.forEach( request -> {
-                  Optional<JsonObject> possibleItem = items.stream()
-                    .filter(item -> item.getString("id").equals(request.getString("itemId")))
-                    .findFirst();
-
-                  Optional<JsonObject> possibleInstance = Optional.empty();
-
-                  if(possibleItem.isPresent()) {
-                    JsonObject item = possibleItem.get();
-
-                    Optional<JsonObject> possibleHolding = holdingForItem(item, holdings);
-
-                    if(possibleHolding.isPresent()) {
-                      JsonObject holding = possibleHolding.get();
-
-                      possibleInstance = instances.stream()
-                        .filter(instance -> instance.getString("id")
-                          .equals(holding.getString("instanceId")))
-                        .findFirst();
-                    }
-
-                    addAdditionalItemProperties(request,
-                      possibleHolding.orElse(null),
-                      possibleItem.orElse(null));
-                  }
-                });
-
-                JsonObject requestsWrapper = new JsonObject()
-                  .put("requests", new JsonArray(requests))
-                  .put("totalRecords", wrappedRequests.getInteger("totalRecords"));
-
-                JsonResponse.success(routingContext.response(),
-                  requestsWrapper);
-              });
             });
+
+            JsonObject requestsWrapper = new JsonObject()
+              .put("requests", new JsonArray(requests))
+              .put("totalRecords", wrappedRequests.getInteger("totalRecords"));
+
+            JsonResponse.success(routingContext.response(),
+              requestsWrapper);
         });
       }
     });
@@ -681,16 +609,5 @@ public class RequestCollectionResource {
     return itemResponse != null && itemResponse.getStatusCode() == 200
       ? itemResponse.getJson()
       : null;
-  }
-
-  private Optional<JsonObject> holdingForItem(
-    JsonObject item,
-    Collection<JsonObject> holdings) {
-
-    String holdingsRecordId = item.getString("holdingsRecordId");
-
-    return holdings.stream()
-      .filter(holding -> holding.getString("id").equals(holdingsRecordId))
-      .findFirst();
   }
 }
