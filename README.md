@@ -15,7 +15,7 @@ FOLIO compatible circulation capabilities, including loan items from the invento
 
 - Java 8 JDK
 - Maven 3.5.0
-- Implementations of the interfaces described in the [module descriptor](descriptors/ModuleDescriptor-template.json) 
+- Implementations of the interfaces described in the [module descriptor](descriptors/ModuleDescriptor-template.json)
 
 ### Optional
 
@@ -79,7 +79,7 @@ During the circulation process an item can change between a variety of states,
 below is a table describing the most common states defined at the moment.
 
 | Name | Description |
-|---|---| 
+|---|---|
 | Available | This item is available to be lent to a patron |
 | Checked out | This item is currently checked out to a patron |
 | Checked out - Recalled | This item is currently checked out to a patron, another patron has requested it be returned as soon as possible |
@@ -112,15 +112,15 @@ the request JSON.schema uses the readOnly property to indicate that these proper
 
 In order to reduce the amount of requests a client needs to make, some properties from other records in responses.
 
-As this inclusion requires a chain of requests after the loans or requests have been fetched responses may take longer than other requests.
+As this inclusion requires a chain of requests after the loans or requests have been fetched, the responses may take longer than other requests.
 
 #### Loans
 
 Loans include information from the item, including locations, holdingsRecordId and instanceId.
 
 #### Requests
- 
-Requests include information from the item, including holdingsRecordId and instanceId. 
+
+Requests include information from the item, including holdingsRecordId and instanceId.
 
 ## Additional Information
 

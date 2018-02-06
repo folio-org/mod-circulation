@@ -11,7 +11,7 @@
 * Applies loan rules to determine the policy to use whilst handling loan requests (CIRC-51)
 * Adds `loanPolicyId` property to a loan, to keep the last policy that was applied to the loan (CIRC-51)
 * Clear cache of loan rules engine when changing loan rules (CIRC-59)
-* Default loan status to `Open` (and action to `checkedout`) if not provided (CIRC-60) 
+* Default loan status to `Open` (and action to `checkedout`) if not provided (CIRC-60)
 * Provides circulation interface 2.6 (CIRC-51)
 * Requires loan-storage interface version 3.4 (CIRC-51)
 
@@ -25,13 +25,13 @@
 
 * Allow multiple requests for the same item (CIRC-54)
 * Use permanent location from holding or item (CIRC-49)
-* Use title from instance or item (CIRC-50) 
+* Use title from instance or item (CIRC-50)
 * Use item permanent and temporary locations for `location` property in loans (CIRC-36)
 * Item status `Checked Out` is now `Checked out` (CIRC-39)
 * Creating or changing a loan updates the `itemStatus` snapshot (similar to `action`) in loan storage (CIRC-38)
 * Creating a hold or recall request changes the associated item's `status` (CIRC-39)
 * Creating a hold or recall request updates the `action` and `itemStatus` snapshots
-for an open loan for the same item in storage, in order to create a loan history entry (CIRC-40, CIRC-38) 
+for an open loan for the same item in storage, in order to create a loan history entry (CIRC-40, CIRC-38)
 * A hold or recall request will be rejected when associated item's `status` is not checked out (CIRC-39)
 * A request for an item that does not exist will be rejected (CIRC-39)
 * The `itemStatus` snapshot is not included in loan representation, as the current status
