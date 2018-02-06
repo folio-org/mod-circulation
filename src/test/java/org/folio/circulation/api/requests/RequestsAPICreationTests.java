@@ -1,6 +1,21 @@
 package org.folio.circulation.api.requests;
 
-import io.vertx.core.json.JsonObject;
+import static org.folio.HttpStatus.HTTP_CREATED;
+import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
+import static org.folio.circulation.api.support.fixtures.LoanFixture.checkOutItem;
+import static org.folio.circulation.api.support.matchers.StatusMatcher.hasStatus;
+import static org.folio.circulation.api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import org.folio.circulation.api.support.APITests;
 import org.folio.circulation.api.support.builders.ItemRequestBuilder;
 import org.folio.circulation.api.support.builders.RequestRequestBuilder;
@@ -14,20 +29,7 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.junit.Test;
 
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import static org.folio.circulation.api.support.fixtures.LoanFixture.checkOutItem;
-import static org.folio.circulation.api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
-import static org.folio.circulation.api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import io.vertx.core.json.JsonObject;
 
 public class RequestsAPICreationTests extends APITests {
   @Test
@@ -72,8 +74,7 @@ public class RequestsAPICreationTests extends APITests {
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat(String.format("Failed to create request: %s", postResponse.getBody()),
-      postResponse.getStatusCode(), is(HttpURLConnection.HTTP_CREATED));
+    assertThat(postResponse, hasStatus(HTTP_CREATED));
 
     JsonObject representation = postResponse.getJson();
 
@@ -141,9 +142,7 @@ public class RequestsAPICreationTests extends APITests {
       ResponseHandler.json(postCompleted));
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(String.format("Should fail to create request: %s", postResponse.getBody()),
-      postResponse.getStatusCode(), is(UNPROCESSABLE_ENTITY));
+    assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
   }
 
   @Test
@@ -172,9 +171,7 @@ public class RequestsAPICreationTests extends APITests {
       ResponseHandler.json(postCompleted));
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(String.format("Should fail to create request: %s", postResponse.getBody()),
-      postResponse.getStatusCode(), is(UNPROCESSABLE_ENTITY));
+    assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
   }
 
   @Test
@@ -203,9 +200,7 @@ public class RequestsAPICreationTests extends APITests {
       ResponseHandler.json(postCompleted));
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(String.format("Should fail to create request: %s", postResponse.getBody()),
-      postResponse.getStatusCode(), is(UNPROCESSABLE_ENTITY));
+    assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
   }
 
   //TODO: Remove this once sample data is updated, temporary to aid change of item status case
@@ -254,9 +249,7 @@ public class RequestsAPICreationTests extends APITests {
       ResponseHandler.json(postCompleted));
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(String.format("Failed to create request: %s", postResponse.getBody()),
-      postResponse.getStatusCode(), is(HttpURLConnection.HTTP_CREATED));
+    assertThat(postResponse, hasStatus(HTTP_CREATED));
   }
 
   @Test
@@ -285,9 +278,7 @@ public class RequestsAPICreationTests extends APITests {
       ResponseHandler.json(postCompleted));
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(String.format("Should be able to create request: %s", postResponse.getBody()),
-      postResponse.getStatusCode(), is(HttpURLConnection.HTTP_CREATED));
+    assertThat(postResponse, hasStatus(HTTP_CREATED));
   }
 
   @Test
@@ -326,8 +317,7 @@ public class RequestsAPICreationTests extends APITests {
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat(String.format("Failed to create request: %s", postResponse.getBody()),
-      postResponse.getStatusCode(), is(HttpURLConnection.HTTP_CREATED));
+    assertThat(postResponse, hasStatus(HTTP_CREATED));
 
     JsonObject representation = postResponse.getJson();
 
@@ -371,8 +361,7 @@ public class RequestsAPICreationTests extends APITests {
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat(String.format("Failed to create request: %s", postResponse.getBody()),
-      postResponse.getStatusCode(), is(HttpURLConnection.HTTP_CREATED));
+    assertThat(postResponse, hasStatus(HTTP_CREATED));
 
     JsonObject representation = postResponse.getJson();
 
@@ -430,8 +419,7 @@ public class RequestsAPICreationTests extends APITests {
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat(String.format("Failed to create request: %s", postResponse.getBody()),
-      postResponse.getStatusCode(), is(HttpURLConnection.HTTP_CREATED));
+    assertThat(postResponse, hasStatus(HTTP_CREATED));
 
     JsonObject representation = postResponse.getJson();
 
@@ -494,8 +482,7 @@ public class RequestsAPICreationTests extends APITests {
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat(String.format("Failed to create request: %s", postResponse.getBody()),
-      postResponse.getStatusCode(), is(HttpURLConnection.HTTP_CREATED));
+    assertThat(postResponse, hasStatus(HTTP_CREATED));
 
     JsonObject representation = postResponse.getJson();
 
@@ -545,8 +532,7 @@ public class RequestsAPICreationTests extends APITests {
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat(String.format("Failed to create request: %s", postResponse.getBody()),
-      postResponse.getStatusCode(), is(HttpURLConnection.HTTP_CREATED));
+    assertThat(postResponse, hasStatus(HTTP_CREATED));
 
     JsonObject representation = postResponse.getJson();
 
@@ -613,8 +599,7 @@ public class RequestsAPICreationTests extends APITests {
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat(String.format("Failed to create request: %s", postResponse.getBody()),
-      postResponse.getStatusCode(), is(HttpURLConnection.HTTP_CREATED));
+    assertThat(postResponse, hasStatus(HTTP_CREATED));
 
     JsonObject representation = postResponse.getJson();
 

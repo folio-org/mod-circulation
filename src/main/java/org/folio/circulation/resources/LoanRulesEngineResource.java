@@ -34,9 +34,10 @@ public class LoanRulesEngineResource {
   private final String applyAllPath;
 
   /** after this time the rules get loaded before executing the loan rules engine */
-  static long maxAgeInMilliseconds = 5000;
-  /** after this time the loan rules engine is executed first and the the loan rules get reloaded */
-  static long triggerAgeInMilliseconds = 4000;
+  private static long maxAgeInMilliseconds = 5000;
+  /** after this time the loan rules engine is executed first for a fast reply
+   * and then the loan rules get reloaded */
+  private static long triggerAgeInMilliseconds = 4000;
 
   private class Rules {
     String loanRulesAsTextFile = "";
@@ -50,7 +51,27 @@ public class LoanRulesEngineResource {
   private static Map<String,Rules> rulesMap = new HashMap<>();
 
   /**
+   * Set the cache time.
+   * @param triggerAgeInMilliseconds  after this time the loan rules engine is executed first for a fast reply
+   *                                  and then the loan rules get reloaded
+   * @param maxAgeInMilliseconds  after this time the rules get loaded before executing the loan rules engine
+   */
+  public static void setCacheTime(long triggerAgeInMilliseconds, long maxAgeInMilliseconds) {
+    LoanRulesEngineResource.triggerAgeInMilliseconds = triggerAgeInMilliseconds;
+    LoanRulesEngineResource.maxAgeInMilliseconds = maxAgeInMilliseconds;
+  }
+
+  /**
+   * Completely drop the cache. This enforces rebuilding the drools rules
+   * even when the loan rules haven't changed.
+   */
+  public static void dropCache() {
+    rulesMap.clear();
+  }
+
+  /**
    * Enforce reload of all loan rules of all tenants.
+   * This doesn't rebuild the drools rules if the loan rules haven't changed.
    */
   public static void clearCache() {
     for (Rules rules: rulesMap.values()) {
@@ -61,6 +82,7 @@ public class LoanRulesEngineResource {
 
   /**
    * Enforce reload of the tenant's loan rules.
+   * This doesn't rebuild the drools rules if the loan rules haven't changed.
    * @param tenantId  id of the tenant
    */
   public static void clearCache(String tenantId) {
