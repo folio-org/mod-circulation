@@ -5,7 +5,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
-import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
@@ -113,12 +112,12 @@ public class RequestCollectionResource {
       if(item == null) {
         reportItemRelatedValidationError(routingContext, itemId, "Item does not exist");
       }
-      else if (canCreateRequestForItem(item, request)) {
-        updateItemStatus(itemId, itemStatusFrom(request),
+      else if (RequestType.from(request).canCreateRequestForItem(item)) {
+        updateItemStatus(itemId, RequestType.from(request).toItemStatus(),
           itemsStorageClient, routingContext.response(), updatedItem ->
             updateLoanActionHistory(itemId,
-            loanActionFromRequest(request), itemStatusFrom(request), loansStorageClient,
-            routingContext.response(), vo -> {
+            RequestType.from(request).toloanAction(), RequestType.from(request).toItemStatus(),
+              loansStorageClient, routingContext.response(), vo -> {
               addStoredItemProperties(request, item, instance);
               addStoredRequesterProperties(request, requester);
 
@@ -517,52 +516,6 @@ public class RequestCollectionResource {
     return getCollectionResourceClient(client, context, "/loan-storage/loans");
   }
 
-  private String itemStatusFrom(JsonObject request) {
-    switch(request.getString("requestType")) {
-      case RequestType.HOLD:
-        return CHECKED_OUT_HELD;
-
-      case RequestType.RECALL:
-        return CHECKED_OUT_RECALLED;
-
-      case RequestType.PAGE:
-        return CHECKED_OUT;
-
-      default:
-        //TODO: Need to add validation to stop this situation
-        return "";
-    }
-  }
-
-  private boolean canCreateRequestForItem(JsonObject item, JsonObject request) {
-    String status = item.getJsonObject("status").getString("name");
-
-    switch (request.getString("requestType")) {
-      case RequestType.HOLD:
-      case RequestType.RECALL:
-        return StringUtils.equalsIgnoreCase(status, CHECKED_OUT) ||
-          StringUtils.equalsIgnoreCase(status, CHECKED_OUT_HELD) ||
-            StringUtils.equalsIgnoreCase(status, CHECKED_OUT_RECALLED);
-
-      case RequestType.PAGE:
-      default:
-        return true;
-    }
-  }
-
-  private String loanActionFromRequest(JsonObject request) {
-    switch (request.getString("requestType")) {
-      case RequestType.HOLD:
-        return "holdrequested";
-      case RequestType.RECALL:
-        return "recallrequested";
-
-      case RequestType.PAGE:
-      default:
-        return null;
-    }
-  }
-
   private CollectionResourceClient getCollectionResourceClient(
     OkapiHttpClient client,
     WebContext context,
@@ -579,6 +532,11 @@ public class RequestCollectionResource {
       : null;
   }
 
+  private void removeRelatedRecordInformation(JsonObject request) {
+    request.remove("item");
+    request.remove("requester");
+  }
+
   private void reportInvalidOkapiUrlHeader(
     RoutingContext routingContext,
     String okapiLocation) {
@@ -593,11 +551,6 @@ public class RequestCollectionResource {
 
     ServerErrorResponse.internalError(routingContext.response(),
       String.format("Could not get inventory records related to request: %s", cause));
-  }
-
-  private void removeRelatedRecordInformation(JsonObject request) {
-    request.remove("item");
-    request.remove("requester");
   }
 
   private void reportItemRelatedValidationError(
