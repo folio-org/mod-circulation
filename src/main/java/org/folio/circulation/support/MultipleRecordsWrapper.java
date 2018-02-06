@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public class MultipleRecordsWrapper {
+  private static final String TOTAL_RECORDS_PROPERTY_NAME = "totalRecords";
+
   public static MultipleRecordsWrapper fromRequestBody(
     String body,
     String recordsPropertyName) {
@@ -18,10 +20,10 @@ public class MultipleRecordsWrapper {
   private final Integer totalRecords;
   private final String recordsPropertyName;
 
-  public MultipleRecordsWrapper(JsonObject wrapper, String recordsPropertyName) {
+  private MultipleRecordsWrapper(JsonObject wrapper, String recordsPropertyName) {
     this.recordsPropertyName = recordsPropertyName;
     this.records = JsonArrayHelper.toList(wrapper.getJsonArray(recordsPropertyName));
-    this.totalRecords = wrapper.getInteger("totalRecords");
+    this.totalRecords = wrapper.getInteger(TOTAL_RECORDS_PROPERTY_NAME);
   }
 
   public Integer getTotalRecords() {
@@ -39,6 +41,6 @@ public class MultipleRecordsWrapper {
   public JsonObject toJson() {
     return new JsonObject()
       .put(recordsPropertyName, new JsonArray(new ArrayList<>(records)))
-      .put("totalRecords", totalRecords);
+      .put(TOTAL_RECORDS_PROPERTY_NAME, totalRecords);
   }
 }

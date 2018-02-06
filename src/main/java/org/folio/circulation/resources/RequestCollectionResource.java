@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import static org.folio.circulation.domain.ItemStatus.*;
 import static org.folio.circulation.domain.ItemStatusAssistant.updateItemStatus;
 import static org.folio.circulation.domain.LoanActionHistoryAssistant.updateLoanActionHistory;
+import static org.folio.circulation.support.JsonPropertyCopier.copyStringIfExists;
 
 public class RequestCollectionResource {
   private final String rootPath;
@@ -74,7 +75,7 @@ public class RequestCollectionResource {
       return;
     }
 
-    String itemId = request.getString("itemId");
+    String itemId = getItemId(request);
 
     InventoryFetcher inventoryFetcher = new InventoryFetcher(
       itemsStorageClient, holdingsStorageClient, instancesStorageClient);
@@ -110,8 +111,7 @@ public class RequestCollectionResource {
       JsonObject requester = getRecordFromResponse(requestingUserResponse);
 
       if(item == null) {
-        JsonResponse.unprocessableEntity(routingContext.response(),
-          "Item does not exist", "itemId", itemId);
+        reportItemRelatedValidationError(routingContext, itemId, "Item does not exist");
       }
       else if (canCreateRequestForItem(item, request)) {
         updateItemStatus(itemId, itemStatusFrom(request),
@@ -136,8 +136,8 @@ public class RequestCollectionResource {
             }));
       }
       else {
-        JsonResponse.unprocessableEntity(routingContext.response(),
-          String.format("Item is not %s", CHECKED_OUT), "itemId", itemId);
+        reportItemRelatedValidationError(routingContext, itemId,
+          String.format("Item is not %s", CHECKED_OUT));
       }
     });
   }
@@ -170,7 +170,7 @@ public class RequestCollectionResource {
       return;
     }
 
-    String itemId = request.getString("itemId");
+    String itemId = getItemId(request);
 
     InventoryFetcher inventoryFetcher = new InventoryFetcher(
       itemsStorageClient, holdingsStorageClient, instancesStorageClient);
@@ -249,7 +249,7 @@ public class RequestCollectionResource {
         JsonObject request = requestResponse.getJson();
 
         CompletableFuture<InventoryRecords> inventoryRecordsCompleted =
-          fetcher.fetch(request.getString("itemId"), t ->
+          fetcher.fetch(getItemId(request), t ->
             reportFailureToFetchInventoryRecords(routingContext, t));
 
         inventoryRecordsCompleted.thenAccept(r -> {
@@ -327,7 +327,7 @@ public class RequestCollectionResource {
         final Collection<JsonObject> requests = wrappedRequests.getRecords();
 
         List<String> itemIds = requests.stream()
-          .map(request -> request.getString("itemId"))
+          .map(this::getItemId)
           .filter(Objects::nonNull)
           .collect(Collectors.toList());
 
@@ -340,8 +340,7 @@ public class RequestCollectionResource {
 
         inventoryRecordsFetched.thenAccept(records -> {
           requests.forEach( request -> {
-              Optional<JsonObject> possibleItem = records.findItemById(
-                request.getString("itemId"));
+              Optional<JsonObject> possibleItem = records.findItemById(getItemId(request));
 
               if(possibleItem.isPresent()) {
                 JsonObject item = possibleItem.get();
@@ -360,6 +359,10 @@ public class RequestCollectionResource {
         });
       }
     });
+  }
+
+  private String getItemId(JsonObject request) {
+    return request.getString("itemId");
   }
 
   private void empty(RoutingContext routingContext) {
@@ -401,13 +404,9 @@ public class RequestCollectionResource {
 
     if(instance != null && instance.containsKey(titleProperty)) {
       itemSummary.put(titleProperty, instance.getString(titleProperty));
-    } else if (item.containsKey("title")) {
-      itemSummary.put(titleProperty, item.getString(titleProperty));
-    }
+    } else copyStringIfExists(titleProperty, item, itemSummary);
 
-    if(item.containsKey("barcode")) {
-      itemSummary.put("barcode", item.getString("barcode"));
-    }
+    copyStringIfExists("barcode", item, itemSummary);
 
     request.put("item", itemSummary);
   }
@@ -424,10 +423,10 @@ public class RequestCollectionResource {
       ? request.getJsonObject("item")
       : new JsonObject();
 
-    itemSummary.put("holdingsRecordId", item.getString("holdingsRecordId"));
+    copyStringIfExists("holdingsRecordId", item, itemSummary);
 
     if(holding != null) {
-      itemSummary.put("instanceId", holding.getString("instanceId"));
+      copyStringIfExists("instanceId", holding, itemSummary);
     }
 
     request.put("item", itemSummary);
@@ -444,18 +443,14 @@ public class RequestCollectionResource {
     JsonObject requesterSummary = new JsonObject();
 
     if(requester.containsKey("personal")) {
-      requesterSummary.put("lastName", requester.getJsonObject("personal").getString("lastName"));
-      requesterSummary.put("firstName", requester.getJsonObject("personal").getString("firstName"));
+      JsonObject personalDetails = requester.getJsonObject("personal");
 
-      if(requester.getJsonObject("personal").containsKey("middleName")) {
-        requesterSummary.put("middleName",
-          requester.getJsonObject("personal").getString("middleName"));
-      }
+      copyStringIfExists("lastName", personalDetails, requesterSummary);
+      copyStringIfExists("firstName", personalDetails, requesterSummary);
+      copyStringIfExists("middleName", personalDetails, requesterSummary);
     }
 
-    if(requester.containsKey("barcode")) {
-      requesterSummary.put("barcode", requester.getString("barcode"));
-    }
+    copyStringIfExists("barcode", requester, requesterSummary);
 
     requestWithAdditionalInformation.put("requester", requesterSummary);
   }
@@ -603,5 +598,14 @@ public class RequestCollectionResource {
   private void removeRelatedRecordInformation(JsonObject request) {
     request.remove("item");
     request.remove("requester");
+  }
+
+  private void reportItemRelatedValidationError(
+    RoutingContext routingContext,
+    String itemId,
+    String reason) {
+
+    JsonResponse.unprocessableEntity(routingContext.response(),
+      reason, "itemId", itemId);
   }
 }
