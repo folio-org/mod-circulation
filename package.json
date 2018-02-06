@@ -1,8 +1,5 @@
 {
   "dependencies": {
     "raml-cop": "^5.0.0"
-  },
-  "resolutions": {
-    "marked": "^0.3.12"
   }
 }

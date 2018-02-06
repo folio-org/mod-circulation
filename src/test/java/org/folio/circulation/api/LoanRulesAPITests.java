@@ -12,7 +12,9 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -43,6 +45,14 @@ public class LoanRulesAPITests {
     assertThat(response.getStatusCode(), is(204));
 
     assertThat(getText(), is(rule));
+  }
+
+  @Test
+  public void canReportInvalidJson() throws Exception {
+    CompletableFuture<Response> completed = new CompletableFuture<>();
+    client.put(InterfaceUrls.loanRulesUrl(), "foo", ResponseHandler.any(completed));
+    Response response = completed.get(5, TimeUnit.SECONDS);
+    assertThat(response.getStatusCode(), is(422));
   }
 
   @Test

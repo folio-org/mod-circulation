@@ -1,5 +1,6 @@
 package org.folio.circulation.resources;
 
+import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -82,12 +83,17 @@ public class LoanRulesResource {
       return;
     }
 
-    JsonObject rulesInput = routingContext.getBodyAsJson();
+    JsonObject rulesInput;
     try {
       // try to convert, do not safe if conversion fails
+      rulesInput = routingContext.getBodyAsJson();
       Text2Drools.convert(rulesInput.getString("loanRulesAsTextFile"));
     } catch (LoanRulesException e) {
       JsonResponse.loanRulesError(routingContext.response(), e);
+      return;
+    } catch (DecodeException e) {
+      JsonResponse.loanRulesError(routingContext.response(), e);
+      return;
     } catch (Exception e) {
       ServerErrorResponse.internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
       return;
