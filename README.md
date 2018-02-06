@@ -112,7 +112,7 @@ the request JSON.schema uses the readOnly property to indicate that these proper
 
 In order to reduce the amount of requests a client needs to make, some properties from other records in responses.
 
-As this inclusion requires a chain of requests after the loans or requests have been fetched responses may take longer than other requests.
+As this inclusion requires a chain of requests after the loans or requests have been fetched, the responses may take longer than other requests.
 
 #### Loans
 
