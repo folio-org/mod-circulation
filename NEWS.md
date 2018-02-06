@@ -1,4 +1,4 @@
-7.0.1 Unreleased
+## 7.0.1 2018-02-06
 
 * Applies loan rules to determine the policy to use whilst handling loan requests (CIRC-51)
 * Adds `loanPolicyId` property to a loan, to keep the last policy that was applied to the loan (CIRC-51)
