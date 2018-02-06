@@ -15,7 +15,7 @@ FOLIO compatible circulation capabilities, including loan items from the invento
 
 - Java 8 JDK
 - Maven 3.5.0
-- Implementation of the loan-storage interface e.g. [FOLIO Loan Storage Module](https://github.com/folio-org/mod-loan-storage)
+- Implementations of the interfaces described in the [module descriptor](descriptors/ModuleDescriptor-template.json) 
 
 ### Optional
 
@@ -112,10 +112,15 @@ the request JSON.schema uses the readOnly property to indicate that these proper
 
 In order to reduce the amount of requests a client needs to make, some properties from other records in responses.
 
+As this inclusion requires a chain of requests after the loans or requests have been fetched responses may take longer than other requests.
+
 #### Loans
 
-Loans include information from the item, including locations. 
-As this requires a second set of requests after the items have been fetched, responses may take longer than other requests.
+Loans include information from the item, including locations, holdingsRecordId and instanceId.
+
+#### Requests
+ 
+Requests include information from the item, including holdingsRecordId and instanceId. 
 
 ## Additional Information
 

@@ -5,21 +5,25 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
-import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.RequestType;
-import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.*;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static org.folio.circulation.domain.ItemStatus.*;
 import static org.folio.circulation.domain.ItemStatusAssistant.updateItemStatus;
 import static org.folio.circulation.domain.LoanActionHistoryAssistant.updateLoanActionHistory;
+import static org.folio.circulation.support.JsonPropertyCopier.copyStringIfExists;
 
 public class RequestCollectionResource {
   private final String rootPath;
@@ -46,8 +50,7 @@ public class RequestCollectionResource {
 
     JsonObject request = routingContext.getBodyAsJson();
 
-    request.remove("item");
-    request.remove("requester");
+    removeRelatedRecordInformation(request);
 
     CollectionResourceClient requestsStorageClient;
     CollectionResourceClient itemsStorageClient;
@@ -66,67 +69,86 @@ public class RequestCollectionResource {
       loansStorageClient = createLoansStorageClient(client, context);
     }
     catch (MalformedURLException e) {
-      ServerErrorResponse.internalError(routingContext.response(),
-        String.format("Invalid Okapi URL: %s", context.getOkapiLocation()));
+      reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
 
       return;
     }
 
-    String itemId = request.getString("itemId");
+    String itemId = getItemId(request);
 
-    itemsStorageClient.get(itemId, getItemResponse -> {
-      if(getItemResponse.getStatusCode() == 200) {
-        JsonObject loadedItem = getItemResponse.getJson();
+    InventoryFetcher inventoryFetcher = new InventoryFetcher(
+      itemsStorageClient, holdingsStorageClient, instancesStorageClient);
 
-        if (canCreateRequestForItem(loadedItem, request)) {
-          updateItemStatus(itemId, itemStatusFrom(request),
-            itemsStorageClient, routingContext.response(), item -> {
-              updateLoanActionHistory(itemId,
-                loanActionFromRequest(request), itemStatusFrom(request), loansStorageClient,
-                routingContext.response(), v -> {
-                  addSummariesToRequest(
-                    request,
-                    itemsStorageClient,
-                    holdingsStorageClient,
-                    instancesStorageClient,
-                    usersStorageClient,
-                    requestWithAdditionalInformation -> {
-                      requestsStorageClient.post(requestWithAdditionalInformation,
-                        requestResponse -> {
-                          if (requestResponse.getStatusCode() == 201) {
-                            JsonObject createdRequest = requestResponse.getJson();
+    CompletableFuture<InventoryRecords> inventoryRecordsCompleted
+      = inventoryFetcher.fetch(itemId, t ->
+      reportFailureToFetchInventoryRecords(routingContext, t));
 
-                            JsonResponse.created(routingContext.response(), createdRequest);
-                          } else {
-                            ForwardResponse.forward(routingContext.response(), requestResponse);
-                          }
-                      });
-                    },
-                    throwable -> {
-                      ServerErrorResponse.internalError(routingContext.response(),
-                        String.format("At least one request for additional information failed: %s",
-                          throwable));
-                    });
-                });
-           });
-        }
-        else {
-          JsonResponse.unprocessableEntity(routingContext.response(),
-            String.format("Item is not %s", CHECKED_OUT), "itemId", itemId);
-        }
+    CompletableFuture<Response> requestingUserRequestCompleted = new CompletableFuture<>();
+
+    usersStorageClient.get(request.getString("requesterId"),
+      requestingUserRequestCompleted::complete);
+
+    CompletableFuture<Void> allCompleted = CompletableFuture.allOf(
+      inventoryRecordsCompleted, requestingUserRequestCompleted);
+
+    allCompleted.exceptionally(t -> {
+      ServerErrorResponse.internalError(routingContext.response(),
+        String.format("At least one request for additional information failed: %s", t));
+
+      return null;
+    });
+
+    allCompleted.thenAccept(v -> {
+      Response requestingUserResponse = requestingUserRequestCompleted.join();
+
+      InventoryRecords inventoryRecords = inventoryRecordsCompleted.join();
+
+      JsonObject item = inventoryRecords.getItem();
+      JsonObject holding = inventoryRecords.getHolding();
+      JsonObject instance = inventoryRecords.getInstance();
+
+      JsonObject requester = getRecordFromResponse(requestingUserResponse);
+
+      if(item == null) {
+        reportItemRelatedValidationError(routingContext, itemId, "Item does not exist");
       }
-      else if(getItemResponse.getStatusCode() == 404) {
-        JsonResponse.unprocessableEntity(routingContext.response(),
-          "Item does not exist", "itemId", itemId);
+      else if (RequestType.from(request).canCreateRequestForItem(item)) {
+        updateItemStatus(itemId, RequestType.from(request).toItemStatus(),
+          itemsStorageClient, routingContext.response(), updatedItem ->
+            updateLoanActionHistory(itemId,
+            RequestType.from(request).toloanAction(), RequestType.from(request).toItemStatus(),
+              loansStorageClient, routingContext.response(), vo -> {
+              addStoredItemProperties(request, item, instance);
+              addStoredRequesterProperties(request, requester);
+
+              requestsStorageClient.post(request, requestResponse -> {
+                if (requestResponse.getStatusCode() == 201) {
+                  JsonObject createdRequest = requestResponse.getJson();
+
+                  addAdditionalItemProperties(createdRequest, holding, item);
+
+                  JsonResponse.created(routingContext.response(), createdRequest);
+                } else {
+                  ForwardResponse.forward(routingContext.response(), requestResponse);
+                }
+              });
+            }));
       }
       else {
-        ForwardResponse.forward(routingContext.response(), getItemResponse);
+        reportItemRelatedValidationError(routingContext, itemId,
+          String.format("Item is not %s", CHECKED_OUT));
       }
     });
   }
 
   private void replace(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
+
+    String id = routingContext.request().getParam("id");
+    JsonObject request = routingContext.getBodyAsJson();
+
+    removeRelatedRecordInformation(request);
+
     CollectionResourceClient requestsStorageClient;
     CollectionResourceClient itemsStorageClient;
     CollectionResourceClient holdingsStorageClient;
@@ -142,48 +164,76 @@ public class RequestCollectionResource {
       usersStorageClient = createUsersStorageClient(client, context);
     }
     catch (MalformedURLException e) {
-      ServerErrorResponse.internalError(routingContext.response(),
-        String.format("Invalid Okapi URL: %s", context.getOkapiLocation()));
+      reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
 
       return;
     }
 
-    String id = routingContext.request().getParam("id");
-    JsonObject request = routingContext.getBodyAsJson();
+    String itemId = getItemId(request);
 
-    request.remove("item");
-    request.remove("requester");
+    InventoryFetcher inventoryFetcher = new InventoryFetcher(
+      itemsStorageClient, holdingsStorageClient, instancesStorageClient);
 
-    addSummariesToRequest(request, itemsStorageClient, holdingsStorageClient,
-      instancesStorageClient, usersStorageClient,
-      requestWithAdditionalInformation -> {
-        requestsStorageClient.put(id, requestWithAdditionalInformation, response -> {
-          if(response.getStatusCode() == 204) {
-            SuccessResponse.noContent(routingContext.response());
-          }
-          else {
-            ForwardResponse.forward(routingContext.response(), response);
-          }
-        });
-      },
-      throwable -> {
-        ServerErrorResponse.internalError(routingContext.response(),
-          String.format("At least one request for additional information failed: %s",
-            throwable));
+    CompletableFuture<InventoryRecords> inventoryRecordsCompleted
+      = inventoryFetcher.fetch(itemId, t ->
+        reportFailureToFetchInventoryRecords(routingContext, t));
+
+    CompletableFuture<Response> requestingUserRequestCompleted = new CompletableFuture<>();
+
+    usersStorageClient.get(request.getString("requesterId"),
+      requestingUserRequestCompleted::complete);
+
+    CompletableFuture<Void> allCompleted = CompletableFuture.allOf(
+      inventoryRecordsCompleted, requestingUserRequestCompleted);
+
+    allCompleted.exceptionally(t -> {
+      ServerErrorResponse.internalError(routingContext.response(),
+        String.format("At least one request for additional information failed: %s", t));
+
+      return null;
+    });
+
+    allCompleted.thenAccept(v -> {
+      Response requestingUserResponse = requestingUserRequestCompleted.join();
+
+      InventoryRecords inventoryRecords = inventoryRecordsCompleted.join();
+
+      JsonObject item = inventoryRecords.getItem();
+      JsonObject instance = inventoryRecords.getInstance();
+
+      JsonObject requester = getRecordFromResponse(requestingUserResponse);
+
+      addStoredItemProperties(request, item, instance);
+      addStoredRequesterProperties(request, requester);
+
+      requestsStorageClient.put(id, request, response -> {
+        if(response.getStatusCode() == 204) {
+          SuccessResponse.noContent(routingContext.response());
+        }
+        else {
+          ForwardResponse.forward(routingContext.response(), response);
+        }
       });
+    });
   }
 
   private void get(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
+
     CollectionResourceClient requestsStorageClient;
+    CollectionResourceClient itemsStorageClient;
+    CollectionResourceClient holdingsStorageClient;
+    CollectionResourceClient instancesStorageClient;
 
     try {
       OkapiHttpClient client = createHttpClient(routingContext, context);
       requestsStorageClient = createRequestsStorageClient(client, context);
+      itemsStorageClient = createItemsStorageClient(client, context);
+      holdingsStorageClient = createHoldingsStorageClient(client, context);
+      instancesStorageClient = createInstanceStorageClient(client, context);
     }
     catch (MalformedURLException e) {
-      ServerErrorResponse.internalError(routingContext.response(),
-        String.format("Invalid Okapi URL: %s", context.getOkapiLocation()));
+      reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
 
       return;
     }
@@ -192,8 +242,21 @@ public class RequestCollectionResource {
 
     requestsStorageClient.get(id, requestResponse -> {
       if(requestResponse.getStatusCode() == 200) {
-        JsonObject request = new JsonObject(requestResponse.getBody());
-        JsonResponse.success(routingContext.response(), request);
+        InventoryFetcher fetcher = new InventoryFetcher(itemsStorageClient,
+          holdingsStorageClient, instancesStorageClient);
+
+        JsonObject request = requestResponse.getJson();
+
+        CompletableFuture<InventoryRecords> inventoryRecordsCompleted =
+          fetcher.fetch(getItemId(request), t ->
+            reportFailureToFetchInventoryRecords(routingContext, t));
+
+        inventoryRecordsCompleted.thenAccept(r -> {
+          addAdditionalItemProperties(request, r.getHolding(), r.getItem());
+
+          JsonResponse.success(routingContext.response(), request);
+        });
+
       }
       else {
         ForwardResponse.forward(routingContext.response(), requestResponse);
@@ -210,8 +273,7 @@ public class RequestCollectionResource {
       requestsStorageClient = createRequestsStorageClient(client, context);
     }
     catch (MalformedURLException e) {
-      ServerErrorResponse.internalError(routingContext.response(),
-        String.format("Invalid Okapi URL: %s", context.getOkapiLocation()));
+      reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
 
       return;
     }
@@ -230,31 +292,76 @@ public class RequestCollectionResource {
 
   private void getMany(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
+
     CollectionResourceClient requestsStorageClient;
+    CollectionResourceClient itemsStorageClient;
+    CollectionResourceClient holdingsStorageClient;
+    CollectionResourceClient instancesStorageClient;
 
     try {
       OkapiHttpClient client = createHttpClient(routingContext, context);
       requestsStorageClient = createRequestsStorageClient(client, context);
+      itemsStorageClient = createItemsStorageClient(client, context);
+      holdingsStorageClient = createHoldingsStorageClient(client, context);
+      instancesStorageClient = createInstanceStorageClient(client, context);
     }
     catch (MalformedURLException e) {
-      ServerErrorResponse.internalError(routingContext.response(),
-        String.format("Invalid Okapi URL: %s", context.getOkapiLocation()));
+      reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
 
       return;
     }
 
     requestsStorageClient.getMany(routingContext.request().query(), requestsResponse -> {
       if(requestsResponse.getStatusCode() == 200) {
-        JsonObject wrappedRequests = new JsonObject(requestsResponse.getBody());
+        final MultipleRecordsWrapper wrappedRequests = MultipleRecordsWrapper.fromRequestBody(
+          requestsResponse.getBody(), "requests");
 
-        JsonObject requestsWrapper = new JsonObject()
-          .put("requests", wrappedRequests.getJsonArray("requests"))
-          .put("totalRecords", wrappedRequests.getInteger("totalRecords"));
+        if(wrappedRequests.isEmpty()) {
+          JsonResponse.success(routingContext.response(),
+            wrappedRequests.toJson());
 
-        JsonResponse.success(routingContext.response(),
-          requestsWrapper);
+          return;
+        }
+
+        final Collection<JsonObject> requests = wrappedRequests.getRecords();
+
+        List<String> itemIds = requests.stream()
+          .map(this::getItemId)
+          .filter(Objects::nonNull)
+          .collect(Collectors.toList());
+
+        InventoryFetcher inventoryFetcher = new InventoryFetcher(itemsStorageClient,
+          holdingsStorageClient, instancesStorageClient);
+
+        CompletableFuture<MultipleInventoryRecords> inventoryRecordsFetched =
+          inventoryFetcher.fetch(itemIds, e ->
+            ServerErrorResponse.internalError(routingContext.response(), e.toString()));
+
+        inventoryRecordsFetched.thenAccept(records -> {
+          requests.forEach( request -> {
+              Optional<JsonObject> possibleItem = records.findItemById(getItemId(request));
+
+              if(possibleItem.isPresent()) {
+                JsonObject item = possibleItem.get();
+
+                Optional<JsonObject> possibleHolding = records.findHoldingById(
+                  item.getString("holdingsRecordId"));
+
+                addAdditionalItemProperties(request,
+                  possibleHolding.orElse(null),
+                  possibleItem.orElse(null));
+              }
+            });
+
+            JsonResponse.success(routingContext.response(),
+              wrappedRequests.toJson());
+        });
       }
     });
+  }
+
+  private String getItemId(JsonObject request) {
+    return request.getString("itemId");
   }
 
   private void empty(RoutingContext routingContext) {
@@ -266,8 +373,7 @@ public class RequestCollectionResource {
       requestsStorageClient = createRequestsStorageClient(client, context);
     }
     catch (MalformedURLException e) {
-      ServerErrorResponse.internalError(routingContext.response(),
-        String.format("Invalid Okapi URL: %s", context.getOkapiLocation()));
+      reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
 
       return;
     }
@@ -282,114 +388,70 @@ public class RequestCollectionResource {
     });
   }
 
-  private void addSummariesToRequest(
+  private void addStoredItemProperties(
     JsonObject request,
-    CollectionResourceClient itemsStorageClient,
-    CollectionResourceClient holdingsStorageClient,
-    CollectionResourceClient instancesStorageClient,
-    CollectionResourceClient usersStorageClient,
-    Consumer<JsonObject> onSuccess,
-    Consumer<Throwable> onFailure) {
+    JsonObject item,
+    JsonObject instance) {
 
-    CompletableFuture<Response> itemRequestCompleted = new CompletableFuture<>();
-    CompletableFuture<Response> holdingRequestCompleted = new CompletableFuture<>();
-    CompletableFuture<Response> instanceRequestCompleted = new CompletableFuture<>();
-    CompletableFuture<Response> requestingUserRequestCompleted = new CompletableFuture<>();
+    if(item == null) {
+      return;
+    }
 
-    itemsStorageClient.get(request.getString("itemId"),
-      itemRequestCompleted::complete);
+    JsonObject itemSummary = new JsonObject();
 
-    itemRequestCompleted.thenAccept(itemResponse -> {
-      if(itemResponse != null && itemResponse.getStatusCode() == 200) {
+    final String titleProperty = "title";
 
-        JsonObject item = itemResponse.getJson();
+    if(instance != null && instance.containsKey(titleProperty)) {
+      itemSummary.put(titleProperty, instance.getString(titleProperty));
+    } else copyStringIfExists(titleProperty, item, itemSummary);
 
-        holdingsStorageClient.get(item.getString("holdingsRecordId"),
-          holdingRequestCompleted::complete);
-      }
-      else {
-        holdingRequestCompleted.complete(null);
-      }
-    });
+    copyStringIfExists("barcode", item, itemSummary);
 
-    holdingRequestCompleted.thenAccept(holdingResponse -> {
-      if(holdingResponse != null && holdingResponse.getStatusCode() == 200) {
+    request.put("item", itemSummary);
+  }
 
-        JsonObject holding = holdingResponse.getJson();
+  private void addAdditionalItemProperties(
+    JsonObject request,
+    JsonObject holding,
+    JsonObject item) {
 
-        instancesStorageClient.get(holding.getString("instanceId"),
-          instanceRequestCompleted::complete);
-      }
-      else {
-        instanceRequestCompleted.complete(null);
-      }
-    });
+    if(item == null)
+      return;
 
-    usersStorageClient.get(request.getString("requesterId"),
-      requestingUserRequestCompleted::complete);
+    JsonObject itemSummary = request.containsKey("item")
+      ? request.getJsonObject("item")
+      : new JsonObject();
 
-    CompletableFuture<Void> allCompleted = CompletableFuture.allOf(
-      itemRequestCompleted, holdingRequestCompleted, instanceRequestCompleted,
-      requestingUserRequestCompleted);
+    copyStringIfExists("holdingsRecordId", item, itemSummary);
 
-    allCompleted.exceptionally(t -> {
-      onFailure.accept(t);
-      return null;
-    });
+    if(holding != null) {
+      copyStringIfExists("instanceId", holding, itemSummary);
+    }
 
-    allCompleted.thenAccept(v -> {
-      Response itemResponse = itemRequestCompleted.join();
-      Response instanceResponse = instanceRequestCompleted.join();
-      Response requestingUserResponse = requestingUserRequestCompleted.join();
+    request.put("item", itemSummary);
+  }
 
-      JsonObject requestWithAdditionalInformation = request.copy();
+  private void addStoredRequesterProperties
+    (JsonObject requestWithAdditionalInformation,
+     JsonObject requester) {
 
-      if (itemResponse != null && itemResponse.getStatusCode() == 200) {
-        JsonObject item = itemResponse.getJson();
+    if(requester == null) {
+      return;
+    }
 
-        JsonObject instance = instanceResponse != null
-          && instanceResponse.getStatusCode() == 200
-          ? instanceResponse.getJson()
-          : null;
+    JsonObject requesterSummary = new JsonObject();
 
-        JsonObject itemSummary = new JsonObject();
+    if(requester.containsKey("personal")) {
+      JsonObject personalDetails = requester.getJsonObject("personal");
 
-        final String titleProperty = "title";
+      copyStringIfExists("lastName", personalDetails, requesterSummary);
+      copyStringIfExists("firstName", personalDetails, requesterSummary);
+      copyStringIfExists("middleName", personalDetails, requesterSummary);
+    }
 
-        if(instance != null && instance.containsKey(titleProperty)) {
-          itemSummary.put(titleProperty, instance.getString(titleProperty));
-        } else if (item.containsKey("title")) {
-          itemSummary.put(titleProperty, item.getString(titleProperty));
-        }
+    copyStringIfExists("barcode", requester, requesterSummary);
 
-        if(item.containsKey("barcode")) {
-          itemSummary.put("barcode", item.getString("barcode"));
-        }
-
-        requestWithAdditionalInformation.put("item", itemSummary);
-      }
-
-      if (requestingUserResponse.getStatusCode() == 200) {
-        JsonObject requester = requestingUserResponse.getJson();
-
-        JsonObject requesterSummary = new JsonObject()
-          .put("lastName", requester.getJsonObject("personal").getString("lastName"))
-          .put("firstName", requester.getJsonObject("personal").getString("firstName"));
-
-        if(requester.getJsonObject("personal").containsKey("middleName")) {
-          requesterSummary.put("middleName",
-            requester.getJsonObject("personal").getString("middleName"));
-        }
-
-        if(requester.containsKey("barcode")) {
-          requesterSummary.put("barcode", requester.getString("barcode"));
-        }
-
-        requestWithAdditionalInformation.put("requester", requesterSummary);
-      }
-
-      onSuccess.accept(requestWithAdditionalInformation);
-    });
+    requestWithAdditionalInformation.put("requester", requesterSummary);
   }
 
   private OkapiHttpClient createHttpClient(RoutingContext routingContext,
@@ -454,57 +516,49 @@ public class RequestCollectionResource {
     return getCollectionResourceClient(client, context, "/loan-storage/loans");
   }
 
-  private String itemStatusFrom(JsonObject request) {
-    switch(request.getString("requestType")) {
-      case RequestType.HOLD:
-        return CHECKED_OUT_HELD;
-
-      case RequestType.RECALL:
-        return CHECKED_OUT_RECALLED;
-
-      case RequestType.PAGE:
-        return CHECKED_OUT;
-
-      default:
-        //TODO: Need to add validation to stop this situation
-        return "";
-    }
-  }
-
-  private boolean canCreateRequestForItem(JsonObject item, JsonObject request) {
-    String status = item.getJsonObject("status").getString("name");
-
-    switch (request.getString("requestType")) {
-      case RequestType.HOLD:
-      case RequestType.RECALL:
-        return StringUtils.equalsIgnoreCase(status, CHECKED_OUT) ||
-          StringUtils.equalsIgnoreCase(status, CHECKED_OUT_HELD) ||
-            StringUtils.equalsIgnoreCase(status, CHECKED_OUT_RECALLED);
-
-      case RequestType.PAGE:
-      default:
-        return true;
-    }
-  }
-
-  private String loanActionFromRequest(JsonObject request) {
-    switch (request.getString("requestType")) {
-      case RequestType.HOLD:
-        return "holdrequested";
-      case RequestType.RECALL:
-        return "recallrequested";
-
-      case RequestType.PAGE:
-      default:
-        return null;
-    }
-  }
-
   private CollectionResourceClient getCollectionResourceClient(
     OkapiHttpClient client,
-    WebContext context, String path) throws MalformedURLException {
+    WebContext context,
+    String path)
+    throws MalformedURLException {
 
     return new CollectionResourceClient(
       client, context.getOkapiBasedUrl(path));
+  }
+
+  private JsonObject getRecordFromResponse(Response itemResponse) {
+    return itemResponse != null && itemResponse.getStatusCode() == 200
+      ? itemResponse.getJson()
+      : null;
+  }
+
+  private void removeRelatedRecordInformation(JsonObject request) {
+    request.remove("item");
+    request.remove("requester");
+  }
+
+  private void reportInvalidOkapiUrlHeader(
+    RoutingContext routingContext,
+    String okapiLocation) {
+
+    ServerErrorResponse.internalError(routingContext.response(),
+      String.format("Invalid Okapi URL: %s", okapiLocation));
+  }
+
+  private static void reportFailureToFetchInventoryRecords(
+    RoutingContext routingContext,
+    Exception cause) {
+
+    ServerErrorResponse.internalError(routingContext.response(),
+      String.format("Could not get inventory records related to request: %s", cause));
+  }
+
+  private void reportItemRelatedValidationError(
+    RoutingContext routingContext,
+    String itemId,
+    String reason) {
+
+    JsonResponse.unprocessableEntity(routingContext.response(),
+      reason, "itemId", itemId);
   }
 }
