@@ -50,8 +50,7 @@ public class RequestCollectionResource {
 
     JsonObject request = routingContext.getBodyAsJson();
 
-    request.remove("item");
-    request.remove("requester");
+    removeRelatedRecordInformation(request);
 
     CollectionResourceClient requestsStorageClient;
     CollectionResourceClient itemsStorageClient;
@@ -70,8 +69,7 @@ public class RequestCollectionResource {
       loansStorageClient = createLoansStorageClient(client, context);
     }
     catch (MalformedURLException e) {
-      ServerErrorResponse.internalError(routingContext.response(),
-        String.format("Invalid Okapi URL: %s", context.getOkapiLocation()));
+      reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
 
       return;
     }
@@ -82,11 +80,8 @@ public class RequestCollectionResource {
       itemsStorageClient, holdingsStorageClient, instancesStorageClient);
 
     CompletableFuture<InventoryRecords> inventoryRecordsCompleted
-      = inventoryFetcher.fetch(itemId, t -> {
-          ServerErrorResponse.internalError(routingContext.response(),
-            String.format(
-              "Could not get inventory records related to request: %s", t));
-    });
+      = inventoryFetcher.fetch(itemId, t ->
+      reportFailureToFetchInventoryRecords(routingContext, t));
 
     CompletableFuture<Response> requestingUserRequestCompleted = new CompletableFuture<>();
 
@@ -120,26 +115,25 @@ public class RequestCollectionResource {
       }
       else if (canCreateRequestForItem(item, request)) {
         updateItemStatus(itemId, itemStatusFrom(request),
-          itemsStorageClient, routingContext.response(), updatedItem -> {
+          itemsStorageClient, routingContext.response(), updatedItem ->
             updateLoanActionHistory(itemId,
-              loanActionFromRequest(request), itemStatusFrom(request), loansStorageClient,
-              routingContext.response(), vo -> {
-                addStoredItemProperties(request, item, instance);
-                addStoredRequesterProperties(request, requester);
+            loanActionFromRequest(request), itemStatusFrom(request), loansStorageClient,
+            routingContext.response(), vo -> {
+              addStoredItemProperties(request, item, instance);
+              addStoredRequesterProperties(request, requester);
 
-                requestsStorageClient.post(request, requestResponse -> {
-                  if (requestResponse.getStatusCode() == 201) {
-                    JsonObject createdRequest = requestResponse.getJson();
+              requestsStorageClient.post(request, requestResponse -> {
+                if (requestResponse.getStatusCode() == 201) {
+                  JsonObject createdRequest = requestResponse.getJson();
 
-                    addAdditionalItemProperties(createdRequest, holding, item);
+                  addAdditionalItemProperties(createdRequest, holding, item);
 
-                    JsonResponse.created(routingContext.response(), createdRequest);
-                  } else {
-                    ForwardResponse.forward(routingContext.response(), requestResponse);
-                  }
-                });
+                  JsonResponse.created(routingContext.response(), createdRequest);
+                } else {
+                  ForwardResponse.forward(routingContext.response(), requestResponse);
+                }
               });
-          });
+            }));
       }
       else {
         JsonResponse.unprocessableEntity(routingContext.response(),
@@ -154,8 +148,7 @@ public class RequestCollectionResource {
     String id = routingContext.request().getParam("id");
     JsonObject request = routingContext.getBodyAsJson();
 
-    request.remove("item");
-    request.remove("requester");
+    removeRelatedRecordInformation(request);
 
     CollectionResourceClient requestsStorageClient;
     CollectionResourceClient itemsStorageClient;
@@ -172,8 +165,7 @@ public class RequestCollectionResource {
       usersStorageClient = createUsersStorageClient(client, context);
     }
     catch (MalformedURLException e) {
-      ServerErrorResponse.internalError(routingContext.response(),
-        String.format("Invalid Okapi URL: %s", context.getOkapiLocation()));
+      reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
 
       return;
     }
@@ -184,11 +176,8 @@ public class RequestCollectionResource {
       itemsStorageClient, holdingsStorageClient, instancesStorageClient);
 
     CompletableFuture<InventoryRecords> inventoryRecordsCompleted
-      = inventoryFetcher.fetch(itemId, t -> {
-      ServerErrorResponse.internalError(routingContext.response(),
-        String.format(
-          "Could not get inventory records related to request: %s", t));
-    });
+      = inventoryFetcher.fetch(itemId, t ->
+        reportFailureToFetchInventoryRecords(routingContext, t));
 
     CompletableFuture<Response> requestingUserRequestCompleted = new CompletableFuture<>();
 
@@ -245,8 +234,7 @@ public class RequestCollectionResource {
       instancesStorageClient = createInstanceStorageClient(client, context);
     }
     catch (MalformedURLException e) {
-      ServerErrorResponse.internalError(routingContext.response(),
-        String.format("Invalid Okapi URL: %s", context.getOkapiLocation()));
+      reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
 
       return;
     }
@@ -261,11 +249,8 @@ public class RequestCollectionResource {
         JsonObject request = requestResponse.getJson();
 
         CompletableFuture<InventoryRecords> inventoryRecordsCompleted =
-          fetcher.fetch(request.getString("itemId"), t -> {
-          ServerErrorResponse.internalError(routingContext.response(),
-            String.format(
-              "Could not get inventory records related to request: %s", t));
-        });
+          fetcher.fetch(request.getString("itemId"), t ->
+            reportFailureToFetchInventoryRecords(routingContext, t));
 
         inventoryRecordsCompleted.thenAccept(r -> {
           addAdditionalItemProperties(request, r.getHolding(), r.getItem());
@@ -289,8 +274,7 @@ public class RequestCollectionResource {
       requestsStorageClient = createRequestsStorageClient(client, context);
     }
     catch (MalformedURLException e) {
-      ServerErrorResponse.internalError(routingContext.response(),
-        String.format("Invalid Okapi URL: %s", context.getOkapiLocation()));
+      reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
 
       return;
     }
@@ -323,8 +307,7 @@ public class RequestCollectionResource {
       instancesStorageClient = createInstanceStorageClient(client, context);
     }
     catch (MalformedURLException e) {
-      ServerErrorResponse.internalError(routingContext.response(),
-        String.format("Invalid Okapi URL: %s", context.getOkapiLocation()));
+      reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
 
       return;
     }
@@ -356,9 +339,8 @@ public class RequestCollectionResource {
           holdingsStorageClient, instancesStorageClient);
 
         CompletableFuture<MultipleInventoryRecords> inventoryRecordsFetched =
-          inventoryFetcher.fetch(itemIds, e -> {
-            ServerErrorResponse.internalError(routingContext.response(), e.toString());
-        });
+          inventoryFetcher.fetch(itemIds, e ->
+            ServerErrorResponse.internalError(routingContext.response(), e.toString()));
 
         inventoryRecordsFetched.thenAccept(records -> {
           requests.forEach( request -> {
@@ -397,8 +379,7 @@ public class RequestCollectionResource {
       requestsStorageClient = createRequestsStorageClient(client, context);
     }
     catch (MalformedURLException e) {
-      ServerErrorResponse.internalError(routingContext.response(),
-        String.format("Invalid Okapi URL: %s", context.getOkapiLocation()));
+      reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
 
       return;
     }
@@ -609,5 +590,26 @@ public class RequestCollectionResource {
     return itemResponse != null && itemResponse.getStatusCode() == 200
       ? itemResponse.getJson()
       : null;
+  }
+
+  private void reportInvalidOkapiUrlHeader(
+    RoutingContext routingContext,
+    String okapiLocation) {
+
+    ServerErrorResponse.internalError(routingContext.response(),
+      String.format("Invalid Okapi URL: %s", okapiLocation));
+  }
+
+  private static void reportFailureToFetchInventoryRecords(
+    RoutingContext routingContext,
+    Exception cause) {
+
+    ServerErrorResponse.internalError(routingContext.response(),
+      String.format("Could not get inventory records related to request: %s", cause));
+  }
+
+  private void removeRelatedRecordInformation(JsonObject request) {
+    request.remove("item");
+    request.remove("requester");
   }
 }
