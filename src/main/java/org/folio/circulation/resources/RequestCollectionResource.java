@@ -1,7 +1,6 @@
 package org.folio.circulation.resources;
 
 import io.vertx.core.http.HttpMethod;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -15,6 +14,7 @@ import org.folio.circulation.support.http.server.*;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -314,21 +314,17 @@ public class RequestCollectionResource {
 
     requestsStorageClient.getMany(routingContext.request().query(), requestsResponse -> {
       if(requestsResponse.getStatusCode() == 200) {
-        JsonObject wrappedRequests = new JsonObject(requestsResponse.getBody());
+        final MultipleRecordsWrapper wrappedRequests = MultipleRecordsWrapper.fromRequestBody(
+          requestsResponse.getBody(), "requests");
 
-        final List<JsonObject> requests = JsonArrayHelper.toList(
-          wrappedRequests.getJsonArray("requests"));
-
-        if(requests.isEmpty()) {
-          JsonObject requestsWrapper = new JsonObject()
-            .put("requests", new JsonArray(requests))
-            .put("totalRecords", wrappedRequests.getInteger("totalRecords"));
-
+        if(wrappedRequests.isEmpty()) {
           JsonResponse.success(routingContext.response(),
-            requestsWrapper);
+            wrappedRequests.toJson());
 
           return;
         }
+
+        final Collection<JsonObject> requests = wrappedRequests.getRecords();
 
         List<String> itemIds = requests.stream()
           .map(request -> request.getString("itemId"))
@@ -359,12 +355,8 @@ public class RequestCollectionResource {
               }
             });
 
-            JsonObject requestsWrapper = new JsonObject()
-              .put("requests", new JsonArray(requests))
-              .put("totalRecords", wrappedRequests.getInteger("totalRecords"));
-
             JsonResponse.success(routingContext.response(),
-              requestsWrapper);
+              wrappedRequests.toJson());
         });
       }
     });
