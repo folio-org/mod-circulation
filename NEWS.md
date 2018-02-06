@@ -1,6 +1,7 @@
-## 7.0.2 Unreleased
+## 7.0.3 Unreleased
 
 * Request to PUT loan rules will respond with 422 when invalid (CIRC-68)
+* Accept comments in loan rules without a space (CIRC-69)
 
 ## 7.0.1 2018-02-06
 

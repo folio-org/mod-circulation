@@ -2,6 +2,7 @@ package org.folio.circulation.loanrules;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -101,7 +102,7 @@ public class Text2Drools {
     int column = 0;
     int indentation = indentation(line);
     popObsoleteMatchers(indentation);
-    LinkedList<String> tokens = parse(line);
+    Deque<String> tokens = parse(line);
     boolean firstToken = true;
     while (! tokens.isEmpty()) {
       String token = tokens.removeFirst();
@@ -150,13 +151,14 @@ public class Text2Drools {
         drools.append("    drools.halt();\n");
         drools.append("end\n\n");
         break;
-      case "#":
-        tokens.clear();  // skip comment
-        break;
       case "\t":
         throw new LoanRulesException("The tab character is not allowed, use the space character instead.",
             lineNumber, column);
       default:
+        if (token.startsWith("#")) {
+          tokens.clear();  // skip comment
+          break;
+        }
         throw new LoanRulesException(
             "Expected f or m or t or fallback-policy or : or + or # but found \"" + token + "\"",
             lineNumber, column);
@@ -181,7 +183,7 @@ public class Text2Drools {
     }
   }
 
-  private void convertNames(int indentation, MatcherType type, LinkedList<String> tokens) {
+  private void convertNames(int indentation, MatcherType type, Deque<String> tokens) {
     List<String> names = new ArrayList<>();
 
     while (! tokens.isEmpty()) {
@@ -252,7 +254,7 @@ public class Text2Drools {
    * @param line  what to parse
    * @return array of tokens.
    */
-  public static LinkedList<String> parse(String line) {
+  public static Deque<String> parse(String line) {
     String [] tokenArray = new StrTokenizer(line)
       .setDelimiterMatcher(StrMatcher.spaceMatcher())
       .setQuoteChar('"')
