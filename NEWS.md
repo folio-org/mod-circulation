@@ -1,3 +1,7 @@
+## 7.0.2 Unreleased
+
+* Request to PUT loan rules will respond with 422 when invalid (CIRC-68)
+
 ## 7.0.1 2018-02-06
 
 * Applies loan rules to determine the policy to use whilst handling loan requests (CIRC-51)

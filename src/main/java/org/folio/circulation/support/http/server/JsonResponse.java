@@ -2,6 +2,7 @@ package org.folio.circulation.support.http.server;
 
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class JsonResponse {
+  private static final String MESSAGE = "message";
 
   //TODO: Needs a location
   public static void created(HttpServerResponse response,
@@ -52,7 +54,7 @@ public class JsonResponse {
       .collect(Collectors.toList()));
 
     JsonObject wrappedErrors = new JsonObject()
-      .put("message", message)
+      .put(MESSAGE, message)
       .put("parameters", parameters);
 
     response(response, wrappedErrors, 422);
@@ -60,9 +62,15 @@ public class JsonResponse {
 
   public static void loanRulesError(HttpServerResponse response, LoanRulesException e) {
     JsonObject body = new JsonObject();
-    body.put("message", e.getMessage());
+    body.put(MESSAGE, e.getMessage());
     body.put("line", e.getLine());
     body.put("column", e.getColumn());
+    response(response, body, 422);
+  }
+
+  public static void loanRulesError(HttpServerResponse response, DecodeException e) {
+    JsonObject body = new JsonObject();
+    body.put(MESSAGE, e.getMessage());  // already contains line and column number
     response(response, body, 422);
   }
 
