@@ -689,10 +689,12 @@ public class LoanCollectionResource {
 
       if(item == null) {
         ServerErrorResponse.internalError(responseToClient, "Unable to process claim for unknown item");
+        return;
       }
 
       if(holding == null) {
         ServerErrorResponse.internalError(responseToClient, "Unable to process claim for unknown holding");
+        return;
       }
 
       String userId = loan.getString("userId");
