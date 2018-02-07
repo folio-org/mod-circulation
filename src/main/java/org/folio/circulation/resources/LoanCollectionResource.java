@@ -622,12 +622,11 @@ public class LoanCollectionResource {
       String materialTypeId = item.getString("materialTypeId");
 
       usersStorageClient.get(userId, getUserResponse -> {
-        if(getUserResponse.getStatusCode() != 200) {
-          if(getUserResponse.getStatusCode() == 404) {
-            ServerErrorResponse.internalError(responseToClient, "Unable to locate User");
-          } else {
-             ForwardResponse.forward(responseToClient, getUserResponse);
-          }
+        if(getUserResponse.getStatusCode() == 404) {
+          ServerErrorResponse.internalError(responseToClient, "Unable to locate User");
+        }
+        else if(getUserResponse.getStatusCode() != 200) {
+          ForwardResponse.forward(responseToClient, getUserResponse);
         } else {
           //Got user record, we're good to continue
           JsonObject user = getUserResponse.getJson();
@@ -654,7 +653,8 @@ public class LoanCollectionResource {
                   }
                 }));
           } catch(MalformedURLException m) {
-            ServerErrorResponse.internalError(responseToClient, "Error forming URL to loan-rules endpoint");
+            ServerErrorResponse.internalError(responseToClient,
+              "Error forming URL to loan-rules endpoint");
           }
         }
       });
