@@ -62,6 +62,7 @@ public class LoanCollectionResource {
     CollectionResourceClient usersStorageClient;
     CollectionResourceClient instancesStorageClient;
     OkapiHttpClient client;
+    LoanRulesClient loanRulesClient;
 
     try {
       client = createHttpClient(routingContext, context);
@@ -71,7 +72,7 @@ public class LoanCollectionResource {
       instancesStorageClient = createInstanceStorageClient(client, context);
       locationsStorageClient = createLocationsStorageClient(client, context);
       usersStorageClient = createUsersStorageClient(client, context);
-
+      loanRulesClient = new LoanRulesClient(client, context);
     }
     catch (MalformedURLException e) {
       reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
@@ -106,9 +107,11 @@ public class LoanCollectionResource {
               ? holdingResponse.getJson()
               : null;
 
-            lookupLoanPolicyId(loan, item, holding, usersStorageClient, client,
-                    routingContext.response(), context, loanPolicyIdJson -> {
+            lookupLoanPolicyId(loan, item, holding, usersStorageClient,
+              loanRulesClient, routingContext.response(), loanPolicyIdJson -> {
+
               loan.put("loanPolicyId", loanPolicyIdJson.getString("loanPolicyId"));
+
               loansStorageClient.post(loan, response -> {
                 if(response.getStatusCode() == 201) {
                   JsonObject createdLoan = response.getJson();
@@ -585,10 +588,9 @@ public class LoanCollectionResource {
     JsonObject item,
     JsonObject holding,
     CollectionResourceClient usersStorageClient,
-    OkapiHttpClient client,
+    LoanRulesClient loanRulesClient,
     HttpServerResponse responseToClient,
-    WebContext context,
-    Consumer<JsonObject> onSuccess ) {
+    Consumer<JsonObject> onSuccess) {
 
     if(item == null) {
       ServerErrorResponse.internalError(responseToClient,
@@ -622,27 +624,20 @@ public class LoanCollectionResource {
 
         String patronGroup = user.getString("patronGroup");
 
-        try {
-          LoanRulesClient loanRulesClient = new LoanRulesClient(client, context);
+        loanRulesClient.applyRules(loanTypeId, locationId, materialTypeId,
+          patronGroup, response -> response.bodyHandler(body -> {
 
-          loanRulesClient.applyRules(loanTypeId, locationId, materialTypeId,
-            patronGroup, response -> response.bodyHandler(body -> {
+          Response getPolicyResponse = Response.from(response, body);
 
-            Response getPolicyResponse = Response.from(response, body);
-
-            if (getPolicyResponse.getStatusCode() == 404) {
-              ServerErrorResponse.internalError(responseToClient, "Unable to locate loan policy");
-            } else if (getPolicyResponse.getStatusCode() != 200) {
-              ForwardResponse.forward(responseToClient, getPolicyResponse);
-            } else {
-              JsonObject policyIdJson = getPolicyResponse.getJson();
-              onSuccess.accept(policyIdJson);
-            }
-          }));
-        } catch(MalformedURLException m) {
-          ServerErrorResponse.internalError(responseToClient,
-            "Error forming URL to loan-rules endpoint");
-        }
+          if (getPolicyResponse.getStatusCode() == 404) {
+            ServerErrorResponse.internalError(responseToClient, "Unable to locate loan policy");
+          } else if (getPolicyResponse.getStatusCode() != 200) {
+            ForwardResponse.forward(responseToClient, getPolicyResponse);
+          } else {
+            JsonObject policyIdJson = getPolicyResponse.getJson();
+            onSuccess.accept(policyIdJson);
+          }
+        }));
       }
     });
   }
