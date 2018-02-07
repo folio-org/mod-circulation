@@ -88,6 +88,11 @@
       "type": "string",
       "enum": ["Hold Shelf", "Delivery"]
     },
+    "deliveryAddressTypeId": {
+      "description": "Deliver to the address of this type, for the requesting patron",
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+    },
     "requestExpirationDate": {
       "description": "Date when the request expires",
       "type": "string",
