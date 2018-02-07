@@ -625,6 +625,8 @@ public class LoanCollectionResource {
         String patronGroup = user.getString("patronGroup");
 
         try {
+          LoanRulesClient loanRulesClient = new LoanRulesClient(client, context);
+
           applyRules(client, context, loanTypeId, locationId, materialTypeId,
             patronGroup, response -> response.bodyHandler(body -> {
 
