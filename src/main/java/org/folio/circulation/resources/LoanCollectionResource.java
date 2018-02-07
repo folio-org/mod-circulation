@@ -1,5 +1,7 @@
 package org.folio.circulation.resources;
 
+import io.vertx.core.Handler;
+import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
@@ -619,34 +621,49 @@ public class LoanCollectionResource {
       } else {
         //Got user record, we're good to continue
         JsonObject user = getUserResponse.getJson();
+
+        String patronGroup = user.getString("patronGroup");
+
         try {
-          String loanRulesQuery = String.format(
-            "?item_type_id=%s&loan_type_id=%s&patron_type_id=%s&shelving_location_id=%s",
-            materialTypeId, loanTypeId, user.getString("patronGroup"), locationId);
+          applyRules(client, context, loanTypeId, locationId, materialTypeId,
+            patronGroup, response -> response.bodyHandler(body -> {
 
-          log.info(String.format("Applying loan rules for %s", loanRulesQuery));
+            Response getPolicyResponse = Response.from(response, body);
 
-          client.get(context.getOkapiBasedUrl("/circulation/loan-rules/apply") +
-              loanRulesQuery,
-              response -> response.bodyHandler(body -> {
-                Response getPolicyResponse = Response.from(response, body);
-
-                if(getPolicyResponse.getStatusCode() == 404) {
-                  ServerErrorResponse.internalError(responseToClient, "Unable to locate loan policy");
-                }
-                else if(getPolicyResponse.getStatusCode() != 200) {
-                  ForwardResponse.forward(responseToClient, getPolicyResponse);
-                } else {
-                  JsonObject policyIdJson = getPolicyResponse.getJson();
-                   onSuccess.accept(policyIdJson);
-                }
-              }));
+            if (getPolicyResponse.getStatusCode() == 404) {
+              ServerErrorResponse.internalError(responseToClient, "Unable to locate loan policy");
+            } else if (getPolicyResponse.getStatusCode() != 200) {
+              ForwardResponse.forward(responseToClient, getPolicyResponse);
+            } else {
+              JsonObject policyIdJson = getPolicyResponse.getJson();
+              onSuccess.accept(policyIdJson);
+            }
+          }));
         } catch(MalformedURLException m) {
           ServerErrorResponse.internalError(responseToClient,
             "Error forming URL to loan-rules endpoint");
         }
       }
     });
+  }
+
+  private static void applyRules(
+    OkapiHttpClient client,
+    WebContext context,
+    String loanTypeId,
+    String locationId,
+    String materialTypeId,
+    String patronGroup,
+    Handler<HttpClientResponse> responseHandler) throws MalformedURLException {
+
+    String loanRulesQuery = String.format(
+      "?item_type_id=%s&loan_type_id=%s&patron_type_id=%s&shelving_location_id=%s",
+      materialTypeId, loanTypeId, patronGroup, locationId);
+
+    log.info(String.format("Applying loan rules for %s", loanRulesQuery));
+
+    client.get(context.getOkapiBasedUrl("/circulation/loan-rules/apply") +
+        loanRulesQuery, responseHandler);
   }
 
   private String determineLoanTypeForItem(JsonObject item) {
