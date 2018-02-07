@@ -2,15 +2,12 @@ package org.folio.circulation.resources;
 
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerResponse;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.CqlHelper;
-import org.folio.circulation.support.JsonArrayHelper;
+import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.*;
@@ -304,7 +301,7 @@ public class LoanCollectionResource {
   private void getMany(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
     CollectionResourceClient loansStorageClient;
-    CollectionResourceClient itemsStorageClient;
+    CollectionResourceClient itemsClient;
     CollectionResourceClient holdingsClient;
     CollectionResourceClient instancesClient;
     CollectionResourceClient locationsClient;
@@ -312,7 +309,7 @@ public class LoanCollectionResource {
     try {
       OkapiHttpClient client = createHttpClient(routingContext, context);
       loansStorageClient = createLoansStorageClient(client, context);
-      itemsStorageClient = createItemsStorageClient(client, context);
+      itemsClient = createItemsStorageClient(client, context);
       locationsClient = createLocationsStorageClient(client, context);
       holdingsClient = createHoldingsStorageClient(client, context);
       instancesClient = createInstanceStorageClient(client, context);
@@ -325,172 +322,100 @@ public class LoanCollectionResource {
 
     loansStorageClient.getMany(routingContext.request().query(), loansResponse -> {
       if(loansResponse.getStatusCode() == 200) {
-        JsonObject wrappedLoans = new JsonObject(loansResponse.getBody());
+        final MultipleRecordsWrapper wrappedLoans = MultipleRecordsWrapper.fromRequestBody(
+          loansResponse.getBody(), "loans");
 
-        final List<JsonObject> loans = JsonArrayHelper.toList(
-          wrappedLoans.getJsonArray("loans"));
-
-        if(loans.isEmpty()) {
-          JsonObject loansWrapper = new JsonObject()
-            .put("loans", new JsonArray(loans))
-            .put("totalRecords", wrappedLoans.getInteger("totalRecords"));
-
+        if(wrappedLoans.isEmpty()) {
           JsonResponse.success(routingContext.response(),
-            loansWrapper);
+            wrappedLoans.toJson());
 
           return;
         }
+
+        final Collection<JsonObject> loans = wrappedLoans.getRecords();
 
         List<String> itemIds = loans.stream()
           .map(loan -> loan.getString("itemId"))
           .filter(Objects::nonNull)
           .collect(Collectors.toList());
 
-        CompletableFuture<Response> itemsFetched = new CompletableFuture<>();
+        InventoryFetcher inventoryFetcher = new InventoryFetcher(itemsClient,
+          holdingsClient, instancesClient);
 
-        String itemsQuery = CqlHelper.multipleRecordsCqlQuery(itemIds);
+        CompletableFuture<MultipleInventoryRecords> inventoryRecordsFetched =
+          inventoryFetcher.fetch(itemIds, e ->
+            ServerErrorResponse.internalError(routingContext.response(), e.toString()));
 
-        itemsStorageClient.getMany(itemsQuery, itemIds.size(), 0,
-          itemsFetched::complete);
-
-        itemsFetched.thenAccept(itemsResponse -> {
-          if(itemsResponse.getStatusCode() != 200) {
-            ServerErrorResponse.internalError(routingContext.response(),
-              String.format("Items request (%s) failed %s: %s",
-                itemsQuery, itemsResponse.getStatusCode(), itemsResponse.getBody()));
-            return;
-          }
-
-          final List<JsonObject> items = JsonArrayHelper.toList(
-            itemsResponse.getJson().getJsonArray("items"));
-
-          List<String> holdingsIds = items.stream()
-            .map(item -> item.getString("holdingsRecordId"))
-            .filter(Objects::nonNull)
+        inventoryRecordsFetched.thenAccept(records -> {
+          List<String> locationIds = records.getItems().stream()
+            .map(item -> determineLocationIdForItem(item,
+              records.findHoldingById(item.getString("holdingsRecordId")).orElse(null)))
+            .filter(StringUtils::isNotBlank)
             .collect(Collectors.toList());
 
-          CompletableFuture<Response> holdingsFetched =
-            new CompletableFuture<>();
+          CompletableFuture<Response> locationsFetched = new CompletableFuture<>();
 
-          String holdingsQuery = CqlHelper.multipleRecordsCqlQuery(holdingsIds);
+          String locationsQuery = CqlHelper.multipleRecordsCqlQuery(locationIds);
 
-          holdingsClient.getMany(holdingsQuery, holdingsIds.size(), 0,
-            holdingsFetched::complete);
+          locationsClient.getMany(locationsQuery, locationIds.size(), 0,
+            locationsFetched::complete);
 
-          holdingsFetched.thenAccept(holdingsResponse -> {
-            if(holdingsResponse.getStatusCode() != 200) {
+          locationsFetched.thenAccept(locationsResponse -> {
+            if(locationsResponse.getStatusCode() != 200) {
               ServerErrorResponse.internalError(routingContext.response(),
-                String.format("Holdings request (%s) failed %s: %s",
-                  holdingsQuery, holdingsResponse.getStatusCode(),
-                  holdingsResponse.getBody()));
+                String.format("Locations request (%s) failed %s: %s",
+                  locationsQuery, locationsResponse.getStatusCode(),
+                  locationsResponse.getBody()));
               return;
             }
 
-            final List<JsonObject> holdings = JsonArrayHelper.toList(
-              holdingsResponse.getJson().getJsonArray("holdingsRecords"));
+            loans.forEach( loan -> {
+              Optional<JsonObject> possibleItem = records.findItemById(
+                loan.getString("itemId"));
 
-            List<String> instanceIds = holdings.stream()
-              .map(holding -> holding.getString("instanceId"))
-              .filter(Objects::nonNull)
-              .collect(Collectors.toList());
+              //No need to pass on the itemStatus property,
+              // as only used to populate the history
+              //and could be confused with aggregation of current status
+              loan.remove("itemStatus");
 
-            CompletableFuture<Response> instancesFetched = new CompletableFuture<>();
+              Optional<JsonObject> possibleInstance = Optional.empty();
 
-            String instancesQuery = CqlHelper.multipleRecordsCqlQuery(instanceIds);
+              if(possibleItem.isPresent()) {
+                JsonObject item = possibleItem.get();
 
-            instancesClient.getMany(instancesQuery, instanceIds.size(), 0,
-              instancesFetched::complete);
+                Optional<JsonObject> possibleHolding = records.findHoldingById(
+                  item.getString("holdingsRecordId"));
 
-            instancesFetched.thenAccept(instancesResponse -> {
-                if (instancesResponse.getStatusCode() != 200) {
-                  ServerErrorResponse.internalError(routingContext.response(),
-                    String.format("Instances request (%s) failed %s: %s",
-                      instancesQuery, instancesResponse.getStatusCode(),
-                      instancesResponse.getBody()));
-                  return;
+                if(possibleHolding.isPresent()) {
+                  JsonObject holding = possibleHolding.get();
+
+                  possibleInstance = records.findInstanceById(
+                    holding.getString("instanceId"));
                 }
 
-                final List<JsonObject> instances = JsonArrayHelper.toList(
-                  instancesResponse.getJson().getJsonArray("instances"));
+                List<JsonObject> locations = JsonArrayHelper.toList(
+                  locationsResponse.getJson().getJsonArray("shelflocations"));
 
-                List<String> locationIds = items.stream()
-                  .map(item -> determineLocationIdForItem(item,
-                    holdingForItem(item, holdings).orElse(null)))
-                  .filter(StringUtils::isNotBlank)
-                  .collect(Collectors.toList());
+                Optional<JsonObject> possibleLocation = locations.stream()
+                  .filter(location -> location.getString("id").equals(
+                    determineLocationIdForItem(item, possibleHolding.orElse(null))))
+                  .findFirst();
 
-                CompletableFuture<Response> locationsFetched = new CompletableFuture<>();
+                loan.put("item", createItemSummary(item,
+                  possibleInstance.orElse(null),
+                    possibleHolding.orElse(null),
+                    possibleLocation.orElse(null)));
+              }
+            });
 
-                String locationsQuery = CqlHelper.multipleRecordsCqlQuery(locationIds);
-
-                locationsClient.getMany(locationsQuery, locationIds.size(), 0,
-                  locationsFetched::complete);
-
-                locationsFetched.thenAccept(locationsResponse -> {
-                  if(locationsResponse.getStatusCode() != 200) {
-                    ServerErrorResponse.internalError(routingContext.response(),
-                      String.format("Locations request (%s) failed %s: %s",
-                        locationsQuery, locationsResponse.getStatusCode(),
-                        locationsResponse.getBody()));
-                    return;
-                  }
-
-                  loans.forEach( loan -> {
-                    Optional<JsonObject> possibleItem = items.stream()
-                      .filter(item -> item.getString("id").equals(loan.getString("itemId")))
-                      .findFirst();
-
-                    //No need to pass on the itemStatus property,
-                    // as only used to populate the history
-                    //and could be confused with aggregation of current status
-                    loan.remove("itemStatus");
-
-                    Optional<JsonObject> possibleInstance = Optional.empty();
-
-                    if(possibleItem.isPresent()) {
-                      JsonObject item = possibleItem.get();
-
-                      Optional<JsonObject> possibleHolding = holdingForItem(item, holdings);
-
-                      if(possibleHolding.isPresent()) {
-                        JsonObject holding = possibleHolding.get();
-
-                        possibleInstance = instances.stream()
-                          .filter(instance -> instance.getString("id")
-                            .equals(holding.getString("instanceId")))
-                          .findFirst();
-                      }
-
-                      List<JsonObject> locations = JsonArrayHelper.toList(
-                        locationsResponse.getJson().getJsonArray("shelflocations"));
-
-                      Optional<JsonObject> possibleLocation = locations.stream()
-                        .filter(location -> location.getString("id").equals(
-                          determineLocationIdForItem(item, possibleHolding.orElse(null))))
-                        .findFirst();
-
-                      loan.put("item", createItemSummary(item,
-                        possibleInstance.orElse(null),
-                          possibleHolding.orElse(null),
-                          possibleLocation.orElse(null)));
-                    }
-                  });
-
-                  JsonObject loansWrapper = new JsonObject()
-                    .put("loans", new JsonArray(loans))
-                    .put("totalRecords", wrappedLoans.getInteger("totalRecords"));
-
-                  JsonResponse.success(routingContext.response(),
-                    loansWrapper);
-                });
-              });
+            JsonResponse.success(routingContext.response(),
+              wrappedLoans.toJson());
           });
         });
       }
       else {
         ServerErrorResponse.internalError(routingContext.response(),
           "Failed to fetch loans from storage");
-        return;
       }
     });
   }
@@ -760,16 +685,5 @@ public class LoanCollectionResource {
     else {
       return null;
     }
-  }
-
-  private Optional<JsonObject> holdingForItem(
-    JsonObject item,
-    Collection<JsonObject> holdings) {
-
-    String holdingsRecordId = item.getString("holdingsRecordId");
-
-    return holdings.stream()
-      .filter(holding -> holding.getString("id").equals(holdingsRecordId))
-      .findFirst();
   }
 }

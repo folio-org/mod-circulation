@@ -10,7 +10,7 @@ public class MultipleInventoryRecords {
   private final Collection<JsonObject> holdings;
   private final Collection<JsonObject> instances;
 
-  public MultipleInventoryRecords(
+  MultipleInventoryRecords(
     Collection<JsonObject> items,
     Collection<JsonObject> holdings,
     Collection<JsonObject> instances) {
@@ -21,16 +21,17 @@ public class MultipleInventoryRecords {
   }
 
   public Optional<JsonObject> findHoldingById(String holdingsId) {
-    return getHoldings().stream()
-      .filter(holding -> holding.getString("id").equals(holdingsId))
-      .findFirst();
+    return findById(holdingsId, holdings);
   }
 
   public Optional<JsonObject> findItemById(String itemId) {
-    return getItems().stream()
-      .filter(item -> item.getString("id").equals(itemId))
-      .findFirst();
+    return findById(itemId, items);
   }
+
+  public Optional<JsonObject> findInstanceById(String instanceId) {
+    return findById(instanceId, instances);
+  }
+
 
   public Collection<JsonObject> getItems() {
     return items;
@@ -42,5 +43,14 @@ public class MultipleInventoryRecords {
 
   public Collection<JsonObject> getInstances() {
     return instances;
+  }
+
+  private Optional<JsonObject> findById(
+    String id,
+    Collection<JsonObject> collection) {
+
+    return collection.stream()
+      .filter(item -> item.getString("id").equals(id))
+      .findFirst();
   }
 }
