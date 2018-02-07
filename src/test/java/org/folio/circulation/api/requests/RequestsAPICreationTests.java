@@ -1,21 +1,6 @@
 package org.folio.circulation.api.requests;
 
-import static org.folio.HttpStatus.HTTP_CREATED;
-import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
-import static org.folio.circulation.api.support.fixtures.LoanFixture.checkOutItem;
-import static org.folio.circulation.api.support.matchers.StatusMatcher.hasStatus;
-import static org.folio.circulation.api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
-
-import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
+import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.support.APITests;
 import org.folio.circulation.api.support.builders.ItemRequestBuilder;
 import org.folio.circulation.api.support.builders.RequestRequestBuilder;
@@ -29,7 +14,23 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.junit.Test;
 
-import io.vertx.core.json.JsonObject;
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import static org.folio.HttpStatus.HTTP_CREATED;
+import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
+import static org.folio.circulation.api.support.fixtures.LoanFixture.checkOutItem;
+import static org.folio.circulation.api.support.matchers.StatusMatcher.hasStatus;
+import static org.folio.circulation.api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static org.hamcrest.Matchers.emptyString;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class RequestsAPICreationTests extends APITests {
   @Test
@@ -209,8 +210,7 @@ public class RequestsAPICreationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 
@@ -257,8 +257,7 @@ public class RequestsAPICreationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
@@ -279,6 +278,36 @@ public class RequestsAPICreationTests extends APITests {
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
     assertThat(postResponse, hasStatus(HTTP_CREATED));
+  }
+
+  @Test
+  public void canCreateARequestToBeFulfilledByDeliveryToAnAddress()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
+      ItemRequestBuilder::available)
+      .getId();
+
+    checkOutItem(itemId, loansClient);
+
+    UUID deliveryAddressTypeId = UUID.randomUUID();
+
+    IndividualResource createdRequest = requestsClient.create(new RequestRequestBuilder()
+      .recall()
+      .withItemId(itemId)
+      .deliverToAddress(deliveryAddressTypeId)
+      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
+
+    JsonObject representation = createdRequest.getJson();
+
+    assertThat(representation.getString("id"), is(not(emptyString())));
+    assertThat(representation.getString("requestType"), is("Recall"));
+    assertThat(representation.getString("fulfilmentPreference"), is("Delivery"));
+    assertThat(representation.getString("deliveryAddressTypeId"),
+      is(deliveryAddressTypeId.toString()));
   }
 
   @Test
