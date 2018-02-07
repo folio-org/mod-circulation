@@ -1,7 +1,5 @@
 package org.folio.circulation.resources;
 
-import io.vertx.core.Handler;
-import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
@@ -627,7 +625,7 @@ public class LoanCollectionResource {
         try {
           LoanRulesClient loanRulesClient = new LoanRulesClient(client, context);
 
-          applyRules(client, context, loanTypeId, locationId, materialTypeId,
+          loanRulesClient.applyRules(loanTypeId, locationId, materialTypeId,
             patronGroup, response -> response.bodyHandler(body -> {
 
             Response getPolicyResponse = Response.from(response, body);
@@ -647,25 +645,6 @@ public class LoanCollectionResource {
         }
       }
     });
-  }
-
-  private static void applyRules(
-    OkapiHttpClient client,
-    WebContext context,
-    String loanTypeId,
-    String locationId,
-    String materialTypeId,
-    String patronGroup,
-    Handler<HttpClientResponse> responseHandler) throws MalformedURLException {
-
-    String loanRulesQuery = String.format(
-      "?item_type_id=%s&loan_type_id=%s&patron_type_id=%s&shelving_location_id=%s",
-      materialTypeId, loanTypeId, patronGroup, locationId);
-
-    log.info(String.format("Applying loan rules for %s", loanRulesQuery));
-
-    client.get(context.getOkapiBasedUrl("/circulation/loan-rules/apply") +
-        loanRulesQuery, responseHandler);
   }
 
   private String determineLoanTypeForItem(JsonObject item) {
