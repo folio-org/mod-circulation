@@ -590,74 +590,69 @@ public class LoanCollectionResource {
     WebContext context,
     Consumer<JsonObject> onSuccess ) {
 
-      if(item == null) {
-        ServerErrorResponse.internalError(responseToClient,
-          "Unable to process claim for unknown item");
-        return;
+    if(item == null) {
+      ServerErrorResponse.internalError(responseToClient,
+        "Unable to process claim for unknown item");
+      return;
+    }
+
+    if(holding == null) {
+      ServerErrorResponse.internalError(responseToClient,
+        "Unable to process claim for unknown holding");
+      return;
+    }
+
+    String userId = loan.getString("userId");
+
+    String loanTypeId = determineLoanTypeForItem(item);
+    String locationId = determineLocationIdForItem(item, holding);
+
+    //Got instance record, we're good to continue
+    String materialTypeId = item.getString("materialTypeId");
+
+    usersStorageClient.get(userId, getUserResponse -> {
+      if(getUserResponse.getStatusCode() == 404) {
+        ServerErrorResponse.internalError(responseToClient, "Unable to locate User");
       }
-
-      if(holding == null) {
-        ServerErrorResponse.internalError(responseToClient,
-          "Unable to process claim for unknown holding");
-        return;
-      }
-
-      String userId = loan.getString("userId");
-
-      String loanTypeId;
-      if(item.containsKey("temporaryLoanTypeId") && !item.getString("temporaryLoanTypeId").isEmpty()) {
-        loanTypeId = item.getString("temporaryLoanTypeId");
+      else if(getUserResponse.getStatusCode() != 200) {
+        ForwardResponse.forward(responseToClient, getUserResponse);
       } else {
-        loanTypeId = item.getString("permanentLoanTypeId");
-      }
+        //Got user record, we're good to continue
+        JsonObject user = getUserResponse.getJson();
+        try {
+          String loanRulesQuery = String.format(
+            "?item_type_id=%s&loan_type_id=%s&patron_type_id=%s&shelving_location_id=%s",
+            materialTypeId, loanTypeId, user.getString("patronGroup"), locationId);
 
-      String locationId;
-      if(item.containsKey("temporaryLocationId") && !item.getString("temporaryLocationId").isEmpty()) {
-        locationId = item.getString("temporaryLocationId");
-      } else {
-        locationId = holding.getString("permanentLocationId");
-      }
+          log.info(String.format("Applying loan rules for %s", loanRulesQuery));
 
-      //Got instance record, we're good to continue
-      String materialTypeId = item.getString("materialTypeId");
-
-      usersStorageClient.get(userId, getUserResponse -> {
-        if(getUserResponse.getStatusCode() == 404) {
-          ServerErrorResponse.internalError(responseToClient, "Unable to locate User");
-        }
-        else if(getUserResponse.getStatusCode() != 200) {
-          ForwardResponse.forward(responseToClient, getUserResponse);
-        } else {
-          //Got user record, we're good to continue
-          JsonObject user = getUserResponse.getJson();
-          try {
-            String loanRulesQuery = String.format(
-              "?item_type_id=%s&loan_type_id=%s&patron_type_id=%s&shelving_location_id=%s",
-              materialTypeId, loanTypeId, user.getString("patronGroup"), locationId);
-
-            log.info(String.format("Applying loan rules for %s", loanRulesQuery));
-
-            client.get(context.getOkapiBasedUrl("/circulation/loan-rules/apply") +
-                loanRulesQuery,
-                response -> response.bodyHandler(body -> {
-                  Response getPolicyResponse = Response.from(response, body);
-                  if(getPolicyResponse.getStatusCode() != 200) {
-                    if(getPolicyResponse.getStatusCode() != 404) {
-                      ServerErrorResponse.internalError(responseToClient, "Unable to locate loan policy");
-                    } else {
-                      ForwardResponse.forward(responseToClient, getPolicyResponse);
-                    }
+          client.get(context.getOkapiBasedUrl("/circulation/loan-rules/apply") +
+              loanRulesQuery,
+              response -> response.bodyHandler(body -> {
+                Response getPolicyResponse = Response.from(response, body);
+                if(getPolicyResponse.getStatusCode() != 200) {
+                  if(getPolicyResponse.getStatusCode() != 404) {
+                    ServerErrorResponse.internalError(responseToClient, "Unable to locate loan policy");
                   } else {
-                    JsonObject policyIdJson = getPolicyResponse.getJson();
-                     onSuccess.accept(policyIdJson);
+                    ForwardResponse.forward(responseToClient, getPolicyResponse);
                   }
-                }));
-          } catch(MalformedURLException m) {
-            ServerErrorResponse.internalError(responseToClient,
-              "Error forming URL to loan-rules endpoint");
-          }
+                } else {
+                  JsonObject policyIdJson = getPolicyResponse.getJson();
+                   onSuccess.accept(policyIdJson);
+                }
+              }));
+        } catch(MalformedURLException m) {
+          ServerErrorResponse.internalError(responseToClient,
+            "Error forming URL to loan-rules endpoint");
         }
-      });
+      }
+    });
+  }
+
+  private String determineLoanTypeForItem(JsonObject item) {
+    return item.containsKey("temporaryLoanTypeId") && !item.getString("temporaryLoanTypeId").isEmpty()
+      ? item.getString("temporaryLoanTypeId")
+      : item.getString("permanentLoanTypeId");
   }
 
   private String determineLocationIdForItem(JsonObject item, JsonObject holding) {
