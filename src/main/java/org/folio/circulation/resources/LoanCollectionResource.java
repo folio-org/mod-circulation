@@ -603,20 +603,24 @@ public class LoanCollectionResource {
       }
 
       String userId = loan.getString("userId");
-      String[] loanTypeId =  { null };
+
+      String loanTypeId;
       if(item.containsKey("temporaryLoanTypeId") && !item.getString("temporaryLoanTypeId").isEmpty()) {
-        loanTypeId[0] = item.getString("temporaryLoanTypeId");
+        loanTypeId = item.getString("temporaryLoanTypeId");
       } else {
-        loanTypeId[0] = item.getString("permanentLoanTypeId");
+        loanTypeId = item.getString("permanentLoanTypeId");
       }
-      String[] locationId = { null };
+
+      String locationId;
       if(item.containsKey("temporaryLocationId") && !item.getString("temporaryLocationId").isEmpty()) {
-        locationId[0] = item.getString("temporaryLocationId");
+        locationId = item.getString("temporaryLocationId");
       } else {
-        locationId[0] = holding.getString("permanentLocationId");
+        locationId = holding.getString("permanentLocationId");
       }
+
       //Got instance record, we're good to continue
-      String[] materialTypeId = { item.getString("materialTypeId") };
+      String materialTypeId = item.getString("materialTypeId");
+
       usersStorageClient.get(userId, getUserResponse -> {
         if(getUserResponse.getStatusCode() != 200) {
           if(getUserResponse.getStatusCode() == 404) {
@@ -628,10 +632,9 @@ public class LoanCollectionResource {
           //Got user record, we're good to continue
           JsonObject user = getUserResponse.getJson();
           try {
-
             String loanRulesQuery = String.format(
               "?item_type_id=%s&loan_type_id=%s&patron_type_id=%s&shelving_location_id=%s",
-              materialTypeId[0], loanTypeId[0], user.getString("patronGroup"), locationId[0]);
+              materialTypeId, loanTypeId, user.getString("patronGroup"), locationId);
 
             log.info(String.format("Applying loan rules for %s", loanRulesQuery));
 
