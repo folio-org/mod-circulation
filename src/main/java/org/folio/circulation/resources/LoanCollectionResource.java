@@ -630,12 +630,12 @@ public class LoanCollectionResource {
               loanRulesQuery,
               response -> response.bodyHandler(body -> {
                 Response getPolicyResponse = Response.from(response, body);
-                if(getPolicyResponse.getStatusCode() != 200) {
-                  if(getPolicyResponse.getStatusCode() != 404) {
-                    ServerErrorResponse.internalError(responseToClient, "Unable to locate loan policy");
-                  } else {
-                    ForwardResponse.forward(responseToClient, getPolicyResponse);
-                  }
+
+                if(getPolicyResponse.getStatusCode() == 404) {
+                  ServerErrorResponse.internalError(responseToClient, "Unable to locate loan policy");
+                }
+                else if(getPolicyResponse.getStatusCode() != 200) {
+                  ForwardResponse.forward(responseToClient, getPolicyResponse);
                 } else {
                   JsonObject policyIdJson = getPolicyResponse.getJson();
                    onSuccess.accept(policyIdJson);
