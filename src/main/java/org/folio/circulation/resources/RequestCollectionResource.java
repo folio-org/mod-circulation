@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import static org.folio.circulation.domain.ItemStatus.*;
 import static org.folio.circulation.domain.ItemStatusAssistant.updateItemStatus;
 import static org.folio.circulation.domain.LoanActionHistoryAssistant.updateLoanActionHistory;
+import static org.folio.circulation.support.CommonFailures.reportFailureToFetchInventoryRecords;
 import static org.folio.circulation.support.JsonPropertyCopier.copyStringIfExists;
 
 public class RequestCollectionResource {
@@ -81,7 +82,7 @@ public class RequestCollectionResource {
 
     CompletableFuture<InventoryRecords> inventoryRecordsCompleted
       = inventoryFetcher.fetch(itemId, t ->
-      CommonFailures.reportFailureToFetchInventoryRecords(routingContext, t));
+      reportFailureToFetchInventoryRecords(routingContext, t));
 
     CompletableFuture<Response> requestingUserRequestCompleted = new CompletableFuture<>();
 
@@ -176,7 +177,7 @@ public class RequestCollectionResource {
 
     CompletableFuture<InventoryRecords> inventoryRecordsCompleted
       = inventoryFetcher.fetch(itemId, t ->
-        CommonFailures.reportFailureToFetchInventoryRecords(routingContext, t));
+        reportFailureToFetchInventoryRecords(routingContext, t));
 
     CompletableFuture<Response> requestingUserRequestCompleted = new CompletableFuture<>();
 
@@ -242,14 +243,14 @@ public class RequestCollectionResource {
 
     requestsStorageClient.get(id, requestResponse -> {
       if(requestResponse.getStatusCode() == 200) {
+        JsonObject request = requestResponse.getJson();
+
         InventoryFetcher fetcher = new InventoryFetcher(itemsStorageClient,
           holdingsStorageClient, instancesStorageClient);
 
-        JsonObject request = requestResponse.getJson();
-
         CompletableFuture<InventoryRecords> inventoryRecordsCompleted =
           fetcher.fetch(getItemId(request), t ->
-            CommonFailures.reportFailureToFetchInventoryRecords(routingContext, t));
+            reportFailureToFetchInventoryRecords(routingContext, t));
 
         inventoryRecordsCompleted.thenAccept(r -> {
           addAdditionalItemProperties(request, r.getHolding(), r.getItem());

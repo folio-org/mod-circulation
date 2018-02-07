@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.ItemStatusAssistant.updateItemStatus;
+import static org.folio.circulation.support.CommonFailures.reportFailureToFetchInventoryRecords;
 import static org.folio.circulation.support.CommonFailures.reportInvalidOkapiUrlHeader;
 
 public class LoanCollectionResource {
@@ -131,7 +132,7 @@ public class LoanCollectionResource {
                   });
                 }
                 else {
-                    ForwardResponse.forward(routingContext.response(), response);
+                  ForwardResponse.forward(routingContext.response(), response);
                 }
               });
           });
@@ -214,56 +215,36 @@ public class LoanCollectionResource {
         JsonObject loan = new JsonObject(loanResponse.getBody());
         String itemId = loan.getString("itemId");
 
-        itemsStorageClient.get(itemId, itemResponse -> {
-          if(itemResponse.getStatusCode() == 200) {
-            JsonObject item = new JsonObject(itemResponse.getBody());
+        InventoryFetcher fetcher = new InventoryFetcher(itemsStorageClient,
+          holdingsStorageClient, instancesStorageClient);
 
-            String holdingId = item.getString("holdingsRecordId");
+        CompletableFuture<InventoryRecords> inventoryRecordsCompleted =
+          fetcher.fetch(itemId, t ->
+            reportFailureToFetchInventoryRecords(routingContext, t));
 
-            holdingsStorageClient.get(holdingId, holdingResponse -> {
-              final String instanceId = holdingResponse.getStatusCode() == 200
-                ? holdingResponse.getJson().getString("instanceId")
-                : null;
+        inventoryRecordsCompleted.thenAccept(r -> {
+          JsonObject item = r.getItem();
+          JsonObject holding = r.getHolding();
+          JsonObject instance = r.getInstance();
 
-              instancesStorageClient.get(instanceId, instanceResponse -> {
-                final JsonObject instance = instanceResponse.getStatusCode() == 200
-                  ? instanceResponse.getJson()
-                  : null;
+          final String locationId = determineLocationIdForItem(item, holding);
 
-                final JsonObject holding = holdingResponse.getStatusCode() == 200
-                  ? holdingResponse.getJson()
-                  : null;
+          locationsStorageClient.get(locationId,
+            locationResponse -> {
+              if (locationResponse.getStatusCode() == 200) {
+                JsonResponse.success(routingContext.response(),
+                  extendedLoan(loan, item, holding, instance,
+                    locationResponse.getJson()));
+              } else {
+                log.warn(
+                  String.format("Could not get location %s for item %s",
+                    locationId, itemId));
 
-                final String locationId = determineLocationIdForItem(item, holding);
-
-                locationsStorageClient.get(locationId,
-                  locationResponse -> {
-                    if(locationResponse.getStatusCode() == 200) {
-                      JsonResponse.success(routingContext.response(),
-                        extendedLoan(loan, item, holding, instance,
-                          locationResponse.getJson()));
-                    }
-                    else {
-                      log.warn(
-                        String.format("Could not get location %s for item %s",
-                          locationId, itemId ));
-
-                      JsonResponse.success(routingContext.response(),
-                        extendedLoan(loan, item, holding, instance, null));
-                    }
-                  });
-              });
+                JsonResponse.success(routingContext.response(),
+                  extendedLoan(loan, item, holding, instance,
+                    null));
+              }
             });
-          }
-          else if(itemResponse.getStatusCode() == 404) {
-            JsonResponse.success(routingContext.response(),
-              loan);
-          }
-          else {
-            ServerErrorResponse.internalError(routingContext.response(),
-              String.format("Failed to item with ID: %s:, %s",
-                itemId, itemResponse.getBody()));
-          }
         });
       }
       else {
@@ -588,7 +569,9 @@ public class LoanCollectionResource {
     JsonObject instance,
     JsonObject location) {
 
-    loan.put("item", createItemSummary(item, instance, holding, location));
+    if(item != null) {
+      loan.put("item", createItemSummary(item, instance, holding, location));
+    }
 
     //No need to pass on the itemStatus property, as only used to populate the history
     //and could be confused with aggregation of current status
@@ -608,12 +591,14 @@ public class LoanCollectionResource {
     Consumer<JsonObject> onSuccess ) {
 
       if(item == null) {
-        ServerErrorResponse.internalError(responseToClient, "Unable to process claim for unknown item");
+        ServerErrorResponse.internalError(responseToClient,
+          "Unable to process claim for unknown item");
         return;
       }
 
       if(holding == null) {
-        ServerErrorResponse.internalError(responseToClient, "Unable to process claim for unknown holding");
+        ServerErrorResponse.internalError(responseToClient,
+          "Unable to process claim for unknown holding");
         return;
       }
 
@@ -673,13 +658,13 @@ public class LoanCollectionResource {
   }
 
   private String determineLocationIdForItem(JsonObject item, JsonObject holding) {
-    if(item.containsKey("temporaryLocationId")) {
+    if(item != null && item.containsKey("temporaryLocationId")) {
       return item.getString("temporaryLocationId");
     }
     else if(holding != null && holding.containsKey("permanentLocationId")) {
       return holding.getString("permanentLocationId");
     }
-    else if(item.containsKey("permanentLocationId")) {
+    else if(item != null && item.containsKey("permanentLocationId")) {
       return item.getString("permanentLocationId");
     }
     else {
