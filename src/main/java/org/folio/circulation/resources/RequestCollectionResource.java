@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import static org.folio.circulation.domain.ItemStatus.*;
 import static org.folio.circulation.domain.ItemStatusAssistant.updateItemStatus;
 import static org.folio.circulation.domain.LoanActionHistoryAssistant.updateLoanActionHistory;
+import static org.folio.circulation.support.CommonFailures.reportFailureToFetchInventoryRecords;
 import static org.folio.circulation.support.JsonPropertyCopier.copyStringIfExists;
 
 public class RequestCollectionResource {
@@ -69,7 +70,7 @@ public class RequestCollectionResource {
       loansStorageClient = createLoansStorageClient(client, context);
     }
     catch (MalformedURLException e) {
-      reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
+      CommonFailures.reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
 
       return;
     }
@@ -110,7 +111,7 @@ public class RequestCollectionResource {
       JsonObject requester = getRecordFromResponse(requestingUserResponse);
 
       if(item == null) {
-        reportItemRelatedValidationError(routingContext, itemId, "Item does not exist");
+        CommonFailures.reportItemRelatedValidationError(routingContext, itemId, "Item does not exist");
       }
       else if (RequestType.from(request).canCreateRequestForItem(item)) {
         updateItemStatus(itemId, RequestType.from(request).toItemStatus(),
@@ -135,7 +136,7 @@ public class RequestCollectionResource {
             }));
       }
       else {
-        reportItemRelatedValidationError(routingContext, itemId,
+        CommonFailures.reportItemRelatedValidationError(routingContext, itemId,
           String.format("Item is not %s", CHECKED_OUT));
       }
     });
@@ -164,7 +165,7 @@ public class RequestCollectionResource {
       usersStorageClient = createUsersStorageClient(client, context);
     }
     catch (MalformedURLException e) {
-      reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
+      CommonFailures.reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
 
       return;
     }
@@ -233,7 +234,7 @@ public class RequestCollectionResource {
       instancesStorageClient = createInstanceStorageClient(client, context);
     }
     catch (MalformedURLException e) {
-      reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
+      CommonFailures.reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
 
       return;
     }
@@ -242,10 +243,10 @@ public class RequestCollectionResource {
 
     requestsStorageClient.get(id, requestResponse -> {
       if(requestResponse.getStatusCode() == 200) {
+        JsonObject request = requestResponse.getJson();
+
         InventoryFetcher fetcher = new InventoryFetcher(itemsStorageClient,
           holdingsStorageClient, instancesStorageClient);
-
-        JsonObject request = requestResponse.getJson();
 
         CompletableFuture<InventoryRecords> inventoryRecordsCompleted =
           fetcher.fetch(getItemId(request), t ->
@@ -273,7 +274,7 @@ public class RequestCollectionResource {
       requestsStorageClient = createRequestsStorageClient(client, context);
     }
     catch (MalformedURLException e) {
-      reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
+      CommonFailures.reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
 
       return;
     }
@@ -306,7 +307,7 @@ public class RequestCollectionResource {
       instancesStorageClient = createInstanceStorageClient(client, context);
     }
     catch (MalformedURLException e) {
-      reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
+      CommonFailures.reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
 
       return;
     }
@@ -373,7 +374,7 @@ public class RequestCollectionResource {
       requestsStorageClient = createRequestsStorageClient(client, context);
     }
     catch (MalformedURLException e) {
-      reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
+      CommonFailures.reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
 
       return;
     }
@@ -535,30 +536,5 @@ public class RequestCollectionResource {
   private void removeRelatedRecordInformation(JsonObject request) {
     request.remove("item");
     request.remove("requester");
-  }
-
-  private void reportInvalidOkapiUrlHeader(
-    RoutingContext routingContext,
-    String okapiLocation) {
-
-    ServerErrorResponse.internalError(routingContext.response(),
-      String.format("Invalid Okapi URL: %s", okapiLocation));
-  }
-
-  private static void reportFailureToFetchInventoryRecords(
-    RoutingContext routingContext,
-    Exception cause) {
-
-    ServerErrorResponse.internalError(routingContext.response(),
-      String.format("Could not get inventory records related to request: %s", cause));
-  }
-
-  private void reportItemRelatedValidationError(
-    RoutingContext routingContext,
-    String itemId,
-    String reason) {
-
-    JsonResponse.unprocessableEntity(routingContext.response(),
-      reason, "itemId", itemId);
   }
 }
