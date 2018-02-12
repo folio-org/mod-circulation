@@ -1,4 +1,4 @@
-## 7.1.1 Unreleased
+## 7.1.1 2018-02-12
 
 * Adds `holdingsRecordId` and `instanceId` properties to the item for a loan (CIRC-61)
 * Adds `holdingsRecordId` and `instanceId` properties to the item for a request (CIRC-70)
