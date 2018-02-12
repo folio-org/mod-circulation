@@ -9,7 +9,7 @@ circulation_instance_id=localhost-9605
 inventory_storage_module_id="mod-inventory-storage-7.2.2-SNAPSHOT"
 
 #Needs to be the specific version of mod-circulation-storage you want to use for testing
-circulation_storage_module_id="mod-circulation-storage-4.1.0-SNAPSHOT"
+circulation_storage_module_id="mod-circulation-storage-4.3.0-SNAPSHOT"
 
 #Needs to be the specific version of mod-users you want to use for testing
 users_storage_module_id="mod-users-14.4.1-SNAPSHOT"
