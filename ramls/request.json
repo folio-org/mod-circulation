@@ -27,6 +27,15 @@
       "type": "string",
       "pattern": "^[a-fA-Z0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
     },
+    "status": {
+      "description": "Status of the request",
+      "type": "string",
+      "enum": [
+        "Open - Not yet filled",
+        "Open - Awaiting pickup",
+        "Closed - Filled"
+      ]
+    },
     "item": {
       "description": "Information about the requested item (some of which is stored and used for searching and sorting)",
       "readOnly": true,

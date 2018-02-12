@@ -1,6 +1,8 @@
 package org.folio.circulation.api.requests;
 
 import io.vertx.core.json.JsonObject;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import org.folio.circulation.api.support.APITests;
 import org.folio.circulation.api.support.builders.ItemRequestBuilder;
 import org.folio.circulation.api.support.builders.RequestRequestBuilder;
@@ -13,8 +15,8 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -32,14 +34,14 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
+@RunWith(JUnitParamsRunner.class)
 public class RequestsAPICreationTests extends APITests {
   @Test
   public void canCreateARequest()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 
@@ -66,6 +68,7 @@ public class RequestsAPICreationTests extends APITests {
       .fulfilToHoldShelf()
       .withRequestExpiration(new LocalDate(2017, 7, 30))
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
+      .withStatus("Open - Not yet filled")
       .create();
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
@@ -87,6 +90,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
     assertThat(representation.getString("requestExpirationDate"), is("2017-07-30"));
     assertThat(representation.getString("holdShelfExpirationDate"), is("2017-08-31"));
+    assertThat(representation.getString("status"), is("Open - Not yet filled"));
 
     assertThat("has information taken from item",
       representation.containsKey("item"), is(true));
@@ -124,8 +128,7 @@ public class RequestsAPICreationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
     UUID itemId = UUID.randomUUID();
@@ -151,8 +154,7 @@ public class RequestsAPICreationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
@@ -180,8 +182,7 @@ public class RequestsAPICreationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
@@ -281,6 +282,51 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
+  @Parameters({
+    "Open - Not yet filled",
+    "Open - Awaiting pickup",
+    "Closed - Filled"
+  })
+  public void canCreateARequestWithValidStatus(String status)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
+      itemBuilder -> itemBuilder
+        .withBarcode("036000291452"))
+      .getId();
+
+    checkOutItem(itemId, loansClient);
+
+    UUID requesterId = usersClient.create(new UserRequestBuilder()
+      .withName("Jones", "Steven")
+      .withBarcode("564376549214"))
+      .getId();
+
+    JsonObject requestRequest = new RequestRequestBuilder()
+      .recall()
+      .toHoldShelf()
+      .withItemId(itemId)
+      .withRequesterId(requesterId)
+      .withStatus(status)
+      .create();
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(InterfaceUrls.requestsUrl(), requestRequest,
+      ResponseHandler.json(postCompleted));
+
+    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
+    assertThat(postResponse, hasStatus(HTTP_CREATED));
+
+    JsonObject representation = postResponse.getJson();
+
+    assertThat(representation.getString("status"), is(status));
+  }
+
+  @Test
   public void canCreateARequestToBeFulfilledByDeliveryToAnAddress()
     throws InterruptedException,
     MalformedURLException,
@@ -315,8 +361,7 @@ public class RequestsAPICreationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 
@@ -359,8 +404,7 @@ public class RequestsAPICreationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 
@@ -414,8 +458,7 @@ public class RequestsAPICreationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 
@@ -477,8 +520,7 @@ public class RequestsAPICreationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 
@@ -536,8 +578,7 @@ public class RequestsAPICreationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 
@@ -584,8 +625,7 @@ public class RequestsAPICreationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 

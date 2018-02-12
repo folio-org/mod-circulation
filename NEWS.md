@@ -1,3 +1,9 @@
+## 7.2.0 Unreleased
+
+* Adds `status` property to requests (CIRC-53)
+* Provides circulation interface 2.8 (CIRC-53)
+* Requires request-storage interface 1.3 (CIRC-53)
+
 ## 7.1.1 2018-02-12
 
 * Adds `holdingsRecordId` and `instanceId` properties to the item for a loan (CIRC-61)
