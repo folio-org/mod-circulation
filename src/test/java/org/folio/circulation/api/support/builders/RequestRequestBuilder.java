@@ -22,6 +22,7 @@ public class RequestRequestBuilder implements Builder {
   private final LocalDate holdShelfExpirationDate;
   private final ItemSummary itemSummary;
   private final PatronSummary requesterSummary;
+  private final String status;
 
   public RequestRequestBuilder() {
     this(UUID.randomUUID(),
@@ -34,7 +35,8 @@ public class RequestRequestBuilder implements Builder {
       null,
       null,
       null,
-      null);
+      null,
+      "Open - Not yet filled");
   }
 
   private RequestRequestBuilder(
@@ -48,7 +50,8 @@ public class RequestRequestBuilder implements Builder {
     LocalDate requestExpirationDate,
     LocalDate holdShelfExpirationDate,
     ItemSummary itemSummary,
-    PatronSummary requesterSummary) {
+    PatronSummary requesterSummary,
+    String status) {
 
     this.id = id;
     this.requestType = requestType;
@@ -61,6 +64,7 @@ public class RequestRequestBuilder implements Builder {
     this.holdShelfExpirationDate = holdShelfExpirationDate;
     this.itemSummary = itemSummary;
     this.requesterSummary = requesterSummary;
+    this.status = status;
   }
 
   public JsonObject create() {
@@ -75,6 +79,10 @@ public class RequestRequestBuilder implements Builder {
     request.put("itemId", this.itemId.toString());
     request.put("requesterId", this.requesterId.toString());
     request.put("fulfilmentPreference", this.fulfilmentPreference);
+
+    if(status != null) {
+      request.put("status", this.status);
+    }
 
     if(deliveryAddressTypeId != null) {
       request.put("deliveryAddressTypeId", this.deliveryAddressTypeId.toString());
@@ -125,7 +133,8 @@ public class RequestRequestBuilder implements Builder {
       this.requestExpirationDate,
       this.holdShelfExpirationDate,
       this.itemSummary,
-      this.requesterSummary);
+      this.requesterSummary,
+      this.status);
   }
 
   public RequestRequestBuilder withNoId() {
@@ -140,7 +149,8 @@ public class RequestRequestBuilder implements Builder {
       this.requestExpirationDate,
       this.holdShelfExpirationDate,
       this.itemSummary,
-      this.requesterSummary);
+      this.requesterSummary,
+      this.status);
   }
 
   public RequestRequestBuilder withRequestDate(DateTime requestDate) {
@@ -155,7 +165,8 @@ public class RequestRequestBuilder implements Builder {
       this.requestExpirationDate,
       this.holdShelfExpirationDate,
       this.itemSummary,
-      this.requesterSummary);
+      this.requesterSummary,
+      this.status);
   }
 
   public RequestRequestBuilder withRequestType(String requestType) {
@@ -170,7 +181,8 @@ public class RequestRequestBuilder implements Builder {
       this.requestExpirationDate,
       this.holdShelfExpirationDate,
       this.itemSummary,
-      this.requesterSummary);
+      this.requesterSummary,
+      this.status);
   }
 
   public RequestRequestBuilder hold() {
@@ -197,7 +209,7 @@ public class RequestRequestBuilder implements Builder {
       this.requestExpirationDate,
       this.holdShelfExpirationDate,
       this.itemSummary,
-      this.requesterSummary);
+      this.requesterSummary, this.status);
   }
 
   public RequestRequestBuilder withRequesterId(UUID requesterId) {
@@ -212,7 +224,7 @@ public class RequestRequestBuilder implements Builder {
       this.requestExpirationDate,
       this.holdShelfExpirationDate,
       this.itemSummary,
-      this.requesterSummary);
+      this.requesterSummary, this.status);
   }
 
   public RequestRequestBuilder toHoldShelf() {
@@ -236,7 +248,7 @@ public class RequestRequestBuilder implements Builder {
       this.requestExpirationDate,
       this.holdShelfExpirationDate,
       this.itemSummary,
-      this.requesterSummary);
+      this.requesterSummary, this.status);
   }
 
   public RequestRequestBuilder fulfilToHoldShelf() {
@@ -256,7 +268,8 @@ public class RequestRequestBuilder implements Builder {
       requestExpiration,
       this.holdShelfExpirationDate,
       this.itemSummary,
-      this.requesterSummary);
+      this.requesterSummary,
+      this.status);
   }
 
   public RequestRequestBuilder withHoldShelfExpiration(LocalDate holdShelfExpiration) {
@@ -271,7 +284,8 @@ public class RequestRequestBuilder implements Builder {
       this.requestExpirationDate,
       holdShelfExpiration,
       this.itemSummary,
-      this.requesterSummary);
+      this.requesterSummary,
+      this.status);
   }
 
   public RequestRequestBuilder withItem(String title, String barcode) {
@@ -285,10 +299,16 @@ public class RequestRequestBuilder implements Builder {
       this.deliveryAddressTypeId, this.requestExpirationDate,
       this.holdShelfExpirationDate,
       new ItemSummary(title, barcode),
-      this.requesterSummary);
+      this.requesterSummary,
+      this.status);
   }
 
-  public RequestRequestBuilder withRequester(String lastName, String firstName, String middleName, String barcode) {
+  public RequestRequestBuilder withRequester(
+    String lastName,
+    String firstName,
+    String middleName,
+    String barcode) {
+
     return new RequestRequestBuilder(
       this.id,
       this.requestType,
@@ -300,10 +320,15 @@ public class RequestRequestBuilder implements Builder {
       this.requestExpirationDate,
       this.holdShelfExpirationDate,
       this.itemSummary,
-      new PatronSummary(lastName, firstName, middleName, barcode));
+      new PatronSummary(lastName, firstName, middleName, barcode),
+      this.status);
   }
 
-  public RequestRequestBuilder withRequester(String lastName, String firstName, String barcode) {
+  public RequestRequestBuilder withRequester(
+    String lastName,
+    String firstName,
+    String barcode) {
+
     return new RequestRequestBuilder(
       this.id,
       this.requestType,
@@ -315,7 +340,8 @@ public class RequestRequestBuilder implements Builder {
       this.requestExpirationDate,
       this.holdShelfExpirationDate,
       this.itemSummary,
-      new PatronSummary(lastName, firstName, null, barcode));
+      new PatronSummary(lastName, firstName, null, barcode),
+      this.status);
   }
 
   public RequestRequestBuilder withDeliveryAddressType(UUID deliverAddressType) {
@@ -330,7 +356,24 @@ public class RequestRequestBuilder implements Builder {
       this.requestExpirationDate,
       this.holdShelfExpirationDate,
       this.itemSummary,
-      this.requesterSummary);
+      this.requesterSummary,
+      this.status);
+  }
+
+  public RequestRequestBuilder withStatus(String status) {
+    return new RequestRequestBuilder(
+      this.id,
+      this.requestType,
+      this.requestDate,
+      this.itemId,
+      this.requesterId,
+      this.fulfilmentPreference,
+      this.deliveryAddressTypeId,
+      this.requestExpirationDate,
+      this.holdShelfExpirationDate,
+      this.itemSummary,
+      this.requesterSummary,
+      status);
   }
 
   private String formatDateTime(DateTime requestDate) {

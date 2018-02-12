@@ -15,7 +15,6 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.junit.Test;
 
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.util.List;
@@ -36,8 +35,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
-    TimeoutException,
-    UnsupportedEncodingException {
+    TimeoutException {
 
     UUID id = UUID.randomUUID();
 
@@ -82,6 +80,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
     assertThat(representation.getString("requestExpirationDate"), is("2017-07-30"));
     assertThat(representation.getString("holdShelfExpirationDate"), is("2017-08-31"));
+    assertThat(representation.getString("status"), is("Open - Not yet filled"));
 
     assertThat("has information taken from item",
       representation.containsKey("item"), is(true));
@@ -119,8 +118,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
-    TimeoutException,
-    UnsupportedEncodingException {
+    TimeoutException {
 
     Response getResponse = ResourceClient.forRequests(client).getById(UUID.randomUUID());
 
@@ -132,8 +130,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
-    TimeoutException,
-    UnsupportedEncodingException {
+    TimeoutException {
 
     UUID requesterId = usersClient.create(new UserRequestBuilder()).getId();
 
@@ -207,8 +204,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
-    TimeoutException,
-    UnsupportedEncodingException {
+    TimeoutException {
 
     UUID firstRequester = usersClient.create(new UserRequestBuilder()
       .withName("Jones", "Steven"))
@@ -273,8 +269,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
-    TimeoutException,
-    UnsupportedEncodingException {
+    TimeoutException {
 
     UUID requesterId = usersClient.create(new UserRequestBuilder()).getId();
 
@@ -340,6 +335,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     hasProperty("fulfilmentPreference", request, "request");
     hasProperty("item", request, "request");
     hasProperty("requester", request, "request");
+    hasProperty("status", request, "request");
   }
 
   private void hasProperty(String property, JsonObject resource, String type) {
