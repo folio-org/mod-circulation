@@ -30,7 +30,7 @@ public class FakeCQLToJSONInterpreter {
     List<ImmutableTriple<String, String, String>> pairs =
       Arrays.stream(query.split(" and "))
         .map( pairText -> {
-          String[] split = pairText.split("=|<>");
+          String[] split = pairText.split("==|=|<>");
           String searchField = split[0]
             .replaceAll("\"", "");
 
@@ -38,7 +38,10 @@ public class FakeCQLToJSONInterpreter {
             .replaceAll("\"", "")
             .replaceAll("\\*", "");
 
-          if(pairText.contains("=")) {
+          if(pairText.contains("==")) {
+            return new ImmutableTriple<>(searchField, searchTerm, "==");
+          }
+          else if(pairText.contains("=")) {
             return new ImmutableTriple<>(searchField, searchTerm, "=");
           }
           else {
@@ -81,6 +84,9 @@ public class FakeCQLToJSONInterpreter {
           }
 
           switch (operator) {
+            case "==":
+              result = propertyValue.equals(cleanTerm);
+              break;
             case "=":
               result = propertyValue.contains(cleanTerm);
               break;
