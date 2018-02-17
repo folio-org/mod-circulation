@@ -11,7 +11,8 @@ import java.util.List;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-public class FakeCQLToJSONInterpreterTests {
+public class FakeCQLToJSONInterpreterSearchingTests {
+
   @Test
   public void canFilterBySinglePropertyContains() {
     FakeCQLToJSONInterpreter interpreter = new FakeCQLToJSONInterpreter(true);
@@ -22,7 +23,7 @@ public class FakeCQLToJSONInterpreterTests {
     records.add(new JsonObject().put("myProperty", "party"));
 
     List<JsonObject> matchedRecords =
-      interpreter.filterByQuery(records, "myProperty=foo");
+      interpreter.execute(records, "myProperty=foo");
 
     assertThat(matchedRecords.size(), is(1));
   }
@@ -38,7 +39,7 @@ public class FakeCQLToJSONInterpreterTests {
     records.add(new JsonObject().put("myProperty", "party"));
 
     List<JsonObject> matchedRecords =
-      interpreter.filterByQuery(records, "myProperty==foo");
+      interpreter.execute(records, "myProperty==foo");
 
     assertThat(matchedRecords.size(), is(1));
   }
@@ -53,7 +54,7 @@ public class FakeCQLToJSONInterpreterTests {
     records.add(new JsonObject());
 
     List<JsonObject> matchedRecords =
-      interpreter.filterByQuery(records, "myProperty=foo");
+      interpreter.execute(records, "myProperty=foo");
 
     assertThat(matchedRecords.size(), is(1));
   }
@@ -89,7 +90,7 @@ public class FakeCQLToJSONInterpreterTests {
       .put("otherProperty", "match"));
 
     List<JsonObject> matchedRecords =
-      interpreter.filterByQuery(records, "myProperty=foo and otherProperty==match");
+      interpreter.execute(records, "myProperty=foo and otherProperty==match");
 
     assertThat(matchedRecords.size(), is(2));
   }
@@ -114,7 +115,7 @@ public class FakeCQLToJSONInterpreterTests {
     records.add(shouldAlsoMatch);
 
     List<JsonObject> matchedRecords =
-      interpreter.filterByQuery(records, "myProperty=(foo or bar)");
+      interpreter.execute(records, "myProperty=(foo or bar)");
 
     assertThat(matchedRecords.size(), is(2));
   }
@@ -135,7 +136,7 @@ public class FakeCQLToJSONInterpreterTests {
       .put("myProperty", "foo"));
 
     List<JsonObject> matchedRecords =
-      interpreter.filterByQuery(records, "myProperty=(foo)");
+      interpreter.execute(records, "myProperty=(foo)");
 
     assertThat(matchedRecords.size(), is(1));
   }
@@ -185,9 +186,9 @@ public class FakeCQLToJSONInterpreterTests {
       .put("id", "12345")
       .put("otherProperty", "hold")
       .put("myProperty", "bar"));
-    
+
     List<JsonObject> matchedRecords =
-      interpreter.filterByQuery(records,
+      interpreter.execute(records,
         "id==12345 and myProperty==(foo or bar) and otherProperty==(hold)");
 
     assertThat(matchedRecords.size(), is(2));

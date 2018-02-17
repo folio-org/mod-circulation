@@ -136,7 +136,7 @@ public class FakeStorageModule extends AbstractVerticle {
     Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
 
     List<JsonObject> filteredItems = new FakeCQLToJSONInterpreter(false)
-      .filterByQuery(resourcesForTenant.values(), query);
+      .execute(resourcesForTenant.values(), query);
 
     List<JsonObject> pagedItems = filteredItems.stream()
       .skip(offset)
