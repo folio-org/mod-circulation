@@ -7,7 +7,6 @@ import org.folio.circulation.api.support.APITests;
 import org.folio.circulation.api.support.builders.ItemRequestBuilder;
 import org.folio.circulation.api.support.builders.RequestRequestBuilder;
 import org.folio.circulation.api.support.builders.UserRequestBuilder;
-import org.folio.circulation.api.support.http.InterfaceUrls;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
@@ -24,9 +23,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.folio.HttpStatus.HTTP_CREATED;
-import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
+import static org.folio.HttpStatus.*;
 import static org.folio.circulation.api.support.fixtures.LoanFixture.checkOutItem;
+import static org.folio.circulation.api.support.http.InterfaceUrls.requestsUrl;
 import static org.folio.circulation.api.support.matchers.StatusMatcher.hasStatus;
 import static org.folio.circulation.api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static org.hamcrest.Matchers.emptyString;
@@ -73,7 +72,7 @@ public class RequestsAPICreationTests extends APITests {
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
 
-    client.post(InterfaceUrls.requestsUrl(), requestRequest,
+    client.post(requestsUrl(), requestRequest,
       ResponseHandler.json(postCompleted));
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
@@ -142,7 +141,7 @@ public class RequestsAPICreationTests extends APITests {
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
 
-    client.post(InterfaceUrls.requestsUrl(), requestRequest,
+    client.post(requestsUrl(), requestRequest,
       ResponseHandler.json(postCompleted));
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
@@ -170,7 +169,7 @@ public class RequestsAPICreationTests extends APITests {
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
 
-    client.post(InterfaceUrls.requestsUrl(), requestRequest,
+    client.post(requestsUrl(), requestRequest,
       ResponseHandler.json(postCompleted));
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
@@ -198,7 +197,7 @@ public class RequestsAPICreationTests extends APITests {
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
 
-    client.post(InterfaceUrls.requestsUrl(), requestRequest,
+    client.post(requestsUrl(), requestRequest,
       ResponseHandler.json(postCompleted));
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
@@ -246,7 +245,7 @@ public class RequestsAPICreationTests extends APITests {
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
 
-    client.post(InterfaceUrls.requestsUrl(), requestRequest,
+    client.post(requestsUrl(), requestRequest,
       ResponseHandler.json(postCompleted));
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
@@ -274,7 +273,7 @@ public class RequestsAPICreationTests extends APITests {
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
 
-    client.post(InterfaceUrls.requestsUrl(), requestRequest,
+    client.post(requestsUrl(), requestRequest,
       ResponseHandler.json(postCompleted));
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
@@ -315,7 +314,7 @@ public class RequestsAPICreationTests extends APITests {
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
 
-    client.post(InterfaceUrls.requestsUrl(), requestRequest,
+    client.post(requestsUrl(), requestRequest,
       ResponseHandler.json(postCompleted));
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
@@ -324,6 +323,52 @@ public class RequestsAPICreationTests extends APITests {
     JsonObject representation = postResponse.getJson();
 
     assertThat(representation.getString("status"), is(status));
+  }
+
+  //TODO: Replace with validation error message
+  @Test
+  @Parameters({
+    "Non-existent status",
+    ""
+  })
+  public void cannotCreateARequestWithInvalidStatus(String status)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
+      itemBuilder -> itemBuilder
+        .withBarcode("036000291452"))
+      .getId();
+
+    checkOutItem(itemId, loansClient);
+
+    UUID requesterId = usersClient.create(new UserRequestBuilder()
+      .withName("Jones", "Steven")
+      .withBarcode("564376549214"))
+      .getId();
+
+    JsonObject requestRequest = new RequestRequestBuilder()
+      .recall()
+      .toHoldShelf()
+      .withItemId(itemId)
+      .withRequesterId(requesterId)
+      .withStatus(status)
+      .create();
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(requestsUrl(), requestRequest,
+      ResponseHandler.any(postCompleted));
+
+    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Should not create request: %s", postResponse.getBody()),
+      postResponse, hasStatus(HTTP_BAD_REQUEST));
+
+    assertThat(postResponse.getBody(),
+      is("Request status must be \"Open - Not yet filled\", \"Open - Awaiting pickup\" or \"Closed - Filled\""));
   }
 
   @Test
@@ -386,7 +431,7 @@ public class RequestsAPICreationTests extends APITests {
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
 
-    client.post(InterfaceUrls.requestsUrl(), requestRequest,
+    client.post(requestsUrl(), requestRequest,
       ResponseHandler.json(postCompleted));
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
@@ -429,7 +474,7 @@ public class RequestsAPICreationTests extends APITests {
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
 
-    client.post(InterfaceUrls.requestsUrl(), requestRequest,
+    client.post(requestsUrl(), requestRequest,
       ResponseHandler.json(postCompleted));
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
@@ -486,7 +531,7 @@ public class RequestsAPICreationTests extends APITests {
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
 
-    client.post(InterfaceUrls.requestsUrl(), requestRequest,
+    client.post(requestsUrl(), requestRequest,
       ResponseHandler.json(postCompleted));
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
@@ -548,7 +593,7 @@ public class RequestsAPICreationTests extends APITests {
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
 
-    client.post(InterfaceUrls.requestsUrl(), requestRequest,
+    client.post(requestsUrl(), requestRequest,
       ResponseHandler.json(postCompleted));
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
@@ -597,7 +642,7 @@ public class RequestsAPICreationTests extends APITests {
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
 
-    client.post(InterfaceUrls.requestsUrl(), requestRequest,
+    client.post(requestsUrl(), requestRequest,
       ResponseHandler.json(postCompleted));
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
@@ -663,7 +708,7 @@ public class RequestsAPICreationTests extends APITests {
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
 
-    client.post(InterfaceUrls.requestsUrl(), requestRequest,
+    client.post(requestsUrl(), requestRequest,
       ResponseHandler.json(postCompleted));
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);

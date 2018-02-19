@@ -11,6 +11,10 @@ import java.util.UUID;
 
 public class RequestRequestBuilder implements Builder {
 
+  public static final String OPEN_NOT_YET_FILLED = "Open - Not yet filled";
+  public static final String OPEN_AWAITING_PICKUP = "Open - Awaiting pickup";
+  public static final String CLOSED_FILLED = "Closed - Filled";
+
   private final UUID id;
   private final String requestType;
   private final DateTime requestDate;
@@ -374,6 +378,10 @@ public class RequestRequestBuilder implements Builder {
       this.itemSummary,
       this.requesterSummary,
       status);
+  }
+
+  public Builder withNoStatus() {
+    return withStatus(null);
   }
 
   private String formatDateTime(DateTime requestDate) {
