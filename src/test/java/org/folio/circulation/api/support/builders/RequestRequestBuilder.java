@@ -40,7 +40,7 @@ public class RequestRequestBuilder implements Builder {
       null,
       null,
       null,
-      "Open - Not yet filled");
+      null);
   }
 
   private RequestRequestBuilder(

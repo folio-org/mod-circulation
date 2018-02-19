@@ -52,10 +52,15 @@ public class RequestCollectionResource {
 
     JsonObject request = routingContext.getBodyAsJson();
 
-    if(request.containsKey("status") && !RequestStatus.from(request).isValid()) {
+    RequestStatus status = RequestStatus.from(request);
+
+    if(!status.isValid()) {
       ClientErrorResponse.badRequest(routingContext.response(),
         RequestStatus.invalidStatusErrorMessage());
       return;
+    }
+    else {
+      status.writeTo(request);
     }
 
     removeRelatedRecordInformation(request);

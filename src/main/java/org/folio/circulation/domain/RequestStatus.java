@@ -17,7 +17,11 @@ public class RequestStatus {
   }
 
   public static RequestStatus from(JsonObject request) {
-    return new RequestStatus(request.getString("status"));
+    String status = request.containsKey("status")
+      ? request.getString("status")
+      : OPEN_NOT_YET_FILLED;
+
+    return new RequestStatus(status);
   }
 
   private RequestStatus(String value) {
@@ -32,5 +36,9 @@ public class RequestStatus {
     allowedValues.add(CLOSED_FILLED);
 
     return allowedValues.contains(value);
+  }
+
+  public void writeTo(JsonObject request) {
+    request.put("status", value);
   }
 }

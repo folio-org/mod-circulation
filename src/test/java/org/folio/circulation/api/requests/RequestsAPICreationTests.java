@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static org.folio.HttpStatus.*;
+import static org.folio.circulation.api.support.builders.RequestRequestBuilder.OPEN_NOT_YET_FILLED;
 import static org.folio.circulation.api.support.fixtures.LoanFixture.checkOutItem;
 import static org.folio.circulation.api.support.http.InterfaceUrls.requestsUrl;
 import static org.folio.circulation.api.support.matchers.StatusMatcher.hasStatus;
@@ -399,6 +400,46 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(representation.getString("fulfilmentPreference"), is("Delivery"));
     assertThat(representation.getString("deliveryAddressTypeId"),
       is(deliveryAddressTypeId.toString()));
+  }
+
+  @Test
+  public void requestStatusDefaultsToOpen()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
+      itemBuilder -> itemBuilder
+        .withBarcode("036000291452"))
+      .getId();
+
+    checkOutItem(itemId, loansClient);
+
+    UUID requesterId = usersClient.create(new UserRequestBuilder()
+      .withName("Jones", "Steven")
+      .withBarcode("564376549214"))
+      .getId();
+
+    JsonObject requestRequest = new RequestRequestBuilder()
+      .recall()
+      .toHoldShelf()
+      .withItemId(itemId)
+      .withRequesterId(requesterId)
+      .withNoStatus()
+      .create();
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(requestsUrl(), requestRequest,
+      ResponseHandler.json(postCompleted));
+
+    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
+    assertThat(postResponse, hasStatus(HTTP_CREATED));
+
+    JsonObject representation = postResponse.getJson();
+
+    assertThat(representation.getString("status"), is(OPEN_NOT_YET_FILLED));
   }
 
   @Test
