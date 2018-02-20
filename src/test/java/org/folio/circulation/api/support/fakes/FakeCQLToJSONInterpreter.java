@@ -1,4 +1,4 @@
-package org.folio.circulation.api.fakes;
+package org.folio.circulation.api.support.fakes;
 
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;

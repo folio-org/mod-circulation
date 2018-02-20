@@ -1,4 +1,4 @@
-package org.folio.circulation.api.fakes;
+package org.folio.circulation.api.support.fakes;
 
 import org.folio.circulation.api.APITestSuite;
 

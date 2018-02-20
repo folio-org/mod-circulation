@@ -1,4 +1,4 @@
-package org.folio.circulation.api.fakes;
+package org.folio.circulation.api.support.fakes;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.json.JsonArray;
