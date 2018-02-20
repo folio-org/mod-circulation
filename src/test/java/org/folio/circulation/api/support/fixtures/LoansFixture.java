@@ -19,13 +19,16 @@ public class LoansFixture {
     this.loansClient = loansClient;
   }
 
-  public IndividualResource checkOut(IndividualResource item)
+  public IndividualResource checkOut(IndividualResource item, IndividualResource to)
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
     TimeoutException {
 
-    return checkOutItem(item.getId());
+    return this.loansClient.create(new LoanBuilder()
+      .open()
+      .withItemId(item.getId())
+      .withUserId(to.getId()));
   }
 
   public IndividualResource checkOutItem(UUID itemId)
