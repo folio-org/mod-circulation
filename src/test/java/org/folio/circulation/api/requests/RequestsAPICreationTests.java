@@ -25,7 +25,6 @@ import java.util.concurrent.TimeoutException;
 
 import static org.folio.HttpStatus.*;
 import static org.folio.circulation.api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
-import static org.folio.circulation.api.support.fixtures.LoansFixture.checkOutItem;
 import static org.folio.circulation.api.support.http.InterfaceUrls.requestsUrl;
 import static org.folio.circulation.api.support.matchers.StatusMatcher.hasStatus;
 import static org.folio.circulation.api.support.matchers.TextDateTimeMatcher.isEquivalentTo;

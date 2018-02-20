@@ -11,8 +11,6 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import static org.folio.circulation.api.support.fixtures.LoansFixture.checkInLoan;
-import static org.folio.circulation.api.support.fixtures.LoansFixture.checkOutItem;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -36,7 +34,7 @@ public class RequestsAPILoanCheckInTests extends APITests {
       .withItemId(itemId)
       .withRequesterId(usersClient.create(new UserBuilder()).getId()));
 
-    checkInLoan(loanId, loansClient);
+    loansFixture.checkInLoan(loanId);
 
     Response changedItem = itemsClient.getById(itemId);
 
@@ -63,7 +61,7 @@ public class RequestsAPILoanCheckInTests extends APITests {
       .withItemId(itemId)
       .withRequesterId(usersClient.create(new UserBuilder()).getId()));
 
-    checkInLoan(loanId, loansClient);
+    loansFixture.checkInLoan(loanId);
 
     Response changedItem = itemsClient.getById(itemId);
 
@@ -90,7 +88,7 @@ public class RequestsAPILoanCheckInTests extends APITests {
       .withItemId(itemId)
       .withRequesterId(usersClient.create(new UserBuilder()).getId()));
 
-    checkInLoan(loanId, loansClient);
+    loansFixture.checkInLoan(loanId);
 
     Response changedItem = itemsClient.getById(itemId);
 

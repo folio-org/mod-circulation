@@ -13,8 +13,6 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import static org.folio.circulation.api.support.fixtures.LoansFixture.checkInLoan;
-import static org.folio.circulation.api.support.fixtures.LoansFixture.checkOutItem;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -120,7 +118,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
 
     UUID closedLoanId = loansFixture.checkOutItem(itemId).getId();
 
-    checkInLoan(closedLoanId, loansClient);
+    loansFixture.checkInLoan(closedLoanId);
 
     loansFixture.checkOutItem(itemId).getId();
 
@@ -154,7 +152,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
 
     UUID closedLoanId = loansFixture.checkOutItem(itemId).getId();
 
-    checkInLoan(closedLoanId, loansClient);
+    loansFixture.checkInLoan(closedLoanId);
 
     loansFixture.checkOutItem(itemId).getId();
 

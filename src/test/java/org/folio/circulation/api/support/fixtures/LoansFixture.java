@@ -19,24 +19,6 @@ public class LoansFixture {
     this.loansClient = loansClient;
   }
 
-  public static void checkInLoan(
-    UUID loanId,
-    ResourceClient loansClient)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    Response getResponse = loansClient.getById(loanId);
-
-    //TODO: Should also have a return date
-    JsonObject closedLoan = getResponse.getJson().copy()
-      .put("status", new JsonObject().put("name", "Closed"))
-      .put("action", "checkedin");
-
-    loansClient.replace(loanId, closedLoan);
-  }
-
   public static void renewLoan(
     UUID loanId,
     ResourceClient loansClient)
@@ -53,6 +35,22 @@ public class LoansFixture {
       .put("renewalCount", 1);
 
     loansClient.replace(loanId, renewedLoan);
+  }
+
+  public void checkInLoan(UUID loanId)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    Response getResponse = loansClient.getById(loanId);
+
+    //TODO: Should also have a return date
+    JsonObject closedLoan = getResponse.getJson().copy()
+      .put("status", new JsonObject().put("name", "Closed"))
+      .put("action", "checkedin");
+
+    loansClient.replace(loanId, closedLoan);
   }
 
   public IndividualResource checkOutItem(UUID itemId)
