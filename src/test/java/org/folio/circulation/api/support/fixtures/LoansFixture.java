@@ -1,8 +1,8 @@
 package org.folio.circulation.api.support.fixtures;
 
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.api.support.http.ResourceClient;
 import org.folio.circulation.api.support.builders.LoanBuilder;
+import org.folio.circulation.api.support.http.ResourceClient;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 
@@ -17,6 +17,26 @@ public class LoansFixture {
 
   public LoansFixture(ResourceClient loansClient) {
     this.loansClient = loansClient;
+  }
+
+  public IndividualResource checkOut(IndividualResource item)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    return checkOutItem(item.getId());
+  }
+
+  public IndividualResource checkOutItem(UUID itemId)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    return this.loansClient.create(new LoanBuilder()
+      .open()
+      .withItemId(itemId));
   }
 
   public void renewLoan(UUID loanId)
@@ -35,6 +55,15 @@ public class LoansFixture {
     loansClient.replace(loanId, renewedLoan);
   }
 
+  public void checkIn(IndividualResource loan)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    checkInLoan(loan.getId());
+  }
+
   public void checkInLoan(UUID loanId)
     throws MalformedURLException,
     InterruptedException,
@@ -49,16 +78,5 @@ public class LoansFixture {
       .put("action", "checkedin");
 
     loansClient.replace(loanId, closedLoan);
-  }
-
-  public IndividualResource checkOutItem(UUID itemId)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    return this.loansClient.create(new LoanBuilder()
-      .open()
-      .withItemId(itemId));
   }
 }
