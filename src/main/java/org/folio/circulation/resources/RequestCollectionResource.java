@@ -5,6 +5,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
+import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
@@ -50,6 +51,17 @@ public class RequestCollectionResource {
     WebContext context = new WebContext(routingContext);
 
     JsonObject request = routingContext.getBodyAsJson();
+
+    RequestStatus status = RequestStatus.from(request);
+
+    if(!status.isValid()) {
+      ClientErrorResponse.badRequest(routingContext.response(),
+        RequestStatus.invalidStatusErrorMessage());
+      return;
+    }
+    else {
+      status.writeTo(request);
+    }
 
     removeRelatedRecordInformation(request);
 
@@ -117,7 +129,7 @@ public class RequestCollectionResource {
         updateItemStatus(itemId, RequestType.from(request).toItemStatus(),
           itemsStorageClient, routingContext.response(), updatedItem ->
             updateLoanActionHistory(itemId,
-            RequestType.from(request).toloanAction(), RequestType.from(request).toItemStatus(),
+            RequestType.from(request).toLoanAction(), RequestType.from(request).toItemStatus(),
               loansStorageClient, routingContext.response(), vo -> {
               addStoredItemProperties(request, item, instance);
               addStoredRequesterProperties(request, requester);
@@ -537,4 +549,5 @@ public class RequestCollectionResource {
     request.remove("item");
     request.remove("requester");
   }
+
 }

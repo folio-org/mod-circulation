@@ -55,7 +55,7 @@ public class RequestType {
     }
   }
 
-  public String toloanAction() {
+  public String toLoanAction() {
     switch (this.value) {
       case HOLD:
         return "holdrequested";
