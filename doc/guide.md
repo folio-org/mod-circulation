@@ -1,10 +1,13 @@
 # Guide
 
+This is a guide meant to help you both use the `mod-circulation` module and
+enable you to contribute to the module.
+
 ## Storage
 
 This circulation module has no persistent storage of its own. Therefore, it 
 should be used in combination with another module that offers such a storage, 
-for example `mod-circulation-storage`. For the current version this 
+for example `mod-circulation-storage`. For the current version, this 
 `mod-circulation-storage` offers an interface (API) for storing: 
 * fixed due date schedules
 * loan policies
@@ -21,9 +24,9 @@ This module actually handles the loans and the requests for those loans.
 
 ### Requests and loans
 
-A request for an item can be created by a requester. Both item id and 
-requester id are stored in the newly created request. If the item is picked up, 
-the request is closed and a loan is created. The corresponding loan consists 
+A `request` for an `item` can be created by a requester. Both item id and 
+requester id are stored in the newly created `request`. If the `item` is picked up, 
+the `request` is closed and a `loan` is created. The corresponding `loan` consists 
 of the same item id and requester id.
 
 ### What about the items and requesters?
