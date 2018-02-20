@@ -23,7 +23,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.folio.circulation.api.support.fixtures.LoanFixture.checkOutItem;
+import static org.folio.circulation.api.support.fixtures.LoansFixture.checkOutItem;
 import static org.folio.circulation.api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
