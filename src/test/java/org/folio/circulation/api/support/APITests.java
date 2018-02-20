@@ -5,6 +5,7 @@ import org.folio.circulation.api.APITestSuite;
 import org.folio.circulation.api.support.fixtures.ItemsFixture;
 import org.folio.circulation.api.support.fixtures.LoansFixture;
 import org.folio.circulation.api.support.fixtures.RequestsFixture;
+import org.folio.circulation.api.support.fixtures.UsersFixture;
 import org.folio.circulation.api.support.http.InterfaceUrls;
 import org.folio.circulation.api.support.http.ResourceClient;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
@@ -47,6 +48,7 @@ public abstract class APITests {
   protected final ItemsFixture itemsFixture = new ItemsFixture(client);
   protected final LoansFixture loansFixture = new LoansFixture(loansClient);
   protected final RequestsFixture requestsFixture = new RequestsFixture(requestsClient);
+  protected final UsersFixture usersFixture = new UsersFixture(usersClient);
 
   protected APITests() {
     this(true);
