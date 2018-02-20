@@ -5,16 +5,16 @@ import org.folio.circulation.api.APITestSuite;
 
 import java.util.UUID;
 
-public class InstanceRequestBuilder implements Builder {
+public class InstanceBuilder implements Builder {
   private final String title;
   private final UUID id;
 
-  public InstanceRequestBuilder(String title) {
+  public InstanceBuilder(String title) {
     id = UUID.randomUUID();
     this.title = title;
   }
 
-  public InstanceRequestBuilder(UUID id, String title) {
+  public InstanceBuilder(UUID id, String title) {
     this.id = id;
     this.title = title;
   }
@@ -28,15 +28,15 @@ public class InstanceRequestBuilder implements Builder {
       .put("instanceTypeId", APITestSuite.booksInstanceTypeId().toString());
   }
 
-  public InstanceRequestBuilder withId(UUID id) {
-    return new InstanceRequestBuilder(
+  public InstanceBuilder withId(UUID id) {
+    return new InstanceBuilder(
       id,
       this.title
     );
   }
 
-  public InstanceRequestBuilder withTitle(String title) {
-    return new InstanceRequestBuilder(
+  public InstanceBuilder withTitle(String title) {
+    return new InstanceBuilder(
       this.id,
       title
     );

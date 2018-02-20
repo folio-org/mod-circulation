@@ -2,8 +2,8 @@ package org.folio.circulation.api.requests;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.support.APITests;
-import org.folio.circulation.api.support.builders.RequestRequestBuilder;
-import org.folio.circulation.api.support.builders.UserRequestBuilder;
+import org.folio.circulation.api.support.builders.RequestBuilder;
+import org.folio.circulation.api.support.builders.UserBuilder;
 import org.folio.circulation.api.support.http.ResourceClient;
 import org.junit.Test;
 
@@ -36,11 +36,11 @@ public class RequestsAPILoanHistoryTests extends APITests {
 
     UUID loanId = checkOutItem(itemId, loansClient).getId();
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .hold()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
+      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
 
     JsonObject loanFromStorage = loansStorageClient.getById(loanId).getJson();
 
@@ -65,11 +65,11 @@ public class RequestsAPILoanHistoryTests extends APITests {
 
     UUID loanId = checkOutItem(itemId, loansClient).getId();
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .recall()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
+      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
 
     JsonObject loanFromStorage = loansStorageClient.getById(loanId).getJson();
 
@@ -91,11 +91,11 @@ public class RequestsAPILoanHistoryTests extends APITests {
 
     UUID loanId = checkOutItem(itemId, loansClient).getId();
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .page()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
+      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
 
     JsonObject loanFromStorage = loansStorageClient.getById(loanId).getJson();
 
@@ -124,11 +124,11 @@ public class RequestsAPILoanHistoryTests extends APITests {
 
     checkOutItem(itemId, loansClient).getId();
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .hold()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
+      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
 
     JsonObject closedLoanFromStorage = loansStorageClient.getById(closedLoanId)
       .getJson();
@@ -158,11 +158,11 @@ public class RequestsAPILoanHistoryTests extends APITests {
 
     checkOutItem(itemId, loansClient).getId();
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .recall()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
+      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
 
     JsonObject closedLoanFromStorage = loansStorageClient.getById(closedLoanId)
       .getJson();
@@ -191,11 +191,11 @@ public class RequestsAPILoanHistoryTests extends APITests {
     checkOutItem(itemId, loansClient).getId();
     UUID loanForOtherItemId = checkOutItem(otherItemId, loansClient).getId();
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .hold()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
+      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
 
     JsonObject storageLoanForOtherItem = loansStorageClient.getById(loanForOtherItemId)
       .getJson();
@@ -224,11 +224,11 @@ public class RequestsAPILoanHistoryTests extends APITests {
     checkOutItem(itemId, loansClient).getId();
     UUID loanForOtherItemId = checkOutItem(otherItemId, loansClient).getId();
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .recall()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
+      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
 
     JsonObject storageLoanForOtherItem = loansStorageClient.getById(loanForOtherItemId)
       .getJson();
@@ -256,11 +256,11 @@ public class RequestsAPILoanHistoryTests extends APITests {
 
     loansClient.delete(loanId);
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .hold()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
+      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
   }
 
   @Test
@@ -279,10 +279,10 @@ public class RequestsAPILoanHistoryTests extends APITests {
 
     loansClient.delete(loanId);
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .recall()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
+      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
   }
 }

@@ -2,9 +2,9 @@ package org.folio.circulation.api.requests;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.support.APITests;
-import org.folio.circulation.api.support.builders.ItemRequestBuilder;
-import org.folio.circulation.api.support.builders.RequestRequestBuilder;
-import org.folio.circulation.api.support.builders.UserRequestBuilder;
+import org.folio.circulation.api.support.builders.ItemBuilder;
+import org.folio.circulation.api.support.builders.RequestBuilder;
+import org.folio.circulation.api.support.builders.UserBuilder;
 import org.folio.circulation.api.support.http.InterfaceUrls;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -45,7 +45,7 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     checkOutItem(itemId, loansClient);
 
-    UUID originalRequesterId = usersClient.create(new UserRequestBuilder()
+    UUID originalRequesterId = usersClient.create(new UserBuilder()
       .withName("Norton", "Jessica")
       .withBarcode("764523186496"))
       .getId();
@@ -53,7 +53,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
     IndividualResource createdRequest = requestsClient.create(
-      new RequestRequestBuilder()
+      new RequestBuilder()
       .recall()
       .withId(id)
       .withRequestDate(requestDate)
@@ -63,7 +63,7 @@ public class RequestsAPIUpdatingTests extends APITests {
       .withRequestExpiration(new LocalDate(2017, 7, 30))
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
-    UUID updatedRequester = usersClient.create(new UserRequestBuilder()
+    UUID updatedRequester = usersClient.create(new UserBuilder()
       .withName("Campbell", "Fiona")
       .withBarcode("679231693475"))
       .getId();
@@ -148,12 +148,12 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     checkOutItem(itemId, loansClient);
 
-    UUID requesterId = usersClient.create(new UserRequestBuilder()).getId();
+    UUID requesterId = usersClient.create(new UserBuilder()).getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
     IndividualResource createdRequest = requestsClient.create(
-      new RequestRequestBuilder()
+      new RequestBuilder()
         .recall()
         .withId(id)
         .withRequestDate(requestDate)
@@ -211,7 +211,7 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     checkOutItem(itemId, loansClient);
 
-    UUID requester = usersClient.create(new UserRequestBuilder()
+    UUID requester = usersClient.create(new UserBuilder()
       .withName("Norton", "Jessica")
       .withBarcode("679231693475"))
       .getId();
@@ -219,7 +219,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
     IndividualResource createdRequest = requestsClient.create(
-      new RequestRequestBuilder()
+      new RequestBuilder()
         .recall()
         .withId(id)
         .withRequestDate(requestDate)
@@ -277,7 +277,7 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     checkOutItem(itemId, loansClient);
 
-    UUID originalRequesterId = usersClient.create(new UserRequestBuilder()
+    UUID originalRequesterId = usersClient.create(new UserBuilder()
       .withName("Norton", "Jessica")
       .withBarcode("764523186496"))
       .getId();
@@ -285,7 +285,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
     IndividualResource createdRequest = requestsClient.create(
-      new RequestRequestBuilder()
+      new RequestBuilder()
         .recall()
         .withId(id)
         .withRequestDate(requestDate)
@@ -295,7 +295,7 @@ public class RequestsAPIUpdatingTests extends APITests {
         .withRequestExpiration(new LocalDate(2017, 7, 30))
         .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
-    UUID updatedRequester = usersClient.create(new UserRequestBuilder()
+    UUID updatedRequester = usersClient.create(new UserBuilder()
       .withName("Campbell", "Fiona")
       .withNoBarcode())
       .getId();
@@ -361,7 +361,7 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     checkOutItem(itemId, loansClient);
 
-    UUID originalRequesterId = usersClient.create(new UserRequestBuilder()
+    UUID originalRequesterId = usersClient.create(new UserBuilder()
       .withName("Norton", "Jessica")
       .withBarcode("764523186496"))
       .getId();
@@ -369,7 +369,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
     IndividualResource createdRequest = requestsClient.create(
-      new RequestRequestBuilder()
+      new RequestBuilder()
       .recall()
       .withId(id)
       .withRequestDate(requestDate)
@@ -379,7 +379,7 @@ public class RequestsAPIUpdatingTests extends APITests {
       .withRequestExpiration(new LocalDate(2017, 7, 30))
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
-    UUID updatedRequester = usersClient.create(new UserRequestBuilder()
+    UUID updatedRequester = usersClient.create(new UserBuilder()
       .withName("Campbell", "Fiona", "Stella")
       .withBarcode("679231693475")).getId();
 
@@ -464,12 +464,12 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     checkOutItem(originalItemId, loansClient);
 
-    UUID requesterId = usersClient.create(new UserRequestBuilder()).getId();
+    UUID requesterId = usersClient.create(new UserBuilder()).getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
     IndividualResource createdRequest = requestsClient.create(
-      new RequestRequestBuilder()
+      new RequestBuilder()
       .recall()
       .withId(id)
       .withRequestDate(requestDate)
@@ -479,7 +479,7 @@ public class RequestsAPIUpdatingTests extends APITests {
       .withRequestExpiration(new LocalDate(2017, 7, 30))
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
-    UUID updatedItemId = itemsFixture.basedUponSmallAngryPlanet(ItemRequestBuilder::withNoBarcode)
+    UUID updatedItemId = itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::withNoBarcode)
       .getId();
 
     JsonObject updatedRequest = createdRequest.copyJson();

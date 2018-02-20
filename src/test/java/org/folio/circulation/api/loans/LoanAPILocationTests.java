@@ -3,10 +3,10 @@ package org.folio.circulation.api.loans;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.APITestSuite;
 import org.folio.circulation.api.support.APITests;
-import org.folio.circulation.api.support.builders.HoldingRequestBuilder;
-import org.folio.circulation.api.support.builders.LoanRequestBuilder;
-import org.folio.circulation.api.support.fixtures.InstanceRequestExamples;
-import org.folio.circulation.api.support.fixtures.ItemRequestExamples;
+import org.folio.circulation.api.support.builders.HoldingBuilder;
+import org.folio.circulation.api.support.builders.LoanBuilder;
+import org.folio.circulation.api.support.fixtures.InstanceExamples;
+import org.folio.circulation.api.support.fixtures.ItemExamples;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.Test;
@@ -34,24 +34,24 @@ public class LoanAPILocationTests extends APITests {
     UnsupportedEncodingException {
 
     UUID instanceId = instancesClient.create(
-      InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
+      InstanceExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID holdingId = holdingsClient.create(
-      new HoldingRequestBuilder()
+      new HoldingBuilder()
         .forInstance(instanceId)
         .withPermanentLocation(mainLibraryLocationId())
         .create())
       .getId();
 
     UUID itemId = itemsClient.create(
-      ItemRequestExamples.basedUponSmallAngryPlanet()
+      ItemExamples.basedUponSmallAngryPlanet()
         .forHolding(holdingId)
         .withNoTemporaryLocation())
       .getId();
 
     UUID loanId = UUID.randomUUID();
 
-    IndividualResource response = loansClient.create(new LoanRequestBuilder()
+    IndividualResource response = loansClient.create(new LoanBuilder()
       .withId(loanId)
       .withItemId(itemId));
 
@@ -87,23 +87,23 @@ public class LoanAPILocationTests extends APITests {
     UnsupportedEncodingException {
 
     UUID instanceId = instancesClient.create(
-      InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
+      InstanceExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID holdingId = holdingsClient.create(
-      new HoldingRequestBuilder()
+      new HoldingBuilder()
         .forInstance(instanceId)
         .withPermanentLocation(mainLibraryLocationId())
         .create())
       .getId();
 
-    UUID itemId = itemsClient.create(ItemRequestExamples.basedUponSmallAngryPlanet()
+    UUID itemId = itemsClient.create(ItemExamples.basedUponSmallAngryPlanet()
       .forHolding(holdingId)
       .withTemporaryLocation(annexLocationId()))
       .getId();
 
     UUID loanId = UUID.randomUUID();
 
-    IndividualResource response = loansClient.create(new LoanRequestBuilder()
+    IndividualResource response = loansClient.create(new LoanBuilder()
       .withId(loanId)
       .withItemId(itemId));
 
@@ -138,39 +138,39 @@ public class LoanAPILocationTests extends APITests {
     ExecutionException {
 
     UUID firstInstanceId = instancesClient.create(
-      InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
+      InstanceExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID firstHoldingId = holdingsClient.create(
-      new HoldingRequestBuilder()
+      new HoldingBuilder()
         .forInstance(firstInstanceId)
         .withPermanentLocation(APITestSuite.mainLibraryLocationId())
         .create())
       .getId();
 
     UUID firstItemId = itemsClient.create(
-      ItemRequestExamples.basedUponSmallAngryPlanet()
+      ItemExamples.basedUponSmallAngryPlanet()
         .forHolding(firstHoldingId))
       .getId();
 
-    UUID firstLoanId = loansClient.create(new LoanRequestBuilder()
+    UUID firstLoanId = loansClient.create(new LoanBuilder()
       .withItemId(firstItemId)).getId();
 
     UUID secondInstanceId = instancesClient.create(
-      InstanceRequestExamples.basedUponTemeraire()).getId();
+      InstanceExamples.basedUponTemeraire()).getId();
 
     UUID secondHoldingId = holdingsClient.create(
-      new HoldingRequestBuilder()
+      new HoldingBuilder()
         .forInstance(secondInstanceId)
         .withPermanentLocation(APITestSuite.annexLocationId())
         .create())
       .getId();
 
     UUID secondItemId = itemsClient.create(
-      ItemRequestExamples.basedUponTemeraire()
+      ItemExamples.basedUponTemeraire()
         .forHolding(secondHoldingId))
       .getId();
 
-    UUID secondLoanId = loansClient.create(new LoanRequestBuilder()
+    UUID secondLoanId = loansClient.create(new LoanBuilder()
       .withItemId(secondItemId)).getId();
 
     List<JsonObject> fetchedLoansResponse = loansClient.getAll();
@@ -212,39 +212,39 @@ public class LoanAPILocationTests extends APITests {
     ExecutionException {
 
     UUID firstInstanceId = instancesClient.create(
-      InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
+      InstanceExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID firstHoldingId = holdingsClient.create(
-      new HoldingRequestBuilder()
+      new HoldingBuilder()
         .forInstance(firstInstanceId)
         .withPermanentLocation(APITestSuite.mainLibraryLocationId())
         .create())
       .getId();
 
     UUID firstItemId = itemsClient.create(
-      ItemRequestExamples.basedUponSmallAngryPlanet()
+      ItemExamples.basedUponSmallAngryPlanet()
         .forHolding(firstHoldingId))
       .getId();
 
-    UUID firstLoanId = loansClient.create(new LoanRequestBuilder()
+    UUID firstLoanId = loansClient.create(new LoanBuilder()
       .withItemId(firstItemId)).getId();
 
     UUID secondInstanceId = instancesClient.create(
-      InstanceRequestExamples.basedUponTemeraire()).getId();
+      InstanceExamples.basedUponTemeraire()).getId();
 
     UUID secondHoldingId = holdingsClient.create(
-      new HoldingRequestBuilder()
+      new HoldingBuilder()
         .forInstance(secondInstanceId)
         .withPermanentLocation(APITestSuite.annexLocationId())
         .create())
       .getId();
 
     UUID secondItemId = itemsClient.create(
-      ItemRequestExamples.basedUponTemeraire()
+      ItemExamples.basedUponTemeraire()
         .forHolding(secondHoldingId))
       .getId();
 
-    UUID secondLoanId = loansClient.create(new LoanRequestBuilder()
+    UUID secondLoanId = loansClient.create(new LoanBuilder()
       .withItemId(secondItemId)).getId();
 
     //Delete holding or instance
@@ -282,22 +282,22 @@ public class LoanAPILocationTests extends APITests {
     ExecutionException {
 
     UUID firstInstanceId = instancesClient.create(
-      InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
+      InstanceExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID firstHoldingId = holdingsClient.create(
-      new HoldingRequestBuilder()
+      new HoldingBuilder()
         .forInstance(firstInstanceId)
         .withPermanentLocation(APITestSuite.mainLibraryLocationId())
         .create())
       .getId();
 
     UUID firstItemId = itemsClient.create(
-      ItemRequestExamples.basedUponSmallAngryPlanet()
+      ItemExamples.basedUponSmallAngryPlanet()
         .withTemporaryLocation(APITestSuite.annexLocationId())
         .forHolding(firstHoldingId))
       .getId();
 
-    UUID firstLoanId = loansClient.create(new LoanRequestBuilder()
+    UUID firstLoanId = loansClient.create(new LoanBuilder()
       .withItemId(firstItemId)).getId();
 
     List<JsonObject> fetchedLoansResponse = loansClient.getAll();

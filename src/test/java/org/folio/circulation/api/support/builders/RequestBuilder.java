@@ -9,7 +9,7 @@ import org.joda.time.format.ISODateTimeFormat;
 
 import java.util.UUID;
 
-public class RequestRequestBuilder implements Builder {
+public class RequestBuilder implements Builder {
 
   public static final String OPEN_NOT_YET_FILLED = "Open - Not yet filled";
   public static final String OPEN_AWAITING_PICKUP = "Open - Awaiting pickup";
@@ -28,7 +28,7 @@ public class RequestRequestBuilder implements Builder {
   private final PatronSummary requesterSummary;
   private final String status;
 
-  public RequestRequestBuilder() {
+  public RequestBuilder() {
     this(UUID.randomUUID(),
       "Hold",
       new DateTime(2017, 7, 15, 9, 35, 27, DateTimeZone.UTC),
@@ -43,7 +43,7 @@ public class RequestRequestBuilder implements Builder {
       null);
   }
 
-  private RequestRequestBuilder(
+  private RequestBuilder(
     UUID id,
     String requestType,
     DateTime requestDate,
@@ -125,8 +125,8 @@ public class RequestRequestBuilder implements Builder {
     return request;
   }
 
-  public RequestRequestBuilder withId(UUID newId) {
-    return new RequestRequestBuilder(
+  public RequestBuilder withId(UUID newId) {
+    return new RequestBuilder(
       newId,
       this.requestType,
       this.requestDate,
@@ -141,8 +141,8 @@ public class RequestRequestBuilder implements Builder {
       this.status);
   }
 
-  public RequestRequestBuilder withNoId() {
-    return new RequestRequestBuilder(
+  public RequestBuilder withNoId() {
+    return new RequestBuilder(
       null,
       this.requestType,
       this.requestDate,
@@ -157,8 +157,8 @@ public class RequestRequestBuilder implements Builder {
       this.status);
   }
 
-  public RequestRequestBuilder withRequestDate(DateTime requestDate) {
-    return new RequestRequestBuilder(
+  public RequestBuilder withRequestDate(DateTime requestDate) {
+    return new RequestBuilder(
       this.id,
       this.requestType,
       requestDate,
@@ -173,8 +173,8 @@ public class RequestRequestBuilder implements Builder {
       this.status);
   }
 
-  public RequestRequestBuilder withRequestType(String requestType) {
-    return new RequestRequestBuilder(
+  public RequestBuilder withRequestType(String requestType) {
+    return new RequestBuilder(
       this.id,
       requestType,
       this.requestDate,
@@ -189,20 +189,20 @@ public class RequestRequestBuilder implements Builder {
       this.status);
   }
 
-  public RequestRequestBuilder hold() {
+  public RequestBuilder hold() {
     return withRequestType("Hold");
   }
 
-  public RequestRequestBuilder page() {
+  public RequestBuilder page() {
     return withRequestType("Page");
   }
 
-  public RequestRequestBuilder recall() {
+  public RequestBuilder recall() {
     return withRequestType("Recall");
   }
 
-  public RequestRequestBuilder withItemId(UUID itemId) {
-    return new RequestRequestBuilder(
+  public RequestBuilder withItemId(UUID itemId) {
+    return new RequestBuilder(
       this.id,
       this.requestType,
       this.requestDate,
@@ -216,8 +216,8 @@ public class RequestRequestBuilder implements Builder {
       this.requesterSummary, this.status);
   }
 
-  public RequestRequestBuilder withRequesterId(UUID requesterId) {
-    return new RequestRequestBuilder(
+  public RequestBuilder withRequesterId(UUID requesterId) {
+    return new RequestBuilder(
       this.id,
       this.requestType,
       this.requestDate,
@@ -231,17 +231,17 @@ public class RequestRequestBuilder implements Builder {
       this.requesterSummary, this.status);
   }
 
-  public RequestRequestBuilder toHoldShelf() {
+  public RequestBuilder toHoldShelf() {
     return withFulfilmentPreference("Hold Shelf");
   }
 
-  public RequestRequestBuilder deliverToAddress(UUID addressTypeId) {
+  public RequestBuilder deliverToAddress(UUID addressTypeId) {
     return withFulfilmentPreference("Delivery")
       .withDeliveryAddressType(addressTypeId);
   }
 
-  public RequestRequestBuilder withFulfilmentPreference(String fulfilmentPreference) {
-    return new RequestRequestBuilder(
+  public RequestBuilder withFulfilmentPreference(String fulfilmentPreference) {
+    return new RequestBuilder(
       this.id,
       this.requestType,
       this.requestDate,
@@ -255,13 +255,13 @@ public class RequestRequestBuilder implements Builder {
       this.requesterSummary, this.status);
   }
 
-  public RequestRequestBuilder fulfilToHoldShelf() {
+  public RequestBuilder fulfilToHoldShelf() {
     return withFulfilmentPreference(
       "Hold Shelf");
   }
 
-  public RequestRequestBuilder withRequestExpiration(LocalDate requestExpiration) {
-    return new RequestRequestBuilder(
+  public RequestBuilder withRequestExpiration(LocalDate requestExpiration) {
+    return new RequestBuilder(
       this.id,
       this.requestType,
       this.requestDate,
@@ -276,8 +276,8 @@ public class RequestRequestBuilder implements Builder {
       this.status);
   }
 
-  public RequestRequestBuilder withHoldShelfExpiration(LocalDate holdShelfExpiration) {
-    return new RequestRequestBuilder(
+  public RequestBuilder withHoldShelfExpiration(LocalDate holdShelfExpiration) {
+    return new RequestBuilder(
       this.id,
       this.requestType,
       this.requestDate,
@@ -292,8 +292,8 @@ public class RequestRequestBuilder implements Builder {
       this.status);
   }
 
-  public RequestRequestBuilder withItem(String title, String barcode) {
-    return new RequestRequestBuilder(
+  public RequestBuilder withItem(String title, String barcode) {
+    return new RequestBuilder(
       this.id,
       this.requestType,
       this.requestDate,
@@ -307,13 +307,13 @@ public class RequestRequestBuilder implements Builder {
       this.status);
   }
 
-  public RequestRequestBuilder withRequester(
+  public RequestBuilder withRequester(
     String lastName,
     String firstName,
     String middleName,
     String barcode) {
 
-    return new RequestRequestBuilder(
+    return new RequestBuilder(
       this.id,
       this.requestType,
       this.requestDate,
@@ -328,12 +328,12 @@ public class RequestRequestBuilder implements Builder {
       this.status);
   }
 
-  public RequestRequestBuilder withRequester(
+  public RequestBuilder withRequester(
     String lastName,
     String firstName,
     String barcode) {
 
-    return new RequestRequestBuilder(
+    return new RequestBuilder(
       this.id,
       this.requestType,
       this.requestDate,
@@ -348,8 +348,8 @@ public class RequestRequestBuilder implements Builder {
       this.status);
   }
 
-  public RequestRequestBuilder withDeliveryAddressType(UUID deliverAddressType) {
-    return new RequestRequestBuilder(
+  public RequestBuilder withDeliveryAddressType(UUID deliverAddressType) {
+    return new RequestBuilder(
       this.id,
       this.requestType,
       this.requestDate,
@@ -364,8 +364,8 @@ public class RequestRequestBuilder implements Builder {
       this.status);
   }
 
-  public RequestRequestBuilder withStatus(String status) {
-    return new RequestRequestBuilder(
+  public RequestBuilder withStatus(String status) {
+    return new RequestBuilder(
       this.id,
       this.requestType,
       this.requestDate,

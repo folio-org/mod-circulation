@@ -2,11 +2,11 @@ package org.folio.circulation.api.requests;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.support.APITests;
-import org.folio.circulation.api.support.builders.HoldingRequestBuilder;
-import org.folio.circulation.api.support.builders.RequestRequestBuilder;
-import org.folio.circulation.api.support.builders.UserRequestBuilder;
-import org.folio.circulation.api.support.fixtures.InstanceRequestExamples;
-import org.folio.circulation.api.support.fixtures.ItemRequestExamples;
+import org.folio.circulation.api.support.builders.HoldingBuilder;
+import org.folio.circulation.api.support.builders.RequestBuilder;
+import org.folio.circulation.api.support.builders.UserBuilder;
+import org.folio.circulation.api.support.fixtures.InstanceExamples;
+import org.folio.circulation.api.support.fixtures.ItemExamples;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.Test;
@@ -32,16 +32,16 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
     MalformedURLException {
 
     UUID instanceId = instancesClient.create(
-      InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
+      InstanceExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID holdingId = holdingsClient.create(
-      new HoldingRequestBuilder()
+      new HoldingBuilder()
         .forInstance(instanceId)
         .create())
       .getId();
 
     UUID itemId = itemsClient.create(
-      ItemRequestExamples.basedUponSmallAngryPlanet()
+      ItemExamples.basedUponSmallAngryPlanet()
         .forHolding(holdingId))
       .getId();
 
@@ -49,9 +49,9 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
 
     UUID requestId = UUID.randomUUID();
 
-    IndividualResource response = requestsClient.create(new RequestRequestBuilder()
+    IndividualResource response = requestsClient.create(new RequestBuilder()
       .withId(requestId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder().create()).getId())
+      .withRequesterId(usersClient.create(new UserBuilder().create()).getId())
       .withItemId(itemId));
 
     JsonObject createdRequest = response.getJson();
@@ -99,16 +99,16 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
     MalformedURLException {
 
     UUID instanceId = instancesClient.create(
-      InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
+      InstanceExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID holdingId = holdingsClient.create(
-      new HoldingRequestBuilder()
+      new HoldingBuilder()
         .forInstance(instanceId)
         .create())
       .getId();
 
     UUID itemId = itemsClient.create(
-      ItemRequestExamples.basedUponSmallAngryPlanet()
+      ItemExamples.basedUponSmallAngryPlanet()
         .forHolding(holdingId))
       .getId();
 
@@ -116,9 +116,9 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
 
     UUID requestId = UUID.randomUUID();
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .withId(requestId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder().create()).getId())
+      .withRequesterId(usersClient.create(new UserBuilder().create()).getId())
       .withItemId(itemId));
 
     instancesClient.delete(instanceId);
@@ -152,16 +152,16 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
     MalformedURLException {
 
     UUID instanceId = instancesClient.create(
-      InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
+      InstanceExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID holdingId = holdingsClient.create(
-      new HoldingRequestBuilder()
+      new HoldingBuilder()
         .forInstance(instanceId)
         .create())
       .getId();
 
     UUID itemId = itemsClient.create(
-      ItemRequestExamples.basedUponSmallAngryPlanet()
+      ItemExamples.basedUponSmallAngryPlanet()
         .forHolding(holdingId))
       .getId();
 
@@ -169,9 +169,9 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
 
     UUID requestId = UUID.randomUUID();
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .withId(requestId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder().create()).getId())
+      .withRequesterId(usersClient.create(new UserBuilder().create()).getId())
       .withItemId(itemId));
 
     holdingsClient.delete(holdingId);
@@ -201,44 +201,44 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
     ExecutionException {
 
     UUID firstInstanceId = instancesClient.create(
-      InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
+      InstanceExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID firstHoldingId = holdingsClient.create(
-      new HoldingRequestBuilder()
+      new HoldingBuilder()
         .forInstance(firstInstanceId)
         .create())
       .getId();
 
     UUID firstItemId = itemsClient.create(
-      ItemRequestExamples.basedUponSmallAngryPlanet()
+      ItemExamples.basedUponSmallAngryPlanet()
         .forHolding(firstHoldingId))
       .getId();
 
     checkOutItem(firstItemId, loansClient);
 
     UUID secondInstanceId = instancesClient.create(
-      InstanceRequestExamples.basedUponTemeraire()).getId();
+      InstanceExamples.basedUponTemeraire()).getId();
 
     UUID secondHoldingId = holdingsClient.create(
-      new HoldingRequestBuilder()
+      new HoldingBuilder()
         .forInstance(secondInstanceId)
         .create())
       .getId();
 
     UUID secondItemId = itemsClient.create(
-      ItemRequestExamples.basedUponTemeraire()
+      ItemExamples.basedUponTemeraire()
         .forHolding(secondHoldingId))
       .getId();
 
     checkOutItem(secondItemId, loansClient);
 
-    UUID requesterId = usersClient.create(new UserRequestBuilder().create()).getId();
+    UUID requesterId = usersClient.create(new UserBuilder().create()).getId();
 
-    UUID firstRequestId = requestsClient.create(new RequestRequestBuilder()
+    UUID firstRequestId = requestsClient.create(new RequestBuilder()
       .withRequesterId(requesterId)
       .withItemId(firstItemId)).getId();
 
-    UUID secondRequestId = requestsClient.create(new RequestRequestBuilder()
+    UUID secondRequestId = requestsClient.create(new RequestBuilder()
       .withRequesterId(requesterId)
       .withItemId(secondItemId)).getId();
 
@@ -287,44 +287,44 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
     ExecutionException {
 
     UUID firstInstanceId = instancesClient.create(
-      InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
+      InstanceExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID firstHoldingId = holdingsClient.create(
-      new HoldingRequestBuilder()
+      new HoldingBuilder()
         .forInstance(firstInstanceId)
         .create())
       .getId();
 
     UUID firstItemId = itemsClient.create(
-      ItemRequestExamples.basedUponSmallAngryPlanet()
+      ItemExamples.basedUponSmallAngryPlanet()
         .forHolding(firstHoldingId))
       .getId();
 
     checkOutItem(firstItemId, loansClient);
 
     UUID secondInstanceId = instancesClient.create(
-      InstanceRequestExamples.basedUponTemeraire()).getId();
+      InstanceExamples.basedUponTemeraire()).getId();
 
     UUID secondHoldingId = holdingsClient.create(
-      new HoldingRequestBuilder()
+      new HoldingBuilder()
         .forInstance(secondInstanceId)
         .create())
       .getId();
 
     UUID secondItemId = itemsClient.create(
-      ItemRequestExamples.basedUponTemeraire()
+      ItemExamples.basedUponTemeraire()
         .forHolding(secondHoldingId))
       .getId();
 
     checkOutItem(secondItemId, loansClient);
 
-    UUID requesterId = usersClient.create(new UserRequestBuilder().create()).getId();
+    UUID requesterId = usersClient.create(new UserBuilder().create()).getId();
 
-    UUID firstRequestId = requestsClient.create(new RequestRequestBuilder()
+    UUID firstRequestId = requestsClient.create(new RequestBuilder()
       .withRequesterId(requesterId)
       .withItemId(firstItemId)).getId();
 
-    UUID secondRequestId = requestsClient.create(new RequestRequestBuilder()
+    UUID secondRequestId = requestsClient.create(new RequestBuilder()
       .withRequesterId(requesterId)
       .withItemId(secondItemId)).getId();
 
@@ -354,44 +354,44 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
     ExecutionException {
 
     UUID firstInstanceId = instancesClient.create(
-      InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
+      InstanceExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID firstHoldingId = holdingsClient.create(
-      new HoldingRequestBuilder()
+      new HoldingBuilder()
         .forInstance(firstInstanceId)
         .create())
       .getId();
 
     UUID firstItemId = itemsClient.create(
-      ItemRequestExamples.basedUponSmallAngryPlanet()
+      ItemExamples.basedUponSmallAngryPlanet()
         .forHolding(firstHoldingId))
       .getId();
 
     checkOutItem(firstItemId, loansClient);
 
     UUID secondInstanceId = instancesClient.create(
-      InstanceRequestExamples.basedUponTemeraire()).getId();
+      InstanceExamples.basedUponTemeraire()).getId();
 
     UUID secondHoldingId = holdingsClient.create(
-      new HoldingRequestBuilder()
+      new HoldingBuilder()
         .forInstance(secondInstanceId)
         .create())
       .getId();
 
     UUID secondItemId = itemsClient.create(
-      ItemRequestExamples.basedUponTemeraire()
+      ItemExamples.basedUponTemeraire()
         .forHolding(secondHoldingId))
       .getId();
 
     checkOutItem(secondItemId, loansClient);
 
-    UUID requesterId = usersClient.create(new UserRequestBuilder().create()).getId();
+    UUID requesterId = usersClient.create(new UserBuilder().create()).getId();
 
-    UUID firstRequestId = requestsClient.create(new RequestRequestBuilder()
+    UUID firstRequestId = requestsClient.create(new RequestBuilder()
       .withRequesterId(requesterId)
       .withItemId(firstItemId)).getId();
 
-    UUID secondRequestId = requestsClient.create(new RequestRequestBuilder()
+    UUID secondRequestId = requestsClient.create(new RequestBuilder()
       .withRequesterId(requesterId)
       .withItemId(secondItemId)).getId();
 

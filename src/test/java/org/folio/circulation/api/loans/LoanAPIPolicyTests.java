@@ -3,7 +3,7 @@ package org.folio.circulation.api.loans;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.APITestSuite;
 import org.folio.circulation.api.support.APITests;
-import org.folio.circulation.api.support.builders.LoanRequestBuilder;
+import org.folio.circulation.api.support.builders.LoanBuilder;
 import org.folio.circulation.api.support.http.InterfaceUrls;
 import org.folio.circulation.api.support.http.ResourceClient;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -16,7 +16,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.UnsupportedEncodingException;
 import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
 import java.util.UUID;
@@ -138,7 +137,7 @@ public class LoanAPIPolicyTests extends APITests {
     InterruptedException,
     ExecutionException,
     TimeoutException {
-    IndividualResource loanResponse = loansClient.create(new LoanRequestBuilder()
+    IndividualResource loanResponse = loansClient.create(new LoanBuilder()
       .withId(id)
       .withUserId(userId)
       .withItemId(itemId)

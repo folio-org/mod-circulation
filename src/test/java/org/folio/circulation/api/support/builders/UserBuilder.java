@@ -5,7 +5,7 @@ import org.folio.circulation.api.APITestSuite;
 
 import java.util.UUID;
 
-public class UserRequestBuilder implements Builder {
+public class UserBuilder implements Builder {
   private final UUID id;
   private final String username;
   private final String lastName;
@@ -14,12 +14,12 @@ public class UserRequestBuilder implements Builder {
   private final String barcode;
   private final UUID patronGroupId;
 
-  public UserRequestBuilder() {
+  public UserBuilder() {
     this("sjones", "Jones", "Steven", null, "785493025613",
       APITestSuite.regularGroupId());
   }
 
-  private UserRequestBuilder(
+  private UserBuilder(
     String username,
     String lastName,
     String firstName,
@@ -68,8 +68,8 @@ public class UserRequestBuilder implements Builder {
     return request;
   }
 
-  public UserRequestBuilder withName(String lastName, String firstName) {
-    return new UserRequestBuilder(
+  public UserBuilder withName(String lastName, String firstName) {
+    return new UserBuilder(
       firstName.substring(0, 1).concat(lastName).toLowerCase(),
       lastName,
       firstName,
@@ -78,8 +78,8 @@ public class UserRequestBuilder implements Builder {
       this.patronGroupId);
   }
 
-  public UserRequestBuilder withName(String lastName, String firstName, String middleName) {
-    return new UserRequestBuilder(
+  public UserBuilder withName(String lastName, String firstName, String middleName) {
+    return new UserBuilder(
       this.username,
       lastName,
       firstName,
@@ -88,8 +88,8 @@ public class UserRequestBuilder implements Builder {
       this.patronGroupId);
   }
 
-  public UserRequestBuilder withBarcode(String barcode) {
-    return new UserRequestBuilder(
+  public UserBuilder withBarcode(String barcode) {
+    return new UserBuilder(
       this.username,
       this.lastName,
       this.firstName,
@@ -98,8 +98,8 @@ public class UserRequestBuilder implements Builder {
       this.patronGroupId);
   }
 
-  public UserRequestBuilder withNoBarcode() {
-    return new UserRequestBuilder(
+  public UserBuilder withNoBarcode() {
+    return new UserBuilder(
       this.username,
       this.lastName,
       this.firstName,
@@ -108,8 +108,8 @@ public class UserRequestBuilder implements Builder {
       this.patronGroupId);
   }
 
-  public UserRequestBuilder withUsername(String username) {
-    return new UserRequestBuilder(
+  public UserBuilder withUsername(String username) {
+    return new UserBuilder(
       username,
       this.lastName,
       this.firstName,
@@ -118,8 +118,8 @@ public class UserRequestBuilder implements Builder {
       this.patronGroupId);
   }
 
-  public UserRequestBuilder withPatronGroupId(UUID patronGroupId) {
-    return new UserRequestBuilder(
+  public UserBuilder withPatronGroupId(UUID patronGroupId) {
+    return new UserBuilder(
       this.username,
       this.lastName,
       this.firstName,

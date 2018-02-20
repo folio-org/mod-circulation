@@ -5,7 +5,7 @@ import org.folio.circulation.api.APITestSuite;
 
 import java.util.UUID;
 
-public class ItemRequestBuilder implements Builder {
+public class ItemBuilder implements Builder {
 
   private static final String AVAILABLE_STATUS = "Available";
   private static final String CHECKED_OUT_STATUS = "Checked out";
@@ -18,12 +18,12 @@ public class ItemRequestBuilder implements Builder {
   private final UUID temporaryLocationId;
   private final UUID temporaryLoanTypeId;
 
-  public ItemRequestBuilder() {
+  public ItemBuilder() {
     this(UUID.randomUUID(), null, "565578437802", AVAILABLE_STATUS,
       null, null, null);
   }
 
-  private ItemRequestBuilder(
+  private ItemBuilder(
     UUID id,
     UUID holdingId,
     String barcode,
@@ -74,16 +74,16 @@ public class ItemRequestBuilder implements Builder {
     return itemRequest;
   }
 
-  public ItemRequestBuilder checkOut() {
+  public ItemBuilder checkOut() {
     return withStatus(CHECKED_OUT_STATUS);
   }
 
-  public ItemRequestBuilder available() {
+  public ItemBuilder available() {
     return withStatus(AVAILABLE_STATUS);
   }
 
-  public ItemRequestBuilder withStatus(String status) {
-    return new ItemRequestBuilder(
+  public ItemBuilder withStatus(String status) {
+    return new ItemBuilder(
       this.id,
       this.holdingId,
       this.barcode,
@@ -93,8 +93,8 @@ public class ItemRequestBuilder implements Builder {
       this.temporaryLoanTypeId);
   }
 
-  public ItemRequestBuilder withBarcode(String barcode) {
-    return new ItemRequestBuilder(
+  public ItemBuilder withBarcode(String barcode) {
+    return new ItemBuilder(
       this.id,
       this.holdingId,
       barcode,
@@ -104,16 +104,16 @@ public class ItemRequestBuilder implements Builder {
       this.temporaryLoanTypeId);
   }
 
-  public ItemRequestBuilder withNoBarcode() {
+  public ItemBuilder withNoBarcode() {
     return withBarcode(null);
   }
 
-  public ItemRequestBuilder withNoTemporaryLocation() {
+  public ItemBuilder withNoTemporaryLocation() {
     return withTemporaryLocation(null);
   }
 
-  public ItemRequestBuilder withTemporaryLocation(UUID temporaryLocationId) {
-    return new ItemRequestBuilder(
+  public ItemBuilder withTemporaryLocation(UUID temporaryLocationId) {
+    return new ItemBuilder(
       this.id,
       this.holdingId,
       this.barcode,
@@ -123,8 +123,8 @@ public class ItemRequestBuilder implements Builder {
       this.temporaryLoanTypeId);
   }
 
-  public ItemRequestBuilder forHolding(UUID holdingId) {
-    return new ItemRequestBuilder(
+  public ItemBuilder forHolding(UUID holdingId) {
+    return new ItemBuilder(
       this.id,
       holdingId,
       this.barcode,
@@ -134,8 +134,8 @@ public class ItemRequestBuilder implements Builder {
       this.temporaryLoanTypeId);
   }
 
-  public ItemRequestBuilder withMaterialType(UUID materialTypeId) {
-    return new ItemRequestBuilder(
+  public ItemBuilder withMaterialType(UUID materialTypeId) {
+    return new ItemBuilder(
       this.id,
       this.holdingId,
       this.barcode,
@@ -145,8 +145,8 @@ public class ItemRequestBuilder implements Builder {
       this.temporaryLoanTypeId);
   }
 
-  public ItemRequestBuilder withTemporaryLoanType(UUID loanTypeId) {
-    return new ItemRequestBuilder(
+  public ItemBuilder withTemporaryLoanType(UUID loanTypeId) {
+    return new ItemBuilder(
       this.id,
       this.holdingId,
       this.barcode,

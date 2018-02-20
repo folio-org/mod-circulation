@@ -5,18 +5,18 @@ import org.folio.circulation.api.APITestSuite;
 
 import java.util.UUID;
 
-public class HoldingRequestBuilder implements Builder {
+public class HoldingBuilder implements Builder {
 
   private final UUID instanceId;
   private final UUID permanentLocationId;
 
-  public HoldingRequestBuilder() {
+  public HoldingBuilder() {
     this(
       null,
       APITestSuite.mainLibraryLocationId());
   }
 
-  private HoldingRequestBuilder(
+  private HoldingBuilder(
     UUID instanceId,
     UUID permanentLocationId) {
 
@@ -31,14 +31,14 @@ public class HoldingRequestBuilder implements Builder {
       .put("permanentLocationId", permanentLocationId.toString());
   }
 
-  public HoldingRequestBuilder withPermanentLocation(UUID permanentLocationId) {
-    return new HoldingRequestBuilder(
+  public HoldingBuilder withPermanentLocation(UUID permanentLocationId) {
+    return new HoldingBuilder(
       this.instanceId,
       permanentLocationId);
   }
 
-  public HoldingRequestBuilder forInstance(UUID instanceId) {
-    return new HoldingRequestBuilder(
+  public HoldingBuilder forInstance(UUID instanceId) {
+    return new HoldingBuilder(
       instanceId,
       this.permanentLocationId);
   }
