@@ -12,7 +12,6 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import static org.folio.circulation.api.support.fixtures.LoansFixture.renewLoan;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -38,7 +37,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
       .withItemId(itemId)
       .withRequesterId(usersClient.create(new UserBuilder()).getId()));
 
-    renewLoan(loanId, loansClient);
+    loansFixture.renewLoan(loanId);
 
     Response changedItem = itemsClient.getById(itemId);
 
@@ -66,7 +65,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
       .withItemId(itemId)
       .withRequesterId(usersClient.create(new UserBuilder()).getId()));
 
-    renewLoan(loanId, loansClient);
+    loansFixture.renewLoan(loanId);
 
     Response changedItem = itemsClient.getById(itemId);
 
@@ -94,7 +93,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
       .withItemId(itemId)
       .withRequesterId(usersClient.create(new UserBuilder()).getId()));
 
-    renewLoan(loanId, loansClient);
+    loansFixture.renewLoan(loanId);
 
     Response changedItem = itemsClient.getById(itemId);
 

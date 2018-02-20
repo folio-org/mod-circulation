@@ -19,9 +19,7 @@ public class LoansFixture {
     this.loansClient = loansClient;
   }
 
-  public static void renewLoan(
-    UUID loanId,
-    ResourceClient loansClient)
+  public void renewLoan(UUID loanId)
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
