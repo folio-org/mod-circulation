@@ -41,7 +41,7 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
     UUID requesterId = usersClient.create(new UserBuilder()
       .withName("Jones", "Steven")

@@ -18,7 +18,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.folio.circulation.api.support.fixtures.LoansFixture.checkOutItem;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -37,7 +36,7 @@ public class RequestsAPICreateMultipleRequestsTests extends APITests {
         .withBarcode("036000291452"))
       .getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
     UUID firstRequesterId = usersClient.create(new UserBuilder()
       .withName("Jones", "Steven")
@@ -96,7 +95,7 @@ public class RequestsAPICreateMultipleRequestsTests extends APITests {
         .withBarcode("036000291452"))
       .getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
     UUID firstRequesterId = usersClient.create(new UserBuilder()
       .withName("Jones", "Steven")

@@ -43,7 +43,7 @@ public class RequestsAPIUpdatingTests extends APITests {
       itemRequestBuilder -> itemRequestBuilder.withBarcode("07295629642"))
       .getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
     UUID originalRequesterId = usersClient.create(new UserBuilder()
       .withName("Norton", "Jessica")
@@ -146,7 +146,7 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     UUID itemId = itemsFixture.basedUponNod().getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
     UUID requesterId = usersClient.create(new UserBuilder()).getId();
 
@@ -209,7 +209,7 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     UUID itemId = itemsFixture.basedUponNod().getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
     UUID requester = usersClient.create(new UserBuilder()
       .withName("Norton", "Jessica")
@@ -275,7 +275,7 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     UUID itemId = itemsFixture.basedUponNod().getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
     UUID originalRequesterId = usersClient.create(new UserBuilder()
       .withName("Norton", "Jessica")
@@ -359,7 +359,7 @@ public class RequestsAPIUpdatingTests extends APITests {
       itemRequestBuilder -> itemRequestBuilder.withBarcode("07295629642"))
       .getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
     UUID originalRequesterId = usersClient.create(new UserBuilder()
       .withName("Norton", "Jessica")
@@ -462,7 +462,7 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     UUID originalItemId = itemsFixture.basedUponTemeraire().getId();
 
-    checkOutItem(originalItemId, loansClient);
+    loansFixture.checkOutItem(originalItemId);
 
     UUID requesterId = usersClient.create(new UserBuilder()).getId();
 

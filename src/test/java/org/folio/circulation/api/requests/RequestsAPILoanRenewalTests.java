@@ -31,7 +31,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID loanId = checkOutItem(itemId, loansClient).getId();
+    UUID loanId = loansFixture.checkOutItem(itemId).getId();
 
     requestsClient.create(new RequestBuilder()
       .hold()
@@ -59,7 +59,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID loanId = checkOutItem(itemId, loansClient).getId();
+    UUID loanId = loansFixture.checkOutItem(itemId).getId();
 
     requestsClient.create(new RequestBuilder()
       .recall()
@@ -87,7 +87,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID loanId = checkOutItem(itemId, loansClient).getId();
+    UUID loanId = loansFixture.checkOutItem(itemId).getId();
 
     requestsClient.create(new RequestBuilder()
       .page()

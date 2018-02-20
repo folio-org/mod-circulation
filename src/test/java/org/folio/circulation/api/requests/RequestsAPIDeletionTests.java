@@ -40,9 +40,9 @@ public class RequestsAPIDeletionTests extends APITests {
     UUID secondItemId = itemsFixture.basedUponNod().getId();
     UUID thirdItemId = itemsFixture.basedUponInterestingTimes().getId();
 
-    checkOutItem(firstItemId, loansClient);
-    checkOutItem(secondItemId, loansClient);
-    checkOutItem(thirdItemId, loansClient);
+    loansFixture.checkOutItem(firstItemId);
+    loansFixture.checkOutItem(secondItemId);
+    loansFixture.checkOutItem(thirdItemId);
 
     requestsClient.create(new RequestBuilder()
       .withItemId(firstItemId)
@@ -99,9 +99,9 @@ public class RequestsAPIDeletionTests extends APITests {
     UUID secondItemId = itemsFixture.basedUponSmallAngryPlanet().getId();
     UUID thirdItemId = itemsFixture.basedUponTemeraire().getId();
 
-    checkOutItem(firstItemId, loansClient);
-    checkOutItem(secondItemId, loansClient);
-    checkOutItem(thirdItemId, loansClient);
+    loansFixture.checkOutItem(firstItemId);
+    loansFixture.checkOutItem(secondItemId);
+    loansFixture.checkOutItem(thirdItemId);
 
     requestsClient.create(new RequestBuilder()
       .withId(firstId)

@@ -34,7 +34,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID loanId = checkOutItem(itemId, loansClient).getId();
+    UUID loanId = loansFixture.checkOutItem(itemId).getId();
 
     requestsClient.create(new RequestBuilder()
       .hold()
@@ -63,7 +63,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID loanId = checkOutItem(itemId, loansClient).getId();
+    UUID loanId = loansFixture.checkOutItem(itemId).getId();
 
     requestsClient.create(new RequestBuilder()
       .recall()
@@ -89,7 +89,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID loanId = checkOutItem(itemId, loansClient).getId();
+    UUID loanId = loansFixture.checkOutItem(itemId).getId();
 
     requestsClient.create(new RequestBuilder()
       .page()
@@ -118,11 +118,11 @@ public class RequestsAPILoanHistoryTests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID closedLoanId = checkOutItem(itemId, loansClient).getId();
+    UUID closedLoanId = loansFixture.checkOutItem(itemId).getId();
 
     checkInLoan(closedLoanId, loansClient);
 
-    checkOutItem(itemId, loansClient).getId();
+    loansFixture.checkOutItem(itemId).getId();
 
     requestsClient.create(new RequestBuilder()
       .hold()
@@ -152,11 +152,11 @@ public class RequestsAPILoanHistoryTests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID closedLoanId = checkOutItem(itemId, loansClient).getId();
+    UUID closedLoanId = loansFixture.checkOutItem(itemId).getId();
 
     checkInLoan(closedLoanId, loansClient);
 
-    checkOutItem(itemId, loansClient).getId();
+    loansFixture.checkOutItem(itemId).getId();
 
     requestsClient.create(new RequestBuilder()
       .recall()
@@ -188,8 +188,8 @@ public class RequestsAPILoanHistoryTests extends APITests {
 
     UUID otherItemId = itemsFixture.basedUponNod().getId();
 
-    checkOutItem(itemId, loansClient).getId();
-    UUID loanForOtherItemId = checkOutItem(otherItemId, loansClient).getId();
+    loansFixture.checkOutItem(itemId).getId();
+    UUID loanForOtherItemId = loansFixture.checkOutItem(otherItemId).getId();
 
     requestsClient.create(new RequestBuilder()
       .hold()
@@ -221,8 +221,8 @@ public class RequestsAPILoanHistoryTests extends APITests {
 
     UUID otherItemId = itemsFixture.basedUponNod().getId();
 
-    checkOutItem(itemId, loansClient).getId();
-    UUID loanForOtherItemId = checkOutItem(otherItemId, loansClient).getId();
+    loansFixture.checkOutItem(itemId).getId();
+    UUID loanForOtherItemId = loansFixture.checkOutItem(otherItemId).getId();
 
     requestsClient.create(new RequestBuilder()
       .recall()
@@ -252,7 +252,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID loanId = checkOutItem(itemId, loansClient).getId();
+    UUID loanId = loansFixture.checkOutItem(itemId).getId();
 
     loansClient.delete(loanId);
 
@@ -275,7 +275,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID loanId = checkOutItem(itemId, loansClient).getId();
+    UUID loanId = loansFixture.checkOutItem(itemId).getId();
 
     loansClient.delete(loanId);
 

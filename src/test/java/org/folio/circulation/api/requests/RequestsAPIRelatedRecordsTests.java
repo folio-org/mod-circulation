@@ -45,7 +45,7 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
         .forHolding(holdingId))
       .getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
     UUID requestId = UUID.randomUUID();
 
@@ -112,7 +112,7 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
         .forHolding(holdingId))
       .getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
     UUID requestId = UUID.randomUUID();
 
@@ -165,7 +165,7 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
         .forHolding(holdingId))
       .getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
     UUID requestId = UUID.randomUUID();
 
@@ -214,7 +214,7 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
         .forHolding(firstHoldingId))
       .getId();
 
-    checkOutItem(firstItemId, loansClient);
+    loansFixture.checkOutItem(firstItemId);
 
     UUID secondInstanceId = instancesClient.create(
       InstanceExamples.basedUponTemeraire()).getId();
@@ -230,7 +230,7 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
         .forHolding(secondHoldingId))
       .getId();
 
-    checkOutItem(secondItemId, loansClient);
+    loansFixture.checkOutItem(secondItemId);
 
     UUID requesterId = usersClient.create(new UserBuilder().create()).getId();
 
@@ -300,7 +300,7 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
         .forHolding(firstHoldingId))
       .getId();
 
-    checkOutItem(firstItemId, loansClient);
+    loansFixture.checkOutItem(firstItemId);
 
     UUID secondInstanceId = instancesClient.create(
       InstanceExamples.basedUponTemeraire()).getId();
@@ -316,7 +316,7 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
         .forHolding(secondHoldingId))
       .getId();
 
-    checkOutItem(secondItemId, loansClient);
+    loansFixture.checkOutItem(secondItemId);
 
     UUID requesterId = usersClient.create(new UserBuilder().create()).getId();
 
@@ -367,7 +367,7 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
         .forHolding(firstHoldingId))
       .getId();
 
-    checkOutItem(firstItemId, loansClient);
+    loansFixture.checkOutItem(firstItemId);
 
     UUID secondInstanceId = instancesClient.create(
       InstanceExamples.basedUponTemeraire()).getId();
@@ -383,7 +383,7 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
         .forHolding(secondHoldingId))
       .getId();
 
-    checkOutItem(secondItemId, loansClient);
+    loansFixture.checkOutItem(secondItemId);
 
     UUID requesterId = usersClient.create(new UserBuilder().create()).getId();
 

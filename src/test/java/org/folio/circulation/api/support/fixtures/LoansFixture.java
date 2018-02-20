@@ -12,17 +12,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 public class LoansFixture {
-  public static IndividualResource checkOutItem(
-    UUID itemId,
-    ResourceClient loansClient)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
 
-    return loansClient.create(new LoanBuilder()
-      .open()
-      .withItemId(itemId));
+  private final ResourceClient loansClient;
+
+  public LoansFixture(ResourceClient loansClient) {
+    this.loansClient = loansClient;
   }
 
   public static void checkInLoan(
@@ -59,5 +53,16 @@ public class LoansFixture {
       .put("renewalCount", 1);
 
     loansClient.replace(loanId, renewedLoan);
+  }
+
+  public IndividualResource checkOutItem(UUID itemId)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    return this.loansClient.create(new LoanBuilder()
+      .open()
+      .withItemId(itemId));
   }
 }

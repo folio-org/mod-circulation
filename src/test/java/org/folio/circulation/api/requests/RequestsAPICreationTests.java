@@ -50,7 +50,7 @@ public class RequestsAPICreationTests extends APITests {
         .withBarcode("036000291452"))
       .getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
     UUID requesterId = usersClient.create(new UserBuilder()
       .withName("Jones", "Steven")
@@ -219,7 +219,7 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID itemId = itemResponse.getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
     JsonObject itemWithChangedStatus = itemResponse.copyJson()
       .put("status", new JsonObject().put("name", "Checked Out"));
@@ -298,7 +298,7 @@ public class RequestsAPICreationTests extends APITests {
         .withBarcode("036000291452"))
       .getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
     UUID requesterId = usersClient.create(new UserBuilder()
       .withName("Jones", "Steven")
@@ -343,7 +343,7 @@ public class RequestsAPICreationTests extends APITests {
         .withBarcode("036000291452"))
       .getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
     UUID requesterId = usersClient.create(new UserBuilder()
       .withName("Jones", "Steven")
@@ -383,7 +383,7 @@ public class RequestsAPICreationTests extends APITests {
       ItemBuilder::available)
       .getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
     UUID deliveryAddressTypeId = UUID.randomUUID();
 
@@ -414,7 +414,7 @@ public class RequestsAPICreationTests extends APITests {
         .withBarcode("036000291452"))
       .getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
     UUID requesterId = usersClient.create(new UserBuilder()
       .withName("Jones", "Steven")
@@ -453,7 +453,7 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
     UUID requesterId = UUID.randomUUID();
 
@@ -496,7 +496,7 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
     UUID requesterId = UUID.randomUUID();
 
@@ -555,7 +555,7 @@ public class RequestsAPICreationTests extends APITests {
       .withBarcode("564376549214"))
       .getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
@@ -612,7 +612,7 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
     UUID requesterId = usersClient.create(new UserBuilder()
       .withName("Jones", "Steven")
@@ -672,7 +672,7 @@ public class RequestsAPICreationTests extends APITests {
       ItemBuilder::withNoBarcode)
       .getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
     JsonObject requestRequest = new RequestBuilder()
       .recall()
@@ -717,7 +717,7 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
     UUID requesterId = usersClient.create(new UserBuilder()
       .withName("Jones", "Steven")
