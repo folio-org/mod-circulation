@@ -25,6 +25,7 @@ import static org.folio.circulation.domain.ItemStatus.*;
 import static org.folio.circulation.domain.ItemStatusAssistant.updateItemStatus;
 import static org.folio.circulation.domain.LoanActionHistoryAssistant.updateLoanActionHistory;
 import static org.folio.circulation.support.CommonFailures.reportFailureToFetchInventoryRecords;
+import static org.folio.circulation.support.CommonFailures.reportItemRelatedValidationError;
 import static org.folio.circulation.support.JsonPropertyCopier.copyStringIfExists;
 
 public class RequestCollectionResource {
@@ -123,7 +124,7 @@ public class RequestCollectionResource {
       JsonObject requester = getRecordFromResponse(requestingUserResponse);
 
       if(item == null) {
-        CommonFailures.reportItemRelatedValidationError(routingContext, itemId, "Item does not exist");
+        reportItemRelatedValidationError(routingContext, itemId, "Item does not exist");
       }
       else if (RequestType.from(request).canCreateRequestForItem(item)) {
         updateItemStatus(itemId, RequestType.from(request).toItemStatus(),
@@ -148,7 +149,7 @@ public class RequestCollectionResource {
             }));
       }
       else {
-        CommonFailures.reportItemRelatedValidationError(routingContext, itemId,
+        reportItemRelatedValidationError(routingContext, itemId,
           String.format("Item is not %s", CHECKED_OUT));
       }
     });

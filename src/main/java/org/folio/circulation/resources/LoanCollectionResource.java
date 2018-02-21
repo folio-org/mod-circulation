@@ -30,6 +30,7 @@ import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.ItemStatusAssistant.updateItemStatus;
 import static org.folio.circulation.support.CommonFailures.reportFailureToFetchInventoryRecords;
 import static org.folio.circulation.support.CommonFailures.reportInvalidOkapiUrlHeader;
+import static org.folio.circulation.support.CommonFailures.reportItemRelatedValidationError;
 
 public class LoanCollectionResource {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -86,61 +87,73 @@ public class LoanCollectionResource {
 
     String itemId = loan.getString("itemId");
 
-    updateItemStatus(itemId, itemStatusFrom(loan),
-      itemsStorageClient, routingContext.response(), item -> {
+    InventoryFetcher inventoryFetcher = new InventoryFetcher(
+      itemsStorageClient, holdingsStorageClient, instancesStorageClient);
 
-        loan.put("itemStatus", item.getJsonObject("status").getString("name"));
+    CompletableFuture<InventoryRecords> inventoryRecordsCompleted
+      = inventoryFetcher.fetch(itemId, t ->
+      reportFailureToFetchInventoryRecords(routingContext, t));
 
-        String holdingId = item.getString("holdingsRecordId");
+    CompletableFuture<Void> allCompleted = CompletableFuture.allOf(
+      inventoryRecordsCompleted);
 
-        holdingsStorageClient.get(holdingId, holdingResponse -> {
-          final String instanceId = holdingResponse.getStatusCode() == 200
-            ? holdingResponse.getJson().getString("instanceId")
-            : null;
+    allCompleted.exceptionally(t -> {
+      ServerErrorResponse.internalError(routingContext.response(),
+        String.format("At least one request for additional information failed: %s", t));
 
-          instancesStorageClient.get(instanceId, instanceResponse -> {
-            final JsonObject instance = instanceResponse.getStatusCode() == 200
-              ? instanceResponse.getJson()
-              : null;
+      return null;
+    });
 
-            final JsonObject holding = holdingResponse.getStatusCode() == 200
-              ? holdingResponse.getJson()
-              : null;
+    allCompleted.thenAccept(v -> {
+      InventoryRecords inventoryRecords = inventoryRecordsCompleted.join();
 
-            lookupLoanPolicyId(loan, item, holding, usersStorageClient,
-              loanRulesClient, routingContext.response(), loanPolicyIdJson -> {
+      JsonObject item = inventoryRecords.getItem();
+      JsonObject holding = inventoryRecords.getHolding();
+      JsonObject instance = inventoryRecords.getInstance();
 
-              loan.put("loanPolicyId", loanPolicyIdJson.getString("loanPolicyId"));
+      if(item == null) {
+        reportItemRelatedValidationError(routingContext, itemId, "Item does not exist");
+      }
+      else {
+        updateItemStatus(itemId, itemStatusFrom(loan),
+          itemsStorageClient, routingContext.response(), updatedItem -> {
 
-              loansStorageClient.post(loan, response -> {
-                if(response.getStatusCode() == 201) {
-                  JsonObject createdLoan = response.getJson();
+          loan.put("itemStatus", updatedItem.getJsonObject("status").getString("name"));
 
-                  final String locationId = determineLocationIdForItem(item, holding);
+          lookupLoanPolicyId(loan, updatedItem, holding, usersStorageClient,
+            loanRulesClient, routingContext.response(), loanPolicyIdJson -> {
 
-                  locationsStorageClient.get(locationId, locationResponse -> {
-                    if(locationResponse.getStatusCode() == 200) {
-                      JsonResponse.created(routingContext.response(),
-                        extendedLoan(createdLoan, item, holding, instance,
-                          locationResponse.getJson()));
-                    }
-                    else {
-                      log.warn(
-                        String.format("Could not get location %s for item %s",
-                          locationId, itemId ));
+            loan.put("loanPolicyId", loanPolicyIdJson.getString("loanPolicyId"));
 
-                      JsonResponse.created(routingContext.response(),
-                        extendedLoan(createdLoan, item, holding, instance, null));
-                    }
-                  });
-                }
-                else {
-                  ForwardResponse.forward(routingContext.response(), response);
-                }
-              });
+            loansStorageClient.post(loan, response -> {
+              if(response.getStatusCode() == 201) {
+                JsonObject createdLoan = response.getJson();
+
+                final String locationId = determineLocationIdForItem(updatedItem, holding);
+
+                locationsStorageClient.get(locationId, locationResponse -> {
+                  if(locationResponse.getStatusCode() == 200) {
+                    JsonResponse.created(routingContext.response(),
+                      extendedLoan(createdLoan, updatedItem, holding, instance,
+                        locationResponse.getJson()));
+                  }
+                  else {
+                    log.warn(
+                      String.format("Could not get location %s for item %s",
+                        locationId, itemId ));
+
+                    JsonResponse.created(routingContext.response(),
+                      extendedLoan(createdLoan, item, holding, instance, null));
+                  }
+                });
+              }
+              else {
+                ForwardResponse.forward(routingContext.response(), response);
+              }
+            });
           });
         });
-      });
+      }
     });
   }
 
