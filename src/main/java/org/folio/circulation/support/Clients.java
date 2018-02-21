@@ -12,6 +12,8 @@ public class Clients {
   private final CollectionResourceClient instancesStorageClient;
   private final CollectionResourceClient usersStorageClient;
   private final CollectionResourceClient loansStorageClient;
+  private final CollectionResourceClient locationsStorageClient;
+  private final LoanRulesClient loanRulesClient;
 
   public static Clients create(WebContext context)
     throws MalformedURLException {
@@ -28,6 +30,8 @@ public class Clients {
     instancesStorageClient = createInstanceStorageClient(client, context);
     usersStorageClient = createUsersStorageClient(client, context);
     loansStorageClient = createLoansStorageClient(client, context);
+    locationsStorageClient = createLocationsStorageClient(client, context);
+    loanRulesClient = new LoanRulesClient(client, context);
   }
 
   public CollectionResourceClient requestsStorage() {
@@ -52,6 +56,14 @@ public class Clients {
 
   public CollectionResourceClient loansStorage() {
     return loansStorageClient;
+  }
+
+  public CollectionResourceClient locationsStorage() {
+    return locationsStorageClient;
+  }
+
+  public LoanRulesClient loanRules() {
+    return loanRulesClient;
   }
 
   private static CollectionResourceClient getCollectionResourceClient(
@@ -111,5 +123,13 @@ public class Clients {
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/loan-storage/loans");
+  }
+
+  private static CollectionResourceClient createLocationsStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context, "/shelf-locations");
   }
 }
