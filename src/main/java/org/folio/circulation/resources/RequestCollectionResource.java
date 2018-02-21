@@ -11,7 +11,6 @@ import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.*;
 
-import java.net.MalformedURLException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -22,9 +21,7 @@ import java.util.stream.Collectors;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.ItemStatusAssistant.updateItemStatus;
 import static org.folio.circulation.domain.LoanActionHistoryAssistant.updateLoanActionHistory;
-import static org.folio.circulation.support.CommonFailures.reportFailureToFetchInventoryRecords;
-import static org.folio.circulation.support.CommonFailures.reportInvalidOkapiUrlHeader;
-import static org.folio.circulation.support.CommonFailures.reportItemRelatedValidationError;
+import static org.folio.circulation.support.CommonFailures.*;
 import static org.folio.circulation.support.JsonPropertyCopier.copyStringIfExists;
 
 public class RequestCollectionResource {
@@ -38,13 +35,13 @@ public class RequestCollectionResource {
     router.post(rootPath + "*").handler(BodyHandler.create());
     router.put(rootPath + "*").handler(BodyHandler.create());
 
-    router.post(rootPath).handler(this::create);
-    router.get(rootPath).handler(this::getMany);
-    router.delete(rootPath).handler(this::empty);
+    withFailureHandler(router.post(rootPath).handler(this::create));
+    withFailureHandler(router.get(rootPath).handler(this::getMany));
+    withFailureHandler(router.delete(rootPath).handler(this::empty));
 
-    router.route(HttpMethod.GET, rootPath + "/:id").handler(this::get);
-    router.route(HttpMethod.PUT, rootPath + "/:id").handler(this::replace);
-    router.route(HttpMethod.DELETE, rootPath + "/:id").handler(this::delete);
+    withFailureHandler(router.route(HttpMethod.GET, rootPath + "/:id").handler(this::get));
+    withFailureHandler(router.route(HttpMethod.PUT, rootPath + "/:id").handler(this::replace));
+    withFailureHandler(router.route(HttpMethod.DELETE, rootPath + "/:id").handler(this::delete));
   }
 
   private void create(RoutingContext routingContext) {
@@ -64,16 +61,7 @@ public class RequestCollectionResource {
     removeRelatedRecordInformation(request);
 
     WebContext context = new WebContext(routingContext);
-    Clients clients;
-
-    try {
-      clients = Clients.create(context);
-    }
-    catch (MalformedURLException e) {
-      reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
-
-      return;
-    }
+    Clients clients = Clients.create(context);
 
     String itemId = getItemId(request);
 
@@ -148,16 +136,7 @@ public class RequestCollectionResource {
     removeRelatedRecordInformation(request);
 
     WebContext context = new WebContext(routingContext);
-    Clients clients;
-
-    try {
-      clients = Clients.create(context);
-    }
-    catch (MalformedURLException e) {
-      reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
-
-      return;
-    }
+    Clients clients = Clients.create(context);
 
     String itemId = getItemId(request);
 
@@ -208,16 +187,7 @@ public class RequestCollectionResource {
 
   private void get(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-    Clients clients;
-
-    try {
-      clients = Clients.create(context);
-    }
-    catch (MalformedURLException e) {
-      reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
-
-      return;
-    }
+    Clients clients = Clients.create(context);
 
     String id = routingContext.request().getParam("id");
 
@@ -246,16 +216,7 @@ public class RequestCollectionResource {
 
   private void delete(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-    Clients clients;
-
-    try {
-      clients = Clients.create(context);
-    }
-    catch (MalformedURLException e) {
-      reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
-
-      return;
-    }
+    Clients clients = Clients.create(context);
 
     String id = routingContext.request().getParam("id");
 
@@ -272,16 +233,7 @@ public class RequestCollectionResource {
   private void getMany(RoutingContext routingContext) {
 
     WebContext context = new WebContext(routingContext);
-    Clients clients;
-
-    try {
-      clients = Clients.create(context);
-    }
-    catch (MalformedURLException e) {
-      reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
-
-      return;
-    }
+    Clients clients = Clients.create(context);
 
     clients.requestsStorage().getMany(routingContext.request().query(),
       requestsResponse -> {
@@ -335,16 +287,7 @@ public class RequestCollectionResource {
 
   private void empty(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-    Clients clients;
-
-    try {
-      clients = Clients.create(context);
-    }
-    catch (MalformedURLException e) {
-      reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
-
-      return;
-    }
+    Clients clients = Clients.create(context);
 
     clients.requestsStorage().delete(response -> {
       if(response.getStatusCode() == 204) {

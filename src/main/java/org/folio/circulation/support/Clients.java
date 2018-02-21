@@ -15,23 +15,24 @@ public class Clients {
   private final CollectionResourceClient locationsStorageClient;
   private final LoanRulesClient loanRulesClient;
 
-  public static Clients create(WebContext context)
-    throws MalformedURLException {
-
+  public static Clients create(WebContext context) {
     return new Clients(context.createHttpClient(), context);
   }
 
-  private Clients(OkapiHttpClient client, WebContext context)
-    throws MalformedURLException {
-
-    requestsStorageClient = createRequestsStorageClient(client, context);
-    itemsStorageClient = createItemsStorageClient(client, context);
-    holdingsStorageClient = createHoldingsStorageClient(client, context);
-    instancesStorageClient = createInstanceStorageClient(client, context);
-    usersStorageClient = createUsersStorageClient(client, context);
-    loansStorageClient = createLoansStorageClient(client, context);
-    locationsStorageClient = createLocationsStorageClient(client, context);
-    loanRulesClient = new LoanRulesClient(client, context);
+  private Clients(OkapiHttpClient client, WebContext context) {
+    try {
+      requestsStorageClient = createRequestsStorageClient(client, context);
+      itemsStorageClient = createItemsStorageClient(client, context);
+      holdingsStorageClient = createHoldingsStorageClient(client, context);
+      instancesStorageClient = createInstanceStorageClient(client, context);
+      usersStorageClient = createUsersStorageClient(client, context);
+      loansStorageClient = createLoansStorageClient(client, context);
+      locationsStorageClient = createLocationsStorageClient(client, context);
+      loanRulesClient = new LoanRulesClient(client, context);
+    }
+    catch(MalformedURLException e) {
+      throw new InvalidOkapiLocationException(context.getOkapiLocation(), e);
+    }
   }
 
   public CollectionResourceClient requestsStorage() {

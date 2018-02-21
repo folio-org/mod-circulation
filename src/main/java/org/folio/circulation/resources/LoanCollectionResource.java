@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
-import java.net.MalformedURLException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -26,7 +25,9 @@ import java.util.stream.Collectors;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.ItemStatusAssistant.updateItemStatus;
-import static org.folio.circulation.support.CommonFailures.*;
+import static org.folio.circulation.support.CommonFailures.reportFailureToFetchInventoryRecords;
+import static org.folio.circulation.support.CommonFailures.reportItemRelatedValidationError;
+import static org.folio.circulation.support.CommonFailures.withFailureHandler;
 
 public class LoanCollectionResource {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -41,27 +42,18 @@ public class LoanCollectionResource {
     router.post(rootPath + "*").handler(BodyHandler.create());
     router.put(rootPath + "*").handler(BodyHandler.create());
 
-    router.post(rootPath).handler(this::create);
-    router.get(rootPath).handler(this::getMany);
-    router.delete(rootPath).handler(this::empty);
+    withFailureHandler(router.post(rootPath).handler(this::create));
+    withFailureHandler(router.get(rootPath).handler(this::getMany));
+    withFailureHandler(router.delete(rootPath).handler(this::empty));
 
-    router.route(HttpMethod.GET, rootPath + "/:id").handler(this::get);
-    router.route(HttpMethod.PUT, rootPath + "/:id").handler(this::replace);
-    router.route(HttpMethod.DELETE, rootPath + "/:id").handler(this::delete);
+    withFailureHandler(router.route(HttpMethod.GET, rootPath + "/:id").handler(this::get));
+    withFailureHandler(router.route(HttpMethod.PUT, rootPath + "/:id").handler(this::replace));
+    withFailureHandler(router.route(HttpMethod.DELETE, rootPath + "/:id").handler(this::delete));
   }
 
   private void create(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-    Clients clients;
-
-    try {
-      clients = Clients.create(context);
-    }
-    catch (MalformedURLException e) {
-      reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
-
-      return;
-    }
+    Clients clients = Clients.create(context);
 
     JsonObject loan = routingContext.getBodyAsJson();
 
@@ -140,16 +132,7 @@ public class LoanCollectionResource {
 
   private void replace(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-    Clients clients;
-
-    try {
-      clients = Clients.create(context);
-    }
-    catch (MalformedURLException e) {
-      reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
-
-      return;
-    }
+    Clients clients = Clients.create(context);
 
     String id = routingContext.request().getParam("id");
 
@@ -182,16 +165,7 @@ public class LoanCollectionResource {
 
   private void get(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-    Clients clients;
-
-    try {
-      clients = Clients.create(context);
-    }
-    catch (MalformedURLException e) {
-      reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
-
-      return;
-    }
+    Clients clients = Clients.create(context);
 
     String id = routingContext.request().getParam("id");
 
@@ -240,16 +214,7 @@ public class LoanCollectionResource {
 
   private void delete(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-    Clients clients;
-
-    try {
-      clients = Clients.create(context);
-    }
-    catch (MalformedURLException e) {
-      reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
-
-      return;
-    }
+    Clients clients = Clients.create(context);
 
     String id = routingContext.request().getParam("id");
 
@@ -265,16 +230,7 @@ public class LoanCollectionResource {
 
   private void getMany(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-    Clients clients;
-
-    try {
-      clients = Clients.create(context);
-    }
-    catch (MalformedURLException e) {
-      reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
-
-      return;
-    }
+    Clients clients = Clients.create(context);
 
     clients.loansStorage().getMany(routingContext.request().query(), loansResponse -> {
       if(loansResponse.getStatusCode() == 200) {
@@ -377,16 +333,7 @@ public class LoanCollectionResource {
 
   private void empty(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-    Clients clients;
-
-    try {
-      clients = Clients.create(context);
-    }
-    catch (MalformedURLException e) {
-      reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
-
-      return;
-    }
+    Clients clients = Clients.create(context);
 
     clients.loansStorage().delete(response -> {
       if(response.getStatusCode() == 204) {

@@ -1,6 +1,7 @@
 package org.folio.circulation.support.http.server;
 
 import io.vertx.ext.web.RoutingContext;
+import org.folio.circulation.support.InvalidOkapiLocationException;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 
 import java.net.MalformedURLException;
@@ -58,12 +59,18 @@ public class WebContext {
       currentRequestUrl.getPort(), path);
   }
 
-  public OkapiHttpClient createHttpClient()
-    throws MalformedURLException {
+  public OkapiHttpClient createHttpClient() {
+    URL okapiUrl;
+
+    try {
+      okapiUrl = new URL(getOkapiLocation());
+    }
+    catch(MalformedURLException e) {
+      throw new InvalidOkapiLocationException(getOkapiLocation(), e);
+    }
 
     return new OkapiHttpClient(routingContext.vertx().createHttpClient(),
-      new URL(getOkapiLocation()), getTenantId(),
-      getOkapiToken(),
+      okapiUrl, getTenantId(), getOkapiToken(),
       exception -> ServerErrorResponse.internalError(routingContext.response(),
         String.format("Failed to contact storage module: %s",
           exception.toString())));
