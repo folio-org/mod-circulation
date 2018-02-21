@@ -6,6 +6,7 @@ import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.http.server.ForwardResponse;
 import org.folio.circulation.support.http.server.ServerErrorResponse;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
@@ -39,12 +40,13 @@ public class ItemStatusAssistant {
     }
   }
 
-  public static void updateItemStatus(
+  public static CompletableFuture<JsonObject> updateItemStatus(
     String itemId,
     String prospectiveNewStatus,
     CollectionResourceClient itemsStorageClient,
-    HttpServerResponse responseToClient,
-    Consumer<JsonObject> onSuccess) {
+    HttpServerResponse responseToClient) {
+
+    CompletableFuture<JsonObject> onUpdated = new CompletableFuture<>();
 
     itemsStorageClient.get(itemId, getItemResponse -> {
       if(getItemResponse.getStatusCode() == 200) {
@@ -55,14 +57,14 @@ public class ItemStatusAssistant {
           itemsStorageClient.put(itemId,
             item, putItemResponse -> {
               if(putItemResponse.getStatusCode() == 204) {
-                onSuccess.accept(item);
+                onUpdated.complete(item);
               }
               else {
                 ForwardResponse.forward(responseToClient, putItemResponse);
               }
             });
         } else {
-          onSuccess.accept(item);
+          onUpdated.complete(item);
         }
       }
       else if(getItemResponse.getStatusCode() == 404) {
@@ -73,6 +75,8 @@ public class ItemStatusAssistant {
         ForwardResponse.forward(responseToClient, getItemResponse);
       }
     });
+
+    return onUpdated;
   }
 
   private static boolean statusNeedsChanging(JsonObject item, String prospectiveNewStatus) {
