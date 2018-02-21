@@ -1,6 +1,7 @@
 package org.folio.circulation.support.http.server;
 
 import io.vertx.ext.web.RoutingContext;
+import org.folio.circulation.support.http.client.OkapiHttpClient;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -55,5 +56,16 @@ public class WebContext {
 
     return new URL(currentRequestUrl.getProtocol(), currentRequestUrl.getHost(),
       currentRequestUrl.getPort(), path);
+  }
+
+  public OkapiHttpClient createHttpClient()
+    throws MalformedURLException {
+
+    return new OkapiHttpClient(routingContext.vertx().createHttpClient(),
+      new URL(getOkapiLocation()), getTenantId(),
+      getOkapiToken(),
+      exception -> ServerErrorResponse.internalError(routingContext.response(),
+        String.format("Failed to contact storage module: %s",
+          exception.toString())));
   }
 }
