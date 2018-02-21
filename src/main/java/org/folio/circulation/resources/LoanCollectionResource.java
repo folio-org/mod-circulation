@@ -86,7 +86,7 @@ public class LoanCollectionResource {
         updateItemStatus(itemId, itemStatusFrom(loan),
           clients.itemsStorage(), routingContext.response(), updatedItem -> {
 
-          loan.put("itemStatus", updatedItem.getJsonObject("status").getString("name"));
+          loan.put("itemStatus", getItemStatus(updatedItem));
 
           lookupLoanPolicyId(loan, updatedItem, holding, clients.usersStorage(),
             clients.loanRules(), routingContext.response(), loanPolicyIdJson -> {
@@ -146,7 +146,7 @@ public class LoanCollectionResource {
 
     updateItemStatus(itemId, itemStatusFrom(loan),
       clients.itemsStorage(), routingContext.response(), item -> {
-        storageLoan.put("itemStatus", item.getJsonObject("status").getString("name"));
+        storageLoan.put("itemStatus", getItemStatus(item));
         clients.loansStorage().put(id, storageLoan, response -> {
           if(response.getStatusCode() == 204) {
             SuccessResponse.noContent(routingContext.response());
@@ -503,5 +503,9 @@ public class LoanCollectionResource {
     else {
       return null;
     }
+  }
+
+  private String getItemStatus(JsonObject item) {
+    return item.getJsonObject("status").getString("name");
   }
 }
