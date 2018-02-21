@@ -77,9 +77,7 @@ public class RequestCollectionResource {
 
     String itemId = getItemId(request);
 
-    InventoryFetcher inventoryFetcher = new InventoryFetcher(
-      clients.itemsStorage(), clients.holdingsStorage(),
-      clients.instancesStorage());
+    InventoryFetcher inventoryFetcher = InventoryFetcher.create(clients);
 
     CompletableFuture<InventoryRecords> inventoryRecordsCompleted
       = inventoryFetcher.fetch(itemId, t ->
@@ -163,9 +161,7 @@ public class RequestCollectionResource {
 
     String itemId = getItemId(request);
 
-    InventoryFetcher inventoryFetcher = new InventoryFetcher(
-      clients.itemsStorage(), clients.holdingsStorage(),
-      clients.instancesStorage());
+    InventoryFetcher inventoryFetcher = InventoryFetcher.create(clients);
 
     CompletableFuture<InventoryRecords> inventoryRecordsCompleted
       = inventoryFetcher.fetch(itemId, t ->
@@ -229,11 +225,10 @@ public class RequestCollectionResource {
       if(requestResponse.getStatusCode() == 200) {
         JsonObject request = requestResponse.getJson();
 
-        InventoryFetcher fetcher = new InventoryFetcher(clients.itemsStorage(),
-          clients.holdingsStorage(), clients.instancesStorage());
+        InventoryFetcher inventoryFetcher = InventoryFetcher.create(clients);
 
         CompletableFuture<InventoryRecords> inventoryRecordsCompleted =
-          fetcher.fetch(getItemId(request), t ->
+          inventoryFetcher.fetch(getItemId(request), t ->
             reportFailureToFetchInventoryRecords(routingContext, t));
 
         inventoryRecordsCompleted.thenAccept(r -> {
@@ -309,8 +304,7 @@ public class RequestCollectionResource {
           .filter(Objects::nonNull)
           .collect(Collectors.toList());
 
-        InventoryFetcher inventoryFetcher = new InventoryFetcher(clients.itemsStorage(),
-          clients.holdingsStorage(), clients.instancesStorage());
+        InventoryFetcher inventoryFetcher = InventoryFetcher.create(clients);
 
         CompletableFuture<MultipleInventoryRecords> inventoryRecordsFetched =
           inventoryFetcher.fetch(itemIds, e ->

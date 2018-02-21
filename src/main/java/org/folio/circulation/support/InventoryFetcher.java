@@ -15,6 +15,11 @@ public class InventoryFetcher {
   private final CollectionResourceClient holdingsClient;
   private final CollectionResourceClient instancesClient;
 
+  public static InventoryFetcher create(Clients clients) {
+    return new InventoryFetcher(clients.itemsStorage(),
+      clients.holdingsStorage(), clients.instancesStorage());
+  }
+
   public InventoryFetcher(
     CollectionResourceClient itemsClient,
     CollectionResourceClient holdingsClient,
