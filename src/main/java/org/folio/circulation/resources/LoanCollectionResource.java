@@ -83,12 +83,12 @@ public class LoanCollectionResource {
         reportItemRelatedValidationError(routingContext, itemId, "Item does not exist");
       }
       else {
-        updateItemStatus(itemId, itemStatusFrom(loan),
-          clients.itemsStorage(), routingContext.response(), updatedItem -> {
+        updateItemStatus(item, itemStatusFrom(loan),
+          clients.itemsStorage(), routingContext.response(), vv -> {
 
-          loan.put("itemStatus", getItemStatus(updatedItem));
+          loan.put("itemStatus", getItemStatus(item));
 
-          lookupLoanPolicyId(loan, updatedItem, holding, clients.usersStorage(),
+          lookupLoanPolicyId(loan, item, holding, clients.usersStorage(),
             clients.loanRules(), routingContext.response(), loanPolicyIdJson -> {
 
             loan.put("loanPolicyId", loanPolicyIdJson.getString("loanPolicyId"));
@@ -97,12 +97,12 @@ public class LoanCollectionResource {
               if(response.getStatusCode() == 201) {
                 JsonObject createdLoan = response.getJson();
 
-                final String locationId = determineLocationIdForItem(updatedItem, holding);
+                final String locationId = determineLocationIdForItem(item, holding);
 
                 clients.locationsStorage().get(locationId, locationResponse -> {
                   if(locationResponse.getStatusCode() == 200) {
                     JsonResponse.created(routingContext.response(),
-                      extendedLoan(createdLoan, updatedItem, holding, instance,
+                      extendedLoan(createdLoan, item, holding, instance,
                         locationResponse.getJson()));
                   }
                   else {

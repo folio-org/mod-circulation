@@ -13,6 +13,32 @@ import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT_HELD;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT_RECALLED;
 
 public class ItemStatusAssistant {
+  private ItemStatusAssistant() { }
+
+  public static void updateItemStatus(
+    JsonObject item,
+    String prospectiveNewStatus,
+    CollectionResourceClient itemsStorageClient,
+    HttpServerResponse responseToClient,
+    Consumer<Void> onSuccess) {
+
+    if (statusNeedsChanging(item, prospectiveNewStatus)) {
+      item.put("status", new JsonObject().put("name", prospectiveNewStatus));
+
+      itemsStorageClient.put(item.getString("id"),
+        item, putItemResponse -> {
+          if(putItemResponse.getStatusCode() == 204) {
+            onSuccess.accept(null);
+          }
+          else {
+            ForwardResponse.forward(responseToClient, putItemResponse);
+          }
+        });
+    } else {
+      onSuccess.accept(null);
+    }
+  }
+
   public static void updateItemStatus(
     String itemId,
     String prospectiveNewStatus,
@@ -49,7 +75,7 @@ public class ItemStatusAssistant {
     });
   }
 
-  public static boolean statusNeedsChanging(JsonObject item, String prospectiveNewStatus) {
+  private static boolean statusNeedsChanging(JsonObject item, String prospectiveNewStatus) {
     String currentStatus = item.getJsonObject("status").getString("name");
 
     // More specific status is ok to retain (will likely be different in each context)

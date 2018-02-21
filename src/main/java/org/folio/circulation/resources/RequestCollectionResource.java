@@ -98,8 +98,8 @@ public class RequestCollectionResource {
         reportItemRelatedValidationError(routingContext, itemId, "Item does not exist");
       }
       else if (RequestType.from(request).canCreateRequestForItem(item)) {
-        updateItemStatus(itemId, RequestType.from(request).toItemStatus(),
-          clients.itemsStorage(), routingContext.response(), updatedItem ->
+        updateItemStatus(item, RequestType.from(request).toItemStatus(),
+          clients.itemsStorage(), routingContext.response(), vv ->
             updateLoanActionHistory(itemId,
             RequestType.from(request).toLoanAction(), RequestType.from(request).toItemStatus(),
               clients.loansStorage(), routingContext.response(), vo -> {
