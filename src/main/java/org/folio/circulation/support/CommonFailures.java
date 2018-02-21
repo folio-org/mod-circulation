@@ -1,8 +1,6 @@
 package org.folio.circulation.support;
 
-import io.vertx.ext.web.Route;
 import io.vertx.ext.web.RoutingContext;
-import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.http.server.JsonResponse;
 import org.folio.circulation.support.http.server.ServerErrorResponse;
 
@@ -26,23 +24,4 @@ public class CommonFailures {
       reason, "itemId", itemId);
   }
 
-  public static Route withFailureHandler(Route route) {
-    return route.failureHandler(CommonFailures::respondWithFailureReason);
-  }
-
-  public static void respondWithFailureReason(RoutingContext context) {
-    Throwable failure = context.failure();
-
-    if(failure != null) {
-      if(StringUtils.isNotBlank(failure.getMessage())) {
-        ServerErrorResponse.internalError(context.response(), failure.getMessage());
-      }
-      else {
-        ServerErrorResponse.internalError(context.response(), failure.toString());
-      }
-    }
-    else {
-      ServerErrorResponse.internalError(context.response(), "Unknown failure occurred");
-    }
-  }
 }

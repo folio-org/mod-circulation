@@ -1,10 +1,8 @@
 package org.folio.circulation.resources;
 
-import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.handler.BodyHandler;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.*;
@@ -21,7 +19,8 @@ import java.util.stream.Collectors;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.ItemStatusAssistant.updateItemStatus;
 import static org.folio.circulation.domain.LoanActionHistoryAssistant.updateLoanActionHistory;
-import static org.folio.circulation.support.CommonFailures.*;
+import static org.folio.circulation.support.CommonFailures.reportFailureToFetchInventoryRecords;
+import static org.folio.circulation.support.CommonFailures.reportItemRelatedValidationError;
 import static org.folio.circulation.support.JsonPropertyCopier.copyStringIfExists;
 
 public class RequestCollectionResource {
@@ -32,16 +31,14 @@ public class RequestCollectionResource {
   }
 
   public void register(Router router) {
-    router.post(rootPath + "*").handler(BodyHandler.create());
-    router.put(rootPath + "*").handler(BodyHandler.create());
+    RouteRegistration routeRegistration = new RouteRegistration(rootPath, router);
 
-    withFailureHandler(router.post(rootPath).handler(this::create));
-    withFailureHandler(router.get(rootPath).handler(this::getMany));
-    withFailureHandler(router.delete(rootPath).handler(this::empty));
-
-    withFailureHandler(router.route(HttpMethod.GET, rootPath + "/:id").handler(this::get));
-    withFailureHandler(router.route(HttpMethod.PUT, rootPath + "/:id").handler(this::replace));
-    withFailureHandler(router.route(HttpMethod.DELETE, rootPath + "/:id").handler(this::delete));
+    routeRegistration.create(this::create);
+    routeRegistration.get(this::get);
+    routeRegistration.getMany(this::getMany);
+    routeRegistration.replace(this::replace);
+    routeRegistration.delete(this::delete);
+    routeRegistration.deleteAll(this::empty);
   }
 
   private void create(RoutingContext routingContext) {
