@@ -137,15 +137,8 @@ public class LoanCollectionResource {
 
     String itemId = loan.getString("itemId");
 
-    //TODO: Either converge the schema (based upon conversations about sharing
-    // schema and including referenced resources or switch to include properties
-    // rather than exclude properties
-    JsonObject storageLoan = loan.copy();
-    storageLoan.remove("item");
-    storageLoan.remove("itemStatus");
-
     updateItemStatus(itemId, itemStatusFrom(loan), clients.itemsStorage(), routingContext.response())
-      .thenApply(updatedItem -> updateLoan(routingContext, clients, id, storageLoan, updatedItem))
+      .thenApply(updatedItem -> updateLoan(routingContext, clients, id, loan, updatedItem))
       .thenAccept(updatedLoan -> SuccessResponse.noContent(routingContext.response()));
   }
 
@@ -504,12 +497,12 @@ public class LoanCollectionResource {
     RoutingContext routingContext,
     Clients clients,
     String id,
-    JsonObject storageLoan,
+    JsonObject loan,
     JsonObject item) {
 
     CompletableFuture<JsonObject> onUpdated = new CompletableFuture<>();
 
-    storageLoan.put("itemStatus", getItemStatus(item));
+    JsonObject storageLoan = convertLoanToStorageRepresentation(loan, item);
 
     clients.loansStorage().put(id, storageLoan, response -> {
       if (response.getStatusCode() == 204) {
@@ -520,5 +513,18 @@ public class LoanCollectionResource {
     });
 
     return onUpdated;
+  }
+
+  private JsonObject convertLoanToStorageRepresentation(
+    JsonObject loan,
+    JsonObject item) {
+
+    JsonObject storageLoan = loan.copy();
+
+    storageLoan.remove("item");
+    storageLoan.remove("itemStatus");
+    storageLoan.put("itemStatus", getItemStatus(item));
+
+    return storageLoan;
   }
 }
