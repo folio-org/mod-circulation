@@ -145,7 +145,8 @@ public class LoanCollectionResource {
     storageLoan.remove("itemStatus");
 
     updateItemStatus(itemId, itemStatusFrom(loan), clients.itemsStorage(), routingContext.response())
-      .thenAccept(item -> updateLoan(routingContext, clients, id, storageLoan, item));
+      .thenApply(updatedItem -> updateLoan(routingContext, clients, id, storageLoan, updatedItem))
+      .thenAccept(updatedLoan -> SuccessResponse.noContent(routingContext.response()));
   }
 
   private void get(RoutingContext routingContext) {
@@ -499,21 +500,25 @@ public class LoanCollectionResource {
     return item.getJsonObject("status").getString("name");
   }
 
-  private void updateLoan(
+  private CompletableFuture<JsonObject> updateLoan(
     RoutingContext routingContext,
     Clients clients,
     String id,
     JsonObject storageLoan,
     JsonObject item) {
 
+    CompletableFuture<JsonObject> onUpdated = new CompletableFuture<>();
+
     storageLoan.put("itemStatus", getItemStatus(item));
 
     clients.loansStorage().put(id, storageLoan, response -> {
       if (response.getStatusCode() == 204) {
-        SuccessResponse.noContent(routingContext.response());
+        onUpdated.complete(storageLoan);
       } else {
         ForwardResponse.forward(routingContext.response(), response);
       }
     });
+
+    return onUpdated;
   }
 }
