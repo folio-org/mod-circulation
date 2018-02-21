@@ -5,6 +5,7 @@ import org.folio.circulation.api.support.http.ResourceClient;
 import org.folio.circulation.support.http.client.IndividualResource;
 
 import java.net.MalformedURLException;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -27,6 +28,22 @@ public class RequestsFixture {
     return requestsClient.create(new RequestBuilder()
       .hold()
       .fulfilToHoldShelf()
+      .withItemId(item.getId())
+      .withRequesterId(by.getId()));
+  }
+
+  public IndividualResource placeDeliveryRequest(
+    IndividualResource item,
+    IndividualResource by)
+
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return requestsClient.create(new RequestBuilder()
+      .hold()
+      .deliverToAddress(UUID.randomUUID())
       .withItemId(item.getId())
       .withRequesterId(by.getId()));
   }

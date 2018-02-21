@@ -1,3 +1,8 @@
+## 7.3.0 Unreleased
+
+* Defaults request `status` to `Open - Not yet filled` (CIRC-53)
+* Updates request `status` for hold shelf delivery to `Open - Awaiting pickup` on check in (CIRC-53)
+
 ## 7.2.0 Unreleased
 
 * Adds `status` property to requests (CIRC-53)

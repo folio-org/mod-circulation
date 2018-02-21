@@ -90,6 +90,8 @@
           ],
           "modulePermissions": [
             "circulation-storage.loans.item.put",
+            "circulation-storage.requests.item.put",
+            "circulation-storage.requests.collection.get",
             "inventory-storage.items.item.get",
             "inventory-storage.items.item.put"
           ]

@@ -3,10 +3,12 @@ package org.folio.circulation.api;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.CirculationVerticle;
-import org.folio.circulation.api.support.fakes.FakeOkapi;
 import org.folio.circulation.api.loans.*;
 import org.folio.circulation.api.requests.*;
+import org.folio.circulation.api.requests.scenarios.SingleOpenDeliveryRequestTests;
+import org.folio.circulation.api.requests.scenarios.SingleOpenHoldShelfRequestTests;
 import org.folio.circulation.api.support.builders.UserBuilder;
+import org.folio.circulation.api.support.fakes.FakeOkapi;
 import org.folio.circulation.api.support.http.ResourceClient;
 import org.folio.circulation.api.support.http.URLHelper;
 import org.folio.circulation.support.VertxAssistant;
@@ -52,6 +54,8 @@ import java.util.function.Consumer;
   RequestsAPILoanHistoryTests.class,
   RequestsAPITitleTests.class,
   RequestsAPIRelatedRecordsTests.class,
+  SingleOpenHoldShelfRequestTests.class,
+  SingleOpenDeliveryRequestTests.class,
 })
 public class APITestSuite {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
