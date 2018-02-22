@@ -5,17 +5,14 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.domain.RequestFulfilmentPreference;
-import org.folio.circulation.domain.RequestStatus;
+import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.UnsupportedEncodingException;
 import java.lang.invoke.MethodHandles;
-import java.net.URLEncoder;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -140,9 +137,11 @@ public class LoanCollectionResource {
 
     String itemId = loan.getString("itemId");
 
+    final RequestQueue requestQueue = new RequestQueue();
+
     updateItemStatus(itemId, itemStatusFrom(loan), clients.itemsStorage(), routingContext.response())
       .thenApply(updatedItem -> updateLoan(routingContext, clients, id, loan, updatedItem)
-      .thenApply(updatedLoan -> updateRequestQueue(clients, loan, reportFailureToClient(routingContext))
+      .thenApply(updatedLoan -> requestQueue.updateRequestQueue(clients, loan, reportFailureToClient(routingContext))
       .thenAccept(updatedRequest -> SuccessResponse.noContent(routingContext.response()))));
   }
 
@@ -517,65 +516,6 @@ public class LoanCollectionResource {
     });
 
     return onUpdated;
-  }
-
-  private CompletableFuture<JsonObject> updateRequestQueue(
-    Clients clients,
-    JsonObject loan,
-    Consumer<String> failureConsumer) {
-
-    CompletableFuture<JsonObject> requestUpdated = new CompletableFuture<>();
-
-    final String cqlQuery;
-
-    try {
-      cqlQuery = URLEncoder.encode(String.format("itemId==%s and fulfilmentPreference==%s",
-        loan.getString("itemId"), RequestFulfilmentPreference.HOLD_SHELF), "UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      failureConsumer.accept("Failed to encode CQL query for fetching request queue");
-      requestUpdated.completeExceptionally(e);
-      return requestUpdated;
-    }
-
-    clients.requestsStorage().getMany(cqlQuery, 1000, 0, fetchRequestsResponse -> {
-      if(fetchRequestsResponse.getStatusCode() == 200) {
-        final List<JsonObject> requestQueue = JsonArrayHelper.toList(
-          fetchRequestsResponse.getJson().getJsonArray("requests"));
-
-        if(hasOutstandingRequests(requestQueue)) {
-          JsonObject firstRequest = requestQueue.get(0);
-
-          firstRequest.put("status", RequestStatus.OPEN_AWAITING_PICKUP);
-
-          clients.requestsStorage().put(firstRequest.getString("id"), firstRequest,
-            updateRequestResponse -> {
-
-            if(updateRequestResponse.getStatusCode() == 204) {
-              requestUpdated.complete(firstRequest);
-            }
-            else {
-              failureConsumer.accept(
-                String.format("Failed to update request: %s: %s",
-                  updateRequestResponse.getStatusCode(), updateRequestResponse.getBody()));
-            }
-          });
-        }
-        else {
-          requestUpdated.complete(null);
-        }
-      }
-      else {
-        failureConsumer.accept(
-          String.format("Failed to fetch request queue: %s: %s",
-            fetchRequestsResponse.getStatusCode(), fetchRequestsResponse.getBody()));
-      }
-    });
-
-    return requestUpdated;
-  }
-
-  private boolean hasOutstandingRequests(List<JsonObject> requestQueue) {
-    return !requestQueue.isEmpty();
   }
 
   private JsonObject convertLoanToStorageRepresentation(
