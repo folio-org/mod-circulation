@@ -1,5 +1,6 @@
 package org.folio.circulation.support;
 
+import io.vertx.core.http.HttpServerResponse;
 import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.support.http.server.JsonResponse;
 import org.folio.circulation.support.http.server.ServerErrorResponse;
@@ -9,10 +10,8 @@ import java.util.function.Consumer;
 public class CommonFailures {
   private CommonFailures() { }
 
-  public static Consumer<String> reportFailureToClient(
-    RoutingContext routingContext) {
-
-    return f -> ServerErrorResponse.internalError(routingContext.response(), f);
+  public static Consumer<String> reportFailureToClient(HttpServerResponse response) {
+    return f -> ServerErrorResponse.internalError(response, f);
   }
 
   public static void reportFailureToFetchInventoryRecords(

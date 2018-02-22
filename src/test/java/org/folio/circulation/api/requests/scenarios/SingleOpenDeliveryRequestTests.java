@@ -36,4 +36,29 @@ public class SingleOpenDeliveryRequestTests extends APITests {
 
     assertThat(request.getJson().getString("status"), is(OPEN_NOT_YET_FILLED));
   }
+
+  @Test
+  public void statusDoesNotChangeWhenItemCheckedOutToRequester()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource james = usersFixture.james();
+    IndividualResource jessica = usersFixture.jessica();
+
+    IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
+
+    IndividualResource requestByJessica = requestsFixture.placeDeliveryRequest(
+      smallAngryPlanet, jessica);
+
+    loansFixture.checkIn(loanToJames);
+
+    loansFixture.checkOut(smallAngryPlanet, jessica);
+
+    Response request = requestsClient.getById(requestByJessica.getId());
+
+    assertThat(request.getJson().getString("status"), is(OPEN_NOT_YET_FILLED));
+  }
 }
