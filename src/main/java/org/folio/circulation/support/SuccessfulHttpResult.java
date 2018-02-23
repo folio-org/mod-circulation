@@ -1,5 +1,8 @@
 package org.folio.circulation.support;
 
+import io.vertx.core.http.HttpServerResponse;
+import org.folio.circulation.support.http.server.SuccessResponse;
+
 public class SuccessfulHttpResult<T> implements HttpResult<T> {
   private final T value;
 
@@ -15,6 +18,11 @@ public class SuccessfulHttpResult<T> implements HttpResult<T> {
   @Override
   public HttpFailure cause() {
     return null;
+  }
+
+  @Override
+  public void writeNoContentSuccess(HttpServerResponse response) {
+    SuccessResponse.noContent(response);
   }
 
   @Override

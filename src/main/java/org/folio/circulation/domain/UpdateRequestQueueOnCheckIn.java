@@ -1,0 +1,41 @@
+package org.folio.circulation.domain;
+
+import io.vertx.core.json.JsonObject;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.ServerErrorFailure;
+
+import java.util.concurrent.CompletableFuture;
+
+public class UpdateRequestQueueOnCheckIn {
+  private final Clients clients;
+
+  public UpdateRequestQueueOnCheckIn(Clients clients) {
+    this.clients = clients;
+  }
+
+  public CompletableFuture<HttpResult<JsonObject>> apply(RequestQueue requestQueue) {
+    CompletableFuture<HttpResult<JsonObject>> requestUpdated = new CompletableFuture<>();
+
+    if (requestQueue.hasOutstandingRequests()) {
+      JsonObject firstRequest = requestQueue.getFirst();
+
+      firstRequest.put("status", RequestStatus.OPEN_AWAITING_PICKUP);
+
+      clients.requestsStorage().put(firstRequest.getString("id"), firstRequest,
+        updateRequestResponse -> {
+          if (updateRequestResponse.getStatusCode() == 204) {
+            requestUpdated.complete(HttpResult.success(firstRequest));
+          } else {
+            requestUpdated.complete(HttpResult.failure(new ServerErrorFailure(
+              String.format("Failed to update request: %s: %s",
+                updateRequestResponse.getStatusCode(), updateRequestResponse.getBody()))));
+          }
+        });
+    } else {
+      requestUpdated.complete(HttpResult.success(null));
+    }
+
+    return requestUpdated;
+  }
+}

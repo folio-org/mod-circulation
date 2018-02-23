@@ -1,10 +1,7 @@
 package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.JsonArrayHelper;
-import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.*;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -21,31 +18,6 @@ public class RequestQueueFetcher {
   public RequestQueueFetcher(Clients clients, Consumer<String> failureConsumer) {
     this.clients = clients;
     this.failureConsumer = failureConsumer;
-  }
-
-  public CompletableFuture<JsonObject> updateOnCheckIn(RequestQueue requestQueue) {
-    CompletableFuture<JsonObject> requestUpdated = new CompletableFuture<>();
-
-    if (requestQueue.hasOutstandingRequests()) {
-      JsonObject firstRequest = requestQueue.getFirst();
-
-      firstRequest.put("status", RequestStatus.OPEN_AWAITING_PICKUP);
-
-      this.clients.requestsStorage().put(firstRequest.getString("id"), firstRequest,
-        updateRequestResponse -> {
-          if (updateRequestResponse.getStatusCode() == 204) {
-            requestUpdated.complete(firstRequest);
-          } else {
-            failureConsumer.accept(
-              String.format("Failed to update request: %s: %s",
-                updateRequestResponse.getStatusCode(), updateRequestResponse.getBody()));
-          }
-        });
-    } else {
-      requestUpdated.complete(null);
-    }
-
-    return requestUpdated;
   }
 
   public CompletableFuture<JsonObject> updateOnCheckOut(JsonObject loan) {

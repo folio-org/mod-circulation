@@ -7,6 +7,7 @@ import io.vertx.ext.web.RoutingContext;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestQueueFetcher;
+import org.folio.circulation.domain.UpdateRequestQueueOnCheckIn;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.*;
@@ -160,11 +161,15 @@ public class LoanCollectionResource {
         fetchRequestQueueResult.cause().writeTo(routingContext.response());
       }
 
-      updateItemStatus(itemId, itemStatusFrom(loan), clients.itemsStorage(), routingContext.response())
-        .thenApply(updatedItem -> updateLoan(routingContext, clients, id, loan, updatedItem)
-          .thenApply(updatedLoan -> requestQueueFetcher.updateOnCheckIn(fetchRequestQueueResult.value())
-            .thenAccept(updatedRequest -> SuccessResponse.noContent(routingContext.response()))));
+      final UpdateRequestQueueOnCheckIn requestQueueUpdate =
+        new UpdateRequestQueueOnCheckIn(clients);
 
+      updateItemStatus(itemId, itemStatusFrom(loan), clients.itemsStorage(),
+        routingContext.response())
+        .thenApply(updatedItem -> updateLoan(routingContext, clients, id, loan, updatedItem)
+        .thenApply(updatedLoan -> requestQueueUpdate.apply(fetchRequestQueueResult.value())
+        .thenAccept(updatedRequest -> updatedRequest.writeNoContentSuccess(
+          routingContext.response()))));
     });
   }
 
