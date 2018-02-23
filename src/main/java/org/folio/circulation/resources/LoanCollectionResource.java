@@ -6,6 +6,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.RequestQueue;
+import org.folio.circulation.domain.RequestQueueFetcher;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.*;
@@ -131,10 +132,10 @@ public class LoanCollectionResource {
     HttpServerResponse response,
     Consumer<JsonObject> onSuccess) {
 
-    final RequestQueue requestQueue = new RequestQueue(clients,
+    final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients,
       reportFailureToClient(response));
 
-    requestQueue.updateOnCheckOut(loan).thenAccept(onSuccess);
+    requestQueueFetcher.updateOnCheckOut(loan).thenAccept(onSuccess);
   }
 
   private void replace(RoutingContext routingContext) {
@@ -149,13 +150,22 @@ public class LoanCollectionResource {
 
     String itemId = loan.getString("itemId");
 
-    final RequestQueue requestQueue = new RequestQueue(clients,
+    final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients,
       reportFailureToClient(routingContext.response()));
 
-    updateItemStatus(itemId, itemStatusFrom(loan), clients.itemsStorage(), routingContext.response())
-      .thenApply(updatedItem -> updateLoan(routingContext, clients, id, loan, updatedItem)
-      .thenApply(updatedLoan -> requestQueue.updateOnCheckIn(loan)
-      .thenAccept(updatedRequest -> SuccessResponse.noContent(routingContext.response()))));
+    CompletableFuture<HttpResult<RequestQueue>> requestQueueFetched = requestQueueFetcher.get(itemId);
+
+    requestQueueFetched.thenAccept(fetchRequestQueueResult -> {
+      if(fetchRequestQueueResult.failed()) {
+        fetchRequestQueueResult.cause().writeTo(routingContext.response());
+      }
+
+      updateItemStatus(itemId, itemStatusFrom(loan), clients.itemsStorage(), routingContext.response())
+        .thenApply(updatedItem -> updateLoan(routingContext, clients, id, loan, updatedItem)
+          .thenApply(updatedLoan -> requestQueueFetcher.updateOnCheckIn(fetchRequestQueueResult.value())
+            .thenAccept(updatedRequest -> SuccessResponse.noContent(routingContext.response()))));
+
+    });
   }
 
   private void get(RoutingContext routingContext) {
