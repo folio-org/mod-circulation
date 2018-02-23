@@ -10,11 +10,11 @@ public class RequestQueue {
     this.requests = requests;
   }
 
-  boolean hasOutstandingRequests() {
+  public boolean hasOutstandingRequests() {
     return !requests.isEmpty();
   }
 
-  public JsonObject getFirst() {
+  public JsonObject getHighestPriority() {
     return requests.get(0);
   }
 }

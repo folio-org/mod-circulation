@@ -27,6 +27,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.ItemStatusAssistant.updateItemStatus;
+import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
 
 public class LoanCollectionResource {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -69,9 +70,10 @@ public class LoanCollectionResource {
 
     completedFuture(HttpResult.success(new LoanAndRelatedRecords(loan)))
       .thenCombineAsync(inventoryFetcher.fetch(loan), this::addInventoryRecords)
-      .thenApply(this::refuseLoanForItemThatDoesNotExist)
+      .thenApply(this::refuseWhenItemDoesNotExist)
       .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
       .thenCombineAsync(getUser(requestingUserId, clients.usersStorage()), this::addUser)
+      .thenApply(this::refuseWhenUserIsNotAwaitingPickup)
       .thenComposeAsync(r -> r.after(records -> getLocation(records, clients)))
       .thenComposeAsync(r -> r.after(records -> updateItemStatus(records,
         itemStatusFrom(loan), clients.itemsStorage())))
@@ -151,7 +153,7 @@ public class LoanCollectionResource {
       .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
   }
 
-  private HttpResult<LoanAndRelatedRecords> refuseLoanForItemThatDoesNotExist(
+  private HttpResult<LoanAndRelatedRecords> refuseWhenItemDoesNotExist(
     HttpResult<LoanAndRelatedRecords> result) {
 
     return result.next(loan -> {
@@ -163,6 +165,47 @@ public class LoanCollectionResource {
         return result;
       }
     });
+  }
+
+  private HttpResult<LoanAndRelatedRecords> refuseWhenUserIsNotAwaitingPickup(
+    HttpResult<LoanAndRelatedRecords> result) {
+
+    return result.next(loan -> {
+      final RequestQueue requestQueue = loan.requestQueue;
+      final JsonObject requestingUser = loan.requestingUser;
+
+      if(hasAwaitingPickupRequestForOtherPatron(requestQueue, requestingUser)) {
+        return HttpResult.failure(new ValidationErrorFailure(
+          "User checking out must be requester awaiting pickup",
+          "userId", loan.loan.getString("userId")));
+      }
+      else {
+        return result;
+      }
+    });
+  }
+
+  private boolean hasAwaitingPickupRequestForOtherPatron(
+    RequestQueue requestQueue,
+    JsonObject requestingUser) {
+
+    if(!requestQueue.hasOutstandingRequests()) {
+      return false;
+    }
+    else {
+      final JsonObject highestPriority = requestQueue.getHighestPriority();
+
+      return isAwaitingPickup(highestPriority)
+        && !isFor(highestPriority, requestingUser);
+    }
+  }
+
+  private boolean isFor(JsonObject request, JsonObject user) {
+    return StringUtils.equals(request.getString("requesterId"), user.getString("id"));
+  }
+
+  private boolean isAwaitingPickup(JsonObject highestPriority) {
+    return StringUtils.equals(highestPriority.getString("status"), OPEN_AWAITING_PICKUP);
   }
 
   private void replace(RoutingContext routingContext) {
@@ -182,7 +225,7 @@ public class LoanCollectionResource {
 
     completedFuture(HttpResult.success(new LoanAndRelatedRecords(loan)))
       .thenCombineAsync(inventoryFetcher.fetch(loan), this::addInventoryRecords)
-      .thenApply(this::refuseLoanForItemThatDoesNotExist)
+      .thenApply(this::refuseWhenItemDoesNotExist)
       .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
       .thenComposeAsync(relatedRecordsResult -> relatedRecordsResult.after(relatedRecords1 ->
         updateItemStatus(relatedRecordsResult.value(), itemStatusFrom(loan), clients.itemsStorage())))
