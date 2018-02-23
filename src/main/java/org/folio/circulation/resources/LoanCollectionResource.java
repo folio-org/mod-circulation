@@ -7,7 +7,7 @@ import io.vertx.ext.web.RoutingContext;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestQueueFetcher;
-import org.folio.circulation.domain.UpdateRequestQueueOnCheckIn;
+import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.*;
@@ -64,8 +64,13 @@ public class LoanCollectionResource {
       = inventoryFetcher.fetch(itemId, t ->
       reportFailureToFetchInventoryRecords(routingContext, t));
 
+    RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
+
+    CompletableFuture<HttpResult<RequestQueue>> requestQueueCompleted
+      = requestQueueFetcher.get(itemId);
+
     CompletableFuture<Void> allCompleted = CompletableFuture.allOf(
-      inventoryRecordsCompleted);
+      inventoryRecordsCompleted, requestQueueCompleted);
 
     allCompleted.exceptionally(t -> {
       ServerErrorResponse.internalError(routingContext.response(),
@@ -81,10 +86,17 @@ public class LoanCollectionResource {
       JsonObject holding = inventoryRecords.getHolding();
       JsonObject instance = inventoryRecords.getInstance();
 
+      final HttpResult<RequestQueue> requestQueueResult = requestQueueCompleted.join();
+
       if(item == null) {
         reportItemRelatedValidationError(routingContext, itemId, "Item does not exist");
       }
+      else if(requestQueueResult.failed()) {
+        requestQueueResult.cause().writeTo(routingContext.response());
+      }
       else {
+        final RequestQueue requestQueue = requestQueueResult.value();
+
         updateItemStatus(item, itemStatusFrom(loan),
           clients.itemsStorage(), routingContext.response(), vv -> {
 
@@ -95,7 +107,14 @@ public class LoanCollectionResource {
 
             loan.put("loanPolicyId", loanPolicyIdJson.getString("loanPolicyId"));
 
-            updateRequestToBeFulfilled(loan, clients, routingContext.response(), vvv -> {
+            final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(clients);
+
+            updateRequestQueue.onCheckOut(requestQueue).thenAccept(result -> {
+              if(result.failed()) {
+                result.cause().writeTo(routingContext.response());
+                return;
+              }
+
               clients.loansStorage().post(loan, response -> {
                 if (response.getStatusCode() == 201) {
                   JsonObject createdLoan = response.getJson();
@@ -127,18 +146,6 @@ public class LoanCollectionResource {
     });
   }
 
-  private void updateRequestToBeFulfilled(
-    JsonObject loan,
-    Clients clients,
-    HttpServerResponse response,
-    Consumer<JsonObject> onSuccess) {
-
-    final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients,
-      reportFailureToClient(response));
-
-    requestQueueFetcher.updateOnCheckOut(loan).thenAccept(onSuccess);
-  }
-
   private void replace(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context);
@@ -151,8 +158,8 @@ public class LoanCollectionResource {
 
     String itemId = loan.getString("itemId");
 
-    final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients,
-      reportFailureToClient(routingContext.response()));
+    final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
+    final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
 
     CompletableFuture<HttpResult<RequestQueue>> requestQueueFetched = requestQueueFetcher.get(itemId);
 
@@ -160,14 +167,11 @@ public class LoanCollectionResource {
       if(fetchRequestQueueResult.failed()) {
         fetchRequestQueueResult.cause().writeTo(routingContext.response());
       }
-
-      final UpdateRequestQueueOnCheckIn requestQueueUpdate =
-        new UpdateRequestQueueOnCheckIn(clients);
-
+      
       updateItemStatus(itemId, itemStatusFrom(loan), clients.itemsStorage(),
         routingContext.response())
         .thenApply(updatedItem -> updateLoan(routingContext, clients, id, loan, updatedItem)
-        .thenApply(updatedLoan -> requestQueueUpdate.apply(fetchRequestQueueResult.value())
+        .thenApply(updatedLoan -> requestQueueUpdate.onCheckIn(fetchRequestQueueResult.value())
         .thenAccept(updatedRequest -> updatedRequest.writeNoContentSuccess(
           routingContext.response()))));
     });
