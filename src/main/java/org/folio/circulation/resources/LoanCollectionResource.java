@@ -167,14 +167,25 @@ public class LoanCollectionResource {
       if(fetchRequestQueueResult.failed()) {
         fetchRequestQueueResult.cause().writeTo(routingContext.response());
       }
-      
+
       updateItemStatus(itemId, itemStatusFrom(loan), clients.itemsStorage(),
         routingContext.response())
         .thenApply(updatedItem -> updateLoan(routingContext, clients, id, loan, updatedItem)
-        .thenApply(updatedLoan -> requestQueueUpdate.onCheckIn(fetchRequestQueueResult.value())
+        .thenApply(updatedLoan -> passOnFailure(requestQueueUpdate, fetchRequestQueueResult)
         .thenAccept(updatedRequest -> updatedRequest.writeNoContentSuccess(
           routingContext.response()))));
     });
+  }
+
+  private CompletableFuture<HttpResult<JsonObject>> passOnFailure(
+    UpdateRequestQueue requestQueueUpdate,
+    HttpResult<RequestQueue> fetchRequestQueueResult) {
+
+    if(fetchRequestQueueResult.failed()) {
+      return CompletableFuture.completedFuture(HttpResult.failure(fetchRequestQueueResult.cause()));
+    }
+
+    return requestQueueUpdate.onCheckIn(fetchRequestQueueResult.value());
   }
 
   private void get(RoutingContext routingContext) {
