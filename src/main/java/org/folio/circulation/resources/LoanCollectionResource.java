@@ -21,12 +21,14 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.ItemStatusAssistant.updateItemStatus;
-import static org.folio.circulation.support.CommonFailures.*;
+import static org.folio.circulation.support.CommonFailures.reportFailureToFetchInventoryRecords;
+import static org.folio.circulation.support.CommonFailures.reportItemRelatedValidationError;
 
 public class LoanCollectionResource {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -171,21 +173,21 @@ public class LoanCollectionResource {
       updateItemStatus(itemId, itemStatusFrom(loan), clients.itemsStorage(),
         routingContext.response())
         .thenApply(updatedItem -> updateLoan(routingContext, clients, id, loan, updatedItem)
-        .thenApply(updatedLoan -> passOnFailure(requestQueueUpdate, fetchRequestQueueResult)
+        .thenApply(updatedLoan -> passOnFailure(fetchRequestQueueResult, requestQueueUpdate::onCheckIn)
         .thenAccept(updatedRequest -> updatedRequest.writeNoContentSuccess(
           routingContext.response()))));
     });
   }
 
   private CompletableFuture<HttpResult<JsonObject>> passOnFailure(
-    UpdateRequestQueue requestQueueUpdate,
-    HttpResult<RequestQueue> fetchRequestQueueResult) {
+    HttpResult<RequestQueue> fetchRequestQueueResult,
+    Function<RequestQueue, CompletableFuture<HttpResult<JsonObject>>> action) {
 
     if(fetchRequestQueueResult.failed()) {
       return CompletableFuture.completedFuture(HttpResult.failure(fetchRequestQueueResult.cause()));
     }
 
-    return requestQueueUpdate.onCheckIn(fetchRequestQueueResult.value());
+    return action.apply(fetchRequestQueueResult.value());
   }
 
   private void get(RoutingContext routingContext) {
