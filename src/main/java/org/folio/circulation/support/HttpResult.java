@@ -2,6 +2,9 @@ package org.folio.circulation.support;
 
 import io.vertx.core.http.HttpServerResponse;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+
 public interface HttpResult<T> {
   boolean failed();
   boolean succeeded();
@@ -18,4 +21,14 @@ public interface HttpResult<T> {
   }
 
   void writeNoContentSuccess(HttpServerResponse response);
+
+  default <R> CompletableFuture<HttpResult<R>> next(
+    Function<T, CompletableFuture<HttpResult<R>>> action) {
+
+    if(failed()) {
+      return CompletableFuture.completedFuture(failure(cause()));
+    }
+
+    return action.apply(value());
+  }
 }

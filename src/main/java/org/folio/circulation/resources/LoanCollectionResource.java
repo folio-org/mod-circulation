@@ -21,7 +21,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
@@ -173,21 +172,10 @@ public class LoanCollectionResource {
       updateItemStatus(itemId, itemStatusFrom(loan), clients.itemsStorage(),
         routingContext.response())
         .thenApply(updatedItem -> updateLoan(routingContext, clients, id, loan, updatedItem)
-        .thenApply(updatedLoan -> passOnFailure(fetchRequestQueueResult, requestQueueUpdate::onCheckIn)
+        .thenApply(updatedLoan -> fetchRequestQueueResult.next(requestQueueUpdate::onCheckIn)
         .thenAccept(updatedRequest -> updatedRequest.writeNoContentSuccess(
           routingContext.response()))));
     });
-  }
-
-  private CompletableFuture<HttpResult<JsonObject>> passOnFailure(
-    HttpResult<RequestQueue> fetchRequestQueueResult,
-    Function<RequestQueue, CompletableFuture<HttpResult<JsonObject>>> action) {
-
-    if(fetchRequestQueueResult.failed()) {
-      return CompletableFuture.completedFuture(HttpResult.failure(fetchRequestQueueResult.cause()));
-    }
-
-    return action.apply(fetchRequestQueueResult.value());
   }
 
   private void get(RoutingContext routingContext) {
