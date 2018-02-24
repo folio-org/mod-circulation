@@ -1,7 +1,5 @@
 package org.folio.circulation.support;
 
-import io.vertx.core.http.HttpServerResponse;
-
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -16,11 +14,9 @@ public interface HttpResult<T> {
     return new SuccessfulHttpResult<>(value);
   }
 
-  static <T> HttpResult<T> failure(HttpFailure cause) {
+  static <T> WritableHttpResult<T> failure(HttpFailure cause) {
     return new FailedHttpResult<>(cause);
   }
-
-  void writeNoContentSuccess(HttpServerResponse response);
 
   default <R> CompletableFuture<HttpResult<R>> next(
     Function<T, CompletableFuture<HttpResult<R>>> action) {

@@ -173,8 +173,8 @@ public class LoanCollectionResource {
         routingContext.response())
         .thenApply(updatedItem -> updateLoan(routingContext, clients, id, loan, updatedItem)
         .thenApply(updatedLoan -> fetchRequestQueueResult.next(requestQueueUpdate::onCheckIn)
-        .thenAccept(updatedRequest -> updatedRequest.writeNoContentSuccess(
-          routingContext.response()))));
+        .thenApply(NoContentHttpResult::from)
+        .thenAccept(result -> result.writeTo(routingContext.response()))));
     });
   }
 

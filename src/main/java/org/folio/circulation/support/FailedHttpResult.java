@@ -2,7 +2,7 @@ package org.folio.circulation.support;
 
 import io.vertx.core.http.HttpServerResponse;
 
-public class FailedHttpResult<T> implements HttpResult<T> {
+public class FailedHttpResult<T> implements WritableHttpResult<T> {
   private final HttpFailure cause;
 
   FailedHttpResult(HttpFailure cause) {
@@ -20,11 +20,6 @@ public class FailedHttpResult<T> implements HttpResult<T> {
   }
 
   @Override
-  public void writeNoContentSuccess(HttpServerResponse response) {
-    cause.writeTo(response);
-  }
-
-  @Override
   public boolean failed() {
     return true;
   }
@@ -32,5 +27,10 @@ public class FailedHttpResult<T> implements HttpResult<T> {
   @Override
   public boolean succeeded() {
     return false;
+  }
+
+  @Override
+  public void writeTo(HttpServerResponse response) {
+    cause.writeTo(response);
   }
 }
