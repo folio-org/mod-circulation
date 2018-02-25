@@ -59,97 +59,78 @@ public class LoanCollectionResource {
     String itemId = loan.getString("itemId");
 
     InventoryFetcher inventoryFetcher = InventoryFetcher.create(clients);
-
-    CompletableFuture<HttpResult<InventoryRecords>> inventoryRecordsCompleted
-      = inventoryFetcher.fetch(itemId);
-
     RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
 
-    CompletableFuture<HttpResult<RequestQueue>> requestQueueCompleted
-      = requestQueueFetcher.get(itemId);
+//    TODO: Reinstate this logic in http result handling
+//    allCompleted.exceptionally(t -> {
+//      ServerErrorResponse.internalError(routingContext.response(),
+//        String.format("At least one request for additional information failed: %s", t));
 
-    CompletableFuture<Void> allCompleted = CompletableFuture.allOf(
-      inventoryRecordsCompleted, requestQueueCompleted);
+    inventoryFetcher.fetch(itemId)
+      .thenCombine(requestQueueFetcher.get(itemId), this::combine)
+      .thenAccept(relatedRecordsResult -> {
+        if(relatedRecordsResult.failed()) {
+          relatedRecordsResult.cause().writeTo(routingContext.response());
+          return;
+        }
 
-    allCompleted.exceptionally(t -> {
-      ServerErrorResponse.internalError(routingContext.response(),
-        String.format("At least one request for additional information failed: %s", t));
+        final JsonObject item = relatedRecordsResult.value().inventoryRecords().getItem();
+        final JsonObject holding = relatedRecordsResult.value().inventoryRecords().getHolding();
+        final JsonObject instance = relatedRecordsResult.value().inventoryRecords().getInstance();
 
-      return null;
-    });
+        if(item == null) {
+          reportItemRelatedValidationError(routingContext, itemId, "Item does not exist");
+          return;
+        }
 
-    allCompleted.thenAccept(v -> {
-    final HttpResult<InventoryRecords> inventoryRecordsResults = inventoryRecordsCompleted.join();
+        final RequestQueue requestQueue = relatedRecordsResult.value().requestQueue();
 
-    if(inventoryRecordsResults.failed()) {
-      inventoryRecordsResults.cause().writeTo(routingContext.response());
-      return;
-    }
+        updateItemStatus(item, itemStatusFrom(loan),
+          clients.itemsStorage(), routingContext.response(), vv -> {
 
-    JsonObject item = inventoryRecordsResults.value().getItem();
-    JsonObject holding = inventoryRecordsResults.value().getHolding();
-    JsonObject instance = inventoryRecordsResults.value().getInstance();
+          loan.put("itemStatus", getItemStatus(item));
 
-    final HttpResult<RequestQueue> requestQueueResult = requestQueueCompleted.join();
+          lookupLoanPolicyId(loan, item, holding, clients.usersStorage(),
+            clients.loanRules(), routingContext.response(), loanPolicyIdJson -> {
 
-    if(item == null) {
-      reportItemRelatedValidationError(routingContext, itemId, "Item does not exist");
-      return;
-    }
+            loan.put("loanPolicyId", loanPolicyIdJson.getString("loanPolicyId"));
 
-    if(requestQueueResult.failed()) {
-      requestQueueResult.cause().writeTo(routingContext.response());
-      return;
-    }
+            final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(clients);
 
-    final RequestQueue requestQueue = requestQueueResult.value();
+            updateRequestQueue.onCheckOut(requestQueue).thenAccept(result -> {
+              if(result.failed()) {
+                result.cause().writeTo(routingContext.response());
+                return;
+              }
 
-    updateItemStatus(item, itemStatusFrom(loan),
-      clients.itemsStorage(), routingContext.response(), vv -> {
+              clients.loansStorage().post(loan, response -> {
+                if (response.getStatusCode() == 201) {
+                  JsonObject createdLoan = response.getJson();
 
-      loan.put("itemStatus", getItemStatus(item));
+                  final String locationId = determineLocationIdForItem(item, holding);
 
-      lookupLoanPolicyId(loan, item, holding, clients.usersStorage(),
-        clients.loanRules(), routingContext.response(), loanPolicyIdJson -> {
+                  clients.locationsStorage().get(locationId, locationResponse -> {
+                    if (locationResponse.getStatusCode() == 200) {
+                      JsonResponse.created(routingContext.response(),
+                        extendedLoan(createdLoan, item, holding, instance,
+                          locationResponse.getJson()));
+                    } else {
+                      log.warn(
+                        String.format("Could not get location %s for item %s",
+                          locationId, itemId));
 
-        loan.put("loanPolicyId", loanPolicyIdJson.getString("loanPolicyId"));
-
-        final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(clients);
-
-        updateRequestQueue.onCheckOut(requestQueue).thenAccept(result -> {
-          if(result.failed()) {
-            result.cause().writeTo(routingContext.response());
-            return;
-          }
-
-          clients.loansStorage().post(loan, response -> {
-            if (response.getStatusCode() == 201) {
-              JsonObject createdLoan = response.getJson();
-
-              final String locationId = determineLocationIdForItem(item, holding);
-
-              clients.locationsStorage().get(locationId, locationResponse -> {
-                if (locationResponse.getStatusCode() == 200) {
-                  JsonResponse.created(routingContext.response(),
-                    extendedLoan(createdLoan, item, holding, instance,
-                      locationResponse.getJson()));
+                      JsonResponse.created(routingContext.response(),
+                        extendedLoan(createdLoan, item, holding, instance, null));
+                    }
+                  });
                 } else {
-                  log.warn(
-                    String.format("Could not get location %s for item %s",
-                      locationId, itemId));
-
-                  JsonResponse.created(routingContext.response(),
-                    extendedLoan(createdLoan, item, holding, instance, null));
+                  ForwardResponse.forward(routingContext.response(), response);
                 }
               });
-            } else {
-              ForwardResponse.forward(routingContext.response(), response);
-            }
+            });
           });
         });
       });
-    });
-    });
   }
 
   private void replace(RoutingContext routingContext) {
@@ -165,34 +146,22 @@ public class LoanCollectionResource {
     String itemId = loan.getString("itemId");
 
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
+    final InventoryFetcher inventoryFetcher = InventoryFetcher.create(clients);
+
     final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
 
-    CompletableFuture<HttpResult<RequestQueue>> requestQueueFetched = requestQueueFetcher.get(itemId);
-
-    InventoryFetcher inventoryFetcher = InventoryFetcher.create(clients);
-
-    CompletableFuture<HttpResult<InventoryRecords>> inventoryRecordsCompleted
-      = inventoryFetcher.fetch(itemId);
-
-    CompletableFuture.allOf(inventoryRecordsCompleted, requestQueueFetched)
-      .thenAccept(v -> {
-        final HttpResult<RequestQueue> fetchRequestQueueResult = requestQueueFetched.join();
-        final HttpResult<InventoryRecords> inventoryRecordsResult = inventoryRecordsCompleted.join();
-
-        if(inventoryRecordsResult.failed()) {
-          inventoryRecordsResult.cause().writeTo(routingContext.response());
+    inventoryFetcher.fetch(itemId)
+      .thenCombine(requestQueueFetcher.get(itemId), this::combine)
+      .thenAccept(relatedRecordsResult -> {
+        if(relatedRecordsResult.failed()) {
+          relatedRecordsResult.cause().writeTo(routingContext.response());
           return;
         }
 
-        final JsonObject item = inventoryRecordsResult.value().getItem();
+        final JsonObject item = relatedRecordsResult.value().inventoryRecords().getItem();
 
         if(item == null) {
           reportItemRelatedValidationError(routingContext, itemId, "Item does not exist");
-        }
-
-        if(fetchRequestQueueResult.failed()) {
-          fetchRequestQueueResult.cause().writeTo(routingContext.response());
-          return;
         }
 
         CompletableFuture<JsonObject> itemUpdated = new CompletableFuture<>();
@@ -202,10 +171,26 @@ public class LoanCollectionResource {
 
         itemUpdated
           .thenApply(updatedItem -> updateLoan(routingContext, clients, id, loan, updatedItem))
-          .thenCompose(updatedLoan -> fetchRequestQueueResult.next(requestQueueUpdate::onCheckIn))
+          .thenCompose(updatedLoan -> relatedRecordsResult.next(requestQueueUpdate::onCheckIn))
           .thenApply(NoContentHttpResult::from)
           .thenAccept(result -> result.writeTo(routingContext.response()));
+
       });
+  }
+
+  private HttpResult<RelatedRecords> combine(
+    HttpResult<InventoryRecords> firstResult,
+    HttpResult<RequestQueue> secondResult) {
+
+    if(firstResult.failed()) {
+      return HttpResult.failure(firstResult.cause());
+    }
+    else if(secondResult.failed()) {
+      return HttpResult.failure(secondResult.cause());
+    }
+    else {
+      return HttpResult.success(new RelatedRecords(firstResult.value(), secondResult.value()));
+    }
   }
 
   private void get(RoutingContext routingContext) {

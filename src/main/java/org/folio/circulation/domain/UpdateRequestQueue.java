@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.resources.RelatedRecords;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ServerErrorFailure;
@@ -14,11 +15,11 @@ public class UpdateRequestQueue {
     this.clients = clients;
   }
 
-  public CompletableFuture<HttpResult<JsonObject>> onCheckIn(RequestQueue requestQueue) {
+  public CompletableFuture<HttpResult<JsonObject>> onCheckIn(RelatedRecords relatedRecords) {
     CompletableFuture<HttpResult<JsonObject>> requestUpdated = new CompletableFuture<>();
 
-    if (requestQueue.hasOutstandingRequests()) {
-      JsonObject firstRequest = requestQueue.getFirst();
+    if (relatedRecords.requestQueue().hasOutstandingRequests()) {
+      JsonObject firstRequest = relatedRecords.requestQueue().getFirst();
 
       firstRequest.put("status", RequestStatus.OPEN_AWAITING_PICKUP);
 
