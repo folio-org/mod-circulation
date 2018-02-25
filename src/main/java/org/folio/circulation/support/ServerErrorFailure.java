@@ -10,6 +10,10 @@ public class ServerErrorFailure implements HttpFailure {
     this.reason = reason;
   }
 
+  public ServerErrorFailure(Throwable e) {
+    this(e.toString());
+  }
+
   @Override
   public void writeTo(HttpServerResponse response) {
     ServerErrorResponse.internalError(response, reason);

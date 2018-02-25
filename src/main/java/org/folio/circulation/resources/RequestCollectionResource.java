@@ -19,7 +19,6 @@ import java.util.stream.Collectors;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.ItemStatusAssistant.updateItemStatus;
 import static org.folio.circulation.domain.LoanActionHistoryAssistant.updateLoanActionHistory;
-import static org.folio.circulation.support.CommonFailures.reportFailureToFetchInventoryRecords;
 import static org.folio.circulation.support.CommonFailures.reportItemRelatedValidationError;
 import static org.folio.circulation.support.JsonPropertyCopier.copyStringIfExists;
 
@@ -64,9 +63,8 @@ public class RequestCollectionResource {
 
     InventoryFetcher inventoryFetcher = InventoryFetcher.create(clients);
 
-    CompletableFuture<InventoryRecords> inventoryRecordsCompleted
-      = inventoryFetcher.fetch(itemId, t ->
-      reportFailureToFetchInventoryRecords(routingContext, t));
+    CompletableFuture<HttpResult<InventoryRecords>> inventoryRecordsCompleted
+      = inventoryFetcher.fetch(itemId);
 
     CompletableFuture<Response> requestingUserRequestCompleted = new CompletableFuture<>();
 
@@ -86,11 +84,16 @@ public class RequestCollectionResource {
     allCompleted.thenAccept(v -> {
       Response requestingUserResponse = requestingUserRequestCompleted.join();
 
-      InventoryRecords inventoryRecords = inventoryRecordsCompleted.join();
+      HttpResult<InventoryRecords> inventoryRecordsResult = inventoryRecordsCompleted.join();
 
-      JsonObject item = inventoryRecords.getItem();
-      JsonObject holding = inventoryRecords.getHolding();
-      JsonObject instance = inventoryRecords.getInstance();
+      if(inventoryRecordsResult.failed()) {
+        inventoryRecordsResult.cause().writeTo(routingContext.response());
+        return;
+      }
+
+      JsonObject item = inventoryRecordsResult.value().getItem();
+      JsonObject holding = inventoryRecordsResult.value().getHolding();
+      JsonObject instance = inventoryRecordsResult.value().getInstance();
 
       JsonObject requester = getRecordFromResponse(requestingUserResponse);
 
@@ -139,9 +142,8 @@ public class RequestCollectionResource {
 
     InventoryFetcher inventoryFetcher = InventoryFetcher.create(clients);
 
-    CompletableFuture<InventoryRecords> inventoryRecordsCompleted
-      = inventoryFetcher.fetch(itemId, t ->
-        reportFailureToFetchInventoryRecords(routingContext, t));
+    CompletableFuture<HttpResult<InventoryRecords>> inventoryRecordsCompleted
+      = inventoryFetcher.fetch(itemId);
 
     CompletableFuture<Response> requestingUserRequestCompleted = new CompletableFuture<>();
 
@@ -160,13 +162,18 @@ public class RequestCollectionResource {
 
     allCompleted.thenAccept(v -> {
       Response requestingUserResponse = requestingUserRequestCompleted.join();
+      HttpResult<InventoryRecords> inventoryRecordsResult = inventoryRecordsCompleted.join();
 
-      InventoryRecords inventoryRecords = inventoryRecordsCompleted.join();
+      if(inventoryRecordsResult.failed()) {
+        inventoryRecordsResult.cause().writeTo(routingContext.response());
+        return;
+      }
 
-      JsonObject item = inventoryRecords.getItem();
-      JsonObject instance = inventoryRecords.getInstance();
+      final InventoryRecords inventoryRecords = inventoryRecordsResult.value();
 
-      JsonObject requester = getRecordFromResponse(requestingUserResponse);
+      final JsonObject item = inventoryRecords.getItem();
+      final JsonObject instance = inventoryRecords.getInstance();
+      final JsonObject requester = getRecordFromResponse(requestingUserResponse);
 
       addStoredItemProperties(request, item, instance);
       addStoredRequesterProperties(request, requester);
@@ -194,16 +201,20 @@ public class RequestCollectionResource {
 
         InventoryFetcher inventoryFetcher = InventoryFetcher.create(clients);
 
-        CompletableFuture<InventoryRecords> inventoryRecordsCompleted =
-          inventoryFetcher.fetch(getItemId(request), t ->
-            reportFailureToFetchInventoryRecords(routingContext, t));
+        CompletableFuture<HttpResult<InventoryRecords>> inventoryRecordsCompleted =
+          inventoryFetcher.fetch(getItemId(request));
 
         inventoryRecordsCompleted.thenAccept(r -> {
-          addAdditionalItemProperties(request, r.getHolding(), r.getItem());
+          if(r.failed()) {
+            r.cause().writeTo(routingContext.response());
+            return;
+          }
+
+          addAdditionalItemProperties(request, r.value().getHolding(),
+            r.value().getItem());
 
           JsonResponse.success(routingContext.response(), request);
         });
-
       }
       else {
         ForwardResponse.forward(routingContext.response(), requestResponse);

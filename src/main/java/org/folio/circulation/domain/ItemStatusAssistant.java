@@ -21,7 +21,7 @@ public class ItemStatusAssistant {
     String prospectiveNewStatus,
     CollectionResourceClient itemsStorageClient,
     HttpServerResponse responseToClient,
-    Consumer<Void> onSuccess) {
+    Consumer<JsonObject> onSuccess) {
 
     if (statusNeedsChanging(item, prospectiveNewStatus)) {
       item.put("status", new JsonObject().put("name", prospectiveNewStatus));
@@ -29,14 +29,14 @@ public class ItemStatusAssistant {
       itemsStorageClient.put(item.getString("id"),
         item, putItemResponse -> {
           if(putItemResponse.getStatusCode() == 204) {
-            onSuccess.accept(null);
+            onSuccess.accept(item);
           }
           else {
             ForwardResponse.forward(responseToClient, putItemResponse);
           }
         });
     } else {
-      onSuccess.accept(null);
+      onSuccess.accept(item);
     }
   }
 

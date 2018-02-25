@@ -27,4 +27,13 @@ public interface HttpResult<T> {
 
     return action.apply(value());
   }
+  
+  default <U> HttpResult<U> map(Function<T, U> map) {
+    if(failed()) {
+      return failure(cause());
+    }
+    else {
+      return HttpResult.success(map.apply(value()));
+    }
+  }
 }
