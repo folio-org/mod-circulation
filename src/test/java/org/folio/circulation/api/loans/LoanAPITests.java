@@ -6,6 +6,7 @@ import org.folio.circulation.api.support.APITests;
 import org.folio.circulation.api.support.builders.ItemBuilder;
 import org.folio.circulation.api.support.builders.LoanBuilder;
 import org.folio.circulation.api.support.builders.UserBuilder;
+import org.folio.circulation.api.support.http.InterfaceUrls;
 import org.folio.circulation.api.support.http.ResourceClient;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -30,6 +31,7 @@ import java.util.concurrent.TimeoutException;
 
 import static org.folio.circulation.api.support.fixtures.UserExamples.basedUponJessicaPontefract;
 import static org.folio.circulation.api.support.fixtures.UserExamples.basedUponStevenJones;
+import static org.folio.circulation.api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.api.support.http.InterfaceUrls.loansUrl;
 import static org.folio.circulation.api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static org.hamcrest.Matchers.greaterThan;
@@ -99,8 +101,6 @@ public class LoanAPITests extends APITests {
       loan.getJsonObject("item").getString("barcode"),
       is("036000291452"));
 
-
-
     assertThat("has item status",
       loan.getJsonObject("item").containsKey("status"), is(true));
 
@@ -123,6 +123,43 @@ public class LoanAPITests extends APITests {
       loansStorageClient.getById(id).getJson().getString("itemStatus"),
       is("Checked out"));
 
+  }
+
+  @Test
+  public void cannotCreateALoanForUnknownItem()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID userId = usersClient.create(new UserBuilder()).getId();
+    UUID proxyUserId = UUID.randomUUID();
+
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
+    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
+
+    client.post(InterfaceUrls.loansUrl(), new LoanBuilder()
+      .withId(id)
+      .withUserId(userId)
+      .withProxyUserId(proxyUserId)
+      .withItemId(UUID.randomUUID())
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate)
+      .withStatus("Open").create(),
+      ResponseHandler.json(createCompleted));
+
+    Response response = createCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(
+      String.format("Should not create loan: %s", response.getBody()),
+      response.getStatusCode(), is(UNPROCESSABLE_ENTITY));
+
+    assertThat(String.format("Incorrect validation error: %s", response.getBody()),
+      response.getJson().getString("message"), is("Item does not exist"));
   }
 
   @Test

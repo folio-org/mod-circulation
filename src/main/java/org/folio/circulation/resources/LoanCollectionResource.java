@@ -26,7 +26,6 @@ import java.util.stream.Collectors;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.ItemStatusAssistant.updateItemStatus;
-import static org.folio.circulation.support.CommonFailures.reportItemRelatedValidationError;
 
 public class LoanCollectionResource {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -67,6 +66,7 @@ public class LoanCollectionResource {
 //        String.format("At least one request for additional information failed: %s", t));
 
     inventoryFetcher.fetch(itemId)
+      .thenApply(r -> checkItemExists(r, itemId))
       .thenCombine(requestQueueFetcher.get(itemId), this::combine)
       .thenAccept(relatedRecordsResult -> {
         if(relatedRecordsResult.failed()) {
@@ -77,11 +77,6 @@ public class LoanCollectionResource {
         final JsonObject item = relatedRecordsResult.value().inventoryRecords().getItem();
         final JsonObject holding = relatedRecordsResult.value().inventoryRecords().getHolding();
         final JsonObject instance = relatedRecordsResult.value().inventoryRecords().getInstance();
-
-        if(item == null) {
-          reportItemRelatedValidationError(routingContext, itemId, "Item does not exist");
-          return;
-        }
 
         final RequestQueue requestQueue = relatedRecordsResult.value().requestQueue();
 
@@ -133,6 +128,20 @@ public class LoanCollectionResource {
       });
   }
 
+  private HttpResult<InventoryRecords> checkItemExists(
+    HttpResult<InventoryRecords> result, String itemId) {
+
+    return result.next((InventoryRecords inventoryRecords) -> {
+      if(inventoryRecords.getItem() == null) {
+        return HttpResult.failure(new ValidationErrorFailure(
+          "Item does not exist", "itemId", itemId));
+      }
+      else {
+        return result;
+      }
+    });
+  }
+
   private void replace(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context);
@@ -151,6 +160,7 @@ public class LoanCollectionResource {
     final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
 
     inventoryFetcher.fetch(itemId)
+      .thenApply(r -> checkItemExists(r, itemId))
       .thenCombine(requestQueueFetcher.get(itemId), this::combine)
       .thenAccept(relatedRecordsResult -> {
         if(relatedRecordsResult.failed()) {
@@ -160,10 +170,6 @@ public class LoanCollectionResource {
 
         final JsonObject item = relatedRecordsResult.value().inventoryRecords().getItem();
 
-        if(item == null) {
-          reportItemRelatedValidationError(routingContext, itemId, "Item does not exist");
-        }
-
         CompletableFuture<JsonObject> itemUpdated = new CompletableFuture<>();
 
         updateItemStatus(item, itemStatusFrom(loan), clients.itemsStorage(),
@@ -171,7 +177,7 @@ public class LoanCollectionResource {
 
         itemUpdated
           .thenApply(updatedItem -> updateLoan(routingContext, clients, id, loan, updatedItem))
-          .thenCompose(updatedLoan -> relatedRecordsResult.next(requestQueueUpdate::onCheckIn))
+          .thenCompose(updatedLoan -> relatedRecordsResult.after(requestQueueUpdate::onCheckIn))
           .thenApply(NoContentHttpResult::from)
           .thenAccept(result -> result.writeTo(routingContext.response()));
 

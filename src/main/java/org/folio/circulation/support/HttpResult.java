@@ -18,7 +18,7 @@ public interface HttpResult<T> {
     return new FailedHttpResult<>(cause);
   }
 
-  default <R> CompletableFuture<HttpResult<R>> next(
+  default <R> CompletableFuture<HttpResult<R>> after(
     Function<T, CompletableFuture<HttpResult<R>>> action) {
 
     if(failed()) {
@@ -27,7 +27,15 @@ public interface HttpResult<T> {
 
     return action.apply(value());
   }
-  
+
+  default <R> HttpResult<R> next(Function<T, HttpResult<R>> action) {
+    if(failed()) {
+      return failure(cause());
+    }
+
+    return action.apply(value());
+  }
+
   default <U> HttpResult<U> map(Function<T, U> map) {
     if(failed()) {
       return failure(cause());

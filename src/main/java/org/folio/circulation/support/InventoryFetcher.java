@@ -147,7 +147,7 @@ public class InventoryFetcher {
   private CompletableFuture<HttpResult<InventoryRecords>> fetchHolding(
     HttpResult<JsonObject> itemResult) {
 
-    return itemResult.next(item -> {
+    return itemResult.after(item -> {
       if(item == null) {
         return CompletableFuture.completedFuture(
           HttpResult.success(new InventoryRecords(null, null, null)));
@@ -169,7 +169,7 @@ public class InventoryFetcher {
   private CompletableFuture<HttpResult<InventoryRecords>> fetchInstance(
     HttpResult<InventoryRecords> holdingResult) {
 
-    return holdingResult.next(inventoryRecords -> {
+    return holdingResult.after(inventoryRecords -> {
       final JsonObject holding = inventoryRecords.getHolding();
 
       if(holding == null) {
