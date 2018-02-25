@@ -1,27 +1,25 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.resources.RelatedRecords;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.http.server.ForwardResponse;
-import org.folio.circulation.support.http.server.ServerErrorResponse;
+import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.InventoryRecords;
+import org.folio.circulation.support.ServerErrorFailure;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 
-import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
-import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT_HELD;
-import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT_RECALLED;
+import static org.folio.circulation.domain.ItemStatus.*;
 
 public class ItemStatusAssistant {
   private ItemStatusAssistant() { }
 
-  public static void updateItemStatus(
+  public static CompletableFuture<HttpResult<JsonObject>> updateItemStatus(
     JsonObject item,
     String prospectiveNewStatus,
-    CollectionResourceClient itemsStorageClient,
-    HttpServerResponse responseToClient,
-    Consumer<JsonObject> onSuccess) {
+    CollectionResourceClient itemsStorageClient) {
+
+    CompletableFuture<HttpResult<JsonObject>> itemUpdated = new CompletableFuture<>();
 
     if (statusNeedsChanging(item, prospectiveNewStatus)) {
       item.put("status", new JsonObject().put("name", prospectiveNewStatus));
@@ -29,54 +27,57 @@ public class ItemStatusAssistant {
       itemsStorageClient.put(item.getString("id"),
         item, putItemResponse -> {
           if(putItemResponse.getStatusCode() == 204) {
-            onSuccess.accept(item);
+            itemUpdated.complete(HttpResult.success(item));
           }
           else {
-            ForwardResponse.forward(responseToClient, putItemResponse);
+            itemUpdated.complete(HttpResult.failure(
+              new ServerErrorFailure("Failed to update item")));
           }
         });
     } else {
-      onSuccess.accept(item);
+      itemUpdated.complete(HttpResult.success(item));
     }
+
+    return itemUpdated;
   }
 
-  public static CompletableFuture<JsonObject> updateItemStatus(
-    String itemId,
+  public static CompletableFuture<HttpResult<RelatedRecords>> updateItemStatus(
+    RelatedRecords relatedRecords,
     String prospectiveNewStatus,
-    CollectionResourceClient itemsStorageClient,
-    HttpServerResponse responseToClient) {
+    CollectionResourceClient itemsStorageClient) {
 
-    CompletableFuture<JsonObject> onUpdated = new CompletableFuture<>();
+    return updateItemStatus(relatedRecords.inventoryRecords().getItem(),
+      prospectiveNewStatus, itemsStorageClient)
+      .thenApply(updatedItemResult -> updatedItemResult.map(updatedItem ->
+        new RelatedRecords(new InventoryRecords(
+          updatedItem, relatedRecords.inventoryRecords().getHolding(),
+          relatedRecords.inventoryRecords().getInstance()),
+          relatedRecords.requestQueue())));
 
-    itemsStorageClient.get(itemId, getItemResponse -> {
-      if(getItemResponse.getStatusCode() == 200) {
-        JsonObject item = getItemResponse.getJson();
-        if (statusNeedsChanging(item, prospectiveNewStatus)) {
-          item.put("status", new JsonObject().put("name", prospectiveNewStatus));
-
-          itemsStorageClient.put(itemId,
-            item, putItemResponse -> {
-              if(putItemResponse.getStatusCode() == 204) {
-                onUpdated.complete(item);
-              }
-              else {
-                ForwardResponse.forward(responseToClient, putItemResponse);
-              }
-            });
-        } else {
-          onUpdated.complete(item);
-        }
-      }
-      else if(getItemResponse.getStatusCode() == 404) {
-        ServerErrorResponse.internalError(responseToClient,
-          "Failed to handle updating an item which does not exist");
-      }
-      else {
-        ForwardResponse.forward(responseToClient, getItemResponse);
-      }
-    });
-
-    return onUpdated;
+//    CompletableFuture<HttpResult<RelatedRecords>> itemUpdated = new CompletableFuture<>();
+//
+////    final JsonObject item = relatedRecords.inventoryRecords().getItem();
+////
+////    if (statusNeedsChanging(item, prospectiveNewStatus)) {
+////      item.put("status", new JsonObject().put("name", prospectiveNewStatus));
+////
+////      itemsStorageClient.put(item.getString("id"),
+////        item, putItemResponse -> {
+////          if(putItemResponse.getStatusCode() == 204) {
+////            itemUpdated.complete(HttpResult.success(new RelatedRecords(new InventoryRecords(item,
+////              relatedRecords.inventoryRecords().getHolding(),
+////              relatedRecords.inventoryRecords().getInstance()),
+////              relatedRecords.requestQueue())));
+////          }
+////          else {
+////             itemUpdated.complete(HttpResult.failure(new ServerErrorFailure("Failed to update item")));
+////          }
+////        });
+////    } else {
+////      itemUpdated.complete(HttpResult.success(relatedRecords));
+////    }
+//
+//    return itemUpdated;
   }
 
   private static boolean statusNeedsChanging(JsonObject item, String prospectiveNewStatus) {

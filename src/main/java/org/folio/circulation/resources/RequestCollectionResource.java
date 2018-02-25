@@ -101,26 +101,33 @@ public class RequestCollectionResource {
         reportItemRelatedValidationError(routingContext, itemId, "Item does not exist");
       }
       else if (RequestType.from(request).canCreateRequestForItem(item)) {
-        updateItemStatus(item, RequestType.from(request).toItemStatus(),
-          clients.itemsStorage(), routingContext.response(), vv ->
-            updateLoanActionHistory(itemId,
-            RequestType.from(request).toLoanAction(), RequestType.from(request).toItemStatus(),
-              clients.loansStorage(), routingContext.response(), vo -> {
-              addStoredItemProperties(request, item, instance);
-              addStoredRequesterProperties(request, requester);
+        updateItemStatus(item,
+          RequestType.from(request).toItemStatus(), clients.itemsStorage()).thenAccept(
+            updateItemResult -> {
+              if(updateItemResult.failed()) {
+                updateItemResult.cause().writeTo(routingContext.response());
+                return;
+              }
 
-              clients.requestsStorage().post(request, requestResponse -> {
-                if (requestResponse.getStatusCode() == 201) {
-                  JsonObject createdRequest = requestResponse.getJson();
+              updateLoanActionHistory(itemId,
+                RequestType.from(request).toLoanAction(), RequestType.from(request).toItemStatus(),
+                clients.loansStorage(), routingContext.response(), vo -> {
+                  addStoredItemProperties(request, item, instance);
+                  addStoredRequesterProperties(request, requester);
 
-                  addAdditionalItemProperties(createdRequest, holding, item);
+                  clients.requestsStorage().post(request, requestResponse -> {
+                    if (requestResponse.getStatusCode() == 201) {
+                      JsonObject createdRequest = requestResponse.getJson();
 
-                  JsonResponse.created(routingContext.response(), createdRequest);
-                } else {
-                  ForwardResponse.forward(routingContext.response(), requestResponse);
-                }
-              });
-            }));
+                      addAdditionalItemProperties(createdRequest, holding, item);
+
+                      JsonResponse.created(routingContext.response(), createdRequest);
+                    } else {
+                      ForwardResponse.forward(routingContext.response(), requestResponse);
+                    }
+                  });
+                });
+          });
       }
       else {
         reportItemRelatedValidationError(routingContext, itemId,
