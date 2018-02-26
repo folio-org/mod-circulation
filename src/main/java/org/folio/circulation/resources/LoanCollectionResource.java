@@ -72,6 +72,7 @@ public class LoanCollectionResource {
       .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
       .thenApply(r -> r.map(records -> records.replaceLoan(loan)))
       .thenCombineAsync(getUser(requestingUserId, clients.usersStorage()), this::addUser)
+      .thenComposeAsync(r -> r.after(records -> getLocation(records, clients)))
       .thenComposeAsync(r -> r.after(records -> updateItemStatus(records,
         itemStatusFrom(loan), clients.itemsStorage())))
       .thenComposeAsync(r -> r.after(records -> lookupLoanPolicyId(
@@ -88,6 +89,7 @@ public class LoanCollectionResource {
         final JsonObject instance = relatedRecordsResult.value().inventoryRecords.getInstance();
         final String loanPolicyId = relatedRecordsResult.value().loanPolicyId;
 
+        final JsonObject location = relatedRecordsResult.value().location;
         loan.put("loanPolicyId", loanPolicyId);
         loan.put("itemStatus", getItemStatus(item));
 
@@ -95,22 +97,8 @@ public class LoanCollectionResource {
           if (response.getStatusCode() == 201) {
             JsonObject createdLoan = response.getJson();
 
-            final String locationId = determineLocationIdForItem(item, holding);
-
-            clients.locationsStorage().get(locationId, locationResponse -> {
-              if (locationResponse.getStatusCode() == 200) {
-                JsonResponse.created(routingContext.response(),
-                  extendedLoan(createdLoan, item, holding, instance,
-                    locationResponse.getJson()));
-              } else {
-                log.warn(
-                  String.format("Could not get location %s for item %s",
-                    locationId, itemId));
-
-                JsonResponse.created(routingContext.response(),
-                  extendedLoan(createdLoan, item, holding, instance, null));
-              }
-            });
+            JsonResponse.created(routingContext.response(),
+              extendedLoan(createdLoan, item, holding, instance, location));
           } else {
             ForwardResponse.forward(routingContext.response(), response);
           }
@@ -136,6 +124,53 @@ public class LoanCollectionResource {
       else {
         //Got user record, we're good to continue
         return HttpResult.success(response.getJson());
+      }
+    };
+
+    return getUserCompleted
+      .thenApply(mapResponse)
+      .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
+  }
+
+  private CompletableFuture<HttpResult<RelatedRecords>> getLocation(
+    RelatedRecords relatedRecords,
+    Clients clients) {
+
+    final String locationId = determineLocationIdForItem(
+      relatedRecords.inventoryRecords.item, relatedRecords.inventoryRecords.holding);
+
+    return getLocation(locationId,
+      relatedRecords.inventoryRecords.item.getString("id"), clients)
+      .thenApply(result -> result.map(relatedRecords::changeLocation));
+  }
+
+  private CompletableFuture<HttpResult<JsonObject>> getLocation(
+    String locationId,
+    String itemId,
+    Clients clients) {
+
+    CompletableFuture<Response> getUserCompleted = new CompletableFuture<>();
+
+    clients.locationsStorage().get(locationId, getUserCompleted::complete);
+
+    //                if (locationResponse.getStatusCode() == 200) {
+//                  JsonResponse.created(routingContext.response(),
+//                    extendedLoan(createdLoan, item, holding, instance,
+//                      locationResponse.getJson()));
+//                } else {
+
+    //TODO: Add functions to explicitly distinguish between fatal not found
+    // and allowable not found
+    final Function<Response, HttpResult<JsonObject>> mapResponse = response -> {
+      if(response != null && response.getStatusCode() == 200) {
+        return HttpResult.success(response.getJson());
+      }
+      else {
+        log.warn(
+          String.format("Could not get location %s for item %s",
+            locationId, itemId));
+
+        return HttpResult.success(null);
       }
     };
 
@@ -597,7 +632,7 @@ public class LoanCollectionResource {
     else {
       return HttpResult.success(new RelatedRecords(
         inventoryRecordsResult.value(), requestQueueResult.value(), null, null,
-        null));
+        null, null));
     }
   }
 
@@ -614,6 +649,22 @@ public class LoanCollectionResource {
     else {
       return HttpResult.success(relatedRecordsResult.value()
         .changeUser(getUserResult.value()));
+    }
+  }
+
+  private HttpResult<RelatedRecords> addLocation(
+    HttpResult<RelatedRecords> relatedRecordsResult,
+    HttpResult<JsonObject> getLocationResult) {
+
+    if(relatedRecordsResult.failed()) {
+      return HttpResult.failure(relatedRecordsResult.cause());
+    }
+    else if(getLocationResult.failed()) {
+      return HttpResult.failure(getLocationResult.cause());
+    }
+    else {
+      return HttpResult.success(relatedRecordsResult.value()
+        .changeLocation(getLocationResult.value()));
     }
   }
 }
