@@ -665,50 +665,27 @@ public class LoanCollectionResource {
   }
 
   private HttpResult<LoanAndRelatedRecords> addInventoryRecords(
-    HttpResult<LoanAndRelatedRecords> loan,
+    HttpResult<LoanAndRelatedRecords> loanResult,
     HttpResult<InventoryRecords> inventoryRecordsResult) {
 
-    if(loan.failed()) {
-      return HttpResult.failure(loan.cause());
-    }
-    else if(inventoryRecordsResult.failed()) {
-      return HttpResult.failure(inventoryRecordsResult.cause());
-    }
-    else {
-      return HttpResult.success(loan.value()
-        .withInventoryRecords(inventoryRecordsResult.value()));
-    }
+    return HttpResult.combine(loanResult, inventoryRecordsResult,
+      LoanAndRelatedRecords::withInventoryRecords);
   }
 
   private HttpResult<LoanAndRelatedRecords> addRequestQueue(
-    HttpResult<LoanAndRelatedRecords> loan,
+    HttpResult<LoanAndRelatedRecords> loanResult,
     HttpResult<RequestQueue> requestQueueResult) {
 
-    if(loan.failed()) {
-      return HttpResult.failure(loan.cause());
-    }
-    else if(requestQueueResult.failed()) {
-      return HttpResult.failure(requestQueueResult.cause());
-    }
-    else {
-      return HttpResult.success(loan.value().withRequestQueue(
-        requestQueueResult.value()));
-    }
+    return HttpResult.combine(loanResult, requestQueueResult,
+      LoanAndRelatedRecords::withRequestQueue);
   }
 
   private HttpResult<LoanAndRelatedRecords> addUser(
-    HttpResult<LoanAndRelatedRecords> relatedRecordsResult,
+    HttpResult<LoanAndRelatedRecords> loanResult,
     HttpResult<JsonObject> getUserResult) {
 
-    if(relatedRecordsResult.failed()) {
-      return HttpResult.failure(relatedRecordsResult.cause());
-    }
-    else if(getUserResult.failed()) {
-      return HttpResult.failure(getUserResult.cause());
-    }
-    else {
-      return HttpResult.success(relatedRecordsResult.value()
-        .withRequestingUser(getUserResult.value()));
-    }
+    return HttpResult.combine(loanResult, getUserResult,
+      LoanAndRelatedRecords::withRequestingUser);
   }
+
 }

@@ -10,11 +10,6 @@ public class NoContentHttpResult implements WritableHttpResult<Void> {
   }
 
   @Override
-  public boolean succeeded() {
-    return true;
-  }
-
-  @Override
   public Void value() {
     return null;
   }

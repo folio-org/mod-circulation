@@ -22,8 +22,4 @@ public class SuccessfulHttpResult<T> implements HttpResult<T> {
     return false;
   }
 
-  @Override
-  public boolean succeeded() {
-    return true;
-  }
 }

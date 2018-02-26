@@ -17,11 +17,6 @@ public class CreatedHttpResult implements WritableHttpResult<JsonObject> {
   }
 
   @Override
-  public boolean succeeded() {
-    return true;
-  }
-
-  @Override
   public JsonObject value() {
     return null;
   }

@@ -25,11 +25,6 @@ public class FailedHttpResult<T> implements WritableHttpResult<T> {
   }
 
   @Override
-  public boolean succeeded() {
-    return false;
-  }
-
-  @Override
   public void writeTo(HttpServerResponse response) {
     cause.writeTo(response);
   }
