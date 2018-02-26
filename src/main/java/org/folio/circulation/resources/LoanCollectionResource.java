@@ -88,9 +88,14 @@ public class LoanCollectionResource {
         final RequestQueue requestQueue = relatedRecordsResult.value().requestQueue;
 
         lookupLoanPolicyId(item, holding, requestingUser,
-          clients.loanRules(), routingContext.response(), loanPolicyIdJson -> {
+          clients.loanRules(), routingContext.response(), loanPolicyIdResult -> {
 
-          loan.put("loanPolicyId", loanPolicyIdJson.getString("loanPolicyId"));
+          if(loanPolicyIdResult.failed()) {
+            loanPolicyIdResult.cause().writeTo(routingContext.response());
+            return;
+          }
+
+          loan.put("loanPolicyId", loanPolicyIdResult.value().getString("loanPolicyId"));
 
           final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(clients);
 
@@ -476,7 +481,7 @@ public class LoanCollectionResource {
     JsonObject user,
     LoanRulesClient loanRulesClient,
     HttpServerResponse responseToClient,
-    Consumer<JsonObject> onSuccess) {
+    Consumer<HttpResult<JsonObject>> onSuccess) {
 
     if(item == null) {
       ServerErrorResponse.internalError(responseToClient,
@@ -507,7 +512,7 @@ public class LoanCollectionResource {
           ForwardResponse.forward(responseToClient, getPolicyResponse);
         } else {
           JsonObject policyIdJson = getPolicyResponse.getJson();
-          onSuccess.accept(policyIdJson);
+          onSuccess.accept(HttpResult.success(policyIdJson));
         }
       }));
   }
