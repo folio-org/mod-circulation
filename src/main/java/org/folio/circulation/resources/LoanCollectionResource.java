@@ -63,11 +63,7 @@ public class LoanCollectionResource {
     final String itemId = loan.getString("itemId");
     final String requestingUserId = loan.getString("userId");
 
-//    TODO: Reinstate this logic in http result handling
-//    allCompleted.exceptionally(t -> {
-//      ServerErrorResponse.internalError(routingContext.response(),
-//        String.format("At least one request for additional information failed: %s", t));
-
+//    TODO: Add exceptional completion of futures to create failed results
     completedFuture(HttpResult.success(new LoanAndRelatedRecords(loan)))
       .thenCombineAsync(inventoryFetcher.fetch(loan), this::addInventoryRecords)
       .thenApply(this::refuseWhenItemDoesNotExist)
@@ -140,9 +136,8 @@ public class LoanCollectionResource {
         return HttpResult.success(response.getJson());
       }
       else {
-        log.warn(
-          String.format("Could not get location %s for item %s",
-            locationId, itemId));
+        log.warn("Could not get location {} for item {}",
+          locationId, itemId);
 
         return HttpResult.success(null);
       }

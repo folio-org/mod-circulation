@@ -32,7 +32,7 @@ public class LoanRulesClient {
 
     String loanRulesQuery = queryParameters(loanTypeId, locationId, materialTypeId, patronGroup);
 
-    log.info(String.format("Applying loan rules for %s", loanRulesQuery));
+    log.info("Applying loan rules for {}", loanRulesQuery);
 
     client.get(String.format("%s/%s?%s", root, "apply", loanRulesQuery),
       responseHandler);
@@ -43,7 +43,7 @@ public class LoanRulesClient {
     String locationId,
     String materialTypeId,
     String patronGroup) {
-    
+
     return String.format(
       "item_type_id=%s&loan_type_id=%s&patron_type_id=%s&shelving_location_id=%s",
       materialTypeId, loanTypeId, patronGroup, locationId);
