@@ -30,6 +30,10 @@ public class InventoryFetcher {
     this.instancesClient = instancesClient;
   }
 
+  public CompletableFuture<HttpResult<InventoryRecords>> fetch(JsonObject loan) {
+    return fetch(loan.getString("itemId"));
+  }
+
   public CompletableFuture<HttpResult<InventoryRecords>> fetch(String itemId) {
     return
       fetchItem(itemId)

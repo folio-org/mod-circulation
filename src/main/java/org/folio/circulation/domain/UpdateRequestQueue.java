@@ -44,7 +44,7 @@ public class UpdateRequestQueue {
     LoanAndRelatedRecords relatedRecords) {
 
     return onCheckOut(relatedRecords.requestQueue)
-      .thenApply(result -> result.map(relatedRecords::changeRequestQueue));
+      .thenApply(result -> result.map(relatedRecords::withRequestQueue));
   }
 
   public CompletableFuture<HttpResult<RequestQueue>> onCheckOut(RequestQueue requestQueue) {

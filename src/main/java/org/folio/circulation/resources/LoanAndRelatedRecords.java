@@ -12,10 +12,9 @@ public class LoanAndRelatedRecords {
   public final String loanPolicyId;
   public final JsonObject location;
 
-  LoanAndRelatedRecords(
-    InventoryRecords inventoryRecords,
+  private LoanAndRelatedRecords(
+    JsonObject loan, InventoryRecords inventoryRecords,
     RequestQueue requestQueue,
-    JsonObject loan,
     JsonObject requestingUser,
     String loanPolicyId, JsonObject location) {
 
@@ -27,34 +26,43 @@ public class LoanAndRelatedRecords {
     this.location = location;
   }
 
-  public LoanAndRelatedRecords replaceItem(JsonObject updatedItem) {
-    return new LoanAndRelatedRecords(new InventoryRecords(updatedItem,
-      inventoryRecords.getHolding(), inventoryRecords.getInstance()),
-      requestQueue, loan, requestingUser, loanPolicyId, location);
+  LoanAndRelatedRecords(JsonObject loan) {
+    this(loan, null, null, null, null, null);
   }
 
-  public LoanAndRelatedRecords changeLoan(JsonObject newLoan) {
-    return new LoanAndRelatedRecords(inventoryRecords, requestQueue, newLoan,
+  public LoanAndRelatedRecords withItem(JsonObject updatedItem) {
+    return new LoanAndRelatedRecords(loan, new InventoryRecords(updatedItem,
+      inventoryRecords.getHolding(), inventoryRecords.getInstance()),
+      requestQueue, requestingUser, loanPolicyId, location);
+  }
+
+  public LoanAndRelatedRecords withLoan(JsonObject newLoan) {
+    return new LoanAndRelatedRecords(newLoan, inventoryRecords, requestQueue,
       requestingUser, loanPolicyId, location);
   }
 
-  public LoanAndRelatedRecords changeUser(JsonObject newUser) {
-    return new LoanAndRelatedRecords(inventoryRecords, requestQueue, loan, newUser,
-      loanPolicyId, location);
+  public LoanAndRelatedRecords withRequestingUser(JsonObject newUser) {
+    return new LoanAndRelatedRecords(loan, inventoryRecords, requestQueue,
+      newUser, loanPolicyId, location);
   }
 
-  public LoanAndRelatedRecords changeLoanPolicy(String newLoanPolicyId) {
-    return new LoanAndRelatedRecords(inventoryRecords, requestQueue, loan,
+  public LoanAndRelatedRecords withLoanPolicy(String newLoanPolicyId) {
+    return new LoanAndRelatedRecords(loan, inventoryRecords, requestQueue,
       requestingUser, newLoanPolicyId, location);
   }
 
-  public LoanAndRelatedRecords changeRequestQueue(RequestQueue newRequestQueue) {
-    return new LoanAndRelatedRecords(inventoryRecords, newRequestQueue, loan,
+  public LoanAndRelatedRecords withRequestQueue(RequestQueue newRequestQueue) {
+    return new LoanAndRelatedRecords(loan, inventoryRecords, newRequestQueue,
       requestingUser, loanPolicyId, location);
   }
 
-  public LoanAndRelatedRecords changeLocation(JsonObject newLocation) {
-    return new LoanAndRelatedRecords(inventoryRecords, requestQueue, loan,
+  public LoanAndRelatedRecords withLocation(JsonObject newLocation) {
+    return new LoanAndRelatedRecords(loan, inventoryRecords, requestQueue,
       requestingUser, loanPolicyId, newLocation);
+  }
+
+  public LoanAndRelatedRecords withInventoryRecords(InventoryRecords newInventoryRecords) {
+    return new LoanAndRelatedRecords(loan, newInventoryRecords, requestQueue,
+      requestingUser, loanPolicyId, location);
   }
 }

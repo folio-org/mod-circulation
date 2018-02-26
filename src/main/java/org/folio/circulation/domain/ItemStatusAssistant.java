@@ -47,7 +47,7 @@ public class ItemStatusAssistant {
 
     return updateItemStatus(relatedRecords.inventoryRecords.getItem(),
       prospectiveNewStatus, itemsStorageClient)
-      .thenApply(updatedItemResult -> updatedItemResult.map(relatedRecords::replaceItem));
+      .thenApply(updatedItemResult -> updatedItemResult.map(relatedRecords::withItem));
   }
 
   private static boolean statusNeedsChanging(JsonObject item, String prospectiveNewStatus) {
