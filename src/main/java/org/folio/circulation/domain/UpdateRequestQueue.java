@@ -1,7 +1,7 @@
 package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.resources.RelatedRecords;
+import org.folio.circulation.resources.LoanAndRelatedRecords;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ServerErrorFailure;
@@ -15,7 +15,7 @@ public class UpdateRequestQueue {
     this.clients = clients;
   }
 
-  public CompletableFuture<HttpResult<JsonObject>> onCheckIn(RelatedRecords relatedRecords) {
+  public CompletableFuture<HttpResult<JsonObject>> onCheckIn(LoanAndRelatedRecords relatedRecords) {
     CompletableFuture<HttpResult<JsonObject>> requestUpdated = new CompletableFuture<>();
 
     if (relatedRecords.requestQueue.hasOutstandingRequests()) {
@@ -40,8 +40,8 @@ public class UpdateRequestQueue {
     return requestUpdated;
   }
 
-  public CompletableFuture<HttpResult<RelatedRecords>> onCheckOut(
-    RelatedRecords relatedRecords) {
+  public CompletableFuture<HttpResult<LoanAndRelatedRecords>> onCheckOut(
+    LoanAndRelatedRecords relatedRecords) {
 
     return onCheckOut(relatedRecords.requestQueue)
       .thenApply(result -> result.map(relatedRecords::changeRequestQueue));

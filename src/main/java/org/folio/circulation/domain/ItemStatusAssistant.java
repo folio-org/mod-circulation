@@ -1,7 +1,7 @@
 package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.resources.RelatedRecords;
+import org.folio.circulation.resources.LoanAndRelatedRecords;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ServerErrorFailure;
@@ -40,8 +40,8 @@ public class ItemStatusAssistant {
     return itemUpdated;
   }
 
-  public static CompletableFuture<HttpResult<RelatedRecords>> updateItemStatus(
-    RelatedRecords relatedRecords,
+  public static CompletableFuture<HttpResult<LoanAndRelatedRecords>> updateItemStatus(
+    LoanAndRelatedRecords relatedRecords,
     String prospectiveNewStatus,
     CollectionResourceClient itemsStorageClient) {
 

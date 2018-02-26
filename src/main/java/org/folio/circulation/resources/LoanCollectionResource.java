@@ -110,8 +110,8 @@ public class LoanCollectionResource {
       .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
   }
 
-  private CompletableFuture<HttpResult<RelatedRecords>> getLocation(
-    RelatedRecords relatedRecords,
+  private CompletableFuture<HttpResult<LoanAndRelatedRecords>> getLocation(
+    LoanAndRelatedRecords relatedRecords,
     Clients clients) {
 
     final String locationId = determineLocationIdForItem(
@@ -446,7 +446,7 @@ public class LoanCollectionResource {
     return itemSummary;
   }
 
-  private JsonObject extendedLoan(RelatedRecords relatedRecords) {
+  private JsonObject extendedLoan(LoanAndRelatedRecords relatedRecords) {
     return extendedLoan(relatedRecords.loan,
       relatedRecords.inventoryRecords.item,
       relatedRecords.inventoryRecords.holding,
@@ -472,8 +472,8 @@ public class LoanCollectionResource {
     return loan;
   }
 
-  private CompletableFuture<HttpResult<RelatedRecords>> lookupLoanPolicyId(
-    RelatedRecords relatedRecords,
+  private CompletableFuture<HttpResult<LoanAndRelatedRecords>> lookupLoanPolicyId(
+    LoanAndRelatedRecords relatedRecords,
     LoanRulesClient loanRulesClient) {
 
     return lookupLoanPolicyId(relatedRecords.inventoryRecords.getItem(),
@@ -564,13 +564,13 @@ public class LoanCollectionResource {
     return item.getJsonObject("status").getString("name");
   }
 
-  private CompletableFuture<HttpResult<RelatedRecords>> updateLoan(
+  private CompletableFuture<HttpResult<LoanAndRelatedRecords>> updateLoan(
     Clients clients,
     String id,
     JsonObject loan,
-    RelatedRecords relatedRecords) {
+    LoanAndRelatedRecords relatedRecords) {
 
-    CompletableFuture<HttpResult<RelatedRecords>> onUpdated = new CompletableFuture<>();
+    CompletableFuture<HttpResult<LoanAndRelatedRecords>> onUpdated = new CompletableFuture<>();
 
     JsonObject storageLoan = convertLoanToStorageRepresentation(loan,
       relatedRecords.inventoryRecords.getItem());
@@ -586,11 +586,11 @@ public class LoanCollectionResource {
     return onUpdated;
   }
 
-  private CompletableFuture<HttpResult<RelatedRecords>> createLoan(
-    RelatedRecords relatedRecords,
+  private CompletableFuture<HttpResult<LoanAndRelatedRecords>> createLoan(
+    LoanAndRelatedRecords relatedRecords,
     Clients clients) {
 
-    CompletableFuture<HttpResult<RelatedRecords>> onCreated = new CompletableFuture<>();
+    CompletableFuture<HttpResult<LoanAndRelatedRecords>> onCreated = new CompletableFuture<>();
 
     JsonObject loan = relatedRecords.loan;
 
@@ -622,7 +622,7 @@ public class LoanCollectionResource {
     return storageLoan;
   }
 
-  private HttpResult<RelatedRecords> addRequestQueue(
+  private HttpResult<LoanAndRelatedRecords> addRequestQueue(
     HttpResult<InventoryRecords> inventoryRecordsResult,
     HttpResult<RequestQueue> requestQueueResult) {
 
@@ -633,14 +633,14 @@ public class LoanCollectionResource {
       return HttpResult.failure(requestQueueResult.cause());
     }
     else {
-      return HttpResult.success(new RelatedRecords(
+      return HttpResult.success(new LoanAndRelatedRecords(
         inventoryRecordsResult.value(), requestQueueResult.value(), null, null,
         null, null));
     }
   }
 
-  private HttpResult<RelatedRecords> addUser(
-    HttpResult<RelatedRecords> relatedRecordsResult,
+  private HttpResult<LoanAndRelatedRecords> addUser(
+    HttpResult<LoanAndRelatedRecords> relatedRecordsResult,
     HttpResult<JsonObject> getUserResult) {
 
     if(relatedRecordsResult.failed()) {

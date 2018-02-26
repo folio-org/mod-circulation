@@ -4,7 +4,7 @@ import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.support.InventoryRecords;
 
-public class RelatedRecords {
+public class LoanAndRelatedRecords {
   public final JsonObject loan;
   public final InventoryRecords inventoryRecords;
   public final RequestQueue requestQueue;
@@ -12,7 +12,7 @@ public class RelatedRecords {
   public final String loanPolicyId;
   public final JsonObject location;
 
-  RelatedRecords(
+  LoanAndRelatedRecords(
     InventoryRecords inventoryRecords,
     RequestQueue requestQueue,
     JsonObject loan,
@@ -27,34 +27,34 @@ public class RelatedRecords {
     this.location = location;
   }
 
-  public RelatedRecords replaceItem(JsonObject updatedItem) {
-    return new RelatedRecords(new InventoryRecords(updatedItem,
+  public LoanAndRelatedRecords replaceItem(JsonObject updatedItem) {
+    return new LoanAndRelatedRecords(new InventoryRecords(updatedItem,
       inventoryRecords.getHolding(), inventoryRecords.getInstance()),
       requestQueue, loan, requestingUser, loanPolicyId, location);
   }
 
-  public RelatedRecords changeLoan(JsonObject newLoan) {
-    return new RelatedRecords(inventoryRecords, requestQueue, newLoan,
+  public LoanAndRelatedRecords changeLoan(JsonObject newLoan) {
+    return new LoanAndRelatedRecords(inventoryRecords, requestQueue, newLoan,
       requestingUser, loanPolicyId, location);
   }
 
-  public RelatedRecords changeUser(JsonObject newUser) {
-    return new RelatedRecords(inventoryRecords, requestQueue, loan, newUser,
+  public LoanAndRelatedRecords changeUser(JsonObject newUser) {
+    return new LoanAndRelatedRecords(inventoryRecords, requestQueue, loan, newUser,
       loanPolicyId, location);
   }
 
-  public RelatedRecords changeLoanPolicy(String newLoanPolicyId) {
-    return new RelatedRecords(inventoryRecords, requestQueue, loan,
+  public LoanAndRelatedRecords changeLoanPolicy(String newLoanPolicyId) {
+    return new LoanAndRelatedRecords(inventoryRecords, requestQueue, loan,
       requestingUser, newLoanPolicyId, location);
   }
 
-  public RelatedRecords changeRequestQueue(RequestQueue newRequestQueue) {
-    return new RelatedRecords(inventoryRecords, newRequestQueue, loan,
+  public LoanAndRelatedRecords changeRequestQueue(RequestQueue newRequestQueue) {
+    return new LoanAndRelatedRecords(inventoryRecords, newRequestQueue, loan,
       requestingUser, loanPolicyId, location);
   }
 
-  public RelatedRecords changeLocation(JsonObject newLocation) {
-    return new RelatedRecords(inventoryRecords, requestQueue, loan,
+  public LoanAndRelatedRecords changeLocation(JsonObject newLocation) {
+    return new LoanAndRelatedRecords(inventoryRecords, requestQueue, loan,
       requestingUser, loanPolicyId, newLocation);
   }
 }
