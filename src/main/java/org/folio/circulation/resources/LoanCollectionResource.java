@@ -79,19 +79,9 @@ public class LoanCollectionResource {
         records, clients.loanRules())))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(records -> createLoan(records, clients)))
-      .thenAcceptAsync(result -> {
-        if(result.failed()) {
-          result.cause().writeTo(routingContext.response());
-          return;
-        }
-
-        JsonResponse.created(routingContext.response(),
-          extendedLoan(result.value().loan,
-            result.value().inventoryRecords.item,
-            result.value().inventoryRecords.holding,
-            result.value().inventoryRecords.instance,
-            result.value().location));
-      });
+      .thenApply(r -> r.map(this::extendedLoan))
+      .thenApply(CreatedHttpResult::from)
+      .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
   private CompletableFuture<HttpResult<JsonObject>> getUser(
@@ -140,12 +130,6 @@ public class LoanCollectionResource {
     CompletableFuture<Response> getUserCompleted = new CompletableFuture<>();
 
     clients.locationsStorage().get(locationId, getUserCompleted::complete);
-
-    //                if (locationResponse.getStatusCode() == 200) {
-//                  JsonResponse.created(routingContext.response(),
-//                    extendedLoan(createdLoan, item, holding, instance,
-//                      locationResponse.getJson()));
-//                } else {
 
     //TODO: Add functions to explicitly distinguish between fatal not found
     // and allowable not found
@@ -205,8 +189,8 @@ public class LoanCollectionResource {
         updateItemStatus(relatedRecordsResult.value(), itemStatusFrom(loan), clients.itemsStorage())))
       .thenComposeAsync(updateItemResult -> updateItemResult.after(relatedRecords -> updateLoan(clients, id, loan, relatedRecords)))
       .thenComposeAsync(updateLoanResult -> updateLoanResult.after(requestQueueUpdate::onCheckIn))
-      .thenApplyAsync(NoContentHttpResult::from)
-      .thenAcceptAsync(result -> result.writeTo(routingContext.response()));
+      .thenApply(NoContentHttpResult::from)
+      .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
   private void get(RoutingContext routingContext) {
@@ -462,6 +446,14 @@ public class LoanCollectionResource {
     return itemSummary;
   }
 
+  private JsonObject extendedLoan(RelatedRecords relatedRecords) {
+    return extendedLoan(relatedRecords.loan,
+      relatedRecords.inventoryRecords.item,
+      relatedRecords.inventoryRecords.holding,
+      relatedRecords.inventoryRecords.instance,
+      relatedRecords.location);
+  }
+
   private JsonObject extendedLoan(
     JsonObject loan,
     JsonObject item,
@@ -660,22 +652,6 @@ public class LoanCollectionResource {
     else {
       return HttpResult.success(relatedRecordsResult.value()
         .changeUser(getUserResult.value()));
-    }
-  }
-
-  private HttpResult<RelatedRecords> addLocation(
-    HttpResult<RelatedRecords> relatedRecordsResult,
-    HttpResult<JsonObject> getLocationResult) {
-
-    if(relatedRecordsResult.failed()) {
-      return HttpResult.failure(relatedRecordsResult.cause());
-    }
-    else if(getLocationResult.failed()) {
-      return HttpResult.failure(getLocationResult.cause());
-    }
-    else {
-      return HttpResult.success(relatedRecordsResult.value()
-        .changeLocation(getLocationResult.value()));
     }
   }
 }
