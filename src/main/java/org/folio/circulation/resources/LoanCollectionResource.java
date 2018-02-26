@@ -67,18 +67,19 @@ public class LoanCollectionResource {
 
     inventoryFetcher.fetch(itemId)
       .thenApply(r -> checkItemExists(r, itemId))
-      .thenCombine(requestQueueFetcher.get(itemId), this::combineInventoryAndRelatedRecords)
-      .thenAccept(relatedRecordsResult -> {
+      .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
+      .thenApply(r -> r.map(records -> records.replaceLoan(loan)))
+      .thenAcceptAsync(relatedRecordsResult -> {
         if(relatedRecordsResult.failed()) {
           relatedRecordsResult.cause().writeTo(routingContext.response());
           return;
         }
 
-        final JsonObject item = relatedRecordsResult.value().inventoryRecords().getItem();
-        final JsonObject holding = relatedRecordsResult.value().inventoryRecords().getHolding();
-        final JsonObject instance = relatedRecordsResult.value().inventoryRecords().getInstance();
+        final JsonObject item = relatedRecordsResult.value().inventoryRecords.getItem();
+        final JsonObject holding = relatedRecordsResult.value().inventoryRecords.getHolding();
+        final JsonObject instance = relatedRecordsResult.value().inventoryRecords.getInstance();
 
-        final RequestQueue requestQueue = relatedRecordsResult.value().requestQueue();
+        final RequestQueue requestQueue = relatedRecordsResult.value().requestQueue;
 
         final CompletableFuture<HttpResult<RelatedRecords>> itemUpdated
           = updateItemStatus(relatedRecordsResult.value(), itemStatusFrom(loan), clients.itemsStorage());
@@ -162,7 +163,7 @@ public class LoanCollectionResource {
 
     inventoryFetcher.fetch(itemId)
       .thenApplyAsync(r -> checkItemExists(r, itemId))
-      .thenCombineAsync(requestQueueFetcher.get(itemId), this::combineInventoryAndRelatedRecords)
+      .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
       .thenComposeAsync(relatedRecordsResult -> relatedRecordsResult.after(relatedRecords1 ->
         updateItemStatus(relatedRecordsResult.value(), itemStatusFrom(loan), clients.itemsStorage())))
       .thenComposeAsync(updateItemResult -> updateItemResult.after(relatedRecords -> updateLoan(clients, id, loan, relatedRecords)))
@@ -535,7 +536,7 @@ public class LoanCollectionResource {
     CompletableFuture<HttpResult<RelatedRecords>> onUpdated = new CompletableFuture<>();
 
     JsonObject storageLoan = convertLoanToStorageRepresentation(loan,
-      relatedRecords.inventoryRecords().getItem());
+      relatedRecords.inventoryRecords.getItem());
 
     clients.loansStorage().put(id, storageLoan, response -> {
       if (response.getStatusCode() == 204) {
@@ -561,18 +562,18 @@ public class LoanCollectionResource {
     return storageLoan;
   }
 
-  private HttpResult<RelatedRecords> combineInventoryAndRelatedRecords(
-    HttpResult<InventoryRecords> firstResult,
-    HttpResult<RequestQueue> secondResult) {
+  private HttpResult<RelatedRecords> addRequestQueue(
+    HttpResult<InventoryRecords> inventoryRecordsResult,
+    HttpResult<RequestQueue> requestQueueResult) {
 
-    if(firstResult.failed()) {
-      return HttpResult.failure(firstResult.cause());
+    if(inventoryRecordsResult.failed()) {
+      return HttpResult.failure(inventoryRecordsResult.cause());
     }
-    else if(secondResult.failed()) {
-      return HttpResult.failure(secondResult.cause());
+    else if(requestQueueResult.failed()) {
+      return HttpResult.failure(requestQueueResult.cause());
     }
     else {
-      return HttpResult.success(new RelatedRecords(firstResult.value(), secondResult.value()));
+      return HttpResult.success(new RelatedRecords(inventoryRecordsResult.value(), requestQueueResult.value(), null));
     }
   }
 }

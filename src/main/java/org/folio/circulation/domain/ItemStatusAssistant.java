@@ -4,7 +4,6 @@ import io.vertx.core.json.JsonObject;
 import org.folio.circulation.resources.RelatedRecords;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.InventoryRecords;
 import org.folio.circulation.support.ServerErrorFailure;
 
 import java.util.concurrent.CompletableFuture;
@@ -46,38 +45,9 @@ public class ItemStatusAssistant {
     String prospectiveNewStatus,
     CollectionResourceClient itemsStorageClient) {
 
-    return updateItemStatus(relatedRecords.inventoryRecords().getItem(),
+    return updateItemStatus(relatedRecords.inventoryRecords.getItem(),
       prospectiveNewStatus, itemsStorageClient)
-      .thenApply(updatedItemResult -> updatedItemResult.map(updatedItem ->
-        new RelatedRecords(new InventoryRecords(
-          updatedItem, relatedRecords.inventoryRecords().getHolding(),
-          relatedRecords.inventoryRecords().getInstance()),
-          relatedRecords.requestQueue())));
-
-//    CompletableFuture<HttpResult<RelatedRecords>> itemUpdated = new CompletableFuture<>();
-//
-////    final JsonObject item = relatedRecords.inventoryRecords().getItem();
-////
-////    if (statusNeedsChanging(item, prospectiveNewStatus)) {
-////      item.put("status", new JsonObject().put("name", prospectiveNewStatus));
-////
-////      itemsStorageClient.put(item.getString("id"),
-////        item, putItemResponse -> {
-////          if(putItemResponse.getStatusCode() == 204) {
-////            itemUpdated.complete(HttpResult.success(new RelatedRecords(new InventoryRecords(item,
-////              relatedRecords.inventoryRecords().getHolding(),
-////              relatedRecords.inventoryRecords().getInstance()),
-////              relatedRecords.requestQueue())));
-////          }
-////          else {
-////             itemUpdated.complete(HttpResult.failure(new ServerErrorFailure("Failed to update item")));
-////          }
-////        });
-////    } else {
-////      itemUpdated.complete(HttpResult.success(relatedRecords));
-////    }
-//
-//    return itemUpdated;
+      .thenApply(updatedItemResult -> updatedItemResult.map(relatedRecords::replaceItem));
   }
 
   private static boolean statusNeedsChanging(JsonObject item, String prospectiveNewStatus) {

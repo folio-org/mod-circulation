@@ -18,8 +18,8 @@ public class UpdateRequestQueue {
   public CompletableFuture<HttpResult<JsonObject>> onCheckIn(RelatedRecords relatedRecords) {
     CompletableFuture<HttpResult<JsonObject>> requestUpdated = new CompletableFuture<>();
 
-    if (relatedRecords.requestQueue().hasOutstandingRequests()) {
-      JsonObject firstRequest = relatedRecords.requestQueue().getFirst();
+    if (relatedRecords.requestQueue.hasOutstandingRequests()) {
+      JsonObject firstRequest = relatedRecords.requestQueue.getFirst();
 
       firstRequest.put("status", RequestStatus.OPEN_AWAITING_PICKUP);
 
