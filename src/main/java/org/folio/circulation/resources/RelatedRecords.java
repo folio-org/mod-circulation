@@ -45,4 +45,9 @@ public class RelatedRecords {
     return new RelatedRecords(inventoryRecords, requestQueue, loan,
       requestingUser, newLoanPolicyId);
   }
+
+  public RelatedRecords changeRequestQueue(RequestQueue newRequestQueue) {
+    return new RelatedRecords(inventoryRecords, newRequestQueue, loan,
+      requestingUser, loanPolicyId);
+  }
 }

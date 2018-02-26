@@ -40,8 +40,15 @@ public class UpdateRequestQueue {
     return requestUpdated;
   }
 
-  public CompletableFuture<HttpResult<JsonObject>> onCheckOut(RequestQueue requestQueue) {
-    CompletableFuture<HttpResult<JsonObject>> requestUpdated = new CompletableFuture<>();
+  public CompletableFuture<HttpResult<RelatedRecords>> onCheckOut(
+    RelatedRecords relatedRecords) {
+
+    return onCheckOut(relatedRecords.requestQueue)
+      .thenApply(result -> result.map(relatedRecords::changeRequestQueue));
+  }
+
+  public CompletableFuture<HttpResult<RequestQueue>> onCheckOut(RequestQueue requestQueue) {
+    CompletableFuture<HttpResult<RequestQueue>> requestUpdated = new CompletableFuture<>();
 
     if (requestQueue.hasOutstandingRequests()) {
       JsonObject firstRequest = requestQueue.getFirst();
@@ -51,7 +58,7 @@ public class UpdateRequestQueue {
       clients.requestsStorage().put(firstRequest.getString("id"), firstRequest,
         updateRequestResponse -> {
           if (updateRequestResponse.getStatusCode() == 204) {
-            requestUpdated.complete(HttpResult.success(firstRequest));
+            requestUpdated.complete(HttpResult.success(requestQueue));
           } else {
             requestUpdated.complete(HttpResult.failure(new ServerErrorFailure(
               String.format("Failed to update request: %s: %s",

@@ -58,8 +58,9 @@ public class LoanCollectionResource {
     final String itemId = loan.getString("itemId");
     final String requestingUserId = loan.getString("userId");
 
-    InventoryFetcher inventoryFetcher = InventoryFetcher.create(clients);
-    RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
+    final InventoryFetcher inventoryFetcher = InventoryFetcher.create(clients);
+    final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
+    final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
 
 //    TODO: Reinstate this logic in http result handling
 //    allCompleted.exceptionally(t -> {
@@ -75,6 +76,7 @@ public class LoanCollectionResource {
         itemStatusFrom(loan), clients.itemsStorage())))
       .thenComposeAsync(r -> r.after(records -> lookupLoanPolicyId(
         records, clients.loanRules())))
+      .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenAcceptAsync(relatedRecordsResult -> {
         if(relatedRecordsResult.failed()) {
           relatedRecordsResult.cause().writeTo(routingContext.response());
@@ -85,43 +87,33 @@ public class LoanCollectionResource {
         final JsonObject holding = relatedRecordsResult.value().inventoryRecords.getHolding();
         final JsonObject instance = relatedRecordsResult.value().inventoryRecords.getInstance();
         final String loanPolicyId = relatedRecordsResult.value().loanPolicyId;
-        final RequestQueue requestQueue = relatedRecordsResult.value().requestQueue;
 
-        final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(clients);
+        loan.put("loanPolicyId", loanPolicyId);
+        loan.put("itemStatus", getItemStatus(item));
 
-        updateRequestQueue.onCheckOut(requestQueue).thenAccept(result -> {
-          if(result.failed()) {
-            result.cause().writeTo(routingContext.response());
-            return;
+        clients.loansStorage().post(loan, response -> {
+          if (response.getStatusCode() == 201) {
+            JsonObject createdLoan = response.getJson();
+
+            final String locationId = determineLocationIdForItem(item, holding);
+
+            clients.locationsStorage().get(locationId, locationResponse -> {
+              if (locationResponse.getStatusCode() == 200) {
+                JsonResponse.created(routingContext.response(),
+                  extendedLoan(createdLoan, item, holding, instance,
+                    locationResponse.getJson()));
+              } else {
+                log.warn(
+                  String.format("Could not get location %s for item %s",
+                    locationId, itemId));
+
+                JsonResponse.created(routingContext.response(),
+                  extendedLoan(createdLoan, item, holding, instance, null));
+              }
+            });
+          } else {
+            ForwardResponse.forward(routingContext.response(), response);
           }
-
-          loan.put("loanPolicyId", loanPolicyId);
-          loan.put("itemStatus", getItemStatus(item));
-
-          clients.loansStorage().post(loan, response -> {
-            if (response.getStatusCode() == 201) {
-              JsonObject createdLoan = response.getJson();
-
-              final String locationId = determineLocationIdForItem(item, holding);
-
-              clients.locationsStorage().get(locationId, locationResponse -> {
-                if (locationResponse.getStatusCode() == 200) {
-                  JsonResponse.created(routingContext.response(),
-                    extendedLoan(createdLoan, item, holding, instance,
-                      locationResponse.getJson()));
-                } else {
-                  log.warn(
-                    String.format("Could not get location %s for item %s",
-                      locationId, itemId));
-
-                  JsonResponse.created(routingContext.response(),
-                    extendedLoan(createdLoan, item, holding, instance, null));
-                }
-              });
-            } else {
-              ForwardResponse.forward(routingContext.response(), response);
-            }
-          });
         });
       });
   }
@@ -472,7 +464,6 @@ public class LoanCollectionResource {
     return lookupLoanPolicyId(relatedRecords.inventoryRecords.getItem(),
       relatedRecords.inventoryRecords.holding, relatedRecords.requestingUser, loanRulesClient)
       .thenApply(result -> result.map(relatedRecords::changeLoanPolicy));
-
   }
 
   private CompletableFuture<HttpResult<String>> lookupLoanPolicyId(
