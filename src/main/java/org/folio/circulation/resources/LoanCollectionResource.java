@@ -1,6 +1,5 @@
 package org.folio.circulation.resources;
 
-import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -88,15 +87,13 @@ public class LoanCollectionResource {
         final RequestQueue requestQueue = relatedRecordsResult.value().requestQueue;
 
         lookupLoanPolicyId(item, holding, requestingUser,
-          clients.loanRules(), routingContext.response(), loanPolicyIdResult -> {
+          clients.loanRules(), loanPolicyIdResult -> {
 
           if(loanPolicyIdResult.failed()) {
             loanPolicyIdResult.cause().writeTo(routingContext.response());
             return;
           }
-
-          loan.put("loanPolicyId", loanPolicyIdResult.value().getString("loanPolicyId"));
-
+          
           final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(clients);
 
           updateRequestQueue.onCheckOut(requestQueue).thenAccept(result -> {
@@ -105,6 +102,7 @@ public class LoanCollectionResource {
               return;
             }
 
+            loan.put("loanPolicyId", loanPolicyIdResult.value().getString("loanPolicyId"));
             loan.put("itemStatus", getItemStatus(item));
 
             clients.loansStorage().post(loan, response -> {
@@ -136,7 +134,7 @@ public class LoanCollectionResource {
       });
   }
 
-  public CompletableFuture<HttpResult<JsonObject>> getUser(
+  private CompletableFuture<HttpResult<JsonObject>> getUser(
     String userId,
     CollectionResourceClient usersClient) {
 
@@ -480,18 +478,17 @@ public class LoanCollectionResource {
     JsonObject holding,
     JsonObject user,
     LoanRulesClient loanRulesClient,
-    HttpServerResponse responseToClient,
-    Consumer<HttpResult<JsonObject>> onSuccess) {
+    Consumer<HttpResult<JsonObject>> onFinished) {
 
     if(item == null) {
-      ServerErrorResponse.internalError(responseToClient,
-        "Unable to process claim for unknown item");
+      onFinished.accept(HttpResult.failure(
+        new ServerErrorFailure("Unable to process claim for unknown item")));
       return;
     }
 
     if(holding == null) {
-      ServerErrorResponse.internalError(responseToClient,
-        "Unable to process claim for unknown holding");
+      onFinished.accept(HttpResult.failure(
+        new ServerErrorFailure("Unable to process claim for unknown holding")));
       return;
     }
 
@@ -507,12 +504,14 @@ public class LoanCollectionResource {
         Response getPolicyResponse = Response.from(response, body);
 
         if (getPolicyResponse.getStatusCode() == 404) {
-          ServerErrorResponse.internalError(responseToClient, "Unable to locate loan policy");
+          onFinished.accept(HttpResult.failure(
+            new ServerErrorFailure("Unable to locate loan policy")));
         } else if (getPolicyResponse.getStatusCode() != 200) {
-          ForwardResponse.forward(responseToClient, getPolicyResponse);
+          onFinished.accept(HttpResult.failure(
+            new ForwardOnFailure(getPolicyResponse)));
         } else {
           JsonObject policyIdJson = getPolicyResponse.getJson();
-          onSuccess.accept(HttpResult.success(policyIdJson));
+          onFinished.accept(HttpResult.success(policyIdJson));
         }
       }));
   }
