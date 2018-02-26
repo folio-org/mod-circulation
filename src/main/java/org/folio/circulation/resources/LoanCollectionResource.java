@@ -21,6 +21,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
@@ -82,48 +83,80 @@ public class LoanCollectionResource {
 
         final RequestQueue requestQueue = relatedRecordsResult.value().requestQueue;
 
-        loan.put("itemStatus", getItemStatus(item));
-
-        lookupLoanPolicyId(loan, item, holding, clients.usersStorage(),
-          clients.loanRules(), routingContext.response(), loanPolicyIdJson -> {
-
-          loan.put("loanPolicyId", loanPolicyIdJson.getString("loanPolicyId"));
-
-          final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(clients);
-
-          updateRequestQueue.onCheckOut(requestQueue).thenAccept(result -> {
-            if(result.failed()) {
-              result.cause().writeTo(routingContext.response());
+        getUser(loan.getString("userId"), clients.usersStorage()).thenAcceptAsync(
+          findUserResult -> {
+            if(findUserResult.failed()) {
+              findUserResult.cause().writeTo(routingContext.response());
               return;
             }
 
-            clients.loansStorage().post(loan, response -> {
-              if (response.getStatusCode() == 201) {
-                JsonObject createdLoan = response.getJson();
+            lookupLoanPolicyId(item, holding, findUserResult.value(),
+              clients.loanRules(), routingContext.response(), loanPolicyIdJson -> {
 
-                final String locationId = determineLocationIdForItem(item, holding);
+              loan.put("loanPolicyId", loanPolicyIdJson.getString("loanPolicyId"));
 
-                clients.locationsStorage().get(locationId, locationResponse -> {
-                  if (locationResponse.getStatusCode() == 200) {
-                    JsonResponse.created(routingContext.response(),
-                      extendedLoan(createdLoan, item, holding, instance,
-                        locationResponse.getJson()));
+              final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(clients);
+
+              updateRequestQueue.onCheckOut(requestQueue).thenAccept(result -> {
+                if(result.failed()) {
+                  result.cause().writeTo(routingContext.response());
+                  return;
+                }
+
+                loan.put("itemStatus", getItemStatus(item));
+
+                clients.loansStorage().post(loan, response -> {
+                  if (response.getStatusCode() == 201) {
+                    JsonObject createdLoan = response.getJson();
+
+                    final String locationId = determineLocationIdForItem(item, holding);
+
+                    clients.locationsStorage().get(locationId, locationResponse -> {
+                      if (locationResponse.getStatusCode() == 200) {
+                        JsonResponse.created(routingContext.response(),
+                          extendedLoan(createdLoan, item, holding, instance,
+                            locationResponse.getJson()));
+                      } else {
+                        log.warn(
+                          String.format("Could not get location %s for item %s",
+                            locationId, itemId));
+
+                        JsonResponse.created(routingContext.response(),
+                          extendedLoan(createdLoan, item, holding, instance, null));
+                      }
+                    });
                   } else {
-                    log.warn(
-                      String.format("Could not get location %s for item %s",
-                        locationId, itemId));
-
-                    JsonResponse.created(routingContext.response(),
-                      extendedLoan(createdLoan, item, holding, instance, null));
+                    ForwardResponse.forward(routingContext.response(), response);
                   }
                 });
-              } else {
-                ForwardResponse.forward(routingContext.response(), response);
-              }
+              });
             });
-          });
         });
       });
+  }
+
+  public CompletableFuture<HttpResult<JsonObject>> getUser(String userId, CollectionResourceClient usersClient) {
+
+    CompletableFuture<Response> getUserCompleted = new CompletableFuture<>();
+
+    usersClient.get(userId, getUserCompleted::complete);
+
+    final Function<Response, HttpResult<JsonObject>> mapResponse = response -> {
+      if(response.getStatusCode() == 404) {
+        return HttpResult.failure(new ServerErrorFailure("Unable to locate User"));
+      }
+      else if(response.getStatusCode() != 200) {
+        return HttpResult.failure(new ForwardOnFailure(response));
+      }
+      else {
+        //Got user record, we're good to continue
+        return HttpResult.success(response.getJson());
+      }
+    };
+
+    return getUserCompleted
+      .thenApply(mapResponse)
+      .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
   }
 
   private HttpResult<InventoryRecords> checkItemExists(
@@ -440,10 +473,9 @@ public class LoanCollectionResource {
   }
 
   private void lookupLoanPolicyId(
-    JsonObject loan,
     JsonObject item,
     JsonObject holding,
-    CollectionResourceClient usersStorageClient,
+    JsonObject user,
     LoanRulesClient loanRulesClient,
     HttpServerResponse responseToClient,
     Consumer<JsonObject> onSuccess) {
@@ -460,42 +492,26 @@ public class LoanCollectionResource {
       return;
     }
 
-    String userId = loan.getString("userId");
-
     String loanTypeId = determineLoanTypeForItem(item);
     String locationId = determineLocationIdForItem(item, holding);
 
     //Got instance record, we're good to continue
     String materialTypeId = item.getString("materialTypeId");
 
-    usersStorageClient.get(userId, getUserResponse -> {
-      if(getUserResponse.getStatusCode() == 404) {
-        ServerErrorResponse.internalError(responseToClient, "Unable to locate User");
-      }
-      else if(getUserResponse.getStatusCode() != 200) {
-        ForwardResponse.forward(responseToClient, getUserResponse);
-      } else {
-        //Got user record, we're good to continue
-        JsonObject user = getUserResponse.getJson();
+    String patronGroup = user.getString("patronGroup");
+    loanRulesClient.applyRules(loanTypeId, locationId, materialTypeId,
+      patronGroup, response -> response.bodyHandler(body -> {
+        Response getPolicyResponse = Response.from(response, body);
 
-        String patronGroup = user.getString("patronGroup");
-
-        loanRulesClient.applyRules(loanTypeId, locationId, materialTypeId,
-          patronGroup, response -> response.bodyHandler(body -> {
-
-          Response getPolicyResponse = Response.from(response, body);
-
-          if (getPolicyResponse.getStatusCode() == 404) {
-            ServerErrorResponse.internalError(responseToClient, "Unable to locate loan policy");
-          } else if (getPolicyResponse.getStatusCode() != 200) {
-            ForwardResponse.forward(responseToClient, getPolicyResponse);
-          } else {
-            JsonObject policyIdJson = getPolicyResponse.getJson();
-            onSuccess.accept(policyIdJson);
-          }
-        }));
-      }
-    });
+        if (getPolicyResponse.getStatusCode() == 404) {
+          ServerErrorResponse.internalError(responseToClient, "Unable to locate loan policy");
+        } else if (getPolicyResponse.getStatusCode() != 200) {
+          ForwardResponse.forward(responseToClient, getPolicyResponse);
+        } else {
+          JsonObject policyIdJson = getPolicyResponse.getJson();
+          onSuccess.accept(policyIdJson);
+        }
+      }));
   }
 
   private String determineLoanTypeForItem(JsonObject item) {
