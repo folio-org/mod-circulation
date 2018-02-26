@@ -25,10 +25,6 @@ public class RelatedRecords {
       requestQueue, updatedItem);
   }
 
-  public RelatedRecords replaceRequestQueue(RequestQueue newRequestQueue) {
-    return new RelatedRecords(inventoryRecords, newRequestQueue, loan);
-  }
-
   public RelatedRecords replaceLoan(JsonObject newLoan) {
     return new RelatedRecords(inventoryRecords, requestQueue, newLoan);
   }

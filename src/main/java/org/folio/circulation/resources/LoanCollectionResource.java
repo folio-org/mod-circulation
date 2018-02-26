@@ -69,6 +69,7 @@ public class LoanCollectionResource {
       .thenApply(r -> checkItemExists(r, itemId))
       .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
       .thenApply(r -> r.map(records -> records.replaceLoan(loan)))
+      .thenComposeAsync(r -> r.after(records -> updateItemStatus(records, itemStatusFrom(loan), clients.itemsStorage())))
       .thenAcceptAsync(relatedRecordsResult -> {
         if(relatedRecordsResult.failed()) {
           relatedRecordsResult.cause().writeTo(routingContext.response());
@@ -81,10 +82,6 @@ public class LoanCollectionResource {
 
         final RequestQueue requestQueue = relatedRecordsResult.value().requestQueue;
 
-        final CompletableFuture<HttpResult<RelatedRecords>> itemUpdated
-          = updateItemStatus(relatedRecordsResult.value(), itemStatusFrom(loan), clients.itemsStorage());
-
-      itemUpdated.thenAcceptAsync(updatedItemResult -> {
         loan.put("itemStatus", getItemStatus(item));
 
         lookupLoanPolicyId(loan, item, holding, clients.usersStorage(),
@@ -127,7 +124,6 @@ public class LoanCollectionResource {
           });
         });
       });
-    });
   }
 
   private HttpResult<InventoryRecords> checkItemExists(
