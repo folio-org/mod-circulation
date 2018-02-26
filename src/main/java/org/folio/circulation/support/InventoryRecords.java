@@ -5,7 +5,7 @@ import io.vertx.core.json.JsonObject;
 public class InventoryRecords {
   public final JsonObject item;
   public final JsonObject holding;
-  private final JsonObject instance;
+  public final JsonObject instance;
 
   public InventoryRecords(
     JsonObject item,

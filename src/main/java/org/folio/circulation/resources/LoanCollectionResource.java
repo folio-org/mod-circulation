@@ -70,7 +70,7 @@ public class LoanCollectionResource {
     inventoryFetcher.fetch(itemId)
       .thenApply(r -> checkItemExists(r, itemId))
       .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
-      .thenApply(r -> r.map(records -> records.replaceLoan(loan)))
+      .thenApply(r -> r.map(records -> records.changeLoan(loan)))
       .thenCombineAsync(getUser(requestingUserId, clients.usersStorage()), this::addUser)
       .thenComposeAsync(r -> r.after(records -> getLocation(records, clients)))
       .thenComposeAsync(r -> r.after(records -> updateItemStatus(records,
@@ -78,31 +78,19 @@ public class LoanCollectionResource {
       .thenComposeAsync(r -> r.after(records -> lookupLoanPolicyId(
         records, clients.loanRules())))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
-      .thenAcceptAsync(relatedRecordsResult -> {
-        if(relatedRecordsResult.failed()) {
-          relatedRecordsResult.cause().writeTo(routingContext.response());
+      .thenComposeAsync(r -> r.after(records -> createLoan(records, clients)))
+      .thenAcceptAsync(result -> {
+        if(result.failed()) {
+          result.cause().writeTo(routingContext.response());
           return;
         }
 
-        final JsonObject item = relatedRecordsResult.value().inventoryRecords.getItem();
-        final JsonObject holding = relatedRecordsResult.value().inventoryRecords.getHolding();
-        final JsonObject instance = relatedRecordsResult.value().inventoryRecords.getInstance();
-        final String loanPolicyId = relatedRecordsResult.value().loanPolicyId;
-
-        final JsonObject location = relatedRecordsResult.value().location;
-        loan.put("loanPolicyId", loanPolicyId);
-        loan.put("itemStatus", getItemStatus(item));
-
-        clients.loansStorage().post(loan, response -> {
-          if (response.getStatusCode() == 201) {
-            JsonObject createdLoan = response.getJson();
-
-            JsonResponse.created(routingContext.response(),
-              extendedLoan(createdLoan, item, holding, instance, location));
-          } else {
-            ForwardResponse.forward(routingContext.response(), response);
-          }
-        });
+        JsonResponse.created(routingContext.response(),
+          extendedLoan(result.value().loan,
+            result.value().inventoryRecords.item,
+            result.value().inventoryRecords.holding,
+            result.value().inventoryRecords.instance,
+            result.value().location));
       });
   }
 
@@ -604,6 +592,29 @@ public class LoanCollectionResource {
     });
 
     return onUpdated;
+  }
+
+  private CompletableFuture<HttpResult<RelatedRecords>> createLoan(
+    RelatedRecords relatedRecords,
+    Clients clients) {
+
+    CompletableFuture<HttpResult<RelatedRecords>> onCreated = new CompletableFuture<>();
+
+    JsonObject loan = relatedRecords.loan;
+
+    loan.put("loanPolicyId", relatedRecords.loanPolicyId);
+    loan.put("itemStatus", getItemStatus(relatedRecords.inventoryRecords.item));
+
+    clients.loansStorage().post(loan, response -> {
+      if (response.getStatusCode() == 201) {
+        onCreated.complete(HttpResult.success(
+          relatedRecords.changeLoan(response.getJson())));
+      } else {
+        onCreated.complete(HttpResult.failure(new ForwardOnFailure(response)));
+      }
+    });
+
+    return onCreated;
   }
 
   private JsonObject convertLoanToStorageRepresentation(

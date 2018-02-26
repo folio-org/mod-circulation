@@ -30,10 +30,10 @@ public class RelatedRecords {
   public RelatedRecords replaceItem(JsonObject updatedItem) {
     return new RelatedRecords(new InventoryRecords(updatedItem,
       inventoryRecords.getHolding(), inventoryRecords.getInstance()),
-      requestQueue, updatedItem, requestingUser, loanPolicyId, location);
+      requestQueue, loan, requestingUser, loanPolicyId, location);
   }
 
-  public RelatedRecords replaceLoan(JsonObject newLoan) {
+  public RelatedRecords changeLoan(JsonObject newLoan) {
     return new RelatedRecords(inventoryRecords, requestQueue, newLoan,
       requestingUser, loanPolicyId, location);
   }
