@@ -4,6 +4,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.domain.ItemStatusAssistant;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestQueueFetcher;
 import org.folio.circulation.domain.UpdateRequestQueue;
@@ -67,6 +68,7 @@ public class LoanCollectionResource {
     completedFuture(HttpResult.success(new LoanAndRelatedRecords(loan)))
       .thenCombineAsync(inventoryFetcher.fetch(loan), this::addInventoryRecords)
       .thenApply(this::refuseWhenItemDoesNotExist)
+      .thenApply(this::refuseWhenItemIsAlreadyCheckedOut)
       .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
       .thenCombineAsync(getUser(requestingUserId, clients.usersStorage()), this::addUser)
       .thenApply(this::refuseWhenUserIsNotAwaitingPickup)
@@ -155,6 +157,22 @@ public class LoanCollectionResource {
       if(loan.inventoryRecords.getItem() == null) {
         return HttpResult.failure(new ValidationErrorFailure(
           "Item does not exist", "itemId", loan.loan.getString("itemId")));
+      }
+      else {
+        return result;
+      }
+    });
+  }
+
+  private HttpResult<LoanAndRelatedRecords> refuseWhenItemIsAlreadyCheckedOut(
+    HttpResult<LoanAndRelatedRecords> result) {
+
+    return result.next(loan -> {
+      final JsonObject item = loan.inventoryRecords.item;
+
+      if(ItemStatusAssistant.isCheckedOut(item)) {
+        return HttpResult.failure(new ValidationErrorFailure(
+          "Item is already checked out", "itemId", item.getString("id")));
       }
       else {
         return result;

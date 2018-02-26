@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
+import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.resources.LoanAndRelatedRecords;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.HttpResult;
@@ -51,20 +52,32 @@ public class ItemStatusAssistant {
   }
 
   private static boolean statusNeedsChanging(JsonObject item, String prospectiveNewStatus) {
-    String currentStatus = item.getJsonObject("status").getString("name");
+    String currentStatus = getStatus(item);
 
     // More specific status is ok to retain (will likely be different in each context)
-    if(prospectiveNewStatus == ItemStatus.CHECKED_OUT) {
-      if (currentStatus.equals(CHECKED_OUT)
-        || currentStatus.equals(CHECKED_OUT_HELD)
-        || currentStatus.equals(CHECKED_OUT_RECALLED)) {
+    if(StringUtils.equals(prospectiveNewStatus, ItemStatus.CHECKED_OUT)) {
+      if (isCheckedOut(currentStatus)) {
         return false;
       } else {
-        return currentStatus != prospectiveNewStatus;
+        return !StringUtils.equals(currentStatus, prospectiveNewStatus);
       }
     }
     else {
-      return currentStatus != prospectiveNewStatus;
+      return !StringUtils.equals(currentStatus, prospectiveNewStatus);
     }
+  }
+
+  public static boolean isCheckedOut(JsonObject item) {
+    return isCheckedOut(getStatus(item));
+  }
+
+  public static boolean isCheckedOut(String status) {
+    return status.equals(CHECKED_OUT)
+      || status.equals(CHECKED_OUT_HELD)
+      || status.equals(CHECKED_OUT_RECALLED);
+  }
+
+  public static String getStatus(JsonObject item) {
+    return item.getJsonObject("status").getString("name");
   }
 }

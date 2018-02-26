@@ -233,6 +233,29 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
+  public void cannotCheckOutAnItemTwice()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource james = usersFixture.james();
+    IndividualResource jessica = usersFixture.jessica();
+
+    loansFixture.checkOut(smallAngryPlanet, james);
+
+    Response response = loansFixture.attemptCheckOut(smallAngryPlanet, jessica);
+
+    assertThat(response.getJson().getString("message"),
+      is("Item is already checked out"));
+
+    //TODO: introduce when move to array of validation errors
+//    assertThat(JsonArrayHelper.toList(response.getJson().getJsonArray("errors")),
+//      JsonObjectMatchers.hasSoleMessageContaining("Item is already checked out"));
+  }
+
+  @Test
   public void canCreateALoanWithoutStatus()
     throws InterruptedException,
     ExecutionException,
