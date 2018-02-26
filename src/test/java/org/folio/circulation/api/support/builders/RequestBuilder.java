@@ -384,6 +384,10 @@ public class RequestBuilder implements Builder {
     return withStatus(null);
   }
 
+  public RequestBuilder fulfilled() {
+    return withStatus(CLOSED_FILLED);
+  }
+
   private String formatDateTime(DateTime requestDate) {
     return requestDate.toString(ISODateTimeFormat.dateTime());
   }

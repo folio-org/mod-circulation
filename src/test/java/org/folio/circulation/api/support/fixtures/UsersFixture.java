@@ -30,7 +30,7 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return usersClient.create(UserExamples.basedUponStevenJones());
+    return usersClient.create(UserExamples.basedUponJamesRodwell());
   }
 
   public IndividualResource rebecca()
@@ -41,5 +41,15 @@ public class UsersFixture {
     ExecutionException {
 
     return usersClient.create(UserExamples.basedUponRebeccaStuart());
+  }
+
+  public IndividualResource steve()
+    throws
+    InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return usersClient.create(UserExamples.basedUponStevenJones());
   }
 }
