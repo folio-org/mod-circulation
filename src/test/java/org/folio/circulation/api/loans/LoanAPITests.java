@@ -29,6 +29,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
 import static org.folio.circulation.api.support.fixtures.UserExamples.basedUponJessicaPontefract;
 import static org.folio.circulation.api.support.fixtures.UserExamples.basedUponStevenJones;
 import static org.folio.circulation.api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
@@ -135,7 +136,6 @@ public class LoanAPITests extends APITests {
     UUID id = UUID.randomUUID();
 
     UUID userId = usersClient.create(new UserBuilder()).getId();
-    UUID proxyUserId = UUID.randomUUID();
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
@@ -145,7 +145,6 @@ public class LoanAPITests extends APITests {
     client.post(InterfaceUrls.loansUrl(), new LoanBuilder()
       .withId(id)
       .withUserId(userId)
-      .withProxyUserId(proxyUserId)
       .withItemId(UUID.randomUUID())
       .withLoanDate(loanDate)
       .withDueDate(dueDate)
@@ -160,6 +159,77 @@ public class LoanAPITests extends APITests {
 
     assertThat(String.format("Incorrect validation error: %s", response.getBody()),
       response.getJson().getString("message"), is("Item does not exist"));
+  }
+
+  @Test
+  public void cannotCreateALoanForUnknownHolding()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID id = UUID.randomUUID();
+
+    final IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    final UUID itemId = item.getId();
+
+    holdingsClient.delete(UUID.fromString(item.getJson().getString("holdingsRecordId")));
+
+    UUID userId = usersClient.create(new UserBuilder()).getId();
+
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
+    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
+
+    client.post(InterfaceUrls.loansUrl(), new LoanBuilder()
+        .withId(id)
+        .withUserId(userId)
+        .withItemId(itemId)
+        .withLoanDate(loanDate)
+        .withDueDate(dueDate)
+        .withStatus("Open").create(),
+      ResponseHandler.any(createCompleted));
+
+    Response response = createCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Should not create loan: %s", response.getBody()),
+      response.getStatusCode(), is(HTTP_INTERNAL_ERROR));
+
+    assertThat(response.getBody(), is("Unable to process claim for unknown holding"));
+  }
+
+  @Test
+  public void cannotCreateALoanForUnknownRequestingUser()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID id = UUID.randomUUID();
+
+    final UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
+    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
+
+    client.post(InterfaceUrls.loansUrl(), new LoanBuilder()
+        .withId(id)
+        .withUserId(UUID.randomUUID())
+        .withItemId(itemId)
+        .withLoanDate(loanDate)
+        .withDueDate(dueDate)
+        .withStatus("Open").create(),
+      ResponseHandler.any(createCompleted));
+
+    Response response = createCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Should not create loan: %s", response.getBody()),
+      response.getStatusCode(), is(HTTP_INTERNAL_ERROR));
+
+    assertThat(response.getBody(), is("Unable to locate User"));
   }
 
   @Test

@@ -228,19 +228,5 @@ public class LoanAPIPolicyTests extends APITests {
          .put("differentPeriod", false));
 
     pFallback = policyResourceClient.create(pFallbackJson).getId();
-
-  }
-
-  private static void deleteLoanPolicies()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    ResourceClient policyResourceClient = ResourceClient.forLoanPolicies(client);
-    policyResourceClient.delete(p1);
-    policyResourceClient.delete(p2);
-    policyResourceClient.delete(p3);
-    policyResourceClient.delete(pFallback);
   }
 }
