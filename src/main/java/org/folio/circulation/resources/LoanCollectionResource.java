@@ -87,13 +87,12 @@ public class LoanCollectionResource {
         final RequestQueue requestQueue = relatedRecordsResult.value().requestQueue;
 
         lookupLoanPolicyId(item, holding, requestingUser,
-          clients.loanRules(), loanPolicyIdResult -> {
-
+          clients.loanRules()).thenAcceptAsync(loanPolicyIdResult -> {
           if(loanPolicyIdResult.failed()) {
             loanPolicyIdResult.cause().writeTo(routingContext.response());
             return;
           }
-          
+
           final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(clients);
 
           updateRequestQueue.onCheckOut(requestQueue).thenAccept(result -> {
@@ -471,6 +470,21 @@ public class LoanCollectionResource {
     loan.remove("itemStatus");
 
     return loan;
+  }
+
+  private CompletableFuture<HttpResult<JsonObject>> lookupLoanPolicyId(
+    JsonObject item,
+    JsonObject holding,
+    JsonObject user,
+    LoanRulesClient loanRulesClient) {
+
+    CompletableFuture<HttpResult<JsonObject>> findLoanPolicyCompleted
+      = new CompletableFuture<>();
+
+    lookupLoanPolicyId(item, holding, user, loanRulesClient,
+      findLoanPolicyCompleted::complete);
+
+    return findLoanPolicyCompleted;
   }
 
   private void lookupLoanPolicyId(
