@@ -4,6 +4,8 @@ import org.folio.circulation.api.support.APITests;
 import org.folio.circulation.api.support.builders.RequestBuilder;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
 import java.net.MalformedURLException;
@@ -32,6 +34,7 @@ public class SingleClosedRequestTests extends APITests {
     IndividualResource requestByJessica = requestsClient.create(new RequestBuilder()
       .hold()
       .fulfilToHoldShelf()
+      .withRequestDate(new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC))
       .fulfilled() //TODO: Replace with closed cancelled when introduced
       .withItemId(smallAngryPlanet.getId())
       .withRequesterId(jessica.getId()));
@@ -67,6 +70,7 @@ public class SingleClosedRequestTests extends APITests {
     IndividualResource requestByJessica = requestsClient.create(new RequestBuilder()
       .hold()
       .fulfilToHoldShelf()
+      .withRequestDate(new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC))
       .fulfilled() //TODO: Replace with closed cancelled when introduced
       .withItemId(smallAngryPlanet.getId())
       .withRequesterId(jessica.getId()));

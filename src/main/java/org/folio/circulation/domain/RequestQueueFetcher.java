@@ -29,10 +29,15 @@ public class RequestQueueFetcher {
     final String cqlQuery;
 
     try {
-      cqlQuery = URLEncoder.encode(
-        String.format("itemId==%s and fulfilmentPreference==%s and status==(%s or %s) sortBy requestDate/sort.ascending",
+      String unencodedQuery = String.format(
+        "itemId==%s and fulfilmentPreference==%s and status==(\"%s\" or \"%s\") sortBy requestDate/sort.ascending",
         itemId, RequestFulfilmentPreference.HOLD_SHELF,
-          RequestStatus.OPEN_AWAITING_PICKUP, RequestStatus.OPEN_NOT_YET_FILLED),
+        RequestStatus.OPEN_AWAITING_PICKUP, RequestStatus.OPEN_NOT_YET_FILLED);
+
+      log.info("Finding request queue with {}", unencodedQuery);
+
+      cqlQuery = URLEncoder.encode(
+        unencodedQuery,
         String.valueOf(StandardCharsets.UTF_8));
     } catch (UnsupportedEncodingException e) {
       return completedFuture(HttpResult.failure(
