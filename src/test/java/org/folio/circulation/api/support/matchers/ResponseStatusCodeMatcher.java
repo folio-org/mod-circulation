@@ -8,14 +8,23 @@ import org.hamcrest.TypeSafeDiagnosingMatcher;
 /**
  * Match Response.getStatusCode() against a HttpStatus.
  */
-public class StatusMatcher extends TypeSafeDiagnosingMatcher<Response> {
+public class ResponseStatusCodeMatcher extends TypeSafeDiagnosingMatcher<Response> {
+  /**
+   * Match Response.getStatusCode() against a httpStatus.
+   * @param httpStatus  the code to match against.
+   * @return the matcher
+   */
+  public static ResponseStatusCodeMatcher hasStatus(HttpStatus httpStatus) {
+    return new ResponseStatusCodeMatcher(httpStatus);
+  }
+  
   private final HttpStatus httpStatus;
 
   /**
    * Set status code.
    * @param httpStatus  the status code to match against.
    */
-  public StatusMatcher(HttpStatus httpStatus) {
+  public ResponseStatusCodeMatcher(HttpStatus httpStatus) {
     this.httpStatus = httpStatus;
   }
 
@@ -36,14 +45,5 @@ public class StatusMatcher extends TypeSafeDiagnosingMatcher<Response> {
   public void describeTo(Description description) {
     description.appendText("a Response with statusCode of ").appendValue(httpStatus.toInt())
       .appendText(" (").appendText(httpStatus.toString()).appendText(")");
-  }
-
-  /**
-   * Match Response.getStatusCode() against a httpStatus.
-   * @param httpStatus  the code to match against.
-   * @return the matcher
-   */
-  public static StatusMatcher hasStatus(HttpStatus httpStatus) {
-    return new StatusMatcher(httpStatus);
   }
 }

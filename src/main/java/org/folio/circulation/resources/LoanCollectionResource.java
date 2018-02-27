@@ -4,10 +4,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.domain.ItemStatusAssistant;
-import org.folio.circulation.domain.RequestQueue;
-import org.folio.circulation.domain.RequestQueueFetcher;
-import org.folio.circulation.domain.UpdateRequestQueue;
+import org.folio.circulation.domain.*;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.*;
@@ -105,7 +102,8 @@ public class LoanCollectionResource {
       .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
       .thenComposeAsync(result -> result.after(records ->
         updateItemStatus(result.value(), itemStatusFrom(loan), clients.itemsStorage())))
-      .thenComposeAsync(updateItemResult -> updateItemResult.after(relatedRecords -> updateLoan(clients, id, loan, relatedRecords)))
+      .thenComposeAsync(updateItemResult -> updateItemResult.after(
+        loanAndRelatedRecords -> updateLoan(clients, id, loan, loanAndRelatedRecords)))
       .thenComposeAsync(updateLoanResult -> updateLoanResult.after(requestQueueUpdate::onCheckIn))
       .thenApply(NoContentHttpResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
