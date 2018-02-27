@@ -80,7 +80,7 @@ public class LoanCollectionResource {
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(records -> createLoan(records, clients)))
       .thenApply(r -> r.map(this::extendedLoan))
-      .thenApply(CreatedHttpResult::from)
+      .thenApply(CreatedJsonHttpResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
@@ -123,7 +123,7 @@ public class LoanCollectionResource {
         result.after(loan -> getInventoryRecords(loan, inventoryFetcher)))
       .thenComposeAsync(r -> r.after(records -> getLocation(records, clients)))
       .thenApply(r -> r.map(this::extendedLoan))
-      .thenApply(OkHttpResult::from)
+      .thenApply(OkJsonHttpResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
