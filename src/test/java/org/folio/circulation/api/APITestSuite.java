@@ -57,7 +57,8 @@ import java.util.function.Consumer;
   SingleOpenDeliveryRequestTests.class,
   SingleClosedRequestTests.class,
   MultipleHoldShelfRequestsTests.class,
-  OutOfOrderRequestsTests.class,
+  MultipleOutOfOrderRequestsTests.class,
+  MultipleMixedFulfilmentRequestsTests.class,
 })
 public class APITestSuite {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());

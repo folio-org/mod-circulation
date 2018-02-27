@@ -15,7 +15,7 @@ import static org.folio.circulation.api.support.builders.RequestBuilder.OPEN_NOT
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-public class OutOfOrderRequestsTests extends APITests {
+public class MultipleOutOfOrderRequestsTests extends APITests {
   @Test
   public void statusOfOldestRequestCreatedOutOfOrderChangesToAwaitingPickupWhenItemCheckedIn()
     throws InterruptedException,
