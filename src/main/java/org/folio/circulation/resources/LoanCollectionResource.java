@@ -50,9 +50,10 @@ public class LoanCollectionResource {
     routeRegistration.deleteAll(this::empty);
   }
 
+  //TODO: Add exceptional completion of futures to create failed results
   private void create(RoutingContext routingContext) {
-    WebContext context = new WebContext(routingContext);
-    Clients clients = Clients.create(context);
+    final WebContext context = new WebContext(routingContext);
+    final Clients clients = Clients.create(context);
     final InventoryFetcher inventoryFetcher = InventoryFetcher.create(clients);
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
     final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
@@ -64,7 +65,6 @@ public class LoanCollectionResource {
     final String itemId = loan.getString("itemId");
     final String requestingUserId = loan.getString("userId");
 
-//    TODO: Add exceptional completion of futures to create failed results
     completedFuture(HttpResult.success(new LoanAndRelatedRecords(loan)))
       .thenCombineAsync(inventoryFetcher.fetch(loan), this::addInventoryRecords)
       .thenApply(this::refuseWhenItemDoesNotExist)
@@ -84,146 +84,9 @@ public class LoanCollectionResource {
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
-  private CompletableFuture<HttpResult<JsonObject>> getUser(
-    String userId,
-    CollectionResourceClient usersClient) {
-
-    CompletableFuture<Response> getUserCompleted = new CompletableFuture<>();
-
-    usersClient.get(userId, getUserCompleted::complete);
-
-    final Function<Response, HttpResult<JsonObject>> mapResponse = response -> {
-      if(response.getStatusCode() == 404) {
-        return HttpResult.failure(new ServerErrorFailure("Unable to locate User"));
-      }
-      else if(response.getStatusCode() != 200) {
-        return HttpResult.failure(new ForwardOnFailure(response));
-      }
-      else {
-        //Got user record, we're good to continue
-        return HttpResult.success(response.getJson());
-      }
-    };
-
-    return getUserCompleted
-      .thenApply(mapResponse)
-      .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
-  }
-
-  private CompletableFuture<HttpResult<LoanAndRelatedRecords>> getLocation(
-    LoanAndRelatedRecords relatedRecords,
-    Clients clients) {
-
-    final String locationId = determineLocationIdForItem(
-      relatedRecords.inventoryRecords.item, relatedRecords.inventoryRecords.holding);
-
-    return getLocation(locationId,
-      relatedRecords.inventoryRecords.item.getString("id"), clients)
-      .thenApply(result -> result.map(relatedRecords::withLocation));
-  }
-
-  private CompletableFuture<HttpResult<JsonObject>> getLocation(
-    String locationId,
-    String itemId,
-    Clients clients) {
-
-    CompletableFuture<Response> getUserCompleted = new CompletableFuture<>();
-
-    clients.locationsStorage().get(locationId, getUserCompleted::complete);
-
-    //TODO: Add functions to explicitly distinguish between fatal not found
-    // and allowable not found
-    final Function<Response, HttpResult<JsonObject>> mapResponse = response -> {
-      if(response != null && response.getStatusCode() == 200) {
-        return HttpResult.success(response.getJson());
-      }
-      else {
-        log.warn("Could not get location {} for item {}",
-          locationId, itemId);
-
-        return HttpResult.success(null);
-      }
-    };
-
-    return getUserCompleted
-      .thenApply(mapResponse)
-      .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
-  }
-
-  private HttpResult<LoanAndRelatedRecords> refuseWhenItemDoesNotExist(
-    HttpResult<LoanAndRelatedRecords> result) {
-
-    return result.next(loan -> {
-      if(loan.inventoryRecords.getItem() == null) {
-        return HttpResult.failure(new ValidationErrorFailure(
-          "Item does not exist", "itemId", loan.loan.getString("itemId")));
-      }
-      else {
-        return result;
-      }
-    });
-  }
-
-  private HttpResult<LoanAndRelatedRecords> refuseWhenItemIsAlreadyCheckedOut(
-    HttpResult<LoanAndRelatedRecords> result) {
-
-    return result.next(loan -> {
-      final JsonObject item = loan.inventoryRecords.item;
-
-      if(ItemStatusAssistant.isCheckedOut(item)) {
-        return HttpResult.failure(new ValidationErrorFailure(
-          "Item is already checked out", "itemId", item.getString("id")));
-      }
-      else {
-        return result;
-      }
-    });
-  }
-
-  private HttpResult<LoanAndRelatedRecords> refuseWhenUserIsNotAwaitingPickup(
-    HttpResult<LoanAndRelatedRecords> result) {
-
-    return result.next(loan -> {
-      final RequestQueue requestQueue = loan.requestQueue;
-      final JsonObject requestingUser = loan.requestingUser;
-
-      if(hasAwaitingPickupRequestForOtherPatron(requestQueue, requestingUser)) {
-        return HttpResult.failure(new ValidationErrorFailure(
-          "User checking out must be requester awaiting pickup",
-          "userId", loan.loan.getString("userId")));
-      }
-      else {
-        return result;
-      }
-    });
-  }
-
-  private boolean hasAwaitingPickupRequestForOtherPatron(
-    RequestQueue requestQueue,
-    JsonObject requestingUser) {
-
-    if(!requestQueue.hasOutstandingRequests()) {
-      return false;
-    }
-    else {
-      final JsonObject highestPriority = requestQueue.getHighestPriority();
-
-      return isAwaitingPickup(highestPriority)
-        && !isFor(highestPriority, requestingUser);
-    }
-  }
-
-  private boolean isFor(JsonObject request, JsonObject user) {
-    return StringUtils.equals(request.getString("requesterId"), user.getString("id"));
-  }
-
-  private boolean isAwaitingPickup(JsonObject highestPriority) {
-    return StringUtils.equals(highestPriority.getString("status"), OPEN_AWAITING_PICKUP);
-  }
-
   private void replace(RoutingContext routingContext) {
-    WebContext context = new WebContext(routingContext);
-    Clients clients = Clients.create(context);
+    final WebContext context = new WebContext(routingContext);
+    final Clients clients = Clients.create(context);
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
     final InventoryFetcher inventoryFetcher = InventoryFetcher.create(clients);
     final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
@@ -240,8 +103,8 @@ public class LoanCollectionResource {
       .thenCombineAsync(inventoryFetcher.fetch(loan), this::addInventoryRecords)
       .thenApply(this::refuseWhenItemDoesNotExist)
       .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
-      .thenComposeAsync(relatedRecordsResult -> relatedRecordsResult.after(relatedRecords1 ->
-        updateItemStatus(relatedRecordsResult.value(), itemStatusFrom(loan), clients.itemsStorage())))
+      .thenComposeAsync(result -> result.after(records ->
+        updateItemStatus(result.value(), itemStatusFrom(loan), clients.itemsStorage())))
       .thenComposeAsync(updateItemResult -> updateItemResult.after(relatedRecords -> updateLoan(clients, id, loan, relatedRecords)))
       .thenComposeAsync(updateLoanResult -> updateLoanResult.after(requestQueueUpdate::onCheckIn))
       .thenApply(NoContentHttpResult::from)
@@ -249,56 +112,19 @@ public class LoanCollectionResource {
   }
 
   private void get(RoutingContext routingContext) {
-    WebContext context = new WebContext(routingContext);
-    Clients clients = Clients.create(context);
+    final WebContext context = new WebContext(routingContext);
+    final Clients clients = Clients.create(context);
+    final InventoryFetcher inventoryFetcher = InventoryFetcher.create(clients);
 
     String id = routingContext.request().getParam("id");
 
-    clients.loansStorage().get(id, loanResponse -> {
-      if(loanResponse.getStatusCode() == 200) {
-        JsonObject loan = new JsonObject(loanResponse.getBody());
-        String itemId = loan.getString("itemId");
-
-        InventoryFetcher fetcher = new InventoryFetcher(clients.itemsStorage(),
-          clients.holdingsStorage(), clients.instancesStorage());
-
-        CompletableFuture<HttpResult<InventoryRecords>> inventoryRecordsCompleted =
-          fetcher.fetch(itemId);
-
-        inventoryRecordsCompleted.thenAccept(result -> {
-          if(result.failed()) {
-            result.cause().writeTo(routingContext.response());
-            return;
-          }
-
-          JsonObject item = result.value().getItem();
-          JsonObject holding = result.value().getHolding();
-          JsonObject instance = result.value().getInstance();
-
-          final String locationId = determineLocationIdForItem(item, holding);
-
-          clients.locationsStorage().get(locationId,
-            locationResponse -> {
-              if (locationResponse.getStatusCode() == 200) {
-                JsonResponse.success(routingContext.response(),
-                  extendedLoan(loan, item, holding, instance,
-                    locationResponse.getJson()));
-              } else {
-                log.warn(
-                  String.format("Could not get location %s for item %s",
-                    locationId, itemId));
-
-                JsonResponse.success(routingContext.response(),
-                  extendedLoan(loan, item, holding, instance,
-                    null));
-              }
-            });
-        });
-      }
-      else {
-        ForwardResponse.forward(routingContext.response(), loanResponse);
-      }
-    });
+    getLoanFromStorage(id, clients)
+      .thenComposeAsync(result ->
+        result.after(loan -> getInventoryRecords(loan, inventoryFetcher)))
+      .thenComposeAsync(r -> r.after(records -> getLocation(records, clients)))
+      .thenApply(r -> r.map(this::extendedLoan))
+      .thenApply(OkHttpResult::from)
+      .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
   private void delete(RoutingContext routingContext) {
@@ -701,4 +527,175 @@ public class LoanCollectionResource {
       LoanAndRelatedRecords::withRequestingUser);
   }
 
+  private CompletableFuture<HttpResult<JsonObject>> getUser(
+    String userId,
+    CollectionResourceClient usersClient) {
+
+    CompletableFuture<Response> getUserCompleted = new CompletableFuture<>();
+
+    usersClient.get(userId, getUserCompleted::complete);
+
+    final Function<Response, HttpResult<JsonObject>> mapResponse = response -> {
+      if(response.getStatusCode() == 404) {
+        return HttpResult.failure(new ServerErrorFailure("Unable to locate User"));
+      }
+      else if(response.getStatusCode() != 200) {
+        return HttpResult.failure(new ForwardOnFailure(response));
+      }
+      else {
+        //Got user record, we're good to continue
+        return HttpResult.success(response.getJson());
+      }
+    };
+
+    return getUserCompleted
+      .thenApply(mapResponse)
+      .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
+  }
+
+  private CompletableFuture<HttpResult<LoanAndRelatedRecords>> getInventoryRecords(
+    LoanAndRelatedRecords loanAndRelatedRecords, InventoryFetcher inventoryFetcher) {
+
+    return inventoryFetcher
+      .fetch(loanAndRelatedRecords.loan)
+      .thenApply(result -> result.map(loanAndRelatedRecords::withInventoryRecords));
+  }
+
+  private CompletableFuture<HttpResult<LoanAndRelatedRecords>> getLocation(
+    LoanAndRelatedRecords relatedRecords,
+    Clients clients) {
+
+    //Cannot find location for unknown item
+    if(relatedRecords.inventoryRecords.item == null) {
+      return CompletableFuture.completedFuture(HttpResult.success(relatedRecords));
+    }
+
+    final String locationId = determineLocationIdForItem(
+      relatedRecords.inventoryRecords.item, relatedRecords.inventoryRecords.holding);
+
+    return getLocation(locationId,
+      relatedRecords.inventoryRecords.item.getString("id"), clients)
+      .thenApply(result -> result.map(relatedRecords::withLocation));
+  }
+
+  private CompletableFuture<HttpResult<LoanAndRelatedRecords>> getLoanFromStorage(
+    String loanId,
+    Clients clients) {
+
+    CompletableFuture<Response> getLoanCompleted = new CompletableFuture<>();
+
+    clients.loansStorage().get(loanId, getLoanCompleted::complete);
+
+    final Function<Response, HttpResult<LoanAndRelatedRecords>> mapResponse = response -> {
+      if(response != null && response.getStatusCode() == 200) {
+        return HttpResult.success(new LoanAndRelatedRecords(response.getJson()));
+      }
+      else {
+        return HttpResult.failure(new ForwardOnFailure(response));
+      }
+    };
+
+    return getLoanCompleted
+      .thenApply(mapResponse)
+      .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
+  }
+
+  private CompletableFuture<HttpResult<JsonObject>> getLocation(
+    String locationId,
+    String itemId,
+    Clients clients) {
+
+    CompletableFuture<Response> getLocationCompleted = new CompletableFuture<>();
+
+    clients.locationsStorage().get(locationId, getLocationCompleted::complete);
+
+    //TODO: Add functions to explicitly distinguish between fatal not found
+    // and allowable not found
+    final Function<Response, HttpResult<JsonObject>> mapResponse = response -> {
+      if(response != null && response.getStatusCode() == 200) {
+        return HttpResult.success(response.getJson());
+      }
+      else {
+        log.warn("Could not get location {} for item {}",
+          locationId, itemId);
+
+        return HttpResult.success(null);
+      }
+    };
+
+    return getLocationCompleted
+      .thenApply(mapResponse)
+      .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
+  }
+
+  private HttpResult<LoanAndRelatedRecords> refuseWhenItemDoesNotExist(
+    HttpResult<LoanAndRelatedRecords> result) {
+
+    return result.next(loan -> {
+      if(loan.inventoryRecords.getItem() == null) {
+        return HttpResult.failure(new ValidationErrorFailure(
+          "Item does not exist", "itemId", loan.loan.getString("itemId")));
+      }
+      else {
+        return result;
+      }
+    });
+  }
+
+  private HttpResult<LoanAndRelatedRecords> refuseWhenItemIsAlreadyCheckedOut(
+    HttpResult<LoanAndRelatedRecords> result) {
+
+    return result.next(loan -> {
+      final JsonObject item = loan.inventoryRecords.item;
+
+      if(ItemStatusAssistant.isCheckedOut(item)) {
+        return HttpResult.failure(new ValidationErrorFailure(
+          "Item is already checked out", "itemId", item.getString("id")));
+      }
+      else {
+        return result;
+      }
+    });
+  }
+
+  private HttpResult<LoanAndRelatedRecords> refuseWhenUserIsNotAwaitingPickup(
+    HttpResult<LoanAndRelatedRecords> result) {
+
+    return result.next(loan -> {
+      final RequestQueue requestQueue = loan.requestQueue;
+      final JsonObject requestingUser = loan.requestingUser;
+
+      if(hasAwaitingPickupRequestForOtherPatron(requestQueue, requestingUser)) {
+        return HttpResult.failure(new ValidationErrorFailure(
+          "User checking out must be requester awaiting pickup",
+          "userId", loan.loan.getString("userId")));
+      }
+      else {
+        return result;
+      }
+    });
+  }
+
+  private boolean hasAwaitingPickupRequestForOtherPatron(
+    RequestQueue requestQueue,
+    JsonObject requestingUser) {
+
+    if(!requestQueue.hasOutstandingRequests()) {
+      return false;
+    }
+    else {
+      final JsonObject highestPriority = requestQueue.getHighestPriority();
+
+      return isAwaitingPickup(highestPriority)
+        && !isFor(highestPriority, requestingUser);
+    }
+  }
+
+  private boolean isFor(JsonObject request, JsonObject user) {
+    return StringUtils.equals(request.getString("requesterId"), user.getString("id"));
+  }
+
+  private boolean isAwaitingPickup(JsonObject highestPriority) {
+    return StringUtils.equals(highestPriority.getString("status"), OPEN_AWAITING_PICKUP);
+  }
 }

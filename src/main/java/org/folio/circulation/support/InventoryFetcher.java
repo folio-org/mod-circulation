@@ -20,6 +20,11 @@ public class InventoryFetcher {
       clients.holdingsStorage(), clients.instancesStorage());
   }
 
+  public InventoryFetcher(Clients clients) {
+    this(clients.itemsStorage(),
+      clients.holdingsStorage(), clients.instancesStorage());
+  }
+
   public InventoryFetcher(
     CollectionResourceClient itemsClient,
     CollectionResourceClient holdingsClient,
@@ -37,8 +42,8 @@ public class InventoryFetcher {
   public CompletableFuture<HttpResult<InventoryRecords>> fetch(String itemId) {
     return
       fetchItem(itemId)
-        .thenCompose(this::fetchHolding)
-        .thenCompose(this::fetchInstance);
+        .thenComposeAsync(this::fetchHolding)
+        .thenComposeAsync(this::fetchInstance);
   }
 
   public CompletableFuture<MultipleInventoryRecords> fetch(
