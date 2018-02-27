@@ -5,8 +5,7 @@ import io.vertx.core.json.JsonObject;
 import org.folio.circulation.CirculationVerticle;
 import org.folio.circulation.api.loans.*;
 import org.folio.circulation.api.requests.*;
-import org.folio.circulation.api.requests.scenarios.SingleOpenDeliveryRequestTests;
-import org.folio.circulation.api.requests.scenarios.SingleOpenHoldShelfRequestTests;
+import org.folio.circulation.api.requests.scenarios.*;
 import org.folio.circulation.api.support.builders.UserBuilder;
 import org.folio.circulation.api.support.fakes.FakeOkapi;
 import org.folio.circulation.api.support.http.ResourceClient;
@@ -56,6 +55,9 @@ import java.util.function.Consumer;
   RequestsAPIRelatedRecordsTests.class,
   SingleOpenHoldShelfRequestTests.class,
   SingleOpenDeliveryRequestTests.class,
+  SingleClosedRequestTests.class,
+  MultipleHoldShelfRequestsTests.class,
+  OutOfOrderRequestsTests.class,
 })
 public class APITestSuite {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());

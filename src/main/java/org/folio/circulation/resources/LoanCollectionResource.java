@@ -73,10 +73,10 @@ public class LoanCollectionResource {
       .thenCombineAsync(getUser(requestingUserId, clients.usersStorage()), this::addUser)
       .thenApply(this::refuseWhenUserIsNotAwaitingPickup)
       .thenComposeAsync(r -> r.after(records -> getLocation(records, clients)))
-      .thenComposeAsync(r -> r.after(records -> updateItemStatus(records,
-        itemStatusFrom(loan), clients.itemsStorage())))
       .thenComposeAsync(r -> r.after(records -> lookupLoanPolicyId(
         records, clients.loanRules())))
+      .thenComposeAsync(r -> r.after(records -> updateItemStatus(records,
+        itemStatusFrom(loan), clients.itemsStorage())))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(records -> createLoan(records, clients)))
       .thenApply(r -> r.map(this::extendedLoan))

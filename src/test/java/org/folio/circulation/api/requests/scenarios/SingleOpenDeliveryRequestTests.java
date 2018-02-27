@@ -3,6 +3,8 @@ package org.folio.circulation.api.requests.scenarios;
 import org.folio.circulation.api.support.APITests;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
 import java.net.MalformedURLException;
@@ -28,7 +30,7 @@ public class SingleOpenDeliveryRequestTests extends APITests {
     IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeDeliveryRequest(
-      smallAngryPlanet, jessica);
+      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
     loansFixture.checkIn(loanToJames);
 
@@ -51,7 +53,7 @@ public class SingleOpenDeliveryRequestTests extends APITests {
     IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeDeliveryRequest(
-      smallAngryPlanet, jessica);
+      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
     loansFixture.checkIn(loanToJames);
 
@@ -77,7 +79,7 @@ public class SingleOpenDeliveryRequestTests extends APITests {
     IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeDeliveryRequest(
-      smallAngryPlanet, jessica);
+      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
     loansFixture.checkIn(loanToJames);
 

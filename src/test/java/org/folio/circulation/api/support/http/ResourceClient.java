@@ -196,6 +196,39 @@ public class ResourceClient {
     return getCompleted.get(5, TimeUnit.SECONDS);
   }
 
+  public IndividualResource get(IndividualResource record)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    return get(record.getId());
+  }
+
+
+  public IndividualResource get(UUID id)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
+
+    client.get(urlMaker.combine(String.format("/%s", id)),
+      ResponseHandler.any(getCompleted));
+
+    final Response response = getCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(
+      String.format("Failed to get %s: %s", resourceName, response.getBody()),
+      response.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+
+    System.out.println(String.format("Found resource %s: %s", resourceName,
+      response.getJson().encodePrettily()));
+
+    return new IndividualResource(response);
+  }
+
   public void delete(UUID id)
     throws MalformedURLException,
     InterruptedException,

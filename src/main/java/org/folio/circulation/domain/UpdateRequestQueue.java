@@ -47,7 +47,7 @@ public class UpdateRequestQueue {
       .thenApply(result -> result.map(relatedRecords::withRequestQueue));
   }
 
-  public CompletableFuture<HttpResult<RequestQueue>> onCheckOut(RequestQueue requestQueue) {
+  private CompletableFuture<HttpResult<RequestQueue>> onCheckOut(RequestQueue requestQueue) {
     CompletableFuture<HttpResult<RequestQueue>> requestUpdated = new CompletableFuture<>();
 
     if (requestQueue.hasOutstandingRequests()) {
