@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
-import static org.folio.circulation.domain.ItemStatusAssistant.updateItemStatus;
 import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
 
 public class LoanCollectionResource {
@@ -54,6 +53,7 @@ public class LoanCollectionResource {
     final InventoryFetcher inventoryFetcher = InventoryFetcher.create(clients);
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
     final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
+    final UpdateItem updateItem = new UpdateItem(clients);
 
     JsonObject loan = routingContext.getBodyAsJson();
 
@@ -72,8 +72,8 @@ public class LoanCollectionResource {
       .thenComposeAsync(r -> r.after(records -> getLocation(records, clients)))
       .thenComposeAsync(r -> r.after(records -> lookupLoanPolicyId(
         records, clients.loanRules())))
-      .thenComposeAsync(r -> r.after(records -> updateItemStatus(records,
-        itemStatusFrom(loan), clients.itemsStorage())))
+      .thenComposeAsync(r -> r.after(records ->
+        updateItem.whilstCheckedOut(records, itemStatusFrom(loan))))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(records -> createLoan(records, clients)))
       .thenApply(r -> r.map(this::extendedLoan))
@@ -87,6 +87,7 @@ public class LoanCollectionResource {
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
     final InventoryFetcher inventoryFetcher = InventoryFetcher.create(clients);
     final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
+    final UpdateItem updateItem = new UpdateItem(clients);
 
     String id = routingContext.request().getParam("id");
 
@@ -101,10 +102,10 @@ public class LoanCollectionResource {
       .thenApply(this::refuseWhenItemDoesNotExist)
       .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
       .thenComposeAsync(result -> result.after(records ->
-        updateItemStatus(result.value(), itemStatusFrom(loan), clients.itemsStorage())))
-      .thenComposeAsync(updateItemResult -> updateItemResult.after(
-        loanAndRelatedRecords -> updateLoan(clients, id, loan, loanAndRelatedRecords)))
-      .thenComposeAsync(updateLoanResult -> updateLoanResult.after(requestQueueUpdate::onCheckIn))
+        updateItem.onLoanUpdate(records, itemStatusFrom(loan))))
+      .thenComposeAsync(result -> result.after(
+        records -> updateLoan(clients, id, loan, records)))
+      .thenComposeAsync(result -> result.after(requestQueueUpdate::onCheckIn))
       .thenApply(NoContentHttpResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
@@ -646,7 +647,7 @@ public class LoanCollectionResource {
     return result.next(loan -> {
       final JsonObject item = loan.inventoryRecords.item;
 
-      if(ItemStatusAssistant.isCheckedOut(item)) {
+      if(ItemStatus.isCheckedOut(item)) {
         return HttpResult.failure(new ValidationErrorFailure(
           "Item is already checked out", "itemId", item.getString("id")));
       }

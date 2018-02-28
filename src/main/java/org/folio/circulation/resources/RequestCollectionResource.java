@@ -5,6 +5,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
+import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.*;
@@ -17,7 +18,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
-import static org.folio.circulation.domain.ItemStatusAssistant.updateItemStatus;
 import static org.folio.circulation.domain.LoanActionHistoryAssistant.updateLoanActionHistory;
 import static org.folio.circulation.support.CommonFailures.reportItemRelatedValidationError;
 import static org.folio.circulation.support.JsonPropertyCopier.copyStringIfExists;
@@ -101,8 +101,10 @@ public class RequestCollectionResource {
         reportItemRelatedValidationError(routingContext, itemId, "Item does not exist");
       }
       else if (RequestType.from(request).canCreateRequestForItem(item)) {
-        updateItemStatus(item,
-          RequestType.from(request).toItemStatus(), clients.itemsStorage()).thenAccept(
+        UpdateItem updateItem = new UpdateItem(clients);
+
+        updateItem.updateItemStatus(item,
+          RequestType.from(request).toItemStatus()).thenAccept(
             updateItemResult -> {
               if(updateItemResult.failed()) {
                 updateItemResult.cause().writeTo(routingContext.response());
