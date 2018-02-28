@@ -11,8 +11,11 @@ import java.net.MalformedURLException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import static org.folio.circulation.api.support.builders.ItemBuilder.AVAILABLE;
+import static org.folio.circulation.api.support.builders.ItemBuilder.CHECKED_OUT;
 import static org.folio.circulation.api.support.builders.RequestBuilder.CLOSED_FILLED;
 import static org.folio.circulation.api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
+import static org.folio.circulation.api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -38,6 +41,10 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     Response request = requestsClient.getById(requestByJessica.getId());
 
     assertThat(request.getJson().getString("status"), is(OPEN_AWAITING_PICKUP));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+
+    assertThat(smallAngryPlanet, hasItemStatus(AVAILABLE));
   }
 
   @Test
@@ -66,8 +73,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-    assertThat(smallAngryPlanet.getJson().getJsonObject("status").getString("name"),
-      is("Checked out"));
+    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
   }
 
   @Test
@@ -100,8 +106,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-    assertThat(smallAngryPlanet.getJson().getJsonObject("status").getString("name"),
-      is("Available"));
+    assertThat(smallAngryPlanet, hasItemStatus(AVAILABLE));
   }
 
   @Test
@@ -128,8 +133,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-    assertThat(smallAngryPlanet.getJson().getJsonObject("status").getString("name"),
-      is("Available"));
+    assertThat(smallAngryPlanet, hasItemStatus(AVAILABLE));
   }
 
   @Test
@@ -163,8 +167,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-    assertThat(smallAngryPlanet.getJson().getJsonObject("status").getString("name"),
-      is("Checked out"));
+    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
   }
 
 }

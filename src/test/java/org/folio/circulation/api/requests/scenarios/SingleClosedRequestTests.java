@@ -12,8 +12,9 @@ import java.net.MalformedURLException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import static java.net.HttpURLConnection.HTTP_OK;
+import static org.folio.circulation.api.support.builders.ItemBuilder.CHECKED_OUT;
 import static org.folio.circulation.api.support.builders.RequestBuilder.CLOSED_FILLED;
+import static org.folio.circulation.api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -47,10 +48,9 @@ public class SingleClosedRequestTests extends APITests {
 
     assertThat(request.getJson().getString("status"), is(CLOSED_FILLED));
 
-    Response item = itemsClient.getById(smallAngryPlanet.getId());
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-    assertThat(item.getStatusCode(), is(HTTP_OK));
-    assertThat(item.getJson().getJsonObject("status").getString("name"), is("Checked out"));
+    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
   }
 
   @Test
@@ -83,9 +83,8 @@ public class SingleClosedRequestTests extends APITests {
 
     assertThat(request.getJson().getString("status"), is(CLOSED_FILLED));
 
-    Response item = itemsClient.getById(smallAngryPlanet.getId());
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-    assertThat(item.getStatusCode(), is(HTTP_OK));
-    assertThat(item.getJson().getJsonObject("status").getString("name"), is("Checked out"));
+    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
   }
 }

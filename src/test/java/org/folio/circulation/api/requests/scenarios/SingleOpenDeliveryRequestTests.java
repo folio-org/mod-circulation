@@ -11,7 +11,10 @@ import java.net.MalformedURLException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import static org.folio.circulation.api.support.builders.ItemBuilder.AVAILABLE;
+import static org.folio.circulation.api.support.builders.ItemBuilder.CHECKED_OUT;
 import static org.folio.circulation.api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
+import static org.folio.circulation.api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -37,6 +40,10 @@ public class SingleOpenDeliveryRequestTests extends APITests {
     Response request = requestsClient.getById(requestByJessica.getId());
 
     assertThat(request.getJson().getString("status"), is(OPEN_NOT_YET_FILLED));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+
+    assertThat(smallAngryPlanet, hasItemStatus(AVAILABLE));
   }
 
   @Test
@@ -62,6 +69,10 @@ public class SingleOpenDeliveryRequestTests extends APITests {
     Response request = requestsClient.getById(requestByJessica.getId());
 
     assertThat(request.getJson().getString("status"), is(OPEN_NOT_YET_FILLED));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+
+    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
   }
 
   @Test
@@ -88,5 +99,9 @@ public class SingleOpenDeliveryRequestTests extends APITests {
     Response request = requestsClient.getById(requestByJessica.getId());
 
     assertThat(request.getJson().getString("status"), is(OPEN_NOT_YET_FILLED));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+
+    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
   }
 }

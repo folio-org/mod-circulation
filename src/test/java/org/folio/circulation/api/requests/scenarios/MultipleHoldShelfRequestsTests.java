@@ -5,13 +5,17 @@ import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.MalformedURLException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import static org.folio.circulation.api.support.builders.ItemBuilder.AVAILABLE;
+import static org.folio.circulation.api.support.builders.ItemBuilder.CHECKED_OUT_HELD;
 import static org.folio.circulation.api.support.builders.RequestBuilder.*;
+import static org.folio.circulation.api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -48,6 +52,7 @@ public class MultipleHoldShelfRequestsTests extends APITests {
   }
 
   @Test
+  @Ignore("Need to implement item status based upon request queue")
   public void statusOfOldestRequestChangesToFulfilledWhenItemCheckedOutToRequester()
     throws InterruptedException,
     MalformedURLException,
@@ -78,6 +83,10 @@ public class MultipleHoldShelfRequestsTests extends APITests {
     requestBySteve = requestsClient.get(requestBySteve);
 
     assertThat(requestBySteve.getJson().getString("status"), is(OPEN_NOT_YET_FILLED));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+
+    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT_HELD));
   }
 
   @Test
@@ -118,8 +127,7 @@ public class MultipleHoldShelfRequestsTests extends APITests {
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-    assertThat(smallAngryPlanet.getJson().getJsonObject("status").getString("name"),
-      is("Available"));
+    assertThat(smallAngryPlanet, hasItemStatus(AVAILABLE));
   }
 
   @Test
@@ -159,8 +167,7 @@ public class MultipleHoldShelfRequestsTests extends APITests {
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-    assertThat(smallAngryPlanet.getJson().getJsonObject("status").getString("name"),
-      is("Available"));
+    assertThat(smallAngryPlanet, hasItemStatus(AVAILABLE));
   }
 
   @Test
@@ -199,8 +206,6 @@ public class MultipleHoldShelfRequestsTests extends APITests {
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-    //TODO: Should be awaiting pickup when CIRC-52 is completed
-    assertThat(smallAngryPlanet.getJson().getJsonObject("status").getString("name"),
-      is("Available"));
+    assertThat(smallAngryPlanet, hasItemStatus(AVAILABLE));
   }
 }

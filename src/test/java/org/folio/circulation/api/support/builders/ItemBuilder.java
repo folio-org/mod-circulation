@@ -7,8 +7,10 @@ import java.util.UUID;
 
 public class ItemBuilder implements Builder {
 
-  private static final String AVAILABLE_STATUS = "Available";
-  private static final String CHECKED_OUT_STATUS = "Checked out";
+  public static final String AVAILABLE = "Available";
+  public static final String CHECKED_OUT = "Checked out";
+  public static final String CHECKED_OUT_HELD = "Checked out - Held";
+  public static final String CHECKED_OUT_RECALLED = "Checked out - Recalled";
 
   private final UUID id;
   private final UUID holdingId;
@@ -19,7 +21,7 @@ public class ItemBuilder implements Builder {
   private final UUID temporaryLoanTypeId;
 
   public ItemBuilder() {
-    this(UUID.randomUUID(), null, "565578437802", AVAILABLE_STATUS,
+    this(UUID.randomUUID(), null, "565578437802", AVAILABLE,
       null, null, null);
   }
 
@@ -75,11 +77,11 @@ public class ItemBuilder implements Builder {
   }
 
   public ItemBuilder checkOut() {
-    return withStatus(CHECKED_OUT_STATUS);
+    return withStatus(CHECKED_OUT);
   }
 
   public ItemBuilder available() {
-    return withStatus(AVAILABLE_STATUS);
+    return withStatus(AVAILABLE);
   }
 
   public ItemBuilder withStatus(String status) {

@@ -7,7 +7,6 @@ import org.folio.circulation.api.support.builders.UserBuilder;
 import org.folio.circulation.api.support.http.ResourceClient;
 import org.junit.Test;
 
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -25,8 +24,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 
@@ -54,8 +52,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 
@@ -80,8 +77,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 
@@ -109,8 +105,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 
@@ -143,8 +138,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 
@@ -177,8 +171,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 
@@ -210,12 +203,11 @@ public class RequestsAPILoanHistoryTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();;
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
     UUID otherItemId = itemsFixture.basedUponNod().getId();
 
@@ -243,8 +235,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 
@@ -266,8 +257,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 

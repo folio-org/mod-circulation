@@ -7,7 +7,7 @@ import org.hamcrest.TypeSafeDiagnosingMatcher;
 import org.hamcrest.core.Is;
 
 public class ItemStatusCodeMatcher extends TypeSafeDiagnosingMatcher<IndividualResource> {
-  public static ItemStatusCodeMatcher hasStatus(String expectedStatus) {
+  public static ItemStatusCodeMatcher hasItemStatus(String expectedStatus) {
     return new ItemStatusCodeMatcher(expectedStatus);
   }
 
