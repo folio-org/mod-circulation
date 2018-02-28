@@ -22,8 +22,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
-import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
 
 public class LoanCollectionResource {
@@ -50,8 +48,11 @@ public class LoanCollectionResource {
   private void create(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context);
+
     final InventoryFetcher inventoryFetcher = InventoryFetcher.create(clients);
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
+    final UserFetcher userFetcher = new UserFetcher(clients);
+
     final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
 
@@ -68,7 +69,7 @@ public class LoanCollectionResource {
       .thenApply(this::refuseWhenItemDoesNotExist)
       .thenApply(this::refuseWhenItemIsAlreadyCheckedOut)
       .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
-      .thenCombineAsync(getUser(requestingUserId, clients.usersStorage()), this::addUser)
+      .thenCombineAsync(userFetcher.getUser(requestingUserId), this::addUser)
       .thenApply(this::refuseWhenUserIsNotAwaitingPickup)
       .thenComposeAsync(r -> r.after(records -> getLocation(records, clients)))
       .thenComposeAsync(r -> r.after(records -> lookupLoanPolicyId(
@@ -257,20 +258,6 @@ public class LoanCollectionResource {
         ForwardResponse.forward(routingContext.response(), response);
       }
     });
-  }
-
-  private String itemStatusFrom(JsonObject loan) {
-    switch(loan.getJsonObject("status").getString("name")) {
-      case "Open":
-        return CHECKED_OUT;
-
-      case "Closed":
-        return AVAILABLE;
-
-      default:
-        //TODO: Need to add validation to stop this situation
-        return "";
-    }
   }
 
   private void defaultStatusAndAction(JsonObject loan) {
@@ -524,32 +511,6 @@ public class LoanCollectionResource {
 
     return HttpResult.combine(loanResult, getUserResult,
       LoanAndRelatedRecords::withRequestingUser);
-  }
-
-  private CompletableFuture<HttpResult<JsonObject>> getUser(
-    String userId,
-    CollectionResourceClient usersClient) {
-
-    CompletableFuture<Response> getUserCompleted = new CompletableFuture<>();
-
-    usersClient.get(userId, getUserCompleted::complete);
-
-    final Function<Response, HttpResult<JsonObject>> mapResponse = response -> {
-      if(response.getStatusCode() == 404) {
-        return HttpResult.failure(new ServerErrorFailure("Unable to locate User"));
-      }
-      else if(response.getStatusCode() != 200) {
-        return HttpResult.failure(new ForwardOnFailure(response));
-      }
-      else {
-        //Got user record, we're good to continue
-        return HttpResult.success(response.getJson());
-      }
-    };
-
-    return getUserCompleted
-      .thenApply(mapResponse)
-      .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
   }
 
   private CompletableFuture<HttpResult<LoanAndRelatedRecords>> getInventoryRecords(
