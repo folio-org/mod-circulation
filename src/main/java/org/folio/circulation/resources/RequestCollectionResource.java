@@ -3,9 +3,7 @@ package org.folio.circulation.resources;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import org.folio.circulation.domain.RequestStatus;
-import org.folio.circulation.domain.RequestType;
-import org.folio.circulation.domain.UpdateItem;
+import org.folio.circulation.domain.*;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.*;
@@ -17,6 +15,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.LoanActionHistoryAssistant.updateLoanActionHistory;
 import static org.folio.circulation.support.CommonFailures.reportItemRelatedValidationError;
@@ -41,6 +40,13 @@ public class RequestCollectionResource {
   }
 
   private void create(RoutingContext routingContext) {
+    final WebContext context = new WebContext(routingContext);
+    final Clients clients = Clients.create(context);
+
+    final InventoryFetcher inventoryFetcher = InventoryFetcher.create(clients);
+    final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
+    final UserFetcher userFetcher = new UserFetcher(clients);
+
     JsonObject request = routingContext.getBodyAsJson();
 
     RequestStatus status = RequestStatus.from(request);
@@ -56,84 +62,61 @@ public class RequestCollectionResource {
 
     removeRelatedRecordInformation(request);
 
-    WebContext context = new WebContext(routingContext);
-    Clients clients = Clients.create(context);
+    final String itemId = getItemId(request);
+    final String requestingUserId = request.getString("requesterId");
 
-    String itemId = getItemId(request);
+    completedFuture(HttpResult.success(new RequestAndRelatedRecords(request)))
+      .thenCombineAsync(inventoryFetcher.fetch(request), this::addInventoryRecords)
+      .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
+      .thenCombineAsync(userFetcher.getUser(requestingUserId, false), this::addUser)
+      .thenAcceptAsync(result -> {
+        if(result.failed()) {
+          result.cause().writeTo(routingContext.response());
+          return;
+        }
 
-    InventoryFetcher inventoryFetcher = InventoryFetcher.create(clients);
+        JsonObject item = result.value().inventoryRecords.getItem();
+        JsonObject holding = result.value().inventoryRecords.getHolding();
+        JsonObject instance = result.value().inventoryRecords.getInstance();
+        JsonObject requestingUser = result.value().requestingUser;
 
-    CompletableFuture<HttpResult<InventoryRecords>> inventoryRecordsCompleted
-      = inventoryFetcher.fetch(itemId);
+        if(item == null) {
+          reportItemRelatedValidationError(routingContext, itemId, "Item does not exist");
+        }
+        else if (RequestType.from(request).canCreateRequestForItem(item)) {
+          UpdateItem updateItem = new UpdateItem(clients);
 
-    CompletableFuture<Response> requestingUserRequestCompleted = new CompletableFuture<>();
+          updateItem.onRequestCreation(item, RequestType.from(request).toItemStatus())
+            .thenAccept(updateItemResult -> {
+              if(updateItemResult.failed()) {
+                updateItemResult.cause().writeTo(routingContext.response());
+                return;
+              }
 
-    clients.usersStorage().get(request.getString("requesterId"),
-      requestingUserRequestCompleted::complete);
+              updateLoanActionHistory(itemId,
+                RequestType.from(request).toLoanAction(), RequestType.from(request).toItemStatus(),
+                clients.loansStorage(), routingContext.response(), vo -> {
+                  addStoredItemProperties(request, item, instance);
+                  addStoredRequesterProperties(request, requestingUser);
 
-    CompletableFuture<Void> allCompleted = CompletableFuture.allOf(
-      inventoryRecordsCompleted, requestingUserRequestCompleted);
+                  clients.requestsStorage().post(request, requestResponse -> {
+                    if (requestResponse.getStatusCode() == 201) {
+                      JsonObject createdRequest = requestResponse.getJson();
 
-    allCompleted.exceptionally(t -> {
-      ServerErrorResponse.internalError(routingContext.response(),
-        String.format("At least one request for additional information failed: %s", t));
+                      addAdditionalItemProperties(createdRequest, holding, item);
 
-      return null;
-    });
-
-    allCompleted.thenAccept(v -> {
-      Response requestingUserResponse = requestingUserRequestCompleted.join();
-
-      HttpResult<InventoryRecords> inventoryRecordsResult = inventoryRecordsCompleted.join();
-
-      if(inventoryRecordsResult.failed()) {
-        inventoryRecordsResult.cause().writeTo(routingContext.response());
-        return;
-      }
-
-      JsonObject item = inventoryRecordsResult.value().getItem();
-      JsonObject holding = inventoryRecordsResult.value().getHolding();
-      JsonObject instance = inventoryRecordsResult.value().getInstance();
-
-      JsonObject requester = getRecordFromResponse(requestingUserResponse);
-
-      if(item == null) {
-        reportItemRelatedValidationError(routingContext, itemId, "Item does not exist");
-      }
-      else if (RequestType.from(request).canCreateRequestForItem(item)) {
-        UpdateItem updateItem = new UpdateItem(clients);
-
-        updateItem.onRequestCreation(item, RequestType.from(request).toItemStatus())
-          .thenAccept(updateItemResult -> {
-            if(updateItemResult.failed()) {
-              updateItemResult.cause().writeTo(routingContext.response());
-              return;
-            }
-
-            updateLoanActionHistory(itemId,
-              RequestType.from(request).toLoanAction(), RequestType.from(request).toItemStatus(),
-              clients.loansStorage(), routingContext.response(), vo -> {
-                addStoredItemProperties(request, item, instance);
-                addStoredRequesterProperties(request, requester);
-
-                clients.requestsStorage().post(request, requestResponse -> {
-                  if (requestResponse.getStatusCode() == 201) {
-                    JsonObject createdRequest = requestResponse.getJson();
-
-                    addAdditionalItemProperties(createdRequest, holding, item);
-
-                    JsonResponse.created(routingContext.response(), createdRequest);
-                  } else {
-                    ForwardResponse.forward(routingContext.response(), requestResponse);
-                  }
+                      JsonResponse.created(routingContext.response(), createdRequest);
+                    } else {
+                      ForwardResponse.forward(routingContext.response(), requestResponse);
+                    }
+                  });
                 });
-              });
-          });
-      }
-      else {
-        reportItemRelatedValidationError(routingContext, itemId,
-          String.format("Item is not %s", CHECKED_OUT));
-      }
+            });
+        }
+        else {
+          reportItemRelatedValidationError(routingContext, itemId,
+            String.format("Item is not %s", CHECKED_OUT));
+        }
     });
   }
 
@@ -394,5 +377,29 @@ public class RequestCollectionResource {
   private void removeRelatedRecordInformation(JsonObject request) {
     request.remove("item");
     request.remove("requester");
+  }
+
+  private HttpResult<RequestAndRelatedRecords> addInventoryRecords(
+    HttpResult<RequestAndRelatedRecords> loanResult,
+    HttpResult<InventoryRecords> inventoryRecordsResult) {
+
+    return HttpResult.combine(loanResult, inventoryRecordsResult,
+      RequestAndRelatedRecords::withInventoryRecords);
+  }
+
+  private HttpResult<RequestAndRelatedRecords> addRequestQueue(
+    HttpResult<RequestAndRelatedRecords> loanResult,
+    HttpResult<RequestQueue> requestQueueResult) {
+
+    return HttpResult.combine(loanResult, requestQueueResult,
+      RequestAndRelatedRecords::withRequestQueue);
+  }
+
+  private HttpResult<RequestAndRelatedRecords> addUser(
+    HttpResult<RequestAndRelatedRecords> loanResult,
+    HttpResult<JsonObject> getUserResult) {
+
+    return HttpResult.combine(loanResult, getUserResult,
+      RequestAndRelatedRecords::withRequestingUser);
   }
 }

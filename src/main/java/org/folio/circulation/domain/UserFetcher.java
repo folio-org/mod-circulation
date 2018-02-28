@@ -15,8 +15,14 @@ public class UserFetcher {
     usersStorageClient = clients.usersStorage();
   }
 
-
   public CompletableFuture<HttpResult<JsonObject>> getUser(String userId) {
+    return getUser(userId, true);
+  }
+
+  //TODO: Need a better way of choosing behaviour for not found
+  public CompletableFuture<HttpResult<JsonObject>> getUser(
+    String userId,
+    boolean failOnNotFound) {
 
     CompletableFuture<Response> getUserCompleted = new CompletableFuture<>();
 
@@ -24,7 +30,12 @@ public class UserFetcher {
 
     final Function<Response, HttpResult<JsonObject>> mapResponse = response -> {
       if(response.getStatusCode() == 404) {
-        return HttpResult.failure(new ServerErrorFailure("Unable to locate User"));
+        if(failOnNotFound) {
+          return HttpResult.failure(new ServerErrorFailure("Unable to locate User"));
+        }
+        else {
+          return HttpResult.success(null);
+        }
       }
       else if(response.getStatusCode() != 200) {
         return HttpResult.failure(new ForwardOnFailure(response));
