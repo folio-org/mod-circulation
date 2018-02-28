@@ -103,32 +103,31 @@ public class RequestCollectionResource {
       else if (RequestType.from(request).canCreateRequestForItem(item)) {
         UpdateItem updateItem = new UpdateItem(clients);
 
-        updateItem.updateItemStatus(item,
-          RequestType.from(request).toItemStatus()).thenAccept(
-            updateItemResult -> {
-              if(updateItemResult.failed()) {
-                updateItemResult.cause().writeTo(routingContext.response());
-                return;
-              }
+        updateItem.onRequestCreation(item, RequestType.from(request).toItemStatus())
+          .thenAccept(updateItemResult -> {
+            if(updateItemResult.failed()) {
+              updateItemResult.cause().writeTo(routingContext.response());
+              return;
+            }
 
-              updateLoanActionHistory(itemId,
-                RequestType.from(request).toLoanAction(), RequestType.from(request).toItemStatus(),
-                clients.loansStorage(), routingContext.response(), vo -> {
-                  addStoredItemProperties(request, item, instance);
-                  addStoredRequesterProperties(request, requester);
+            updateLoanActionHistory(itemId,
+              RequestType.from(request).toLoanAction(), RequestType.from(request).toItemStatus(),
+              clients.loansStorage(), routingContext.response(), vo -> {
+                addStoredItemProperties(request, item, instance);
+                addStoredRequesterProperties(request, requester);
 
-                  clients.requestsStorage().post(request, requestResponse -> {
-                    if (requestResponse.getStatusCode() == 201) {
-                      JsonObject createdRequest = requestResponse.getJson();
+                clients.requestsStorage().post(request, requestResponse -> {
+                  if (requestResponse.getStatusCode() == 201) {
+                    JsonObject createdRequest = requestResponse.getJson();
 
-                      addAdditionalItemProperties(createdRequest, holding, item);
+                    addAdditionalItemProperties(createdRequest, holding, item);
 
-                      JsonResponse.created(routingContext.response(), createdRequest);
-                    } else {
-                      ForwardResponse.forward(routingContext.response(), requestResponse);
-                    }
-                  });
+                    JsonResponse.created(routingContext.response(), createdRequest);
+                  } else {
+                    ForwardResponse.forward(routingContext.response(), requestResponse);
+                  }
                 });
+              });
           });
       }
       else {

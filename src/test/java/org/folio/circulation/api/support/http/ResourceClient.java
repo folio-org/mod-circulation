@@ -119,6 +119,20 @@ public class ResourceClient {
     this.collectionArrayPropertyName = resourceName;
   }
 
+  public Response attemptCreate(Builder builder)
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
+
+    client.post(urlMaker.combine(""), builder.create(),
+      ResponseHandler.any(createCompleted));
+
+    return createCompleted.get(5, TimeUnit.SECONDS);
+  }
+
   public IndividualResource create(Builder builder)
     throws InterruptedException,
     MalformedURLException,

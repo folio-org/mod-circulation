@@ -12,6 +12,7 @@ import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
+import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Period;
@@ -249,6 +250,33 @@ public class LoanAPITests extends APITests {
 
     assertThat(response.getJson().getString("message"),
       is("Item is already checked out"));
+
+    //TODO: introduce when move to array of validation errors
+//    assertThat(JsonArrayHelper.toList(response.getJson().getJsonArray("errors")),
+//      JsonObjectMatchers.hasSoleMessageContaining("Item is already checked out"));
+  }
+
+  @Test
+  public void cannotCreateLoanThatIsNotOpenOrClosed()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource jessica = usersFixture.jessica();
+
+    final Response response = loansClient.attemptCreate(new LoanBuilder()
+        .withStatus("Unknown Status")
+        .withItemId(smallAngryPlanet.getId())
+        .withUserId(jessica.getId()));
+
+    assertThat(
+      String.format("Should not be able to create loan: %s", response.getBody()),
+      response.getStatusCode(), Matchers.is(UNPROCESSABLE_ENTITY));
+
+    assertThat(response.getJson().getString("message"),
+      is("Loan status must be \"Open\" or \"Closed\""));
 
     //TODO: introduce when move to array of validation errors
 //    assertThat(JsonArrayHelper.toList(response.getJson().getJsonArray("errors")),

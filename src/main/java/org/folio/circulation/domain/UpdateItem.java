@@ -10,6 +10,9 @@ import org.folio.circulation.support.ServerErrorFailure;
 
 import java.util.concurrent.CompletableFuture;
 
+import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
+import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
+
 public class UpdateItem {
   private final CollectionResourceClient itemsStorageClient;
 
@@ -17,55 +20,68 @@ public class UpdateItem {
     itemsStorageClient = clients.itemsStorage();
   }
 
-  public CompletableFuture<HttpResult<LoanAndRelatedRecords>> whilstCheckedOut(
-    LoanAndRelatedRecords relatedRecords,
-    String prospectiveNewStatus) {
+  public CompletableFuture<HttpResult<LoanAndRelatedRecords>> onCheckOut(
+    LoanAndRelatedRecords relatedRecords) {
 
-    return updateItemStatus(relatedRecords.inventoryRecords.getItem(),
-      prospectiveNewStatus)
-      .thenApply(updatedItemResult -> updatedItemResult.map(relatedRecords::withItem));
+    JsonObject item = relatedRecords.inventoryRecords.getItem();
+    String prospectiveStatus = itemStatusFrom(relatedRecords.loan);
+
+    if(statusNeedsChanging(item, prospectiveStatus)) {
+      return internalUpdate(item, prospectiveStatus)
+        .thenApply(updatedItemResult -> updatedItemResult.map(
+          relatedRecords::withItem));
+    }
+    else {
+      return skip(relatedRecords);
+    }
   }
 
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> onLoanUpdate(
-    LoanAndRelatedRecords relatedRecords,
-    String prospectiveNewStatus) {
+    LoanAndRelatedRecords loanAndRelatedRecords) {
 
-    return updateItemStatus(relatedRecords.inventoryRecords.getItem(),
-      prospectiveNewStatus)
-      .thenApply(updatedItemResult -> updatedItemResult.map(relatedRecords::withItem));
+    String prospectiveStatus = itemStatusFrom(loanAndRelatedRecords.loan);
+    JsonObject item = loanAndRelatedRecords.inventoryRecords.getItem();
+
+    if(statusNeedsChanging(item, prospectiveStatus)) {
+      return internalUpdate(item,
+        prospectiveStatus)
+        .thenApply(updatedItemResult ->
+          updatedItemResult.map(loanAndRelatedRecords::withItem));
+    }
+    else {
+      return skip(loanAndRelatedRecords);
+    }
   }
 
-  public CompletableFuture<HttpResult<LoanAndRelatedRecords>> updateItemStatus(
-    LoanAndRelatedRecords relatedRecords,
-    String prospectiveNewStatus) {
-
-    return updateItemStatus(relatedRecords.inventoryRecords.getItem(),
-      prospectiveNewStatus)
-      .thenApply(updatedItemResult -> updatedItemResult.map(relatedRecords::withItem));
-  }
-
-  public CompletableFuture<HttpResult<JsonObject>> updateItemStatus(
+  public CompletableFuture<HttpResult<JsonObject>> onRequestCreation(
     JsonObject item,
-    String prospectiveNewStatus) {
+    String prospectiveStatus) {
+
+    if (statusNeedsChanging(item, prospectiveStatus)) {
+      return internalUpdate(item, prospectiveStatus);
+    } else {
+      return skip(item);
+    }
+  }
+
+  private CompletableFuture<HttpResult<JsonObject>> internalUpdate(
+    JsonObject item,
+    String newStatus) {
 
     CompletableFuture<HttpResult<JsonObject>> itemUpdated = new CompletableFuture<>();
 
-    if (statusNeedsChanging(item, prospectiveNewStatus)) {
-      item.put("status", new JsonObject().put("name", prospectiveNewStatus));
+    item.put("status", new JsonObject().put("name", newStatus));
 
-      this.itemsStorageClient.put(item.getString("id"),
-        item, putItemResponse -> {
-          if(putItemResponse.getStatusCode() == 204) {
-            itemUpdated.complete(HttpResult.success(item));
-          }
-          else {
-            itemUpdated.complete(HttpResult.failure(
-              new ServerErrorFailure("Failed to update item")));
-          }
-        });
-    } else {
-      itemUpdated.complete(HttpResult.success(item));
-    }
+    this.itemsStorageClient.put(item.getString("id"),
+      item, putItemResponse -> {
+        if(putItemResponse.getStatusCode() == 204) {
+          itemUpdated.complete(HttpResult.success(item));
+        }
+        else {
+          itemUpdated.complete(HttpResult.failure(
+            new ServerErrorFailure("Failed to update item")));
+        }
+      });
 
     return itemUpdated;
   }
@@ -87,5 +103,22 @@ public class UpdateItem {
     else {
       return !StringUtils.equals(currentStatus, prospectiveNewStatus);
     }
+  }
+
+  private String itemStatusFrom(JsonObject loan) {
+    switch(loan.getJsonObject("status").getString("name")) {
+      case "Open":
+        return CHECKED_OUT;
+
+      case "Closed":
+        return AVAILABLE;
+
+      default:
+        return "";
+    }
+  }
+
+  private <T> CompletableFuture<HttpResult<T>> skip(T previousResult) {
+    return CompletableFuture.completedFuture(HttpResult.success(previousResult));
   }
 }

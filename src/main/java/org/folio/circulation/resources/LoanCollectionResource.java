@@ -63,6 +63,7 @@ public class LoanCollectionResource {
     final String requestingUserId = loan.getString("userId");
 
     completedFuture(HttpResult.success(new LoanAndRelatedRecords(loan)))
+      .thenApply(this::refuseWhenNotOpenOrClosed)
       .thenCombineAsync(inventoryFetcher.fetch(loan), this::addInventoryRecords)
       .thenApply(this::refuseWhenItemDoesNotExist)
       .thenApply(this::refuseWhenItemIsAlreadyCheckedOut)
@@ -72,8 +73,7 @@ public class LoanCollectionResource {
       .thenComposeAsync(r -> r.after(records -> getLocation(records, clients)))
       .thenComposeAsync(r -> r.after(records -> lookupLoanPolicyId(
         records, clients.loanRules())))
-      .thenComposeAsync(r -> r.after(records ->
-        updateItem.whilstCheckedOut(records, itemStatusFrom(loan))))
+      .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(records -> createLoan(records, clients)))
       .thenApply(r -> r.map(this::extendedLoan))
@@ -98,11 +98,11 @@ public class LoanCollectionResource {
     String itemId = loan.getString("itemId");
 
     completedFuture(HttpResult.success(new LoanAndRelatedRecords(loan)))
+      .thenApply(this::refuseWhenNotOpenOrClosed)
       .thenCombineAsync(inventoryFetcher.fetch(loan), this::addInventoryRecords)
       .thenApply(this::refuseWhenItemDoesNotExist)
       .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
-      .thenComposeAsync(result -> result.after(records ->
-        updateItem.onLoanUpdate(records, itemStatusFrom(loan))))
+      .thenComposeAsync(result -> result.after(updateItem::onLoanUpdate))
       .thenComposeAsync(result -> result.after(
         records -> updateLoan(clients, id, loan, records)))
       .thenComposeAsync(result -> result.after(requestQueueUpdate::onCheckIn))
@@ -637,6 +637,36 @@ public class LoanCollectionResource {
       }
       else {
         return result;
+      }
+    });
+  }
+
+  private HttpResult<LoanAndRelatedRecords> refuseWhenNotOpenOrClosed(
+    HttpResult<LoanAndRelatedRecords> result) {
+
+    return result.next(loanAndRelatedRecords -> {
+      JsonObject loan = loanAndRelatedRecords.loan;
+
+      if(loan == null) {
+        return HttpResult.failure(new ServerErrorFailure(
+          "Cannot check loan status when no loan"));
+      }
+
+      if(!loan.containsKey("status")) {
+        return HttpResult.failure(new ServerErrorFailure(
+          "Loan does not have a status"));
+      }
+
+      String status = loan.getJsonObject("status").getString("name");
+
+      switch(status) {
+        case "Open":
+        case "Closed":
+          return result;
+
+        default:
+          return HttpResult.failure(new ValidationErrorFailure(
+            "Loan status must be \"Open\" or \"Closed\"", "status", status));
       }
     });
   }

@@ -3,6 +3,8 @@
 * Defaults request `status` to `Open - Not yet filled` (CIRC-53)
 * Updates request `status` for hold shelf delivery to `Open - Awaiting pickup` on check in (CIRC-53)
 * Disallow checking out item to other patrons when request is awaiting pickup (CIRC-53)
+* Refuse loan creation for already checked out items (CIRC-53)
+* Only allow `Open` and `Closed` loan status (may become interface constraint in future, CIRC-53)
 
 ## 7.2.0 Unreleased
 
