@@ -121,63 +121,45 @@ public class RequestCollectionResource {
   }
 
   private void replace(RoutingContext routingContext) {
+    final WebContext context = new WebContext(routingContext);
+    final Clients clients = Clients.create(context);
+
+    final InventoryFetcher inventoryFetcher = InventoryFetcher.create(clients);
+    final UserFetcher userFetcher = new UserFetcher(clients);
+
     String id = routingContext.request().getParam("id");
     JsonObject request = routingContext.getBodyAsJson();
 
     removeRelatedRecordInformation(request);
 
-    WebContext context = new WebContext(routingContext);
-    Clients clients = Clients.create(context);
+    final String requestingUserId = request.getString("requesterId");
 
-    String itemId = getItemId(request);
-
-    InventoryFetcher inventoryFetcher = InventoryFetcher.create(clients);
-
-    CompletableFuture<HttpResult<InventoryRecords>> inventoryRecordsCompleted
-      = inventoryFetcher.fetch(itemId);
-
-    CompletableFuture<Response> requestingUserRequestCompleted = new CompletableFuture<>();
-
-    clients.usersStorage().get(request.getString("requesterId"),
-      requestingUserRequestCompleted::complete);
-
-    CompletableFuture<Void> allCompleted = CompletableFuture.allOf(
-      inventoryRecordsCompleted, requestingUserRequestCompleted);
-
-    allCompleted.exceptionally(t -> {
-      ServerErrorResponse.internalError(routingContext.response(),
-        String.format("At least one request for additional information failed: %s", t));
-
-      return null;
-    });
-
-    allCompleted.thenAccept(v -> {
-      Response requestingUserResponse = requestingUserRequestCompleted.join();
-      HttpResult<InventoryRecords> inventoryRecordsResult = inventoryRecordsCompleted.join();
-
-      if(inventoryRecordsResult.failed()) {
-        inventoryRecordsResult.cause().writeTo(routingContext.response());
-        return;
-      }
-
-      final InventoryRecords inventoryRecords = inventoryRecordsResult.value();
-
-      final JsonObject item = inventoryRecords.getItem();
-      final JsonObject instance = inventoryRecords.getInstance();
-      final JsonObject requester = getRecordFromResponse(requestingUserResponse);
-
-      addStoredItemProperties(request, item, instance);
-      addStoredRequesterProperties(request, requester);
-
-      clients.requestsStorage().put(id, request, response -> {
-        if(response.getStatusCode() == 204) {
-          SuccessResponse.noContent(routingContext.response());
+    completedFuture(HttpResult.success(new RequestAndRelatedRecords(request)))
+      .thenCombineAsync(inventoryFetcher.fetch(request), this::addInventoryRecords)
+      .thenCombineAsync(userFetcher.getUser(requestingUserId, false), this::addUser)
+      .thenAcceptAsync(result -> {
+        if(result.failed()) {
+          result.cause().writeTo(routingContext.response());
+          return;
         }
-        else {
-          ForwardResponse.forward(routingContext.response(), response);
-        }
+
+        final InventoryRecords inventoryRecords = result.value().inventoryRecords;
+        final JsonObject item = inventoryRecords.getItem();
+        final JsonObject instance = inventoryRecords.getInstance();
+        final JsonObject requester = result.value().requestingUser;
+
+        addStoredItemProperties(request, item, instance);
+        addStoredRequesterProperties(request, requester);
+
+        clients.requestsStorage().put(id, request, response -> {
+          if(response.getStatusCode() == 204) {
+            SuccessResponse.noContent(routingContext.response());
+          }
+          else {
+            ForwardResponse.forward(routingContext.response(), response);
+          }
+        });
       });
-    });
   }
 
   private void get(RoutingContext routingContext) {
