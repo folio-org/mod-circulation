@@ -1,7 +1,6 @@
-package org.folio.circulation.resources;
+package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.support.InventoryRecords;
 
 public class LoanAndRelatedRecords {
@@ -26,7 +25,7 @@ public class LoanAndRelatedRecords {
     this.location = location;
   }
 
-  LoanAndRelatedRecords(JsonObject loan) {
+  public LoanAndRelatedRecords(JsonObject loan) {
     this(loan, null, null, null, null, null);
   }
 
