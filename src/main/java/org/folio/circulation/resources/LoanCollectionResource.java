@@ -674,7 +674,7 @@ public class LoanCollectionResource {
       return false;
     }
     else {
-      final JsonObject highestPriority = requestQueue.getHighestPriorityFulfillableRequests();
+      final JsonObject highestPriority = requestQueue.getHighestPriorityFulfillableRequest();
 
       return isAwaitingPickup(highestPriority)
         && !isFor(highestPriority, requestingUser);

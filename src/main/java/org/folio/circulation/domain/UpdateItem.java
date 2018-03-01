@@ -25,7 +25,7 @@ public class UpdateItem {
     JsonObject item = relatedRecords.inventoryRecords.getItem();
     String prospectiveStatus = itemStatusFrom(relatedRecords.loan);
 
-    if(statusNeedsChanging(item, prospectiveStatus)) {
+    if(isNotSameStatusIgnoringCheckOutVariants(item, prospectiveStatus)) {
       return internalUpdate(item, prospectiveStatus)
         .thenApply(updatedItemResult -> updatedItemResult.map(
           relatedRecords::withItem));
@@ -41,7 +41,7 @@ public class UpdateItem {
     String prospectiveStatus = itemStatusFrom(loanAndRelatedRecords.loan);
     JsonObject item = loanAndRelatedRecords.inventoryRecords.getItem();
 
-    if(statusNeedsChanging(item, prospectiveStatus)) {
+    if(isNotSameStatusIgnoringCheckOutVariants(item, prospectiveStatus)) {
       return internalUpdate(item,
         prospectiveStatus)
         .thenApply(updatedItemResult ->
@@ -55,15 +55,26 @@ public class UpdateItem {
   public CompletableFuture<HttpResult<RequestAndRelatedRecords>> onRequestCreation(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    RequestType requestType = RequestType.from(requestAndRelatedRecords.request);
-    String newStatus = requestType.toItemStatus();
+    try {
+      RequestType requestType = RequestType.from(requestAndRelatedRecords.request);
 
-    if (statusNeedsChanging(requestAndRelatedRecords.inventoryRecords.item, newStatus)) {
-      return internalUpdate(requestAndRelatedRecords.inventoryRecords.item, newStatus)
-        .thenApply(updatedItemResult ->
-          updatedItemResult.map(requestAndRelatedRecords::withItem));
-    } else {
-      return skip(requestAndRelatedRecords);
+      RequestQueue requestQueue = requestAndRelatedRecords.requestQueue;
+
+      String newStatus = requestQueue.hasOutstandingRequests()
+        ? RequestType.from(requestQueue.getHighestPriorityRequest()).toItemStatus()
+        : requestType.toItemStatus();
+
+      if (isNotSameStatus(requestAndRelatedRecords.inventoryRecords.item, newStatus)) {
+        return internalUpdate(requestAndRelatedRecords.inventoryRecords.item, newStatus)
+          .thenApply(updatedItemResult ->
+            updatedItemResult.map(requestAndRelatedRecords::withItem));
+      } else {
+        return skip(requestAndRelatedRecords);
+      }
+    }
+    catch (Exception ex) {
+      return CompletableFuture.completedFuture(
+        HttpResult.failure(new ServerErrorFailure(ex)));
     }
   }
 
@@ -89,23 +100,37 @@ public class UpdateItem {
     return itemUpdated;
   }
 
-  private static boolean statusNeedsChanging(
+  private static boolean isNotSameStatusIgnoringCheckOutVariants(
     JsonObject item,
-    String prospectiveNewStatus) {
+    String prospectiveStatus) {
 
     String currentStatus = ItemStatus.getStatus(item);
 
     // More specific status is ok to retain (will likely be different in each context)
-    if(StringUtils.equals(prospectiveNewStatus, ItemStatus.CHECKED_OUT)) {
+    if(StringUtils.equals(prospectiveStatus, ItemStatus.CHECKED_OUT)) {
       if (ItemStatus.isCheckedOut(currentStatus)) {
         return false;
       } else {
-        return !StringUtils.equals(currentStatus, prospectiveNewStatus);
+        return isNotSameStatus(currentStatus, prospectiveStatus);
       }
     }
     else {
-      return !StringUtils.equals(currentStatus, prospectiveNewStatus);
+      return isNotSameStatus(currentStatus, prospectiveStatus);
     }
+  }
+
+  private static boolean isNotSameStatus(
+    JsonObject item,
+    String prospectiveStatus) {
+
+    return isNotSameStatus(ItemStatus.getStatus(item), prospectiveStatus);
+  }
+
+  private static boolean isNotSameStatus(
+    String currentStatus,
+    String prospectiveStatus) {
+
+    return !StringUtils.equals(currentStatus, prospectiveStatus);
   }
 
   private String itemStatusFrom(JsonObject loan) {

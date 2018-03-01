@@ -8,6 +8,8 @@ import org.folio.circulation.api.support.http.InterfaceUrls;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
 import org.hamcrest.core.Is;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
 import java.net.HttpURLConnection;
@@ -161,7 +163,7 @@ public class RequestsAPIStatusChangeTests extends APITests {
   }
 
   @Test
-  public void itemStatusIsBasedUponLastRequestCreatedWhenMultipleRequestsOfDifferentTypeAreMadeForSameItem()
+  public void itemStatusIsBasedUponOldestRequestCreated()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -193,18 +195,21 @@ public class RequestsAPIStatusChangeTests extends APITests {
       .recall()
       .withItemId(itemId)
       .withRequesterId(firstRequesterId)
+      .withRequestDate(new DateTime(2018, 1, 24, 12, 43, 21, DateTimeZone.UTC))
       .create());
 
     requestsClient.create(new RequestBuilder()
       .page()
       .withItemId(itemId)
       .withRequesterId(secondRequesterId)
+      .withRequestDate(new DateTime(2018, 1, 27, 11, 21, 43, DateTimeZone.UTC))
       .create());
 
     JsonObject requestRequest = new RequestBuilder()
       .hold()
       .withItemId(itemId)
       .withRequesterId(thirdRequesterId)
+      .withRequestDate(new DateTime(2018, 2, 3, 8, 1, 6, DateTimeZone.UTC))
       .create();
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
@@ -220,7 +225,7 @@ public class RequestsAPIStatusChangeTests extends APITests {
     Response changedItem = itemsClient.getById(itemId);
 
     assertThat(changedItem.getJson().getJsonObject("status").getString("name"),
-      is("Checked out - Held"));
+      is("Checked out - Recalled"));
   }
 
   //This might change when page requests are analysed further

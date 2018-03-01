@@ -13,11 +13,19 @@ public class RequestQueue {
     this.requests = requests;
   }
 
+  public boolean hasOutstandingRequests() {
+    return !requests.isEmpty();
+  }
+
+  public JsonObject getHighestPriorityRequest() {
+    return requests.get(0);
+  }
+
   public boolean hasOutstandingFulfillableRequests() {
     return !fulfillableRequests().isEmpty();
   }
 
-  public JsonObject getHighestPriorityFulfillableRequests() {
+  public JsonObject getHighestPriorityFulfillableRequest() {
     return fulfillableRequests().get(0);
   }
 
