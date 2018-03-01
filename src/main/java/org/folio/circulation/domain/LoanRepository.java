@@ -1,10 +1,7 @@
 package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.ForwardOnFailure;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.*;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -16,24 +13,56 @@ public class LoanRepository {
   }
 
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> createLoan(
-    LoanAndRelatedRecords relatedRecords) {
+    LoanAndRelatedRecords loanAndRelatedRecords) {
 
     CompletableFuture<HttpResult<LoanAndRelatedRecords>> onCreated = new CompletableFuture<>();
 
-    JsonObject loan = relatedRecords.loan;
+    JsonObject storageLoan = convertLoanToStorageRepresentation(
+      loanAndRelatedRecords.loan, loanAndRelatedRecords.inventoryRecords.item);
 
-    loan.put("loanPolicyId", relatedRecords.loanPolicyId);
-    loan.put("itemStatus", ItemStatus.getStatus(relatedRecords.inventoryRecords.item));
+    storageLoan.put("loanPolicyId", loanAndRelatedRecords.loanPolicyId);
 
-    loansStorageClient.post(loan, response -> {
+    loansStorageClient.post(storageLoan, response -> {
       if (response.getStatusCode() == 201) {
         onCreated.complete(HttpResult.success(
-          relatedRecords.withLoan(response.getJson())));
+          loanAndRelatedRecords.withLoan(response.getJson())));
       } else {
         onCreated.complete(HttpResult.failure(new ForwardOnFailure(response)));
       }
     });
 
     return onCreated;
+  }
+
+  public CompletableFuture<HttpResult<LoanAndRelatedRecords>> updateLoan(
+    LoanAndRelatedRecords loanAndRelatedRecords) {
+
+    CompletableFuture<HttpResult<LoanAndRelatedRecords>> onUpdated = new CompletableFuture<>();
+
+    JsonObject storageLoan = convertLoanToStorageRepresentation(
+      loanAndRelatedRecords.loan, loanAndRelatedRecords.inventoryRecords.item);
+
+    loansStorageClient.put(storageLoan.getString("id"), storageLoan, response -> {
+      if (response.getStatusCode() == 204) {
+        onUpdated.complete(HttpResult.success(loanAndRelatedRecords));
+      } else {
+        onUpdated.complete(HttpResult.failure(new ServerErrorFailure("Failed to update loan")));
+      }
+    });
+
+    return onUpdated;
+  }
+
+  private static JsonObject convertLoanToStorageRepresentation(
+    JsonObject loan,
+    JsonObject item) {
+
+    JsonObject storageLoan = loan.copy();
+
+    storageLoan.remove("item");
+    storageLoan.remove("itemStatus");
+    storageLoan.put("itemStatus", ItemStatus.getStatus(item));
+
+    return storageLoan;
   }
 }

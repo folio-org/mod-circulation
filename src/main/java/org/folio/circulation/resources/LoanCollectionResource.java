@@ -55,7 +55,6 @@ public class LoanCollectionResource {
 
     final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
-
     final LoanRepository loanRepository = new LoanRepository(clients);
 
     JsonObject loan = routingContext.getBodyAsJson();
@@ -90,12 +89,14 @@ public class LoanCollectionResource {
     final Clients clients = Clients.create(context);
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
     final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
+
     final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
-
-    String id = routingContext.request().getParam("id");
+    final LoanRepository loanRepository = new LoanRepository(clients);
 
     JsonObject loan = routingContext.getBodyAsJson();
+
+    loan.put("id", routingContext.request().getParam("id"));
 
     defaultStatusAndAction(loan);
 
@@ -108,8 +109,7 @@ public class LoanCollectionResource {
       .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
       .thenComposeAsync(result -> result.after(requestQueueUpdate::onCheckIn))
       .thenComposeAsync(result -> result.after(updateItem::onLoanUpdate))
-      .thenComposeAsync(result -> result.after(
-        records -> updateLoan(clients, id, loan, records)))
+      .thenComposeAsync(result -> result.after(loanRepository::updateLoan))
       .thenApply(NoContentHttpResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
@@ -428,41 +428,6 @@ public class LoanCollectionResource {
     else {
       return null;
     }
-  }
-
-  private CompletableFuture<HttpResult<LoanAndRelatedRecords>> updateLoan(
-    Clients clients,
-    String id,
-    JsonObject loan,
-    LoanAndRelatedRecords relatedRecords) {
-
-    CompletableFuture<HttpResult<LoanAndRelatedRecords>> onUpdated = new CompletableFuture<>();
-
-    JsonObject storageLoan = convertLoanToStorageRepresentation(loan,
-      relatedRecords.inventoryRecords.getItem());
-
-    clients.loansStorage().put(id, storageLoan, response -> {
-      if (response.getStatusCode() == 204) {
-        onUpdated.complete(HttpResult.success(relatedRecords));
-      } else {
-        onUpdated.complete(HttpResult.failure(new ServerErrorFailure("Failed to update loan")));
-      }
-    });
-
-    return onUpdated;
-  }
-
-  private JsonObject convertLoanToStorageRepresentation(
-    JsonObject loan,
-    JsonObject item) {
-
-    JsonObject storageLoan = loan.copy();
-
-    storageLoan.remove("item");
-    storageLoan.remove("itemStatus");
-    storageLoan.put("itemStatus", ItemStatus.getStatus(item));
-
-    return storageLoan;
   }
 
   private HttpResult<LoanAndRelatedRecords> addInventoryRecords(
