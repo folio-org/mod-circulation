@@ -118,10 +118,11 @@ public class LoanCollectionResource {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context);
     final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
+    final LoanRepository loanRepository = new LoanRepository(clients);
 
     String id = routingContext.request().getParam("id");
 
-    getLoanFromStorage(id, clients)
+    loanRepository.getById(id)
       .thenComposeAsync(result ->
         result.after(loan -> getInventoryRecords(loan, inventoryFetcher)))
       .thenComposeAsync(r -> r.after(records -> getLocation(records, clients)))
@@ -477,28 +478,6 @@ public class LoanCollectionResource {
     return getLocation(locationId,
       relatedRecords.inventoryRecords.item.getString("id"), clients)
       .thenApply(result -> result.map(relatedRecords::withLocation));
-  }
-
-  private CompletableFuture<HttpResult<LoanAndRelatedRecords>> getLoanFromStorage(
-    String loanId,
-    Clients clients) {
-
-    CompletableFuture<Response> getLoanCompleted = new CompletableFuture<>();
-
-    clients.loansStorage().get(loanId, getLoanCompleted::complete);
-
-    final Function<Response, HttpResult<LoanAndRelatedRecords>> mapResponse = response -> {
-      if(response != null && response.getStatusCode() == 200) {
-        return HttpResult.success(new LoanAndRelatedRecords(response.getJson()));
-      }
-      else {
-        return HttpResult.failure(new ForwardOnFailure(response));
-      }
-    };
-
-    return getLoanCompleted
-      .thenApply(mapResponse)
-      .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
   }
 
   private CompletableFuture<HttpResult<JsonObject>> getLocation(

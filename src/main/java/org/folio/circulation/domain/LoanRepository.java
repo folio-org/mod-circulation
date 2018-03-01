@@ -2,8 +2,10 @@ package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.*;
+import org.folio.circulation.support.http.client.Response;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 public class LoanRepository {
   private final CollectionResourceClient loansStorageClient;
@@ -51,6 +53,25 @@ public class LoanRepository {
     });
 
     return onUpdated;
+  }
+
+  public CompletableFuture<HttpResult<LoanAndRelatedRecords>> getById(String id) {
+    CompletableFuture<Response> getLoanCompleted = new CompletableFuture<>();
+
+    loansStorageClient.get(id, getLoanCompleted::complete);
+
+    final Function<Response, HttpResult<LoanAndRelatedRecords>> mapResponse = response -> {
+      if(response != null && response.getStatusCode() == 200) {
+        return HttpResult.success(new LoanAndRelatedRecords(response.getJson()));
+      }
+      else {
+        return HttpResult.failure(new ForwardOnFailure(response));
+      }
+    };
+
+    return getLoanCompleted
+      .thenApply(mapResponse)
+      .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
   }
 
   private static JsonObject convertLoanToStorageRepresentation(
