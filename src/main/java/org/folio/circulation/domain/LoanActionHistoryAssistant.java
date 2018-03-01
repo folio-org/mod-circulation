@@ -4,6 +4,7 @@ import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.server.ServerErrorResponse;
 import org.slf4j.Logger;
@@ -11,17 +12,16 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.concurrent.CompletableFuture;
 
 public class LoanActionHistoryAssistant {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   //Updates the single open loan for the item related to a request
-  public static void  updateLoanActionHistory(
+  public static CompletableFuture<HttpResult<RequestAndRelatedRecords>> updateLoanActionHistory(
     RequestAndRelatedRecords requestAndRelatedRecords,
     CollectionResourceClient loansStorageClient,
-    HttpServerResponse responseToClient,
-    Consumer<Void> onSuccess) {
+    HttpServerResponse responseToClient) {
 
     RequestType requestType = RequestType.from(requestAndRelatedRecords.request);
 
@@ -31,8 +31,7 @@ public class LoanActionHistoryAssistant {
 
     //Do not change any loans if no new status
     if(StringUtils.isEmpty(action)) {
-      onSuccess.accept(null);
-      return;
+      return skip(requestAndRelatedRecords);
     }
 
     String itemId = requestAndRelatedRecords.request.getString("itemId");
@@ -40,14 +39,18 @@ public class LoanActionHistoryAssistant {
     String queryTemplate = "query=itemId=%s+and+status.name=Open";
     String query = String.format(queryTemplate, itemId);
 
+    CompletableFuture<HttpResult<RequestAndRelatedRecords>> completed = new CompletableFuture<>();
+
     loansStorageClient.getMany(query, getLoansResponse -> {
       if(getLoansResponse.getStatusCode() == 200) {
         List<JsonObject> loans = JsonArrayHelper.toList(
           getLoansResponse.getJson().getJsonArray("loans"));
 
-        if(loans.size() == 0) {
-          log.info(String.format("No open loans found for item", itemId));
-          onSuccess.accept(null);
+        if(loans.isEmpty()) {
+          log.warn("No open loans found for item {}", itemId);
+          //Only success in the sense that it can't be done, but no
+          //compensating action to take
+          completed.complete(HttpResult.success(requestAndRelatedRecords));
         }
         else if(loans.size() == 1) {
           JsonObject changedLoan = loans.get(0).copy();
@@ -56,9 +59,8 @@ public class LoanActionHistoryAssistant {
           changedLoan.put("itemStatus", itemStatus);
 
           loansStorageClient.put(changedLoan.getString("id"), changedLoan,
-            putLoanResponse -> {
-              onSuccess.accept(null);
-          });
+            putLoanResponse ->
+              completed.complete(HttpResult.success(requestAndRelatedRecords)));
         }
         else {
           String moreThanOneOpenLoanError = String.format(
@@ -77,5 +79,11 @@ public class LoanActionHistoryAssistant {
           failedError);
       }
     });
+
+    return completed;
+  }
+
+  private static <T> CompletableFuture<HttpResult<T>> skip(T previousResult) {
+    return CompletableFuture.completedFuture(HttpResult.success(previousResult));
   }
 }

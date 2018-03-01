@@ -86,8 +86,9 @@ public class RequestCollectionResource {
 
         updateLoanActionHistory(
           requestAndRelatedRecords,
-          clients.loansStorage(), routingContext.response(),
-          vo -> {
+          clients.loansStorage(), routingContext.response()
+        ).thenAcceptAsync(r ->
+          {
             addStoredItemProperties(request, item, instance);
             addStoredRequesterProperties(request, requestingUser);
 
