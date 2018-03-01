@@ -56,6 +56,8 @@ public class LoanCollectionResource {
     final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
 
+    final LoanRepository loanRepository = new LoanRepository(clients);
+
     JsonObject loan = routingContext.getBodyAsJson();
 
     defaultStatusAndAction(loan);
@@ -77,7 +79,7 @@ public class LoanCollectionResource {
         records, clients.loanRules())))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
-      .thenComposeAsync(r -> r.after(records -> createLoan(records, clients)))
+      .thenComposeAsync(r -> r.after(loanRepository::createLoan))
       .thenApply(r -> r.map(this::extendedLoan))
       .thenApply(CreatedJsonHttpResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
@@ -428,10 +430,6 @@ public class LoanCollectionResource {
     }
   }
 
-  private String getItemStatus(JsonObject item) {
-    return item.getJsonObject("status").getString("name");
-  }
-
   private CompletableFuture<HttpResult<LoanAndRelatedRecords>> updateLoan(
     Clients clients,
     String id,
@@ -454,29 +452,6 @@ public class LoanCollectionResource {
     return onUpdated;
   }
 
-  private CompletableFuture<HttpResult<LoanAndRelatedRecords>> createLoan(
-    LoanAndRelatedRecords relatedRecords,
-    Clients clients) {
-
-    CompletableFuture<HttpResult<LoanAndRelatedRecords>> onCreated = new CompletableFuture<>();
-
-    JsonObject loan = relatedRecords.loan;
-
-    loan.put("loanPolicyId", relatedRecords.loanPolicyId);
-    loan.put("itemStatus", getItemStatus(relatedRecords.inventoryRecords.item));
-
-    clients.loansStorage().post(loan, response -> {
-      if (response.getStatusCode() == 201) {
-        onCreated.complete(HttpResult.success(
-          relatedRecords.withLoan(response.getJson())));
-      } else {
-        onCreated.complete(HttpResult.failure(new ForwardOnFailure(response)));
-      }
-    });
-
-    return onCreated;
-  }
-
   private JsonObject convertLoanToStorageRepresentation(
     JsonObject loan,
     JsonObject item) {
@@ -485,7 +460,7 @@ public class LoanCollectionResource {
 
     storageLoan.remove("item");
     storageLoan.remove("itemStatus");
-    storageLoan.put("itemStatus", getItemStatus(item));
+    storageLoan.put("itemStatus", ItemStatus.getStatus(item));
 
     return storageLoan;
   }
