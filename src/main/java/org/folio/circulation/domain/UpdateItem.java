@@ -52,14 +52,18 @@ public class UpdateItem {
     }
   }
 
-  public CompletableFuture<HttpResult<JsonObject>> onRequestCreation(
-    JsonObject item,
-    String prospectiveStatus) {
+  public CompletableFuture<HttpResult<RequestAndRelatedRecords>> onRequestCreation(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    if (statusNeedsChanging(item, prospectiveStatus)) {
-      return internalUpdate(item, prospectiveStatus);
+    RequestType requestType = RequestType.from(requestAndRelatedRecords.request);
+    String newStatus = requestType.toItemStatus();
+
+    if (statusNeedsChanging(requestAndRelatedRecords.inventoryRecords.item, newStatus)) {
+      return internalUpdate(requestAndRelatedRecords.inventoryRecords.item, newStatus)
+        .thenApply(updatedItemResult ->
+          updatedItemResult.map(requestAndRelatedRecords::withItem));
     } else {
-      return skip(item);
+      return skip(requestAndRelatedRecords);
     }
   }
 

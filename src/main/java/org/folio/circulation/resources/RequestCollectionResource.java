@@ -76,16 +76,19 @@ public class RequestCollectionResource {
           return;
         }
 
-        JsonObject item = result.value().inventoryRecords.getItem();
-        JsonObject holding = result.value().inventoryRecords.getHolding();
-        JsonObject instance = result.value().inventoryRecords.getInstance();
-        JsonObject requestingUser = result.value().requestingUser;
+        RequestAndRelatedRecords requestAndRelatedRecords = result.value();
 
-        RequestType requestType = RequestType.from(request);
+        JsonObject item = requestAndRelatedRecords.inventoryRecords.getItem();
+        JsonObject holding = requestAndRelatedRecords.inventoryRecords.getHolding();
+        JsonObject instance = requestAndRelatedRecords.inventoryRecords.getInstance();
+        JsonObject requestingUser = requestAndRelatedRecords.requestingUser;
 
         UpdateItem updateItem = new UpdateItem(clients);
 
-        updateItem.onRequestCreation(item, requestType.toItemStatus())
+        RequestType requestType = RequestType.from(request);
+        String newItemStatus = requestType.toItemStatus();
+
+        updateItem.onRequestCreation(requestAndRelatedRecords)
           .thenAccept(updateItemResult -> {
             if(updateItemResult.failed()) {
               updateItemResult.cause().writeTo(routingContext.response());
@@ -93,7 +96,7 @@ public class RequestCollectionResource {
             }
 
             updateLoanActionHistory(itemId,
-              requestType.toLoanAction(), requestType.toItemStatus(),
+              requestType.toLoanAction(), newItemStatus,
               clients.loansStorage(), routingContext.response(), vo -> {
                 addStoredItemProperties(request, item, instance);
                 addStoredRequesterProperties(request, requestingUser);
