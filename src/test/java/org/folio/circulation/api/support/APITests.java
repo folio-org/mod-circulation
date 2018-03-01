@@ -33,9 +33,8 @@ public abstract class APITests {
 
   private static boolean runningOnOwn;
 
-  protected final OkapiHttpClient client = APITestSuite.createClient(exception -> {
-    log.error("Request to circulation module failed:", exception);
-  });
+  protected final OkapiHttpClient client = APITestSuite.createClient(exception ->
+    log.error("Request to circulation module failed:", exception));
 
   private final boolean initialiseLoanRules;
   protected final ResourceClient usersClient = ResourceClient.forUsers(client);

@@ -84,7 +84,6 @@ public class APITestSuite {
   private static UUID alternateGroupId;
   private static boolean initialised;
   private static UUID userId1;
-  private static UUID userId2;
   private static JsonObject userRecord1;
   private static JsonObject userRecord2;
 
@@ -318,7 +317,7 @@ public class APITestSuite {
       .withPatronGroupId(alternateGroupId)
       .create();
 
-    userId2 = usersClient.create(userRecord2).getId();
+    usersClient.create(userRecord2).getId();
   }
 
   public static void createGroups()

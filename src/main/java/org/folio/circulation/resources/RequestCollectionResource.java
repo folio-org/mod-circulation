@@ -41,7 +41,7 @@ public class RequestCollectionResource {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context);
 
-    final InventoryFetcher inventoryFetcher = InventoryFetcher.create(clients);
+    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
     final UserFetcher userFetcher = new UserFetcher(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
@@ -84,7 +84,7 @@ public class RequestCollectionResource {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context);
 
-    final InventoryFetcher inventoryFetcher = InventoryFetcher.create(clients);
+    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
     final UserFetcher userFetcher = new UserFetcher(clients);
 
     String id = routingContext.request().getParam("id");
@@ -132,7 +132,7 @@ public class RequestCollectionResource {
       if(requestResponse.getStatusCode() == 200) {
         JsonObject request = requestResponse.getJson();
 
-        InventoryFetcher inventoryFetcher = InventoryFetcher.create(clients);
+        InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
 
         CompletableFuture<HttpResult<InventoryRecords>> inventoryRecordsCompleted =
           inventoryFetcher.fetch(getItemId(request));
@@ -197,7 +197,7 @@ public class RequestCollectionResource {
           .filter(Objects::nonNull)
           .collect(Collectors.toList());
 
-        InventoryFetcher inventoryFetcher = InventoryFetcher.create(clients);
+        InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
 
         CompletableFuture<MultipleInventoryRecords> inventoryRecordsFetched =
           inventoryFetcher.fetch(itemIds, e ->

@@ -3,7 +3,6 @@ package org.folio.circulation.api.support.fakes;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpServer;
-import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.folio.circulation.api.APITestSuite;
@@ -132,25 +131,21 @@ public class FakeOkapi extends AbstractVerticle {
       });
   }
 
-  private Route forwardRequestsToApplyLoanRulesBackToCirculationModule(Router router) {
-
+  private void forwardRequestsToApplyLoanRulesBackToCirculationModule(Router router) {
     //During loan creation, a request to /circulation/loan-rules/apply is made,
     //which is effectively to itself, so needs to be routed back
-    return router.get("/circulation/loan-rules/apply").handler(context -> {
-      OkapiHttpClient client = APITestSuite.createClient(throwable -> {
+    router.get("/circulation/loan-rules/apply").handler(context -> {
+      OkapiHttpClient client = APITestSuite.createClient(throwable ->
         ServerErrorResponse.internalError(context.response(),
           String.format("Exception when forward loan rules apply request: %s",
-            throwable.getMessage()));
-      });
+            throwable.getMessage())));
 
       client.get(String.format("http://localhost:%s/circulation/loan-rules/apply?%s"
         , APITestSuite.circulationModulePort(), context.request().query()),
-        httpClientResponse -> {
-          httpClientResponse.bodyHandler(buffer -> {
+        httpClientResponse ->
+          httpClientResponse.bodyHandler(buffer ->
             ForwardResponse.forward(context.response(), httpClientResponse,
-              BufferHelper.stringFromBuffer(buffer));
-          });
-        });
+              BufferHelper.stringFromBuffer(buffer))));
     });
   }
 

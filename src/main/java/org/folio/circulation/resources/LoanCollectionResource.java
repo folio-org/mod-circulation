@@ -49,7 +49,7 @@ public class LoanCollectionResource {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context);
 
-    final InventoryFetcher inventoryFetcher = InventoryFetcher.create(clients);
+    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
     final UserFetcher userFetcher = new UserFetcher(clients);
 
@@ -87,7 +87,7 @@ public class LoanCollectionResource {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context);
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
-    final InventoryFetcher inventoryFetcher = InventoryFetcher.create(clients);
+    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
     final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
 
@@ -115,7 +115,7 @@ public class LoanCollectionResource {
   private void get(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context);
-    final InventoryFetcher inventoryFetcher = InventoryFetcher.create(clients);
+    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
 
     String id = routingContext.request().getParam("id");
 
@@ -167,7 +167,7 @@ public class LoanCollectionResource {
           .filter(Objects::nonNull)
           .collect(Collectors.toList());
 
-        InventoryFetcher inventoryFetcher = InventoryFetcher.create(clients);
+        InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
 
         CompletableFuture<MultipleInventoryRecords> inventoryRecordsFetched =
           inventoryFetcher.fetch(itemIds, e ->

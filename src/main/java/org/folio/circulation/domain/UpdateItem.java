@@ -139,25 +139,6 @@ public class UpdateItem {
     return itemUpdated;
   }
 
-  private static boolean isNotSameStatusIgnoringCheckOutVariants(
-    JsonObject item,
-    String prospectiveStatus) {
-
-    String currentStatus = ItemStatus.getStatus(item);
-
-    // More specific status is ok to retain (will likely be different in each context)
-    if(StringUtils.equals(prospectiveStatus, ItemStatus.CHECKED_OUT)) {
-      if (ItemStatus.isCheckedOut(currentStatus)) {
-        return false;
-      } else {
-        return isNotSameStatus(currentStatus, prospectiveStatus);
-      }
-    }
-    else {
-      return isNotSameStatus(currentStatus, prospectiveStatus);
-    }
-  }
-
   private static boolean isNotSameStatus(
     JsonObject item,
     String prospectiveStatus) {
