@@ -74,6 +74,7 @@ public class RequestCollectionResource {
       .thenCombineAsync(userFetcher.getUser(requestingUserId, false), this::addUser)
       .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
       .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreation))
+      .thenComposeAsync(r -> r.after(records -> createRequest(records, clients)))
       .thenAcceptAsync(result -> {
         if(result.failed()) {
           result.cause().writeTo(response);
@@ -84,23 +85,10 @@ public class RequestCollectionResource {
 
         JsonObject item = requestAndRelatedRecords.inventoryRecords.getItem();
         JsonObject holding = requestAndRelatedRecords.inventoryRecords.getHolding();
-        JsonObject instance = requestAndRelatedRecords.inventoryRecords.getInstance();
-        JsonObject requestingUser = requestAndRelatedRecords.requestingUser;
 
-        addStoredItemProperties(request, item, instance);
-        addStoredRequesterProperties(request, requestingUser);
+        addAdditionalItemProperties(requestAndRelatedRecords.request, holding, item);
 
-        clients.requestsStorage().post(request, requestResponse -> {
-          if (requestResponse.getStatusCode() == 201) {
-            JsonObject createdRequest = requestResponse.getJson();
-
-            addAdditionalItemProperties(createdRequest, holding, item);
-
-            JsonResponse.created(response, createdRequest);
-          } else {
-            ForwardResponse.forward(response, requestResponse);
-          }
-        });
+        JsonResponse.created(response, requestAndRelatedRecords.request);
       });
   }
 
@@ -398,5 +386,32 @@ public class RequestCollectionResource {
         return result;
       }
     });
+  }
+
+  private CompletableFuture<HttpResult<RequestAndRelatedRecords>> createRequest(
+    RequestAndRelatedRecords requestAndRelatedRecords,
+    Clients clients) {
+
+    CompletableFuture<HttpResult<RequestAndRelatedRecords>> onCreated = new CompletableFuture<>();
+
+    JsonObject request = requestAndRelatedRecords.request;
+
+    JsonObject item = requestAndRelatedRecords.inventoryRecords.getItem();
+    JsonObject instance = requestAndRelatedRecords.inventoryRecords.getInstance();
+    JsonObject requestingUser = requestAndRelatedRecords.requestingUser;
+
+    addStoredItemProperties(request, item, instance);
+    addStoredRequesterProperties(request, requestingUser);
+
+    clients.requestsStorage().post(request, response -> {
+      if (response.getStatusCode() == 201) {
+        onCreated.complete(HttpResult.success(
+          requestAndRelatedRecords.withRequest(response.getJson())));
+      } else {
+        onCreated.complete(HttpResult.failure(new ForwardOnFailure(response)));
+      }
+    });
+
+    return onCreated;
   }
 }
