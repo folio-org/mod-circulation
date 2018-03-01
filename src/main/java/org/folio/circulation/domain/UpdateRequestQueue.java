@@ -65,7 +65,7 @@ public class UpdateRequestQueue {
           }
       });
     } else {
-      requestUpdated.complete(HttpResult.success(null));
+      requestUpdated.complete(HttpResult.success(requestQueue));
     }
 
     return requestUpdated;

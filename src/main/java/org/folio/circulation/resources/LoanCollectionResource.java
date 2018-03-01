@@ -74,8 +74,8 @@ public class LoanCollectionResource {
       .thenComposeAsync(r -> r.after(records -> getLocation(records, clients)))
       .thenComposeAsync(r -> r.after(records -> lookupLoanPolicyId(
         records, clients.loanRules())))
-      .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
+      .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
       .thenComposeAsync(r -> r.after(records -> createLoan(records, clients)))
       .thenApply(r -> r.map(this::extendedLoan))
       .thenApply(CreatedJsonHttpResult::from)

@@ -12,10 +12,12 @@ public class LoanAndRelatedRecords {
   public final JsonObject location;
 
   private LoanAndRelatedRecords(
-    JsonObject loan, InventoryRecords inventoryRecords,
+    JsonObject loan,
+    InventoryRecords inventoryRecords,
     RequestQueue requestQueue,
     JsonObject requestingUser,
-    String loanPolicyId, JsonObject location) {
+    String loanPolicyId,
+    JsonObject location) {
 
     this.loan = loan;
     this.inventoryRecords = inventoryRecords;

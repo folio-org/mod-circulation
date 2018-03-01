@@ -6,13 +6,18 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ServerErrorFailure;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 
 public class UpdateItem {
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
   private final CollectionResourceClient itemsStorageClient;
 
   public UpdateItem(Clients clients) {
@@ -22,16 +27,32 @@ public class UpdateItem {
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> onCheckOut(
     LoanAndRelatedRecords relatedRecords) {
 
-    JsonObject item = relatedRecords.inventoryRecords.getItem();
-    String prospectiveStatus = itemStatusFrom(relatedRecords.loan);
+    try {
+      JsonObject item = relatedRecords.inventoryRecords.getItem();
+      RequestQueue requestQueue = relatedRecords.requestQueue;
 
-    if(isNotSameStatusIgnoringCheckOutVariants(item, prospectiveStatus)) {
-      return internalUpdate(item, prospectiveStatus)
-        .thenApply(updatedItemResult -> updatedItemResult.map(
-          relatedRecords::withItem));
+      //Hack for creating returned loan - should distinguish further up the chain
+      if(isClosed(relatedRecords.loan)) {
+        return skip(relatedRecords);
+      }
+
+      String prospectiveStatus = requestQueue.hasOutstandingRequests()
+        ? RequestType.from(requestQueue.getHighestPriorityRequest()).toItemStatus()
+        : CHECKED_OUT;
+
+      if(isNotSameStatus(item, prospectiveStatus)) {
+        return internalUpdate(item, prospectiveStatus)
+          .thenApply(updatedItemResult -> updatedItemResult.map(
+            relatedRecords::withItem));
+      }
+      else {
+        return skip(relatedRecords);
+      }
     }
-    else {
-      return skip(relatedRecords);
+    catch (Exception ex) {
+      log.error("Exception occurred whilst updating item", ex);
+      return CompletableFuture.completedFuture(
+        HttpResult.failure(new ServerErrorFailure(ex)));
     }
   }
 
@@ -73,6 +94,7 @@ public class UpdateItem {
       }
     }
     catch (Exception ex) {
+      log.error("Exception occurred whilst updating item", ex);
       return CompletableFuture.completedFuture(
         HttpResult.failure(new ServerErrorFailure(ex)));
     }
@@ -148,5 +170,9 @@ public class UpdateItem {
 
   private <T> CompletableFuture<HttpResult<T>> skip(T previousResult) {
     return CompletableFuture.completedFuture(HttpResult.success(previousResult));
+  }
+
+  private boolean isClosed(JsonObject loan) {
+    return StringUtils.equals(loan.getJsonObject("status").getString("name"), "Closed");
   }
 }

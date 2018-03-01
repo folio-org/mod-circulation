@@ -11,7 +11,7 @@ public class ServerErrorFailure implements HttpFailure {
   }
 
   public ServerErrorFailure(Throwable e) {
-    this(e.toString());
+    this(e.getMessage());
   }
 
   @Override

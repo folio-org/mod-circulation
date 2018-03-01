@@ -14,11 +14,11 @@ public class RequestQueue {
   }
 
   public boolean hasOutstandingRequests() {
-    return !requests.isEmpty();
+    return !openRequests().isEmpty();
   }
 
   public JsonObject getHighestPriorityRequest() {
-    return requests.get(0);
+    return openRequests().get(0);
   }
 
   public boolean hasOutstandingFulfillableRequests() {
@@ -32,9 +32,25 @@ public class RequestQueue {
   private List<JsonObject> fulfillableRequests() {
     return requests
       .stream()
-      .filter(request ->
-        StringUtils.equals(request.getString("fulfilmentPreference"),
-          RequestFulfilmentPreference.HOLD_SHELF))
+      .filter(this::isFulfillable)
+      .collect(Collectors.toList());
+  }
+
+  private boolean isFulfillable(JsonObject request) {
+    return StringUtils.equals(request.getString("fulfilmentPreference"),
+      RequestFulfilmentPreference.HOLD_SHELF);
+  }
+
+  private boolean isOpen(JsonObject request) {
+    String status = request.getString("status");
+
+    return StringUtils.equals(status, RequestStatus.OPEN_AWAITING_PICKUP)
+      || StringUtils.equals(status, RequestStatus.OPEN_NOT_YET_FILLED);
+  }
+
+  private List<JsonObject> openRequests() {
+    return requests.stream()
+      .filter(this::isOpen)
       .collect(Collectors.toList());
   }
 }

@@ -12,7 +12,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import static org.folio.circulation.api.support.builders.ItemBuilder.AVAILABLE;
-import static org.folio.circulation.api.support.builders.ItemBuilder.CHECKED_OUT;
+import static org.folio.circulation.api.support.builders.ItemBuilder.CHECKED_OUT_HELD;
 import static org.folio.circulation.api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static org.folio.circulation.api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static org.hamcrest.Matchers.is;
@@ -72,7 +72,8 @@ public class SingleOpenDeliveryRequestTests extends APITests {
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+    //As this request is still in the queue (as it cannot currently be fulfilled)
+    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT_HELD));
   }
 
   @Test
@@ -102,6 +103,7 @@ public class SingleOpenDeliveryRequestTests extends APITests {
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+    //As this request is still in the queue (as it cannot currently be fulfilled)
+    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT_HELD));
   }
 }
