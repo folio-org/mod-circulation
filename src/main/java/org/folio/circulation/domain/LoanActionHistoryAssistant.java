@@ -17,8 +17,8 @@ public class LoanActionHistoryAssistant {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   //Updates the single open loan for the item related to a request
-  public static void updateLoanActionHistory(
-    String itemId,
+  public static void  updateLoanActionHistory(
+    RequestAndRelatedRecords requestAndRelatedRecords,
     String newAction,
     String newItemStatus,
     CollectionResourceClient loansStorageClient,
@@ -30,6 +30,8 @@ public class LoanActionHistoryAssistant {
       onSuccess.accept(null);
       return;
     }
+
+    String itemId = requestAndRelatedRecords.request.getString("itemId");
 
     String queryTemplate = "query=itemId=%s+and+status.name=Open";
     String query = String.format(queryTemplate, itemId);

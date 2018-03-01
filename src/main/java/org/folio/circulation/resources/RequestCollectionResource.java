@@ -87,9 +87,10 @@ public class RequestCollectionResource {
         RequestType requestType = RequestType.from(request);
         String newItemStatus = requestType.toItemStatus();
 
-        updateLoanActionHistory(itemId,
-          requestType.toLoanAction(), newItemStatus,
-          clients.loansStorage(), routingContext.response(), vo -> {
+        updateLoanActionHistory(
+          requestAndRelatedRecords, requestType.toLoanAction(), newItemStatus,
+          clients.loansStorage(), routingContext.response(),
+          vo -> {
             addStoredItemProperties(request, item, instance);
             addStoredRequesterProperties(request, requestingUser);
 
