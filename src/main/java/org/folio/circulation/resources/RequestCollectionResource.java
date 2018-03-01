@@ -75,21 +75,9 @@ public class RequestCollectionResource {
       .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
       .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreation))
       .thenComposeAsync(r -> r.after(records -> createRequest(records, clients)))
-      .thenAcceptAsync(result -> {
-        if(result.failed()) {
-          result.cause().writeTo(response);
-          return;
-        }
-
-        RequestAndRelatedRecords requestAndRelatedRecords = result.value();
-
-        JsonObject item = requestAndRelatedRecords.inventoryRecords.getItem();
-        JsonObject holding = requestAndRelatedRecords.inventoryRecords.getHolding();
-
-        addAdditionalItemProperties(requestAndRelatedRecords.request, holding, item);
-
-        JsonResponse.created(response, requestAndRelatedRecords.request);
-      });
+      .thenApply(r -> r.map(this::extendedRequest))
+      .thenApply(CreatedJsonHttpResult::from)
+      .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
   private void replace(RoutingContext routingContext) {
@@ -413,5 +401,14 @@ public class RequestCollectionResource {
     });
 
     return onCreated;
+  }
+
+  private JsonObject extendedRequest(RequestAndRelatedRecords requestAndRelatedRecords) {
+    JsonObject item = requestAndRelatedRecords.inventoryRecords.getItem();
+    JsonObject holding = requestAndRelatedRecords.inventoryRecords.getHolding();
+
+    addAdditionalItemProperties(requestAndRelatedRecords.request, holding, item);
+
+    return requestAndRelatedRecords.request;
   }
 }
