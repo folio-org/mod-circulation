@@ -1,5 +1,6 @@
 package org.folio.circulation.resources;
 
+import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -50,8 +51,9 @@ public class RequestCollectionResource {
 
     RequestStatus status = RequestStatus.from(request);
 
+    HttpServerResponse response = routingContext.response();
     if(!status.isValid()) {
-      ClientErrorResponse.badRequest(routingContext.response(),
+      ClientErrorResponse.badRequest(response,
         RequestStatus.invalidStatusErrorMessage());
       return;
     }
@@ -73,7 +75,7 @@ public class RequestCollectionResource {
       .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
       .thenAcceptAsync(result -> {
         if(result.failed()) {
-          result.cause().writeTo(routingContext.response());
+          result.cause().writeTo(response);
           return;
         }
 
@@ -86,9 +88,14 @@ public class RequestCollectionResource {
 
         updateLoanActionHistory(
           requestAndRelatedRecords,
-          clients.loansStorage(), routingContext.response()
-        ).thenAcceptAsync(r ->
-          {
+          clients.loansStorage())
+          .thenAcceptAsync(r -> {
+
+            if(r.failed()) {
+              r.cause().writeTo(response);
+              return;
+            }
+
             addStoredItemProperties(request, item, instance);
             addStoredRequesterProperties(request, requestingUser);
 
@@ -98,9 +105,9 @@ public class RequestCollectionResource {
 
                 addAdditionalItemProperties(createdRequest, holding, item);
 
-                JsonResponse.created(routingContext.response(), createdRequest);
+                JsonResponse.created(response, createdRequest);
               } else {
-                ForwardResponse.forward(routingContext.response(), requestResponse);
+                ForwardResponse.forward(response, requestResponse);
               }
             });
           });

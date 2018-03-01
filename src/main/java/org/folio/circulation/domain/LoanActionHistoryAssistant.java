@@ -1,12 +1,11 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.JsonArrayHelper;
-import org.folio.circulation.support.http.server.ServerErrorResponse;
+import org.folio.circulation.support.ServerErrorFailure;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,8 +19,7 @@ public class LoanActionHistoryAssistant {
   //Updates the single open loan for the item related to a request
   public static CompletableFuture<HttpResult<RequestAndRelatedRecords>> updateLoanActionHistory(
     RequestAndRelatedRecords requestAndRelatedRecords,
-    CollectionResourceClient loansStorageClient,
-    HttpServerResponse responseToClient) {
+    CollectionResourceClient loansStorageClient) {
 
     RequestType requestType = RequestType.from(requestAndRelatedRecords.request);
 
@@ -68,15 +66,15 @@ public class LoanActionHistoryAssistant {
             loans.size(), itemId);
 
           log.error(moreThanOneOpenLoanError);
-          ServerErrorResponse.internalError(responseToClient,
-            moreThanOneOpenLoanError);
+          completed.complete(HttpResult.failure(
+            new ServerErrorFailure(moreThanOneOpenLoanError)));
         }
       } else {
         String failedError = String.format("Could not get open loans for item %s", itemId);
 
         log.error(failedError);
-        ServerErrorResponse.internalError(responseToClient,
-          failedError);
+        completed.complete(HttpResult.failure(
+          new ServerErrorFailure(failedError)));
       }
     });
 
