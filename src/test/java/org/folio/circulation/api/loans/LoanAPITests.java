@@ -194,10 +194,12 @@ public class LoanAPITests extends APITests {
 
     Response response = createCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat(String.format("Should not create loan: %s", response.getBody()),
-      response.getStatusCode(), is(HTTP_INTERNAL_ERROR));
+    assertThat(
+      String.format("Should not create loan: %s", response.getBody()),
+      response.getStatusCode(), is(UNPROCESSABLE_ENTITY));
 
-    assertThat(response.getBody(), is("Unable to process claim for unknown holding"));
+    assertThat(String.format("Incorrect validation error: %s", response.getBody()),
+      response.getJson().getString("message"), is("Holding does not exist"));
   }
 
   @Test
@@ -1116,12 +1118,5 @@ public class LoanAPITests extends APITests {
 
   private List<JsonObject> getLoans(JsonObject page) {
     return JsonArrayHelper.toList(page.getJsonArray("loans"));
-  }
-
-  private static JsonObject findLoanByItemId(List<JsonObject> loans, UUID itemId) {
-    return loans.stream()
-      .filter(record -> record.getString("itemId").equals(itemId.toString()))
-      .findFirst()
-      .get();
   }
 }

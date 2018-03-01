@@ -8,7 +8,6 @@ import org.folio.circulation.api.support.fixtures.InstanceExamples;
 import org.folio.circulation.api.support.fixtures.ItemExamples;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.MalformedURLException;
@@ -74,52 +73,6 @@ public class LoanAPITitleTests extends APITests {
   }
 
   @Test
-  @Ignore("Cannot create loan when holding not found, due to applying loan rules")
-  public void noTitleWhenHoldingNotFound()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
-
-    UUID instanceId = instancesClient.create(
-      InstanceExamples.basedUponSmallAngryPlanet()).getId();
-
-    UUID holdingId = holdingsClient.create(
-      new HoldingBuilder()
-        .forInstance(instanceId)
-        .create())
-      .getId();
-
-    UUID itemId = itemsClient.create(
-      ItemExamples.basedUponSmallAngryPlanet()
-        .forHolding(holdingId))
-      .getId();
-
-    holdingsClient.delete(holdingId);
-
-    UUID loanId = UUID.randomUUID();
-
-    IndividualResource response = loansClient.create(new LoanBuilder()
-      .withId(loanId)
-      .withItemId(itemId));
-
-    JsonObject createdLoan = response.getJson();
-
-    assertThat("has no title",
-      createdLoan.getJsonObject("item").containsKey("title"), is(false));
-
-    Response fetchedLoanResponse = loansClient.getById(loanId);
-
-    assertThat(fetchedLoanResponse.getStatusCode(), is(200));
-
-    JsonObject fetchedLoan = fetchedLoanResponse.getJson();
-
-    assertThat("has no title",
-      fetchedLoan.getJsonObject("item").containsKey("title"), is(false));
-  }
-
-  @Test
-  @Ignore("Cannot create loan when instance not found, due to applying loan rules")
   public void noTitleWhenInstanceNotFound()
     throws InterruptedException,
     ExecutionException,

@@ -67,6 +67,7 @@ public class LoanCollectionResource {
       .thenApply(this::refuseWhenNotOpenOrClosed)
       .thenCombineAsync(inventoryFetcher.fetch(loan), this::addInventoryRecords)
       .thenApply(this::refuseWhenItemDoesNotExist)
+      .thenApply(this::refuseWhenHoldingDoesNotExist)
       .thenApply(this::refuseWhenItemIsAlreadyCheckedOut)
       .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
       .thenCombineAsync(userFetcher.getUser(requestingUserId), this::addUser)
@@ -595,6 +596,20 @@ public class LoanCollectionResource {
       if(loan.inventoryRecords.getItem() == null) {
         return HttpResult.failure(new ValidationErrorFailure(
           "Item does not exist", "itemId", loan.loan.getString("itemId")));
+      }
+      else {
+        return result;
+      }
+    });
+  }
+
+  private HttpResult<LoanAndRelatedRecords> refuseWhenHoldingDoesNotExist(
+    HttpResult<LoanAndRelatedRecords> result) {
+
+    return result.next(loan -> {
+      if(loan.inventoryRecords.getHolding() == null) {
+        return HttpResult.failure(new ValidationErrorFailure(
+          "Holding does not exist", "itemId", loan.loan.getString("itemId")));
       }
       else {
         return result;
