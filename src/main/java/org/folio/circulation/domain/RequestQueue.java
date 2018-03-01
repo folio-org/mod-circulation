@@ -1,7 +1,10 @@
 package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class RequestQueue {
   private final List<JsonObject> requests;
@@ -10,11 +13,20 @@ public class RequestQueue {
     this.requests = requests;
   }
 
-  public boolean hasOutstandingRequests() {
-    return !requests.isEmpty();
+  public boolean hasOutstandingFulfillableRequests() {
+    return !fulfillableRequests().isEmpty();
   }
 
-  public JsonObject getHighestPriority() {
-    return requests.get(0);
+  public JsonObject getHighestPriorityFulfillableRequests() {
+    return fulfillableRequests().get(0);
+  }
+
+  private List<JsonObject> fulfillableRequests() {
+    return requests
+      .stream()
+      .filter(request ->
+        StringUtils.equals(request.getString("fulfilmentPreference"),
+          RequestFulfilmentPreference.HOLD_SHELF))
+      .collect(Collectors.toList());
   }
 }

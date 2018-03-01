@@ -17,8 +17,8 @@ public class UpdateRequestQueue {
   public CompletableFuture<HttpResult<JsonObject>> onCheckIn(LoanAndRelatedRecords relatedRecords) {
     CompletableFuture<HttpResult<JsonObject>> requestUpdated = new CompletableFuture<>();
 
-    if (relatedRecords.requestQueue.hasOutstandingRequests()) {
-      JsonObject firstRequest = relatedRecords.requestQueue.getHighestPriority();
+    if (relatedRecords.requestQueue.hasOutstandingFulfillableRequests()) {
+      JsonObject firstRequest = relatedRecords.requestQueue.getHighestPriorityFulfillableRequests();
 
       firstRequest.put("status", RequestStatus.OPEN_AWAITING_PICKUP);
 
@@ -49,8 +49,8 @@ public class UpdateRequestQueue {
   private CompletableFuture<HttpResult<RequestQueue>> onCheckOut(RequestQueue requestQueue) {
     CompletableFuture<HttpResult<RequestQueue>> requestUpdated = new CompletableFuture<>();
 
-    if (requestQueue.hasOutstandingRequests()) {
-      JsonObject firstRequest = requestQueue.getHighestPriority();
+    if (requestQueue.hasOutstandingFulfillableRequests()) {
+      JsonObject firstRequest = requestQueue.getHighestPriorityFulfillableRequests();
 
       firstRequest.put("status", RequestStatus.CLOSED_FILLED);
 

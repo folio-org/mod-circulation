@@ -30,9 +30,8 @@ public class RequestQueueFetcher {
 
     try {
       String unencodedQuery = String.format(
-        "itemId==%s and fulfilmentPreference==%s and status==(\"%s\" or \"%s\") sortBy requestDate/sort.ascending",
-        itemId, RequestFulfilmentPreference.HOLD_SHELF,
-        RequestStatus.OPEN_AWAITING_PICKUP, RequestStatus.OPEN_NOT_YET_FILLED);
+        "itemId==%s and status==(\"%s\" or \"%s\") sortBy requestDate/sort.ascending",
+        itemId, RequestStatus.OPEN_AWAITING_PICKUP, RequestStatus.OPEN_NOT_YET_FILLED);
 
       log.info("Finding request queue with {}", unencodedQuery);
 
