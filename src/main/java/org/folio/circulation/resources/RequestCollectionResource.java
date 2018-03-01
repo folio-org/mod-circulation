@@ -84,11 +84,8 @@ public class RequestCollectionResource {
         JsonObject instance = requestAndRelatedRecords.inventoryRecords.getInstance();
         JsonObject requestingUser = requestAndRelatedRecords.requestingUser;
 
-        RequestType requestType = RequestType.from(request);
-        String newItemStatus = requestType.toItemStatus();
-
         updateLoanActionHistory(
-          requestAndRelatedRecords, requestType.toLoanAction(), newItemStatus,
+          requestAndRelatedRecords,
           clients.loansStorage(), routingContext.response(),
           vo -> {
             addStoredItemProperties(request, item, instance);

@@ -19,14 +19,18 @@ public class LoanActionHistoryAssistant {
   //Updates the single open loan for the item related to a request
   public static void  updateLoanActionHistory(
     RequestAndRelatedRecords requestAndRelatedRecords,
-    String newAction,
-    String newItemStatus,
     CollectionResourceClient loansStorageClient,
     HttpServerResponse responseToClient,
     Consumer<Void> onSuccess) {
 
+    RequestType requestType = RequestType.from(requestAndRelatedRecords.request);
+
+    String action = requestType.toLoanAction();
+    String itemStatus = ItemStatus.getStatus(
+      requestAndRelatedRecords.inventoryRecords.item);
+
     //Do not change any loans if no new status
-    if(StringUtils.isEmpty(newAction)) {
+    if(StringUtils.isEmpty(action)) {
       onSuccess.accept(null);
       return;
     }
@@ -48,8 +52,8 @@ public class LoanActionHistoryAssistant {
         else if(loans.size() == 1) {
           JsonObject changedLoan = loans.get(0).copy();
 
-          changedLoan.put("action", newAction);
-          changedLoan.put("itemStatus", newItemStatus);
+          changedLoan.put("action", action);
+          changedLoan.put("itemStatus", itemStatus);
 
           loansStorageClient.put(changedLoan.getString("id"), changedLoan,
             putLoanResponse -> {
