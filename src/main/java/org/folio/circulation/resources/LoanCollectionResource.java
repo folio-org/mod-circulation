@@ -123,8 +123,7 @@ public class LoanCollectionResource {
     String id = routingContext.request().getParam("id");
 
     loanRepository.getById(id)
-      .thenComposeAsync(result ->
-        result.after(loan -> getInventoryRecords(loan, inventoryFetcher)))
+      .thenComposeAsync(result -> result.after(inventoryFetcher::getInventoryRecords))
       .thenComposeAsync(r -> r.after(records -> getLocation(records, clients)))
       .thenApply(r -> r.map(this::extendedLoan))
       .thenApply(OkJsonHttpResult::from)
@@ -453,14 +452,6 @@ public class LoanCollectionResource {
 
     return HttpResult.combine(loanResult, getUserResult,
       LoanAndRelatedRecords::withRequestingUser);
-  }
-
-  private CompletableFuture<HttpResult<LoanAndRelatedRecords>> getInventoryRecords(
-    LoanAndRelatedRecords loanAndRelatedRecords, InventoryFetcher inventoryFetcher) {
-
-    return inventoryFetcher
-      .fetch(loanAndRelatedRecords.loan)
-      .thenApply(result -> result.map(loanAndRelatedRecords::withInventoryRecords));
   }
 
   private CompletableFuture<HttpResult<LoanAndRelatedRecords>> getLocation(

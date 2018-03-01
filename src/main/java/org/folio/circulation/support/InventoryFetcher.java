@@ -1,6 +1,7 @@
 package org.folio.circulation.support;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.support.http.client.Response;
 
 import java.util.Collection;
@@ -194,5 +195,13 @@ public class InventoryFetcher {
           .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
       }
     });
+  }
+
+  public CompletableFuture<HttpResult<LoanAndRelatedRecords>> getInventoryRecords(
+    LoanAndRelatedRecords loanAndRelatedRecords) {
+
+    return
+      fetch(loanAndRelatedRecords.loan)
+      .thenApply(result -> result.map(loanAndRelatedRecords::withInventoryRecords));
   }
 }
