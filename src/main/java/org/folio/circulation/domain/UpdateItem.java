@@ -50,7 +50,7 @@ public class UpdateItem {
       }
     }
     catch (Exception ex) {
-      log.error("Exception occurred whilst updating item", ex);
+      logException(ex);
       return CompletableFuture.completedFuture(
         HttpResult.failure(new ServerErrorFailure(ex)));
     }
@@ -59,17 +59,34 @@ public class UpdateItem {
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> onLoanUpdate(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
-    String prospectiveStatus = itemStatusFrom(loanAndRelatedRecords.loan);
-    JsonObject item = loanAndRelatedRecords.inventoryRecords.getItem();
+    try {
+      final String prospectiveStatus;
+      JsonObject item = loanAndRelatedRecords.inventoryRecords.getItem();
 
-    if(isNotSameStatusIgnoringCheckOutVariants(item, prospectiveStatus)) {
-      return internalUpdate(item,
-        prospectiveStatus)
-        .thenApply(updatedItemResult ->
-          updatedItemResult.map(loanAndRelatedRecords::withItem));
+      if(isClosed(loanAndRelatedRecords.loan)) {
+        prospectiveStatus = itemStatusFrom(loanAndRelatedRecords.loan);
+      }
+      else {
+        RequestQueue requestQueue = loanAndRelatedRecords.requestQueue;
+
+        prospectiveStatus = requestQueue.hasOutstandingRequests()
+          ? RequestType.from(requestQueue.getHighestPriorityRequest()).toItemStatus()
+          : CHECKED_OUT;
+      }
+
+      if(isNotSameStatus(item, prospectiveStatus)) {
+        return internalUpdate(item, prospectiveStatus)
+          .thenApply(updatedItemResult ->
+            updatedItemResult.map(loanAndRelatedRecords::withItem));
+      }
+      else {
+        return skip(loanAndRelatedRecords);
+      }
     }
-    else {
-      return skip(loanAndRelatedRecords);
+    catch (Exception ex) {
+      logException(ex);
+      return CompletableFuture.completedFuture(
+        HttpResult.failure(new ServerErrorFailure(ex)));
     }
   }
 
@@ -94,7 +111,7 @@ public class UpdateItem {
       }
     }
     catch (Exception ex) {
-      log.error("Exception occurred whilst updating item", ex);
+      logException(ex);
       return CompletableFuture.completedFuture(
         HttpResult.failure(new ServerErrorFailure(ex)));
     }
@@ -174,5 +191,9 @@ public class UpdateItem {
 
   private boolean isClosed(JsonObject loan) {
     return StringUtils.equals(loan.getJsonObject("status").getString("name"), "Closed");
+  }
+
+  private void logException(Exception ex) {
+    log.error("Exception occurred whilst updating item", ex);
   }
 }

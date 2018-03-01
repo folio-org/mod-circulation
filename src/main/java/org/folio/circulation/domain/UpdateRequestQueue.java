@@ -14,8 +14,10 @@ public class UpdateRequestQueue {
     this.clients = clients;
   }
 
-  public CompletableFuture<HttpResult<JsonObject>> onCheckIn(LoanAndRelatedRecords relatedRecords) {
-    CompletableFuture<HttpResult<JsonObject>> requestUpdated = new CompletableFuture<>();
+  public CompletableFuture<HttpResult<LoanAndRelatedRecords>> onCheckIn(
+    LoanAndRelatedRecords relatedRecords) {
+
+    CompletableFuture<HttpResult<LoanAndRelatedRecords>> requestUpdated = new CompletableFuture<>();
 
     if (relatedRecords.requestQueue.hasOutstandingFulfillableRequests()) {
       JsonObject firstRequest = relatedRecords.requestQueue.getHighestPriorityFulfillableRequest();
@@ -25,7 +27,7 @@ public class UpdateRequestQueue {
       clients.requestsStorage().put(firstRequest.getString("id"), firstRequest,
         updateRequestResponse -> {
           if (updateRequestResponse.getStatusCode() == 204) {
-            requestUpdated.complete(HttpResult.success(firstRequest));
+            requestUpdated.complete(HttpResult.success(relatedRecords));
           } else {
             requestUpdated.complete(HttpResult.failure(new ServerErrorFailure(
               String.format("Failed to update request: %s: %s",
@@ -33,7 +35,7 @@ public class UpdateRequestQueue {
           }
         });
     } else {
-      requestUpdated.complete(HttpResult.success(null));
+      requestUpdated.complete(HttpResult.success(relatedRecords));
     }
 
     return requestUpdated;

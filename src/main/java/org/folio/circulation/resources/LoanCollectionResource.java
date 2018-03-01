@@ -103,10 +103,10 @@ public class LoanCollectionResource {
       .thenCombineAsync(inventoryFetcher.fetch(loan), this::addInventoryRecords)
       .thenApply(this::refuseWhenItemDoesNotExist)
       .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
+      .thenComposeAsync(result -> result.after(requestQueueUpdate::onCheckIn))
       .thenComposeAsync(result -> result.after(updateItem::onLoanUpdate))
       .thenComposeAsync(result -> result.after(
         records -> updateLoan(clients, id, loan, records)))
-      .thenComposeAsync(result -> result.after(requestQueueUpdate::onCheckIn))
       .thenApply(NoContentHttpResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
