@@ -16,9 +16,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
+import static org.folio.circulation.domain.ItemStatus.*;
 import static org.folio.circulation.domain.LoanActionHistoryAssistant.updateLoanActionHistory;
-import static org.folio.circulation.support.CommonFailures.reportItemRelatedValidationError;
 import static org.folio.circulation.support.JsonPropertyCopier.copyStringIfExists;
 
 public class RequestCollectionResource {
@@ -67,6 +66,8 @@ public class RequestCollectionResource {
 
     completedFuture(HttpResult.success(new RequestAndRelatedRecords(request)))
       .thenCombineAsync(inventoryFetcher.fetch(request), this::addInventoryRecords)
+      .thenApply(this::refuseWhenItemDoesNotExist)
+      .thenApply(this::refuseWhenItemIsNotValid)
       .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
       .thenCombineAsync(userFetcher.getUser(requestingUserId, false), this::addUser)
       .thenAcceptAsync(result -> {
@@ -80,48 +81,37 @@ public class RequestCollectionResource {
         JsonObject instance = result.value().inventoryRecords.getInstance();
         JsonObject requestingUser = result.value().requestingUser;
 
-        if(item == null) {
-          reportItemRelatedValidationError(routingContext, itemId, "Item does not exist");
-        }
-        else {
-          RequestType requestType = RequestType.from(request);
+        RequestType requestType = RequestType.from(request);
 
-          if (requestType.canCreateRequestForItem(item)) {
-            UpdateItem updateItem = new UpdateItem(clients);
+        UpdateItem updateItem = new UpdateItem(clients);
 
-            updateItem.onRequestCreation(item, requestType.toItemStatus())
-              .thenAccept(updateItemResult -> {
-                if(updateItemResult.failed()) {
-                  updateItemResult.cause().writeTo(routingContext.response());
-                  return;
-                }
+        updateItem.onRequestCreation(item, requestType.toItemStatus())
+          .thenAccept(updateItemResult -> {
+            if(updateItemResult.failed()) {
+              updateItemResult.cause().writeTo(routingContext.response());
+              return;
+            }
 
-                updateLoanActionHistory(itemId,
-                  requestType.toLoanAction(), requestType.toItemStatus(),
-                  clients.loansStorage(), routingContext.response(), vo -> {
-                    addStoredItemProperties(request, item, instance);
-                    addStoredRequesterProperties(request, requestingUser);
+            updateLoanActionHistory(itemId,
+              requestType.toLoanAction(), requestType.toItemStatus(),
+              clients.loansStorage(), routingContext.response(), vo -> {
+                addStoredItemProperties(request, item, instance);
+                addStoredRequesterProperties(request, requestingUser);
 
-                    clients.requestsStorage().post(request, requestResponse -> {
-                      if (requestResponse.getStatusCode() == 201) {
-                        JsonObject createdRequest = requestResponse.getJson();
+                clients.requestsStorage().post(request, requestResponse -> {
+                  if (requestResponse.getStatusCode() == 201) {
+                    JsonObject createdRequest = requestResponse.getJson();
 
-                        addAdditionalItemProperties(createdRequest, holding, item);
+                    addAdditionalItemProperties(createdRequest, holding, item);
 
-                        JsonResponse.created(routingContext.response(), createdRequest);
-                      } else {
-                        ForwardResponse.forward(routingContext.response(), requestResponse);
-                      }
-                    });
-                  });
+                    JsonResponse.created(routingContext.response(), createdRequest);
+                  } else {
+                    ForwardResponse.forward(routingContext.response(), requestResponse);
+                  }
+                });
               });
-          }
-          else {
-            reportItemRelatedValidationError(routingContext, itemId,
-              String.format("Item is not %s", CHECKED_OUT));
-          }
-        }
-    });
+          });
+      });
   }
 
   private void replace(RoutingContext routingContext) {
@@ -387,5 +377,42 @@ public class RequestCollectionResource {
 
     return HttpResult.combine(loanResult, getUserResult,
       RequestAndRelatedRecords::withRequestingUser);
+  }
+
+  private HttpResult<RequestAndRelatedRecords> refuseWhenItemDoesNotExist(
+    HttpResult<RequestAndRelatedRecords> result) {
+
+    return result.next(requestAndRelatedRecords -> {
+      if(requestAndRelatedRecords.inventoryRecords.getItem() == null) {
+        return HttpResult.failure(new ValidationErrorFailure(
+          "Item does not exist", "itemId",
+          requestAndRelatedRecords.request.getString("itemId")));
+      }
+      else {
+        return result;
+      }
+    });
+  }
+
+  private HttpResult<RequestAndRelatedRecords> refuseWhenItemIsNotValid(
+    HttpResult<RequestAndRelatedRecords> result) {
+
+    return result.next(requestAndRelatedRecords -> {
+      JsonObject request = requestAndRelatedRecords.request;
+      JsonObject item = requestAndRelatedRecords.inventoryRecords.item;
+
+      RequestType requestType = RequestType.from(request);
+
+      if (!requestType.canCreateRequestForItem(item)) {
+        return HttpResult.failure(new ValidationErrorFailure(
+          String.format("Item is not %s, %s or %s", CHECKED_OUT,
+            CHECKED_OUT_HELD, CHECKED_OUT_RECALLED),
+          "itemId", request.getString("itemId")
+        ));
+      }
+      else {
+        return result;
+      }
+    });
   }
 }
