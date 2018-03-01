@@ -5,7 +5,6 @@ import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.MalformedURLException;
@@ -64,7 +63,6 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
   }
 
   @Test
-  @Ignore("Need to implement item status based upon request queue")
   public void deliveryRequestIsIgnoredWhenItemItemCheckedOutToRequester()
     throws InterruptedException,
     MalformedURLException,
