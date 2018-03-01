@@ -124,6 +124,46 @@ public class LoanAPITests extends APITests {
       is("Checked out"));
 
   }
+  
+  @Test
+  public void canCreateALoanWithReturnProcessedDate() 
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+    
+    UUID id = UUID.randomUUID();
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    UUID userId = usersClient.create(new UserRequestBuilder()).getId();
+    UUID proxyUserId = UUID.randomUUID();
+    
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+    DateTime returnProcessedDate = new DateTime(2017, 4, 1, 12, 0, 0, DateTimeZone.UTC);
+    
+    JsonObject builtRequest = new LoanRequestBuilder()
+      .withId(id)
+      .withUserId(userId)
+      .withProxyUserId(proxyUserId)
+      .withItemId(itemId)
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate)
+      .withReturnProcessedDate(returnProcessedDate)
+      .withStatus("Closed")
+      .create();
+    
+    assertThat("request object does not have proper value for returnProcessedDate",
+      builtRequest.getString("returnProcessedDate"), is("2017-04-01T12:00:00.000Z"));
+    
+    IndividualResource response = loansClient.create(builtRequest);
+    
+    JsonObject loan = response.getJson();
+    
+    assertThat("returnProcessedDate does not match",
+      loan.getString("returnProcessedDate"), is("2017-04-01T12:00:00.000Z"));
+  }
+  
+  
 
   @Test
   public void canCreateALoanWithoutStatus()

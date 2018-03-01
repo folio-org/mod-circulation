@@ -89,6 +89,11 @@
       "type": "string",
       "format": "date-time"
     },
+    "returnProcessedDate" : {
+      "description": "Date and time when return was processed",
+      "type": "string",
+      "format": "date-time"
+	},
     "action": {
       "description": "Last action performed on a loan (currently can be any value, values commonly used are checkedout and checkedin)",
       "type": "string"
