@@ -5,7 +5,6 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.domain.*;
 import org.folio.circulation.support.*;
-import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.*;
 
 import java.util.Collection;
@@ -45,6 +44,7 @@ public class RequestCollectionResource {
     final InventoryFetcher inventoryFetcher = InventoryFetcher.create(clients);
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
     final UserFetcher userFetcher = new UserFetcher(clients);
+    final UpdateItem updateItem = new UpdateItem(clients);
 
     JsonObject request = routingContext.getBodyAsJson();
 
@@ -70,6 +70,7 @@ public class RequestCollectionResource {
       .thenApply(this::refuseWhenItemIsNotValid)
       .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
       .thenCombineAsync(userFetcher.getUser(requestingUserId, false), this::addUser)
+      .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
       .thenAcceptAsync(result -> {
         if(result.failed()) {
           result.cause().writeTo(routingContext.response());
@@ -83,36 +84,26 @@ public class RequestCollectionResource {
         JsonObject instance = requestAndRelatedRecords.inventoryRecords.getInstance();
         JsonObject requestingUser = requestAndRelatedRecords.requestingUser;
 
-        UpdateItem updateItem = new UpdateItem(clients);
-
         RequestType requestType = RequestType.from(request);
         String newItemStatus = requestType.toItemStatus();
 
-        updateItem.onRequestCreation(requestAndRelatedRecords)
-          .thenAccept(updateItemResult -> {
-            if(updateItemResult.failed()) {
-              updateItemResult.cause().writeTo(routingContext.response());
-              return;
-            }
+        updateLoanActionHistory(itemId,
+          requestType.toLoanAction(), newItemStatus,
+          clients.loansStorage(), routingContext.response(), vo -> {
+            addStoredItemProperties(request, item, instance);
+            addStoredRequesterProperties(request, requestingUser);
 
-            updateLoanActionHistory(itemId,
-              requestType.toLoanAction(), newItemStatus,
-              clients.loansStorage(), routingContext.response(), vo -> {
-                addStoredItemProperties(request, item, instance);
-                addStoredRequesterProperties(request, requestingUser);
+            clients.requestsStorage().post(request, requestResponse -> {
+              if (requestResponse.getStatusCode() == 201) {
+                JsonObject createdRequest = requestResponse.getJson();
 
-                clients.requestsStorage().post(request, requestResponse -> {
-                  if (requestResponse.getStatusCode() == 201) {
-                    JsonObject createdRequest = requestResponse.getJson();
+                addAdditionalItemProperties(createdRequest, holding, item);
 
-                    addAdditionalItemProperties(createdRequest, holding, item);
-
-                    JsonResponse.created(routingContext.response(), createdRequest);
-                  } else {
-                    ForwardResponse.forward(routingContext.response(), requestResponse);
-                  }
-                });
-              });
+                JsonResponse.created(routingContext.response(), createdRequest);
+              } else {
+                ForwardResponse.forward(routingContext.response(), requestResponse);
+              }
+            });
           });
       });
   }
@@ -345,12 +336,6 @@ public class RequestCollectionResource {
     copyStringIfExists("barcode", requester, requesterSummary);
 
     requestWithAdditionalInformation.put("requester", requesterSummary);
-  }
-
-  private JsonObject getRecordFromResponse(Response itemResponse) {
-    return itemResponse != null && itemResponse.getStatusCode() == 200
-      ? itemResponse.getJson()
-      : null;
   }
 
   private void removeRelatedRecordInformation(JsonObject request) {
