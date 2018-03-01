@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.*;
-import static org.folio.circulation.domain.LoanActionHistoryAssistant.updateLoanActionHistory;
 import static org.folio.circulation.support.JsonPropertyCopier.copyStringIfExists;
 
 public class RequestCollectionResource {
@@ -46,6 +45,7 @@ public class RequestCollectionResource {
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
     final UserFetcher userFetcher = new UserFetcher(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
+    final UpdateLoanActionHistory updateLoanActionHistory = new UpdateLoanActionHistory(clients);
 
     JsonObject request = routingContext.getBodyAsJson();
 
@@ -73,6 +73,7 @@ public class RequestCollectionResource {
       .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
       .thenCombineAsync(userFetcher.getUser(requestingUserId, false), this::addUser)
       .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
+      .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreation))
       .thenAcceptAsync(result -> {
         if(result.failed()) {
           result.cause().writeTo(response);
@@ -86,31 +87,20 @@ public class RequestCollectionResource {
         JsonObject instance = requestAndRelatedRecords.inventoryRecords.getInstance();
         JsonObject requestingUser = requestAndRelatedRecords.requestingUser;
 
-        updateLoanActionHistory(
-          requestAndRelatedRecords,
-          clients.loansStorage())
-          .thenAcceptAsync(r -> {
+        addStoredItemProperties(request, item, instance);
+        addStoredRequesterProperties(request, requestingUser);
 
-            if(r.failed()) {
-              r.cause().writeTo(response);
-              return;
-            }
+        clients.requestsStorage().post(request, requestResponse -> {
+          if (requestResponse.getStatusCode() == 201) {
+            JsonObject createdRequest = requestResponse.getJson();
 
-            addStoredItemProperties(request, item, instance);
-            addStoredRequesterProperties(request, requestingUser);
+            addAdditionalItemProperties(createdRequest, holding, item);
 
-            clients.requestsStorage().post(request, requestResponse -> {
-              if (requestResponse.getStatusCode() == 201) {
-                JsonObject createdRequest = requestResponse.getJson();
-
-                addAdditionalItemProperties(createdRequest, holding, item);
-
-                JsonResponse.created(response, createdRequest);
-              } else {
-                ForwardResponse.forward(response, requestResponse);
-              }
-            });
-          });
+            JsonResponse.created(response, createdRequest);
+          } else {
+            ForwardResponse.forward(response, requestResponse);
+          }
+        });
       });
   }
 

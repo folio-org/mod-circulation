@@ -2,10 +2,7 @@ package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.JsonArrayHelper;
-import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,13 +10,22 @@ import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public class LoanActionHistoryAssistant {
+public class UpdateLoanActionHistory {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
+  private final CollectionResourceClient loansStorageClient;
+
+  public UpdateLoanActionHistory(Clients clients) {
+    loansStorageClient = clients.loansStorage();
+  }
+
+  private static <T> CompletableFuture<HttpResult<T>> skip(T previousResult) {
+    return CompletableFuture.completedFuture(HttpResult.success(previousResult));
+  }
+
   //Updates the single open loan for the item related to a request
-  public static CompletableFuture<HttpResult<RequestAndRelatedRecords>> updateLoanActionHistory(
-    RequestAndRelatedRecords requestAndRelatedRecords,
-    CollectionResourceClient loansStorageClient) {
+  public CompletableFuture<HttpResult<RequestAndRelatedRecords>> onRequestCreation(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
 
     RequestType requestType = RequestType.from(requestAndRelatedRecords.request);
 
@@ -39,7 +45,7 @@ public class LoanActionHistoryAssistant {
 
     CompletableFuture<HttpResult<RequestAndRelatedRecords>> completed = new CompletableFuture<>();
 
-    loansStorageClient.getMany(query, getLoansResponse -> {
+    this.loansStorageClient.getMany(query, getLoansResponse -> {
       if(getLoansResponse.getStatusCode() == 200) {
         List<JsonObject> loans = JsonArrayHelper.toList(
           getLoansResponse.getJson().getJsonArray("loans"));
@@ -56,7 +62,7 @@ public class LoanActionHistoryAssistant {
           changedLoan.put("action", action);
           changedLoan.put("itemStatus", itemStatus);
 
-          loansStorageClient.put(changedLoan.getString("id"), changedLoan,
+          this.loansStorageClient.put(changedLoan.getString("id"), changedLoan,
             putLoanResponse ->
               completed.complete(HttpResult.success(requestAndRelatedRecords)));
         }
@@ -79,9 +85,5 @@ public class LoanActionHistoryAssistant {
     });
 
     return completed;
-  }
-
-  private static <T> CompletableFuture<HttpResult<T>> skip(T previousResult) {
-    return CompletableFuture.completedFuture(HttpResult.success(previousResult));
   }
 }
