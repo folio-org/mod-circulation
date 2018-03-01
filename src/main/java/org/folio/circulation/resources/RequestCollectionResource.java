@@ -83,39 +83,43 @@ public class RequestCollectionResource {
         if(item == null) {
           reportItemRelatedValidationError(routingContext, itemId, "Item does not exist");
         }
-        else if (RequestType.from(request).canCreateRequestForItem(item)) {
-          UpdateItem updateItem = new UpdateItem(clients);
-
-          updateItem.onRequestCreation(item, RequestType.from(request).toItemStatus())
-            .thenAccept(updateItemResult -> {
-              if(updateItemResult.failed()) {
-                updateItemResult.cause().writeTo(routingContext.response());
-                return;
-              }
-
-              updateLoanActionHistory(itemId,
-                RequestType.from(request).toLoanAction(), RequestType.from(request).toItemStatus(),
-                clients.loansStorage(), routingContext.response(), vo -> {
-                  addStoredItemProperties(request, item, instance);
-                  addStoredRequesterProperties(request, requestingUser);
-
-                  clients.requestsStorage().post(request, requestResponse -> {
-                    if (requestResponse.getStatusCode() == 201) {
-                      JsonObject createdRequest = requestResponse.getJson();
-
-                      addAdditionalItemProperties(createdRequest, holding, item);
-
-                      JsonResponse.created(routingContext.response(), createdRequest);
-                    } else {
-                      ForwardResponse.forward(routingContext.response(), requestResponse);
-                    }
-                  });
-                });
-            });
-        }
         else {
-          reportItemRelatedValidationError(routingContext, itemId,
-            String.format("Item is not %s", CHECKED_OUT));
+          RequestType requestType = RequestType.from(request);
+
+          if (requestType.canCreateRequestForItem(item)) {
+            UpdateItem updateItem = new UpdateItem(clients);
+
+            updateItem.onRequestCreation(item, requestType.toItemStatus())
+              .thenAccept(updateItemResult -> {
+                if(updateItemResult.failed()) {
+                  updateItemResult.cause().writeTo(routingContext.response());
+                  return;
+                }
+
+                updateLoanActionHistory(itemId,
+                  requestType.toLoanAction(), requestType.toItemStatus(),
+                  clients.loansStorage(), routingContext.response(), vo -> {
+                    addStoredItemProperties(request, item, instance);
+                    addStoredRequesterProperties(request, requestingUser);
+
+                    clients.requestsStorage().post(request, requestResponse -> {
+                      if (requestResponse.getStatusCode() == 201) {
+                        JsonObject createdRequest = requestResponse.getJson();
+
+                        addAdditionalItemProperties(createdRequest, holding, item);
+
+                        JsonResponse.created(routingContext.response(), createdRequest);
+                      } else {
+                        ForwardResponse.forward(routingContext.response(), requestResponse);
+                      }
+                    });
+                  });
+              });
+          }
+          else {
+            reportItemRelatedValidationError(routingContext, itemId,
+              String.format("Item is not %s", CHECKED_OUT));
+          }
         }
     });
   }
