@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import static org.folio.circulation.api.support.builders.ItemBuilder.AVAILABLE;
+import static org.folio.circulation.api.support.builders.ItemBuilder.AWAITING_PICKUP;
 import static org.folio.circulation.api.support.builders.ItemBuilder.CHECKED_OUT;
 import static org.folio.circulation.api.support.builders.RequestBuilder.CLOSED_FILLED;
 import static org.folio.circulation.api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
@@ -44,7 +45,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-    assertThat(smallAngryPlanet, hasItemStatus(AVAILABLE));
+    assertThat(smallAngryPlanet, hasItemStatus(AWAITING_PICKUP));
   }
 
   @Test
@@ -106,7 +107,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-    assertThat(smallAngryPlanet, hasItemStatus(AVAILABLE));
+    assertThat(smallAngryPlanet, hasItemStatus(AWAITING_PICKUP));
   }
 
   @Test

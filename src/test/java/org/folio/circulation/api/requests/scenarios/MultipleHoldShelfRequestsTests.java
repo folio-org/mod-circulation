@@ -11,7 +11,7 @@ import java.net.MalformedURLException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import static org.folio.circulation.api.support.builders.ItemBuilder.AVAILABLE;
+import static org.folio.circulation.api.support.builders.ItemBuilder.AWAITING_PICKUP;
 import static org.folio.circulation.api.support.builders.ItemBuilder.CHECKED_OUT_HELD;
 import static org.folio.circulation.api.support.builders.RequestBuilder.*;
 import static org.folio.circulation.api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
@@ -48,6 +48,10 @@ public class MultipleHoldShelfRequestsTests extends APITests {
     requestBySteve = requestsClient.get(requestBySteve);
 
     assertThat(requestBySteve.getJson().getString("status"), is(OPEN_NOT_YET_FILLED));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+
+    assertThat(smallAngryPlanet, hasItemStatus(AWAITING_PICKUP));
   }
 
   @Test
@@ -125,7 +129,7 @@ public class MultipleHoldShelfRequestsTests extends APITests {
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-    assertThat(smallAngryPlanet, hasItemStatus(AVAILABLE));
+    assertThat(smallAngryPlanet, hasItemStatus(AWAITING_PICKUP));
   }
 
   @Test
@@ -165,7 +169,7 @@ public class MultipleHoldShelfRequestsTests extends APITests {
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-    assertThat(smallAngryPlanet, hasItemStatus(AVAILABLE));
+    assertThat(smallAngryPlanet, hasItemStatus(AWAITING_PICKUP));
   }
 
   @Test
@@ -204,6 +208,6 @@ public class MultipleHoldShelfRequestsTests extends APITests {
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-    assertThat(smallAngryPlanet, hasItemStatus(AVAILABLE));
+    assertThat(smallAngryPlanet, hasItemStatus(AWAITING_PICKUP));
   }
 }

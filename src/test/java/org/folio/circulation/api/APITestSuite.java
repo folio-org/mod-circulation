@@ -48,7 +48,6 @@ import java.util.function.Consumer;
   RequestsAPIRetrievalTests.class,
   RequestsAPIUpdatingTests.class,
   RequestsAPIStatusChangeTests.class,
-  RequestsAPILoanCheckInTests.class,
   RequestsAPILoanRenewalTests.class,
   RequestsAPILoanHistoryTests.class,
   RequestsAPITitleTests.class,

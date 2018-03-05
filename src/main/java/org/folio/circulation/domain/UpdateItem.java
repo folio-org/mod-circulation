@@ -37,7 +37,7 @@ public class UpdateItem {
       }
 
       String prospectiveStatus = requestQueue.hasOutstandingRequests()
-        ? RequestType.from(requestQueue.getHighestPriorityRequest()).toItemStatus()
+        ? RequestType.from(requestQueue.getHighestPriorityRequest()).toCheckedOutItemStatus()
         : CHECKED_OUT;
 
       if(isNotSameStatus(item, prospectiveStatus)) {
@@ -60,19 +60,10 @@ public class UpdateItem {
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
     try {
-      final String prospectiveStatus;
       JsonObject item = loanAndRelatedRecords.inventoryRecords.getItem();
 
-      if(isClosed(loanAndRelatedRecords.loan)) {
-        prospectiveStatus = itemStatusFrom(loanAndRelatedRecords.loan);
-      }
-      else {
-        RequestQueue requestQueue = loanAndRelatedRecords.requestQueue;
-
-        prospectiveStatus = requestQueue.hasOutstandingRequests()
-          ? RequestType.from(requestQueue.getHighestPriorityRequest()).toItemStatus()
-          : CHECKED_OUT;
-      }
+      final String prospectiveStatus = itemStatusFrom(
+        loanAndRelatedRecords.loan, loanAndRelatedRecords.requestQueue);
 
       if(isNotSameStatus(item, prospectiveStatus)) {
         return internalUpdate(item, prospectiveStatus)
@@ -99,8 +90,8 @@ public class UpdateItem {
       RequestQueue requestQueue = requestAndRelatedRecords.requestQueue;
 
       String newStatus = requestQueue.hasOutstandingRequests()
-        ? RequestType.from(requestQueue.getHighestPriorityRequest()).toItemStatus()
-        : requestType.toItemStatus();
+        ? RequestType.from(requestQueue.getHighestPriorityRequest()).toCheckedOutItemStatus()
+        : requestType.toCheckedOutItemStatus();
 
       if (isNotSameStatus(requestAndRelatedRecords.inventoryRecords.item, newStatus)) {
         return internalUpdate(requestAndRelatedRecords.inventoryRecords.item, newStatus)
@@ -172,6 +163,25 @@ public class UpdateItem {
 
   private boolean isClosed(JsonObject loan) {
     return StringUtils.equals(loan.getJsonObject("status").getString("name"), "Closed");
+  }
+
+  private String itemStatusFrom(JsonObject loan, RequestQueue requestQueue) {
+    String prospectiveStatus;
+
+    boolean closed = isClosed(loan);
+
+    if(closed) {
+      prospectiveStatus = requestQueue.hasOutstandingFulfillableRequests()
+        ? RequestFulfilmentPreference.from(requestQueue.getHighestPriorityFulfillableRequest()).toCheckedInItemStatus()
+        : AVAILABLE;
+    }
+    else {
+      prospectiveStatus = requestQueue.hasOutstandingRequests()
+        ? RequestType.from(requestQueue.getHighestPriorityRequest()).toCheckedOutItemStatus()
+        : CHECKED_OUT;
+    }
+
+    return prospectiveStatus;
   }
 
   private void logException(Exception ex) {

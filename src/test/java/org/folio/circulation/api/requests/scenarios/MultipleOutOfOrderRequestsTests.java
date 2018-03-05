@@ -10,7 +10,7 @@ import java.net.MalformedURLException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import static org.folio.circulation.api.support.builders.ItemBuilder.AVAILABLE;
+import static org.folio.circulation.api.support.builders.ItemBuilder.AWAITING_PICKUP;
 import static org.folio.circulation.api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static org.folio.circulation.api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static org.folio.circulation.api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
@@ -50,6 +50,6 @@ public class MultipleOutOfOrderRequestsTests extends APITests {
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-    assertThat(smallAngryPlanet, hasItemStatus(AVAILABLE));
+    assertThat(smallAngryPlanet, hasItemStatus(AWAITING_PICKUP));
   }
 }

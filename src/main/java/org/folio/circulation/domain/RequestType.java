@@ -3,9 +3,7 @@ package org.folio.circulation.domain;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 
-import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
-import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT_HELD;
-import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT_RECALLED;
+import static org.folio.circulation.domain.ItemStatus.*;
 
 public class RequestType {
   private static final String RECALL = "Recall";
@@ -38,7 +36,7 @@ public class RequestType {
     }
   }
 
-  public String toItemStatus() {
+  public String toCheckedOutItemStatus() {
     switch(value) {
       case RequestType.HOLD:
         return CHECKED_OUT_HELD;

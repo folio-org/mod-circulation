@@ -11,6 +11,7 @@ public class ItemBuilder implements Builder {
   public static final String CHECKED_OUT = "Checked out";
   public static final String CHECKED_OUT_HELD = "Checked out - Held";
   public static final String CHECKED_OUT_RECALLED = "Checked out - Recalled";
+  public static final String AWAITING_PICKUP = "Awaiting pickup";
 
   private final UUID id;
   private final UUID holdingId;

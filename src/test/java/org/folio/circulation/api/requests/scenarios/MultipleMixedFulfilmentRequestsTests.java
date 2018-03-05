@@ -11,7 +11,7 @@ import java.net.MalformedURLException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import static org.folio.circulation.api.support.builders.ItemBuilder.AVAILABLE;
+import static org.folio.circulation.api.support.builders.ItemBuilder.AWAITING_PICKUP;
 import static org.folio.circulation.api.support.builders.ItemBuilder.CHECKED_OUT_HELD;
 import static org.folio.circulation.api.support.builders.RequestBuilder.*;
 import static org.folio.circulation.api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
@@ -59,7 +59,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-    assertThat(smallAngryPlanet, hasItemStatus("Available"));
+    assertThat(smallAngryPlanet, hasItemStatus(AWAITING_PICKUP));
   }
 
   @Test
@@ -152,7 +152,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-    assertThat(smallAngryPlanet, hasItemStatus(AVAILABLE));
+    assertThat(smallAngryPlanet, hasItemStatus(AWAITING_PICKUP));
   }
 
   @Test
@@ -200,7 +200,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-    assertThat(smallAngryPlanet, hasItemStatus(AVAILABLE));
+    assertThat(smallAngryPlanet, hasItemStatus(AWAITING_PICKUP));
   }
 
   //TODO: Add second delivery request in between fulfilled and next request
@@ -248,6 +248,6 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-    assertThat(smallAngryPlanet, hasItemStatus(AVAILABLE));
+    assertThat(smallAngryPlanet, hasItemStatus(AWAITING_PICKUP));
   }
 }
