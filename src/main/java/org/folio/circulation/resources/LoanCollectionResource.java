@@ -122,7 +122,7 @@ public class LoanCollectionResource {
                     if(locationResponse.getStatusCode() == 200) {
                       JsonResponse.created(routingContext.response(),
                         extendedLoan(createdLoan, item, holding, instance,
-                          locationResponse.getJson()));
+                          locationResponse.getJson(), null));
                     }
                     else {
                       log.warn(
@@ -130,7 +130,7 @@ public class LoanCollectionResource {
                           locationId, itemId ));
 
                       JsonResponse.created(routingContext.response(),
-                        extendedLoan(createdLoan, item, holding, instance, null));
+                        extendedLoan(createdLoan, item, holding, instance, null, null));
                     }
                   });
                 }
@@ -196,6 +196,7 @@ public class LoanCollectionResource {
     CollectionResourceClient holdingsStorageClient;
     CollectionResourceClient locationsStorageClient;
     CollectionResourceClient instancesStorageClient;
+    CollectionResourceClient materialTypesStorageClient;
 
     try {
       OkapiHttpClient client = createHttpClient(routingContext, context);
@@ -204,6 +205,8 @@ public class LoanCollectionResource {
       holdingsStorageClient = createHoldingsStorageClient(client, context);
       locationsStorageClient = createLocationsStorageClient(client, context);
       instancesStorageClient = createInstanceStorageClient(client, context);
+      materialTypesStorageClient = createMaterialTypesStorageClient(client, context);
+
     }
     catch (MalformedURLException e) {
       reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
@@ -231,23 +234,35 @@ public class LoanCollectionResource {
           JsonObject instance = r.getInstance();
 
           final String locationId = determineLocationIdForItem(item, holding);
-
+          
           locationsStorageClient.get(locationId,
             locationResponse -> {
-              if (locationResponse.getStatusCode() == 200) {
-                JsonResponse.success(routingContext.response(),
-                  extendedLoan(loan, item, holding, instance,
-                    locationResponse.getJson()));
+            JsonObject locationObject;
+            if (locationResponse.getStatusCode() != 200) {
+              log.warn(
+                String.format("Could not get location %s for item %s",
+                  locationId, itemId));
+              locationObject = null;
+            } else {
+              locationObject = locationResponse.getJson();
+            }
+            String materialTypeId = null;
+            if(item != null && item.containsKey("materialTypeId")) {
+              materialTypeId = item.getString("materialTypeId");
+            }
+            materialTypesStorageClient.get(materialTypeId,
+              mtResponse -> {
+              JsonObject materialTypeObject;
+              if(mtResponse.getStatusCode() != 200) {
+                materialTypeObject = null;
               } else {
-                log.warn(
-                  String.format("Could not get location %s for item %s",
-                    locationId, itemId));
-
-                JsonResponse.success(routingContext.response(),
-                  extendedLoan(loan, item, holding, instance,
-                    null));
+                materialTypeObject = mtResponse.getJson();
               }
-            });
+              JsonResponse.success(routingContext.response(),
+                extendedLoan(loan, item, holding, instance,
+                locationObject, materialTypeObject));    
+            });       
+          });
         });
       }
       else {
@@ -289,6 +304,7 @@ public class LoanCollectionResource {
     CollectionResourceClient holdingsClient;
     CollectionResourceClient instancesClient;
     CollectionResourceClient locationsClient;
+    CollectionResourceClient materialTypesClient;
 
     try {
       OkapiHttpClient client = createHttpClient(routingContext, context);
@@ -297,6 +313,7 @@ public class LoanCollectionResource {
       locationsClient = createLocationsStorageClient(client, context);
       holdingsClient = createHoldingsStorageClient(client, context);
       instancesClient = createInstanceStorageClient(client, context);
+      materialTypesClient = createMaterialTypesStorageClient(client, context);
     }
     catch (MalformedURLException e) {
       reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
@@ -388,7 +405,8 @@ public class LoanCollectionResource {
                 loan.put("item", createItemSummary(item,
                   possibleInstance.orElse(null),
                     possibleHolding.orElse(null),
-                    possibleLocation.orElse(null)));
+                    possibleLocation.orElse(null),
+                    null));
               }
             });
 
@@ -497,6 +515,14 @@ public class LoanCollectionResource {
 
     return usersStorageClient;
   }
+  
+  private CollectionResourceClient createMaterialTypesStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+    return new CollectionResourceClient(client,
+      context.getOkapiBasedUrl("/material-types"));
+  }
 
   private String itemStatusFrom(JsonObject loan) {
     switch(loan.getJsonObject("status").getString("name")) {
@@ -526,7 +552,8 @@ public class LoanCollectionResource {
     JsonObject item,
     JsonObject instance,
     JsonObject holding,
-    JsonObject location) {
+    JsonObject location,
+    JsonObject materialType) {
     JsonObject itemSummary = new JsonObject();
 
     final String titleProperty = "title";
@@ -534,6 +561,7 @@ public class LoanCollectionResource {
     final String statusProperty = "status";
     final String holdingsRecordIdProperty = "holdingsRecordId";
     final String instanceIdProperty = "instanceId";
+    final String callNumberProperty = "callNumber";
 
     if(instance != null && instance.containsKey(titleProperty)) {
       itemSummary.put(titleProperty, instance.getString(titleProperty));
@@ -552,6 +580,10 @@ public class LoanCollectionResource {
     if(holding != null && holding.containsKey(instanceIdProperty)) {
       itemSummary.put(instanceIdProperty, holding.getString(instanceIdProperty));
     }
+    
+    if(holding != null && holding.containsKey(callNumberProperty)) {
+      itemSummary.put(callNumberProperty, holding.getString(callNumberProperty));
+    }
 
     if(item.containsKey(statusProperty)) {
       itemSummary.put(statusProperty, item.getJsonObject(statusProperty));
@@ -560,6 +592,11 @@ public class LoanCollectionResource {
     if(location != null && location.containsKey("name")) {
       itemSummary.put("location", new JsonObject()
         .put("name", location.getString("name")));
+    }
+    
+    if(materialType != null && materialType.containsKey("name")) {
+      itemSummary.put("materialType", new JsonObject()
+        .put("name", materialType.getString("name")));
     }
 
     return itemSummary;
@@ -570,10 +607,12 @@ public class LoanCollectionResource {
     JsonObject item,
     JsonObject holding,
     JsonObject instance,
-    JsonObject location) {
+    JsonObject location,
+    JsonObject materialType) {
 
     if(item != null) {
-      loan.put("item", createItemSummary(item, instance, holding, location));
+      loan.put("item", createItemSummary(item, instance, holding, location,
+        materialType));
     }
 
     //No need to pass on the itemStatus property, as only used to populate the history

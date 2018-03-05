@@ -33,6 +33,21 @@
           "description": "The title of the item lent to the patron",
           "type": "string"
         },
+        "callNumber" : {
+          "description" : "The call number from the holdings record",
+          "type": "string"
+		},
+		"materialType" : {
+		  "description" : "The material type from the item record",
+		  "type": "string"
+		},
+	    "contributors": {
+          "description": "Contributors from the instance record",
+          "type": "array",
+          "items" : {
+            "type": "string"
+		  }
+		},
         "holdingsRecordId": {
           "description": "The ID of the holdings for the item lent to the patron",
           "type": "string"
