@@ -1,5 +1,6 @@
-## 7.2.0 Unreleased
+## 7.3.0 2018-03-06
 
+* Adds systemReturnDate property to loans (CIRC-81)
 * Adds `status` property to requests (CIRC-53)
 * Provides circulation interface 2.8 (CIRC-53)
 * Requires request-storage interface 1.3 (CIRC-53)
