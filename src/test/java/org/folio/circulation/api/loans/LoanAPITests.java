@@ -35,27 +35,6 @@ import static org.folio.circulation.api.support.matchers.TextDateTimeMatcher.isE
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
-import static org.folio.circulation.api.support.http.InterfaceUrls.loansUrl;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
-import static org.folio.circulation.api.support.http.InterfaceUrls.loansUrl;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
-import static org.folio.circulation.api.support.http.InterfaceUrls.loansUrl;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
-import static org.folio.circulation.api.support.http.InterfaceUrls.loansUrl;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
-import static org.folio.circulation.api.support.http.InterfaceUrls.loansUrl;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
-import static org.folio.circulation.api.support.http.InterfaceUrls.loansUrl;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
-import static org.folio.circulation.api.support.http.InterfaceUrls.loansUrl;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class LoanAPITests extends APITests {
   private final ResourceClient loansStorageClient = ResourceClient.forLoansStorage(client);
@@ -120,8 +99,6 @@ public class LoanAPITests extends APITests {
       loan.getJsonObject("item").getString("barcode"),
       is("036000291452"));
 
-
-
     assertThat("has item status",
       loan.getJsonObject("item").containsKey("status"), is(true));
 
@@ -145,23 +122,23 @@ public class LoanAPITests extends APITests {
       is("Checked out"));
 
   }
-  
+
   @Test
-  public void canCreateALoanWithSystemReturnDate() 
+  public void canCreateALoanWithSystemReturnDate()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
     MalformedURLException {
-    
+
     UUID id = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
     UUID userId = usersClient.create(new UserRequestBuilder()).getId();
     UUID proxyUserId = UUID.randomUUID();
-    
+
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
     DateTime systemReturnDate = new DateTime(2017, 4, 1, 12, 0, 0, DateTimeZone.UTC);
-    
+
     JsonObject builtRequest = new LoanRequestBuilder()
       .withId(id)
       .withUserId(userId)
@@ -172,19 +149,14 @@ public class LoanAPITests extends APITests {
       .withSystemReturnDate(systemReturnDate)
       .withStatus("Closed")
       .create();
-    
-    assertThat("request object does not have proper value for systemReturnDate",
-      builtRequest.getString("systemReturnDate"), is("2017-04-01T12:00:00.000Z"));
-    
+
     IndividualResource response = loansClient.create(builtRequest);
-    
+
     JsonObject loan = response.getJson();
-    
+
     assertThat("systemReturnDate does not match",
-      loan.getString("systemReturnDate"), is("2017-04-01T12:00:00.000Z"));
+      loan.getString("systemReturnDate"), isEquivalentTo(systemReturnDate));
   }
-  
-  
 
   @Test
   public void canCreateALoanWithoutStatus()
@@ -244,8 +216,7 @@ public class LoanAPITests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 
@@ -299,8 +270,7 @@ public class LoanAPITests extends APITests {
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
-    TimeoutException,
-    UnsupportedEncodingException {
+    TimeoutException {
 
     UUID id = UUID.randomUUID();
 
@@ -388,8 +358,7 @@ public class LoanAPITests extends APITests {
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
-    TimeoutException,
-    UnsupportedEncodingException {
+    TimeoutException {
 
     UUID itemId = itemsFixture.basedUponNod().getId();
 
@@ -415,8 +384,7 @@ public class LoanAPITests extends APITests {
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
-    TimeoutException,
-    UnsupportedEncodingException {
+    TimeoutException {
 
     UUID id = UUID.randomUUID();
 
@@ -449,8 +417,7 @@ public class LoanAPITests extends APITests {
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
-    TimeoutException,
-    UnsupportedEncodingException {
+    TimeoutException {
 
     Response getResponse = loansClient.getById(UUID.randomUUID());
 
@@ -462,8 +429,7 @@ public class LoanAPITests extends APITests {
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
-    ExecutionException,
-    UnsupportedEncodingException {
+    ExecutionException {
 
     DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 
@@ -528,8 +494,7 @@ public class LoanAPITests extends APITests {
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
-    ExecutionException,
-    UnsupportedEncodingException {
+    ExecutionException {
 
     DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 
@@ -605,8 +570,7 @@ public class LoanAPITests extends APITests {
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
-    ExecutionException,
-    UnsupportedEncodingException {
+    ExecutionException {
 
     DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, 232, DateTimeZone.UTC);
 
@@ -649,8 +613,7 @@ public class LoanAPITests extends APITests {
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
-    TimeoutException,
-    UnsupportedEncodingException {
+    TimeoutException {
 
     UUID itemId = itemsFixture.basedUponNod().getId();
 
@@ -683,8 +646,7 @@ public class LoanAPITests extends APITests {
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
-    ExecutionException,
-    UnsupportedEncodingException {
+    ExecutionException {
 
     loansClient.create(new LoanRequestBuilder()
       .withItem(itemsFixture.basedUponSmallAngryPlanet()));
@@ -751,8 +713,7 @@ public class LoanAPITests extends APITests {
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
-    TimeoutException,
-    UnsupportedEncodingException {
+    TimeoutException {
 
     UUID firstUserId = usersClient.create(basedUponStevenJones()).getId();
     UUID secondUserId = usersClient.create(basedUponJessicaPontefract()).getId();
@@ -831,8 +792,7 @@ public class LoanAPITests extends APITests {
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
-    TimeoutException,
-    UnsupportedEncodingException {
+    TimeoutException {
 
     UUID firstUserId = UUID.randomUUID();
     UUID secondUserId = UUID.randomUUID();
@@ -972,8 +932,7 @@ public class LoanAPITests extends APITests {
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
-    ExecutionException,
-    UnsupportedEncodingException {
+    ExecutionException {
 
     UUID id = loansClient.create(new LoanRequestBuilder()
       .withItem(itemsFixture.basedUponNod()))
