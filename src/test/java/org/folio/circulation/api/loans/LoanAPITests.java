@@ -35,6 +35,27 @@ import static org.folio.circulation.api.support.matchers.TextDateTimeMatcher.isE
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.folio.circulation.api.support.http.InterfaceUrls.loansUrl;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.folio.circulation.api.support.http.InterfaceUrls.loansUrl;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.folio.circulation.api.support.http.InterfaceUrls.loansUrl;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.folio.circulation.api.support.http.InterfaceUrls.loansUrl;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.folio.circulation.api.support.http.InterfaceUrls.loansUrl;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.folio.circulation.api.support.http.InterfaceUrls.loansUrl;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.folio.circulation.api.support.http.InterfaceUrls.loansUrl;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class LoanAPITests extends APITests {
   private final ResourceClient loansStorageClient = ResourceClient.forLoansStorage(client);
@@ -126,7 +147,7 @@ public class LoanAPITests extends APITests {
   }
   
   @Test
-  public void canCreateALoanWithReturnProcessedDate() 
+  public void canCreateALoanWithSystemReturnDate() 
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -139,7 +160,7 @@ public class LoanAPITests extends APITests {
     
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
-    DateTime returnProcessedDate = new DateTime(2017, 4, 1, 12, 0, 0, DateTimeZone.UTC);
+    DateTime systemReturnDate = new DateTime(2017, 4, 1, 12, 0, 0, DateTimeZone.UTC);
     
     JsonObject builtRequest = new LoanRequestBuilder()
       .withId(id)
@@ -148,19 +169,19 @@ public class LoanAPITests extends APITests {
       .withItemId(itemId)
       .withLoanDate(loanDate)
       .withDueDate(dueDate)
-      .withReturnProcessedDate(returnProcessedDate)
+      .withSystemReturnDate(systemReturnDate)
       .withStatus("Closed")
       .create();
     
-    assertThat("request object does not have proper value for returnProcessedDate",
-      builtRequest.getString("returnProcessedDate"), is("2017-04-01T12:00:00.000Z"));
+    assertThat("request object does not have proper value for systemReturnDate",
+      builtRequest.getString("systemReturnDate"), is("2017-04-01T12:00:00.000Z"));
     
     IndividualResource response = loansClient.create(builtRequest);
     
     JsonObject loan = response.getJson();
     
-    assertThat("returnProcessedDate does not match",
-      loan.getString("returnProcessedDate"), is("2017-04-01T12:00:00.000Z"));
+    assertThat("systemReturnDate does not match",
+      loan.getString("systemReturnDate"), is("2017-04-01T12:00:00.000Z"));
   }
   
   

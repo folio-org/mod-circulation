@@ -89,7 +89,7 @@
       "type": "string",
       "format": "date-time"
     },
-    "returnProcessedDate" : {
+    "systemReturnDate" : {
       "description": "Date and time when return was processed",
       "type": "string",
       "format": "date-time"
