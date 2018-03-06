@@ -15,23 +15,20 @@ for example `mod-circulation-storage`. For the current version, this
 * loans
 * requests
 
-Please consult the `doc/guide.md` within `mod-circulation-storage` for an 
-up-to-date guide on how to use the API
-
 ## How does the module work?
 
 This module actually handles the loans and the requests for those loans. 
 
 ### Requests and loans
 
-A `request` for an `item` can be created by a requester. Both item id and 
-requester id are stored in the newly created `request`. If the `item` is picked up, 
+A `request` for an `item` can be created by a requesting user. Both item id and 
+requesting user id are stored in the newly created `request`. If the `item` is picked up, 
 the `request` is closed and a `loan` is created. The corresponding `loan` consists 
 of the same item id and requester id.
 
-### What about the items and requesters?
+### What about the items and requesting users?
 
-Well, the items and requesters don't live in this module themselves, but can 
+Well, the items and requesting users don't live in this module themselves, but can 
 be retrieved by their id from other modules, responsible for users and 
 inventory.
 
@@ -47,27 +44,14 @@ moment, is not possible to request "the first that comes available again".
 
 ### Statuses
 
-#### Item statuses
+See list of item and request statuses in the [README](../README.md) file
 
-Items can have the following statuses:
-* "Available"
-* "Checked out"
-* "Checked out - Held"
-* "Checked out - Recalled"
-
-#### Request statuses
-
-Requests can have the following statuses:
-* "Open - Not yet filled"
-* "Open - Awaiting pickup"
-* "Closed - Filled" 
-
-So, if a request for an item that is already checked out to another requester
+So, if a request for an item that is already checked out to another user
 is created, the request status becomes "not yet filled". If the item is checked
-in AND the request is the first in the list of requests(*), the request status 
+in AND the request is the first in the list of requests [^1], the request status 
 is set to "awaiting pickup". If the item is then picked up, the request is 
 closed and a loan is created.
 
-*) Currently this is ordered by creation date (time stamp) and can not be 
-altered.  
+[^1]: Currently this is ordered by creation date (time stamp) and can not be 
+altered.
 

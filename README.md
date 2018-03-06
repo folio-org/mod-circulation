@@ -90,9 +90,18 @@ below is a table describing the most common states defined at the moment.
 | Checked out - Recalled | This item is currently checked out to a patron, another patron has requested it be returned as soon as possible |
 | Checked out - Held | This item is currently checked out to a patron, another patron has requested it be held upon it’s return |
 
+### Request Status
+
+| Name | Description |
+|---|---|
+| Open - Not yet filled | The requested item is not yet available to the requesting user |
+| Open - Awaiting pickup | The item is available to the requesting user |
+| Closed - Filled | |
+
 ### Storing Information from Other Records
 
-In order to facilitate the searching and sorting of requests by the properties of related records, a snapshot of some properties are stored with the request.
+In order to facilitate the searching and sorting of requests by the properties of related records, a snapshot of some
+properties are stored with the request.
 
 This snapshot is updated during POST or PUT requests by requesting the current state of those records.
 It is possible for them to become out of sync with the referenced records.
