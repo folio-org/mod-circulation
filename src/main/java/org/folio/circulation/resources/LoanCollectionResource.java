@@ -1,5 +1,6 @@
 package org.folio.circulation.resources;
 
+import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -24,12 +25,13 @@ import java.util.stream.Collectors;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
 
-public class LoanCollectionResource {
+public class LoanCollectionResource extends CollectionResource {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final String rootPath;
 
-  public LoanCollectionResource(String rootPath) {
+  public LoanCollectionResource(String rootPath, HttpClient client) {
+    super(client);
     this.rootPath = rootPath;
   }
 
@@ -47,7 +49,7 @@ public class LoanCollectionResource {
   //TODO: Add exceptional completion of futures to create failed results
   private void create(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
-    final Clients clients = Clients.create(context);
+    final Clients clients = Clients.create(context, client);
 
     final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
@@ -86,7 +88,7 @@ public class LoanCollectionResource {
 
   private void replace(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
-    final Clients clients = Clients.create(context);
+    final Clients clients = Clients.create(context, client);
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
     final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
 
@@ -116,7 +118,7 @@ public class LoanCollectionResource {
 
   private void get(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
-    final Clients clients = Clients.create(context);
+    final Clients clients = Clients.create(context, client);
     final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
 
@@ -132,7 +134,7 @@ public class LoanCollectionResource {
 
   private void delete(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-    Clients clients = Clients.create(context);
+    Clients clients = Clients.create(context, client);
 
     String id = routingContext.request().getParam("id");
 
@@ -148,7 +150,7 @@ public class LoanCollectionResource {
 
   private void getMany(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-    Clients clients = Clients.create(context);
+    Clients clients = Clients.create(context, client);
 
     clients.loansStorage().getMany(routingContext.request().query(), loansResponse -> {
       if(loansResponse.getStatusCode() == 200) {
@@ -251,7 +253,7 @@ public class LoanCollectionResource {
 
   private void empty(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-    Clients clients = Clients.create(context);
+    Clients clients = Clients.create(context, client);
 
     clients.loansStorage().delete(response -> {
       if(response.getStatusCode() == 204) {

@@ -1,6 +1,7 @@
 package org.folio.circulation.resources;
 
 import io.vertx.core.Handler;
+import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -27,7 +28,7 @@ import java.util.Map;
  * The loan rules engine calculates the loan policy based on
  * item type, loan type, patron type and shelving location.
  */
-public class LoanRulesEngineResource {
+public class LoanRulesEngineResource extends CollectionResource {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final String applyPath;
@@ -97,8 +98,10 @@ public class LoanRulesEngineResource {
    * Create a loan rules engine that listens at applyPath and applyAllPath.
    * @param applyPath  URL path for loan rules triggering that returns the first match
    * @param applyAllPath  URL path for loan rules triggering that returns all matches
+   * @param client
    */
-  public LoanRulesEngineResource(String applyPath, String applyAllPath) {
+  public LoanRulesEngineResource(String applyPath, String applyAllPath, HttpClient client) {
+    super(client);
     this.applyPath = applyPath;
     this.applyAllPath = applyAllPath;
   }

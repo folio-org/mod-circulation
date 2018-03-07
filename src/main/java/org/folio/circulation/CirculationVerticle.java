@@ -2,6 +2,7 @@ package org.folio.circulation;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
+import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpServer;
 import io.vertx.ext.web.Router;
 import org.folio.circulation.resources.LoanCollectionResource;
@@ -26,13 +27,19 @@ public class CirculationVerticle extends AbstractVerticle {
 
     Router router = Router.router(vertx);
 
+    HttpClient client = vertx.createHttpClient();
+
     this.server = vertx.createHttpServer();
 
-    new LoanCollectionResource    ("/circulation/loans"     ).register(router);
-    new RequestCollectionResource ("/circulation/requests"  ).register(router);
-    new LoanRulesResource         ("/circulation/loan-rules").register(router);
+    new LoanCollectionResource    ("/circulation/loans", client)
+      .register(router);
+    new RequestCollectionResource ("/circulation/requests", client)
+      .register(router);
+    new LoanRulesResource         ("/circulation/loan-rules", client)
+      .register(router);
     new LoanRulesEngineResource   ("/circulation/loan-rules/apply",
-                                   "/circulation/loan-rules/apply-all").register(router);
+                                   "/circulation/loan-rules/apply-all", client)
+      .register(router);
 
     server.requestHandler(router::accept)
       .listen(config().getInteger("port"), result -> {

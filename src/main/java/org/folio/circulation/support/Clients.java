@@ -1,5 +1,6 @@
 package org.folio.circulation.support;
 
+import io.vertx.core.http.HttpClient;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.server.WebContext;
 
@@ -15,8 +16,8 @@ public class Clients {
   private final CollectionResourceClient locationsStorageClient;
   private final LoanRulesClient loanRulesClient;
 
-  public static Clients create(WebContext context) {
-    return new Clients(context.createHttpClient(), context);
+  public static Clients create(WebContext context, HttpClient httpClient) {
+    return new Clients(context.createHttpClient(httpClient), context);
   }
 
   private Clients(OkapiHttpClient client, WebContext context) {

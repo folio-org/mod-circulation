@@ -1,5 +1,6 @@
 package org.folio.circulation.resources;
 
+import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
@@ -19,10 +20,11 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.*;
 import static org.folio.circulation.support.JsonPropertyCopier.copyStringIfExists;
 
-public class RequestCollectionResource {
+public class RequestCollectionResource extends CollectionResource {
   private final String rootPath;
 
-  public RequestCollectionResource(String rootPath) {
+  public RequestCollectionResource(String rootPath, HttpClient client) {
+    super(client);
     this.rootPath = rootPath;
   }
 
@@ -39,7 +41,7 @@ public class RequestCollectionResource {
 
   private void create(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
-    final Clients clients = Clients.create(context);
+    final Clients clients = Clients.create(context, client);
 
     final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
@@ -82,7 +84,7 @@ public class RequestCollectionResource {
 
   private void replace(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
-    final Clients clients = Clients.create(context);
+    final Clients clients = Clients.create(context, client);
 
     final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
     final UserFetcher userFetcher = new UserFetcher(clients);
@@ -124,7 +126,7 @@ public class RequestCollectionResource {
 
   private void get(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-    Clients clients = Clients.create(context);
+    Clients clients = Clients.create(context, client);
 
     String id = routingContext.request().getParam("id");
 
@@ -157,7 +159,7 @@ public class RequestCollectionResource {
 
   private void delete(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-    Clients clients = Clients.create(context);
+    Clients clients = Clients.create(context, client);
 
     String id = routingContext.request().getParam("id");
 
@@ -174,7 +176,7 @@ public class RequestCollectionResource {
   private void getMany(RoutingContext routingContext) {
 
     WebContext context = new WebContext(routingContext);
-    Clients clients = Clients.create(context);
+    Clients clients = Clients.create(context, client);
 
     clients.requestsStorage().getMany(routingContext.request().query(),
       requestsResponse -> {
@@ -228,7 +230,7 @@ public class RequestCollectionResource {
 
   private void empty(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-    Clients clients = Clients.create(context);
+    Clients clients = Clients.create(context, client);
 
     clients.requestsStorage().delete(response -> {
       if(response.getStatusCode() == 204) {
