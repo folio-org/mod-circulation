@@ -3,6 +3,7 @@ package org.folio.circulation.resources;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.json.JsonArray;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
@@ -246,14 +247,18 @@ public class LoanCollectionResource {
             } else {
               locationObject = locationResponse.getJson();
             }
-            String materialTypeId = null;
+            final String materialTypeId;
             if(item != null && item.containsKey("materialTypeId")) {
               materialTypeId = item.getString("materialTypeId");
+            } else {
+              materialTypeId = null;
             }
             materialTypesStorageClient.get(materialTypeId,
               mtResponse -> {
               JsonObject materialTypeObject;
               if(mtResponse.getStatusCode() != 200) {
+                log.warn(String.format("Could not get material type %s fpr item %s",
+                  materialTypeId, itemId));
                 materialTypeObject = null;
               } else {
                 materialTypeObject = mtResponse.getJson();
@@ -304,7 +309,7 @@ public class LoanCollectionResource {
     CollectionResourceClient holdingsClient;
     CollectionResourceClient instancesClient;
     CollectionResourceClient locationsClient;
-    CollectionResourceClient materialTypesClient;
+    CollectionResourceClient materialTypesStorageClient;
 
     try {
       OkapiHttpClient client = createHttpClient(routingContext, context);
@@ -313,7 +318,7 @@ public class LoanCollectionResource {
       locationsClient = createLocationsStorageClient(client, context);
       holdingsClient = createHoldingsStorageClient(client, context);
       instancesClient = createInstanceStorageClient(client, context);
-      materialTypesClient = createMaterialTypesStorageClient(client, context);
+      materialTypesStorageClient = createMaterialTypesStorageClient(client, context);
     }
     catch (MalformedURLException e) {
       reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
@@ -369,49 +374,80 @@ public class LoanCollectionResource {
                   locationsResponse.getBody()));
               return;
             }
-
-            loans.forEach( loan -> {
-              Optional<JsonObject> possibleItem = records.findItemById(
-                loan.getString("itemId"));
-
-              //No need to pass on the itemStatus property,
-              // as only used to populate the history
-              //and could be confused with aggregation of current status
-              loan.remove("itemStatus");
-
-              Optional<JsonObject> possibleInstance = Optional.empty();
-
-              if(possibleItem.isPresent()) {
-                JsonObject item = possibleItem.get();
-
-                Optional<JsonObject> possibleHolding = records.findHoldingById(
-                  item.getString("holdingsRecordId"));
-
-                if(possibleHolding.isPresent()) {
-                  JsonObject holding = possibleHolding.get();
-
-                  possibleInstance = records.findInstanceById(
-                    holding.getString("instanceId"));
-                }
-
-                List<JsonObject> locations = JsonArrayHelper.toList(
-                  locationsResponse.getJson().getJsonArray("shelflocations"));
-
-                Optional<JsonObject> possibleLocation = locations.stream()
-                  .filter(location -> location.getString("id").equals(
-                    determineLocationIdForItem(item, possibleHolding.orElse(null))))
-                  .findFirst();
-
-                loan.put("item", createItemSummary(item,
-                  possibleInstance.orElse(null),
-                    possibleHolding.orElse(null),
-                    possibleLocation.orElse(null),
-                    null));
+            
+            //Also get a list of material types
+            List<String> materialTypeIds = records.getItems().stream()
+              .map(item -> item.getString("materialTypeId"))
+              .filter(StringUtils::isNotBlank)
+              .collect(Collectors.toList());
+            CompletableFuture<Response> materialTypesFetched = new CompletableFuture<>();
+            String materialTypesQuery = CqlHelper.multipleRecordsCqlQuery(materialTypeIds);
+            
+            materialTypesStorageClient.getMany(materialTypesQuery,
+              materialTypeIds.size(), 0, materialTypesFetched::complete);
+            
+            materialTypesFetched.thenAccept(materialTypesResponse -> {
+              if(materialTypesResponse.getStatusCode() != 200) {
+                ServerErrorResponse.internalError(routingContext.response(),
+                  String.format("Material Types request (%s) failed %s: %s",
+                    materialTypesQuery, materialTypesResponse.getStatusCode(),
+                    materialTypesResponse.getBody()));
+                return;
               }
-            });
+               
+              loans.forEach( loan -> {
+                Optional<JsonObject> possibleItem = records.findItemById(
+                  loan.getString("itemId"));
 
-            JsonResponse.success(routingContext.response(),
-              wrappedLoans.toJson());
+                //No need to pass on the itemStatus property,
+                // as only used to populate the history
+                //and could be confused with aggregation of current status
+                loan.remove("itemStatus");
+
+                Optional<JsonObject> possibleInstance = Optional.empty();
+
+                if(possibleItem.isPresent()) {
+                  JsonObject item = possibleItem.get();
+
+                  Optional<JsonObject> possibleHolding = records.findHoldingById(
+                    item.getString("holdingsRecordId"));
+
+                  if(possibleHolding.isPresent()) {
+                    JsonObject holding = possibleHolding.get();
+
+                    possibleInstance = records.findInstanceById(
+                      holding.getString("instanceId"));
+                  }
+
+                  List<JsonObject> locations = JsonArrayHelper.toList(
+                    locationsResponse.getJson().getJsonArray("shelflocations"));
+
+                  Optional<JsonObject> possibleLocation = locations.stream()
+                    .filter(location -> location.getString("id").equals(
+                      determineLocationIdForItem(item, possibleHolding.orElse(null))))
+                    .findFirst();
+                  
+                  List<JsonObject> materialTypes = JsonArrayHelper.toList(
+                    materialTypesResponse.getJson().getJsonArray("mtypes"));
+                  
+                  Optional<JsonObject> possibleMaterialType = materialTypes.stream()
+                    .filter(materialType -> materialType.getString("id")
+                    .equals(loan.getString("materialTypeId"))).findFirst();
+
+                  loan.put("item", createItemSummary(item,
+                    possibleInstance.orElse(null),
+                      possibleHolding.orElse(null),
+                      possibleLocation.orElse(null),
+                      possibleMaterialType.orElse(null)
+                      )
+                  );
+                }
+              });
+
+              JsonResponse.success(routingContext.response(),
+                wrappedLoans.toJson());
+
+            });            
           });
         });
       }
@@ -567,6 +603,19 @@ public class LoanCollectionResource {
       itemSummary.put(titleProperty, instance.getString(titleProperty));
     } else if (item.containsKey("title")) {
       itemSummary.put(titleProperty, item.getString(titleProperty));
+    }
+    
+    if(instance != null && instance.containsKey("contributors")) {
+      JsonArray instanceContributors = instance.getJsonArray("contributors");
+      if(instanceContributors != null && !instanceContributors.isEmpty()) {
+        JsonArray contributors = new JsonArray();
+        for(Object ob : instanceContributors) {
+          String name = ((JsonObject)ob).getString("name");
+          contributors.add(new JsonObject().put("name", name));
+        }
+        itemSummary.put("contributors", contributors);
+      }
+            
     }
 
     if(item.containsKey(barcodeProperty)) {

@@ -98,9 +98,13 @@ public class LoanAPITests extends APITests {
     assertThat("barcode is taken from item",
       loan.getJsonObject("item").getString("barcode"),
       is("036000291452"));
-
-
-
+    
+    assertThat("call number is foo", loan.getJsonObject("item")
+      .getString("callNumber"), is("foo"));
+    
+    assertThat("materialType is book", loan.getJsonObject("item")
+      .getString("materialType"), is("Book"));
+ 
     assertThat("has item status",
       loan.getJsonObject("item").containsKey("status"), is(true));
 
@@ -122,6 +126,9 @@ public class LoanAPITests extends APITests {
     assertThat("item status snapshot in storage is not checked out",
       loansStorageClient.getById(id).getJson().getString("itemStatus"),
       is("Checked out"));
+   
+    
+    
 
   }
 

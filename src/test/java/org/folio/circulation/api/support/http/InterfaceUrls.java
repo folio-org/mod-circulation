@@ -29,6 +29,11 @@ public class InterfaceUrls {
 
     return APITestSuite.viaOkapiModuleUrl("/instance-types" + subPath);
   }
+  
+  public static URL contributorTypesStorageUrl(String subPath)
+    throws MalformedURLException {
+    return APITestSuite.viaOkapiModuleUrl("/contributor-types" + subPath);
+  }
 
   public static URL itemsStorageUrl(String subPath)
     throws MalformedURLException {
@@ -109,4 +114,5 @@ public class InterfaceUrls {
   public static URL loanRulesUrl(String subPath) {
     return APITestSuite.circulationModuleUrl("/circulation/loan-rules" + subPath);
   }
+  
 }
