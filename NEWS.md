@@ -8,6 +8,7 @@
 * Refuse loan creation when item or holding does not exist (CIRC-53)
 * Only allow `Open` and `Closed` loan status (may become interface constraint in future, CIRC-53)
 * Item status is determined by the oldest request in the request queue (CIRC-53)
+* Reuse Vert.x HTTP client within the circulation verticle (to allow for connection pooling, CIRC-86) 
 
 ## 7.2.0 Unreleased
 
