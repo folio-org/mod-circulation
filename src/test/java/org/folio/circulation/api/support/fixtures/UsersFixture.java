@@ -52,4 +52,14 @@ public class UsersFixture {
 
     return usersClient.create(UserExamples.basedUponStevenJones());
   }
+
+  public IndividualResource Charlotte()
+    throws
+    InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return usersClient.create(UserExamples.basedUponCharlotteBroadwell());
+  }
 }

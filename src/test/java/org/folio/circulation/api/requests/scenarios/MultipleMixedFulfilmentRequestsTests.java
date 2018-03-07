@@ -154,9 +154,9 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
 
     assertThat(smallAngryPlanet, hasItemStatus(AWAITING_PICKUP));
   }
-  
+
   @Test
-  public void deliveryRequestIsIgnoredWhenItemCannotBeCheckedOutToOtherPatron()
+  public void itemCannotBeCheckedOutToDeliveryRequestRequester()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -182,6 +182,55 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     loansFixture.checkIn(loanToJames);
 
     Response response = loansFixture.attemptCheckOut(smallAngryPlanet, rebecca);
+
+    assertThat(response.getJson().getString("message"),
+      is("User checking out must be requester awaiting pickup"));
+
+    requestByRebecca = requestsClient.get(requestByRebecca);
+
+    assertThat(requestByRebecca.getJson().getString("status"), is(OPEN_NOT_YET_FILLED));
+
+    requestByJessica = requestsClient.get(requestByJessica);
+
+    assertThat(requestByJessica.getJson().getString("status"), is(OPEN_AWAITING_PICKUP));
+
+    requestBySteve = requestsClient.get(requestBySteve);
+
+    assertThat(requestBySteve.getJson().getString("status"), is(OPEN_NOT_YET_FILLED));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+
+    assertThat(smallAngryPlanet, hasItemStatus(AWAITING_PICKUP));
+  }
+
+  @Test
+  public void deliveryRequestIsIgnoredWhenItemCannotBeCheckedOutToOtherPatron()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource james = usersFixture.james();
+    IndividualResource jessica = usersFixture.jessica();
+    IndividualResource steve = usersFixture.steve();
+    IndividualResource rebecca = usersFixture.rebecca();
+    IndividualResource charlotte = usersFixture.Charlotte();
+
+    IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
+
+    IndividualResource requestByRebecca = requestsFixture.placeDeliveryRequest(
+      smallAngryPlanet, rebecca, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+
+    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+
+    IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
+      smallAngryPlanet, steve, new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC));
+
+    loansFixture.checkIn(loanToJames);
+
+    Response response = loansFixture.attemptCheckOut(smallAngryPlanet, charlotte);
 
     assertThat(response.getJson().getString("message"),
       is("User checking out must be requester awaiting pickup"));

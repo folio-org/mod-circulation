@@ -170,5 +170,4 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
 
     assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
   }
-
 }

@@ -27,4 +27,10 @@ public class UserExamples {
       .withBarcode("6430530304");
 
   }
+
+  public static UserBuilder basedUponCharlotteBroadwell() {
+    return new UserBuilder()
+      .withName("Broadwell", "Charlotte")
+      .withBarcode("6430705932");
+  }
 }
