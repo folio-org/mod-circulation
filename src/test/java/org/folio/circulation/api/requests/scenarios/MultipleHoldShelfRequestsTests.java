@@ -1,25 +1,28 @@
 package org.folio.circulation.api.requests.scenarios;
 
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import org.folio.circulation.api.support.APITests;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.net.MalformedURLException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import static org.folio.circulation.api.support.builders.ItemBuilder.AWAITING_PICKUP;
-import static org.folio.circulation.api.support.builders.ItemBuilder.CHECKED_OUT_HELD;
 import static org.folio.circulation.api.support.builders.RequestBuilder.*;
 import static org.folio.circulation.api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
+@RunWith(JUnitParamsRunner.class)
 public class MultipleHoldShelfRequestsTests extends APITests {
-  @Test
+
   public void statusOfOldestRequestChangesToAwaitingPickupWhenItemCheckedIn()
     throws InterruptedException,
     MalformedURLException,
@@ -55,7 +58,12 @@ public class MultipleHoldShelfRequestsTests extends APITests {
   }
 
   @Test
-  public void statusOfOldestRequestChangesToFulfilledWhenItemCheckedOutToRequester()
+  @Parameters({
+    "Hold|Checked out - Held",
+    "Recall|Checked out - Recalled",
+    "Page|Checked out"
+  })
+  public void statusOfOldestRequestChangesToFulfilledWhenItemCheckedOutToRequester(String requestType, String itemStatus)
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -72,7 +80,7 @@ public class MultipleHoldShelfRequestsTests extends APITests {
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
     IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, steve, new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC));
+      smallAngryPlanet, steve, new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC), requestType);
 
     loansFixture.checkIn(loanToJames);
 
@@ -88,7 +96,7 @@ public class MultipleHoldShelfRequestsTests extends APITests {
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT_HELD));
+    assertThat(smallAngryPlanet, hasItemStatus(itemStatus));
   }
 
   @Test

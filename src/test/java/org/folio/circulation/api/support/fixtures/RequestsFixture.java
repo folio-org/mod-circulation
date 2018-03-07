@@ -53,7 +53,6 @@ public class RequestsFixture {
     IndividualResource item,
     IndividualResource by,
     DateTime on)
-
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -61,6 +60,24 @@ public class RequestsFixture {
 
     return requestsClient.create(new RequestBuilder()
       .hold()
+      .deliverToAddress(UUID.randomUUID())
+      .withRequestDate(on)
+      .withItemId(item.getId())
+      .withRequesterId(by.getId()));
+  }
+
+  public IndividualResource placeHoldShelfRequest(
+    IndividualResource item,
+    IndividualResource by,
+    DateTime on,
+    String type)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return requestsClient.create(new RequestBuilder()
+      .withRequestType(type)
       .deliverToAddress(UUID.randomUUID())
       .withRequestDate(on)
       .withItemId(item.getId())
