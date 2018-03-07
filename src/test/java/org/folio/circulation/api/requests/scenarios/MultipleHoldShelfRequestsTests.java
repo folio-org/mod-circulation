@@ -92,6 +92,45 @@ public class MultipleHoldShelfRequestsTests extends APITests {
   }
 
   @Test
+  public void checkingInLoanThatFulfilsRequestShouldMakeItemAvailableForPickupToNextRequester()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource james = usersFixture.james();
+    IndividualResource jessica = usersFixture.jessica();
+    IndividualResource steve = usersFixture.steve();
+
+    IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
+
+    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+
+    IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
+      smallAngryPlanet, steve, new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC));
+
+    loansFixture.checkIn(loanToJames);
+
+    IndividualResource loanToJessica = loansFixture.checkOut(smallAngryPlanet, jessica);
+
+    loansFixture.checkIn(loanToJessica);
+
+    requestByJessica = requestsClient.get(requestByJessica);
+
+    assertThat(requestByJessica.getJson().getString("status"), is(CLOSED_FILLED));
+
+    requestBySteve = requestsClient.get(requestBySteve);
+
+    assertThat(requestBySteve.getJson().getString("status"), is(OPEN_AWAITING_PICKUP));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+
+    assertThat(smallAngryPlanet, hasItemStatus(AWAITING_PICKUP));
+  }
+
+  @Test
   public void itemCannotBeCheckedOutToOtherPatronWhenOldestRequestIsAwaitingPickup()
     throws InterruptedException,
     MalformedURLException,
@@ -166,45 +205,6 @@ public class MultipleHoldShelfRequestsTests extends APITests {
     requestBySteve = requestsClient.get(requestBySteve);
 
     assertThat(requestBySteve.getJson().getString("status"), is(OPEN_NOT_YET_FILLED));
-
-    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
-
-    assertThat(smallAngryPlanet, hasItemStatus(AWAITING_PICKUP));
-  }
-
-  @Test
-  public void checkingInLoanThatFulfilsRequestShouldMakeItemAvailableForPickupToNextRequester()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource james = usersFixture.james();
-    IndividualResource jessica = usersFixture.jessica();
-    IndividualResource steve = usersFixture.steve();
-
-    IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
-
-    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
-
-    IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, steve, new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC));
-
-    loansFixture.checkIn(loanToJames);
-
-    IndividualResource loanToJessica = loansFixture.checkOut(smallAngryPlanet, jessica);
-
-    loansFixture.checkIn(loanToJessica);
-
-    requestByJessica = requestsClient.get(requestByJessica);
-
-    assertThat(requestByJessica.getJson().getString("status"), is(CLOSED_FILLED));
-
-    requestBySteve = requestsClient.get(requestBySteve);
-
-    assertThat(requestBySteve.getJson().getString("status"), is(OPEN_AWAITING_PICKUP));
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 

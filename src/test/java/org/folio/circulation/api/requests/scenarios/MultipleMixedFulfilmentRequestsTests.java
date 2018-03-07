@@ -107,6 +107,54 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT_HELD));
   }
 
+  //TODO: Add second delivery request in between fulfilled and next request
+  @Test
+  public void deliveryRequestsAreIgnoredWhenCheckingInLoanThatFulfilsRequest()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource james = usersFixture.james();
+    IndividualResource jessica = usersFixture.jessica();
+    IndividualResource steve = usersFixture.steve();
+    IndividualResource rebecca = usersFixture.rebecca();
+
+    IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
+
+    IndividualResource deliveryRequestByRebecca = requestsFixture.placeDeliveryRequest(
+      smallAngryPlanet, rebecca, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+
+    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+
+    IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
+      smallAngryPlanet, steve, new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC));
+
+    loansFixture.checkIn(loanToJames);
+
+    IndividualResource loanToJessica = loansFixture.checkOut(smallAngryPlanet, jessica);
+
+    loansFixture.checkIn(loanToJessica);
+
+    deliveryRequestByRebecca = requestsClient.get(deliveryRequestByRebecca);
+
+    assertThat(deliveryRequestByRebecca.getJson().getString("status"), is(OPEN_NOT_YET_FILLED));
+
+    requestByJessica = requestsClient.get(requestByJessica);
+
+    assertThat(requestByJessica.getJson().getString("status"), is(CLOSED_FILLED));
+
+    requestBySteve = requestsClient.get(requestBySteve);
+
+    assertThat(requestBySteve.getJson().getString("status"), is(OPEN_AWAITING_PICKUP));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+
+    assertThat(smallAngryPlanet, hasItemStatus(AWAITING_PICKUP));
+  }
+  
   @Test
   public void deliveryRequestIsIgnoredWhenItemCannotBeCheckedOutToOtherPatron()
     throws InterruptedException,
@@ -197,54 +245,6 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     requestBySteve = requestsClient.get(requestBySteve);
 
     assertThat(requestBySteve.getJson().getString("status"), is(OPEN_NOT_YET_FILLED));
-
-    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
-
-    assertThat(smallAngryPlanet, hasItemStatus(AWAITING_PICKUP));
-  }
-
-  //TODO: Add second delivery request in between fulfilled and next request
-  @Test
-  public void deliveryRequestsAreIgnoredWhenCheckingInLoanThatFulfilsRequest()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource james = usersFixture.james();
-    IndividualResource jessica = usersFixture.jessica();
-    IndividualResource steve = usersFixture.steve();
-    IndividualResource rebecca = usersFixture.rebecca();
-
-    IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
-
-    IndividualResource deliveryRequestByRebecca = requestsFixture.placeDeliveryRequest(
-      smallAngryPlanet, rebecca, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
-
-    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
-
-    IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, steve, new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC));
-
-    loansFixture.checkIn(loanToJames);
-
-    IndividualResource loanToJessica = loansFixture.checkOut(smallAngryPlanet, jessica);
-
-    loansFixture.checkIn(loanToJessica);
-
-    deliveryRequestByRebecca = requestsClient.get(deliveryRequestByRebecca);
-
-    assertThat(deliveryRequestByRebecca.getJson().getString("status"), is(OPEN_NOT_YET_FILLED));
-
-    requestByJessica = requestsClient.get(requestByJessica);
-
-    assertThat(requestByJessica.getJson().getString("status"), is(CLOSED_FILLED));
-
-    requestBySteve = requestsClient.get(requestBySteve);
-
-    assertThat(requestBySteve.getJson().getString("status"), is(OPEN_AWAITING_PICKUP));
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
