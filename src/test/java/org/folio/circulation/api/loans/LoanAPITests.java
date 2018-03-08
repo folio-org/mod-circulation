@@ -1049,6 +1049,48 @@ public class LoanAPITests extends APITests {
 
   }
 
+  @Test
+  public void updateWithNonExistentProxy()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID id = UUID.randomUUID();
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    UUID userId = usersClient.create(new UserRequestBuilder()).getId();
+
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
+    IndividualResource response = loansClient.create(new LoanRequestBuilder()
+      .withId(id)
+      .withUserId(userId)
+      .withItemId(itemId)
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate)
+      .withStatus("Open"));
+
+    JsonObject loan = new LoanRequestBuilder()
+    .withId(id)
+    .withUserId(userId)
+    .withProxyUserId(UUID.randomUUID())
+    .withItemId(itemId)
+    .withLoanDate(loanDate)
+    .withDueDate(dueDate)
+    .withStatus("Open").create();
+
+    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
+
+    client.put(loansUrl(String.format("/%s", response.getId())), loan,
+      ResponseHandler.any(putCompleted));
+
+    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat("Invalid proxyUserId is not allowed when updating a loan", putResponse.getStatusCode(), is(422));
+
+  }
+
   private void loanHasExpectedProperties(JsonObject loan) {
     hasProperty("id", loan, "loan");
     hasProperty("userId", loan, "loan");

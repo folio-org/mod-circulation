@@ -34,8 +34,6 @@ import org.folio.circulation.support.http.server.JsonResponse;
 import org.folio.circulation.support.http.server.ServerErrorResponse;
 import org.folio.circulation.support.http.server.SuccessResponse;
 import org.folio.circulation.support.http.server.WebContext;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,7 +97,7 @@ public class LoanCollectionResource {
 
     JsonObject loan = routingContext.getBodyAsJson();
 
-    String validProxyQuery = buildProxyQuery(loan, routingContext);
+    String validProxyQuery = CqlHelper.buildisValidUserProxyQuery(loan);
 
     handleProxy(usersProxyStorageClient, validProxyQuery, proxyValidResponse -> {
 
@@ -191,31 +189,17 @@ public class LoanCollectionResource {
     }
   }
 
-  private String buildProxyQuery(JsonObject loan, RoutingContext routingContext){
-    //we got the id of the proxy record and user id, look for a record that indicates this is indeed a
-    //proxy for this user id, and make sure that the proxy is valid by indicating that we
-    //only want a match is the status is active and the expDate is in the future
-    String proxyId = loan.getString("proxyUserId");
-    if(proxyId != null){
-      String userId = loan.getString("userId");
-      DateTime expDate = new DateTime(DateTimeZone.UTC);
-      String validteProxyQuery ="id="+proxyId +"+and+"+
-          "userId="+userId+"+and+meta.status=Active"
-          +"+and+meta.expirationDate>"+expDate.toString().trim();
-      return validteProxyQuery;
-    }
-    return null;
-  }
-
   private void replace(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
     CollectionResourceClient loansStorageClient;
     CollectionResourceClient itemsStorageClient;
+    CollectionResourceClient usersProxyStorageClient;
 
     try {
       OkapiHttpClient client = createHttpClient(routingContext, context);
       loansStorageClient = createLoansStorageClient(client, context);
       itemsStorageClient = createItemsStorageClient(client, context);
+      usersProxyStorageClient = createProxyUsersStorageClient(client, context);
     }
     catch (MalformedURLException e) {
       reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
@@ -227,29 +211,48 @@ public class LoanCollectionResource {
 
     JsonObject loan = routingContext.getBodyAsJson();
 
-    defaultStatusAndAction(loan);
+    String validProxyQuery = CqlHelper.buildisValidUserProxyQuery(loan);
 
-    String itemId = loan.getString("itemId");
+    handleProxy(usersProxyStorageClient, validProxyQuery, proxyValidResponse -> {
 
-    //TODO: Either converge the schema (based upon conversations about sharing
-    // schema and including referenced resources or switch to include properties
-    // rather than exclude properties
-    JsonObject storageLoan = loan.copy();
-    storageLoan.remove("item");
-    storageLoan.remove("itemStatus");
+      if(proxyValidResponse != null){
+        if(proxyValidResponse.getStatusCode() != 200){
+          ForwardResponse.forward(routingContext.response(), proxyValidResponse);
+          return;
+        }
+        final MultipleRecordsWrapper wrappedLoans = MultipleRecordsWrapper.fromRequestBody(
+          proxyValidResponse.getBody(), "proxiesfor");
+        if(wrappedLoans.isEmpty()) { //if empty then we dont have a valid proxy id in the loan
+          CommonFailures.reportProxyRelatedValidationError(routingContext, loan.getString("proxyUserId"),
+              "proxyUserId is not valid");
+          return;
+        }
+      }
 
-    updateItemStatus(itemId, itemStatusFrom(loan),
-      itemsStorageClient, routingContext.response(), item -> {
-        storageLoan.put("itemStatus", item.getJsonObject("status").getString("name"));
-        loansStorageClient.put(id, storageLoan, response -> {
-          if(response.getStatusCode() == 204) {
-            SuccessResponse.noContent(routingContext.response());
-          }
-          else {
-            ForwardResponse.forward(routingContext.response(), response);
-          }
+      defaultStatusAndAction(loan);
+
+      String itemId = loan.getString("itemId");
+
+      //TODO: Either converge the schema (based upon conversations about sharing
+      // schema and including referenced resources or switch to include properties
+      // rather than exclude properties
+      JsonObject storageLoan = loan.copy();
+      storageLoan.remove("item");
+      storageLoan.remove("itemStatus");
+
+      updateItemStatus(itemId, itemStatusFrom(loan),
+        itemsStorageClient, routingContext.response(), item -> {
+          storageLoan.put("itemStatus", item.getJsonObject("status").getString("name"));
+          loansStorageClient.put(id, storageLoan, response -> {
+            if(response.getStatusCode() == 204) {
+              SuccessResponse.noContent(routingContext.response());
+            }
+            else {
+              ForwardResponse.forward(routingContext.response(), response);
+            }
+          });
         });
-      });
+    });
   }
 
   private void get(RoutingContext routingContext) {
