@@ -1,8 +1,9 @@
 package org.folio.circulation.support;
 
-import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.support.http.server.JsonResponse;
 import org.folio.circulation.support.http.server.ServerErrorResponse;
+
+import io.vertx.ext.web.RoutingContext;
 
 public class CommonFailures {
   private CommonFailures() { }
@@ -30,5 +31,14 @@ public class CommonFailures {
 
     JsonResponse.unprocessableEntity(routingContext.response(),
       reason, "itemId", itemId);
+  }
+
+  public static void reportProxyRelatedValidationError(
+      RoutingContext routingContext,
+      String proxyUserId,
+      String reason) {
+
+      JsonResponse.unprocessableEntity(routingContext.response(),
+        reason, "proxyUserId", proxyUserId);
   }
 }

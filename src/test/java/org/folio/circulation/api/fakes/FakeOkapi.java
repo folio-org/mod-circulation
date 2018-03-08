@@ -1,10 +1,7 @@
 package org.folio.circulation.api.fakes;
 
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Future;
-import io.vertx.core.http.HttpServer;
-import io.vertx.ext.web.Route;
-import io.vertx.ext.web.Router;
+import java.lang.invoke.MethodHandles;
+
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.folio.circulation.api.APITestSuite;
 import org.folio.circulation.support.http.client.BufferHelper;
@@ -14,7 +11,11 @@ import org.folio.circulation.support.http.server.ServerErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.invoke.MethodHandles;
+import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Future;
+import io.vertx.core.http.HttpServer;
+import io.vertx.ext.web.Route;
+import io.vertx.ext.web.Router;
 
 public class FakeOkapi extends AbstractVerticle {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -109,6 +110,14 @@ public class FakeOkapi extends AbstractVerticle {
       .withRootPath("/users")
       .withRequiredProperties("id", "username")
       .withUniqueProperties("username")
+      .disallowCollectionDelete()
+      .create().register(router);
+
+    new FakeStorageModuleBuilder()
+      .withRecordName("proxyFor")
+      .withRootPath("/proxiesfor")
+      .withRequiredProperties("id")
+      .withUniqueProperties("id")
       .disallowCollectionDelete()
       .create().register(router);
 

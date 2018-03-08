@@ -1,18 +1,10 @@
 package org.folio.circulation.resources;
 
-import io.vertx.core.http.HttpMethod;
-import io.vertx.core.http.HttpServerResponse;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.handler.BodyHandler;
-import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.support.*;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.server.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
+import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
+import static org.folio.circulation.domain.ItemStatusAssistant.updateItemStatus;
+import static org.folio.circulation.support.CommonFailures.reportFailureToFetchInventoryRecords;
+import static org.folio.circulation.support.CommonFailures.reportInvalidOkapiUrlHeader;
 
 import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
@@ -25,11 +17,34 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
-import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
-import static org.folio.circulation.domain.ItemStatusAssistant.updateItemStatus;
-import static org.folio.circulation.support.CommonFailures.reportFailureToFetchInventoryRecords;
-import static org.folio.circulation.support.CommonFailures.reportInvalidOkapiUrlHeader;
+import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.CommonFailures;
+import org.folio.circulation.support.CqlHelper;
+import org.folio.circulation.support.InventoryFetcher;
+import org.folio.circulation.support.InventoryRecords;
+import org.folio.circulation.support.JsonArrayHelper;
+import org.folio.circulation.support.LoanRulesClient;
+import org.folio.circulation.support.MultipleInventoryRecords;
+import org.folio.circulation.support.MultipleRecordsWrapper;
+import org.folio.circulation.support.http.client.OkapiHttpClient;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.server.ForwardResponse;
+import org.folio.circulation.support.http.server.JsonResponse;
+import org.folio.circulation.support.http.server.ServerErrorResponse;
+import org.folio.circulation.support.http.server.SuccessResponse;
+import org.folio.circulation.support.http.server.WebContext;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.BodyHandler;
 
 public class LoanCollectionResource {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -60,6 +75,7 @@ public class LoanCollectionResource {
     CollectionResourceClient holdingsStorageClient;
     CollectionResourceClient locationsStorageClient;
     CollectionResourceClient usersStorageClient;
+    CollectionResourceClient usersProxyStorageClient;
     CollectionResourceClient instancesStorageClient;
     OkapiHttpClient client;
     LoanRulesClient loanRulesClient;
@@ -72,6 +88,7 @@ public class LoanCollectionResource {
       instancesStorageClient = createInstanceStorageClient(client, context);
       locationsStorageClient = createLocationsStorageClient(client, context);
       usersStorageClient = createUsersStorageClient(client, context);
+      usersProxyStorageClient = createProxyUsersStorageClient(client, context);
       loanRulesClient = new LoanRulesClient(client, context);
     }
     catch (MalformedURLException e) {
@@ -82,66 +99,112 @@ public class LoanCollectionResource {
 
     JsonObject loan = routingContext.getBodyAsJson();
 
-    defaultStatusAndAction(loan);
+    String validProxyQuery = buildProxyQuery(loan, routingContext);
 
-    String itemId = loan.getString("itemId");
+    handleProxy(usersProxyStorageClient, validProxyQuery, proxyValidResponse -> {
 
-    updateItemStatus(itemId, itemStatusFrom(loan),
-      itemsStorageClient, routingContext.response(), item -> {
+      if(proxyValidResponse != null){
+        if(proxyValidResponse.getStatusCode() != 200){
+          ForwardResponse.forward(routingContext.response(), proxyValidResponse);
+          return;
+        }
+        final MultipleRecordsWrapper wrappedLoans = MultipleRecordsWrapper.fromRequestBody(
+          proxyValidResponse.getBody(), "proxiesfor");
+        if(wrappedLoans.isEmpty()) { //if empty then we dont have a valid proxy id in the loan
+          CommonFailures.reportProxyRelatedValidationError(routingContext, loan.getString("proxyUserId"),
+              "proxyUserId is not valid");
+          return;
+        }
+      }
 
-        loan.put("itemStatus", item.getJsonObject("status").getString("name"));
+      defaultStatusAndAction(loan);
 
-        String holdingId = item.getString("holdingsRecordId");
+      String itemId = loan.getString("itemId");
 
-        holdingsStorageClient.get(holdingId, holdingResponse -> {
-          final String instanceId = holdingResponse.getStatusCode() == 200
-            ? holdingResponse.getJson().getString("instanceId")
-            : null;
+      updateItemStatus(itemId, itemStatusFrom(loan),
+        itemsStorageClient, routingContext.response(), item -> {
 
-          instancesStorageClient.get(instanceId, instanceResponse -> {
-            final JsonObject instance = instanceResponse.getStatusCode() == 200
-              ? instanceResponse.getJson()
+          loan.put("itemStatus", item.getJsonObject("status").getString("name"));
+
+          String holdingId = item.getString("holdingsRecordId");
+
+          holdingsStorageClient.get(holdingId, holdingResponse -> {
+            final String instanceId = holdingResponse.getStatusCode() == 200
+              ? holdingResponse.getJson().getString("instanceId")
               : null;
 
-            final JsonObject holding = holdingResponse.getStatusCode() == 200
-              ? holdingResponse.getJson()
-              : null;
+            instancesStorageClient.get(instanceId, instanceResponse -> {
+              final JsonObject instance = instanceResponse.getStatusCode() == 200
+                ? instanceResponse.getJson()
+                : null;
 
-            lookupLoanPolicyId(loan, item, holding, usersStorageClient,
-              loanRulesClient, routingContext.response(), loanPolicyIdJson -> {
+              final JsonObject holding = holdingResponse.getStatusCode() == 200
+                ? holdingResponse.getJson()
+                : null;
 
-              loan.put("loanPolicyId", loanPolicyIdJson.getString("loanPolicyId"));
+              lookupLoanPolicyId(loan, item, holding, usersStorageClient,
+                loanRulesClient, routingContext.response(), loanPolicyIdJson -> {
 
-              loansStorageClient.post(loan, response -> {
-                if(response.getStatusCode() == 201) {
-                  JsonObject createdLoan = response.getJson();
+                loan.put("loanPolicyId", loanPolicyIdJson.getString("loanPolicyId"));
 
-                  final String locationId = determineLocationIdForItem(item, holding);
+                loansStorageClient.post(loan, response -> {
+                  if(response.getStatusCode() == 201) {
+                    JsonObject createdLoan = response.getJson();
 
-                  locationsStorageClient.get(locationId, locationResponse -> {
-                    if(locationResponse.getStatusCode() == 200) {
-                      JsonResponse.created(routingContext.response(),
-                        extendedLoan(createdLoan, item, holding, instance,
-                          locationResponse.getJson()));
-                    }
-                    else {
-                      log.warn(
-                        String.format("Could not get location %s for item %s",
-                          locationId, itemId ));
+                    final String locationId = determineLocationIdForItem(item, holding);
 
-                      JsonResponse.created(routingContext.response(),
-                        extendedLoan(createdLoan, item, holding, instance, null));
-                    }
-                  });
-                }
-                else {
-                  ForwardResponse.forward(routingContext.response(), response);
-                }
-              });
+                    locationsStorageClient.get(locationId, locationResponse -> {
+                      if(locationResponse.getStatusCode() == 200) {
+                        JsonResponse.created(routingContext.response(),
+                          extendedLoan(createdLoan, item, holding, instance,
+                            locationResponse.getJson()));
+                      }
+                      else {
+                        log.warn(
+                          String.format("Could not get location %s for item %s",
+                            locationId, itemId ));
+
+                        JsonResponse.created(routingContext.response(),
+                          extendedLoan(createdLoan, item, holding, instance, null));
+                      }
+                    });
+                  }
+                  else {
+                    ForwardResponse.forward(routingContext.response(), response);
+                  }
+                });
+            });
           });
         });
       });
     });
+  }
+
+  private void handleProxy(CollectionResourceClient client,
+      String query, Consumer<Response> responseHandler){
+
+    if(query != null){
+      client.getMany(query, 1, 0, responseHandler);
+    }
+    else{
+      responseHandler.accept(null);
+    }
+  }
+
+  private String buildProxyQuery(JsonObject loan, RoutingContext routingContext){
+    //we got the id of the proxy record and user id, look for a record that indicates this is indeed a
+    //proxy for this user id, and make sure that the proxy is valid by indicating that we
+    //only want a match is the status is active and the expDate is in the future
+    String proxyId = loan.getString("proxyUserId");
+    if(proxyId != null){
+      String userId = loan.getString("userId");
+      DateTime expDate = new DateTime(DateTimeZone.UTC);
+      String validteProxyQuery ="id="+proxyId +"+and+"+
+          "userId="+userId+"+and+meta.status=Active"
+          +"+and+meta.expirationDate>"+expDate.toString().trim();
+      return validteProxyQuery;
+    }
+    return null;
   }
 
   private void replace(RoutingContext routingContext) {
@@ -497,6 +560,19 @@ public class LoanCollectionResource {
 
     return usersStorageClient;
   }
+
+  private CollectionResourceClient createProxyUsersStorageClient(
+      OkapiHttpClient client,
+      WebContext context)
+      throws MalformedURLException {
+
+      CollectionResourceClient proxyUsersStorageClient;
+
+      proxyUsersStorageClient = new CollectionResourceClient(
+        client, context.getOkapiBasedUrl("/proxiesfor"));
+
+      return proxyUsersStorageClient;
+    }
 
   private String itemStatusFrom(JsonObject loan) {
     switch(loan.getJsonObject("status").getString("name")) {
