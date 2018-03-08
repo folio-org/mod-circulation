@@ -99,8 +99,8 @@ public class LoanAPITests extends APITests {
       loan.getJsonObject("item").getString("barcode"),
       is("036000291452"));
     
-    assertThat("call number is foo", loan.getJsonObject("item")
-      .getString("callNumber"), is("foo"));
+    assertThat("call number is 123456", loan.getJsonObject("item")
+      .getString("callNumber"), is("123456"));
     
     assertThat("materialType is book", loan.getJsonObject("item")
       .getString("materialType"), is("Book"));

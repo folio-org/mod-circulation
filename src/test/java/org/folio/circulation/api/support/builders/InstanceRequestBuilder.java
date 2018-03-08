@@ -18,6 +18,7 @@ public class InstanceRequestBuilder implements Builder {
     this.id = id;
     this.title = title;
   }
+  
 
   @Override
   public JsonObject create() {

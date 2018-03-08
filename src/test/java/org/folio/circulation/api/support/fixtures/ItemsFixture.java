@@ -188,7 +188,7 @@ public class ItemsFixture {
       .forInstance(instance.getId())
       .withPermanentLocation(defaultPermanentLocation);
 
-    IndividualResource holding = holdingsClient.create(holdingBuilder);
+    IndividualResource holding = holdingsClient.create(holdingBuilder.withCallNumber("123456"));
 
     return itemsClient.create(
       itemRequestBuilder.forHolding(holding.getId())
