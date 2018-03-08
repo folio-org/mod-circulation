@@ -34,6 +34,7 @@ import static org.folio.circulation.api.support.http.InterfaceUrls.loansUrl;
 import static org.folio.circulation.api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
+import org.hamcrest.core.IsNot;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class LoanAPITests extends APITests {
@@ -49,6 +50,9 @@ public class LoanAPITests extends APITests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    String materialTypeId = itemsFixture.basedUponSmallAngryPlanet().getJson().getString("materialTypeId");
+    
+    assertThat("materialTypeId is null", materialTypeId == null, is(false));
 
     UUID userId = usersClient.create(new UserRequestBuilder()).getId();
     UUID proxyUserId = UUID.randomUUID();
@@ -101,6 +105,8 @@ public class LoanAPITests extends APITests {
     
     assertThat("call number is 123456", loan.getJsonObject("item")
       .getString("callNumber"), is("123456"));
+    
+    assertThat(loan.getJsonObject("item").encode() + " contains 'materialType'", loan.getJsonObject("item").containsKey("materialType"), is(true));
     
     assertThat("materialType is book", loan.getJsonObject("item")
       .getString("materialType"), is("Book"));

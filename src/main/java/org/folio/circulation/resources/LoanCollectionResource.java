@@ -62,6 +62,7 @@ public class LoanCollectionResource {
     CollectionResourceClient locationsStorageClient;
     CollectionResourceClient usersStorageClient;
     CollectionResourceClient instancesStorageClient;
+    CollectionResourceClient materialTypesStorageClient;
     OkapiHttpClient client;
     LoanRulesClient loanRulesClient;
 
@@ -73,6 +74,7 @@ public class LoanCollectionResource {
       instancesStorageClient = createInstanceStorageClient(client, context);
       locationsStorageClient = createLocationsStorageClient(client, context);
       usersStorageClient = createUsersStorageClient(client, context);
+      materialTypesStorageClient = createMaterialTypesStorageClient(client, context);
       loanRulesClient = new LoanRulesClient(client, context);
     }
     catch (MalformedURLException e) {
@@ -120,19 +122,41 @@ public class LoanCollectionResource {
                   final String locationId = determineLocationIdForItem(item, holding);
 
                   locationsStorageClient.get(locationId, locationResponse -> {
+                    JsonObject locationObject;
                     if(locationResponse.getStatusCode() == 200) {
-                      JsonResponse.created(routingContext.response(),
-                        extendedLoan(createdLoan, item, holding, instance,
-                          locationResponse.getJson(), null));
+                      locationObject = locationResponse.getJson();
+                      //JsonResponse.created(routingContext.response(),
+                      //  extendedLoan(createdLoan, item, holding, instance,
+                      //    locationResponse.getJson(), null));
                     }
                     else {
                       log.warn(
                         String.format("Could not get location %s for item %s",
                           locationId, itemId ));
+                      locationObject = null;
 
-                      JsonResponse.created(routingContext.response(),
-                        extendedLoan(createdLoan, item, holding, instance, null, null));
+                      //JsonResponse.created(routingContext.response(),
+                      //  extendedLoan(createdLoan, item, holding, instance, null, null));
                     }
+                    String materialTypeId;
+                    if(item != null) {
+                      materialTypeId = item.getString("materialTypeId");
+                    } else {
+                      materialTypeId = null;
+                    }
+                    materialTypesStorageClient.get(materialTypeId, mtResponse -> {
+                      JsonObject materialTypeObject;
+                      if(mtResponse.getStatusCode() != 200) {
+                        log.warn("Could not get material type for material type id "
+                          + materialTypeId);
+                        materialTypeObject = null;
+                      } else {
+                        materialTypeObject = mtResponse.getJson();
+                      }
+                      JsonResponse.created(routingContext.response(),
+                        extendedLoan(createdLoan, item, holding, instance,
+                        locationObject, materialTypeObject));
+                    });
                   });
                 }
                 else {
@@ -247,21 +271,30 @@ public class LoanCollectionResource {
             } else {
               locationObject = locationResponse.getJson();
             }
-            final String materialTypeId;
+            String materialTypeId;
             if(item != null && item.containsKey("materialTypeId")) {
               materialTypeId = item.getString("materialTypeId");
+              if(materialTypeId == null) {
+                log.warn("Retrieved materialTypeId is null");
+              }
             } else {
+              log.warn("No materialTypeId found in item " + itemId);
               materialTypeId = null;
             }
             materialTypesStorageClient.get(materialTypeId,
               mtResponse -> {
               JsonObject materialTypeObject;
               if(mtResponse.getStatusCode() != 200) {
-                log.warn(String.format("Could not get material type %s fpr item %s",
+                log.warn(String.format("Could not get material type %s for item '%s'",
                   materialTypeId, itemId));
                 materialTypeObject = null;
               } else {
                 materialTypeObject = mtResponse.getJson();
+                if(materialTypeObject == null) {
+                  log.warn("Null result returned from material types client for id " + materialTypeId);
+                } else {
+                  log.info("Got material type object: " + materialTypeObject.encode());
+                }
               }
               JsonResponse.success(routingContext.response(),
                 extendedLoan(loan, item, holding, instance,
@@ -598,6 +631,7 @@ public class LoanCollectionResource {
     final String holdingsRecordIdProperty = "holdingsRecordId";
     final String instanceIdProperty = "instanceId";
     final String callNumberProperty = "callNumber";
+    final String materialTypeProperty = "materialType";
 
     if(instance != null && instance.containsKey(titleProperty)) {
       itemSummary.put(titleProperty, instance.getString(titleProperty));
@@ -643,9 +677,15 @@ public class LoanCollectionResource {
         .put("name", location.getString("name")));
     }
     
-    if(materialType != null && materialType.containsKey("name")) {
-      itemSummary.put("materialType", new JsonObject()
-        .put("name", materialType.getString("name")));
+    if(materialType != null) {
+      if(materialType.containsKey("name") && materialType.getString("name") != null) {
+        itemSummary.put(materialTypeProperty, materialType.getString("name"));
+      } else {
+        log.warn("Missing or null property for material type for item id " +
+          item.getString("id"));
+      }      
+    } else {
+      log.warn("Null materialType object for item " + item.getString("id"));
     }
 
     return itemSummary;
