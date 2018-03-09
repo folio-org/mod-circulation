@@ -685,7 +685,8 @@ public class LoanCollectionResource {
           item.getString("id"));
       }      
     } else {
-      log.warn("Null materialType object for item " + item.getString("id"));
+      log.warn(String.format("Null materialType object for item %s",
+        item.getString("id")));
     }
 
     return itemSummary;
