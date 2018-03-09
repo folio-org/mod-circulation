@@ -9,11 +9,13 @@ public class HoldingRequestBuilder implements Builder {
 
   private final UUID instanceId;
   private final UUID permanentLocationId;
+  private final String callNumber;
 
   public HoldingRequestBuilder() {
     this(
       null,
-      APITestSuite.mainLibraryLocationId());
+      APITestSuite.mainLibraryLocationId(),
+      null);
   }
 
   private HoldingRequestBuilder(
@@ -22,24 +24,45 @@ public class HoldingRequestBuilder implements Builder {
 
     this.instanceId = instanceId;
     this.permanentLocationId = permanentLocationId;
+    this.callNumber = "";
+  }
+  
+  private HoldingRequestBuilder(
+    UUID instanceId,
+    UUID permanentLocationId,
+    String callNumber) {
+    this.instanceId = instanceId;
+    this.permanentLocationId = permanentLocationId;
+    this.callNumber = callNumber;
   }
 
   @Override
   public JsonObject create() {
     return new JsonObject()
       .put("instanceId", instanceId.toString())
-      .put("permanentLocationId", permanentLocationId.toString());
+      .put("permanentLocationId", permanentLocationId.toString())
+      .put("callNumber", callNumber);
   }
 
   public HoldingRequestBuilder withPermanentLocation(UUID permanentLocationId) {
     return new HoldingRequestBuilder(
       this.instanceId,
-      permanentLocationId);
+      permanentLocationId,
+      this.callNumber);
   }
 
   public HoldingRequestBuilder forInstance(UUID instanceId) {
     return new HoldingRequestBuilder(
       instanceId,
-      this.permanentLocationId);
+      this.permanentLocationId,
+      this.callNumber);
+  }
+  
+  public HoldingRequestBuilder withCallNumber(String callNumber) {
+    return new HoldingRequestBuilder(
+      this.instanceId,
+      this.permanentLocationId,
+      callNumber
+    );
   }
 }

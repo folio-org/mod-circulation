@@ -80,6 +80,7 @@ public class APITestSuite {
   private static UUID userId2;
   private static JsonObject userRecord1;
   private static JsonObject userRecord2;
+  private static UUID personalContributorTypeId;
 
   private static UUID canCirculateLoanPolicyId;
 
@@ -153,6 +154,10 @@ public class APITestSuite {
     return booksInstanceTypeId;
   }
 
+  public static UUID personalContributorNameTypeId() {
+    return personalContributorTypeId;
+  }
+
   public static UUID userId() {
     return userId1;
   }
@@ -218,6 +223,7 @@ public class APITestSuite {
     createMaterialTypes();
     createLoanTypes();
     createLocations();
+    createContributorNameTypes();
     createInstanceTypes();
     createGroups();
     createUsers();
@@ -252,6 +258,7 @@ public class APITestSuite {
     deleteMaterialTypes();
     deleteLoanTypes();
     deleteLocations();
+    deleteContributorTypes();
     deleteInstanceTypes();
     deleteLoanPolicies();
 
@@ -356,6 +363,7 @@ public class APITestSuite {
       ResourceClient.forMaterialTypes(createClient()), "Video Recording");
   }
 
+
   private static void deleteMaterialTypes()
     throws MalformedURLException,
     InterruptedException,
@@ -366,6 +374,26 @@ public class APITestSuite {
 
     materialTypesClient.delete(bookMaterialTypeId);
     materialTypesClient.delete(videoRecordingMaterialTypeId);
+  }
+
+
+  private static void createContributorNameTypes()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+    personalContributorTypeId = createReferenceRecord(
+      ResourceClient.forContributorNameTypes(createClient()), "Personal name");
+  }
+
+  private static void deleteContributorTypes()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    ResourceClient contributorTypesClient = ResourceClient.forContributorNameTypes(createClient());
+    contributorTypesClient.delete(personalContributorTypeId);
   }
 
   private static void createLoanTypes()

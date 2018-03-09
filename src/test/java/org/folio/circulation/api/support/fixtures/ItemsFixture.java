@@ -1,5 +1,7 @@
 package org.folio.circulation.api.support.fixtures;
 
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.APITestSuite;
 import org.folio.circulation.api.support.builders.HoldingRequestBuilder;
 import org.folio.circulation.api.support.builders.InstanceRequestBuilder;
@@ -46,7 +48,13 @@ public class ItemsFixture {
     ExecutionException {
 
     return create(
-      InstanceRequestExamples.basedUponSmallAngryPlanet(),
+      InstanceRequestExamples.basedUponSmallAngryPlanet()
+        .withContributors(
+          new JsonArray().add(
+            new JsonObject()
+              .put("name", "Smith, Joe")
+              .put("contributorNameTypeId",
+                APITestSuite.personalContributorNameTypeId().toString()))),
       ItemRequestExamples.basedUponSmallAngryPlanet());
   }
 
@@ -188,7 +196,7 @@ public class ItemsFixture {
       .forInstance(instance.getId())
       .withPermanentLocation(defaultPermanentLocation);
 
-    IndividualResource holding = holdingsClient.create(holdingBuilder);
+    IndividualResource holding = holdingsClient.create(holdingBuilder.withCallNumber("123456"));
 
     return itemsClient.create(
       itemRequestBuilder.forHolding(holding.getId())
