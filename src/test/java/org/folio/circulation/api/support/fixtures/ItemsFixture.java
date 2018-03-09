@@ -51,7 +51,10 @@ public class ItemsFixture {
       InstanceRequestExamples.basedUponSmallAngryPlanet()
         .withContributors(
           new JsonArray().add(
-            new JsonObject().put("name", "Smith, Joe"))),
+            new JsonObject()
+              .put("name", "Smith, Joe")
+              .put("contributorNameTypeId",
+                APITestSuite.personalContributorNameTypeId().toString()))),
       ItemRequestExamples.basedUponSmallAngryPlanet());
   }
 

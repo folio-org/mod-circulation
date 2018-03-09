@@ -257,7 +257,7 @@ public class LoanCollectionResource {
           JsonObject instance = r.getInstance();
 
           final String locationId = determineLocationIdForItem(item, holding);
-          
+
           locationsStorageClient.get(locationId,
             locationResponse -> {
             JsonObject locationObject;
@@ -295,8 +295,8 @@ public class LoanCollectionResource {
               }
               JsonResponse.success(routingContext.response(),
                 extendedLoan(loan, item, holding, instance,
-                locationObject, materialTypeObject));    
-            });       
+                locationObject, materialTypeObject));
+            });
           });
         });
       }
@@ -404,7 +404,7 @@ public class LoanCollectionResource {
                   locationsResponse.getBody()));
               return;
             }
-            
+
             //Also get a list of material types
             List<String> materialTypeIds = records.getItems().stream()
               .map(item -> item.getString(MT_ID_PROPERTY))
@@ -412,10 +412,10 @@ public class LoanCollectionResource {
               .collect(Collectors.toList());
             CompletableFuture<Response> materialTypesFetched = new CompletableFuture<>();
             String materialTypesQuery = CqlHelper.multipleRecordsCqlQuery(materialTypeIds);
-            
+
             materialTypesStorageClient.getMany(materialTypesQuery,
               materialTypeIds.size(), 0, materialTypesFetched::complete);
-            
+
             materialTypesFetched.thenAccept(materialTypesResponse -> {
               if(materialTypesResponse.getStatusCode() != 200) {
                 ServerErrorResponse.internalError(routingContext.response(),
@@ -424,7 +424,7 @@ public class LoanCollectionResource {
                     materialTypesResponse.getBody()));
                 return;
               }
-               
+
               loans.forEach( loan -> {
                 Optional<JsonObject> possibleItem = records.findItemById(
                   loan.getString("itemId"));
@@ -457,15 +457,15 @@ public class LoanCollectionResource {
                     .filter(location -> location.getString("id").equals(
                       determineLocationIdForItem(item, possibleHolding.orElse(null))))
                     .findFirst();
-                  
+
                   List<JsonObject> materialTypes = JsonArrayHelper.toList(
                     materialTypesResponse.getJson().getJsonArray("mtypes"));
-                  
-            
+
+
                   Optional<JsonObject> possibleMaterialType = materialTypes.stream()
                     .filter(materialType -> materialType.getString("id")
                     .equals(materialTypeId[0])).findFirst();
-                  
+
 
                   loan.put("item", createItemSummary(item,
                     possibleInstance.orElse(null),
@@ -480,7 +480,7 @@ public class LoanCollectionResource {
               JsonResponse.success(routingContext.response(),
                 wrappedLoans.toJson());
 
-            });            
+            });
           });
         });
       }
@@ -584,7 +584,7 @@ public class LoanCollectionResource {
 
     return usersStorageClient;
   }
-  
+
   private CollectionResourceClient createMaterialTypesStorageClient(
     OkapiHttpClient client,
     WebContext context)
@@ -638,9 +638,9 @@ public class LoanCollectionResource {
     } else if (item.containsKey("title")) {
       itemSummary.put(titleProperty, item.getString(titleProperty));
     }
-    
     if(instance != null && instance.containsKey(CONTRIBUTORS_PROPERTY)) {
       JsonArray instanceContributors = instance.getJsonArray(CONTRIBUTORS_PROPERTY);
+
       if(instanceContributors != null && !instanceContributors.isEmpty()) {
         JsonArray contributors = new JsonArray();
         for(Object ob : instanceContributors) {
@@ -649,7 +649,6 @@ public class LoanCollectionResource {
         }
         itemSummary.put(CONTRIBUTORS_PROPERTY, contributors);
       }
-            
     }
 
     if(item.containsKey(barcodeProperty)) {
@@ -663,7 +662,7 @@ public class LoanCollectionResource {
     if(holding != null && holding.containsKey(instanceIdProperty)) {
       itemSummary.put(instanceIdProperty, holding.getString(instanceIdProperty));
     }
-    
+
     if(holding != null && holding.containsKey(callNumberProperty)) {
       itemSummary.put(callNumberProperty, holding.getString(callNumberProperty));
     }
@@ -676,14 +675,15 @@ public class LoanCollectionResource {
       itemSummary.put("location", new JsonObject()
         .put("name", location.getString("name")));
     }
-    
+
     if(materialType != null) {
       if(materialType.containsKey("name") && materialType.getString("name") != null) {
-        itemSummary.put(materialTypeProperty, materialType.getString("name"));
+        itemSummary.put(materialTypeProperty, new JsonObject()
+          .put("name", materialType.getString("name")));
       } else {
         log.warn("Missing or null property for material type for item id " +
           item.getString("id"));
-      }      
+      }
     } else {
       log.warn(String.format("Null materialType object for item %s",
         item.getString("id")));

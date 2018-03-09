@@ -154,6 +154,10 @@ public class APITestSuite {
     return booksInstanceTypeId;
   }
 
+  public static UUID personalContributorNameTypeId() {
+    return personalContributorTypeId;
+  }
+
   public static UUID userId() {
     return userId1;
   }
@@ -219,7 +223,7 @@ public class APITestSuite {
     createMaterialTypes();
     createLoanTypes();
     createLocations();
-    createContributorTypes();
+    createContributorNameTypes();
     createInstanceTypes();
     createGroups();
     createUsers();
@@ -371,24 +375,24 @@ public class APITestSuite {
     materialTypesClient.delete(bookMaterialTypeId);
     materialTypesClient.delete(videoRecordingMaterialTypeId);
   }
-  
-    
-  private static void createContributorTypes()
+
+
+  private static void createContributorNameTypes()
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
     TimeoutException {
     personalContributorTypeId = createReferenceRecord(
-      ResourceClient.forContributorTypes(createClient()), "Personal name");
+      ResourceClient.forContributorNameTypes(createClient()), "Personal name");
   }
-  
+
   private static void deleteContributorTypes()
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
     TimeoutException {
-    
-    ResourceClient contributorTypesClient = ResourceClient.forContributorTypes(createClient());
+
+    ResourceClient contributorTypesClient = ResourceClient.forContributorNameTypes(createClient());
     contributorTypesClient.delete(personalContributorTypeId);
   }
 
@@ -516,7 +520,7 @@ public class APITestSuite {
     InterruptedException,
     ExecutionException,
     TimeoutException {
-    
+
     List<JsonObject> existingRecords = client.getAll();
 
     if(existsInList(existingRecords, name)) {

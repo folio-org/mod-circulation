@@ -63,11 +63,11 @@ public class FakeOkapi extends AbstractVerticle {
       .withRootPath("/instance-types")
       .withCollectionPropertyName("instanceTypes")
       .create().register(router);
-    
+
     new FakeStorageModuleBuilder()
-      .withRecordName("contributor type")
-      .withRootPath("/contributor-types")
-      .withCollectionPropertyName("contributorTypes")
+      .withRecordName("contributor name type")
+      .withRootPath("/contributor-name-types")
+      .withCollectionPropertyName("contributorNameTypes")
       .create().register(router);
 
     new FakeStorageModuleBuilder()

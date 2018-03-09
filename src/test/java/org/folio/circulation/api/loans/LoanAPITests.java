@@ -34,7 +34,6 @@ import static org.folio.circulation.api.support.http.InterfaceUrls.loansUrl;
 import static org.folio.circulation.api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
-import org.hamcrest.core.IsNot;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class LoanAPITests extends APITests {
@@ -51,7 +50,7 @@ public class LoanAPITests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
     String materialTypeId = itemsFixture.basedUponSmallAngryPlanet().getJson().getString("materialTypeId");
-    
+
     assertThat("materialTypeId is null", materialTypeId == null, is(false));
 
     UUID userId = usersClient.create(new UserRequestBuilder()).getId();
@@ -102,17 +101,22 @@ public class LoanAPITests extends APITests {
     assertThat("barcode is taken from item",
       loan.getJsonObject("item").getString("barcode"),
       is("036000291452"));
-    
+
     assertThat("call number is 123456", loan.getJsonObject("item")
       .getString("callNumber"), is("123456"));
-    
+
     assertThat(loan.getJsonObject("item").encode() + " contains 'materialType'",
       loan.getJsonObject("item").containsKey("materialType"), is(true));
-    
+
+    assertThat("materialType exists for item", loan.getJsonObject("item")
+      .containsKey("materialType"), is(true));
+
     assertThat("materialType is book", loan.getJsonObject("item")
-      .getString("materialType"), is("Book"));
-    
-    assertThat("Joe Smith is a contributor", loan.getJsonObject("item").getJsonArray("contributors").getJsonObject(0).getString("name"), is("Smith, Joe"));
+      .getJsonObject("materialType").getString("name"), is("Book"));
+
+    assertThat("Joe Smith is a contributor",
+      loan.getJsonObject("item").getJsonArray("contributors")
+        .getJsonObject(0).getString("name"), is("Smith, Joe"));
 
     assertThat("has item status",
       loan.getJsonObject("item").containsKey("status"), is(true));
@@ -135,9 +139,9 @@ public class LoanAPITests extends APITests {
     assertThat("item status snapshot in storage is not checked out",
       loansStorageClient.getById(id).getJson().getString("itemStatus"),
       is("Checked out"));
-   
-    
-    
+
+
+
 
   }
 

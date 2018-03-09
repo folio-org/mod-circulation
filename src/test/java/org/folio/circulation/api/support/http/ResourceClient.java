@@ -98,9 +98,9 @@ public class ResourceClient {
       "instance types", "instanceTypes");
   }
 
-  public static ResourceClient forContributorTypes(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::contributorTypesStorageUrl,
-      "contributor types", "contributorTypes");
+  public static ResourceClient forContributorNameTypes(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::contributorNameTypesStorageUrl,
+      "contributor name types", "contributorNameTypes");
   }
 
   private ResourceClient(
