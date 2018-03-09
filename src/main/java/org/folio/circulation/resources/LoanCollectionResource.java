@@ -36,6 +36,8 @@ public class LoanCollectionResource {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final String rootPath;
+  private static final String CONTRIBUTORS_PROPERTY = "contributors";
+  private static final String MT_ID_PROPERTY = "materialTypeId";
 
   public LoanCollectionResource(String rootPath) {
     this.rootPath = rootPath;
@@ -136,15 +138,15 @@ public class LoanCollectionResource {
                     }
                     String materialTypeId;
                     if(item != null) {
-                      materialTypeId = item.getString("materialTypeId");
+                      materialTypeId = item.getString(MT_ID_PROPERTY);
                     } else {
                       materialTypeId = null;
                     }
                     materialTypesStorageClient.get(materialTypeId, mtResponse -> {
                       JsonObject materialTypeObject;
                       if(mtResponse.getStatusCode() != 200) {
-                        log.warn("Could not get material type for material type id "
-                          + materialTypeId);
+                        log.warn(String.format("Could not get material type for material type id %s",
+                          materialTypeId));
                         materialTypeObject = null;
                       } else {
                         materialTypeObject = mtResponse.getJson();
@@ -268,13 +270,13 @@ public class LoanCollectionResource {
               locationObject = locationResponse.getJson();
             }
             String materialTypeId;
-            if(item != null && item.containsKey("materialTypeId")) {
-              materialTypeId = item.getString("materialTypeId");
+            if(item != null && item.containsKey(MT_ID_PROPERTY)) {
+              materialTypeId = item.getString(MT_ID_PROPERTY);
               if(materialTypeId == null) {
                 log.warn("Retrieved materialTypeId is null");
               }
             } else {
-              log.warn("No materialTypeId found in item " + itemId);
+              log.warn(String.format("No materialTypeId found in item %s", itemId));
               materialTypeId = null;
             }
             materialTypesStorageClient.get(materialTypeId,
@@ -287,9 +289,8 @@ public class LoanCollectionResource {
               } else {
                 materialTypeObject = mtResponse.getJson();
                 if(materialTypeObject == null) {
-                  log.warn("Null result returned from material types client for id " + materialTypeId);
-                } else {
-                  log.info("Got material type object: " + materialTypeObject.encode());
+                  log.warn(String.format("Null result returned from material types client for id %s",
+                  materialTypeId));
                 }
               }
               JsonResponse.success(routingContext.response(),
@@ -406,7 +407,7 @@ public class LoanCollectionResource {
             
             //Also get a list of material types
             List<String> materialTypeIds = records.getItems().stream()
-              .map(item -> item.getString("materialTypeId"))
+              .map(item -> item.getString(MT_ID_PROPERTY))
               .filter(StringUtils::isNotBlank)
               .collect(Collectors.toList());
             CompletableFuture<Response> materialTypesFetched = new CompletableFuture<>();
@@ -437,7 +438,7 @@ public class LoanCollectionResource {
                 String[] materialTypeId = new String[]{null};
                 if(possibleItem.isPresent()) {
                   JsonObject item = possibleItem.get();
-                  materialTypeId[0] = item.getString("materialTypeId");
+                  materialTypeId[0] = item.getString(MT_ID_PROPERTY);
 
                   Optional<JsonObject> possibleHolding = records.findHoldingById(
                     item.getString("holdingsRecordId"));
@@ -638,15 +639,15 @@ public class LoanCollectionResource {
       itemSummary.put(titleProperty, item.getString(titleProperty));
     }
     
-    if(instance != null && instance.containsKey("contributors")) {
-      JsonArray instanceContributors = instance.getJsonArray("contributors");
+    if(instance != null && instance.containsKey(CONTRIBUTORS_PROPERTY)) {
+      JsonArray instanceContributors = instance.getJsonArray(CONTRIBUTORS_PROPERTY);
       if(instanceContributors != null && !instanceContributors.isEmpty()) {
         JsonArray contributors = new JsonArray();
         for(Object ob : instanceContributors) {
           String name = ((JsonObject)ob).getString("name");
           contributors.add(new JsonObject().put("name", name));
         }
-        itemSummary.put("contributors", contributors);
+        itemSummary.put(CONTRIBUTORS_PROPERTY, contributors);
       }
             
     }
@@ -737,7 +738,7 @@ public class LoanCollectionResource {
     String locationId = determineLocationIdForItem(item, holding);
 
     //Got instance record, we're good to continue
-    String materialTypeId = item.getString("materialTypeId");
+    String materialTypeId = item.getString(MT_ID_PROPERTY);
 
     usersStorageClient.get(userId, getUserResponse -> {
       if(getUserResponse.getStatusCode() == 404) {
