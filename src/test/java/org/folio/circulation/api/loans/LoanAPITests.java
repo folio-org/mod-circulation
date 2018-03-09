@@ -106,10 +106,13 @@ public class LoanAPITests extends APITests {
     assertThat("call number is 123456", loan.getJsonObject("item")
       .getString("callNumber"), is("123456"));
     
-    assertThat(loan.getJsonObject("item").encode() + " contains 'materialType'", loan.getJsonObject("item").containsKey("materialType"), is(true));
+    assertThat(loan.getJsonObject("item").encode() + " contains 'materialType'",
+      loan.getJsonObject("item").containsKey("materialType"), is(true));
     
     assertThat("materialType is book", loan.getJsonObject("item")
       .getString("materialType"), is("Book"));
+    
+    assertThat("Joe Smith is a contributor", loan.getJsonObject("item").getJsonArray("contributors").getJsonObject(0).getString("name"), is("Smith, Joe"));
  
     assertThat("has item status",
       loan.getJsonObject("item").containsKey("status"), is(true));
@@ -964,6 +967,7 @@ public class LoanAPITests extends APITests {
     hasProperty("title", item, "item");
     hasProperty("barcode", item, "item");
     hasProperty("status", item, "item");
+    hasProperty("materialType", item, "item");
 
     assertThat("Should not have snapshot of item status, as current status is included",
       loan.containsKey("itemStatus"), is(false));

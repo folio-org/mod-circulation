@@ -125,9 +125,6 @@ public class LoanCollectionResource {
                     JsonObject locationObject;
                     if(locationResponse.getStatusCode() == 200) {
                       locationObject = locationResponse.getJson();
-                      //JsonResponse.created(routingContext.response(),
-                      //  extendedLoan(createdLoan, item, holding, instance,
-                      //    locationResponse.getJson(), null));
                     }
                     else {
                       log.warn(
@@ -135,8 +132,7 @@ public class LoanCollectionResource {
                           locationId, itemId ));
                       locationObject = null;
 
-                      //JsonResponse.created(routingContext.response(),
-                      //  extendedLoan(createdLoan, item, holding, instance, null, null));
+
                     }
                     String materialTypeId;
                     if(item != null) {
@@ -438,9 +434,10 @@ public class LoanCollectionResource {
                 loan.remove("itemStatus");
 
                 Optional<JsonObject> possibleInstance = Optional.empty();
-
+                String[] materialTypeId = new String[]{null};
                 if(possibleItem.isPresent()) {
                   JsonObject item = possibleItem.get();
+                  materialTypeId[0] = item.getString("materialTypeId");
 
                   Optional<JsonObject> possibleHolding = records.findHoldingById(
                     item.getString("holdingsRecordId"));
@@ -463,9 +460,11 @@ public class LoanCollectionResource {
                   List<JsonObject> materialTypes = JsonArrayHelper.toList(
                     materialTypesResponse.getJson().getJsonArray("mtypes"));
                   
+            
                   Optional<JsonObject> possibleMaterialType = materialTypes.stream()
                     .filter(materialType -> materialType.getString("id")
-                    .equals(loan.getString("materialTypeId"))).findFirst();
+                    .equals(materialTypeId[0])).findFirst();
+                  
 
                   loan.put("item", createItemSummary(item,
                     possibleInstance.orElse(null),
