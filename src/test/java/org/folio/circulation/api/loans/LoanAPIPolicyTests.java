@@ -30,6 +30,11 @@ import static org.folio.circulation.api.APITestSuite.readingRoomLoanTypeId;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.folio.circulation.api.APITestSuite.canCirculateLoanTypeId;
+import static org.folio.circulation.api.APITestSuite.readingRoomLoanTypeId;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNot.not;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 
 /**
