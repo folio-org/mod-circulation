@@ -2,8 +2,8 @@ package org.folio.circulation.resources;
 
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerResponse;
-import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
@@ -710,6 +710,7 @@ public class LoanCollectionResource {
     } else if (item.containsKey("title")) {
       itemSummary.put(titleProperty, item.getString(titleProperty));
     }
+
     if(instance != null && instance.containsKey(CONTRIBUTORS_PROPERTY)) {
       JsonArray instanceContributors = instance.getJsonArray(CONTRIBUTORS_PROPERTY);
 

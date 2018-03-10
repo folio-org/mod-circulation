@@ -61,4 +61,15 @@ public class InstanceRequestBuilder implements Builder {
       contributors
     );
   }
+
+  public InstanceRequestBuilder withContributor(String name) {
+    JsonArray contributors = new JsonArray();
+
+    contributors.add(new JsonObject()
+      .put("name", name)
+      .put("contributorNameTypeId",
+        APITestSuite.personalContributorNameTypeId().toString()));
+
+    return withContributors(contributors);
+  }
 }

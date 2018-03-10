@@ -1,5 +1,6 @@
 package org.folio.circulation.api.loans;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.APITestSuite;
 import org.folio.circulation.api.support.APITests;
@@ -51,9 +52,6 @@ public class LoanAPITests extends APITests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
-    String materialTypeId = itemsFixture.basedUponSmallAngryPlanet().getJson().getString("materialTypeId");
-
-    assertThat("materialTypeId is null", materialTypeId == null, is(false));
 
     UUID userId = usersClient.create(new UserRequestBuilder()).getId();
     UUID proxyUserId = UUID.randomUUID();
@@ -106,15 +104,19 @@ public class LoanAPITests extends APITests {
     assertThat(loan.getJsonObject("item").encode() + " contains 'materialType'",
       loan.getJsonObject("item").containsKey("materialType"), is(true));
 
-    assertThat("materialType exists for item", loan.getJsonObject("item")
-      .containsKey("materialType"), is(true));
-
     assertThat("materialType is book", loan.getJsonObject("item")
       .getJsonObject("materialType").getString("name"), is("Book"));
 
-    assertThat("Joe Smith is a contributor",
-      loan.getJsonObject("item").getJsonArray("contributors")
-        .getJsonObject(0).getString("name"), is("Smith, Joe"));
+    assertThat("item has contributors",
+      loan.getJsonObject("item").containsKey("contributors"), is(true));
+
+    JsonArray contributors = loan.getJsonObject("item").getJsonArray("contributors");
+
+    assertThat("item has a single contributor",
+      contributors.size(), is(1));
+
+    assertThat("Becky Chambers is a contributor",
+      contributors.getJsonObject(0).getString("name"), is("Chambers, Becky"));
 
     assertThat("has item status",
       loan.getJsonObject("item").containsKey("status"), is(true));
@@ -344,6 +346,26 @@ public class LoanAPITests extends APITests {
     assertThat("barcode is taken from item",
       loan.getJsonObject("item").getString("barcode"),
       is("036000291452"));
+
+    assertThat("call number is 123456", loan.getJsonObject("item")
+      .getString("callNumber"), is("123456"));
+
+    assertThat(loan.getJsonObject("item").encode() + " contains 'materialType'",
+      loan.getJsonObject("item").containsKey("materialType"), is(true));
+
+    assertThat("materialType is book", loan.getJsonObject("item")
+      .getJsonObject("materialType").getString("name"), is("Book"));
+
+    assertThat("item has contributors",
+      loan.getJsonObject("item").containsKey("contributors"), is(true));
+
+    JsonArray contributors = loan.getJsonObject("item").getJsonArray("contributors");
+
+    assertThat("item has a single contributor",
+      contributors.size(), is(1));
+
+    assertThat("Becky Chambers is a contributor",
+      contributors.getJsonObject(0).getString("name"), is("Chambers, Becky"));
 
     assertThat("has item status",
       loan.getJsonObject("item").containsKey("status"), is(true));
@@ -1237,6 +1259,24 @@ public class LoanAPITests extends APITests {
     hasProperty("barcode", item, "item");
     hasProperty("status", item, "item");
     hasProperty("materialType", item, "item");
+    hasProperty("callNumber", item, "item");
+    hasProperty("contributors", item, "item");
+
+    JsonObject materialType = item.getJsonObject("materialType");
+
+    hasProperty("name", materialType, "material type");
+
+    JsonObject itemStatus = item.getJsonObject("status");
+
+    hasProperty("name", itemStatus, "item status");
+
+    List<JsonObject> contributors = JsonArrayHelper.toList(item.getJsonArray("contributors"));
+
+    assertThat("Should have single contributor",
+      contributors.size(), is(1));
+
+    assertThat("Contributor has a name",
+      contributors.get(0).containsKey("name"), is(true));
 
     assertThat("Should not have snapshot of item status, as current status is included",
       loan.containsKey("itemStatus"), is(false));
