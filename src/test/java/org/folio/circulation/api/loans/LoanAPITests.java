@@ -933,7 +933,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void queryValidProxyFor()
+  public void createLoanProxyForTest()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -1050,6 +1050,102 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
+  public void updateWithValidProxy()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID id = UUID.randomUUID();
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    UUID userId = usersClient.create(new UserRequestBuilder()).getId();
+
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
+    loansClient.create(new LoanRequestBuilder()
+      .withId(id)
+      .withUserId(userId)
+      .withItemId(itemId)
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate)
+      .withStatus("Open"));
+
+    UUID proxyUserId = UUID.randomUUID();
+    DateTime expDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    UUID recordId = userProxyClient.create(new UserProxyRequestBuilder().
+      withValidationFields(expDate.toString(), "Active", userId.toString(), proxyUserId.toString())).getId();
+
+    JsonObject loan = new LoanRequestBuilder()
+    .withId(id)
+    .withUserId(userId)
+    .withProxyUserId(recordId)
+    .withItemId(itemId)
+    .withLoanDate(loanDate)
+    .withDueDate(dueDate)
+    .withStatus("Open").create();
+
+    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
+
+    client.put(loansUrl(String.format("/%s", id)), loan,
+      ResponseHandler.any(putCompleted));
+
+    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat("Valid proxy should allow updates to work but does not", putResponse.getStatusCode(),
+      is(HttpURLConnection.HTTP_NO_CONTENT));
+
+  }
+
+  @Test
+  public void updateWithInValidProxy()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID id = UUID.randomUUID();
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    UUID userId = usersClient.create(new UserRequestBuilder()).getId();
+
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
+    loansClient.create(new LoanRequestBuilder()
+      .withId(id)
+      .withUserId(userId)
+      .withItemId(itemId)
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate)
+      .withStatus("Open"));
+
+    UUID proxyUserId = UUID.randomUUID();
+    DateTime expDate = new DateTime(1999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    UUID recordId = userProxyClient.create(new UserProxyRequestBuilder().
+      withValidationFields(expDate.toString(), "Active", userId.toString(), proxyUserId.toString())).getId();
+
+    JsonObject loan = new LoanRequestBuilder()
+    .withId(id)
+    .withUserId(userId)
+    .withProxyUserId(recordId)
+    .withItemId(itemId)
+    .withLoanDate(loanDate)
+    .withDueDate(dueDate)
+    .withStatus("Open").create();
+
+    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
+
+    client.put(loansUrl(String.format("/%s", id)), loan,
+      ResponseHandler.any(putCompleted));
+
+    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat("InValid proxy should fail loan update", putResponse.getStatusCode(),
+      is(422));
+
+  }
+
+  @Test
   public void updateWithNonExistentProxy()
     throws InterruptedException,
     ExecutionException,
@@ -1082,7 +1178,7 @@ public class LoanAPITests extends APITests {
 
     CompletableFuture<Response> putCompleted = new CompletableFuture<>();
 
-    client.put(loansUrl(String.format("/%s", response.getId())), loan,
+    client.put(loansUrl(String.format("/%s", id)), loan,
       ResponseHandler.any(putCompleted));
 
     Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
