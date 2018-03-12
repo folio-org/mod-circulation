@@ -44,9 +44,14 @@ public class FakeStorageModuleBuilder {
   }
 
   public FakeStorageModuleBuilder withRootPath(String rootPath) {
+
+    String newCollectionPropertyName = collectionPropertyName == null
+      ? rootPath.substring(rootPath.lastIndexOf("/") + 1)
+      : collectionPropertyName;
+
     return new FakeStorageModuleBuilder(
       rootPath,
-      rootPath.substring(rootPath.lastIndexOf("/") + 1),
+      newCollectionPropertyName,
       this.tenantId,
       this.requiredProperties,
       this.hasCollectionDelete,

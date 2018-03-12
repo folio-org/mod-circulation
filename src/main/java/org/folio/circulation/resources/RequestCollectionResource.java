@@ -1,10 +1,16 @@
 package org.folio.circulation.resources;
 
-import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
-import static org.folio.circulation.domain.ItemStatusAssistant.updateItemStatus;
-import static org.folio.circulation.domain.LoanActionHistoryAssistant.updateLoanActionHistory;
-import static org.folio.circulation.support.CommonFailures.reportFailureToFetchInventoryRecords;
-import static org.folio.circulation.support.JsonPropertyCopier.copyStringIfExists;
+import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.BodyHandler;
+import org.folio.circulation.domain.RequestStatus;
+import org.folio.circulation.domain.RequestType;
+import org.folio.circulation.support.*;
+import org.folio.circulation.support.http.client.OkapiHttpClient;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.server.*;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -15,29 +21,11 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.domain.RequestStatus;
-import org.folio.circulation.domain.RequestType;
-import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.CommonFailures;
-import org.folio.circulation.support.CqlHelper;
-import org.folio.circulation.support.InventoryFetcher;
-import org.folio.circulation.support.InventoryRecords;
-import org.folio.circulation.support.MultipleInventoryRecords;
-import org.folio.circulation.support.MultipleRecordsWrapper;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.server.ClientErrorResponse;
-import org.folio.circulation.support.http.server.ForwardResponse;
-import org.folio.circulation.support.http.server.JsonResponse;
-import org.folio.circulation.support.http.server.ServerErrorResponse;
-import org.folio.circulation.support.http.server.SuccessResponse;
-import org.folio.circulation.support.http.server.WebContext;
-
-import io.vertx.core.http.HttpMethod;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.handler.BodyHandler;
+import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
+import static org.folio.circulation.domain.ItemStatusAssistant.updateItemStatus;
+import static org.folio.circulation.domain.LoanActionHistoryAssistant.updateLoanActionHistory;
+import static org.folio.circulation.support.CommonFailures.reportFailureToFetchInventoryRecords;
+import static org.folio.circulation.support.JsonPropertyCopier.copyStringIfExists;
 
 public class RequestCollectionResource {
   private final String rootPath;
@@ -164,7 +152,7 @@ public class RequestCollectionResource {
           return;
         }
         final MultipleRecordsWrapper wrappedLoans = MultipleRecordsWrapper.fromRequestBody(
-          userProxyIdResponse.getBody(), "proxiesfor");
+          userProxyIdResponse.getBody(), "proxiesFor");
         if(wrappedLoans.isEmpty()) { //if empty then we dont have a valid proxy id in the request
           CommonFailures.reportProxyRelatedValidationError(routingContext, request.getString("proxyUserId"),
               "proxyUserId is not valid");
@@ -290,7 +278,7 @@ public class RequestCollectionResource {
           return;
         }
         final MultipleRecordsWrapper wrappedLoans = MultipleRecordsWrapper.fromRequestBody(
-          userProxyIdResponse.getBody(), "proxiesfor");
+          userProxyIdResponse.getBody(), "proxiesFor");
         if(wrappedLoans.isEmpty()) { //if empty then we dont have a valid proxy id in the request
           CommonFailures.reportProxyRelatedValidationError(routingContext, request.getString("proxyUserId"),
               "proxyUserId is not valid");

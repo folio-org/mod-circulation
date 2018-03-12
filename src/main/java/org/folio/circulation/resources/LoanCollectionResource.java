@@ -1,10 +1,18 @@
 package org.folio.circulation.resources;
 
-import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
-import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
-import static org.folio.circulation.domain.ItemStatusAssistant.updateItemStatus;
-import static org.folio.circulation.support.CommonFailures.reportFailureToFetchInventoryRecords;
-import static org.folio.circulation.support.CommonFailures.reportInvalidOkapiUrlHeader;
+import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.BodyHandler;
+import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.support.*;
+import org.folio.circulation.support.http.client.OkapiHttpClient;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.server.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
@@ -17,32 +25,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.CommonFailures;
-import org.folio.circulation.support.CqlHelper;
-import org.folio.circulation.support.InventoryFetcher;
-import org.folio.circulation.support.InventoryRecords;
-import org.folio.circulation.support.JsonArrayHelper;
-import org.folio.circulation.support.LoanRulesClient;
-import org.folio.circulation.support.MultipleInventoryRecords;
-import org.folio.circulation.support.MultipleRecordsWrapper;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.server.ForwardResponse;
-import org.folio.circulation.support.http.server.JsonResponse;
-import org.folio.circulation.support.http.server.ServerErrorResponse;
-import org.folio.circulation.support.http.server.SuccessResponse;
-import org.folio.circulation.support.http.server.WebContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import io.vertx.core.http.HttpMethod;
-import io.vertx.core.http.HttpServerResponse;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.handler.BodyHandler;
+import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
+import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
+import static org.folio.circulation.domain.ItemStatusAssistant.updateItemStatus;
+import static org.folio.circulation.support.CommonFailures.reportFailureToFetchInventoryRecords;
+import static org.folio.circulation.support.CommonFailures.reportInvalidOkapiUrlHeader;
 
 public class LoanCollectionResource {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -57,12 +44,19 @@ public class LoanCollectionResource {
     router.post(rootPath + "*").handler(BodyHandler.create());
     router.put(rootPath + "*").handler(BodyHandler.create());
 
-    router.post(rootPath).handler(this::create);
+    router.post(rootPath).handler(this::create).failureHandler(c -> {
+      ServerErrorResponse.internalError(c.response(),
+        String.format("Failure Handler: %s", c.failure().getMessage()));
+    });
     router.get(rootPath).handler(this::getMany);
     router.delete(rootPath).handler(this::empty);
 
     router.route(HttpMethod.GET, rootPath + "/:id").handler(this::get);
-    router.route(HttpMethod.PUT, rootPath + "/:id").handler(this::replace);
+    router.route(HttpMethod.PUT, rootPath + "/:id").handler(this::replace).failureHandler(c -> {
+      ServerErrorResponse.internalError(c.response(),
+        String.format("Failure Handler: %s", c.failure().getMessage()));
+    });
+
     router.route(HttpMethod.DELETE, rootPath + "/:id").handler(this::delete);
   }
 
@@ -107,7 +101,7 @@ public class LoanCollectionResource {
           return;
         }
         final MultipleRecordsWrapper wrappedLoans = MultipleRecordsWrapper.fromRequestBody(
-          proxyValidResponse.getBody(), "proxiesfor");
+          proxyValidResponse.getBody(), "proxiesFor");
         if(wrappedLoans.isEmpty()) { //if empty then we dont have a valid proxy id in the loan
           CommonFailures.reportProxyRelatedValidationError(routingContext, loan.getString("proxyUserId"),
               "proxyUserId is not valid");
@@ -221,7 +215,7 @@ public class LoanCollectionResource {
           return;
         }
         final MultipleRecordsWrapper wrappedLoans = MultipleRecordsWrapper.fromRequestBody(
-          proxyValidResponse.getBody(), "proxiesfor");
+          proxyValidResponse.getBody(), "proxiesFor");
         if(wrappedLoans.isEmpty()) { //if empty then we dont have a valid proxy id in the loan
           CommonFailures.reportProxyRelatedValidationError(routingContext, loan.getString("proxyUserId"),
               "proxyUserId is not valid");
