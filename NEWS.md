@@ -2,9 +2,10 @@
 
 * Adds `status` property to `requests` (CIRC-53)
 * Adds `proxyUserId` to `requests` (CIRC-77)
-* Validates proxy relationship for `loans` and `requests` (CIRC-79)
+* Validates proxy relationship when creating or updating `loans` and `requests` (CIRC-79)
 * Provides circulation interface 2.8 (CIRC-53)
 * Requires request-storage interface 1.4 (CIRC-53, CIRC-77, CIRC-79)
+* Requires users interface version 14.2 (CIRC-79)
 
 ## 7.1.1 2018-02-12
 
