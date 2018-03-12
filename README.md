@@ -69,9 +69,17 @@ run `./lint.sh` to validate the RAML and JSON.Schema descriptions of the API (re
 
 ### Loan Rules Caching
 
-The loan rules engine used for applying loan rules has an internal, local cache which is refreshed every 5 seconds.
+The loan rules engine used for applying loan rules has an internal, local cache which is refreshed every 5 seconds and
+when a PUT to /circulation/loan-rules changes the loan rules.
 
 This is per module instance, and so may result in different responses during this window after the loan rules are changed.
+
+### Loan Rules
+
+[doc/loanrules.md](doc/loanrules.md)
+
+That document explains how the loan rules engine calculates the loan policy (that specifies the loan period)
+based on the patron's patron group and the item's material type, loan type, and location.
 
 ### Item Status
 
