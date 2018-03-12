@@ -22,13 +22,13 @@ public class InstanceRequestBuilder implements Builder {
     this.title = title;
     this.contributors = new JsonArray();
   }
-  
+
   public InstanceRequestBuilder(UUID id, String title, JsonArray contributors) {
     this.id = id;
     this.title = title;
     this.contributors = contributors;
   }
-  
+
 
   @Override
   public JsonObject create() {
@@ -53,7 +53,7 @@ public class InstanceRequestBuilder implements Builder {
       title
     );
   }
-  
+
   public InstanceRequestBuilder withContributors(JsonArray contributors) {
     return new InstanceRequestBuilder(
       this.id,
