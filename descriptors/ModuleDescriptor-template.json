@@ -45,7 +45,8 @@
             "inventory-storage.holdings.collection.get",
             "inventory-storage.holdings.item.get",
             "inventory-storage.instances.collection.get",
-            "inventory-storage.instances.item.get"
+            "inventory-storage.instances.item.get",
+            "proxiesfor.collection.get"
           ]
         },
         {
@@ -91,7 +92,8 @@
           "modulePermissions": [
             "circulation-storage.loans.item.put",
             "inventory-storage.items.item.get",
-            "inventory-storage.items.item.put"
+            "inventory-storage.items.item.put",
+            "proxiesfor.collection.get"
           ]
         },
         {
@@ -185,7 +187,8 @@
             "inventory-storage.holdings.collection.get",
             "inventory-storage.holdings.item.get",
             "inventory-storage.instances.collection.get",
-            "inventory-storage.instances.item.get"
+            "inventory-storage.instances.item.get",
+            "proxiesfor.collection.get"
           ]
         },
         {
@@ -232,7 +235,8 @@
             "inventory-storage.holdings.collection.get",
             "inventory-storage.holdings.item.get",
             "inventory-storage.instances.collection.get",
-            "inventory-storage.instances.item.get"
+            "inventory-storage.instances.item.get",
+            "proxiesfor.collection.get"
           ]
         },
         {
