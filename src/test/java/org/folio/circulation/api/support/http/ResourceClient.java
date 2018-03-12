@@ -104,6 +104,11 @@ public class ResourceClient {
       "instance types", "instanceTypes");
   }
 
+  public static ResourceClient forContributorNameTypes(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::contributorNameTypesStorageUrl,
+      "contributor name types", "contributorNameTypes");
+  }
+
   private ResourceClient(
     OkapiHttpClient client,
     UrlMaker urlMaker, String resourceName,
@@ -284,7 +289,15 @@ public class ResourceClient {
     assertThat(String.format("Get all records failed: %s", response.getBody()),
       response.getStatusCode(), is(200));
 
-    return JsonArrayHelper.toList(response.getJson()
+    JsonObject json = response.getJson();
+
+    if(!json.containsKey(collectionArrayPropertyName)) {
+      throw new RuntimeException(String.format(
+        "Collection array property \"%s\" is not present in: %s",
+        collectionArrayPropertyName, json.encodePrettily()));
+    }
+
+    return JsonArrayHelper.toList(json
       .getJsonArray(collectionArrayPropertyName));
   }
 

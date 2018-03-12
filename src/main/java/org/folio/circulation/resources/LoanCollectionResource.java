@@ -3,6 +3,7 @@ package org.folio.circulation.resources;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.json.JsonArray;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
@@ -35,6 +36,8 @@ public class LoanCollectionResource {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final String rootPath;
+  private static final String CONTRIBUTORS_PROPERTY = "contributors";
+  private static final String MT_ID_PROPERTY = "materialTypeId";
 
   public LoanCollectionResource(String rootPath) {
     this.rootPath = rootPath;
@@ -69,6 +72,7 @@ public class LoanCollectionResource {
     CollectionResourceClient usersStorageClient;
     CollectionResourceClient usersProxyStorageClient;
     CollectionResourceClient instancesStorageClient;
+    CollectionResourceClient materialTypesStorageClient;
     OkapiHttpClient client;
     LoanRulesClient loanRulesClient;
 
@@ -81,6 +85,7 @@ public class LoanCollectionResource {
       locationsStorageClient = createLocationsStorageClient(client, context);
       usersStorageClient = createUsersStorageClient(client, context);
       usersProxyStorageClient = createProxyUsersStorageClient(client, context);
+      materialTypesStorageClient = createMaterialTypesStorageClient(client, context);
       loanRulesClient = new LoanRulesClient(client, context);
     }
     catch (MalformedURLException e) {
@@ -91,11 +96,14 @@ public class LoanCollectionResource {
 
     JsonObject loan = routingContext.getBodyAsJson();
 
+    defaultStatusAndAction(loan);
+
+    String itemId = loan.getString("itemId");
+
     String validProxyQuery = CqlHelper.buildisValidUserProxyQuery(loan);
 
     handleProxy(usersProxyStorageClient, validProxyQuery, proxyValidResponse -> {
-
-      if(proxyValidResponse != null){
+      if(proxyValidResponse != null) {
         if(proxyValidResponse.getStatusCode() != 200){
           ForwardResponse.forward(routingContext.response(), proxyValidResponse);
           return;
@@ -104,67 +112,81 @@ public class LoanCollectionResource {
           proxyValidResponse.getBody(), "proxiesFor");
         if(wrappedLoans.isEmpty()) { //if empty then we dont have a valid proxy id in the loan
           CommonFailures.reportProxyRelatedValidationError(routingContext, loan.getString("proxyUserId"),
-              "proxyUserId is not valid");
+            "proxyUserId is not valid");
           return;
         }
       }
 
-      defaultStatusAndAction(loan);
-
-      String itemId = loan.getString("itemId");
-
       updateItemStatus(itemId, itemStatusFrom(loan),
         itemsStorageClient, routingContext.response(), item -> {
 
-          loan.put("itemStatus", item.getJsonObject("status").getString("name"));
+        loan.put("itemStatus", item.getJsonObject("status").getString("name"));
 
-          String holdingId = item.getString("holdingsRecordId");
+        String holdingId = item.getString("holdingsRecordId");
 
-          holdingsStorageClient.get(holdingId, holdingResponse -> {
-            final String instanceId = holdingResponse.getStatusCode() == 200
-              ? holdingResponse.getJson().getString("instanceId")
+        holdingsStorageClient.get(holdingId, holdingResponse -> {
+          final String instanceId = holdingResponse.getStatusCode() == 200
+            ? holdingResponse.getJson().getString("instanceId")
+            : null;
+
+          instancesStorageClient.get(instanceId, instanceResponse -> {
+            final JsonObject instance = instanceResponse.getStatusCode() == 200
+              ? instanceResponse.getJson()
               : null;
 
-            instancesStorageClient.get(instanceId, instanceResponse -> {
-              final JsonObject instance = instanceResponse.getStatusCode() == 200
-                ? instanceResponse.getJson()
-                : null;
+            final JsonObject holding = holdingResponse.getStatusCode() == 200
+              ? holdingResponse.getJson()
+              : null;
 
-              final JsonObject holding = holdingResponse.getStatusCode() == 200
-                ? holdingResponse.getJson()
-                : null;
+            lookupLoanPolicyId(loan, item, holding, usersStorageClient,
+              loanRulesClient, routingContext.response(), loanPolicyIdJson -> {
 
-              lookupLoanPolicyId(loan, item, holding, usersStorageClient,
-                loanRulesClient, routingContext.response(), loanPolicyIdJson -> {
+              loan.put("loanPolicyId", loanPolicyIdJson.getString("loanPolicyId"));
 
-                loan.put("loanPolicyId", loanPolicyIdJson.getString("loanPolicyId"));
+              loansStorageClient.post(loan, response -> {
+                if(response.getStatusCode() == 201) {
+                  JsonObject createdLoan = response.getJson();
 
-                loansStorageClient.post(loan, response -> {
-                  if(response.getStatusCode() == 201) {
-                    JsonObject createdLoan = response.getJson();
+                  final String locationId = determineLocationIdForItem(item, holding);
 
-                    final String locationId = determineLocationIdForItem(item, holding);
+                  locationsStorageClient.get(locationId, locationResponse -> {
+                    JsonObject locationObject;
+                    if(locationResponse.getStatusCode() == 200) {
+                      locationObject = locationResponse.getJson();
+                    }
+                    else {
+                      log.warn(
+                        String.format("Could not get location %s for item %s",
+                          locationId, itemId ));
+                      locationObject = null;
+                    }
 
-                    locationsStorageClient.get(locationId, locationResponse -> {
-                      if(locationResponse.getStatusCode() == 200) {
-                        JsonResponse.created(routingContext.response(),
-                          extendedLoan(createdLoan, item, holding, instance,
-                            locationResponse.getJson()));
+                    String materialTypeId;
+                    if(item != null) {
+                      materialTypeId = item.getString(MT_ID_PROPERTY);
+                    } else {
+                      materialTypeId = null;
+                    }
+
+                    materialTypesStorageClient.get(materialTypeId, mtResponse -> {
+                      JsonObject materialTypeObject;
+                      if(mtResponse.getStatusCode() != 200) {
+                        log.warn(String.format("Could not get material type for material type id %s",
+                          materialTypeId));
+                        materialTypeObject = null;
+                      } else {
+                        materialTypeObject = mtResponse.getJson();
                       }
-                      else {
-                        log.warn(
-                          String.format("Could not get location %s for item %s",
-                            locationId, itemId ));
-
-                        JsonResponse.created(routingContext.response(),
-                          extendedLoan(createdLoan, item, holding, instance, null));
-                      }
+                      JsonResponse.created(routingContext.response(),
+                        extendedLoan(createdLoan, item, holding, instance,
+                          locationObject, materialTypeObject));
                     });
-                  }
-                  else {
-                    ForwardResponse.forward(routingContext.response(), response);
-                  }
-                });
+                  });
+                }
+                else {
+                  ForwardResponse.forward(routingContext.response(), response);
+                }
+              });
             });
           });
         });
@@ -256,6 +278,7 @@ public class LoanCollectionResource {
     CollectionResourceClient holdingsStorageClient;
     CollectionResourceClient locationsStorageClient;
     CollectionResourceClient instancesStorageClient;
+    CollectionResourceClient materialTypesStorageClient;
 
     try {
       OkapiHttpClient client = createHttpClient(routingContext, context);
@@ -264,6 +287,8 @@ public class LoanCollectionResource {
       holdingsStorageClient = createHoldingsStorageClient(client, context);
       locationsStorageClient = createLocationsStorageClient(client, context);
       instancesStorageClient = createInstanceStorageClient(client, context);
+      materialTypesStorageClient = createMaterialTypesStorageClient(client, context);
+
     }
     catch (MalformedURLException e) {
       reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
@@ -294,20 +319,44 @@ public class LoanCollectionResource {
 
           locationsStorageClient.get(locationId,
             locationResponse -> {
-              if (locationResponse.getStatusCode() == 200) {
-                JsonResponse.success(routingContext.response(),
-                  extendedLoan(loan, item, holding, instance,
-                    locationResponse.getJson()));
-              } else {
-                log.warn(
-                  String.format("Could not get location %s for item %s",
-                    locationId, itemId));
-
-                JsonResponse.success(routingContext.response(),
-                  extendedLoan(loan, item, holding, instance,
-                    null));
+            JsonObject locationObject;
+            if (locationResponse.getStatusCode() != 200) {
+              log.warn(
+                String.format("Could not get location %s for item %s",
+                  locationId, itemId));
+              locationObject = null;
+            } else {
+              locationObject = locationResponse.getJson();
+            }
+            String materialTypeId;
+            if(item != null && item.containsKey(MT_ID_PROPERTY)) {
+              materialTypeId = item.getString(MT_ID_PROPERTY);
+              if(materialTypeId == null) {
+                log.warn("Retrieved materialTypeId is null");
               }
+            } else {
+              log.warn(String.format("No materialTypeId found in item %s", itemId));
+              materialTypeId = null;
+            }
+            materialTypesStorageClient.get(materialTypeId,
+              mtResponse -> {
+              JsonObject materialTypeObject;
+              if(mtResponse.getStatusCode() != 200) {
+                log.warn(String.format("Could not get material type %s for item '%s'",
+                  materialTypeId, itemId));
+                materialTypeObject = null;
+              } else {
+                materialTypeObject = mtResponse.getJson();
+                if(materialTypeObject == null) {
+                  log.warn(String.format("Null result returned from material types client for id %s",
+                  materialTypeId));
+                }
+              }
+              JsonResponse.success(routingContext.response(),
+                extendedLoan(loan, item, holding, instance,
+                locationObject, materialTypeObject));
             });
+          });
         });
       }
       else {
@@ -349,6 +398,7 @@ public class LoanCollectionResource {
     CollectionResourceClient holdingsClient;
     CollectionResourceClient instancesClient;
     CollectionResourceClient locationsClient;
+    CollectionResourceClient materialTypesStorageClient;
 
     try {
       OkapiHttpClient client = createHttpClient(routingContext, context);
@@ -357,6 +407,7 @@ public class LoanCollectionResource {
       locationsClient = createLocationsStorageClient(client, context);
       holdingsClient = createHoldingsStorageClient(client, context);
       instancesClient = createInstanceStorageClient(client, context);
+      materialTypesStorageClient = createMaterialTypesStorageClient(client, context);
     }
     catch (MalformedURLException e) {
       reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
@@ -413,47 +464,82 @@ public class LoanCollectionResource {
               return;
             }
 
-            loans.forEach( loan -> {
-              Optional<JsonObject> possibleItem = records.findItemById(
-                loan.getString("itemId"));
+            //Also get a list of material types
+            List<String> materialTypeIds = records.getItems().stream()
+              .map(item -> item.getString(MT_ID_PROPERTY))
+              .filter(StringUtils::isNotBlank)
+              .collect(Collectors.toList());
+            CompletableFuture<Response> materialTypesFetched = new CompletableFuture<>();
+            String materialTypesQuery = CqlHelper.multipleRecordsCqlQuery(materialTypeIds);
 
-              //No need to pass on the itemStatus property,
-              // as only used to populate the history
-              //and could be confused with aggregation of current status
-              loan.remove("itemStatus");
+            materialTypesStorageClient.getMany(materialTypesQuery,
+              materialTypeIds.size(), 0, materialTypesFetched::complete);
 
-              Optional<JsonObject> possibleInstance = Optional.empty();
-
-              if(possibleItem.isPresent()) {
-                JsonObject item = possibleItem.get();
-
-                Optional<JsonObject> possibleHolding = records.findHoldingById(
-                  item.getString("holdingsRecordId"));
-
-                if(possibleHolding.isPresent()) {
-                  JsonObject holding = possibleHolding.get();
-
-                  possibleInstance = records.findInstanceById(
-                    holding.getString("instanceId"));
-                }
-
-                List<JsonObject> locations = JsonArrayHelper.toList(
-                  locationsResponse.getJson().getJsonArray("shelflocations"));
-
-                Optional<JsonObject> possibleLocation = locations.stream()
-                  .filter(location -> location.getString("id").equals(
-                    determineLocationIdForItem(item, possibleHolding.orElse(null))))
-                  .findFirst();
-
-                loan.put("item", createItemSummary(item,
-                  possibleInstance.orElse(null),
-                    possibleHolding.orElse(null),
-                    possibleLocation.orElse(null)));
+            materialTypesFetched.thenAccept(materialTypesResponse -> {
+              if(materialTypesResponse.getStatusCode() != 200) {
+                ServerErrorResponse.internalError(routingContext.response(),
+                  String.format("Material Types request (%s) failed %s: %s",
+                    materialTypesQuery, materialTypesResponse.getStatusCode(),
+                    materialTypesResponse.getBody()));
+                return;
               }
-            });
 
-            JsonResponse.success(routingContext.response(),
-              wrappedLoans.toJson());
+              loans.forEach( loan -> {
+                Optional<JsonObject> possibleItem = records.findItemById(
+                  loan.getString("itemId"));
+
+                //No need to pass on the itemStatus property,
+                // as only used to populate the history
+                //and could be confused with aggregation of current status
+                loan.remove("itemStatus");
+
+                Optional<JsonObject> possibleInstance = Optional.empty();
+                String[] materialTypeId = new String[]{null};
+                if(possibleItem.isPresent()) {
+                  JsonObject item = possibleItem.get();
+                  materialTypeId[0] = item.getString(MT_ID_PROPERTY);
+
+                  Optional<JsonObject> possibleHolding = records.findHoldingById(
+                    item.getString("holdingsRecordId"));
+
+                  if(possibleHolding.isPresent()) {
+                    JsonObject holding = possibleHolding.get();
+
+                    possibleInstance = records.findInstanceById(
+                      holding.getString("instanceId"));
+                  }
+
+                  List<JsonObject> locations = JsonArrayHelper.toList(
+                    locationsResponse.getJson().getJsonArray("shelflocations"));
+
+                  Optional<JsonObject> possibleLocation = locations.stream()
+                    .filter(location -> location.getString("id").equals(
+                      determineLocationIdForItem(item, possibleHolding.orElse(null))))
+                    .findFirst();
+
+                  List<JsonObject> materialTypes = JsonArrayHelper.toList(
+                    materialTypesResponse.getJson().getJsonArray("mtypes"));
+
+
+                  Optional<JsonObject> possibleMaterialType = materialTypes.stream()
+                    .filter(materialType -> materialType.getString("id")
+                    .equals(materialTypeId[0])).findFirst();
+
+
+                  loan.put("item", createItemSummary(item,
+                    possibleInstance.orElse(null),
+                      possibleHolding.orElse(null),
+                      possibleLocation.orElse(null),
+                      possibleMaterialType.orElse(null)
+                      )
+                  );
+                }
+              });
+
+              JsonResponse.success(routingContext.response(),
+                wrappedLoans.toJson());
+
+            });
           });
         });
       }
@@ -571,6 +657,14 @@ public class LoanCollectionResource {
       return proxyUsersStorageClient;
     }
 
+  private CollectionResourceClient createMaterialTypesStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+    return new CollectionResourceClient(client,
+      context.getOkapiBasedUrl("/material-types"));
+  }
+
   private String itemStatusFrom(JsonObject loan) {
     switch(loan.getJsonObject("status").getString("name")) {
       case "Open":
@@ -599,7 +693,8 @@ public class LoanCollectionResource {
     JsonObject item,
     JsonObject instance,
     JsonObject holding,
-    JsonObject location) {
+    JsonObject location,
+    JsonObject materialType) {
     JsonObject itemSummary = new JsonObject();
 
     final String titleProperty = "title";
@@ -607,11 +702,25 @@ public class LoanCollectionResource {
     final String statusProperty = "status";
     final String holdingsRecordIdProperty = "holdingsRecordId";
     final String instanceIdProperty = "instanceId";
+    final String callNumberProperty = "callNumber";
+    final String materialTypeProperty = "materialType";
 
     if(instance != null && instance.containsKey(titleProperty)) {
       itemSummary.put(titleProperty, instance.getString(titleProperty));
     } else if (item.containsKey("title")) {
       itemSummary.put(titleProperty, item.getString(titleProperty));
+    }
+    if(instance != null && instance.containsKey(CONTRIBUTORS_PROPERTY)) {
+      JsonArray instanceContributors = instance.getJsonArray(CONTRIBUTORS_PROPERTY);
+
+      if(instanceContributors != null && !instanceContributors.isEmpty()) {
+        JsonArray contributors = new JsonArray();
+        for(Object ob : instanceContributors) {
+          String name = ((JsonObject)ob).getString("name");
+          contributors.add(new JsonObject().put("name", name));
+        }
+        itemSummary.put(CONTRIBUTORS_PROPERTY, contributors);
+      }
     }
 
     if(item.containsKey(barcodeProperty)) {
@@ -626,6 +735,10 @@ public class LoanCollectionResource {
       itemSummary.put(instanceIdProperty, holding.getString(instanceIdProperty));
     }
 
+    if(holding != null && holding.containsKey(callNumberProperty)) {
+      itemSummary.put(callNumberProperty, holding.getString(callNumberProperty));
+    }
+
     if(item.containsKey(statusProperty)) {
       itemSummary.put(statusProperty, item.getJsonObject(statusProperty));
     }
@@ -633,6 +746,19 @@ public class LoanCollectionResource {
     if(location != null && location.containsKey("name")) {
       itemSummary.put("location", new JsonObject()
         .put("name", location.getString("name")));
+    }
+
+    if(materialType != null) {
+      if(materialType.containsKey("name") && materialType.getString("name") != null) {
+        itemSummary.put(materialTypeProperty, new JsonObject()
+          .put("name", materialType.getString("name")));
+      } else {
+        log.warn("Missing or null property for material type for item id " +
+          item.getString("id"));
+      }
+    } else {
+      log.warn(String.format("Null materialType object for item %s",
+        item.getString("id")));
     }
 
     return itemSummary;
@@ -643,10 +769,12 @@ public class LoanCollectionResource {
     JsonObject item,
     JsonObject holding,
     JsonObject instance,
-    JsonObject location) {
+    JsonObject location,
+    JsonObject materialType) {
 
     if(item != null) {
-      loan.put("item", createItemSummary(item, instance, holding, location));
+      loan.put("item", createItemSummary(item, instance, holding, location,
+        materialType));
     }
 
     //No need to pass on the itemStatus property, as only used to populate the history
@@ -683,7 +811,7 @@ public class LoanCollectionResource {
     String locationId = determineLocationIdForItem(item, holding);
 
     //Got instance record, we're good to continue
-    String materialTypeId = item.getString("materialTypeId");
+    String materialTypeId = item.getString(MT_ID_PROPERTY);
 
     usersStorageClient.get(userId, getUserResponse -> {
       if(getUserResponse.getStatusCode() == 404) {

@@ -8,6 +8,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class JsonArrayHelper {
+  private JsonArrayHelper() { }
+
   public static List<JsonObject> toList(JsonArray array) {
     return array
       .stream()

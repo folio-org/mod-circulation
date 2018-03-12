@@ -4,7 +4,7 @@
   "provides": [
     {
       "id": "circulation",
-      "version": "2.8",
+      "version": "2.11",
       "handlers": [
         {
           "methods": [
@@ -23,7 +23,8 @@
             "inventory-storage.holdings.collection.get",
             "inventory-storage.holdings.item.get",
             "inventory-storage.instances.collection.get",
-            "inventory-storage.instances.item.get"
+            "inventory-storage.instances.item.get",
+            "inventory-storage.material-types.collection.get"
           ]
         },
         {
@@ -46,7 +47,8 @@
             "inventory-storage.holdings.item.get",
             "inventory-storage.instances.collection.get",
             "inventory-storage.instances.item.get",
-            "proxiesfor.collection.get"
+            "proxiesfor.collection.get",
+            "inventory-storage.material-types.item.get"
           ]
         },
         {
@@ -78,7 +80,8 @@
             "inventory-storage.holdings.collection.get",
             "inventory-storage.holdings.item.get",
             "inventory-storage.instances.collection.get",
-            "inventory-storage.instances.item.get"
+            "inventory-storage.instances.item.get",
+            "inventory-storage.material-types.item.get"
           ]
         },
         {
@@ -257,7 +260,7 @@
   "requires": [
     {
       "id": "loan-storage",
-      "version": "3.4"
+      "version": "3.5"
     },
     {
       "id": "loan-rules-storage",
@@ -286,6 +289,10 @@
     {
       "id": "shelf-locations",
       "version": "1.0"
+    },
+    {
+      "id": "material-types",
+      "version": "2.0"
     }
   ],
   "permissionSets": [
