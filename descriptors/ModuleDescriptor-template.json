@@ -399,5 +399,12 @@
         "circulation.requests.collection.delete"
       ]
     }
-  ]
+  ],
+  "launchDescriptor": {
+    "dockerImage": "${artifactId}:${version}",
+    "dockerArgs": {
+      "HostConfig": { "PortBindings": { "9801/tcp":  [{ "HostPort": "%p" }] } }
+    },
+    "dockerPull" : false
+  } 
 }
