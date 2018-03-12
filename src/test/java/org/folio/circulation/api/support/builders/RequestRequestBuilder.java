@@ -1,13 +1,14 @@
 package org.folio.circulation.api.support.builders;
 
-import io.vertx.core.json.JsonObject;
+import java.util.UUID;
+
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.ISODateTimeFormat;
 
-import java.util.UUID;
+import io.vertx.core.json.JsonObject;
 
 public class RequestRequestBuilder implements Builder {
 
@@ -27,6 +28,7 @@ public class RequestRequestBuilder implements Builder {
   private final ItemSummary itemSummary;
   private final PatronSummary requesterSummary;
   private final String status;
+  private final UUID proxyUserId;
 
   public RequestRequestBuilder() {
     this(UUID.randomUUID(),
@@ -40,10 +42,40 @@ public class RequestRequestBuilder implements Builder {
       null,
       null,
       null,
+      null,
       null);
   }
 
-  private RequestRequestBuilder(
+  public RequestRequestBuilder(
+      UUID id,
+      String requestType,
+      DateTime requestDate,
+      UUID itemId,
+      UUID requesterId,
+      String fulfilmentPreference,
+      UUID deliveryAddressTypeId,
+      LocalDate requestExpirationDate,
+      LocalDate holdShelfExpirationDate,
+      ItemSummary itemSummary,
+      PatronSummary requesterSummary,
+      String status) {
+
+      this(id,
+        requestType,
+        requestDate,
+        itemId,
+        requesterId,
+        fulfilmentPreference,
+        deliveryAddressTypeId,
+        requestExpirationDate,
+        holdShelfExpirationDate,
+        itemSummary,
+        requesterSummary,
+        status, null);
+
+    }
+
+  public RequestRequestBuilder(
     UUID id,
     String requestType,
     DateTime requestDate,
@@ -55,7 +87,8 @@ public class RequestRequestBuilder implements Builder {
     LocalDate holdShelfExpirationDate,
     ItemSummary itemSummary,
     PatronSummary requesterSummary,
-    String status) {
+    String status,
+    UUID proxyUserId) {
 
     this.id = id;
     this.requestType = requestType;
@@ -69,8 +102,10 @@ public class RequestRequestBuilder implements Builder {
     this.itemSummary = itemSummary;
     this.requesterSummary = requesterSummary;
     this.status = status;
+    this.proxyUserId = proxyUserId;
   }
 
+  @Override
   public JsonObject create() {
     JsonObject request = new JsonObject();
 
@@ -120,6 +155,10 @@ public class RequestRequestBuilder implements Builder {
       requester.put("barcode", requesterSummary.barcode);
 
       request.put("requester", requester);
+    }
+
+    if(proxyUserId != null){
+      request.put("proxyUserId", proxyUserId.toString());
     }
 
     return request;
@@ -378,6 +417,23 @@ public class RequestRequestBuilder implements Builder {
       this.itemSummary,
       this.requesterSummary,
       status);
+  }
+
+  public RequestRequestBuilder withUserProxyId(UUID itemId, UUID userProxyId) {
+    return new RequestRequestBuilder(
+      this.id,
+      this.requestType,
+      this.requestDate,
+      itemId,
+      this.requesterId,
+      this.fulfilmentPreference,
+      this.deliveryAddressTypeId,
+      this.requestExpirationDate,
+      this.holdShelfExpirationDate,
+      this.itemSummary,
+      this.requesterSummary,
+      this.status,
+      userProxyId);
   }
 
   public Builder withNoStatus() {

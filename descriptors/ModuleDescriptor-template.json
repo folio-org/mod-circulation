@@ -4,7 +4,7 @@
   "provides": [
     {
       "id": "circulation",
-      "version": "2.10",
+      "version": "2.11",
       "handlers": [
         {
           "methods": [
@@ -47,6 +47,7 @@
             "inventory-storage.holdings.item.get",
             "inventory-storage.instances.collection.get",
             "inventory-storage.instances.item.get",
+            "proxiesfor.collection.get",
             "inventory-storage.material-types.item.get"
           ]
         },
@@ -94,7 +95,8 @@
           "modulePermissions": [
             "circulation-storage.loans.item.put",
             "inventory-storage.items.item.get",
-            "inventory-storage.items.item.put"
+            "inventory-storage.items.item.put",
+            "proxiesfor.collection.get"
           ]
         },
         {
@@ -188,7 +190,8 @@
             "inventory-storage.holdings.collection.get",
             "inventory-storage.holdings.item.get",
             "inventory-storage.instances.collection.get",
-            "inventory-storage.instances.item.get"
+            "inventory-storage.instances.item.get",
+            "proxiesfor.collection.get"
           ]
         },
         {
@@ -235,7 +238,8 @@
             "inventory-storage.holdings.collection.get",
             "inventory-storage.holdings.item.get",
             "inventory-storage.instances.collection.get",
-            "inventory-storage.instances.item.get"
+            "inventory-storage.instances.item.get",
+            "proxiesfor.collection.get"
           ]
         },
         {
@@ -276,11 +280,11 @@
     },
     {
       "id": "request-storage",
-      "version": "1.3"
+      "version": "1.4"
     },
     {
       "id": "users",
-      "version": "14.0"
+      "version": "14.2"
     },
     {
       "id": "shelf-locations",

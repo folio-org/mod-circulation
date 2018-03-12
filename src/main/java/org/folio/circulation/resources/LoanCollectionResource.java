@@ -2,8 +2,8 @@ package org.folio.circulation.resources;
 
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerResponse;
-import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
@@ -47,12 +47,19 @@ public class LoanCollectionResource {
     router.post(rootPath + "*").handler(BodyHandler.create());
     router.put(rootPath + "*").handler(BodyHandler.create());
 
-    router.post(rootPath).handler(this::create);
+    router.post(rootPath).handler(this::create).failureHandler(c -> {
+      ServerErrorResponse.internalError(c.response(),
+        String.format("Failure Handler: %s", c.failure().getMessage()));
+    });
     router.get(rootPath).handler(this::getMany);
     router.delete(rootPath).handler(this::empty);
 
     router.route(HttpMethod.GET, rootPath + "/:id").handler(this::get);
-    router.route(HttpMethod.PUT, rootPath + "/:id").handler(this::replace);
+    router.route(HttpMethod.PUT, rootPath + "/:id").handler(this::replace).failureHandler(c -> {
+      ServerErrorResponse.internalError(c.response(),
+        String.format("Failure Handler: %s", c.failure().getMessage()));
+    });
+
     router.route(HttpMethod.DELETE, rootPath + "/:id").handler(this::delete);
   }
 
@@ -63,6 +70,7 @@ public class LoanCollectionResource {
     CollectionResourceClient holdingsStorageClient;
     CollectionResourceClient locationsStorageClient;
     CollectionResourceClient usersStorageClient;
+    CollectionResourceClient usersProxyStorageClient;
     CollectionResourceClient instancesStorageClient;
     CollectionResourceClient materialTypesStorageClient;
     OkapiHttpClient client;
@@ -76,6 +84,7 @@ public class LoanCollectionResource {
       instancesStorageClient = createInstanceStorageClient(client, context);
       locationsStorageClient = createLocationsStorageClient(client, context);
       usersStorageClient = createUsersStorageClient(client, context);
+      usersProxyStorageClient = createProxyUsersStorageClient(client, context);
       materialTypesStorageClient = createMaterialTypesStorageClient(client, context);
       loanRulesClient = new LoanRulesClient(client, context);
     }
@@ -91,8 +100,25 @@ public class LoanCollectionResource {
 
     String itemId = loan.getString("itemId");
 
-    updateItemStatus(itemId, itemStatusFrom(loan),
-      itemsStorageClient, routingContext.response(), item -> {
+    String validProxyQuery = CqlHelper.buildisValidUserProxyQuery(loan);
+
+    handleProxy(usersProxyStorageClient, validProxyQuery, proxyValidResponse -> {
+      if(proxyValidResponse != null) {
+        if(proxyValidResponse.getStatusCode() != 200){
+          ForwardResponse.forward(routingContext.response(), proxyValidResponse);
+          return;
+        }
+        final MultipleRecordsWrapper wrappedLoans = MultipleRecordsWrapper.fromRequestBody(
+          proxyValidResponse.getBody(), "proxiesFor");
+        if(wrappedLoans.isEmpty()) { //if empty then we dont have a valid proxy id in the loan
+          CommonFailures.reportProxyRelatedValidationError(routingContext, loan.getString("proxyUserId"),
+            "proxyUserId is not valid");
+          return;
+        }
+      }
+
+      updateItemStatus(itemId, itemStatusFrom(loan),
+        itemsStorageClient, routingContext.response(), item -> {
 
         loan.put("itemStatus", item.getJsonObject("status").getString("name"));
 
@@ -133,15 +159,15 @@ public class LoanCollectionResource {
                         String.format("Could not get location %s for item %s",
                           locationId, itemId ));
                       locationObject = null;
-
-
                     }
+
                     String materialTypeId;
                     if(item != null) {
                       materialTypeId = item.getString(MT_ID_PROPERTY);
                     } else {
                       materialTypeId = null;
                     }
+
                     materialTypesStorageClient.get(materialTypeId, mtResponse -> {
                       JsonObject materialTypeObject;
                       if(mtResponse.getStatusCode() != 200) {
@@ -153,7 +179,7 @@ public class LoanCollectionResource {
                       }
                       JsonResponse.created(routingContext.response(),
                         extendedLoan(createdLoan, item, holding, instance,
-                        locationObject, materialTypeObject));
+                          locationObject, materialTypeObject));
                     });
                   });
                 }
@@ -161,21 +187,35 @@ public class LoanCollectionResource {
                   ForwardResponse.forward(routingContext.response(), response);
                 }
               });
+            });
           });
         });
       });
     });
   }
 
+  private void handleProxy(CollectionResourceClient client,
+      String query, Consumer<Response> responseHandler){
+
+    if(query != null){
+      client.getMany(query, 1, 0, responseHandler);
+    }
+    else{
+      responseHandler.accept(null);
+    }
+  }
+
   private void replace(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
     CollectionResourceClient loansStorageClient;
     CollectionResourceClient itemsStorageClient;
+    CollectionResourceClient usersProxyStorageClient;
 
     try {
       OkapiHttpClient client = createHttpClient(routingContext, context);
       loansStorageClient = createLoansStorageClient(client, context);
       itemsStorageClient = createItemsStorageClient(client, context);
+      usersProxyStorageClient = createProxyUsersStorageClient(client, context);
     }
     catch (MalformedURLException e) {
       reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
@@ -187,29 +227,48 @@ public class LoanCollectionResource {
 
     JsonObject loan = routingContext.getBodyAsJson();
 
-    defaultStatusAndAction(loan);
+    String validProxyQuery = CqlHelper.buildisValidUserProxyQuery(loan);
 
-    String itemId = loan.getString("itemId");
+    handleProxy(usersProxyStorageClient, validProxyQuery, proxyValidResponse -> {
 
-    //TODO: Either converge the schema (based upon conversations about sharing
-    // schema and including referenced resources or switch to include properties
-    // rather than exclude properties
-    JsonObject storageLoan = loan.copy();
-    storageLoan.remove("item");
-    storageLoan.remove("itemStatus");
+      if(proxyValidResponse != null){
+        if(proxyValidResponse.getStatusCode() != 200){
+          ForwardResponse.forward(routingContext.response(), proxyValidResponse);
+          return;
+        }
+        final MultipleRecordsWrapper wrappedLoans = MultipleRecordsWrapper.fromRequestBody(
+          proxyValidResponse.getBody(), "proxiesFor");
+        if(wrappedLoans.isEmpty()) { //if empty then we dont have a valid proxy id in the loan
+          CommonFailures.reportProxyRelatedValidationError(routingContext, loan.getString("proxyUserId"),
+              "proxyUserId is not valid");
+          return;
+        }
+      }
 
-    updateItemStatus(itemId, itemStatusFrom(loan),
-      itemsStorageClient, routingContext.response(), item -> {
-        storageLoan.put("itemStatus", item.getJsonObject("status").getString("name"));
-        loansStorageClient.put(id, storageLoan, response -> {
-          if(response.getStatusCode() == 204) {
-            SuccessResponse.noContent(routingContext.response());
-          }
-          else {
-            ForwardResponse.forward(routingContext.response(), response);
-          }
+      defaultStatusAndAction(loan);
+
+      String itemId = loan.getString("itemId");
+
+      //TODO: Either converge the schema (based upon conversations about sharing
+      // schema and including referenced resources or switch to include properties
+      // rather than exclude properties
+      JsonObject storageLoan = loan.copy();
+      storageLoan.remove("item");
+      storageLoan.remove("itemStatus");
+
+      updateItemStatus(itemId, itemStatusFrom(loan),
+        itemsStorageClient, routingContext.response(), item -> {
+          storageLoan.put("itemStatus", item.getJsonObject("status").getString("name"));
+          loansStorageClient.put(id, storageLoan, response -> {
+            if(response.getStatusCode() == 204) {
+              SuccessResponse.noContent(routingContext.response());
+            }
+            else {
+              ForwardResponse.forward(routingContext.response(), response);
+            }
+          });
         });
-      });
+    });
   }
 
   private void get(RoutingContext routingContext) {
@@ -585,6 +644,19 @@ public class LoanCollectionResource {
     return usersStorageClient;
   }
 
+  private CollectionResourceClient createProxyUsersStorageClient(
+      OkapiHttpClient client,
+      WebContext context)
+      throws MalformedURLException {
+
+      CollectionResourceClient proxyUsersStorageClient;
+
+      proxyUsersStorageClient = new CollectionResourceClient(
+        client, context.getOkapiBasedUrl("/proxiesfor"));
+
+      return proxyUsersStorageClient;
+    }
+
   private CollectionResourceClient createMaterialTypesStorageClient(
     OkapiHttpClient client,
     WebContext context)
@@ -638,6 +710,7 @@ public class LoanCollectionResource {
     } else if (item.containsKey("title")) {
       itemSummary.put(titleProperty, item.getString(titleProperty));
     }
+
     if(instance != null && instance.containsKey(CONTRIBUTORS_PROPERTY)) {
       JsonArray instanceContributors = instance.getJsonArray(CONTRIBUTORS_PROPERTY);
 

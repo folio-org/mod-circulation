@@ -1,12 +1,16 @@
-## 7.4.0 Unreleased
+## 7.5.0 Unreleased
 
+* Adds `status` property to `requests` (CIRC-53)
+* Adds `proxyUserId` to `requests` (CIRC-77)
 * Adds `systemReturnDate` property to `loans` (CIRC-81)
 * Adds `status` property to `requests` (CIRC-53)
 * Adds `materialType` property to the `item` for `loans` (CIRC-80)
 * Adds `callNumber` property to the `item` for `loans` (CIRC-80)
 * Adds `contributors` array to the `item` for `loans` (CIRC-80)
-* Provides circulation interface 2.10 (CIRC-53, CIRC-81, CIRC-80)
-* Requires request-storage interface 1.3 (CIRC-53)
+* Validates proxy relationship when creating or updating `loans` and `requests` (CIRC-79)
+* Provides circulation interface 2.11 (CIRC-53, CIRC-81, CIRC-80, CIRC-77, CIRC-79)
+* Requires request-storage interface 1.4 (CIRC-53, CIRC-77, CIRC-79)
+* Requires users interface version 14.2 (CIRC-79)
 * Requires loan-storage interface 3.5 (CIRC-81)
 * Requires material-types interface 2.0 (CIRC-80)
 
