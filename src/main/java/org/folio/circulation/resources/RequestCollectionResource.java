@@ -1,16 +1,10 @@
 package org.folio.circulation.resources;
 
-import io.vertx.core.http.HttpMethod;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.handler.BodyHandler;
-import org.folio.circulation.domain.RequestStatus;
-import org.folio.circulation.domain.RequestType;
-import org.folio.circulation.support.*;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.server.*;
+import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
+import static org.folio.circulation.domain.ItemStatusAssistant.updateItemStatus;
+import static org.folio.circulation.domain.LoanActionHistoryAssistant.updateLoanActionHistory;
+import static org.folio.circulation.support.CommonFailures.reportFailureToFetchInventoryRecords;
+import static org.folio.circulation.support.JsonPropertyCopier.copyStringIfExists;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -21,11 +15,29 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import static org.folio.circulation.domain.ItemStatus.*;
-import static org.folio.circulation.domain.ItemStatusAssistant.updateItemStatus;
-import static org.folio.circulation.domain.LoanActionHistoryAssistant.updateLoanActionHistory;
-import static org.folio.circulation.support.CommonFailures.reportFailureToFetchInventoryRecords;
-import static org.folio.circulation.support.JsonPropertyCopier.copyStringIfExists;
+import org.folio.circulation.domain.RequestStatus;
+import org.folio.circulation.domain.RequestType;
+import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.CommonFailures;
+import org.folio.circulation.support.CqlHelper;
+import org.folio.circulation.support.InventoryFetcher;
+import org.folio.circulation.support.InventoryRecords;
+import org.folio.circulation.support.MultipleInventoryRecords;
+import org.folio.circulation.support.MultipleRecordsWrapper;
+import org.folio.circulation.support.http.client.OkapiHttpClient;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.server.ClientErrorResponse;
+import org.folio.circulation.support.http.server.ForwardResponse;
+import org.folio.circulation.support.http.server.JsonResponse;
+import org.folio.circulation.support.http.server.ServerErrorResponse;
+import org.folio.circulation.support.http.server.SuccessResponse;
+import org.folio.circulation.support.http.server.WebContext;
+
+import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.BodyHandler;
 
 public class RequestCollectionResource {
   private final String rootPath;
@@ -71,6 +83,7 @@ public class RequestCollectionResource {
     CollectionResourceClient instancesStorageClient;
     CollectionResourceClient usersStorageClient;
     CollectionResourceClient loansStorageClient;
+    CollectionResourceClient usersProxyStorageClient;
 
     try {
       OkapiHttpClient client = createHttpClient(routingContext, context);
@@ -80,6 +93,7 @@ public class RequestCollectionResource {
       instancesStorageClient = createInstanceStorageClient(client, context);
       usersStorageClient = createUsersStorageClient(client, context);
       loansStorageClient = createLoansStorageClient(client, context);
+      usersProxyStorageClient = createProxyUsersStorageClient(client, context);
     }
     catch (MalformedURLException e) {
       CommonFailures.reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
@@ -89,6 +103,15 @@ public class RequestCollectionResource {
 
     String itemId = getItemId(request);
 
+    int callsToCompleteCount = 2;
+    String validProxyQuery = CqlHelper.buildisValidUserProxyQuery(request);
+    if(validProxyQuery != null){
+      //a user proxy was passed in, we need to make an extra call to validate it as well
+      callsToCompleteCount = 3;
+    }
+
+    CompletableFuture<?> []toComplete = new CompletableFuture<?>[callsToCompleteCount];
+
     InventoryFetcher inventoryFetcher = new InventoryFetcher(
       itemsStorageClient, holdingsStorageClient, instancesStorageClient);
 
@@ -96,13 +119,24 @@ public class RequestCollectionResource {
       = inventoryFetcher.fetch(itemId, t ->
       reportFailureToFetchInventoryRecords(routingContext, t));
 
+    toComplete[0] = inventoryRecordsCompleted;
+
     CompletableFuture<Response> requestingUserRequestCompleted = new CompletableFuture<>();
 
     usersStorageClient.get(request.getString("requesterId"),
       requestingUserRequestCompleted::complete);
 
+    toComplete[1] = requestingUserRequestCompleted;
+
+    CompletableFuture<Response> requestingUserProxyRequestCompleted = new CompletableFuture<>();
+    if(validProxyQuery != null){
+      usersProxyStorageClient.getMany(validProxyQuery, 1, 0,
+        requestingUserProxyRequestCompleted::complete);
+      toComplete[2] = requestingUserProxyRequestCompleted;
+    }
+
     CompletableFuture<Void> allCompleted = CompletableFuture.allOf(
-      inventoryRecordsCompleted, requestingUserRequestCompleted);
+      toComplete);
 
     allCompleted.exceptionally(t -> {
       ServerErrorResponse.internalError(routingContext.response(),
@@ -112,6 +146,7 @@ public class RequestCollectionResource {
     });
 
     allCompleted.thenAccept(v -> {
+
       Response requestingUserResponse = requestingUserRequestCompleted.join();
 
       InventoryRecords inventoryRecords = inventoryRecordsCompleted.join();
@@ -121,6 +156,21 @@ public class RequestCollectionResource {
       JsonObject instance = inventoryRecords.getInstance();
 
       JsonObject requester = getRecordFromResponse(requestingUserResponse);
+
+      if(validProxyQuery != null){
+        Response userProxyIdResponse = requestingUserProxyRequestCompleted.join();
+        if(userProxyIdResponse.getStatusCode() != 200){
+          ForwardResponse.forward(routingContext.response(), userProxyIdResponse);
+          return;
+        }
+        final MultipleRecordsWrapper wrappedLoans = MultipleRecordsWrapper.fromRequestBody(
+          userProxyIdResponse.getBody(), "proxiesfor");
+        if(wrappedLoans.isEmpty()) { //if empty then we dont have a valid proxy id in the request
+          CommonFailures.reportProxyRelatedValidationError(routingContext, request.getString("proxyUserId"),
+              "proxyUserId is not valid");
+          return;
+        }
+      }
 
       if(item == null) {
         CommonFailures.reportItemRelatedValidationError(routingContext, itemId, "Item does not exist");
@@ -167,6 +217,7 @@ public class RequestCollectionResource {
     CollectionResourceClient holdingsStorageClient;
     CollectionResourceClient instancesStorageClient;
     CollectionResourceClient usersStorageClient;
+    CollectionResourceClient usersProxyStorageClient;
 
     try {
       OkapiHttpClient client = createHttpClient(routingContext, context);
@@ -175,6 +226,7 @@ public class RequestCollectionResource {
       holdingsStorageClient = createHoldingsStorageClient(client, context);
       instancesStorageClient = createInstanceStorageClient(client, context);
       usersStorageClient = createUsersStorageClient(client, context);
+      usersProxyStorageClient = createProxyUsersStorageClient(client, context);
     }
     catch (MalformedURLException e) {
       CommonFailures.reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
@@ -184,6 +236,15 @@ public class RequestCollectionResource {
 
     String itemId = getItemId(request);
 
+    int callsToCompleteCount = 2;
+    String validProxyQuery = CqlHelper.buildisValidUserProxyQuery(request);
+    if(validProxyQuery != null){
+      //a user proxy was passed in, we need to make an extra call to validate it as well
+      callsToCompleteCount = 3;
+    }
+
+    CompletableFuture<?> []toComplete = new CompletableFuture<?>[callsToCompleteCount];
+
     InventoryFetcher inventoryFetcher = new InventoryFetcher(
       itemsStorageClient, holdingsStorageClient, instancesStorageClient);
 
@@ -191,13 +252,24 @@ public class RequestCollectionResource {
       = inventoryFetcher.fetch(itemId, t ->
         reportFailureToFetchInventoryRecords(routingContext, t));
 
+    toComplete[0] = inventoryRecordsCompleted;
+
     CompletableFuture<Response> requestingUserRequestCompleted = new CompletableFuture<>();
+
+    toComplete[1] = requestingUserRequestCompleted;
 
     usersStorageClient.get(request.getString("requesterId"),
       requestingUserRequestCompleted::complete);
 
+    CompletableFuture<Response> requestingUserProxyRequestCompleted = new CompletableFuture<>();
+    if(validProxyQuery != null){
+      usersProxyStorageClient.getMany(validProxyQuery, 1, 0,
+        requestingUserProxyRequestCompleted::complete);
+      toComplete[2] = requestingUserProxyRequestCompleted;
+    }
+
     CompletableFuture<Void> allCompleted = CompletableFuture.allOf(
-      inventoryRecordsCompleted, requestingUserRequestCompleted);
+      toComplete);
 
     allCompleted.exceptionally(t -> {
       ServerErrorResponse.internalError(routingContext.response(),
@@ -210,6 +282,21 @@ public class RequestCollectionResource {
       Response requestingUserResponse = requestingUserRequestCompleted.join();
 
       InventoryRecords inventoryRecords = inventoryRecordsCompleted.join();
+
+      if(validProxyQuery != null){
+        Response userProxyIdResponse = requestingUserProxyRequestCompleted.join();
+        if(userProxyIdResponse.getStatusCode() != 200){
+          ForwardResponse.forward(routingContext.response(), userProxyIdResponse);
+          return;
+        }
+        final MultipleRecordsWrapper wrappedLoans = MultipleRecordsWrapper.fromRequestBody(
+          userProxyIdResponse.getBody(), "proxiesfor");
+        if(wrappedLoans.isEmpty()) { //if empty then we dont have a valid proxy id in the request
+          CommonFailures.reportProxyRelatedValidationError(routingContext, request.getString("proxyUserId"),
+              "proxyUserId is not valid");
+          return;
+        }
+      }
 
       JsonObject item = inventoryRecords.getItem();
       JsonObject instance = inventoryRecords.getInstance();
@@ -528,6 +615,20 @@ public class RequestCollectionResource {
 
     return getCollectionResourceClient(client, context, "/loan-storage/loans");
   }
+
+  private CollectionResourceClient createProxyUsersStorageClient(
+      OkapiHttpClient client,
+      WebContext context)
+      throws MalformedURLException {
+
+      CollectionResourceClient proxyUsersStorageClient;
+
+      proxyUsersStorageClient = new CollectionResourceClient(
+        client, context.getOkapiBasedUrl("/proxiesfor"));
+
+      return proxyUsersStorageClient;
+    }
+
 
   private CollectionResourceClient getCollectionResourceClient(
     OkapiHttpClient client,

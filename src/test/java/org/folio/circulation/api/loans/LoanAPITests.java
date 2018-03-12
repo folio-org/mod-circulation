@@ -1159,7 +1159,7 @@ public class LoanAPITests extends APITests {
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
 
-    IndividualResource response = loansClient.create(new LoanRequestBuilder()
+    loansClient.create(new LoanRequestBuilder()
       .withId(id)
       .withUserId(userId)
       .withItemId(itemId)
