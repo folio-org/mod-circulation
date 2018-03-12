@@ -25,7 +25,7 @@ public class LoanRequestBuilder extends JsonRequestBuilder implements Builder {
   private final UUID proxyUserId;
   private final DateTime systemReturnDate;
 
-  
+
   public LoanRequestBuilder() {
     this(UUID.randomUUID(), UUID.randomUUID(), APITestSuite.userId(),
       new DateTime(2017, 03, 06, 16, 04, 43), null, "Open", null, null,
@@ -160,7 +160,7 @@ public class LoanRequestBuilder extends JsonRequestBuilder implements Builder {
       this.loanDate, this.dueDate, this.status, returnDate,
       this.systemReturnDate, this.action, this.proxyUserId);
   }
-  
+
   public LoanRequestBuilder withSystemReturnDate(DateTime systemReturnDate) {
     return new LoanRequestBuilder(this.id, this.itemId, this.userId,
       this.loanDate, this.dueDate, this.status, this.returnDate,
@@ -175,13 +175,13 @@ public class LoanRequestBuilder extends JsonRequestBuilder implements Builder {
 
   public LoanRequestBuilder withDueDate(DateTime dueDate) {
     return new LoanRequestBuilder(this.id, this.itemId, this.userId,
-      this.loanDate, dueDate, this.status, this.returnDate, 
+      this.loanDate, dueDate, this.status, this.returnDate,
       this.systemReturnDate, this.action, this.proxyUserId);
   }
 
   public LoanRequestBuilder withProxyUserId(UUID proxyUserId) {
     return new LoanRequestBuilder(this.id, this.itemId, this.userId,
-      this.loanDate, dueDate, this.status, this.returnDate, 
+      this.loanDate, dueDate, this.status, this.returnDate,
       this.systemReturnDate, this.action, proxyUserId);
   }
 

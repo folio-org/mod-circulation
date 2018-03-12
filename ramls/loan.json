@@ -37,16 +37,16 @@
           "description" : "The call number from the holdings record",
           "type": "string"
         },
-		    "materialType" : {
-          "description" : "The material type from the item record",
+        "materialType": {
+          "description": "The material type from the item record",
           "type": "object",
-          "properties" : {
+          "properties": {
             "name": {
               "type": "string"
             }
           },
           "additionalProperties": false
-		    },
+        },
         "contributors": {
             "description": "Contributors from the instance record",
             "type": "array",
@@ -117,11 +117,11 @@
       "type": "string",
       "format": "date-time"
     },
-    "systemReturnDate" : {
+    "systemReturnDate": {
       "description": "Date and time when return was processed",
       "type": "string",
       "format": "date-time"
-	},
+    },
     "action": {
       "description": "Last action performed on a loan (currently can be any value, values commonly used are checkedout and checkedin)",
       "type": "string"

@@ -7,7 +7,7 @@ Version 2.0. See the file "[LICENSE](LICENSE)" for more information.
 
 ## Documentation
 
-Further documentation about this module can be found in the 
+Further documentation about this module can be found in the
 [Guide](doc/guide.md) file within the `/doc/` folder.
 
 ## Goal
