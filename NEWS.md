@@ -1,4 +1,4 @@
-## 7.5.0 Unreleased
+## 7.5.0 2018-03-13
 
 * Adds `status` property to `requests` (CIRC-53)
 * Adds `proxyUserId` to `requests` (CIRC-77)
