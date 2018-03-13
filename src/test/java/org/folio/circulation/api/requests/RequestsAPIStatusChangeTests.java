@@ -10,7 +10,6 @@ import org.folio.circulation.support.http.client.ResponseHandler;
 import org.hamcrest.core.Is;
 import org.junit.Test;
 
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.util.UUID;
@@ -29,8 +28,7 @@ public class RequestsAPIStatusChangeTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 
@@ -55,8 +53,7 @@ public class RequestsAPIStatusChangeTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 
@@ -81,8 +78,7 @@ public class RequestsAPIStatusChangeTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 
@@ -107,8 +103,7 @@ public class RequestsAPIStatusChangeTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
       itemBuilder -> itemBuilder
@@ -171,8 +166,7 @@ public class RequestsAPIStatusChangeTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
       itemBuilder -> itemBuilder
@@ -236,8 +230,7 @@ public class RequestsAPIStatusChangeTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
       itemBuilder -> itemBuilder

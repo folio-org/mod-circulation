@@ -23,8 +23,6 @@ import static org.folio.circulation.api.APITestSuite.mainLibraryLocationId;
 import static org.folio.circulation.api.support.JsonCollectionAssistant.getRecordById;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class LoanAPILocationTests extends APITests {
   @Test

@@ -29,9 +29,6 @@ import static org.folio.circulation.api.APITestSuite.readingRoomLoanTypeId;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsNot.not;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 
 /**
@@ -231,19 +228,5 @@ public class LoanAPIPolicyTests extends APITests {
          .put("differentPeriod", false));
 
     pFallback = policyResourceClient.create(pFallbackJson).getId();
-
-  }
-
-  private static void deleteLoanPolicies()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    ResourceClient policyResourceClient = ResourceClient.forLoanPolicies(client);
-    policyResourceClient.delete(p1);
-    policyResourceClient.delete(p2);
-    policyResourceClient.delete(p3);
-    policyResourceClient.delete(pFallback);
   }
 }
