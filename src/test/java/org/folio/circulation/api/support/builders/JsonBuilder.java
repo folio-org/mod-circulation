@@ -6,7 +6,7 @@ import org.joda.time.format.ISODateTimeFormat;
 
 import java.util.UUID;
 
-public class JsonRequestBuilder {
+public class JsonBuilder {
   protected void put(JsonObject request, String property, String value) {
     if(value != null) {
       request.put(property, value);

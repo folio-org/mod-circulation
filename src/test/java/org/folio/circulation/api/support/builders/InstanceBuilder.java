@@ -6,24 +6,24 @@ import org.folio.circulation.api.APITestSuite;
 
 import java.util.UUID;
 
-public class InstanceRequestBuilder implements Builder {
+public class InstanceBuilder implements Builder {
   private final String title;
   private final UUID id;
   private final JsonArray contributors;
 
-  public InstanceRequestBuilder(String title) {
+  public InstanceBuilder(String title) {
     id = UUID.randomUUID();
     this.title = title;
     this.contributors = new JsonArray();
   }
 
-  public InstanceRequestBuilder(UUID id, String title) {
+  public InstanceBuilder(UUID id, String title) {
     this.id = id;
     this.title = title;
     this.contributors = new JsonArray();
   }
 
-  public InstanceRequestBuilder(UUID id, String title, JsonArray contributors) {
+  public InstanceBuilder(UUID id, String title, JsonArray contributors) {
     this.id = id;
     this.title = title;
     this.contributors = contributors;
@@ -40,29 +40,29 @@ public class InstanceRequestBuilder implements Builder {
       .put("contributors", contributors);
   }
 
-  public InstanceRequestBuilder withId(UUID id) {
-    return new InstanceRequestBuilder(
+  public InstanceBuilder withId(UUID id) {
+    return new InstanceBuilder(
       id,
       this.title
     );
   }
 
-  public InstanceRequestBuilder withTitle(String title) {
-    return new InstanceRequestBuilder(
+  public InstanceBuilder withTitle(String title) {
+    return new InstanceBuilder(
       this.id,
       title
     );
   }
 
-  public InstanceRequestBuilder withContributors(JsonArray contributors) {
-    return new InstanceRequestBuilder(
+  public InstanceBuilder withContributors(JsonArray contributors) {
+    return new InstanceBuilder(
       this.id,
       this.title,
       contributors
     );
   }
 
-  public InstanceRequestBuilder withContributor(String name) {
+  public InstanceBuilder withContributor(String name) {
     JsonArray contributors = new JsonArray();
 
     contributors.add(new JsonObject()

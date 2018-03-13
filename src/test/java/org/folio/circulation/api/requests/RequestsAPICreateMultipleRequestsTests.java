@@ -2,8 +2,8 @@ package org.folio.circulation.api.requests;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.support.APITests;
-import org.folio.circulation.api.support.builders.RequestRequestBuilder;
-import org.folio.circulation.api.support.builders.UserRequestBuilder;
+import org.folio.circulation.api.support.builders.RequestBuilder;
+import org.folio.circulation.api.support.builders.UserBuilder;
 import org.folio.circulation.api.support.http.InterfaceUrls;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
@@ -39,34 +39,34 @@ public class RequestsAPICreateMultipleRequestsTests extends APITests {
 
     checkOutItem(itemId, loansClient);
 
-    UUID firstRequesterId = usersClient.create(new UserRequestBuilder()
+    UUID firstRequesterId = usersClient.create(new UserBuilder()
       .withName("Jones", "Steven")
       .withBarcode("564376549214"))
       .getId();
 
-    UUID secondRequesterId = usersClient.create(new UserRequestBuilder()
+    UUID secondRequesterId = usersClient.create(new UserBuilder()
       .withName("Williamson", "Casey")
       .withBarcode("340695406504"))
       .getId();
 
-    UUID thirdRequesterId = usersClient.create(new UserRequestBuilder()
+    UUID thirdRequesterId = usersClient.create(new UserBuilder()
       .withName("Stevenson", "Kelly")
       .withBarcode("670544032419"))
       .getId();
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .hold()
       .withItemId(itemId)
       .withRequesterId(firstRequesterId)
       .create());
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .hold()
       .withItemId(itemId)
       .withRequesterId(secondRequesterId)
       .create());
 
-    JsonObject requestRequest = new RequestRequestBuilder()
+    JsonObject requestRequest = new RequestBuilder()
       .hold()
       .withItemId(itemId)
       .withRequesterId(thirdRequesterId)
@@ -98,34 +98,34 @@ public class RequestsAPICreateMultipleRequestsTests extends APITests {
 
     checkOutItem(itemId, loansClient);
 
-    UUID firstRequesterId = usersClient.create(new UserRequestBuilder()
+    UUID firstRequesterId = usersClient.create(new UserBuilder()
       .withName("Jones", "Steven")
       .withBarcode("564376549214"))
       .getId();
 
-    UUID secondRequesterId = usersClient.create(new UserRequestBuilder()
+    UUID secondRequesterId = usersClient.create(new UserBuilder()
       .withName("Williamson", "Casey")
       .withBarcode("340695406504"))
       .getId();
 
-    UUID thirdRequesterId = usersClient.create(new UserRequestBuilder()
+    UUID thirdRequesterId = usersClient.create(new UserBuilder()
       .withName("Stevenson", "Kelly")
       .withBarcode("670544032419"))
       .getId();
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .hold()
       .withItemId(itemId)
       .withRequesterId(firstRequesterId)
       .create());
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .page()
       .withItemId(itemId)
       .withRequesterId(secondRequesterId)
       .create());
 
-    JsonObject requestRequest = new RequestRequestBuilder()
+    JsonObject requestRequest = new RequestBuilder()
       .recall()
       .withItemId(itemId)
       .withRequesterId(thirdRequesterId)

@@ -2,9 +2,9 @@ package org.folio.circulation.api.requests;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.support.APITests;
-import org.folio.circulation.api.support.builders.HoldingRequestBuilder;
-import org.folio.circulation.api.support.builders.RequestRequestBuilder;
-import org.folio.circulation.api.support.builders.UserRequestBuilder;
+import org.folio.circulation.api.support.builders.HoldingBuilder;
+import org.folio.circulation.api.support.builders.RequestBuilder;
+import org.folio.circulation.api.support.builders.UserBuilder;
 import org.folio.circulation.api.support.fixtures.InstanceRequestExamples;
 import org.folio.circulation.api.support.fixtures.ItemRequestExamples;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -35,7 +35,7 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
       InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID holdingId = holdingsClient.create(
-      new HoldingRequestBuilder()
+      new HoldingBuilder()
         .forInstance(instanceId)
         .create())
       .getId();
@@ -49,9 +49,9 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
 
     UUID requestId = UUID.randomUUID();
 
-    IndividualResource response = requestsClient.create(new RequestRequestBuilder()
+    IndividualResource response = requestsClient.create(new RequestBuilder()
       .withId(requestId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder().create()).getId())
+      .withRequesterId(usersClient.create(new UserBuilder().create()).getId())
       .withItemId(itemId));
 
     JsonObject createdRequest = response.getJson();
@@ -102,7 +102,7 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
       InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID holdingId = holdingsClient.create(
-      new HoldingRequestBuilder()
+      new HoldingBuilder()
         .forInstance(instanceId)
         .create())
       .getId();
@@ -116,9 +116,9 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
 
     UUID requestId = UUID.randomUUID();
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .withId(requestId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder().create()).getId())
+      .withRequesterId(usersClient.create(new UserBuilder().create()).getId())
       .withItemId(itemId));
 
     instancesClient.delete(instanceId);
@@ -155,7 +155,7 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
       InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID holdingId = holdingsClient.create(
-      new HoldingRequestBuilder()
+      new HoldingBuilder()
         .forInstance(instanceId)
         .create())
       .getId();
@@ -169,9 +169,9 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
 
     UUID requestId = UUID.randomUUID();
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .withId(requestId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder().create()).getId())
+      .withRequesterId(usersClient.create(new UserBuilder().create()).getId())
       .withItemId(itemId));
 
     holdingsClient.delete(holdingId);
@@ -204,7 +204,7 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
       InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID firstHoldingId = holdingsClient.create(
-      new HoldingRequestBuilder()
+      new HoldingBuilder()
         .forInstance(firstInstanceId)
         .create())
       .getId();
@@ -220,7 +220,7 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
       InstanceRequestExamples.basedUponTemeraire()).getId();
 
     UUID secondHoldingId = holdingsClient.create(
-      new HoldingRequestBuilder()
+      new HoldingBuilder()
         .forInstance(secondInstanceId)
         .create())
       .getId();
@@ -232,13 +232,13 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
 
     checkOutItem(secondItemId, loansClient);
 
-    UUID requesterId = usersClient.create(new UserRequestBuilder().create()).getId();
+    UUID requesterId = usersClient.create(new UserBuilder().create()).getId();
 
-    UUID firstRequestId = requestsClient.create(new RequestRequestBuilder()
+    UUID firstRequestId = requestsClient.create(new RequestBuilder()
       .withRequesterId(requesterId)
       .withItemId(firstItemId)).getId();
 
-    UUID secondRequestId = requestsClient.create(new RequestRequestBuilder()
+    UUID secondRequestId = requestsClient.create(new RequestBuilder()
       .withRequesterId(requesterId)
       .withItemId(secondItemId)).getId();
 
@@ -290,7 +290,7 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
       InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID firstHoldingId = holdingsClient.create(
-      new HoldingRequestBuilder()
+      new HoldingBuilder()
         .forInstance(firstInstanceId)
         .create())
       .getId();
@@ -306,7 +306,7 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
       InstanceRequestExamples.basedUponTemeraire()).getId();
 
     UUID secondHoldingId = holdingsClient.create(
-      new HoldingRequestBuilder()
+      new HoldingBuilder()
         .forInstance(secondInstanceId)
         .create())
       .getId();
@@ -318,13 +318,13 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
 
     checkOutItem(secondItemId, loansClient);
 
-    UUID requesterId = usersClient.create(new UserRequestBuilder().create()).getId();
+    UUID requesterId = usersClient.create(new UserBuilder().create()).getId();
 
-    UUID firstRequestId = requestsClient.create(new RequestRequestBuilder()
+    UUID firstRequestId = requestsClient.create(new RequestBuilder()
       .withRequesterId(requesterId)
       .withItemId(firstItemId)).getId();
 
-    UUID secondRequestId = requestsClient.create(new RequestRequestBuilder()
+    UUID secondRequestId = requestsClient.create(new RequestBuilder()
       .withRequesterId(requesterId)
       .withItemId(secondItemId)).getId();
 
@@ -357,7 +357,7 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
       InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID firstHoldingId = holdingsClient.create(
-      new HoldingRequestBuilder()
+      new HoldingBuilder()
         .forInstance(firstInstanceId)
         .create())
       .getId();
@@ -373,7 +373,7 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
       InstanceRequestExamples.basedUponTemeraire()).getId();
 
     UUID secondHoldingId = holdingsClient.create(
-      new HoldingRequestBuilder()
+      new HoldingBuilder()
         .forInstance(secondInstanceId)
         .create())
       .getId();
@@ -385,13 +385,13 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
 
     checkOutItem(secondItemId, loansClient);
 
-    UUID requesterId = usersClient.create(new UserRequestBuilder().create()).getId();
+    UUID requesterId = usersClient.create(new UserBuilder().create()).getId();
 
-    UUID firstRequestId = requestsClient.create(new RequestRequestBuilder()
+    UUID firstRequestId = requestsClient.create(new RequestBuilder()
       .withRequesterId(requesterId)
       .withItemId(firstItemId)).getId();
 
-    UUID secondRequestId = requestsClient.create(new RequestRequestBuilder()
+    UUID secondRequestId = requestsClient.create(new RequestBuilder()
       .withRequesterId(requesterId)
       .withItemId(secondItemId)).getId();
 

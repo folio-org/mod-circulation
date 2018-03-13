@@ -1,9 +1,9 @@
 package org.folio.circulation.api.support.fixtures;
 
 import org.folio.circulation.api.APITestSuite;
-import org.folio.circulation.api.support.builders.HoldingRequestBuilder;
-import org.folio.circulation.api.support.builders.InstanceRequestBuilder;
-import org.folio.circulation.api.support.builders.ItemRequestBuilder;
+import org.folio.circulation.api.support.builders.HoldingBuilder;
+import org.folio.circulation.api.support.builders.InstanceBuilder;
+import org.folio.circulation.api.support.builders.ItemBuilder;
 import org.folio.circulation.api.support.http.ResourceClient;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
@@ -51,7 +51,7 @@ public class ItemsFixture {
   }
 
   public IndividualResource basedUponSmallAngryPlanet(
-    Function<ItemRequestBuilder, ItemRequestBuilder> additionalItemProperties)
+    Function<ItemBuilder, ItemBuilder> additionalItemProperties)
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -75,7 +75,7 @@ public class ItemsFixture {
   }
 
   public IndividualResource basedUponNod(
-    Function<ItemRequestBuilder, ItemRequestBuilder> additionalItemProperties)
+    Function<ItemBuilder, ItemBuilder> additionalItemProperties)
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -99,7 +99,7 @@ public class ItemsFixture {
   }
 
   public IndividualResource basedUponTemeraire(
-    Function<ItemRequestBuilder, ItemRequestBuilder> additionalItemProperties)
+    Function<ItemBuilder, ItemBuilder> additionalItemProperties)
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -123,7 +123,7 @@ public class ItemsFixture {
   }
 
   public IndividualResource basedUponUprooted(
-    Function<ItemRequestBuilder, ItemRequestBuilder> additionalItemProperties)
+    Function<ItemBuilder, ItemBuilder> additionalItemProperties)
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -147,7 +147,7 @@ public class ItemsFixture {
   }
 
   public IndividualResource basedUponInterestingTimes(
-    Function<ItemRequestBuilder, ItemRequestBuilder> additionalItemProperties)
+    Function<ItemBuilder, ItemBuilder> additionalItemProperties)
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -160,38 +160,38 @@ public class ItemsFixture {
   }
 
   private IndividualResource applyAdditionalProperties(
-    Function<ItemRequestBuilder, ItemRequestBuilder> additionalItemProperties,
-    InstanceRequestBuilder instanceRequestBuilder,
-    ItemRequestBuilder itemRequestBuilder)
+    Function<ItemBuilder, ItemBuilder> additionalItemProperties,
+    InstanceBuilder instanceBuilder,
+    ItemBuilder itemBuilder)
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
 
     return create(
-      instanceRequestBuilder,
-      additionalItemProperties.apply(itemRequestBuilder));
+      instanceBuilder,
+      additionalItemProperties.apply(itemBuilder));
   }
 
   private IndividualResource create(
-    InstanceRequestBuilder instanceRequestBuilder,
-    ItemRequestBuilder itemRequestBuilder)
+    InstanceBuilder instanceBuilder,
+    ItemBuilder itemBuilder)
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
     TimeoutException {
 
     IndividualResource instance = instancesClient.create(
-      instanceRequestBuilder);
+      instanceBuilder);
 
-    HoldingRequestBuilder holdingBuilder = new HoldingRequestBuilder()
+    HoldingBuilder holdingBuilder = new HoldingBuilder()
       .forInstance(instance.getId())
       .withPermanentLocation(defaultPermanentLocation);
 
     IndividualResource holding = holdingsClient.create(holdingBuilder.withCallNumber("123456"));
 
     return itemsClient.create(
-      itemRequestBuilder.forHolding(holding.getId())
+      itemBuilder.forHolding(holding.getId())
       .create());
   }
 }

@@ -1,8 +1,8 @@
 package org.folio.circulation.api.requests;
 
 import org.folio.circulation.api.support.APITests;
-import org.folio.circulation.api.support.builders.RequestRequestBuilder;
-import org.folio.circulation.api.support.builders.UserRequestBuilder;
+import org.folio.circulation.api.support.builders.RequestBuilder;
+import org.folio.circulation.api.support.builders.UserBuilder;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.Test;
 
@@ -33,11 +33,11 @@ public class RequestsAPILoanRenewalTests extends APITests {
 
     UUID loanId = checkOutItem(itemId, loansClient).getId();
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .hold()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
+      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
 
     renewLoan(loanId, loansClient);
 
@@ -61,11 +61,11 @@ public class RequestsAPILoanRenewalTests extends APITests {
 
     UUID loanId = checkOutItem(itemId, loansClient).getId();
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .recall()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
+      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
 
     renewLoan(loanId, loansClient);
 
@@ -89,11 +89,11 @@ public class RequestsAPILoanRenewalTests extends APITests {
 
     UUID loanId = checkOutItem(itemId, loansClient).getId();
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .page()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
+      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
 
     renewLoan(loanId, loansClient);
 

@@ -1,40 +1,40 @@
 package org.folio.circulation.api.support.fixtures;
 
-import org.folio.circulation.api.support.builders.InstanceRequestBuilder;
+import org.folio.circulation.api.support.builders.InstanceBuilder;
 
 public class InstanceRequestExamples {
-  public static InstanceRequestBuilder basedUponSmallAngryPlanet() {
+  public static InstanceBuilder basedUponSmallAngryPlanet() {
     return create("The Long Way to a Small, Angry Planet")
       .withContributor("Chambers, Becky");
   }
 
-  public static InstanceRequestBuilder basedUponNod() {
+  public static InstanceBuilder basedUponNod() {
     return create("Nod")
       .withContributor("Barnes, Adrian");
   }
 
-  public static InstanceRequestBuilder basedUponUprooted() {
+  public static InstanceBuilder basedUponUprooted() {
     return create("Uprooted")
       .withContributor("Novik, Naomi");
   }
 
-  public static InstanceRequestBuilder basedUponTemeraire() {
+  public static InstanceBuilder basedUponTemeraire() {
     return create("Temeraire")
       .withContributor("Novik, Naomi");
   }
 
-  public static InstanceRequestBuilder basedUponInterestingTimes() {
+  public static InstanceBuilder basedUponInterestingTimes() {
     return create("Interesting Times")
       .withContributor("Pratchett, Terry");
   }
 
-  public static InstanceRequestBuilder basedUponDunkirk() {
-    return new InstanceRequestBuilder("Dunkirk")
+  public static InstanceBuilder basedUponDunkirk() {
+    return new InstanceBuilder("Dunkirk")
       .withContributor("Nolan, Christopher");
   }
 
-  private static InstanceRequestBuilder create(String title) {
-    return new InstanceRequestBuilder(title);
+  private static InstanceBuilder create(String title) {
+    return new InstanceBuilder(title);
   }
 
 }

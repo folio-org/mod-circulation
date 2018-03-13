@@ -2,8 +2,8 @@ package org.folio.circulation.api.loans;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.support.APITests;
-import org.folio.circulation.api.support.builders.HoldingRequestBuilder;
-import org.folio.circulation.api.support.builders.LoanRequestBuilder;
+import org.folio.circulation.api.support.builders.HoldingBuilder;
+import org.folio.circulation.api.support.builders.LoanBuilder;
 import org.folio.circulation.api.support.fixtures.InstanceRequestExamples;
 import org.folio.circulation.api.support.fixtures.ItemRequestExamples;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -36,7 +36,7 @@ public class LoanAPITitleTests extends APITests {
       InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID holdingId = holdingsClient.create(
-      new HoldingRequestBuilder()
+      new HoldingBuilder()
         .forInstance(instanceId)
         .create())
       .getId();
@@ -48,7 +48,7 @@ public class LoanAPITitleTests extends APITests {
 
     UUID loanId = UUID.randomUUID();
 
-    IndividualResource response = loansClient.create(new LoanRequestBuilder()
+    IndividualResource response = loansClient.create(new LoanBuilder()
       .withId(loanId)
       .withItemId(itemId));
 
@@ -87,7 +87,7 @@ public class LoanAPITitleTests extends APITests {
       InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID holdingId = holdingsClient.create(
-      new HoldingRequestBuilder()
+      new HoldingBuilder()
         .forInstance(instanceId)
         .create())
       .getId();
@@ -101,7 +101,7 @@ public class LoanAPITitleTests extends APITests {
 
     UUID loanId = UUID.randomUUID();
 
-    IndividualResource response = loansClient.create(new LoanRequestBuilder()
+    IndividualResource response = loansClient.create(new LoanBuilder()
       .withId(loanId)
       .withItemId(itemId));
 
@@ -132,7 +132,7 @@ public class LoanAPITitleTests extends APITests {
       InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID holdingId = holdingsClient.create(
-      new HoldingRequestBuilder()
+      new HoldingBuilder()
         .forInstance(instanceId)
         .create())
       .getId();
@@ -146,7 +146,7 @@ public class LoanAPITitleTests extends APITests {
 
     UUID loanId = UUID.randomUUID();
 
-    IndividualResource response = loansClient.create(new LoanRequestBuilder()
+    IndividualResource response = loansClient.create(new LoanBuilder()
       .withId(loanId)
       .withItemId(itemId));
 
@@ -176,7 +176,7 @@ public class LoanAPITitleTests extends APITests {
       InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID firstHoldingId = holdingsClient.create(
-      new HoldingRequestBuilder()
+      new HoldingBuilder()
         .forInstance(firstInstanceId)
         .create())
       .getId();
@@ -190,7 +190,7 @@ public class LoanAPITitleTests extends APITests {
       InstanceRequestExamples.basedUponTemeraire()).getId();
 
     UUID secondHoldingId = holdingsClient.create(
-      new HoldingRequestBuilder()
+      new HoldingBuilder()
         .forInstance(secondInstanceId)
         .create())
       .getId();
@@ -200,10 +200,10 @@ public class LoanAPITitleTests extends APITests {
         .forHolding(secondHoldingId))
       .getId();
 
-    UUID firstLoanId = loansClient.create(new LoanRequestBuilder()
+    UUID firstLoanId = loansClient.create(new LoanBuilder()
       .withItemId(firstItemId)).getId();
 
-    UUID secondLoanId = loansClient.create(new LoanRequestBuilder()
+    UUID secondLoanId = loansClient.create(new LoanBuilder()
       .withItemId(secondItemId)).getId();
 
     List<JsonObject> fetchedLoansResponse = loansClient.getAll();
@@ -240,7 +240,7 @@ public class LoanAPITitleTests extends APITests {
       InstanceRequestExamples.basedUponSmallAngryPlanet()).getId();
 
     UUID firstHoldingId = holdingsClient.create(
-      new HoldingRequestBuilder()
+      new HoldingBuilder()
         .forInstance(firstInstanceId)
         .create())
       .getId();
@@ -254,7 +254,7 @@ public class LoanAPITitleTests extends APITests {
       InstanceRequestExamples.basedUponTemeraire()).getId();
 
     UUID secondHoldingId = holdingsClient.create(
-      new HoldingRequestBuilder()
+      new HoldingBuilder()
         .forInstance(secondInstanceId)
         .create())
       .getId();
@@ -264,10 +264,10 @@ public class LoanAPITitleTests extends APITests {
         .forHolding(secondHoldingId))
       .getId();
 
-    UUID firstLoanId = loansClient.create(new LoanRequestBuilder()
+    UUID firstLoanId = loansClient.create(new LoanBuilder()
       .withItemId(firstItemId)).getId();
 
-    UUID secondLoanId = loansClient.create(new LoanRequestBuilder()
+    UUID secondLoanId = loansClient.create(new LoanBuilder()
       .withItemId(secondItemId)).getId();
 
     //Delete instance or holding

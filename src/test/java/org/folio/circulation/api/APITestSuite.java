@@ -6,7 +6,7 @@ import org.folio.circulation.CirculationVerticle;
 import org.folio.circulation.api.fakes.FakeOkapi;
 import org.folio.circulation.api.loans.*;
 import org.folio.circulation.api.requests.*;
-import org.folio.circulation.api.support.builders.UserRequestBuilder;
+import org.folio.circulation.api.support.builders.UserBuilder;
 import org.folio.circulation.api.support.http.ResourceClient;
 import org.folio.circulation.api.support.http.URLHelper;
 import org.folio.circulation.support.VertxAssistant;
@@ -306,14 +306,14 @@ public class APITestSuite {
     TimeoutException {
     ResourceClient usersClient = ResourceClient.forUsers(createClient());
 
-    userRecord1 = new UserRequestBuilder()
+    userRecord1 = new UserBuilder()
       .withUsername("bfrederi")
       .withPatronGroupId(regularGroupId)
       .create();
 
     userId1 = usersClient.create(userRecord1).getId();
 
-    userRecord2 = new UserRequestBuilder()
+    userRecord2 = new UserBuilder()
       .withUsername("lko")
       .withPatronGroupId(alternateGroupId)
       .create();

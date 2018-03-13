@@ -2,7 +2,7 @@ package org.folio.circulation.api.support.fixtures;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.support.http.ResourceClient;
-import org.folio.circulation.api.support.builders.LoanRequestBuilder;
+import org.folio.circulation.api.support.builders.LoanBuilder;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 
@@ -20,7 +20,7 @@ public class LoanFixture {
     ExecutionException,
     TimeoutException {
 
-    return loansClient.create(new LoanRequestBuilder()
+    return loansClient.create(new LoanBuilder()
       .open()
       .withItemId(itemId));
   }
