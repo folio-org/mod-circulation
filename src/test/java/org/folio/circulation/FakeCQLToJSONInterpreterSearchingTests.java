@@ -1,7 +1,7 @@
 package org.folio.circulation;
 
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.api.fakes.FakeCQLToJSONInterpreter;
+import org.folio.circulation.api.support.fakes.FakeCQLToJSONInterpreter;
 import org.junit.Test;
 
 import java.util.ArrayList;
