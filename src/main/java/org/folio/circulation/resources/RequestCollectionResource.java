@@ -8,12 +8,9 @@ import io.vertx.ext.web.handler.BodyHandler;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.*;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.*;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -49,29 +46,7 @@ public class RequestCollectionResource {
 
   private void create(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-    CollectionResourceClient requestsStorageClient;
-    CollectionResourceClient itemsStorageClient;
-    CollectionResourceClient holdingsStorageClient;
-    CollectionResourceClient instancesStorageClient;
-    CollectionResourceClient usersStorageClient;
-    CollectionResourceClient loansStorageClient;
-    CollectionResourceClient usersProxyStorageClient;
-
-    try {
-      OkapiHttpClient client = createHttpClient(routingContext, context);
-      requestsStorageClient = createRequestsStorageClient(client, context);
-      itemsStorageClient = createItemsStorageClient(client, context);
-      holdingsStorageClient = createHoldingsStorageClient(client, context);
-      instancesStorageClient = createInstanceStorageClient(client, context);
-      usersStorageClient = createUsersStorageClient(client, context);
-      loansStorageClient = createLoansStorageClient(client, context);
-      usersProxyStorageClient = createProxyUsersStorageClient(client, context);
-    }
-    catch (MalformedURLException e) {
-      CommonFailures.reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
-
-      return;
-    }
+    Clients clients = Clients.create(context);
 
     JsonObject request = routingContext.getBodyAsJson();
 
@@ -100,7 +75,7 @@ public class RequestCollectionResource {
     CompletableFuture<?> []toComplete = new CompletableFuture<?>[callsToCompleteCount];
 
     InventoryFetcher inventoryFetcher = new InventoryFetcher(
-      itemsStorageClient, holdingsStorageClient, instancesStorageClient);
+      clients.itemsStorage(), clients.holdingsStorage(), clients.instancesStorage());
 
     CompletableFuture<InventoryRecords> inventoryRecordsCompleted
       = inventoryFetcher.fetch(itemId, t ->
@@ -110,14 +85,14 @@ public class RequestCollectionResource {
 
     CompletableFuture<Response> requestingUserRequestCompleted = new CompletableFuture<>();
 
-    usersStorageClient.get(request.getString("requesterId"),
+    clients.usersStorage().get(request.getString("requesterId"),
       requestingUserRequestCompleted::complete);
 
     toComplete[1] = requestingUserRequestCompleted;
 
     CompletableFuture<Response> requestingUserProxyRequestCompleted = new CompletableFuture<>();
     if(validProxyQuery != null){
-      usersProxyStorageClient.getMany(validProxyQuery, 1, 0,
+      clients.userProxies().getMany(validProxyQuery, 1, 0,
         requestingUserProxyRequestCompleted::complete);
       toComplete[2] = requestingUserProxyRequestCompleted;
     }
@@ -164,14 +139,14 @@ public class RequestCollectionResource {
       }
       else if (RequestType.from(request).canCreateRequestForItem(item)) {
         updateItemStatus(itemId, RequestType.from(request).toItemStatus(),
-          itemsStorageClient, routingContext.response(), updatedItem ->
+          clients.itemsStorage(), routingContext.response(), updatedItem ->
             updateLoanActionHistory(itemId,
             RequestType.from(request).toLoanAction(), RequestType.from(request).toItemStatus(),
-              loansStorageClient, routingContext.response(), vo -> {
+              clients.loansStorage(), routingContext.response(), vo -> {
               addStoredItemProperties(request, item, instance);
               addStoredRequesterProperties(request, requester);
 
-              requestsStorageClient.post(request, requestResponse -> {
+              clients.requestsStorage().post(request, requestResponse -> {
                 if (requestResponse.getStatusCode() == 201) {
                   JsonObject createdRequest = requestResponse.getJson();
 
@@ -193,27 +168,7 @@ public class RequestCollectionResource {
 
   private void replace(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-    CollectionResourceClient requestsStorageClient;
-    CollectionResourceClient itemsStorageClient;
-    CollectionResourceClient holdingsStorageClient;
-    CollectionResourceClient instancesStorageClient;
-    CollectionResourceClient usersStorageClient;
-    CollectionResourceClient usersProxyStorageClient;
-
-    try {
-      OkapiHttpClient client = createHttpClient(routingContext, context);
-      requestsStorageClient = createRequestsStorageClient(client, context);
-      itemsStorageClient = createItemsStorageClient(client, context);
-      holdingsStorageClient = createHoldingsStorageClient(client, context);
-      instancesStorageClient = createInstanceStorageClient(client, context);
-      usersStorageClient = createUsersStorageClient(client, context);
-      usersProxyStorageClient = createProxyUsersStorageClient(client, context);
-    }
-    catch (MalformedURLException e) {
-      CommonFailures.reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
-
-      return;
-    }
+    Clients clients = Clients.create(context);
 
     String id = routingContext.request().getParam("id");
     JsonObject request = routingContext.getBodyAsJson();
@@ -232,7 +187,7 @@ public class RequestCollectionResource {
     CompletableFuture<?> []toComplete = new CompletableFuture<?>[callsToCompleteCount];
 
     InventoryFetcher inventoryFetcher = new InventoryFetcher(
-      itemsStorageClient, holdingsStorageClient, instancesStorageClient);
+      clients.itemsStorage(), clients.holdingsStorage(), clients.instancesStorage());
 
     CompletableFuture<InventoryRecords> inventoryRecordsCompleted
       = inventoryFetcher.fetch(itemId, t ->
@@ -244,12 +199,12 @@ public class RequestCollectionResource {
 
     toComplete[1] = requestingUserRequestCompleted;
 
-    usersStorageClient.get(request.getString("requesterId"),
+    clients.usersStorage().get(request.getString("requesterId"),
       requestingUserRequestCompleted::complete);
 
     CompletableFuture<Response> requestingUserProxyRequestCompleted = new CompletableFuture<>();
     if(validProxyQuery != null){
-      usersProxyStorageClient.getMany(validProxyQuery, 1, 0,
+      clients.userProxies().getMany(validProxyQuery, 1, 0,
         requestingUserProxyRequestCompleted::complete);
       toComplete[2] = requestingUserProxyRequestCompleted;
     }
@@ -292,7 +247,7 @@ public class RequestCollectionResource {
       addStoredItemProperties(request, item, instance);
       addStoredRequesterProperties(request, requester);
 
-      requestsStorageClient.put(id, request, response -> {
+      clients.requestsStorage().put(id, request, response -> {
         if(response.getStatusCode() == 204) {
           SuccessResponse.noContent(routingContext.response());
         }
@@ -305,33 +260,16 @@ public class RequestCollectionResource {
 
   private void get(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-
-    CollectionResourceClient requestsStorageClient;
-    CollectionResourceClient itemsStorageClient;
-    CollectionResourceClient holdingsStorageClient;
-    CollectionResourceClient instancesStorageClient;
-
-    try {
-      OkapiHttpClient client = createHttpClient(routingContext, context);
-      requestsStorageClient = createRequestsStorageClient(client, context);
-      itemsStorageClient = createItemsStorageClient(client, context);
-      holdingsStorageClient = createHoldingsStorageClient(client, context);
-      instancesStorageClient = createInstanceStorageClient(client, context);
-    }
-    catch (MalformedURLException e) {
-      CommonFailures.reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
-
-      return;
-    }
+    Clients clients = Clients.create(context);
 
     String id = routingContext.request().getParam("id");
 
-    requestsStorageClient.get(id, requestResponse -> {
+    clients.requestsStorage().get(id, requestResponse -> {
       if(requestResponse.getStatusCode() == 200) {
         JsonObject request = requestResponse.getJson();
 
-        InventoryFetcher fetcher = new InventoryFetcher(itemsStorageClient,
-          holdingsStorageClient, instancesStorageClient);
+        InventoryFetcher fetcher = new InventoryFetcher(
+          clients.itemsStorage(), clients.holdingsStorage(), clients.instancesStorage());
 
         CompletableFuture<InventoryRecords> inventoryRecordsCompleted =
           fetcher.fetch(getItemId(request), t ->
@@ -352,21 +290,11 @@ public class RequestCollectionResource {
 
   private void delete(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-    CollectionResourceClient requestsStorageClient;
-
-    try {
-      OkapiHttpClient client = createHttpClient(routingContext, context);
-      requestsStorageClient = createRequestsStorageClient(client, context);
-    }
-    catch (MalformedURLException e) {
-      CommonFailures.reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
-
-      return;
-    }
+    Clients clients = Clients.create(context);
 
     String id = routingContext.request().getParam("id");
 
-    requestsStorageClient.delete(id, response -> {
+    clients.requestsStorage().delete(id, response -> {
       if(response.getStatusCode() == 204) {
         SuccessResponse.noContent(routingContext.response());
       }
@@ -378,26 +306,9 @@ public class RequestCollectionResource {
 
   private void getMany(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
+    Clients clients = Clients.create(context);
 
-    CollectionResourceClient requestsStorageClient;
-    CollectionResourceClient itemsStorageClient;
-    CollectionResourceClient holdingsStorageClient;
-    CollectionResourceClient instancesStorageClient;
-
-    try {
-      OkapiHttpClient client = createHttpClient(routingContext, context);
-      requestsStorageClient = createRequestsStorageClient(client, context);
-      itemsStorageClient = createItemsStorageClient(client, context);
-      holdingsStorageClient = createHoldingsStorageClient(client, context);
-      instancesStorageClient = createInstanceStorageClient(client, context);
-    }
-    catch (MalformedURLException e) {
-      CommonFailures.reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
-
-      return;
-    }
-
-    requestsStorageClient.getMany(routingContext.request().query(), requestsResponse -> {
+    clients.requestsStorage().getMany(routingContext.request().query(), requestsResponse -> {
       if(requestsResponse.getStatusCode() == 200) {
         final MultipleRecordsWrapper wrappedRequests = MultipleRecordsWrapper.fromRequestBody(
           requestsResponse.getBody(), "requests");
@@ -416,8 +327,8 @@ public class RequestCollectionResource {
           .filter(Objects::nonNull)
           .collect(Collectors.toList());
 
-        InventoryFetcher inventoryFetcher = new InventoryFetcher(itemsStorageClient,
-          holdingsStorageClient, instancesStorageClient);
+        InventoryFetcher inventoryFetcher = new InventoryFetcher(
+          clients.itemsStorage(), clients.holdingsStorage(), clients.instancesStorage());
 
         CompletableFuture<MultipleInventoryRecords> inventoryRecordsFetched =
           inventoryFetcher.fetch(itemIds, e ->
@@ -452,19 +363,9 @@ public class RequestCollectionResource {
 
   private void empty(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-    CollectionResourceClient requestsStorageClient;
+    Clients clients = Clients.create(context);
 
-    try {
-      OkapiHttpClient client = createHttpClient(routingContext, context);
-      requestsStorageClient = createRequestsStorageClient(client, context);
-    }
-    catch (MalformedURLException e) {
-      CommonFailures.reportInvalidOkapiUrlHeader(routingContext, context.getOkapiLocation());
-
-      return;
-    }
-
-    requestsStorageClient.delete(response -> {
+    clients.requestsStorage().delete(response -> {
       if(response.getStatusCode() == 204) {
         SuccessResponse.noContent(routingContext.response());
       }
@@ -538,92 +439,6 @@ public class RequestCollectionResource {
     copyStringIfExists("barcode", requester, requesterSummary);
 
     requestWithAdditionalInformation.put("requester", requesterSummary);
-  }
-
-  private OkapiHttpClient createHttpClient(RoutingContext routingContext,
-                                           WebContext context)
-    throws MalformedURLException {
-
-    return new OkapiHttpClient(routingContext.vertx().createHttpClient(),
-      new URL(context.getOkapiLocation()), context.getTenantId(),
-      context.getOkapiToken(),
-      exception -> ServerErrorResponse.internalError(routingContext.response(),
-        String.format("Failed to contact storage module: %s",
-          exception.toString())));
-  }
-
-  private CollectionResourceClient createRequestsStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
-    throws MalformedURLException {
-
-    return getCollectionResourceClient(client, context, "/request-storage/requests");
-  }
-
-  private CollectionResourceClient createItemsStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
-    throws MalformedURLException {
-
-    return getCollectionResourceClient(client, context, "/item-storage/items");
-  }
-
-  private CollectionResourceClient createHoldingsStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
-    throws MalformedURLException {
-
-    return new CollectionResourceClient(
-      client, context.getOkapiBasedUrl("/holdings-storage/holdings"));
-  }
-
-  private CollectionResourceClient createInstanceStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
-    throws MalformedURLException {
-
-    return new CollectionResourceClient(
-      client, context.getOkapiBasedUrl("/instance-storage/instances"));
-  }
-
-  private CollectionResourceClient createUsersStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
-    throws MalformedURLException {
-
-    return getCollectionResourceClient(client, context, "/users");
-  }
-
-  private CollectionResourceClient createLoansStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
-    throws MalformedURLException {
-
-    return getCollectionResourceClient(client, context, "/loan-storage/loans");
-  }
-
-  private CollectionResourceClient createProxyUsersStorageClient(
-      OkapiHttpClient client,
-      WebContext context)
-      throws MalformedURLException {
-
-      CollectionResourceClient proxyUsersStorageClient;
-
-      proxyUsersStorageClient = new CollectionResourceClient(
-        client, context.getOkapiBasedUrl("/proxiesfor"));
-
-      return proxyUsersStorageClient;
-    }
-
-
-  private CollectionResourceClient getCollectionResourceClient(
-    OkapiHttpClient client,
-    WebContext context,
-    String path)
-    throws MalformedURLException {
-
-    return new CollectionResourceClient(
-      client, context.getOkapiBasedUrl(path));
   }
 
   private JsonObject getRecordFromResponse(Response itemResponse) {
