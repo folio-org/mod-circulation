@@ -7,6 +7,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.domain.*;
 import org.folio.circulation.support.*;
+import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.*;
 
 import java.util.Collection;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -72,6 +74,7 @@ public class RequestCollectionResource extends CollectionResource {
       .thenCombineAsync(inventoryFetcher.fetch(request), this::addInventoryRecords)
       .thenApply(this::refuseWhenItemDoesNotExist)
       .thenApply(this::refuseWhenItemIsNotValid)
+      .thenComposeAsync(r -> r.after(records -> refuseWhenProxyRelationshipIsInvalid(records, clients)))
       .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
       .thenCombineAsync(userFetcher.getUser(requestingUserId, false), this::addUser)
       .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
@@ -99,6 +102,7 @@ public class RequestCollectionResource extends CollectionResource {
     completedFuture(HttpResult.success(new RequestAndRelatedRecords(request)))
       .thenCombineAsync(inventoryFetcher.fetch(request), this::addInventoryRecords)
       .thenCombineAsync(userFetcher.getUser(requestingUserId, false), this::addUser)
+      .thenComposeAsync(r -> r.after(records -> refuseWhenProxyRelationshipIsInvalid(records, clients)))
       .thenAcceptAsync(result -> {
         if(result.failed()) {
           result.cause().writeTo(routingContext.response());
@@ -376,6 +380,55 @@ public class RequestCollectionResource extends CollectionResource {
         return result;
       }
     });
+  }
+
+  private void handleProxy(CollectionResourceClient client,
+                           String query, Consumer<Response> responseHandler){
+
+    if(query != null){
+      client.getMany(query, 1, 0, responseHandler);
+    }
+    else{
+      responseHandler.accept(null);
+    }
+  }
+
+  private CompletableFuture<HttpResult<RequestAndRelatedRecords>> refuseWhenProxyRelationshipIsInvalid(
+    RequestAndRelatedRecords requestAndRelatedRecords,
+    Clients clients) {
+
+    String validProxyQuery = CqlHelper.buildisValidUserProxyQuery(requestAndRelatedRecords.request);
+
+    if(validProxyQuery == null) {
+      return CompletableFuture.completedFuture(HttpResult.success(requestAndRelatedRecords));
+    }
+
+    CompletableFuture<HttpResult<RequestAndRelatedRecords>> future = new CompletableFuture<>();
+
+    handleProxy(clients.userProxies(), validProxyQuery, proxyValidResponse -> {
+      if (proxyValidResponse != null) {
+        if (proxyValidResponse.getStatusCode() != 200) {
+          future.complete(HttpResult.failure(new ForwardOnFailure(proxyValidResponse)));
+          return;
+        }
+        final MultipleRecordsWrapper wrappedLoans = MultipleRecordsWrapper.fromRequestBody(
+          proxyValidResponse.getBody(), "proxiesFor");
+        if (wrappedLoans.isEmpty()) { //if empty then we dont have a valid proxy id in the loan
+          future.complete(HttpResult.failure(new ValidationErrorFailure(
+            "proxyUserId is not valid", "proxyUserId",
+            requestAndRelatedRecords.request.getString("proxyUserId"))));
+        }
+        else {
+          future.complete(HttpResult.success(requestAndRelatedRecords));
+        }
+      }
+      else {
+        future.complete(HttpResult.failure(
+          new ServerErrorFailure("No response when requesting proxies")));
+      }
+    });
+
+    return future;
   }
 
   private CompletableFuture<HttpResult<RequestAndRelatedRecords>> createRequest(

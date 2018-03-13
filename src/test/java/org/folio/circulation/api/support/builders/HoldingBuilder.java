@@ -9,37 +9,51 @@ public class HoldingBuilder implements Builder {
 
   private final UUID instanceId;
   private final UUID permanentLocationId;
+  private final String callNumber;
 
   public HoldingBuilder() {
     this(
       null,
-      APITestSuite.mainLibraryLocationId());
+      APITestSuite.mainLibraryLocationId(),
+      null);
   }
 
   private HoldingBuilder(
     UUID instanceId,
-    UUID permanentLocationId) {
-
+    UUID permanentLocationId,
+    String callNumber) {
     this.instanceId = instanceId;
     this.permanentLocationId = permanentLocationId;
+    this.callNumber = callNumber;
   }
 
   @Override
   public JsonObject create() {
     return new JsonObject()
       .put("instanceId", instanceId.toString())
-      .put("permanentLocationId", permanentLocationId.toString());
+      .put("permanentLocationId", permanentLocationId.toString())
+      .put("callNumber", callNumber);
   }
 
   public HoldingBuilder withPermanentLocation(UUID permanentLocationId) {
     return new HoldingBuilder(
       this.instanceId,
-      permanentLocationId);
+      permanentLocationId,
+      this.callNumber);
   }
 
   public HoldingBuilder forInstance(UUID instanceId) {
     return new HoldingBuilder(
       instanceId,
-      this.permanentLocationId);
+      this.permanentLocationId,
+      this.callNumber);
+  }
+
+  public HoldingBuilder withCallNumber(String callNumber) {
+    return new HoldingBuilder(
+      this.instanceId,
+      this.permanentLocationId,
+      callNumber
+    );
   }
 }

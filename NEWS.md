@@ -7,15 +7,25 @@
 * Refuse loan creation for already checked out items (CIRC-53)
 * Refuse loan creation when item or holding does not exist (CIRC-53)
 * Only allow `Open` and `Closed` loan status (may become interface constraint in future, CIRC-53)
-* Item status is determined by the oldest request in the request queue (CIRC-53)
+* Item status is determined by the oldest request in the request queue (CIRC-52)
 * Reuse Vert.x HTTP client within the circulation verticle (to allow for connection pooling, CIRC-86)
 * Use == relation when finding related records (CIRC-87) 
 
-## 7.2.0 Unreleased
+## 7.5.0 2018-03-13
 
-* Adds `status` property to requests (CIRC-53)
-* Provides circulation interface 2.8 (CIRC-53)
-* Requires request-storage interface 1.3 (CIRC-53)
+* Adds `status` property to `requests` (CIRC-53)
+* Adds `proxyUserId` to `requests` (CIRC-77)
+* Adds `systemReturnDate` property to `loans` (CIRC-81)
+* Adds `status` property to `requests` (CIRC-53)
+* Adds `materialType` property to the `item` for `loans` (CIRC-80)
+* Adds `callNumber` property to the `item` for `loans` (CIRC-80)
+* Adds `contributors` array to the `item` for `loans` (CIRC-80)
+* Validates proxy relationship when creating or updating `loans` and `requests` (CIRC-79)
+* Provides circulation interface 2.11 (CIRC-53, CIRC-81, CIRC-80, CIRC-77, CIRC-79)
+* Requires request-storage interface 1.4 (CIRC-53, CIRC-77, CIRC-79)
+* Requires users interface version 14.2 (CIRC-79)
+* Requires loan-storage interface 3.5 (CIRC-81)
+* Requires material-types interface 2.0 (CIRC-80)
 
 ## 7.1.1 2018-02-12
 

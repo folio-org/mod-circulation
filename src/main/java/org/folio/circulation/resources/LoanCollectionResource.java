@@ -1,6 +1,7 @@
 package org.folio.circulation.resources;
 
 import io.vertx.core.http.HttpClient;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -29,6 +30,8 @@ public class LoanCollectionResource extends CollectionResource {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final String rootPath;
+  private static final String CONTRIBUTORS_PROPERTY = "contributors";
+  private static final String MT_ID_PROPERTY = "materialTypeId";
 
   public LoanCollectionResource(String rootPath, HttpClient client) {
     super(client);
@@ -72,10 +75,12 @@ public class LoanCollectionResource extends CollectionResource {
       .thenApply(this::refuseWhenItemDoesNotExist)
       .thenApply(this::refuseWhenHoldingDoesNotExist)
       .thenApply(this::refuseWhenItemIsAlreadyCheckedOut)
+      .thenComposeAsync(r -> r.after(records -> refuseWhenProxyRelationshipIsInvalid(records, clients)))
       .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
       .thenCombineAsync(userFetcher.getUser(requestingUserId), this::addUser)
       .thenApply(this::refuseWhenUserIsNotAwaitingPickup)
       .thenComposeAsync(r -> r.after(records -> getLocation(records, clients)))
+      .thenComposeAsync(r -> r.after(records -> getMaterialType(records, clients)))
       .thenComposeAsync(r -> r.after(records -> lookupLoanPolicyId(
         records, clients.loanRules())))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
@@ -108,6 +113,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenApply(this::refuseWhenNotOpenOrClosed)
       .thenCombineAsync(inventoryFetcher.fetch(loan), this::addInventoryRecords)
       .thenApply(this::refuseWhenItemDoesNotExist)
+      .thenComposeAsync(r -> r.after(records -> refuseWhenProxyRelationshipIsInvalid(records, clients)))
       .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
       .thenComposeAsync(result -> result.after(requestQueueUpdate::onCheckIn))
       .thenComposeAsync(result -> result.after(updateItem::onLoanUpdate))
@@ -127,6 +133,7 @@ public class LoanCollectionResource extends CollectionResource {
     loanRepository.getById(id)
       .thenComposeAsync(result -> result.after(inventoryFetcher::getInventoryRecords))
       .thenComposeAsync(r -> r.after(records -> getLocation(records, clients)))
+      .thenComposeAsync(r -> r.after(records -> getMaterialType(records, clients)))
       .thenApply(r -> r.map(this::extendedLoan))
       .thenApply(OkJsonHttpResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
@@ -200,47 +207,82 @@ public class LoanCollectionResource extends CollectionResource {
               return;
             }
 
-            loans.forEach( loan -> {
-              Optional<JsonObject> possibleItem = records.findItemById(
-                loan.getString("itemId"));
+            //Also get a list of material types
+            List<String> materialTypeIds = records.getItems().stream()
+              .map(item -> item.getString(MT_ID_PROPERTY))
+              .filter(StringUtils::isNotBlank)
+              .collect(Collectors.toList());
+            CompletableFuture<Response> materialTypesFetched = new CompletableFuture<>();
+            String materialTypesQuery = CqlHelper.multipleRecordsCqlQuery(materialTypeIds);
 
-              //No need to pass on the itemStatus property,
-              // as only used to populate the history
-              //and could be confused with aggregation of current status
-              loan.remove("itemStatus");
+            clients.materialTypesStorage().getMany(materialTypesQuery,
+              materialTypeIds.size(), 0, materialTypesFetched::complete);
 
-              Optional<JsonObject> possibleInstance = Optional.empty();
-
-              if(possibleItem.isPresent()) {
-                JsonObject item = possibleItem.get();
-
-                Optional<JsonObject> possibleHolding = records.findHoldingById(
-                  item.getString("holdingsRecordId"));
-
-                if(possibleHolding.isPresent()) {
-                  JsonObject holding = possibleHolding.get();
-
-                  possibleInstance = records.findInstanceById(
-                    holding.getString("instanceId"));
-                }
-
-                List<JsonObject> locations = JsonArrayHelper.toList(
-                  locationsResponse.getJson().getJsonArray("shelflocations"));
-
-                Optional<JsonObject> possibleLocation = locations.stream()
-                  .filter(location -> location.getString("id").equals(
-                    determineLocationIdForItem(item, possibleHolding.orElse(null))))
-                  .findFirst();
-
-                loan.put("item", createItemSummary(item,
-                  possibleInstance.orElse(null),
-                    possibleHolding.orElse(null),
-                    possibleLocation.orElse(null)));
+            materialTypesFetched.thenAccept(materialTypesResponse -> {
+              if(materialTypesResponse.getStatusCode() != 200) {
+                ServerErrorResponse.internalError(routingContext.response(),
+                  String.format("Material Types request (%s) failed %s: %s",
+                    materialTypesQuery, materialTypesResponse.getStatusCode(),
+                    materialTypesResponse.getBody()));
+                return;
               }
-            });
 
-            JsonResponse.success(routingContext.response(),
-              wrappedLoans.toJson());
+              loans.forEach( loan -> {
+                Optional<JsonObject> possibleItem = records.findItemById(
+                  loan.getString("itemId"));
+
+                //No need to pass on the itemStatus property,
+                // as only used to populate the history
+                //and could be confused with aggregation of current status
+                loan.remove("itemStatus");
+
+                Optional<JsonObject> possibleInstance = Optional.empty();
+                String[] materialTypeId = new String[]{null};
+                if(possibleItem.isPresent()) {
+                  JsonObject item = possibleItem.get();
+                  materialTypeId[0] = item.getString(MT_ID_PROPERTY);
+
+                  Optional<JsonObject> possibleHolding = records.findHoldingById(
+                    item.getString("holdingsRecordId"));
+
+                  if(possibleHolding.isPresent()) {
+                    JsonObject holding = possibleHolding.get();
+
+                    possibleInstance = records.findInstanceById(
+                      holding.getString("instanceId"));
+                  }
+
+                  List<JsonObject> locations = JsonArrayHelper.toList(
+                    locationsResponse.getJson().getJsonArray("shelflocations"));
+
+                  Optional<JsonObject> possibleLocation = locations.stream()
+                    .filter(location -> location.getString("id").equals(
+                      determineLocationIdForItem(item, possibleHolding.orElse(null))))
+                    .findFirst();
+
+                  List<JsonObject> materialTypes = JsonArrayHelper.toList(
+                    materialTypesResponse.getJson().getJsonArray("mtypes"));
+
+
+                  Optional<JsonObject> possibleMaterialType = materialTypes.stream()
+                    .filter(materialType -> materialType.getString("id")
+                    .equals(materialTypeId[0])).findFirst();
+
+
+                  loan.put("item", createItemSummary(item,
+                    possibleInstance.orElse(null),
+                      possibleHolding.orElse(null),
+                      possibleLocation.orElse(null),
+                      possibleMaterialType.orElse(null)
+                      )
+                  );
+                }
+              });
+
+              JsonResponse.success(routingContext.response(),
+                wrappedLoans.toJson());
+
+            });
           });
         });
       }
@@ -279,7 +321,8 @@ public class LoanCollectionResource extends CollectionResource {
     JsonObject item,
     JsonObject instance,
     JsonObject holding,
-    JsonObject location) {
+    JsonObject location,
+    JsonObject materialType) {
     JsonObject itemSummary = new JsonObject();
 
     final String titleProperty = "title";
@@ -287,11 +330,26 @@ public class LoanCollectionResource extends CollectionResource {
     final String statusProperty = "status";
     final String holdingsRecordIdProperty = "holdingsRecordId";
     final String instanceIdProperty = "instanceId";
+    final String callNumberProperty = "callNumber";
+    final String materialTypeProperty = "materialType";
 
     if(instance != null && instance.containsKey(titleProperty)) {
       itemSummary.put(titleProperty, instance.getString(titleProperty));
     } else if (item.containsKey("title")) {
       itemSummary.put(titleProperty, item.getString(titleProperty));
+    }
+
+    if(instance != null && instance.containsKey(CONTRIBUTORS_PROPERTY)) {
+      JsonArray instanceContributors = instance.getJsonArray(CONTRIBUTORS_PROPERTY);
+
+      if(instanceContributors != null && !instanceContributors.isEmpty()) {
+        JsonArray contributors = new JsonArray();
+        for(Object ob : instanceContributors) {
+          String name = ((JsonObject)ob).getString("name");
+          contributors.add(new JsonObject().put("name", name));
+        }
+        itemSummary.put(CONTRIBUTORS_PROPERTY, contributors);
+      }
     }
 
     if(item.containsKey(barcodeProperty)) {
@@ -306,6 +364,10 @@ public class LoanCollectionResource extends CollectionResource {
       itemSummary.put(instanceIdProperty, holding.getString(instanceIdProperty));
     }
 
+    if(holding != null && holding.containsKey(callNumberProperty)) {
+      itemSummary.put(callNumberProperty, holding.getString(callNumberProperty));
+    }
+
     if(item.containsKey(statusProperty)) {
       itemSummary.put(statusProperty, item.getJsonObject(statusProperty));
     }
@@ -313,6 +375,19 @@ public class LoanCollectionResource extends CollectionResource {
     if(location != null && location.containsKey("name")) {
       itemSummary.put("location", new JsonObject()
         .put("name", location.getString("name")));
+    }
+
+    if(materialType != null) {
+      if(materialType.containsKey("name") && materialType.getString("name") != null) {
+        itemSummary.put(materialTypeProperty, new JsonObject()
+          .put("name", materialType.getString("name")));
+      } else {
+        log.warn("Missing or null property for material type for item id " +
+          item.getString("id"));
+      }
+    } else {
+      log.warn(String.format("Null materialType object for item %s",
+        item.getString("id")));
     }
 
     return itemSummary;
@@ -323,7 +398,8 @@ public class LoanCollectionResource extends CollectionResource {
       relatedRecords.inventoryRecords.item,
       relatedRecords.inventoryRecords.holding,
       relatedRecords.inventoryRecords.instance,
-      relatedRecords.location);
+      relatedRecords.location,
+      relatedRecords.materialType);
   }
 
   private JsonObject extendedLoan(
@@ -331,10 +407,12 @@ public class LoanCollectionResource extends CollectionResource {
     JsonObject item,
     JsonObject holding,
     JsonObject instance,
-    JsonObject location) {
+    JsonObject location,
+    JsonObject materialType) {
 
     if(item != null) {
-      loan.put("item", createItemSummary(item, instance, holding, location));
+      loan.put("item", createItemSummary(item, instance, holding, location,
+        materialType));
     }
 
     //No need to pass on the itemStatus property, as only used to populate the history
@@ -391,7 +469,7 @@ public class LoanCollectionResource extends CollectionResource {
     String locationId = determineLocationIdForItem(item, holding);
 
     //Got instance record, we're good to continue
-    String materialTypeId = item.getString("materialTypeId");
+    String materialTypeId = item.getString(MT_ID_PROPERTY);
 
     String patronGroup = user.getString("patronGroup");
     loanRulesClient.applyRules(loanTypeId, locationId, materialTypeId,
@@ -501,6 +579,52 @@ public class LoanCollectionResource extends CollectionResource {
       .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
   }
 
+  private CompletableFuture<HttpResult<LoanAndRelatedRecords>> getMaterialType(
+    LoanAndRelatedRecords relatedRecords,
+    Clients clients) {
+
+    JsonObject item = relatedRecords.inventoryRecords.item;
+
+    //Cannot find material type for unknown item
+    if(item == null) {
+      return CompletableFuture.completedFuture(HttpResult.success(relatedRecords));
+    }
+
+    String materialTypeId = item.getString(MT_ID_PROPERTY);
+
+    return getMaterialType(materialTypeId,
+      item.getString("id"), clients)
+      .thenApply(result -> result.map(relatedRecords::withMaterialType));
+  }
+
+  private CompletableFuture<HttpResult<JsonObject>> getMaterialType(
+    String materialTypeId,
+    String itemId,
+    Clients clients) {
+
+    CompletableFuture<Response> getLocationCompleted = new CompletableFuture<>();
+
+    clients.materialTypesStorage().get(materialTypeId, getLocationCompleted::complete);
+
+    //TODO: Add functions to explicitly distinguish between fatal not found
+    // and allowable not found
+    final Function<Response, HttpResult<JsonObject>> mapResponse = response -> {
+      if(response != null && response.getStatusCode() == 200) {
+        return HttpResult.success(response.getJson());
+      }
+      else {
+        log.warn("Could not get material type {} for item {}",
+          materialTypeId, itemId);
+
+        return HttpResult.success(null);
+      }
+    };
+
+    return getLocationCompleted
+      .thenApply(mapResponse)
+      .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
+  }
+
   private HttpResult<LoanAndRelatedRecords> refuseWhenItemDoesNotExist(
     HttpResult<LoanAndRelatedRecords> result) {
 
@@ -575,10 +699,59 @@ public class LoanCollectionResource extends CollectionResource {
     });
   }
 
-  private HttpResult<LoanAndRelatedRecords> refuseWhenUserIsNotAwaitingPickup(
-    HttpResult<LoanAndRelatedRecords> result) {
+  private void handleProxy(CollectionResourceClient client,
+                           String query, Consumer<Response> responseHandler){
 
-    return result.next(loan -> {
+    if(query != null){
+      client.getMany(query, 1, 0, responseHandler);
+    }
+    else{
+      responseHandler.accept(null);
+    }
+  }
+
+  private CompletableFuture<HttpResult<LoanAndRelatedRecords>> refuseWhenProxyRelationshipIsInvalid(
+    LoanAndRelatedRecords loanAndRelatedRecords,
+    Clients clients) {
+
+    String validProxyQuery = CqlHelper.buildisValidUserProxyQuery(loanAndRelatedRecords.loan);
+
+    if(validProxyQuery == null) {
+      return CompletableFuture.completedFuture(HttpResult.success(loanAndRelatedRecords));
+    }
+
+    CompletableFuture<HttpResult<LoanAndRelatedRecords>> future = new CompletableFuture<>();
+
+    handleProxy(clients.userProxies(), validProxyQuery, proxyValidResponse -> {
+      if (proxyValidResponse != null) {
+        if (proxyValidResponse.getStatusCode() != 200) {
+          future.complete(HttpResult.failure(new ForwardOnFailure(proxyValidResponse)));
+          return;
+        }
+        final MultipleRecordsWrapper wrappedLoans = MultipleRecordsWrapper.fromRequestBody(
+          proxyValidResponse.getBody(), "proxiesFor");
+        if (wrappedLoans.isEmpty()) { //if empty then we dont have a valid proxy id in the loan
+          future.complete(HttpResult.failure(new ValidationErrorFailure(
+            "proxyUserId is not valid", "proxyUserId",
+            loanAndRelatedRecords.loan.getString("proxyUserId"))));
+        }
+        else {
+          future.complete(HttpResult.success(loanAndRelatedRecords));
+        }
+      }
+      else {
+        future.complete(HttpResult.failure(
+          new ServerErrorFailure("No response when requesting proxies")));
+      }
+    });
+
+    return future;
+  }
+
+  private HttpResult<LoanAndRelatedRecords> refuseWhenUserIsNotAwaitingPickup(
+    HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
+
+    return loanAndRelatedRecords.next(loan -> {
       final RequestQueue requestQueue = loan.requestQueue;
       final JsonObject requestingUser = loan.requestingUser;
 
@@ -588,7 +761,7 @@ public class LoanCollectionResource extends CollectionResource {
           "userId", loan.loan.getString("userId")));
       }
       else {
-        return result;
+        return loanAndRelatedRecords;
       }
     });
   }

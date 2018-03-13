@@ -14,10 +14,16 @@ public class Clients {
   private final CollectionResourceClient usersStorageClient;
   private final CollectionResourceClient loansStorageClient;
   private final CollectionResourceClient locationsStorageClient;
+  private final CollectionResourceClient materialTypesStorageClient;
+  private final CollectionResourceClient proxiesForClient;
   private final LoanRulesClient loanRulesClient;
 
   public static Clients create(WebContext context, HttpClient httpClient) {
     return new Clients(context.createHttpClient(httpClient), context);
+  }
+
+  public static Clients create(WebContext context) {
+    return new Clients(context.createHttpClient(), context);
   }
 
   private Clients(OkapiHttpClient client, WebContext context) {
@@ -30,6 +36,8 @@ public class Clients {
       loansStorageClient = createLoansStorageClient(client, context);
       locationsStorageClient = createLocationsStorageClient(client, context);
       loanRulesClient = new LoanRulesClient(client, context);
+      materialTypesStorageClient = createMaterialTypesStorageClient(client, context);
+      proxiesForClient = createProxyUsersStorageClient(client, context);
     }
     catch(MalformedURLException e) {
       throw new InvalidOkapiLocationException(context.getOkapiLocation(), e);
@@ -62,6 +70,14 @@ public class Clients {
 
   public CollectionResourceClient locationsStorage() {
     return locationsStorageClient;
+  }
+
+  public CollectionResourceClient materialTypesStorage() {
+    return materialTypesStorageClient;
+  }
+
+  public CollectionResourceClient userProxies() {
+    return proxiesForClient;
   }
 
   public LoanRulesClient loanRules() {
@@ -133,5 +149,21 @@ public class Clients {
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/shelf-locations");
+  }
+
+  private CollectionResourceClient createProxyUsersStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context, "/proxiesfor");
+  }
+
+  private CollectionResourceClient createMaterialTypesStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context, "/material-types");
   }
 }

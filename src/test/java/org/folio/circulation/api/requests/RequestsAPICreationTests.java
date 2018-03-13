@@ -7,6 +7,7 @@ import org.folio.circulation.api.support.APITests;
 import org.folio.circulation.api.support.builders.ItemBuilder;
 import org.folio.circulation.api.support.builders.RequestBuilder;
 import org.folio.circulation.api.support.builders.UserBuilder;
+import org.folio.circulation.api.support.builders.UserProxyBuilder;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
@@ -782,5 +783,63 @@ public class RequestsAPICreationTests extends APITests {
     assertThat("barcode is taken from requesting user",
       representation.getJsonObject("requester").getString("barcode"),
       is("564376549214"));
+  }
+
+  @Test
+  public void canCreateARequestForItemWithValidUserProxy()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    loansFixture.checkOutItem(itemId);
+
+    DateTime expDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    UUID recordId = userProxyClient.create(new UserProxyBuilder().
+      withValidationFields(expDate.toString(), "Active",
+        UUID.randomUUID().toString(), UUID.randomUUID().toString())).getId();
+
+    JsonObject requestRequest = new RequestBuilder()
+      .withUserProxyId(itemId, recordId)
+      .create();
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(requestsUrl(), requestRequest,
+      ResponseHandler.json(postCompleted));
+
+    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(postResponse, hasStatus(HTTP_CREATED));
+  }
+
+  @Test
+  public void canNotCreateARequestForItemWithInValidUserProxy()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    loansFixture.checkOutItem(itemId);
+
+    DateTime expDate = new DateTime(1999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    UUID recordId = userProxyClient.create(new UserProxyBuilder().
+      withValidationFields(expDate.toString(), "Active",
+        UUID.randomUUID().toString(), UUID.randomUUID().toString())).getId();
+
+    JsonObject requestRequest = new RequestBuilder()
+      .withUserProxyId(itemId, recordId)
+      .create();
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(requestsUrl(), requestRequest,
+      ResponseHandler.json(postCompleted));
+
+    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(postResponse.getStatusCode(), is(422));
   }
 }

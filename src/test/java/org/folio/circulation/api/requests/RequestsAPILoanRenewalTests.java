@@ -6,7 +6,6 @@ import org.folio.circulation.api.support.builders.UserBuilder;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.Test;
 
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -16,14 +15,12 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class RequestsAPILoanRenewalTests extends APITests {
-
   @Test
   public void RenewalWithOutstandingHoldRequestDoesNotChangeItemStatus()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 
@@ -50,8 +47,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 
@@ -78,8 +74,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 

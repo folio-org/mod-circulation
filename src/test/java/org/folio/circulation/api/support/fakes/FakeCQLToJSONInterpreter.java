@@ -1,5 +1,4 @@
 package org.folio.circulation.api.support.fakes;
-
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -78,7 +77,7 @@ public class FakeCQLToJSONInterpreter {
     List<ImmutableTriple<String, String, String>> pairs =
       Arrays.stream(query.split(" and "))
         .map( pairText -> {
-          String[] split = pairText.split("==|=|<>");
+          String[] split = pairText.split("==|=|<>|<|>");
           String searchField = split[0]
             .replaceAll("\"", "");
 
@@ -91,6 +90,12 @@ public class FakeCQLToJSONInterpreter {
           }
           else if(pairText.contains("=")) {
             return new ImmutableTriple<>(searchField, searchTerm, "=");
+          }
+          else if(pairText.contains("<")) {
+            return new ImmutableTriple<>(searchField, searchTerm, "<");
+          }
+          else if(pairText.contains(">")) {
+            return new ImmutableTriple<>(searchField, searchTerm, ">");
           }
           else {
             return new ImmutableTriple<>(searchField, searchTerm, "<>");
@@ -131,7 +136,6 @@ public class FakeCQLToJSONInterpreter {
           if(propertyValue == null) {
             return false;
           }
-
           switch (operator) {
             case "==":
               result = propertyValue.equals(cleanTerm);
@@ -141,6 +145,12 @@ public class FakeCQLToJSONInterpreter {
               break;
             case "<>":
               result = !propertyValue.contains(cleanTerm);
+              break;
+            case ">":
+              result = propertyValue.compareTo(cleanTerm) > 0 ? true : false;
+              break;
+            case "<":
+              result = propertyValue.compareTo(cleanTerm) < 0 ? true : false;
               break;
             default:
               result = false;
@@ -169,12 +179,11 @@ public class FakeCQLToJSONInterpreter {
     //TODO: Should bomb if property does not exist
     if(field.contains(".")) {
       String[] fields = field.split("\\.");
-
       return record.getJsonObject(String.format("%s", fields[0]))
-        .getString(String.format("%s", fields[1]));
+        .getString(String.format("%s", fields[1].trim()));
     }
     else {
-      return record.getString(String.format("%s", field));
+      return record.getString(String.format("%s", field.trim()));
     }
   }
 

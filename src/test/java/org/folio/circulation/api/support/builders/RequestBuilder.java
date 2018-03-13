@@ -27,6 +27,7 @@ public class RequestBuilder implements Builder {
   private final ItemSummary itemSummary;
   private final PatronSummary requesterSummary;
   private final String status;
+  private final UUID proxyUserId;
 
   public RequestBuilder() {
     this(UUID.randomUUID(),
@@ -40,10 +41,11 @@ public class RequestBuilder implements Builder {
       null,
       null,
       null,
+      null,
       null);
   }
 
-  private RequestBuilder(
+  public RequestBuilder(
     UUID id,
     String requestType,
     DateTime requestDate,
@@ -55,7 +57,8 @@ public class RequestBuilder implements Builder {
     LocalDate holdShelfExpirationDate,
     ItemSummary itemSummary,
     PatronSummary requesterSummary,
-    String status) {
+    String status,
+    UUID proxyUserId) {
 
     this.id = id;
     this.requestType = requestType;
@@ -69,8 +72,10 @@ public class RequestBuilder implements Builder {
     this.itemSummary = itemSummary;
     this.requesterSummary = requesterSummary;
     this.status = status;
+    this.proxyUserId = proxyUserId;
   }
 
+  @Override
   public JsonObject create() {
     JsonObject request = new JsonObject();
 
@@ -122,6 +127,10 @@ public class RequestBuilder implements Builder {
       request.put("requester", requester);
     }
 
+    if(proxyUserId != null){
+      request.put("proxyUserId", proxyUserId.toString());
+    }
+
     return request;
   }
 
@@ -138,7 +147,8 @@ public class RequestBuilder implements Builder {
       this.holdShelfExpirationDate,
       this.itemSummary,
       this.requesterSummary,
-      this.status);
+      this.status,
+      this.proxyUserId);
   }
 
   public RequestBuilder withNoId() {
@@ -154,7 +164,8 @@ public class RequestBuilder implements Builder {
       this.holdShelfExpirationDate,
       this.itemSummary,
       this.requesterSummary,
-      this.status);
+      this.status,
+      this.proxyUserId);
   }
 
   public RequestBuilder withRequestDate(DateTime requestDate) {
@@ -170,7 +181,8 @@ public class RequestBuilder implements Builder {
       this.holdShelfExpirationDate,
       this.itemSummary,
       this.requesterSummary,
-      this.status);
+      this.status,
+      this.proxyUserId);
   }
 
   public RequestBuilder withRequestType(String requestType) {
@@ -186,7 +198,8 @@ public class RequestBuilder implements Builder {
       this.holdShelfExpirationDate,
       this.itemSummary,
       this.requesterSummary,
-      this.status);
+      this.status,
+      this.proxyUserId);
   }
 
   public RequestBuilder hold() {
@@ -213,7 +226,9 @@ public class RequestBuilder implements Builder {
       this.requestExpirationDate,
       this.holdShelfExpirationDate,
       this.itemSummary,
-      this.requesterSummary, this.status);
+      this.requesterSummary,
+      this.status,
+      this.proxyUserId);
   }
 
   public RequestBuilder withRequesterId(UUID requesterId) {
@@ -228,7 +243,9 @@ public class RequestBuilder implements Builder {
       this.requestExpirationDate,
       this.holdShelfExpirationDate,
       this.itemSummary,
-      this.requesterSummary, this.status);
+      this.requesterSummary,
+      this.status,
+      this.proxyUserId);
   }
 
   public RequestBuilder toHoldShelf() {
@@ -252,7 +269,9 @@ public class RequestBuilder implements Builder {
       this.requestExpirationDate,
       this.holdShelfExpirationDate,
       this.itemSummary,
-      this.requesterSummary, this.status);
+      this.requesterSummary,
+      this.status,
+      this.proxyUserId);
   }
 
   public RequestBuilder fulfilToHoldShelf() {
@@ -273,7 +292,8 @@ public class RequestBuilder implements Builder {
       this.holdShelfExpirationDate,
       this.itemSummary,
       this.requesterSummary,
-      this.status);
+      this.status,
+      this.proxyUserId);
   }
 
   public RequestBuilder withHoldShelfExpiration(LocalDate holdShelfExpiration) {
@@ -289,7 +309,8 @@ public class RequestBuilder implements Builder {
       holdShelfExpiration,
       this.itemSummary,
       this.requesterSummary,
-      this.status);
+      this.status,
+      this.proxyUserId);
   }
 
   public RequestBuilder withItem(String title, String barcode) {
@@ -304,7 +325,8 @@ public class RequestBuilder implements Builder {
       this.holdShelfExpirationDate,
       new ItemSummary(title, barcode),
       this.requesterSummary,
-      this.status);
+      this.status,
+      this.proxyUserId);
   }
 
   public RequestBuilder withRequester(
@@ -325,7 +347,8 @@ public class RequestBuilder implements Builder {
       this.holdShelfExpirationDate,
       this.itemSummary,
       new PatronSummary(lastName, firstName, middleName, barcode),
-      this.status);
+      this.status,
+      this.proxyUserId);
   }
 
   public RequestBuilder withRequester(
@@ -345,7 +368,8 @@ public class RequestBuilder implements Builder {
       this.holdShelfExpirationDate,
       this.itemSummary,
       new PatronSummary(lastName, firstName, null, barcode),
-      this.status);
+      this.status,
+      this.proxyUserId);
   }
 
   public RequestBuilder withDeliveryAddressType(UUID deliverAddressType) {
@@ -361,7 +385,8 @@ public class RequestBuilder implements Builder {
       this.holdShelfExpirationDate,
       this.itemSummary,
       this.requesterSummary,
-      this.status);
+      this.status,
+      this.proxyUserId);
   }
 
   public RequestBuilder withStatus(String status) {
@@ -377,7 +402,25 @@ public class RequestBuilder implements Builder {
       this.holdShelfExpirationDate,
       this.itemSummary,
       this.requesterSummary,
-      status);
+      status,
+      this.proxyUserId);
+  }
+
+  public RequestBuilder withUserProxyId(UUID itemId, UUID userProxyId) {
+    return new RequestBuilder(
+      this.id,
+      this.requestType,
+      this.requestDate,
+      itemId,
+      this.requesterId,
+      this.fulfilmentPreference,
+      this.deliveryAddressTypeId,
+      this.requestExpirationDate,
+      this.holdShelfExpirationDate,
+      this.itemSummary,
+      this.requesterSummary,
+      this.status,
+      userProxyId);
   }
 
   public Builder withNoStatus() {

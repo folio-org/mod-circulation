@@ -17,7 +17,7 @@ public class ResponseStatusCodeMatcher extends TypeSafeDiagnosingMatcher<Respons
   public static ResponseStatusCodeMatcher hasStatus(HttpStatus httpStatus) {
     return new ResponseStatusCodeMatcher(httpStatus);
   }
-  
+
   private final HttpStatus httpStatus;
 
   /**

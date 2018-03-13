@@ -1,11 +1,13 @@
 package org.folio.circulation.api.loans;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.APITestSuite;
 import org.folio.circulation.api.support.APITests;
 import org.folio.circulation.api.support.builders.ItemBuilder;
 import org.folio.circulation.api.support.builders.LoanBuilder;
 import org.folio.circulation.api.support.builders.UserBuilder;
+import org.folio.circulation.api.support.builders.UserProxyBuilder;
 import org.folio.circulation.api.support.http.InterfaceUrls;
 import org.folio.circulation.api.support.http.ResourceClient;
 import org.folio.circulation.support.JsonArrayHelper;
@@ -35,6 +37,7 @@ import static org.folio.circulation.api.support.fixtures.UserExamples.basedUponJ
 import static org.folio.circulation.api.support.fixtures.UserExamples.basedUponStevenJones;
 import static org.folio.circulation.api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.api.support.http.InterfaceUrls.loansUrl;
+import static org.folio.circulation.api.support.http.InterfaceUrls.usersProxyUrl;
 import static org.folio.circulation.api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
@@ -63,7 +66,6 @@ public class LoanAPITests extends APITests {
     IndividualResource response = loansClient.create(new LoanBuilder()
       .withId(id)
       .withUserId(userId)
-      .withProxyUserId(proxyUserId)
       .withItemId(itemId)
       .withLoanDate(loanDate)
       .withDueDate(dueDate)
@@ -76,9 +78,6 @@ public class LoanAPITests extends APITests {
 
     assertThat("user id does not match",
       loan.getString("userId"), is(userId.toString()));
-
-    assertThat("proxy user id does not match",
-      loan.getString("proxyUserId"), is(proxyUserId.toString()));
 
     assertThat("item id does not match",
       loan.getString("itemId"), is(itemId.toString()));
@@ -103,6 +102,26 @@ public class LoanAPITests extends APITests {
       loan.getJsonObject("item").getString("barcode"),
       is("036000291452"));
 
+    assertThat("call number is 123456", loan.getJsonObject("item")
+      .getString("callNumber"), is("123456"));
+
+    assertThat(loan.getJsonObject("item").encode() + " contains 'materialType'",
+      loan.getJsonObject("item").containsKey("materialType"), is(true));
+
+    assertThat("materialType is book", loan.getJsonObject("item")
+      .getJsonObject("materialType").getString("name"), is("Book"));
+
+    assertThat("item has contributors",
+      loan.getJsonObject("item").containsKey("contributors"), is(true));
+
+    JsonArray contributors = loan.getJsonObject("item").getJsonArray("contributors");
+
+    assertThat("item has a single contributor",
+      contributors.size(), is(1));
+
+    assertThat("Becky Chambers is a contributor",
+      contributors.getJsonObject(0).getString("name"), is("Chambers, Becky"));
+
     assertThat("has item status",
       loan.getJsonObject("item").containsKey("status"), is(true));
 
@@ -124,7 +143,6 @@ public class LoanAPITests extends APITests {
     assertThat("item status snapshot in storage is not checked out",
       loansStorageClient.getById(id).getJson().getString("itemStatus"),
       is("Checked out"));
-
   }
 
   @Test
@@ -144,12 +162,12 @@ public class LoanAPITests extends APITests {
     CompletableFuture<Response> createCompleted = new CompletableFuture<>();
 
     client.post(InterfaceUrls.loansUrl(), new LoanBuilder()
-      .withId(id)
-      .withUserId(userId)
-      .withItemId(UUID.randomUUID())
-      .withLoanDate(loanDate)
-      .withDueDate(dueDate)
-      .withStatus("Open").create(),
+        .withId(id)
+        .withUserId(userId)
+        .withItemId(UUID.randomUUID())
+        .withLoanDate(loanDate)
+        .withDueDate(dueDate)
+        .withStatus("Open").create(),
       ResponseHandler.json(createCompleted));
 
     Response response = createCompleted.get(5, TimeUnit.SECONDS);
@@ -184,12 +202,13 @@ public class LoanAPITests extends APITests {
     CompletableFuture<Response> createCompleted = new CompletableFuture<>();
 
     client.post(InterfaceUrls.loansUrl(), new LoanBuilder()
-        .withId(id)
-        .withUserId(userId)
-        .withItemId(itemId)
-        .withLoanDate(loanDate)
-        .withDueDate(dueDate)
-        .withStatus("Open").create(),
+      .open()
+      .withId(id)
+      .withUserId(userId)
+      .withItemId(itemId)
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate)
+      .create(),
       ResponseHandler.any(createCompleted));
 
     Response response = createCompleted.get(5, TimeUnit.SECONDS);
@@ -233,6 +252,39 @@ public class LoanAPITests extends APITests {
       response.getStatusCode(), is(HTTP_INTERNAL_ERROR));
 
     assertThat(response.getBody(), is("Unable to locate User"));
+  }
+
+  @Test
+  public void canCreateALoanWithSystemReturnDate()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID id = UUID.randomUUID();
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    UUID userId = usersClient.create(new UserBuilder()).getId();
+
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+    DateTime systemReturnDate = new DateTime(2017, 4, 1, 12, 0, 0, DateTimeZone.UTC);
+
+    JsonObject builtRequest = new LoanBuilder()
+      .closed()
+      .withId(id)
+      .withUserId(userId)
+      .withItemId(itemId)
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate)
+      .withSystemReturnDate(systemReturnDate)
+      .create();
+
+    IndividualResource response = loansClient.create(builtRequest);
+
+    JsonObject loan = response.getJson();
+
+    assertThat("systemReturnDate does not match",
+      loan.getString("systemReturnDate"), isEquivalentTo(systemReturnDate));
   }
 
   @Test
@@ -414,7 +466,6 @@ public class LoanAPITests extends APITests {
     loansClient.create(new LoanBuilder()
       .withId(id)
       .withUserId(userId)
-      .withProxyUserId(proxyUserId)
       .withItemId(itemId)
       .withLoanDate(new DateTime(2016, 10, 15, 8, 26, 53, DateTimeZone.UTC))
       .withDueDate(dueDate)
@@ -432,9 +483,6 @@ public class LoanAPITests extends APITests {
 
     assertThat("user id does not match",
       loan.getString("userId"), is(userId.toString()));
-
-    assertThat("proxy user id does not match",
-      loan.getString("proxyUserId"), is(proxyUserId.toString()));
 
     assertThat("item id does not match",
       loan.getString("itemId"), is(itemId.toString()));
@@ -461,6 +509,26 @@ public class LoanAPITests extends APITests {
     assertThat("barcode is taken from item",
       loan.getJsonObject("item").getString("barcode"),
       is("036000291452"));
+
+    assertThat("call number is 123456", loan.getJsonObject("item")
+      .getString("callNumber"), is("123456"));
+
+    assertThat(loan.getJsonObject("item").encode() + " contains 'materialType'",
+      loan.getJsonObject("item").containsKey("materialType"), is(true));
+
+    assertThat("materialType is book", loan.getJsonObject("item")
+      .getJsonObject("materialType").getString("name"), is("Book"));
+
+    assertThat("item has contributors",
+      loan.getJsonObject("item").containsKey("contributors"), is(true));
+
+    JsonArray contributors = loan.getJsonObject("item").getJsonArray("contributors");
+
+    assertThat("item has a single contributor",
+      contributors.size(), is(1));
+
+    assertThat("Becky Chambers is a contributor",
+      contributors.getJsonObject(0).getString("name"), is("Chambers, Becky"));
 
     assertThat("has item status",
       loan.getJsonObject("item").containsKey("status"), is(true));
@@ -1084,6 +1152,261 @@ public class LoanAPITests extends APITests {
     assertThat(getResponse.getStatusCode(), is(HttpURLConnection.HTTP_NOT_FOUND));
   }
 
+  @Test
+  public void createLoanProxyForTest()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID id = UUID.randomUUID();
+
+    //create item
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+
+    //create user
+    UUID userId = usersClient.create(new UserBuilder()).getId();
+
+    //create proxy that is valid with an expDate in the year 2999
+    UUID proxyUserId = UUID.randomUUID();
+    DateTime expDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    UUID recordId = userProxyClient.create(new UserProxyBuilder().
+      withValidationFields(expDate.toString(), "Active", userId.toString(), proxyUserId.toString())).getId();
+
+    //create loan with the proxy id annd user id
+
+    //should pass, do same but create invalid proxy (not active) and check
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
+    //create loan should be allowed as proxy is valid
+    IndividualResource response = loansClient.create(new LoanBuilder()
+      .withId(id)
+      .withUserId(userId)
+      .withProxyUserId(recordId)
+      .withItemId(itemId)
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate)
+      .withStatus("Open"));
+
+    JsonObject loan = response.getJson();
+
+    assertThat("user id does not match",
+      loan.getString("userId"), is(userId.toString()));
+
+    assertThat("proxy user id does not match",
+      loan.getString("proxyUserId"), is(recordId.toString()));
+
+    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
+
+    client.get(usersProxyUrl(""),
+      ResponseHandler.any(getCompleted));
+
+    Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+
+    //create proxy that is invalid with an expDate in the year 2000
+    id = UUID.randomUUID();
+
+    proxyUserId = UUID.randomUUID();
+    expDate = new DateTime(2000, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    recordId = userProxyClient.create(new UserProxyBuilder().
+      withValidationFields(expDate.toString(), "Active", userId.toString(), proxyUserId.toString())).getId();
+
+    loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
+    //create loan should not be allowed as proxy is valid
+    loan = new LoanBuilder()
+    .withId(id)
+    .withUserId(userId)
+    .withProxyUserId(recordId)
+    .withItemId(itemId)
+    .withLoanDate(loanDate)
+    .withDueDate(dueDate)
+    .withStatus("Open").create();
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(loansUrl(), loan,
+      ResponseHandler.any(postCompleted));
+
+    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(postResponse.getBody(), postResponse.getStatusCode(), is(422));
+  }
+
+  @Test
+  public void nonExistentProxy()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID id = UUID.randomUUID();
+
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
+    JsonObject loan = new LoanBuilder()
+    .withId(id)
+    .withUserId(UUID.randomUUID())
+    .withProxyUserId(UUID.randomUUID())
+    .withItemId(UUID.randomUUID())
+    .withLoanDate(loanDate)
+    .withDueDate(dueDate)
+    .withStatus("Open").create();
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(loansUrl(), loan,
+      ResponseHandler.any(postCompleted));
+
+    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(postResponse.getBody(), postResponse.getStatusCode(), is(422));
+
+  }
+
+  @Test
+  public void updateWithValidProxy()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID id = UUID.randomUUID();
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    UUID userId = usersClient.create(new UserBuilder()).getId();
+
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
+    loansClient.create(new LoanBuilder()
+      .withId(id)
+      .withUserId(userId)
+      .withItemId(itemId)
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate)
+      .withStatus("Open"));
+
+    UUID proxyUserId = UUID.randomUUID();
+    DateTime expDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    UUID recordId = userProxyClient.create(new UserProxyBuilder().
+      withValidationFields(expDate.toString(), "Active", userId.toString(), proxyUserId.toString())).getId();
+
+    JsonObject loan = new LoanBuilder()
+    .withId(id)
+    .withUserId(userId)
+    .withProxyUserId(recordId)
+    .withItemId(itemId)
+    .withLoanDate(loanDate)
+    .withDueDate(dueDate)
+    .withStatus("Open").create();
+
+    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
+
+    client.put(loansUrl(String.format("/%s", id)), loan,
+      ResponseHandler.any(putCompleted));
+
+    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat("Valid proxy should allow updates to work but does not", putResponse.getStatusCode(),
+      is(HttpURLConnection.HTTP_NO_CONTENT));
+
+  }
+
+  @Test
+  public void updateWithInValidProxy()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID id = UUID.randomUUID();
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    UUID userId = usersClient.create(new UserBuilder()).getId();
+
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
+    loansClient.create(new LoanBuilder()
+      .withId(id)
+      .withUserId(userId)
+      .withItemId(itemId)
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate)
+      .withStatus("Open"));
+
+    UUID proxyUserId = UUID.randomUUID();
+    DateTime expDate = new DateTime(1999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    UUID recordId = userProxyClient.create(new UserProxyBuilder().
+      withValidationFields(expDate.toString(), "Active", userId.toString(), proxyUserId.toString())).getId();
+
+    JsonObject loan = new LoanBuilder()
+    .withId(id)
+    .withUserId(userId)
+    .withProxyUserId(recordId)
+    .withItemId(itemId)
+    .withLoanDate(loanDate)
+    .withDueDate(dueDate)
+    .withStatus("Open").create();
+
+    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
+
+    client.put(loansUrl(String.format("/%s", id)), loan,
+      ResponseHandler.any(putCompleted));
+
+    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat("InValid proxy should fail loan update", putResponse.getStatusCode(),
+      is(422));
+
+  }
+
+  @Test
+  public void updateWithNonExistentProxy()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID id = UUID.randomUUID();
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    UUID userId = usersClient.create(new UserBuilder()).getId();
+
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
+    loansClient.create(new LoanBuilder()
+      .withId(id)
+      .withUserId(userId)
+      .withItemId(itemId)
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate)
+      .withStatus("Open"));
+
+    JsonObject loan = new LoanBuilder()
+    .withId(id)
+    .withUserId(userId)
+    .withProxyUserId(UUID.randomUUID())
+    .withItemId(itemId)
+    .withLoanDate(loanDate)
+    .withDueDate(dueDate)
+    .withStatus("Open").create();
+
+    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
+
+    client.put(loansUrl(String.format("/%s", id)), loan,
+      ResponseHandler.any(putCompleted));
+
+    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat("Invalid proxyUserId is not allowed when updating a loan", putResponse.getStatusCode(), is(422));
+
+  }
+
   private void loanHasExpectedProperties(JsonObject loan) {
     hasProperty("id", loan, "loan");
     hasProperty("userId", loan, "loan");
@@ -1098,6 +1421,25 @@ public class LoanAPITests extends APITests {
     hasProperty("title", item, "item");
     hasProperty("barcode", item, "item");
     hasProperty("status", item, "item");
+    hasProperty("materialType", item, "item");
+    hasProperty("callNumber", item, "item");
+    hasProperty("contributors", item, "item");
+
+    JsonObject materialType = item.getJsonObject("materialType");
+
+    hasProperty("name", materialType, "material type");
+
+    JsonObject itemStatus = item.getJsonObject("status");
+
+    hasProperty("name", itemStatus, "item status");
+
+    List<JsonObject> contributors = JsonArrayHelper.toList(item.getJsonArray("contributors"));
+
+    assertThat("Should have single contributor",
+      contributors.size(), is(1));
+
+    assertThat("Contributor has a name",
+      contributors.get(0).containsKey("name"), is(true));
 
     assertThat("Should not have snapshot of item status, as current status is included",
       loan.containsKey("itemStatus"), is(false));

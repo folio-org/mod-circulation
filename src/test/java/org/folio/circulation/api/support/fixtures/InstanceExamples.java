@@ -4,31 +4,32 @@ import org.folio.circulation.api.support.builders.InstanceBuilder;
 
 public class InstanceExamples {
   public static InstanceBuilder basedUponSmallAngryPlanet() {
-    return create("The Long Way to a Small, Angry Planet");
+    return new InstanceBuilder("The Long Way to a Small, Angry Planet")
+      .withContributor("Chambers, Becky");
   }
 
   public static InstanceBuilder basedUponNod() {
-    return create("Nod");
+    return new InstanceBuilder("Nod")
+      .withContributor("Barnes, Adrian");
   }
 
   public static InstanceBuilder basedUponUprooted() {
-    return create("Uprooted");
+    return new InstanceBuilder("Uprooted")
+      .withContributor("Novik, Naomi");
   }
 
   public static InstanceBuilder basedUponTemeraire() {
-    return create("Temeraire");
+    return new InstanceBuilder("Temeraire")
+      .withContributor("Novik, Naomi");
   }
 
   public static InstanceBuilder basedUponInterestingTimes() {
-    return create("Interesting Times");
+    return new InstanceBuilder("Interesting Times")
+      .withContributor("Pratchett, Terry");
   }
 
   public static InstanceBuilder basedUponDunkirk() {
-    return new InstanceBuilder("Dunkirk");
+    return new InstanceBuilder("Dunkirk")
+      .withContributor("Nolan, Christopher");
   }
-
-  private static InstanceBuilder create(String title) {
-    return new InstanceBuilder(title);
-  }
-
 }

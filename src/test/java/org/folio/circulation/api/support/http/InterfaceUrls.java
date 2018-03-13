@@ -1,9 +1,9 @@
 package org.folio.circulation.api.support.http;
 
-import org.folio.circulation.api.APITestSuite;
-
 import java.net.MalformedURLException;
 import java.net.URL;
+
+import org.folio.circulation.api.APITestSuite;
 
 public class InterfaceUrls {
   public static URL materialTypesStorageUrl(String subPath)
@@ -28,6 +28,11 @@ public class InterfaceUrls {
     throws MalformedURLException {
 
     return APITestSuite.viaOkapiModuleUrl("/instance-types" + subPath);
+  }
+
+  public static URL contributorNameTypesStorageUrl(String subPath)
+    throws MalformedURLException {
+    return APITestSuite.viaOkapiModuleUrl("/contributor-name-types" + subPath);
   }
 
   public static URL itemsStorageUrl(String subPath)
@@ -72,6 +77,12 @@ public class InterfaceUrls {
     return APITestSuite.viaOkapiModuleUrl("/users" + subPath);
   }
 
+  public static URL usersProxyUrl(String subPath)
+      throws MalformedURLException {
+
+      return APITestSuite.viaOkapiModuleUrl("/proxiesfor" + subPath);
+    }
+
   public static URL groupsUrl(String subPath)
     throws MalformedURLException {
 
@@ -109,4 +120,5 @@ public class InterfaceUrls {
   public static URL loanRulesUrl(String subPath) {
     return APITestSuite.circulationModuleUrl("/circulation/loan-rules" + subPath);
   }
+
 }
