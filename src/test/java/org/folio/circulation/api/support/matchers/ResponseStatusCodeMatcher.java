@@ -8,7 +8,7 @@ import org.hamcrest.TypeSafeDiagnosingMatcher;
 /**
  * Match Response.getStatusCode() against a HttpStatus.
  */
-public class StatusMatcher extends TypeSafeDiagnosingMatcher<Response> {
+public class ResponseStatusCodeMatcher extends TypeSafeDiagnosingMatcher<Response> {
 
   private final HttpStatus httpStatus;
 
@@ -16,7 +16,7 @@ public class StatusMatcher extends TypeSafeDiagnosingMatcher<Response> {
    * Set status code.
    * @param httpStatus  the status code to match against.
    */
-  public StatusMatcher(HttpStatus httpStatus) {
+  public ResponseStatusCodeMatcher(HttpStatus httpStatus) {
     this.httpStatus = httpStatus;
   }
 
@@ -44,7 +44,7 @@ public class StatusMatcher extends TypeSafeDiagnosingMatcher<Response> {
    * @param httpStatus  the code to match against.
    * @return the matcher
    */
-  public static StatusMatcher hasStatus(HttpStatus httpStatus) {
-    return new StatusMatcher(httpStatus);
+  public static ResponseStatusCodeMatcher hasStatus(HttpStatus httpStatus) {
+    return new ResponseStatusCodeMatcher(httpStatus);
   }
 }
