@@ -2,7 +2,7 @@ package org.folio.circulation.api.support.fixtures;
 
 import org.folio.circulation.api.support.builders.InstanceBuilder;
 
-public class InstanceRequestExamples {
+public class InstanceExamples {
   public static InstanceBuilder basedUponSmallAngryPlanet() {
     return create("The Long Way to a Small, Angry Planet")
       .withContributor("Chambers, Becky");

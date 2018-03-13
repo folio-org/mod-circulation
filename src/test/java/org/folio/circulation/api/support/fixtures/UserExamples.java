@@ -2,7 +2,7 @@ package org.folio.circulation.api.support.fixtures;
 
 import org.folio.circulation.api.support.builders.UserBuilder;
 
-public class UserRequestExamples {
+public class UserExamples {
   public static UserBuilder basedUponStevenJones() {
     return new UserBuilder()
       .withName("Jones", "Steven")

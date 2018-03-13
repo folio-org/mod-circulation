@@ -35,8 +35,8 @@ public class ItemsFixture {
     ExecutionException {
 
     return create(
-      InstanceRequestExamples.basedUponDunkirk(),
-      ItemRequestExamples.basedUponDunkirk());
+      InstanceExamples.basedUponDunkirk(),
+      ItemExamples.basedUponDunkirk());
   }
 
   public IndividualResource basedUponSmallAngryPlanet()
@@ -46,8 +46,8 @@ public class ItemsFixture {
     ExecutionException {
 
     return create(
-      InstanceRequestExamples.basedUponSmallAngryPlanet(),
-      ItemRequestExamples.basedUponSmallAngryPlanet());
+      InstanceExamples.basedUponSmallAngryPlanet(),
+      ItemExamples.basedUponSmallAngryPlanet());
   }
 
   public IndividualResource basedUponSmallAngryPlanet(
@@ -59,8 +59,8 @@ public class ItemsFixture {
 
     return applyAdditionalProperties(
       additionalItemProperties,
-      InstanceRequestExamples.basedUponSmallAngryPlanet(),
-      ItemRequestExamples.basedUponSmallAngryPlanet());
+      InstanceExamples.basedUponSmallAngryPlanet(),
+      ItemExamples.basedUponSmallAngryPlanet());
   }
 
   public IndividualResource basedUponNod()
@@ -70,8 +70,8 @@ public class ItemsFixture {
     ExecutionException {
 
     return create(
-      InstanceRequestExamples.basedUponNod(),
-      ItemRequestExamples.basedUponNod());
+      InstanceExamples.basedUponNod(),
+      ItemExamples.basedUponNod());
   }
 
   public IndividualResource basedUponNod(
@@ -83,8 +83,8 @@ public class ItemsFixture {
 
     return applyAdditionalProperties(
       additionalItemProperties,
-      InstanceRequestExamples.basedUponNod(),
-      ItemRequestExamples.basedUponNod());
+      InstanceExamples.basedUponNod(),
+      ItemExamples.basedUponNod());
   }
 
   public IndividualResource basedUponTemeraire()
@@ -94,8 +94,8 @@ public class ItemsFixture {
     ExecutionException {
 
     return create(
-      InstanceRequestExamples.basedUponTemeraire(),
-      ItemRequestExamples.basedUponTemeraire());
+      InstanceExamples.basedUponTemeraire(),
+      ItemExamples.basedUponTemeraire());
   }
 
   public IndividualResource basedUponTemeraire(
@@ -107,8 +107,8 @@ public class ItemsFixture {
 
     return applyAdditionalProperties(
       additionalItemProperties,
-      InstanceRequestExamples.basedUponTemeraire(),
-      ItemRequestExamples.basedUponTemeraire());
+      InstanceExamples.basedUponTemeraire(),
+      ItemExamples.basedUponTemeraire());
   }
 
   public IndividualResource basedUponUprooted()
@@ -118,8 +118,8 @@ public class ItemsFixture {
     ExecutionException {
 
     return create(
-      InstanceRequestExamples.basedUponUprooted(),
-      ItemRequestExamples.basedUponUprooted());
+      InstanceExamples.basedUponUprooted(),
+      ItemExamples.basedUponUprooted());
   }
 
   public IndividualResource basedUponUprooted(
@@ -131,8 +131,8 @@ public class ItemsFixture {
 
     return applyAdditionalProperties(
       additionalItemProperties,
-      InstanceRequestExamples.basedUponUprooted(),
-      ItemRequestExamples.basedUponUprooted());
+      InstanceExamples.basedUponUprooted(),
+      ItemExamples.basedUponUprooted());
   }
 
   public IndividualResource basedUponInterestingTimes()
@@ -142,8 +142,8 @@ public class ItemsFixture {
     ExecutionException {
 
     return create(
-      InstanceRequestExamples.basedUponInterestingTimes(),
-      ItemRequestExamples.basedUponInterestingTimes());
+      InstanceExamples.basedUponInterestingTimes(),
+      ItemExamples.basedUponInterestingTimes());
   }
 
   public IndividualResource basedUponInterestingTimes(
@@ -155,8 +155,8 @@ public class ItemsFixture {
 
     return applyAdditionalProperties(
       additionalItemProperties,
-      InstanceRequestExamples.basedUponInterestingTimes(),
-      ItemRequestExamples.basedUponInterestingTimes());
+      InstanceExamples.basedUponInterestingTimes(),
+      ItemExamples.basedUponInterestingTimes());
   }
 
   private IndividualResource applyAdditionalProperties(

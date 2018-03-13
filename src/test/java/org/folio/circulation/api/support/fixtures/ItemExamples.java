@@ -3,7 +3,7 @@ package org.folio.circulation.api.support.fixtures;
 import org.folio.circulation.api.APITestSuite;
 import org.folio.circulation.api.support.builders.ItemBuilder;
 
-public class ItemRequestExamples {
+public class ItemExamples {
   public static ItemBuilder basedUponSmallAngryPlanet() {
     return new ItemBuilder()
       .withMaterialType(APITestSuite.bookMaterialTypeId())

@@ -30,8 +30,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.folio.circulation.api.support.fixtures.UserRequestExamples.basedUponJessicaPontefract;
-import static org.folio.circulation.api.support.fixtures.UserRequestExamples.basedUponStevenJones;
+import static org.folio.circulation.api.support.fixtures.UserExamples.basedUponJessicaPontefract;
+import static org.folio.circulation.api.support.fixtures.UserExamples.basedUponStevenJones;
 import static org.folio.circulation.api.support.http.InterfaceUrls.loansUrl;
 import static org.folio.circulation.api.support.http.InterfaceUrls.usersProxyUrl;
 import static org.folio.circulation.api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
