@@ -49,22 +49,6 @@ public class RequestCollectionResource {
 
   private void create(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-
-    JsonObject request = routingContext.getBodyAsJson();
-
-    RequestStatus status = RequestStatus.from(request);
-
-    if(!status.isValid()) {
-      ClientErrorResponse.badRequest(routingContext.response(),
-        RequestStatus.invalidStatusErrorMessage());
-      return;
-    }
-    else {
-      status.writeTo(request);
-    }
-
-    removeRelatedRecordInformation(request);
-
     CollectionResourceClient requestsStorageClient;
     CollectionResourceClient itemsStorageClient;
     CollectionResourceClient holdingsStorageClient;
@@ -88,6 +72,21 @@ public class RequestCollectionResource {
 
       return;
     }
+
+    JsonObject request = routingContext.getBodyAsJson();
+
+    RequestStatus status = RequestStatus.from(request);
+
+    if(!status.isValid()) {
+      ClientErrorResponse.badRequest(routingContext.response(),
+        RequestStatus.invalidStatusErrorMessage());
+      return;
+    }
+    else {
+      status.writeTo(request);
+    }
+
+    removeRelatedRecordInformation(request);
 
     String itemId = getItemId(request);
 
@@ -194,12 +193,6 @@ public class RequestCollectionResource {
 
   private void replace(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-
-    String id = routingContext.request().getParam("id");
-    JsonObject request = routingContext.getBodyAsJson();
-
-    removeRelatedRecordInformation(request);
-
     CollectionResourceClient requestsStorageClient;
     CollectionResourceClient itemsStorageClient;
     CollectionResourceClient holdingsStorageClient;
@@ -221,6 +214,11 @@ public class RequestCollectionResource {
 
       return;
     }
+
+    String id = routingContext.request().getParam("id");
+    JsonObject request = routingContext.getBodyAsJson();
+
+    removeRelatedRecordInformation(request);
 
     String itemId = getItemId(request);
 
