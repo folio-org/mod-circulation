@@ -1,24 +1,11 @@
 package org.folio.circulation.api.requests;
 
-import static org.folio.circulation.api.support.fixtures.LoanFixture.checkOutItem;
-import static org.folio.circulation.api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
-
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
+import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.support.APITests;
-import org.folio.circulation.api.support.builders.ItemRequestBuilder;
-import org.folio.circulation.api.support.builders.RequestRequestBuilder;
-import org.folio.circulation.api.support.builders.UserProxyRequestBuilder;
-import org.folio.circulation.api.support.builders.UserRequestBuilder;
+import org.folio.circulation.api.support.builders.ItemBuilder;
+import org.folio.circulation.api.support.builders.RequestBuilder;
+import org.folio.circulation.api.support.builders.UserBuilder;
+import org.folio.circulation.api.support.builders.UserProxyBuilder;
 import org.folio.circulation.api.support.http.InterfaceUrls;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -28,7 +15,17 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.junit.Test;
 
-import io.vertx.core.json.JsonObject;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import static org.folio.circulation.api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class RequestsAPIUpdatingTests extends APITests {
   @Test
@@ -36,8 +33,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
-    ExecutionException,
-    UnsupportedEncodingException {
+    ExecutionException {
 
     UUID id = UUID.randomUUID();
 
@@ -45,9 +41,9 @@ public class RequestsAPIUpdatingTests extends APITests {
       itemRequestBuilder -> itemRequestBuilder.withBarcode("07295629642"))
       .getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
-    UUID originalRequesterId = usersClient.create(new UserRequestBuilder()
+    UUID originalRequesterId = usersClient.create(new UserBuilder()
       .withName("Norton", "Jessica")
       .withBarcode("764523186496"))
       .getId();
@@ -55,7 +51,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
     IndividualResource createdRequest = requestsClient.create(
-      new RequestRequestBuilder()
+      new RequestBuilder()
       .recall()
       .withId(id)
       .withRequestDate(requestDate)
@@ -65,7 +61,7 @@ public class RequestsAPIUpdatingTests extends APITests {
       .withRequestExpiration(new LocalDate(2017, 7, 30))
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
-    UUID updatedRequester = usersClient.create(new UserRequestBuilder()
+    UUID updatedRequester = usersClient.create(new UserBuilder()
       .withName("Campbell", "Fiona")
       .withBarcode("679231693475"))
       .getId();
@@ -148,14 +144,14 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     UUID itemId = itemsFixture.basedUponNod().getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
-    UUID requesterId = usersClient.create(new UserRequestBuilder()).getId();
+    UUID requesterId = usersClient.create(new UserBuilder()).getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
     IndividualResource createdRequest = requestsClient.create(
-      new RequestRequestBuilder()
+      new RequestBuilder()
         .recall()
         .withId(id)
         .withRequestDate(requestDate)
@@ -204,16 +200,15 @@ public class RequestsAPIUpdatingTests extends APITests {
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
-    ExecutionException,
-    UnsupportedEncodingException {
+    ExecutionException {
 
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponNod().getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
-    UUID requester = usersClient.create(new UserRequestBuilder()
+    UUID requester = usersClient.create(new UserBuilder()
       .withName("Norton", "Jessica")
       .withBarcode("679231693475"))
       .getId();
@@ -221,7 +216,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
     IndividualResource createdRequest = requestsClient.create(
-      new RequestRequestBuilder()
+      new RequestBuilder()
         .recall()
         .withId(id)
         .withRequestDate(requestDate)
@@ -270,16 +265,15 @@ public class RequestsAPIUpdatingTests extends APITests {
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
-    ExecutionException,
-    UnsupportedEncodingException {
+    ExecutionException {
 
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponNod().getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
-    UUID originalRequesterId = usersClient.create(new UserRequestBuilder()
+    UUID originalRequesterId = usersClient.create(new UserBuilder()
       .withName("Norton", "Jessica")
       .withBarcode("764523186496"))
       .getId();
@@ -287,7 +281,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
     IndividualResource createdRequest = requestsClient.create(
-      new RequestRequestBuilder()
+      new RequestBuilder()
         .recall()
         .withId(id)
         .withRequestDate(requestDate)
@@ -297,7 +291,7 @@ public class RequestsAPIUpdatingTests extends APITests {
         .withRequestExpiration(new LocalDate(2017, 7, 30))
         .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
-    UUID updatedRequester = usersClient.create(new UserRequestBuilder()
+    UUID updatedRequester = usersClient.create(new UserBuilder()
       .withName("Campbell", "Fiona")
       .withNoBarcode())
       .getId();
@@ -352,8 +346,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
-    ExecutionException,
-    UnsupportedEncodingException {
+    ExecutionException {
 
     UUID id = UUID.randomUUID();
 
@@ -361,9 +354,9 @@ public class RequestsAPIUpdatingTests extends APITests {
       itemRequestBuilder -> itemRequestBuilder.withBarcode("07295629642"))
       .getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
-    UUID originalRequesterId = usersClient.create(new UserRequestBuilder()
+    UUID originalRequesterId = usersClient.create(new UserBuilder()
       .withName("Norton", "Jessica")
       .withBarcode("764523186496"))
       .getId();
@@ -371,7 +364,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
     IndividualResource createdRequest = requestsClient.create(
-      new RequestRequestBuilder()
+      new RequestBuilder()
       .recall()
       .withId(id)
       .withRequestDate(requestDate)
@@ -381,7 +374,7 @@ public class RequestsAPIUpdatingTests extends APITests {
       .withRequestExpiration(new LocalDate(2017, 7, 30))
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
-    UUID updatedRequester = usersClient.create(new UserRequestBuilder()
+    UUID updatedRequester = usersClient.create(new UserBuilder()
       .withName("Campbell", "Fiona", "Stella")
       .withBarcode("679231693475")).getId();
 
@@ -457,21 +450,20 @@ public class RequestsAPIUpdatingTests extends APITests {
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
-    ExecutionException,
-    UnsupportedEncodingException {
+    ExecutionException {
 
     UUID id = UUID.randomUUID();
 
     UUID originalItemId = itemsFixture.basedUponTemeraire().getId();
 
-    checkOutItem(originalItemId, loansClient);
+    loansFixture.checkOutItem(originalItemId);
 
-    UUID requesterId = usersClient.create(new UserRequestBuilder()).getId();
+    UUID requesterId = usersClient.create(new UserBuilder()).getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
     IndividualResource createdRequest = requestsClient.create(
-      new RequestRequestBuilder()
+      new RequestBuilder()
       .recall()
       .withId(id)
       .withRequestDate(requestDate)
@@ -481,7 +473,7 @@ public class RequestsAPIUpdatingTests extends APITests {
       .withRequestExpiration(new LocalDate(2017, 7, 30))
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
-    UUID updatedItemId = itemsFixture.basedUponSmallAngryPlanet(ItemRequestBuilder::withNoBarcode)
+    UUID updatedItemId = itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::withNoBarcode)
       .getId();
 
     JsonObject updatedRequest = createdRequest.copyJson();
@@ -535,14 +527,14 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     UUID itemId = itemsFixture.basedUponTemeraire().getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
-    UUID requesterId = usersClient.create(new UserRequestBuilder()).getId();
+    UUID requesterId = usersClient.create(new UserBuilder()).getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
     IndividualResource createdRequest = requestsClient.create(
-      new RequestRequestBuilder()
+      new RequestBuilder()
       .recall()
       .withId(id)
       .withRequestDate(requestDate)
@@ -553,7 +545,7 @@ public class RequestsAPIUpdatingTests extends APITests {
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
     DateTime expDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    UUID recordId = userProxyClient.create(new UserProxyRequestBuilder().
+    UUID recordId = userProxyClient.create(new UserProxyBuilder().
       withValidationFields(expDate.toString(), "Active",
         UUID.randomUUID().toString(), UUID.randomUUID().toString())).getId();
 
@@ -583,14 +575,14 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     UUID itemId = itemsFixture.basedUponTemeraire().getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
-    UUID requesterId = usersClient.create(new UserRequestBuilder()).getId();
+    UUID requesterId = usersClient.create(new UserBuilder()).getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
     IndividualResource createdRequest = requestsClient.create(
-      new RequestRequestBuilder()
+      new RequestBuilder()
       .recall()
       .withId(id)
       .withRequestDate(requestDate)
@@ -601,7 +593,7 @@ public class RequestsAPIUpdatingTests extends APITests {
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
     DateTime expDate = new DateTime(1999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    UUID recordId = userProxyClient.create(new UserProxyRequestBuilder().
+    UUID recordId = userProxyClient.create(new UserProxyBuilder().
       withValidationFields(expDate.toString(), "Active",
         UUID.randomUUID().toString(), UUID.randomUUID().toString())).getId();
 

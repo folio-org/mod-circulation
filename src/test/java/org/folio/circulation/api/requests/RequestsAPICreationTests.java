@@ -1,30 +1,13 @@
 package org.folio.circulation.api.requests;
 
-import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
-import static org.folio.HttpStatus.HTTP_CREATED;
-import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
-import static org.folio.circulation.api.support.builders.RequestRequestBuilder.OPEN_NOT_YET_FILLED;
-import static org.folio.circulation.api.support.fixtures.LoanFixture.checkOutItem;
-import static org.folio.circulation.api.support.http.InterfaceUrls.requestsUrl;
-import static org.folio.circulation.api.support.matchers.StatusMatcher.hasStatus;
-import static org.folio.circulation.api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static org.hamcrest.Matchers.emptyString;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
-
-import java.net.MalformedURLException;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
+import io.vertx.core.json.JsonObject;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import org.folio.circulation.api.support.APITests;
-import org.folio.circulation.api.support.builders.ItemRequestBuilder;
-import org.folio.circulation.api.support.builders.RequestRequestBuilder;
-import org.folio.circulation.api.support.builders.UserProxyRequestBuilder;
-import org.folio.circulation.api.support.builders.UserRequestBuilder;
+import org.folio.circulation.api.support.builders.ItemBuilder;
+import org.folio.circulation.api.support.builders.RequestBuilder;
+import org.folio.circulation.api.support.builders.UserBuilder;
+import org.folio.circulation.api.support.builders.UserProxyBuilder;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
@@ -34,9 +17,22 @@ import org.joda.time.LocalDate;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import io.vertx.core.json.JsonObject;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
+import java.net.MalformedURLException;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import static org.folio.HttpStatus.*;
+import static org.folio.circulation.api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
+import static org.folio.circulation.api.support.http.InterfaceUrls.requestsUrl;
+import static org.folio.circulation.api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
+import static org.folio.circulation.api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static org.hamcrest.Matchers.emptyString;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 @RunWith(JUnitParamsRunner.class)
 public class RequestsAPICreationTests extends APITests {
@@ -54,16 +50,16 @@ public class RequestsAPICreationTests extends APITests {
         .withBarcode("036000291452"))
       .getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
-    UUID requesterId = usersClient.create(new UserRequestBuilder()
+    UUID requesterId = usersClient.create(new UserBuilder()
       .withName("Jones", "Steven")
       .withBarcode("564376549214"))
       .getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
-    JsonObject requestRequest = new RequestRequestBuilder()
+    JsonObject requestRequest = new RequestBuilder()
       .recall()
       .withId(id)
       .withRequestDate(requestDate)
@@ -137,11 +133,11 @@ public class RequestsAPICreationTests extends APITests {
     UUID id = UUID.randomUUID();
     UUID itemId = UUID.randomUUID();
 
-    JsonObject requestRequest = new RequestRequestBuilder()
+    JsonObject requestRequest = new RequestBuilder()
       .recall()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId())
+      .withRequesterId(usersClient.create(new UserBuilder()).getId())
       .create();
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
@@ -162,14 +158,14 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID id = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
-      ItemRequestBuilder::available)
+      ItemBuilder::available)
       .getId();
 
-    JsonObject requestRequest = new RequestRequestBuilder()
+    JsonObject requestRequest = new RequestBuilder()
       .recall()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId())
+      .withRequesterId(usersClient.create(new UserBuilder()).getId())
       .create();
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
@@ -190,14 +186,14 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID id = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
-      ItemRequestBuilder::available)
+      ItemBuilder::available)
       .getId();
 
-    JsonObject requestRequest = new RequestRequestBuilder()
+    JsonObject requestRequest = new RequestBuilder()
       .hold()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId())
+      .withRequesterId(usersClient.create(new UserBuilder()).getId())
       .create();
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
@@ -223,21 +219,21 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID itemId = itemResponse.getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
     JsonObject itemWithChangedStatus = itemResponse.copyJson()
       .put("status", new JsonObject().put("name", "Checked Out"));
 
     itemsClient.replace(itemId, itemWithChangedStatus);
 
-    UUID requesterId = usersClient.create(new UserRequestBuilder()
+    UUID requesterId = usersClient.create(new UserBuilder()
       .withName("Jones", "Steven")
       .withBarcode("564376549214"))
       .getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
-    JsonObject requestRequest = new RequestRequestBuilder()
+    JsonObject requestRequest = new RequestBuilder()
       .recall()
       .withId(id)
       .withRequestDate(requestDate)
@@ -266,14 +262,14 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID id = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
-      ItemRequestBuilder::available)
+      ItemBuilder::available)
       .getId();
 
-    JsonObject requestRequest = new RequestRequestBuilder()
+    JsonObject requestRequest = new RequestBuilder()
       .page()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId())
+      .withRequesterId(usersClient.create(new UserBuilder()).getId())
       .create();
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
@@ -302,14 +298,14 @@ public class RequestsAPICreationTests extends APITests {
         .withBarcode("036000291452"))
       .getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
-    UUID requesterId = usersClient.create(new UserRequestBuilder()
+    UUID requesterId = usersClient.create(new UserBuilder()
       .withName("Jones", "Steven")
       .withBarcode("564376549214"))
       .getId();
 
-    JsonObject requestRequest = new RequestRequestBuilder()
+    JsonObject requestRequest = new RequestBuilder()
       .recall()
       .toHoldShelf()
       .withItemId(itemId)
@@ -347,14 +343,14 @@ public class RequestsAPICreationTests extends APITests {
         .withBarcode("036000291452"))
       .getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
-    UUID requesterId = usersClient.create(new UserRequestBuilder()
+    UUID requesterId = usersClient.create(new UserBuilder()
       .withName("Jones", "Steven")
       .withBarcode("564376549214"))
       .getId();
 
-    JsonObject requestRequest = new RequestRequestBuilder()
+    JsonObject requestRequest = new RequestBuilder()
       .recall()
       .toHoldShelf()
       .withItemId(itemId)
@@ -384,18 +380,18 @@ public class RequestsAPICreationTests extends APITests {
     ExecutionException {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
-      ItemRequestBuilder::available)
+      ItemBuilder::available)
       .getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
     UUID deliveryAddressTypeId = UUID.randomUUID();
 
-    IndividualResource createdRequest = requestsClient.create(new RequestRequestBuilder()
+    IndividualResource createdRequest = requestsClient.create(new RequestBuilder()
       .recall()
       .withItemId(itemId)
       .deliverToAddress(deliveryAddressTypeId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
+      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
 
     JsonObject representation = createdRequest.getJson();
 
@@ -418,14 +414,14 @@ public class RequestsAPICreationTests extends APITests {
         .withBarcode("036000291452"))
       .getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
-    UUID requesterId = usersClient.create(new UserRequestBuilder()
+    UUID requesterId = usersClient.create(new UserBuilder()
       .withName("Jones", "Steven")
       .withBarcode("564376549214"))
       .getId();
 
-    JsonObject requestRequest = new RequestRequestBuilder()
+    JsonObject requestRequest = new RequestBuilder()
       .recall()
       .toHoldShelf()
       .withItemId(itemId)
@@ -457,13 +453,13 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
     UUID requesterId = UUID.randomUUID();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
-    JsonObject requestRequest = new RequestRequestBuilder()
+    JsonObject requestRequest = new RequestBuilder()
       .recall()
       .withId(id)
       .withRequestDate(requestDate)
@@ -500,13 +496,13 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
     UUID requesterId = UUID.randomUUID();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
-    JsonObject requestRequest = new RequestRequestBuilder()
+    JsonObject requestRequest = new RequestBuilder()
       .recall()
       .withId(id)
       .withRequestDate(requestDate)
@@ -554,16 +550,16 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID requesterId = usersClient.create(new UserRequestBuilder()
+    UUID requesterId = usersClient.create(new UserBuilder()
       .withName("Jones", "Steven", "Anthony")
       .withBarcode("564376549214"))
       .getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
-    JsonObject requestRequest = new RequestRequestBuilder()
+    JsonObject requestRequest = new RequestBuilder()
       .recall()
       .withId(id)
       .withRequestDate(requestDate)
@@ -616,16 +612,16 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
-    UUID requesterId = usersClient.create(new UserRequestBuilder()
+    UUID requesterId = usersClient.create(new UserBuilder()
       .withName("Jones", "Steven")
       .withNoBarcode())
       .getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
-    JsonObject requestRequest = new RequestRequestBuilder()
+    JsonObject requestRequest = new RequestBuilder()
       .recall()
       .withId(id)
       .withRequestDate(requestDate)
@@ -673,16 +669,16 @@ public class RequestsAPICreationTests extends APITests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
-      ItemRequestBuilder::withNoBarcode)
+      ItemBuilder::withNoBarcode)
       .getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
-    JsonObject requestRequest = new RequestRequestBuilder()
+    JsonObject requestRequest = new RequestBuilder()
       .recall()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId())
+      .withRequesterId(usersClient.create(new UserBuilder()).getId())
       .create();
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
@@ -721,16 +717,16 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
-    UUID requesterId = usersClient.create(new UserRequestBuilder()
+    UUID requesterId = usersClient.create(new UserBuilder()
       .withName("Jones", "Steven")
       .withBarcode("564376549214"))
       .getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
-    JsonObject requestRequest = new RequestRequestBuilder()
+    JsonObject requestRequest = new RequestBuilder()
       .recall()
       .withId(id)
       .withRequestDate(requestDate)
@@ -797,14 +793,14 @@ public class RequestsAPICreationTests extends APITests {
     MalformedURLException {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
     DateTime expDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    UUID recordId = userProxyClient.create(new UserProxyRequestBuilder().
+    UUID recordId = userProxyClient.create(new UserProxyBuilder().
       withValidationFields(expDate.toString(), "Active",
         UUID.randomUUID().toString(), UUID.randomUUID().toString())).getId();
 
-    JsonObject requestRequest = new RequestRequestBuilder()
+    JsonObject requestRequest = new RequestBuilder()
       .withUserProxyId(itemId, recordId)
       .create();
 
@@ -816,8 +812,6 @@ public class RequestsAPICreationTests extends APITests {
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
 
     assertThat(postResponse, hasStatus(HTTP_CREATED));
-
-    JsonObject representation = postResponse.getJson();
   }
 
   @Test
@@ -828,14 +822,14 @@ public class RequestsAPICreationTests extends APITests {
     MalformedURLException {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
     DateTime expDate = new DateTime(1999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    UUID recordId = userProxyClient.create(new UserProxyRequestBuilder().
+    UUID recordId = userProxyClient.create(new UserProxyBuilder().
       withValidationFields(expDate.toString(), "Active",
         UUID.randomUUID().toString(), UUID.randomUUID().toString())).getId();
 
-    JsonObject requestRequest = new RequestRequestBuilder()
+    JsonObject requestRequest = new RequestBuilder()
       .withUserProxyId(itemId, recordId)
       .create();
 
@@ -847,7 +841,5 @@ public class RequestsAPICreationTests extends APITests {
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
 
     assertThat(postResponse.getStatusCode(), is(422));
-
-    JsonObject representation = postResponse.getJson();
   }
 }

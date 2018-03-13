@@ -1,6 +1,7 @@
 package org.folio.circulation.support;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.support.http.client.Response;
 
 import java.util.Collection;
@@ -15,7 +16,12 @@ public class InventoryFetcher {
   private final CollectionResourceClient holdingsClient;
   private final CollectionResourceClient instancesClient;
 
-  public InventoryFetcher(
+  public InventoryFetcher(Clients clients) {
+    this(clients.itemsStorage(),
+      clients.holdingsStorage(), clients.instancesStorage());
+  }
+
+  private InventoryFetcher(
     CollectionResourceClient itemsClient,
     CollectionResourceClient holdingsClient,
     CollectionResourceClient instancesClient) {
@@ -25,67 +31,15 @@ public class InventoryFetcher {
     this.instancesClient = instancesClient;
   }
 
-  public CompletableFuture<InventoryRecords> fetch(
-    String itemId,
-    Consumer<Exception> onFailure) {
+  public CompletableFuture<HttpResult<InventoryRecords>> fetch(JsonObject loan) {
+    return fetch(loan.getString("itemId"));
+  }
 
-    CompletableFuture<Response> itemRequestCompleted = new CompletableFuture<>();
-    CompletableFuture<Response> holdingRequestCompleted = new CompletableFuture<>();
-    CompletableFuture<Response> instanceRequestCompleted = new CompletableFuture<>();
-
-    itemsClient.get(itemId, itemRequestCompleted::complete);
-
-    itemRequestCompleted.thenAccept(itemResponse -> {
-      try {
-        if(itemResponse != null && itemResponse.getStatusCode() == 200) {
-          JsonObject item = itemResponse.getJson();
-
-          holdingsClient.get(item.getString("holdingsRecordId"),
-            holdingRequestCompleted::complete);
-        }
-        else {
-          holdingRequestCompleted.complete(null);
-          instanceRequestCompleted.complete(null);
-        }
-      }
-      catch(Exception e) {
-        onFailure.accept(e);
-      }
-    });
-
-    holdingRequestCompleted.thenAccept(holdingResponse -> {
-      try {
-        if(holdingResponse != null && holdingResponse.getStatusCode() == 200) {
-          JsonObject holding = holdingResponse.getJson();
-
-          instancesClient.get(holding.getString("instanceId"),
-            instanceRequestCompleted::complete);
-        }
-        else {
-          instanceRequestCompleted.complete(null);
-        }
-      }
-      catch(Exception e) {
-        onFailure.accept(e);
-      }
-    });
-
-    CompletableFuture<Void> allCompleted = CompletableFuture.allOf(
-      itemRequestCompleted,
-      holdingRequestCompleted,
-      instanceRequestCompleted);
-
-    CompletableFuture<InventoryRecords> recordsCompleted = new CompletableFuture<>();
-
-    allCompleted.thenAccept(v -> {
-      JsonObject item = getRecordFromResponse(itemRequestCompleted.join());
-      JsonObject holding = getRecordFromResponse(holdingRequestCompleted.join());
-      JsonObject instance = getRecordFromResponse(instanceRequestCompleted.join());
-
-      recordsCompleted.complete(new InventoryRecords(item, holding, instance));
-    });
-
-    return recordsCompleted;
+  public CompletableFuture<HttpResult<InventoryRecords>> fetch(String itemId) {
+    return
+      fetchItem(itemId)
+        .thenComposeAsync(this::fetchHolding)
+        .thenComposeAsync(this::fetchInstance);
   }
 
   public CompletableFuture<MultipleInventoryRecords> fetch(
@@ -174,5 +128,80 @@ public class InventoryFetcher {
     return itemResponse != null && itemResponse.getStatusCode() == 200
       ? itemResponse.getJson()
       : null;
+  }
+
+  private CompletableFuture<HttpResult<JsonObject>> fetchItem(String itemId) {
+    CompletableFuture<Response> itemRequestCompleted = new CompletableFuture<>();
+
+    itemsClient.get(itemId, itemRequestCompleted::complete);
+
+    return itemRequestCompleted
+      .thenApply(this::mapToResult)
+      .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
+  }
+
+  private HttpResult<JsonObject> mapToResult(Response response) {
+    if (response != null && response.getStatusCode() == 200) {
+      return HttpResult.success(response.getJson());
+    } else {
+      //TODO: Handle different failure cases
+      return HttpResult.success(null);
+    }
+  }
+
+  private CompletableFuture<HttpResult<InventoryRecords>> fetchHolding(
+    HttpResult<JsonObject> itemResult) {
+
+    return itemResult.after(item -> {
+      if(item == null) {
+        return CompletableFuture.completedFuture(
+          HttpResult.success(new InventoryRecords(null, null, null)));
+      }
+      else {
+        CompletableFuture<Response> holdingRequestCompleted = new CompletableFuture<>();
+
+        holdingsClient.get(item.getString("holdingsRecordId"),
+          holdingRequestCompleted::complete);
+
+        return holdingRequestCompleted
+          .thenApply(response -> HttpResult.success(new InventoryRecords(item,
+            getRecordFromResponse(response), null)))
+          .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
+      }
+    });
+  }
+
+  private CompletableFuture<HttpResult<InventoryRecords>> fetchInstance(
+    HttpResult<InventoryRecords> holdingResult) {
+
+    return holdingResult.after(inventoryRecords -> {
+      final JsonObject holding = inventoryRecords.getHolding();
+
+      if(holding == null) {
+        return CompletableFuture.completedFuture(
+          HttpResult.success(new InventoryRecords(
+            inventoryRecords.getItem(), null, null)));
+      }
+      else {
+        CompletableFuture<Response> instanceRequestCompleted = new CompletableFuture<>();
+
+        instancesClient.get(holding.getString("instanceId"),
+          instanceRequestCompleted::complete);
+
+        return instanceRequestCompleted
+          .thenApply(response -> HttpResult.success(new InventoryRecords(
+            inventoryRecords.getItem(), inventoryRecords.getHolding(),
+            getRecordFromResponse(response))))
+          .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
+      }
+    });
+  }
+
+  public CompletableFuture<HttpResult<LoanAndRelatedRecords>> getInventoryRecords(
+    LoanAndRelatedRecords loanAndRelatedRecords) {
+
+    return
+      fetch(loanAndRelatedRecords.loan)
+      .thenApply(result -> result.map(loanAndRelatedRecords::withInventoryRecords));
   }
 }

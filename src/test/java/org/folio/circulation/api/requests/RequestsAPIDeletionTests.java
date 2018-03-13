@@ -2,8 +2,8 @@ package org.folio.circulation.api.requests;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.support.APITests;
-import org.folio.circulation.api.support.builders.RequestRequestBuilder;
-import org.folio.circulation.api.support.builders.UserRequestBuilder;
+import org.folio.circulation.api.support.builders.RequestBuilder;
+import org.folio.circulation.api.support.builders.UserBuilder;
 import org.folio.circulation.api.support.http.InterfaceUrls;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.Response;
@@ -20,7 +20,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static java.net.HttpURLConnection.*;
-import static org.folio.circulation.api.support.fixtures.LoanFixture.checkOutItem;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -34,25 +33,25 @@ public class RequestsAPIDeletionTests extends APITests {
     ExecutionException,
     UnsupportedEncodingException {
 
-    UUID requesterId = usersClient.create(new UserRequestBuilder()).getId();
+    UUID requesterId = usersClient.create(new UserBuilder()).getId();
 
     UUID firstItemId = itemsFixture.basedUponSmallAngryPlanet().getId();
     UUID secondItemId = itemsFixture.basedUponNod().getId();
     UUID thirdItemId = itemsFixture.basedUponInterestingTimes().getId();
 
-    checkOutItem(firstItemId, loansClient);
-    checkOutItem(secondItemId, loansClient);
-    checkOutItem(thirdItemId, loansClient);
+    loansFixture.checkOutItem(firstItemId);
+    loansFixture.checkOutItem(secondItemId);
+    loansFixture.checkOutItem(thirdItemId);
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .withItemId(firstItemId)
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .withItemId(secondItemId)
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .withItemId(thirdItemId)
       .withRequesterId(requesterId));
 
@@ -93,27 +92,27 @@ public class RequestsAPIDeletionTests extends APITests {
     UUID secondId = UUID.randomUUID();
     UUID thirdId = UUID.randomUUID();
 
-    UUID requesterId = usersClient.create(new UserRequestBuilder()).getId();
+    UUID requesterId = usersClient.create(new UserBuilder()).getId();
 
     UUID firstItemId = itemsFixture.basedUponNod().getId();
     UUID secondItemId = itemsFixture.basedUponSmallAngryPlanet().getId();
     UUID thirdItemId = itemsFixture.basedUponTemeraire().getId();
 
-    checkOutItem(firstItemId, loansClient);
-    checkOutItem(secondItemId, loansClient);
-    checkOutItem(thirdItemId, loansClient);
+    loansFixture.checkOutItem(firstItemId);
+    loansFixture.checkOutItem(secondItemId);
+    loansFixture.checkOutItem(thirdItemId);
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .withId(firstId)
       .withItemId(firstItemId)
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .withId(secondId)
       .withItemId(secondItemId)
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .withId(thirdId)
       .withItemId(thirdItemId)
       .withRequesterId(requesterId));

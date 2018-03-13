@@ -3,9 +3,9 @@ package org.folio.circulation.support;
 import io.vertx.core.json.JsonObject;
 
 public class InventoryRecords {
-  private final JsonObject item;
-  private final JsonObject holding;
-  private final JsonObject instance;
+  public final JsonObject item;
+  public final JsonObject holding;
+  public final JsonObject instance;
 
   public InventoryRecords(
     JsonObject item,

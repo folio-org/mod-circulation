@@ -3,10 +3,11 @@ package org.folio.circulation.api;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.CirculationVerticle;
-import org.folio.circulation.api.fakes.FakeOkapi;
 import org.folio.circulation.api.loans.*;
 import org.folio.circulation.api.requests.*;
-import org.folio.circulation.api.support.builders.UserRequestBuilder;
+import org.folio.circulation.api.requests.scenarios.*;
+import org.folio.circulation.api.support.builders.UserBuilder;
+import org.folio.circulation.api.support.fakes.FakeOkapi;
 import org.folio.circulation.api.support.http.ResourceClient;
 import org.folio.circulation.api.support.http.URLHelper;
 import org.folio.circulation.support.VertxAssistant;
@@ -47,11 +48,16 @@ import java.util.function.Consumer;
   RequestsAPIRetrievalTests.class,
   RequestsAPIUpdatingTests.class,
   RequestsAPIStatusChangeTests.class,
-  RequestsAPILoanCheckInTests.class,
   RequestsAPILoanRenewalTests.class,
   RequestsAPILoanHistoryTests.class,
   RequestsAPITitleTests.class,
   RequestsAPIRelatedRecordsTests.class,
+  SingleOpenHoldShelfRequestTests.class,
+  SingleOpenDeliveryRequestTests.class,
+  SingleClosedRequestTests.class,
+  MultipleHoldShelfRequestsTests.class,
+  MultipleOutOfOrderRequestsTests.class,
+  MultipleMixedFulfilmentRequestsTests.class,
 })
 public class APITestSuite {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -77,7 +83,6 @@ public class APITestSuite {
   private static UUID alternateGroupId;
   private static boolean initialised;
   private static UUID userId1;
-  private static UUID userId2;
   private static JsonObject userRecord1;
   private static JsonObject userRecord2;
   private static UUID personalContributorTypeId;
@@ -306,19 +311,19 @@ public class APITestSuite {
     TimeoutException {
     ResourceClient usersClient = ResourceClient.forUsers(createClient());
 
-    userRecord1 = new UserRequestBuilder()
+    userRecord1 = new UserBuilder()
       .withUsername("bfrederi")
       .withPatronGroupId(regularGroupId)
       .create();
 
     userId1 = usersClient.create(userRecord1).getId();
 
-    userRecord2 = new UserRequestBuilder()
+    userRecord2 = new UserBuilder()
       .withUsername("lko")
       .withPatronGroupId(alternateGroupId)
       .create();
 
-    userId2 = usersClient.create(userRecord2).getId();
+    usersClient.create(userRecord2).getId();
   }
 
   public static void createGroups()

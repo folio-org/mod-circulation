@@ -13,6 +13,9 @@ import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.api.APITestSuite;
 import org.folio.circulation.api.support.fixtures.ItemsFixture;
+import org.folio.circulation.api.support.fixtures.LoansFixture;
+import org.folio.circulation.api.support.fixtures.RequestsFixture;
+import org.folio.circulation.api.support.fixtures.UsersFixture;
 import org.folio.circulation.api.support.http.InterfaceUrls;
 import org.folio.circulation.api.support.http.ResourceClient;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
@@ -31,9 +34,8 @@ public abstract class APITests {
 
   private static boolean runningOnOwn;
 
-  protected final OkapiHttpClient client = APITestSuite.createClient(exception -> {
-    log.error("Request to circulation module failed:", exception);
-  });
+  protected final OkapiHttpClient client = APITestSuite.createClient(exception ->
+    log.error("Request to circulation module failed:", exception));
 
   private final boolean initialiseLoanRules;
   protected final ResourceClient usersClient = ResourceClient.forUsers(client);
@@ -41,9 +43,13 @@ public abstract class APITests {
   protected final ResourceClient itemsClient = ResourceClient.forItems(client);
   protected final ResourceClient requestsClient = ResourceClient.forRequests(client);
   protected final ResourceClient loansClient = ResourceClient.forLoans(client);
-  protected final ItemsFixture itemsFixture = new ItemsFixture(client);
   protected final ResourceClient holdingsClient = ResourceClient.forHoldings(client);
   protected final ResourceClient instancesClient = ResourceClient.forInstances(client);
+
+  protected final ItemsFixture itemsFixture = new ItemsFixture(client);
+  protected final LoansFixture loansFixture = new LoansFixture(loansClient, client);
+  protected final RequestsFixture requestsFixture = new RequestsFixture(requestsClient);
+  protected final UsersFixture usersFixture = new UsersFixture(usersClient);
 
   protected APITests() {
     this(true);

@@ -2,9 +2,9 @@ package org.folio.circulation.api.requests;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.support.APITests;
-import org.folio.circulation.api.support.builders.ItemRequestBuilder;
-import org.folio.circulation.api.support.builders.RequestRequestBuilder;
-import org.folio.circulation.api.support.builders.UserRequestBuilder;
+import org.folio.circulation.api.support.builders.ItemBuilder;
+import org.folio.circulation.api.support.builders.RequestBuilder;
+import org.folio.circulation.api.support.builders.UserBuilder;
 import org.folio.circulation.api.support.http.InterfaceUrls;
 import org.folio.circulation.api.support.http.ResourceClient;
 import org.folio.circulation.support.JsonArrayHelper;
@@ -24,7 +24,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.folio.circulation.api.support.fixtures.LoanFixture.checkOutItem;
 import static org.folio.circulation.api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -41,16 +40,16 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    checkOutItem(itemId, loansClient);
+    loansFixture.checkOutItem(itemId);
 
-    UUID requesterId = usersClient.create(new UserRequestBuilder()
+    UUID requesterId = usersClient.create(new UserBuilder()
       .withName("Jones", "Steven")
       .withBarcode("564376549214"))
       .getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .recall()
       .withId(id)
       .withRequestDate(requestDate)
@@ -132,34 +131,34 @@ public class RequestsAPIRetrievalTests extends APITests {
     ExecutionException,
     TimeoutException {
 
-    UUID requesterId = usersClient.create(new UserRequestBuilder()).getId();
+    UUID requesterId = usersClient.create(new UserBuilder()).getId();
 
-    requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsFixture.basedUponSmallAngryPlanet(ItemRequestBuilder::checkOut).getId())
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut).getId())
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsFixture.basedUponNod(ItemRequestBuilder::checkOut).getId())
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponNod(ItemBuilder::checkOut).getId())
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsFixture.basedUponInterestingTimes(ItemRequestBuilder::checkOut).getId())
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponInterestingTimes(ItemBuilder::checkOut).getId())
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsFixture.basedUponTemeraire(ItemRequestBuilder::checkOut).getId())
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsFixture.basedUponNod(ItemRequestBuilder::checkOut).getId())
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponNod(ItemBuilder::checkOut).getId())
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsFixture.basedUponUprooted(ItemRequestBuilder::checkOut).getId())
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponUprooted(ItemBuilder::checkOut).getId())
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsFixture.basedUponTemeraire(ItemRequestBuilder::checkOut).getId())
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
       .withRequesterId(requesterId));
 
     CompletableFuture<Response> getFirstPageCompleted = new CompletableFuture<>();
@@ -206,40 +205,40 @@ public class RequestsAPIRetrievalTests extends APITests {
     ExecutionException,
     TimeoutException {
 
-    UUID firstRequester = usersClient.create(new UserRequestBuilder()
+    UUID firstRequester = usersClient.create(new UserBuilder()
       .withName("Jones", "Steven"))
       .getId();
 
-    UUID secondRequester = usersClient.create(new UserRequestBuilder()
+    UUID secondRequester = usersClient.create(new UserBuilder()
       .withName("Norton", "Jessica"))
       .getId();
 
-    requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsFixture.basedUponSmallAngryPlanet(ItemRequestBuilder::checkOut).getId())
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut).getId())
       .withRequesterId(firstRequester));
 
-    requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsFixture.basedUponNod(ItemRequestBuilder::checkOut).getId())
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponNod(ItemBuilder::checkOut).getId())
       .withRequesterId(firstRequester));
 
-    requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsFixture.basedUponInterestingTimes(ItemRequestBuilder::checkOut).getId())
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponInterestingTimes(ItemBuilder::checkOut).getId())
       .withRequesterId(secondRequester));
 
-    requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsFixture.basedUponTemeraire(ItemRequestBuilder::checkOut).getId())
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
       .withRequesterId(firstRequester));
 
-    requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsFixture.basedUponNod(ItemRequestBuilder::checkOut).getId())
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponNod(ItemBuilder::checkOut).getId())
       .withRequesterId(firstRequester));
 
-    requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsFixture.basedUponUprooted(ItemRequestBuilder::checkOut).getId())
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponUprooted(ItemBuilder::checkOut).getId())
       .withRequesterId(secondRequester));
 
-    requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsFixture.basedUponTemeraire(ItemRequestBuilder::checkOut).getId())
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
       .withRequesterId(secondRequester));
 
     CompletableFuture<Response> getRequestsCompleted = new CompletableFuture<>();
@@ -271,34 +270,34 @@ public class RequestsAPIRetrievalTests extends APITests {
     ExecutionException,
     TimeoutException {
 
-    UUID requesterId = usersClient.create(new UserRequestBuilder()).getId();
+    UUID requesterId = usersClient.create(new UserBuilder()).getId();
 
-    requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsFixture.basedUponSmallAngryPlanet(ItemRequestBuilder::checkOut).getId())
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut).getId())
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsFixture.basedUponNod(ItemRequestBuilder::checkOut).getId())
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponNod(ItemBuilder::checkOut).getId())
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsFixture.basedUponInterestingTimes(ItemRequestBuilder::checkOut).getId())
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponInterestingTimes(ItemBuilder::checkOut).getId())
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsFixture.basedUponTemeraire(ItemRequestBuilder::checkOut).getId())
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsFixture.basedUponNod(ItemRequestBuilder::checkOut).getId())
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponNod(ItemBuilder::checkOut).getId())
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsFixture.basedUponUprooted(ItemRequestBuilder::checkOut).getId())
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponUprooted(ItemBuilder::checkOut).getId())
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestRequestBuilder()
-      .withItemId(itemsFixture.basedUponTemeraire(ItemRequestBuilder::checkOut).getId())
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
       .withRequesterId(requesterId));
 
     CompletableFuture<Response> getRequestsCompleted = new CompletableFuture<>();

@@ -87,8 +87,8 @@ public class CollectionResourceClient {
 
     //TODO: Replace with query string creator that checks each parameter
     String url = isProvided(cqlQuery)
-      ? String.format("%s?query=%s&limit=%s&offset=%s", collectionRoot, cqlQuery,
-      pageLimit, pageOffset)
+      ? String.format("%s?query=%s&limit=%s&offset=%s", collectionRoot,
+      cqlQuery, pageLimit, pageOffset)
       : collectionRoot.toString();
 
     client.get(url, responseConversationHandler(responseHandler));

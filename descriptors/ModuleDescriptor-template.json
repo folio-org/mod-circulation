@@ -38,6 +38,8 @@
           "modulePermissions": [
             "circulation-storage.loans.item.post",
             "circulation.loan-rules.apply.get",
+            "circulation-storage.requests.collection.get",
+            "circulation-storage.requests.item.put",
             "inventory-storage.items.item.put",
             "inventory-storage.items.item.get",
             "inventory-storage.items.collection.get",
@@ -47,6 +49,7 @@
             "inventory-storage.holdings.item.get",
             "inventory-storage.instances.collection.get",
             "inventory-storage.instances.item.get",
+            "users.item.get",
             "proxiesfor.collection.get",
             "inventory-storage.material-types.item.get"
           ]
@@ -94,6 +97,8 @@
           ],
           "modulePermissions": [
             "circulation-storage.loans.item.put",
+            "circulation-storage.requests.item.put",
+            "circulation-storage.requests.collection.get",
             "inventory-storage.items.item.get",
             "inventory-storage.items.item.put",
             "proxiesfor.collection.get"
@@ -181,6 +186,7 @@
           ],
           "modulePermissions": [
             "circulation-storage.requests.item.post",
+            "circulation-storage.requests.collection.get",
             "inventory-storage.items.item.get",
             "inventory-storage.items.collection.get",
             "inventory-storage.items.item.put",
@@ -406,5 +412,5 @@
       "HostConfig": { "PortBindings": { "9801/tcp":  [{ "HostPort": "%p" }] } }
     },
     "dockerPull" : false
-  } 
+  }
 }

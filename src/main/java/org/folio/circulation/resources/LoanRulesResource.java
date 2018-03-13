@@ -1,5 +1,6 @@
 package org.folio.circulation.resources;
 
+import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
@@ -24,7 +25,7 @@ import java.lang.invoke.MethodHandles;
 /**
  * Write and read the loan rules.
  */
-public class LoanRulesResource {
+public class LoanRulesResource extends CollectionResource {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final String rootPath;
@@ -32,8 +33,10 @@ public class LoanRulesResource {
   /**
    * Set the URL path.
    * @param rootPath  URL path
+   * @param client
    */
-  public LoanRulesResource(String rootPath) {
+  public LoanRulesResource(String rootPath, HttpClient client) {
+    super(client);
     this.rootPath = rootPath;
   }
 

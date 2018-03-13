@@ -1,45 +1,40 @@
 package org.folio.circulation.api.requests;
 
 import org.folio.circulation.api.support.APITests;
-import org.folio.circulation.api.support.builders.RequestRequestBuilder;
-import org.folio.circulation.api.support.builders.UserRequestBuilder;
+import org.folio.circulation.api.support.builders.RequestBuilder;
+import org.folio.circulation.api.support.builders.UserBuilder;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.Test;
 
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import static org.folio.circulation.api.support.fixtures.LoanFixture.checkOutItem;
-import static org.folio.circulation.api.support.fixtures.LoanFixture.renewLoan;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class RequestsAPILoanRenewalTests extends APITests {
-
   @Test
   public void RenewalWithOutstandingHoldRequestDoesNotChangeItemStatus()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID loanId = checkOutItem(itemId, loansClient).getId();
+    UUID loanId = loansFixture.checkOutItem(itemId).getId();
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .hold()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
+      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
 
-    renewLoan(loanId, loansClient);
+    loansFixture.renewLoan(loanId);
 
     Response changedItem = itemsClient.getById(itemId);
 
@@ -52,22 +47,21 @@ public class RequestsAPILoanRenewalTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID loanId = checkOutItem(itemId, loansClient).getId();
+    UUID loanId = loansFixture.checkOutItem(itemId).getId();
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .recall()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
+      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
 
-    renewLoan(loanId, loansClient);
+    loansFixture.renewLoan(loanId);
 
     Response changedItem = itemsClient.getById(itemId);
 
@@ -80,22 +74,21 @@ public class RequestsAPILoanRenewalTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID loanId = checkOutItem(itemId, loansClient).getId();
+    UUID loanId = loansFixture.checkOutItem(itemId).getId();
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .page()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
+      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
 
-    renewLoan(loanId, loansClient);
+    loansFixture.renewLoan(loanId);
 
     Response changedItem = itemsClient.getById(itemId);
 

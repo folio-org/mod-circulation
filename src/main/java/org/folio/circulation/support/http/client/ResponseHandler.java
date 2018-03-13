@@ -2,14 +2,13 @@ package org.folio.circulation.support.http.client;
 
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpClientResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.function.Predicate;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class ResponseHandler {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -52,27 +51,24 @@ public class ResponseHandler {
     Predicate<Response> expectation,
     Function<Response, Throwable> expectationFailed) {
 
-    return vertxResponse -> {
-        vertxResponse.bodyHandler(buffer -> {
-          try {
+    return vertxResponse -> vertxResponse.bodyHandler(buffer -> {
+      try {
+        Response response = Response.from(vertxResponse, buffer);
 
-            Response response = Response.from(vertxResponse, buffer);
+        log.debug("Received Response: {}: {}", response.getStatusCode(), response.getContentType());
+        log.debug("Received Response Body: {}", response.getBody());
 
-            log.debug("Received Response: {}: {}", response.getStatusCode(), response.getContentType());
-            log.debug("Received Response Body: {}", response.getBody());
-
-            if(expectation.test(response)) {
-              completed.complete(response);
-            }
-            else {
-              completed.completeExceptionally(
-                expectationFailed.apply(response));
-            }
-          } catch (Throwable e) {
-            completed.completeExceptionally(e);
-          }
-        });
-    };
+        if(expectation.test(response)) {
+          completed.complete(response);
+        }
+        else {
+          completed.completeExceptionally(
+            expectationFailed.apply(response));
+        }
+      } catch (Throwable e) {
+        completed.completeExceptionally(e);
+      }
+    });
   }
 
 }

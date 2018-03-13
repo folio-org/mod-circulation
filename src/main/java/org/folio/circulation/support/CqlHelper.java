@@ -23,7 +23,7 @@ public class CqlHelper {
       return null;
     }
     else {
-      String query = String.format("id=(%s)", recordIds.stream()
+      String query = String.format("id==(%s)", recordIds.stream()
         .map(String::toString)
         .distinct()
         .collect(Collectors.joining(" or ")));

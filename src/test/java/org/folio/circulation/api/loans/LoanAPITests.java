@@ -4,15 +4,17 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.APITestSuite;
 import org.folio.circulation.api.support.APITests;
-import org.folio.circulation.api.support.builders.ItemRequestBuilder;
-import org.folio.circulation.api.support.builders.LoanRequestBuilder;
-import org.folio.circulation.api.support.builders.UserProxyRequestBuilder;
-import org.folio.circulation.api.support.builders.UserRequestBuilder;
+import org.folio.circulation.api.support.builders.ItemBuilder;
+import org.folio.circulation.api.support.builders.LoanBuilder;
+import org.folio.circulation.api.support.builders.UserBuilder;
+import org.folio.circulation.api.support.builders.UserProxyBuilder;
+import org.folio.circulation.api.support.http.InterfaceUrls;
 import org.folio.circulation.api.support.http.ResourceClient;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
+import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Period;
@@ -30,8 +32,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.folio.circulation.api.support.fixtures.UserRequestExamples.basedUponJessicaPontefract;
-import static org.folio.circulation.api.support.fixtures.UserRequestExamples.basedUponStevenJones;
+import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
+import static org.folio.circulation.api.support.fixtures.UserExamples.basedUponJessicaPontefract;
+import static org.folio.circulation.api.support.fixtures.UserExamples.basedUponStevenJones;
+import static org.folio.circulation.api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.api.support.http.InterfaceUrls.loansUrl;
 import static org.folio.circulation.api.support.http.InterfaceUrls.usersProxyUrl;
 import static org.folio.circulation.api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -53,13 +57,13 @@ public class LoanAPITests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID userId = usersClient.create(new UserRequestBuilder()).getId();
+    UUID userId = usersClient.create(new UserBuilder()).getId();
     UUID proxyUserId = UUID.randomUUID();
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
 
-    IndividualResource response = loansClient.create(new LoanRequestBuilder()
+    IndividualResource response = loansClient.create(new LoanBuilder()
       .withId(id)
       .withUserId(userId)
       .withItemId(itemId)
@@ -142,6 +146,115 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
+  public void cannotCreateALoanForUnknownItem()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID userId = usersClient.create(new UserBuilder()).getId();
+
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
+    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
+
+    client.post(InterfaceUrls.loansUrl(), new LoanBuilder()
+        .withId(id)
+        .withUserId(userId)
+        .withItemId(UUID.randomUUID())
+        .withLoanDate(loanDate)
+        .withDueDate(dueDate)
+        .withStatus("Open").create(),
+      ResponseHandler.json(createCompleted));
+
+    Response response = createCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(
+      String.format("Should not create loan: %s", response.getBody()),
+      response.getStatusCode(), is(UNPROCESSABLE_ENTITY));
+
+    assertThat(String.format("Incorrect validation error: %s", response.getBody()),
+      response.getJson().getString("message"), is("Item does not exist"));
+  }
+
+  @Test
+  public void cannotCreateALoanForUnknownHolding()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID id = UUID.randomUUID();
+
+    final IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    final UUID itemId = item.getId();
+
+    holdingsClient.delete(UUID.fromString(item.getJson().getString("holdingsRecordId")));
+
+    UUID userId = usersClient.create(new UserBuilder()).getId();
+
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
+    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
+
+    client.post(InterfaceUrls.loansUrl(), new LoanBuilder()
+      .open()
+      .withId(id)
+      .withUserId(userId)
+      .withItemId(itemId)
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate)
+      .create(),
+      ResponseHandler.any(createCompleted));
+
+    Response response = createCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(
+      String.format("Should not create loan: %s", response.getBody()),
+      response.getStatusCode(), is(UNPROCESSABLE_ENTITY));
+
+    assertThat(String.format("Incorrect validation error: %s", response.getBody()),
+      response.getJson().getString("message"), is("Holding does not exist"));
+  }
+
+  @Test
+  public void cannotCreateALoanForUnknownRequestingUser()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID id = UUID.randomUUID();
+
+    final UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
+    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
+
+    client.post(InterfaceUrls.loansUrl(), new LoanBuilder()
+        .withId(id)
+        .withUserId(UUID.randomUUID())
+        .withItemId(itemId)
+        .withLoanDate(loanDate)
+        .withDueDate(dueDate)
+        .withStatus("Open").create(),
+      ResponseHandler.any(createCompleted));
+
+    Response response = createCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Should not create loan: %s", response.getBody()),
+      response.getStatusCode(), is(HTTP_INTERNAL_ERROR));
+
+    assertThat(response.getBody(), is("Unable to locate User"));
+  }
+
+  @Test
   public void canCreateALoanWithSystemReturnDate()
     throws InterruptedException,
     ExecutionException,
@@ -150,13 +263,13 @@ public class LoanAPITests extends APITests {
 
     UUID id = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
-    UUID userId = usersClient.create(new UserRequestBuilder()).getId();
+    UUID userId = usersClient.create(new UserBuilder()).getId();
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
     DateTime systemReturnDate = new DateTime(2017, 4, 1, 12, 0, 0, DateTimeZone.UTC);
 
-    JsonObject builtRequest = new LoanRequestBuilder()
+    JsonObject builtRequest = new LoanBuilder()
       .closed()
       .withId(id)
       .withUserId(userId)
@@ -175,6 +288,56 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
+  public void cannotCheckOutAnItemTwice()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource james = usersFixture.james();
+    IndividualResource jessica = usersFixture.jessica();
+
+    loansFixture.checkOut(smallAngryPlanet, james);
+
+    Response response = loansFixture.attemptCheckOut(smallAngryPlanet, jessica);
+
+    assertThat(response.getJson().getString("message"),
+      is("Item is already checked out"));
+
+    //TODO: introduce when move to array of validation errors
+//    assertThat(JsonArrayHelper.toList(response.getJson().getJsonArray("errors")),
+//      JsonObjectMatchers.hasSoleMessageContaining("Item is already checked out"));
+  }
+
+  @Test
+  public void cannotCreateLoanThatIsNotOpenOrClosed()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource jessica = usersFixture.jessica();
+
+    final Response response = loansClient.attemptCreate(new LoanBuilder()
+        .withStatus("Unknown Status")
+        .withItemId(smallAngryPlanet.getId())
+        .withUserId(jessica.getId()));
+
+    assertThat(
+      String.format("Should not be able to create loan: %s", response.getBody()),
+      response.getStatusCode(), Matchers.is(UNPROCESSABLE_ENTITY));
+
+    assertThat(response.getJson().getString("message"),
+      is("Loan status must be \"Open\" or \"Closed\""));
+
+    //TODO: introduce when move to array of validation errors
+//    assertThat(JsonArrayHelper.toList(response.getJson().getJsonArray("errors")),
+//      JsonObjectMatchers.hasSoleMessageContaining("Item is already checked out"));
+  }
+
+  @Test
   public void canCreateALoanWithoutStatus()
     throws InterruptedException,
     ExecutionException,
@@ -185,9 +348,9 @@ public class LoanAPITests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID userId = usersClient.create(new UserRequestBuilder()).getId();
+    UUID userId = usersClient.create(new UserBuilder()).getId();
 
-    IndividualResource response = loansClient.create(new LoanRequestBuilder()
+    IndividualResource response = loansClient.create(new LoanBuilder()
       .withId(id)
       .withUserId(userId)
       .withItemId(itemId)
@@ -238,9 +401,9 @@ public class LoanAPITests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID userId = usersClient.create(new UserRequestBuilder()).getId();
+    UUID userId = usersClient.create(new UserBuilder()).getId();
 
-    IndividualResource response = loansClient.create(new LoanRequestBuilder()
+    IndividualResource response = loansClient.create(new LoanBuilder()
       .withId(id)
       .withUserId(userId)
       .withItemId(itemId)
@@ -295,12 +458,12 @@ public class LoanAPITests extends APITests {
         .withBarcode("036000291452"))
       .getId();
 
-    UUID userId = usersClient.create(new UserRequestBuilder()).getId();
+    UUID userId = usersClient.create(new UserBuilder()).getId();
     UUID proxyUserId = UUID.randomUUID();
 
     DateTime dueDate = new DateTime(2016, 11, 15, 8, 26, 53, DateTimeZone.UTC);
 
-    loansClient.create(new LoanRequestBuilder()
+    loansClient.create(new LoanBuilder()
       .withId(id)
       .withUserId(userId)
       .withItemId(itemId)
@@ -394,7 +557,7 @@ public class LoanAPITests extends APITests {
 
     UUID itemId = itemsFixture.basedUponNod().getId();
 
-    UUID id = loansClient.create(new LoanRequestBuilder()
+    UUID id = loansClient.create(new LoanBuilder()
       .withItemId(itemId))
       .getId();
 
@@ -421,12 +584,12 @@ public class LoanAPITests extends APITests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
-      ItemRequestBuilder::withNoBarcode)
+      ItemBuilder::withNoBarcode)
       .getId();
 
-    UUID userId = usersClient.create(new UserRequestBuilder()).getId();
+    UUID userId = usersClient.create(new UserBuilder()).getId();
 
-    loansClient.create(new LoanRequestBuilder()
+    loansClient.create(new LoanBuilder()
       .withId(id)
       .withUserId(userId)
       .withItemId(itemId)
@@ -465,7 +628,7 @@ public class LoanAPITests extends APITests {
 
     DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 
-    IndividualResource loan = loansClient.create(new LoanRequestBuilder()
+    IndividualResource loan = loansClient.create(new LoanBuilder()
       .withLoanDate(loanDate)
       .withItem(itemsFixture.basedUponNod()));
 
@@ -532,7 +695,7 @@ public class LoanAPITests extends APITests {
 
     UUID itemId = itemsFixture.basedUponNod().getId();
 
-    IndividualResource loan = loansClient.create(new LoanRequestBuilder()
+    IndividualResource loan = loansClient.create(new LoanBuilder()
       .withLoanDate(loanDate)
       .withItemId(itemId)
       .withDueDate(loanDate.plus(Period.days(14))));
@@ -608,7 +771,7 @@ public class LoanAPITests extends APITests {
 
     UUID itemId = itemsFixture.basedUponNod().getId();
 
-    IndividualResource loan = loansClient.create(new LoanRequestBuilder()
+    IndividualResource loan = loansClient.create(new LoanBuilder()
       .withLoanDate(loanDate)
       .withItemId(itemId));
 
@@ -649,7 +812,7 @@ public class LoanAPITests extends APITests {
 
     UUID itemId = itemsFixture.basedUponNod().getId();
 
-    loansClient.create(new LoanRequestBuilder()
+    loansClient.create(new LoanBuilder()
       .withItemId(itemId));
 
     itemsClient.delete(itemId);
@@ -680,25 +843,25 @@ public class LoanAPITests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    loansClient.create(new LoanRequestBuilder()
+    loansClient.create(new LoanBuilder()
       .withItem(itemsFixture.basedUponSmallAngryPlanet()));
 
-    loansClient.create(new LoanRequestBuilder()
+    loansClient.create(new LoanBuilder()
       .withItem(itemsFixture.basedUponNod()));
 
-    loansClient.create(new LoanRequestBuilder()
+    loansClient.create(new LoanBuilder()
       .withItem(itemsFixture.basedUponSmallAngryPlanet()));
 
-    loansClient.create(new LoanRequestBuilder()
+    loansClient.create(new LoanBuilder()
       .withItem(itemsFixture.basedUponTemeraire()));
 
-    loansClient.create(new LoanRequestBuilder()
+    loansClient.create(new LoanBuilder()
       .withItem(itemsFixture.basedUponUprooted()));
 
-    loansClient.create(new LoanRequestBuilder()
+    loansClient.create(new LoanBuilder()
       .withItem(itemsFixture.basedUponNod()));
 
-    loansClient.create(new LoanRequestBuilder()
+    loansClient.create(new LoanBuilder()
       .withItem(itemsFixture.basedUponInterestingTimes()));
 
     CompletableFuture<Response> firstPageCompleted = new CompletableFuture<>();
@@ -752,31 +915,31 @@ public class LoanAPITests extends APITests {
 
     String queryTemplate = loansUrl() + "?query=userId=%s";
 
-    loansClient.create(new LoanRequestBuilder()
+    loansClient.create(new LoanBuilder()
       .withItem(itemsFixture.basedUponSmallAngryPlanet())
       .withUserId(firstUserId));
 
-    loansClient.create(new LoanRequestBuilder()
+    loansClient.create(new LoanBuilder()
       .withItem(itemsFixture.basedUponNod())
       .withUserId(firstUserId));
 
-    loansClient.create(new LoanRequestBuilder()
+    loansClient.create(new LoanBuilder()
       .withItem(itemsFixture.basedUponSmallAngryPlanet())
       .withUserId(firstUserId));
 
-    loansClient.create(new LoanRequestBuilder()
+    loansClient.create(new LoanBuilder()
       .withItem(itemsFixture.basedUponTemeraire())
       .withUserId(firstUserId));
 
-    loansClient.create(new LoanRequestBuilder()
+    loansClient.create(new LoanBuilder()
       .withItem(itemsFixture.basedUponUprooted())
       .withUserId(secondUserId));
 
-    loansClient.create(new LoanRequestBuilder()
+    loansClient.create(new LoanBuilder()
       .withItem(itemsFixture.basedUponNod())
       .withUserId(secondUserId));
 
-    loansClient.create(new LoanRequestBuilder().withItem(
+    loansClient.create(new LoanBuilder().withItem(
       itemsFixture.basedUponInterestingTimes())
       .withUserId(secondUserId));
 
@@ -872,42 +1035,42 @@ public class LoanAPITests extends APITests {
     TimeoutException,
     UnsupportedEncodingException {
 
-    UUID userId = usersClient.create(new UserRequestBuilder()).getId();
+    UUID userId = usersClient.create(new UserBuilder()).getId();
 
     String queryTemplate = "userId=\"%s\" and status.name=\"%s\"";
 
-    loansClient.create(new LoanRequestBuilder()
+    loansClient.create(new LoanBuilder()
       .withUserId(userId)
       .withStatus("Open")
       .withItem(itemsFixture.basedUponSmallAngryPlanet())
       .withRandomPastLoanDate());
 
-    loansClient.create(new LoanRequestBuilder()
+    loansClient.create(new LoanBuilder()
       .withUserId(userId)
       .withStatus("Open")
       .withItem(itemsFixture.basedUponNod())
       .withRandomPastLoanDate());
 
-    loansClient.create(new LoanRequestBuilder()
+    loansClient.create(new LoanBuilder()
       .withUserId(userId)
       .withItem(
         itemsFixture.basedUponNod())
       .withStatus("Closed")
       .withRandomPastLoanDate());
 
-    loansClient.create(new LoanRequestBuilder()
+    loansClient.create(new LoanBuilder()
       .withUserId(userId)
       .withStatus("Closed")
       .withItem(itemsFixture.basedUponTemeraire())
       .withRandomPastLoanDate());
 
-    loansClient.create(new LoanRequestBuilder()
+    loansClient.create(new LoanBuilder()
       .withUserId(userId)
       .withStatus("Closed")
       .withItem(itemsFixture.basedUponUprooted())
       .withRandomPastLoanDate());
 
-    loansClient.create(new LoanRequestBuilder()
+    loansClient.create(new LoanBuilder()
       .withUserId(userId)
       .withStatus("Closed")
       .withItem(itemsFixture.basedUponInterestingTimes())
@@ -966,7 +1129,7 @@ public class LoanAPITests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    UUID id = loansClient.create(new LoanRequestBuilder()
+    UUID id = loansClient.create(new LoanBuilder()
       .withItem(itemsFixture.basedUponNod()))
       .getId();
 
@@ -1002,12 +1165,12 @@ public class LoanAPITests extends APITests {
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
     //create user
-    UUID userId = usersClient.create(new UserRequestBuilder()).getId();
+    UUID userId = usersClient.create(new UserBuilder()).getId();
 
     //create proxy that is valid with an expDate in the year 2999
     UUID proxyUserId = UUID.randomUUID();
     DateTime expDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    UUID recordId = userProxyClient.create(new UserProxyRequestBuilder().
+    UUID recordId = userProxyClient.create(new UserProxyBuilder().
       withValidationFields(expDate.toString(), "Active", userId.toString(), proxyUserId.toString())).getId();
 
     //create loan with the proxy id annd user id
@@ -1017,7 +1180,7 @@ public class LoanAPITests extends APITests {
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
 
     //create loan should be allowed as proxy is valid
-    IndividualResource response = loansClient.create(new LoanRequestBuilder()
+    IndividualResource response = loansClient.create(new LoanBuilder()
       .withId(id)
       .withUserId(userId)
       .withProxyUserId(recordId)
@@ -1048,14 +1211,14 @@ public class LoanAPITests extends APITests {
 
     proxyUserId = UUID.randomUUID();
     expDate = new DateTime(2000, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    recordId = userProxyClient.create(new UserProxyRequestBuilder().
+    recordId = userProxyClient.create(new UserProxyBuilder().
       withValidationFields(expDate.toString(), "Active", userId.toString(), proxyUserId.toString())).getId();
 
     loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
 
     //create loan should not be allowed as proxy is valid
-    loan = new LoanRequestBuilder()
+    loan = new LoanBuilder()
     .withId(id)
     .withUserId(userId)
     .withProxyUserId(recordId)
@@ -1086,7 +1249,7 @@ public class LoanAPITests extends APITests {
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
 
-    JsonObject loan = new LoanRequestBuilder()
+    JsonObject loan = new LoanBuilder()
     .withId(id)
     .withUserId(UUID.randomUUID())
     .withProxyUserId(UUID.randomUUID())
@@ -1115,12 +1278,12 @@ public class LoanAPITests extends APITests {
 
     UUID id = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
-    UUID userId = usersClient.create(new UserRequestBuilder()).getId();
+    UUID userId = usersClient.create(new UserBuilder()).getId();
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
 
-    loansClient.create(new LoanRequestBuilder()
+    loansClient.create(new LoanBuilder()
       .withId(id)
       .withUserId(userId)
       .withItemId(itemId)
@@ -1130,10 +1293,10 @@ public class LoanAPITests extends APITests {
 
     UUID proxyUserId = UUID.randomUUID();
     DateTime expDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    UUID recordId = userProxyClient.create(new UserProxyRequestBuilder().
+    UUID recordId = userProxyClient.create(new UserProxyBuilder().
       withValidationFields(expDate.toString(), "Active", userId.toString(), proxyUserId.toString())).getId();
 
-    JsonObject loan = new LoanRequestBuilder()
+    JsonObject loan = new LoanBuilder()
     .withId(id)
     .withUserId(userId)
     .withProxyUserId(recordId)
@@ -1163,12 +1326,12 @@ public class LoanAPITests extends APITests {
 
     UUID id = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
-    UUID userId = usersClient.create(new UserRequestBuilder()).getId();
+    UUID userId = usersClient.create(new UserBuilder()).getId();
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
 
-    loansClient.create(new LoanRequestBuilder()
+    loansClient.create(new LoanBuilder()
       .withId(id)
       .withUserId(userId)
       .withItemId(itemId)
@@ -1178,10 +1341,10 @@ public class LoanAPITests extends APITests {
 
     UUID proxyUserId = UUID.randomUUID();
     DateTime expDate = new DateTime(1999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    UUID recordId = userProxyClient.create(new UserProxyRequestBuilder().
+    UUID recordId = userProxyClient.create(new UserProxyBuilder().
       withValidationFields(expDate.toString(), "Active", userId.toString(), proxyUserId.toString())).getId();
 
-    JsonObject loan = new LoanRequestBuilder()
+    JsonObject loan = new LoanBuilder()
     .withId(id)
     .withUserId(userId)
     .withProxyUserId(recordId)
@@ -1211,12 +1374,12 @@ public class LoanAPITests extends APITests {
 
     UUID id = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
-    UUID userId = usersClient.create(new UserRequestBuilder()).getId();
+    UUID userId = usersClient.create(new UserBuilder()).getId();
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
 
-    loansClient.create(new LoanRequestBuilder()
+    loansClient.create(new LoanBuilder()
       .withId(id)
       .withUserId(userId)
       .withItemId(itemId)
@@ -1224,7 +1387,7 @@ public class LoanAPITests extends APITests {
       .withDueDate(dueDate)
       .withStatus("Open"));
 
-    JsonObject loan = new LoanRequestBuilder()
+    JsonObject loan = new LoanBuilder()
     .withId(id)
     .withUserId(userId)
     .withProxyUserId(UUID.randomUUID())
@@ -1297,12 +1460,5 @@ public class LoanAPITests extends APITests {
 
   private List<JsonObject> getLoans(JsonObject page) {
     return JsonArrayHelper.toList(page.getJsonArray("loans"));
-  }
-
-  private static JsonObject findLoanByItemId(List<JsonObject> loans, UUID itemId) {
-    return loans.stream()
-      .filter(record -> record.getString("itemId").equals(itemId.toString()))
-      .findFirst()
-      .get();
   }
 }

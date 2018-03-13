@@ -2,19 +2,16 @@ package org.folio.circulation.api.requests;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.support.APITests;
-import org.folio.circulation.api.support.builders.RequestRequestBuilder;
-import org.folio.circulation.api.support.builders.UserRequestBuilder;
+import org.folio.circulation.api.support.builders.RequestBuilder;
+import org.folio.circulation.api.support.builders.UserBuilder;
 import org.folio.circulation.api.support.http.ResourceClient;
 import org.junit.Test;
 
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import static org.folio.circulation.api.support.fixtures.LoanFixture.checkInLoan;
-import static org.folio.circulation.api.support.fixtures.LoanFixture.checkOutItem;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -27,20 +24,19 @@ public class RequestsAPILoanHistoryTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID loanId = checkOutItem(itemId, loansClient).getId();
+    UUID loanId = loansFixture.checkOutItem(itemId).getId();
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .hold()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
+      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
 
     JsonObject loanFromStorage = loansStorageClient.getById(loanId).getJson();
 
@@ -56,20 +52,19 @@ public class RequestsAPILoanHistoryTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID loanId = checkOutItem(itemId, loansClient).getId();
+    UUID loanId = loansFixture.checkOutItem(itemId).getId();
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .recall()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
+      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
 
     JsonObject loanFromStorage = loansStorageClient.getById(loanId).getJson();
 
@@ -82,20 +77,19 @@ public class RequestsAPILoanHistoryTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID loanId = checkOutItem(itemId, loansClient).getId();
+    UUID loanId = loansFixture.checkOutItem(itemId).getId();
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .page()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
+      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
 
     JsonObject loanFromStorage = loansStorageClient.getById(loanId).getJson();
 
@@ -111,24 +105,23 @@ public class RequestsAPILoanHistoryTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID closedLoanId = checkOutItem(itemId, loansClient).getId();
+    UUID closedLoanId = loansFixture.checkOutItem(itemId).getId();
 
-    checkInLoan(closedLoanId, loansClient);
+    loansFixture.checkInLoan(closedLoanId);
 
-    checkOutItem(itemId, loansClient).getId();
+    loansFixture.checkOutItem(itemId).getId();
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .hold()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
+      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
 
     JsonObject closedLoanFromStorage = loansStorageClient.getById(closedLoanId)
       .getJson();
@@ -145,24 +138,23 @@ public class RequestsAPILoanHistoryTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID closedLoanId = checkOutItem(itemId, loansClient).getId();
+    UUID closedLoanId = loansFixture.checkOutItem(itemId).getId();
 
-    checkInLoan(closedLoanId, loansClient);
+    loansFixture.checkInLoan(closedLoanId);
 
-    checkOutItem(itemId, loansClient).getId();
+    loansFixture.checkOutItem(itemId).getId();
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .recall()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
+      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
 
     JsonObject closedLoanFromStorage = loansStorageClient.getById(closedLoanId)
       .getJson();
@@ -179,8 +171,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 
@@ -188,14 +179,14 @@ public class RequestsAPILoanHistoryTests extends APITests {
 
     UUID otherItemId = itemsFixture.basedUponNod().getId();
 
-    checkOutItem(itemId, loansClient).getId();
-    UUID loanForOtherItemId = checkOutItem(otherItemId, loansClient).getId();
+    loansFixture.checkOutItem(itemId).getId();
+    UUID loanForOtherItemId = loansFixture.checkOutItem(otherItemId).getId();
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .hold()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
+      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
 
     JsonObject storageLoanForOtherItem = loansStorageClient.getById(loanForOtherItemId)
       .getJson();
@@ -212,23 +203,22 @@ public class RequestsAPILoanHistoryTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();;
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
     UUID otherItemId = itemsFixture.basedUponNod().getId();
 
-    checkOutItem(itemId, loansClient).getId();
-    UUID loanForOtherItemId = checkOutItem(otherItemId, loansClient).getId();
+    loansFixture.checkOutItem(itemId).getId();
+    UUID loanForOtherItemId = loansFixture.checkOutItem(otherItemId).getId();
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .recall()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
+      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
 
     JsonObject storageLoanForOtherItem = loansStorageClient.getById(loanForOtherItemId)
       .getJson();
@@ -245,22 +235,21 @@ public class RequestsAPILoanHistoryTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID loanId = checkOutItem(itemId, loansClient).getId();
+    UUID loanId = loansFixture.checkOutItem(itemId).getId();
 
     loansClient.delete(loanId);
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .hold()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
+      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
   }
 
   @Test
@@ -268,21 +257,20 @@ public class RequestsAPILoanHistoryTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID loanId = checkOutItem(itemId, loansClient).getId();
+    UUID loanId = loansFixture.checkOutItem(itemId).getId();
 
     loansClient.delete(loanId);
 
-    requestsClient.create(new RequestRequestBuilder()
+    requestsClient.create(new RequestBuilder()
       .recall()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserRequestBuilder()).getId()));
+      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
   }
 }

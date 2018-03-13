@@ -1,3 +1,16 @@
+## 8.0.0 Unreleased
+
+* Defaults request `status` to `Open - Not yet filled` (CIRC-53)
+* Updates request `status` for hold shelf delivery to `Open - Awaiting pickup` on check in (CIRC-53)
+* Updates request `status` for hold shelf delivery to `Closed - Filled` on check out to the requester (CIRC-53)
+* Disallow checking out item to other patrons when request is awaiting pickup (CIRC-53)
+* Refuse loan creation for already checked out items (CIRC-53)
+* Refuse loan creation when item or holding does not exist (CIRC-53)
+* Only allow `Open` and `Closed` loan status (may become interface constraint in future, CIRC-53)
+* Item status is determined by the oldest request in the request queue (CIRC-52)
+* Reuse Vert.x HTTP client within the circulation verticle (to allow for connection pooling, CIRC-86)
+* Use == relation when finding related records (CIRC-87) 
+
 ## 7.5.0 2018-03-13
 
 * Adds `status` property to `requests` (CIRC-53)
