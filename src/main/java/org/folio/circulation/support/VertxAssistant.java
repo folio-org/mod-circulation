@@ -3,24 +3,18 @@ package org.folio.circulation.support;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 import java.util.function.Function;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class VertxAssistant {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private Vertx vertx;
-
-  public void useVertx(Consumer<Vertx> action) {
-    action.accept(vertx);
-  }
 
   public <T> T createUsingVertx(Function<Vertx, T> function) {
     return function.apply(vertx);
@@ -46,7 +40,7 @@ public class VertxAssistant {
         }
       });
 
-      stopped.thenAccept(result -> { this.vertx = null; });
+      stopped.thenAccept(result -> this.vertx = null);
     }
   }
 
