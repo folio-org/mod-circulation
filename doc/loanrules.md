@@ -94,10 +94,10 @@ has matching criteria.
 The hierarchy shown before contains these rules:
 
 Patron group staff (indentation level 0) gives policy-a. (This is true for any material type,
-any loan type and any shelving location).
+any loan type and any shelving location.)
 
 Patron group visitor (indentation level 0) and shelving location new-acquisition
-(indentation level 1) gives policy-h. (This is true for any loan type and any material type).
+(indentation level 1) gives policy-h. (This is true for any loan type and any material type.)
 
 Patron group visitor (indentation level 0) and material type book (indentation level 1)
 and loan type course-reserve (indentation level 2) and shelving location math-department
@@ -112,20 +112,20 @@ and loan type course-reserve (indentation level 2) and any shelving location dif
 math-department and law-department gives policy-e.
 
 Patron group visitor (indentation level 0) and material type book (indentation level 1)
-and loan type rare (indentation level 2) gives policy-d. (This is true for any shelving location).
+and loan type rare (indentation level 2) gives policy-d. (This is true for any shelving location.)
 
 Patron group visitor (indentation level 0) and material type book (indentation level 1)
 and any loan type different from rare and course-reserve gives policy-c.
-(This is true for any shelving location).
+(This is true for any shelving location.)
 
 Patron group visitor (indentation level 0) and any material type different from book and globe
-gives policy-b. (This is true for any loan type and any shelving location).
+gives policy-b. (This is true for any loan type and any shelving location.)
 
 ## Multiple matching rules
 
 If more than one rule matches then this 3-tier logic is used.
 
-### 1. Criterum type priority
+### 1. Criterium type priority
 
 The loan rules file may contain a line like
 `priority: t, s, c, b, a, m, g` that lists the criterium types in
@@ -143,7 +143,7 @@ m book: policy-e
 ```
 
 A loan for patron group `visitor` and loan type `rare` and material type `book` matches
-all three rules. However, the policy-c rules is the only rules with the highest criterium
+all three rules. However, the policy-c rule is the only rule with the highest criterium
 type `t` and wins.
 
 Example b:
@@ -161,7 +161,7 @@ We assign priority numbers to the criterium types:
 t=7, a=6, b=5, c=4, s=3, m=2, g=1.
 
 A loan for material type `book` and loan type `rare` and patron group `visitor` matches
-all five rules and each rules has this priority:
+all five rules and each rule has this priority:
 
 ```
 g visitor: max(g=1)=1: policy-a
