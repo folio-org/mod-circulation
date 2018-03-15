@@ -215,7 +215,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource steve = usersFixture.steve();
     IndividualResource rebecca = usersFixture.rebecca();
-    IndividualResource charlotte = usersFixture.Charlotte();
+    IndividualResource charlotte = usersFixture.charlotte();
 
     IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
 

@@ -53,7 +53,7 @@ public class UsersFixture {
     return usersClient.create(UserExamples.basedUponStevenJones());
   }
 
-  public IndividualResource Charlotte()
+  public IndividualResource charlotte()
     throws
     InterruptedException,
     MalformedURLException,
