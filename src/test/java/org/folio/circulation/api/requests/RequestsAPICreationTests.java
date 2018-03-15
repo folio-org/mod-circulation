@@ -45,12 +45,13 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet(
       itemBuilder -> itemBuilder
-        .withBarcode("036000291452"))
-      .getId();
+        .withBarcode("036000291452"));
 
-    loansFixture.checkOutItem(itemId);
+    UUID itemId = item.getId();
+
+    loansFixture.checkOut(item, usersFixture.jessica());
 
     UUID requesterId = usersClient.create(new UserBuilder()
       .withName("Jones", "Steven")
@@ -59,28 +60,18 @@ public class RequestsAPICreationTests extends APITests {
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
-    JsonObject requestRequest = new RequestBuilder()
-      .recall()
+    IndividualResource request = requestsFixture.place(new RequestBuilder()
       .withId(id)
+      .recall()
+      .forItem(item)
       .withRequestDate(requestDate)
-      .withItemId(itemId)
       .withRequesterId(requesterId)
       .fulfilToHoldShelf()
       .withRequestExpiration(new LocalDate(2017, 7, 30))
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
-      .withStatus("Open - Not yet filled")
-      .create();
+      .withStatus("Open - Not yet filled"));
 
-    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
-
-    client.post(requestsUrl(), requestRequest,
-      ResponseHandler.json(postCompleted));
-
-    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(postResponse, hasStatus(HTTP_CREATED));
-
-    JsonObject representation = postResponse.getJson();
+    JsonObject representation = request.getJson();
 
     assertThat(representation.getString("id"), is(id.toString()));
     assertThat(representation.getString("requestType"), is("Recall"));

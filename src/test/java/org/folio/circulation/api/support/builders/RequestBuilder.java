@@ -1,6 +1,7 @@
 package org.folio.circulation.api.support.builders;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
@@ -231,6 +232,10 @@ public class RequestBuilder implements Builder {
       this.proxyUserId);
   }
 
+  public RequestBuilder forItem(IndividualResource item) {
+    return withItemId(item.getId());
+  }
+
   public RequestBuilder withRequesterId(UUID requesterId) {
     return new RequestBuilder(
       this.id,
@@ -309,65 +314,6 @@ public class RequestBuilder implements Builder {
       holdShelfExpiration,
       this.itemSummary,
       this.requesterSummary,
-      this.status,
-      this.proxyUserId);
-  }
-
-  public RequestBuilder withItem(String title, String barcode) {
-    return new RequestBuilder(
-      this.id,
-      this.requestType,
-      this.requestDate,
-      this.itemId,
-      this.requesterId,
-      this.fulfilmentPreference,
-      this.deliveryAddressTypeId, this.requestExpirationDate,
-      this.holdShelfExpirationDate,
-      new ItemSummary(title, barcode),
-      this.requesterSummary,
-      this.status,
-      this.proxyUserId);
-  }
-
-  public RequestBuilder withRequester(
-    String lastName,
-    String firstName,
-    String middleName,
-    String barcode) {
-
-    return new RequestBuilder(
-      this.id,
-      this.requestType,
-      this.requestDate,
-      this.itemId,
-      this.requesterId,
-      this.fulfilmentPreference,
-      this.deliveryAddressTypeId,
-      this.requestExpirationDate,
-      this.holdShelfExpirationDate,
-      this.itemSummary,
-      new PatronSummary(lastName, firstName, middleName, barcode),
-      this.status,
-      this.proxyUserId);
-  }
-
-  public RequestBuilder withRequester(
-    String lastName,
-    String firstName,
-    String barcode) {
-
-    return new RequestBuilder(
-      this.id,
-      this.requestType,
-      this.requestDate,
-      this.itemId,
-      this.requesterId,
-      this.fulfilmentPreference,
-      this.deliveryAddressTypeId,
-      this.requestExpirationDate,
-      this.holdShelfExpirationDate,
-      this.itemSummary,
-      new PatronSummary(lastName, firstName, null, barcode),
       this.status,
       this.proxyUserId);
   }
