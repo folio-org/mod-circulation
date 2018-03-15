@@ -360,12 +360,12 @@ public class RequestBuilder implements Builder {
     return withStatus(OPEN_NOT_YET_FILLED);
   }
 
-  public RequestBuilder withUserProxyId(UUID itemId, UUID userProxyId) {
+  public RequestBuilder withUserProxyId(UUID userProxyId) {
     return new RequestBuilder(
       this.id,
       this.requestType,
       this.requestDate,
-      itemId,
+      this.itemId,
       this.requesterId,
       this.fulfilmentPreference,
       this.deliveryAddressTypeId,

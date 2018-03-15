@@ -777,8 +777,9 @@ public class RequestsAPICreationTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
-    loansFixture.checkOutItem(itemId);
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+
+    loansFixture.checkOut(item, usersFixture.steve());
 
     DateTime expDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     UUID recordId = userProxyClient.create(new UserProxyBuilder().
@@ -786,7 +787,8 @@ public class RequestsAPICreationTests extends APITests {
         UUID.randomUUID().toString(), UUID.randomUUID().toString())).getId();
 
     JsonObject requestRequest = new RequestBuilder()
-      .withUserProxyId(itemId, recordId)
+      .forItem(item)
+      .withUserProxyId(recordId)
       .create();
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
@@ -806,8 +808,9 @@ public class RequestsAPICreationTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
-    loansFixture.checkOutItem(itemId);
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+
+    loansFixture.checkOut(item, usersFixture.steve());
 
     DateTime expDate = new DateTime(1999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     UUID recordId = userProxyClient.create(new UserProxyBuilder().
@@ -815,7 +818,8 @@ public class RequestsAPICreationTests extends APITests {
         UUID.randomUUID().toString(), UUID.randomUUID().toString())).getId();
 
     JsonObject requestRequest = new RequestBuilder()
-      .withUserProxyId(itemId, recordId)
+      .forItem(item)
+      .withUserProxyId(recordId)
       .create();
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
