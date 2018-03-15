@@ -253,6 +253,10 @@ public class RequestBuilder implements Builder {
       this.proxyUserId);
   }
 
+  public RequestBuilder by(IndividualResource requester) {
+    return withRequesterId(requester.getId());
+  }
+
   public RequestBuilder toHoldShelf() {
     return withFulfilmentPreference("Hold Shelf");
   }

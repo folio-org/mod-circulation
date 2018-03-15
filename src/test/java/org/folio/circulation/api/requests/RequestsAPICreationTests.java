@@ -36,6 +36,7 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 @RunWith(JUnitParamsRunner.class)
 public class RequestsAPICreationTests extends APITests {
+
   @Test
   public void canCreateARequest()
     throws InterruptedException,
@@ -45,18 +46,11 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID id = UUID.randomUUID();
 
-    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet(
-      itemBuilder -> itemBuilder
-        .withBarcode("036000291452"));
-
-    UUID itemId = item.getId();
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
 
     loansFixture.checkOut(item, usersFixture.jessica());
 
-    UUID requesterId = usersClient.create(new UserBuilder()
-      .withName("Jones", "Steven")
-      .withBarcode("564376549214"))
-      .getId();
+    IndividualResource requester = usersFixture.steve();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
@@ -65,8 +59,8 @@ public class RequestsAPICreationTests extends APITests {
       .open()
       .recall()
       .forItem(item)
+      .by(requester)
       .withRequestDate(requestDate)
-      .withRequesterId(requesterId)
       .fulfilToHoldShelf()
       .withRequestExpiration(new LocalDate(2017, 7, 30))
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
@@ -76,8 +70,8 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(representation.getString("id"), is(id.toString()));
     assertThat(representation.getString("requestType"), is("Recall"));
     assertThat(representation.getString("requestDate"), isEquivalentTo(requestDate));
-    assertThat(representation.getString("itemId"), is(itemId.toString()));
-    assertThat(representation.getString("requesterId"), is(requesterId.toString()));
+    assertThat(representation.getString("itemId"), is(item.getId().toString()));
+    assertThat(representation.getString("requesterId"), is(requester.getId().toString()));
     assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
     assertThat(representation.getString("requestExpirationDate"), is("2017-07-30"));
     assertThat(representation.getString("holdShelfExpirationDate"), is("2017-08-31"));
@@ -111,7 +105,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat("barcode is taken from requesting user",
       representation.getJsonObject("requester").getString("barcode"),
-      is("564376549214"));
+      is("5694596854"));
   }
 
   @Test
