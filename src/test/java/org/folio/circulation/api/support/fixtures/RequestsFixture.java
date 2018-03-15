@@ -17,6 +17,15 @@ public class RequestsFixture {
     this.requestsClient = requestsClient;
   }
 
+  public IndividualResource place(RequestBuilder requestToBuild)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return requestsClient.create(requestToBuild);
+  }
+
   public IndividualResource placeHoldShelfRequest(
     IndividualResource item,
     IndividualResource by)
@@ -25,7 +34,7 @@ public class RequestsFixture {
     TimeoutException,
     ExecutionException {
 
-    return requestsClient.create(new RequestBuilder()
+    return place(new RequestBuilder()
       .hold()
       .fulfilToHoldShelf()
       .withItemId(item.getId())
@@ -41,7 +50,7 @@ public class RequestsFixture {
     TimeoutException,
     ExecutionException {
 
-    return requestsClient.create(new RequestBuilder()
+    return place(new RequestBuilder()
       .hold()
       .fulfilToHoldShelf()
       .withItemId(item.getId())
@@ -58,7 +67,7 @@ public class RequestsFixture {
     TimeoutException,
     ExecutionException {
 
-    return requestsClient.create(new RequestBuilder()
+    return place(new RequestBuilder()
       .hold()
       .deliverToAddress(UUID.randomUUID())
       .withRequestDate(on)
@@ -76,7 +85,7 @@ public class RequestsFixture {
     TimeoutException,
     ExecutionException {
 
-    return requestsClient.create(new RequestBuilder()
+    return place(new RequestBuilder()
       .withRequestType(type)
       .deliverToAddress(UUID.randomUUID())
       .withRequestDate(on)
