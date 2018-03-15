@@ -352,6 +352,10 @@ public class RequestBuilder implements Builder {
       this.proxyUserId);
   }
 
+  public RequestBuilder open() {
+    return withStatus(OPEN_NOT_YET_FILLED);
+  }
+
   public RequestBuilder withUserProxyId(UUID itemId, UUID userProxyId) {
     return new RequestBuilder(
       this.id,

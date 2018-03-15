@@ -62,14 +62,14 @@ public class RequestsAPICreationTests extends APITests {
 
     IndividualResource request = requestsFixture.place(new RequestBuilder()
       .withId(id)
+      .open()
       .recall()
       .forItem(item)
       .withRequestDate(requestDate)
       .withRequesterId(requesterId)
       .fulfilToHoldShelf()
       .withRequestExpiration(new LocalDate(2017, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
-      .withStatus("Open - Not yet filled"));
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
     JsonObject representation = request.getJson();
 
