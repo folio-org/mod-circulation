@@ -9,7 +9,7 @@
 * Only allow `Open` and `Closed` loan status (may become interface constraint in future, CIRC-53)
 * Item status is determined by the oldest request in the request queue (CIRC-52)
 * Reuse Vert.x HTTP client within the circulation verticle (to allow for connection pooling, CIRC-86)
-* Use == relation when finding related records (CIRC-87) 
+* Use == relation when finding related records (CIRC-87)
 
 ## 7.5.0 2018-03-13
 
