@@ -4,7 +4,7 @@
   "provides": [
     {
       "id": "circulation",
-      "version": "2.11",
+      "version": "2.12",
       "handlers": [
         {
           "methods": [
@@ -286,7 +286,7 @@
     },
     {
       "id": "request-storage",
-      "version": "1.4"
+      "version": "1.5"
     },
     {
       "id": "users",

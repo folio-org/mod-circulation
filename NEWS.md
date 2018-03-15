@@ -1,5 +1,11 @@
-## 8.0.2 Unreleased
+## 8.1.0 Unreleased
 
+* Includes proxy user's name for requests (CIRC-88)
+* Stores proxy user's name for requests (so it can be used for sorting, CIRC-88)
+* Provides circulation interface 2.12 (CIRC-88)
+* Requires request-storage interface 1.5 (CIRC-88)
+
+## 8.0.2 Unreleased
 * Defaults request `status` to `Open - Not yet filled` (CIRC-53)
 * Updates request `status` for hold shelf delivery to `Open - Awaiting pickup` on check in (CIRC-53)
 * Updates request `status` for hold shelf delivery to `Closed - Filled` on check out to the requester (CIRC-53)

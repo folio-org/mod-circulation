@@ -97,6 +97,34 @@
       },
       "additionalProperties": false
     },
+    "proxy": {
+      "description": "Copy of some proxy patron metadata (used for searching and sorting), will be taken from the user referred to by the proxyUserId",
+      "readOnly": true,
+      "type": "object",
+      "properties": {
+        "firstName": {
+          "description": "first name of the proxy patron (read only, defined by the server)",
+          "type": "string",
+          "readonly": true
+        },
+        "lastName": {
+          "description": "last name of the proxy patron (read only, defined by the server)",
+          "type": "string",
+          "readonly": true
+        },
+        "middleName": {
+          "description": "middle name of the proxy patron (read only, defined by the server)",
+          "type": "string",
+          "readonly": true
+        },
+        "barcode": {
+          "description": "barcode of the proxy patron (read only, defined by the server)",
+          "type": "string",
+          "readonly": true
+        }
+      },
+      "additionalProperties": false
+    },
     "fulfilmentPreference": {
       "description": "How should the request be fulfilled (whether the item should be kept on the hold shelf for collection or delivered to the requester)",
       "type": "string",
