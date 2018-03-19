@@ -52,6 +52,7 @@ import java.util.function.Consumer;
   RequestsAPILoanRenewalTests.class,
   RequestsAPILoanHistoryTests.class,
   RequestsAPITitleTests.class,
+  RequestsAPIProxyTests.class,
   RequestsAPIRelatedRecordsTests.class,
   SingleOpenHoldShelfRequestTests.class,
   SingleOpenDeliveryRequestTests.class,
