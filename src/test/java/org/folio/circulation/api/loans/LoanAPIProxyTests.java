@@ -3,7 +3,6 @@ package org.folio.circulation.api.loans;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.support.APITests;
 import org.folio.circulation.api.support.builders.LoanBuilder;
-import org.folio.circulation.api.support.builders.UserBuilder;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
@@ -37,13 +36,12 @@ public class LoanAPIProxyTests extends APITests {
     //create item
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    //create user
-    UUID userId = usersClient.create(new UserBuilder()).getId();
+    IndividualResource sponsor = usersFixture.jessica();
+    IndividualResource proxy = usersFixture.james();
 
     //create proxy that is valid with an expDate in the year 2999
-    UUID proxyUserId = UUID.randomUUID();
     DateTime expDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    UUID recordId = usersFixture.proxyFor(userId, proxyUserId, expDate).getId();
+    UUID recordId = usersFixture.proxyFor(sponsor.getId(), proxy.getId(), expDate).getId();
 
     //create loan with the proxy id annd user id
 
@@ -54,7 +52,7 @@ public class LoanAPIProxyTests extends APITests {
     //create loan should be allowed as proxy is valid
     IndividualResource response = loansClient.create(new LoanBuilder()
       .withId(id)
-      .withUserId(userId)
+      .withUserId(sponsor.getId())
       .withProxyUserId(recordId)
       .withItemId(itemId)
       .withLoanDate(loanDate)
@@ -64,7 +62,7 @@ public class LoanAPIProxyTests extends APITests {
     JsonObject loan = response.getJson();
 
     assertThat("user id does not match",
-      loan.getString("userId"), is(userId.toString()));
+      loan.getString("userId"), is(sponsor.getId().toString()));
 
     assertThat("proxy user id does not match",
       loan.getString("proxyUserId"), is(recordId.toString()));
@@ -90,13 +88,13 @@ public class LoanAPIProxyTests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID userId = usersClient.create(new UserBuilder()).getId();
+    IndividualResource sponsor = usersFixture.jessica();
+    IndividualResource proxy = usersFixture.james();
 
-    UUID proxyUserId = UUID.randomUUID();
     DateTime expDate = new DateTime(2000, 2, 27, 10, 23, 43, DateTimeZone.UTC);
 
     //create proxy that is invalid with an expDate in the year 2000
-    UUID recordId = usersFixture.proxyFor(userId, proxyUserId, expDate).getId();
+    UUID recordId = usersFixture.proxyFor(sponsor.getId(), proxy.getId(), expDate).getId();
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
@@ -104,7 +102,7 @@ public class LoanAPIProxyTests extends APITests {
     //create loan should not be allowed as proxy is valid
     JsonObject loan = new LoanBuilder()
       .withId(id)
-      .withUserId(userId)
+      .withUserId(sponsor.getId())
       .withProxyUserId(recordId)
       .withItemId(itemId)
       .withLoanDate(loanDate)
@@ -133,11 +131,16 @@ public class LoanAPIProxyTests extends APITests {
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
 
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+
+    IndividualResource requestingUser = usersFixture.jessica();
+    IndividualResource userAttemptingToProxy = usersFixture.james();
+
     JsonObject loan = new LoanBuilder()
       .withId(id)
-      .withUserId(UUID.randomUUID())
-      .withProxyUserId(UUID.randomUUID())
-      .withItemId(UUID.randomUUID())
+      .withUserId(requestingUser.getId())
+      .withProxyUserId(userAttemptingToProxy.getId())
+      .withItemId(itemId)
       .withLoanDate(loanDate)
       .withDueDate(dueDate)
       .withStatus("Open").create();
@@ -161,26 +164,28 @@ public class LoanAPIProxyTests extends APITests {
 
     UUID id = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
-    UUID userId = usersClient.create(new UserBuilder()).getId();
+
+    IndividualResource sponsor = usersFixture.jessica();
+    IndividualResource proxy = usersFixture.james();
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
 
     loansClient.create(new LoanBuilder()
       .withId(id)
-      .withUserId(userId)
+      .withUserId(sponsor.getId())
       .withItemId(itemId)
       .withLoanDate(loanDate)
       .withDueDate(dueDate)
       .withStatus("Open"));
 
-    UUID proxyUserId = UUID.randomUUID();
+    //create proxy that is valid with an expDate in the year 2999
     DateTime expDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    UUID recordId = usersFixture.proxyFor(userId, proxyUserId, expDate).getId();
+    UUID recordId = usersFixture.proxyFor(sponsor.getId(), proxy.getId(), expDate).getId();
 
     JsonObject loan = new LoanBuilder()
       .withId(id)
-      .withUserId(userId)
+      .withUserId(sponsor.getId())
       .withProxyUserId(recordId)
       .withItemId(itemId)
       .withLoanDate(loanDate)
@@ -207,26 +212,27 @@ public class LoanAPIProxyTests extends APITests {
 
     UUID id = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
-    UUID userId = usersClient.create(new UserBuilder()).getId();
+
+    IndividualResource sponsor = usersFixture.jessica();
+    IndividualResource proxy = usersFixture.james();
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
 
     loansClient.create(new LoanBuilder()
       .withId(id)
-      .withUserId(userId)
+      .withUserId(sponsor.getId())
       .withItemId(itemId)
       .withLoanDate(loanDate)
       .withDueDate(dueDate)
       .withStatus("Open"));
 
-    UUID proxyUserId = UUID.randomUUID();
     DateTime expDate = new DateTime(1999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    UUID recordId = usersFixture.proxyFor(userId, proxyUserId, expDate).getId();
+    UUID recordId = usersFixture.proxyFor(sponsor.getId(), proxy.getId(), expDate).getId();
 
     JsonObject loan = new LoanBuilder()
       .withId(id)
-      .withUserId(userId)
+      .withUserId(sponsor.getId())
       .withProxyUserId(recordId)
       .withItemId(itemId)
       .withLoanDate(loanDate)
@@ -253,14 +259,16 @@ public class LoanAPIProxyTests extends APITests {
 
     UUID id = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
-    UUID userId = usersClient.create(new UserBuilder()).getId();
+
+    IndividualResource requestingUser = usersFixture.jessica();
+    IndividualResource userAttemptingToProxy = usersFixture.james();
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
 
     loansClient.create(new LoanBuilder()
       .withId(id)
-      .withUserId(userId)
+      .withUserId(requestingUser.getId())
       .withItemId(itemId)
       .withLoanDate(loanDate)
       .withDueDate(dueDate)
@@ -268,7 +276,7 @@ public class LoanAPIProxyTests extends APITests {
 
     JsonObject loan = new LoanBuilder()
       .withId(id)
-      .withUserId(userId)
+      .withUserId(requestingUser.getId())
       .withProxyUserId(UUID.randomUUID())
       .withItemId(itemId)
       .withLoanDate(loanDate)
