@@ -1,7 +1,12 @@
 package org.folio.circulation.api.support.http;
 
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import io.vertx.core.json.JsonObject;
+import org.folio.circulation.api.support.builders.Builder;
+import org.folio.circulation.support.JsonArrayHelper;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.OkapiHttpClient;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
 
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -13,14 +18,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.folio.circulation.api.support.builders.Builder;
-import org.folio.circulation.support.JsonArrayHelper;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
-
-import io.vertx.core.json.JsonObject;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class ResourceClient {
 
@@ -76,7 +75,7 @@ public class ResourceClient {
 
   public static ResourceClient forGroups(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::groupsUrl,
-      "groups");
+      "groups", "usergroups");
   }
 
   public static ResourceClient forLoansStorage(OkapiHttpClient client) {

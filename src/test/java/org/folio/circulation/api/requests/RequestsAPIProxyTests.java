@@ -43,7 +43,7 @@ public class RequestsAPIProxyTests extends APITests {
     IndividualResource proxy = usersFixture.james();
 
     DateTime expirationDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    
+
     usersFixture.proxyFor(sponsor, proxy, expirationDate);
 
     JsonObject requestRequest = new RequestBuilder()

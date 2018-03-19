@@ -335,6 +335,8 @@ public class APITestSuite {
     TimeoutException {
     ResourceClient groupsClient = ResourceClient.forGroups(createClient());
 
+    groupsClient.deleteAllIndividually();
+
     regularGroupId = groupsClient.create(new JsonObject()
       .put("group", "Regular Group")
       .put("desc", "Regular group")
