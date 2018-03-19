@@ -3,7 +3,6 @@ package org.folio.circulation.api.requests;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.support.APITests;
 import org.folio.circulation.api.support.builders.RequestBuilder;
-import org.folio.circulation.api.support.builders.UserBuilder;
 import org.folio.circulation.api.support.http.InterfaceUrls;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -48,6 +47,7 @@ public class RequestsAPIProxyTests extends APITests {
 
     JsonObject requestRequest = new RequestBuilder()
       .forItem(item)
+      .withRequesterId(sponsor.getId())
       .withUserProxyId(proxy.getId())
       .create();
 
@@ -81,6 +81,42 @@ public class RequestsAPIProxyTests extends APITests {
 
     JsonObject requestRequest = new RequestBuilder()
       .forItem(item)
+      .withRequesterId(sponsor.getId())
+      .withUserProxyId(proxy.getId())
+      .create();
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(requestsUrl(), requestRequest,
+      ResponseHandler.json(postCompleted));
+
+    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(postResponse.getStatusCode(), is(422));
+  }
+
+  @Test
+  public void cannotCreateProxiedRequestWhenRelationshipIsForOtherSponsor()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+
+    loansFixture.checkOut(item, usersFixture.steve());
+
+    DateTime expirationDate = new DateTime(1999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+
+    IndividualResource unexpectedSponsor = usersFixture.jessica();
+    IndividualResource otherUser = usersFixture.charlotte();
+    IndividualResource proxy = usersFixture.james();
+
+    usersFixture.proxyFor(unexpectedSponsor, proxy, expirationDate);
+
+    JsonObject requestRequest = new RequestBuilder()
+      .forItem(item)
+      .withRequesterId(otherUser.getId())
       .withUserProxyId(proxy.getId())
       .create();
 
@@ -107,7 +143,8 @@ public class RequestsAPIProxyTests extends APITests {
 
     loansFixture.checkOutItem(itemId);
 
-    UUID requesterId = usersClient.create(new UserBuilder()).getId();
+    IndividualResource sponsor = usersFixture.jessica();
+    IndividualResource proxy = usersFixture.james();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
@@ -117,17 +154,14 @@ public class RequestsAPIProxyTests extends APITests {
         .withId(id)
         .withRequestDate(requestDate)
         .withItemId(itemId)
-        .withRequesterId(requesterId)
+        .withRequesterId(sponsor.getId())
         .fulfilToHoldShelf()
         .withRequestExpiration(new LocalDate(2017, 7, 30))
         .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
-    DateTime expDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime expirationDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
 
-    IndividualResource sponsor = usersFixture.jessica();
-    IndividualResource proxy = usersFixture.james();
-
-    usersFixture.proxyFor(sponsor, proxy, expDate);
+    usersFixture.proxyFor(sponsor, proxy, expirationDate);
 
     JsonObject updatedRequest = createdRequest.copyJson();
 
@@ -156,7 +190,8 @@ public class RequestsAPIProxyTests extends APITests {
 
     loansFixture.checkOutItem(itemId);
 
-    UUID requesterId = usersClient.create(new UserBuilder()).getId();
+    IndividualResource sponsor = usersFixture.jessica();
+    IndividualResource proxy = usersFixture.james();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
@@ -166,17 +201,62 @@ public class RequestsAPIProxyTests extends APITests {
         .withId(id)
         .withRequestDate(requestDate)
         .withItemId(itemId)
-        .withRequesterId(requesterId)
+        .withRequesterId(sponsor.getId())
         .fulfilToHoldShelf()
         .withRequestExpiration(new LocalDate(2017, 7, 30))
         .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
     DateTime expirationDate = new DateTime(1999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
 
-    IndividualResource sponsor = usersFixture.jessica();
+    usersFixture.proxyFor(sponsor, proxy, expirationDate);
+
+    JsonObject updatedRequest = createdRequest.copyJson();
+
+    updatedRequest.put("proxyUserId", proxy.getId().toString());
+
+    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
+
+    client.put(InterfaceUrls.requestsUrl(String.format("/%s", id)),
+      updatedRequest, ResponseHandler.any(putCompleted));
+
+    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(putResponse.getStatusCode(), is(422));
+  }
+
+  @Test
+  public void cannotUpdateProxiedRequestWhenRelationshipIsForOtherSponsor()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = itemsFixture.basedUponTemeraire().getId();
+
+    loansFixture.checkOutItem(itemId);
+
+    IndividualResource unexpectedSponsor = usersFixture.jessica();
+    IndividualResource otherUser = usersFixture.charlotte();
     IndividualResource proxy = usersFixture.james();
 
-    usersFixture.proxyFor(sponsor, proxy, expirationDate);
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    IndividualResource createdRequest = requestsClient.create(
+      new RequestBuilder()
+        .recall()
+        .withId(id)
+        .withRequestDate(requestDate)
+        .withItemId(itemId)
+        .withRequesterId(otherUser.getId())
+        .fulfilToHoldShelf()
+        .withRequestExpiration(new LocalDate(2017, 7, 30))
+        .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
+
+    DateTime expirationDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+
+    usersFixture.proxyFor(unexpectedSponsor, proxy, expirationDate);
 
     JsonObject updatedRequest = createdRequest.copyJson();
 

@@ -1,6 +1,5 @@
 package org.folio.circulation.support;
 
-import io.vertx.core.json.JsonObject;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
@@ -38,14 +37,13 @@ public class CqlHelper {
     }
   }
 
-  public static String buildIsValidUserProxyQuery(JsonObject objectToValidate){
-    //we got the id of the proxy record and user id, look for a record that indicates this is indeed a
-    //proxy for this user id, and make sure that the proxy is valid by indicating that we
-    //only want a match is the status is active and the expDate is in the future
-    String proxyId = objectToValidate.getString("proxyUserId");
-    if(proxyId != null) {
+  public static String buildIsValidUserProxyQuery(String proxyUserId, String sponsorUserId){
+    //we got the id of the proxy and sponsor user IDs, look for a record that indicates
+    // there is a proxy relationship that is active and the expiration date is in the future
+    if(proxyUserId != null) {
       DateTime expDate = new DateTime(DateTimeZone.UTC);
-      String validateProxyQuery ="proxyUserId="+proxyId
+      String validateProxyQuery ="proxyUserId="+ proxyUserId
+          +" and userId="+sponsorUserId
           +" and meta.status=Active"
           +" and meta.expirationDate>"+expDate.toString().trim();
       try {
