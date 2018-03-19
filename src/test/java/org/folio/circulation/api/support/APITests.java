@@ -1,16 +1,6 @@
 package org.folio.circulation.api.support;
 
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
-
-import java.lang.invoke.MethodHandles;
-import java.net.MalformedURLException;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
+import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.APITestSuite;
 import org.folio.circulation.api.support.fixtures.ItemsFixture;
 import org.folio.circulation.api.support.fixtures.LoansFixture;
@@ -27,7 +17,16 @@ import org.junit.BeforeClass;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.vertx.core.json.JsonObject;
+import java.lang.invoke.MethodHandles;
+import java.net.MalformedURLException;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public abstract class APITests {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -39,7 +38,7 @@ public abstract class APITests {
 
   private final boolean initialiseLoanRules;
   protected final ResourceClient usersClient = ResourceClient.forUsers(client);
-  protected final ResourceClient userProxyClient = ResourceClient.forUsersProxy(client);
+  protected final ResourceClient userProxiesClient = ResourceClient.forUsersProxy(client);
   protected final ResourceClient itemsClient = ResourceClient.forItems(client);
   protected final ResourceClient requestsClient = ResourceClient.forRequests(client);
   protected final ResourceClient loansClient = ResourceClient.forLoans(client);
@@ -49,7 +48,7 @@ public abstract class APITests {
   protected final ItemsFixture itemsFixture = new ItemsFixture(client);
   protected final LoansFixture loansFixture = new LoansFixture(loansClient, client);
   protected final RequestsFixture requestsFixture = new RequestsFixture(requestsClient);
-  protected final UsersFixture usersFixture = new UsersFixture(usersClient);
+  protected final UsersFixture usersFixture = new UsersFixture(usersClient, userProxiesClient);
 
   protected APITests() {
     this(true);

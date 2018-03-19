@@ -7,7 +7,6 @@ import org.folio.circulation.api.support.APITests;
 import org.folio.circulation.api.support.builders.ItemBuilder;
 import org.folio.circulation.api.support.builders.RequestBuilder;
 import org.folio.circulation.api.support.builders.UserBuilder;
-import org.folio.circulation.api.support.builders.UserProxyBuilder;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
@@ -782,9 +781,9 @@ public class RequestsAPICreationTests extends APITests {
     loansFixture.checkOut(item, usersFixture.steve());
 
     DateTime expDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    UUID recordId = userProxyClient.create(new UserProxyBuilder().
-      withValidationFields(expDate.toString(), "Active",
-        UUID.randomUUID().toString(), UUID.randomUUID().toString())).getId();
+
+    UUID recordId = usersFixture.proxyFor(UUID.randomUUID(), UUID.randomUUID(),
+      expDate).getId();
 
     JsonObject requestRequest = new RequestBuilder()
       .forItem(item)
@@ -813,9 +812,9 @@ public class RequestsAPICreationTests extends APITests {
     loansFixture.checkOut(item, usersFixture.steve());
 
     DateTime expDate = new DateTime(1999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    UUID recordId = userProxyClient.create(new UserProxyBuilder().
-      withValidationFields(expDate.toString(), "Active",
-        UUID.randomUUID().toString(), UUID.randomUUID().toString())).getId();
+
+    UUID recordId = usersFixture.proxyFor(UUID.randomUUID(), UUID.randomUUID(),
+      expDate).getId();
 
     JsonObject requestRequest = new RequestBuilder()
       .forItem(item)

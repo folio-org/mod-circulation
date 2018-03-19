@@ -545,7 +545,7 @@ public class RequestsAPIUpdatingTests extends APITests {
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
     DateTime expDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    UUID recordId = userProxyClient.create(new UserProxyBuilder().
+    UUID recordId = userProxiesClient.create(new UserProxyBuilder().
       withValidationFields(expDate.toString(), "Active",
         UUID.randomUUID().toString(), UUID.randomUUID().toString())).getId();
 
@@ -593,7 +593,7 @@ public class RequestsAPIUpdatingTests extends APITests {
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
     DateTime expDate = new DateTime(1999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    UUID recordId = userProxyClient.create(new UserProxyBuilder().
+    UUID recordId = userProxiesClient.create(new UserProxyBuilder().
       withValidationFields(expDate.toString(), "Active",
         UUID.randomUUID().toString(), UUID.randomUUID().toString())).getId();
 

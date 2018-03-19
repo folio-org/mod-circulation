@@ -7,7 +7,6 @@ import org.folio.circulation.api.support.APITests;
 import org.folio.circulation.api.support.builders.ItemBuilder;
 import org.folio.circulation.api.support.builders.LoanBuilder;
 import org.folio.circulation.api.support.builders.UserBuilder;
-import org.folio.circulation.api.support.builders.UserProxyBuilder;
 import org.folio.circulation.api.support.http.InterfaceUrls;
 import org.folio.circulation.api.support.http.ResourceClient;
 import org.folio.circulation.support.JsonArrayHelper;
@@ -1170,8 +1169,7 @@ public class LoanAPITests extends APITests {
     //create proxy that is valid with an expDate in the year 2999
     UUID proxyUserId = UUID.randomUUID();
     DateTime expDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    UUID recordId = userProxyClient.create(new UserProxyBuilder().
-      withValidationFields(expDate.toString(), "Active", userId.toString(), proxyUserId.toString())).getId();
+    UUID recordId = usersFixture.proxyFor(userId, proxyUserId, expDate).getId();
 
     //create loan with the proxy id annd user id
 
@@ -1211,8 +1209,7 @@ public class LoanAPITests extends APITests {
 
     proxyUserId = UUID.randomUUID();
     expDate = new DateTime(2000, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    recordId = userProxyClient.create(new UserProxyBuilder().
-      withValidationFields(expDate.toString(), "Active", userId.toString(), proxyUserId.toString())).getId();
+    recordId = usersFixture.proxyFor(userId, proxyUserId, expDate).getId();
 
     loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
@@ -1293,8 +1290,7 @@ public class LoanAPITests extends APITests {
 
     UUID proxyUserId = UUID.randomUUID();
     DateTime expDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    UUID recordId = userProxyClient.create(new UserProxyBuilder().
-      withValidationFields(expDate.toString(), "Active", userId.toString(), proxyUserId.toString())).getId();
+    UUID recordId = usersFixture.proxyFor(userId, proxyUserId, expDate).getId();
 
     JsonObject loan = new LoanBuilder()
     .withId(id)
@@ -1341,8 +1337,7 @@ public class LoanAPITests extends APITests {
 
     UUID proxyUserId = UUID.randomUUID();
     DateTime expDate = new DateTime(1999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    UUID recordId = userProxyClient.create(new UserProxyBuilder().
-      withValidationFields(expDate.toString(), "Active", userId.toString(), proxyUserId.toString())).getId();
+    UUID recordId = usersFixture.proxyFor(userId, proxyUserId, expDate).getId();
 
     JsonObject loan = new LoanBuilder()
     .withId(id)
@@ -1360,9 +1355,8 @@ public class LoanAPITests extends APITests {
 
     Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat("InValid proxy should fail loan update", putResponse.getStatusCode(),
-      is(422));
-
+    assertThat("InValid proxy should fail loan update",
+      putResponse.getStatusCode(), is(422));
   }
 
   @Test
@@ -1403,8 +1397,8 @@ public class LoanAPITests extends APITests {
 
     Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat("Invalid proxyUserId is not allowed when updating a loan", putResponse.getStatusCode(), is(422));
-
+    assertThat("Invalid proxyUserId is not allowed when updating a loan",
+      putResponse.getStatusCode(), is(422));
   }
 
   private void loanHasExpectedProperties(JsonObject loan) {
