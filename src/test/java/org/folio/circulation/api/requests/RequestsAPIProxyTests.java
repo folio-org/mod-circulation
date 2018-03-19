@@ -4,7 +4,6 @@ import io.vertx.core.json.JsonObject;
 import org.folio.circulation.api.support.APITests;
 import org.folio.circulation.api.support.builders.RequestBuilder;
 import org.folio.circulation.api.support.builders.UserBuilder;
-import org.folio.circulation.api.support.builders.UserProxyBuilder;
 import org.folio.circulation.api.support.http.InterfaceUrls;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -42,7 +41,10 @@ public class RequestsAPIProxyTests extends APITests {
 
     DateTime expDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
 
-    UUID recordId = usersFixture.proxyFor(UUID.randomUUID(), UUID.randomUUID(),
+    IndividualResource sponsor = usersFixture.jessica();
+    IndividualResource proxy = usersFixture.james();
+
+    UUID recordId = usersFixture.proxyFor(sponsor.getId(), proxy.getId(),
       expDate).getId();
 
     JsonObject requestRequest = new RequestBuilder()
@@ -73,7 +75,10 @@ public class RequestsAPIProxyTests extends APITests {
 
     DateTime expDate = new DateTime(1999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
 
-    UUID recordId = usersFixture.proxyFor(UUID.randomUUID(), UUID.randomUUID(),
+    IndividualResource sponsor = usersFixture.jessica();
+    IndividualResource proxy = usersFixture.james();
+
+    UUID recordId = usersFixture.proxyFor(sponsor.getId(), proxy.getId(),
       expDate).getId();
 
     JsonObject requestRequest = new RequestBuilder()
@@ -120,14 +125,16 @@ public class RequestsAPIProxyTests extends APITests {
         .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
     DateTime expDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    UUID recordId = userProxiesClient.create(new UserProxyBuilder().
-      withValidationFields(expDate.toString(), "Active",
-        UUID.randomUUID().toString(), UUID.randomUUID().toString())).getId();
+
+    IndividualResource sponsor = usersFixture.jessica();
+    IndividualResource proxy = usersFixture.james();
+
+    UUID recordId = usersFixture.proxyFor(sponsor.getId(), proxy.getId(),
+      expDate).getId();
 
     JsonObject updatedRequest = createdRequest.copyJson();
 
-    updatedRequest
-      .put("proxyUserId", recordId.toString());
+    updatedRequest.put("proxyUserId", recordId.toString());
 
     CompletableFuture<Response> putCompleted = new CompletableFuture<>();
 
@@ -168,14 +175,16 @@ public class RequestsAPIProxyTests extends APITests {
         .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
     DateTime expDate = new DateTime(1999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    UUID recordId = userProxiesClient.create(new UserProxyBuilder().
-      withValidationFields(expDate.toString(), "Active",
-        UUID.randomUUID().toString(), UUID.randomUUID().toString())).getId();
+
+    IndividualResource sponsor = usersFixture.jessica();
+    IndividualResource proxy = usersFixture.james();
+
+    UUID recordId = usersFixture.proxyFor(sponsor.getId(), proxy.getId(),
+      expDate).getId();
 
     JsonObject updatedRequest = createdRequest.copyJson();
 
-    updatedRequest
-      .put("proxyUserId", recordId.toString());
+    updatedRequest.put("proxyUserId", recordId.toString());
 
     CompletableFuture<Response> putCompleted = new CompletableFuture<>();
 
