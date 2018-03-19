@@ -22,12 +22,12 @@ public class UsersFixture {
     this.userProxiesClient = userProxiesClient;
   }
 
-  public IndividualResource proxyFor(UUID userId, UUID proxyUserId, DateTime expirationDate)
+  public void proxyFor(UUID sponsorUserId, UUID proxyUserId, DateTime expirationDate)
     throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
-    return userProxiesClient.create(new UserProxyBuilder().
+    userProxiesClient.create(new UserProxyBuilder().
       withValidationFields(expirationDate.toString(), "Active",
-        userId.toString(), proxyUserId.toString()));
+        sponsorUserId.toString(), proxyUserId.toString()));
   }
 
   public IndividualResource jessica()

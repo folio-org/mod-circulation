@@ -44,12 +44,12 @@ public class RequestsAPIProxyTests extends APITests {
     IndividualResource sponsor = usersFixture.jessica();
     IndividualResource proxy = usersFixture.james();
 
-    UUID recordId = usersFixture.proxyFor(sponsor.getId(), proxy.getId(),
-      expDate).getId();
+    usersFixture.proxyFor(sponsor.getId(), proxy.getId(),
+      expDate);
 
     JsonObject requestRequest = new RequestBuilder()
       .forItem(item)
-      .withUserProxyId(recordId)
+      .withUserProxyId(proxy.getId())
       .create();
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
@@ -78,12 +78,11 @@ public class RequestsAPIProxyTests extends APITests {
     IndividualResource sponsor = usersFixture.jessica();
     IndividualResource proxy = usersFixture.james();
 
-    UUID recordId = usersFixture.proxyFor(sponsor.getId(), proxy.getId(),
-      expDate).getId();
+    usersFixture.proxyFor(sponsor.getId(), proxy.getId(), expDate);
 
     JsonObject requestRequest = new RequestBuilder()
       .forItem(item)
-      .withUserProxyId(recordId)
+      .withUserProxyId(proxy.getId())
       .create();
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
@@ -129,12 +128,11 @@ public class RequestsAPIProxyTests extends APITests {
     IndividualResource sponsor = usersFixture.jessica();
     IndividualResource proxy = usersFixture.james();
 
-    UUID recordId = usersFixture.proxyFor(sponsor.getId(), proxy.getId(),
-      expDate).getId();
+    usersFixture.proxyFor(sponsor.getId(), proxy.getId(), expDate);
 
     JsonObject updatedRequest = createdRequest.copyJson();
 
-    updatedRequest.put("proxyUserId", recordId.toString());
+    updatedRequest.put("proxyUserId", proxy.getId().toString());
 
     CompletableFuture<Response> putCompleted = new CompletableFuture<>();
 
@@ -179,12 +177,11 @@ public class RequestsAPIProxyTests extends APITests {
     IndividualResource sponsor = usersFixture.jessica();
     IndividualResource proxy = usersFixture.james();
 
-    UUID recordId = usersFixture.proxyFor(sponsor.getId(), proxy.getId(),
-      expDate).getId();
+    usersFixture.proxyFor(sponsor.getId(), proxy.getId(), expDate);
 
     JsonObject updatedRequest = createdRequest.copyJson();
 
-    updatedRequest.put("proxyUserId", recordId.toString());
+    updatedRequest.put("proxyUserId", proxy.getId().toString());
 
     CompletableFuture<Response> putCompleted = new CompletableFuture<>();
 

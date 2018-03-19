@@ -38,14 +38,14 @@ public class CqlHelper {
     }
   }
 
-  public static String buildisValidUserProxyQuery(JsonObject objectToValidate){
+  public static String buildIsValidUserProxyQuery(JsonObject objectToValidate){
     //we got the id of the proxy record and user id, look for a record that indicates this is indeed a
     //proxy for this user id, and make sure that the proxy is valid by indicating that we
     //only want a match is the status is active and the expDate is in the future
     String proxyId = objectToValidate.getString("proxyUserId");
     if(proxyId != null) {
       DateTime expDate = new DateTime(DateTimeZone.UTC);
-      String validateProxyQuery ="id="+proxyId
+      String validateProxyQuery ="proxyUserId="+proxyId
           +" and meta.status=Active"
           +" and meta.expirationDate>"+expDate.toString().trim();
       try {

@@ -714,7 +714,7 @@ public class LoanCollectionResource extends CollectionResource {
     LoanAndRelatedRecords loanAndRelatedRecords,
     Clients clients) {
 
-    String validProxyQuery = CqlHelper.buildisValidUserProxyQuery(loanAndRelatedRecords.loan);
+    String validProxyQuery = CqlHelper.buildIsValidUserProxyQuery(loanAndRelatedRecords.loan);
 
     if(validProxyQuery == null) {
       return CompletableFuture.completedFuture(HttpResult.success(loanAndRelatedRecords));

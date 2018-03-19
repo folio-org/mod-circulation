@@ -397,7 +397,7 @@ public class RequestCollectionResource extends CollectionResource {
     RequestAndRelatedRecords requestAndRelatedRecords,
     Clients clients) {
 
-    String validProxyQuery = CqlHelper.buildisValidUserProxyQuery(requestAndRelatedRecords.request);
+    String validProxyQuery = CqlHelper.buildIsValidUserProxyQuery(requestAndRelatedRecords.request);
 
     if(validProxyQuery == null) {
       return CompletableFuture.completedFuture(HttpResult.success(requestAndRelatedRecords));

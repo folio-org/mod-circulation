@@ -39,11 +39,9 @@ public class LoanAPIProxyTests extends APITests {
     IndividualResource sponsor = usersFixture.jessica();
     IndividualResource proxy = usersFixture.james();
 
-    //create proxy that is valid with an expDate in the year 2999
+    //create proxy relationship that is valid with an expDate in the year 2999
     DateTime expDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    UUID recordId = usersFixture.proxyFor(sponsor.getId(), proxy.getId(), expDate).getId();
-
-    //create loan with the proxy id annd user id
+    usersFixture.proxyFor(sponsor.getId(), proxy.getId(), expDate);
 
     //should pass, do same but create invalid proxy (not active) and check
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
@@ -53,7 +51,7 @@ public class LoanAPIProxyTests extends APITests {
     IndividualResource response = loansClient.create(new LoanBuilder()
       .withId(id)
       .withUserId(sponsor.getId())
-      .withProxyUserId(recordId)
+      .withProxyUserId(proxy.getId())
       .withItemId(itemId)
       .withLoanDate(loanDate)
       .withDueDate(dueDate)
@@ -65,7 +63,7 @@ public class LoanAPIProxyTests extends APITests {
       loan.getString("userId"), is(sponsor.getId().toString()));
 
     assertThat("proxy user id does not match",
-      loan.getString("proxyUserId"), is(recordId.toString()));
+      loan.getString("proxyUserId"), is(proxy.getId().toString()));
 
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
@@ -93,8 +91,8 @@ public class LoanAPIProxyTests extends APITests {
 
     DateTime expDate = new DateTime(2000, 2, 27, 10, 23, 43, DateTimeZone.UTC);
 
-    //create proxy that is invalid with an expDate in the year 2000
-    UUID recordId = usersFixture.proxyFor(sponsor.getId(), proxy.getId(), expDate).getId();
+    //create proxy relationship that is invalid with an expDate in the year 2000
+    usersFixture.proxyFor(sponsor.getId(), proxy.getId(), expDate);
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
@@ -103,7 +101,7 @@ public class LoanAPIProxyTests extends APITests {
     JsonObject loan = new LoanBuilder()
       .withId(id)
       .withUserId(sponsor.getId())
-      .withProxyUserId(recordId)
+      .withProxyUserId(proxy.getId())
       .withItemId(itemId)
       .withLoanDate(loanDate)
       .withDueDate(dueDate)
@@ -181,12 +179,12 @@ public class LoanAPIProxyTests extends APITests {
 
     //create proxy that is valid with an expDate in the year 2999
     DateTime expDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    UUID recordId = usersFixture.proxyFor(sponsor.getId(), proxy.getId(), expDate).getId();
+    usersFixture.proxyFor(sponsor.getId(), proxy.getId(), expDate);
 
     JsonObject loan = new LoanBuilder()
       .withId(id)
       .withUserId(sponsor.getId())
-      .withProxyUserId(recordId)
+      .withProxyUserId(proxy.getId())
       .withItemId(itemId)
       .withLoanDate(loanDate)
       .withDueDate(dueDate)
@@ -228,12 +226,12 @@ public class LoanAPIProxyTests extends APITests {
       .withStatus("Open"));
 
     DateTime expDate = new DateTime(1999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    UUID recordId = usersFixture.proxyFor(sponsor.getId(), proxy.getId(), expDate).getId();
+    usersFixture.proxyFor(sponsor.getId(), proxy.getId(), expDate);
 
     JsonObject loan = new LoanBuilder()
       .withId(id)
       .withUserId(sponsor.getId())
-      .withProxyUserId(recordId)
+      .withProxyUserId(proxy.getId())
       .withItemId(itemId)
       .withLoanDate(loanDate)
       .withDueDate(dueDate)
@@ -277,7 +275,7 @@ public class LoanAPIProxyTests extends APITests {
     JsonObject loan = new LoanBuilder()
       .withId(id)
       .withUserId(requestingUser.getId())
-      .withProxyUserId(UUID.randomUUID())
+      .withProxyUserId(userAttemptingToProxy.getId())
       .withItemId(itemId)
       .withLoanDate(loanDate)
       .withDueDate(dueDate)
