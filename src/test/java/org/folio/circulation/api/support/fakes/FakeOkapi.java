@@ -104,7 +104,7 @@ public class FakeOkapi extends AbstractVerticle {
     new FakeStorageModuleBuilder()
       .withRecordName("user group")
       .withRootPath("/groups")
-      .withCollectionPropertyName("groups")
+      .withCollectionPropertyName("usergroups")
       .withRequiredProperties("group", "desc")
       .disallowCollectionDelete()
       .create().register(router);

@@ -7,7 +7,6 @@ import org.folio.circulation.api.support.APITests;
 import org.folio.circulation.api.support.builders.ItemBuilder;
 import org.folio.circulation.api.support.builders.RequestBuilder;
 import org.folio.circulation.api.support.builders.UserBuilder;
-import org.folio.circulation.api.support.builders.UserProxyBuilder;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
@@ -36,6 +35,7 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 @RunWith(JUnitParamsRunner.class)
 public class RequestsAPICreationTests extends APITests {
+
   @Test
   public void canCreateARequest()
     throws InterruptedException,
@@ -45,48 +45,32 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
-      itemBuilder -> itemBuilder
-        .withBarcode("036000291452"))
-      .getId();
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
 
-    loansFixture.checkOutItem(itemId);
+    loansFixture.checkOut(item, usersFixture.jessica());
 
-    UUID requesterId = usersClient.create(new UserBuilder()
-      .withName("Jones", "Steven")
-      .withBarcode("564376549214"))
-      .getId();
+    IndividualResource requester = usersFixture.steve();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
-    JsonObject requestRequest = new RequestBuilder()
-      .recall()
+    IndividualResource request = requestsFixture.place(new RequestBuilder()
       .withId(id)
+      .open()
+      .recall()
+      .forItem(item)
+      .by(requester)
       .withRequestDate(requestDate)
-      .withItemId(itemId)
-      .withRequesterId(requesterId)
       .fulfilToHoldShelf()
       .withRequestExpiration(new LocalDate(2017, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
-      .withStatus("Open - Not yet filled")
-      .create();
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
-    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
-
-    client.post(requestsUrl(), requestRequest,
-      ResponseHandler.json(postCompleted));
-
-    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(postResponse, hasStatus(HTTP_CREATED));
-
-    JsonObject representation = postResponse.getJson();
+    JsonObject representation = request.getJson();
 
     assertThat(representation.getString("id"), is(id.toString()));
     assertThat(representation.getString("requestType"), is("Recall"));
     assertThat(representation.getString("requestDate"), isEquivalentTo(requestDate));
-    assertThat(representation.getString("itemId"), is(itemId.toString()));
-    assertThat(representation.getString("requesterId"), is(requesterId.toString()));
+    assertThat(representation.getString("itemId"), is(item.getId().toString()));
+    assertThat(representation.getString("requesterId"), is(requester.getId().toString()));
     assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
     assertThat(representation.getString("requestExpirationDate"), is("2017-07-30"));
     assertThat(representation.getString("holdShelfExpirationDate"), is("2017-08-31"));
@@ -120,7 +104,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat("barcode is taken from requesting user",
       representation.getJsonObject("requester").getString("barcode"),
-      is("564376549214"));
+      is("5694596854"));
   }
 
   @Test
@@ -783,63 +767,5 @@ public class RequestsAPICreationTests extends APITests {
     assertThat("barcode is taken from requesting user",
       representation.getJsonObject("requester").getString("barcode"),
       is("564376549214"));
-  }
-
-  @Test
-  public void canCreateARequestForItemWithValidUserProxy()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
-
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
-    loansFixture.checkOutItem(itemId);
-
-    DateTime expDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    UUID recordId = userProxyClient.create(new UserProxyBuilder().
-      withValidationFields(expDate.toString(), "Active",
-        UUID.randomUUID().toString(), UUID.randomUUID().toString())).getId();
-
-    JsonObject requestRequest = new RequestBuilder()
-      .withUserProxyId(itemId, recordId)
-      .create();
-
-    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
-
-    client.post(requestsUrl(), requestRequest,
-      ResponseHandler.json(postCompleted));
-
-    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(postResponse, hasStatus(HTTP_CREATED));
-  }
-
-  @Test
-  public void canNotCreateARequestForItemWithInValidUserProxy()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
-
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
-    loansFixture.checkOutItem(itemId);
-
-    DateTime expDate = new DateTime(1999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    UUID recordId = userProxyClient.create(new UserProxyBuilder().
-      withValidationFields(expDate.toString(), "Active",
-        UUID.randomUUID().toString(), UUID.randomUUID().toString())).getId();
-
-    JsonObject requestRequest = new RequestBuilder()
-      .withUserProxyId(itemId, recordId)
-      .create();
-
-    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
-
-    client.post(requestsUrl(), requestRequest,
-      ResponseHandler.json(postCompleted));
-
-    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(postResponse.getStatusCode(), is(422));
   }
 }
