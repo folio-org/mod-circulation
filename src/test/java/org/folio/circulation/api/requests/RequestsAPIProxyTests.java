@@ -39,13 +39,12 @@ public class RequestsAPIProxyTests extends APITests {
 
     loansFixture.checkOut(item, usersFixture.steve());
 
-    DateTime expDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-
     IndividualResource sponsor = usersFixture.jessica();
     IndividualResource proxy = usersFixture.james();
 
-    usersFixture.proxyFor(sponsor.getId(), proxy.getId(),
-      expDate);
+    DateTime expirationDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    
+    usersFixture.proxyFor(sponsor, proxy, expirationDate);
 
     JsonObject requestRequest = new RequestBuilder()
       .forItem(item)
@@ -73,12 +72,12 @@ public class RequestsAPIProxyTests extends APITests {
 
     loansFixture.checkOut(item, usersFixture.steve());
 
-    DateTime expDate = new DateTime(1999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime expirationDate = new DateTime(1999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
 
     IndividualResource sponsor = usersFixture.jessica();
     IndividualResource proxy = usersFixture.james();
 
-    usersFixture.proxyFor(sponsor.getId(), proxy.getId(), expDate);
+    usersFixture.proxyFor(sponsor, proxy, expirationDate);
 
     JsonObject requestRequest = new RequestBuilder()
       .forItem(item)
@@ -128,7 +127,7 @@ public class RequestsAPIProxyTests extends APITests {
     IndividualResource sponsor = usersFixture.jessica();
     IndividualResource proxy = usersFixture.james();
 
-    usersFixture.proxyFor(sponsor.getId(), proxy.getId(), expDate);
+    usersFixture.proxyFor(sponsor, proxy, expDate);
 
     JsonObject updatedRequest = createdRequest.copyJson();
 
@@ -172,12 +171,12 @@ public class RequestsAPIProxyTests extends APITests {
         .withRequestExpiration(new LocalDate(2017, 7, 30))
         .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
-    DateTime expDate = new DateTime(1999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime expirationDate = new DateTime(1999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
 
     IndividualResource sponsor = usersFixture.jessica();
     IndividualResource proxy = usersFixture.james();
 
-    usersFixture.proxyFor(sponsor.getId(), proxy.getId(), expDate);
+    usersFixture.proxyFor(sponsor, proxy, expirationDate);
 
     JsonObject updatedRequest = createdRequest.copyJson();
 

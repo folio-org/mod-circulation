@@ -3,7 +3,7 @@ package org.folio.circulation.api.support.fixtures;
 import org.folio.circulation.api.support.builders.UserProxyBuilder;
 import org.folio.circulation.api.support.http.ResourceClient;
 import org.folio.circulation.support.http.client.IndividualResource;
-import org.joda.time.DateTime;
+import org.joda.time.*;
 
 import java.net.MalformedURLException;
 import java.util.UUID;
@@ -22,8 +22,26 @@ public class UsersFixture {
     this.userProxiesClient = userProxiesClient;
   }
 
-  public void proxyFor(UUID sponsorUserId, UUID proxyUserId, DateTime expirationDate)
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+  public void proxyFor(
+    IndividualResource sponsor,
+    IndividualResource proxy,
+    DateTime expirationDate)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    proxyFor(sponsor.getId(), proxy.getId(), expirationDate);
+  }
+
+  public void proxyFor(
+    UUID sponsorUserId,
+    UUID proxyUserId,
+    DateTime expirationDate)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
 
     userProxiesClient.create(new UserProxyBuilder().
       withValidationFields(expirationDate.toString(), "Active",

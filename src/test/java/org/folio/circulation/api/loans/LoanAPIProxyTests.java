@@ -92,7 +92,7 @@ public class LoanAPIProxyTests extends APITests {
     DateTime expDate = new DateTime(2000, 2, 27, 10, 23, 43, DateTimeZone.UTC);
 
     //create proxy relationship that is invalid with an expDate in the year 2000
-    usersFixture.proxyFor(sponsor.getId(), proxy.getId(), expDate);
+    usersFixture.proxyFor(sponsor, proxy, expDate);
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
@@ -178,8 +178,8 @@ public class LoanAPIProxyTests extends APITests {
       .withStatus("Open"));
 
     //create proxy that is valid with an expDate in the year 2999
-    DateTime expDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    usersFixture.proxyFor(sponsor.getId(), proxy.getId(), expDate);
+    DateTime expirationDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    usersFixture.proxyFor(sponsor, proxy, expirationDate);
 
     JsonObject loan = new LoanBuilder()
       .withId(id)
@@ -225,8 +225,8 @@ public class LoanAPIProxyTests extends APITests {
       .withDueDate(dueDate)
       .withStatus("Open"));
 
-    DateTime expDate = new DateTime(1999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    usersFixture.proxyFor(sponsor.getId(), proxy.getId(), expDate);
+    DateTime expirationDate = new DateTime(1999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    usersFixture.proxyFor(sponsor, proxy, expirationDate);
 
     JsonObject loan = new LoanBuilder()
       .withId(id)
