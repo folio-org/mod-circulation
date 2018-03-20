@@ -24,7 +24,7 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class LoanAPIProxyTests extends APITests {
   @Test
-  public void canCreateProxiedLoanWhenValidRelationship()
+  public void canCreateProxiedLoanWhenCurrentActiveRelationship()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -58,6 +58,44 @@ public class LoanAPIProxyTests extends APITests {
 
     assertThat("proxy user id does not match",
       loan.getString("proxyUserId"), is(proxy.getId().toString()));
+  }
+
+  @Test
+  public void cannotCreateProxiedLoanWhenRelationshipIsInactive()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+
+    IndividualResource sponsor = usersFixture.jessica();
+    IndividualResource proxy = usersFixture.james();
+
+    usersFixture.inactiveProxyFor(sponsor, proxy);
+
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
+    JsonObject loan = new LoanBuilder()
+      .withId(id)
+      .open()
+      .withUserId(sponsor.getId())
+      .withProxyUserId(proxy.getId())
+      .withItemId(itemId)
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate).create();
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(loansUrl(), loan,
+      ResponseHandler.any(postCompleted));
+
+    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(postResponse.getBody(), postResponse.getStatusCode(), is(422));
   }
 
   @Test

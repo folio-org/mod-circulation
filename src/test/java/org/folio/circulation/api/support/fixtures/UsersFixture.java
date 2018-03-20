@@ -58,6 +58,19 @@ public class UsersFixture {
         sponsorUserId.toString(), proxyUserId.toString()));
   }
 
+  public void inactiveProxyFor(
+    IndividualResource sponsor,
+    IndividualResource proxy)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    userProxiesClient.create(new UserProxyBuilder().
+      withValidationFields(DateTime.now().plusYears(1).toString(), "Inactive",
+        sponsor.getId().toString(), proxy.getId().toString()));
+  }
+
   public IndividualResource jessica()
     throws InterruptedException,
     MalformedURLException,

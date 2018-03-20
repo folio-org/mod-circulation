@@ -28,7 +28,7 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class RequestsAPIProxyTests extends APITests {
   @Test
-  public void canCreateProxiedRequestWhenValidRelationship()
+  public void canCreateProxiedRequestWhenCurrentActiveRelationship()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -57,6 +57,38 @@ public class RequestsAPIProxyTests extends APITests {
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
 
     assertThat(postResponse, hasStatus(HTTP_CREATED));
+  }
+
+  @Test
+  public void cannotCreateProxiedRequestWhenRelationshipIsInactive()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+
+    loansFixture.checkOut(item, usersFixture.steve());
+
+    IndividualResource sponsor = usersFixture.jessica();
+    IndividualResource proxy = usersFixture.james();
+
+    usersFixture.inactiveProxyFor(sponsor, proxy);
+
+    JsonObject requestRequest = new RequestBuilder()
+      .forItem(item)
+      .withRequesterId(sponsor.getId())
+      .withUserProxyId(proxy.getId())
+      .create();
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(requestsUrl(), requestRequest,
+      ResponseHandler.json(postCompleted));
+
+    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(postResponse.getStatusCode(), is(422));
   }
 
   @Test
