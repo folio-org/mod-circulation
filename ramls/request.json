@@ -71,7 +71,7 @@
     },
     "requester": {
       "description": "Copy of some requesting patron metadata (used for searching and sorting), will be taken from the user referred to by the requesterId",
-      "readOnly": true,
+      "readonly": true,
       "type": "object",
       "properties": {
         "firstName": {
@@ -99,7 +99,7 @@
     },
     "proxy": {
       "description": "Copy of some proxy patron metadata (used for searching and sorting), will be taken from the user referred to by the proxyUserId",
-      "readOnly": true,
+      "readonly": true,
       "type": "object",
       "properties": {
         "firstName": {
