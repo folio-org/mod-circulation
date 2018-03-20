@@ -61,6 +61,43 @@ public class LoanAPIProxyTests extends APITests {
   }
 
   @Test
+  public void canCreateProxiedLoanWhenNonExpiringRelationship()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+
+    IndividualResource sponsor = usersFixture.jessica();
+    IndividualResource proxy = usersFixture.james();
+
+    usersFixture.nonExpiringProxyFor(sponsor, proxy);
+
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
+    IndividualResource response = loansClient.create(new LoanBuilder()
+      .withId(id)
+      .open()
+      .withUserId(sponsor.getId())
+      .withProxyUserId(proxy.getId())
+      .withItemId(itemId)
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate));
+
+    JsonObject loan = response.getJson();
+
+    assertThat("user id does not match",
+      loan.getString("userId"), is(sponsor.getId().toString()));
+
+    assertThat("proxy user id does not match",
+      loan.getString("proxyUserId"), is(proxy.getId().toString()));
+  }
+
+  @Test
   public void cannotCreateProxiedLoanWhenRelationshipIsInactive()
     throws InterruptedException,
     ExecutionException,
