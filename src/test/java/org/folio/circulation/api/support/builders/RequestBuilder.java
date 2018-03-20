@@ -360,6 +360,14 @@ public class RequestBuilder implements Builder {
     return withStatus(OPEN_NOT_YET_FILLED);
   }
 
+  public RequestBuilder withNoStatus() {
+    return withStatus(null);
+  }
+
+  public RequestBuilder fulfilled() {
+    return withStatus(CLOSED_FILLED);
+  }
+
   public RequestBuilder withUserProxyId(UUID userProxyId) {
     return new RequestBuilder(
       this.id,
@@ -377,12 +385,8 @@ public class RequestBuilder implements Builder {
       userProxyId);
   }
 
-  public Builder withNoStatus() {
-    return withStatus(null);
-  }
-
-  public RequestBuilder fulfilled() {
-    return withStatus(CLOSED_FILLED);
+  public RequestBuilder proxiedBy(IndividualResource proxy) {
+    return withUserProxyId(proxy.getId());
   }
 
   private String formatDateTime(DateTime requestDate) {

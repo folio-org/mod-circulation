@@ -125,6 +125,13 @@ the request JSON.schema uses the readOnly property to indicate that these proper
 * middleName
 * barcode
 
+##### Proxy Requesting User (referenced by proxyUserId, held in proxy property)
+
+* firstName
+* lastName
+* middleName
+* barcode
+
 ##### Requested Item (referenced by itemId, held in item property)
 
 * title

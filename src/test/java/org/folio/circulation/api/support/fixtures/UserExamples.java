@@ -11,7 +11,7 @@ public class UserExamples {
 
   public static UserBuilder basedUponJessicaPontefract() {
     return new UserBuilder()
-      .withName("Jessica", "Pontefract")
+      .withName("Pontefract", "Jessica")
       .withBarcode("7697595697");
   }
 

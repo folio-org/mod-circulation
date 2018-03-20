@@ -8,45 +8,77 @@ public class RequestAndRelatedRecords {
   public final InventoryRecords inventoryRecords;
   public final RequestQueue requestQueue;
   public final JsonObject requestingUser;
+  public final JsonObject proxyUser;
 
   private RequestAndRelatedRecords(
     JsonObject request,
     InventoryRecords inventoryRecords,
-    RequestQueue requestQueue, JsonObject requestingUser) {
+    RequestQueue requestQueue,
+    JsonObject requestingUser,
+    JsonObject proxyUser) {
 
     this.request = request;
     this.inventoryRecords = inventoryRecords;
     this.requestQueue = requestQueue;
     this.requestingUser = requestingUser;
+    this.proxyUser = proxyUser;
   }
 
   public RequestAndRelatedRecords(JsonObject request) {
-    this(request, null, null, null);
+    this(request, null, null, null, null);
   }
 
   public RequestAndRelatedRecords withItem(JsonObject updatedItem) {
-    return new RequestAndRelatedRecords(request, new InventoryRecords(updatedItem,
-      inventoryRecords.getHolding(), inventoryRecords.getInstance()),
-      requestQueue, requestingUser);
+    return new RequestAndRelatedRecords(this.request,
+      new InventoryRecords(updatedItem,
+      this.inventoryRecords.getHolding(),
+      this.inventoryRecords.getInstance()),
+      this.requestQueue,
+      this.requestingUser,
+      this.proxyUser);
   }
 
   public RequestAndRelatedRecords withRequest(JsonObject newRequest) {
-    return new RequestAndRelatedRecords(newRequest, inventoryRecords,
-      requestQueue, requestingUser);
+    return new RequestAndRelatedRecords(newRequest,
+      this.inventoryRecords,
+      this.requestQueue,
+      this.requestingUser,
+      this.proxyUser);
   }
 
   public RequestAndRelatedRecords withRequestQueue(RequestQueue newRequestQueue) {
-    return new RequestAndRelatedRecords(request, inventoryRecords,
-      newRequestQueue, requestingUser);
+    return new RequestAndRelatedRecords(
+      this.request,
+      this.inventoryRecords,
+      newRequestQueue,
+      this.requestingUser,
+      this.proxyUser);
   }
 
   public RequestAndRelatedRecords withInventoryRecords(InventoryRecords newInventoryRecords) {
-    return new RequestAndRelatedRecords(request, newInventoryRecords,
-      requestQueue, requestingUser);
+    return new RequestAndRelatedRecords(
+      this.request,
+      newInventoryRecords,
+      this.requestQueue,
+      this.requestingUser,
+      this.proxyUser);
   }
 
   public RequestAndRelatedRecords withRequestingUser(JsonObject newUser) {
-    return new RequestAndRelatedRecords(request, inventoryRecords, requestQueue,
-      newUser);
+    return new RequestAndRelatedRecords(
+      this.request,
+      this.inventoryRecords,
+      this.requestQueue,
+      newUser,
+      this.proxyUser);
+  }
+
+  public RequestAndRelatedRecords withProxyUser(JsonObject newProxyUser) {
+    return new RequestAndRelatedRecords(
+      this.request,
+      this.inventoryRecords,
+      this.requestQueue,
+      this.requestingUser,
+      newProxyUser);
   }
 }

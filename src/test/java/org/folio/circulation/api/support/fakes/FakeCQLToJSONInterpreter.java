@@ -179,6 +179,11 @@ public class FakeCQLToJSONInterpreter {
     //TODO: Should bomb if property does not exist
     if(field.contains(".")) {
       String[] fields = field.split("\\.");
+
+      if(!record.containsKey(String.format("%s", fields[0]))) {
+        return null;
+      }
+
       return record.getJsonObject(String.format("%s", fields[0]))
         .getString(String.format("%s", fields[1].trim()));
     }
