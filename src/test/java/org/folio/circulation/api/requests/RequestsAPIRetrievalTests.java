@@ -8,6 +8,7 @@ import org.folio.circulation.api.support.builders.UserBuilder;
 import org.folio.circulation.api.support.http.InterfaceUrls;
 import org.folio.circulation.api.support.http.ResourceClient;
 import org.folio.circulation.support.JsonArrayHelper;
+import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
@@ -245,6 +246,68 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     client.get(InterfaceUrls.requestsUrl()
         + String.format("?query=requester.lastName=%s", "Norton"),
+      ResponseHandler.any(getRequestsCompleted));
+
+    Response getRequestsResponse = getRequestsCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Failed to get requests: %s",
+      getRequestsResponse.getBody()),
+      getRequestsResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+
+    JsonObject wrappedRequests = getRequestsResponse.getJson();
+
+    List<JsonObject> requests = getRequests(wrappedRequests);
+
+    assertThat(requests.size(), is(3));
+    assertThat(wrappedRequests.getInteger("totalRecords"), is(3));
+
+    requests.forEach(this::requestHasExpectedProperties);
+  }
+
+  @Test
+  public void canSearchForRequestsByProxyLastName()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    final IndividualResource sponsor = usersFixture.jessica();
+
+    final IndividualResource firstProxy = usersFixture.charlotte();
+    final IndividualResource secondProxy = usersFixture.james();
+
+    usersFixture.currentProxyFor(sponsor, firstProxy);
+    usersFixture.currentProxyFor(sponsor, secondProxy);
+
+    requestsClient.create(new RequestBuilder()
+      .forItem(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut))
+      .by(sponsor)
+      .proxiedBy(firstProxy));
+
+    requestsClient.create(new RequestBuilder()
+      .forItem(itemsFixture.basedUponNod(ItemBuilder::checkOut))
+      .by(sponsor)
+      .proxiedBy(secondProxy));
+
+    requestsClient.create(new RequestBuilder()
+      .forItem(itemsFixture.basedUponNod(ItemBuilder::checkOut))
+      .by(sponsor)
+      .proxiedBy(secondProxy));
+
+    requestsClient.create(new RequestBuilder()
+      .forItem(itemsFixture.basedUponUprooted(ItemBuilder::checkOut))
+      .by(sponsor)
+      .proxiedBy(firstProxy));
+
+    requestsClient.create(new RequestBuilder()
+      .forItem(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut))
+      .by(sponsor)
+      .proxiedBy(secondProxy));
+
+    CompletableFuture<Response> getRequestsCompleted = new CompletableFuture<>();
+
+    client.get(InterfaceUrls.requestsUrl()
+        + String.format("?query=proxy.lastName=%s", "Rodwell"),
       ResponseHandler.any(getRequestsCompleted));
 
     Response getRequestsResponse = getRequestsCompleted.get(5, TimeUnit.SECONDS);
