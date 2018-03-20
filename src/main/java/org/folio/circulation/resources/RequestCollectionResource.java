@@ -101,10 +101,12 @@ public class RequestCollectionResource extends CollectionResource {
     removeRelatedRecordInformation(request);
 
     final String requestingUserId = request.getString("requesterId");
+    final String proxyUserId = request.getString("proxyUserId");
 
     completedFuture(HttpResult.success(new RequestAndRelatedRecords(request)))
       .thenCombineAsync(inventoryFetcher.fetch(request), this::addInventoryRecords)
       .thenCombineAsync(userFetcher.getUser(requestingUserId, false), this::addUser)
+      .thenCombineAsync(userFetcher.getUser(proxyUserId, false), this::addProxyUser)
       .thenComposeAsync(r -> r.after(records -> refuseWhenProxyRelationshipIsInvalid(records, clients)))
       .thenAcceptAsync(result -> {
         if(result.failed()) {
@@ -116,9 +118,11 @@ public class RequestCollectionResource extends CollectionResource {
         final JsonObject item = inventoryRecords.getItem();
         final JsonObject instance = inventoryRecords.getInstance();
         final JsonObject requester = result.value().requestingUser;
+        final JsonObject proxy = result.value().proxyUser;
 
         addStoredItemProperties(request, item, instance);
         addStoredRequesterProperties(request, requester);
+        addStoredProxyProperties(request, proxy);
 
         clients.requestsStorage().put(id, request, response -> {
           if(response.getStatusCode() == 204) {

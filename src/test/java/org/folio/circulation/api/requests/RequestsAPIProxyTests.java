@@ -225,7 +225,7 @@ public class RequestsAPIProxyTests extends APITests {
     loansFixture.checkOutItem(itemId);
 
     IndividualResource sponsor = usersFixture.jessica();
-    IndividualResource proxy = usersFixture.james();
+    IndividualResource proxy = usersFixture.rebecca();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
@@ -254,6 +254,29 @@ public class RequestsAPIProxyTests extends APITests {
     Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
 
     assertThat(putResponse.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
+
+    final JsonObject representation = requestsClient.get(createdRequest).getJson();
+
+    assertThat("has information taken from proxying user",
+      representation.containsKey("proxy"), is(true));
+
+    final JsonObject proxyRepresentation = representation.getJsonObject("proxy");
+
+    assertThat("last name is taken from proxying user",
+      proxyRepresentation.getString("lastName"),
+      is("Stuart"));
+
+    assertThat("first name is taken from proxying user",
+      proxyRepresentation.getString("firstName"),
+      is("Rebecca"));
+
+    assertThat("middle name is not taken from proxying user",
+      proxyRepresentation.containsKey("middleName"),
+      is(false));
+
+    assertThat("barcode is taken from proxying user",
+      proxyRepresentation.getString("barcode"),
+      is("6059539205"));
   }
 
   @Test
