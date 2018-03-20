@@ -1,7 +1,5 @@
 package org.folio.circulation.support;
 
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,14 +36,13 @@ public class CqlHelper {
   }
 
   public static String buildIsValidUserProxyQuery(String proxyUserId, String sponsorUserId){
-    //we got the id of the proxy and sponsor user IDs, look for a record that indicates
-    // there is a proxy relationship that is active and the expiration date is in the future
     if(proxyUserId != null) {
-      DateTime expDate = new DateTime(DateTimeZone.UTC);
+//      DateTime expDate = new DateTime(DateTimeZone.UTC);
       String validateProxyQuery ="proxyUserId="+ proxyUserId
           +" and userId="+sponsorUserId
-          +" and meta.status=Active"
-          +" and meta.expirationDate>"+expDate.toString().trim();
+          +" and meta.status=Active";
+          //Temporarily removed as does not work when optional expiration date is missing
+//          +" and meta.expirationDate>"+expDate.toString().trim();
       try {
         return URLEncoder.encode(validateProxyQuery, String.valueOf(StandardCharsets.UTF_8));
       } catch (UnsupportedEncodingException e) {

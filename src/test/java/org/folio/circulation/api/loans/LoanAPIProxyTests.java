@@ -24,7 +24,7 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class LoanAPIProxyTests extends APITests {
   @Test
-  public void canCreateProxiedLoanWhenValidRelationship()
+  public void canCreateProxiedLoanWhenCurrentActiveRelationship()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -37,21 +37,19 @@ public class LoanAPIProxyTests extends APITests {
     IndividualResource sponsor = usersFixture.jessica();
     IndividualResource proxy = usersFixture.james();
 
-    DateTime expirationDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-
-    usersFixture.proxyFor(sponsor.getId(), proxy.getId(), expirationDate);
+    usersFixture.currentProxyFor(sponsor, proxy);
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
 
     IndividualResource response = loansClient.create(new LoanBuilder()
       .withId(id)
+      .open()
       .withUserId(sponsor.getId())
       .withProxyUserId(proxy.getId())
       .withItemId(itemId)
       .withLoanDate(loanDate)
-      .withDueDate(dueDate)
-      .withStatus("Open"));
+      .withDueDate(dueDate));
 
     JsonObject loan = response.getJson();
 
@@ -60,6 +58,81 @@ public class LoanAPIProxyTests extends APITests {
 
     assertThat("proxy user id does not match",
       loan.getString("proxyUserId"), is(proxy.getId().toString()));
+  }
+
+  @Test
+  public void canCreateProxiedLoanWhenNonExpiringRelationship()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+
+    IndividualResource sponsor = usersFixture.jessica();
+    IndividualResource proxy = usersFixture.james();
+
+    usersFixture.nonExpiringProxyFor(sponsor, proxy);
+
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
+    IndividualResource response = loansClient.create(new LoanBuilder()
+      .withId(id)
+      .open()
+      .withUserId(sponsor.getId())
+      .withProxyUserId(proxy.getId())
+      .withItemId(itemId)
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate));
+
+    JsonObject loan = response.getJson();
+
+    assertThat("user id does not match",
+      loan.getString("userId"), is(sponsor.getId().toString()));
+
+    assertThat("proxy user id does not match",
+      loan.getString("proxyUserId"), is(proxy.getId().toString()));
+  }
+
+  @Test
+  public void cannotCreateProxiedLoanWhenRelationshipIsInactive()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+
+    IndividualResource sponsor = usersFixture.jessica();
+    IndividualResource proxy = usersFixture.james();
+
+    usersFixture.inactiveProxyFor(sponsor, proxy);
+
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
+    JsonObject loan = new LoanBuilder()
+      .withId(id)
+      .open()
+      .withUserId(sponsor.getId())
+      .withProxyUserId(proxy.getId())
+      .withItemId(itemId)
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate).create();
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(loansUrl(), loan,
+      ResponseHandler.any(postCompleted));
+
+    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(postResponse.getBody(), postResponse.getStatusCode(), is(422));
   }
 
   @Test
@@ -76,21 +149,19 @@ public class LoanAPIProxyTests extends APITests {
     IndividualResource sponsor = usersFixture.jessica();
     IndividualResource proxy = usersFixture.james();
 
-    DateTime expirationDate = new DateTime(2000, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-
-    usersFixture.proxyFor(sponsor, proxy, expirationDate);
+    usersFixture.expiredProxyFor(sponsor, proxy);
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
 
     JsonObject loan = new LoanBuilder()
       .withId(id)
+      .open()
       .withUserId(sponsor.getId())
       .withProxyUserId(proxy.getId())
       .withItemId(itemId)
       .withLoanDate(loanDate)
-      .withDueDate(dueDate)
-      .withStatus("Open").create();
+      .withDueDate(dueDate).create();
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
 
@@ -117,21 +188,19 @@ public class LoanAPIProxyTests extends APITests {
     IndividualResource otherUser = usersFixture.charlotte();
     IndividualResource proxy = usersFixture.james();
 
-    DateTime expirationDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-
-    usersFixture.proxyFor(unexpectedSponsor, proxy, expirationDate);
+    usersFixture.currentProxyFor(unexpectedSponsor, proxy);
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
 
     JsonObject loan = new LoanBuilder()
       .withId(id)
+      .open()
       .withUserId(otherUser.getId())
       .withProxyUserId(proxy.getId())
       .withItemId(itemId)
       .withLoanDate(loanDate)
-      .withDueDate(dueDate)
-      .withStatus("Open").create();
+      .withDueDate(dueDate).create();
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
 
@@ -162,12 +231,12 @@ public class LoanAPIProxyTests extends APITests {
 
     JsonObject loan = new LoanBuilder()
       .withId(id)
+      .open()
       .withUserId(requestingUser.getId())
       .withProxyUserId(userAttemptingToProxy.getId())
       .withItemId(itemId)
       .withLoanDate(loanDate)
-      .withDueDate(dueDate)
-      .withStatus("Open").create();
+      .withDueDate(dueDate).create();
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
 
@@ -197,24 +266,22 @@ public class LoanAPIProxyTests extends APITests {
 
     loansClient.create(new LoanBuilder()
       .withId(id)
+      .open()
       .withUserId(sponsor.getId())
       .withItemId(itemId)
       .withLoanDate(loanDate)
-      .withDueDate(dueDate)
-      .withStatus("Open"));
+      .withDueDate(dueDate));
 
-    DateTime expirationDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-
-    usersFixture.proxyFor(sponsor, proxy, expirationDate);
+    usersFixture.currentProxyFor(sponsor, proxy);
 
     JsonObject loan = new LoanBuilder()
       .withId(id)
+      .open()
       .withUserId(sponsor.getId())
       .withProxyUserId(proxy.getId())
       .withItemId(itemId)
       .withLoanDate(loanDate)
-      .withDueDate(dueDate)
-      .withStatus("Open").create();
+      .withDueDate(dueDate).create();
 
     CompletableFuture<Response> putCompleted = new CompletableFuture<>();
 
@@ -223,8 +290,8 @@ public class LoanAPIProxyTests extends APITests {
 
     Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat("Valid proxy should allow updates to work but does not", putResponse.getStatusCode(),
-      is(HttpURLConnection.HTTP_NO_CONTENT));
+    assertThat("Valid proxy should allow updates to work but does not",
+      putResponse.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
   }
 
   @Test
@@ -245,23 +312,22 @@ public class LoanAPIProxyTests extends APITests {
 
     loansClient.create(new LoanBuilder()
       .withId(id)
+      .open()
       .withUserId(sponsor.getId())
       .withItemId(itemId)
       .withLoanDate(loanDate)
-      .withDueDate(dueDate)
-      .withStatus("Open"));
+      .withDueDate(dueDate));
 
-    DateTime expirationDate = new DateTime(1999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    usersFixture.proxyFor(sponsor, proxy, expirationDate);
+    usersFixture.expiredProxyFor(sponsor, proxy);
 
     JsonObject loan = new LoanBuilder()
       .withId(id)
+      .open()
       .withUserId(sponsor.getId())
       .withProxyUserId(proxy.getId())
       .withItemId(itemId)
       .withLoanDate(loanDate)
-      .withDueDate(dueDate)
-      .withStatus("Open").create();
+      .withDueDate(dueDate).create();
 
     CompletableFuture<Response> putCompleted = new CompletableFuture<>();
 
@@ -293,24 +359,22 @@ public class LoanAPIProxyTests extends APITests {
 
     loansClient.create(new LoanBuilder()
       .withId(id)
+      .open()
       .withUserId(otherUser.getId())
       .withItemId(itemId)
       .withLoanDate(loanDate)
-      .withDueDate(dueDate)
-      .withStatus("Open"));
+      .withDueDate(dueDate));
 
-    DateTime expirationDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-
-    usersFixture.proxyFor(unexpectedSponsor, proxy, expirationDate);
+    usersFixture.currentProxyFor(unexpectedSponsor, proxy);
 
     JsonObject loan = new LoanBuilder()
       .withId(id)
+      .open()
       .withUserId(otherUser.getId())
       .withProxyUserId(proxy.getId())
       .withItemId(itemId)
       .withLoanDate(loanDate)
-      .withDueDate(dueDate)
-      .withStatus("Open").create();
+      .withDueDate(dueDate).create();
 
     CompletableFuture<Response> putCompleted = new CompletableFuture<>();
 
@@ -341,20 +405,21 @@ public class LoanAPIProxyTests extends APITests {
 
     loansClient.create(new LoanBuilder()
       .withId(id)
+      .open()
       .withUserId(requestingUser.getId())
       .withItemId(itemId)
       .withLoanDate(loanDate)
-      .withDueDate(dueDate)
-      .withStatus("Open"));
+      .withDueDate(dueDate));
 
     JsonObject loan = new LoanBuilder()
       .withId(id)
+      .open()
       .withUserId(requestingUser.getId())
       .withProxyUserId(userAttemptingToProxy.getId())
       .withItemId(itemId)
       .withLoanDate(loanDate)
       .withDueDate(dueDate)
-      .withStatus("Open").create();
+      .create();
 
     CompletableFuture<Response> putCompleted = new CompletableFuture<>();
 

@@ -10,6 +10,7 @@ import org.folio.circulation.domain.*;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.*;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -730,9 +731,33 @@ public class LoanCollectionResource extends CollectionResource {
           future.complete(HttpResult.failure(new ForwardOnFailure(proxyValidResponse)));
           return;
         }
-        final MultipleRecordsWrapper wrappedLoans = MultipleRecordsWrapper.fromRequestBody(
+
+        final MultipleRecordsWrapper proxyRelationships = MultipleRecordsWrapper.fromRequestBody(
           proxyValidResponse.getBody(), "proxiesFor");
-        if (wrappedLoans.isEmpty()) { //if empty then we dont have a valid proxy id in the loan
+
+        final Collection<JsonObject> unExpiredRelationships = proxyRelationships.getRecords()
+          .stream()
+          .filter(relationship -> {
+            if(relationship.containsKey("meta")) {
+              final JsonObject meta = relationship.getJsonObject("meta");
+
+              if(meta.containsKey("expirationDate")) {
+                final DateTime expirationDate = DateTime.parse(
+                  meta.getString("expirationDate"));
+
+                return expirationDate.isAfter(DateTime.now());
+              }
+              else {
+                return true;
+              }
+            }
+            else {
+              return true;
+            }
+          })
+          .collect(Collectors.toList());
+
+        if (unExpiredRelationships.isEmpty()) { //if empty then we dont have a valid proxy id in the loan
           future.complete(HttpResult.failure(new ValidationErrorFailure(
             "proxyUserId is not valid", "proxyUserId",
             loanAndRelatedRecords.loan.getString("proxyUserId"))));

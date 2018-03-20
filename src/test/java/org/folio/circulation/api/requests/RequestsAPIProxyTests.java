@@ -28,7 +28,7 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class RequestsAPIProxyTests extends APITests {
   @Test
-  public void canCreateProxiedRequestWhenValidRelationship()
+  public void canCreateProxiedRequestWhenCurrentActiveRelationship()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -41,9 +41,7 @@ public class RequestsAPIProxyTests extends APITests {
     IndividualResource sponsor = usersFixture.jessica();
     IndividualResource proxy = usersFixture.james();
 
-    DateTime expirationDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-
-    usersFixture.proxyFor(sponsor, proxy, expirationDate);
+    usersFixture.currentProxyFor(sponsor, proxy);
 
     JsonObject requestRequest = new RequestBuilder()
       .forItem(item)
@@ -62,6 +60,70 @@ public class RequestsAPIProxyTests extends APITests {
   }
 
   @Test
+  public void canCreateProxiedRequestWhenNonExpiringRelationship()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+
+    loansFixture.checkOut(item, usersFixture.steve());
+
+    IndividualResource sponsor = usersFixture.jessica();
+    IndividualResource proxy = usersFixture.james();
+
+    usersFixture.nonExpiringProxyFor(sponsor, proxy);
+
+    JsonObject requestRequest = new RequestBuilder()
+      .forItem(item)
+      .withRequesterId(sponsor.getId())
+      .withUserProxyId(proxy.getId())
+      .create();
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(requestsUrl(), requestRequest,
+      ResponseHandler.json(postCompleted));
+
+    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(postResponse, hasStatus(HTTP_CREATED));
+  }
+
+  @Test
+  public void cannotCreateProxiedRequestWhenRelationshipIsInactive()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+
+    loansFixture.checkOut(item, usersFixture.steve());
+
+    IndividualResource sponsor = usersFixture.jessica();
+    IndividualResource proxy = usersFixture.james();
+
+    usersFixture.inactiveProxyFor(sponsor, proxy);
+
+    JsonObject requestRequest = new RequestBuilder()
+      .forItem(item)
+      .withRequesterId(sponsor.getId())
+      .withUserProxyId(proxy.getId())
+      .create();
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(requestsUrl(), requestRequest,
+      ResponseHandler.json(postCompleted));
+
+    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(postResponse.getStatusCode(), is(422));
+  }
+
+  @Test
   public void cannotCreateProxiedRequestWhenRelationshipHasExpired()
     throws InterruptedException,
     ExecutionException,
@@ -72,12 +134,10 @@ public class RequestsAPIProxyTests extends APITests {
 
     loansFixture.checkOut(item, usersFixture.steve());
 
-    DateTime expirationDate = new DateTime(1999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-
     IndividualResource sponsor = usersFixture.jessica();
     IndividualResource proxy = usersFixture.james();
 
-    usersFixture.proxyFor(sponsor, proxy, expirationDate);
+    usersFixture.expiredProxyFor(sponsor, proxy);
 
     JsonObject requestRequest = new RequestBuilder()
       .forItem(item)
@@ -106,13 +166,11 @@ public class RequestsAPIProxyTests extends APITests {
 
     loansFixture.checkOut(item, usersFixture.steve());
 
-    DateTime expirationDate = new DateTime(1999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-
     IndividualResource unexpectedSponsor = usersFixture.jessica();
     IndividualResource otherUser = usersFixture.charlotte();
     IndividualResource proxy = usersFixture.james();
 
-    usersFixture.proxyFor(unexpectedSponsor, proxy, expirationDate);
+    usersFixture.expiredProxyFor(unexpectedSponsor, proxy);
 
     JsonObject requestRequest = new RequestBuilder()
       .forItem(item)
@@ -159,9 +217,7 @@ public class RequestsAPIProxyTests extends APITests {
         .withRequestExpiration(new LocalDate(2017, 7, 30))
         .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
-    DateTime expirationDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-
-    usersFixture.proxyFor(sponsor, proxy, expirationDate);
+    usersFixture.currentProxyFor(sponsor, proxy);
 
     JsonObject updatedRequest = createdRequest.copyJson();
 
@@ -206,9 +262,7 @@ public class RequestsAPIProxyTests extends APITests {
         .withRequestExpiration(new LocalDate(2017, 7, 30))
         .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
-    DateTime expirationDate = new DateTime(1999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-
-    usersFixture.proxyFor(sponsor, proxy, expirationDate);
+    usersFixture.expiredProxyFor(sponsor, proxy);
 
     JsonObject updatedRequest = createdRequest.copyJson();
 
@@ -254,9 +308,7 @@ public class RequestsAPIProxyTests extends APITests {
         .withRequestExpiration(new LocalDate(2017, 7, 30))
         .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
-    DateTime expirationDate = new DateTime(2999, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-
-    usersFixture.proxyFor(unexpectedSponsor, proxy, expirationDate);
+    usersFixture.currentProxyFor(unexpectedSponsor, proxy);
 
     JsonObject updatedRequest = createdRequest.copyJson();
 

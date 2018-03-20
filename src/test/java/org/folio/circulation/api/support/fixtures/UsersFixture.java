@@ -22,16 +22,26 @@ public class UsersFixture {
     this.userProxiesClient = userProxiesClient;
   }
 
-  public void proxyFor(
+  public void expiredProxyFor(
     IndividualResource sponsor,
-    IndividualResource proxy,
-    DateTime expirationDate)
+    IndividualResource proxy)
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
 
-    proxyFor(sponsor.getId(), proxy.getId(), expirationDate);
+    proxyFor(sponsor.getId(), proxy.getId(), DateTime.now().minusYears(1));
+  }
+
+  public void currentProxyFor(
+    IndividualResource sponsor,
+    IndividualResource proxy)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    proxyFor(sponsor.getId(), proxy.getId(), DateTime.now().plusYears(1));
   }
 
   public void proxyFor(
@@ -46,6 +56,31 @@ public class UsersFixture {
     userProxiesClient.create(new UserProxyBuilder().
       withValidationFields(expirationDate.toString(), "Active",
         sponsorUserId.toString(), proxyUserId.toString()));
+  }
+
+  public void inactiveProxyFor(
+    IndividualResource sponsor,
+    IndividualResource proxy)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    userProxiesClient.create(new UserProxyBuilder().
+      withValidationFields(DateTime.now().plusYears(1).toString(), "Inactive",
+        sponsor.getId().toString(), proxy.getId().toString()));
+  }
+
+  public void nonExpiringProxyFor(
+    IndividualResource sponsor,
+    IndividualResource proxy)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+      userProxiesClient.create(new UserProxyBuilder().
+        withValidationFields(null, "Active",
+          sponsor.getId().toString(), proxy.getId().toString()));
   }
 
   public IndividualResource jessica()
