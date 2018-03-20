@@ -70,6 +70,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final String itemId = getItemId(request);
     final String requestingUserId = request.getString("requesterId");
+    final String proxyUserId = request.getString("proxyUserId");
 
     completedFuture(HttpResult.success(new RequestAndRelatedRecords(request)))
       .thenCombineAsync(inventoryFetcher.fetch(request), this::addInventoryRecords)
@@ -78,6 +79,7 @@ public class RequestCollectionResource extends CollectionResource {
       .thenComposeAsync(r -> r.after(records -> refuseWhenProxyRelationshipIsInvalid(records, clients)))
       .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
       .thenCombineAsync(userFetcher.getUser(requestingUserId, false), this::addUser)
+      .thenCombineAsync(userFetcher.getUser(proxyUserId, false), this::addProxyUser)
       .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
       .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreation))
       .thenComposeAsync(r -> r.after(records -> createRequest(records, clients)))
@@ -302,24 +304,43 @@ public class RequestCollectionResource extends CollectionResource {
       return;
     }
 
+    JsonObject requesterSummary = createUserSummary(requester);
+
+    requestWithAdditionalInformation.put("requester", requesterSummary);
+  }
+
+  private void addStoredProxyProperties
+    (JsonObject requestWithAdditionalInformation,
+     JsonObject proxy) {
+
+    if(proxy == null) {
+      return;
+    }
+
+    JsonObject proxySummary = createUserSummary(proxy);
+
+    requestWithAdditionalInformation.put("proxy", proxySummary);
+  }
+
+  private JsonObject createUserSummary(JsonObject user) {
     JsonObject requesterSummary = new JsonObject();
 
-    if(requester.containsKey("personal")) {
-      JsonObject personalDetails = requester.getJsonObject("personal");
+    if(user.containsKey("personal")) {
+      JsonObject personalDetails = user.getJsonObject("personal");
 
       copyStringIfExists("lastName", personalDetails, requesterSummary);
       copyStringIfExists("firstName", personalDetails, requesterSummary);
       copyStringIfExists("middleName", personalDetails, requesterSummary);
     }
 
-    copyStringIfExists("barcode", requester, requesterSummary);
-
-    requestWithAdditionalInformation.put("requester", requesterSummary);
+    copyStringIfExists("barcode", user, requesterSummary);
+    return requesterSummary;
   }
 
   private void removeRelatedRecordInformation(JsonObject request) {
     request.remove("item");
     request.remove("requester");
+    request.remove("proxy");
   }
 
   private HttpResult<RequestAndRelatedRecords> addInventoryRecords(
@@ -345,6 +366,15 @@ public class RequestCollectionResource extends CollectionResource {
     return HttpResult.combine(loanResult, getUserResult,
       RequestAndRelatedRecords::withRequestingUser);
   }
+
+  private HttpResult<RequestAndRelatedRecords> addProxyUser(
+    HttpResult<RequestAndRelatedRecords> loanResult,
+    HttpResult<JsonObject> getUserResult) {
+
+    return HttpResult.combine(loanResult, getUserResult,
+      RequestAndRelatedRecords::withProxyUser);
+  }
+
 
   private HttpResult<RequestAndRelatedRecords> refuseWhenItemDoesNotExist(
     HttpResult<RequestAndRelatedRecords> result) {
@@ -471,9 +501,11 @@ public class RequestCollectionResource extends CollectionResource {
     JsonObject item = requestAndRelatedRecords.inventoryRecords.getItem();
     JsonObject instance = requestAndRelatedRecords.inventoryRecords.getInstance();
     JsonObject requestingUser = requestAndRelatedRecords.requestingUser;
+    JsonObject proxyUser = requestAndRelatedRecords.proxyUser;
 
     addStoredItemProperties(request, item, instance);
     addStoredRequesterProperties(request, requestingUser);
+    addStoredProxyProperties(request, proxyUser);
 
     clients.requestsStorage().post(request, response -> {
       if (response.getStatusCode() == 201) {

@@ -342,5 +342,4 @@ public class RequestsAPIRetrievalTests extends APITests {
       type, property, resource),
       resource.containsKey(property), is(true));
   }
-
 }

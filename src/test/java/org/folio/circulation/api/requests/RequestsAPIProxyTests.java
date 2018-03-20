@@ -57,6 +57,29 @@ public class RequestsAPIProxyTests extends APITests {
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
 
     assertThat(postResponse, hasStatus(HTTP_CREATED));
+
+    JsonObject representation = postResponse.getJson();
+
+    assertThat("has information taken from proxying user",
+      representation.containsKey("proxy"), is(true));
+
+    final JsonObject proxyRepresentation = representation.getJsonObject("proxy");
+
+    assertThat("last name is taken from proxying user",
+      proxyRepresentation.getString("lastName"),
+      is("Rodwell"));
+
+    assertThat("first name is taken from proxying user",
+      proxyRepresentation.getString("firstName"),
+      is("James"));
+
+    assertThat("middle name is not taken from proxying user",
+      proxyRepresentation.containsKey("middleName"),
+      is(false));
+
+    assertThat("barcode is taken from proxying user",
+      proxyRepresentation.getString("barcode"),
+      is("6430530304"));
   }
 
   @Test
