@@ -105,6 +105,9 @@ public class RequestsAPICreationTests extends APITests {
     assertThat("barcode is taken from requesting user",
       representation.getJsonObject("requester").getString("barcode"),
       is("5694596854"));
+
+    assertThat("does not have information taken from proxying user",
+      representation.containsKey("proxy"), is(false));
   }
 
   @Test
