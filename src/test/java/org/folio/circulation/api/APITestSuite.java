@@ -89,6 +89,8 @@ public class APITestSuite {
   private static JsonObject userRecord2;
   private static UUID personalContributorTypeId;
 
+  private static UUID nottinghamUniversityInstitution;
+
   private static UUID canCirculateLoanPolicyId;
 
   public static int circulationModulePort() {
@@ -436,7 +438,23 @@ public class APITestSuite {
     ExecutionException,
     TimeoutException {
 
-    final ResourceClient shelfLocationsClient = ResourceClient.forShelfLocations(createClient());
+    final OkapiHttpClient client = createClient();
+
+    ResourceClient institutionsClient = ResourceClient.forInstitutions(client);
+
+    nottinghamUniversityInstitution = createReferenceRecord(institutionsClient,
+      "Nottingham University");
+
+    //Jubilee Campus - campus
+
+    //Djanogly Learning Resource Centre - library
+
+    //Business Library - library
+
+    //Locations within the library
+
+    //Old locations model
+    final ResourceClient shelfLocationsClient = ResourceClient.forShelfLocations(client);
 
     mainLibraryLocationId = createReferenceRecord(
       shelfLocationsClient, "Main Library");
@@ -451,7 +469,13 @@ public class APITestSuite {
     ExecutionException,
     TimeoutException {
 
-    ResourceClient locationsClient = ResourceClient.forShelfLocations(createClient());
+    final OkapiHttpClient client = createClient();
+
+    ResourceClient institutionsClient = ResourceClient.forInstitutions(client);
+
+    institutionsClient.delete(nottinghamUniversityInstitution);
+
+    ResourceClient locationsClient = ResourceClient.forShelfLocations(client);
 
     locationsClient.delete(mainLibraryLocationId);
     locationsClient.delete(annexLocationId);

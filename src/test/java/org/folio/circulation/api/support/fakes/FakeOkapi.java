@@ -52,12 +52,6 @@ public class FakeOkapi extends AbstractVerticle {
       .create().register(router);
 
     new FakeStorageModuleBuilder()
-      .withRecordName("location")
-      .withRootPath("/shelf-locations")
-      .withCollectionPropertyName("shelflocations")
-      .create().register(router);
-
-    new FakeStorageModuleBuilder()
       .withRecordName("instance type")
       .withRootPath("/instance-types")
       .withCollectionPropertyName("instanceTypes")
@@ -134,6 +128,18 @@ public class FakeOkapi extends AbstractVerticle {
       .create().register(router);
 
     registerLoanRulesStorage(router);
+
+    new FakeStorageModuleBuilder()
+      .withRecordName("shelf location")
+      .withRootPath("/shelf-locations")
+      .withCollectionPropertyName("shelflocations")
+      .create().register(router);
+
+    new FakeStorageModuleBuilder()
+      .withRecordName("institution")
+      .withRootPath("/location-units/institutions")
+      .withCollectionPropertyName("locinsts")
+      .create().register(router);
 
     server.requestHandler(router::accept)
       .listen(PORT_TO_USE, result -> {
