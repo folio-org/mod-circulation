@@ -436,11 +436,13 @@ public class APITestSuite {
     ExecutionException,
     TimeoutException {
 
+    final ResourceClient shelfLocationsClient = ResourceClient.forShelfLocations(createClient());
+
     mainLibraryLocationId = createReferenceRecord(
-      ResourceClient.forLocations(createClient()), "Main Library");
+      shelfLocationsClient, "Main Library");
 
     annexLocationId = createReferenceRecord(
-      ResourceClient.forLocations(createClient()), "Annex");
+      shelfLocationsClient, "Annex");
   }
 
   private static void deleteLocations()
@@ -449,7 +451,7 @@ public class APITestSuite {
     ExecutionException,
     TimeoutException {
 
-    ResourceClient locationsClient = ResourceClient.forLocations(createClient());
+    ResourceClient locationsClient = ResourceClient.forShelfLocations(createClient());
 
     locationsClient.delete(mainLibraryLocationId);
     locationsClient.delete(annexLocationId);

@@ -18,7 +18,7 @@ public class InterfaceUrls {
     return APITestSuite.viaOkapiModuleUrl("/loan-types" + subPath);
   }
 
-  public static URL locationsStorageUrl(String subPath)
+  public static URL shelfLocationsStorageUrl(String subPath)
     throws MalformedURLException {
 
     return APITestSuite.viaOkapiModuleUrl("/shelf-locations" + subPath);

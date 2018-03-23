@@ -93,8 +93,8 @@ public class ResourceClient {
       "loan types", "loantypes");
   }
 
-  public static ResourceClient forLocations(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::locationsStorageUrl,
+  public static ResourceClient forShelfLocations(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::shelfLocationsStorageUrl,
       "locations", "shelflocations");
   }
 
