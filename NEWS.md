@@ -1,4 +1,4 @@
-## 8.1.0 Unreleased
+## 8.1.1 Unreleased
 
 * Includes proxy user's name for requests (CIRC-88)
 * Stores proxy user's name for requests (so it can be used for sorting, CIRC-88)
@@ -13,6 +13,7 @@
 * Allows un-expiring relationships when validating proxy (CIRC-92)
 * Reuse Vert.x HTTP client within the circulation verticle (to allow for connection pooling, CIRC-86)
 * Use == relation when finding related records (CIRC-87)
+* Validation messages look 
 * Provides circulation interface 2.12 (CIRC-88)
 * Requires request-storage interface 1.5 (CIRC-88)
 

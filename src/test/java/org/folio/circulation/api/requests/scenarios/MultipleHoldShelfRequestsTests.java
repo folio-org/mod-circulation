@@ -17,6 +17,7 @@ import java.util.concurrent.TimeoutException;
 import static org.folio.circulation.api.support.builders.ItemBuilder.AWAITING_PICKUP;
 import static org.folio.circulation.api.support.builders.RequestBuilder.*;
 import static org.folio.circulation.api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
+import static org.folio.circulation.api.support.matchers.JsonObjectMatchers.hasSoleErrorMessageContaining;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -163,8 +164,8 @@ public class MultipleHoldShelfRequestsTests extends APITests {
 
     Response response = loansFixture.attemptCheckOut(smallAngryPlanet, rebecca);
 
-    assertThat(response.getJson().getString("message"),
-      is("User checking out must be requester awaiting pickup"));
+    assertThat(response.getJson(),
+      hasSoleErrorMessageContaining("User checking out must be requester awaiting pickup"));
 
     requestByJessica = requestsClient.get(requestByJessica);
 
@@ -203,8 +204,8 @@ public class MultipleHoldShelfRequestsTests extends APITests {
 
     Response response = loansFixture.attemptCheckOut(smallAngryPlanet, steve);
 
-    assertThat(response.getJson().getString("message"),
-      is("User checking out must be requester awaiting pickup"));
+    assertThat(response.getJson(),
+      hasSoleErrorMessageContaining("User checking out must be requester awaiting pickup"));
 
     requestByJessica = requestsClient.get(requestByJessica);
 

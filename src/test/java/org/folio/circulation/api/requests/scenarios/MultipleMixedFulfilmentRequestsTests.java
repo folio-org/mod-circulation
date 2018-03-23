@@ -15,6 +15,7 @@ import static org.folio.circulation.api.support.builders.ItemBuilder.AWAITING_PI
 import static org.folio.circulation.api.support.builders.ItemBuilder.CHECKED_OUT_HELD;
 import static org.folio.circulation.api.support.builders.RequestBuilder.*;
 import static org.folio.circulation.api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
+import static org.folio.circulation.api.support.matchers.JsonObjectMatchers.hasSoleErrorMessageContaining;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -183,8 +184,8 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
 
     Response response = loansFixture.attemptCheckOut(smallAngryPlanet, rebecca);
 
-    assertThat(response.getJson().getString("message"),
-      is("User checking out must be requester awaiting pickup"));
+    assertThat(response.getJson(),
+      hasSoleErrorMessageContaining("User checking out must be requester awaiting pickup"));
 
     requestByRebecca = requestsClient.get(requestByRebecca);
 
@@ -232,8 +233,8 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
 
     Response response = loansFixture.attemptCheckOut(smallAngryPlanet, charlotte);
 
-    assertThat(response.getJson().getString("message"),
-      is("User checking out must be requester awaiting pickup"));
+    assertThat(response.getJson(),
+      hasSoleErrorMessageContaining("User checking out must be requester awaiting pickup"));
 
     requestByRebecca = requestsClient.get(requestByRebecca);
 
@@ -280,8 +281,8 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
 
     Response response = loansFixture.attemptCheckOut(smallAngryPlanet, steve);
 
-    assertThat(response.getJson().getString("message"),
-      is("User checking out must be requester awaiting pickup"));
+    assertThat(response.getJson(),
+      hasSoleErrorMessageContaining("User checking out must be requester awaiting pickup"));
 
     deliveryRequestByRebecca = requestsClient.get(deliveryRequestByRebecca);
 

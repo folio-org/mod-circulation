@@ -8,13 +8,9 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.loanrules.LoanRulesException;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class JsonResponse {
-  private static final String MESSAGE = "message";
-
   //TODO: Needs a location
   public static void created(HttpServerResponse response,
                       JsonObject body) {
@@ -34,35 +30,29 @@ public class JsonResponse {
     String propertyName,
     String value) {
 
-    ArrayList<ValidationError> errors = new ArrayList<>();
+    ValidationError error = new ValidationError(message, propertyName, value);
 
-    ValidationError error = new ValidationError(propertyName, value);
+    JsonArray errors = new JsonArray();
 
-    errors.add(error);
+    errors.add(error.toJson());
 
-    unprocessableEntity(response, message, errors);
+    response(response, new JsonObject().put("errors", errors), 422);
   }
 
   public static void unprocessableEntity(
     HttpServerResponse response,
-    String message, List<ValidationError> errors) {
+    List<ValidationError> errors) {
 
-    JsonArray parameters = new JsonArray(errors.stream()
-      .map(error -> new JsonObject()
-        .put("key", error.propertyName)
-        .put("value", error.value))
-      .collect(Collectors.toList()));
+    JsonArray errorsArray = new JsonArray();
 
-    JsonObject wrappedErrors = new JsonObject()
-      .put(MESSAGE, message)
-      .put("parameters", parameters);
+    errors.forEach(error -> errorsArray.add(error.toJson()));
 
-    response(response, wrappedErrors, 422);
+    response(response, new JsonObject().put("errors", errors), 422);
   }
 
   public static void loanRulesError(HttpServerResponse response, LoanRulesException e) {
     JsonObject body = new JsonObject();
-    body.put(MESSAGE, e.getMessage());
+    body.put("message", e.getMessage());
     body.put("line", e.getLine());
     body.put("column", e.getColumn());
     response(response, body, 422);
@@ -70,7 +60,7 @@ public class JsonResponse {
 
   public static void loanRulesError(HttpServerResponse response, DecodeException e) {
     JsonObject body = new JsonObject();
-    body.put(MESSAGE, e.getMessage());  // already contains line and column number
+    body.put("message", e.getMessage());  // already contains line and column number
     response(response, body, 422);
   }
 
