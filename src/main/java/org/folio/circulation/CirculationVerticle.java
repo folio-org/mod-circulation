@@ -5,10 +5,7 @@ import io.vertx.core.Future;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpServer;
 import io.vertx.ext.web.Router;
-import org.folio.circulation.resources.LoanCollectionResource;
-import org.folio.circulation.resources.LoanRulesEngineResource;
-import org.folio.circulation.resources.LoanRulesResource;
-import org.folio.circulation.resources.RequestCollectionResource;
+import org.folio.circulation.resources.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +28,7 @@ public class CirculationVerticle extends AbstractVerticle {
 
     this.server = vertx.createHttpServer();
 
+    new CheckOutResource(client).register(router);
     new LoanCollectionResource    ("/circulation/loans", client)
       .register(router);
     new RequestCollectionResource ("/circulation/requests", client)

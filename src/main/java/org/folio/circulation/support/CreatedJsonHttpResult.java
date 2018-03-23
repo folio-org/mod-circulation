@@ -5,7 +5,7 @@ import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.http.server.JsonResponse;
 
 public class CreatedJsonHttpResult extends JsonHttpResult {
-  private CreatedJsonHttpResult(JsonObject body) {
+  public CreatedJsonHttpResult(JsonObject body) {
     super(body);
   }
 

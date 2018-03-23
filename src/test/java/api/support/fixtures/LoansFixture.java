@@ -9,6 +9,7 @@ import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
 
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -97,8 +98,7 @@ public class LoansFixture {
   public Response attemptCheckOut(
     IndividualResource item,
     IndividualResource to)
-    throws MalformedURLException,
-    InterruptedException,
+    throws InterruptedException,
     ExecutionException,
     TimeoutException {
 
@@ -117,5 +117,34 @@ public class LoansFixture {
       response.getStatusCode(), is(UNPROCESSABLE_ENTITY));
 
     return response;
+  }
+
+  public IndividualResource checkOutByBarcode(IndividualResource item, IndividualResource to)
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    final String itemBarcode = item.getJson().getString("barcode");
+    final String userBarcode = to.getJson().getString("barcode");
+
+    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
+
+    JsonObject request = new JsonObject()
+      .put("itemBarcode", itemBarcode)
+      .put("userBarcode", userBarcode);
+
+    client.post(InterfaceUrls.checkOutUrl(), request,
+      ResponseHandler.json(createCompleted));
+
+    Response response = createCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(
+      String.format("Failed to create loan using barcodes: %s", response.getBody()),
+      response.getStatusCode(), is(HttpURLConnection.HTTP_CREATED));
+
+    System.out.println(String.format("Created resource loan using barcodes: %s",
+      response.getJson().encodePrettily()));
+
+    return new IndividualResource(response);
   }
 }

@@ -81,6 +81,10 @@ public class InterfaceUrls {
     return APITestSuite.circulationModuleUrl("/circulation/requests" + subPath);
   }
 
+  public static URL checkOutUrl() {
+    return APITestSuite.circulationModuleUrl("/circulation/check-out");
+  }
+
   public static URL loansUrl() {
     return loansUrl("");
   }

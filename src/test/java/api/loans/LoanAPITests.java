@@ -461,7 +461,6 @@ public class LoanAPITests extends APITests {
       .getId();
 
     UUID userId = usersClient.create(new UserBuilder()).getId();
-    UUID proxyUserId = UUID.randomUUID();
 
     DateTime dueDate = new DateTime(2016, 11, 15, 8, 26, 53, DateTimeZone.UTC);
 
@@ -986,8 +985,7 @@ public class LoanAPITests extends APITests {
 
   @Test
   public void canFindNoResultsFromSearch()
-    throws MalformedURLException,
-    InterruptedException,
+    throws InterruptedException,
     ExecutionException,
     TimeoutException {
 
