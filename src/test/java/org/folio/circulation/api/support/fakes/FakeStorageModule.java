@@ -227,7 +227,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
     requiredProperties.stream().forEach(requiredProperty -> {
       if(!body.getMap().containsKey(requiredProperty)) {
-        errors.add(new ValidationError(requiredProperty, ""));
+        errors.add(new ValidationError("Required property missing", requiredProperty, ""));
       }
     });
 
@@ -235,8 +235,7 @@ public class FakeStorageModule extends AbstractVerticle {
       routingContext.next();
     }
     else {
-      JsonResponse.unprocessableEntity(routingContext.response(),
-        "Required properties missing", errors);
+      JsonResponse.unprocessableEntity(routingContext.response(), errors);
     }
   }
 
@@ -259,10 +258,11 @@ public class FakeStorageModule extends AbstractVerticle {
         .map(record -> record.getString(uniqueProperty))
         .anyMatch(usedValue -> usedValue.equals(proposedValue))) {
 
-        errors.add(new ValidationError(uniqueProperty, proposedValue));
+        errors.add(new ValidationError(
+          String.format("%s with this %s already exists", recordTypeName, uniqueProperty),
+          uniqueProperty, proposedValue));
 
         JsonResponse.unprocessableEntity(routingContext.response(),
-          String.format("%s with this %s already exists", recordTypeName, uniqueProperty),
           errors);
       }
     });

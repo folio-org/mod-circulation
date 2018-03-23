@@ -36,7 +36,7 @@ import static org.folio.circulation.api.support.fixtures.UserExamples.basedUponJ
 import static org.folio.circulation.api.support.fixtures.UserExamples.basedUponStevenJones;
 import static org.folio.circulation.api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.api.support.http.InterfaceUrls.loansUrl;
-import static org.folio.circulation.api.support.http.InterfaceUrls.usersProxyUrl;
+import static org.folio.circulation.api.support.matchers.JsonObjectMatchers.hasSoleErrorMessageContaining;
 import static org.folio.circulation.api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
@@ -161,12 +161,13 @@ public class LoanAPITests extends APITests {
     CompletableFuture<Response> createCompleted = new CompletableFuture<>();
 
     client.post(InterfaceUrls.loansUrl(), new LoanBuilder()
+        .open()
         .withId(id)
         .withUserId(userId)
         .withItemId(UUID.randomUUID())
         .withLoanDate(loanDate)
         .withDueDate(dueDate)
-        .withStatus("Open").create(),
+        .create(),
       ResponseHandler.json(createCompleted));
 
     Response response = createCompleted.get(5, TimeUnit.SECONDS);
@@ -175,8 +176,8 @@ public class LoanAPITests extends APITests {
       String.format("Should not create loan: %s", response.getBody()),
       response.getStatusCode(), is(UNPROCESSABLE_ENTITY));
 
-    assertThat(String.format("Incorrect validation error: %s", response.getBody()),
-      response.getJson().getString("message"), is("Item does not exist"));
+    assertThat(response.getJson(),
+      hasSoleErrorMessageContaining("Item does not exist"));
   }
 
   @Test
@@ -216,8 +217,8 @@ public class LoanAPITests extends APITests {
       String.format("Should not create loan: %s", response.getBody()),
       response.getStatusCode(), is(UNPROCESSABLE_ENTITY));
 
-    assertThat(String.format("Incorrect validation error: %s", response.getBody()),
-      response.getJson().getString("message"), is("Holding does not exist"));
+    assertThat(response.getJson(),
+      hasSoleErrorMessageContaining("Holding does not exist"));
   }
 
   @Test
@@ -301,12 +302,8 @@ public class LoanAPITests extends APITests {
 
     Response response = loansFixture.attemptCheckOut(smallAngryPlanet, jessica);
 
-    assertThat(response.getJson().getString("message"),
-      is("Item is already checked out"));
-
-    //TODO: introduce when move to array of validation errors
-//    assertThat(JsonArrayHelper.toList(response.getJson().getJsonArray("errors")),
-//      JsonObjectMatchers.hasSoleMessageContaining("Item is already checked out"));
+    assertThat(response.getJson(),
+      hasSoleErrorMessageContaining("Item is already checked out"));
   }
 
   @Test
@@ -328,12 +325,8 @@ public class LoanAPITests extends APITests {
       String.format("Should not be able to create loan: %s", response.getBody()),
       response.getStatusCode(), Matchers.is(UNPROCESSABLE_ENTITY));
 
-    assertThat(response.getJson().getString("message"),
-      is("Loan status must be \"Open\" or \"Closed\""));
-
-    //TODO: introduce when move to array of validation errors
-//    assertThat(JsonArrayHelper.toList(response.getJson().getJsonArray("errors")),
-//      JsonObjectMatchers.hasSoleMessageContaining("Item is already checked out"));
+    assertThat(response.getJson(),
+      hasSoleErrorMessageContaining("Loan status must be \"Open\" or \"Closed\""));
   }
 
   @Test

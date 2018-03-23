@@ -17,6 +17,7 @@ import static org.folio.circulation.api.support.builders.ItemBuilder.CHECKED_OUT
 import static org.folio.circulation.api.support.builders.RequestBuilder.CLOSED_FILLED;
 import static org.folio.circulation.api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static org.folio.circulation.api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
+import static org.folio.circulation.api.support.matchers.JsonObjectMatchers.hasSoleErrorMessageContaining;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -98,8 +99,8 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
 
     Response response = loansFixture.attemptCheckOut(smallAngryPlanet, rebecca);
 
-    assertThat(response.getJson().getString("message"),
-      is("User checking out must be requester awaiting pickup"));
+    assertThat(response.getJson(),
+      hasSoleErrorMessageContaining("User checking out must be requester awaiting pickup"));
 
     Response request = requestsClient.getById(requestByJessica.getId());
 
