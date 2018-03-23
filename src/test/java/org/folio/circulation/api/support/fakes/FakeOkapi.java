@@ -139,6 +139,14 @@ public class FakeOkapi extends AbstractVerticle {
       .withRecordName("institution")
       .withRootPath("/location-units/institutions")
       .withCollectionPropertyName("locinsts")
+      .withRequiredProperties("name")
+      .create().register(router);
+
+    new FakeStorageModuleBuilder()
+      .withRecordName("campus")
+      .withRootPath("/location-units/campuses")
+      .withCollectionPropertyName("loccamps")
+      .withRequiredProperties("name", "institutionId")
       .create().register(router);
 
     server.requestHandler(router::accept)

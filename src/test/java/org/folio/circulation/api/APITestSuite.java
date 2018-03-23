@@ -90,6 +90,7 @@ public class APITestSuite {
   private static UUID personalContributorTypeId;
 
   private static UUID nottinghamUniversityInstitution;
+  private static UUID jubileeCampus;
 
   private static UUID canCirculateLoanPolicyId;
 
@@ -99,15 +100,12 @@ public class APITestSuite {
 
   public static URL circulationModuleUrl(String path) {
     try {
-      if(useOkapiForInitialRequests) {
+      if (useOkapiForInitialRequests) {
         return URLHelper.joinPath(okapiUrl(), path);
-      }
-
-      else {
+      } else {
         return new URL("http", "localhost", port, path);
       }
-    }
-    catch(MalformedURLException ex) {
+    } catch (MalformedURLException ex) {
       return null;
     }
   }
@@ -115,8 +113,7 @@ public class APITestSuite {
   public static URL viaOkapiModuleUrl(String path) {
     try {
       return URLHelper.joinPath(okapiUrl(), path);
-    }
-    catch(MalformedURLException ex) {
+    } catch (MalformedURLException ex) {
       return null;
     }
   }
@@ -187,7 +184,9 @@ public class APITestSuite {
     return alternateGroupId;
   }
 
-  public static UUID canCirculateLoanPolicyId() { return canCirculateLoanPolicyId; }
+  public static UUID canCirculateLoanPolicyId() {
+    return canCirculateLoanPolicyId;
+  }
 
   @BeforeClass
   public static void before()
@@ -214,11 +213,10 @@ public class APITestSuite {
 
     CompletableFuture<String> fakeStorageModuleDeployed = new CompletableFuture<>();
 
-    if(!useOkapiForStorage) {
-        vertxAssistant.deployVerticle(FakeOkapi.class.getName(),
+    if (!useOkapiForStorage) {
+      vertxAssistant.deployVerticle(FakeOkapi.class.getName(),
         new HashMap<>(), fakeStorageModuleDeployed);
-    }
-    else {
+    } else {
       fakeStorageModuleDeployed.complete(null);
     }
 
@@ -276,11 +274,10 @@ public class APITestSuite {
 
     CompletableFuture<Void> fakeOkapiUndeployed = new CompletableFuture<>();
 
-    if(!useOkapiForStorage) {
+    if (!useOkapiForStorage) {
       vertxAssistant.undeployVerticle(fakeOkapiDeploymentId,
         fakeOkapiUndeployed);
-    }
-    else {
+    } else {
       fakeOkapiUndeployed.complete(null);
     }
 
@@ -296,14 +293,12 @@ public class APITestSuite {
 
   private static URL okapiUrl() {
     try {
-      if(useOkapiForStorage) {
+      if (useOkapiForStorage) {
         return new URL("http://localhost:9130");
-      }
-      else {
+      } else {
         return new URL(FakeOkapi.getAddress());
       }
-    }
-    catch(MalformedURLException ex) {
+    } catch (MalformedURLException ex) {
       return null;
     }
   }
@@ -445,7 +440,12 @@ public class APITestSuite {
     nottinghamUniversityInstitution = createReferenceRecord(institutionsClient,
       "Nottingham University");
 
-    //Jubilee Campus - campus
+    ResourceClient campusesClient = ResourceClient.forCampuses(client);
+
+    jubileeCampus = createReferenceRecord(campusesClient,
+      new JsonObject()
+        .put("name", "Jubilee Campus")
+        .put("institutionId", nottinghamUniversityInstitution.toString()));
 
     //Djanogly Learning Resource Centre - library
 
@@ -470,6 +470,10 @@ public class APITestSuite {
     TimeoutException {
 
     final OkapiHttpClient client = createClient();
+
+    ResourceClient campusesClient = ResourceClient.forCampuses(client);
+
+    campusesClient.delete(jubileeCampus);
 
     ResourceClient institutionsClient = ResourceClient.forInstitutions(client);
 
@@ -537,10 +541,10 @@ public class APITestSuite {
   }
 
   static void setLoanRules(String rules)
-      throws MalformedURLException,
-      InterruptedException,
-      ExecutionException,
-      TimeoutException {
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
 
     ResourceClient client = ResourceClient.forLoanRules(createClient());
     JsonObject json = new JsonObject().put("loanRulesAsTextFile", rules);
@@ -549,8 +553,7 @@ public class APITestSuite {
 
   private static UUID createReferenceRecord(
     ResourceClient client,
-    String name)
-
+    JsonObject record)
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
@@ -558,15 +561,30 @@ public class APITestSuite {
 
     List<JsonObject> existingRecords = client.getAll();
 
+    String name = record.getString("name");
+
+    if(name == null) {
+      throw new IllegalArgumentException("Reference records must have a name");
+    }
+
     if(existsInList(existingRecords, name)) {
-
-      JsonObject newReferenceRecord = new JsonObject().put("name", name);
-
-      return client.create(newReferenceRecord).getId();
+      return client.create(record).getId();
     }
     else {
       return findFirstByName(existingRecords, name);
     }
+  }
+
+  private static UUID createReferenceRecord(
+    ResourceClient client,
+    String name)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    return createReferenceRecord(client, new JsonObject()
+      .put("name", name));
   }
 
   private static UUID findFirstByName(List<JsonObject> existingRecords, String name) {
