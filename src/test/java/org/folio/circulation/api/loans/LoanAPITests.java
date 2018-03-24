@@ -57,7 +57,6 @@ public class LoanAPITests extends APITests {
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
     UUID userId = usersClient.create(new UserBuilder()).getId();
-    UUID proxyUserId = UUID.randomUUID();
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
@@ -534,7 +533,7 @@ public class LoanAPITests extends APITests {
 
     assertThat("location is taken from holding",
       loan.getJsonObject("item").getJsonObject("location").getString("name"),
-      is("Main Library"));
+      is("3rd Floor"));
 
     assertThat("Should not have snapshot of item status, as current status is included",
       loan.containsKey("itemStatus"), is(false));

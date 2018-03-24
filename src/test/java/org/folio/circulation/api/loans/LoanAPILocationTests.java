@@ -62,7 +62,7 @@ public class LoanAPILocationTests extends APITests {
 
     assertThat("location is taken from holding",
       createdLoan.getJsonObject("item").getJsonObject("location").getString("name"),
-      is("Main Library"));
+      is("3rd Floor"));
 
     Response fetchedLoanResponse = loansClient.getById(loanId);
 
@@ -75,7 +75,7 @@ public class LoanAPILocationTests extends APITests {
 
     assertThat("location is taken from holding",
       fetchedLoan.getJsonObject("item").getJsonObject("location").getString("name"),
-      is("Main Library"));
+      is("3rd Floor"));
   }
 
   @Test
@@ -114,7 +114,7 @@ public class LoanAPILocationTests extends APITests {
 
     assertThat("location is taken from item",
       createdLoan.getJsonObject("item").getJsonObject("location").getString("name"),
-      is("Annex"));
+      is("Display Case, Mezzanine"));
 
     Response fetchedLoanResponse = loansClient.getById(loanId);
 
@@ -127,7 +127,7 @@ public class LoanAPILocationTests extends APITests {
 
     assertThat("location is taken from item",
       fetchedLoan.getJsonObject("item").getJsonObject("location").getString("name"),
-      is("Annex"));
+      is("Display Case, Mezzanine"));
   }
 
   @Test
@@ -188,7 +188,7 @@ public class LoanAPILocationTests extends APITests {
 
     assertThat("location is taken from holding",
       firstFetchedLoan.getJsonObject("item").getJsonObject("location").getString("name"),
-      is("Main Library"));
+      is("3rd Floor"));
 
     JsonObject secondFetchedLoan = getRecordById(
       fetchedLoansResponse, secondLoanId).get();
@@ -201,7 +201,7 @@ public class LoanAPILocationTests extends APITests {
 
     assertThat("location is taken from holding",
       secondFetchedLoan.getJsonObject("item").getJsonObject("location").getString("name"),
-      is("Annex"));
+      is("Display Case, Mezzanine"));
   }
 
   @Test
@@ -315,6 +315,6 @@ public class LoanAPILocationTests extends APITests {
 
     assertThat("location is taken from item",
       firstFetchedLoan.getJsonObject("item").getJsonObject("location").getString("name"),
-      is("Annex"));
+      is("Display Case, Mezzanine"));
   }
 }

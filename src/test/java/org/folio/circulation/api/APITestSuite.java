@@ -78,8 +78,8 @@ public class APITestSuite {
   private static UUID videoRecordingMaterialTypeId;
   private static UUID canCirculateLoanTypeId;
   private static UUID readingRoomLoanTypeId;
-  private static UUID mainLibraryLocationId;
-  private static UUID annexLocationId;
+  private static UUID thirdFloorLocationId;
+  private static UUID mezzanineDisplayCaseLocationId;
   private static UUID booksInstanceTypeId;
   private static UUID regularGroupId;
   private static UUID alternateGroupId;
@@ -152,11 +152,11 @@ public class APITestSuite {
   }
 
   public static UUID mainLibraryLocationId() {
-    return mainLibraryLocationId;
+    return thirdFloorLocationId;
   }
 
   public static UUID annexLocationId() {
-    return annexLocationId;
+    return mezzanineDisplayCaseLocationId;
   }
 
   public static UUID booksInstanceTypeId() {
@@ -372,7 +372,6 @@ public class APITestSuite {
       ResourceClient.forMaterialTypes(createClient()), "Video Recording");
   }
 
-
   private static void deleteMaterialTypes()
     throws MalformedURLException,
     InterruptedException,
@@ -384,7 +383,6 @@ public class APITestSuite {
     materialTypesClient.delete(bookMaterialTypeId);
     materialTypesClient.delete(videoRecordingMaterialTypeId);
   }
-
 
   private static void createContributorNameTypes()
     throws MalformedURLException,
@@ -467,11 +465,11 @@ public class APITestSuite {
     //Old locations model
     final ResourceClient shelfLocationsClient = ResourceClient.forShelfLocations(client);
 
-    mainLibraryLocationId = createReferenceRecord(
-      shelfLocationsClient, "Main Library");
+    thirdFloorLocationId = createReferenceRecord(
+      shelfLocationsClient, "3rd Floor");
 
-    annexLocationId = createReferenceRecord(
-      shelfLocationsClient, "Annex");
+    mezzanineDisplayCaseLocationId = createReferenceRecord(
+      shelfLocationsClient, "Display Case, Mezzanine");
   }
 
   private static void deleteLocations()
@@ -497,8 +495,8 @@ public class APITestSuite {
 
     ResourceClient locationsClient = ResourceClient.forShelfLocations(client);
 
-    locationsClient.delete(mainLibraryLocationId);
-    locationsClient.delete(annexLocationId);
+    locationsClient.delete(thirdFloorLocationId);
+    locationsClient.delete(mezzanineDisplayCaseLocationId);
   }
 
   private static void createInstanceTypes()
