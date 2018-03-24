@@ -29,6 +29,10 @@ public class InterfaceUrls {
     return APITestSuite.viaOkapiModuleUrl("/location-units/libraries" + subPath);
   }
 
+  public static URL locationsStorageUrl(String subPath) {
+    return APITestSuite.viaOkapiModuleUrl("/locations" + subPath);
+  }
+
   public static URL instanceTypesStorageUrl(String subPath) {
     return APITestSuite.viaOkapiModuleUrl("/instance-types" + subPath);
   }

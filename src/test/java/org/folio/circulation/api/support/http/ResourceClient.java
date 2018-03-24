@@ -123,6 +123,11 @@ public class ResourceClient {
       "libraries", "loclibs");
   }
 
+  public static ResourceClient forLocations(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::locationsStorageUrl,
+      "locations");
+  }
+
   private ResourceClient(
     OkapiHttpClient client,
     UrlMaker urlMaker, String resourceName,

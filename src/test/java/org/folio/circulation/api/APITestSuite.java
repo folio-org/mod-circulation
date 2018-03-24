@@ -460,8 +460,6 @@ public class APITestSuite {
         .put("name", "Business Library")
         .put("campusId", jubileeCampus.toString()));
 
-    //Locations within the library
-
     //Old locations model
     final ResourceClient shelfLocationsClient = ResourceClient.forShelfLocations(client);
 
@@ -470,6 +468,27 @@ public class APITestSuite {
 
     mezzanineDisplayCaseLocationId = createReferenceRecord(
       shelfLocationsClient, "Display Case, Mezzanine");
+
+    ResourceClient locationsClient = ResourceClient.forLocations(client);
+
+    //Use the same ID as old locations for continuity
+    createReferenceRecord(locationsClient,
+      new JsonObject()
+        .put("id", thirdFloorLocationId.toString())
+        .put("name", "3rd Floor")
+        .put("code", "NU/JC/DL/3F")
+        .put("institutionId", nottinghamUniversityInstitution.toString())
+        .put("campusId", jubileeCampus.toString())
+        .put("libraryId", djanoglyLibrary.toString()));
+
+     createReferenceRecord(locationsClient,
+      new JsonObject()
+        .put("id", mezzanineDisplayCaseLocationId.toString())
+        .put("name", "Display Case, Mezzanine")
+        .put("code", "NU/JC/BL/DM")
+        .put("institutionId", nottinghamUniversityInstitution.toString())
+        .put("campusId", jubileeCampus.toString())
+        .put("libraryId", businessLibrary.toString()));
   }
 
   private static void deleteLocations()
@@ -479,6 +498,12 @@ public class APITestSuite {
     TimeoutException {
 
     final OkapiHttpClient client = createClient();
+
+    ResourceClient locationsClient = ResourceClient.forLocations(client);
+
+    //Use the same ID as old locations for continuity
+    locationsClient.delete(thirdFloorLocationId);
+    locationsClient.delete(mezzanineDisplayCaseLocationId);
 
     ResourceClient librariesClient = ResourceClient.forLibraries(client);
 
@@ -493,10 +518,10 @@ public class APITestSuite {
 
     institutionsClient.delete(nottinghamUniversityInstitution);
 
-    ResourceClient locationsClient = ResourceClient.forShelfLocations(client);
+    ResourceClient shelfLocationsClient = ResourceClient.forShelfLocations(client);
 
-    locationsClient.delete(thirdFloorLocationId);
-    locationsClient.delete(mezzanineDisplayCaseLocationId);
+    shelfLocationsClient.delete(thirdFloorLocationId);
+    shelfLocationsClient.delete(mezzanineDisplayCaseLocationId);
   }
 
   private static void createInstanceTypes()
