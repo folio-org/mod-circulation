@@ -103,11 +103,6 @@ public class ResourceClient {
       "contributor name types", "contributorNameTypes");
   }
 
-  public static ResourceClient forShelfLocations(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::shelfLocationsStorageUrl,
-      "locations", "shelflocations");
-  }
-
   public static ResourceClient forInstitutions(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::institutionsStorageUrl,
       "institutions", "locinsts");

@@ -13,10 +13,6 @@ public class InterfaceUrls {
     return APITestSuite.viaOkapiModuleUrl("/loan-types" + subPath);
   }
 
-  public static URL shelfLocationsStorageUrl(String subPath) {
-    return APITestSuite.viaOkapiModuleUrl("/shelf-locations" + subPath);
-  }
-
   public static URL institutionsStorageUrl(String subPath) {
     return APITestSuite.viaOkapiModuleUrl("/location-units/institutions" + subPath);
   }

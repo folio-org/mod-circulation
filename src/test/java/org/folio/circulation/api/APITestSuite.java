@@ -460,30 +460,18 @@ public class APITestSuite {
         .put("name", "Business Library")
         .put("campusId", jubileeCampus.toString()));
 
-    //Old locations model
-    final ResourceClient shelfLocationsClient = ResourceClient.forShelfLocations(client);
-
-    thirdFloorLocationId = createReferenceRecord(
-      shelfLocationsClient, "3rd Floor");
-
-    mezzanineDisplayCaseLocationId = createReferenceRecord(
-      shelfLocationsClient, "Display Case, Mezzanine");
-
     ResourceClient locationsClient = ResourceClient.forLocations(client);
 
-    //Use the same ID as old locations for continuity
-    createReferenceRecord(locationsClient,
+    thirdFloorLocationId = createReferenceRecord(locationsClient,
       new JsonObject()
-        .put("id", thirdFloorLocationId.toString())
         .put("name", "3rd Floor")
         .put("code", "NU/JC/DL/3F")
         .put("institutionId", nottinghamUniversityInstitution.toString())
         .put("campusId", jubileeCampus.toString())
         .put("libraryId", djanoglyLibrary.toString()));
 
-     createReferenceRecord(locationsClient,
+    mezzanineDisplayCaseLocationId = createReferenceRecord(locationsClient,
       new JsonObject()
-        .put("id", mezzanineDisplayCaseLocationId.toString())
         .put("name", "Display Case, Mezzanine")
         .put("code", "NU/JC/BL/DM")
         .put("institutionId", nottinghamUniversityInstitution.toString())
@@ -517,11 +505,6 @@ public class APITestSuite {
     ResourceClient institutionsClient = ResourceClient.forInstitutions(client);
 
     institutionsClient.delete(nottinghamUniversityInstitution);
-
-    ResourceClient shelfLocationsClient = ResourceClient.forShelfLocations(client);
-
-    shelfLocationsClient.delete(thirdFloorLocationId);
-    shelfLocationsClient.delete(mezzanineDisplayCaseLocationId);
   }
 
   private static void createInstanceTypes()
