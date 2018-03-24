@@ -91,6 +91,9 @@ public class APITestSuite {
 
   private static UUID nottinghamUniversityInstitution;
   private static UUID jubileeCampus;
+  private static UUID djanoglyLibrary;
+  private static UUID businessLibrary;
+
 
   private static UUID canCirculateLoanPolicyId;
 
@@ -447,9 +450,17 @@ public class APITestSuite {
         .put("name", "Jubilee Campus")
         .put("institutionId", nottinghamUniversityInstitution.toString()));
 
-    //Djanogly Learning Resource Centre - library
+    ResourceClient librariesClient = ResourceClient.forLibraries(client);
 
-    //Business Library - library
+    djanoglyLibrary = createReferenceRecord(librariesClient,
+      new JsonObject()
+        .put("name", "Djanogly Learning Resource Centre")
+        .put("campusId", jubileeCampus.toString()));
+
+    businessLibrary = createReferenceRecord(librariesClient,
+      new JsonObject()
+        .put("name", "Business Library")
+        .put("campusId", jubileeCampus.toString()));
 
     //Locations within the library
 
@@ -470,6 +481,11 @@ public class APITestSuite {
     TimeoutException {
 
     final OkapiHttpClient client = createClient();
+
+    ResourceClient librariesClient = ResourceClient.forLibraries(client);
+
+    librariesClient.delete(djanoglyLibrary);
+    librariesClient.delete(businessLibrary);
 
     ResourceClient campusesClient = ResourceClient.forCampuses(client);
 

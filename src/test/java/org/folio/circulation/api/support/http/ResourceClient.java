@@ -118,6 +118,11 @@ public class ResourceClient {
       "campuses", "loccamps");
   }
 
+  public static ResourceClient forLibraries(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::librariesStorageUrl,
+      "libraries", "loclibs");
+  }
+
   private ResourceClient(
     OkapiHttpClient client,
     UrlMaker urlMaker, String resourceName,
