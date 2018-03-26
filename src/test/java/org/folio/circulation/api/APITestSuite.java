@@ -78,8 +78,6 @@ public class APITestSuite {
   private static UUID videoRecordingMaterialTypeId;
   private static UUID canCirculateLoanTypeId;
   private static UUID readingRoomLoanTypeId;
-  private static UUID thirdFloorLocationId;
-  private static UUID mezzanineDisplayCaseLocationId;
   private static UUID booksInstanceTypeId;
   private static UUID regularGroupId;
   private static UUID alternateGroupId;
@@ -93,7 +91,8 @@ public class APITestSuite {
   private static UUID jubileeCampus;
   private static UUID djanoglyLibrary;
   private static UUID businessLibrary;
-
+  private static UUID thirdFloorLocationId;
+  private static UUID mezzanineDisplayCaseLocationId;
 
   private static UUID canCirculateLoanPolicyId;
 
