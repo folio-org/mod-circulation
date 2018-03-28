@@ -93,11 +93,6 @@ public class ResourceClient {
       "loan types", "loantypes");
   }
 
-  public static ResourceClient forLocations(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::locationsStorageUrl,
-      "locations", "shelflocations");
-  }
-
   public static ResourceClient forInstanceTypes(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::instanceTypesStorageUrl,
       "instance types", "instanceTypes");
@@ -106,6 +101,26 @@ public class ResourceClient {
   public static ResourceClient forContributorNameTypes(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::contributorNameTypesStorageUrl,
       "contributor name types", "contributorNameTypes");
+  }
+
+  public static ResourceClient forInstitutions(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::institutionsStorageUrl,
+      "institutions", "locinsts");
+  }
+
+  public static ResourceClient forCampuses(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::campusesStorageUrl,
+      "campuses", "loccamps");
+  }
+
+  public static ResourceClient forLibraries(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::librariesStorageUrl,
+      "libraries", "loclibs");
+  }
+
+  public static ResourceClient forLocations(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::locationsStorageUrl,
+      "locations");
   }
 
   private ResourceClient(

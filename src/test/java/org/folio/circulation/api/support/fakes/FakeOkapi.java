@@ -52,12 +52,6 @@ public class FakeOkapi extends AbstractVerticle {
       .create().register(router);
 
     new FakeStorageModuleBuilder()
-      .withRecordName("location")
-      .withRootPath("/shelf-locations")
-      .withCollectionPropertyName("shelflocations")
-      .create().register(router);
-
-    new FakeStorageModuleBuilder()
       .withRecordName("instance type")
       .withRootPath("/instance-types")
       .withCollectionPropertyName("instanceTypes")
@@ -134,6 +128,42 @@ public class FakeOkapi extends AbstractVerticle {
       .create().register(router);
 
     registerLoanRulesStorage(router);
+
+    new FakeStorageModuleBuilder()
+      .withRecordName("institution")
+      .withRootPath("/location-units/institutions")
+      .withCollectionPropertyName("locinsts")
+      .withRequiredProperties("name")
+      .create().register(router);
+
+    new FakeStorageModuleBuilder()
+      .withRecordName("campus")
+      .withRootPath("/location-units/campuses")
+      .withCollectionPropertyName("loccamps")
+      .withRequiredProperties("name", "institutionId")
+      .create().register(router);
+
+    new FakeStorageModuleBuilder()
+      .withRecordName("library")
+      .withRootPath("/location-units/libraries")
+      .withCollectionPropertyName("loclibs")
+      .withRequiredProperties("name", "campusId")
+      .create().register(router);
+
+    //Also proxies as shelf-locations (see method just prior to register)
+    new FakeStorageModuleBuilder()
+      .withRecordName("locations")
+      .withRootPath("/locations")
+      .withCollectionPropertyName("locations")
+      .withRequiredProperties(
+        "name",
+        "code",
+        "institutionId",
+        "campusId",
+        "libraryId")
+      .create()
+      .proxyAs("/shelf-locations", "shelflocations", "id", "name")
+      .register(router);
 
     server.requestHandler(router::accept)
       .listen(PORT_TO_USE, result -> {

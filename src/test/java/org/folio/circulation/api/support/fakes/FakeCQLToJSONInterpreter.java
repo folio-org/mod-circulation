@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class FakeCQLToJSONInterpreter {
@@ -22,10 +23,8 @@ public class FakeCQLToJSONInterpreter {
     ImmutablePair<String, String> queryAndSort = splitQueryAndSort(query);
 
     if(containsSort(queryAndSort)) {
-      if(diagnosticsEnabled) {
-        System.out.println(String.format("Search by: %s", queryAndSort.left));
-        System.out.println(String.format("Sort by: %s", queryAndSort.right));
-      }
+      printDiagnostics(() -> String.format("Search by: %s", queryAndSort.left));
+      printDiagnostics(() -> String.format("Sort by: %s", queryAndSort.right));
 
       return records.stream()
         .filter(filterForQuery(queryAndSort.left))
@@ -33,9 +32,7 @@ public class FakeCQLToJSONInterpreter {
         .collect(Collectors.toList());
     }
     else {
-      if(diagnosticsEnabled) {
-        System.out.println(String.format("Search only by: %s", queryAndSort.left));
-      }
+      printDiagnostics(() -> String.format("Search only by: %s", queryAndSort.left));
 
       return records.stream()
         .filter(filterForQuery(queryAndSort.left))
@@ -78,6 +75,10 @@ public class FakeCQLToJSONInterpreter {
       Arrays.stream(query.split(" and "))
         .map( pairText -> {
           String[] split = pairText.split("==|=|<>|<|>");
+
+          printDiagnostics(() -> String.format("Split clause: %s",
+            String.join(", ", split)));
+
           String searchField = split[0]
             .replaceAll("\"", "");
 
@@ -91,6 +92,9 @@ public class FakeCQLToJSONInterpreter {
           else if(pairText.contains("=")) {
             return new ImmutableTriple<>(searchField, searchTerm, "=");
           }
+          else if(pairText.contains("<>")) {
+            return new ImmutableTriple<>(searchField, searchTerm, "<>");
+          }
           else if(pairText.contains("<")) {
             return new ImmutableTriple<>(searchField, searchTerm, "<");
           }
@@ -98,24 +102,26 @@ public class FakeCQLToJSONInterpreter {
             return new ImmutableTriple<>(searchField, searchTerm, ">");
           }
           else {
-            return new ImmutableTriple<>(searchField, searchTerm, "<>");
+            //Should fail completely
+            return new ImmutableTriple<>(searchField, searchTerm, "");
           }
         })
         .collect(Collectors.toList());
 
     return consolidateToSinglePredicate(
       pairs.stream()
-      .map(pair -> filterByField(pair.getLeft(), pair.getMiddle(), pair.getRight()))
-      .collect(Collectors.toList()));
+        .map(pair -> filterByField(pair.getLeft(), pair.getMiddle(), pair.getRight()))
+        .collect(Collectors.toList()));
   }
 
   private Predicate<JsonObject> filterByField(String field, String term, String operator) {
     return record -> {
-      boolean result = false;
-      String propertyValue = "";
+      final boolean result;
+      final String propertyValue;
 
       if (term == null || field == null) {
-        result = true;
+        printDiagnostics(() -> "Either term or field are null, aborting filtering");
+        return true;
       }
       else {
         propertyValue = getPropertyValue(record, field);
@@ -147,19 +153,17 @@ public class FakeCQLToJSONInterpreter {
               result = !propertyValue.contains(cleanTerm);
               break;
             case ">":
-              result = propertyValue.compareTo(cleanTerm) > 0 ? true : false;
+              result = propertyValue.compareTo(cleanTerm) > 0;
               break;
             case "<":
-              result = propertyValue.compareTo(cleanTerm) < 0 ? true : false;
+              result = propertyValue.compareTo(cleanTerm) < 0;
               break;
             default:
               result = false;
           }
         }
-      }
 
-      if(diagnosticsEnabled) {
-        System.out.println(String.format("Filtering %s by %s %s %s: %s (value: %s)",
+        printDiagnostics(() -> String.format("Filtering %s by %s %s %s: %s (value: %s)",
           record.encodePrettily(), field, operator, term, result, propertyValue));
       }
 
@@ -209,6 +213,12 @@ public class FakeCQLToJSONInterpreter {
     }
     else {
       return new ImmutablePair<>(query, "");
+    }
+  }
+
+  private void printDiagnostics(Supplier<String> diagnosticTextSupplier) {
+    if(diagnosticsEnabled) {
+      System.out.println(diagnosticTextSupplier.get());
     }
   }
 }

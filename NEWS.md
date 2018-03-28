@@ -13,7 +13,7 @@
 * Allows un-expiring relationships when validating proxy (CIRC-92)
 * Reuse Vert.x HTTP client within the circulation verticle (to allow for connection pooling, CIRC-86)
 * Use == relation when finding related records (CIRC-87)
-* Validation messages look 
+* Validation messages are structurally similar to schema (CIRC-93)
 * Provides circulation interface 2.12 (CIRC-88)
 * Requires request-storage interface 1.5 (CIRC-88)
 
