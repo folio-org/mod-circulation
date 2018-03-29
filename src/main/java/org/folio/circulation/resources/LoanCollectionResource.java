@@ -71,7 +71,7 @@ public class LoanCollectionResource extends CollectionResource {
     completedFuture(HttpResult.success(new LoanAndRelatedRecords(loan)))
       .thenApply(this::refuseWhenNotOpenOrClosed)
       .thenCombineAsync(inventoryFetcher.fetch(loan), this::addInventoryRecords)
-      .thenApply(this::refuseWhenItemDoesNotExist)
+      .thenApply(LoanValidation::refuseWhenItemDoesNotExist)
       .thenApply(this::refuseWhenHoldingDoesNotExist)
       .thenApply(this::refuseWhenItemIsAlreadyCheckedOut)
       .thenComposeAsync(r -> r.after(records -> refuseWhenProxyRelationshipIsInvalid(records, clients)))
@@ -111,7 +111,7 @@ public class LoanCollectionResource extends CollectionResource {
     completedFuture(HttpResult.success(new LoanAndRelatedRecords(loan)))
       .thenApply(this::refuseWhenNotOpenOrClosed)
       .thenCombineAsync(inventoryFetcher.fetch(loan), this::addInventoryRecords)
-      .thenApply(this::refuseWhenItemDoesNotExist)
+      .thenApply(LoanValidation::refuseWhenItemDoesNotExist)
       .thenComposeAsync(r -> r.after(records -> refuseWhenProxyRelationshipIsInvalid(records, clients)))
       .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
       .thenComposeAsync(result -> result.after(requestQueueUpdate::onCheckIn))
@@ -622,20 +622,6 @@ public class LoanCollectionResource extends CollectionResource {
     return getLocationCompleted
       .thenApply(mapResponse)
       .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
-  }
-
-  private HttpResult<LoanAndRelatedRecords> refuseWhenItemDoesNotExist(
-    HttpResult<LoanAndRelatedRecords> result) {
-
-    return result.next(loan -> {
-      if(loan.inventoryRecords.getItem() == null) {
-        return HttpResult.failure(new ValidationErrorFailure(
-          "Item does not exist", "itemId", loan.loan.getString("itemId")));
-      }
-      else {
-        return result;
-      }
-    });
   }
 
   private HttpResult<LoanAndRelatedRecords> refuseWhenHoldingDoesNotExist(

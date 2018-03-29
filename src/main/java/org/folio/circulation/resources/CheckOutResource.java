@@ -5,11 +5,9 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.LoanValidation;
 import org.folio.circulation.domain.UserFetcher;
-import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CreatedJsonHttpResult;
-import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.RouteRegistration;
+import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.server.WebContext;
 
 import java.util.UUID;
@@ -33,6 +31,7 @@ public class CheckOutResource extends CollectionResource {
     final Clients clients = Clients.create(context, client);
 
     final UserFetcher userFetcher = new UserFetcher(clients);
+    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
 
     JsonObject request = routingContext.getBodyAsJson();
 
@@ -40,8 +39,13 @@ public class CheckOutResource extends CollectionResource {
     loan.put("id", UUID.randomUUID().toString());
     loan.put("status", new JsonObject().put("name", "Open"));
 
+    final String userBarcode = request.getString("userBarcode");
+    final String itemBarcode = request.getString("itemBarcode");
+
     completedFuture(HttpResult.success(new LoanAndRelatedRecords(loan)))
-      .thenCombineAsync(userFetcher.getUserByBarcode(request.getString("userBarcode")), this::addUser)
+      .thenCombineAsync(userFetcher.getUserByBarcode(userBarcode), this::addUser)
+      .thenCombineAsync(inventoryFetcher.fetchByBarcode(itemBarcode), this::addInventoryRecords)
+      .thenApply(LoanValidation::refuseWhenItemDoesNotExist)
       .thenApply(r -> r.map(toLoan()))
       .thenApply(CreatedJsonHttpResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
@@ -52,6 +56,7 @@ public class CheckOutResource extends CollectionResource {
       final JsonObject loan = loanAndRelatedRecords.getLoan();
 
       loan.put("userId", loanAndRelatedRecords.requestingUser.getString("id"));
+      loan.put("itemId", loanAndRelatedRecords.inventoryRecords.item.getString("id"));
 
       return loan;
     };
@@ -63,5 +68,13 @@ public class CheckOutResource extends CollectionResource {
 
     return HttpResult.combine(loanResult, getUserResult,
       LoanAndRelatedRecords::withRequestingUser);
+  }
+
+  private HttpResult<LoanAndRelatedRecords> addInventoryRecords(
+    HttpResult<LoanAndRelatedRecords> loanResult,
+    HttpResult<InventoryRecords> inventoryRecordsResult) {
+
+    return HttpResult.combine(loanResult, inventoryRecordsResult,
+      LoanAndRelatedRecords::withInventoryRecords);
   }
 }

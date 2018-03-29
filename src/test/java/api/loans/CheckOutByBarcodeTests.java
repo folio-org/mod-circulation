@@ -37,6 +37,9 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat("user ID should match barcode",
       loan.getString("userId"), is(steve.getId().toString()));
+
+    assertThat("item ID should match barcode",
+      loan.getString("itemId"), is(smallAngryPlanet.getId().toString()));
   }
 
   @Test
@@ -55,5 +58,23 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat(response.getJson(), hasSoleErrorMessageContaining(
       "Could not find user with matching barcode"));
+  }
+
+  @Test
+  public void cannotCreateALoanForUnknownItem()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+
+    itemsClient.delete(smallAngryPlanet.getId());
+
+    final Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, steve);
+
+    assertThat(response.getJson(),
+      hasSoleErrorMessageContaining("Item does not exist"));
   }
 }

@@ -41,10 +41,15 @@ public class InventoryFetcher {
   }
 
   public CompletableFuture<HttpResult<InventoryRecords>> fetch(String itemId) {
-    return
-      fetchItem(itemId)
-        .thenComposeAsync(this::fetchHolding)
-        .thenComposeAsync(this::fetchInstance);
+    return fetchItem(itemId)
+      .thenComposeAsync(this::fetchHolding)
+      .thenComposeAsync(this::fetchInstance);
+  }
+
+  public CompletableFuture<HttpResult<InventoryRecords>> fetchByBarcode(String barcode) {
+    return fetchItemByBarcode(barcode)
+      .thenComposeAsync(this::fetchHolding)
+      .thenComposeAsync(this::fetchInstance);
   }
 
   public CompletableFuture<MultipleInventoryRecords> fetch(
@@ -159,6 +164,19 @@ public class InventoryFetcher {
       .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
   }
 
+  private CompletableFuture<HttpResult<JsonObject>> fetchItemByBarcode(String barcode) {
+    CompletableFuture<Response> itemRequestCompleted = new CompletableFuture<>();
+
+    log.info("Fetching item with barcode: {}", barcode);
+
+    itemsClient.getMany(
+      String.format("barcode==%s", barcode), 1, 0, itemRequestCompleted::complete);
+
+    return itemRequestCompleted
+      .thenApply(this::mapMultipleToResult)
+      .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
+  }
+
   private HttpResult<JsonObject> mapToResult(Response response) {
     if(response != null) {
       log.info("Response received, status code: {} body: {}",
@@ -171,7 +189,34 @@ public class InventoryFetcher {
       }
     }
     else {
-      //TODO: needs more context in log message
+      //TODO: Replace with failure result
+      log.warn("Did not receive response to request");
+      return HttpResult.success(null);
+    }
+  }
+
+  private HttpResult<JsonObject> mapMultipleToResult(Response response) {
+    if(response != null) {
+      log.info("Response received, status code: {} body: {}",
+        response.getStatusCode(), response.getBody());
+
+      if (response.getStatusCode() == 200) {
+        //TODO: Check for multiple total records
+        final MultipleRecordsWrapper wrappedItems =
+          MultipleRecordsWrapper.fromBody(response.getBody(), "items");
+
+        if(wrappedItems.getRecords().isEmpty()) {
+          return HttpResult.success(null);
+        }
+        else {
+          return HttpResult.success(wrappedItems.getRecords().stream().findFirst().get());
+        }
+      } else {
+        return HttpResult.success(null);
+      }
+    }
+    else {
+      //TODO: Replace with failure result
       log.warn("Did not receive response to request");
       return HttpResult.success(null);
     }
