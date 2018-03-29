@@ -33,6 +33,10 @@ public class LoanAndRelatedRecords {
     this(loan, null, null, null, null, null, null);
   }
 
+  public JsonObject getLoan() {
+    return loan;
+  }
+
   public LoanAndRelatedRecords withItem(JsonObject updatedItem) {
     return new LoanAndRelatedRecords(loan, new InventoryRecords(updatedItem,
       inventoryRecords.getHolding(), inventoryRecords.getInstance()),

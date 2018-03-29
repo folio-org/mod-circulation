@@ -19,6 +19,39 @@ public class UserFetcher {
     return getUser(userId, true);
   }
 
+  public CompletableFuture<HttpResult<JsonObject>> getUserByBarcode(String barcode) {
+    CompletableFuture<Response> getUserCompleted = new CompletableFuture<>();
+
+    this.usersStorageClient.getMany(
+      String.format("barcode==%s", barcode), 1, 0, getUserCompleted::complete);
+
+    final Function<Response, HttpResult<JsonObject>> mapResponse = response -> {
+      if(response.getStatusCode() == 404) {
+        return HttpResult.failure(new ServerErrorFailure("Unable to locate User"));
+      }
+      else if(response.getStatusCode() != 200) {
+        return HttpResult.failure(new ForwardOnFailure(response));
+      }
+      else {
+        //TODO: Check for multiple total records
+        final MultipleRecordsWrapper wrappedUsers =
+          MultipleRecordsWrapper.fromBody(response.getBody(), "users");
+
+        if(wrappedUsers.getRecords().isEmpty()) {
+          return HttpResult.failure(new ValidationErrorFailure(
+            "Could not find user with matching barcode", "userBarcode", barcode));
+        }
+        else {
+          return HttpResult.success(wrappedUsers.getRecords().stream().findFirst().get());
+        }
+      }
+    };
+
+    return getUserCompleted
+      .thenApply(mapResponse)
+      .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
+  }
+
   //TODO: Need a better way of choosing behaviour for not found
   public CompletableFuture<HttpResult<JsonObject>> getUser(
     String userId,

@@ -160,7 +160,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     clients.loansStorage().getMany(routingContext.request().query(), loansResponse -> {
       if(loansResponse.getStatusCode() == 200) {
-        final MultipleRecordsWrapper wrappedLoans = MultipleRecordsWrapper.fromRequestBody(
+        final MultipleRecordsWrapper wrappedLoans = MultipleRecordsWrapper.fromBody(
           loansResponse.getBody(), "loans");
 
         if(wrappedLoans.isEmpty()) {
@@ -730,7 +730,7 @@ public class LoanCollectionResource extends CollectionResource {
           return;
         }
 
-        final MultipleRecordsWrapper proxyRelationships = MultipleRecordsWrapper.fromRequestBody(
+        final MultipleRecordsWrapper proxyRelationships = MultipleRecordsWrapper.fromBody(
           proxyValidResponse.getBody(), "proxiesFor");
 
         final Collection<JsonObject> unExpiredRelationships = proxyRelationships.getRecords()

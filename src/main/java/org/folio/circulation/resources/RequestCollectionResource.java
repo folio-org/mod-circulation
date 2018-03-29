@@ -190,7 +190,7 @@ public class RequestCollectionResource extends CollectionResource {
       requestsResponse -> {
 
       if(requestsResponse.getStatusCode() == 200) {
-        final MultipleRecordsWrapper wrappedRequests = MultipleRecordsWrapper.fromRequestBody(
+        final MultipleRecordsWrapper wrappedRequests = MultipleRecordsWrapper.fromBody(
           requestsResponse.getBody(), "requests");
 
         if(wrappedRequests.isEmpty()) {
@@ -448,7 +448,7 @@ public class RequestCollectionResource extends CollectionResource {
           return;
         }
 
-        final MultipleRecordsWrapper proxyRelationships = MultipleRecordsWrapper.fromRequestBody(
+        final MultipleRecordsWrapper proxyRelationships = MultipleRecordsWrapper.fromBody(
           proxyValidResponse.getBody(), "proxiesFor");
 
         final Collection<JsonObject> unExpiredRelationships = proxyRelationships.getRecords()

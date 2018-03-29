@@ -125,12 +125,10 @@ public class LoansFixture {
   }
 
   public IndividualResource checkOutByBarcode(IndividualResource item, IndividualResource to) {
-    final String itemBarcode = item.getJson().getString("barcode");
-    final String userBarcode = to.getJson().getString("barcode");
+    final String itemBarcode = getBarcode(item);
+    final String userBarcode = getBarcode(to);
 
-    JsonObject request = new JsonObject()
-      .put("itemBarcode", itemBarcode)
-      .put("userBarcode", userBarcode);
+    JsonObject request = checkOutByBarcodeRequest(itemBarcode, userBarcode);
 
     RamlDefinition api = RamlLoaders.fromFile("ramls")
       .load("circulation.raml")
@@ -154,11 +152,55 @@ public class LoansFixture {
       .statusCode(201)
       .extract().response();
 
+    return new IndividualResource(from(response));
+  }
+
+  public Response attemptCheckOutByBarcode(
+    IndividualResource item,
+    IndividualResource to) {
+
+    final String itemBarcode = getBarcode(item);
+    final String userBarcode = getBarcode(to);
+
+    JsonObject request = checkOutByBarcodeRequest(itemBarcode, userBarcode);
+
+    RamlDefinition api = RamlLoaders.fromFile("ramls")
+      .load("circulation.raml")
+      .ignoringXheaders();
+
+    RestAssuredClient restAssured = api.createRestAssured3();
+
+    RequestSpecBuilder requestHeaders = new RequestSpecBuilder()
+      .addHeader("X-Okapi-Url", APITestSuite.okapiUrl().toString())
+      .addHeader("X-Okapi-Tenant", APITestSuite.TENANT_ID)
+      .addHeader("X-Okapi-Token", APITestSuite.TOKEN)
+      .setAccept("application/json, text/plain")
+      .setContentType("application/json");
+
+    io.restassured.response.Response response = restAssured.given()
+      .spec(requestHeaders.build())
+      .body(request.encodePrettily())
+      .when().post(InterfaceUrls.checkOutUrl())
+      .then()
+      .log().all()
+      .statusCode(422)
+      .extract().response();
+
     return from(response);
   }
 
-  public static IndividualResource from(io.restassured.response.Response response) {
-    return new IndividualResource(new Response(response.statusCode(), response.body().print(),
-      response.contentType()));
+  private String getBarcode(IndividualResource record) {
+    return record.getJson().getString("barcode");
+  }
+
+  private JsonObject checkOutByBarcodeRequest(String itemBarcode, String userBarcode) {
+    return new JsonObject()
+      .put("itemBarcode", itemBarcode)
+      .put("userBarcode", userBarcode);
+  }
+
+  private static Response from(io.restassured.response.Response response) {
+    return new Response(response.statusCode(), response.body().print(),
+      response.contentType());
   }
 }
