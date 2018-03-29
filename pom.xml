@@ -262,12 +262,11 @@
         <version>2.20</version>
         <configuration>
           <excludes>
-            <exclude>**/api/**/**Tests.class</exclude>
+            <exclude>api/**/**Tests.class</exclude>
           </excludes>
           <includes>
-            <include>org/folio/circulation/api/APITestSuite.class</include>
-            <include>org/folio/circulation/loanrules/*.class</include>
-            <include>org/folio/circulation/*.class</include>
+            <include>api/APITestSuite.class</include>
+            <include>org/folio/circulation/**/*</include>
           </includes>
         </configuration>
       </plugin>
