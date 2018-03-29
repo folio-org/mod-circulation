@@ -24,15 +24,12 @@ import static org.folio.circulation.domain.ItemStatus.*;
 import static org.folio.circulation.support.JsonPropertyCopier.copyStringIfExists;
 
 public class RequestCollectionResource extends CollectionResource {
-  private final String rootPath;
-
-  public RequestCollectionResource(String rootPath, HttpClient client) {
+  public RequestCollectionResource(HttpClient client) {
     super(client);
-    this.rootPath = rootPath;
   }
 
   public void register(Router router) {
-    RouteRegistration routeRegistration = new RouteRegistration(rootPath, router);
+    RouteRegistration routeRegistration = new RouteRegistration("/circulation/requests", router);
 
     routeRegistration.create(this::create);
     routeRegistration.get(this::get);

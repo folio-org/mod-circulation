@@ -29,10 +29,9 @@ public class CirculationVerticle extends AbstractVerticle {
     this.server = vertx.createHttpServer();
 
     new CheckOutResource(client).register(router);
-    new LoanCollectionResource    ("/circulation/loans", client)
-      .register(router);
-    new RequestCollectionResource ("/circulation/requests", client)
-      .register(router);
+    new LoanCollectionResource(client).register(router);
+    new RequestCollectionResource(client).register(router);
+
     new LoanRulesResource         ("/circulation/loan-rules", client)
       .register(router);
     new LoanRulesEngineResource   ("/circulation/loan-rules/apply",

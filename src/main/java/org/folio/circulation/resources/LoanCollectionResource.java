@@ -30,17 +30,15 @@ import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
 public class LoanCollectionResource extends CollectionResource {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  private final String rootPath;
   private static final String CONTRIBUTORS_PROPERTY = "contributors";
   private static final String MT_ID_PROPERTY = "materialTypeId";
 
-  public LoanCollectionResource(String rootPath, HttpClient client) {
+  public LoanCollectionResource(HttpClient client) {
     super(client);
-    this.rootPath = rootPath;
   }
 
   public void register(Router router) {
-    RouteRegistration routeRegistration = new RouteRegistration(rootPath, router);
+    RouteRegistration routeRegistration = new RouteRegistration("/circulation/loans", router);
 
     routeRegistration.create(this::create);
     routeRegistration.get(this::get);
