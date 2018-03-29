@@ -14,6 +14,7 @@ import java.util.UUID;
 import java.util.function.Function;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.LoanValidation.defaultStatusAndAction;
 
 public class CheckOutResource extends CollectionResource {
   public CheckOutResource(HttpClient client) {
@@ -37,7 +38,8 @@ public class CheckOutResource extends CollectionResource {
 
     final JsonObject loan = new JsonObject();
     loan.put("id", UUID.randomUUID().toString());
-    loan.put("status", new JsonObject().put("name", "Open"));
+
+    defaultStatusAndAction(loan);
 
     final String userBarcode = request.getString("userBarcode");
     final String itemBarcode = request.getString("itemBarcode");

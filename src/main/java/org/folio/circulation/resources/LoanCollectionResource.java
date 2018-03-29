@@ -63,7 +63,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     JsonObject loan = routingContext.getBodyAsJson();
 
-    defaultStatusAndAction(loan);
+    LoanValidation.defaultStatusAndAction(loan);
 
     final String itemId = loan.getString("itemId");
     final String requestingUserId = loan.getString("userId");
@@ -104,7 +104,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     loan.put("id", routingContext.request().getParam("id"));
 
-    defaultStatusAndAction(loan);
+    LoanValidation.defaultStatusAndAction(loan);
 
     String itemId = loan.getString("itemId");
 
@@ -304,16 +304,6 @@ public class LoanCollectionResource extends CollectionResource {
         ForwardResponse.forward(routingContext.response(), response);
       }
     });
-  }
-
-  private void defaultStatusAndAction(JsonObject loan) {
-    if(!loan.containsKey("status")) {
-      loan.put("status", new JsonObject().put("name", "Open"));
-
-      if(!loan.containsKey("action")) {
-        loan.put("action", "checkedout");
-      }
-    }
   }
 
   private JsonObject createItemSummary(

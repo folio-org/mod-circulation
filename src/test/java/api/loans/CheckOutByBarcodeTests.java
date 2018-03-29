@@ -32,14 +32,17 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat(loan.getString("id"), is(notNullValue()));
 
-    assertThat("status is not open",
-      loan.getJsonObject("status").getString("name"), is("Open"));
-
     assertThat("user ID should match barcode",
       loan.getString("userId"), is(steve.getId().toString()));
 
     assertThat("item ID should match barcode",
       loan.getString("itemId"), is(smallAngryPlanet.getId().toString()));
+
+    assertThat("status should be open",
+      loan.getJsonObject("status").getString("name"), is("Open"));
+
+    assertThat("action should be checkedout",
+      loan.getString("action"), is("checkedout"));
   }
 
   @Test

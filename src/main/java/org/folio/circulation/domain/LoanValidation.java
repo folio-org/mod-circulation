@@ -1,5 +1,6 @@
 package org.folio.circulation.domain;
 
+import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ValidationErrorFailure;
 
@@ -18,5 +19,15 @@ public class LoanValidation {
         return result;
       }
     });
+  }
+
+  public static void defaultStatusAndAction(JsonObject loan) {
+    if(!loan.containsKey("status")) {
+      loan.put("status", new JsonObject().put("name", "Open"));
+
+      if(!loan.containsKey("action")) {
+        loan.put("action", "checkedout");
+      }
+    }
   }
 }
