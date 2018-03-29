@@ -67,9 +67,8 @@ public class APITestSuite {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   public static final String TENANT_ID = "test_tenant";
-
   public static final String USER_ID = "79ff2a8b-d9c3-5b39-ad4a-0a84025ab085";
-  private static final String TOKEN = "eyJhbGciOiJIUzUxMiJ9eyJzdWIiOiJhZG1pbiIsInVzZXJfaWQiOiI3OWZmMmE4Yi1kOWMzLTViMzktYWQ0YS0wYTg0MDI1YWIwODUiLCJ0ZW5hbnQiOiJ0ZXN0X3RlbmFudCJ9BShwfHcNClt5ZXJ8ImQTMQtAM1sQEnhsfWNmXGsYVDpuaDN3RVQ9";
+  public static final String TOKEN = "eyJhbGciOiJIUzUxMiJ9eyJzdWIiOiJhZG1pbiIsInVzZXJfaWQiOiI3OWZmMmE4Yi1kOWMzLTViMzktYWQ0YS0wYTg0MDI1YWIwODUiLCJ0ZW5hbnQiOiJ0ZXN0X3RlbmFudCJ9BShwfHcNClt5ZXJ8ImQTMQtAM1sQEnhsfWNmXGsYVDpuaDN3RVQ9";
 
   private static VertxAssistant vertxAssistant;
   private static int port;
@@ -296,7 +295,7 @@ public class APITestSuite {
     stopped.get(5, TimeUnit.SECONDS);
   }
 
-  private static URL okapiUrl() {
+  public static URL okapiUrl() {
     try {
       if (useOkapiForStorage) {
         return new URL("http://localhost:9130");
@@ -304,7 +303,7 @@ public class APITestSuite {
         return new URL(FakeOkapi.getAddress());
       }
     } catch (MalformedURLException ex) {
-      return null;
+      throw new IllegalArgumentException("Invalid Okapi URL configured for tests");
     }
   }
 

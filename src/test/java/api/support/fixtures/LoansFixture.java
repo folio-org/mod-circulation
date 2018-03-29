@@ -1,15 +1,19 @@
 package api.support.fixtures;
 
-import io.vertx.core.json.JsonObject;
+import api.APITestSuite;
 import api.support.builders.LoanBuilder;
 import api.support.http.InterfaceUrls;
 import api.support.http.ResourceClient;
+import guru.nidi.ramltester.RamlDefinition;
+import guru.nidi.ramltester.RamlLoaders;
+import guru.nidi.ramltester.restassured3.RestAssuredClient;
+import io.restassured.builder.RequestSpecBuilder;
+import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
 
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -18,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
+import static org.folio.circulation.support.http.OkapiHeader.*;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -119,32 +124,41 @@ public class LoansFixture {
     return response;
   }
 
-  public IndividualResource checkOutByBarcode(IndividualResource item, IndividualResource to)
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
+  public IndividualResource checkOutByBarcode(IndividualResource item, IndividualResource to) {
     final String itemBarcode = item.getJson().getString("barcode");
     final String userBarcode = to.getJson().getString("barcode");
-
-    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
 
     JsonObject request = new JsonObject()
       .put("itemBarcode", itemBarcode)
       .put("userBarcode", userBarcode);
 
-    client.post(InterfaceUrls.checkOutUrl(), request,
-      ResponseHandler.json(createCompleted));
+    RamlDefinition api = RamlLoaders.fromFile("ramls")
+      .load("circulation.raml")
+      .ignoringXheaders();
 
-    Response response = createCompleted.get(5, TimeUnit.SECONDS);
+    RestAssuredClient restAssured = api.createRestAssured3();
 
-    assertThat(
-      String.format("Failed to create loan using barcodes: %s", response.getBody()),
-      response.getStatusCode(), is(HttpURLConnection.HTTP_CREATED));
+    RequestSpecBuilder requestHeaders = new RequestSpecBuilder()
+      .addHeader(OKAPI_URL, APITestSuite.okapiUrl().toString())
+      .addHeader(TENANT, APITestSuite.TENANT_ID)
+      .addHeader(TOKEN, APITestSuite.TOKEN)
+      .setAccept("application/json, text/plain")
+      .setContentType("application/json");
 
-    System.out.println(String.format("Created resource loan using barcodes: %s",
-      response.getJson().encodePrettily()));
+    io.restassured.response.Response response = restAssured.given()
+      .spec(requestHeaders.build())
+      .body(request.encodePrettily())
+      .when().post(InterfaceUrls.checkOutUrl())
+      .then()
+      .log().all()
+      .statusCode(201)
+      .extract().response();
 
-    return new IndividualResource(response);
+    return from(response);
+  }
+
+  public static IndividualResource from(io.restassured.response.Response response) {
+    return new IndividualResource(new Response(response.statusCode(), response.body().print(),
+      response.contentType()));
   }
 }
