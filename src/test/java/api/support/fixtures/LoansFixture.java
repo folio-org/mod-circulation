@@ -8,6 +8,7 @@ import guru.nidi.ramltester.RamlDefinition;
 import guru.nidi.ramltester.RamlLoaders;
 import guru.nidi.ramltester.restassured3.RestAssuredClient;
 import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.specification.RequestSpecification;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
@@ -130,21 +131,9 @@ public class LoansFixture {
 
     JsonObject request = checkOutByBarcodeRequest(itemBarcode, userBarcode);
 
-    RamlDefinition api = RamlLoaders.fromFile("ramls")
-      .load("circulation.raml")
-      .ignoringXheaders();
-
-    RestAssuredClient restAssured = api.createRestAssured3();
-
-    RequestSpecBuilder requestHeaders = new RequestSpecBuilder()
-      .addHeader(OKAPI_URL, APITestSuite.okapiUrl().toString())
-      .addHeader(TENANT, APITestSuite.TENANT_ID)
-      .addHeader(TOKEN, APITestSuite.TOKEN)
-      .setAccept("application/json, text/plain")
-      .setContentType("application/json");
-
-    io.restassured.response.Response response = restAssured.given()
-      .spec(requestHeaders.build())
+    io.restassured.response.Response response = createClient().given()
+      .log().all()
+      .spec(defaultHeaders())
       .body(request.encodePrettily())
       .when().post(InterfaceUrls.checkOutUrl())
       .then()
@@ -164,21 +153,9 @@ public class LoansFixture {
 
     JsonObject request = checkOutByBarcodeRequest(itemBarcode, userBarcode);
 
-    RamlDefinition api = RamlLoaders.fromFile("ramls")
-      .load("circulation.raml")
-      .ignoringXheaders();
-
-    RestAssuredClient restAssured = api.createRestAssured3();
-
-    RequestSpecBuilder requestHeaders = new RequestSpecBuilder()
-      .addHeader("X-Okapi-Url", APITestSuite.okapiUrl().toString())
-      .addHeader("X-Okapi-Tenant", APITestSuite.TENANT_ID)
-      .addHeader("X-Okapi-Token", APITestSuite.TOKEN)
-      .setAccept("application/json, text/plain")
-      .setContentType("application/json");
-
-    io.restassured.response.Response response = restAssured.given()
-      .spec(requestHeaders.build())
+    io.restassured.response.Response response = createClient().given()
+      .log().all()
+      .spec(defaultHeaders())
       .body(request.encodePrettily())
       .when().post(InterfaceUrls.checkOutUrl())
       .then()
@@ -187,6 +164,17 @@ public class LoansFixture {
       .extract().response();
 
     return from(response);
+  }
+
+  private RequestSpecification defaultHeaders() {
+    return new RequestSpecBuilder()
+      .addHeader(OKAPI_URL, APITestSuite.okapiUrl().toString())
+      .addHeader(TENANT, APITestSuite.TENANT_ID)
+      .addHeader(TOKEN, APITestSuite.TOKEN)
+      .addHeader(REQUEST_ID, APITestSuite.REQUEST_ID)
+      .setAccept("application/json, text/plain")
+      .setContentType("application/json")
+      .build();
   }
 
   private String getBarcode(IndividualResource record) {
@@ -202,5 +190,13 @@ public class LoansFixture {
   private static Response from(io.restassured.response.Response response) {
     return new Response(response.statusCode(), response.body().print(),
       response.contentType());
+  }
+
+  private RestAssuredClient createClient() {
+    RamlDefinition api = RamlLoaders.fromFile("ramls")
+      .load("circulation.raml")
+      .ignoringXheaders();
+
+    return api.createRestAssured3();
   }
 }
