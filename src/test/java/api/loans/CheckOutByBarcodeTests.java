@@ -4,6 +4,8 @@ import api.support.APITests;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
+import org.joda.time.DateTime;
+import org.joda.time.Seconds;
 import org.junit.Test;
 
 import java.net.MalformedURLException;
@@ -11,6 +13,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import static api.support.matchers.JsonObjectMatchers.hasSoleErrorMessageContaining;
+import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -25,6 +28,8 @@ public class CheckOutByBarcodeTests extends APITests {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
+
+    DateTime requestMade = DateTime.now();
 
     final IndividualResource response = loansFixture.checkOutByBarcode(smallAngryPlanet, steve);
 
@@ -43,6 +48,9 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat("action should be checkedout",
       loan.getString("action"), is("checkedout"));
+
+    assertThat("loan date should match when request was made",
+      loan.getString("loanDate"), withinSecondsAfter(Seconds.seconds(2), requestMade));
   }
 
   @Test

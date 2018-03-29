@@ -9,6 +9,9 @@ import org.folio.circulation.domain.LoanValidation;
 import org.folio.circulation.domain.UserFetcher;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.server.WebContext;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.format.ISODateTimeFormat;
 
 import java.util.UUID;
 import java.util.function.Function;
@@ -40,6 +43,9 @@ public class CheckOutResource extends CollectionResource {
     loan.put("id", UUID.randomUUID().toString());
 
     defaultStatusAndAction(loan);
+
+    loan.put("loanDate", DateTime.now().toDateTime(DateTimeZone.UTC)
+      .toString(ISODateTimeFormat.dateTime()));
 
     final String userBarcode = request.getString("userBarcode");
     final String itemBarcode = request.getString("itemBarcode");

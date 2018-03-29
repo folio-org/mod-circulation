@@ -31,6 +31,7 @@ public class LoansFixture {
 
   private final ResourceClient loansClient;
   private final OkapiHttpClient client;
+  private final RestAssuredClient restAssuredClient = createClient();
 
   public LoansFixture(ResourceClient loansClient, OkapiHttpClient client) {
     this.loansClient = loansClient;
@@ -131,7 +132,7 @@ public class LoansFixture {
 
     JsonObject request = checkOutByBarcodeRequest(itemBarcode, userBarcode);
 
-    io.restassured.response.Response response = createClient().given()
+    io.restassured.response.Response response = restAssuredClient.given()
       .log().all()
       .spec(defaultHeaders())
       .body(request.encodePrettily())
@@ -153,7 +154,7 @@ public class LoansFixture {
 
     JsonObject request = checkOutByBarcodeRequest(itemBarcode, userBarcode);
 
-    io.restassured.response.Response response = createClient().given()
+    io.restassured.response.Response response = restAssuredClient.given()
       .log().all()
       .spec(defaultHeaders())
       .body(request.encodePrettily())
