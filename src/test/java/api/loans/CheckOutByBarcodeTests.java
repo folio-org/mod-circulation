@@ -15,7 +15,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class CreateByBarcodeTests extends APITests {
+public class CheckOutByBarcodeTests extends APITests {
   @Test
   public void canCreateALoanUsingItemAndUserBarcode()
     throws InterruptedException,

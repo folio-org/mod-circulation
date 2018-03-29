@@ -36,7 +36,7 @@ import java.util.function.Consumer;
 @RunWith(Suite.class)
 
 @Suite.SuiteClasses({
-  CreateByBarcodeTests.class,
+  CheckOutByBarcodeTests.class,
   LoanAPITests.class,
   LoanAPILocationTests.class,
   LoanAPITitleTests.class,
