@@ -113,6 +113,24 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>io.rest-assured</groupId>
+      <artifactId>rest-assured</artifactId>
+      <version>3.0.7</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>guru.nidi.raml</groupId>
+      <artifactId>raml-tester</artifactId>
+      <version>0.8.15</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>ch.qos.logback</groupId>
+          <artifactId>logback-classic</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
       <groupId>org.jacoco</groupId>
       <artifactId>jacoco-maven-plugin</artifactId>
       <version>0.8.0</version>
