@@ -25,6 +25,13 @@ public class RequestQueueFetcher {
     this.clients = clients;
   }
 
+  public CompletableFuture<HttpResult<LoanAndRelatedRecords>> get(
+    LoanAndRelatedRecords loanAndRelatedRecords) {
+
+    return get(loanAndRelatedRecords.loan.getString("itemId"))
+      .thenApply(result -> result.map(loanAndRelatedRecords::withRequestQueue));
+  }
+
   public CompletableFuture<HttpResult<RequestQueue>> get(String itemId) {
     final String cqlQuery;
 

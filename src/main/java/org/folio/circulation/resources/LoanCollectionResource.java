@@ -25,7 +25,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
 
 public class LoanCollectionResource extends CollectionResource {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -77,7 +76,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenComposeAsync(r -> r.after(records -> refuseWhenProxyRelationshipIsInvalid(records, clients)))
       .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
       .thenCombineAsync(userFetcher.getUser(requestingUserId), this::addUser)
-      .thenApply(this::refuseWhenUserIsNotAwaitingPickup)
+      .thenApply(LoanValidation::refuseWhenUserIsNotAwaitingPickup)
       .thenComposeAsync(r -> r.after(records -> getLocation(records, clients)))
       .thenComposeAsync(r -> r.after(records -> getMaterialType(records, clients)))
       .thenComposeAsync(r -> r.after(records -> lookupLoanPolicyId(
@@ -747,46 +746,5 @@ public class LoanCollectionResource extends CollectionResource {
     });
 
     return future;
-  }
-
-  private HttpResult<LoanAndRelatedRecords> refuseWhenUserIsNotAwaitingPickup(
-    HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
-
-    return loanAndRelatedRecords.next(loan -> {
-      final RequestQueue requestQueue = loan.requestQueue;
-      final JsonObject requestingUser = loan.requestingUser;
-
-      if(hasAwaitingPickupRequestForOtherPatron(requestQueue, requestingUser)) {
-        return HttpResult.failure(new ValidationErrorFailure(
-          "User checking out must be requester awaiting pickup",
-          "userId", loan.loan.getString("userId")));
-      }
-      else {
-        return loanAndRelatedRecords;
-      }
-    });
-  }
-
-  private boolean hasAwaitingPickupRequestForOtherPatron(
-    RequestQueue requestQueue,
-    JsonObject requestingUser) {
-
-    if(!requestQueue.hasOutstandingFulfillableRequests()) {
-      return false;
-    }
-    else {
-      final JsonObject highestPriority = requestQueue.getHighestPriorityFulfillableRequest();
-
-      return isAwaitingPickup(highestPriority)
-        && !isFor(highestPriority, requestingUser);
-    }
-  }
-
-  private boolean isFor(JsonObject request, JsonObject user) {
-    return StringUtils.equals(request.getString("requesterId"), user.getString("id"));
-  }
-
-  private boolean isAwaitingPickup(JsonObject highestPriority) {
-    return StringUtils.equals(highestPriority.getString("status"), OPEN_AWAITING_PICKUP);
   }
 }

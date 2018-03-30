@@ -7,6 +7,7 @@ import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.joda.time.Seconds;
 import org.junit.Test;
 
@@ -16,6 +17,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static api.support.builders.ItemBuilder.AWAITING_PICKUP;
+import static api.support.builders.ItemBuilder.CHECKED_OUT;
+import static api.support.builders.RequestBuilder.CLOSED_FILLED;
+import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
+import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.JsonObjectMatchers.hasSoleErrorMessageContaining;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static java.net.HttpURLConnection.HTTP_OK;
@@ -31,7 +37,7 @@ public class CheckOutByBarcodeTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
     DateTime requestMade = DateTime.now();
@@ -57,10 +63,9 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat("loan date should match when request was made",
       loan.getString("loanDate"), withinSecondsAfter(Seconds.seconds(5), requestMade));
 
-    JsonObject item = itemsClient.getById(smallAngryPlanet.getId()).getJson();
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-    assertThat("item status is not checked out",
-      item.getJsonObject("status").getString("name"), is("Checked out"));
+    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
   }
 
   @Test
@@ -89,7 +94,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCreateALoanForUnknownUser()
+  public void cannotCheckOutWhenLoaneeCannotBeFound()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -107,7 +112,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCreateALoanForUnknownItem()
+  public void cannotCheckOutWhenItemCannotBeFound()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -123,4 +128,67 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat(response.getJson(),
       hasSoleErrorMessageContaining("No item with barcode 036000291452 exists"));
   }
+
+  @Test
+  public void cannotCheckOutToOtherPatronWhenRequestIsAwaitingPickup()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource james = usersFixture.james();
+    IndividualResource jessica = usersFixture.jessica();
+    IndividualResource rebecca = usersFixture.rebecca();
+
+    IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
+
+    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+
+    loansFixture.checkIn(loanToJames);
+
+    Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, rebecca);
+
+    assertThat(response.getJson(),
+      hasSoleErrorMessageContaining("User checking out must be requester awaiting pickup"));
+
+    Response request = requestsClient.getById(requestByJessica.getId());
+
+    assertThat(request.getJson().getString("status"), is(OPEN_AWAITING_PICKUP));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+
+    assertThat(smallAngryPlanet, hasItemStatus(AWAITING_PICKUP));
+  }
+
+  @Test
+  public void canCheckOutToRequester()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource james = usersFixture.james();
+    IndividualResource jessica = usersFixture.jessica();
+
+    IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
+
+    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+
+    loansFixture.checkIn(loanToJames);
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
+
+    Response request = requestsClient.getById(requestByJessica.getId());
+
+    assertThat(request.getJson().getString("status"), is(CLOSED_FILLED));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+
+    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+  }
+
 }
