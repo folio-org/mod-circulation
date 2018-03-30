@@ -50,7 +50,7 @@ public class CheckOutByBarcodeTests extends APITests {
       loan.getString("action"), is("checkedout"));
 
     assertThat("loan date should match when request was made",
-      loan.getString("loanDate"), withinSecondsAfter(Seconds.seconds(2), requestMade));
+      loan.getString("loanDate"), withinSecondsAfter(Seconds.seconds(5), requestMade));
   }
 
   @Test

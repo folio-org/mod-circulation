@@ -53,7 +53,7 @@ public class CheckOutResource extends CollectionResource {
     completedFuture(HttpResult.success(new LoanAndRelatedRecords(loan)))
       .thenCombineAsync(userFetcher.getUserByBarcode(userBarcode), this::addUser)
       .thenCombineAsync(inventoryFetcher.fetchByBarcode(itemBarcode), this::addInventoryRecords)
-      .thenApply(LoanValidation::refuseWhenItemDoesNotExist)
+      .thenApply(r -> r.next(v -> LoanValidation.refuseWhenItemBarcodeDoesNotExist(r, itemBarcode)))
       .thenApply(r -> r.map(toLoan()))
       .thenApply(CreatedJsonHttpResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));

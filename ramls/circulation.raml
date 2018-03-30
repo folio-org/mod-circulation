@@ -33,7 +33,11 @@ resourceTypes:
     displayName: Check out using barcode for item and loanee
     post:
       description: Creates a loan by checking out an item to a loanee
-      is: [secured, language, validate]
+      is: [
+        secured,
+        language,
+        validate
+      ]
       body:
         application/json:
           schema: !include check-out-by-barcode-request.json

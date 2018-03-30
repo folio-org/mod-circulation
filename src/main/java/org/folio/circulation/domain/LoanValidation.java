@@ -21,6 +21,20 @@ public class LoanValidation {
     });
   }
 
+  public static HttpResult<LoanAndRelatedRecords> refuseWhenItemBarcodeDoesNotExist(
+    HttpResult<LoanAndRelatedRecords> result, String barcode) {
+
+    return result.next(loanAndRelatedRecords -> {
+      if(loanAndRelatedRecords.inventoryRecords.getItem() == null) {
+        return HttpResult.failure(new ValidationErrorFailure(
+          "Item does not exist", "itemBarcode", barcode));
+      }
+      else {
+        return result;
+      }
+    });
+  }
+
   public static void defaultStatusAndAction(JsonObject loan) {
     if(!loan.containsKey("status")) {
       loan.put("status", new JsonObject().put("name", "Open"));
