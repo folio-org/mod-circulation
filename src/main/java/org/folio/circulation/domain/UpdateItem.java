@@ -36,9 +36,16 @@ public class UpdateItem {
         return skip(relatedRecords);
       }
 
-      String prospectiveStatus = requestQueue.hasOutstandingRequests()
-        ? RequestType.from(requestQueue.getHighestPriorityRequest()).toCheckedOutItemStatus()
-        : CHECKED_OUT;
+      final String prospectiveStatus;
+
+      if(requestQueue != null) {
+        prospectiveStatus = requestQueue.hasOutstandingRequests()
+          ? RequestType.from(requestQueue.getHighestPriorityRequest()).toCheckedOutItemStatus()
+          : CHECKED_OUT;
+      }
+      else {
+        prospectiveStatus = CHECKED_OUT;
+      }
 
       if(isNotSameStatus(item, prospectiveStatus)) {
         return internalUpdate(item, prospectiveStatus)

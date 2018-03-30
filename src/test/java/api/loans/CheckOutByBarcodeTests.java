@@ -56,6 +56,11 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat("loan date should match when request was made",
       loan.getString("loanDate"), withinSecondsAfter(Seconds.seconds(5), requestMade));
+
+    JsonObject item = itemsClient.getById(smallAngryPlanet.getId()).getJson();
+
+    assertThat("item status is not checked out",
+      item.getJsonObject("status").getString("name"), is("Checked out"));
   }
 
   @Test

@@ -10,6 +10,12 @@ public class ServerErrorResponse {
     response.setStatusCode(500);
 
     response.putHeader("content-type", ContentType.TEXT_PLAIN.toString());
-    response.end(reason);
+
+    if(reason != null) {
+      response.end(reason);
+    }
+    else {
+      response.end();
+    }
   }
 }

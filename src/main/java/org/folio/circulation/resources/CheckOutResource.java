@@ -4,10 +4,7 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.domain.LoanRepository;
-import org.folio.circulation.domain.LoanValidation;
-import org.folio.circulation.domain.UserFetcher;
+import org.folio.circulation.domain.*;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.server.WebContext;
 import org.joda.time.DateTime;
@@ -37,7 +34,9 @@ public class CheckOutResource extends CollectionResource {
 
     final UserFetcher userFetcher = new UserFetcher(clients);
     final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
+
     final LoanRepository loanRepository = new LoanRepository(clients);
+    final UpdateItem updateItem = new UpdateItem(clients);
 
     JsonObject request = routingContext.getBodyAsJson();
 
@@ -58,7 +57,8 @@ public class CheckOutResource extends CollectionResource {
       .thenApply(r -> r.next(v -> LoanValidation.refuseWhenItemBarcodeDoesNotExist(r, itemBarcode)))
       .thenApply(r -> r.map(mapBarcodes()))
       .thenComposeAsync(r -> r.after(loanRepository::createLoan))
-      .thenApply(r -> r.map(toLoan()))
+      .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
+      .thenApply(r -> r.map(LoanAndRelatedRecords::getLoan))
       .thenApply(this::createdLoanFrom)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
@@ -82,14 +82,6 @@ public class CheckOutResource extends CollectionResource {
       return new CreatedJsonHttpResult(result.value(),
         String.format("/circulation/loans/%s", result.value().getString("id")));
     }
-  }
-
-  private Function<LoanAndRelatedRecords, JsonObject> toLoan() {
-    return loanAndRelatedRecords -> {
-      final JsonObject loan = loanAndRelatedRecords.getLoan();
-
-      return loan;
-    };
   }
 
   private HttpResult<LoanAndRelatedRecords> addUser(

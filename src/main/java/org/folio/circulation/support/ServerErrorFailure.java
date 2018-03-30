@@ -11,11 +11,27 @@ public class ServerErrorFailure implements HttpFailure {
   }
 
   public ServerErrorFailure(Throwable e) {
-    this(e.getMessage());
+    this(mapToString(e));
   }
 
   @Override
   public void writeTo(HttpServerResponse response) {
     ServerErrorResponse.internalError(response, reason);
+  }
+
+  private static String mapToString(Throwable e) {
+    final String reason;
+
+    if(e.getMessage() != null) {
+      reason = e.getMessage();
+    }
+    else if(e.toString() != null) {
+      reason = e.toString();
+    }
+    else {
+      reason = "Unknown internal error";
+    }
+
+    return reason;
   }
 }
