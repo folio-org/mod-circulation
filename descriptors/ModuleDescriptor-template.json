@@ -31,6 +31,33 @@
           "methods": [
             "POST"
           ],
+          "pathPattern": "/circulation/check-out",
+          "permissionsRequired": [
+            "circulation.check-out.post"
+          ],
+          "modulePermissions": [
+            "circulation-storage.loans.item.post",
+            "circulation.loan-rules.apply.get",
+            "circulation-storage.requests.collection.get",
+            "circulation-storage.requests.item.put",
+            "inventory-storage.items.item.put",
+            "inventory-storage.items.item.get",
+            "inventory-storage.items.collection.get",
+            "inventory-storage.shelf-locations.item.get",
+            "inventory-storage.shelf-locations.collection.get",
+            "inventory-storage.holdings.collection.get",
+            "inventory-storage.holdings.item.get",
+            "inventory-storage.instances.collection.get",
+            "inventory-storage.instances.item.get",
+            "users.item.get",
+            "proxiesfor.collection.get",
+            "inventory-storage.material-types.item.get"
+          ]
+        },
+        {
+          "methods": [
+            "POST"
+          ],
           "pathPattern": "/circulation/loans",
           "permissionsRequired": [
             "circulation.loans.item.post"
@@ -303,6 +330,11 @@
   ],
   "permissionSets": [
     {
+      "permissionName": "circulation.check-out.post",
+      "displayName": "circulation - check out item by barcode",
+      "description": "check out an item using barcodes for item and loanee"
+    },
+    {
       "permissionName": "circulation.loans.collection.get",
       "displayName": "circulation - get loan collection",
       "description": "get loan collection"
@@ -387,6 +419,7 @@
       "displayName": "circulation - all permissions",
       "description": "Entire set of permissions needed to use the circulation",
       "subPermissions": [
+        "circulation.check-out.post",
         "circulation.loans.collection.get",
         "circulation.loans.item.get",
         "circulation.loans.item.post",
