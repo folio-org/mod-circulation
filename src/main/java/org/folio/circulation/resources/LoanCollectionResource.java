@@ -1,7 +1,6 @@
 package org.folio.circulation.resources;
 
 import io.vertx.core.http.HttpClient;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -29,7 +28,6 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 public class LoanCollectionResource extends CollectionResource {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  private static final String CONTRIBUTORS_PROPERTY = "contributors";
   private static final String MT_ID_PROPERTY = "materialTypeId";
 
   public LoanCollectionResource(HttpClient client) {
@@ -60,6 +58,9 @@ public class LoanCollectionResource extends CollectionResource {
     final UpdateItem updateItem = new UpdateItem(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanRulesRepository loanRulesRepository = new LoanRulesRepository(clients);
+    final MaterialTypeRepository materialTypeRepository = new MaterialTypeRepository(clients);
+
+    final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
     JsonObject loan = routingContext.getBodyAsJson();
 
@@ -79,12 +80,12 @@ public class LoanCollectionResource extends CollectionResource {
       .thenCombineAsync(userFetcher.getUser(requestingUserId), this::addUser)
       .thenApply(LoanValidation::refuseWhenUserIsNotAwaitingPickup)
       .thenComposeAsync(r -> r.after(records -> getLocation(records, clients)))
-      .thenComposeAsync(r -> r.after(records -> getMaterialType(records, clients)))
+      .thenComposeAsync(r -> r.after(materialTypeRepository::getMaterialType))
       .thenComposeAsync(r -> r.after(loanRulesRepository::lookupLoanPolicyId))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
       .thenComposeAsync(r -> r.after(loanRepository::createLoan))
-      .thenApply(r -> r.map(this::extendedLoan))
+      .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(CreatedJsonHttpResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
@@ -125,14 +126,17 @@ public class LoanCollectionResource extends CollectionResource {
     final Clients clients = Clients.create(context, client);
     final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
+    final MaterialTypeRepository materialTypeRepository = new MaterialTypeRepository(clients);
+
+    final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
     String id = routingContext.request().getParam("id");
 
     loanRepository.getById(id)
       .thenComposeAsync(result -> result.after(inventoryFetcher::getInventoryRecords))
       .thenComposeAsync(r -> r.after(records -> getLocation(records, clients)))
-      .thenComposeAsync(r -> r.after(records -> getMaterialType(records, clients)))
-      .thenApply(r -> r.map(this::extendedLoan))
+      .thenComposeAsync(r -> r.after(materialTypeRepository::getMaterialType))
+      .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(OkJsonHttpResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
@@ -156,6 +160,8 @@ public class LoanCollectionResource extends CollectionResource {
   private void getMany(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context, client);
+
+    final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
     clients.loansStorage().getMany(routingContext.request().query(), loansResponse -> {
       if(loansResponse.getStatusCode() == 200) {
@@ -267,7 +273,7 @@ public class LoanCollectionResource extends CollectionResource {
                     .equals(materialTypeId[0])).findFirst();
 
 
-                  loan.put("item", createItemSummary(item,
+                  loan.put("item", new LoanRepresentation().createItemSummary(item,
                     possibleInstance.orElse(null),
                       possibleHolding.orElse(null),
                       possibleLocation.orElse(null),
@@ -303,111 +309,6 @@ public class LoanCollectionResource extends CollectionResource {
         ForwardResponse.forward(routingContext.response(), response);
       }
     });
-  }
-
-  private JsonObject createItemSummary(
-    JsonObject item,
-    JsonObject instance,
-    JsonObject holding,
-    JsonObject location,
-    JsonObject materialType) {
-    JsonObject itemSummary = new JsonObject();
-
-    final String titleProperty = "title";
-    final String barcodeProperty = "barcode";
-    final String statusProperty = "status";
-    final String holdingsRecordIdProperty = "holdingsRecordId";
-    final String instanceIdProperty = "instanceId";
-    final String callNumberProperty = "callNumber";
-    final String materialTypeProperty = "materialType";
-
-    if(instance != null && instance.containsKey(titleProperty)) {
-      itemSummary.put(titleProperty, instance.getString(titleProperty));
-    } else if (item.containsKey("title")) {
-      itemSummary.put(titleProperty, item.getString(titleProperty));
-    }
-
-    if(instance != null && instance.containsKey(CONTRIBUTORS_PROPERTY)) {
-      JsonArray instanceContributors = instance.getJsonArray(CONTRIBUTORS_PROPERTY);
-
-      if(instanceContributors != null && !instanceContributors.isEmpty()) {
-        JsonArray contributors = new JsonArray();
-        for(Object ob : instanceContributors) {
-          String name = ((JsonObject)ob).getString("name");
-          contributors.add(new JsonObject().put("name", name));
-        }
-        itemSummary.put(CONTRIBUTORS_PROPERTY, contributors);
-      }
-    }
-
-    if(item.containsKey(barcodeProperty)) {
-      itemSummary.put(barcodeProperty, item.getString(barcodeProperty));
-    }
-
-    if(item.containsKey(holdingsRecordIdProperty)) {
-      itemSummary.put(holdingsRecordIdProperty, item.getString(holdingsRecordIdProperty));
-    }
-
-    if(holding != null && holding.containsKey(instanceIdProperty)) {
-      itemSummary.put(instanceIdProperty, holding.getString(instanceIdProperty));
-    }
-
-    if(holding != null && holding.containsKey(callNumberProperty)) {
-      itemSummary.put(callNumberProperty, holding.getString(callNumberProperty));
-    }
-
-    if(item.containsKey(statusProperty)) {
-      itemSummary.put(statusProperty, item.getJsonObject(statusProperty));
-    }
-
-    if(location != null && location.containsKey("name")) {
-      itemSummary.put("location", new JsonObject()
-        .put("name", location.getString("name")));
-    }
-
-    if(materialType != null) {
-      if(materialType.containsKey("name") && materialType.getString("name") != null) {
-        itemSummary.put(materialTypeProperty, new JsonObject()
-          .put("name", materialType.getString("name")));
-      } else {
-        log.warn("Missing or null property for material type for item id " +
-          item.getString("id"));
-      }
-    } else {
-      log.warn(String.format("Null materialType object for item %s",
-        item.getString("id")));
-    }
-
-    return itemSummary;
-  }
-
-  private JsonObject extendedLoan(LoanAndRelatedRecords relatedRecords) {
-    return extendedLoan(relatedRecords.loan,
-      relatedRecords.inventoryRecords.item,
-      relatedRecords.inventoryRecords.holding,
-      relatedRecords.inventoryRecords.instance,
-      relatedRecords.location,
-      relatedRecords.materialType);
-  }
-
-  private JsonObject extendedLoan(
-    JsonObject loan,
-    JsonObject item,
-    JsonObject holding,
-    JsonObject instance,
-    JsonObject location,
-    JsonObject materialType) {
-
-    if(item != null) {
-      loan.put("item", createItemSummary(item, instance, holding, location,
-        materialType));
-    }
-
-    //No need to pass on the itemStatus property, as only used to populate the history
-    //and could be confused with aggregation of current status
-    loan.remove("itemStatus");
-
-    return loan;
   }
 
   private HttpResult<LoanAndRelatedRecords> addInventoryRecords(
@@ -469,52 +370,6 @@ public class LoanCollectionResource extends CollectionResource {
       else {
         log.warn("Could not get location {} for item {}",
           locationId, itemId);
-
-        return HttpResult.success(null);
-      }
-    };
-
-    return getLocationCompleted
-      .thenApply(mapResponse)
-      .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
-  }
-
-  private CompletableFuture<HttpResult<LoanAndRelatedRecords>> getMaterialType(
-    LoanAndRelatedRecords relatedRecords,
-    Clients clients) {
-
-    JsonObject item = relatedRecords.inventoryRecords.item;
-
-    //Cannot find material type for unknown item
-    if(item == null) {
-      return CompletableFuture.completedFuture(HttpResult.success(relatedRecords));
-    }
-
-    String materialTypeId = item.getString(MT_ID_PROPERTY);
-
-    return getMaterialType(materialTypeId,
-      item.getString("id"), clients)
-      .thenApply(result -> result.map(relatedRecords::withMaterialType));
-  }
-
-  private CompletableFuture<HttpResult<JsonObject>> getMaterialType(
-    String materialTypeId,
-    String itemId,
-    Clients clients) {
-
-    CompletableFuture<Response> getLocationCompleted = new CompletableFuture<>();
-
-    clients.materialTypesStorage().get(materialTypeId, getLocationCompleted::complete);
-
-    //TODO: Add functions to explicitly distinguish between fatal not found
-    // and allowable not found
-    final Function<Response, HttpResult<JsonObject>> mapResponse = response -> {
-      if(response != null && response.getStatusCode() == 200) {
-        return HttpResult.success(response.getJson());
-      }
-      else {
-        log.warn("Could not get material type {} for item {}",
-          materialTypeId, itemId);
 
         return HttpResult.success(null);
       }

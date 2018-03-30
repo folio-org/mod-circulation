@@ -37,8 +37,12 @@ public class CheckOutResource extends CollectionResource {
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanRulesRepository loanRulesRepository = new LoanRulesRepository(clients);
+    final MaterialTypeRepository materialTypeRepository = new MaterialTypeRepository(clients);
+
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
+
+    final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
     JsonObject request = routingContext.getBodyAsJson();
 
@@ -60,11 +64,12 @@ public class CheckOutResource extends CollectionResource {
       .thenApply(r -> r.map(mapBarcodes()))
       .thenComposeAsync(r -> r.after(requestQueueFetcher::get))
       .thenApply(LoanValidation::refuseWhenUserIsNotAwaitingPickup)
+      .thenComposeAsync(r -> r.after(materialTypeRepository::getMaterialType))
       .thenComposeAsync(r -> r.after(loanRulesRepository::lookupLoanPolicyId))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
       .thenComposeAsync(r -> r.after(loanRepository::createLoan))
-      .thenApply(r -> r.map(LoanAndRelatedRecords::getLoan))
+      .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(this::createdLoanFrom)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }

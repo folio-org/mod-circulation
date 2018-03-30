@@ -127,9 +127,6 @@ public class LoanAPITests extends APITests {
       loan.getJsonObject("item").getJsonObject("status").getString("name"),
       is("Checked out"));
 
-    assertThat("due date does not match",
-      loan.getString("dueDate"), isEquivalentTo(dueDate));
-
     assertThat("Should not have snapshot of item status, as current status is included",
       loan.containsKey("itemStatus"), is(false));
 
@@ -143,6 +140,9 @@ public class LoanAPITests extends APITests {
 
     assertThat("change metadata should have updated date",
       changeMetadata.containsKey("updatedDate"), is(true));
+
+    assertThat("due date does not match",
+      loan.getString("dueDate"), isEquivalentTo(dueDate));
 
     JsonObject item = itemsClient.getById(itemId).getJson();
 

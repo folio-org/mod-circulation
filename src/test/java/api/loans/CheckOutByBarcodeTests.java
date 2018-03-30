@@ -2,6 +2,7 @@ package api.loans;
 
 import api.APITestSuite;
 import api.support.APITests;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -69,6 +70,47 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat("last loan policy should be stored",
       loan.getString("loanPolicyId"), is(APITestSuite.canCirculateLoanPolicyId().toString()));
+
+    assertThat("has item information",
+      loan.containsKey("item"), is(true));
+
+    assertThat("title is taken from instance",
+      loan.getJsonObject("item").getString("title"),
+      is("The Long Way to a Small, Angry Planet"));
+
+    assertThat("barcode is taken from item",
+      loan.getJsonObject("item").getString("barcode"),
+      is("036000291452"));
+
+    assertThat("call number is 123456", loan.getJsonObject("item")
+      .getString("callNumber"), is("123456"));
+
+    assertThat(loan.getJsonObject("item").encode() + " contains 'materialType'",
+      loan.getJsonObject("item").containsKey("materialType"), is(true));
+
+    assertThat("materialType is book", loan.getJsonObject("item")
+      .getJsonObject("materialType").getString("name"), is("Book"));
+
+    assertThat("item has contributors",
+      loan.getJsonObject("item").containsKey("contributors"), is(true));
+
+    JsonArray contributors = loan.getJsonObject("item").getJsonArray("contributors");
+
+    assertThat("item has a single contributor",
+      contributors.size(), is(1));
+
+    assertThat("Becky Chambers is a contributor",
+      contributors.getJsonObject(0).getString("name"), is("Chambers, Becky"));
+
+    assertThat("has item status",
+      loan.getJsonObject("item").containsKey("status"), is(true));
+
+    assertThat("status is taken from item",
+      loan.getJsonObject("item").getJsonObject("status").getString("name"),
+      is("Checked out"));
+
+    assertThat("Should not have snapshot of item status, as current status is included",
+      loan.containsKey("itemStatus"), is(false));
   }
 
   @Test
