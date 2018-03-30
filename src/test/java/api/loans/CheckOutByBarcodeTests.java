@@ -66,6 +66,9 @@ public class CheckOutByBarcodeTests extends APITests {
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
     assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+
+    assertThat("last loan policy should be stored",
+      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateLoanPolicyId().toString()));
   }
 
   @Test
