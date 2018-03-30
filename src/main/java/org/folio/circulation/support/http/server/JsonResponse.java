@@ -12,14 +12,16 @@ import java.util.List;
 
 public class JsonResponse {
   //TODO: Needs a location
-  public static void created(HttpServerResponse response,
-                      JsonObject body) {
+  public static void created(
+    HttpServerResponse response,
+    JsonObject body) {
 
     response(response, body, 201);
   }
 
-  public static void success(HttpServerResponse response,
-                             JsonObject body) {
+  public static void success(
+    HttpServerResponse response,
+    JsonObject body) {
 
     response(response, body, 200);
   }

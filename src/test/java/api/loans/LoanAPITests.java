@@ -63,11 +63,11 @@ public class LoanAPITests extends APITests {
 
     IndividualResource response = loansClient.create(new LoanBuilder()
       .withId(id)
+      .open()
       .withUserId(userId)
       .withItemId(itemId)
       .withLoanDate(loanDate)
-      .withDueDate(dueDate)
-      .withStatus("Open"));
+      .withDueDate(dueDate));
 
     JsonObject loan = response.getJson();
 
@@ -170,11 +170,13 @@ public class LoanAPITests extends APITests {
 
     CompletableFuture<Response> createCompleted = new CompletableFuture<>();
 
+    final UUID nonExistantItemId = UUID.randomUUID();
+
     client.post(InterfaceUrls.loansUrl(), new LoanBuilder()
         .open()
         .withId(id)
         .withUserId(userId)
-        .withItemId(UUID.randomUUID())
+        .withItemId(nonExistantItemId)
         .withLoanDate(loanDate)
         .withDueDate(dueDate)
         .create(),

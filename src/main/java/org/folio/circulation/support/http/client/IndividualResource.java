@@ -23,4 +23,8 @@ public class IndividualResource {
   public JsonObject copyJson() {
     return response.getJson().copy();
   }
+
+  public String getLocation() {
+    return response.getHeader("location");
+  }
 }

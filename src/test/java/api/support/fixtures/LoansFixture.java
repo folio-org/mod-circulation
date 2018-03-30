@@ -8,6 +8,7 @@ import guru.nidi.ramltester.RamlDefinition;
 import guru.nidi.ramltester.RamlLoaders;
 import guru.nidi.ramltester.restassured3.RestAssuredClient;
 import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.http.Header;
 import io.restassured.specification.RequestSpecification;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -21,6 +22,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.support.http.OkapiHeader.*;
@@ -197,7 +199,9 @@ public class LoansFixture {
 
   private static Response from(io.restassured.response.Response response) {
     return new Response(response.statusCode(), response.body().print(),
-      response.contentType());
+      response.contentType(),
+      response.headers().asList().stream()
+        .collect(Collectors.toMap(Header::getName, Header::getValue)));
   }
 
   private RestAssuredClient createClient() {

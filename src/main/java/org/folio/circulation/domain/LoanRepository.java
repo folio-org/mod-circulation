@@ -22,7 +22,9 @@ public class LoanRepository {
     JsonObject storageLoan = convertLoanToStorageRepresentation(
       loanAndRelatedRecords.loan, loanAndRelatedRecords.inventoryRecords.item);
 
-    storageLoan.put("loanPolicyId", loanAndRelatedRecords.loanPolicyId);
+    if(loanAndRelatedRecords.loanPolicyId != null) {
+      storageLoan.put("loanPolicyId", loanAndRelatedRecords.loanPolicyId);
+    }
 
     loansStorageClient.post(storageLoan, response -> {
       if (response.getStatusCode() == 201) {

@@ -12,8 +12,10 @@ public class LoanValidation {
 
     return result.next(loan -> {
       if(loan.inventoryRecords.getItem() == null) {
+        final String itemId = loan.loan.getString("itemId");
+
         return HttpResult.failure(new ValidationErrorFailure(
-          "Item does not exist", "itemId", loan.loan.getString("itemId")));
+          "Item does not exist", "itemId", itemId));
       }
       else {
         return result;
@@ -27,7 +29,8 @@ public class LoanValidation {
     return result.next(loanAndRelatedRecords -> {
       if(loanAndRelatedRecords.inventoryRecords.getItem() == null) {
         return HttpResult.failure(new ValidationErrorFailure(
-          "Item does not exist", "itemBarcode", barcode));
+          String.format("No item with barcode %s exists", barcode),
+          "itemBarcode", barcode));
       }
       else {
         return result;

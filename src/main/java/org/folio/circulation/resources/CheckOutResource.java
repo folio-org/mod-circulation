@@ -5,6 +5,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.LoanValidation;
 import org.folio.circulation.domain.UserFetcher;
 import org.folio.circulation.support.*;
@@ -36,6 +37,7 @@ public class CheckOutResource extends CollectionResource {
 
     final UserFetcher userFetcher = new UserFetcher(clients);
     final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
+    final LoanRepository loanRepository = new LoanRepository(clients);
 
     JsonObject request = routingContext.getBodyAsJson();
 
@@ -54,17 +56,37 @@ public class CheckOutResource extends CollectionResource {
       .thenCombineAsync(userFetcher.getUserByBarcode(userBarcode), this::addUser)
       .thenCombineAsync(inventoryFetcher.fetchByBarcode(itemBarcode), this::addInventoryRecords)
       .thenApply(r -> r.next(v -> LoanValidation.refuseWhenItemBarcodeDoesNotExist(r, itemBarcode)))
+      .thenApply(r -> r.map(mapBarcodes()))
+      .thenComposeAsync(r -> r.after(loanRepository::createLoan))
       .thenApply(r -> r.map(toLoan()))
-      .thenApply(CreatedJsonHttpResult::from)
+      .thenApply(this::createdLoanFrom)
       .thenAccept(result -> result.writeTo(routingContext.response()));
+  }
+
+  private Function<LoanAndRelatedRecords, LoanAndRelatedRecords> mapBarcodes() {
+    return loanAndRelatedRecords -> {
+      final JsonObject loan = loanAndRelatedRecords.loan;
+
+      loan.put("userId", loanAndRelatedRecords.requestingUser.getString("id"));
+      loan.put("itemId", loanAndRelatedRecords.inventoryRecords.item.getString("id"));
+
+      return loanAndRelatedRecords;
+    };
+  }
+
+  private WritableHttpResult<JsonObject> createdLoanFrom(HttpResult<JsonObject> result) {
+    if(result.failed()) {
+      return HttpResult.failure(result.cause());
+    }
+    else {
+      return new CreatedJsonHttpResult(result.value(),
+        String.format("/circulation/loans/%s", result.value().getString("id")));
+    }
   }
 
   private Function<LoanAndRelatedRecords, JsonObject> toLoan() {
     return loanAndRelatedRecords -> {
       final JsonObject loan = loanAndRelatedRecords.getLoan();
-
-      loan.put("userId", loanAndRelatedRecords.requestingUser.getString("id"));
-      loan.put("itemId", loanAndRelatedRecords.inventoryRecords.item.getString("id"));
 
       return loan;
     };
