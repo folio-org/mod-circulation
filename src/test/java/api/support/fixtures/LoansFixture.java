@@ -1,6 +1,7 @@
 package api.support.fixtures;
 
 import api.APITestSuite;
+import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.http.InterfaceUrls;
 import api.support.http.ResourceClient;
@@ -129,11 +130,14 @@ public class LoansFixture {
     return response;
   }
 
-  public IndividualResource checkOutByBarcode(IndividualResource item, IndividualResource to) {
-    final String itemBarcode = getBarcode(item);
-    final String userBarcode = getBarcode(to);
+  public IndividualResource checkOutByBarcode(
+    IndividualResource item,
+    IndividualResource to) {
 
-    JsonObject request = checkOutByBarcodeRequest(itemBarcode, userBarcode);
+    JsonObject request = new CheckOutByBarcodeRequestBuilder()
+      .forItem(item)
+      .to(to)
+      .create();
 
     io.restassured.response.Response response = restAssuredClient.given()
       .log().all()
@@ -155,10 +159,10 @@ public class LoansFixture {
     IndividualResource item,
     IndividualResource to) {
 
-    final String itemBarcode = getBarcode(item);
-    final String userBarcode = getBarcode(to);
-
-    JsonObject request = checkOutByBarcodeRequest(itemBarcode, userBarcode);
+    JsonObject request = new CheckOutByBarcodeRequestBuilder()
+      .forItem(item)
+      .to(to)
+      .create();
 
     io.restassured.response.Response response = restAssuredClient.given()
       .log().all()
@@ -189,12 +193,6 @@ public class LoansFixture {
 
   private String getBarcode(IndividualResource record) {
     return record.getJson().getString("barcode");
-  }
-
-  private JsonObject checkOutByBarcodeRequest(String itemBarcode, String userBarcode) {
-    return new JsonObject()
-      .put("itemBarcode", itemBarcode)
-      .put("userBarcode", userBarcode);
   }
 
   private static Response from(io.restassured.response.Response response) {

@@ -43,7 +43,8 @@ public class CheckOutByBarcodeTests extends APITests {
 
     DateTime requestMade = DateTime.now();
 
-    final IndividualResource response = loansFixture.checkOutByBarcode(smallAngryPlanet, steve);
+    final IndividualResource response = loansFixture.checkOutByBarcode(
+      smallAngryPlanet, steve);
 
     final JsonObject loan = response.getJson();
 
