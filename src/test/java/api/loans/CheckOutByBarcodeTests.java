@@ -70,6 +70,9 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat("loan date should be as supplied",
       loan.getString("loanDate"), isEquivalentTo(loanDate));
 
+    assertThat("due date is 14 days after loan date",
+      loan.getString("dueDate"), isEquivalentTo(loanDate.plusDays(14)));
+
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
     assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));

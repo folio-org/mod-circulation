@@ -65,18 +65,34 @@ public class CheckOutResource extends CollectionResource {
       .thenCombineAsync(inventoryFetcher.fetchByBarcode(itemBarcode), this::addInventoryRecords)
       .thenApply(r -> r.next(v -> LoanValidation.refuseWhenItemBarcodeDoesNotExist(r, itemBarcode)))
       .thenApply(r -> r.map(mapBarcodes()))
-      .thenComposeAsync(r -> r.after(records -> LoanValidation.refuseWhenProxyRelationshipIsInvalid(records, clients)))
+      .thenComposeAsync(r -> r.after(records ->
+        LoanValidation.refuseWhenProxyRelationshipIsInvalid(records, clients)))
       .thenComposeAsync(r -> r.after(requestQueueFetcher::get))
       .thenApply(LoanValidation::refuseWhenUserIsNotAwaitingPickup)
       .thenComposeAsync(r -> r.after(materialTypeRepository::getMaterialType))
       .thenComposeAsync(r -> r.after(locationRepository::getLocation))
       .thenComposeAsync(r -> r.after(loanRulesRepository::lookupLoanPolicyId))
+      .thenApply(r -> r.next(this::calculateDueDate))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
       .thenComposeAsync(r -> r.after(loanRepository::createLoan))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(this::createdLoanFrom)
       .thenAccept(result -> result.writeTo(routingContext.response()));
+  }
+
+  private HttpResult<LoanAndRelatedRecords> calculateDueDate(
+    LoanAndRelatedRecords loanAndRelatedRecords) {
+
+    final DateTime loanDate = DateTime.parse(
+      loanAndRelatedRecords.loan.getString("loanDate"));
+
+    final DateTime dueDate = loanDate.plusDays(14);
+
+    loanAndRelatedRecords.loan.put("dueDate",
+      dueDate.toString(ISODateTimeFormat.dateTime()));
+
+    return HttpResult.success(loanAndRelatedRecords);
   }
 
   private void copyOrDefaultLoanDate(JsonObject request, JsonObject loan) {
