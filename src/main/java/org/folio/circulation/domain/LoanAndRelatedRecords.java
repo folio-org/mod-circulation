@@ -8,6 +8,7 @@ public class LoanAndRelatedRecords {
   public final InventoryRecords inventoryRecords;
   public final RequestQueue requestQueue;
   public final JsonObject requestingUser;
+  public final JsonObject proxyingUser;
   public final String loanPolicyId;
   public final JsonObject location;
   public final JsonObject materialType;
@@ -17,20 +18,23 @@ public class LoanAndRelatedRecords {
     InventoryRecords inventoryRecords,
     RequestQueue requestQueue,
     JsonObject requestingUser,
+    JsonObject proxyingUser,
     String loanPolicyId,
-    JsonObject location, JsonObject materialType) {
+    JsonObject location,
+    JsonObject materialType) {
 
     this.loan = loan;
     this.inventoryRecords = inventoryRecords;
     this.requestQueue = requestQueue;
     this.requestingUser = requestingUser;
+    this.proxyingUser = proxyingUser;
     this.loanPolicyId = loanPolicyId;
     this.location = location;
     this.materialType = materialType;
   }
 
   public LoanAndRelatedRecords(JsonObject loan) {
-    this(loan, null, null, null, null, null, null);
+    this(loan, null, null, null, null, null, null, null);
   }
 
   public JsonObject getLoan() {
@@ -40,41 +44,47 @@ public class LoanAndRelatedRecords {
   public LoanAndRelatedRecords withItem(JsonObject updatedItem) {
     return new LoanAndRelatedRecords(loan, new InventoryRecords(updatedItem,
       inventoryRecords.getHolding(), inventoryRecords.getInstance()),
-      requestQueue, requestingUser, loanPolicyId, location, this.materialType);
+      requestQueue, requestingUser, proxyingUser, loanPolicyId, location,
+      this.materialType);
   }
 
   public LoanAndRelatedRecords withLoan(JsonObject newLoan) {
     return new LoanAndRelatedRecords(newLoan, inventoryRecords, requestQueue,
-      requestingUser, loanPolicyId, location, this.materialType);
+      requestingUser, proxyingUser, loanPolicyId, location, this.materialType);
   }
 
   public LoanAndRelatedRecords withRequestingUser(JsonObject newUser) {
     return new LoanAndRelatedRecords(loan, inventoryRecords, requestQueue,
-      newUser, loanPolicyId, location, this.materialType);
+      newUser, proxyingUser, loanPolicyId, location, this.materialType);
+  }
+
+  public LoanAndRelatedRecords withProxyingUser(JsonObject newProxyingUser) {
+    return new LoanAndRelatedRecords(loan, inventoryRecords, requestQueue,
+      requestingUser, newProxyingUser, loanPolicyId, location, this.materialType);
   }
 
   public LoanAndRelatedRecords withLoanPolicy(String newLoanPolicyId) {
     return new LoanAndRelatedRecords(loan, inventoryRecords, requestQueue,
-      requestingUser, newLoanPolicyId, location, this.materialType);
+      requestingUser, proxyingUser, newLoanPolicyId, location, this.materialType);
   }
 
   public LoanAndRelatedRecords withRequestQueue(RequestQueue newRequestQueue) {
     return new LoanAndRelatedRecords(loan, inventoryRecords, newRequestQueue,
-      requestingUser, loanPolicyId, location, this.materialType);
+      requestingUser, proxyingUser, loanPolicyId, location, this.materialType);
   }
 
   public LoanAndRelatedRecords withLocation(JsonObject newLocation) {
     return new LoanAndRelatedRecords(loan, inventoryRecords, requestQueue,
-      requestingUser, loanPolicyId, newLocation, this.materialType);
+      requestingUser, proxyingUser, loanPolicyId, newLocation, this.materialType);
   }
 
   public LoanAndRelatedRecords withInventoryRecords(InventoryRecords newInventoryRecords) {
     return new LoanAndRelatedRecords(loan, newInventoryRecords, requestQueue,
-      requestingUser, loanPolicyId, location, this.materialType);
+      requestingUser, proxyingUser, loanPolicyId, location, this.materialType);
   }
 
   public LoanAndRelatedRecords withMaterialType(JsonObject newMaterialType) {
     return new LoanAndRelatedRecords(loan, inventoryRecords, requestQueue,
-      requestingUser, loanPolicyId, location, newMaterialType);
+      requestingUser, proxyingUser, loanPolicyId, location, newMaterialType);
   }
 }

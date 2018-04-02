@@ -34,7 +34,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class CheckOutByBarcodeTests extends APITests {
   @Test
-  public void canCreateALoanUsingItemAndUserBarcode()
+  public void canCheckOutUsingItemAndUserBarcode()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -152,7 +152,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCreateALoanWithoutLoanDate()
+  public void canCheckOutWithoutLoanDate()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -272,4 +272,51 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
   }
 
+  @Test
+  public void canCheckOutViaProxy()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource james = usersFixture.james();
+    IndividualResource jessica = usersFixture.jessica();
+
+    usersFixture.currentProxyFor(jessica, james);
+
+    final IndividualResource response = loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+      .forItem(smallAngryPlanet)
+      .to(jessica)
+      .proxiedBy(james));
+
+    JsonObject loan = response.getJson();
+
+    assertThat("user id does not match",
+      loan.getString("userId"), is(jessica.getId().toString()));
+
+    assertThat("proxy user id does not match",
+      loan.getString("proxyUserId"), is(james.getId().toString()));
+  }
+
+  @Test
+  public void cannotCreateProxiedLoanWhenNoRelationship()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource james = usersFixture.james();
+    IndividualResource jessica = usersFixture.jessica();
+
+    final Response response = loansFixture.attemptCheckOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(jessica)
+        .proxiedBy(james));
+
+    assertThat(response.getBody(), response.getStatusCode(), is(422));
+  }
 }

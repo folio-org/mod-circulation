@@ -8,7 +8,9 @@ import api.support.http.ResourceClient;
 import guru.nidi.ramltester.RamlDefinition;
 import guru.nidi.ramltester.RamlLoaders;
 import guru.nidi.ramltester.restassured3.RestAssuredClient;
+import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.config.HttpClientConfig;
 import io.restassured.http.Header;
 import io.restassured.specification.RequestSpecification;
 import io.vertx.core.json.JsonObject;
@@ -145,6 +147,7 @@ public class LoansFixture {
     io.restassured.response.Response response = restAssuredClient.given()
       .log().all()
       .spec(defaultHeaders())
+      .spec(timeoutConfig())
       .body(request.encodePrettily())
       .when().post(InterfaceUrls.checkOutUrl())
       .then()
@@ -162,14 +165,19 @@ public class LoansFixture {
     IndividualResource item,
     IndividualResource to) {
 
-    JsonObject request = new CheckOutByBarcodeRequestBuilder()
+    return attemptCheckOutByBarcode(new CheckOutByBarcodeRequestBuilder()
       .forItem(item)
-      .to(to)
-      .create();
+      .to(to));
+  }
+
+  public Response attemptCheckOutByBarcode(CheckOutByBarcodeRequestBuilder builder) {
+
+    JsonObject request = builder.create();
 
     io.restassured.response.Response response = restAssuredClient.given()
       .log().all()
       .spec(defaultHeaders())
+      .spec(timeoutConfig())
       .body(request.encodePrettily())
       .when().post(InterfaceUrls.checkOutUrl())
       .then()
@@ -194,8 +202,12 @@ public class LoansFixture {
       .build();
   }
 
-  private String getBarcode(IndividualResource record) {
-    return record.getJson().getString("barcode");
+  private RequestSpecification timeoutConfig() {
+    return new RequestSpecBuilder()
+      .setConfig(RestAssured.config()
+        .httpClient(HttpClientConfig.httpClientConfig()
+          .setParam("http.connection.timeout", 5000)
+          .setParam("http.socket.timeout", 5000))).build();
   }
 
   private static Response from(io.restassured.response.Response response) {

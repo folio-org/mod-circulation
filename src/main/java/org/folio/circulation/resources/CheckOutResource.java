@@ -55,14 +55,17 @@ public class CheckOutResource extends CollectionResource {
 
     copyOrDefaultLoanDate(request, loan);
 
-    final String userBarcode = request.getString("userBarcode");
     final String itemBarcode = request.getString("itemBarcode");
+    final String userBarcode = request.getString("userBarcode");
+    final String proxyUserBarcode = request.getString("proxyUserBarcode");
 
     completedFuture(HttpResult.success(new LoanAndRelatedRecords(loan)))
       .thenCombineAsync(userFetcher.getUserByBarcode(userBarcode), this::addUser)
+      .thenCombineAsync(userFetcher.getProxyUserByBarcode(proxyUserBarcode), this::addProxyUser)
       .thenCombineAsync(inventoryFetcher.fetchByBarcode(itemBarcode), this::addInventoryRecords)
       .thenApply(r -> r.next(v -> LoanValidation.refuseWhenItemBarcodeDoesNotExist(r, itemBarcode)))
       .thenApply(r -> r.map(mapBarcodes()))
+      .thenComposeAsync(r -> r.after(records -> LoanValidation.refuseWhenProxyRelationshipIsInvalid(records, clients)))
       .thenComposeAsync(r -> r.after(requestQueueFetcher::get))
       .thenApply(LoanValidation::refuseWhenUserIsNotAwaitingPickup)
       .thenComposeAsync(r -> r.after(materialTypeRepository::getMaterialType))
@@ -93,6 +96,10 @@ public class CheckOutResource extends CollectionResource {
       loan.put("userId", loanAndRelatedRecords.requestingUser.getString("id"));
       loan.put("itemId", loanAndRelatedRecords.inventoryRecords.item.getString("id"));
 
+      if(loanAndRelatedRecords.proxyingUser != null) {
+        loan.put("proxyUserId", loanAndRelatedRecords.proxyingUser.getString("id"));
+      }
+
       return loanAndRelatedRecords;
     };
   }
@@ -105,6 +112,14 @@ public class CheckOutResource extends CollectionResource {
       return new CreatedJsonHttpResult(result.value(),
         String.format("/circulation/loans/%s", result.value().getString("id")));
     }
+  }
+
+  private HttpResult<LoanAndRelatedRecords> addProxyUser(
+    HttpResult<LoanAndRelatedRecords> loanResult,
+    HttpResult<JsonObject> getUserResult) {
+
+    return HttpResult.combine(loanResult, getUserResult,
+      LoanAndRelatedRecords::withProxyingUser);
   }
 
   private HttpResult<LoanAndRelatedRecords> addUser(

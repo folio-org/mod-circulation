@@ -9,7 +9,6 @@ import org.folio.circulation.domain.*;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.*;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +18,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -75,7 +73,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenApply(LoanValidation::refuseWhenItemDoesNotExist)
       .thenApply(this::refuseWhenHoldingDoesNotExist)
       .thenApply(this::refuseWhenItemIsAlreadyCheckedOut)
-      .thenComposeAsync(r -> r.after(records -> refuseWhenProxyRelationshipIsInvalid(records, clients)))
+      .thenComposeAsync(r -> r.after(records -> LoanValidation.refuseWhenProxyRelationshipIsInvalid(records, clients)))
       .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
       .thenCombineAsync(userFetcher.getUser(requestingUserId), this::addUser)
       .thenApply(LoanValidation::refuseWhenUserIsNotAwaitingPickup)
@@ -112,7 +110,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenApply(this::refuseWhenNotOpenOrClosed)
       .thenCombineAsync(inventoryFetcher.fetch(loan), this::addInventoryRecords)
       .thenApply(LoanValidation::refuseWhenItemDoesNotExist)
-      .thenComposeAsync(r -> r.after(records -> refuseWhenProxyRelationshipIsInvalid(records, clients)))
+      .thenComposeAsync(r -> r.after(records -> LoanValidation.refuseWhenProxyRelationshipIsInvalid(records, clients)))
       .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
       .thenComposeAsync(result -> result.after(requestQueueUpdate::onCheckIn))
       .thenComposeAsync(result -> result.after(updateItem::onLoanUpdate))
@@ -391,80 +389,5 @@ public class LoanCollectionResource extends CollectionResource {
         return result;
       }
     });
-  }
-
-  private void handleProxy(CollectionResourceClient client,
-                           String query, Consumer<Response> responseHandler){
-
-    if(query != null){
-      client.getMany(query, 1, 0, responseHandler);
-    }
-    else{
-      responseHandler.accept(null);
-    }
-  }
-
-  private CompletableFuture<HttpResult<LoanAndRelatedRecords>> refuseWhenProxyRelationshipIsInvalid(
-    LoanAndRelatedRecords loanAndRelatedRecords,
-    Clients clients) {
-
-    String validProxyQuery = CqlHelper.buildIsValidUserProxyQuery(
-      loanAndRelatedRecords.loan.getString("proxyUserId"),
-      loanAndRelatedRecords.loan.getString("userId"));
-
-    if(validProxyQuery == null) {
-      return CompletableFuture.completedFuture(HttpResult.success(loanAndRelatedRecords));
-    }
-
-    CompletableFuture<HttpResult<LoanAndRelatedRecords>> future = new CompletableFuture<>();
-
-    handleProxy(clients.userProxies(), validProxyQuery, proxyValidResponse -> {
-      if (proxyValidResponse != null) {
-        if (proxyValidResponse.getStatusCode() != 200) {
-          future.complete(HttpResult.failure(new ForwardOnFailure(proxyValidResponse)));
-          return;
-        }
-
-        final MultipleRecordsWrapper proxyRelationships = MultipleRecordsWrapper.fromBody(
-          proxyValidResponse.getBody(), "proxiesFor");
-
-        final Collection<JsonObject> unExpiredRelationships = proxyRelationships.getRecords()
-          .stream()
-          .filter(relationship -> {
-            if(relationship.containsKey("meta")) {
-              final JsonObject meta = relationship.getJsonObject("meta");
-
-              if(meta.containsKey("expirationDate")) {
-                final DateTime expirationDate = DateTime.parse(
-                  meta.getString("expirationDate"));
-
-                return expirationDate.isAfter(DateTime.now());
-              }
-              else {
-                return true;
-              }
-            }
-            else {
-              return true;
-            }
-          })
-          .collect(Collectors.toList());
-
-        if (unExpiredRelationships.isEmpty()) { //if empty then we dont have a valid proxy id in the loan
-          future.complete(HttpResult.failure(new ValidationErrorFailure(
-            "proxyUserId is not valid", "proxyUserId",
-            loanAndRelatedRecords.loan.getString("proxyUserId"))));
-        }
-        else {
-          future.complete(HttpResult.success(loanAndRelatedRecords));
-        }
-      }
-      else {
-        future.complete(HttpResult.failure(
-          new ServerErrorFailure("No response when requesting proxies")));
-      }
-    });
-
-    return future;
   }
 }

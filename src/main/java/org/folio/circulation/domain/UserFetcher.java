@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
+import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
 
@@ -19,7 +20,26 @@ public class UserFetcher {
     return getUser(userId, true);
   }
 
-  public CompletableFuture<HttpResult<JsonObject>> getUserByBarcode(String barcode) {
+  public CompletableFuture<HttpResult<JsonObject>> getProxyUserByBarcode(String barcode) {
+    //Not proxying, so no need to get proxy user
+    if(StringUtils.isBlank(barcode)) {
+      return CompletableFuture.completedFuture(HttpResult.success(null));
+    }
+    else {
+      return getUserByBarcode(barcode, "proxyUserBarcode");
+    }
+  }
+
+  public CompletableFuture<HttpResult<JsonObject>> getUserByBarcode(
+    String barcode) {
+
+    return getUserByBarcode(barcode, "userBarcode");
+  }
+
+  private CompletableFuture<HttpResult<JsonObject>> getUserByBarcode(
+    String barcode,
+    String propertyName) {
+
     CompletableFuture<Response> getUserCompleted = new CompletableFuture<>();
 
     this.usersStorageClient.getMany(
@@ -39,7 +59,7 @@ public class UserFetcher {
 
         if(wrappedUsers.getRecords().isEmpty()) {
           return HttpResult.failure(new ValidationErrorFailure(
-            "Could not find user with matching barcode", "userBarcode", barcode));
+            "Could not find user with matching barcode", propertyName, barcode));
         }
         else {
           return HttpResult.success(wrappedUsers.getRecords().stream().findFirst().get());
