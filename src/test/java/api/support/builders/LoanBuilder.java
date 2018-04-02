@@ -28,7 +28,7 @@ public class LoanBuilder extends JsonBuilder implements Builder {
 
   public LoanBuilder() {
     this(UUID.randomUUID(), UUID.randomUUID(), APITestSuite.userId(),
-      new DateTime(2017, 03, 06, 16, 04, 43), null, "Open", null, null,
+      new DateTime(2017, 3, 6, 16, 4, 43), null, "Open", null, null,
       "checkedout", null);
   }
 

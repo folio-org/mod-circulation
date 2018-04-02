@@ -23,7 +23,8 @@ public class CheckOutResource extends CollectionResource {
   }
 
   public void register(Router router) {
-    RouteRegistration routeRegistration = new RouteRegistration("/circulation/check-out", router);
+    RouteRegistration routeRegistration = new RouteRegistration(
+      "/circulation/check-out", router);
 
     routeRegistration.create(this::checkOut);
   }
@@ -51,8 +52,7 @@ public class CheckOutResource extends CollectionResource {
 
     defaultStatusAndAction(loan);
 
-    loan.put("loanDate", DateTime.now().toDateTime(DateTimeZone.UTC)
-      .toString(ISODateTimeFormat.dateTime()));
+    copyOrDefaultLoanDate(request, loan);
 
     final String userBarcode = request.getString("userBarcode");
     final String itemBarcode = request.getString("itemBarcode");
@@ -72,6 +72,16 @@ public class CheckOutResource extends CollectionResource {
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(this::createdLoanFrom)
       .thenAccept(result -> result.writeTo(routingContext.response()));
+  }
+
+  private void copyOrDefaultLoanDate(JsonObject request, JsonObject loan) {
+    final String loanDateProperty = "loanDate";
+    if(request.containsKey(loanDateProperty)) {
+      loan.put(loanDateProperty, request.getString(loanDateProperty));
+    } else {
+      loan.put(loanDateProperty, DateTime.now().toDateTime(DateTimeZone.UTC)
+        .toString(ISODateTimeFormat.dateTime()));
+    }
   }
 
   private Function<LoanAndRelatedRecords, LoanAndRelatedRecords> mapBarcodes() {

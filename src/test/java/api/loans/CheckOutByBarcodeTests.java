@@ -2,6 +2,7 @@ package api.loans;
 
 import api.APITestSuite;
 import api.support.APITests;
+import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -24,6 +25,7 @@ import static api.support.builders.RequestBuilder.CLOSED_FILLED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.JsonObjectMatchers.hasSoleErrorMessageContaining;
+import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static org.hamcrest.CoreMatchers.is;
@@ -41,10 +43,13 @@ public class CheckOutByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    DateTime requestMade = DateTime.now();
+    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
-      smallAngryPlanet, steve);
+      new CheckOutByBarcodeRequestBuilder()
+      .forItem(smallAngryPlanet)
+      .to(steve)
+      .at(loanDate));
 
     final JsonObject loan = response.getJson();
 
@@ -62,8 +67,8 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat("action should be checkedout",
       loan.getString("action"), is("checkedout"));
 
-    assertThat("loan date should match when request was made",
-      loan.getString("loanDate"), withinSecondsAfter(Seconds.seconds(5), requestMade));
+    assertThat("loan date should be as supplied",
+      loan.getString("loanDate"), isEquivalentTo(loanDate));
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
@@ -137,6 +142,29 @@ public class CheckOutByBarcodeTests extends APITests {
     final Response getResponse = completed.get(2, TimeUnit.SECONDS);
 
     assertThat(getResponse.getStatusCode(), is(HTTP_OK));
+  }
+
+  @Test
+  public void canCreateALoanWithoutLoanDate()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+
+    final DateTime requestDate = DateTime.now();
+
+    final IndividualResource response = loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve));
+
+    final JsonObject loan = response.getJson();
+
+    assertThat("loan date should be as supplied",
+      loan.getString("loanDate"), withinSecondsAfter(Seconds.seconds(10), requestDate));
   }
 
   @Test

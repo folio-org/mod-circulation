@@ -10,6 +10,11 @@
     "itemBarcode": {
       "description": "Barcode of the item to be lent to the patron",
       "type": "string"
+    },
+    "loanDate": {
+      "description": "When the loan is to begin, defaults to current date and time",
+      "type": "string",
+      "format": "date-time"
     }
   },
   "required": [

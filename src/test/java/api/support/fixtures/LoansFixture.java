@@ -133,11 +133,14 @@ public class LoansFixture {
   public IndividualResource checkOutByBarcode(
     IndividualResource item,
     IndividualResource to) {
-
-    JsonObject request = new CheckOutByBarcodeRequestBuilder()
+    return checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
       .forItem(item)
-      .to(to)
-      .create();
+      .to(to));
+  }
+
+  public IndividualResource checkOutByBarcode(CheckOutByBarcodeRequestBuilder builder) {
+
+    JsonObject request = builder.create();
 
     io.restassured.response.Response response = restAssuredClient.given()
       .log().all()
