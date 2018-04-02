@@ -3,79 +3,20 @@ package org.folio.circulation.domain;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 
 public class LoanPolicyRepository {
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
   private final LoanRulesClient loanRulesClient;
 
   public LoanPolicyRepository(Clients clients) {
     loanRulesClient = clients.loanRules();
-  }
-
-  private static CompletableFuture<HttpResult<String>> lookupLoanPolicyId(
-    JsonObject item,
-    JsonObject holding,
-    JsonObject user,
-    LoanRulesClient loanRulesClient) {
-
-    CompletableFuture<HttpResult<String>> findLoanPolicyCompleted
-      = new CompletableFuture<>();
-
-    lookupLoanPolicyId(item, holding, user, loanRulesClient,
-      findLoanPolicyCompleted::complete);
-
-    return findLoanPolicyCompleted;
-  }
-
-  private static void lookupLoanPolicyId(
-    JsonObject item,
-    JsonObject holding,
-    JsonObject user,
-    LoanRulesClient loanRulesClient,
-    Consumer<HttpResult<String>> onFinished) {
-
-    if(item == null) {
-      onFinished.accept(HttpResult.failure(
-        new ServerErrorFailure("Unable to process claim for unknown item")));
-      return;
-    }
-
-    if(holding == null) {
-      onFinished.accept(HttpResult.failure(
-        new ServerErrorFailure("Unable to process claim for unknown holding")));
-      return;
-    }
-
-    String loanTypeId = determineLoanTypeForItem(item);
-    String locationId = LoanValidation.determineLocationIdForItem(item, holding);
-
-    //Got instance record, we're good to continue
-    String materialTypeId = item.getString("materialTypeId");
-
-    String patronGroup = user.getString("patronGroup");
-    loanRulesClient.applyRules(loanTypeId, locationId, materialTypeId,
-      patronGroup, response -> response.bodyHandler(body -> {
-        Response getPolicyResponse = Response.from(response, body);
-
-        if (getPolicyResponse.getStatusCode() == 404) {
-          onFinished.accept(HttpResult.failure(
-            new ServerErrorFailure("Unable to locate loan policy")));
-        } else if (getPolicyResponse.getStatusCode() != 200) {
-          onFinished.accept(HttpResult.failure(
-            new ForwardOnFailure(getPolicyResponse)));
-        } else {
-          String policyId = getPolicyResponse.getJson().getString("loanPolicyId");
-          onFinished.accept(HttpResult.success(policyId));
-        }
-      }));
-  }
-
-  private static String determineLoanTypeForItem(JsonObject item) {
-    return item.containsKey("temporaryLoanTypeId") && !item.getString("temporaryLoanTypeId").isEmpty()
-      ? item.getString("temporaryLoanTypeId")
-      : item.getString("permanentLoanTypeId");
   }
 
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> lookupLoanPolicyId(
@@ -84,8 +25,64 @@ public class LoanPolicyRepository {
     return lookupLoanPolicyId(
       relatedRecords.inventoryRecords.getItem(),
       relatedRecords.inventoryRecords.holding,
-      relatedRecords.requestingUser,
-      loanRulesClient)
+      relatedRecords.requestingUser)
       .thenApply(result -> result.map(relatedRecords::withLoanPolicy));
+  }
+
+  private CompletableFuture<HttpResult<String>> lookupLoanPolicyId(
+    JsonObject item,
+    JsonObject holding,
+    JsonObject user) {
+
+    CompletableFuture<HttpResult<String>> findLoanPolicyCompleted
+      = new CompletableFuture<>();
+
+    if(item == null) {
+      return CompletableFuture.completedFuture(HttpResult.failure(
+        new ServerErrorFailure("Unable to apply loan rules for unknown item")));
+    }
+
+    if(holding == null) {
+      return CompletableFuture.completedFuture(HttpResult.failure(
+        new ServerErrorFailure("Unable to apply loan rules for unknown holding")));
+    }
+
+    String loanTypeId = determineLoanTypeForItem(item);
+    String locationId = LoanValidation.determineLocationIdForItem(item, holding);
+
+    //Got instance record, we're good to continue
+    String materialTypeId = item.getString("materialTypeId");
+
+    String patronGroupId = user.getString("patronGroup");
+
+    CompletableFuture<Response> loanRulesResponse = new CompletableFuture<>();
+
+    log.info(
+      "Applying loan rules for material type: {}, patron group: {}, loan type: {}, location: {}",
+      materialTypeId, patronGroupId, loanTypeId, locationId);
+
+    loanRulesClient.applyRules(loanTypeId, locationId, materialTypeId,
+      patronGroupId, ResponseHandler.any(loanRulesResponse));
+
+    loanRulesResponse.thenAcceptAsync(response -> {
+      if (response.getStatusCode() == 404) {
+        findLoanPolicyCompleted.complete(HttpResult.failure(
+          new ServerErrorFailure("Unable to apply loan rules")));
+      } else if (response.getStatusCode() != 200) {
+        findLoanPolicyCompleted.complete(HttpResult.failure(
+          new ForwardOnFailure(response)));
+      } else {
+        String policyId = response.getJson().getString("loanPolicyId");
+        findLoanPolicyCompleted.complete(HttpResult.success(policyId));
+      }
+    });
+
+    return findLoanPolicyCompleted;
+  }
+
+  private static String determineLoanTypeForItem(JsonObject item) {
+    return item.containsKey("temporaryLoanTypeId") && !item.getString("temporaryLoanTypeId").isEmpty()
+      ? item.getString("temporaryLoanTypeId")
+      : item.getString("permanentLoanTypeId");
   }
 }
