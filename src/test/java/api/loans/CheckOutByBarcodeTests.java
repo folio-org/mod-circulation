@@ -117,6 +117,13 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat("Should not have snapshot of item status, as current status is included",
       loan.containsKey("itemStatus"), is(false));
+
+    assertThat("item has location",
+      loan.getJsonObject("item").containsKey("location"), is(true));
+
+    assertThat("location is taken from holding",
+      loan.getJsonObject("item").getJsonObject("location").getString("name"),
+      is("3rd Floor"));
   }
 
   @Test
