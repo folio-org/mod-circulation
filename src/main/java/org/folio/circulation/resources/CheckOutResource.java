@@ -37,7 +37,7 @@ public class CheckOutResource extends CollectionResource {
     final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
-    final LoanRulesRepository loanRulesRepository = new LoanRulesRepository(clients);
+    final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final MaterialTypeRepository materialTypeRepository = new MaterialTypeRepository(clients);
     final LocationRepository locationRepository = new LocationRepository(clients);
 
@@ -71,7 +71,7 @@ public class CheckOutResource extends CollectionResource {
       .thenApply(LoanValidation::refuseWhenUserIsNotAwaitingPickup)
       .thenComposeAsync(r -> r.after(materialTypeRepository::getMaterialType))
       .thenComposeAsync(r -> r.after(locationRepository::getLocation))
-      .thenComposeAsync(r -> r.after(loanRulesRepository::lookupLoanPolicyId))
+      .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicyId))
       .thenApply(r -> r.next(this::calculateDueDate))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(updateItem::onCheckOut))

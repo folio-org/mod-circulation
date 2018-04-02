@@ -7,10 +7,10 @@ import org.folio.circulation.support.http.client.Response;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
-public class LoanRulesRepository {
+public class LoanPolicyRepository {
   private final LoanRulesClient loanRulesClient;
 
-  public LoanRulesRepository(Clients clients) {
+  public LoanPolicyRepository(Clients clients) {
     loanRulesClient = clients.loanRules();
   }
 
