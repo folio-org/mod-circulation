@@ -20,7 +20,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -59,6 +58,7 @@ public class LoanCollectionResource extends CollectionResource {
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanRulesRepository loanRulesRepository = new LoanRulesRepository(clients);
     final MaterialTypeRepository materialTypeRepository = new MaterialTypeRepository(clients);
+    final LocationRepository locationRepository = new LocationRepository(clients);
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
@@ -79,7 +79,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
       .thenCombineAsync(userFetcher.getUser(requestingUserId), this::addUser)
       .thenApply(LoanValidation::refuseWhenUserIsNotAwaitingPickup)
-      .thenComposeAsync(r -> r.after(records -> getLocation(records, clients)))
+      .thenComposeAsync(r -> r.after(locationRepository::getLocation))
       .thenComposeAsync(r -> r.after(materialTypeRepository::getMaterialType))
       .thenComposeAsync(r -> r.after(loanRulesRepository::lookupLoanPolicyId))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
@@ -127,6 +127,7 @@ public class LoanCollectionResource extends CollectionResource {
     final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final MaterialTypeRepository materialTypeRepository = new MaterialTypeRepository(clients);
+    final LocationRepository locationRepository = new LocationRepository(clients);
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
@@ -134,7 +135,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     loanRepository.getById(id)
       .thenComposeAsync(result -> result.after(inventoryFetcher::getInventoryRecords))
-      .thenComposeAsync(r -> r.after(records -> getLocation(records, clients)))
+      .thenComposeAsync(r -> r.after(locationRepository::getLocation))
       .thenComposeAsync(r -> r.after(materialTypeRepository::getMaterialType))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(OkJsonHttpResult::from)
@@ -190,7 +191,7 @@ public class LoanCollectionResource extends CollectionResource {
 
         inventoryRecordsFetched.thenAccept(records -> {
           List<String> locationIds = records.getItems().stream()
-            .map(item -> LoanRulesRepository.determineLocationIdForItem(item,
+            .map(item -> LoanValidation.determineLocationIdForItem(item,
               records.findHoldingById(item.getString("holdingsRecordId")).orElse(null)))
             .filter(StringUtils::isNotBlank)
             .collect(Collectors.toList());
@@ -261,7 +262,7 @@ public class LoanCollectionResource extends CollectionResource {
 
                   Optional<JsonObject> possibleLocation = locations.stream()
                     .filter(location -> location.getString("id").equals(
-                      LoanRulesRepository.determineLocationIdForItem(item, possibleHolding.orElse(null))))
+                      LoanValidation.determineLocationIdForItem(item, possibleHolding.orElse(null))))
                     .findFirst();
 
                   List<JsonObject> materialTypes = JsonArrayHelper.toList(
@@ -272,14 +273,11 @@ public class LoanCollectionResource extends CollectionResource {
                     .filter(materialType -> materialType.getString("id")
                     .equals(materialTypeId[0])).findFirst();
 
-
-                  loan.put("item", new LoanRepresentation().createItemSummary(item,
+                  loan.put("item", loanRepresentation.createItemSummary(item,
                     possibleInstance.orElse(null),
                       possibleHolding.orElse(null),
                       possibleLocation.orElse(null),
-                      possibleMaterialType.orElse(null)
-                      )
-                  );
+                      possibleMaterialType.orElse(null)));
                 }
               });
 
@@ -333,51 +331,6 @@ public class LoanCollectionResource extends CollectionResource {
 
     return HttpResult.combine(loanResult, getUserResult,
       LoanAndRelatedRecords::withRequestingUser);
-  }
-
-  private CompletableFuture<HttpResult<LoanAndRelatedRecords>> getLocation(
-    LoanAndRelatedRecords relatedRecords,
-    Clients clients) {
-
-    //Cannot find location for unknown item
-    if(relatedRecords.inventoryRecords.item == null) {
-      return CompletableFuture.completedFuture(HttpResult.success(relatedRecords));
-    }
-
-    final String locationId = LoanRulesRepository.determineLocationIdForItem(
-      relatedRecords.inventoryRecords.item, relatedRecords.inventoryRecords.holding);
-
-    return getLocation(locationId,
-      relatedRecords.inventoryRecords.item.getString("id"), clients)
-      .thenApply(result -> result.map(relatedRecords::withLocation));
-  }
-
-  private CompletableFuture<HttpResult<JsonObject>> getLocation(
-    String locationId,
-    String itemId,
-    Clients clients) {
-
-    CompletableFuture<Response> getLocationCompleted = new CompletableFuture<>();
-
-    clients.locationsStorage().get(locationId, getLocationCompleted::complete);
-
-    //TODO: Add functions to explicitly distinguish between fatal not found
-    // and allowable not found
-    final Function<Response, HttpResult<JsonObject>> mapResponse = response -> {
-      if(response != null && response.getStatusCode() == 200) {
-        return HttpResult.success(response.getJson());
-      }
-      else {
-        log.warn("Could not get location {} for item {}",
-          locationId, itemId);
-
-        return HttpResult.success(null);
-      }
-    };
-
-    return getLocationCompleted
-      .thenApply(mapResponse)
-      .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
   }
 
   private HttpResult<LoanAndRelatedRecords> refuseWhenHoldingDoesNotExist(

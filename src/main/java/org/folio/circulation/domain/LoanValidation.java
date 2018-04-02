@@ -91,4 +91,19 @@ public class LoanValidation {
   private static boolean isAwaitingPickup(JsonObject highestPriority) {
     return StringUtils.equals(highestPriority.getString("status"), OPEN_AWAITING_PICKUP);
   }
+
+  public static String determineLocationIdForItem(JsonObject item, JsonObject holding) {
+    if(item != null && item.containsKey("temporaryLocationId")) {
+      return item.getString("temporaryLocationId");
+    }
+    else if(holding != null && holding.containsKey("permanentLocationId")) {
+      return holding.getString("permanentLocationId");
+    }
+    else if(item != null && item.containsKey("permanentLocationId")) {
+      return item.getString("permanentLocationId");
+    }
+    else {
+      return null;
+    }
+  }
 }

@@ -49,7 +49,7 @@ public class LoanRulesRepository {
     }
 
     String loanTypeId = determineLoanTypeForItem(item);
-    String locationId = determineLocationIdForItem(item, holding);
+    String locationId = LoanValidation.determineLocationIdForItem(item, holding);
 
     //Got instance record, we're good to continue
     String materialTypeId = item.getString("materialTypeId");
@@ -76,21 +76,6 @@ public class LoanRulesRepository {
     return item.containsKey("temporaryLoanTypeId") && !item.getString("temporaryLoanTypeId").isEmpty()
       ? item.getString("temporaryLoanTypeId")
       : item.getString("permanentLoanTypeId");
-  }
-
-  public static String determineLocationIdForItem(JsonObject item, JsonObject holding) {
-    if(item != null && item.containsKey("temporaryLocationId")) {
-      return item.getString("temporaryLocationId");
-    }
-    else if(holding != null && holding.containsKey("permanentLocationId")) {
-      return holding.getString("permanentLocationId");
-    }
-    else if(item != null && item.containsKey("permanentLocationId")) {
-      return item.getString("permanentLocationId");
-    }
-    else {
-      return null;
-    }
   }
 
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> lookupLoanPolicyId(
