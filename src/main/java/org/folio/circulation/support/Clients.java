@@ -16,6 +16,7 @@ public class Clients {
   private final CollectionResourceClient policiesStorageClient;
   private final CollectionResourceClient locationsStorageClient;
   private final CollectionResourceClient materialTypesStorageClient;
+  private final CollectionResourceClient loanPoliciesStorageClient;
   private final CollectionResourceClient proxiesForClient;
   private final LoanRulesClient loanRulesClient;
 
@@ -40,6 +41,7 @@ public class Clients {
       loanRulesClient = new LoanRulesClient(client, context);
       materialTypesStorageClient = createMaterialTypesStorageClient(client, context);
       proxiesForClient = createProxyUsersStorageClient(client, context);
+      loanPoliciesStorageClient = createLoanPoliciesStorageClient(client, context);
     }
     catch(MalformedURLException e) {
       throw new InvalidOkapiLocationException(context.getOkapiLocation(), e);
@@ -80,6 +82,10 @@ public class Clients {
 
   public CollectionResourceClient materialTypesStorage() {
     return materialTypesStorageClient;
+  }
+
+  public CollectionResourceClient loanPoliciesStorage() {
+    return loanPoliciesStorageClient;
   }
 
   public CollectionResourceClient userProxies() {
@@ -179,5 +185,14 @@ public class Clients {
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/material-types");
+  }
+
+  private CollectionResourceClient createLoanPoliciesStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context,
+      "/loan-policy-storage/loan-policies");
   }
 }

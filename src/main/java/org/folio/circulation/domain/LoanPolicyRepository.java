@@ -14,9 +14,11 @@ public class LoanPolicyRepository {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final LoanRulesClient loanRulesClient;
+  private final CollectionResourceClient loanPoliciesStorageClient;
 
   public LoanPolicyRepository(Clients clients) {
     loanRulesClient = clients.loanRules();
+    loanPoliciesStorageClient = clients.loanPoliciesStorage();
   }
 
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> lookupLoanPolicy(
@@ -33,8 +35,8 @@ public class LoanPolicyRepository {
   private CompletableFuture<HttpResult<JsonObject>> lookupLoanPolicy(
     String loanPolicyId) {
 
-    return CompletableFuture.completedFuture(HttpResult.success(
-      new JsonObject().put("id", loanPolicyId)));
+    return new SingleRecordFetcher(loanPoliciesStorageClient, "loan policy")
+      .fetchSingleRecord(loanPolicyId);
   }
 
   private CompletableFuture<HttpResult<String>> lookupLoanPolicyId(
