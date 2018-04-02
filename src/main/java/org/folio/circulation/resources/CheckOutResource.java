@@ -71,7 +71,7 @@ public class CheckOutResource extends CollectionResource {
       .thenApply(LoanValidation::refuseWhenUserIsNotAwaitingPickup)
       .thenComposeAsync(r -> r.after(materialTypeRepository::getMaterialType))
       .thenComposeAsync(r -> r.after(locationRepository::getLocation))
-      .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicyId))
+      .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenApply(r -> r.next(this::calculateDueDate))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(updateItem::onCheckOut))

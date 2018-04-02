@@ -79,7 +79,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenApply(LoanValidation::refuseWhenUserIsNotAwaitingPickup)
       .thenComposeAsync(r -> r.after(locationRepository::getLocation))
       .thenComposeAsync(r -> r.after(materialTypeRepository::getMaterialType))
-      .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicyId))
+      .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
       .thenComposeAsync(r -> r.after(loanRepository::createLoan))

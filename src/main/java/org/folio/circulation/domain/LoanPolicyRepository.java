@@ -19,14 +19,22 @@ public class LoanPolicyRepository {
     loanRulesClient = clients.loanRules();
   }
 
-  public CompletableFuture<HttpResult<LoanAndRelatedRecords>> lookupLoanPolicyId(
+  public CompletableFuture<HttpResult<LoanAndRelatedRecords>> lookupLoanPolicy(
     LoanAndRelatedRecords relatedRecords) {
 
     return lookupLoanPolicyId(
       relatedRecords.inventoryRecords.getItem(),
       relatedRecords.inventoryRecords.holding,
       relatedRecords.requestingUser)
+      .thenComposeAsync(r -> r.after(this::lookupLoanPolicy))
       .thenApply(result -> result.map(relatedRecords::withLoanPolicy));
+  }
+
+  private CompletableFuture<HttpResult<JsonObject>> lookupLoanPolicy(
+    String loanPolicyId) {
+
+    return CompletableFuture.completedFuture(HttpResult.success(
+      new JsonObject().put("id", loanPolicyId)));
   }
 
   private CompletableFuture<HttpResult<String>> lookupLoanPolicyId(
