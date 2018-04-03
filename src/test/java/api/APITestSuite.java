@@ -1,15 +1,16 @@
 package api;
 
-import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.CirculationVerticle;
 import api.loans.*;
 import api.requests.*;
 import api.requests.scenarios.*;
+import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.UserBuilder;
 import api.support.fakes.FakeOkapi;
 import api.support.http.ResourceClient;
 import api.support.http.URLHelper;
+import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
+import org.folio.circulation.CirculationVerticle;
 import org.folio.circulation.support.VertxAssistant;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.junit.AfterClass;
@@ -132,9 +133,8 @@ public class APITestSuite {
   }
 
   public static OkapiHttpClient createClient() {
-    return APITestSuite.createClient(exception -> {
-      log.error("Request failed:", exception);
-    });
+    return APITestSuite.createClient(exception ->
+      log.error("Request failed:", exception));
   }
 
   public static UUID bookMaterialTypeId() {
@@ -253,9 +253,8 @@ public class APITestSuite {
 
     initialised = false;
 
-    OkapiHttpClient client = APITestSuite.createClient(exception -> {
-      log.error("Requests to delete all for clean up failed:", exception);
-    });
+    OkapiHttpClient client = APITestSuite.createClient(exception ->
+      log.error("Requests to delete all for clean up failed:", exception));
 
     ResourceClient.forRequests(client).deleteAll();
     ResourceClient.forLoans(client).deleteAll();
@@ -538,17 +537,9 @@ public class APITestSuite {
 
     ResourceClient client = ResourceClient.forLoanPolicies(createClient());
 
-    JsonObject canCirculateLoanPolicy = new JsonObject()
-      .put("name", "Can Circulate")
-      .put("description", "Can circulate item")
-      .put("loanable", true)
-      .put("renewable", true)
-      .put("loansPolicy", new JsonObject()
-        .put("profileId", "ROLLING")
-        .put("closedLibraryDueDateManagementId", "KEEP_CURRENT_DATE"))
-      .put("renewalsPolicy", new JsonObject()
-        .put("renewFromId", "CURRENT_DUE_DATE")
-        .put("differentPeriod", false));
+    LoanPolicyBuilder canCirculateLoanPolicy = new LoanPolicyBuilder()
+      .withName("Can Circulate")
+      .withDescription("Can circulate item");
 
     canCirculateLoanPolicyId = client.create(canCirculateLoanPolicy).getId();
   }
