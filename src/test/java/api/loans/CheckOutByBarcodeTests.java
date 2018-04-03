@@ -70,15 +70,15 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat("loan date should be as supplied",
       loan.getString("loanDate"), isEquivalentTo(loanDate));
 
-    assertThat("due date is 14 days after loan date",
-      loan.getString("dueDate"), isEquivalentTo(loanDate.plusDays(14)));
+    assertThat("last loan policy should be stored",
+      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateLoanPolicyId().toString()));
+
+    assertThat("due date should be 3 weeks after loan date, based upon loan policy",
+      loan.getString("dueDate"), isEquivalentTo(loanDate.plusWeeks(3)));
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
     assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
-
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateLoanPolicyId().toString()));
 
     assertThat("has item information",
       loan.containsKey("item"), is(true));

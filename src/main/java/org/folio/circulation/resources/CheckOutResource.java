@@ -84,15 +84,17 @@ public class CheckOutResource extends CollectionResource {
   private HttpResult<LoanAndRelatedRecords> calculateDueDate(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
-    final DateTime loanDate = DateTime.parse(
-      loanAndRelatedRecords.loan.getString("loanDate"));
+    final DueDateCalculation dueDateCalculation = new DueDateCalculation();
+    final JsonObject loan = loanAndRelatedRecords.loan;
+    final JsonObject loanPolicy = loanAndRelatedRecords.loanPolicy;
 
-    final DateTime dueDate = loanDate.plusDays(14);
+    return dueDateCalculation.calculate(loan, loanPolicy)
+      .map(dueDate -> {
+        loanAndRelatedRecords.loan.put("dueDate",
+          dueDate.toString(ISODateTimeFormat.dateTime()));
 
-    loanAndRelatedRecords.loan.put("dueDate",
-      dueDate.toString(ISODateTimeFormat.dateTime()));
-
-    return HttpResult.success(loanAndRelatedRecords);
+        return loanAndRelatedRecords;
+      });
   }
 
   private void copyOrDefaultLoanDate(JsonObject request, JsonObject loan) {
