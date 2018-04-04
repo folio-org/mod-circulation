@@ -13,6 +13,7 @@ import org.folio.circulation.loanrules.Drools;
 import org.folio.circulation.loanrules.Text2Drools;
 import org.folio.circulation.support.ClientUtil;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.http.server.ClientErrorResponse;
 import org.folio.circulation.support.http.server.ForwardResponse;
 import org.folio.circulation.support.http.server.JsonResponse;
 import org.folio.circulation.support.http.server.ServerErrorResponse;
@@ -30,6 +31,11 @@ import java.util.Map;
  */
 public class LoanRulesEngineResource extends CollectionResource {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
+  private static final String ITEM_TYPE_ID_NAME = "item_type_id";
+  private static final String LOAN_TYPE_ID_NAME = "loan_type_id";
+  private static final String PATRON_TYPE_ID_NAME = "patron_type_id";
+  private static final String SHELVING_LOCATION_ID_NAME = "shelving_location_id";
 
   private final String applyPath;
   private final String applyAllPath;
@@ -231,14 +237,40 @@ public class LoanRulesEngineResource extends CollectionResource {
     }
   }
 
+  private boolean invalidUuid(HttpServerRequest request, String paramName) {
+    final String regex = "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$";
+    String uuid = request.getParam(paramName);
+    if (uuid == null) {
+      ClientErrorResponse.badRequest(request.response(), "required query parameter missing: " + paramName);
+      return true;
+    }
+    if (! uuid.matches(regex)) {
+      ClientErrorResponse.badRequest(request.response(), "invalid uuid format of " + paramName +
+          ", expecting " + regex + " but it is " + uuid);
+      return true;
+    }
+    return false;
+  }
+
+  private boolean invalidApplyParameters(HttpServerRequest request) {
+    return
+        invalidUuid(request, ITEM_TYPE_ID_NAME) ||
+        invalidUuid(request, LOAN_TYPE_ID_NAME) ||
+        invalidUuid(request, PATRON_TYPE_ID_NAME) ||
+        invalidUuid(request, SHELVING_LOCATION_ID_NAME);
+  }
+
   private void apply(RoutingContext routingContext) {
+    HttpServerRequest request = routingContext.request();
+    if (invalidApplyParameters(request)) {
+      return;
+    }
     drools(routingContext, drools -> {
       try {
-        HttpServerRequest request = routingContext.request();
-        String itemTypeId = request.getParam("item_type_id");
-        String loanTypeId = request.getParam("loan_type_id");
-        String patronGroupId = request.getParam("patron_type_id");
-        String shelvingLocationId = request.getParam("shelving_location_id");
+        String itemTypeId = request.getParam(ITEM_TYPE_ID_NAME);
+        String loanTypeId = request.getParam(LOAN_TYPE_ID_NAME);
+        String patronGroupId = request.getParam(PATRON_TYPE_ID_NAME);
+        String shelvingLocationId = request.getParam(SHELVING_LOCATION_ID_NAME);
         String loanPolicyId = drools.loanPolicy(itemTypeId, loanTypeId, patronGroupId);
         JsonObject json = new JsonObject().put("loanPolicyId", loanPolicyId);
         JsonResponse.success(routingContext.response(), json);
@@ -251,17 +283,20 @@ public class LoanRulesEngineResource extends CollectionResource {
   }
 
   private void applyAll(RoutingContext routingContext) {
+    HttpServerRequest request = routingContext.request();
+    if (invalidApplyParameters(request)) {
+      return;
+    }
     if (routingContext.pathParam("loan_rules") != null) {
       ServerErrorResponse.internalError(routingContext.response(), "parameter loan_rules not implemented yet");
       return;
     }
     drools(routingContext, drools -> {
       try {
-        HttpServerRequest request = routingContext.request();
-        String itemTypeId = request.getParam("item_type_id");
-        String loanTypeId = request.getParam("loan_type_id");
-        String patronGroupId = request.getParam("patron_type_id");
-        String shelvingLocationId = request.getParam("shelving_location_id");
+        String itemTypeId = request.getParam(ITEM_TYPE_ID_NAME);
+        String loanTypeId = request.getParam(LOAN_TYPE_ID_NAME);
+        String patronGroupId = request.getParam(PATRON_TYPE_ID_NAME);
+        String shelvingLocationId = request.getParam(SHELVING_LOCATION_ID_NAME);
         List<String> loanPolicyIds = drools.loanPolicies(itemTypeId, loanTypeId, patronGroupId);
         JsonArray loanPolicies = new JsonArray();
         loanPolicyIds.forEach(id -> {
