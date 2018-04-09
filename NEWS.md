@@ -1,4 +1,4 @@
-## 8.1.1 Unreleased
+## 8.1.1 2018-04-09
 
 * Includes proxy user's name for requests (CIRC-88)
 * Stores proxy user's name for requests (so it can be used for sorting, CIRC-88)
