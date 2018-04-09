@@ -1,6 +1,6 @@
 #%RAML 0.8
 title: Circulation
-version: v2.12
+version: v2.13
 protocols: [ HTTP, HTTPS ]
 baseUri: http://localhost:9130
 
@@ -137,6 +137,11 @@ resourceTypes:
               application/json:
                 schema: !include schema/loan-policy-id.json
                 example: !include examples/loan-policy-id.json
+          400:
+            description: "Invalid query parameters"
+            body:
+              text/plain:
+                example: "required query parameter missing: item_type_id"
           422:
             description: "Invalid id error."
             body:
