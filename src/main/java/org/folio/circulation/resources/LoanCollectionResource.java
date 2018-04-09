@@ -254,7 +254,7 @@ public class LoanCollectionResource extends CollectionResource {
                   }
 
                   List<JsonObject> locations = JsonArrayHelper.toList(
-                    locationsResponse.getJson().getJsonArray("shelflocations"));
+                    locationsResponse.getJson().getJsonArray("locations"));
 
                   Optional<JsonObject> possibleLocation = locations.stream()
                     .filter(location -> location.getString("id").equals(
