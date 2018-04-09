@@ -1,5 +1,7 @@
-## 9.0.0 Unreleased
+## 9.0.1 Unreleased
 
+* Loan rules `apply` endpoint missing or malformed reports query parameters (CIRC-95)
+* Provides `circulation` interface 2.13 (CIRC-95)
 * Requires location interface 1.1 or 2.0 (CIRC-91)
 * No longer requires `shelf-locations` interface (CIRC-91)
 

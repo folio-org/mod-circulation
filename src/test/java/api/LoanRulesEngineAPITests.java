@@ -15,11 +15,14 @@ import org.slf4j.LoggerFactory;
 import java.lang.invoke.MethodHandles;
 import java.net.URL;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static api.support.http.InterfaceUrls.loanRulesUrl;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.StringContains.containsString;
 
 public class LoanRulesEngineAPITests {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -53,6 +56,7 @@ public class LoanRulesEngineAPITests {
           );
       client.get(url, ResponseHandler.any(completed));
       Response response = completed.get(10, TimeUnit.SECONDS);
+      assert response.getStatusCode() == 200;
       JsonObject json = new JsonObject(response.getBody());
       String loanPolicyId = json.getString("loanPolicyId");
       assert loanPolicyId != null;
@@ -99,6 +103,81 @@ public class LoanRulesEngineAPITests {
   public void setUp() {
     LoanRulesEngineResource.dropCache();
     LoanRulesEngineResource.setCacheTime(1000000, 1000000);  // 1000 seconds
+  }
+
+  @Test
+  public void applyWithoutParameters() throws Exception {
+    CompletableFuture<Response> completed = new CompletableFuture<>();
+    URL url = loanRulesUrl("/apply");
+    client.get(url, ResponseHandler.any(completed));
+    Response response = completed.get(10, TimeUnit.SECONDS);
+    assertThat(response.getStatusCode(), is(400));
+  }
+
+  private void applyOneParameterMissing(String p1, String p2, String p3, String missing) throws Exception {
+    String name = missing.substring(0, missing.indexOf("="));
+    CompletableFuture<Response> completed = new CompletableFuture<>();
+    URL url = loanRulesUrl("/apply?" + p1 + "&" + p2 + "&" + p3);
+    client.get(url, ResponseHandler.any(completed));
+    Response response = completed.get(10, TimeUnit.SECONDS);
+    assertThat(response.getStatusCode(), is(400));
+    assertThat(response.getBody(), containsString(name));
+  }
+
+  @Test
+  public void applyOneParameterMissing() throws Exception {
+    String [] p = {
+        "item_type_id=" + m1,
+        "loan_type_id=" + t1,
+        "patron_type_id=" + p1,
+        "shelving_location_id=" + s1
+    };
+
+    applyOneParameterMissing(p[1], p[2], p[3],  p[0]);
+    applyOneParameterMissing(p[0], p[2], p[3],  p[1]);
+    applyOneParameterMissing(p[0], p[1], p[3],  p[2]);
+    applyOneParameterMissing(p[0], p[1], p[2],  p[3]);
+  }
+
+  private void applyInvalidUuid(String i, String l, String p, String s) {
+    CompletableFuture<Response> completed = new CompletableFuture<>();
+    URL url = loanRulesUrl("/apply"
+        + "?item_type_id=" + i
+        + "&loan_type_id=" + l
+        + "&patron_type_id=" + p
+        + "&shelving_location_id=" + s);
+    client.get(url, ResponseHandler.any(completed));
+    Response response;
+    try {
+      response = completed.get(10, TimeUnit.SECONDS);
+    } catch (InterruptedException | ExecutionException | TimeoutException e) {
+      throw new RuntimeException (e);
+    }
+    assertThat(response.getStatusCode(), is(400));
+    assertThat(response.getBody(), containsString("uuid"));
+  }
+
+  private void applyInvalidUuid(String uuid) {
+    applyInvalidUuid( uuid, t1.id, p1.id, s1.id);
+    applyInvalidUuid(m1.id,  uuid, p1.id, s1.id);
+    applyInvalidUuid(m1.id, t1.id,  uuid, s1.id);
+    applyInvalidUuid(m1.id, t1.id, p1.id,  uuid);
+  }
+
+  @Test
+  public void applyInvalidUuid() {
+    applyInvalidUuid("");
+    applyInvalidUuid("0");
+    applyInvalidUuid("f");
+    applyInvalidUuid("-");
+    applyInvalidUuid(  "0000000-0000-1000-8000-000000000000");
+    applyInvalidUuid( "00000000-0000-1000-8000-00000000000");
+    applyInvalidUuid("000000000-0000-1000-8000-000000000000");
+    applyInvalidUuid( "00000000-0000-1000-8000-0000000000000");
+    applyInvalidUuid( "00000000-0000-0000-8000-000000000000");
+    applyInvalidUuid( "g0000000-0000-1000-0000-000000000000");
+    applyInvalidUuid( "00000000-0000-1000-8000-00000000000g");
+    applyInvalidUuid( "00000000000010008000000000000000");
   }
 
   @Test
