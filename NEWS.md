@@ -1,3 +1,8 @@
+## 9.0.0 Unreleased
+
+* Requires location interface 1.1 or 2.0 (CIRC-91)
+* No longer requires `shelf-locations` interface (CIRC-91)
+
 ## 8.1.1 2018-04-09
 
 * Includes proxy user's name for requests (CIRC-88)
