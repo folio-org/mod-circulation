@@ -5,9 +5,11 @@ package org.folio.circulation.loanrules;
  */
 public class CampusLocation {
   /** UUID of the campus location. */
+  @SuppressWarnings("squid:ClassVariableVisibilityCheck")  // Drools directly uses public fields
   public String id;
   /**
-   * Set UUID of the campus location.
+   * Set campus.
+   * @param id  UUID of the campus location.
    */
   public CampusLocation(String id) {
     this.id = id;

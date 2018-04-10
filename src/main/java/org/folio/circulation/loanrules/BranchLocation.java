@@ -5,9 +5,11 @@ package org.folio.circulation.loanrules;
  */
 public class BranchLocation {
   /** UUID of the branch location. */
+  @SuppressWarnings("squid:ClassVariableVisibilityCheck")  // Drools directly uses public fields
   public String id;
   /**
-   * Set UUID of the branch location.
+   * Set the branch.
+   * @param UUID of the branch location.
    */
   public BranchLocation(String id) {
     this.id = id;

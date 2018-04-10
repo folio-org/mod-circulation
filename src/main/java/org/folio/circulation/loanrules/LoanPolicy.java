@@ -1,7 +1,17 @@
 package org.folio.circulation.loanrules;
 
+/**
+ * Store the UUID of the loan policy.
+ */
 public class LoanPolicy {
+  /** UUID of the loan policy. */
+  @SuppressWarnings("squid:ClassVariableVisibilityCheck")  // Drools directly uses public fields
   public String id;
+
+  /**
+   * Set loan policy.
+   * @param id  UUID of the loan policy.
+   */
   public LoanPolicy(String id) {
     this.id = id;
   }

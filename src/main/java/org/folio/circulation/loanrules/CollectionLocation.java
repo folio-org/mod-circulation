@@ -5,9 +5,11 @@ package org.folio.circulation.loanrules;
  */
 public class CollectionLocation {
   /** UUID of the collection location. */
+  @SuppressWarnings("squid:ClassVariableVisibilityCheck")  // Drools directly uses public fields
   public String id;
   /**
-   * Set UUID of the collection location.
+   * Set collection.
+   * @param id  UUID of the collection location.
    */
   public CollectionLocation(String id) {
     this.id = id;

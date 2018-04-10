@@ -5,6 +5,7 @@ package org.folio.circulation.loanrules;
  */
 public class ShelvingLocation {
   /** UUID of the shelving location. */
+  @SuppressWarnings("squid:ClassVariableVisibilityCheck")  // Drools directly uses public fields
   public String id;
 
   /** Set shelving location.
