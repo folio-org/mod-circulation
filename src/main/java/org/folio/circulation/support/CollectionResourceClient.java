@@ -2,6 +2,7 @@ package org.folio.circulation.support;
 
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpClientResponse;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.http.entity.ContentType;
@@ -71,31 +72,65 @@ public class CollectionResourceClient {
       responseConversationHandler(responseHandler));
   }
 
-  public void getMany(String query, Consumer<Response> responseHandler) {
-      String url = isProvided(query)
-        ? String.format("%s?%s", collectionRoot, query)
+  public void getMany(String urlencodedQuery, Consumer<Response> responseHandler) {
+      String url = isProvided(urlencodedQuery)
+        ? String.format("%s?%s", collectionRoot, urlencodedQuery)
         : collectionRoot.toString();
 
       client.get(url, responseConversationHandler(responseHandler));
   }
 
   public void getMany(
-    String cqlQuery,
+    String urlencodedCqlQuery,
     Integer pageLimit,
     Integer pageOffset,
     Consumer<Response> responseHandler) {
 
-    //TODO: Replace with query string creator that checks each parameter
-    String url = isProvided(cqlQuery)
-      ? String.format("%s?query=%s&limit=%s&offset=%s", collectionRoot,
-      cqlQuery, pageLimit, pageOffset)
-      : collectionRoot.toString();
-
+    String url = collectionRoot + createQueryString(urlencodedCqlQuery, pageLimit, pageOffset);
     client.get(url, responseConversationHandler(responseHandler));
   }
 
-  private boolean isProvided(String query) {
+  /**
+   * Get all records (up to Integer.MAX_VALUE).
+   * @param responseHandler  the result
+   */
+  public void getAll(Consumer<Response> responseHandler) {
+    getMany(null, Integer.MAX_VALUE, null, responseHandler);
+  }
+
+  private static boolean isProvided(String query) {
     return StringUtils.isNotBlank(query);
+  }
+
+  /**
+   * Combine the optional parameters to a query string.
+   * <p>
+   * createQueryString("field%3Da", 5, 10) = "?query=field%3Da&limit=5&offset=10"
+   * <p>
+   * createQueryString(null, 5, null) = "?limit=5"
+   * <p>
+   * createQueryString(null, null, null) = ""
+   *
+   * @param urlencodedCqlQuery  the urlencoded String for the query parameter, may be null or empty for none
+   * @param pageLimit  the value for the limit parameter, may be null for none
+   * @param pageOffset  the value for the offset parameter, may be null for none
+   * @return the query string, may be empty
+   */
+  static String createQueryString(String urlencodedCqlQuery, Integer pageLimit, Integer pageOffset) {
+    String query = "";
+
+    if (isProvided(urlencodedCqlQuery)) {
+      query += "?query=" + urlencodedCqlQuery;
+    }
+    if (pageLimit != null) {
+      query += query.isEmpty() ? "?" : "&";
+      query += "limit=" + pageLimit;
+    }
+    if (pageOffset != null) {
+      query += query.isEmpty() ? "?" : "&";
+      query += "offset=" + pageOffset;
+    }
+    return query;
   }
 
   private Handler<HttpClientResponse> responseConversationHandler(

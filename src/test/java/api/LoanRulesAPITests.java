@@ -12,9 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -34,16 +32,16 @@ public class LoanRulesAPITests {
 
   @Test
   public void canPutAndGet() throws Exception {
-    Response response = put("");
+    String rule = "priority: t, s, c, b, a, m, g\nfallback-policy: no-circulation\n";
+
+    Response response = put(rule);
     assertThat(response.getStatusCode(), is(204));
+    assertThat(getText(), is(rule));
 
-    assertThat(getText(), is(""));
-
-    String rule = "fallback-policy: no-circulation\n";
+    rule = "priority: t, s, c, b, a, m, g\nfallback-policy: loan-forever\n";
 
     response = put(rule);
     assertThat(response.getStatusCode(), is(204));
-
     assertThat(getText(), is(rule));
   }
 
@@ -57,12 +55,12 @@ public class LoanRulesAPITests {
 
   @Test
   public void canReportValidationError() throws Exception {
-    Response response = put(" \t");
+    Response response = put("\t");
     assertThat(response.getStatusCode(), is(422));
     JsonObject json = new JsonObject(response.getBody());
-    assertThat(json.getString("message"), containsString("tab"));
-    assertThat(json.getInteger("line"), is(0));
-    assertThat(json.getInteger("column"), is(1));
+    assertThat(json.getString("message"), containsStringIgnoringCase("tab"));
+    assertThat(json.getInteger("line"), is(1));
+    assertThat(json.getInteger("column"), is(2));
   }
 
   private Response get() throws Exception {

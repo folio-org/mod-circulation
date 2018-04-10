@@ -123,20 +123,43 @@ gives policy-b. (This is true for any loan type and any shelving location.)
 
 ## Multiple matching rules
 
-If more than one rule matches then this 3-tier logic is used.
+If more than one rule matches then the rule with the highest priority is used. The priority line
+lists the priority regulations in the order they are checked until only a single matching rule
+remains. The priority line must be before the first rule line.
 
-### 1. Criterium type priority
+The priority line may contain one, two or three priority regulations. The last regulation must be
+one of the two line regulations `first-line` and `last-line`.
 
-The loan rules file may contain a line like
-`priority: t, s, c, b, a, m, g` that lists the criterium types in
-decreasing priority. For each rule take the criterium type with
+Before the line regulation there can be zero, one or two of the other regulations:
+`criterium (…)`, `number-of-criteria`
+
+The `criterium (…)` regulation contains the seven criterium types in any order, for example
+`criterium (t, s, c, b, a, m, g)`.
+
+This is an example for a complete priority line:
+
+`policy: number-of-criteria, criterium (t, s, c, b, a, m, g), last-line`
+
+For compatibility with former versions a priority line may contain only the seven criterium types:
+
+`priority: t, s, c, b, a, m, g`
+
+This is the same as
+
+`priority: criterium(t, s, c, b, a, m, g), number-of-criteria, last-line`
+
+### Criterium type priority
+
+The criterium priority lists the criterium types in decreasing priority, for example
+`criterium(t, s, c, b, a, m, g)`. For each rule take the criterium type with
 the highest priority. Now compare the matching rules using that criterium type.
 The rules with the highest priority win.
 
 Example a:
 
 ```
-priority: t, s, c, b, a, m, g
+priority: criterium(t, s, c, b, a, m, g), number-of-criteria, last-line
+fallback-policy: no-circulation
 g visitor: policy-a
 t rare: policy-c
 m book: policy-e
@@ -149,7 +172,8 @@ type `t` and wins.
 Example b:
 
 ```
-priority: t, s, c, b, a, m, g
+priority: criterium(t, s, c, b, a, m, g), number-of-criteria, last-line
+fallback-policy: no-circulation
 g visitor: policy-a
     t rare: policy-b
 t rare: policy-c
@@ -164,6 +188,8 @@ A loan for material type `book` and loan type `rare` and patron group `visitor` 
 all five rules and each rule has this priority:
 
 ```
+priority: criterium(t, s, c, b, a, m, g), number-of-criteria, last-line
+fallback-policy: no-circulation
 g visitor: max(g=1)=1: policy-a
 g visitor + t rare: max(g=1, t=7)=7: policy-b
 t rare: max(t=7)=7: policy-c
@@ -177,13 +203,14 @@ For the tie we need to continue with "2. Rule specificity priority".
 The rule with policy-e has a lower criterium type priority of 2,
 the rule with policy-a has the lowest criterium type priority of 1.
 
-### 2. Rule specificity priority
+### Rule specificity priority (number-of-criteria)
 
-If the criterium type priority is the same then the rule specificity priority comes into effect.
 Specificity is the number of criterium types.  Higher number of criterium types has higher priority.
 Any number of location criterium types (`a`, `b`, `c`, `s`) count as one.
 
 ```
+priority: criterium(t, s, c, b, a, m, g), number-of-criteria, last-line
+fallback-policy: no-circulation
 g visitor + t rare: policy-b
 t rare: policy-c
 t rare + m book: policy-d
@@ -202,6 +229,8 @@ criterium type is used for both the Criterium type priority and the Rule specifi
 priority but without restricting to some names. Example:
 
 ```
+priority: criterium(t, s, c, b, a, m, g), number-of-criteria, last-line
+fallback-policy: no-circulation
 g visitor + t rare: policy-b
 t rare: policy-c
 t rare + m book: policy-d
@@ -213,11 +242,13 @@ and uses three criteria.
 
 ### 3. Line number priority
 
-If both the Criterium type priority and the Rule specificity priority are the same then the
-Line number priority comes into effect. The later rule (higher line number) has higher
-priority.
+For the line number priority the order of the rules is relevant. The `last-line` the
+last matching rule (the rule with the highest line number) is taken, for `first-line` the
+first matching rule (the rule with the lowest line numer) is taken.
 
 ```
+priority: criterium(t, s, c, b, a, m, g), number-of-criteria, last-line
+fallback-policy: no-circulation
 g visitor + t rare: policy-b
 t rare + m book: policy-d
 ```
@@ -225,3 +256,10 @@ t rare + m book: policy-d
 A loan for material type `book` and loan type `rare` and patron group `visitor` matches
 both lines. The criterium type priority is the same (`t`). They both have two criteria.
 The line with policy-d has higher priority because it is last (it has a higher line number).
+
+## Fallback policy
+
+There always must be a line with a fallback policy like `fallback-policy: no-circulation`.
+It must be after the priority line and before the the first rule.
+
+For `priority: last-line` it must be after the last rule.

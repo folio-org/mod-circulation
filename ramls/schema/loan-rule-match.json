@@ -7,15 +7,14 @@
       "description": "Line number of the matching rule",
       "type": "integer"
     },
-    "loanPolicy": {
-      "description": "Loan policy of the matching rule",
-      "type": "object",
-      "$ref" : "../raml-util/schemas/mod-circulation/loan-policy.json"
+    "loanPolicyId": {
+      "description": "Loan policy id specified by the matching rule",
+      "type": "string"
     }
   },
   "additionalProperties": false,
   "required": [
     "loanRuleLine",
-    "loanPolicy"
+    "loanPolicyId"
    ]
 }

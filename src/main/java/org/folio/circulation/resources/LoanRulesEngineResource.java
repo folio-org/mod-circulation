@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -98,7 +97,7 @@ public class LoanRulesEngineResource extends CollectionResource {
    * Create a loan rules engine that listens at applyPath and applyAllPath.
    * @param applyPath  URL path for loan rules triggering that returns the first match
    * @param applyAllPath  URL path for loan rules triggering that returns all matches
-   * @param client
+   * @param client  the HttpClient to use for requests via Okapi
    */
   public LoanRulesEngineResource(String applyPath, String applyAllPath, HttpClient client) {
     super(client);
@@ -145,7 +144,6 @@ public class LoanRulesEngineResource extends CollectionResource {
 
   /**
    * Load the loan rules from the storage module.
-   * @param tenantId - the tenant the rules are for
    * @param rules - where to store the rules and reload information
    * @param routingContext - where to report any error
    * @param done - invoked after success
@@ -160,14 +158,16 @@ public class LoanRulesEngineResource extends CollectionResource {
       try {
         if (response.getStatusCode() != 200) {
           ForwardResponse.forward(routingContext.response(), response);
-          log.error(response.getStatusCode() + " " + response.getBody());
+          log.error("{} {}", response.getStatusCode(), response.getBody());
           return;
         }
 
         rules.reloadTimestamp = System.currentTimeMillis();
         rules.reloadInitiated = false;
         JsonObject loanRules = new JsonObject(response.getBody());
-        log.debug("loanRules = {}", loanRules.encodePrettily());
+        if (log.isDebugEnabled()) {
+          log.debug("loanRules = {}", loanRules.encodePrettily());
+        }
         String loanRulesAsTextFile = loanRules.getString("loanRulesAsTextFile");
         if (loanRulesAsTextFile == null) {
           throw new NullPointerException("loanRulesAsTextFile");
@@ -220,12 +220,12 @@ public class LoanRulesEngineResource extends CollectionResource {
       reloadRules(rules, routingContext, done -> {
         try {
           droolsHandler.handle(finalRules.drools);
-        } catch (Throwable e) {
+        } catch (Exception e) {
           log.error("drools droolsHandler", e);
           ServerErrorResponse.internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
         }
       });
-    } catch (Throwable e) {
+    } catch (Exception e) {
       log.error("drools", e);
       ServerErrorResponse.internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
     }
@@ -239,7 +239,7 @@ public class LoanRulesEngineResource extends CollectionResource {
         String loanTypeId = request.getParam("loan_type_id");
         String patronGroupId = request.getParam("patron_type_id");
         String shelvingLocationId = request.getParam("shelving_location_id");
-        String loanPolicyId = drools.loanPolicy(itemTypeId, loanTypeId, patronGroupId);
+        String loanPolicyId = drools.loanPolicy(itemTypeId, loanTypeId, patronGroupId, shelvingLocationId);
         JsonObject json = new JsonObject().put("loanPolicyId", loanPolicyId);
         JsonResponse.success(routingContext.response(), json);
       }
@@ -251,33 +251,37 @@ public class LoanRulesEngineResource extends CollectionResource {
   }
 
   private void applyAll(RoutingContext routingContext) {
-    if (routingContext.pathParam("loan_rules") != null) {
-      ServerErrorResponse.internalError(routingContext.response(), "parameter loan_rules not implemented yet");
+    String loanRules = routingContext.pathParam("loan_rules");
+    if (loanRules == null) {
+      drools(routingContext, drools -> applyAll(routingContext, drools));
       return;
     }
-    drools(routingContext, drools -> {
-      try {
-        HttpServerRequest request = routingContext.request();
-        String itemTypeId = request.getParam("item_type_id");
-        String loanTypeId = request.getParam("loan_type_id");
-        String patronGroupId = request.getParam("patron_type_id");
-        String shelvingLocationId = request.getParam("shelving_location_id");
-        List<String> loanPolicyIds = drools.loanPolicies(itemTypeId, loanTypeId, patronGroupId);
-        JsonArray loanPolicies = new JsonArray();
-        loanPolicyIds.forEach(id -> {
-          JsonObject loanPolicy = new JsonObject().put("id", id);
-          JsonObject match = new JsonObject().put("loanPolicy", loanPolicy);
-          loanPolicies.add(match);
-        });
-        JsonObject json = new JsonObject()
-            .put("loanRuleMatches", loanPolicies)
-            .put("applyAll", "isNotCompletelyImplementedYet");
-        JsonResponse.success(routingContext.response(), json);
-      }
-      catch (Exception e) {
-        log.error("apply", e);
-        ServerErrorResponse.internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
-      }
-    });
+
+    try {
+      String droolsFile = Text2Drools.convert(loanRules);
+      Drools drools = new Drools(droolsFile);
+      applyAll(routingContext, drools);
+    }
+    catch (Exception e) {
+      log.error("applyAll", e);
+      ServerErrorResponse.internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
+    }
+  }
+
+  private void applyAll(RoutingContext routingContext, Drools drools) {
+    try {
+      HttpServerRequest request = routingContext.request();
+      String itemTypeId = request.getParam("item_type_id");
+      String loanTypeId = request.getParam("loan_type_id");
+      String patronGroupId = request.getParam("patron_type_id");
+      String shelvingLocationId = request.getParam("shelving_location_id");
+      JsonArray matches = drools.loanPolicies(itemTypeId, loanTypeId, patronGroupId, shelvingLocationId);
+      JsonObject json = new JsonObject().put("loanRuleMatches", matches);
+      JsonResponse.success(routingContext.response(), json);
+    }
+    catch (Exception e) {
+      log.error("applyAll", e);
+      ServerErrorResponse.internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
+    }
   }
 }

@@ -78,16 +78,18 @@ public class LoanRulesEngineAPITests {
   LoanPolicy p3 = new LoanPolicy("f0c8d755-0e56-4d38-9a45-9cd9248b1ae8");
   LoanPolicy p4 = new LoanPolicy("0122feae-bd0e-4405-88de-525d93ba7cfd");
 
-  private String rulesFallback = "fallback-policy: " + p6;
-  private String rulesFallback2 = "fallback-policy: " + p7;
+  private String rulesFallback =  "priority: t, s, c, b, a, m, g\nfallback-policy: " + p6;
+  private String rulesFallback2 = "priority: t, s, c, b, a, m, g\nfallback-policy: " + p7;
 
   private String rules1 = String.join("\n",
+      "priority: t, s, c, b, a, m, g",
       "fallback-policy: " + p2,
       "m " + m2 + ": " + p3,
       "    g " + g2 + ": " + p4
       );
 
   private String rules2 = String.join("\n",
+      "priority: t, s, c, b, a, m, g",
       "fallback-policy: " + p6,
       "m " + m1 + ": " + p1,
       "m " + m1 + " + t " + t1 + " : " + p2,

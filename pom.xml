@@ -21,6 +21,7 @@
   <properties>
     <antlr4.version>4.7.1</antlr4.version>
     <drools.version>7.0.0.Final</drools.version>
+    <rmb.version>19.0.0</rmb.version>
     <vertx.version>3.4.2</vertx.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -40,7 +41,7 @@
     <dependency>
       <groupId>org.folio</groupId>
       <artifactId>util</artifactId>
-      <version>16.0.3</version>
+      <version>${rmb.version}</version>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -88,12 +89,6 @@
       <version>2.9.7</version>
     </dependency>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.12</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.hamcrest</groupId>
       <artifactId>hamcrest-junit</artifactId>
       <version>2.0.0.0</version>
@@ -103,6 +98,18 @@
       <groupId>pl.pragmatists</groupId>
       <artifactId>JUnitParams</artifactId>
       <version>1.1.1</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.12</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.folio</groupId>
+      <artifactId>testing</artifactId>
+      <version>${rmb.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
