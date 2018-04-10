@@ -33,6 +33,7 @@ import org.folio.circulation.loanrules.LoanRulesParser.TwoPrioritiesContext;
  * Convert a loan rules text in FOLIO format into a drools rules text.
  */
 public class Text2Drools extends LoanRulesBaseListener {
+  @SuppressWarnings("squid:CommentedOutCodeLine")  // Example code is allowed
   /* Example drools file:
 
   package loanrules
