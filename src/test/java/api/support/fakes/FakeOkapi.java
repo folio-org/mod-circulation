@@ -149,8 +149,7 @@ public class FakeOkapi extends AbstractVerticle {
       .withCollectionPropertyName("loclibs")
       .withRequiredProperties("name", "campusId")
       .create().register(router);
-
-    //Also proxies as shelf-locations (see method just prior to register)
+    
     new FakeStorageModuleBuilder()
       .withRecordName("locations")
       .withRootPath("/locations")
@@ -162,7 +161,6 @@ public class FakeOkapi extends AbstractVerticle {
         "campusId",
         "libraryId")
       .create()
-      .proxyAs("/shelf-locations", "shelflocations", "id", "name")
       .register(router);
 
     server.requestHandler(router::accept)

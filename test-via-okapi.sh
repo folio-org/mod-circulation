@@ -6,7 +6,7 @@ circulation_direct_address=http://localhost:9605
 circulation_instance_id=localhost-9605
 
 #Needs to be the specific version of mod-inventory-storage you want to use for testing
-inventory_storage_module_id="mod-inventory-storage-9.0.0-SNAPSHOT"
+inventory_storage_module_id="mod-inventory-storage-10.0.0-SNAPSHOT"
 
 #Needs to be the specific version of mod-circulation-storage you want to use for testing
 circulation_storage_module_id="mod-circulation-storage-4.6.0-SNAPSHOT"

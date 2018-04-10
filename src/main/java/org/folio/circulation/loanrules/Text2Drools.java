@@ -45,7 +45,8 @@ public class Text2Drools extends LoanRulesBaseListener {
     salience 0
     when
     then
-      loanPolicy.id = "ffffffff-2222-4b5e-a7bd-064b8d177231";
+      match.loanPolicyId = "ffffffff-2222-4b5e-a7bd-064b8d177231";
+      match.lineNumber = 1;
       drools.halt();
   end
 
@@ -54,7 +55,8 @@ public class Text2Drools extends LoanRulesBaseListener {
     when
       ItemType(id == "aaaaaaaa-1111-4b5e-a7bd-064b8d177231")
     then
-      loanPolicy.id = "ffffffff-3333-4b5e-a7bd-064b8d177231";
+      match.loanPolicyId = "ffffffff-3333-4b5e-a7bd-064b8d177231";
+      match.lineNumber = 2;
       drools.halt();
   end
 
@@ -64,7 +66,8 @@ public class Text2Drools extends LoanRulesBaseListener {
       ItemType(id == "aaaaaaaa-1111-4b5e-a7bd-064b8d177231")
       PatronGroup(id == "cccccccc-1111-4b5e-a7bd-064b8d177231")
     then
-      loanPolicy.id = "ffffffff-4444-4b5e-a7bd-064b8d177231";
+      match.loanPolicyId = "ffffffff-4444-4b5e-a7bd-064b8d177231";
+      match.lineNumber = 3;
       drools.halt();
   end
 
@@ -73,8 +76,7 @@ public class Text2Drools extends LoanRulesBaseListener {
   private StringBuilder drools = new StringBuilder(
       "package loanrules\n" +
       "import org.folio.circulation.loanrules.*\n" +
-      "global LoanPolicy loanPolicy\n" +
-      "global java.lang.Integer lineNumber\n" +
+      "global Match match\n" +
       "\n"
       );
 
@@ -274,10 +276,10 @@ public class Text2Drools extends LoanRulesBaseListener {
     drools.append("  when\n");
     stack.descendingIterator().forEachRemaining(matcher -> drools.append(matcher.drools));
     drools.append("  then\n");
-    drools.append("    loanPolicy.id = ");
+    drools.append("    match.loanPolicyId = ");
     appendQuotedString(drools, policy.NAME(0).getText());
     drools.append(     ";\n");
-    drools.append("    lineNumber = ").append(line).append(";\n");
+    drools.append("    match.lineNumber = ").append(line).append(";\n");
     drools.append("    drools.halt();\n");
     drools.append("end\n\n");
   }

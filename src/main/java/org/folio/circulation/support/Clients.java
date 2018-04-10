@@ -162,7 +162,7 @@ public class Clients {
     WebContext context)
     throws MalformedURLException {
 
-    return getCollectionResourceClient(client, context, "/shelf-locations");
+    return getCollectionResourceClient(client, context, "/locations");
   }
 
   private CollectionResourceClient createProxyUsersStorageClient(

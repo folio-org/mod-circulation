@@ -17,7 +17,7 @@ public class Drools {
   // https://docs.jboss.org/drools/release/6.2.0.CR1/drools-docs/html/ch19.html
   // http://www.deepakgaikwad.net/index.php/2016/05/16/drools-tutorial-beginners.html
 
-  private LoanPolicy loanPolicy = new LoanPolicy(null);
+  private Match match = new Match();
   private KieContainer kieContainer;
 
   /**
@@ -38,8 +38,8 @@ public class Drools {
 
   private KieSession createSession(String itemType, String loanType, String patronGroup, String shelvingLocation) {
     KieSession kieSession = kieContainer.newKieSession();
-    loanPolicy.id = null;
-    kieSession.setGlobal("loanPolicy", loanPolicy);
+    match.loanPolicyId = null;
+    kieSession.setGlobal("match", match);
     kieSession.insert(new ItemType(itemType));
     kieSession.insert(new LoanType(loanType));
     kieSession.insert(new PatronGroup(patronGroup));
@@ -62,7 +62,7 @@ public class Drools {
     KieSession kieSession = createSession(itemType, loanType, patronGroup, shelvingLocation);
     kieSession.fireAllRules();
     kieSession.dispose();
-    return loanPolicy.id;
+    return match.loanPolicyId;
   }
 
   /**
@@ -78,10 +78,10 @@ public class Drools {
     KieSession kieSession = createSession(itemType, loanType, patronGroup, shelvingLocation);
     JsonArray array = new JsonArray();
     while (kieSession.fireAllRules() > 0) {
-      JsonObject match = new JsonObject();
-      match.put("loanPolicyId", loanPolicy.id);
-      match.put("loanRuleLine", (Integer) kieSession.getGlobal("lineNumber"));
-      array.add(match);
+      JsonObject json = new JsonObject();
+      json.put("loanPolicyId", match.loanPolicyId);
+      json.put("loanRuleLine", match.lineNumber);
+      array.add(json);
     }
     kieSession.dispose();
     return array;

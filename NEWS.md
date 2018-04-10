@@ -1,4 +1,11 @@
-## 8.1.1 Unreleased
+## 9.0.1 Unreleased
+
+* Loan rules `apply` endpoint missing or malformed reports query parameters (CIRC-95)
+* Provides `circulation` interface 2.13 (CIRC-95)
+* Requires location interface 1.1 or 2.0 (CIRC-91)
+* No longer requires `shelf-locations` interface (CIRC-91)
+
+## 8.1.1 2018-04-09
 
 * Includes proxy user's name for requests (CIRC-88)
 * Stores proxy user's name for requests (so it can be used for sorting, CIRC-88)
