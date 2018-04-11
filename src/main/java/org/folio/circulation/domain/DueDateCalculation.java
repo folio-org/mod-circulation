@@ -37,6 +37,9 @@ public class DueDateCalculation {
       else if(interval.equals("Hours") && duration != null) {
         return HttpResult.success(loanDate.plusHours(duration));
       }
+      else if(interval.equals("Minutes") && duration != null) {
+        return HttpResult.success(loanDate.plusMinutes(duration));
+      }
       else {
         return fail("Unrecognised interval", interval, loanPolicy);
       }

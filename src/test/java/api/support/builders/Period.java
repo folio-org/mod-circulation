@@ -20,4 +20,8 @@ public class Period {
   public static Period hours(int duration) {
     return new Period(duration, "Hours");
   }
+
+  public static Period minutes(int duration) {
+    return new Period(duration, "Minutes");
+  }
 }

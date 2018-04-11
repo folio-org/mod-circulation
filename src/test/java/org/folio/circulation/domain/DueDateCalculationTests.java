@@ -101,6 +101,32 @@ public class DueDateCalculationTests {
   }
 
   @Test
+  @Parameters({
+    "1",
+    "5",
+    "30",
+    "60",
+    "200"
+  })
+  public void shouldApplyMinuteIntervalRollingPolicy(int duration) {
+    JsonObject loanPolicy = new LoanPolicyBuilder()
+      .rolling(Period.minutes(duration))
+      .create();
+
+    DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
+
+    JsonObject loan = new LoanBuilder()
+      .open()
+      .withLoanDate(loanDate)
+      .create();
+
+    final HttpResult<DateTime> calculationResult = new DueDateCalculation()
+      .calculate(loan, loanPolicy);
+
+    assertThat(calculationResult.value(), is(loanDate.plusMinutes(duration)));
+  }
+
+  @Test
   public void shouldFailForNonRollingProfile() {
     JsonObject loanPolicy = new LoanPolicyBuilder()
       .withLoansProfile("Fixed")
