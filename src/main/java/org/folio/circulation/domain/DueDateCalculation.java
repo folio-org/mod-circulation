@@ -27,43 +27,54 @@ public class DueDateCalculation {
     log.info("Applying loan policy, profile: {}, period: {} {}",
       profile, duration, interval);
 
+    final String loanPolicyId = loanPolicy.getString("id");
+
     if(profile.equals("Rolling")) {
-      if(interval.equals("Months") && duration != null) {
-        return HttpResult.success(loanDate.plusMonths(duration));
-      }
-      else if(interval.equals("Weeks") && duration != null) {
-        return HttpResult.success(loanDate.plusWeeks(duration));
-      }
-      else if(interval.equals("Days") && duration != null) {
-        return HttpResult.success(loanDate.plusDays(duration));
-      }
-      else if(interval.equals("Hours") && duration != null) {
-        return HttpResult.success(loanDate.plusHours(duration));
-      }
-      else if(interval.equals("Minutes") && duration != null) {
-        return HttpResult.success(loanDate.plusMinutes(duration));
-      }
-      else {
-        return fail("Unrecognised interval", interval, loanPolicy);
-      }
+      return calculateRollingDueDate(loanDate, interval, duration, loanPolicyId);
     }
     else {
-      return fail("Unrecognised profile", profile, loanPolicy);
+      return fail("Unrecognised profile", profile, loanPolicyId);
+    }
+  }
+
+  private HttpResult<DateTime> calculateRollingDueDate(
+    DateTime loanDate,
+    String interval,
+    Integer duration,
+    String loanPolicyId) {
+
+    if(interval.equals("Months") && duration != null) {
+      return HttpResult.success(loanDate.plusMonths(duration));
+    }
+    else if(interval.equals("Weeks") && duration != null) {
+      return HttpResult.success(loanDate.plusWeeks(duration));
+    }
+    else if(interval.equals("Days") && duration != null) {
+      return HttpResult.success(loanDate.plusDays(duration));
+    }
+    else if(interval.equals("Hours") && duration != null) {
+      return HttpResult.success(loanDate.plusHours(duration));
+    }
+    else if(interval.equals("Minutes") && duration != null) {
+      return HttpResult.success(loanDate.plusMinutes(duration));
+    }
+    else {
+      return fail("Unrecognised interval", interval, loanPolicyId);
     }
   }
 
   private HttpResult<DateTime> fail(
     String reason,
-    String value,
-    JsonObject loanPolicy) {
+    String parameterValue,
+    String loanPolicyId) {
 
     final String message = String.format(
-      "Loans policy cannot be applied - %s: %s", reason, value);
+      "Loans policy cannot be applied - %s: %s", reason, parameterValue);
 
     log.error(message);
 
     return HttpResult.failure(new ValidationErrorFailure(
       message,
-      "loanPolicyId", loanPolicy.getString("id")));
+      "loanPolicyId", loanPolicyId));
   }
 }
