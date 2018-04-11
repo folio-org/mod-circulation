@@ -17,14 +17,14 @@ import java.util.function.Function;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.LoanValidation.defaultStatusAndAction;
 
-public class CheckOutResource extends CollectionResource {
-  public CheckOutResource(HttpClient client) {
+public class CheckOutByBarcodeResource extends CollectionResource {
+  public CheckOutByBarcodeResource(HttpClient client) {
     super(client);
   }
 
   public void register(Router router) {
     RouteRegistration routeRegistration = new RouteRegistration(
-      "/circulation/check-out", router);
+      "/circulation/check-out-by-barcode", router);
 
     routeRegistration.create(this::checkOut);
   }

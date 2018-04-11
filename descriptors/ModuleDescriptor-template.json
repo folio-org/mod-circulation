@@ -4,15 +4,15 @@
   "provides": [
     {
       "id": "circulation",
-      "version": "3.0",
+      "version": "3.1",
       "handlers": [
         {
           "methods": [
             "POST"
           ],
-          "pathPattern": "/circulation/check-out",
+          "pathPattern": "/circulation/check-out-by-barcode",
           "permissionsRequired": [
-            "circulation.check-out.post"
+            "circulation.check-out-by-barcode.post"
           ],
           "modulePermissions": [
             "circulation-storage.loans.item.post",
@@ -336,7 +336,7 @@
   ],
   "permissionSets": [
     {
-      "permissionName": "circulation.check-out.post",
+      "permissionName": "circulation.check-out-by-barcode.post",
       "displayName": "circulation - check out item by barcode",
       "description": "check out an item using barcodes for item and loanee"
     },
@@ -425,7 +425,7 @@
       "displayName": "circulation - all permissions",
       "description": "Entire set of permissions needed to use the circulation",
       "subPermissions": [
-        "circulation.check-out.post",
+        "circulation.check-out-by-barcode.post",
         "circulation.loans.collection.get",
         "circulation.loans.item.get",
         "circulation.loans.item.post",

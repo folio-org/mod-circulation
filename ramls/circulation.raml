@@ -1,6 +1,6 @@
 #%RAML 0.8
 title: Circulation
-version: v3.0
+version: v3.1
 protocols: [ HTTP, HTTPS ]
 baseUri: http://localhost:9130
 
@@ -29,7 +29,7 @@ resourceTypes:
   - collection-item: !include raml-util/rtypes/item-collection.raml
 
 /circulation:
-  /check-out:
+  /check-out-by-barcode:
     displayName: Check out using barcode for item and loanee
     post:
       description: Creates a loan by checking out an item to a loanee
