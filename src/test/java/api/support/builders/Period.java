@@ -16,4 +16,8 @@ public class Period {
   public static Period days(Integer duration) {
     return new Period(duration, "Days");
   }
+
+  public static Period hours(int duration) {
+    return new Period(duration, "Hours");
+  }
 }
