@@ -20,6 +20,6 @@ public class StringUtilTest {
     assertThat(StringUtil.urlEncode("abc", "q"), is(nullValue()));
     assertThat(StringUtil.urlEncode("key=a-umlaut-ä", StandardCharsets.ISO_8859_1.name()),
         is("key%3Da-umlaut-%E4"));
-    assertThat(StringUtil.urlencode("key=a-umlaut-ä"), is("key%3Da-umlaut-%C3%A4"));
+    assertThat(StringUtil.urlEncode("key=a-umlaut-ä"), is("key%3Da-umlaut-%C3%A4"));
   }
 }
