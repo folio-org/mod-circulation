@@ -12,15 +12,21 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
   private final JsonObject loanPeriod;
 
   public LoanPolicyBuilder() {
-    this(null, "Example Loan Policy", "An example loan policy");
+    this(null, "Example Loan Policy", "An example loan policy", "Rolling",
+      createPeriod(Period.weeks(3)));
   }
 
-  private LoanPolicyBuilder(UUID id, String name, String description) {
+  private LoanPolicyBuilder(
+    UUID id,
+    String name,
+    String description,
+    String profile, JsonObject loanPeriod) {
+
     this.id = id;
     this.name = name;
     this.description = description;
-    profile = "Rolling";
-    loanPeriod = createPeriod(Period.weeks(3));
+    this.profile = profile;
+    this.loanPeriod = loanPeriod;
   }
 
   @Override
@@ -56,18 +62,42 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
   }
 
   public LoanPolicyBuilder withId(UUID id) {
-    return new LoanPolicyBuilder(id, this.name, this.description);
+    return new LoanPolicyBuilder(
+      id,
+      this.name,
+      this.description,
+      this.profile,
+      this.loanPeriod);
   }
 
   public LoanPolicyBuilder withName(String name) {
-    return new LoanPolicyBuilder(this.id, name, this.description);
+    return new LoanPolicyBuilder(
+      this.id,
+      name,
+      this.description,
+      this.profile,
+      this.loanPeriod);
   }
 
   public LoanPolicyBuilder withDescription(String description) {
-    return new LoanPolicyBuilder(this.id, this.name, description);
+    return new LoanPolicyBuilder(
+      this.id,
+      this.name,
+      description,
+      this.profile,
+      this.loanPeriod);
   }
 
-  private JsonObject createPeriod(Period period) {
+  public LoanPolicyBuilder rolling(Period period) {
+    return new LoanPolicyBuilder(
+      this.id,
+      this.name,
+      description,
+      this.profile,
+      createPeriod(period));
+  }
+
+  private static JsonObject createPeriod(Period period) {
     JsonObject representation = new JsonObject();
 
     representation.put("duration", period.duration);
