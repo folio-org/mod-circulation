@@ -72,21 +72,21 @@ public class CollectionResourceClient {
       responseConversationHandler(responseHandler));
   }
 
-  public void getMany(String urlencodedQuery, Consumer<Response> responseHandler) {
-      String url = isProvided(urlencodedQuery)
-        ? String.format("%s?%s", collectionRoot, urlencodedQuery)
+  public void getMany(String urlEncodedQuery, Consumer<Response> responseHandler) {
+      String url = isProvided(urlEncodedQuery)
+        ? String.format("%s?%s", collectionRoot, urlEncodedQuery)
         : collectionRoot.toString();
 
       client.get(url, responseConversationHandler(responseHandler));
   }
 
   public void getMany(
-    String urlencodedCqlQuery,
+    String urlEncodedCqlQuery,
     Integer pageLimit,
     Integer pageOffset,
     Consumer<Response> responseHandler) {
 
-    String url = collectionRoot + createQueryString(urlencodedCqlQuery, pageLimit, pageOffset);
+    String url = collectionRoot + createQueryString(urlEncodedCqlQuery, pageLimit, pageOffset);
     client.get(url, responseConversationHandler(responseHandler));
   }
 
@@ -111,16 +111,16 @@ public class CollectionResourceClient {
    * <p>
    * createQueryString(null, null, null) = ""
    *
-   * @param urlencodedCqlQuery  the urlencoded String for the query parameter, may be null or empty for none
+   * @param urlEncodedCqlQuery  the URL encoded String for the query parameter, may be null or empty for none
    * @param pageLimit  the value for the limit parameter, may be null for none
    * @param pageOffset  the value for the offset parameter, may be null for none
    * @return the query string, may be empty
    */
-  static String createQueryString(String urlencodedCqlQuery, Integer pageLimit, Integer pageOffset) {
+  static String createQueryString(String urlEncodedCqlQuery, Integer pageLimit, Integer pageOffset) {
     String query = "";
 
-    if (isProvided(urlencodedCqlQuery)) {
-      query += "?query=" + urlencodedCqlQuery;
+    if (isProvided(urlEncodedCqlQuery)) {
+      query += "?query=" + urlEncodedCqlQuery;
     }
     if (pageLimit != null) {
       query += query.isEmpty() ? "?" : "&";

@@ -17,7 +17,7 @@ public final class StringUtil {
    * @return the encoded String, or null if charset is not supported
    * @throws NullPointerException if source or charset is null
    */
-  public static String urlencode(String source, String charset) {
+  public static String urlEncode(String source, String charset) {
     try {
       return URLEncoder.encode(source, charset);
     } catch (UnsupportedEncodingException e) {
@@ -32,9 +32,9 @@ public final class StringUtil {
    * @return the encoded String
    * @throws NullPointerException if source is null
    */
-  public static String urlencode(String source) {
+  public static String urlEncode(String source) {
     // This charset is always supported and will never trigger an
     // UnsupportedEncodingException.
-    return urlencode(source, StandardCharsets.UTF_8.name());
+    return urlEncode(source, StandardCharsets.UTF_8.name());
   }
 }
