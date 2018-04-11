@@ -25,8 +25,6 @@ FOLIO compatible circulation capabilities, including loan items from the invento
 ### Optional
 
 - Python 3 (for un-registering module during managed demo and tests via Okapi)
-- Node.js 6.4 (for API linting)
-- NPM 3.10 (for API linting)
 
 ## Preparation
 
@@ -68,7 +66,7 @@ In order to change the specific versions of these dependencies, edit the test-vi
 
 ### Checking the RAML and JSON.Schema definitions
 
-run `./lint.sh` to validate the RAML and JSON.Schema descriptions of the API (requires node.js and NPM)
+run `./scripts/lint-raml-cop.sh` to validate the RAML and JSON.Schema descriptions of the API
 
 ## Design Notes
 
