@@ -43,4 +43,32 @@ public class DueDateCalculationTests {
 
     assertThat(calculationResult.value(), is(loanDate.plusWeeks(duration)));
   }
+
+  @Test
+  @Parameters({
+    "1",
+    "7",
+    "14",
+    "12",
+    "30",
+    "100"
+  })
+  public void shouldApplyDailyRollingPolicy(int duration) {
+
+    JsonObject loanPolicy = new LoanPolicyBuilder()
+      .rolling(Period.days(duration))
+      .create();
+
+    DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
+
+    JsonObject loan = new LoanBuilder()
+      .open()
+      .withLoanDate(loanDate)
+      .create();
+
+    final HttpResult<DateTime> calculationResult = new DueDateCalculation()
+      .calculate(loan, loanPolicy);
+
+    assertThat(calculationResult.value(), is(loanDate.plusDays(duration)));
+  }
 }

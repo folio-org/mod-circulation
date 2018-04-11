@@ -28,13 +28,27 @@ public class DueDateCalculation {
     log.info("Applying loan policy, profile: {}, period: {} {}",
       profile, duration, interval);
 
-    if(profile.equals("Rolling") && interval.equals("Weeks") && duration != null) {
-      dueDate = loanDate.plusWeeks(duration);
+    if(profile.equals("Rolling")) {
+      if(interval.equals("Weeks") && duration != null) {
+        dueDate = loanDate.plusWeeks(duration);
+      }
+      else if(interval.equals("Days") && duration != null) {
+        dueDate = loanDate.plusDays(duration);
+      }
+      else {
+        dueDate = defaultDueDate(loanDate);
+      }
     }
     else {
-      log.warn("Defaulting due date to 14 days after loan date");
-      dueDate = loanDate.plusDays(14);
+      dueDate = defaultDueDate(loanDate);
     }
     return HttpResult.success(dueDate);
+  }
+
+  private DateTime defaultDueDate(DateTime loanDate) {
+    DateTime dueDate;
+    log.warn("Defaulting due date to 14 days after loan date");
+    dueDate = loanDate.plusDays(14);
+    return dueDate;
   }
 }
