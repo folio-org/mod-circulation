@@ -17,7 +17,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
 @RunWith(JUnitParamsRunner.class)
-public class DueDateCalculationTests {
+public class RollingDueDateCalculationTests {
 
   @Test
   @Parameters({
