@@ -28,7 +28,10 @@ public class DueDateCalculation {
       profile, duration, interval);
 
     if(profile.equals("Rolling")) {
-      if(interval.equals("Weeks") && duration != null) {
+      if(interval.equals("Months") && duration != null) {
+        return HttpResult.success(loanDate.plusMonths(duration));
+      }
+      else if(interval.equals("Weeks") && duration != null) {
         return HttpResult.success(loanDate.plusWeeks(duration));
       }
       else if(interval.equals("Days") && duration != null) {

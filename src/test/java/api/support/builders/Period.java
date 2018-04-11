@@ -9,6 +9,10 @@ public class Period {
     this.interval = interval;
   }
 
+  public static Period months(int duration) {
+    return new Period(duration, "Months");
+  }
+
   public static Period weeks(Integer duration) {
     return new Period(duration, "Weeks");
   }

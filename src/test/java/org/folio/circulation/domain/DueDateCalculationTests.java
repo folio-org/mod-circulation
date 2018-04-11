@@ -18,6 +18,33 @@ import static org.junit.Assert.assertThat;
 
 @RunWith(JUnitParamsRunner.class)
 public class DueDateCalculationTests {
+
+  @Test
+  @Parameters({
+    "1",
+    "8",
+    "12",
+    "15"
+  })
+  public void shouldApplyMonthlyRollingPolicy(int duration) {
+
+    JsonObject loanPolicy = new LoanPolicyBuilder()
+      .rolling(Period.months(duration))
+      .create();
+
+    DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
+
+    JsonObject loan = new LoanBuilder()
+      .open()
+      .withLoanDate(loanDate)
+      .create();
+
+    final HttpResult<DateTime> calculationResult = new DueDateCalculation()
+      .calculate(loan, loanPolicy);
+
+    assertThat(calculationResult.value(), is(loanDate.plusMonths(duration)));
+  }
+
   @Test
   @Parameters({
     "1",
