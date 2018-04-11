@@ -2,6 +2,7 @@ package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,32 +24,37 @@ public class DueDateCalculation {
     final String interval = period.getString("intervalId");
     final Integer duration = period.getInteger("duration");
 
-    final DateTime dueDate;
-
     log.info("Applying loan policy, profile: {}, period: {} {}",
       profile, duration, interval);
 
     if(profile.equals("Rolling")) {
       if(interval.equals("Weeks") && duration != null) {
-        dueDate = loanDate.plusWeeks(duration);
+        return HttpResult.success(loanDate.plusWeeks(duration));
       }
       else if(interval.equals("Days") && duration != null) {
-        dueDate = loanDate.plusDays(duration);
+        return HttpResult.success(loanDate.plusDays(duration));
       }
       else {
-        dueDate = defaultDueDate(loanDate);
+        return fail("Unrecognised interval", interval, loanPolicy);
       }
     }
     else {
-      dueDate = defaultDueDate(loanDate);
+      return fail("Unrecognised profile", profile, loanPolicy);
     }
-    return HttpResult.success(dueDate);
   }
 
-  private DateTime defaultDueDate(DateTime loanDate) {
-    DateTime dueDate;
-    log.warn("Defaulting due date to 14 days after loan date");
-    dueDate = loanDate.plusDays(14);
-    return dueDate;
+  private HttpResult<DateTime> fail(
+    String reason,
+    String value,
+    JsonObject loanPolicy) {
+
+    final String message = String.format(
+      "Loans policy cannot be applied - %s: %s", reason, value);
+
+    log.error(message);
+
+    return HttpResult.failure(new ValidationErrorFailure(
+      message,
+      "loanPolicyId", loanPolicy.getString("id")));
   }
 }

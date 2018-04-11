@@ -88,6 +88,15 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.loanPeriod);
   }
 
+  public LoanPolicyBuilder withLoansProfile(String profile) {
+    return new LoanPolicyBuilder(
+      this.id,
+      this.name,
+      description,
+      profile,
+      this.loanPeriod);
+  }
+
   public LoanPolicyBuilder rolling(Period period) {
     return new LoanPolicyBuilder(
       this.id,

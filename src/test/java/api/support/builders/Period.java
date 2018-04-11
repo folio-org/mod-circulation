@@ -4,7 +4,7 @@ public class Period {
   public final Integer duration;
   public final String interval;
 
-  private Period(Integer duration, String interval) {
+  public Period(Integer duration, String interval) {
     this.duration = duration;
     this.interval = interval;
   }

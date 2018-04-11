@@ -13,6 +13,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
 @RunWith(JUnitParamsRunner.class)
@@ -70,5 +71,47 @@ public class DueDateCalculationTests {
       .calculate(loan, loanPolicy);
 
     assertThat(calculationResult.value(), is(loanDate.plusDays(duration)));
+  }
+
+  @Test
+  public void shouldFailForNonRollingProfile() {
+    JsonObject loanPolicy = new LoanPolicyBuilder()
+      .withLoansProfile("Fixed")
+      .create();
+
+    DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
+
+    JsonObject loan = new LoanBuilder()
+      .open()
+      .withLoanDate(loanDate)
+      .create();
+
+    final HttpResult<DateTime> calculationResult = new DueDateCalculation()
+      .calculate(loan, loanPolicy);
+
+    assertThat(calculationResult.failed(), is(true));
+    //TODO: Figure out how to inspect failures
+    assertThat(calculationResult.cause(), is(notNullValue()));
+  }
+
+  @Test
+  public void shouldFailForUnrecognisedInterval() {
+    JsonObject loanPolicy = new LoanPolicyBuilder()
+      .rolling(new Period(5, "Unknown"))
+      .create();
+
+    DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
+
+    JsonObject loan = new LoanBuilder()
+      .open()
+      .withLoanDate(loanDate)
+      .create();
+
+    final HttpResult<DateTime> calculationResult = new DueDateCalculation()
+      .calculate(loan, loanPolicy);
+
+    assertThat(calculationResult.failed(), is(true));
+    //TODO: Figure out how to inspect failures
+    assertThat(calculationResult.cause(), is(notNullValue()));
   }
 }
