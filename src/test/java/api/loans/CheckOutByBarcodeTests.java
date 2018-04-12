@@ -71,7 +71,7 @@ public class CheckOutByBarcodeTests extends APITests {
       loan.getString("loanDate"), isEquivalentTo(loanDate));
 
     assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateLoanPolicyId().toString()));
+      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateRollingLoanPolicyId().toString()));
 
     assertThat("due date should be 3 weeks after loan date, based upon loan policy",
       loan.getString("dueDate"), isEquivalentTo(loanDate.plusWeeks(3)));

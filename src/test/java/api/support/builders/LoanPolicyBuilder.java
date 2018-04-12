@@ -2,6 +2,7 @@ package api.support.builders;
 
 import io.vertx.core.json.JsonObject;
 
+import java.util.Objects;
 import java.util.UUID;
 
 public class LoanPolicyBuilder extends JsonBuilder implements Builder {
@@ -10,23 +11,27 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
   private final String description;
   private final String profile;
   private final JsonObject loanPeriod;
+  private final UUID fixedDueDateScheduleId;
 
   public LoanPolicyBuilder() {
-    this(null, "Example Loan Policy", "An example loan policy", "Rolling",
-      createPeriod(Period.weeks(3)));
+    this(null, "Example Loan Policy", "An example loan policy", null, null,
+      null);
   }
 
   private LoanPolicyBuilder(
     UUID id,
     String name,
     String description,
-    String profile, JsonObject loanPeriod) {
+    String profile,
+    JsonObject loanPeriod,
+    UUID fixedDueDateScheduleId) {
 
     this.id = id;
     this.name = name;
     this.description = description;
     this.profile = profile;
     this.loanPeriod = loanPeriod;
+    this.fixedDueDateScheduleId = fixedDueDateScheduleId;
   }
 
   @Override
@@ -45,7 +50,15 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
     JsonObject loansPolicy = new JsonObject();
 
     loansPolicy.put("profileId", profile);
-    loansPolicy.put("period", loanPeriod);
+
+    //TODO: Replace with sub-builders
+    if(Objects.equals(profile, "Rolling")) {
+      loansPolicy.put("period", loanPeriod);
+    }
+    else if(Objects.equals(profile, "Fixed")) {
+      loansPolicy.put("fixedDueDateScheduleId", fixedDueDateScheduleId);
+    }
+    
     loansPolicy.put("closedLibraryDueDateManagementId", "KEEP_CURRENT_DATE");
 
     request.put("loansPolicy", loansPolicy);
@@ -67,7 +80,8 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.name,
       this.description,
       this.profile,
-      this.loanPeriod);
+      this.loanPeriod,
+      this.fixedDueDateScheduleId);
   }
 
   public LoanPolicyBuilder withName(String name) {
@@ -76,7 +90,8 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       name,
       this.description,
       this.profile,
-      this.loanPeriod);
+      this.loanPeriod,
+      this.fixedDueDateScheduleId);
   }
 
   public LoanPolicyBuilder withDescription(String description) {
@@ -85,7 +100,8 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.name,
       description,
       this.profile,
-      this.loanPeriod);
+      this.loanPeriod,
+      this.fixedDueDateScheduleId);
   }
 
   public LoanPolicyBuilder withLoansProfile(String profile) {
@@ -94,7 +110,8 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.name,
       description,
       profile,
-      this.loanPeriod);
+      this.loanPeriod,
+      this.fixedDueDateScheduleId);
   }
 
   public LoanPolicyBuilder rolling(Period period) {
@@ -102,8 +119,19 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.id,
       this.name,
       description,
-      this.profile,
-      createPeriod(period));
+      "Rolling",
+      createPeriod(period),
+      null);
+  }
+
+  public LoanPolicyBuilder fixed(UUID fixedDueDateScheduleId) {
+    return new LoanPolicyBuilder(
+      this.id,
+      this.name,
+      description,
+      "Fixed",
+      null,
+      fixedDueDateScheduleId);
   }
 
   private static JsonObject createPeriod(Period period) {

@@ -90,7 +90,7 @@ public class LoanAPITests extends APITests {
       loan.getString("action"), is("checkedout"));
 
     assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateLoanPolicyId().toString()));
+      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateRollingLoanPolicyId().toString()));
 
     assertThat("title is taken from instance",
       loan.getJsonObject("item").getString("title"),
@@ -369,7 +369,7 @@ public class LoanAPITests extends APITests {
       loan.getString("action"), is("checkedout"));
 
     assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateLoanPolicyId().toString()));
+      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateRollingLoanPolicyId().toString()));
 
     assertThat("title is taken from item",
       loan.getJsonObject("item").containsKey("title"), is(true));
@@ -503,7 +503,7 @@ public class LoanAPITests extends APITests {
       loan.getString("action"), is("checkedout"));
 
     assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateLoanPolicyId().toString()));
+      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateRollingLoanPolicyId().toString()));
 
     assertThat("title is taken from item",
       loan.getJsonObject("item").getString("title"),

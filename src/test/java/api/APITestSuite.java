@@ -3,8 +3,7 @@ package api;
 import api.loans.*;
 import api.requests.*;
 import api.requests.scenarios.*;
-import api.support.builders.LoanPolicyBuilder;
-import api.support.builders.UserBuilder;
+import api.support.builders.*;
 import api.support.fakes.FakeOkapi;
 import api.support.http.ResourceClient;
 import api.support.http.URLHelper;
@@ -13,6 +12,8 @@ import io.vertx.core.json.JsonObject;
 import org.folio.circulation.CirculationVerticle;
 import org.folio.circulation.support.VertxAssistant;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
@@ -98,7 +99,9 @@ public class APITestSuite {
   private static UUID thirdFloorLocationId;
   private static UUID mezzanineDisplayCaseLocationId;
 
-  private static UUID canCirculateLoanPolicyId;
+  private static UUID canCirculateRollingLoanPolicyId;
+  private static UUID canCirculateFixedLoanPolicyId;
+  private static UUID exampleFixedDueDateSchedulesId;
 
   public static int circulationModulePort() {
     return port;
@@ -189,8 +192,12 @@ public class APITestSuite {
     return alternateGroupId;
   }
 
-  public static UUID canCirculateLoanPolicyId() {
-    return canCirculateLoanPolicyId;
+  public static UUID canCirculateRollingLoanPolicyId() {
+    return canCirculateRollingLoanPolicyId;
+  }
+
+  public static UUID canCirculateFixedLoanPolicyId() {
+    return canCirculateFixedLoanPolicyId;
   }
 
   @BeforeClass
@@ -535,13 +542,37 @@ public class APITestSuite {
     TimeoutException,
     ExecutionException {
 
-    ResourceClient client = ResourceClient.forLoanPolicies(createClient());
+    final OkapiHttpClient client = createClient();
 
-    LoanPolicyBuilder canCirculateLoanPolicy = new LoanPolicyBuilder()
-      .withName("Can Circulate")
-      .withDescription("Can circulate item");
+    ResourceClient loanPoliciesClient = ResourceClient.forLoanPolicies(client);
 
-    canCirculateLoanPolicyId = client.create(canCirculateLoanPolicy).getId();
+    LoanPolicyBuilder canCirculateRollingLoanPolicy = new LoanPolicyBuilder()
+      .withName("Can Circulate Rolling")
+      .withDescription("Can circulate item")
+      .rolling(Period.weeks(3));
+
+    canCirculateRollingLoanPolicyId = loanPoliciesClient.create(canCirculateRollingLoanPolicy).getId();
+
+    ResourceClient fixedDueDateSchedulesClient = ResourceClient.forFixedDueDateSchedules(client);
+
+    FixedDueDateSchedulesBuilder fixedDueDateSchedule =
+      new FixedDueDateSchedulesBuilder()
+        .withName("Example Fixed Due Date Schedule")
+        .withDescription("Example Fixed Due Date Schedule")
+        .addSchedule(new FixedDueDateSchedule(
+          new DateTime(2018, 1, 1, 0, 0, 0, DateTimeZone.UTC),
+          new DateTime(2018, 12, 31, 23, 59, 59, DateTimeZone.UTC),
+          new DateTime(2018, 12, 31, 23, 59, 59, DateTimeZone.UTC)
+        ));
+
+    exampleFixedDueDateSchedulesId = fixedDueDateSchedulesClient.create(fixedDueDateSchedule).getId();
+
+    LoanPolicyBuilder canCirculateFixedLoanPolicy = new LoanPolicyBuilder()
+      .withName("Can Circulate Fixed")
+      .withDescription("Can circulate item")
+      .rolling(Period.days(14));
+
+    canCirculateFixedLoanPolicyId = loanPoliciesClient.create(canCirculateFixedLoanPolicy).getId();
   }
 
   private static void deleteLoanPolicies()
@@ -550,9 +581,14 @@ public class APITestSuite {
     ExecutionException,
     TimeoutException {
 
-    ResourceClient client = ResourceClient.forLoanPolicies(createClient());
+    ResourceClient loanPoliciesClient = ResourceClient.forLoanPolicies(createClient());
 
-    client.delete(canCirculateLoanPolicyId());
+    loanPoliciesClient.delete(canCirculateRollingLoanPolicyId());
+    loanPoliciesClient.delete(canCirculateFixedLoanPolicyId());
+
+    ResourceClient fixedDueDateSchedulesClient = ResourceClient.forFixedDueDateSchedules(createClient());
+
+    fixedDueDateSchedulesClient.delete(exampleFixedDueDateSchedulesId);
   }
 
   static void setLoanRules(String rules)
