@@ -130,6 +130,39 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
+  public void canCheckOutUsingFixedDueDateLoanPolicy()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    useExampleFixedPolicyLoanRules();
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+
+    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
+
+    final IndividualResource response = loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .at(loanDate));
+
+    final JsonObject loan = response.getJson();
+
+    assertThat("loan date should be as supplied",
+      loan.getString("loanDate"), isEquivalentTo(loanDate));
+
+    assertThat("last loan policy should be stored",
+      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateFixedLoanPolicyId().toString()));
+
+    assertThat("due date should be based upon fixed due date schedule",
+      loan.getString("dueDate"),
+      isEquivalentTo(new DateTime(2018, 12, 31, 23, 59, 59, DateTimeZone.UTC)));
+  }
+
+  @Test
   public void canGetLoanCreatedWhilstCheckingOut()
     throws InterruptedException,
     MalformedURLException,

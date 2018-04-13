@@ -37,8 +37,8 @@ public abstract class APITests {
     log.error("Request to circulation module failed:", exception));
 
   private final boolean initialiseLoanRules;
+  private final ResourceClient userProxiesClient = ResourceClient.forUsersProxy(client);
   protected final ResourceClient usersClient = ResourceClient.forUsers(client);
-  protected final ResourceClient userProxiesClient = ResourceClient.forUsersProxy(client);
   protected final ResourceClient itemsClient = ResourceClient.forItems(client);
   protected final ResourceClient requestsClient = ResourceClient.forRequests(client);
   protected final ResourceClient loansClient = ResourceClient.forLoans(client);
@@ -104,19 +104,36 @@ public abstract class APITests {
     APITestSuite.createUsers();
 
     if(initialiseLoanRules) {
-      setDefaultLoanRules();
-      warmUpApplyEndpoint();
+      useDefaultRollingPolicyLoanRules();
     }
   }
 
+  public void useExampleFixedPolicyLoanRules()
+    throws InterruptedException,
+      ExecutionException,
+      TimeoutException {
+
+    updateLoanRules(APITestSuite.canCirculateFixedLoanPolicyId());
+    warmUpApplyEndpoint();
+  }
+
   //Needs to be done each time as some tests manipulate the rules
-  private void setDefaultLoanRules()
+  private void useDefaultRollingPolicyLoanRules()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    updateLoanRules(APITestSuite.canCirculateRollingLoanPolicyId());
+    warmUpApplyEndpoint();
+  }
+
+  private void updateLoanRules(UUID loanPolicyId)
     throws InterruptedException,
     ExecutionException,
     TimeoutException {
 
     String rule = String.format("priority: t, s, c, b, a, m, g%nfallback-policy: %s%n",
-      APITestSuite.canCirculateRollingLoanPolicyId());
+      loanPolicyId);
 
     JsonObject loanRulesRequest = new JsonObject()
       .put("loanRulesAsTextFile", rule);

@@ -28,9 +28,9 @@ public class RollingDueDateCalculationTests {
   })
   public void shouldApplyMonthlyRollingPolicy(int duration) {
 
-    JsonObject loanPolicy = new LoanPolicyBuilder()
+    LoanPolicy loanPolicy = new LoanPolicy(new LoanPolicyBuilder()
       .rolling(Period.months(duration))
-      .create();
+      .create());
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
@@ -55,9 +55,9 @@ public class RollingDueDateCalculationTests {
   })
   public void shouldApplyWeeklyRollingPolicy(int duration) {
 
-    JsonObject loanPolicy = new LoanPolicyBuilder()
+    LoanPolicy loanPolicy = new LoanPolicy(new LoanPolicyBuilder()
       .rolling(Period.weeks(duration))
-      .create();
+      .create());
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
@@ -83,9 +83,9 @@ public class RollingDueDateCalculationTests {
   })
   public void shouldApplyDailyRollingPolicy(int duration) {
 
-    JsonObject loanPolicy = new LoanPolicyBuilder()
+    LoanPolicy loanPolicy = new LoanPolicy(new LoanPolicyBuilder()
       .rolling(Period.days(duration))
-      .create();
+      .create());
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
@@ -110,9 +110,10 @@ public class RollingDueDateCalculationTests {
     "24"
   })
   public void shouldApplyHourlyRollingPolicy(int duration) {
-    JsonObject loanPolicy = new LoanPolicyBuilder()
+
+    LoanPolicy loanPolicy = new LoanPolicy(new LoanPolicyBuilder()
       .rolling(Period.hours(duration))
-      .create();
+      .create());
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
@@ -136,9 +137,9 @@ public class RollingDueDateCalculationTests {
     "200"
   })
   public void shouldApplyMinuteIntervalRollingPolicy(int duration) {
-    JsonObject loanPolicy = new LoanPolicyBuilder()
+    LoanPolicy loanPolicy = new LoanPolicy(new LoanPolicyBuilder()
       .rolling(Period.minutes(duration))
-      .create();
+      .create());
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
@@ -155,9 +156,9 @@ public class RollingDueDateCalculationTests {
 
   @Test
   public void shouldFailForNonRollingProfile() {
-    JsonObject loanPolicy = new LoanPolicyBuilder()
-      .withLoansProfile("Fixed")
-      .create();
+    LoanPolicy loanPolicy = new LoanPolicy(new LoanPolicyBuilder()
+      .withLoansProfile("Unknown profile")
+      .create());
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
@@ -176,9 +177,9 @@ public class RollingDueDateCalculationTests {
 
   @Test
   public void shouldFailForUnrecognisedInterval() {
-    JsonObject loanPolicy = new LoanPolicyBuilder()
+    LoanPolicy loanPolicy = new LoanPolicy(new LoanPolicyBuilder()
       .rolling(new Period(5, "Unknown"))
-      .create();
+      .create());
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 

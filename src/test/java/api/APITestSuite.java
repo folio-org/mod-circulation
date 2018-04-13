@@ -551,7 +551,8 @@ public class APITestSuite {
       .withDescription("Can circulate item")
       .rolling(Period.weeks(3));
 
-    canCirculateRollingLoanPolicyId = loanPoliciesClient.create(canCirculateRollingLoanPolicy).getId();
+    canCirculateRollingLoanPolicyId = loanPoliciesClient.create(
+      canCirculateRollingLoanPolicy).getId();
 
     ResourceClient fixedDueDateSchedulesClient = ResourceClient.forFixedDueDateSchedules(client);
 
@@ -565,14 +566,16 @@ public class APITestSuite {
           new DateTime(2018, 12, 31, 23, 59, 59, DateTimeZone.UTC)
         ));
 
-    exampleFixedDueDateSchedulesId = fixedDueDateSchedulesClient.create(fixedDueDateSchedule).getId();
+    exampleFixedDueDateSchedulesId = fixedDueDateSchedulesClient.create(
+      fixedDueDateSchedule).getId();
 
     LoanPolicyBuilder canCirculateFixedLoanPolicy = new LoanPolicyBuilder()
       .withName("Can Circulate Fixed")
       .withDescription("Can circulate item")
-      .rolling(Period.days(14));
+      .fixed(exampleFixedDueDateSchedulesId);
 
-    canCirculateFixedLoanPolicyId = loanPoliciesClient.create(canCirculateFixedLoanPolicy).getId();
+    canCirculateFixedLoanPolicyId = loanPoliciesClient.create(
+      canCirculateFixedLoanPolicy).getId();
   }
 
   private static void deleteLoanPolicies()

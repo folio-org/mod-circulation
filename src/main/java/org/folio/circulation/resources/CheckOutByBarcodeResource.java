@@ -86,7 +86,7 @@ public class CheckOutByBarcodeResource extends CollectionResource {
 
     final DueDateCalculation dueDateCalculation = new DueDateCalculation();
     final JsonObject loan = loanAndRelatedRecords.loan;
-    final JsonObject loanPolicy = loanAndRelatedRecords.loanPolicy;
+    final LoanPolicy loanPolicy = loanAndRelatedRecords.loanPolicy;
 
     return dueDateCalculation.calculate(loan, loanPolicy)
       .map(dueDate -> {

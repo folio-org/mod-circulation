@@ -9,7 +9,7 @@ public class LoanAndRelatedRecords {
   public final RequestQueue requestQueue;
   public final JsonObject requestingUser;
   public final JsonObject proxyingUser;
-  public final JsonObject loanPolicy;
+  public final LoanPolicy loanPolicy;
   public final JsonObject location;
   public final JsonObject materialType;
 
@@ -19,7 +19,7 @@ public class LoanAndRelatedRecords {
     RequestQueue requestQueue,
     JsonObject requestingUser,
     JsonObject proxyingUser,
-    JsonObject loanPolicy,
+    LoanPolicy loanPolicy,
     JsonObject location,
     JsonObject materialType) {
 
@@ -63,7 +63,7 @@ public class LoanAndRelatedRecords {
       requestingUser, newProxyingUser, loanPolicy, location, this.materialType);
   }
 
-  public LoanAndRelatedRecords withLoanPolicy(JsonObject newLoanPolicy) {
+  public LoanAndRelatedRecords withLoanPolicy(LoanPolicy newLoanPolicy) {
     return new LoanAndRelatedRecords(loan, inventoryRecords, requestQueue,
       requestingUser, proxyingUser, newLoanPolicy, location, this.materialType);
   }

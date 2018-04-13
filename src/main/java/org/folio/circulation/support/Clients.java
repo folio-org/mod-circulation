@@ -13,11 +13,11 @@ public class Clients {
   private final CollectionResourceClient instancesStorageClient;
   private final CollectionResourceClient usersStorageClient;
   private final CollectionResourceClient loansStorageClient;
-  private final CollectionResourceClient policiesStorageClient;
   private final CollectionResourceClient locationsStorageClient;
   private final CollectionResourceClient materialTypesStorageClient;
-  private final CollectionResourceClient loanPoliciesStorageClient;
   private final CollectionResourceClient proxiesForClient;
+  private final CollectionResourceClient loanPoliciesStorageClient;
+  private final CollectionResourceClient fixedDueDateSchedulesStorageClient;
   private final LoanRulesClient loanRulesClient;
 
   public static Clients create(WebContext context, HttpClient httpClient) {
@@ -37,11 +37,11 @@ public class Clients {
       usersStorageClient = createUsersStorageClient(client, context);
       loansStorageClient = createLoansStorageClient(client, context);
       locationsStorageClient = createLocationsStorageClient(client, context);
-      policiesStorageClient = createPoliciesStorageClient(client, context);
-      loanRulesClient = new LoanRulesClient(client, context);
       materialTypesStorageClient = createMaterialTypesStorageClient(client, context);
       proxiesForClient = createProxyUsersStorageClient(client, context);
+      loanRulesClient = new LoanRulesClient(client, context);
       loanPoliciesStorageClient = createLoanPoliciesStorageClient(client, context);
+      fixedDueDateSchedulesStorageClient = createFixedDueDateSchedulesStorageClient(client, context);
     }
     catch(MalformedURLException e) {
       throw new InvalidOkapiLocationException(context.getOkapiLocation(), e);
@@ -76,16 +76,16 @@ public class Clients {
     return locationsStorageClient;
   }
 
-  public CollectionResourceClient policiesStorage() {
-    return policiesStorageClient;
-  }
-
   public CollectionResourceClient materialTypesStorage() {
     return materialTypesStorageClient;
   }
 
   public CollectionResourceClient loanPoliciesStorage() {
     return loanPoliciesStorageClient;
+  }
+
+  public CollectionResourceClient fixedDueDateSchedules() {
+    return fixedDueDateSchedulesStorageClient;
   }
 
   public CollectionResourceClient userProxies() {
@@ -155,14 +155,6 @@ public class Clients {
     return getCollectionResourceClient(client, context, "/loan-storage/loans");
   }
 
-  private static CollectionResourceClient createPoliciesStorageClient(
-      OkapiHttpClient client,
-      WebContext context)
-          throws MalformedURLException {
-
-    return getCollectionResourceClient(client, context, "/loan-policy-storage/loan-policies");
-  }
-
   private static CollectionResourceClient createLocationsStorageClient(
     OkapiHttpClient client,
     WebContext context)
@@ -194,5 +186,14 @@ public class Clients {
 
     return getCollectionResourceClient(client, context,
       "/loan-policy-storage/loan-policies");
+  }
+
+  private CollectionResourceClient createFixedDueDateSchedulesStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context,
+      "/fixed-due-date-schedule-storage/fixed-due-date-schedules");
   }
 }

@@ -2,6 +2,8 @@ package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.JsonArrayHelper;
+import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -12,25 +14,31 @@ import java.lang.invoke.MethodHandles;
 public class DueDateCalculation {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  public HttpResult<DateTime> calculate(JsonObject loan, JsonObject loanPolicy) {
+  public HttpResult<DateTime> calculate(JsonObject loan, LoanPolicy loanPolicy) {
     final DateTime loanDate = DateTime.parse(
       loan.getString("loanDate"));
 
     final JsonObject loansPolicy = loanPolicy.getJsonObject("loansPolicy");
 
     final String profile = loansPolicy.getString("profileId");
-    final JsonObject period = loansPolicy.getJsonObject("period");
-
-    final String interval = period.getString("intervalId");
-    final Integer duration = period.getInteger("duration");
-
-    log.info("Applying loan policy, profile: {}, period: {} {}",
-      profile, duration, interval);
 
     final String loanPolicyId = loanPolicy.getString("id");
 
-    if(profile.equals("Rolling")) {
+    if(profile.equalsIgnoreCase("Rolling")) {
+      final JsonObject period = loansPolicy.getJsonObject("period");
+
+      final String interval = period.getString("intervalId");
+      final Integer duration = period.getInteger("duration");
+
+      log.info("Applying loan policy {}, profile: {}, period: {} {}",
+        loanPolicyId, profile, duration, interval);
+
       return calculateRollingDueDate(loanDate, interval, duration, loanPolicyId);
+    }
+    if(profile.equalsIgnoreCase("Fixed")) {
+      log.info("Applying loan policy {}, profile: {}", loanPolicyId, profile);
+
+      return determineFixedDueDate(loanDate, loanPolicy.fixedDueDateSchedules, loanPolicyId);
     }
     else {
       return fail("Unrecognised profile", profile, loanPolicyId);
@@ -60,6 +68,24 @@ public class DueDateCalculation {
     }
     else {
       return fail("Unrecognised interval", interval, loanPolicyId);
+    }
+  }
+
+  private HttpResult<DateTime> determineFixedDueDate(
+    DateTime loanDate,
+    JsonObject fixedDueDateSchedules,
+    String loanPolicyId) {
+
+    try {
+      return HttpResult.success(DateTime.parse(
+        JsonArrayHelper.toList(fixedDueDateSchedules.getJsonArray("schedules"))
+          .stream()
+          .findFirst()
+          .get()
+          .getString("due")));
+    }
+    catch(Exception e) {
+      return HttpResult.failure(new ServerErrorFailure(e));
     }
   }
 

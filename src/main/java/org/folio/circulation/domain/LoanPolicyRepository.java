@@ -15,10 +15,12 @@ public class LoanPolicyRepository {
 
   private final LoanRulesClient loanRulesClient;
   private final CollectionResourceClient loanPoliciesStorageClient;
+  private final CollectionResourceClient fixedDueDateSchedulesStorageClient;
 
   public LoanPolicyRepository(Clients clients) {
     loanRulesClient = clients.loanRules();
     loanPoliciesStorageClient = clients.loanPoliciesStorage();
+    fixedDueDateSchedulesStorageClient = clients.fixedDueDateSchedules();
   }
 
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> lookupLoanPolicy(
@@ -29,7 +31,28 @@ public class LoanPolicyRepository {
       relatedRecords.inventoryRecords.holding,
       relatedRecords.requestingUser)
       .thenComposeAsync(r -> r.after(this::lookupLoanPolicy))
+      .thenApply(result -> result.map(representation -> new LoanPolicy(representation, null)))
+      .thenComposeAsync(r -> r.after(this::lookupSchedules))
       .thenApply(result -> result.map(relatedRecords::withLoanPolicy));
+  }
+
+  private CompletableFuture<HttpResult<LoanPolicy>> lookupSchedules(LoanPolicy loanPolicy) {
+
+    //TODO: Need to be defensive about loansPolicy object
+    final String fixedDueDateScheduleId = loanPolicy.getJsonObject("loansPolicy").getString("fixedDueDateScheduleId");
+
+    if(fixedDueDateScheduleId != null) {
+      final SingleRecordFetcher fetcher = new SingleRecordFetcher(
+        fixedDueDateSchedulesStorageClient,
+        "fixed due date schedule");
+
+      return fetcher
+        .fetchSingleRecord(fixedDueDateScheduleId)
+        .thenApply(r -> r.map(loanPolicy::withDueDateSchedule));
+    }
+    else {
+      return CompletableFuture.completedFuture(HttpResult.success(loanPolicy));
+    }
   }
 
   private CompletableFuture<HttpResult<JsonObject>> lookupLoanPolicy(

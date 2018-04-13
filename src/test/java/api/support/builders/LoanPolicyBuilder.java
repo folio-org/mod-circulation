@@ -56,9 +56,9 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       loansPolicy.put("period", loanPeriod);
     }
     else if(Objects.equals(profile, "Fixed")) {
-      loansPolicy.put("fixedDueDateScheduleId", fixedDueDateScheduleId);
+      put(loansPolicy, "fixedDueDateScheduleId", fixedDueDateScheduleId);
     }
-    
+
     loansPolicy.put("closedLibraryDueDateManagementId", "KEEP_CURRENT_DATE");
 
     request.put("loansPolicy", loansPolicy);
