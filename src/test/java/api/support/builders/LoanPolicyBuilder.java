@@ -14,7 +14,7 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
   private final UUID fixedDueDateScheduleId;
 
   public LoanPolicyBuilder() {
-    this(null, "Example Loan Policy", "An example loan policy", null, null,
+    this(UUID.randomUUID(), "Example Loan Policy", "An example loan policy", null, null,
       null);
   }
 

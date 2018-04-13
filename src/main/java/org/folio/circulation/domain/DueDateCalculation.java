@@ -10,6 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
+import java.util.List;
+import java.util.function.Predicate;
 
 public class DueDateCalculation {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -41,7 +43,7 @@ public class DueDateCalculation {
       return determineFixedDueDate(loanDate, loanPolicy.fixedDueDateSchedules, loanPolicyId);
     }
     else {
-      return fail("Unrecognised profile", profile, loanPolicyId);
+      return fail(String.format("Unrecognised profile - %s", profile), loanPolicyId);
     }
   }
 
@@ -67,7 +69,7 @@ public class DueDateCalculation {
       return HttpResult.success(loanDate.plusMinutes(duration));
     }
     else {
-      return fail("Unrecognised interval", interval, loanPolicyId);
+      return fail(String.format("Unrecognised interval - %s", interval), loanPolicyId);
     }
   }
 
@@ -77,30 +79,48 @@ public class DueDateCalculation {
     String loanPolicyId) {
 
     try {
-      return HttpResult.success(DateTime.parse(
-        JsonArrayHelper.toList(fixedDueDateSchedules.getJsonArray("schedules"))
+      final List<JsonObject> schedules = JsonArrayHelper.toList(
+        fixedDueDateSchedules.getJsonArray("schedules"));
+
+      if(schedules.isEmpty()) {
+        return fail("No schedules for fixed due date loan policy", loanPolicyId);
+      }
+      else {
+        return schedules
           .stream()
+          .filter(scheduleOverlaps(loanDate))
           .findFirst()
-          .get()
-          .getString("due")));
+          .map(this::getDueDate)
+          .orElseGet(() -> fail("Loan date is not within a schedule", loanPolicyId));
+      }
     }
     catch(Exception e) {
+      log.error("Error occurred during fixed due date determination", e);
       return HttpResult.failure(new ServerErrorFailure(e));
     }
   }
 
-  private HttpResult<DateTime> fail(
-    String reason,
-    String parameterValue,
-    String loanPolicyId) {
+  private HttpResult<DateTime> getDueDate(JsonObject schedule) {
+    return HttpResult.success(DateTime.parse(
+    schedule.getString("due")));
+  }
 
+  private Predicate<? super JsonObject> scheduleOverlaps(DateTime loanDate) {
+    return schedule -> {
+      DateTime from = DateTime.parse(schedule.getString("from"));
+      DateTime to = DateTime.parse(schedule.getString("to"));
+
+      return loanDate.isAfter(from) && loanDate.isBefore(to);
+    };
+  }
+
+  private HttpResult<DateTime> fail(String reason, String loanPolicyId) {
     final String message = String.format(
-      "Loans policy cannot be applied - %s: %s", reason, parameterValue);
+      "Loans policy cannot be applied - %s", reason);
 
-    log.error(message);
+    log.warn(message);
 
     return HttpResult.failure(new ValidationErrorFailure(
-      message,
-      "loanPolicyId", loanPolicyId));
+      message, "loanPolicyId", loanPolicyId));
   }
 }

@@ -27,7 +27,6 @@ public class RollingDueDateCalculationTests {
     "15"
   })
   public void shouldApplyMonthlyRollingPolicy(int duration) {
-
     LoanPolicy loanPolicy = new LoanPolicy(new LoanPolicyBuilder()
       .rolling(Period.months(duration))
       .create());

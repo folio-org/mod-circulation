@@ -35,4 +35,9 @@ public class FailedHttpResult<T> implements WritableHttpResult<T> {
     log.info("Writing failure response");
     cause.writeTo(response);
   }
+
+  @Override
+  public String toString() {
+    return String.format("Failed Http Result with cause %s", cause.toString());
+  }
 }

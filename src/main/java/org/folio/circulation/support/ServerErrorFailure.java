@@ -4,7 +4,7 @@ import io.vertx.core.http.HttpServerResponse;
 import org.folio.circulation.support.http.server.ServerErrorResponse;
 
 public class ServerErrorFailure implements HttpFailure {
-  private final String reason;
+  public final String reason;
 
   public ServerErrorFailure(String reason) {
     this.reason = reason;
@@ -33,5 +33,10 @@ public class ServerErrorFailure implements HttpFailure {
     }
 
     return reason;
+  }
+
+  @Override
+  public String toString() {
+    return String.format("Server error failure, reason: %s", reason);
   }
 }
