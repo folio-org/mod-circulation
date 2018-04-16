@@ -180,12 +180,10 @@ public class InventoryFetcher {
         final MultipleRecordsWrapper wrappedItems =
           MultipleRecordsWrapper.fromBody(response.getBody(), "items");
 
-        if(wrappedItems.getRecords().isEmpty()) {
-          return HttpResult.success(null);
-        }
-        else {
-          return HttpResult.success(wrappedItems.getRecords().stream().findFirst().get());
-        }
+        return HttpResult.success(wrappedItems.getRecords().stream()
+          .findFirst()
+          .orElse(null));
+
       } else {
         return HttpResult.success(null);
       }
