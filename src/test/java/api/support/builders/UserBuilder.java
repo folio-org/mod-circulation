@@ -2,10 +2,11 @@ package api.support.builders;
 
 import io.vertx.core.json.JsonObject;
 import api.APITestSuite;
+import org.joda.time.DateTime;
 
 import java.util.UUID;
 
-public class UserBuilder implements Builder {
+public class UserBuilder extends JsonBuilder implements Builder {
   private final UUID id;
   private final String username;
   private final String lastName;
@@ -13,10 +14,12 @@ public class UserBuilder implements Builder {
   private final String middleName;
   private final String barcode;
   private final UUID patronGroupId;
+  private final Boolean active;
+  private final DateTime expirationDate;
 
   public UserBuilder() {
     this("sjones", "Jones", "Steven", null, "785493025613",
-      APITestSuite.regularGroupId());
+      APITestSuite.regularGroupId(), true, null);
   }
 
   private UserBuilder(
@@ -25,7 +28,9 @@ public class UserBuilder implements Builder {
     String firstName,
     String middleName,
     String barcode,
-    UUID patronGroupId) {
+    UUID patronGroupId,
+    boolean active,
+    DateTime expirationDate) {
 
     this.id = UUID.randomUUID();
     this.username = username;
@@ -36,6 +41,8 @@ public class UserBuilder implements Builder {
 
     this.barcode = barcode;
     this.patronGroupId = patronGroupId;
+    this.active = active;
+    this.expirationDate = expirationDate;
   }
 
   public JsonObject create() {
@@ -54,6 +61,9 @@ public class UserBuilder implements Builder {
     if(this.patronGroupId != null) {
       request.put("patronGroup", this.patronGroupId.toString());
     }
+
+    put(request, "active", active);
+    put(request, "expirationDate", expirationDate);
 
     JsonObject personalInformation = new JsonObject()
       .put("lastName", this.lastName)
@@ -75,7 +85,9 @@ public class UserBuilder implements Builder {
       firstName,
       this.middleName,
       this.barcode,
-      this.patronGroupId);
+      this.patronGroupId,
+      this.active,
+      this.expirationDate);
   }
 
   public UserBuilder withName(String lastName, String firstName, String middleName) {
@@ -85,7 +97,9 @@ public class UserBuilder implements Builder {
       firstName,
       middleName,
       this.barcode,
-      this.patronGroupId);
+      this.patronGroupId,
+      this.active,
+      this.expirationDate);
   }
 
   public UserBuilder withBarcode(String barcode) {
@@ -95,7 +109,9 @@ public class UserBuilder implements Builder {
       this.firstName,
       this.middleName,
       barcode,
-      this.patronGroupId);
+      this.patronGroupId,
+      this.active,
+      this.expirationDate);
   }
 
   public UserBuilder withNoBarcode() {
@@ -105,7 +121,9 @@ public class UserBuilder implements Builder {
       this.firstName,
       this.middleName,
       null,
-      this.patronGroupId);
+      this.patronGroupId,
+      this.active,
+      this.expirationDate);
   }
 
   public UserBuilder withUsername(String username) {
@@ -115,7 +133,9 @@ public class UserBuilder implements Builder {
       this.firstName,
       this.middleName,
       this.barcode,
-      this.patronGroupId);
+      this.patronGroupId,
+      this.active,
+      this.expirationDate);
   }
 
   public UserBuilder withPatronGroupId(UUID patronGroupId) {
@@ -125,6 +145,55 @@ public class UserBuilder implements Builder {
       this.firstName,
       this.middleName,
       this.barcode,
-      patronGroupId);
+      patronGroupId,
+      this.active,
+      this.expirationDate);
+  }
+
+  public UserBuilder inactive() {
+    return new UserBuilder(
+      this.username,
+      this.lastName,
+      this.firstName,
+      this.middleName,
+      this.barcode,
+      this.patronGroupId,
+      false,
+      this.expirationDate);
+  }
+
+  public UserBuilder active() {
+    return new UserBuilder(
+      this.username,
+      this.lastName,
+      this.firstName,
+      this.middleName,
+      this.barcode,
+      this.patronGroupId,
+      true, this.expirationDate);
+  }
+
+  public UserBuilder expires(DateTime newExpirationDate) {
+    return new UserBuilder(
+      this.username,
+      this.lastName,
+      this.firstName,
+      this.middleName,
+      this.barcode,
+      this.patronGroupId,
+      this.active,
+      newExpirationDate);
+  }
+
+  public UserBuilder noExpiration() {
+    return new UserBuilder(
+      this.username,
+      this.lastName,
+      this.firstName,
+      this.middleName,
+      this.barcode,
+      this.patronGroupId,
+      this.active,
+      null);
   }
 }

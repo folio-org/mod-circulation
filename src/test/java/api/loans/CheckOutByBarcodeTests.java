@@ -3,6 +3,7 @@ package api.loans;
 import api.APITestSuite;
 import api.support.APITests;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
+import api.support.builders.UserBuilder;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -229,6 +230,46 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
+  public void cannotCheckOutWhenLoaneeIsInactive()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve(UserBuilder::inactive);
+
+    final Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, steve);
+
+    assertThat(response.getJson(), hasSoleErrorMessageContaining(
+      "Cannot check out to inactive user"));
+  }
+
+  @Test
+  public void cannotCheckOutByProxyWhenProxyingUserIsInactive()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+
+    final IndividualResource james = usersFixture.james();
+    final IndividualResource steve = usersFixture.steve(UserBuilder::inactive);
+
+    usersFixture.currentProxyFor(james, steve);
+
+    final Response response = loansFixture.attemptCheckOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(james)
+        .proxiedBy(steve));
+
+    assertThat(response.getJson(), hasSoleErrorMessageContaining(
+      "Cannot check out via inactive proxying user"));
+  }
+
+  @Test
   public void cannotCheckOutWhenItemCannotBeFound()
     throws InterruptedException,
     MalformedURLException,
@@ -337,7 +378,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCreateProxiedLoanWhenNoRelationship()
+  public void cannotCheckOutByProxyWhenNoRelationship()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,

@@ -1,14 +1,16 @@
 package api.support.fixtures;
 
+import api.support.builders.UserBuilder;
 import api.support.builders.UserProxyBuilder;
 import api.support.http.ResourceClient;
 import org.folio.circulation.support.http.client.IndividualResource;
-import org.joda.time.*;
+import org.joda.time.DateTime;
 
 import java.net.MalformedURLException;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
 
 public class UsersFixture {
   private final ResourceClient usersClient;
@@ -119,8 +121,25 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return usersClient.create(UserExamples.basedUponStevenJones());
+    return steve(b -> b);
   }
+
+  public IndividualResource steve(
+    Function<UserBuilder, UserBuilder> additionalUserProperties)
+
+    throws
+    InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final UserBuilder builder = additionalUserProperties.apply(
+      UserExamples.basedUponStevenJones());
+
+    return usersClient.create(builder);
+  }
+
+
 
   public IndividualResource charlotte()
     throws

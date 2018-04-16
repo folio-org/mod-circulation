@@ -1,6 +1,7 @@
 package org.folio.circulation.support;
 
 import io.vertx.core.http.HttpServerResponse;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.folio.circulation.support.http.server.ServerErrorResponse;
 
 public class ServerErrorFailure implements HttpFailure {
@@ -22,6 +23,8 @@ public class ServerErrorFailure implements HttpFailure {
   private static String mapToString(Throwable e) {
     final String reason;
 
+
+
     if(e.getMessage() != null) {
       reason = e.getMessage();
     }
@@ -32,7 +35,7 @@ public class ServerErrorFailure implements HttpFailure {
       reason = "Unknown internal error";
     }
 
-    return reason;
+    return String.format("%s\n%s", reason, ExceptionUtils.getStackTrace(e));
   }
 
   @Override

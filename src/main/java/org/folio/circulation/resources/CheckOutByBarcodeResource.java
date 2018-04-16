@@ -15,6 +15,7 @@ import java.util.UUID;
 import java.util.function.Function;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.LoanValidation.*;
 import static org.folio.circulation.domain.LoanValidation.defaultStatusAndAction;
 
 public class CheckOutByBarcodeResource extends CollectionResource {
@@ -63,12 +64,13 @@ public class CheckOutByBarcodeResource extends CollectionResource {
       .thenCombineAsync(userFetcher.getUserByBarcode(userBarcode), this::addUser)
       .thenCombineAsync(userFetcher.getProxyUserByBarcode(proxyUserBarcode), this::addProxyUser)
       .thenCombineAsync(inventoryFetcher.fetchByBarcode(itemBarcode), this::addInventoryRecords)
-      .thenApply(r -> r.next(v -> LoanValidation.refuseWhenItemBarcodeDoesNotExist(r, itemBarcode)))
+      .thenApply(r -> r.next(v -> refuseWhenItemBarcodeDoesNotExist(r, itemBarcode)))
       .thenApply(r -> r.map(mapBarcodes()))
-      .thenComposeAsync(r -> r.after(records ->
-        LoanValidation.refuseWhenProxyRelationshipIsInvalid(records, clients)))
+      .thenComposeAsync(r -> r.after(records -> refuseWhenProxyRelationshipIsInvalid(records, clients)))
       .thenComposeAsync(r -> r.after(requestQueueFetcher::get))
       .thenApply(LoanValidation::refuseWhenUserIsNotAwaitingPickup)
+      .thenApply(LoanValidation::refuseWhenRequestingUserIsInactive)
+      .thenApply(LoanValidation::refuseWhenProxyingUserIsInactive)
       .thenComposeAsync(r -> r.after(materialTypeRepository::getMaterialType))
       .thenComposeAsync(r -> r.after(locationRepository::getLocation))
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))

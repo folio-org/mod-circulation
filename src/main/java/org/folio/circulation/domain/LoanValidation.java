@@ -75,6 +75,45 @@ public class LoanValidation {
     });
   }
 
+  public static HttpResult<LoanAndRelatedRecords> refuseWhenRequestingUserIsInactive(
+    HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
+
+    return loanAndRelatedRecords.next(loan -> {
+      try {
+        final User requestingUser = loan.requestingUser;
+
+        if (requestingUser.isInactive()) {
+          return HttpResult.failure(new ValidationErrorFailure(
+            "Cannot check out to inactive user",
+            "userId", loan.loan.getString("userId")));
+        } else {
+          return HttpResult.success(loan);
+        }
+      } catch (Exception e) {
+        return HttpResult.failure(new ServerErrorFailure(e));
+      }
+    });
+  }
+  public static HttpResult<LoanAndRelatedRecords> refuseWhenProxyingUserIsInactive(
+    HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
+
+    return loanAndRelatedRecords.next(loan -> {
+      final User proxyingUser = loan.proxyingUser;
+
+      if(proxyingUser == null) {
+        return loanAndRelatedRecords;
+      }
+      else if(proxyingUser.isInactive()) {
+        return HttpResult.failure(new ValidationErrorFailure(
+          "Cannot check out via inactive proxying user",
+          "proxyUserId", loan.loan.getString("proxyUserId")));
+      }
+      else {
+        return loanAndRelatedRecords;
+      }
+    });
+  }
+
   private static boolean hasAwaitingPickupRequestForOtherPatron(
     RequestQueue requestQueue,
     JsonObject requestingUser) {
