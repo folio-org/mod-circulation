@@ -320,7 +320,7 @@ public class LoanCollectionResource extends CollectionResource {
 
   private HttpResult<LoanAndRelatedRecords> addUser(
     HttpResult<LoanAndRelatedRecords> loanResult,
-    HttpResult<JsonObject> getUserResult) {
+    HttpResult<User> getUserResult) {
 
     return HttpResult.combine(loanResult, getUserResult,
       LoanAndRelatedRecords::withRequestingUser);

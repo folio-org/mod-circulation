@@ -5,6 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
 
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -16,11 +17,11 @@ public class UserFetcher {
     usersStorageClient = clients.usersStorage();
   }
 
-  public CompletableFuture<HttpResult<JsonObject>> getUser(String userId) {
+  public CompletableFuture<HttpResult<User>> getUser(String userId) {
     return getUser(userId, true);
   }
 
-  public CompletableFuture<HttpResult<JsonObject>> getProxyUserByBarcode(String barcode) {
+  public CompletableFuture<HttpResult<User>> getProxyUserByBarcode(String barcode) {
     //Not proxying, so no need to get proxy user
     if(StringUtils.isBlank(barcode)) {
       return CompletableFuture.completedFuture(HttpResult.success(null));
@@ -30,13 +31,13 @@ public class UserFetcher {
     }
   }
 
-  public CompletableFuture<HttpResult<JsonObject>> getUserByBarcode(
+  public CompletableFuture<HttpResult<User>> getUserByBarcode(
     String barcode) {
 
     return getUserByBarcode(barcode, "userBarcode");
   }
 
-  private CompletableFuture<HttpResult<JsonObject>> getUserByBarcode(
+  private CompletableFuture<HttpResult<User>> getUserByBarcode(
     String barcode,
     String propertyName) {
 
@@ -45,7 +46,7 @@ public class UserFetcher {
     this.usersStorageClient.getMany(
       String.format("barcode==%s", barcode), 1, 0, getUserCompleted::complete);
 
-    final Function<Response, HttpResult<JsonObject>> mapResponse = response -> {
+    final Function<Response, HttpResult<User>> mapResponse = response -> {
       if(response.getStatusCode() == 404) {
         return HttpResult.failure(new ServerErrorFailure("Unable to locate User"));
       }
@@ -57,13 +58,11 @@ public class UserFetcher {
         final MultipleRecordsWrapper wrappedUsers =
           MultipleRecordsWrapper.fromBody(response.getBody(), "users");
 
-        if(wrappedUsers.getRecords().isEmpty()) {
-          return HttpResult.failure(new ValidationErrorFailure(
-            "Could not find user with matching barcode", propertyName, barcode));
-        }
-        else {
-          return HttpResult.success(wrappedUsers.getRecords().stream().findFirst().get());
-        }
+        final Optional<JsonObject> firstUser = wrappedUsers.getRecords().stream().findFirst();
+
+        return firstUser.map(User::new).map(HttpResult::success).orElseGet(
+          () -> HttpResult.failure(new ValidationErrorFailure(
+          "Could not find user with matching barcode", propertyName, barcode)));
       }
     };
 
@@ -73,7 +72,7 @@ public class UserFetcher {
   }
 
   //TODO: Need a better way of choosing behaviour for not found
-  public CompletableFuture<HttpResult<JsonObject>> getUser(
+  public CompletableFuture<HttpResult<User>> getUser(
     String userId,
     boolean failOnNotFound) {
 
@@ -81,7 +80,7 @@ public class UserFetcher {
 
     this.usersStorageClient.get(userId, getUserCompleted::complete);
 
-    final Function<Response, HttpResult<JsonObject>> mapResponse = response -> {
+    final Function<Response, HttpResult<User>> mapResponse = response -> {
       if(response.getStatusCode() == 404) {
         if(failOnNotFound) {
           return HttpResult.failure(new ServerErrorFailure("Unable to locate User"));
@@ -95,7 +94,7 @@ public class UserFetcher {
       }
       else {
         //Got user record, we're good to continue
-        return HttpResult.success(response.getJson());
+        return HttpResult.success(new User(response.getJson()));
       }
     };
 

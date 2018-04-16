@@ -134,7 +134,7 @@ public class CheckOutByBarcodeResource extends CollectionResource {
 
   private HttpResult<LoanAndRelatedRecords> addProxyUser(
     HttpResult<LoanAndRelatedRecords> loanResult,
-    HttpResult<JsonObject> getUserResult) {
+    HttpResult<User> getUserResult) {
 
     return HttpResult.combine(loanResult, getUserResult,
       LoanAndRelatedRecords::withProxyingUser);
@@ -142,7 +142,7 @@ public class CheckOutByBarcodeResource extends CollectionResource {
 
   private HttpResult<LoanAndRelatedRecords> addUser(
     HttpResult<LoanAndRelatedRecords> loanResult,
-    HttpResult<JsonObject> getUserResult) {
+    HttpResult<User> getUserResult) {
 
     return HttpResult.combine(loanResult, getUserResult,
       LoanAndRelatedRecords::withRequestingUser);

@@ -7,8 +7,8 @@ public class LoanAndRelatedRecords {
   public final JsonObject loan;
   public final InventoryRecords inventoryRecords;
   public final RequestQueue requestQueue;
-  public final JsonObject requestingUser;
-  public final JsonObject proxyingUser;
+  public final User requestingUser;
+  public final User proxyingUser;
   public final LoanPolicy loanPolicy;
   public final JsonObject location;
   public final JsonObject materialType;
@@ -17,8 +17,8 @@ public class LoanAndRelatedRecords {
     JsonObject loan,
     InventoryRecords inventoryRecords,
     RequestQueue requestQueue,
-    JsonObject requestingUser,
-    JsonObject proxyingUser,
+    User requestingUser,
+    User proxyingUser,
     LoanPolicy loanPolicy,
     JsonObject location,
     JsonObject materialType) {
@@ -53,12 +53,12 @@ public class LoanAndRelatedRecords {
       requestingUser, proxyingUser, loanPolicy, location, this.materialType);
   }
 
-  public LoanAndRelatedRecords withRequestingUser(JsonObject newUser) {
+  public LoanAndRelatedRecords withRequestingUser(User newUser) {
     return new LoanAndRelatedRecords(loan, inventoryRecords, requestQueue,
       newUser, proxyingUser, loanPolicy, location, this.materialType);
   }
 
-  public LoanAndRelatedRecords withProxyingUser(JsonObject newProxyingUser) {
+  public LoanAndRelatedRecords withProxyingUser(User newProxyingUser) {
     return new LoanAndRelatedRecords(loan, inventoryRecords, requestQueue,
       requestingUser, newProxyingUser, loanPolicy, location, this.materialType);
   }

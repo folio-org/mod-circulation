@@ -1,6 +1,6 @@
 ## 10.1.0 Unreleased
 
-* Initial check out API for checking out an item to a loanee using barcodes (CIRC-74)
+* Initial check out API for checking out an item to a loanee using their barcodes (CIRC-74)
 * Rename `metaData` property to `metadata` (CIRC-98)
 * Add shelving location to loan rule parser (CIRC-16)
 * Add required priority keyword to loan rule engine (CIRC-17)

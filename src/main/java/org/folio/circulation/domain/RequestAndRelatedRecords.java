@@ -7,15 +7,15 @@ public class RequestAndRelatedRecords {
   public final JsonObject request;
   public final InventoryRecords inventoryRecords;
   public final RequestQueue requestQueue;
-  public final JsonObject requestingUser;
-  public final JsonObject proxyUser;
+  public final User requestingUser;
+  public final User proxyUser;
 
   private RequestAndRelatedRecords(
     JsonObject request,
     InventoryRecords inventoryRecords,
     RequestQueue requestQueue,
-    JsonObject requestingUser,
-    JsonObject proxyUser) {
+    User requestingUser,
+    User proxyUser) {
 
     this.request = request;
     this.inventoryRecords = inventoryRecords;
@@ -64,7 +64,7 @@ public class RequestAndRelatedRecords {
       this.proxyUser);
   }
 
-  public RequestAndRelatedRecords withRequestingUser(JsonObject newUser) {
+  public RequestAndRelatedRecords withRequestingUser(User newUser) {
     return new RequestAndRelatedRecords(
       this.request,
       this.inventoryRecords,
@@ -73,7 +73,7 @@ public class RequestAndRelatedRecords {
       this.proxyUser);
   }
 
-  public RequestAndRelatedRecords withProxyUser(JsonObject newProxyUser) {
+  public RequestAndRelatedRecords withProxyUser(User newProxyUser) {
     return new RequestAndRelatedRecords(
       this.request,
       this.inventoryRecords,

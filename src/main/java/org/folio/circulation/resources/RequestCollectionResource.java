@@ -362,7 +362,7 @@ public class RequestCollectionResource extends CollectionResource {
 
   private HttpResult<RequestAndRelatedRecords> addUser(
     HttpResult<RequestAndRelatedRecords> loanResult,
-    HttpResult<JsonObject> getUserResult) {
+    HttpResult<User> getUserResult) {
 
     return HttpResult.combine(loanResult, getUserResult,
       RequestAndRelatedRecords::withRequestingUser);
@@ -370,12 +370,11 @@ public class RequestCollectionResource extends CollectionResource {
 
   private HttpResult<RequestAndRelatedRecords> addProxyUser(
     HttpResult<RequestAndRelatedRecords> loanResult,
-    HttpResult<JsonObject> getUserResult) {
+    HttpResult<User> getUserResult) {
 
     return HttpResult.combine(loanResult, getUserResult,
       RequestAndRelatedRecords::withProxyUser);
   }
-
 
   private HttpResult<RequestAndRelatedRecords> refuseWhenItemDoesNotExist(
     HttpResult<RequestAndRelatedRecords> result) {
