@@ -44,6 +44,7 @@ public abstract class APITests {
   protected final ResourceClient loansClient = ResourceClient.forLoans(client);
   protected final ResourceClient holdingsClient = ResourceClient.forHoldings(client);
   protected final ResourceClient instancesClient = ResourceClient.forInstances(client);
+  protected final ResourceClient loansStorageClient = ResourceClient.forLoansStorage(client);
 
   protected final ItemsFixture itemsFixture = new ItemsFixture(client);
   protected final LoansFixture loansFixture = new LoansFixture(loansClient, client);

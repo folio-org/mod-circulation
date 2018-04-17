@@ -43,8 +43,6 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class LoanAPITests extends APITests {
-  private final ResourceClient loansStorageClient = ResourceClient.forLoansStorage(client);
-
   @Test
   public void canCreateALoan()
     throws InterruptedException,
