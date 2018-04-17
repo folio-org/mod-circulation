@@ -181,18 +181,25 @@ public class FakeCQLToJSONInterpreter {
 
   private String getPropertyValue(JsonObject record, String field) {
     //TODO: Should bomb if property does not exist
-    if(field.contains(".")) {
-      String[] fields = field.split("\\.");
+    try {
+      if(field.contains(".")) {
+        String[] fields = field.split("\\.");
 
-      if(!record.containsKey(String.format("%s", fields[0]))) {
-        return null;
+        if(!record.containsKey(String.format("%s", fields[0]))) {
+          return null;
+        }
+
+        return record.getJsonObject(String.format("%s", fields[0]))
+          .getString(String.format("%s", fields[1].trim()));
       }
-
-      return record.getJsonObject(String.format("%s", fields[0]))
-        .getString(String.format("%s", fields[1].trim()));
+      else {
+        return record.getString(String.format("%s", field.trim()));
+      }
     }
-    else {
-      return record.getString(String.format("%s", field.trim()));
+    catch(Exception e) {
+      throw new IllegalArgumentException(String.format(
+        "Cannot get value of %s from %s", field,
+        record.encodePrettily()));
     }
   }
 

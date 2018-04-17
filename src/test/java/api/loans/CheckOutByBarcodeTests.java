@@ -3,6 +3,7 @@ package api.loans;
 import api.APITestSuite;
 import api.support.APITests;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
+import api.support.builders.LoanBuilder;
 import api.support.builders.UserBuilder;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -305,7 +306,29 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat(response.getJson(),
       hasSoleErrorMessageContaining("Item is already checked out"));
   }
-  
+
+  @Test
+  public void cannotCheckOutWhenOpenLoanAlreadyExists()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+    final IndividualResource steve = usersFixture.steve();
+
+    loansStorageClient.create(new LoanBuilder()
+      .open()
+      .withItemId(smallAngryPlanet.getId())
+      .withUserId(jessica.getId()));
+
+    final Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, steve);
+
+    assertThat(response.getJson(),
+      hasSoleErrorMessageContaining("Cannot check out item that already has an open loan"));
+  }
+
   @Test
   public void cannotCheckOutToOtherPatronWhenRequestIsAwaitingPickup()
     throws InterruptedException,

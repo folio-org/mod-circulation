@@ -68,6 +68,7 @@ public class CheckOutByBarcodeResource extends CollectionResource {
       .thenApply(r -> r.map(mapBarcodes()))
       .thenApply(LoanValidation::refuseWhenItemIsAlreadyCheckedOut)
       .thenComposeAsync(r -> r.after(records -> refuseWhenProxyRelationshipIsInvalid(records, clients)))
+      .thenComposeAsync(r -> r.after(records -> refuseWhenHasOpenLoan(records, loanRepository)))
       .thenComposeAsync(r -> r.after(requestQueueFetcher::get))
       .thenApply(LoanValidation::refuseWhenUserIsNotAwaitingPickup)
       .thenApply(LoanValidation::refuseWhenRequestingUserIsInactive)

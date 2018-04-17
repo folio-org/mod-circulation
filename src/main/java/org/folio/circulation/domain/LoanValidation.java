@@ -227,6 +227,24 @@ public class LoanValidation {
     return future;
   }
 
+  public static CompletableFuture<HttpResult<LoanAndRelatedRecords>> refuseWhenHasOpenLoan(
+    LoanAndRelatedRecords loanAndRelatedRecords,
+    LoanRepository loanRepository) {
+
+    final String itemId = loanAndRelatedRecords.loan.getString("itemId");
+
+    return loanRepository.hasOpenLoan(itemId)
+      .thenApply(r -> r.next(openLoan -> {
+        if(openLoan) {
+          return HttpResult.failure(new ValidationErrorFailure(
+            "Cannot check out item that already has an open loan", "itemId", itemId));
+        }
+        else {
+          return HttpResult.success(loanAndRelatedRecords);
+        }
+      }));
+  }
+
   public static HttpResult<LoanAndRelatedRecords> refuseWhenItemIsAlreadyCheckedOut(
     HttpResult<LoanAndRelatedRecords> result) {
 
