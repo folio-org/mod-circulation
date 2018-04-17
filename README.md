@@ -70,6 +70,24 @@ run `./scripts/lint-raml-cop.sh` to validate the RAML and JSON.Schema descriptio
 
 ## Design Notes
 
+### Check Out By Barcode
+
+In additional to the typical loan creation API, it is possible to check out an item to a loanee (optionally via a proxy), using barcodes. 
+
+Below is a short summary summary of the validation checks performed when using this endpoint.
+
+|Check|Notes|
+|---|---|
+|Item exists| |
+|Holding exists|otherwise it is not possible to lookup loan rules|
+|Item is not already checked out| |
+|No other checked out loan| |
+|Proxy relationship needs to be valid|only if proxy is involved|
+|User must be requesting user|if there is an outstanding fulfillable request for item|
+|Loan must have a status of Open or Closed| |
+|User needs to be active and not expired| |
+|Proxy needs to be active and not expired|only if proxy is involved|
+
 ### Loan Rules Caching
 
 The loan rules engine used for applying loan rules has an internal, local cache which is refreshed every 5 seconds and
