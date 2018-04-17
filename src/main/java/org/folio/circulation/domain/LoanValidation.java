@@ -226,4 +226,20 @@ public class LoanValidation {
 
     return future;
   }
+
+  public static HttpResult<LoanAndRelatedRecords> refuseWhenItemIsAlreadyCheckedOut(
+    HttpResult<LoanAndRelatedRecords> result) {
+
+    return result.next(loan -> {
+      final JsonObject item = loan.inventoryRecords.item;
+
+      if(ItemStatus.isCheckedOut(item)) {
+        return HttpResult.failure(new ValidationErrorFailure(
+          "Item is already checked out", "itemId", item.getString("id")));
+      }
+      else {
+        return result;
+      }
+    });
+  }
 }

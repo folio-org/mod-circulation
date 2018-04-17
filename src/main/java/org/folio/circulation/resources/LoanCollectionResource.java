@@ -67,7 +67,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenCombineAsync(inventoryFetcher.fetch(loan), this::addInventoryRecords)
       .thenApply(LoanValidation::refuseWhenItemDoesNotExist)
       .thenApply(this::refuseWhenHoldingDoesNotExist)
-      .thenApply(this::refuseWhenItemIsAlreadyCheckedOut)
+      .thenApply(LoanValidation::refuseWhenItemIsAlreadyCheckedOut)
       .thenComposeAsync(r -> r.after(records -> LoanValidation.refuseWhenProxyRelationshipIsInvalid(records, clients)))
       .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
       .thenCombineAsync(userFetcher.getUser(requestingUserId), this::addUser)
@@ -366,22 +366,6 @@ public class LoanCollectionResource extends CollectionResource {
         default:
           return HttpResult.failure(new ValidationErrorFailure(
             "Loan status must be \"Open\" or \"Closed\"", "status", status));
-      }
-    });
-  }
-
-  private HttpResult<LoanAndRelatedRecords> refuseWhenItemIsAlreadyCheckedOut(
-    HttpResult<LoanAndRelatedRecords> result) {
-
-    return result.next(loan -> {
-      final JsonObject item = loan.inventoryRecords.item;
-
-      if(ItemStatus.isCheckedOut(item)) {
-        return HttpResult.failure(new ValidationErrorFailure(
-          "Item is already checked out", "itemId", item.getString("id")));
-      }
-      else {
-        return result;
       }
     });
   }

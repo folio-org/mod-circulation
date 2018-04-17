@@ -288,6 +288,25 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
+  public void cannotCheckOutWhenItemIsAlreadyCheckedOut()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+    final IndividualResource steve = usersFixture.steve();
+
+    loansFixture.checkOut(smallAngryPlanet, jessica);
+
+    final Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, steve);
+
+    assertThat(response.getJson(),
+      hasSoleErrorMessageContaining("Item is already checked out"));
+  }
+  
+  @Test
   public void cannotCheckOutToOtherPatronWhenRequestIsAwaitingPickup()
     throws InterruptedException,
     MalformedURLException,

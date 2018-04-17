@@ -66,6 +66,7 @@ public class CheckOutByBarcodeResource extends CollectionResource {
       .thenCombineAsync(inventoryFetcher.fetchByBarcode(itemBarcode), this::addInventoryRecords)
       .thenApply(r -> r.next(v -> refuseWhenItemBarcodeDoesNotExist(r, itemBarcode)))
       .thenApply(r -> r.map(mapBarcodes()))
+      .thenApply(LoanValidation::refuseWhenItemIsAlreadyCheckedOut)
       .thenComposeAsync(r -> r.after(records -> refuseWhenProxyRelationshipIsInvalid(records, clients)))
       .thenComposeAsync(r -> r.after(requestQueueFetcher::get))
       .thenApply(LoanValidation::refuseWhenUserIsNotAwaitingPickup)
