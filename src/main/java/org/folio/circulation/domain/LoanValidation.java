@@ -82,6 +82,11 @@ public class LoanValidation {
       try {
         final User requestingUser = loan.requestingUser;
 
+        if (!requestingUser.containsKey("active")) {
+          return HttpResult.failure(new ValidationErrorFailure(
+            "Cannot determine if user is active or not",
+            "userId", loan.loan.getString("userId")));
+        }
         if (requestingUser.isInactive()) {
           return HttpResult.failure(new ValidationErrorFailure(
             "Cannot check out to inactive user",
@@ -102,6 +107,11 @@ public class LoanValidation {
 
       if(proxyingUser == null) {
         return loanAndRelatedRecords;
+      }
+      else if (!proxyingUser.containsKey("active")) {
+        return HttpResult.failure(new ValidationErrorFailure(
+          "Cannot determine if proxying user is active or not",
+          "proxyUserId", loan.loan.getString("proxyUserId")));
       }
       else if(proxyingUser.isInactive()) {
         return HttpResult.failure(new ValidationErrorFailure(
