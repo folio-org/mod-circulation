@@ -118,18 +118,20 @@
       <version>3.0.7</version>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>guru.nidi.raml</groupId>
-      <artifactId>raml-tester</artifactId>
-      <version>0.8.15</version>
-      <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>ch.qos.logback</groupId>
-          <artifactId>logback-classic</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
+    <!-- Reinstate if we figure out a way to refer to schema that are compatible
+    with other tools, see FOLIO-1213 -->
+    <!--<dependency>-->
+      <!--<groupId>guru.nidi.raml</groupId>-->
+      <!--<artifactId>raml-tester</artifactId>-->
+      <!--<version>0.8.15</version>-->
+      <!--<scope>test</scope>-->
+      <!--<exclusions>-->
+        <!--<exclusion>-->
+          <!--<groupId>ch.qos.logback</groupId>-->
+          <!--<artifactId>logback-classic</artifactId>-->
+        <!--</exclusion>-->
+      <!--</exclusions>-->
+    <!--</dependency>-->
     <dependency>
       <groupId>org.jacoco</groupId>
       <artifactId>jacoco-maven-plugin</artifactId>

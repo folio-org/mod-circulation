@@ -5,9 +5,6 @@ import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.http.InterfaceUrls;
 import api.support.http.ResourceClient;
-import guru.nidi.ramltester.RamlDefinition;
-import guru.nidi.ramltester.RamlLoaders;
-import guru.nidi.ramltester.restassured3.RestAssuredClient;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.config.HttpClientConfig;
@@ -29,7 +26,7 @@ import java.util.stream.Collectors;
 
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.support.http.OkapiHeader.*;
-import static guru.nidi.ramltester.junit.RamlMatchers.hasNoViolations;
+import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -37,7 +34,6 @@ public class LoansFixture {
 
   private final ResourceClient loansClient;
   private final OkapiHttpClient client;
-  private final RestAssuredClient restAssuredClient = createClient();
 
   public LoansFixture(ResourceClient loansClient, OkapiHttpClient client) {
     this.loansClient = loansClient;
@@ -144,7 +140,7 @@ public class LoansFixture {
 
     JsonObject request = builder.create();
 
-    io.restassured.response.Response response = restAssuredClient.given()
+    io.restassured.response.Response response = given()
       .log().all()
       .spec(defaultHeaders())
       .spec(timeoutConfig())
@@ -154,9 +150,6 @@ public class LoansFixture {
       .log().all()
       .statusCode(201)
       .extract().response();
-
-    assertThat(restAssuredClient.getLastReport().toString(),
-      restAssuredClient.getLastReport(), hasNoViolations());
 
     return new IndividualResource(from(response));
   }
@@ -174,7 +167,7 @@ public class LoansFixture {
 
     JsonObject request = builder.create();
 
-    io.restassured.response.Response response = restAssuredClient.given()
+    io.restassured.response.Response response = given()
       .log().all()
       .spec(defaultHeaders())
       .spec(timeoutConfig())
@@ -184,9 +177,6 @@ public class LoansFixture {
       .log().all()
       .statusCode(422)
       .extract().response();
-
-    assertThat(restAssuredClient.getLastReport().toString(),
-      restAssuredClient.getLastReport(), hasNoViolations());
 
     return from(response);
   }
@@ -215,13 +205,5 @@ public class LoansFixture {
       response.contentType(),
       response.headers().asList().stream()
         .collect(Collectors.toMap(Header::getName, Header::getValue)));
-  }
-
-  private RestAssuredClient createClient() {
-    RamlDefinition api = RamlLoaders.fromFile("ramls")
-      .load("circulation.raml")
-      .ignoringXheaders();
-
-    return api.createRestAssured3();
   }
 }
