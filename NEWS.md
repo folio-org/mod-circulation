@@ -1,4 +1,4 @@
-## 9.0.1 Unreleased
+## 9.0.1 2018-04-16
 
 * Loan rules `apply` endpoint missing or malformed reports query parameters (CIRC-95)
 * Provides `circulation` interface 2.13 (CIRC-95)

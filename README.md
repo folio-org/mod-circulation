@@ -25,8 +25,6 @@ FOLIO compatible circulation capabilities, including loan items from the invento
 ### Optional
 
 - Python 3 (for un-registering module during managed demo and tests via Okapi)
-- Node.js 6.4 (for API linting)
-- NPM 3.10 (for API linting)
 
 ## Preparation
 
@@ -38,7 +36,7 @@ To initialise these please run `git submodule init && git submodule update` in t
 
 If these are not initialised, the inventory-storage module will fail to build correctly, and other operations may also fail.
 
-More information is available on the [developer site](http://dev.folio.org/doc/setup#update-git-submodules).
+More information is available on the [developer site](https://dev.folio.org/guides/developer-setup/#update-git-submodules).
 
 ## Common activities
 
@@ -68,7 +66,7 @@ In order to change the specific versions of these dependencies, edit the test-vi
 
 ### Checking the RAML and JSON.Schema definitions
 
-run `./lint.sh` to validate the RAML and JSON.Schema descriptions of the API (requires node.js and NPM)
+run `./scripts/lint-raml-cop.sh` to validate the RAML and JSON.Schema descriptions of the API
 
 ## Design Notes
 
@@ -153,10 +151,10 @@ Requests include information from the item, including holdingsRecordId and insta
 
 ## Additional Information
 
-Other [modules](http://dev.folio.org/source-code/#server-side).
+Other [modules](https://dev.folio.org/source-code/#server-side).
 
 See project [CIRC](https://issues.folio.org/browse/CIRC)
-at the [FOLIO issue tracker](http://dev.folio.org/community/guide-issues).
+at the [FOLIO issue tracker](https://dev.folio.org/guidelines/issue-tracker/).
 
-Other FOLIO Developer documentation is at [dev.folio.org](http://dev.folio.org/)
+Other FOLIO Developer documentation is at [dev.folio.org](https://dev.folio.org/)
 
