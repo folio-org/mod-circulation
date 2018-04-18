@@ -1,6 +1,15 @@
 ## 10.0.0 Unreleased
 
-* Implements loan rules engine using antlr parser (CIRC-35)
+* Add shelving location to loan rule parser (CIRC-16)
+* Add priority keyword to loan rule engine (CIRC-17)
+* Add "all" keyword to loan rule engine (CIRC-18)
+* Add ! (negation) operator to loan rule engine (CIRC-19)
+* Implement applyAll API endpoint of loan rules engine (CIRC-33)
+* Implement /circulation/loan-rules/apply-all endpoint (fix 500 status) (CIRC-63)
+* Implement antlr parser; wire loan rules against UUIDs of controlled vocabularies (CIRC-35)
+* Fix "Loan rule is not processed when no space after colon between rule and policy" (CIRC-73)
+
+Breaking change: required priority keyword
 
 ## 9.0.1 2018-04-16
 
