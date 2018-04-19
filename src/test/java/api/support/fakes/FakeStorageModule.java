@@ -8,6 +8,9 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.http.server.*;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.format.ISODateTimeFormat;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -20,6 +23,8 @@ public class FakeStorageModule extends AbstractVerticle {
   private final Map<String, Map<String, JsonObject>> storedResourcesByTenant;
   private final String recordTypeName;
   private final Collection<String> uniqueProperties;
+  private final Boolean includeChangeMetadata;
+  private final String changeMetadataPropertyName = "metaData";
   private Proxy proxyAs;
 
   public FakeStorageModule(
@@ -29,7 +34,8 @@ public class FakeStorageModule extends AbstractVerticle {
     Collection<String> requiredProperties,
     boolean hasCollectionDelete,
     String recordTypeName,
-    Collection<String> uniqueProperties) {
+    Collection<String> uniqueProperties,
+    Boolean includeChangeMetadata) {
 
     this.rootPath = rootPath;
     this.collectionPropertyName = collectionPropertyName;
@@ -37,6 +43,7 @@ public class FakeStorageModule extends AbstractVerticle {
     this.hasCollectionDelete = hasCollectionDelete;
     this.recordTypeName = recordTypeName;
     this.uniqueProperties = uniqueProperties;
+    this.includeChangeMetadata = includeChangeMetadata;
 
     storedResourcesByTenant = new HashMap<>();
     storedResourcesByTenant.put(tenantId, new HashMap<>());
@@ -79,6 +86,17 @@ public class FakeStorageModule extends AbstractVerticle {
 
     body.put("id", id);
 
+    if(includeChangeMetadata) {
+      final UUID fakeUserId = UUID.randomUUID();
+      body.put(changeMetadataPropertyName, new JsonObject()
+        .put("createdDate", new DateTime(DateTimeZone.UTC)
+          .toString(ISODateTimeFormat.dateTime()))
+        .put("createdByUserId", fakeUserId.toString())
+        .put("updatedDate", new DateTime(DateTimeZone.UTC)
+          .toString(ISODateTimeFormat.dateTime()))
+        .put("updatedByUserId", fakeUserId.toString()));
+    }
+
     getResourcesForTenant(context).put(id, body);
 
     System.out.println(
@@ -99,6 +117,20 @@ public class FakeStorageModule extends AbstractVerticle {
     if(resourcesForTenant.containsKey(id)) {
       System.out.println(
         String.format("Replaced %s resource: %s", recordTypeName, id));
+
+      if(includeChangeMetadata) {
+        final UUID fakeUserId = UUID.randomUUID();
+
+        final JsonObject existingChangeMetadata = resourcesForTenant.get(id)
+          .getJsonObject(changeMetadataPropertyName);
+
+        final JsonObject updatedChangeMetadata = existingChangeMetadata.copy()
+          .put("updatedDate", new DateTime(DateTimeZone.UTC)
+            .toString(ISODateTimeFormat.dateTime()))
+          .put("updatedByUserId", fakeUserId.toString());
+
+        body.put(changeMetadataPropertyName, updatedChangeMetadata);
+      }
 
       resourcesForTenant.replace(id, body);
       SuccessResponse.noContent(routingContext.response());

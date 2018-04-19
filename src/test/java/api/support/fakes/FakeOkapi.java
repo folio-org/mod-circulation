@@ -87,6 +87,7 @@ public class FakeOkapi extends AbstractVerticle {
       .withRecordName("loan")
       .withRootPath("/loan-storage/loans")
       .withRequiredProperties("userId", "itemId", "loanDate", "action")
+      .withChangeMetadata()
       .create().register(router);
 
     new FakeStorageModuleBuilder()
@@ -125,6 +126,7 @@ public class FakeOkapi extends AbstractVerticle {
       .withRootPath("/request-storage/requests")
       .withRequiredProperties("itemId", "requesterId", "requestType",
         "requestDate", "fulfilmentPreference")
+      .withChangeMetadata()
       .create().register(router);
 
     registerLoanRulesStorage(router);
