@@ -110,9 +110,9 @@ public class RequestsAPICreationTests extends APITests {
       representation.containsKey("proxy"), is(false));
 
     assertThat("should have change metadata",
-      representation.containsKey("metaData"), is(true));
+      representation.containsKey("metadata"), is(true));
 
-    JsonObject changeMetadata = representation.getJsonObject("metaData");
+    JsonObject changeMetadata = representation.getJsonObject("metadata");
 
     assertThat("change metadata should have created date",
       changeMetadata.containsKey("createdDate"), is(true));

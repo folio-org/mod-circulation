@@ -24,7 +24,7 @@ public class FakeStorageModule extends AbstractVerticle {
   private final String recordTypeName;
   private final Collection<String> uniqueProperties;
   private final Boolean includeChangeMetadata;
-  private final String changeMetadataPropertyName = "metaData";
+  private final String changeMetadataPropertyName = "metadata";
   private Proxy proxyAs;
 
   public FakeStorageModule(

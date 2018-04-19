@@ -134,9 +134,9 @@ public class LoanAPITests extends APITests {
       loan.containsKey("itemStatus"), is(false));
 
     assertThat("should have change metadata",
-      loan.containsKey("metaData"), is(true));
+      loan.containsKey("metadata"), is(true));
 
-    JsonObject changeMetadata = loan.getJsonObject("metaData");
+    JsonObject changeMetadata = loan.getJsonObject("metadata");
 
     assertThat("change metadata should have created date",
       changeMetadata.containsKey("createdDate"), is(true));

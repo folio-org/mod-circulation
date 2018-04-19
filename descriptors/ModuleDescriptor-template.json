@@ -4,7 +4,7 @@
   "provides": [
     {
       "id": "circulation",
-      "version": "2.13",
+      "version": "3.0",
       "handlers": [
         {
           "methods": [
@@ -266,7 +266,7 @@
   "requires": [
     {
       "id": "loan-storage",
-      "version": "3.5"
+      "version": "4.0"
     },
     {
       "id": "loan-rules-storage",
@@ -286,7 +286,7 @@
     },
     {
       "id": "request-storage",
-      "version": "1.5"
+      "version": "2.0"
     },
     {
       "id": "users",
