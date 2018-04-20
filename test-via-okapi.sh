@@ -12,7 +12,7 @@ inventory_storage_module_id="mod-inventory-storage-10.1.0-SNAPSHOT"
 circulation_storage_module_id="mod-circulation-storage-5.0.0-SNAPSHOT"
 
 #Needs to be the specific version of mod-users you want to use for testing
-users_storage_module_id="mod-users-14.5.0-SNAPSHOT"
+users_storage_module_id="mod-users-14.8.0-SNAPSHOT"
 
 #remove log output
 rm test-via-okapi.log
