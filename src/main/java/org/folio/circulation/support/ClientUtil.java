@@ -16,7 +16,7 @@ public final class ClientUtil {
 
     return new OkapiHttpClient(routingContext.vertx().createHttpClient(),
       new URL(context.getOkapiLocation()), context.getTenantId(),
-      context.getOkapiToken(),
+      context.getOkapiToken(), context.getOkapiUserId(),
       exception -> ServerErrorResponse.internalError(routingContext.response(),
         String.format("Failed to contact storage module: %s",
           exception.toString())));

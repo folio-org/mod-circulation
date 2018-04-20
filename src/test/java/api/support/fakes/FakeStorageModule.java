@@ -1,5 +1,6 @@
 package api.support.fakes;
 
+import api.APITestSuite;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -87,14 +88,14 @@ public class FakeStorageModule extends AbstractVerticle {
     body.put("id", id);
 
     if(includeChangeMetadata) {
-      final UUID fakeUserId = UUID.randomUUID();
+      final String fakeUserId = APITestSuite.USER_ID;
       body.put(changeMetadataPropertyName, new JsonObject()
         .put("createdDate", new DateTime(DateTimeZone.UTC)
           .toString(ISODateTimeFormat.dateTime()))
-        .put("createdByUserId", fakeUserId.toString())
+        .put("createdByUserId", fakeUserId)
         .put("updatedDate", new DateTime(DateTimeZone.UTC)
           .toString(ISODateTimeFormat.dateTime()))
-        .put("updatedByUserId", fakeUserId.toString()));
+        .put("updatedByUserId", fakeUserId));
     }
 
     getResourcesForTenant(context).put(id, body);
@@ -119,7 +120,7 @@ public class FakeStorageModule extends AbstractVerticle {
         String.format("Replaced %s resource: %s", recordTypeName, id));
 
       if(includeChangeMetadata) {
-        final UUID fakeUserId = UUID.randomUUID();
+        final String fakeUserId = APITestSuite.USER_ID;
 
         final JsonObject existingChangeMetadata = resourcesForTenant.get(id)
           .getJsonObject(changeMetadataPropertyName);
@@ -127,7 +128,7 @@ public class FakeStorageModule extends AbstractVerticle {
         final JsonObject updatedChangeMetadata = existingChangeMetadata.copy()
           .put("updatedDate", new DateTime(DateTimeZone.UTC)
             .toString(ISODateTimeFormat.dateTime()))
-          .put("updatedByUserId", fakeUserId.toString());
+          .put("updatedByUserId", fakeUserId);
 
         body.put(changeMetadataPropertyName, updatedChangeMetadata);
       }
