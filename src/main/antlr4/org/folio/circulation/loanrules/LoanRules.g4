@@ -88,9 +88,36 @@ tokens { INDENT, DEDENT }
   }
 }
 
-loanRulesFile : NEWLINE* fallbackpolicy
-                ( NEWLINE | statement )*
-                EOF ;
+loanRulesFile
+  : NEWLINE* 'priority' ':' 'first-line' ( NEWLINE | statement )*  NEWLINE* fallbackpolicy noStatementAfterFallbackPolicy EOF
+  | NEWLINE* 'priority' ':' priority     NEWLINE* fallbackpolicy   ( NEWLINE | statement )* EOF
+  ;
+
+priority
+  : 'last-line'                                                # lastLinePriorities
+  | criteriumPriority ',' linePriority                         # twoPriorities
+  | criteriumPriority ',' criteriumPriority ',' linePriority   # threePriorities
+  | sevenCriteriumLetters                                      # defaultPriorities
+  ;
+
+criteriumPriority
+  : 'criterium' '(' sevenCriteriumLetters ')'
+  | 'number-of-criteria'
+  ;
+
+linePriority
+  : 'first-line'
+  | 'last-line'
+  ;
+
+sevenCriteriumLetters
+  : CRITERIUM_LETTER (','? CRITERIUM_LETTER)*
+  ;
+
+noStatementAfterFallbackPolicy
+  :
+  | { notifyErrorListeners("For 'priority: first-line' the fallback-policy must be after the last rule."); }  statement
+  ;
 
 statement
   : simpleStatement
@@ -99,17 +126,22 @@ statement
 
 simpleStatement : expr NEWLINE ;
 
-blockStatements : expr NEWLINE INDENT statement+ DEDENT ;
+blockStatements : expr NEWLINE indent statement+ dedent ;
+
+indent : INDENT ;
+
+dedent : DEDENT ;
 
 expr: criterium ('+' criterium)* policy?
     ;
 
-criterium : ('t'|'a'|'b'|'c'|'s'|'m'|'g')
+criterium : CRITERIUM_LETTER
             (   all
               | NAME+
               | NAME+ '!'        { notifyErrorListeners("A '!' must precede each name or no name."); } (NAME|'!')*
               | ('!' NAME)+
               | ('!' NAME)+ NAME { notifyErrorListeners("A '!' must precede each name or no name."); } (NAME|'!')*
+              |                  { notifyErrorListeners("Name missing."); }
             )
           ;
 
@@ -122,6 +154,8 @@ policy : ':' NAME
        | ':'           { notifyErrorListeners("Policy missing after ':'"); }
        | ':' NAME NAME { notifyErrorListeners("Only one policy allowed");  }
        ;
+
+CRITERIUM_LETTER: [tabcsmg];
 
 NAME: [0-9a-zA-Z-]+;
 
@@ -138,8 +172,9 @@ NEWLINE : ( '\r'? '\n' | '\r' ) { if (pendingDent) {
 WS : ' '+ { setChannel(HIDDEN); if (pendingDent) { indentCount += getText().length(); } } ;
 
 TAB : '\t' { if (true) {  // "if (true)" prevents a compile error "unreachable code"
-               throw new RuntimeException("Tabulator character is not allowed, use spaces instead."
-                   + " Line " + getLine() + ", column " + getCharPositionInLine());
+               throw new org.folio.circulation.loanrules.LoanRulesException(
+                  "Tabulator character is not allowed, use spaces instead.",
+                   getLine(), getCharPositionInLine()+1);
              }
            }
     ;

@@ -1,5 +1,6 @@
 package api;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import api.support.http.InterfaceUrls;
 import org.folio.circulation.loanrules.*;
@@ -82,21 +83,22 @@ public class LoanRulesEngineAPITests {
   LoanPolicy p3 = new LoanPolicy("f0c8d755-0e56-4d38-9a45-9cd9248b1ae8");
   LoanPolicy p4 = new LoanPolicy("0122feae-bd0e-4405-88de-525d93ba7cfd");
 
-  private String rulesFallback = "fallback-policy: " + p6;
-  private String rulesFallback2 = "fallback-policy: " + p7;
+  private String rulesFallback =  "priority: t, s, c, b, a, m, g\nfallback-policy: " + p6;
+  private String rulesFallback2 = "priority: t, s, c, b, a, m, g\nfallback-policy: " + p7;
 
   private String rules1 = String.join("\n",
+      "priority: t, s, c, b, a, m, g",
       "fallback-policy: " + p2,
       "m " + m2 + ": " + p3,
       "    g " + g2 + ": " + p4
       );
 
   private String rules2 = String.join("\n",
+      "priority: t, s, c, b, a, m, g",
       "fallback-policy: " + p6,
       "m " + m1 + ": " + p1,
       "m " + m1 + " + t " + t1 + " : " + p2,
-      "m " + m1 + " + t " + t1 + " + g " + g1 + " : " + p3//,
-      //"m " + mDefault + " + t " + tDefault + " + g " + gDefault + " + s " +  sDefault + " : " + pFourth
+      "m " + m1 + " + t " + t1 + " + g " + g1 + " : " + p3
       );
 
   @Before
@@ -201,7 +203,35 @@ public class LoanRulesEngineAPITests {
     assertThat(apply(m1, t2, g2, s2), is(p1));
     assertThat(apply(m1, t1, g2, s2), is(p2));
     assertThat(apply(m1, t1, g1, s2), is(p3));
-    //assertThat(apply(mDefault, tDefault, gDefault, sDefault), is(pFourth));
+  }
+
+  private void matches(JsonArray array, int match, LoanPolicy policy, int line) {
+    JsonObject o = array.getJsonObject(match);
+    assertThat("["+match+"].loanPolicyId of "+o, o.getString("loanPolicyId"), is(policy.id));
+    assertThat("["+match+"].loanRuleLine of "+o, o.getInteger("loanRuleLine"), is(line));
+  }
+
+  @Test
+  public void test1ApplyAll() throws Exception {
+    setRules(rules1);
+    CompletableFuture<Response> completed = new CompletableFuture<>();
+    URL url = loanRulesUrl(
+        "/apply-all"
+        + "?item_type_id="         + m2
+        + "&loan_type_id="         + t2
+        + "&patron_type_id="       + g2
+        + "&shelving_location_id=" + s2
+        );
+    client.get(url, ResponseHandler.any(completed));
+    Response response = completed.get(10, TimeUnit.SECONDS);
+    assertThat(response.getStatusCode() + " " + response.getBody(),
+        response.getStatusCode(), is(200));
+    JsonObject json = new JsonObject(response.getBody());
+    JsonArray array = json.getJsonArray("loanRuleMatches");
+    matches(array, 0, p4, 4);
+    matches(array, 1, p3, 3);
+    matches(array, 2, p2, 2);
+    assertThat(array.size(), is(3));
   }
 
   @Test

@@ -1,18 +1,17 @@
 package org.folio.circulation.loanrules;
 
 /**
- * Store the UUID of the patron group.
+ * Store the branch location.
  */
-public class PatronGroup {
-  /** UUID of the patron group */
+public class BranchLocation {
+  /** UUID of the branch location. */
   @SuppressWarnings("squid:ClassVariableVisibilityCheck")  // Drools directly uses public fields
   public String id;
-
   /**
-   * Set patron group.
-   * @param id  UUID of the patron group
+   * Set the branch.
+   * @param UUID of the branch location.
    */
-  public PatronGroup(String id) {
+  public BranchLocation(String id) {
     this.id = id;
   }
 

@@ -1,6 +1,7 @@
 package org.folio.circulation.loanrules;
 
-import static org.junit.Assert.assertEquals;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -37,24 +38,27 @@ public class NameConverterTest {
     }
   }
 
-  private static final String NL = "\n";
-
-  private String loanRulesNames =
-      "fallback-policy: fallback"
-      + NL + "m book withoutreplacement dvd + t withoutreplacement: policy-x"
-      + NL;
-  private String loanRulesUuids =
-      "fallback-policy: 0"
-      + NL + "m 123 withoutreplacement 987 + t withoutreplacement: 1"
-      + NL;
+  private String loanRulesNames = String.join("\n",
+      "priority: last-line",
+      "fallback-policy: fallback",
+      "m book withoutreplacement dvd + t withoutreplacement: policy-x",
+      ""
+  );
+  private String loanRulesUuids = String.join("\n",
+      "priority: last-line",
+      "fallback-policy: 0",
+      "m 123 withoutreplacement 987 + t withoutreplacement: 1",
+      ""
+  );
 
   private String convertNames(String loanRules, Map<String,Map<String,String>> replacements) {
     CharStream inputStream = CharStreams.fromString(loanRules);
     LoanRulesLexer lexer = new LoanRulesLexer(inputStream);
     CommonTokenStream tokenStream = new CommonTokenStream(lexer);
     LoanRulesParser parser = new LoanRulesParser(tokenStream);
+    parser.removeErrorListeners(); // remove ConsoleErrorListener
+    parser.addErrorListener(new ErrorListener());
     ParseTree parseTree = parser.loanRulesFile();
-
     ParseTreeWalker walker = new ParseTreeWalker();
     NameConverter nameConverter = new NameConverter(tokenStream, replacements);
     walker.walk(nameConverter, parseTree);
@@ -63,11 +67,11 @@ public class NameConverterTest {
 
   @Test
   public void replaceNames() {
-    assertEquals(convertNames(loanRulesNames, name2uuid), loanRulesUuids);
+    assertThat(convertNames(loanRulesNames, name2uuid), is(loanRulesUuids));
   }
 
   @Test
   public void replaceUuids() {
-    assertEquals(convertNames(loanRulesUuids, uuid2name), loanRulesNames);
+    assertThat(convertNames(loanRulesUuids, uuid2name), is(loanRulesNames));
   }
 }

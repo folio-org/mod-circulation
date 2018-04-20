@@ -79,6 +79,7 @@ public class LoanAPIPolicyTests extends APITests {
 
     //Set the loan rules
     String rules = String.join("\n",
+      "priority: t, s, c, b, a, m, g",
       "fallback-policy: " + pFallback,
       "m " + APITestSuite.videoRecordingMaterialTypeId() + " + g " + group1 + " : " + p1,
       "m " + APITestSuite.bookMaterialTypeId() + " + t " + canCirculateLoanTypeId() + " : " + p2,
