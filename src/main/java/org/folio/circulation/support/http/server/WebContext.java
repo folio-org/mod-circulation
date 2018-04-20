@@ -8,6 +8,8 @@ import org.folio.circulation.support.http.client.OkapiHttpClient;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import static org.folio.circulation.support.http.OkapiHeader.*;
+
 public class WebContext {
   private final RoutingContext routingContext;
 
@@ -16,30 +18,30 @@ public class WebContext {
   }
 
   public String getTenantId() {
-    return getHeader("X-Okapi-Tenant", "");
+    return getHeader(TENANT, "");
   }
 
   public String getOkapiToken() {
-    return getHeader("X-Okapi-Token", "");
+    return getHeader(TOKEN, "");
   }
 
   public String getOkapiUserId() {
-    return getHeader("X-Okapi-User-Id", "");
+    return getHeader(USER_ID, "");
   }
 
   public String getOkapiLocation() {
-    return getHeader("X-Okapi-Url", "");
+    return getHeader(OKAPI_URL, "");
   }
 
-  public String getHeader(String header) {
+  private String getHeader(String header) {
     return routingContext.request().getHeader(header);
   }
 
-  public String getHeader(String header, String defaultValue) {
+  private String getHeader(String header, String defaultValue) {
     return hasHeader(header) ? getHeader(header) : defaultValue;
   }
 
-  public boolean hasHeader(String header) {
+  private boolean hasHeader(String header) {
     return routingContext.request().headers().contains(header);
   }
 
