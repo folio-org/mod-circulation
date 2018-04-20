@@ -49,7 +49,7 @@ public class OkapiHttpClient {
 
     HttpClientRequest request = client.postAbs(url.toString(), responseHandler);
 
-    request.headers().add("Content-type","application/json");
+    addJsonContentTypeHeader(request);
 
     addStandardHeaders(request);
 
@@ -84,7 +84,7 @@ public class OkapiHttpClient {
 
     HttpClientRequest request = client.putAbs(url, responseHandler);
 
-    request.headers().add("Content-type","application/json");
+    addJsonContentTypeHeader(request);
 
     addStandardHeaders(request);
 
@@ -146,6 +146,10 @@ public class OkapiHttpClient {
     addHeaderIfPresent(request, TENANT, this.tenantId);
     addHeaderIfPresent(request, TOKEN, this.token);
     addHeaderIfPresent(request, USER_ID, this.userId);
+  }
+
+  private void addJsonContentTypeHeader(HttpClientRequest request) {
+    addHeaderIfPresent(request, "Content-type","application/json");
   }
 
   private void addHeaderIfPresent(
