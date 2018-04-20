@@ -10,6 +10,7 @@
 * Implement /circulation/loan-rules/apply-all endpoint (fix 500 status) (CIRC-63)
 * Implement antlr parser; wire loan rules against UUIDs of controlled vocabularies (CIRC-35)
 * Fix "Loan rule is not processed when no space after colon between rule and policy" (CIRC-73)
+* Forward on X-Okapi-Request-Id header if present (CIRC-99)
 * Provides `circulation` interface 3.0 (CIRC-98, CIRC-33)
 * Requires `loan-storage` interface 4.0 (CIRC-98)
 * Requires `request-storage` interface 2.0 (CIRC-98)

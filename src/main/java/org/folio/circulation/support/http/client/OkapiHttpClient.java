@@ -24,6 +24,7 @@ public class OkapiHttpClient {
   private final String tenantId;
   private final String token;
   private final String userId;
+  private final String requestId;
   private final Consumer<Throwable> exceptionHandler;
 
   public OkapiHttpClient(
@@ -32,6 +33,7 @@ public class OkapiHttpClient {
     String tenantId,
     String token,
     String userId,
+    String requestId,
     Consumer<Throwable> exceptionHandler) {
 
     this.client = httpClient;
@@ -39,6 +41,7 @@ public class OkapiHttpClient {
     this.tenantId = tenantId;
     this.token = token;
     this.userId = userId;
+    this.requestId = requestId;
     this.exceptionHandler = exceptionHandler;
   }
 
@@ -146,6 +149,7 @@ public class OkapiHttpClient {
     addHeaderIfPresent(request, TENANT, this.tenantId);
     addHeaderIfPresent(request, TOKEN, this.token);
     addHeaderIfPresent(request, USER_ID, this.userId);
+    addHeaderIfPresent(request, REQUEST_ID, this.requestId);
   }
 
   private void addJsonContentTypeHeader(HttpClientRequest request) {

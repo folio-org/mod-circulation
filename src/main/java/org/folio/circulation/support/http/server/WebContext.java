@@ -25,12 +25,16 @@ public class WebContext {
     return getHeader(TOKEN, "");
   }
 
-  public String getOkapiUserId() {
+  public String getUserId() {
     return getHeader(USER_ID, "");
   }
 
   public String getOkapiLocation() {
     return getHeader(OKAPI_URL, "");
+  }
+
+  public String getRequestId() {
+    return getHeader(REQUEST_ID, "");
   }
 
   private String getHeader(String header) {
@@ -81,8 +85,8 @@ public class WebContext {
     }
 
     return new OkapiHttpClient(httpClient,
-      okapiUrl, getTenantId(), getOkapiToken(), getOkapiUserId(),
-      exception -> ServerErrorResponse.internalError(routingContext.response(),
+      okapiUrl, getTenantId(), getOkapiToken(), getUserId(),
+      getRequestId(), exception -> ServerErrorResponse.internalError(routingContext.response(),
         String.format("Failed to contact storage module: %s",
           exception.toString())));
   }

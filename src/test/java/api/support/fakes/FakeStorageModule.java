@@ -54,6 +54,7 @@ public class FakeStorageModule extends AbstractVerticle {
     String pathTree = rootPath + "/*";
 
     router.route(pathTree).handler(this::checkTokenHeader);
+    router.route(pathTree).handler(this::checkRequestIdHeader);
 
     router.post(pathTree).handler(BodyHandler.create());
     router.put(pathTree).handler(BodyHandler.create());
@@ -327,6 +328,18 @@ public class FakeStorageModule extends AbstractVerticle {
 
     if(StringUtils.isBlank(context.getOkapiToken())) {
       ClientErrorResponse.forbidden(routingContext.response());
+    }
+    else {
+      routingContext.next();
+    }
+  }
+
+  private void checkRequestIdHeader(RoutingContext routingContext) {
+    WebContext context = new WebContext(routingContext);
+
+    if(StringUtils.isBlank(context.getRequestId())) {
+      ClientErrorResponse.badRequest(routingContext.response(),
+        "Request ID is expected for all requests during tests");
     }
     else {
       routingContext.next();

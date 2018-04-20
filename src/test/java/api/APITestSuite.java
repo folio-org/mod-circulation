@@ -24,6 +24,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -126,7 +127,7 @@ public class APITestSuite {
 
     return new OkapiHttpClient(
       vertxAssistant.createUsingVertx(Vertx::createHttpClient),
-      okapiUrl(), TENANT_ID, TOKEN, USER_ID, exceptionHandler);
+      okapiUrl(), TENANT_ID, TOKEN, USER_ID, createFakeRequestId(), exceptionHandler);
   }
 
   public static OkapiHttpClient createClient() {
@@ -620,6 +621,10 @@ public class APITestSuite {
   private static boolean existsInList(List<JsonObject> existingRecords, String name) {
     return existingRecords.stream()
       .noneMatch(materialType -> materialType.getString("name").equals(name));
+  }
+
+  private static String createFakeRequestId() {
+    return String.format("%s/fake-context", new Random().nextInt(999999));
   }
 
   public static boolean isNotInitialised() {
