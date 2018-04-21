@@ -2,44 +2,15 @@
   "loanRuleMatches": [
     {
       "loanRuleLine": 7,
-      "loanPolicy": {
-        "id": "d9cd0bed-1b49-4b5e-a7bd-064b8d177231",
-        "name": "Regular loan",
-        "loanable": true,
-        "renewable": false,
-        "loansPolicy": {
-          "profileId": "67fd628e-d82b-41f3-a81e-f3f983bc511c",
-          "period": {
-             "duration": 4,
-             "intervalId": "WEEKS"
-          }
-        }
-      }
+      "loanPolicyId": "d9cd0bed-1b49-4b5e-a7bd-064b8d177231"
     },
     {
       "loanRuleLine": 4,
-      "loanPolicy": {
-        "id": "5e3bf628-cf74-48c2-ae8e-fe1bdc8d6220",
-        "name": "Regular loan",
-        "loanable": true,
-        "renewable": false,
-        "loansPolicy": {
-          "profileId": "ee21b93c-72fa-4d96-a3a2-7b7c347cefd2",
-          "period": {
-             "duration": 1,
-             "intervalId": "DAYS"
-          }
-        }
-      }
+      "loanPolicyId": "5e3bf628-cf74-48c2-ae8e-fe1bdc8d6220"
     },
     {
       "loanRuleLine": 1,
-      "loanPolicy": {
-        "id": "7df77ebc-6dd3-425c-a00a-82c1ae930f72",
-        "name": "No loan",
-        "loanable": false,
-        "renewable": false
-      }
+      "loanPolicyId": "7df77ebc-6dd3-425c-a00a-82c1ae930f72"
     }
   ]
 }
