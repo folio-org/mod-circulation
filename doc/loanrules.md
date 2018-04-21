@@ -244,7 +244,7 @@ and uses three criteria.
 
 For the line number priority the order of the rules is relevant. The `last-line` the
 last matching rule (the rule with the highest line number) is taken, for `first-line` the
-first matching rule (the rule with the lowest line numer) is taken.
+first matching rule (the rule with the lowest line number) is taken.
 
 ```
 priority: criterium(t, s, c, b, a, m, g), number-of-criteria, last-line
@@ -260,6 +260,6 @@ The line with policy-d has higher priority because it is last (it has a higher l
 ## Fallback policy
 
 There always must be a line with a fallback policy like `fallback-policy: no-circulation`.
-It must be after the priority line and before the the first rule.
+It must be after the priority line and before the first rule.
 
 For `priority: last-line` it must be after the last rule.
