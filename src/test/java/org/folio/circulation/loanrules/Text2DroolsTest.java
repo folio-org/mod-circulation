@@ -276,6 +276,26 @@ public class Text2DroolsTest {
   }
 
   @Test
+  public void noSpaceAroundColon() {
+    Drools drools = new Drools(Text2Drools.convert(String.join("\n",
+        "priority:last-line",
+        "fallback-policy:no-loan",
+        "s new:policy-a")));
+    assertThat(drools.loanPolicy("dvd", "regular", "student", "shelf"), is("no-loan"));
+    assertThat(drools.loanPolicy("dvd", "regular", "student", "new"  ), is("policy-a"));
+  }
+
+  @Test
+  public void multiSpaceAroundColon() {
+    Drools drools = new Drools(Text2Drools.convert(String.join("\n",
+        "priority   :   last-line",
+        "fallback-policy   :   no-loan",
+        "s new   :   policy-a")));
+    assertThat(drools.loanPolicy("dvd", "regular", "student", "shelf"), is("no-loan"));
+    assertThat(drools.loanPolicy("dvd", "regular", "student", "new"  ), is("policy-a"));
+  }
+
+  @Test
   public void negation() {
     Drools drools = new Drools(Text2Drools.convert(HEADER + "m !dvd !music: policy-a"));
     assertThat(drools.loanPolicy("dvd",       "regular", "student", "shelf"), is("no-loan"));
