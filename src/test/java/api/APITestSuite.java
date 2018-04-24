@@ -576,6 +576,9 @@ public class APITestSuite {
 
     canCirculateFixedLoanPolicyId = loanPoliciesClient.create(
       canCirculateFixedLoanPolicy).getId();
+
+    log.info("Rolling loan policy {}", canCirculateRollingLoanPolicyId);
+    log.info("Fixed loan policy {}", canCirculateFixedLoanPolicyId);
   }
 
   private static void deleteLoanPolicies()

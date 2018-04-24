@@ -113,6 +113,7 @@ public abstract class APITests {
       ExecutionException,
       TimeoutException {
 
+    log.info("Using fixed loan policy as fallback policy");
     updateLoanRules(APITestSuite.canCirculateFixedLoanPolicyId());
     warmUpApplyEndpoint();
   }
@@ -123,6 +124,7 @@ public abstract class APITests {
     ExecutionException,
     TimeoutException {
 
+    log.info("Using rolling loan policy as fallback policy");
     updateLoanRules(APITestSuite.canCirculateRollingLoanPolicyId());
     warmUpApplyEndpoint();
   }
