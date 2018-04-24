@@ -1,5 +1,6 @@
 package api.support.fakes;
 
+import api.APITestSuite;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -8,6 +9,9 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.http.server.*;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.format.ISODateTimeFormat;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -20,6 +24,8 @@ public class FakeStorageModule extends AbstractVerticle {
   private final Map<String, Map<String, JsonObject>> storedResourcesByTenant;
   private final String recordTypeName;
   private final Collection<String> uniqueProperties;
+  private final Boolean includeChangeMetadata;
+  private final String changeMetadataPropertyName = "metadata";
   private Proxy proxyAs;
 
   public FakeStorageModule(
@@ -29,7 +35,8 @@ public class FakeStorageModule extends AbstractVerticle {
     Collection<String> requiredProperties,
     boolean hasCollectionDelete,
     String recordTypeName,
-    Collection<String> uniqueProperties) {
+    Collection<String> uniqueProperties,
+    Boolean includeChangeMetadata) {
 
     this.rootPath = rootPath;
     this.collectionPropertyName = collectionPropertyName;
@@ -37,6 +44,7 @@ public class FakeStorageModule extends AbstractVerticle {
     this.hasCollectionDelete = hasCollectionDelete;
     this.recordTypeName = recordTypeName;
     this.uniqueProperties = uniqueProperties;
+    this.includeChangeMetadata = includeChangeMetadata;
 
     storedResourcesByTenant = new HashMap<>();
     storedResourcesByTenant.put(tenantId, new HashMap<>());
@@ -46,6 +54,7 @@ public class FakeStorageModule extends AbstractVerticle {
     String pathTree = rootPath + "/*";
 
     router.route(pathTree).handler(this::checkTokenHeader);
+    router.route(pathTree).handler(this::checkRequestIdHeader);
 
     router.post(pathTree).handler(BodyHandler.create());
     router.put(pathTree).handler(BodyHandler.create());
@@ -79,6 +88,17 @@ public class FakeStorageModule extends AbstractVerticle {
 
     body.put("id", id);
 
+    if(includeChangeMetadata) {
+      final String fakeUserId = APITestSuite.USER_ID;
+      body.put(changeMetadataPropertyName, new JsonObject()
+        .put("createdDate", new DateTime(DateTimeZone.UTC)
+          .toString(ISODateTimeFormat.dateTime()))
+        .put("createdByUserId", fakeUserId)
+        .put("updatedDate", new DateTime(DateTimeZone.UTC)
+          .toString(ISODateTimeFormat.dateTime()))
+        .put("updatedByUserId", fakeUserId));
+    }
+
     getResourcesForTenant(context).put(id, body);
 
     System.out.println(
@@ -99,6 +119,20 @@ public class FakeStorageModule extends AbstractVerticle {
     if(resourcesForTenant.containsKey(id)) {
       System.out.println(
         String.format("Replaced %s resource: %s", recordTypeName, id));
+
+      if(includeChangeMetadata) {
+        final String fakeUserId = APITestSuite.USER_ID;
+
+        final JsonObject existingChangeMetadata = resourcesForTenant.get(id)
+          .getJsonObject(changeMetadataPropertyName);
+
+        final JsonObject updatedChangeMetadata = existingChangeMetadata.copy()
+          .put("updatedDate", new DateTime(DateTimeZone.UTC)
+            .toString(ISODateTimeFormat.dateTime()))
+          .put("updatedByUserId", fakeUserId);
+
+        body.put(changeMetadataPropertyName, updatedChangeMetadata);
+      }
 
       resourcesForTenant.replace(id, body);
       SuccessResponse.noContent(routingContext.response());
@@ -294,6 +328,18 @@ public class FakeStorageModule extends AbstractVerticle {
 
     if(StringUtils.isBlank(context.getOkapiToken())) {
       ClientErrorResponse.forbidden(routingContext.response());
+    }
+    else {
+      routingContext.next();
+    }
+  }
+
+  private void checkRequestIdHeader(RoutingContext routingContext) {
+    WebContext context = new WebContext(routingContext);
+
+    if(StringUtils.isBlank(context.getRequestId())) {
+      ClientErrorResponse.badRequest(routingContext.response(),
+        "Request ID is expected for all requests during tests");
     }
     else {
       routingContext.next();

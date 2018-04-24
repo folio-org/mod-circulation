@@ -24,6 +24,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -66,7 +67,8 @@ public class APITestSuite {
 
   public static final String TENANT_ID = "test_tenant";
 
-  private static final String TOKEN = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsInRlbmFudCI6ImRlbW9fdGVuYW50In0.63jTgc15Kil946OdOGYZur_8xVWEUURANx87FAOQajh9TJbsnCMbjE164JQqNLMWShCyi9FOX0Kr1RFuiHTFAQ";
+  public static final String USER_ID = "79ff2a8b-d9c3-5b39-ad4a-0a84025ab085";
+  private static final String TOKEN = "eyJhbGciOiJIUzUxMiJ9eyJzdWIiOiJhZG1pbiIsInVzZXJfaWQiOiI3OWZmMmE4Yi1kOWMzLTViMzktYWQ0YS0wYTg0MDI1YWIwODUiLCJ0ZW5hbnQiOiJ0ZXN0X3RlbmFudCJ9BShwfHcNClt5ZXJ8ImQTMQtAM1sQEnhsfWNmXGsYVDpuaDN3RVQ9";
 
   private static VertxAssistant vertxAssistant;
   private static int port;
@@ -125,7 +127,7 @@ public class APITestSuite {
 
     return new OkapiHttpClient(
       vertxAssistant.createUsingVertx(Vertx::createHttpClient),
-      okapiUrl(), TENANT_ID, TOKEN, exceptionHandler);
+      okapiUrl(), TENANT_ID, TOKEN, USER_ID, createFakeRequestId(), exceptionHandler);
   }
 
   public static OkapiHttpClient createClient() {
@@ -619,6 +621,10 @@ public class APITestSuite {
   private static boolean existsInList(List<JsonObject> existingRecords, String name) {
     return existingRecords.stream()
       .noneMatch(materialType -> materialType.getString("name").equals(name));
+  }
+
+  private static String createFakeRequestId() {
+    return String.format("%s/fake-context", new Random().nextInt(999999));
   }
 
   public static boolean isNotInitialised() {

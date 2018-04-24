@@ -14,10 +14,11 @@ public class FakeStorageModuleBuilder {
   private final Collection<String> uniqueProperties;
   private final Boolean hasCollectionDelete;
   private final String recordName;
+  private final Boolean includeChangeMetadata;
 
   public FakeStorageModuleBuilder() {
     this(null, null, APITestSuite.TENANT_ID, new ArrayList<>(), true, "",
-      new ArrayList<>());
+      new ArrayList<>(), false);
   }
 
   private FakeStorageModuleBuilder(
@@ -25,9 +26,10 @@ public class FakeStorageModuleBuilder {
     String collectionPropertyName,
     String tenantId,
     Collection<String> requiredProperties,
-    boolean hasCollectionDelete,
+    Boolean hasCollectionDelete,
     String recordName,
-    Collection<String> uniqueProperties) {
+    Collection<String> uniqueProperties,
+    Boolean includeChangeMetadata) {
 
     this.rootPath = rootPath;
     this.collectionPropertyName = collectionPropertyName;
@@ -36,11 +38,13 @@ public class FakeStorageModuleBuilder {
     this.hasCollectionDelete = hasCollectionDelete;
     this.recordName = recordName;
     this.uniqueProperties = uniqueProperties;
+    this.includeChangeMetadata = includeChangeMetadata;
   }
 
   public FakeStorageModule create() {
     return new FakeStorageModule(rootPath, collectionPropertyName, tenantId,
-      requiredProperties, hasCollectionDelete, recordName, uniqueProperties);
+      requiredProperties, hasCollectionDelete, recordName, uniqueProperties,
+      includeChangeMetadata);
   }
 
   public FakeStorageModuleBuilder withRootPath(String rootPath) {
@@ -56,7 +60,8 @@ public class FakeStorageModuleBuilder {
       this.requiredProperties,
       this.hasCollectionDelete,
       this.recordName,
-      this.uniqueProperties);
+      this.uniqueProperties,
+      this.includeChangeMetadata);
   }
 
   public FakeStorageModuleBuilder withCollectionPropertyName(String collectionPropertyName) {
@@ -67,7 +72,8 @@ public class FakeStorageModuleBuilder {
       this.requiredProperties,
       this.hasCollectionDelete,
       this.recordName,
-      this.uniqueProperties);
+      this.uniqueProperties,
+      this.includeChangeMetadata);
   }
 
   public FakeStorageModuleBuilder withRecordName(String recordName) {
@@ -78,7 +84,8 @@ public class FakeStorageModuleBuilder {
       this.requiredProperties,
       this.hasCollectionDelete,
       recordName,
-      this.uniqueProperties);
+      this.uniqueProperties,
+      this.includeChangeMetadata);
   }
 
   public FakeStorageModuleBuilder withRequiredProperties(Collection<String> requiredProperties) {
@@ -89,8 +96,9 @@ public class FakeStorageModuleBuilder {
       requiredProperties,
       this.hasCollectionDelete,
       this.recordName,
-      this.uniqueProperties);
-  }
+      this.uniqueProperties,
+      this.includeChangeMetadata);
+    }
 
   public FakeStorageModuleBuilder withRequiredProperties(String... requiredProperties) {
     return withRequiredProperties(Arrays.asList(requiredProperties));
@@ -104,7 +112,8 @@ public class FakeStorageModuleBuilder {
       this.requiredProperties,
       this.hasCollectionDelete,
       this.recordName,
-      uniqueProperties);
+      uniqueProperties,
+      this.includeChangeMetadata);
   }
 
   public FakeStorageModuleBuilder withUniqueProperties(String... uniqueProperties) {
@@ -119,6 +128,19 @@ public class FakeStorageModuleBuilder {
       this.requiredProperties,
       false,
       this.recordName,
-      this.uniqueProperties);
+      this.uniqueProperties,
+      this.includeChangeMetadata);
+  }
+
+  public FakeStorageModuleBuilder withChangeMetadata() {
+    return new FakeStorageModuleBuilder(
+      this.rootPath,
+      this.collectionPropertyName,
+      this.tenantId,
+      this.requiredProperties,
+      this.hasCollectionDelete,
+      this.recordName,
+      this.uniqueProperties,
+      true);
   }
 }

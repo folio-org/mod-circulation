@@ -133,6 +133,17 @@ public class LoanAPITests extends APITests {
     assertThat("Should not have snapshot of item status, as current status is included",
       loan.containsKey("itemStatus"), is(false));
 
+    assertThat("should have change metadata",
+      loan.containsKey("metadata"), is(true));
+
+    JsonObject changeMetadata = loan.getJsonObject("metadata");
+
+    assertThat("change metadata should have created date",
+      changeMetadata.containsKey("createdDate"), is(true));
+
+    assertThat("change metadata should have updated date",
+      changeMetadata.containsKey("updatedDate"), is(true));
+
     JsonObject item = itemsClient.getById(itemId).getJson();
 
     assertThat("item status is not checked out",

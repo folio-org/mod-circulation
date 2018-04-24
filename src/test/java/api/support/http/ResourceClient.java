@@ -125,7 +125,8 @@ public class ResourceClient {
 
   private ResourceClient(
     OkapiHttpClient client,
-    UrlMaker urlMaker, String resourceName,
+    UrlMaker urlMaker,
+    String resourceName,
     String collectionArrayPropertyName) {
 
     this.client = client;
@@ -136,7 +137,8 @@ public class ResourceClient {
 
   private ResourceClient(
     OkapiHttpClient client,
-    UrlMaker urlMaker, String resourceName) {
+    UrlMaker urlMaker,
+    String resourceName) {
 
     this.client = client;
     this.urlMaker = urlMaker;
