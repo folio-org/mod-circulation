@@ -75,8 +75,27 @@ public class LoanValidation {
     });
   }
 
+  public static HttpResult<LoanAndRelatedRecords> refuseWhenUserIsNotAwaitingPickup(
+    HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords, String barcode) {
+
+    //TODO: Extract duplication between this and above
+    return loanAndRelatedRecords.next(loan -> {
+      final RequestQueue requestQueue = loan.requestQueue;
+      final JsonObject requestingUser = loan.requestingUser;
+
+      if(hasAwaitingPickupRequestForOtherPatron(requestQueue, requestingUser)) {
+        return HttpResult.failure(new ValidationErrorFailure(
+          "User checking out must be requester awaiting pickup",
+          "userBarcode", barcode));
+      }
+      else {
+        return loanAndRelatedRecords;
+      }
+    });
+  }
+
   public static HttpResult<LoanAndRelatedRecords> refuseWhenRequestingUserIsInactive(
-    HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
+    HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords, String barcode) {
 
     return loanAndRelatedRecords.next(loan -> {
       try {
@@ -85,12 +104,12 @@ public class LoanValidation {
         if (!requestingUser.containsKey("active")) {
           return HttpResult.failure(new ValidationErrorFailure(
             "Cannot determine if user is active or not",
-            "userId", loan.loan.getString("userId")));
+            "userBarcode", barcode));
         }
         if (requestingUser.isInactive()) {
           return HttpResult.failure(new ValidationErrorFailure(
             "Cannot check out to inactive user",
-            "userId", loan.loan.getString("userId")));
+            "userBarcode", barcode));
         } else {
           return HttpResult.success(loan);
         }
@@ -100,7 +119,7 @@ public class LoanValidation {
     });
   }
   public static HttpResult<LoanAndRelatedRecords> refuseWhenProxyingUserIsInactive(
-    HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
+    HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords, String barcode) {
 
     return loanAndRelatedRecords.next(loan -> {
       final User proxyingUser = loan.proxyingUser;
@@ -111,12 +130,12 @@ public class LoanValidation {
       else if (!proxyingUser.containsKey("active")) {
         return HttpResult.failure(new ValidationErrorFailure(
           "Cannot determine if proxying user is active or not",
-          "proxyUserId", loan.loan.getString("proxyUserId")));
+          "proxyUserBarcode", barcode));
       }
       else if(proxyingUser.isInactive()) {
         return HttpResult.failure(new ValidationErrorFailure(
           "Cannot check out via inactive proxying user",
-          "proxyUserId", loan.loan.getString("proxyUserId")));
+          "proxyUserBarcode", barcode));
       }
       else {
         return loanAndRelatedRecords;
@@ -237,9 +256,77 @@ public class LoanValidation {
     return future;
   }
 
+  public static CompletableFuture<HttpResult<LoanAndRelatedRecords>> refuseWhenProxyRelationshipIsInvalid(
+    LoanAndRelatedRecords loanAndRelatedRecords,
+    Clients clients,
+    String proxyUserBarcode) {
+
+    //TODO: Remove duplication with above
+
+    String validProxyQuery = CqlHelper.buildIsValidUserProxyQuery(
+      loanAndRelatedRecords.loan.getString("proxyUserId"),
+      loanAndRelatedRecords.loan.getString("userId"));
+
+    if(validProxyQuery == null) {
+      return CompletableFuture.completedFuture(HttpResult.success(loanAndRelatedRecords));
+    }
+
+    CompletableFuture<HttpResult<LoanAndRelatedRecords>> future = new CompletableFuture<>();
+
+    handleProxy(clients.userProxies(), validProxyQuery, proxyValidResponse -> {
+      if (proxyValidResponse != null) {
+        if (proxyValidResponse.getStatusCode() != 200) {
+          future.complete(HttpResult.failure(new ForwardOnFailure(proxyValidResponse)));
+          return;
+        }
+
+        final MultipleRecordsWrapper proxyRelationships = MultipleRecordsWrapper.fromBody(
+          proxyValidResponse.getBody(), "proxiesFor");
+
+        final Collection<JsonObject> unExpiredRelationships = proxyRelationships.getRecords()
+          .stream()
+          .filter(relationship -> {
+            if(relationship.containsKey("meta")) {
+              final JsonObject meta = relationship.getJsonObject("meta");
+
+              if(meta.containsKey("expirationDate")) {
+                final DateTime expirationDate = DateTime.parse(
+                  meta.getString("expirationDate"));
+
+                return expirationDate.isAfter(DateTime.now());
+              }
+              else {
+                return true;
+              }
+            }
+            else {
+              return true;
+            }
+          })
+          .collect(Collectors.toList());
+
+        if (unExpiredRelationships.isEmpty()) { //if empty then we dont have a valid proxy id in the loan
+          future.complete(HttpResult.failure(new ValidationErrorFailure(
+            "Cannot check out item via proxy when relationship is invalid", "proxyUserBarcode",
+            proxyUserBarcode)));
+        }
+        else {
+          future.complete(HttpResult.success(loanAndRelatedRecords));
+        }
+      }
+      else {
+        future.complete(HttpResult.failure(
+          new ServerErrorFailure("No response when requesting proxies")));
+      }
+    });
+
+    return future;
+  }
+
   public static CompletableFuture<HttpResult<LoanAndRelatedRecords>> refuseWhenHasOpenLoan(
     LoanAndRelatedRecords loanAndRelatedRecords,
-    LoanRepository loanRepository) {
+    LoanRepository loanRepository,
+    String barcode) {
 
     final String itemId = loanAndRelatedRecords.loan.getString("itemId");
 
@@ -247,7 +334,7 @@ public class LoanValidation {
       .thenApply(r -> r.next(openLoan -> {
         if(openLoan) {
           return HttpResult.failure(new ValidationErrorFailure(
-            "Cannot check out item that already has an open loan", "itemId", itemId));
+            "Cannot check out item that already has an open loan", "itemBarcode", barcode));
         }
         else {
           return HttpResult.success(loanAndRelatedRecords);
@@ -256,9 +343,9 @@ public class LoanValidation {
   }
 
   public static HttpResult<LoanAndRelatedRecords> refuseWhenItemIsAlreadyCheckedOut(
-    HttpResult<LoanAndRelatedRecords> result) {
+    HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
-    return result.next(loan -> {
+    return loanAndRelatedRecords.next(loan -> {
       final JsonObject item = loan.inventoryRecords.item;
 
       if(ItemStatus.isCheckedOut(item)) {
@@ -266,7 +353,24 @@ public class LoanValidation {
           "Item is already checked out", "itemId", item.getString("id")));
       }
       else {
-        return result;
+        return loanAndRelatedRecords;
+      }
+    });
+  }
+
+  public static HttpResult<LoanAndRelatedRecords> refuseWhenItemIsAlreadyCheckedOut(
+    HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords, String barcode) {
+
+    //TODO: Extract duplication with above
+    return loanAndRelatedRecords.next(loan -> {
+      final JsonObject item = loan.inventoryRecords.item;
+
+      if(ItemStatus.isCheckedOut(item)) {
+        return HttpResult.failure(new ValidationErrorFailure(
+          "Item is already checked out", "itemBarcode", barcode));
+      }
+      else {
+        return loanAndRelatedRecords;
       }
     });
   }

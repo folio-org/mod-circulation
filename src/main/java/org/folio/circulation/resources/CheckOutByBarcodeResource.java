@@ -16,7 +16,6 @@ import java.util.function.Function;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.LoanValidation.*;
-import static org.folio.circulation.domain.LoanValidation.defaultStatusAndAction;
 
 public class CheckOutByBarcodeResource extends CollectionResource {
   public CheckOutByBarcodeResource(HttpClient client) {
@@ -63,16 +62,18 @@ public class CheckOutByBarcodeResource extends CollectionResource {
     completedFuture(HttpResult.success(new LoanAndRelatedRecords(loan)))
       .thenCombineAsync(userFetcher.getUserByBarcode(userBarcode), this::addUser)
       .thenCombineAsync(userFetcher.getProxyUserByBarcode(proxyUserBarcode), this::addProxyUser)
+      .thenApply(r -> refuseWhenRequestingUserIsInactive(r, userBarcode))
+      .thenApply(r -> refuseWhenProxyingUserIsInactive(r, proxyUserBarcode))
       .thenCombineAsync(inventoryFetcher.fetchByBarcode(itemBarcode), this::addInventoryRecords)
       .thenApply(r -> r.next(v -> refuseWhenItemBarcodeDoesNotExist(r, itemBarcode)))
       .thenApply(r -> r.map(mapBarcodes()))
-      .thenApply(LoanValidation::refuseWhenItemIsAlreadyCheckedOut)
-      .thenComposeAsync(r -> r.after(records -> refuseWhenProxyRelationshipIsInvalid(records, clients)))
-      .thenComposeAsync(r -> r.after(records -> refuseWhenHasOpenLoan(records, loanRepository)))
+      .thenApply(r -> refuseWhenItemIsAlreadyCheckedOut(r, itemBarcode))
+      .thenComposeAsync(r -> r.after(records ->
+        refuseWhenProxyRelationshipIsInvalid(records, clients, proxyUserBarcode)))
+      .thenComposeAsync(r -> r.after(records ->
+        refuseWhenHasOpenLoan(records, loanRepository, itemBarcode)))
       .thenComposeAsync(r -> r.after(requestQueueFetcher::get))
-      .thenApply(LoanValidation::refuseWhenUserIsNotAwaitingPickup)
-      .thenApply(LoanValidation::refuseWhenRequestingUserIsInactive)
-      .thenApply(LoanValidation::refuseWhenProxyingUserIsInactive)
+      .thenApply(r -> refuseWhenUserIsNotAwaitingPickup(r, userBarcode))
       .thenComposeAsync(r -> r.after(materialTypeRepository::getMaterialType))
       .thenComposeAsync(r -> r.after(locationRepository::getLocation))
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))

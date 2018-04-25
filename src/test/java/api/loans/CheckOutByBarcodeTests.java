@@ -27,6 +27,7 @@ import static api.support.builders.RequestBuilder.CLOSED_FILLED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.JsonObjectMatchers.hasSoleErrorMessageContaining;
+import static api.support.matchers.JsonObjectMatchers.hasSoleErrorFor;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static java.net.HttpURLConnection.HTTP_OK;
@@ -228,6 +229,9 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat(response.getJson(), hasSoleErrorMessageContaining(
       "Could not find user with matching barcode"));
+
+    assertThat(response.getJson(), hasSoleErrorFor(
+      "userBarcode", steve.getJson().getString("barcode")));
   }
 
   @Test
@@ -244,6 +248,9 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat(response.getJson(), hasSoleErrorMessageContaining(
       "Cannot check out to inactive user"));
+
+    assertThat(response.getJson(), hasSoleErrorFor(
+      "userBarcode", steve.getJson().getString("barcode")));
   }
 
   @Test
@@ -268,6 +275,9 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat(response.getJson(), hasSoleErrorMessageContaining(
       "Cannot check out via inactive proxying user"));
+
+    assertThat(response.getJson(), hasSoleErrorFor(
+      "proxyUserBarcode", steve.getJson().getString("barcode")));
   }
 
   @Test
@@ -286,6 +296,9 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat(response.getJson(),
       hasSoleErrorMessageContaining("No item with barcode 036000291452 exists"));
+
+    assertThat(response.getJson(), hasSoleErrorFor(
+      "itemBarcode", smallAngryPlanet.getJson().getString("barcode")));
   }
 
   @Test
@@ -305,6 +318,9 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat(response.getJson(),
       hasSoleErrorMessageContaining("Item is already checked out"));
+
+    assertThat(response.getJson(), hasSoleErrorFor(
+      "itemBarcode", smallAngryPlanet.getJson().getString("barcode")));
   }
 
   @Test
@@ -327,6 +343,9 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat(response.getJson(),
       hasSoleErrorMessageContaining("Cannot check out item that already has an open loan"));
+
+    assertThat(response.getJson(), hasSoleErrorFor(
+      "itemBarcode", smallAngryPlanet.getJson().getString("barcode")));
   }
 
   @Test
@@ -352,6 +371,9 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat(response.getJson(),
       hasSoleErrorMessageContaining("User checking out must be requester awaiting pickup"));
+
+    assertThat(response.getJson(), hasSoleErrorFor(
+      "userBarcode", rebecca.getJson().getString("barcode")));
 
     Response request = requestsClient.getById(requestByJessica.getId());
 
@@ -437,5 +459,11 @@ public class CheckOutByBarcodeTests extends APITests {
         .proxiedBy(james));
 
     assertThat(response.getBody(), response.getStatusCode(), is(422));
+
+    assertThat(response.getJson(),
+      hasSoleErrorMessageContaining("Cannot check out item via proxy when relationship is invalid"));
+
+    assertThat(response.getJson(), hasSoleErrorFor(
+      "proxyUserBarcode", james.getJson().getString("barcode")));
   }
 }
