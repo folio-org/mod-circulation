@@ -15,12 +15,14 @@
 * Provides `circulation` interface 3.1 (CIRC-98, CIRC-33, CIRC-74)
 * Requires `loan-storage` interface 4.0 (CIRC-98)
 * Requires `request-storage` interface 2.0 (CIRC-98)
+* Requires `loan-policy-storage` interface 1.2 (CIRC-74)
+* Requires `fixed-due-date-schedules-storage` interface 2.0 (CIRC-74)
 
 ## 9.0.1 2018-04-16
 
 * Loan rules `apply` endpoint missing or malformed reports query parameters (CIRC-95)
 * Provides `circulation` interface 2.13 (CIRC-95)
-* Requires location interface 1.1 or 2.0 (CIRC-91)
+* Requires `locations` interface 1.1 or 2.0 (CIRC-91)
 * No longer requires `shelf-locations` interface (CIRC-91)
 
 ## 8.1.1 2018-04-09
