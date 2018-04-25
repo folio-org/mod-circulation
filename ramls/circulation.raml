@@ -1,6 +1,6 @@
 #%RAML 0.8
 title: Circulation
-version: v3.0
+version: v3.1
 protocols: [ HTTP, HTTPS ]
 baseUri: http://localhost:9130
 
@@ -13,6 +13,7 @@ schemas:
   - loans: !include loans.json
   - request.json: !include request.json
   - requests: !include requests.json
+  - errors: !include raml-util/schemas/errors.schema
   - raml-util/schemas/error.schema: !include raml-util/schemas/error.schema
   - raml-util/schemas/metadata.schema: !include raml-util/schemas/metadata.schema
 
@@ -21,12 +22,37 @@ traits:
   - language: !include raml-util/traits/language.raml
   - pageable: !include raml-util/traits/pageable.raml
   - searchable: !include raml-util/traits/searchable.raml
+  - validate: !include raml-util/traits/validation.raml
 
 resourceTypes:
   - collection: !include raml-util/rtypes/collection.raml
   - collection-item: !include raml-util/rtypes/item-collection.raml
 
 /circulation:
+  /check-out-by-barcode:
+    displayName: Check out using barcode for item and loanee
+    post:
+      description: Creates a loan by checking out an item to a loanee
+      is: [
+        secured,
+        language,
+        validate
+      ]
+      body:
+        application/json:
+          schema: !include check-out-by-barcode-request.json
+          example: !include examples/check-out-by-barcode-request.json
+      responses:
+        201:
+          body:
+            application/json:
+              schema: loan.json
+              example: !include examples/loan.json
+        500:
+          description: "Internal server error"
+          body:
+            text/plain:
+              example: "Internal server error"
   /loans:
     displayName: Loans
     type:

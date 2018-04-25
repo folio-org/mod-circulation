@@ -1,5 +1,6 @@
-## 10.0.0 Unreleased
+## 10.1.0 Unreleased
 
+* Initial check out API for checking out an item to a loanee using their barcodes (CIRC-74)
 * Rename `metaData` property to `metadata` (CIRC-98)
 * Add shelving location to loan rule parser (CIRC-16)
 * Add required priority keyword to loan rule engine (CIRC-17)
@@ -11,15 +12,17 @@
 * Implement antlr parser; wire loan rules against UUIDs of controlled vocabularies (CIRC-35)
 * Fix "Loan rule is not processed when no space after colon between rule and policy" (CIRC-73)
 * Forward on X-Okapi-Request-Id header if present (CIRC-99)
-* Provides `circulation` interface 3.0 (CIRC-98, CIRC-33)
+* Provides `circulation` interface 3.1 (CIRC-98, CIRC-33, CIRC-74)
 * Requires `loan-storage` interface 4.0 (CIRC-98)
 * Requires `request-storage` interface 2.0 (CIRC-98)
+* Requires `loan-policy-storage` interface 1.2 (CIRC-74)
+* Requires `fixed-due-date-schedules-storage` interface 2.0 (CIRC-74)
 
 ## 9.0.1 2018-04-16
 
 * Loan rules `apply` endpoint missing or malformed reports query parameters (CIRC-95)
 * Provides `circulation` interface 2.13 (CIRC-95)
-* Requires location interface 1.1 or 2.0 (CIRC-91)
+* Requires `locations` interface 1.1 or 2.0 (CIRC-91)
 * No longer requires `shelf-locations` interface (CIRC-91)
 
 ## 8.1.1 2018-04-09

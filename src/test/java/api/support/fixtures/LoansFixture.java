@@ -1,9 +1,16 @@
 package api.support.fixtures;
 
-import io.vertx.core.json.JsonObject;
+import api.APITestSuite;
+import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.http.InterfaceUrls;
 import api.support.http.ResourceClient;
+import io.restassured.RestAssured;
+import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.config.HttpClientConfig;
+import io.restassured.http.Header;
+import io.restassured.specification.RequestSpecification;
+import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
@@ -15,8 +22,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
+import static org.folio.circulation.support.http.OkapiHeader.*;
+import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -97,8 +107,7 @@ public class LoansFixture {
   public Response attemptCheckOut(
     IndividualResource item,
     IndividualResource to)
-    throws MalformedURLException,
-    InterruptedException,
+    throws InterruptedException,
     ExecutionException,
     TimeoutException {
 
@@ -117,5 +126,84 @@ public class LoansFixture {
       response.getStatusCode(), is(UNPROCESSABLE_ENTITY));
 
     return response;
+  }
+
+  public IndividualResource checkOutByBarcode(
+    IndividualResource item,
+    IndividualResource to) {
+    return checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
+      .forItem(item)
+      .to(to));
+  }
+
+  public IndividualResource checkOutByBarcode(CheckOutByBarcodeRequestBuilder builder) {
+
+    JsonObject request = builder.create();
+
+    io.restassured.response.Response response = given()
+      .log().all()
+      .spec(defaultHeaders())
+      .spec(timeoutConfig())
+      .body(request.encodePrettily())
+      .when().post(InterfaceUrls.checkOutByBarcodeUrl())
+      .then()
+      .log().all()
+      .statusCode(201)
+      .extract().response();
+
+    return new IndividualResource(from(response));
+  }
+
+  public Response attemptCheckOutByBarcode(
+    IndividualResource item,
+    IndividualResource to) {
+
+    return attemptCheckOutByBarcode(new CheckOutByBarcodeRequestBuilder()
+      .forItem(item)
+      .to(to));
+  }
+
+  public Response attemptCheckOutByBarcode(CheckOutByBarcodeRequestBuilder builder) {
+
+    JsonObject request = builder.create();
+
+    io.restassured.response.Response response = given()
+      .log().all()
+      .spec(defaultHeaders())
+      .spec(timeoutConfig())
+      .body(request.encodePrettily())
+      .when().post(InterfaceUrls.checkOutByBarcodeUrl())
+      .then()
+      .log().all()
+      .statusCode(422)
+      .extract().response();
+
+    return from(response);
+  }
+
+  private RequestSpecification defaultHeaders() {
+    return new RequestSpecBuilder()
+      .addHeader(OKAPI_URL, APITestSuite.okapiUrl().toString())
+      .addHeader(TENANT, APITestSuite.TENANT_ID)
+      .addHeader(TOKEN, APITestSuite.TOKEN)
+      .addHeader(REQUEST_ID, APITestSuite.REQUEST_ID)
+      .setAccept("application/json, text/plain")
+      .setContentType("application/json")
+      .build();
+  }
+
+  private RequestSpecification timeoutConfig() {
+    return new RequestSpecBuilder()
+      .setConfig(RestAssured.config()
+        .httpClient(HttpClientConfig.httpClientConfig()
+          .setParam("http.connection.timeout", 5000)
+          .setParam("http.socket.timeout", 5000))).build();
+  }
+
+  private static Response from(io.restassured.response.Response response) {
+    return new Response(response.statusCode(), response.body().print(),
+      response.contentType(),
+      response.headers().asList().stream()
+        .collect(Collectors.toMap(Header::getName, Header::getValue)));
   }
 }

@@ -9,7 +9,7 @@ import java.util.Collection;
 public class MultipleRecordsWrapper {
   private static final String TOTAL_RECORDS_PROPERTY_NAME = "totalRecords";
 
-  public static MultipleRecordsWrapper fromRequestBody(
+  public static MultipleRecordsWrapper fromBody(
     String body,
     String recordsPropertyName) {
 

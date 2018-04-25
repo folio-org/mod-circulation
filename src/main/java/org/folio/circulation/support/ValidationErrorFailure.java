@@ -4,9 +4,14 @@ import io.vertx.core.http.HttpServerResponse;
 import org.folio.circulation.support.http.server.JsonResponse;
 
 public class ValidationErrorFailure implements HttpFailure {
-  private final String reason;
+  public final String reason;
   private final String propertyName;
   private final String propertyValue;
+
+  public ValidationErrorFailure(
+    String reason) {
+    this(reason, null, null);
+  }
 
   public ValidationErrorFailure(
     String reason,
@@ -21,6 +26,12 @@ public class ValidationErrorFailure implements HttpFailure {
   @Override
   public void writeTo(HttpServerResponse response) {
     JsonResponse.unprocessableEntity(response,
+      reason, propertyName, propertyValue);
+  }
+
+  @Override
+  public String toString() {
+    return String.format("Validation failure, reason: %s property name: %s value: %s",
       reason, propertyName, propertyValue);
   }
 }

@@ -4,8 +4,38 @@
   "provides": [
     {
       "id": "circulation",
-      "version": "3.0",
+      "version": "3.1",
       "handlers": [
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/circulation/check-out-by-barcode",
+          "permissionsRequired": [
+            "circulation.check-out-by-barcode.post"
+          ],
+          "modulePermissions": [
+            "circulation-storage.loans.item.post",
+            "circulation-storage.loans.collection.get",
+            "circulation.loan-rules.apply.get",
+            "circulation-storage.requests.collection.get",
+            "circulation-storage.requests.item.put",
+            "inventory-storage.items.item.put",
+            "inventory-storage.items.item.get",
+            "inventory-storage.items.collection.get",
+            "inventory-storage.locations.item.get",
+            "inventory-storage.locations.collection.get",
+            "inventory-storage.holdings.collection.get",
+            "inventory-storage.holdings.item.get",
+            "inventory-storage.instances.collection.get",
+            "inventory-storage.instances.item.get",
+            "users.item.get",
+            "proxiesfor.collection.get",
+            "inventory-storage.material-types.item.get",
+            "circulation-storage.loan-policies.item.get",
+            "circulation-storage.fixed-due-date-schedules.item.get"
+          ]
+        },
         {
           "methods": [
             "GET"
@@ -18,8 +48,8 @@
             "circulation-storage.loans.collection.get",
             "inventory-storage.items.item.get",
             "inventory-storage.items.collection.get",
-            "inventory-storage.locations.item.get",
-            "inventory-storage.locations.collection.get",
+            "inventory-storage.shelf-locations.item.get",
+            "inventory-storage.shelf-locations.collection.get",
             "inventory-storage.holdings.collection.get",
             "inventory-storage.holdings.item.get",
             "inventory-storage.instances.collection.get",
@@ -51,7 +81,8 @@
             "inventory-storage.instances.item.get",
             "users.item.get",
             "proxiesfor.collection.get",
-            "inventory-storage.material-types.item.get"
+            "inventory-storage.material-types.item.get",
+            "circulation-storage.loan-policies.item.get"
           ]
         },
         {
@@ -299,9 +330,22 @@
     {
       "id": "material-types",
       "version": "2.0"
+    },
+    {
+      "id": "loan-policy-storage",
+      "version": "1.2"
+    },
+    {
+      "id": "fixed-due-date-schedules-storage",
+      "version": "2.0"
     }
   ],
   "permissionSets": [
+    {
+      "permissionName": "circulation.check-out-by-barcode.post",
+      "displayName": "circulation - check out item by barcode",
+      "description": "check out an item using barcodes for item and loanee"
+    },
     {
       "permissionName": "circulation.loans.collection.get",
       "displayName": "circulation - get loan collection",
@@ -387,6 +431,7 @@
       "displayName": "circulation - all permissions",
       "description": "Entire set of permissions needed to use the circulation",
       "subPermissions": [
+        "circulation.check-out-by-barcode.post",
         "circulation.loans.collection.get",
         "circulation.loans.item.get",
         "circulation.loans.item.post",

@@ -117,6 +117,7 @@ public class OkapiHttpClient {
   }
 
   public void get(String url, Handler<HttpClientResponse> responseHandler) {
+    log.info("GET {}", url);
 
     HttpClientRequest request = client.getAbs(url, responseHandler);
 

@@ -1,17 +1,19 @@
 package api;
 
-import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.CirculationVerticle;
 import api.loans.*;
 import api.requests.*;
 import api.requests.scenarios.*;
-import api.support.builders.UserBuilder;
+import api.support.builders.*;
 import api.support.fakes.FakeOkapi;
 import api.support.http.ResourceClient;
 import api.support.http.URLHelper;
+import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
+import org.folio.circulation.CirculationVerticle;
 import org.folio.circulation.support.VertxAssistant;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
@@ -36,6 +38,7 @@ import java.util.function.Consumer;
 @RunWith(Suite.class)
 
 @Suite.SuiteClasses({
+  CheckOutByBarcodeTests.class,
   LoanAPITests.class,
   LoanAPILocationTests.class,
   LoanAPITitleTests.class,
@@ -66,9 +69,9 @@ public class APITestSuite {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   public static final String TENANT_ID = "test_tenant";
-
   public static final String USER_ID = "79ff2a8b-d9c3-5b39-ad4a-0a84025ab085";
-  private static final String TOKEN = "eyJhbGciOiJIUzUxMiJ9eyJzdWIiOiJhZG1pbiIsInVzZXJfaWQiOiI3OWZmMmE4Yi1kOWMzLTViMzktYWQ0YS0wYTg0MDI1YWIwODUiLCJ0ZW5hbnQiOiJ0ZXN0X3RlbmFudCJ9BShwfHcNClt5ZXJ8ImQTMQtAM1sQEnhsfWNmXGsYVDpuaDN3RVQ9";
+  public static final String TOKEN = "eyJhbGciOiJIUzUxMiJ9eyJzdWIiOiJhZG1pbiIsInVzZXJfaWQiOiI3OWZmMmE4Yi1kOWMzLTViMzktYWQ0YS0wYTg0MDI1YWIwODUiLCJ0ZW5hbnQiOiJ0ZXN0X3RlbmFudCJ9BShwfHcNClt5ZXJ8ImQTMQtAM1sQEnhsfWNmXGsYVDpuaDN3RVQ9";
+  public static final String REQUEST_ID = createFakeRequestId();
 
   private static VertxAssistant vertxAssistant;
   private static int port;
@@ -96,7 +99,9 @@ public class APITestSuite {
   private static UUID thirdFloorLocationId;
   private static UUID mezzanineDisplayCaseLocationId;
 
-  private static UUID canCirculateLoanPolicyId;
+  private static UUID canCirculateRollingLoanPolicyId;
+  private static UUID canCirculateFixedLoanPolicyId;
+  private static UUID exampleFixedDueDateSchedulesId;
 
   public static int circulationModulePort() {
     return port;
@@ -127,13 +132,12 @@ public class APITestSuite {
 
     return new OkapiHttpClient(
       vertxAssistant.createUsingVertx(Vertx::createHttpClient),
-      okapiUrl(), TENANT_ID, TOKEN, USER_ID, createFakeRequestId(), exceptionHandler);
+      okapiUrl(), TENANT_ID, TOKEN, USER_ID, REQUEST_ID, exceptionHandler);
   }
 
   public static OkapiHttpClient createClient() {
-    return APITestSuite.createClient(exception -> {
-      log.error("Request failed:", exception);
-    });
+    return APITestSuite.createClient(exception ->
+      log.error("Request failed:", exception));
   }
 
   public static UUID bookMaterialTypeId() {
@@ -188,8 +192,12 @@ public class APITestSuite {
     return alternateGroupId;
   }
 
-  public static UUID canCirculateLoanPolicyId() {
-    return canCirculateLoanPolicyId;
+  public static UUID canCirculateRollingLoanPolicyId() {
+    return canCirculateRollingLoanPolicyId;
+  }
+
+  public static UUID canCirculateFixedLoanPolicyId() {
+    return canCirculateFixedLoanPolicyId;
   }
 
   @BeforeClass
@@ -252,9 +260,8 @@ public class APITestSuite {
 
     initialised = false;
 
-    OkapiHttpClient client = APITestSuite.createClient(exception -> {
-      log.error("Requests to delete all for clean up failed:", exception);
-    });
+    OkapiHttpClient client = APITestSuite.createClient(exception ->
+      log.error("Requests to delete all for clean up failed:", exception));
 
     ResourceClient.forRequests(client).deleteAll();
     ResourceClient.forLoans(client).deleteAll();
@@ -295,7 +302,7 @@ public class APITestSuite {
     stopped.get(5, TimeUnit.SECONDS);
   }
 
-  private static URL okapiUrl() {
+  public static URL okapiUrl() {
     try {
       if (useOkapiForStorage) {
         return new URL("http://localhost:9130");
@@ -303,7 +310,7 @@ public class APITestSuite {
         return new URL(FakeOkapi.getAddress());
       }
     } catch (MalformedURLException ex) {
-      return null;
+      throw new IllegalArgumentException("Invalid Okapi URL configured for tests");
     }
   }
 
@@ -535,21 +542,43 @@ public class APITestSuite {
     TimeoutException,
     ExecutionException {
 
-    ResourceClient client = ResourceClient.forLoanPolicies(createClient());
+    final OkapiHttpClient client = createClient();
 
-    JsonObject canCirculateLoanPolicy = new JsonObject()
-      .put("name", "Can Circulate")
-      .put("description", "Can circulate item")
-      .put("loanable", true)
-      .put("renewable", true)
-      .put("loansPolicy", new JsonObject()
-        .put("profileId", "ROLLING")
-        .put("closedLibraryDueDateManagementId", "KEEP_CURRENT_DATE"))
-      .put("renewalsPolicy", new JsonObject()
-        .put("renewFromId", "CURRENT_DUE_DATE")
-        .put("differentPeriod", false));
+    ResourceClient loanPoliciesClient = ResourceClient.forLoanPolicies(client);
 
-    canCirculateLoanPolicyId = client.create(canCirculateLoanPolicy).getId();
+    LoanPolicyBuilder canCirculateRollingLoanPolicy = new LoanPolicyBuilder()
+      .withName("Can Circulate Rolling")
+      .withDescription("Can circulate item")
+      .rolling(Period.weeks(3));
+
+    canCirculateRollingLoanPolicyId = loanPoliciesClient.create(
+      canCirculateRollingLoanPolicy).getId();
+
+    ResourceClient fixedDueDateSchedulesClient = ResourceClient.forFixedDueDateSchedules(client);
+
+    FixedDueDateSchedulesBuilder fixedDueDateSchedule =
+      new FixedDueDateSchedulesBuilder()
+        .withName("Example Fixed Due Date Schedule")
+        .withDescription("Example Fixed Due Date Schedule")
+        .addSchedule(new FixedDueDateSchedule(
+          new DateTime(2018, 1, 1, 0, 0, 0, DateTimeZone.UTC),
+          new DateTime(2018, 12, 31, 23, 59, 59, DateTimeZone.UTC),
+          new DateTime(2018, 12, 31, 23, 59, 59, DateTimeZone.UTC)
+        ));
+
+    exampleFixedDueDateSchedulesId = fixedDueDateSchedulesClient.create(
+      fixedDueDateSchedule).getId();
+
+    LoanPolicyBuilder canCirculateFixedLoanPolicy = new LoanPolicyBuilder()
+      .withName("Can Circulate Fixed")
+      .withDescription("Can circulate item")
+      .fixed(exampleFixedDueDateSchedulesId);
+
+    canCirculateFixedLoanPolicyId = loanPoliciesClient.create(
+      canCirculateFixedLoanPolicy).getId();
+
+    log.info("Rolling loan policy {}", canCirculateRollingLoanPolicyId);
+    log.info("Fixed loan policy {}", canCirculateFixedLoanPolicyId);
   }
 
   private static void deleteLoanPolicies()
@@ -558,9 +587,14 @@ public class APITestSuite {
     ExecutionException,
     TimeoutException {
 
-    ResourceClient client = ResourceClient.forLoanPolicies(createClient());
+    ResourceClient loanPoliciesClient = ResourceClient.forLoanPolicies(createClient());
 
-    client.delete(canCirculateLoanPolicyId());
+    loanPoliciesClient.delete(canCirculateRollingLoanPolicyId());
+    loanPoliciesClient.delete(canCirculateFixedLoanPolicyId());
+
+    ResourceClient fixedDueDateSchedulesClient = ResourceClient.forFixedDueDateSchedules(createClient());
+
+    fixedDueDateSchedulesClient.delete(exampleFixedDueDateSchedulesId);
   }
 
   static void setLoanRules(String rules)

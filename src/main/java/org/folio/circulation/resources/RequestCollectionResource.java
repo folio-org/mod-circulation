@@ -24,15 +24,12 @@ import static org.folio.circulation.domain.ItemStatus.*;
 import static org.folio.circulation.support.JsonPropertyCopier.copyStringIfExists;
 
 public class RequestCollectionResource extends CollectionResource {
-  private final String rootPath;
-
-  public RequestCollectionResource(String rootPath, HttpClient client) {
+  public RequestCollectionResource(HttpClient client) {
     super(client);
-    this.rootPath = rootPath;
   }
 
   public void register(Router router) {
-    RouteRegistration routeRegistration = new RouteRegistration(rootPath, router);
+    RouteRegistration routeRegistration = new RouteRegistration("/circulation/requests", router);
 
     routeRegistration.create(this::create);
     routeRegistration.get(this::get);
@@ -193,7 +190,7 @@ public class RequestCollectionResource extends CollectionResource {
       requestsResponse -> {
 
       if(requestsResponse.getStatusCode() == 200) {
-        final MultipleRecordsWrapper wrappedRequests = MultipleRecordsWrapper.fromRequestBody(
+        final MultipleRecordsWrapper wrappedRequests = MultipleRecordsWrapper.fromBody(
           requestsResponse.getBody(), "requests");
 
         if(wrappedRequests.isEmpty()) {
@@ -365,7 +362,7 @@ public class RequestCollectionResource extends CollectionResource {
 
   private HttpResult<RequestAndRelatedRecords> addUser(
     HttpResult<RequestAndRelatedRecords> loanResult,
-    HttpResult<JsonObject> getUserResult) {
+    HttpResult<User> getUserResult) {
 
     return HttpResult.combine(loanResult, getUserResult,
       RequestAndRelatedRecords::withRequestingUser);
@@ -373,12 +370,11 @@ public class RequestCollectionResource extends CollectionResource {
 
   private HttpResult<RequestAndRelatedRecords> addProxyUser(
     HttpResult<RequestAndRelatedRecords> loanResult,
-    HttpResult<JsonObject> getUserResult) {
+    HttpResult<User> getUserResult) {
 
     return HttpResult.combine(loanResult, getUserResult,
       RequestAndRelatedRecords::withProxyUser);
   }
-
 
   private HttpResult<RequestAndRelatedRecords> refuseWhenItemDoesNotExist(
     HttpResult<RequestAndRelatedRecords> result) {
@@ -451,7 +447,7 @@ public class RequestCollectionResource extends CollectionResource {
           return;
         }
 
-        final MultipleRecordsWrapper proxyRelationships = MultipleRecordsWrapper.fromRequestBody(
+        final MultipleRecordsWrapper proxyRelationships = MultipleRecordsWrapper.fromBody(
           proxyValidResponse.getBody(), "proxiesFor");
 
         final Collection<JsonObject> unExpiredRelationships = proxyRelationships.getRecords()

@@ -3,7 +3,10 @@ package org.folio.circulation.support;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.support.http.client.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -12,6 +15,8 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class InventoryFetcher {
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
   private final CollectionResourceClient itemsClient;
   private final CollectionResourceClient holdingsClient;
   private final CollectionResourceClient instancesClient;
@@ -36,10 +41,15 @@ public class InventoryFetcher {
   }
 
   public CompletableFuture<HttpResult<InventoryRecords>> fetch(String itemId) {
-    return
-      fetchItem(itemId)
-        .thenComposeAsync(this::fetchHolding)
-        .thenComposeAsync(this::fetchInstance);
+    return fetchItem(itemId)
+      .thenComposeAsync(this::fetchHolding)
+      .thenComposeAsync(this::fetchInstance);
+  }
+
+  public CompletableFuture<HttpResult<InventoryRecords>> fetchByBarcode(String barcode) {
+    return fetchItemByBarcode(barcode)
+      .thenComposeAsync(this::fetchHolding)
+      .thenComposeAsync(this::fetchInstance);
   }
 
   public CompletableFuture<MultipleInventoryRecords> fetch(
@@ -124,27 +134,63 @@ public class InventoryFetcher {
     return fetchCompleted;
   }
 
-  private JsonObject getRecordFromResponse(Response itemResponse) {
-    return itemResponse != null && itemResponse.getStatusCode() == 200
-      ? itemResponse.getJson()
-      : null;
+  private JsonObject getRecordFromResponse(Response response) {
+    if(response != null) {
+      log.info("Response received, status code: {} body: {}",
+        response.getStatusCode(), response.getBody());
+
+      if (response.getStatusCode() == 200) {
+        return response.getJson();
+      } else {
+        return null;
+      }
+    }
+    else {
+      //TODO: needs more context in log message
+      log.warn("Did not receive response to request");
+      return null;
+    }
   }
 
   private CompletableFuture<HttpResult<JsonObject>> fetchItem(String itemId) {
+    return new SingleRecordFetcher(itemsClient, "item")
+      .fetchSingleRecord(itemId);
+  }
+
+  private CompletableFuture<HttpResult<JsonObject>> fetchItemByBarcode(String barcode) {
     CompletableFuture<Response> itemRequestCompleted = new CompletableFuture<>();
 
-    itemsClient.get(itemId, itemRequestCompleted::complete);
+    log.info("Fetching item with barcode: {}", barcode);
+
+    itemsClient.getMany(
+      String.format("barcode==%s", barcode), 1, 0, itemRequestCompleted::complete);
 
     return itemRequestCompleted
-      .thenApply(this::mapToResult)
+      .thenApply(this::mapMultipleToResult)
       .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
   }
 
-  private HttpResult<JsonObject> mapToResult(Response response) {
-    if (response != null && response.getStatusCode() == 200) {
-      return HttpResult.success(response.getJson());
-    } else {
-      //TODO: Handle different failure cases
+  private HttpResult<JsonObject> mapMultipleToResult(Response response) {
+    if(response != null) {
+      log.info("Response received, status code: {} body: {}",
+        response.getStatusCode(), response.getBody());
+
+      if (response.getStatusCode() == 200) {
+        //TODO: Check for multiple total records
+        final MultipleRecordsWrapper wrappedItems =
+          MultipleRecordsWrapper.fromBody(response.getBody(), "items");
+
+        return HttpResult.success(wrappedItems.getRecords().stream()
+          .findFirst()
+          .orElse(null));
+
+      } else {
+        return HttpResult.success(null);
+      }
+    }
+    else {
+      //TODO: Replace with failure result
+      log.warn("Did not receive response to request");
       return HttpResult.success(null);
     }
   }
@@ -154,14 +200,18 @@ public class InventoryFetcher {
 
     return itemResult.after(item -> {
       if(item == null) {
+        log.info("Item was not found, aborting fetching holding or instance");
         return CompletableFuture.completedFuture(
           HttpResult.success(new InventoryRecords(null, null, null)));
       }
       else {
+        final String holdingsRecordId = item.getString("holdingsRecordId");
+
+        log.info("Fetching holding with ID: {}", holdingsRecordId);
+
         CompletableFuture<Response> holdingRequestCompleted = new CompletableFuture<>();
 
-        holdingsClient.get(item.getString("holdingsRecordId"),
-          holdingRequestCompleted::complete);
+        holdingsClient.get(holdingsRecordId, holdingRequestCompleted::complete);
 
         return holdingRequestCompleted
           .thenApply(response -> HttpResult.success(new InventoryRecords(item,
@@ -178,15 +228,20 @@ public class InventoryFetcher {
       final JsonObject holding = inventoryRecords.getHolding();
 
       if(holding == null) {
+        log.info("Holding was not found, aborting fetching instance");
+
         return CompletableFuture.completedFuture(
           HttpResult.success(new InventoryRecords(
             inventoryRecords.getItem(), null, null)));
       }
       else {
+        final String instanceId = holding.getString("instanceId");
+
+        log.info("Fetching instance with ID: {}", instanceId);
+
         CompletableFuture<Response> instanceRequestCompleted = new CompletableFuture<>();
 
-        instancesClient.get(holding.getString("instanceId"),
-          instanceRequestCompleted::complete);
+        instancesClient.get(instanceId, instanceRequestCompleted::complete);
 
         return instanceRequestCompleted
           .thenApply(response -> HttpResult.success(new InventoryRecords(

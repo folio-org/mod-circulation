@@ -1,10 +1,9 @@
 package api.requests;
 
-import io.vertx.core.json.JsonObject;
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
-import api.support.http.ResourceClient;
+import io.vertx.core.json.JsonObject;
 import org.junit.Test;
 
 import java.net.MalformedURLException;
@@ -17,8 +16,6 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 
 public class RequestsAPILoanHistoryTests extends APITests {
-  private final ResourceClient loansStorageClient = ResourceClient.forLoansStorage(client);
-
   @Test
   public void creatingHoldRequestChangesTheOpenLoanForTheSameItem()
     throws InterruptedException,

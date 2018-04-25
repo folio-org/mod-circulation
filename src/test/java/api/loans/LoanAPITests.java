@@ -43,8 +43,6 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class LoanAPITests extends APITests {
-  private final ResourceClient loansStorageClient = ResourceClient.forLoansStorage(client);
-
   @Test
   public void canCreateALoan()
     throws InterruptedException,
@@ -63,11 +61,11 @@ public class LoanAPITests extends APITests {
 
     IndividualResource response = loansClient.create(new LoanBuilder()
       .withId(id)
+      .open()
       .withUserId(userId)
       .withItemId(itemId)
       .withLoanDate(loanDate)
-      .withDueDate(dueDate)
-      .withStatus("Open"));
+      .withDueDate(dueDate));
 
     JsonObject loan = response.getJson();
 
@@ -90,7 +88,7 @@ public class LoanAPITests extends APITests {
       loan.getString("action"), is("checkedout"));
 
     assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateLoanPolicyId().toString()));
+      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateRollingLoanPolicyId().toString()));
 
     assertThat("title is taken from instance",
       loan.getJsonObject("item").getString("title"),
@@ -127,9 +125,6 @@ public class LoanAPITests extends APITests {
       loan.getJsonObject("item").getJsonObject("status").getString("name"),
       is("Checked out"));
 
-    assertThat("due date does not match",
-      loan.getString("dueDate"), isEquivalentTo(dueDate));
-
     assertThat("Should not have snapshot of item status, as current status is included",
       loan.containsKey("itemStatus"), is(false));
 
@@ -143,6 +138,9 @@ public class LoanAPITests extends APITests {
 
     assertThat("change metadata should have updated date",
       changeMetadata.containsKey("updatedDate"), is(true));
+
+    assertThat("due date does not match",
+      loan.getString("dueDate"), isEquivalentTo(dueDate));
 
     JsonObject item = itemsClient.getById(itemId).getJson();
 
@@ -170,11 +168,13 @@ public class LoanAPITests extends APITests {
 
     CompletableFuture<Response> createCompleted = new CompletableFuture<>();
 
+    final UUID nonExistantItemId = UUID.randomUUID();
+
     client.post(InterfaceUrls.loansUrl(), new LoanBuilder()
         .open()
         .withId(id)
         .withUserId(userId)
-        .withItemId(UUID.randomUUID())
+        .withItemId(nonExistantItemId)
         .withLoanDate(loanDate)
         .withDueDate(dueDate)
         .create(),
@@ -367,7 +367,7 @@ public class LoanAPITests extends APITests {
       loan.getString("action"), is("checkedout"));
 
     assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateLoanPolicyId().toString()));
+      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateRollingLoanPolicyId().toString()));
 
     assertThat("title is taken from item",
       loan.getJsonObject("item").containsKey("title"), is(true));
@@ -461,7 +461,6 @@ public class LoanAPITests extends APITests {
       .getId();
 
     UUID userId = usersClient.create(new UserBuilder()).getId();
-    UUID proxyUserId = UUID.randomUUID();
 
     DateTime dueDate = new DateTime(2016, 11, 15, 8, 26, 53, DateTimeZone.UTC);
 
@@ -502,7 +501,7 @@ public class LoanAPITests extends APITests {
       loan.getString("action"), is("checkedout"));
 
     assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateLoanPolicyId().toString()));
+      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateRollingLoanPolicyId().toString()));
 
     assertThat("title is taken from item",
       loan.getJsonObject("item").getString("title"),
@@ -986,8 +985,7 @@ public class LoanAPITests extends APITests {
 
   @Test
   public void canFindNoResultsFromSearch()
-    throws MalformedURLException,
-    InterruptedException,
+    throws InterruptedException,
     ExecutionException,
     TimeoutException {
 
