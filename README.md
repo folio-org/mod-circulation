@@ -74,19 +74,111 @@ run `./scripts/lint-raml-cop.sh` to validate the RAML and JSON.Schema descriptio
 
 In additional to the typical loan creation API, it is possible to check out an item to a loanee (optionally via a proxy), using barcodes. 
 
-Below is a short summary summary of the validation checks performed when using this endpoint.
+#### Example Request
 
-|Check|Notes|
-|---|---|
-|Item exists| |
-|Holding exists|otherwise it is not possible to lookup loan rules|
-|Item is not already checked out| |
-|No other checked out loan| |
-|Proxy relationship needs to be valid|only if proxy is involved|
-|User must be requesting user|if there is an outstanding fulfillable request for item|
-|Loan must have a status of Open or Closed| |
-|User needs to be active and not expired| |
-|Proxy needs to be active and not expired|only if proxy is involved|
+```
+POST http://{okapi-location}/circulation/check-out-by-barcode
+{
+    "itemBarcode": "036000291452",
+    "userBarcode": "5694596854",
+    "loanDate": "2018-03-18T11:43:54.000Z"
+}
+```
+
+#### Example Success Response
+
+```
+HTTP/1.1 201 Created
+content-type: application/json; charset=utf-8
+content-length: 1095
+location: /circulation/loans/e01ed4d3-28c4-4f9b-89a2-e818e0a6e7f5
+
+{
+    "id": "e01ed4d3-28c4-4f9b-89a2-e818e0a6e7f5",
+    "status": {
+        "name": "Open"
+    },
+    "action": "checkedout",
+    "loanDate": "2018-03-18T11:43:54.000Z",
+    "userId": "2f400401-a751-456a-9f57-415cbce65864",
+    "itemId": "8722fa77-dc6b-4182-9ea0-e3b708bee0f5",
+    "dueDate": "2018-04-08T11:43:54.000Z",
+    "loanPolicyId": "af30cbee-5d54-4a83-842b-eaef0f02cfbe",
+    "metadata": {
+        "createdDate": "2018-04-25T18:17:49.545Z",
+        "createdByUserId": "79ff2a8b-d9c3-5b39-ad4a-0a84025ab085",
+        "updatedDate": "2018-04-25T18:17:49.545Z",
+        "updatedByUserId": "79ff2a8b-d9c3-5b39-ad4a-0a84025ab085"
+    },
+    "item": {
+        "title": "The Long Way to a Small, Angry Planet",
+        "contributors": [
+            {
+                "name": "Chambers, Becky"
+            }
+        ],
+        "barcode": "036000291452",
+        "holdingsRecordId": "e2309cd0-5b99-4bf2-8620-df7ac8edd38a",
+        "instanceId": "ffe94513-fd4a-4c17-86ae-bfc936b47c06",
+        "callNumber": "123456",
+        "status": {
+            "name": "Checked out"
+        },
+        "location": {
+            "name": "3rd Floor"
+        },
+        "materialType": {
+            "name": "Book"
+        }
+    }
+}
+```
+
+#### Example Failure Response
+
+Below is an example of a failure response.
+
+The message explains the reason for the refusal of the request.
+
+The parameters refer to what part of the request caused the request to be refused.
+
+```
+HTTP/1.1 422 Unprocessable Entity
+content-type: application/json; charset=utf-8
+content-length: 200
+
+{
+    "errors": [
+        {
+            "message": "Cannot check out item via proxy when relationship is invalid",
+            "parameters": [
+                {
+                    "key": "proxyUserBarcode",
+                    "value": "6430530304"
+                }
+            ]
+        }
+    ]
+}
+```
+
+#### Validation
+
+Below is a short summary summary of most of the validation checks performed when using this endpoint. 
+
+Each includes an example of the error message provided and the parameter key included with the error.
+
+|Check|Example Message|Parameter Key|Notes|
+|---|---|---|---|
+|Item does not exist|No item with barcode 036000291452 exists|itemBarcode| |
+|Holding does not exist| | |otherwise it is not possible to lookup loan rules|
+|Item is already checked out|Item is already checked out|itemBarcode| |
+|Existing open loan for item|Cannot check out item that already has an open loan|itemBarcode| |
+|Proxy relationship is valid|Cannot check out item via proxy when relationship is invalid| |only if proxying|
+|User must be requesting user|User checking out must be requester awaiting pickup|userBarcode|if there is an outstanding fulfillable request for item|
+|User does not exist|Could not find user with matching barcode|userBarcode| |
+|User needs to be active and not expired|Cannot check out to inactive user|userBarcode| |
+|Proxy user needs to be active and not expired|Cannot check out via inactive proxying user|proxyUserBarcode|only if proxying|
 
 ### Loan Rules Caching
 
