@@ -8,8 +8,8 @@ import api.support.http.ResourceClient;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.config.HttpClientConfig;
-import io.restassured.http.Header;
 import io.restassured.specification.RequestSpecification;
+import io.vertx.core.http.CaseInsensitiveHeaders;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
@@ -22,11 +22,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
 
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
-import static org.folio.circulation.support.http.OkapiHeader.*;
 import static io.restassured.RestAssured.given;
+import static org.folio.circulation.support.http.OkapiHeader.*;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -201,9 +200,14 @@ public class LoansFixture {
   }
 
   private static Response from(io.restassured.response.Response response) {
+    final CaseInsensitiveHeaders mappedHeaders = new CaseInsensitiveHeaders();
+
+    response.headers().iterator().forEachRemaining(h -> {
+      mappedHeaders.add(h.getName(), h.getValue());
+    });
+
     return new Response(response.statusCode(), response.body().print(),
       response.contentType(),
-      response.headers().asList().stream()
-        .collect(Collectors.toMap(Header::getName, Header::getValue)));
+      mappedHeaders);
   }
 }
