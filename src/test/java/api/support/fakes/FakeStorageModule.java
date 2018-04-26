@@ -2,6 +2,9 @@ package api.support.fakes;
 
 import api.APITestSuite;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
@@ -160,7 +163,25 @@ public class FakeStorageModule extends AbstractVerticle {
         String.format("Found %s resource: %s", recordTypeName,
           resourceRepresentation.encodePrettily()));
 
-      JsonResponse.success(routingContext.response(), resourceRepresentation);
+      HttpServerResponse response = routingContext.response();
+
+      String json = Json.encodePrettily(resourceRepresentation);
+      Buffer buffer = Buffer.buffer(json, "UTF-8");
+
+      response.setStatusCode(200);
+      response.putHeader("content-type", "application/json; charset=utf-8");
+      response.putHeader("content-length", Integer.toString(buffer.length()));
+
+      //Add fake trace lines to reproduce CIRC-103
+      List<String> traceValues = new ArrayList<>();
+
+      traceValues.add("GET mod-authtoken-1.4.1-SNAPSHOT.21");
+      traceValues.add("GET mod-circulation-10.1.0-SNAPSHOT.131");
+
+      response.putHeader("X-Okapi-Trace", traceValues);
+
+      response.write(buffer);
+      response.end();
     }
     else {
       System.out.println(
@@ -198,7 +219,19 @@ public class FakeStorageModule extends AbstractVerticle {
       String.format("Found %s resources: %s", recordTypeName,
         result.encodePrettily()));
 
-    JsonResponse.success(routingContext.response(), result);
+    HttpServerResponse response = routingContext.response();
+
+    String json = Json.encodePrettily(result);
+    Buffer buffer = Buffer.buffer(json, "UTF-8");
+
+    response.setStatusCode(200);
+    response.putHeader("content-type", "application/json; charset=utf-8");
+    response.putHeader("content-length", Integer.toString(buffer.length()));
+    response.putHeader("X-Okapi-Trace", "GET mod-authtoken-1.4.1-SNAPSHOT.21");
+    response.putHeader("X-Okapi-Trace", "GET mod-circulation-10.1.0-SNAPSHOT.131");
+
+    response.write(buffer);
+    response.end();
   }
 
   private void empty(RoutingContext routingContext) {

@@ -1,12 +1,9 @@
 package org.folio.circulation.support.http.client;
 
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.CaseInsensitiveHeaders;
 import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.json.JsonObject;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 
@@ -14,17 +11,17 @@ public class Response {
   protected final String body;
   private final int statusCode;
   private final String contentType;
-  private final Map<String, String> headers;
+  private final CaseInsensitiveHeaders headers;
 
   public Response(int statusCode, String body, String contentType) {
-    this(statusCode, body, contentType, new HashMap<>());
+    this(statusCode, body, contentType, new CaseInsensitiveHeaders());
   }
 
   public Response(
     int statusCode,
     String body,
     String contentType,
-    Map<String, String> headers) {
+    CaseInsensitiveHeaders headers) {
 
     this.statusCode = statusCode;
     this.body = body;
@@ -33,11 +30,14 @@ public class Response {
   }
 
   public static Response from(HttpClientResponse response, Buffer body) {
+    final CaseInsensitiveHeaders headers = new CaseInsensitiveHeaders();
+
+    headers.addAll(response.headers());
+
     return new Response(response.statusCode(),
       BufferHelper.stringFromBuffer(body),
       convertNullToEmpty(response.getHeader(CONTENT_TYPE)),
-      response.headers().entries().stream()
-        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+      headers);
   }
 
   public boolean hasBody() {

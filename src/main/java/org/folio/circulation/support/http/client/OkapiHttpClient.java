@@ -162,7 +162,7 @@ public class OkapiHttpClient {
     String name,
     String value) {
 
-    if(StringUtils.isNotBlank(this.tenantId)) {
+    if(StringUtils.isNotBlank(name)) {
       request.headers().add(name, value);
     }
   }
