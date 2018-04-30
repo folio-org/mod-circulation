@@ -48,8 +48,8 @@
             "circulation-storage.loans.collection.get",
             "inventory-storage.items.item.get",
             "inventory-storage.items.collection.get",
-            "inventory-storage.shelf-locations.item.get",
-            "inventory-storage.shelf-locations.collection.get",
+            "inventory-storage.locations.item.get",
+            "inventory-storage.locations.collection.get",
             "inventory-storage.holdings.collection.get",
             "inventory-storage.holdings.item.get",
             "inventory-storage.instances.collection.get",
@@ -67,6 +67,7 @@
           ],
           "modulePermissions": [
             "circulation-storage.loans.item.post",
+            "circulation-storage.loans.collection.get",
             "circulation.loan-rules.apply.get",
             "circulation-storage.requests.collection.get",
             "circulation-storage.requests.item.put",
@@ -82,7 +83,8 @@
             "users.item.get",
             "proxiesfor.collection.get",
             "inventory-storage.material-types.item.get",
-            "circulation-storage.loan-policies.item.get"
+            "circulation-storage.loan-policies.item.get",
+            "circulation-storage.fixed-due-date-schedules.item.get"
           ]
         },
         {
@@ -128,11 +130,27 @@
           ],
           "modulePermissions": [
             "circulation-storage.loans.item.put",
+            "circulation-storage.loans.collection.get",
+            "circulation.loan-rules.apply.get",
             "circulation-storage.requests.item.put",
             "circulation-storage.requests.collection.get",
             "inventory-storage.items.item.get",
             "inventory-storage.items.item.put",
-            "proxiesfor.collection.get"
+            "inventory-storage.items.collection.get",
+            "inventory-storage.locations.item.get",
+            "inventory-storage.locations.collection.get",
+            "inventory-storage.holdings.collection.get",
+            "inventory-storage.holdings.item.get",
+            "inventory-storage.instances.collection.get",
+            "inventory-storage.instances.item.get",
+            "proxiesfor.collection.get",
+            "users.item.get",
+            "proxiesfor.collection.get",
+            "inventory-storage.material-types.item.get",
+            "circulation-storage.loan-policies.item.get",
+            "circulation-storage.fixed-due-date-schedules.item.get"
+
+
           ]
         },
         {
