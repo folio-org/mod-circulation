@@ -1,4 +1,4 @@
-## 10.1.1 Unreleased
+## 10.1.2 Unreleased
 
 * Initial check out API for checking out an item to a loanee using their barcodes (CIRC-74)
 * Rename `metaData` property to `metadata` (CIRC-98)
@@ -11,7 +11,8 @@
 * Implement /circulation/loan-rules/apply-all endpoint (fix 500 status) (CIRC-63)
 * Implement antlr parser; wire loan rules against UUIDs of controlled vocabularies (CIRC-35)
 * Fix "Loan rule is not processed when no space after colon between rule and policy" (CIRC-73)
-* Fix for multiple value headers in storage module responses (CIRC-103) 
+* Fix for multiple value headers in storage module responses (CIRC-103)
+* Adds missing location permission for getting loans in module descriptor (CIRC-105) 
 * Forward on X-Okapi-Request-Id header if present (CIRC-99)
 * Provides `circulation` interface 3.1 (CIRC-98, CIRC-33, CIRC-74)
 * Requires `loan-storage` interface 4.0 (CIRC-98)
