@@ -1,4 +1,4 @@
-## 10.1.2 Unreleased
+## 10.1.2 2018-05-01
 
 * Initial check out API for checking out an item to a loanee using their barcodes (CIRC-74)
 * Rename `metaData` property to `metadata` (CIRC-98)
