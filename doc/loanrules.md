@@ -128,7 +128,7 @@ lists the priority regulations in the order they are checked until only a single
 remains. The priority line must be before the first rule line.
 
 The priority line may contain one, two or three priority regulations. The last regulation must be
-one of the two line regulations `first-line` and `last-line`.
+a line regulation: either `first-line` or `last-line`.
 
 Before the line regulation there can be zero, one or two of the other regulations:
 `criterium (…)`, `number-of-criteria`
@@ -240,9 +240,9 @@ g all + t all + s course-reserve: policy-e
 The policy-e rule has priority over the other three rules because it has a `t` criterium
 and uses three criteria.
 
-### 3. Line number priority
+### Line number priority
 
-For the line number priority the order of the rules is relevant. The `last-line` the
+For the line number priority the order of the rules is relevant. For `last-line` the
 last matching rule (the rule with the highest line number) is taken, for `first-line` the
 first matching rule (the rule with the lowest line number) is taken.
 
@@ -263,3 +263,4 @@ There always must be a line with a fallback policy like `fallback-policy: no-cir
 It must be after the priority line and before the first rule.
 
 For `priority: last-line` it must be after the last rule.
+
