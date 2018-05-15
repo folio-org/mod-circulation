@@ -2,9 +2,7 @@ package api.loans;
 
 import api.APITestSuite;
 import api.support.APITests;
-import api.support.builders.CheckOutByBarcodeRequestBuilder;
-import api.support.builders.LoanBuilder;
-import api.support.builders.UserBuilder;
+import api.support.builders.*;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -13,9 +11,11 @@ import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Seconds;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.MalformedURLException;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -26,8 +26,8 @@ import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.builders.RequestBuilder.CLOSED_FILLED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
-import static api.support.matchers.JsonObjectMatchers.hasSoleErrorMessageContaining;
 import static api.support.matchers.JsonObjectMatchers.hasSoleErrorFor;
+import static api.support.matchers.JsonObjectMatchers.hasSoleErrorMessageContaining;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static java.net.HttpURLConnection.HTTP_OK;
@@ -163,6 +163,54 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat("due date should be based upon fixed due date schedule",
       loan.getString("dueDate"),
       isEquivalentTo(new DateTime(2018, 12, 31, 23, 59, 59, DateTimeZone.UTC)));
+  }
+
+  @Test
+  @Ignore("Ignore until implemented logic and changed fetching")
+  public void canCheckOutUsingDueDateLimitedRollingLoanPolicy()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
+      .withName("March Only Due Date Limit")
+      .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 3));
+
+    final UUID dueDateLimitScheduleId = fixedDueDateScheduleClient.create(
+      dueDateLimitSchedule).getId();
+
+    LoanPolicyBuilder dueDateLimitedPolicy = new LoanPolicyBuilder()
+      .withName("Due Date Limited Rolling Policy")
+      .rolling(Period.days(30))
+      .limitedBySchedule(dueDateLimitScheduleId);
+
+    UUID dueDateLimitedPolicyId = loanPolicyClient.create(dueDateLimitedPolicy).getId();
+
+    useLoanPolicyAsFallback(dueDateLimitedPolicyId);
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+
+    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
+
+    final IndividualResource response = loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .at(loanDate));
+
+    final JsonObject loan = response.getJson();
+
+    assertThat("loan date should be as supplied",
+      loan.getString("loanDate"), isEquivalentTo(loanDate));
+
+    assertThat("last loan policy should be stored",
+      loan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
+
+    assertThat("due date should be limited by schedule",
+      loan.getString("dueDate"),
+      isEquivalentTo(new DateTime(2018, 3, 31, 23, 59, 59, DateTimeZone.UTC)));
   }
 
   @Test

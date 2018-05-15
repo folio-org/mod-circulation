@@ -54,6 +54,9 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
     //TODO: Replace with sub-builders
     if(Objects.equals(profile, "Rolling")) {
       loansPolicy.put("period", loanPeriod);
+
+      //Due date limited rolling policy, maybe should be separate property
+      put(loansPolicy, "fixedDueDateScheduleId", fixedDueDateScheduleId);
     }
     else if(Objects.equals(profile, "Fixed")) {
       put(loansPolicy, "fixedDueDateScheduleId", fixedDueDateScheduleId);
@@ -118,7 +121,7 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
     return new LoanPolicyBuilder(
       this.id,
       this.name,
-      description,
+      this.description,
       "Rolling",
       createPeriod(period),
       null);
@@ -128,9 +131,24 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
     return new LoanPolicyBuilder(
       this.id,
       this.name,
-      description,
+      this.description,
       "Fixed",
       null,
+      fixedDueDateScheduleId);
+  }
+
+  public LoanPolicyBuilder limitedBySchedule(UUID fixedDueDateScheduleId) {
+    if(!Objects.equals(this.profile, "Rolling")) {
+      throw new IllegalArgumentException(
+        "Cannot apply due date limit if not rolling policy");
+    }
+
+    return new LoanPolicyBuilder(
+      this.id,
+      this.name,
+      this.description,
+      this.profile,
+      this.loanPeriod,
       fixedDueDateScheduleId);
   }
 

@@ -45,6 +45,8 @@ public abstract class APITests {
   protected final ResourceClient holdingsClient = ResourceClient.forHoldings(client);
   protected final ResourceClient instancesClient = ResourceClient.forInstances(client);
   protected final ResourceClient loansStorageClient = ResourceClient.forLoansStorage(client);
+  protected final ResourceClient loanPolicyClient = ResourceClient.forLoanPolicies(client);
+  protected final ResourceClient fixedDueDateScheduleClient = ResourceClient.forFixedDueDateSchedules(client);
 
   protected final ItemsFixture itemsFixture = new ItemsFixture(client);
   protected final LoansFixture loansFixture = new LoansFixture(loansClient, client);
@@ -109,16 +111,6 @@ public abstract class APITests {
     }
   }
 
-  public void useExampleFixedPolicyLoanRules()
-    throws InterruptedException,
-      ExecutionException,
-      TimeoutException {
-
-    log.info("Using fixed loan policy as fallback policy");
-    updateLoanRules(APITestSuite.canCirculateFixedLoanPolicyId());
-    warmUpApplyEndpoint();
-  }
-
   //Needs to be done each time as some tests manipulate the rules
   private void useDefaultRollingPolicyLoanRules()
     throws InterruptedException,
@@ -126,7 +118,24 @@ public abstract class APITests {
     TimeoutException {
 
     log.info("Using rolling loan policy as fallback policy");
-    updateLoanRules(APITestSuite.canCirculateRollingLoanPolicyId());
+    useLoanPolicyAsFallback(APITestSuite.canCirculateRollingLoanPolicyId());
+  }
+
+  protected void useExampleFixedPolicyLoanRules()
+    throws InterruptedException,
+      ExecutionException,
+      TimeoutException {
+
+    log.info("Using fixed loan policy as fallback policy");
+    useLoanPolicyAsFallback(APITestSuite.canCirculateFixedLoanPolicyId());
+  }
+
+  protected void useLoanPolicyAsFallback(UUID loanPolicyId)
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    updateLoanRules(loanPolicyId);
     warmUpApplyEndpoint();
   }
 
