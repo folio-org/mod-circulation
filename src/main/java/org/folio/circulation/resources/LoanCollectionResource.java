@@ -18,6 +18,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.LoanValidation.*;
 
 public class LoanCollectionResource extends CollectionResource {
   private static final String MT_ID_PROPERTY = "materialTypeId";
@@ -57,7 +58,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     JsonObject loan = routingContext.getBodyAsJson();
 
-    LoanValidation.defaultStatusAndAction(loan);
+    defaultStatusAndAction(loan);
 
     final String itemId = loan.getString("itemId");
     final String requestingUserId = loan.getString("userId");
@@ -68,7 +69,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenApply(LoanValidation::refuseWhenItemDoesNotExist)
       .thenApply(this::refuseWhenHoldingDoesNotExist)
       .thenApply(LoanValidation::refuseWhenItemIsAlreadyCheckedOut)
-      .thenComposeAsync(r -> r.after(records -> LoanValidation.refuseWhenProxyRelationshipIsInvalid(records, clients)))
+      .thenComposeAsync(r -> r.after(records -> refuseWhenProxyRelationshipIsInvalid(records, clients)))
       .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
       .thenCombineAsync(userFetcher.getUser(requestingUserId), this::addUser)
       .thenApply(LoanValidation::refuseWhenUserIsNotAwaitingPickup)
@@ -97,7 +98,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     loan.put("id", routingContext.request().getParam("id"));
 
-    LoanValidation.defaultStatusAndAction(loan);
+    defaultStatusAndAction(loan);
 
     String itemId = loan.getString("itemId");
 
@@ -105,7 +106,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenApply(this::refuseWhenNotOpenOrClosed)
       .thenCombineAsync(inventoryFetcher.fetch(loan), this::addInventoryRecords)
       .thenApply(LoanValidation::refuseWhenItemDoesNotExist)
-      .thenComposeAsync(r -> r.after(records -> LoanValidation.refuseWhenProxyRelationshipIsInvalid(records, clients)))
+      .thenComposeAsync(r -> r.after(records -> refuseWhenProxyRelationshipIsInvalid(records, clients)))
       .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
       .thenComposeAsync(result -> result.after(requestQueueUpdate::onCheckIn))
       .thenComposeAsync(result -> result.after(updateItem::onLoanUpdate))
