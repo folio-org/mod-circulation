@@ -31,9 +31,13 @@ public class LoanPolicyRepository {
       relatedRecords.inventoryRecords.holding,
       relatedRecords.requestingUser)
       .thenComposeAsync(r -> r.after(this::lookupLoanPolicy))
-      .thenApply(result -> result.map(representation -> new LoanPolicy(representation, null)))
+      .thenApply(result -> result.map(this::toLoanPolicy))
       .thenComposeAsync(r -> r.after(this::lookupSchedules))
       .thenApply(result -> result.map(relatedRecords::withLoanPolicy));
+  }
+
+  private LoanPolicy toLoanPolicy(JsonObject representation) {
+    return new LoanPolicy(representation, null);
   }
 
   private CompletableFuture<HttpResult<LoanPolicy>> lookupSchedules(LoanPolicy loanPolicy) {
