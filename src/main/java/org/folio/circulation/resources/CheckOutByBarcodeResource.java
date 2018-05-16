@@ -88,12 +88,11 @@ public class CheckOutByBarcodeResource extends CollectionResource {
 
   private HttpResult<LoanAndRelatedRecords> calculateDueDate(
     LoanAndRelatedRecords loanAndRelatedRecords) {
-
-    final DueDateCalculation dueDateCalculation = new DueDateCalculation();
+    
     final JsonObject loan = loanAndRelatedRecords.loan;
     final LoanPolicy loanPolicy = loanAndRelatedRecords.loanPolicy;
 
-    return dueDateCalculation.calculate(loan, loanPolicy)
+    return loanPolicy.calculate(loan)
       .map(dueDate -> {
         loanAndRelatedRecords.loan.put("dueDate",
           dueDate.toString(ISODateTimeFormat.dateTime()));

@@ -33,8 +33,8 @@ public class FixedDueDateCalculationTests {
       .withLoanDate(loanDate)
       .create();
 
-    final HttpResult<DateTime> calculationResult = new DueDateCalculation()
-      .calculate(loan, loanPolicy);
+    final HttpResult<DateTime> calculationResult = loanPolicy
+      .calculate(loan);
 
     assertThat(calculationResult.value(), is(new DateTime(2018, 12, 31, 23, 59, 59,
       DateTimeZone.UTC)));
@@ -56,7 +56,7 @@ public class FixedDueDateCalculationTests {
       .withLoanDate(loanDate)
       .create();
 
-    final HttpResult<DateTime> result = new DueDateCalculation().calculate(loan, loanPolicy);
+    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
 
     assertThat(result, isValidationFailure(
       "Loans policy cannot be applied - Loan date is not within a schedule"));
@@ -78,7 +78,7 @@ public class FixedDueDateCalculationTests {
       .withLoanDate(loanDate)
       .create();
 
-    final HttpResult<DateTime> result = new DueDateCalculation().calculate(loan, loanPolicy);
+    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
 
     assertThat(result, isValidationFailure(
       "Loans policy cannot be applied - Loan date is not within a schedule"));
@@ -104,8 +104,8 @@ public class FixedDueDateCalculationTests {
       .withLoanDate(loanDate)
       .create();
 
-    final HttpResult<DateTime> calculationResult = new DueDateCalculation()
-      .calculate(loan, loanPolicy);
+    final HttpResult<DateTime> calculationResult = loanPolicy
+      .calculate(loan);
 
     assertThat(calculationResult.value(), is(expectedSchedule.due));
   }
@@ -130,8 +130,8 @@ public class FixedDueDateCalculationTests {
       .withLoanDate(loanDate)
       .create();
 
-    final HttpResult<DateTime> calculationResult = new DueDateCalculation()
-      .calculate(loan, loanPolicy);
+    final HttpResult<DateTime> calculationResult = loanPolicy
+      .calculate(loan);
 
     assertThat(calculationResult.value(), is(expectedSchedule.due));
   }
@@ -156,8 +156,8 @@ public class FixedDueDateCalculationTests {
       .withLoanDate(loanDate)
       .create();
 
-    final HttpResult<DateTime> calculationResult = new DueDateCalculation()
-      .calculate(loan, loanPolicy);
+    final HttpResult<DateTime> calculationResult = loanPolicy
+      .calculate(loan);
 
     assertThat(calculationResult.value(), is(expectedSchedule.due));
   }
@@ -180,7 +180,7 @@ public class FixedDueDateCalculationTests {
       .withLoanDate(loanDate)
       .create();
 
-    final HttpResult<DateTime> result = new DueDateCalculation().calculate(loan, loanPolicy);
+    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
 
     assertThat(result, isValidationFailure(
       "Loans policy cannot be applied - Loan date is not within a schedule"));
@@ -204,7 +204,7 @@ public class FixedDueDateCalculationTests {
       .withLoanDate(loanDate)
       .create();
 
-    final HttpResult<DateTime> result = new DueDateCalculation().calculate(loan, loanPolicy);
+    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
 
     assertThat(result, isValidationFailure(
       "Loans policy cannot be applied - Loan date is not within a schedule"));
@@ -227,7 +227,7 @@ public class FixedDueDateCalculationTests {
       .withLoanDate(loanDate)
       .create();
 
-    final HttpResult<DateTime> result = new DueDateCalculation().calculate(loan, loanPolicy);
+    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
 
     assertThat(result, isValidationFailure(
       "Loans policy cannot be applied - Loan date is not within a schedule"));
@@ -248,7 +248,7 @@ public class FixedDueDateCalculationTests {
       .withLoanDate(loanDate)
       .create();
 
-    final HttpResult<DateTime> result = new DueDateCalculation().calculate(loan, loanPolicy);
+    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
 
     assertThat(result, isValidationFailure(
       "Loans policy cannot be applied - No schedules for fixed due date loan policy"));

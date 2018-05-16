@@ -38,8 +38,8 @@ public class RollingDueDateCalculationTests {
       .withLoanDate(loanDate)
       .create();
 
-    final HttpResult<DateTime> calculationResult = new DueDateCalculation()
-      .calculate(loan, loanPolicy);
+    final HttpResult<DateTime> calculationResult = loanPolicy
+      .calculate(loan);
 
     assertThat(calculationResult.value(), is(loanDate.plusMonths(duration)));
   }
@@ -65,8 +65,8 @@ public class RollingDueDateCalculationTests {
       .withLoanDate(loanDate)
       .create();
 
-    final HttpResult<DateTime> calculationResult = new DueDateCalculation()
-      .calculate(loan, loanPolicy);
+    final HttpResult<DateTime> calculationResult = loanPolicy
+      .calculate(loan);
 
     assertThat(calculationResult.value(), is(loanDate.plusWeeks(duration)));
   }
@@ -93,8 +93,8 @@ public class RollingDueDateCalculationTests {
       .withLoanDate(loanDate)
       .create();
 
-    final HttpResult<DateTime> calculationResult = new DueDateCalculation()
-      .calculate(loan, loanPolicy);
+    final HttpResult<DateTime> calculationResult = loanPolicy
+      .calculate(loan);
 
     assertThat(calculationResult.value(), is(loanDate.plusDays(duration)));
   }
@@ -121,8 +121,8 @@ public class RollingDueDateCalculationTests {
       .withLoanDate(loanDate)
       .create();
 
-    final HttpResult<DateTime> calculationResult = new DueDateCalculation()
-      .calculate(loan, loanPolicy);
+    final HttpResult<DateTime> calculationResult = loanPolicy
+      .calculate(loan);
 
     assertThat(calculationResult.value(), is(loanDate.plusHours(duration)));
   }
@@ -147,8 +147,8 @@ public class RollingDueDateCalculationTests {
       .withLoanDate(loanDate)
       .create();
 
-    final HttpResult<DateTime> calculationResult = new DueDateCalculation()
-      .calculate(loan, loanPolicy);
+    final HttpResult<DateTime> calculationResult = loanPolicy
+      .calculate(loan);
 
     assertThat(calculationResult.value(), is(loanDate.plusMinutes(duration)));
   }
@@ -166,8 +166,8 @@ public class RollingDueDateCalculationTests {
       .withLoanDate(loanDate)
       .create();
 
-    final HttpResult<DateTime> calculationResult = new DueDateCalculation()
-      .calculate(loan, loanPolicy);
+    final HttpResult<DateTime> calculationResult = loanPolicy
+      .calculate(loan);
 
     assertThat(calculationResult.failed(), is(true));
     //TODO: Figure out how to inspect failures
@@ -187,8 +187,8 @@ public class RollingDueDateCalculationTests {
       .withLoanDate(loanDate)
       .create();
 
-    final HttpResult<DateTime> calculationResult = new DueDateCalculation()
-      .calculate(loan, loanPolicy);
+    final HttpResult<DateTime> calculationResult = loanPolicy
+      .calculate(loan);
 
     assertThat(calculationResult.failed(), is(true));
     //TODO: Figure out how to inspect failures
