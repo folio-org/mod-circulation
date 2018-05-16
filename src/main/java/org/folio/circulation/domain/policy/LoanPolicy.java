@@ -27,6 +27,7 @@ public class LoanPolicy extends JsonObject {
 
   private DueDateStrategy determineStrategy() {
     final String loanPolicyId = getString("id");
+    final String loanPolicyName = getString("name");
 
     final JsonObject loansPolicy = getJsonObject("loansPolicy");
     final String profileId = loansPolicy.getString("profileId");
@@ -37,8 +38,8 @@ public class LoanPolicy extends JsonObject {
       final String interval = period.getString("intervalId");
       final Integer duration = period.getInteger("duration");
 
-      return new RollingDueDateStrategy(loanPolicyId, interval, duration,
-        fixedDueDateSchedules);
+      return new RollingDueDateStrategy(loanPolicyId, loanPolicyName,
+        interval, duration, fixedDueDateSchedules);
     }
     else if(profileId.equalsIgnoreCase("Fixed")) {
       return new FixedScheduleDueDateStrategy(loanPolicyId,

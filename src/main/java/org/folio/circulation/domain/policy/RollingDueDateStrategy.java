@@ -3,23 +3,29 @@ package org.folio.circulation.domain.policy;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.JsonArrayHelper;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.joda.time.DateTime;
 
 import java.util.List;
 import java.util.function.Predicate;
 
 class RollingDueDateStrategy extends DueDateStrategy {
+  private static final String NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE =
+    "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy. Please review %s before retrying checking out";
+
   private final String intervalId;
   private final Integer duration;
   private final JsonObject dueDateLimitSchedules;
+  private final String loanPolicyName;
 
   RollingDueDateStrategy(
     String loanPolicyId,
-    String intervalId,
+    String loanPolicyName, String intervalId,
     Integer duration,
     JsonObject dueDateLimitSchedules) {
 
     super(loanPolicyId);
+    this.loanPolicyName = loanPolicyName;
     this.intervalId = intervalId;
     this.duration = duration;
     this.dueDateLimitSchedules = dueDateLimitSchedules;
@@ -69,25 +75,34 @@ class RollingDueDateStrategy extends DueDateStrategy {
       final List<JsonObject> schedules = JsonArrayHelper.toList(
         dueDateLimitSchedules.getJsonArray("schedules"));
 
-      final DateTime limit = schedules
+      return schedules
         .stream()
         .filter(scheduleOverlaps(loanDate))
         .findFirst()
         .map(this::getDueDate)
-        .get();
+        .map(limit -> earliest(dueDate, limit))
+        .map(HttpResult::success)
+        .orElseGet(() -> {
+          final String message = String.format(NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE,
+            loanPolicyName);
 
-      if(limit.isBefore(dueDate)) {
-        return HttpResult.success(limit);
-      }
-      else {
-        return HttpResult.success(dueDate);
-      }
+          log.warn(message);
+
+          return HttpResult.failure(new ValidationErrorFailure(
+            message, "loanPolicyId", this.loanPolicyId));
+        });
     }
     else {
       return HttpResult.success(dueDate);
     }
   }
-  
+
+  private DateTime earliest(DateTime rollingDueDate, DateTime limit) {
+    return limit.isBefore(rollingDueDate)
+      ? limit
+      : rollingDueDate;
+  }
+
   private Predicate<? super JsonObject> scheduleOverlaps(DateTime loanDate) {
     return schedule -> {
       DateTime from = DateTime.parse(schedule.getString("from"));

@@ -31,7 +31,8 @@ public class ValidationErrorFailure implements HttpFailure {
 
   @Override
   public String toString() {
-    return String.format("Validation failure, reason: %s property name: %s value: %s",
+    return String.format("Validation failure, reason: \"%s\", " +
+        "property name: \"%s\" value: \"%s\"",
       reason, propertyName, propertyValue);
   }
 }

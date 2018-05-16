@@ -215,4 +215,81 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     assertThat(result.value(), is(new DateTime(2018, 4, 10, 23, 59, 59, DateTimeZone.UTC)));
   }
+
+  @Test
+  public void shouldNotLimitDueDateWhenWithinDueDateLimitScheduleButInitialDateIsSooner() {
+    //TODO: Slight hack to use the same builder, the schedule is fed in later
+    //TODO: Introduce builder for individual schedules
+    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
+      .rolling(Period.weeks(2))
+      .limitedBySchedule(UUID.randomUUID())
+      .create())
+      .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
+        .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 3))
+        .create());
+
+    DateTime loanDate = new DateTime(2018, 3, 11, 16, 21, 43, DateTimeZone.UTC);
+
+    JsonObject loan = new LoanBuilder()
+      .open()
+      .withLoanDate(loanDate)
+      .create();
+
+    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
+
+    assertThat(result.value(), is(new DateTime(2018, 3, 25, 16, 21, 43, DateTimeZone.UTC)));
+  }
+
+  @Test
+  public void shouldFailWhenNotWithinOneOfProvidedDueDateLimitSchedules() {
+    //TODO: Slight hack to use the same builder, the schedule is fed in later
+    //TODO: Introduce builder for individual schedules
+    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
+      .withName("One Month")
+      .rolling(Period.months(1))
+      .limitedBySchedule(UUID.randomUUID())
+      .create())
+      .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
+        .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 3))
+        .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 5))
+        .create());
+
+    DateTime loanDate = new DateTime(2018, 4, 3, 9, 25, 43, DateTimeZone.UTC);
+
+    JsonObject loan = new LoanBuilder()
+      .open()
+      .withLoanDate(loanDate)
+      .create();
+
+    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
+
+    assertThat(result, isValidationFailure(
+      "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy. " +
+        "Please review One Month before retrying checking out"));
+  }
+
+  @Test
+  public void shouldFailWhenNoDueDateLimitSchedules() {
+    //TODO: Slight hack to use the same builder, the schedule is fed in later
+    //TODO: Introduce builder for individual schedules
+    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
+      .rolling(Period.months(1))
+      .withName("One Month")
+      .limitedBySchedule(UUID.randomUUID())
+      .create())
+      .withDueDateSchedules(new FixedDueDateSchedulesBuilder().create());
+
+    DateTime loanDate = new DateTime(2018, 4, 3, 9, 25, 43, DateTimeZone.UTC);
+
+    JsonObject loan = new LoanBuilder()
+      .open()
+      .withLoanDate(loanDate)
+      .create();
+
+    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
+
+    assertThat(result, isValidationFailure(
+      "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy. " +
+        "Please review One Month before retrying checking out"));
+  }
 }
