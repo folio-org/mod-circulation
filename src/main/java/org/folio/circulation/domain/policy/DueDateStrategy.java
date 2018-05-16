@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
 
-class DueDateStrategy {
+abstract class DueDateStrategy {
   static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   DueDateStrategy() {
@@ -31,13 +31,7 @@ class DueDateStrategy {
     }
   }
 
-  HttpResult<DateTime> calculate(JsonObject loan, LoanPolicy loanPolicy) {
-    final JsonObject loansPolicy = loanPolicy.getJsonObject("loansPolicy");
-    final String profile = loansPolicy.getString("profileId");
-    final String loanPolicyId = loanPolicy.getString("id");
-
-    return fail(String.format("Unrecognised profile - %s", profile), loanPolicyId);
-  }
+  abstract HttpResult<DateTime> calculate(JsonObject loan, LoanPolicy loanPolicy);
 
   HttpResult<DateTime> fail(String reason, String loanPolicyId) {
     final String message = String.format(
