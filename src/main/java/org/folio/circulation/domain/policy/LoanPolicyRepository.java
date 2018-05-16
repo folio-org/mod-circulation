@@ -54,7 +54,7 @@ public class LoanPolicyRepository {
 
       return fetcher
         .fetchSingleRecord(fixedDueDateScheduleId)
-        .thenApply(r -> r.map(loanPolicy::withDueDateSchedule));
+        .thenApply(r -> r.map(loanPolicy::withDueDateSchedules));
     }
     else {
       return CompletableFuture.completedFuture(HttpResult.success(loanPolicy));

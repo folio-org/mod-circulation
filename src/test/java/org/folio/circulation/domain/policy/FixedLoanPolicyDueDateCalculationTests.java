@@ -22,7 +22,7 @@ public class FixedLoanPolicyDueDateCalculationTests {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .create())
-      .withDueDateSchedule(new FixedDueDateSchedulesBuilder()
+      .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
         .addSchedule(FixedDueDateSchedule.wholeYear(2018))
         .create());
 
@@ -45,7 +45,7 @@ public class FixedLoanPolicyDueDateCalculationTests {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .create())
-      .withDueDateSchedule(new FixedDueDateSchedulesBuilder()
+      .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
         .addSchedule(FixedDueDateSchedule.wholeYear(2018))
         .create());
 
@@ -67,7 +67,7 @@ public class FixedLoanPolicyDueDateCalculationTests {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .create())
-      .withDueDateSchedule(new FixedDueDateSchedulesBuilder()
+      .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
         .addSchedule(FixedDueDateSchedule.wholeYear(2018))
         .create());
 
@@ -91,7 +91,7 @@ public class FixedLoanPolicyDueDateCalculationTests {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .create())
-      .withDueDateSchedule(new FixedDueDateSchedulesBuilder()
+      .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
         .addSchedule(expectedSchedule)
         .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 2))
         .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 3))
@@ -117,7 +117,7 @@ public class FixedLoanPolicyDueDateCalculationTests {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .create())
-      .withDueDateSchedule(new FixedDueDateSchedulesBuilder()
+      .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
         .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 1))
         .addSchedule(expectedSchedule)
         .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 3))
@@ -143,7 +143,7 @@ public class FixedLoanPolicyDueDateCalculationTests {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .create())
-      .withDueDateSchedule(new FixedDueDateSchedulesBuilder()
+      .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
         .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 1))
         .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 2))
         .addSchedule(expectedSchedule)
@@ -167,7 +167,7 @@ public class FixedLoanPolicyDueDateCalculationTests {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .create())
-      .withDueDateSchedule(new FixedDueDateSchedulesBuilder()
+      .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
         .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 1))
         .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 2))
         .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 3))
@@ -191,7 +191,7 @@ public class FixedLoanPolicyDueDateCalculationTests {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .create())
-      .withDueDateSchedule(new FixedDueDateSchedulesBuilder()
+      .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
         .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 1))
         .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 2))
         .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 3))
@@ -215,7 +215,7 @@ public class FixedLoanPolicyDueDateCalculationTests {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .create())
-      .withDueDateSchedule(new FixedDueDateSchedulesBuilder()
+      .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
         .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 1))
         .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 3))
         .create());
@@ -239,7 +239,7 @@ public class FixedLoanPolicyDueDateCalculationTests {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .create())
-      .withDueDateSchedule(new FixedDueDateSchedulesBuilder().create());
+      .withDueDateSchedules(new FixedDueDateSchedulesBuilder().create());
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 

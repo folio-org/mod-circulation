@@ -1,8 +1,6 @@
 package org.folio.circulation.domain.policy;
 
-import api.support.builders.LoanBuilder;
-import api.support.builders.LoanPolicyBuilder;
-import api.support.builders.Period;
+import api.support.builders.*;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
@@ -11,6 +9,8 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -193,5 +193,32 @@ public class RollingLoanPolicyDueDateCalculationTests {
     assertThat(calculationResult.failed(), is(true));
     //TODO: Figure out how to inspect failures
     assertThat(calculationResult.cause(), is(notNullValue()));
+  }
+
+  @Test
+  public void shouldLimitDueDateWhenWithinDueDateLimitSchedule() {
+    //TODO: Slight hack to use the same builder, the schedule is fed in later
+    //TODO: Introduce builder for individual schedules
+    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
+      .rolling(Period.months(1))
+      .limitedBySchedule(UUID.randomUUID())
+      .create())
+      .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
+        .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 3,
+          new DateTime(2018, 4, 10, 23, 59, 59, DateTimeZone.UTC)))
+        .create());
+
+    DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
+
+    JsonObject loan = new LoanBuilder()
+      .open()
+      .withLoanDate(loanDate)
+      .create();
+
+    final HttpResult<DateTime> calculationResult = loanPolicy
+      .calculate(loan);
+
+    assertThat(calculationResult.value(), is(new DateTime(2018, 4, 10, 23, 59, 59,
+      DateTimeZone.UTC)));
   }
 }

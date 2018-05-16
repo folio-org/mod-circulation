@@ -37,17 +37,19 @@ public class LoanPolicy extends JsonObject {
       final String interval = period.getString("intervalId");
       final Integer duration = period.getInteger("duration");
 
-      return new RollingDueDateStrategy(loanPolicyId, interval, duration);
+      return new RollingDueDateStrategy(loanPolicyId, interval, duration,
+        fixedDueDateSchedules);
     }
     else if(profileId.equalsIgnoreCase("Fixed")) {
-      return new FixedScheduleDueDateStrategy(loanPolicyId, fixedDueDateSchedules);
+      return new FixedScheduleDueDateStrategy(loanPolicyId,
+        fixedDueDateSchedules);
     }
     else {
       return new UnknownDueDateStrategy(loanPolicyId, profileId);
     }
   }
 
-  LoanPolicy withDueDateSchedule(JsonObject fixedDueDateSchedules) {
+  LoanPolicy withDueDateSchedules(JsonObject fixedDueDateSchedules) {
     return new LoanPolicy(this, fixedDueDateSchedules);
   }
 

@@ -35,4 +35,16 @@ public class FixedDueDateSchedule {
 
     return dueAtEnd(firstOfMonth, lastOfMonth);
   }
+
+  public static FixedDueDateSchedule wholeMonth(int year, int month, DateTime dueDate) {
+    final DateTime firstOfMonth = new DateTime(year, month, 1, 0, 0, 0, DateTimeZone.UTC);
+
+    final DateTime lastOfMonth = firstOfMonth
+      .withDayOfMonth(firstOfMonth.dayOfMonth().getMaximumValue())
+      .withHourOfDay(23)
+      .withMinuteOfHour(59)
+      .withSecondOfMinute(59);
+
+    return new FixedDueDateSchedule(firstOfMonth, lastOfMonth, dueDate);
+  }
 }

@@ -11,7 +11,6 @@ import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Seconds;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.MalformedURLException;
@@ -166,7 +165,6 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  @Ignore("Ignore until implemented logic and changed fetching")
   public void canCheckOutUsingDueDateLimitedRollingLoanPolicy()
     throws InterruptedException,
     MalformedURLException,
