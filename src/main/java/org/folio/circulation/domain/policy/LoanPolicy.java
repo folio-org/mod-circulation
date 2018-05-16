@@ -50,4 +50,14 @@ public class LoanPolicy extends JsonObject {
   LoanPolicy withDueDateSchedule(JsonObject fixedDueDateSchedules) {
     return new LoanPolicy(this, fixedDueDateSchedules);
   }
+
+  @Override
+  public boolean equals(Object o) {
+    return super.equals(o);
+  }
+
+  @Override
+  public int hashCode() {
+    return super.hashCode();
+  }
 }
