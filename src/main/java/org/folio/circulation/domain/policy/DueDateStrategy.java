@@ -21,16 +21,16 @@ abstract class DueDateStrategy {
     final String loanPolicyId = loanPolicy.getString("id");
 
     final JsonObject loansPolicy = loanPolicy.getJsonObject("loansPolicy");
-    final String profile = loansPolicy.getString("profileId");
+    final String profileId = loansPolicy.getString("profileId");
 
-    if(profile.equalsIgnoreCase("Rolling")) {
+    if(profileId.equalsIgnoreCase("Rolling")) {
       return new RollingDueDateStrategy(loanPolicyId);
     }
-    else if(profile.equalsIgnoreCase("Fixed")) {
+    else if(profileId.equalsIgnoreCase("Fixed")) {
       return new FixedScheduleDueDateStrategy(loanPolicyId);
     }
     else {
-      return new UnknownDueDateStrategy(loanPolicyId);
+      return new UnknownDueDateStrategy(loanPolicyId, profileId);
     }
   }
 

@@ -17,10 +17,8 @@ class FixedScheduleDueDateStrategy extends DueDateStrategy {
   @Override
   HttpResult<DateTime> calculate(JsonObject loan, LoanPolicy loanPolicy) {
     final DateTime loanDate = DateTime.parse(loan.getString("loanDate"));
-    final JsonObject loansPolicy = loanPolicy.getJsonObject("loansPolicy");
-    final String profile = loansPolicy.getString("profileId");
 
-    log.info("Applying loan policy {}, profile: {}", loanPolicyId, profile);
+    log.info("Applying fixed due date schedule loan policy {}", loanPolicyId);
 
     try {
       final List<JsonObject> schedules = JsonArrayHelper.toList(

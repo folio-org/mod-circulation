@@ -5,15 +5,15 @@ import org.folio.circulation.support.HttpResult;
 import org.joda.time.DateTime;
 
 class UnknownDueDateStrategy extends DueDateStrategy {
-  UnknownDueDateStrategy(String loanPolicyId) {
+  private String profileId;
+
+  UnknownDueDateStrategy(String loanPolicyId, String profileId) {
     super(loanPolicyId);
+    this.profileId = profileId;
   }
 
   @Override
   HttpResult<DateTime> calculate(JsonObject loan, LoanPolicy loanPolicy) {
-    final JsonObject loansPolicy = loanPolicy.getJsonObject("loansPolicy");
-    final String profile = loansPolicy.getString("profileId");
-
-    return fail(String.format("Unrecognised profile - %s", profile));
+    return fail(String.format("Unrecognised profile - %s", profileId));
   }
 }

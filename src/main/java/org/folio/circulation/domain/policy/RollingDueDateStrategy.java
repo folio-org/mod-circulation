@@ -13,15 +13,14 @@ class RollingDueDateStrategy extends DueDateStrategy {
   HttpResult<DateTime> calculate(JsonObject loan, LoanPolicy loanPolicy) {
     final DateTime loanDate = DateTime.parse(loan.getString("loanDate"));
     final JsonObject loansPolicy = loanPolicy.getJsonObject("loansPolicy");
-    final String profile = loansPolicy.getString("profileId");
 
     final JsonObject period = loansPolicy.getJsonObject("period");
 
     final String interval = period.getString("intervalId");
     final Integer duration = period.getInteger("duration");
 
-    log.info("Applying loan policy {}, profile: {}, period: {} {}",
-      loanPolicyId, profile, duration, interval);
+    log.info("Applying rolling due date loan policy {}, period: {} {}",
+      loanPolicyId, duration, interval);
 
     return calculateRollingDueDate(loanDate, interval, duration);
   }
