@@ -19,7 +19,7 @@ import static org.junit.Assert.assertThat;
 public class FixedDueDateCalculationTests {
   @Test
   public void shouldUseOnlyScheduleAvailableWhenLoanDateFits() {
-    LoanPolicy loanPolicy = new LoanPolicy(new LoanPolicyBuilder()
+    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .create())
       .withDueDateSchedule(new FixedDueDateSchedulesBuilder()
@@ -42,7 +42,7 @@ public class FixedDueDateCalculationTests {
 
   @Test
   public void shouldFailWhenLoanDateIsBeforeOnlyScheduleAvailable() {
-    LoanPolicy loanPolicy = new LoanPolicy(new LoanPolicyBuilder()
+    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .create())
       .withDueDateSchedule(new FixedDueDateSchedulesBuilder()
@@ -64,7 +64,7 @@ public class FixedDueDateCalculationTests {
 
   @Test
   public void shouldFailWhenLoanDateIsAfterOnlyScheduleAvailable() {
-    LoanPolicy loanPolicy = new LoanPolicy(new LoanPolicyBuilder()
+    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .create())
       .withDueDateSchedule(new FixedDueDateSchedulesBuilder()
@@ -88,7 +88,7 @@ public class FixedDueDateCalculationTests {
   public void shouldUseFirstScheduleAvailableWhenLoanDateFits() {
     final FixedDueDateSchedule expectedSchedule = FixedDueDateSchedule.wholeMonth(2018, 1);
 
-    LoanPolicy loanPolicy = new LoanPolicy(new LoanPolicyBuilder()
+    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .create())
       .withDueDateSchedule(new FixedDueDateSchedulesBuilder()
@@ -114,7 +114,7 @@ public class FixedDueDateCalculationTests {
   public void shouldUseMiddleScheduleAvailableWhenLoanDateFits() {
     final FixedDueDateSchedule expectedSchedule = FixedDueDateSchedule.wholeMonth(2018, 2);
 
-    LoanPolicy loanPolicy = new LoanPolicy(new LoanPolicyBuilder()
+    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .create())
       .withDueDateSchedule(new FixedDueDateSchedulesBuilder()
@@ -140,7 +140,7 @@ public class FixedDueDateCalculationTests {
   public void shouldUseLastScheduleAvailableWhenLoanDateFits() {
     final FixedDueDateSchedule expectedSchedule = FixedDueDateSchedule.wholeMonth(2018, 3);
 
-    LoanPolicy loanPolicy = new LoanPolicy(new LoanPolicyBuilder()
+    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .create())
       .withDueDateSchedule(new FixedDueDateSchedulesBuilder()
@@ -164,7 +164,7 @@ public class FixedDueDateCalculationTests {
 
   @Test
   public void shouldFailWhenLoanDateIsBeforeAllSchedules() {
-    LoanPolicy loanPolicy = new LoanPolicy(new LoanPolicyBuilder()
+    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .create())
       .withDueDateSchedule(new FixedDueDateSchedulesBuilder()
@@ -188,7 +188,7 @@ public class FixedDueDateCalculationTests {
 
   @Test
   public void shouldFailWhenLoanDateIsAfterAllSchedules() {
-    LoanPolicy loanPolicy = new LoanPolicy(new LoanPolicyBuilder()
+    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .create())
       .withDueDateSchedule(new FixedDueDateSchedulesBuilder()
@@ -212,7 +212,7 @@ public class FixedDueDateCalculationTests {
 
   @Test
   public void shouldFailWhenLoanDateIsInBetweenSchedules() {
-    LoanPolicy loanPolicy = new LoanPolicy(new LoanPolicyBuilder()
+    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .create())
       .withDueDateSchedule(new FixedDueDateSchedulesBuilder()
@@ -236,7 +236,7 @@ public class FixedDueDateCalculationTests {
 
   @Test
   public void shouldFailWhenNoSchedules() {
-    LoanPolicy loanPolicy = new LoanPolicy(new LoanPolicyBuilder()
+    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .create())
       .withDueDateSchedule(new FixedDueDateSchedulesBuilder().create());

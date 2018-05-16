@@ -27,7 +27,7 @@ public class RollingDueDateCalculationTests {
     "15"
   })
   public void shouldApplyMonthlyRollingPolicy(int duration) {
-    LoanPolicy loanPolicy = new LoanPolicy(new LoanPolicyBuilder()
+    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.months(duration))
       .create());
 
@@ -54,7 +54,7 @@ public class RollingDueDateCalculationTests {
   })
   public void shouldApplyWeeklyRollingPolicy(int duration) {
 
-    LoanPolicy loanPolicy = new LoanPolicy(new LoanPolicyBuilder()
+    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.weeks(duration))
       .create());
 
@@ -82,7 +82,7 @@ public class RollingDueDateCalculationTests {
   })
   public void shouldApplyDailyRollingPolicy(int duration) {
 
-    LoanPolicy loanPolicy = new LoanPolicy(new LoanPolicyBuilder()
+    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.days(duration))
       .create());
 
@@ -110,7 +110,7 @@ public class RollingDueDateCalculationTests {
   })
   public void shouldApplyHourlyRollingPolicy(int duration) {
 
-    LoanPolicy loanPolicy = new LoanPolicy(new LoanPolicyBuilder()
+    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.hours(duration))
       .create());
 
@@ -136,7 +136,7 @@ public class RollingDueDateCalculationTests {
     "200"
   })
   public void shouldApplyMinuteIntervalRollingPolicy(int duration) {
-    LoanPolicy loanPolicy = new LoanPolicy(new LoanPolicyBuilder()
+    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.minutes(duration))
       .create());
 
@@ -155,7 +155,7 @@ public class RollingDueDateCalculationTests {
 
   @Test
   public void shouldFailForNonRollingProfile() {
-    LoanPolicy loanPolicy = new LoanPolicy(new LoanPolicyBuilder()
+    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .withLoansProfile("Unknown profile")
       .create());
 
@@ -176,7 +176,7 @@ public class RollingDueDateCalculationTests {
 
   @Test
   public void shouldFailForUnrecognisedInterval() {
-    LoanPolicy loanPolicy = new LoanPolicy(new LoanPolicyBuilder()
+    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(new Period(5, "Unknown"))
       .create());
 
