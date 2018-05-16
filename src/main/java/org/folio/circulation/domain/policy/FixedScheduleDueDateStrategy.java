@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.function.Predicate;
 
 class FixedScheduleDueDateStrategy extends DueDateStrategy {
-  FixedScheduleDueDateStrategy() {
-    super();
+  FixedScheduleDueDateStrategy(String loanPolicyId) {
+    super(loanPolicyId);
   }
 
   @Override
@@ -19,7 +19,6 @@ class FixedScheduleDueDateStrategy extends DueDateStrategy {
     final DateTime loanDate = DateTime.parse(loan.getString("loanDate"));
     final JsonObject loansPolicy = loanPolicy.getJsonObject("loansPolicy");
     final String profile = loansPolicy.getString("profileId");
-    final String loanPolicyId = loanPolicy.getString("id");
 
     log.info("Applying loan policy {}, profile: {}", loanPolicyId, profile);
 
@@ -28,7 +27,7 @@ class FixedScheduleDueDateStrategy extends DueDateStrategy {
         loanPolicy.fixedDueDateSchedules.getJsonArray("schedules"));
 
       if(schedules.isEmpty()) {
-        return fail("No schedules for fixed due date loan policy", loanPolicyId);
+        return fail("No schedules for fixed due date loan policy");
       }
       else {
         return schedules
@@ -36,7 +35,7 @@ class FixedScheduleDueDateStrategy extends DueDateStrategy {
           .filter(scheduleOverlaps(loanDate))
           .findFirst()
           .map(this::getDueDate)
-          .orElseGet(() -> fail("Loan date is not within a schedule", loanPolicyId));
+          .orElseGet(() -> fail("Loan date is not within a schedule"));
       }
     }
     catch(Exception e) {

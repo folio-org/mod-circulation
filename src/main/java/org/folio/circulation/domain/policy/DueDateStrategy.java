@@ -11,35 +11,38 @@ import java.lang.invoke.MethodHandles;
 
 abstract class DueDateStrategy {
   static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  protected String loanPolicyId;
 
-  DueDateStrategy() {
-
+  DueDateStrategy(String loanPolicyId) {
+    this.loanPolicyId = loanPolicyId;
   }
 
   static DueDateStrategy from(LoanPolicy loanPolicy) {
+    final String loanPolicyId = loanPolicy.getString("id");
+
     final JsonObject loansPolicy = loanPolicy.getJsonObject("loansPolicy");
     final String profile = loansPolicy.getString("profileId");
 
     if(profile.equalsIgnoreCase("Rolling")) {
-      return new RollingDueDateStrategy();
+      return new RollingDueDateStrategy(loanPolicyId);
     }
     else if(profile.equalsIgnoreCase("Fixed")) {
-      return new FixedScheduleDueDateStrategy();
+      return new FixedScheduleDueDateStrategy(loanPolicyId);
     }
     else {
-      return new UnknownDueDateStrategy();
+      return new UnknownDueDateStrategy(loanPolicyId);
     }
   }
 
   abstract HttpResult<DateTime> calculate(JsonObject loan, LoanPolicy loanPolicy);
 
-  HttpResult<DateTime> fail(String reason, String loanPolicyId) {
+  HttpResult<DateTime> fail(String reason) {
     final String message = String.format(
       "Loans policy cannot be applied - %s", reason);
 
     log.warn(message);
 
     return HttpResult.failure(new ValidationErrorFailure(
-      message, "loanPolicyId", loanPolicyId));
+      message, "loanPolicyId", this.loanPolicyId));
   }
 }

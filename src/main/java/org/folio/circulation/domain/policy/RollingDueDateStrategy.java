@@ -5,8 +5,8 @@ import org.folio.circulation.support.HttpResult;
 import org.joda.time.DateTime;
 
 class RollingDueDateStrategy extends DueDateStrategy {
-  RollingDueDateStrategy() {
-    super();
+  RollingDueDateStrategy(String loanPolicyId) {
+    super(loanPolicyId);
   }
 
   @Override
@@ -14,7 +14,6 @@ class RollingDueDateStrategy extends DueDateStrategy {
     final DateTime loanDate = DateTime.parse(loan.getString("loanDate"));
     final JsonObject loansPolicy = loanPolicy.getJsonObject("loansPolicy");
     final String profile = loansPolicy.getString("profileId");
-    final String loanPolicyId = loanPolicy.getString("id");
 
     final JsonObject period = loansPolicy.getJsonObject("period");
 
@@ -24,14 +23,13 @@ class RollingDueDateStrategy extends DueDateStrategy {
     log.info("Applying loan policy {}, profile: {}, period: {} {}",
       loanPolicyId, profile, duration, interval);
 
-    return calculateRollingDueDate(loanDate, interval, duration, loanPolicyId);
+    return calculateRollingDueDate(loanDate, interval, duration);
   }
 
   private HttpResult<DateTime> calculateRollingDueDate(
     DateTime loanDate,
     String interval,
-    Integer duration,
-    String loanPolicyId) {
+    Integer duration) {
 
     if(interval.equals("Months") && duration != null) {
       return HttpResult.success(loanDate.plusMonths(duration));
@@ -49,7 +47,7 @@ class RollingDueDateStrategy extends DueDateStrategy {
       return HttpResult.success(loanDate.plusMinutes(duration));
     }
     else {
-      return fail(String.format("Unrecognised interval - %s", interval), loanPolicyId);
+      return fail(String.format("Unrecognised interval - %s", interval));
     }
   }
 }
