@@ -40,17 +40,6 @@ class DueDateStrategy {
     final String profile = loansPolicy.getString("profileId");
     final String loanPolicyId = loanPolicy.getString("id");
 
-    if(profile.equalsIgnoreCase("Rolling")) {
-      final JsonObject period = loansPolicy.getJsonObject("period");
-
-      final String interval = period.getString("intervalId");
-      final Integer duration = period.getInteger("duration");
-
-      log.info("Applying loan policy {}, profile: {}, period: {} {}",
-        loanPolicyId, profile, duration, interval);
-
-      return calculateRollingDueDate(loanDate, interval, duration, loanPolicyId);
-    }
     if(profile.equalsIgnoreCase("Fixed")) {
       log.info("Applying loan policy {}, profile: {}", loanPolicyId, profile);
 
@@ -89,32 +78,6 @@ class DueDateStrategy {
     }
   }
 
-  private static HttpResult<DateTime> calculateRollingDueDate(
-    DateTime loanDate,
-    String interval,
-    Integer duration,
-    String loanPolicyId) {
-
-    if(interval.equals("Months") && duration != null) {
-      return HttpResult.success(loanDate.plusMonths(duration));
-    }
-    else if(interval.equals("Weeks") && duration != null) {
-      return HttpResult.success(loanDate.plusWeeks(duration));
-    }
-    else if(interval.equals("Days") && duration != null) {
-      return HttpResult.success(loanDate.plusDays(duration));
-    }
-    else if(interval.equals("Hours") && duration != null) {
-      return HttpResult.success(loanDate.plusHours(duration));
-    }
-    else if(interval.equals("Minutes") && duration != null) {
-      return HttpResult.success(loanDate.plusMinutes(duration));
-    }
-    else {
-      return fail(String.format("Unrecognised interval - %s", interval), loanPolicyId);
-    }
-  }
-
   private static Predicate<? super JsonObject> scheduleOverlaps(DateTime loanDate) {
     return schedule -> {
       DateTime from = DateTime.parse(schedule.getString("from"));
@@ -129,7 +92,7 @@ class DueDateStrategy {
     schedule.getString("due")));
   }
 
-  private static HttpResult<DateTime> fail(String reason, String loanPolicyId) {
+  static HttpResult<DateTime> fail(String reason, String loanPolicyId) {
     final String message = String.format(
       "Loans policy cannot be applied - %s", reason);
 
