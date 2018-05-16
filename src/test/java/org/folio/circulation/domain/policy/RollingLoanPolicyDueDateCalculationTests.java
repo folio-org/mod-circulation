@@ -12,8 +12,8 @@ import org.junit.runner.RunWith;
 
 import java.util.UUID;
 
+import static api.support.matchers.FailureMatcher.isValidationFailure;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
 @RunWith(JUnitParamsRunner.class)
@@ -166,12 +166,10 @@ public class RollingLoanPolicyDueDateCalculationTests {
       .withLoanDate(loanDate)
       .create();
 
-    final HttpResult<DateTime> calculationResult = loanPolicy
-      .calculate(loan);
+    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
 
-    assertThat(calculationResult.failed(), is(true));
-    //TODO: Figure out how to inspect failures
-    assertThat(calculationResult.cause(), is(notNullValue()));
+    assertThat(result, isValidationFailure(
+      "Loans policy cannot be applied - Unrecognised profile - Unknown profile"));
   }
 
   @Test
@@ -187,12 +185,10 @@ public class RollingLoanPolicyDueDateCalculationTests {
       .withLoanDate(loanDate)
       .create();
 
-    final HttpResult<DateTime> calculationResult = loanPolicy
-      .calculate(loan);
+    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
 
-    assertThat(calculationResult.failed(), is(true));
-    //TODO: Figure out how to inspect failures
-    assertThat(calculationResult.cause(), is(notNullValue()));
+    assertThat(result, isValidationFailure(
+      "Loans policy cannot be applied - Unrecognised interval - Unknown"));
   }
 
   @Test
@@ -215,10 +211,8 @@ public class RollingLoanPolicyDueDateCalculationTests {
       .withLoanDate(loanDate)
       .create();
 
-    final HttpResult<DateTime> calculationResult = loanPolicy
-      .calculate(loan);
+    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
 
-    assertThat(calculationResult.value(), is(new DateTime(2018, 4, 10, 23, 59, 59,
-      DateTimeZone.UTC)));
+    assertThat(result.value(), is(new DateTime(2018, 4, 10, 23, 59, 59, DateTimeZone.UTC)));
   }
 }
