@@ -13,7 +13,7 @@ class UnknownDueDateStrategy extends DueDateStrategy {
   }
 
   @Override
-  HttpResult<DateTime> calculate(JsonObject loan, LoanPolicy loanPolicy) {
+  HttpResult<DateTime> calculate(JsonObject loan) {
     return fail(String.format("Unrecognised profile - %s", profileId));
   }
 }

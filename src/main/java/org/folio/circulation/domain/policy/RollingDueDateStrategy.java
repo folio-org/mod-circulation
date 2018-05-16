@@ -5,24 +5,23 @@ import org.folio.circulation.support.HttpResult;
 import org.joda.time.DateTime;
 
 class RollingDueDateStrategy extends DueDateStrategy {
-  RollingDueDateStrategy(String loanPolicyId) {
+  private final String intervalId;
+  private final Integer duration;
+
+  RollingDueDateStrategy(String loanPolicyId, String intervalId, Integer duration) {
     super(loanPolicyId);
+    this.intervalId = intervalId;
+    this.duration = duration;
   }
 
   @Override
-  HttpResult<DateTime> calculate(JsonObject loan, LoanPolicy loanPolicy) {
+  HttpResult<DateTime> calculate(JsonObject loan) {
     final DateTime loanDate = DateTime.parse(loan.getString("loanDate"));
-    final JsonObject loansPolicy = loanPolicy.getJsonObject("loansPolicy");
-
-    final JsonObject period = loansPolicy.getJsonObject("period");
-
-    final String interval = period.getString("intervalId");
-    final Integer duration = period.getInteger("duration");
 
     log.info("Applying rolling due date loan policy {}, period: {} {}",
-      loanPolicyId, duration, interval);
+      loanPolicyId, duration, intervalId);
 
-    return calculateRollingDueDate(loanDate, interval, duration);
+    return calculateRollingDueDate(loanDate, intervalId, duration);
   }
 
   private HttpResult<DateTime> calculateRollingDueDate(

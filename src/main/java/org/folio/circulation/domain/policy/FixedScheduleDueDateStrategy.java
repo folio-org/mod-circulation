@@ -10,19 +10,23 @@ import java.util.List;
 import java.util.function.Predicate;
 
 class FixedScheduleDueDateStrategy extends DueDateStrategy {
-  FixedScheduleDueDateStrategy(String loanPolicyId) {
+
+  private final JsonObject fixedDueDateSchedules;
+
+  FixedScheduleDueDateStrategy(String loanPolicyId, JsonObject fixedDueDateSchedules) {
     super(loanPolicyId);
+    this.fixedDueDateSchedules = fixedDueDateSchedules;
   }
 
   @Override
-  HttpResult<DateTime> calculate(JsonObject loan, LoanPolicy loanPolicy) {
+  HttpResult<DateTime> calculate(JsonObject loan) {
     final DateTime loanDate = DateTime.parse(loan.getString("loanDate"));
 
     log.info("Applying fixed due date schedule loan policy {}", loanPolicyId);
 
     try {
       final List<JsonObject> schedules = JsonArrayHelper.toList(
-        loanPolicy.fixedDueDateSchedules.getJsonArray("schedules"));
+        fixedDueDateSchedules.getJsonArray("schedules"));
 
       if(schedules.isEmpty()) {
         return fail("No schedules for fixed due date loan policy");

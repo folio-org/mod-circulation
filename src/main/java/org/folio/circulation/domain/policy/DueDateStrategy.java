@@ -11,7 +11,8 @@ import java.lang.invoke.MethodHandles;
 
 abstract class DueDateStrategy {
   static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-  protected String loanPolicyId;
+
+  protected final String loanPolicyId;
 
   DueDateStrategy(String loanPolicyId) {
     this.loanPolicyId = loanPolicyId;
@@ -24,17 +25,23 @@ abstract class DueDateStrategy {
     final String profileId = loansPolicy.getString("profileId");
 
     if(profileId.equalsIgnoreCase("Rolling")) {
-      return new RollingDueDateStrategy(loanPolicyId);
+      final JsonObject period = loansPolicy.getJsonObject("period");
+
+      final String interval = period.getString("intervalId");
+      final Integer duration = period.getInteger("duration");
+
+      return new RollingDueDateStrategy(loanPolicyId, interval, duration);
     }
     else if(profileId.equalsIgnoreCase("Fixed")) {
-      return new FixedScheduleDueDateStrategy(loanPolicyId);
+      return new FixedScheduleDueDateStrategy(loanPolicyId,
+        loanPolicy.fixedDueDateSchedules);
     }
     else {
       return new UnknownDueDateStrategy(loanPolicyId, profileId);
     }
   }
 
-  abstract HttpResult<DateTime> calculate(JsonObject loan, LoanPolicy loanPolicy);
+  abstract HttpResult<DateTime> calculate(JsonObject loan);
 
   HttpResult<DateTime> fail(String reason) {
     final String message = String.format(
