@@ -16,6 +16,24 @@ import java.util.function.Predicate;
 class DueDateStrategy {
   static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
+  DueDateStrategy() {
+  }
+
+  static DueDateStrategy from(LoanPolicy loanPolicy) {
+    final JsonObject loansPolicy = loanPolicy.getJsonObject("loansPolicy");
+    final String profile = loansPolicy.getString("profileId");
+
+    if(profile.equalsIgnoreCase("Rolling")) {
+      return new RollingDueDateStrategy();
+    }
+    else if(profile.equalsIgnoreCase("Fixed")) {
+      return new FixedDueDateStrategy();
+    }
+    else {
+      return new UnknownDueDateStrategy();
+    }
+  }
+
   HttpResult<DateTime> calculate(JsonObject loan, LoanPolicy loanPolicy) {
     final DateTime loanDate = DateTime.parse(loan.getString("loanDate"));
     final JsonObject loansPolicy = loanPolicy.getJsonObject("loansPolicy");

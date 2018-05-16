@@ -28,7 +28,7 @@ public class LoanPolicy extends JsonObject {
   }
 
   public HttpResult<DateTime> calculate(JsonObject loan) {
-    return new DueDateStrategy().calculate(loan, this);
+    return DueDateStrategy.from(this).calculate(loan, this);
   }
 
   LoanPolicy withDueDateSchedule(JsonObject fixedDueDateSchedules) {
