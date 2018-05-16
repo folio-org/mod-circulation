@@ -6,7 +6,6 @@ import api.support.builders.Period;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
-import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.support.HttpResult;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -18,7 +17,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
 @RunWith(JUnitParamsRunner.class)
-public class RollingDueDateCalculationTests {
+public class RollingLoanPolicyDueDateCalculationTests {
 
   @Test
   @Parameters({

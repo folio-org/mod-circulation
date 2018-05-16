@@ -5,7 +5,6 @@ import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.support.HttpResult;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -17,7 +16,7 @@ import static api.support.matchers.FailureMatcher.isValidationFailure;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-public class FixedDueDateCalculationTests {
+public class FixedLoanPolicyDueDateCalculationTests {
   @Test
   public void shouldUseOnlyScheduleAvailableWhenLoanDateFits() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
