@@ -5,6 +5,8 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.domain.*;
+import org.folio.circulation.domain.policy.LoanPolicy;
+import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.server.WebContext;
 import org.joda.time.DateTime;
@@ -88,7 +90,7 @@ public class CheckOutByBarcodeResource extends CollectionResource {
 
   private HttpResult<LoanAndRelatedRecords> calculateDueDate(
     LoanAndRelatedRecords loanAndRelatedRecords) {
-    
+
     final JsonObject loan = loanAndRelatedRecords.loan;
     final LoanPolicy loanPolicy = loanAndRelatedRecords.loanPolicy;
 

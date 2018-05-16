@@ -1,4 +1,4 @@
-package org.folio.circulation.domain;
+package org.folio.circulation.domain.policy;
 
 import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
@@ -6,6 +6,7 @@ import api.support.builders.Period;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
+import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.support.HttpResult;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;

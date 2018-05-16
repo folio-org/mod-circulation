@@ -1,6 +1,8 @@
-package org.folio.circulation.domain;
+package org.folio.circulation.domain.policy;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.LoanValidation;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;

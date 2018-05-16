@@ -1,4 +1,4 @@
-package org.folio.circulation.domain;
+package org.folio.circulation.domain.policy;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.HttpResult;
