@@ -3,15 +3,9 @@ package org.folio.circulation.domain.policy;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.HttpResult;
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.lang.invoke.MethodHandles;
 
 public class LoanPolicy extends JsonObject {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
-  final JsonObject fixedDueDateSchedules;
+  private final JsonObject fixedDueDateSchedules;
 
   private LoanPolicy(JsonObject representation) {
     this(representation, null);
@@ -28,7 +22,29 @@ public class LoanPolicy extends JsonObject {
   }
 
   public HttpResult<DateTime> calculate(JsonObject loan) {
-    return DueDateStrategy.from(this).calculate(loan);
+    return determineStrategy().calculate(loan);
+  }
+
+  private DueDateStrategy determineStrategy() {
+    final String loanPolicyId = getString("id");
+
+    final JsonObject loansPolicy = getJsonObject("loansPolicy");
+    final String profileId = loansPolicy.getString("profileId");
+
+    if(profileId.equalsIgnoreCase("Rolling")) {
+      final JsonObject period = loansPolicy.getJsonObject("period");
+
+      final String interval = period.getString("intervalId");
+      final Integer duration = period.getInteger("duration");
+
+      return new RollingDueDateStrategy(loanPolicyId, interval, duration);
+    }
+    else if(profileId.equalsIgnoreCase("Fixed")) {
+      return new FixedScheduleDueDateStrategy(loanPolicyId, fixedDueDateSchedules);
+    }
+    else {
+      return new UnknownDueDateStrategy(loanPolicyId, profileId);
+    }
   }
 
   LoanPolicy withDueDateSchedule(JsonObject fixedDueDateSchedules) {

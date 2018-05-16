@@ -12,33 +12,11 @@ import java.lang.invoke.MethodHandles;
 abstract class DueDateStrategy {
   static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
+  //TODO: Remove, as this is a slight bleed from the calling context (loan policy)
   protected final String loanPolicyId;
 
   DueDateStrategy(String loanPolicyId) {
     this.loanPolicyId = loanPolicyId;
-  }
-
-  static DueDateStrategy from(LoanPolicy loanPolicy) {
-    final String loanPolicyId = loanPolicy.getString("id");
-
-    final JsonObject loansPolicy = loanPolicy.getJsonObject("loansPolicy");
-    final String profileId = loansPolicy.getString("profileId");
-
-    if(profileId.equalsIgnoreCase("Rolling")) {
-      final JsonObject period = loansPolicy.getJsonObject("period");
-
-      final String interval = period.getString("intervalId");
-      final Integer duration = period.getInteger("duration");
-
-      return new RollingDueDateStrategy(loanPolicyId, interval, duration);
-    }
-    else if(profileId.equalsIgnoreCase("Fixed")) {
-      return new FixedScheduleDueDateStrategy(loanPolicyId,
-        loanPolicy.fixedDueDateSchedules);
-    }
-    else {
-      return new UnknownDueDateStrategy(loanPolicyId, profileId);
-    }
   }
 
   abstract HttpResult<DateTime> calculate(JsonObject loan);
