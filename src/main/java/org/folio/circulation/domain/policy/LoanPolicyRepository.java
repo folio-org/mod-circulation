@@ -45,7 +45,8 @@ public class LoanPolicyRepository {
   private CompletableFuture<HttpResult<LoanPolicy>> lookupSchedules(LoanPolicy loanPolicy) {
 
     //TODO: Need to be defensive about loansPolicy object
-    final String fixedDueDateScheduleId = loanPolicy.getJsonObject("loansPolicy").getString("fixedDueDateScheduleId");
+    final String fixedDueDateScheduleId = loanPolicy.getJsonObject("loansPolicy")
+      .getString("fixedDueDateScheduleId");
 
     if(fixedDueDateScheduleId != null) {
       final SingleRecordFetcher fetcher = new SingleRecordFetcher(
@@ -54,6 +55,7 @@ public class LoanPolicyRepository {
 
       return fetcher
         .fetchSingleRecord(fixedDueDateScheduleId)
+        .thenApply(r -> r.map(FixedDueDateSchedules::new))
         .thenApply(r -> r.map(loanPolicy::withDueDateSchedules));
     }
     else {

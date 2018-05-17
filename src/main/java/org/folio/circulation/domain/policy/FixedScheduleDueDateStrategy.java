@@ -13,12 +13,12 @@ class FixedScheduleDueDateStrategy extends DueDateStrategy {
   private static final String NO_APPLICABLE_DUE_DATE_SCHEDULE_MESSAGE =
     "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy.";
 
-  private final JsonObject fixedDueDateSchedules;
+  private final FixedDueDateSchedules fixedDueDateSchedules;
 
   FixedScheduleDueDateStrategy(
     String loanPolicyId,
     String loanPolicyName,
-    JsonObject fixedDueDateSchedules) {
+    FixedDueDateSchedules fixedDueDateSchedules) {
 
     super(loanPolicyId, loanPolicyName);
     this.fixedDueDateSchedules = fixedDueDateSchedules;

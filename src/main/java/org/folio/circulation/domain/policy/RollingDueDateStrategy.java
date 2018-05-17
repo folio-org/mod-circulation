@@ -17,14 +17,14 @@ class RollingDueDateStrategy extends DueDateStrategy {
 
   private final String intervalId;
   private final Integer duration;
-  private final JsonObject dueDateLimitSchedules;
+  private final FixedDueDateSchedules dueDateLimitSchedules;
 
   RollingDueDateStrategy(
     String loanPolicyId,
     String loanPolicyName,
     String intervalId,
     Integer duration,
-    JsonObject dueDateLimitSchedules) {
+    FixedDueDateSchedules dueDateLimitSchedules) {
 
     super(loanPolicyId, loanPolicyName);
     this.intervalId = intervalId;

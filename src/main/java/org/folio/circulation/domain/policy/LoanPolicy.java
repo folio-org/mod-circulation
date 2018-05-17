@@ -5,16 +5,18 @@ import org.folio.circulation.support.HttpResult;
 import org.joda.time.DateTime;
 
 public class LoanPolicy extends JsonObject {
-  private final JsonObject fixedDueDateSchedules;
+  private final FixedDueDateSchedules fixedDueDateSchedules;
 
   private LoanPolicy(JsonObject representation) {
     this(representation, null);
   }
 
-  LoanPolicy(JsonObject representation, JsonObject fixedDueDateSchedules) {
-    super(representation.getMap());
+  LoanPolicy(
+    JsonObject representation,
+    FixedDueDateSchedules fixedDueDateSchedules) {
 
-    this.fixedDueDateSchedules = fixedDueDateSchedules;
+    super(representation.getMap());
+    this. fixedDueDateSchedules = fixedDueDateSchedules;
   }
 
   static LoanPolicy from(JsonObject representation) {
@@ -50,8 +52,13 @@ public class LoanPolicy extends JsonObject {
     }
   }
 
-  LoanPolicy withDueDateSchedules(JsonObject fixedDueDateSchedules) {
+  LoanPolicy withDueDateSchedules(FixedDueDateSchedules fixedDueDateSchedules) {
     return new LoanPolicy(this, fixedDueDateSchedules);
+  }
+
+  //TODO: potentially remove this, when builder can create class or JSON representation
+  LoanPolicy withDueDateSchedules(JsonObject fixedDueDateSchedules) {
+    return new LoanPolicy(this, new FixedDueDateSchedules(fixedDueDateSchedules));
   }
 
   @Override
