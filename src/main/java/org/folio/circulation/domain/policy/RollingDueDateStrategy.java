@@ -3,7 +3,6 @@ package org.folio.circulation.domain.policy;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.JsonArrayHelper;
-import org.folio.circulation.support.ValidationErrorFailure;
 import org.joda.time.DateTime;
 
 import java.util.List;
@@ -11,21 +10,23 @@ import java.util.function.Predicate;
 
 class RollingDueDateStrategy extends DueDateStrategy {
   private static final String NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE =
-    "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy. Please review %s before retrying checking out";
+    "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy.";
+
+  private static final String UNRECOGNISED_INTERVAL_MESSAGE =
+    "Item can't be checked out as the interval \"%s\" in the loan policy is not recognised";
 
   private final String intervalId;
   private final Integer duration;
   private final JsonObject dueDateLimitSchedules;
-  private final String loanPolicyName;
 
   RollingDueDateStrategy(
     String loanPolicyId,
-    String loanPolicyName, String intervalId,
+    String loanPolicyName,
+    String intervalId,
     Integer duration,
     JsonObject dueDateLimitSchedules) {
 
-    super(loanPolicyId);
-    this.loanPolicyName = loanPolicyName;
+    super(loanPolicyId, loanPolicyName);
     this.intervalId = intervalId;
     this.duration = duration;
     this.dueDateLimitSchedules = dueDateLimitSchedules;
@@ -63,7 +64,7 @@ class RollingDueDateStrategy extends DueDateStrategy {
       return HttpResult.success(loanDate.plusMinutes(duration));
     }
     else {
-      return fail(String.format("Unrecognised interval - %s", interval));
+      return fail(String.format(UNRECOGNISED_INTERVAL_MESSAGE, interval));
     }
   }
 
@@ -82,15 +83,7 @@ class RollingDueDateStrategy extends DueDateStrategy {
         .map(this::getDueDate)
         .map(limit -> earliest(dueDate, limit))
         .map(HttpResult::success)
-        .orElseGet(() -> {
-          final String message = String.format(NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE,
-            loanPolicyName);
-
-          log.warn(message);
-
-          return HttpResult.failure(new ValidationErrorFailure(
-            message, "loanPolicyId", this.loanPolicyId));
-        });
+        .orElseGet(() -> fail(NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE));
     }
     else {
       return HttpResult.success(dueDate);

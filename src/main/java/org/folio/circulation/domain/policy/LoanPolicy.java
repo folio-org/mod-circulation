@@ -42,11 +42,11 @@ public class LoanPolicy extends JsonObject {
         interval, duration, fixedDueDateSchedules);
     }
     else if(profileId.equalsIgnoreCase("Fixed")) {
-      return new FixedScheduleDueDateStrategy(loanPolicyId,
+      return new FixedScheduleDueDateStrategy(loanPolicyId, loanPolicyName,
         fixedDueDateSchedules);
     }
     else {
-      return new UnknownDueDateStrategy(loanPolicyId, profileId);
+      return new UnknownDueDateStrategy(loanPolicyId, loanPolicyName, profileId);
     }
   }
 

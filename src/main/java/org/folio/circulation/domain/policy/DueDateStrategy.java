@@ -14,16 +14,18 @@ abstract class DueDateStrategy {
 
   //TODO: Remove, as this is a slight bleed from the calling context (loan policy)
   protected final String loanPolicyId;
+  private final String loanPolicyName;
 
-  DueDateStrategy(String loanPolicyId) {
+  DueDateStrategy(String loanPolicyId, String loanPolicyName) {
     this.loanPolicyId = loanPolicyId;
+    this.loanPolicyName = loanPolicyName;
   }
 
   abstract HttpResult<DateTime> calculate(JsonObject loan);
 
   HttpResult<DateTime> fail(String reason) {
     final String message = String.format(
-      "Loans policy cannot be applied - %s", reason);
+      "%s Please review %s before retrying checking out", reason, loanPolicyName);
 
     log.warn(message);
 

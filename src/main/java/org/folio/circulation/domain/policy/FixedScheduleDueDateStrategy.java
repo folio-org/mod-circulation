@@ -10,11 +10,17 @@ import java.util.List;
 import java.util.function.Predicate;
 
 class FixedScheduleDueDateStrategy extends DueDateStrategy {
+  private static final String NO_APPLICABLE_DUE_DATE_SCHEDULE_MESSAGE =
+    "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy.";
 
   private final JsonObject fixedDueDateSchedules;
 
-  FixedScheduleDueDateStrategy(String loanPolicyId, JsonObject fixedDueDateSchedules) {
-    super(loanPolicyId);
+  FixedScheduleDueDateStrategy(
+    String loanPolicyId,
+    String loanPolicyName,
+    JsonObject fixedDueDateSchedules) {
+
+    super(loanPolicyId, loanPolicyName);
     this.fixedDueDateSchedules = fixedDueDateSchedules;
   }
 
@@ -29,7 +35,7 @@ class FixedScheduleDueDateStrategy extends DueDateStrategy {
         fixedDueDateSchedules.getJsonArray("schedules"));
 
       if(schedules.isEmpty()) {
-        return fail("No schedules for fixed due date loan policy");
+        return fail(NO_APPLICABLE_DUE_DATE_SCHEDULE_MESSAGE);
       }
       else {
         return schedules
@@ -37,7 +43,7 @@ class FixedScheduleDueDateStrategy extends DueDateStrategy {
           .filter(scheduleOverlaps(loanDate))
           .findFirst()
           .map(this::getDueDate)
-          .orElseGet(() -> fail("Loan date is not within a schedule"));
+          .orElseGet(() -> fail(NO_APPLICABLE_DUE_DATE_SCHEDULE_MESSAGE));
       }
     }
     catch(Exception e) {
