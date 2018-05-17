@@ -10,10 +10,10 @@ import org.slf4j.LoggerFactory;
 import java.lang.invoke.MethodHandles;
 
 abstract class DueDateStrategy {
-  static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  //TODO: Remove, as this is a slight bleed from the calling context (loan policy)
-  protected final String loanPolicyId;
+  //TODO: Move failure and logging external to calculation, as could be used in multiple contexts
+  private final String loanPolicyId;
   private final String loanPolicyName;
 
   DueDateStrategy(String loanPolicyId, String loanPolicyName) {
@@ -23,13 +23,21 @@ abstract class DueDateStrategy {
 
   abstract HttpResult<DateTime> calculate(JsonObject loan);
 
-  HttpResult<DateTime> fail(String reason) {
+  protected HttpResult<DateTime> fail(String reason) {
     final String message = String.format(
-      "%s Please review %s before retrying checking out", reason, loanPolicyName);
+      "%s Please review \"%s\" before retrying checking out", reason, loanPolicyName);
 
     log.warn(message);
 
     return HttpResult.failure(new ValidationErrorFailure(
       message, "loanPolicyId", this.loanPolicyId));
+  }
+
+  void logApplying(String message) {
+    log.info("Applying loan policy {} ({}): {}", loanPolicyName, loanPolicyId, message);
+  }
+
+  void logException(Exception e, String message) {
+    log.error("{}: {} ({})", message, loanPolicyName, loanPolicyId, e);
   }
 }

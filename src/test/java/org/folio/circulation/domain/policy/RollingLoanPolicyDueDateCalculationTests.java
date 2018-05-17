@@ -156,6 +156,7 @@ public class RollingLoanPolicyDueDateCalculationTests {
   @Test
   public void shouldFailForNonRollingProfile() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
+      .withName("Invalid Loan Policy")
       .withLoansProfile("Unknown profile")
       .create());
 
@@ -169,13 +170,15 @@ public class RollingLoanPolicyDueDateCalculationTests {
     final HttpResult<DateTime> result = loanPolicy.calculate(loan);
 
     assertThat(result, isValidationFailure(
-      "Loans policy cannot be applied - Unrecognised profile - Unknown profile"));
+      "Item can't be checked out as profile \"Unknown profile\" in the loan policy is not recognised. " +
+        "Please review \"Invalid Loan Policy\" before retrying checking out"));
   }
 
   @Test
   public void shouldFailForUnrecognisedInterval() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(new Period(5, "Unknown"))
+      .withName("Invalid Loan Policy")
       .create());
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
@@ -188,7 +191,8 @@ public class RollingLoanPolicyDueDateCalculationTests {
     final HttpResult<DateTime> result = loanPolicy.calculate(loan);
 
     assertThat(result, isValidationFailure(
-      "Loans policy cannot be applied - Unrecognised interval - Unknown"));
+      "Item can't be checked out as the interval \"Unknown\" in the loan policy is not recognised. " +
+        "Please review \"Invalid Loan Policy\" before retrying checking out"));
   }
 
   @Test
@@ -265,7 +269,7 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     assertThat(result, isValidationFailure(
       "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy. " +
-        "Please review One Month before retrying checking out"));
+        "Please review \"One Month\" before retrying checking out"));
   }
 
   @Test
@@ -290,6 +294,6 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     assertThat(result, isValidationFailure(
       "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy. " +
-        "Please review One Month before retrying checking out"));
+        "Please review \"One Month\" before retrying checking out"));
   }
 }

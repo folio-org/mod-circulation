@@ -44,6 +44,7 @@ public class FixedLoanPolicyDueDateCalculationTests {
   public void shouldFailWhenLoanDateIsBeforeOnlyScheduleAvailable() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
+      .withName("Example Fixed Schedule Loan Policy")
       .create())
       .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
         .addSchedule(FixedDueDateSchedule.wholeYear(2018))
@@ -59,13 +60,15 @@ public class FixedLoanPolicyDueDateCalculationTests {
     final HttpResult<DateTime> result = loanPolicy.calculate(loan);
 
     assertThat(result, isValidationFailure(
-      "Loans policy cannot be applied - Loan date is not within a schedule"));
+      "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy. " +
+        "Please review \"Example Fixed Schedule Loan Policy\" before retrying checking out"));
   }
 
   @Test
   public void shouldFailWhenLoanDateIsAfterOnlyScheduleAvailable() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
+      .withName("Example Fixed Schedule Loan Policy")
       .create())
       .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
         .addSchedule(FixedDueDateSchedule.wholeYear(2018))
@@ -81,7 +84,8 @@ public class FixedLoanPolicyDueDateCalculationTests {
     final HttpResult<DateTime> result = loanPolicy.calculate(loan);
 
     assertThat(result, isValidationFailure(
-      "Loans policy cannot be applied - Loan date is not within a schedule"));
+      "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy. " +
+        "Please review \"Example Fixed Schedule Loan Policy\" before retrying checking out"));
   }
 
   @Test
@@ -166,6 +170,7 @@ public class FixedLoanPolicyDueDateCalculationTests {
   public void shouldFailWhenLoanDateIsBeforeAllSchedules() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
+      .withName("Example Fixed Schedule Loan Policy")
       .create())
       .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
         .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 1))
@@ -183,13 +188,15 @@ public class FixedLoanPolicyDueDateCalculationTests {
     final HttpResult<DateTime> result = loanPolicy.calculate(loan);
 
     assertThat(result, isValidationFailure(
-      "Loans policy cannot be applied - Loan date is not within a schedule"));
+      "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy. " +
+        "Please review \"Example Fixed Schedule Loan Policy\" before retrying checking out"));
   }
 
   @Test
   public void shouldFailWhenLoanDateIsAfterAllSchedules() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
+      .withName("Example Fixed Schedule Loan Policy")
       .create())
       .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
         .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 1))
@@ -207,13 +214,15 @@ public class FixedLoanPolicyDueDateCalculationTests {
     final HttpResult<DateTime> result = loanPolicy.calculate(loan);
 
     assertThat(result, isValidationFailure(
-      "Loans policy cannot be applied - Loan date is not within a schedule"));
+      "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy. " +
+        "Please review \"Example Fixed Schedule Loan Policy\" before retrying checking out"));
   }
 
   @Test
   public void shouldFailWhenLoanDateIsInBetweenSchedules() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
+      .withName("Example Fixed Schedule Loan Policy")
       .create())
       .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
         .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 1))
@@ -230,14 +239,15 @@ public class FixedLoanPolicyDueDateCalculationTests {
     final HttpResult<DateTime> result = loanPolicy.calculate(loan);
 
     assertThat(result, isValidationFailure(
-      "Loans policy cannot be applied - Loan date is not within a schedule"));
+      "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy. " +
+        "Please review \"Example Fixed Schedule Loan Policy\" before retrying checking out"));
   }
-
 
   @Test
   public void shouldFailWhenNoSchedules() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
+      .withName("Example Fixed Schedule Loan Policy")
       .create())
       .withDueDateSchedules(new FixedDueDateSchedulesBuilder().create());
 
@@ -251,6 +261,7 @@ public class FixedLoanPolicyDueDateCalculationTests {
     final HttpResult<DateTime> result = loanPolicy.calculate(loan);
 
     assertThat(result, isValidationFailure(
-      "Loans policy cannot be applied - No schedules for fixed due date loan policy"));
+      "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy. " +
+        "Please review \"Example Fixed Schedule Loan Policy\" before retrying checking out"));
   }
 }

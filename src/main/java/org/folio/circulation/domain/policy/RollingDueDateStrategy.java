@@ -13,7 +13,7 @@ class RollingDueDateStrategy extends DueDateStrategy {
     "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy.";
 
   private static final String UNRECOGNISED_INTERVAL_MESSAGE =
-    "Item can't be checked out as the interval \"%s\" in the loan policy is not recognised";
+    "Item can't be checked out as the interval \"%s\" in the loan policy is not recognised.";
 
   private final String intervalId;
   private final Integer duration;
@@ -36,8 +36,7 @@ class RollingDueDateStrategy extends DueDateStrategy {
   HttpResult<DateTime> calculate(JsonObject loan) {
     final DateTime loanDate = DateTime.parse(loan.getString("loanDate"));
 
-    log.info("Applying rolling due date loan policy {}, period: {} {}",
-      loanPolicyId, duration, intervalId);
+    logApplying(String.format("Rolling %s %s due date calculation", duration, intervalId));
 
     return calculateRollingDueDate(loanDate, intervalId, duration)
       .next(dueDate -> limitDueDateBySchedule(loanDate, dueDate));

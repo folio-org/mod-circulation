@@ -28,7 +28,7 @@ class FixedScheduleDueDateStrategy extends DueDateStrategy {
   HttpResult<DateTime> calculate(JsonObject loan) {
     final DateTime loanDate = DateTime.parse(loan.getString("loanDate"));
 
-    log.info("Applying fixed due date schedule loan policy {}", loanPolicyId);
+    logApplying("Fixed schedule due date calculation");
 
     try {
       final List<JsonObject> schedules = JsonArrayHelper.toList(
@@ -47,7 +47,7 @@ class FixedScheduleDueDateStrategy extends DueDateStrategy {
       }
     }
     catch(Exception e) {
-      log.error("Error occurred during fixed due date determination", e);
+      logException(e, "Error occured during fixed schedule due date calculation");
       return HttpResult.failure(new ServerErrorFailure(e));
     }
   }
