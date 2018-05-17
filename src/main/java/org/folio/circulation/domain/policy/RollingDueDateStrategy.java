@@ -2,11 +2,7 @@ package org.folio.circulation.domain.policy;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.JsonArrayHelper;
 import org.joda.time.DateTime;
-
-import java.util.List;
-import java.util.function.Predicate;
 
 class RollingDueDateStrategy extends DueDateStrategy {
   private static final String NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE =
@@ -72,14 +68,7 @@ class RollingDueDateStrategy extends DueDateStrategy {
     DateTime dueDate) {
 
     if(dueDateLimitSchedules != null) {
-      final List<JsonObject> schedules = JsonArrayHelper.toList(
-        dueDateLimitSchedules.getJsonArray("schedules"));
-
-      return schedules
-        .stream()
-        .filter(scheduleOverlaps(loanDate))
-        .findFirst()
-        .map(this::getDueDate)
+      return dueDateLimitSchedules.findDueDateFor(loanDate)
         .map(limit -> earliest(dueDate, limit))
         .map(HttpResult::success)
         .orElseGet(() -> fail(NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE));
@@ -93,18 +82,5 @@ class RollingDueDateStrategy extends DueDateStrategy {
     return limit.isBefore(rollingDueDate)
       ? limit
       : rollingDueDate;
-  }
-
-  private Predicate<? super JsonObject> scheduleOverlaps(DateTime loanDate) {
-    return schedule -> {
-      DateTime from = DateTime.parse(schedule.getString("from"));
-      DateTime to = DateTime.parse(schedule.getString("to"));
-
-      return loanDate.isAfter(from) && loanDate.isBefore(to);
-    };
-  }
-
-  private DateTime getDueDate(JsonObject schedule) {
-    return DateTime.parse(schedule.getString("due"));
   }
 }
