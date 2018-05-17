@@ -1,3 +1,7 @@
+## 10.2 Unreleased
+
+* Fixed due date schedule limits are applied for rolling loan policies during check out (CIRC-106)
+
 ## 10.1.2 2018-05-01
 
 * Initial check out API for checking out an item to a loanee using their barcodes (CIRC-74)
