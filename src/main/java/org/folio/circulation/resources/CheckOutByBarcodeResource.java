@@ -33,6 +33,19 @@ public class CheckOutByBarcodeResource extends CollectionResource {
 
   private void checkOut(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
+
+    JsonObject request = routingContext.getBodyAsJson();
+
+    final JsonObject loan = new JsonObject();
+    loan.put("id", UUID.randomUUID().toString());
+
+    defaultStatusAndAction(loan);
+    copyOrDefaultLoanDate(request, loan);
+
+    final String itemBarcode = request.getString("itemBarcode");
+    final String userBarcode = request.getString("userBarcode");
+    final String proxyUserBarcode = request.getString("proxyUserBarcode");
+
     final Clients clients = Clients.create(context, client);
 
     final UserFetcher userFetcher = new UserFetcher(clients);
@@ -42,24 +55,15 @@ public class CheckOutByBarcodeResource extends CollectionResource {
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final MaterialTypeRepository materialTypeRepository = new MaterialTypeRepository(clients);
     final LocationRepository locationRepository = new LocationRepository(clients);
+    final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
+      clients, () -> new ValidationErrorFailure(
+      "Cannot check out item via proxy when relationship is invalid", "proxyUserBarcode",
+      proxyUserBarcode));
 
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
-
-    JsonObject request = routingContext.getBodyAsJson();
-
-    final JsonObject loan = new JsonObject();
-    loan.put("id", UUID.randomUUID().toString());
-
-    defaultStatusAndAction(loan);
-
-    copyOrDefaultLoanDate(request, loan);
-
-    final String itemBarcode = request.getString("itemBarcode");
-    final String userBarcode = request.getString("userBarcode");
-    final String proxyUserBarcode = request.getString("proxyUserBarcode");
 
     completedFuture(HttpResult.success(new LoanAndRelatedRecords(loan)))
       .thenCombineAsync(userFetcher.getUserByBarcode(userBarcode), this::addUser)
@@ -70,8 +74,7 @@ public class CheckOutByBarcodeResource extends CollectionResource {
       .thenApply(r -> r.next(v -> refuseWhenItemBarcodeDoesNotExist(r, itemBarcode)))
       .thenApply(r -> r.map(mapBarcodes()))
       .thenApply(r -> refuseWhenItemIsAlreadyCheckedOut(r, itemBarcode))
-      .thenComposeAsync(r -> r.after(records ->
-        refuseWhenProxyRelationshipIsInvalid(records, clients, proxyUserBarcode)))
+      .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenComposeAsync(r -> r.after(records ->
         refuseWhenHasOpenLoan(records, loanRepository, itemBarcode)))
       .thenComposeAsync(r -> r.after(requestQueueFetcher::get))

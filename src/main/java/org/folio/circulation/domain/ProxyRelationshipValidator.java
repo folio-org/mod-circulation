@@ -2,10 +2,12 @@ package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.*;
+import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -21,7 +23,7 @@ public class ProxyRelationshipValidator {
     this.invalidRelationshipErrorSupplier = invalidRelationshipErrorSupplier;
   }
 
-  public CompletableFuture<HttpResult<LoanAndRelatedRecords>> refuseWhenProxyRelationshipIsInvalid(
+  public CompletableFuture<HttpResult<LoanAndRelatedRecords>> refuseWhenInvalid(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
     String validProxyQuery = CqlHelper.buildIsValidUserProxyQuery(
@@ -34,7 +36,7 @@ public class ProxyRelationshipValidator {
 
     CompletableFuture<HttpResult<LoanAndRelatedRecords>> future = new CompletableFuture<>();
 
-    LoanValidation.handleProxy(proxyRelationshipsClient, validProxyQuery, proxyValidResponse -> {
+    handleProxy(proxyRelationshipsClient, validProxyQuery, proxyValidResponse -> {
       if (proxyValidResponse != null) {
         if (proxyValidResponse.getStatusCode() != 200) {
           future.complete(HttpResult.failure(new ForwardOnFailure(proxyValidResponse)));
@@ -80,5 +82,18 @@ public class ProxyRelationshipValidator {
     });
 
     return future;
+  }
+
+  private void handleProxy(
+    CollectionResourceClient client,
+    String query,
+    Consumer<Response> responseHandler) {
+
+    if(query != null){
+      client.getMany(query, 1, 0, responseHandler);
+    }
+    else{
+      responseHandler.accept(null);
+    }
   }
 }
