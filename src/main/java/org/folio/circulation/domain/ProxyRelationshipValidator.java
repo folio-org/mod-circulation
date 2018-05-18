@@ -1,9 +1,6 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonObject;
-import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.*;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,7 +9,6 @@ import java.lang.invoke.MethodHandles;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public class ProxyRelationshipValidator {
@@ -79,7 +75,8 @@ public class ProxyRelationshipValidator {
 
         final boolean activeRelationship = proxyRelationships.getRecords()
           .stream()
-          .anyMatch(activeRelationship());
+          .map(ProxyRelationship::new)
+          .anyMatch(ProxyRelationship::isActive);
 
         future.complete(
           activeRelationship
@@ -93,32 +90,6 @@ public class ProxyRelationshipValidator {
     });
 
     return future;
-  }
-
-  private Predicate<JsonObject> activeRelationship() {
-    return relationship -> {
-      if (relationship.containsKey("meta")) {
-        final JsonObject meta = relationship.getJsonObject("meta");
-
-        boolean notExpired = true;
-        boolean active = true;
-
-        if (meta.containsKey("expirationDate")) {
-          final DateTime expirationDate = DateTime.parse(
-            meta.getString("expirationDate"));
-
-          notExpired = expirationDate.isAfter(DateTime.now());
-        }
-
-        if (meta.containsKey("status")) {
-          active = StringUtils.equalsIgnoreCase(meta.getString("status"), "Active");
-        }
-
-        return active && notExpired;
-      } else {
-        return true;
-      }
-    };
   }
 
   private String proxyRelationshipQuery(String proxyUserId, String sponsorUserId) {
