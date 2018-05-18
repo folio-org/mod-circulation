@@ -154,27 +154,6 @@ public class RollingLoanPolicyDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailForNonRollingProfile() {
-    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
-      .withName("Invalid Loan Policy")
-      .withLoansProfile("Unknown profile")
-      .create());
-
-    DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
-
-    JsonObject loan = new LoanBuilder()
-      .open()
-      .withLoanDate(loanDate)
-      .create();
-
-    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
-
-    assertThat(result, isValidationFailure(
-      "Item can't be checked out as profile \"Unknown profile\" in the loan policy is not recognised. " +
-        "Please review \"Invalid Loan Policy\" before retrying checking out"));
-  }
-
-  @Test
   public void shouldFailForUnrecognisedInterval() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(new Period(5, "Unknown"))
