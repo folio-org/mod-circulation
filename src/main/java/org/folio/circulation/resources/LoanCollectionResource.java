@@ -42,6 +42,10 @@ public class LoanCollectionResource extends CollectionResource {
   //TODO: Add exceptional completion of futures to create failed results
   private void create(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
+
+    JsonObject loan = routingContext.getBodyAsJson();
+    defaultStatusAndAction(loan);
+
     final Clients clients = Clients.create(context, client);
 
     final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
@@ -54,13 +58,13 @@ public class LoanCollectionResource extends CollectionResource {
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final MaterialTypeRepository materialTypeRepository = new MaterialTypeRepository(clients);
     final LocationRepository locationRepository = new LocationRepository(clients);
-    final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(clients);
+
+    final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
+      clients, () -> new ValidationErrorFailure(
+        "proxyUserId is not valid", "proxyUserId",
+        loan.getString("proxyUserId")));
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
-
-    JsonObject loan = routingContext.getBodyAsJson();
-
-    defaultStatusAndAction(loan);
 
     final String itemId = loan.getString("itemId");
     final String requestingUserId = loan.getString("userId");
@@ -88,6 +92,13 @@ public class LoanCollectionResource extends CollectionResource {
 
   private void replace(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
+
+    JsonObject loan = routingContext.getBodyAsJson();
+
+    loan.put("id", routingContext.request().getParam("id"));
+
+    defaultStatusAndAction(loan);
+
     final Clients clients = Clients.create(context, client);
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
     final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
@@ -95,13 +106,10 @@ public class LoanCollectionResource extends CollectionResource {
     final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
-    final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(clients);
-
-    JsonObject loan = routingContext.getBodyAsJson();
-
-    loan.put("id", routingContext.request().getParam("id"));
-
-    defaultStatusAndAction(loan);
+    final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
+      clients, () -> new ValidationErrorFailure(
+        "proxyUserId is not valid", "proxyUserId",
+        loan.getString("proxyUserId")));
 
     String itemId = loan.getString("itemId");
 

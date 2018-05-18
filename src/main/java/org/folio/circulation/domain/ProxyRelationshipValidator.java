@@ -6,13 +6,19 @@ import org.joda.time.DateTime;
 
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class ProxyRelationshipValidator {
   private final CollectionResourceClient proxyRelationshipsClient;
+  private Supplier<ValidationErrorFailure> invalidRelationshipErrorSupplier;
 
-  public ProxyRelationshipValidator(Clients clients) {
-    proxyRelationshipsClient = clients.userProxies();
+  public ProxyRelationshipValidator(
+    Clients clients,
+    Supplier<ValidationErrorFailure> invalidRelationshipErrorSupplier) {
+
+    this.proxyRelationshipsClient = clients.userProxies();
+    this.invalidRelationshipErrorSupplier = invalidRelationshipErrorSupplier;
   }
 
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> refuseWhenProxyRelationshipIsInvalid(
@@ -60,10 +66,8 @@ public class ProxyRelationshipValidator {
           })
           .collect(Collectors.toList());
 
-        if (unExpiredRelationships.isEmpty()) { //if empty then we dont have a valid proxy id in the loan
-          future.complete(HttpResult.failure(new ValidationErrorFailure(
-            "proxyUserId is not valid", "proxyUserId",
-            loanAndRelatedRecords.loan.getString("proxyUserId"))));
+        if (unExpiredRelationships.isEmpty()) {
+          future.complete(HttpResult.failure(invalidRelationshipErrorSupplier.get()));
         }
         else {
           future.complete(HttpResult.success(loanAndRelatedRecords));
