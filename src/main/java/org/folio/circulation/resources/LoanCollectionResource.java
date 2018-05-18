@@ -69,7 +69,7 @@ public class LoanCollectionResource extends CollectionResource {
     final String itemId = loan.getString("itemId");
     final String requestingUserId = loan.getString("userId");
 
-    completedFuture(HttpResult.success(new LoanAndRelatedRecords(loan)))
+    completedFuture(HttpResult.success(new LoanAndRelatedRecords(Loan.from(loan))))
       .thenApply(this::refuseWhenNotOpenOrClosed)
       .thenCombineAsync(inventoryFetcher.fetch(loan), this::addInventoryRecords)
       .thenApply(LoanValidation::refuseWhenItemDoesNotExist)
@@ -113,7 +113,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     String itemId = loan.getString("itemId");
 
-    completedFuture(HttpResult.success(new LoanAndRelatedRecords(loan)))
+    completedFuture(HttpResult.success(new LoanAndRelatedRecords(Loan.from(loan))))
       .thenApply(this::refuseWhenNotOpenOrClosed)
       .thenCombineAsync(inventoryFetcher.fetch(loan), this::addInventoryRecords)
       .thenApply(LoanValidation::refuseWhenItemDoesNotExist)

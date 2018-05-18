@@ -5,7 +5,7 @@ import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.support.InventoryRecords;
 
 public class LoanAndRelatedRecords {
-  public final JsonObject loan;
+  public final Loan loan;
   public final InventoryRecords inventoryRecords;
   public final RequestQueue requestQueue;
   public final User requestingUser;
@@ -15,7 +15,7 @@ public class LoanAndRelatedRecords {
   public final JsonObject materialType;
 
   private LoanAndRelatedRecords(
-    JsonObject loan,
+    Loan loan,
     InventoryRecords inventoryRecords,
     RequestQueue requestQueue,
     User requestingUser,
@@ -34,11 +34,11 @@ public class LoanAndRelatedRecords {
     this.materialType = materialType;
   }
 
-  public LoanAndRelatedRecords(JsonObject loan) {
+  public LoanAndRelatedRecords(Loan loan) {
     this(loan, null, null, null, null, null, null, null);
   }
 
-  public JsonObject getLoan() {
+  public Loan getLoan() {
     return loan;
   }
 
@@ -49,7 +49,7 @@ public class LoanAndRelatedRecords {
       this.materialType);
   }
 
-  public LoanAndRelatedRecords withLoan(JsonObject newLoan) {
+  public LoanAndRelatedRecords withLoan(Loan newLoan) {
     return new LoanAndRelatedRecords(newLoan, inventoryRecords, requestQueue,
       requestingUser, proxyingUser, loanPolicy, location, this.materialType);
   }

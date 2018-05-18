@@ -65,7 +65,7 @@ public class CheckOutByBarcodeResource extends CollectionResource {
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
-    completedFuture(HttpResult.success(new LoanAndRelatedRecords(loan)))
+    completedFuture(HttpResult.success(new LoanAndRelatedRecords(Loan.from(loan))))
       .thenCombineAsync(userFetcher.getUserByBarcode(userBarcode), this::addUser)
       .thenCombineAsync(userFetcher.getProxyUserByBarcode(proxyUserBarcode), this::addProxyUser)
       .thenApply(r -> refuseWhenRequestingUserIsInactive(r, userBarcode))

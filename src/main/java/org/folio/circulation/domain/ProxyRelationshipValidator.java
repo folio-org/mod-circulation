@@ -27,8 +27,8 @@ public class ProxyRelationshipValidator {
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
     String validProxyQuery = CqlHelper.buildIsValidUserProxyQuery(
-      loanAndRelatedRecords.loan.getString("proxyUserId"),
-      loanAndRelatedRecords.loan.getString("userId"));
+      loanAndRelatedRecords.loan.getProxyUserId(),
+      loanAndRelatedRecords.loan.getUserId());
 
     if(validProxyQuery == null) {
       return CompletableFuture.completedFuture(HttpResult.success(loanAndRelatedRecords));
