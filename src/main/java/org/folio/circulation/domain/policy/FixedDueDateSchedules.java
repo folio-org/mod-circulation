@@ -8,9 +8,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 
-class FixedDueDateSchedules extends JsonObject {
+class FixedDueDateSchedules {
+  private final JsonObject representation;
+
   FixedDueDateSchedules(JsonObject representation) {
-    super(representation.getMap());
+    this.representation = representation;
   }
 
   Optional<DateTime> findDueDateFor(DateTime date) {
@@ -20,7 +22,7 @@ class FixedDueDateSchedules extends JsonObject {
 
   private Optional<JsonObject> findScheduleFor(DateTime date) {
     final List<JsonObject> schedules = JsonArrayHelper.toList(
-      getJsonArray("schedules"));
+      representation.getJsonArray("schedules"));
 
     return schedules
       .stream()
