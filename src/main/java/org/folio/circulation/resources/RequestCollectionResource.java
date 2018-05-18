@@ -7,16 +7,13 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.domain.*;
 import org.folio.circulation.support.*;
-import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.*;
-import org.joda.time.DateTime;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -41,6 +38,9 @@ public class RequestCollectionResource extends CollectionResource {
 
   private void create(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
+
+    JsonObject request = routingContext.getBodyAsJson();
+
     final Clients clients = Clients.create(context, client);
 
     final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
@@ -48,8 +48,10 @@ public class RequestCollectionResource extends CollectionResource {
     final UserFetcher userFetcher = new UserFetcher(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateLoanActionHistory updateLoanActionHistory = new UpdateLoanActionHistory(clients);
-
-    JsonObject request = routingContext.getBodyAsJson();
+    final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
+      clients, () -> new ValidationErrorFailure(
+      "proxyUserId is not valid", "proxyUserId",
+      request.getString("proxyUserId")));
 
     RequestStatus status = RequestStatus.from(request);
 
@@ -73,7 +75,7 @@ public class RequestCollectionResource extends CollectionResource {
       .thenCombineAsync(inventoryFetcher.fetch(request), this::addInventoryRecords)
       .thenApply(this::refuseWhenItemDoesNotExist)
       .thenApply(this::refuseWhenItemIsNotValid)
-      .thenComposeAsync(r -> r.after(records -> refuseWhenProxyRelationshipIsInvalid(records, clients)))
+      .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
       .thenCombineAsync(userFetcher.getUser(requestingUserId, false), this::addUser)
       .thenCombineAsync(userFetcher.getUser(proxyUserId, false), this::addProxyUser)
@@ -87,13 +89,19 @@ public class RequestCollectionResource extends CollectionResource {
 
   private void replace(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
+
+    String id = routingContext.request().getParam("id");
+    JsonObject request = routingContext.getBodyAsJson();
+
     final Clients clients = Clients.create(context, client);
 
     final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
     final UserFetcher userFetcher = new UserFetcher(clients);
 
-    String id = routingContext.request().getParam("id");
-    JsonObject request = routingContext.getBodyAsJson();
+    final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
+      clients, () -> new ValidationErrorFailure(
+      "proxyUserId is not valid", "proxyUserId",
+      request.getString("proxyUserId")));
 
     removeRelatedRecordInformation(request);
 
@@ -104,7 +112,7 @@ public class RequestCollectionResource extends CollectionResource {
       .thenCombineAsync(inventoryFetcher.fetch(request), this::addInventoryRecords)
       .thenCombineAsync(userFetcher.getUser(requestingUserId, false), this::addUser)
       .thenCombineAsync(userFetcher.getUser(proxyUserId, false), this::addProxyUser)
-      .thenComposeAsync(r -> r.after(records -> refuseWhenProxyRelationshipIsInvalid(records, clients)))
+      .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenAcceptAsync(result -> {
         if(result.failed()) {
           result.cause().writeTo(routingContext.response());
@@ -411,83 +419,6 @@ public class RequestCollectionResource extends CollectionResource {
         return result;
       }
     });
-  }
-
-  private void handleProxy(
-    CollectionResourceClient client,
-    String query,
-    Consumer<Response> responseHandler) {
-
-    if(query != null) {
-      client.getMany(query, 1, 0, responseHandler);
-    }
-    else{
-      responseHandler.accept(null);
-    }
-  }
-
-  private CompletableFuture<HttpResult<RequestAndRelatedRecords>> refuseWhenProxyRelationshipIsInvalid(
-    RequestAndRelatedRecords requestAndRelatedRecords,
-    Clients clients) {
-
-    String validProxyQuery = CqlHelper.buildIsValidUserProxyQuery(
-      requestAndRelatedRecords.request.getString("proxyUserId"),
-      requestAndRelatedRecords.request.getString("requesterId"));
-
-    if(validProxyQuery == null) {
-      return CompletableFuture.completedFuture(HttpResult.success(requestAndRelatedRecords));
-    }
-
-    CompletableFuture<HttpResult<RequestAndRelatedRecords>> future = new CompletableFuture<>();
-
-    handleProxy(clients.userProxies(), validProxyQuery, proxyValidResponse -> {
-      if (proxyValidResponse != null) {
-        if (proxyValidResponse.getStatusCode() != 200) {
-          future.complete(HttpResult.failure(new ForwardOnFailure(proxyValidResponse)));
-          return;
-        }
-
-        final MultipleRecordsWrapper proxyRelationships = MultipleRecordsWrapper.fromBody(
-          proxyValidResponse.getBody(), "proxiesFor");
-
-        final Collection<JsonObject> unExpiredRelationships = proxyRelationships.getRecords()
-          .stream()
-          .filter(relationship -> {
-            if(relationship.containsKey("meta")) {
-              final JsonObject meta = relationship.getJsonObject("meta");
-
-              if(meta.containsKey("expirationDate")) {
-                final DateTime expirationDate = DateTime.parse(
-                  meta.getString("expirationDate"));
-
-                return expirationDate.isAfter(DateTime.now());
-              }
-              else {
-                return true;
-              }
-            }
-            else {
-              return true;
-            }
-          })
-          .collect(Collectors.toList());
-
-        if (unExpiredRelationships.isEmpty()) { //if empty then we dont have a valid proxy id in the loan
-          future.complete(HttpResult.failure(new ValidationErrorFailure(
-            "proxyUserId is not valid", "proxyUserId",
-            requestAndRelatedRecords.request.getString("proxyUserId"))));
-        }
-        else {
-          future.complete(HttpResult.success(requestAndRelatedRecords));
-        }
-      }
-      else {
-        future.complete(HttpResult.failure(
-          new ServerErrorFailure("No response when requesting proxies")));
-      }
-    });
-
-    return future;
   }
 
   private CompletableFuture<HttpResult<RequestAndRelatedRecords>> createRequest(
