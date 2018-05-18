@@ -26,6 +26,10 @@ class FixedScheduleDueDateStrategy extends DueDateStrategy {
 
     logApplying("Fixed schedule due date calculation");
 
+    if(fixedDueDateSchedules == null) {
+      return fail(NO_APPLICABLE_DUE_DATE_SCHEDULE_MESSAGE);
+    }
+
     try {
       return fixedDueDateSchedules.findDueDateFor(loanDate)
         .map(HttpResult::success)

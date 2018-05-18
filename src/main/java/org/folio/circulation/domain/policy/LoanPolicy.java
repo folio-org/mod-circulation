@@ -67,7 +67,7 @@ public class LoanPolicy {
 
   //TODO: potentially remove this, when builder can create class or JSON representation
   LoanPolicy withDueDateSchedules(JsonObject fixedDueDateSchedules) {
-    return new LoanPolicy(representation, new FixedDueDateSchedules(fixedDueDateSchedules));
+    return withDueDateSchedules(new FixedDueDateSchedules(fixedDueDateSchedules));
   }
 
   public String getId() {

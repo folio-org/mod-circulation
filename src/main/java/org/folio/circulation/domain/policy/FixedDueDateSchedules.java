@@ -9,10 +9,11 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 class FixedDueDateSchedules {
-  private final JsonObject representation;
+  private final List<JsonObject> schedules;
 
   FixedDueDateSchedules(JsonObject representation) {
-    this.representation = representation;
+    schedules = JsonArrayHelper.toList(
+      representation.getJsonArray("schedules"));
   }
 
   Optional<DateTime> findDueDateFor(DateTime date) {
@@ -21,9 +22,6 @@ class FixedDueDateSchedules {
   }
 
   private Optional<JsonObject> findScheduleFor(DateTime date) {
-    final List<JsonObject> schedules = JsonArrayHelper.toList(
-      representation.getJsonArray("schedules"));
-
     return schedules
       .stream()
       .filter(isWithin(date))
@@ -41,5 +39,9 @@ class FixedDueDateSchedules {
 
   private DateTime getDueDate(JsonObject schedule) {
     return DateTime.parse(schedule.getString("due"));
+  }
+
+  public boolean isEmpty() {
+    return schedules.isEmpty();
   }
 }
