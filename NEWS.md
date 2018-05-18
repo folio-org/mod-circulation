@@ -1,6 +1,7 @@
 ## 10.2 Unreleased
 
 * Fixed due date schedule limits are applied for rolling loan policies during check out (CIRC-106)
+* Check out requests using a rolling loan policy with missing policy definition respond with an error message (CIRC-108) 
 
 ## 10.1.2 2018-05-01
 
