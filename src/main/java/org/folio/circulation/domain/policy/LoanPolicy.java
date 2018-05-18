@@ -4,6 +4,9 @@ import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.HttpResult;
 import org.joda.time.DateTime;
 
+import static org.folio.circulation.support.DefensiveJsonPropertyFetcher.getNestedIntegerProperty;
+import static org.folio.circulation.support.DefensiveJsonPropertyFetcher.getNestedStringProperty;
+
 public class LoanPolicy extends JsonObject {
   private final FixedDueDateSchedules fixedDueDateSchedules;
 
@@ -35,10 +38,8 @@ public class LoanPolicy extends JsonObject {
     final String profileId = loansPolicy.getString("profileId");
 
     if(profileId.equalsIgnoreCase("Rolling")) {
-      final JsonObject period = loansPolicy.getJsonObject("period");
-
-      final String interval = period.getString("intervalId");
-      final Integer duration = period.getInteger("duration");
+      final String interval = getNestedStringProperty(loansPolicy, "period", "intervalId");
+      final Integer duration = getNestedIntegerProperty(loansPolicy, "period", "duration");
 
       return new RollingDueDateStrategy(loanPolicyId, loanPolicyName,
         interval, duration, fixedDueDateSchedules);

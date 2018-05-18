@@ -11,6 +11,12 @@ class RollingDueDateStrategy extends DueDateStrategy {
   private static final String UNRECOGNISED_INTERVAL_MESSAGE =
     "Item can't be checked out as the interval \"%s\" in the loan policy is not recognised.";
 
+  private static final String INVALID_DURATION_MESSAGE =
+    "Item can't be checked out as the duration \"%s\" in the loan policy is invalid.";
+
+  private static final String UNRECOGNISED_PERIOD_MESSAGE =
+    "Item can't be checked out as the loan period in the loan policy is not recognised.";
+
   private final String intervalId;
   private final Integer duration;
   private final FixedDueDateSchedules dueDateLimitSchedules;
@@ -43,23 +49,31 @@ class RollingDueDateStrategy extends DueDateStrategy {
     String interval,
     Integer duration) {
 
-    if(interval.equals("Months") && duration != null) {
-      return HttpResult.success(loanDate.plusMonths(duration));
+    if(interval == null) {
+      return fail(UNRECOGNISED_PERIOD_MESSAGE);
     }
-    else if(interval.equals("Weeks") && duration != null) {
-      return HttpResult.success(loanDate.plusWeeks(duration));
+
+    if(duration == null) {
+      return fail(UNRECOGNISED_PERIOD_MESSAGE);
     }
-    else if(interval.equals("Days") && duration != null) {
-      return HttpResult.success(loanDate.plusDays(duration));
+
+    if(duration <= 0) {
+      return fail(String.format(INVALID_DURATION_MESSAGE, duration));
     }
-    else if(interval.equals("Hours") && duration != null) {
-      return HttpResult.success(loanDate.plusHours(duration));
-    }
-    else if(interval.equals("Minutes") && duration != null) {
-      return HttpResult.success(loanDate.plusMinutes(duration));
-    }
-    else {
-      return fail(String.format(UNRECOGNISED_INTERVAL_MESSAGE, interval));
+
+    switch (interval) {
+      case "Months":
+        return HttpResult.success(loanDate.plusMonths(duration));
+      case "Weeks":
+        return HttpResult.success(loanDate.plusWeeks(duration));
+      case "Days":
+        return HttpResult.success(loanDate.plusDays(duration));
+      case "Hours":
+        return HttpResult.success(loanDate.plusHours(duration));
+      case "Minutes":
+        return HttpResult.success(loanDate.plusMinutes(duration));
+      default:
+        return fail(String.format(UNRECOGNISED_INTERVAL_MESSAGE, interval));
     }
   }
 

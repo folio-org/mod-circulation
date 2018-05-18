@@ -175,6 +175,109 @@ public class RollingLoanPolicyDueDateCalculationTests {
   }
 
   @Test
+  public void shouldFailWhenNoPeriodProvided() {
+    final JsonObject representation = new LoanPolicyBuilder()
+      .rolling(new Period(5, "Unknown"))
+      .withName("Invalid Loan Policy")
+      .create();
+
+    representation.getJsonObject("loansPolicy").remove("period");
+
+    LoanPolicy loanPolicy = LoanPolicy.from(representation);
+
+    DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
+
+    JsonObject loan = new LoanBuilder()
+      .open()
+      .withLoanDate(loanDate)
+      .create();
+
+    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
+
+    assertThat(result, isValidationFailure(
+      "Item can't be checked out as the loan period in the loan policy is not recognised. " +
+        "Please review \"Invalid Loan Policy\" before retrying checking out"));
+  }
+
+  @Test
+  public void shouldFailWhenNoPeriodDurationProvided() {
+    final JsonObject representation = new LoanPolicyBuilder()
+      .rolling(new Period(5, "Weeks"))
+      .withName("Invalid Loan Policy")
+      .create();
+
+    representation.getJsonObject("loansPolicy").getJsonObject("period").remove("duration");
+
+    LoanPolicy loanPolicy = LoanPolicy.from(representation);
+
+    DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
+
+    JsonObject loan = new LoanBuilder()
+      .open()
+      .withLoanDate(loanDate)
+      .create();
+
+    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
+
+    assertThat(result, isValidationFailure(
+      "Item can't be checked out as the loan period in the loan policy is not recognised. " +
+        "Please review \"Invalid Loan Policy\" before retrying checking out"));
+  }
+
+  @Test
+  public void shouldFailWhenNoPeriodIntervalProvided() {
+    final JsonObject representation = new LoanPolicyBuilder()
+      .rolling(new Period(5, "Weeks"))
+      .withName("Invalid Loan Policy")
+      .create();
+
+    representation.getJsonObject("loansPolicy").getJsonObject("period").remove("intervalId");
+
+    LoanPolicy loanPolicy = LoanPolicy.from(representation);
+
+    DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
+
+    JsonObject loan = new LoanBuilder()
+      .open()
+      .withLoanDate(loanDate)
+      .create();
+
+    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
+
+    assertThat(result, isValidationFailure(
+      "Item can't be checked out as the loan period in the loan policy is not recognised. " +
+        "Please review \"Invalid Loan Policy\" before retrying checking out"));
+  }
+
+  @Test
+  @Parameters({
+    "0",
+    "-1",
+  })
+  public void shouldFailWhenDurationIsInvalid(int duration) {
+    final JsonObject representation = new LoanPolicyBuilder()
+      .rolling(Period.minutes(duration))
+      .withName("Invalid Loan Policy")
+      .create();
+
+    LoanPolicy loanPolicy = LoanPolicy.from(representation);
+
+    DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
+
+    JsonObject loan = new LoanBuilder()
+      .open()
+      .withLoanDate(loanDate)
+      .create();
+
+    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
+
+    assertThat(result, isValidationFailure(
+      String.format(
+        "Item can't be checked out as the duration \"%s\" in the loan policy is invalid. " +
+        "Please review \"Invalid Loan Policy\" before retrying checking out", duration)));
+  }
+
+  @Test
   public void shouldLimitDueDateWhenWithinDueDateLimitSchedule() {
     //TODO: Slight hack to use the same builder, the schedule is fed in later
     //TODO: Introduce builder for individual schedules
