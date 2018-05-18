@@ -43,10 +43,7 @@ public class LoanPolicyRepository {
   }
 
   private CompletableFuture<HttpResult<LoanPolicy>> lookupSchedules(LoanPolicy loanPolicy) {
-
-    //TODO: Need to be defensive about loansPolicy object
-    final String fixedDueDateScheduleId = loanPolicy.getJsonObject("loansPolicy")
-      .getString("fixedDueDateScheduleId");
+    final String fixedDueDateScheduleId = loanPolicy.getLoansFixedDueDateScheduleId();
 
     if(fixedDueDateScheduleId != null) {
       final SingleRecordFetcher fetcher = new SingleRecordFetcher(

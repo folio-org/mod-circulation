@@ -35,7 +35,7 @@ public class LoanRepository {
       loanAndRelatedRecords.loan, loanAndRelatedRecords.inventoryRecords.item);
 
     if(loanAndRelatedRecords.loanPolicy != null) {
-      storageLoan.put("loanPolicyId", loanAndRelatedRecords.loanPolicy.getString("id"));
+      storageLoan.put("loanPolicyId", loanAndRelatedRecords.loanPolicy.getId());
     }
 
     loansStorageClient.post(storageLoan, response -> {

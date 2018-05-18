@@ -8,7 +8,8 @@ import org.joda.time.DateTime;
 import static org.folio.circulation.support.DefensiveJsonPropertyFetcher.getNestedIntegerProperty;
 import static org.folio.circulation.support.DefensiveJsonPropertyFetcher.getNestedStringProperty;
 
-public class LoanPolicy extends JsonObject {
+public class LoanPolicy {
+  private final JsonObject representation;
   private final FixedDueDateSchedules fixedDueDateSchedules;
 
   private LoanPolicy(JsonObject representation) {
@@ -19,8 +20,8 @@ public class LoanPolicy extends JsonObject {
     JsonObject representation,
     FixedDueDateSchedules fixedDueDateSchedules) {
 
-    super(representation.getMap());
-    this. fixedDueDateSchedules = fixedDueDateSchedules;
+    this.representation = representation;
+    this.fixedDueDateSchedules = fixedDueDateSchedules;
   }
 
   static LoanPolicy from(JsonObject representation) {
@@ -32,10 +33,10 @@ public class LoanPolicy extends JsonObject {
   }
 
   private DueDateStrategy determineStrategy() {
-    final String loanPolicyId = getString("id");
-    final String loanPolicyName = getString("name");
+    final String loanPolicyId = representation.getString("id");
+    final String loanPolicyName = representation.getString("name");
 
-    final JsonObject loansPolicy = getJsonObject("loansPolicy");
+    final JsonObject loansPolicy = representation.getJsonObject("loansPolicy");
 
     //TODO: Temporary until have better logic for missing loans policy
     if(loansPolicy == null) {
@@ -61,12 +62,21 @@ public class LoanPolicy extends JsonObject {
   }
 
   LoanPolicy withDueDateSchedules(FixedDueDateSchedules fixedDueDateSchedules) {
-    return new LoanPolicy(this, fixedDueDateSchedules);
+    return new LoanPolicy(representation, fixedDueDateSchedules);
   }
 
   //TODO: potentially remove this, when builder can create class or JSON representation
   LoanPolicy withDueDateSchedules(JsonObject fixedDueDateSchedules) {
-    return new LoanPolicy(this, new FixedDueDateSchedules(fixedDueDateSchedules));
+    return new LoanPolicy(representation, new FixedDueDateSchedules(fixedDueDateSchedules));
+  }
+
+  public String getId() {
+    return representation.getString("id");
+  }
+
+  String getLoansFixedDueDateScheduleId() {
+    return getNestedStringProperty(representation, "loansPolicy",
+      "fixedDueDateScheduleId");
   }
 
   @Override
