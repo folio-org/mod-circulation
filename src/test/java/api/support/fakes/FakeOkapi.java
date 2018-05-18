@@ -94,6 +94,7 @@ public class FakeOkapi extends AbstractVerticle {
       .withRecordName("fixed due date schedules")
       .withRootPath("/fixed-due-date-schedule-storage/fixed-due-date-schedules")
       .withCollectionPropertyName("fixedDueDateSchedules")
+      .withUniqueProperties("name")
       .create().register(router);
 
     new FakeStorageModuleBuilder()

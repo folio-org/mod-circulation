@@ -431,22 +431,16 @@ public class FakeStorageModule extends AbstractVerticle {
     }
   }
 
-  public FakeStorageModule proxyAs(
-    String path,
-    String collectionPropertyName,
-    String... propertiesToMap) {
-
-    proxyAs = new Proxy(path, collectionPropertyName, Arrays.asList(propertiesToMap));
-
-    return this;
-  }
-
   private class Proxy {
     final String path;
     final String collectionPropertyName;
     final Collection<String> propertiesToMap;
 
-    private Proxy(String path, String collectionPropertyName, Collection<String> propertiesToMap) {
+    private Proxy(
+      String path,
+      String collectionPropertyName,
+      Collection<String> propertiesToMap) {
+
       this.path = path;
       this.collectionPropertyName = collectionPropertyName;
       this.propertiesToMap = propertiesToMap;

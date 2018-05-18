@@ -1,6 +1,5 @@
 package api.support;
 
-import io.vertx.core.json.JsonObject;
 import api.APITestSuite;
 import api.support.fixtures.ItemsFixture;
 import api.support.fixtures.LoansFixture;
@@ -8,6 +7,7 @@ import api.support.fixtures.RequestsFixture;
 import api.support.fixtures.UsersFixture;
 import api.support.http.InterfaceUrls;
 import api.support.http.ResourceClient;
+import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
@@ -19,6 +19,8 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -53,6 +55,9 @@ public abstract class APITests {
   protected final RequestsFixture requestsFixture = new RequestsFixture(requestsClient);
   protected final UsersFixture usersFixture = new UsersFixture(usersClient, userProxiesClient);
 
+  protected final Set<UUID> schedulesToDelete = new HashSet<>();
+  protected final Set<UUID> policiesToDelete = new HashSet<>();
+
   protected APITests() {
     this(true);
   }
@@ -62,7 +67,7 @@ public abstract class APITests {
   }
 
   @BeforeClass
-  public static void before()
+  public static void beforeAll()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -72,19 +77,6 @@ public abstract class APITests {
       System.out.println("Running test on own, initialising suite manually");
       runningOnOwn = true;
       APITestSuite.before();
-    }
-  }
-
-  @AfterClass
-  public static void after()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
-
-    if(runningOnOwn) {
-      System.out.println("Running test on own, un-initialising suite manually");
-      APITestSuite.after();
     }
   }
 
@@ -109,6 +101,39 @@ public abstract class APITests {
     if(initialiseLoanRules) {
       useDefaultRollingPolicyLoanRules();
     }
+  }
+
+  @AfterClass
+  public static void afterAll()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    if(runningOnOwn) {
+      System.out.println("Running test on own, un-initialising suite manually");
+      APITestSuite.after();
+    }
+  }
+
+  @Before
+  public void afterEach()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    for (UUID policyId : policiesToDelete) {
+      loanPolicyClient.delete(policyId);
+    }
+
+    policiesToDelete.clear();
+
+    for (UUID scheduleId : schedulesToDelete) {
+      fixedDueDateScheduleClient.delete(scheduleId);
+    }
+
+    schedulesToDelete.clear();
   }
 
   //Needs to be done each time as some tests manipulate the rules

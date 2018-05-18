@@ -178,12 +178,18 @@ public class CheckOutByBarcodeTests extends APITests {
     final UUID dueDateLimitScheduleId = fixedDueDateScheduleClient.create(
       dueDateLimitSchedule).getId();
 
+    //Need to remember in order to delete after test
+    schedulesToDelete.add(dueDateLimitScheduleId);
+
     LoanPolicyBuilder dueDateLimitedPolicy = new LoanPolicyBuilder()
       .withName("Due Date Limited Rolling Policy")
       .rolling(Period.days(30))
       .limitedBySchedule(dueDateLimitScheduleId);
 
     UUID dueDateLimitedPolicyId = loanPolicyClient.create(dueDateLimitedPolicy).getId();
+
+    //Need to remember in order to delete after test
+    policiesToDelete.add(dueDateLimitedPolicyId);
 
     useLoanPolicyAsFallback(dueDateLimitedPolicyId);
 
