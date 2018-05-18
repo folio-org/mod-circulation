@@ -1,8 +1,8 @@
 package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
+import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.*;
-import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,11 +11,9 @@ import java.io.UnsupportedEncodingException;
 import java.lang.invoke.MethodHandles;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 public class ProxyRelationshipValidator {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -55,17 +53,21 @@ public class ProxyRelationshipValidator {
     String proxyUserId,
     String userId) {
 
-    String validProxyQuery = buildIsValidUserProxyQuery(
-      proxyUserId,
-      userId);
-
-    if(validProxyQuery == null) {
+    //No need to validate as not proxied activity
+    if (proxyUserId == null) {
       return CompletableFuture.completedFuture(HttpResult.success(null));
+    }
+
+    String proxyRelationshipQuery = proxyRelationshipQuery(proxyUserId, userId);
+
+    if(proxyRelationshipQuery == null) {
+      return CompletableFuture.completedFuture(HttpResult.failure(
+        new ServerErrorFailure("Unable to fetch proxy relationships")));
     }
 
     CompletableFuture<HttpResult<Void>> future = new CompletableFuture<>();
 
-    handleProxy(proxyRelationshipsClient, validProxyQuery, proxyValidResponse -> {
+    proxyRelationshipsClient.getMany(proxyRelationshipQuery, 1000, 0, proxyValidResponse -> {
       if (proxyValidResponse != null) {
         if (proxyValidResponse.getStatusCode() != 200) {
           future.complete(HttpResult.failure(new ForwardOnFailure(proxyValidResponse)));
@@ -75,34 +77,14 @@ public class ProxyRelationshipValidator {
         final MultipleRecordsWrapper proxyRelationships = MultipleRecordsWrapper.fromBody(
           proxyValidResponse.getBody(), "proxiesFor");
 
-        final Collection<JsonObject> unExpiredRelationships = proxyRelationships.getRecords()
+        final boolean activeRelationship = proxyRelationships.getRecords()
           .stream()
-          .filter(relationship -> {
-            if(relationship.containsKey("meta")) {
-              final JsonObject meta = relationship.getJsonObject("meta");
+          .anyMatch(activeRelationship());
 
-              if(meta.containsKey("expirationDate")) {
-                final DateTime expirationDate = DateTime.parse(
-                  meta.getString("expirationDate"));
-
-                return expirationDate.isAfter(DateTime.now());
-              }
-              else {
-                return true;
-              }
-            }
-            else {
-              return true;
-            }
-          })
-          .collect(Collectors.toList());
-
-        if (unExpiredRelationships.isEmpty()) {
-          future.complete(HttpResult.failure(invalidRelationshipErrorSupplier.get()));
-        }
-        else {
-          future.complete(HttpResult.success(null));
-        }
+        future.complete(
+          activeRelationship
+            ? HttpResult.success(null)
+            : HttpResult.failure(invalidRelationshipErrorSupplier.get()));
       }
       else {
         future.complete(HttpResult.failure(
@@ -113,34 +95,45 @@ public class ProxyRelationshipValidator {
     return future;
   }
 
-  private void handleProxy(
-    CollectionResourceClient client,
-    String query,
-    Consumer<Response> responseHandler) {
+  private Predicate<JsonObject> activeRelationship() {
+    return relationship -> {
+      if (relationship.containsKey("meta")) {
+        final JsonObject meta = relationship.getJsonObject("meta");
 
-    if(query != null){
-      client.getMany(query, 1, 0, responseHandler);
-    }
-    else{
-      responseHandler.accept(null);
-    }
+        boolean notExpired = true;
+        boolean active = true;
+
+        if (meta.containsKey("expirationDate")) {
+          final DateTime expirationDate = DateTime.parse(
+            meta.getString("expirationDate"));
+
+          notExpired = expirationDate.isAfter(DateTime.now());
+        }
+
+        if (meta.containsKey("status")) {
+          active = StringUtils.equalsIgnoreCase(meta.getString("status"), "Active");
+        }
+
+        return active && notExpired;
+      } else {
+        return true;
+      }
+    };
   }
 
-  private static String buildIsValidUserProxyQuery(String proxyUserId, String sponsorUserId){
-    if(proxyUserId != null) {
-//      DateTime expDate = new DateTime(DateTimeZone.UTC);
-      String validateProxyQuery ="proxyUserId="+ proxyUserId
-        +" and userId="+sponsorUserId
-        +" and meta.status=Active";
-      //Temporarily removed as does not work when optional expiration date is missing
-//          +" and meta.expirationDate>"+expDate.toString().trim();
-      try {
-        return URLEncoder.encode(validateProxyQuery, String.valueOf(StandardCharsets.UTF_8));
-      } catch (UnsupportedEncodingException e) {
-        log.error("Failed to encode query for proxies");
-        return null;
-      }
+  private String proxyRelationshipQuery(String proxyUserId, String sponsorUserId) {
+    //Cannot check whether relationship is not active or expired in CQL, due to
+    //having to look in two different parts of the representation for the properties
+    //and CQL implementation does not currently support > comparison on optional properties
+
+    String validateProxyQuery = String.format("proxyUserId=%s and userId=%s",
+      proxyUserId, sponsorUserId);
+
+    try {
+      return URLEncoder.encode(validateProxyQuery, String.valueOf(StandardCharsets.UTF_8));
+    } catch (UnsupportedEncodingException e) {
+      log.error("Failed to encode query for proxies");
+      return null;
     }
-    return null;
   }
 }
