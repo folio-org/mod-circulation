@@ -12,6 +12,10 @@ public class DefensiveJsonPropertyFetcher {
     String objectName,
     String propertyName) {
 
+    if(representation == null) {
+      return null;
+    }
+
     return representation.containsKey(objectName)
       ? representation.getJsonObject(objectName).getString(propertyName)
       : null;
@@ -21,6 +25,10 @@ public class DefensiveJsonPropertyFetcher {
     JsonObject representation,
     String objectName,
     String propertyName) {
+
+    if(representation == null) {
+      return null;
+    }
 
     return representation.containsKey(objectName)
       ? representation.getJsonObject(objectName).getInteger(propertyName)

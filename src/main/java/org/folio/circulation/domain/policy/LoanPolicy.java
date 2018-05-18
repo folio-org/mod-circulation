@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.policy;
 
 import io.vertx.core.json.JsonObject;
+import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.HttpResult;
 import org.joda.time.DateTime;
 
@@ -35,16 +36,22 @@ public class LoanPolicy extends JsonObject {
     final String loanPolicyName = getString("name");
 
     final JsonObject loansPolicy = getJsonObject("loansPolicy");
+
+    //TODO: Temporary until have better logic for missing loans policy
+    if(loansPolicy == null) {
+      return new UnknownDueDateStrategy(loanPolicyId, loanPolicyName, "");
+    }
+
     final String profileId = loansPolicy.getString("profileId");
 
-    if(profileId.equalsIgnoreCase("Rolling")) {
+    if(StringUtils.equalsIgnoreCase(profileId, "Rolling")) {
       final String interval = getNestedStringProperty(loansPolicy, "period", "intervalId");
       final Integer duration = getNestedIntegerProperty(loansPolicy, "period", "duration");
 
       return new RollingDueDateStrategy(loanPolicyId, loanPolicyName,
         interval, duration, fixedDueDateSchedules);
     }
-    else if(profileId.equalsIgnoreCase("Fixed")) {
+    else if(StringUtils.equalsIgnoreCase(profileId, "Fixed")) {
       return new FixedScheduleDueDateStrategy(loanPolicyId, loanPolicyName,
         fixedDueDateSchedules);
     }
