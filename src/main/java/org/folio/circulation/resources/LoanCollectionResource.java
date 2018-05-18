@@ -54,6 +54,7 @@ public class LoanCollectionResource extends CollectionResource {
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final MaterialTypeRepository materialTypeRepository = new MaterialTypeRepository(clients);
     final LocationRepository locationRepository = new LocationRepository(clients);
+    final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(clients);
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
@@ -70,7 +71,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenApply(LoanValidation::refuseWhenItemDoesNotExist)
       .thenApply(this::refuseWhenHoldingDoesNotExist)
       .thenApply(LoanValidation::refuseWhenItemIsAlreadyCheckedOut)
-      .thenComposeAsync(r -> r.after(records -> refuseWhenProxyRelationshipIsInvalid(records, clients)))
+      .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenProxyRelationshipIsInvalid))
       .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
       .thenCombineAsync(userFetcher.getUser(requestingUserId), this::addUser)
       .thenApply(LoanValidation::refuseWhenUserIsNotAwaitingPickup)
@@ -94,6 +95,7 @@ public class LoanCollectionResource extends CollectionResource {
     final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
+    final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(clients);
 
     JsonObject loan = routingContext.getBodyAsJson();
 
@@ -107,7 +109,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenApply(this::refuseWhenNotOpenOrClosed)
       .thenCombineAsync(inventoryFetcher.fetch(loan), this::addInventoryRecords)
       .thenApply(LoanValidation::refuseWhenItemDoesNotExist)
-      .thenComposeAsync(r -> r.after(records -> refuseWhenProxyRelationshipIsInvalid(records, clients)))
+      .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenProxyRelationshipIsInvalid))
       .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
       .thenComposeAsync(result -> result.after(requestQueueUpdate::onCheckIn))
       .thenComposeAsync(result -> result.after(updateItem::onLoanUpdate))
