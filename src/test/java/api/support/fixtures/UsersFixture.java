@@ -55,9 +55,11 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    proxyRelationshipClient.create(new ProxyRelationshipBuilder().
-      withValidationFields(expirationDate.toString(), "Active",
-        sponsorUserId.toString(), proxyUserId.toString()));
+    proxyRelationshipClient.create(new ProxyRelationshipBuilder()
+      .sponsor(sponsorUserId)
+      .proxy(proxyUserId)
+      .active()
+      .expires(expirationDate));
   }
 
   public void inactiveProxyFor(
@@ -68,9 +70,11 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    proxyRelationshipClient.create(new ProxyRelationshipBuilder().
-      withValidationFields(DateTime.now().plusYears(1).toString(), "Inactive",
-        sponsor.getId().toString(), proxy.getId().toString()));
+    proxyRelationshipClient.create(new ProxyRelationshipBuilder()
+      .sponsor(sponsor.getId())
+      .proxy(proxy.getId())
+      .inactive()
+      .expires(DateTime.now().plusYears(1)));
   }
 
   public void nonExpiringProxyFor(
@@ -80,9 +84,12 @@ public class UsersFixture {
     MalformedURLException,
     TimeoutException,
     ExecutionException {
-      proxyRelationshipClient.create(new ProxyRelationshipBuilder().
-        withValidationFields(null, "Active",
-          sponsor.getId().toString(), proxy.getId().toString()));
+
+    proxyRelationshipClient.create(new ProxyRelationshipBuilder()
+      .sponsor(sponsor.getId())
+      .proxy(proxy.getId())
+      .active()
+      .doesNotExpire());
   }
 
   public IndividualResource jessica()

@@ -1,8 +1,9 @@
 package api.support.builders;
 
-import java.util.UUID;
-
 import io.vertx.core.json.JsonObject;
+import org.joda.time.DateTime;
+
+import java.util.UUID;
 
 public class ProxyRelationshipBuilder implements Builder {
 
@@ -24,9 +25,17 @@ public class ProxyRelationshipBuilder implements Builder {
       "Sponsor","Sponsor");
   }
 
-  public ProxyRelationshipBuilder(UUID id, String userId, String proxyUserId,
-                                  String requestForSponsor, String createdDate, String expirationDate, String status,
-                                  String accrueTo, String notificationsTo) {
+  public ProxyRelationshipBuilder(
+    UUID id,
+    String userId,
+    String proxyUserId,
+    String requestForSponsor,
+    String createdDate,
+    String expirationDate,
+    String status,
+    String accrueTo,
+    String notificationsTo) {
+
     super();
     this.id = id;
     this.userId = userId;
@@ -69,12 +78,81 @@ public class ProxyRelationshipBuilder implements Builder {
     return request;
   }
 
-  public ProxyRelationshipBuilder withValidationFields(String expDate, String status, String userId, String proxyId) {
-    this.expirationDate = expDate;
-    this.status = status;
-    this.userId = userId;
-    this.proxyUserId = proxyId;
-    return this;
+  public ProxyRelationshipBuilder expires(DateTime expirationDate) {
+    return new ProxyRelationshipBuilder(
+      this.id,
+      this.userId,
+      this.proxyUserId,
+      this.requestForSponsor,
+      this.createdDate,
+      expirationDate.toString(),
+      this.status,
+      this.accrueTo,
+      this.notificationsTo
+    );
   }
 
+  public ProxyRelationshipBuilder doesNotExpire() {
+    return new ProxyRelationshipBuilder(
+      this.id,
+      this.userId,
+      this.proxyUserId,
+      this.requestForSponsor,
+      this.createdDate,
+      null,
+      this.status,
+      this.accrueTo,
+      this.notificationsTo
+    );
+  }
+
+  public ProxyRelationshipBuilder active() {
+    return withStatus("Active");
+  }
+
+  public ProxyRelationshipBuilder inactive() {
+    return withStatus("Inactive");
+  }
+
+  private ProxyRelationshipBuilder withStatus(String status) {
+    return new ProxyRelationshipBuilder(
+      this.id,
+      this.userId,
+      this.proxyUserId,
+      this.requestForSponsor,
+      this.createdDate,
+      this.expirationDate,
+      status,
+      this.accrueTo,
+      this.notificationsTo
+    );
+  }
+
+  public ProxyRelationshipBuilder sponsor(UUID sponsoringUserId) {
+    return new ProxyRelationshipBuilder(
+      this.id,
+      sponsoringUserId.toString(),
+      this.proxyUserId,
+      this.requestForSponsor,
+      this.createdDate,
+      this.expirationDate,
+      this.status,
+      this.accrueTo,
+      this.notificationsTo
+    );
+  }
+
+  public ProxyRelationshipBuilder proxy(UUID proxyUserId) {
+    return new ProxyRelationshipBuilder(
+      this.id,
+      this.userId,
+      proxyUserId.toString(),
+      this.requestForSponsor,
+      this.createdDate,
+      this.expirationDate,
+      this.status,
+      this.accrueTo,
+      this.notificationsTo
+    );
+  }
 }
