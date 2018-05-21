@@ -13,6 +13,8 @@ import java.util.function.Predicate;
 public class ResponseHandler {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
+  private ResponseHandler() { }
+
   public static Handler<HttpClientResponse> any(
     CompletableFuture<Response> completed) {
 
@@ -65,7 +67,7 @@ public class ResponseHandler {
           completed.completeExceptionally(
             expectationFailed.apply(response));
         }
-      } catch (Throwable e) {
+      } catch (Exception e) {
         completed.completeExceptionally(e);
       }
     });

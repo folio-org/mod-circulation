@@ -11,7 +11,8 @@ import org.folio.circulation.loanrules.LoanRulesException;
 import java.util.List;
 
 public class JsonResponse {
-  //TODO: Needs a location
+  private JsonResponse() { }
+
   public static void created(
     HttpServerResponse response,
     JsonObject body) {
