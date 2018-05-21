@@ -44,13 +44,20 @@ public class JsonPropertyFetcher {
     if (representation.containsKey(objectName)) {
       final JsonObject object = representation.getJsonObject(objectName);
 
-      if (object.containsKey(propertyName)) {
-        return DateTime.parse(
-          object.getString(propertyName));
-      }
-      else {
-        return null;
-      }
+      return getDateTimeProperty(object, propertyName);
+    }
+    else {
+      return null;
+    }
+  }
+
+  public static DateTime getDateTimeProperty(
+    JsonObject representation,
+    String propertyName) {
+
+    if (representation.containsKey(propertyName)) {
+      return DateTime.parse(
+        representation.getString(propertyName));
     }
     else {
       return null;

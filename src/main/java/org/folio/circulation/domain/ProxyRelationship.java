@@ -4,6 +4,7 @@ import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 
+import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 
@@ -13,11 +14,35 @@ class ProxyRelationship {
   private final boolean active;
 
   ProxyRelationship(JsonObject representation) {
-    active = convertStatusToActive(
-      getNestedStringProperty(representation, "meta", "status"));
+    this.active = getActive(representation);
+    this.expirationDate = getExpirationDate(representation);
 
-    expirationDate = getNestedDateTimeProperty(representation, "meta",
-      "expirationDate");
+  }
+
+  private boolean getActive(JsonObject representation) {
+    final String STATUS_PROPERTY_NAME = "status";
+
+    if(representation.containsKey(STATUS_PROPERTY_NAME)) {
+      return convertStatusToActive(
+        representation.getString(STATUS_PROPERTY_NAME));
+    }
+    else {
+      return convertStatusToActive(
+        getNestedStringProperty(representation, "meta", STATUS_PROPERTY_NAME));
+    }
+  }
+
+  private DateTime getExpirationDate(JsonObject representation) {
+    final String EXPIRATION_DATE_PROPERTY_NAME = "expirationDate";
+
+    if(representation.containsKey(EXPIRATION_DATE_PROPERTY_NAME) ) {
+      return getDateTimeProperty(representation,
+        EXPIRATION_DATE_PROPERTY_NAME);
+    }
+    else {
+      return getNestedDateTimeProperty(representation, "meta",
+        EXPIRATION_DATE_PROPERTY_NAME);
+    }
   }
 
   private boolean convertStatusToActive(String status) {

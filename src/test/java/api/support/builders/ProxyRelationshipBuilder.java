@@ -18,14 +18,16 @@ public class ProxyRelationshipBuilder implements Builder {
   private String accrueTo;
   private String notificationsTo;
 
+  //Proxy relationship properties used to be kept within a informal "meta" object
+  private boolean useMetaObject;
 
   public ProxyRelationshipBuilder() {
     this(UUID.randomUUID(), UUID.randomUUID().toString(), UUID.randomUUID().toString(),
       "Yes", "2018-02-28T12:30:23+00:00", "2999-02-28T12:30:23+00:00" , "Active" ,
-      "Sponsor","Sponsor");
+      "Sponsor","Sponsor", false);
   }
 
-  public ProxyRelationshipBuilder(
+  private ProxyRelationshipBuilder(
     UUID id,
     String userId,
     String proxyUserId,
@@ -34,7 +36,8 @@ public class ProxyRelationshipBuilder implements Builder {
     String expirationDate,
     String status,
     String accrueTo,
-    String notificationsTo) {
+    String notificationsTo,
+    boolean useMetaObject) {
 
     super();
     this.id = id;
@@ -46,6 +49,7 @@ public class ProxyRelationshipBuilder implements Builder {
     this.status = status;
     this.accrueTo = accrueTo;
     this.notificationsTo = notificationsTo;
+    this.useMetaObject = useMetaObject;
   }
 
   @Override
@@ -55,27 +59,66 @@ public class ProxyRelationshipBuilder implements Builder {
     request.put("id", this.id.toString());
     request.put("userId", this.userId);
     request.put("proxyUserId", this.proxyUserId);
-    request.put("meta", new JsonObject());
+
+    //Can be used to put properties on the main object or the meta object
+    //So can be used to verify fallback behaviour
+    final JsonObject objectToPutValidationPropertiesOn;
+
+    if(useMetaObject) {
+      final JsonObject metaObject = new JsonObject();
+
+      request.put("meta", metaObject);
+
+      objectToPutValidationPropertiesOn = request.getJsonObject("meta");
+    }
+    else {
+      objectToPutValidationPropertiesOn = request;
+    }
 
     if(this.requestForSponsor != null) {
-      request.getJsonObject("meta").put("requestForSponsor" , this.requestForSponsor);
+      objectToPutValidationPropertiesOn.put("requestForSponsor" , this.requestForSponsor);
     }
     if(this.createdDate != null) {
-      request.getJsonObject("meta").put("createdDate" , this.createdDate);
+      objectToPutValidationPropertiesOn.put("createdDate" , this.createdDate);
     }
     if(this.expirationDate != null) {
-      request.getJsonObject("meta").put("expirationDate" , this.expirationDate);
+      objectToPutValidationPropertiesOn.put("expirationDate" , this.expirationDate);
     }
     if(this.status != null) {
-      request.getJsonObject("meta").put("status" , this.status);
+      objectToPutValidationPropertiesOn.put("status" , this.status);
     }
     if(this.accrueTo != null) {
-      request.getJsonObject("meta").put("accrueTo" , this.accrueTo);
+      objectToPutValidationPropertiesOn.put("accrueTo" , this.accrueTo);
     }
     if(this.notificationsTo != null) {
-      request.getJsonObject("meta").put("notificationsTo" , this.notificationsTo);
+      objectToPutValidationPropertiesOn.put("notificationsTo" , this.notificationsTo);
     }
     return request;
+  }
+
+  /**
+   * Allows the validation properties to be created in either the top level object
+   * or the informal "meta" object, in order to test both supported variants
+   *
+   * @param useMetaObject whether to use the "meta" object for validation properties
+   *                      instead of main object in representation
+   * @return A new instance of the builder with the changed property
+   * @see https://issues.folio.org/browse/CIRC-107
+   * @see https://issues.folio.org/browse/MODUSERS-68
+   */
+  public ProxyRelationshipBuilder useMetaObject(boolean useMetaObject) {
+    return new ProxyRelationshipBuilder(
+      this.id,
+      this.userId,
+      this.proxyUserId,
+      this.requestForSponsor,
+      this.createdDate,
+      this.expirationDate,
+      this.status,
+      this.accrueTo,
+      this.notificationsTo,
+      useMetaObject
+    );
   }
 
   public ProxyRelationshipBuilder expires(DateTime expirationDate) {
@@ -88,7 +131,8 @@ public class ProxyRelationshipBuilder implements Builder {
       expirationDate.toString(),
       this.status,
       this.accrueTo,
-      this.notificationsTo
+      this.notificationsTo,
+      false
     );
   }
 
@@ -102,7 +146,8 @@ public class ProxyRelationshipBuilder implements Builder {
       null,
       this.status,
       this.accrueTo,
-      this.notificationsTo
+      this.notificationsTo,
+      false
     );
   }
 
@@ -124,7 +169,8 @@ public class ProxyRelationshipBuilder implements Builder {
       this.expirationDate,
       status,
       this.accrueTo,
-      this.notificationsTo
+      this.notificationsTo,
+      false
     );
   }
 
@@ -138,7 +184,8 @@ public class ProxyRelationshipBuilder implements Builder {
       this.expirationDate,
       this.status,
       this.accrueTo,
-      this.notificationsTo
+      this.notificationsTo,
+      false
     );
   }
 
@@ -152,7 +199,8 @@ public class ProxyRelationshipBuilder implements Builder {
       this.expirationDate,
       this.status,
       this.accrueTo,
-      this.notificationsTo
+      this.notificationsTo,
+      false
     );
   }
 }
