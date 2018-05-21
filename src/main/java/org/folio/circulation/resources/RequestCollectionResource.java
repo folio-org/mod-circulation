@@ -3,7 +3,6 @@ package org.folio.circulation.resources;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.domain.*;
 import org.folio.circulation.support.*;
@@ -22,21 +21,10 @@ import static org.folio.circulation.support.JsonPropertyCopier.copyStringIfExist
 
 public class RequestCollectionResource extends CollectionResource {
   public RequestCollectionResource(HttpClient client) {
-    super(client);
+    super(client, "/circulation/requests");
   }
 
-  public void register(Router router) {
-    RouteRegistration routeRegistration = new RouteRegistration("/circulation/requests", router);
-
-    routeRegistration.create(this::create);
-    routeRegistration.get(this::get);
-    routeRegistration.getMany(this::getMany);
-    routeRegistration.replace(this::replace);
-    routeRegistration.delete(this::delete);
-    routeRegistration.deleteAll(this::empty);
-  }
-
-  private void create(RoutingContext routingContext) {
+  void create(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
 
     JsonObject representation = routingContext.getBodyAsJson();
@@ -87,7 +75,7 @@ public class RequestCollectionResource extends CollectionResource {
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
-  private void replace(RoutingContext routingContext) {
+  void replace(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
 
     String id = routingContext.request().getParam("id");
@@ -140,7 +128,7 @@ public class RequestCollectionResource extends CollectionResource {
       });
   }
 
-  private void get(RoutingContext routingContext) {
+  void get(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context, client);
 
@@ -173,7 +161,7 @@ public class RequestCollectionResource extends CollectionResource {
     });
   }
 
-  private void delete(RoutingContext routingContext) {
+  void delete(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context, client);
 
@@ -189,7 +177,7 @@ public class RequestCollectionResource extends CollectionResource {
     });
   }
 
-  private void getMany(RoutingContext routingContext) {
+  void getMany(RoutingContext routingContext) {
 
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context, client);
@@ -244,7 +232,7 @@ public class RequestCollectionResource extends CollectionResource {
     });
   }
 
-  private void empty(RoutingContext routingContext) {
+  void empty(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context, client);
 

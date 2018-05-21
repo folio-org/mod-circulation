@@ -28,7 +28,7 @@ import java.util.Map;
  * The loan rules engine calculates the loan policy based on
  * item type, loan type, patron type and shelving location.
  */
-public class LoanRulesEngineResource extends CollectionResource {
+public class LoanRulesEngineResource extends Resource {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private static final String ITEM_TYPE_ID_NAME = "item_type_id";

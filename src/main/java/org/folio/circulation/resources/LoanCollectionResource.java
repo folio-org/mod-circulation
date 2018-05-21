@@ -2,7 +2,6 @@ package org.folio.circulation.resources;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.*;
@@ -19,28 +18,17 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.LoanValidation.*;
+import static org.folio.circulation.domain.LoanValidation.defaultStatusAndAction;
 
 public class LoanCollectionResource extends CollectionResource {
   private static final String MT_ID_PROPERTY = "materialTypeId";
 
   public LoanCollectionResource(HttpClient client) {
-    super(client);
-  }
-
-  public void register(Router router) {
-    RouteRegistration routeRegistration = new RouteRegistration("/circulation/loans", router);
-
-    routeRegistration.create(this::create);
-    routeRegistration.get(this::get);
-    routeRegistration.getMany(this::getMany);
-    routeRegistration.replace(this::replace);
-    routeRegistration.delete(this::delete);
-    routeRegistration.deleteAll(this::empty);
+    super(client, "/circulation/loans");
   }
 
   //TODO: Add exceptional completion of futures to create failed results
-  private void create(RoutingContext routingContext) {
+  protected void create(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
 
     JsonObject loan = routingContext.getBodyAsJson();
@@ -90,7 +78,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
-  private void replace(RoutingContext routingContext) {
+  void replace(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
 
     JsonObject loan = routingContext.getBodyAsJson();
@@ -126,7 +114,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
-  private void get(RoutingContext routingContext) {
+  void get(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
     final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
@@ -147,7 +135,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
-  private void delete(RoutingContext routingContext) {
+  void delete(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context, client);
 
@@ -163,7 +151,7 @@ public class LoanCollectionResource extends CollectionResource {
     });
   }
 
-  private void getMany(RoutingContext routingContext) {
+  void getMany(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context, client);
 
@@ -300,7 +288,7 @@ public class LoanCollectionResource extends CollectionResource {
     });
   }
 
-  private void empty(RoutingContext routingContext) {
+  void empty(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context, client);
 

@@ -19,7 +19,7 @@ import java.util.function.Function;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.LoanValidation.*;
 
-public class CheckOutByBarcodeResource extends CollectionResource {
+public class CheckOutByBarcodeResource extends Resource {
   public CheckOutByBarcodeResource(HttpClient client) {
     super(client);
   }
