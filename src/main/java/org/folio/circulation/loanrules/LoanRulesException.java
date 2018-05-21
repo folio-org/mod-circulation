@@ -5,8 +5,8 @@ package org.folio.circulation.loanrules;
  */
 public class LoanRulesException extends IllegalArgumentException {
   private static final long serialVersionUID = 243533650859582936L;
-  private int line;
-  private int column;
+  private final int line;
+  private final int column;
 
   /**
    * Create an exception about an error in loan rules.
