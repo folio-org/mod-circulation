@@ -3,8 +3,8 @@ package org.folio.circulation.support;
 import io.vertx.core.json.JsonObject;
 import org.joda.time.DateTime;
 
-public class DefensiveJsonPropertyFetcher {
-  private DefensiveJsonPropertyFetcher() {
+public class JsonPropertyFetcher {
+  private JsonPropertyFetcher() {
 
   }
 

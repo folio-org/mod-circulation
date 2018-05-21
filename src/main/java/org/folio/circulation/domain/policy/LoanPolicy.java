@@ -5,8 +5,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.HttpResult;
 import org.joda.time.DateTime;
 
-import static org.folio.circulation.support.DefensiveJsonPropertyFetcher.getNestedIntegerProperty;
-import static org.folio.circulation.support.DefensiveJsonPropertyFetcher.getNestedStringProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getNestedIntegerProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 
 public class LoanPolicy {
   private final JsonObject representation;

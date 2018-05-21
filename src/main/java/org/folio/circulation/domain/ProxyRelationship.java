@@ -4,8 +4,8 @@ import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 
-import static org.folio.circulation.support.DefensiveJsonPropertyFetcher.getNestedDateTimeProperty;
-import static org.folio.circulation.support.DefensiveJsonPropertyFetcher.getNestedStringProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getNestedDateTimeProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 
 class ProxyRelationship {
 
