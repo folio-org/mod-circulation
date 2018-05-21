@@ -25,12 +25,9 @@ class ProxyRelationship {
   }
 
   boolean isActive() {
-      boolean notExpired = true;
+      boolean expired = expirationDate != null
+        && expirationDate.isBefore(DateTime.now());
 
-      if(expirationDate != null) {
-        notExpired = expirationDate.isAfter(DateTime.now());
-      }
-
-      return active && notExpired;
+      return active && !expired;
   }
 }
