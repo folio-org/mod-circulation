@@ -77,6 +77,8 @@ public class LoanRulesResource extends Resource {
     });
   }
 
+  //Cannot combine exception catching as cannot resolve overloaded method for error
+  @SuppressWarnings("squid:S2147")
   private void put(RoutingContext routingContext) {
     CollectionResourceClient loansRulesClient = ClientUtil.getLoanRulesClient(routingContext);
 
