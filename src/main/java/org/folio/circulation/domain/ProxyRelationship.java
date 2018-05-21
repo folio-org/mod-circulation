@@ -4,32 +4,33 @@ import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 
-class ProxyRelationship extends JsonObject {
+import static org.folio.circulation.support.DefensiveJsonPropertyFetcher.getNestedDateTimeProperty;
+import static org.folio.circulation.support.DefensiveJsonPropertyFetcher.getNestedStringProperty;
+
+class ProxyRelationship {
+
+  private final DateTime expirationDate;
+  private final boolean active;
+
   ProxyRelationship(JsonObject representation) {
-    super(representation.getMap());
+    active = convertStatusToActive(
+      getNestedStringProperty(representation, "meta", "status"));
+
+    expirationDate = getNestedDateTimeProperty(representation, "meta",
+      "expirationDate");
+  }
+
+  private boolean convertStatusToActive(String status) {
+    return StringUtils.equalsIgnoreCase(status, "Active");
   }
 
   boolean isActive() {
-    if (containsKey("meta")) {
-      final JsonObject meta = getJsonObject("meta");
-
       boolean notExpired = true;
-      boolean active = true;
 
-      if (meta.containsKey("expirationDate")) {
-        final DateTime expirationDate = DateTime.parse(
-          meta.getString("expirationDate"));
-
+      if(expirationDate != null) {
         notExpired = expirationDate.isAfter(DateTime.now());
       }
 
-      if (meta.containsKey("status")) {
-        active = StringUtils.equalsIgnoreCase(meta.getString("status"), "Active");
-      }
-
       return active && notExpired;
-    } else {
-      return true;
-    }
   }
 }

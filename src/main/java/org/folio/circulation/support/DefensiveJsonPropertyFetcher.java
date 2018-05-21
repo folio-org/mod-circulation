@@ -1,6 +1,7 @@
 package org.folio.circulation.support;
 
 import io.vertx.core.json.JsonObject;
+import org.joda.time.DateTime;
 
 public class DefensiveJsonPropertyFetcher {
   private DefensiveJsonPropertyFetcher() {
@@ -33,5 +34,26 @@ public class DefensiveJsonPropertyFetcher {
     return representation.containsKey(objectName)
       ? representation.getJsonObject(objectName).getInteger(propertyName)
       : null;
+  }
+
+  public static DateTime getNestedDateTimeProperty(
+    JsonObject representation,
+    String objectName,
+    String propertyName) {
+
+    if (representation.containsKey(objectName)) {
+      final JsonObject object = representation.getJsonObject(objectName);
+
+      if (object.containsKey(propertyName)) {
+        return DateTime.parse(
+          object.getString(propertyName));
+      }
+      else {
+        return null;
+      }
+    }
+    else {
+      return null;
+    }
   }
 }
