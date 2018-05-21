@@ -69,7 +69,7 @@ public class InterfaceUrls {
     return APITestSuite.viaOkapiModuleUrl("/users" + subPath);
   }
 
-  static URL usersProxyUrl(String subPath) {
+  static URL proxyRelationshipsUrl(String subPath) {
     return APITestSuite.viaOkapiModuleUrl("/proxiesfor" + subPath);
   }
 

@@ -39,7 +39,7 @@ public abstract class APITests {
     log.error("Request to circulation module failed:", exception));
 
   private final boolean initialiseLoanRules;
-  private final ResourceClient userProxiesClient = ResourceClient.forUsersProxy(client);
+  private final ResourceClient proxyRelationshipsClient = ResourceClient.forProxyRelationships(client);
   protected final ResourceClient usersClient = ResourceClient.forUsers(client);
   protected final ResourceClient itemsClient = ResourceClient.forItems(client);
   protected final ResourceClient requestsClient = ResourceClient.forRequests(client);
@@ -53,7 +53,7 @@ public abstract class APITests {
   protected final ItemsFixture itemsFixture = new ItemsFixture(client);
   protected final LoansFixture loansFixture = new LoansFixture(loansClient, client);
   protected final RequestsFixture requestsFixture = new RequestsFixture(requestsClient);
-  protected final UsersFixture usersFixture = new UsersFixture(usersClient, userProxiesClient);
+  protected final UsersFixture usersFixture = new UsersFixture(usersClient, proxyRelationshipsClient);
 
   protected final Set<UUID> schedulesToDelete = new HashSet<>();
   protected final Set<UUID> policiesToDelete = new HashSet<>();

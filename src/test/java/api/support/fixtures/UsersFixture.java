@@ -1,7 +1,7 @@
 package api.support.fixtures;
 
 import api.support.builders.UserBuilder;
-import api.support.builders.UserProxyBuilder;
+import api.support.builders.ProxyRelationshipBuilder;
 import api.support.http.ResourceClient;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
@@ -14,14 +14,14 @@ import java.util.function.Function;
 
 public class UsersFixture {
   private final ResourceClient usersClient;
-  private final ResourceClient userProxiesClient;
+  private final ResourceClient proxyRelationshipClient;
 
   public UsersFixture(
     ResourceClient usersClient,
-    ResourceClient userProxiesClient) {
+    ResourceClient proxyRelationshipClient) {
 
     this.usersClient = usersClient;
-    this.userProxiesClient = userProxiesClient;
+    this.proxyRelationshipClient = proxyRelationshipClient;
   }
 
   public void expiredProxyFor(
@@ -55,7 +55,7 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    userProxiesClient.create(new UserProxyBuilder().
+    proxyRelationshipClient.create(new ProxyRelationshipBuilder().
       withValidationFields(expirationDate.toString(), "Active",
         sponsorUserId.toString(), proxyUserId.toString()));
   }
@@ -68,7 +68,7 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    userProxiesClient.create(new UserProxyBuilder().
+    proxyRelationshipClient.create(new ProxyRelationshipBuilder().
       withValidationFields(DateTime.now().plusYears(1).toString(), "Inactive",
         sponsor.getId().toString(), proxy.getId().toString()));
   }
@@ -80,7 +80,7 @@ public class UsersFixture {
     MalformedURLException,
     TimeoutException,
     ExecutionException {
-      userProxiesClient.create(new UserProxyBuilder().
+      proxyRelationshipClient.create(new ProxyRelationshipBuilder().
         withValidationFields(null, "Active",
           sponsor.getId().toString(), proxy.getId().toString()));
   }

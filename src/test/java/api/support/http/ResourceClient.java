@@ -73,8 +73,8 @@ public class ResourceClient {
       "users");
   }
 
-  public static ResourceClient forUsersProxy(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::usersProxyUrl,
+  public static ResourceClient forProxyRelationships(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::proxyRelationshipsUrl,
       "proxiesFor");
   }
 
