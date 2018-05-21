@@ -5,7 +5,6 @@ import api.support.APITests;
 import api.support.builders.ItemBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
-import api.support.builders.UserProxyBuilder;
 import api.support.http.InterfaceUrls;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;

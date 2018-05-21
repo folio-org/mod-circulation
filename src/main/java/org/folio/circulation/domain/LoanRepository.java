@@ -35,13 +35,13 @@ public class LoanRepository {
       loanAndRelatedRecords.loan, loanAndRelatedRecords.inventoryRecords.item);
 
     if(loanAndRelatedRecords.loanPolicy != null) {
-      storageLoan.put("loanPolicyId", loanAndRelatedRecords.loanPolicy.getString("id"));
+      storageLoan.put("loanPolicyId", loanAndRelatedRecords.loanPolicy.getId());
     }
 
     loansStorageClient.post(storageLoan, response -> {
       if (response.getStatusCode() == 201) {
         onCreated.complete(HttpResult.success(
-          loanAndRelatedRecords.withLoan(response.getJson())));
+          loanAndRelatedRecords.withLoan(Loan.from(response.getJson()))));
       } else {
         onCreated.complete(HttpResult.failure(new ForwardOnFailure(response)));
       }
@@ -76,7 +76,7 @@ public class LoanRepository {
 
     final Function<Response, HttpResult<LoanAndRelatedRecords>> mapResponse = response -> {
       if(response != null && response.getStatusCode() == 200) {
-        return HttpResult.success(new LoanAndRelatedRecords(response.getJson()));
+        return HttpResult.success(new LoanAndRelatedRecords(Loan.from(response.getJson())));
       }
       else {
         return HttpResult.failure(new ForwardOnFailure(response));

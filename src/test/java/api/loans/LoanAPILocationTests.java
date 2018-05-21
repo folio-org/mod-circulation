@@ -1,17 +1,16 @@
 package api.loans;
 
-import io.vertx.core.json.JsonObject;
 import api.APITestSuite;
 import api.support.APITests;
 import api.support.builders.HoldingBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.fixtures.InstanceExamples;
 import api.support.fixtures.ItemExamples;
+import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.Test;
 
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.util.List;
 import java.util.UUID;
@@ -30,8 +29,7 @@ public class LoanAPILocationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID instanceId = instancesClient.create(
       InstanceExamples.basedUponSmallAngryPlanet()).getId();
@@ -83,8 +81,7 @@ public class LoanAPILocationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
     UUID instanceId = instancesClient.create(
       InstanceExamples.basedUponSmallAngryPlanet()).getId();

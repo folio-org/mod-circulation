@@ -1,6 +1,8 @@
-package org.folio.circulation.domain;
+package org.folio.circulation.domain.policy;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.LoanValidation;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
@@ -31,15 +33,17 @@ public class LoanPolicyRepository {
       relatedRecords.inventoryRecords.holding,
       relatedRecords.requestingUser)
       .thenComposeAsync(r -> r.after(this::lookupLoanPolicy))
-      .thenApply(result -> result.map(representation -> new LoanPolicy(representation, null)))
+      .thenApply(result -> result.map(this::toLoanPolicy))
       .thenComposeAsync(r -> r.after(this::lookupSchedules))
       .thenApply(result -> result.map(relatedRecords::withLoanPolicy));
   }
 
-  private CompletableFuture<HttpResult<LoanPolicy>> lookupSchedules(LoanPolicy loanPolicy) {
+  private LoanPolicy toLoanPolicy(JsonObject representation) {
+    return new LoanPolicy(representation, null);
+  }
 
-    //TODO: Need to be defensive about loansPolicy object
-    final String fixedDueDateScheduleId = loanPolicy.getJsonObject("loansPolicy").getString("fixedDueDateScheduleId");
+  private CompletableFuture<HttpResult<LoanPolicy>> lookupSchedules(LoanPolicy loanPolicy) {
+    final String fixedDueDateScheduleId = loanPolicy.getLoansFixedDueDateScheduleId();
 
     if(fixedDueDateScheduleId != null) {
       final SingleRecordFetcher fetcher = new SingleRecordFetcher(
@@ -48,7 +52,8 @@ public class LoanPolicyRepository {
 
       return fetcher
         .fetchSingleRecord(fixedDueDateScheduleId)
-        .thenApply(r -> r.map(loanPolicy::withDueDateSchedule));
+        .thenApply(r -> r.map(FixedDueDateSchedules::new))
+        .thenApply(r -> r.map(loanPolicy::withDueDateSchedules));
     }
     else {
       return CompletableFuture.completedFuture(HttpResult.success(loanPolicy));
