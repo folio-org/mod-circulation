@@ -86,12 +86,11 @@ public class LoanRepresentation {
         itemSummary.put(materialTypeProperty, new JsonObject()
           .put("name", materialType.getString("name")));
       } else {
-        log.warn("Missing or null property for material type for item id " +
+        log.warn("Missing or null property for material type for item id {}",
           item.getString("id"));
       }
     } else {
-      log.warn(String.format("Null materialType object for item %s",
-        item.getString("id")));
+      log.warn("Null materialType object for item {}", item.getString("id"));
     }
 
     return itemSummary;
