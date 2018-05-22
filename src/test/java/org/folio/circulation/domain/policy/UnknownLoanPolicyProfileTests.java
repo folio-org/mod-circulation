@@ -2,7 +2,7 @@ package org.folio.circulation.domain.policy;
 
 import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
-import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -21,10 +21,10 @@ public class UnknownLoanPolicyProfileTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    JsonObject loan = new LoanBuilder()
+    Loan loan = new LoanBuilder()
       .open()
       .withLoanDate(loanDate)
-      .create();
+      .asDomainObject();
 
     final HttpResult<DateTime> result = loanPolicy.calculate(loan);
 

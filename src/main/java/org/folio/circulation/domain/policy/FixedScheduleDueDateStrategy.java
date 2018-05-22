@@ -1,6 +1,6 @@
 package org.folio.circulation.domain.policy;
 
-import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.joda.time.DateTime;
@@ -21,7 +21,7 @@ class FixedScheduleDueDateStrategy extends DueDateStrategy {
   }
 
   @Override
-  HttpResult<DateTime> calculate(JsonObject loan) {
+  HttpResult<DateTime> calculate(Loan loan) {
     final DateTime loanDate = DateTime.parse(loan.getString("loanDate"));
 
     logApplying("Fixed schedule due date calculation");

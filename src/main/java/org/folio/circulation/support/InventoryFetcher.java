@@ -256,7 +256,7 @@ public class InventoryFetcher {
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
     return
-      fetch(loanAndRelatedRecords.loan)
+      fetch(loanAndRelatedRecords.loan.asJson())
       .thenApply(result -> result.map(loanAndRelatedRecords::withInventoryRecords));
   }
 }

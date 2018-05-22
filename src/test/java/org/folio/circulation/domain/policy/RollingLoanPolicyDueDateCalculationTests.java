@@ -4,6 +4,7 @@ import api.support.builders.*;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
+import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -33,10 +34,7 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    JsonObject loan = new LoanBuilder()
-      .open()
-      .withLoanDate(loanDate)
-      .create();
+    Loan loan = loanFor(loanDate);
 
     final HttpResult<DateTime> calculationResult = loanPolicy
       .calculate(loan);
@@ -60,10 +58,7 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    JsonObject loan = new LoanBuilder()
-      .open()
-      .withLoanDate(loanDate)
-      .create();
+    Loan loan = loanFor(loanDate);
 
     final HttpResult<DateTime> calculationResult = loanPolicy
       .calculate(loan);
@@ -88,10 +83,7 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    JsonObject loan = new LoanBuilder()
-      .open()
-      .withLoanDate(loanDate)
-      .create();
+    Loan loan = loanFor(loanDate);
 
     final HttpResult<DateTime> calculationResult = loanPolicy
       .calculate(loan);
@@ -116,10 +108,7 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    JsonObject loan = new LoanBuilder()
-      .open()
-      .withLoanDate(loanDate)
-      .create();
+    Loan loan = loanFor(loanDate);
 
     final HttpResult<DateTime> calculationResult = loanPolicy
       .calculate(loan);
@@ -142,10 +131,7 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    JsonObject loan = new LoanBuilder()
-      .open()
-      .withLoanDate(loanDate)
-      .create();
+    Loan loan = loanFor(loanDate);
 
     final HttpResult<DateTime> calculationResult = loanPolicy
       .calculate(loan);
@@ -162,10 +148,7 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    JsonObject loan = new LoanBuilder()
-      .open()
-      .withLoanDate(loanDate)
-      .create();
+    Loan loan = loanFor(loanDate);
 
     final HttpResult<DateTime> result = loanPolicy.calculate(loan);
 
@@ -187,10 +170,7 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    JsonObject loan = new LoanBuilder()
-      .open()
-      .withLoanDate(loanDate)
-      .create();
+    Loan loan = loanFor(loanDate);
 
     final HttpResult<DateTime> result = loanPolicy.calculate(loan);
 
@@ -212,10 +192,7 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    JsonObject loan = new LoanBuilder()
-      .open()
-      .withLoanDate(loanDate)
-      .create();
+    Loan loan = loanFor(loanDate);
 
     final HttpResult<DateTime> result = loanPolicy.calculate(loan);
 
@@ -237,10 +214,7 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    JsonObject loan = new LoanBuilder()
-      .open()
-      .withLoanDate(loanDate)
-      .create();
+    Loan loan = loanFor(loanDate);
 
     final HttpResult<DateTime> result = loanPolicy.calculate(loan);
 
@@ -264,10 +238,7 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    JsonObject loan = new LoanBuilder()
-      .open()
-      .withLoanDate(loanDate)
-      .create();
+    Loan loan = loanFor(loanDate);
 
     final HttpResult<DateTime> result = loanPolicy.calculate(loan);
 
@@ -292,10 +263,7 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    JsonObject loan = new LoanBuilder()
-      .open()
-      .withLoanDate(loanDate)
-      .create();
+    Loan loan = loanFor(loanDate);
 
     final HttpResult<DateTime> result = loanPolicy.calculate(loan);
 
@@ -316,10 +284,7 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 11, 16, 21, 43, DateTimeZone.UTC);
 
-    JsonObject loan = new LoanBuilder()
-      .open()
-      .withLoanDate(loanDate)
-      .create();
+    Loan loan = loanFor(loanDate);
 
     final HttpResult<DateTime> result = loanPolicy.calculate(loan);
 
@@ -342,10 +307,7 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 4, 3, 9, 25, 43, DateTimeZone.UTC);
 
-    JsonObject loan = new LoanBuilder()
-      .open()
-      .withLoanDate(loanDate)
-      .create();
+    Loan loan = loanFor(loanDate);
 
     final HttpResult<DateTime> result = loanPolicy.calculate(loan);
 
@@ -367,15 +329,19 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 4, 3, 9, 25, 43, DateTimeZone.UTC);
 
-    JsonObject loan = new LoanBuilder()
-      .open()
-      .withLoanDate(loanDate)
-      .create();
+    Loan loan = loanFor(loanDate);
 
     final HttpResult<DateTime> result = loanPolicy.calculate(loan);
 
     assertThat(result, isValidationFailure(
       "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy. " +
         "Please review \"One Month\" before retrying checking out"));
+  }
+
+  private Loan loanFor(DateTime loanDate) {
+    return new LoanBuilder()
+      .open()
+      .withLoanDate(loanDate)
+      .asDomainObject();
   }
 }

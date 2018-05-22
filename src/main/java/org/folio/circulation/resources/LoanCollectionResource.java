@@ -356,7 +356,7 @@ public class LoanCollectionResource extends CollectionResource {
     HttpResult<LoanAndRelatedRecords> result) {
 
     return result.next(loanAndRelatedRecords -> {
-      JsonObject loan = loanAndRelatedRecords.loan;
+      Loan loan = loanAndRelatedRecords.loan;
 
       if(loan == null) {
         return HttpResult.failure(new ServerErrorFailure(

@@ -13,7 +13,7 @@ public class LoanRepresentation {
   private static final String CONTRIBUTORS_PROPERTY = "contributors";
 
   public JsonObject extendedLoan(LoanAndRelatedRecords relatedRecords) {
-    return extendedLoan(relatedRecords.loan,
+    return extendedLoan(relatedRecords.loan.asJson(),
       relatedRecords.inventoryRecords.item,
       relatedRecords.inventoryRecords.holding,
       relatedRecords.inventoryRecords.instance,

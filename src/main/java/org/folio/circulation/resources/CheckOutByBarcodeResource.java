@@ -94,7 +94,7 @@ public class CheckOutByBarcodeResource extends CollectionResource {
   private HttpResult<LoanAndRelatedRecords> calculateDueDate(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
-    final JsonObject loan = loanAndRelatedRecords.loan;
+    final Loan loan = loanAndRelatedRecords.loan;
     final LoanPolicy loanPolicy = loanAndRelatedRecords.loanPolicy;
 
     return loanPolicy.calculate(loan)
@@ -118,7 +118,7 @@ public class CheckOutByBarcodeResource extends CollectionResource {
 
   private Function<LoanAndRelatedRecords, LoanAndRelatedRecords> mapBarcodes() {
     return loanAndRelatedRecords -> {
-      final JsonObject loan = loanAndRelatedRecords.loan;
+      final Loan loan = loanAndRelatedRecords.loan;
 
       loan.put("userId", loanAndRelatedRecords.requestingUser.getString("id"));
       loan.put("itemId", loanAndRelatedRecords.inventoryRecords.item.getString("id"));

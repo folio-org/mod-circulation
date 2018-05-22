@@ -1,6 +1,6 @@
 package org.folio.circulation.domain.policy;
 
-import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.joda.time.DateTime;
@@ -21,7 +21,7 @@ abstract class DueDateStrategy {
     this.loanPolicyName = loanPolicyName;
   }
 
-  abstract HttpResult<DateTime> calculate(JsonObject loan);
+  abstract HttpResult<DateTime> calculate(Loan loan);
 
   protected HttpResult<DateTime> fail(String reason) {
     final String message = String.format(

@@ -2,6 +2,7 @@ package org.folio.circulation.domain.policy;
 
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
 import org.joda.time.DateTime;
 
@@ -28,7 +29,7 @@ public class LoanPolicy {
     return new LoanPolicy(representation);
   }
 
-  public HttpResult<DateTime> calculate(JsonObject loan) {
+  public HttpResult<DateTime> calculate(Loan loan) {
     return determineStrategy().calculate(loan);
   }
 

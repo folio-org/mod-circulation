@@ -151,28 +151,15 @@ public class UpdateItem {
     return !StringUtils.equals(currentStatus, prospectiveStatus);
   }
 
-  private String itemStatusFrom(JsonObject loan) {
-    switch(loan.getJsonObject("status").getString("name")) {
-      case "Open":
-        return CHECKED_OUT;
-
-      case "Closed":
-        return AVAILABLE;
-
-      default:
-        return "";
-    }
-  }
-
   private <T> CompletableFuture<HttpResult<T>> skip(T previousResult) {
     return CompletableFuture.completedFuture(HttpResult.success(previousResult));
   }
 
-  private boolean isClosed(JsonObject loan) {
+  private boolean isClosed(Loan loan) {
     return StringUtils.equals(loan.getJsonObject("status").getString("name"), "Closed");
   }
 
-  private String itemStatusFrom(JsonObject loan, RequestQueue requestQueue) {
+  private String itemStatusFrom(Loan loan, RequestQueue requestQueue) {
     String prospectiveStatus;
 
     boolean closed = isClosed(loan);

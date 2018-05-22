@@ -2,6 +2,7 @@ package api.support.builders;
 
 import io.vertx.core.json.JsonObject;
 import api.APITestSuite;
+import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
@@ -57,7 +58,6 @@ public class LoanBuilder extends JsonBuilder implements Builder {
   }
 
   public JsonObject create() {
-
     JsonObject loanRequest = new JsonObject();
 
     if(id != null) {
@@ -80,6 +80,10 @@ public class LoanBuilder extends JsonBuilder implements Builder {
     }
 
     return loanRequest;
+  }
+
+  public Loan asDomainObject() {
+    return new Loan(create());
   }
 
   public LoanBuilder withRandomPastLoanDate() {

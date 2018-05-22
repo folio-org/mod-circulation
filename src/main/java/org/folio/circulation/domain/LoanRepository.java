@@ -89,10 +89,10 @@ public class LoanRepository {
   }
 
   private static JsonObject convertLoanToStorageRepresentation(
-    JsonObject loan,
+    Loan loan,
     JsonObject item) {
 
-    JsonObject storageLoan = loan.copy();
+    JsonObject storageLoan = loan.asJson();
 
     storageLoan.remove("item");
     storageLoan.remove("itemStatus");

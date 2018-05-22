@@ -1,6 +1,6 @@
 package org.folio.circulation.domain.policy;
 
-import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
 import org.joda.time.DateTime;
 
@@ -20,7 +20,7 @@ class UnknownDueDateStrategy extends DueDateStrategy {
   }
 
   @Override
-  HttpResult<DateTime> calculate(JsonObject loan) {
+  HttpResult<DateTime> calculate(Loan loan) {
     return fail(String.format(UNRECOGNISED_PROFILE_MESSAGE, profileId));
   }
 }
