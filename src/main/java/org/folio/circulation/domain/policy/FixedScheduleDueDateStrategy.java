@@ -22,7 +22,7 @@ class FixedScheduleDueDateStrategy extends DueDateStrategy {
 
   @Override
   HttpResult<DateTime> calculate(Loan loan) {
-    final DateTime loanDate = DateTime.parse(loan.getString("loanDate"));
+    final DateTime loanDate = loan.getLoanDate();
 
     logApplying("Fixed schedule due date calculation");
 
@@ -40,4 +40,5 @@ class FixedScheduleDueDateStrategy extends DueDateStrategy {
       return HttpResult.failure(new ServerErrorFailure(e));
     }
   }
+
 }

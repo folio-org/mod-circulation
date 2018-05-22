@@ -36,7 +36,7 @@ class RollingDueDateStrategy extends DueDateStrategy {
 
   @Override
   HttpResult<DateTime> calculate(Loan loan) {
-    final DateTime loanDate = DateTime.parse(loan.getString("loanDate"));
+    final DateTime loanDate = loan.getLoanDate();
 
     logApplying(String.format("Rolling %s %s due date calculation", duration, intervalId));
 

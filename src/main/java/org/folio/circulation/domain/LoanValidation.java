@@ -18,7 +18,7 @@ public class LoanValidation {
 
     return result.next(loan -> {
       if(loan.inventoryRecords.getItem() == null) {
-        final String itemId = loan.loan.getString("itemId");
+        final String itemId = loan.loan.getItemId();
 
         return HttpResult.failure(new ValidationErrorFailure(
           "Item does not exist", "itemId", itemId));
@@ -57,14 +57,15 @@ public class LoanValidation {
   public static HttpResult<LoanAndRelatedRecords> refuseWhenUserIsNotAwaitingPickup(
     HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
-    return loanAndRelatedRecords.next(loan -> {
+    return loanAndRelatedRecords
+      .next(loan -> {
       final RequestQueue requestQueue = loan.requestQueue;
       final JsonObject requestingUser = loan.requestingUser;
 
       if(hasAwaitingPickupRequestForOtherPatron(requestQueue, requestingUser)) {
         return HttpResult.failure(new ValidationErrorFailure(
           "User checking out must be requester awaiting pickup",
-          "userId", loan.loan.getString("userId")));
+          "userId", loan.loan.getUserId()));
       }
       else {
         return loanAndRelatedRecords;
@@ -183,7 +184,7 @@ public class LoanValidation {
     LoanRepository loanRepository,
     String barcode) {
 
-    final String itemId = loanAndRelatedRecords.loan.getString("itemId");
+    final String itemId = loanAndRelatedRecords.loan.getItemId();
 
     return loanRepository.hasOpenLoan(itemId)
       .thenApply(r -> r.next(openLoan -> {

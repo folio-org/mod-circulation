@@ -27,18 +27,6 @@ public class Loan {
     return representation.copy();
   }
 
-  String getUserId() {
-    return representation.getString("userId");
-  }
-
-  String getProxyUserId() {
-    return representation.getString("proxyUserId");
-  }
-
-  public String getString(String propertyName) {
-    return representation.getString(propertyName);
-  }
-
   public void changeDueDate(DateTime dueDate) {
     representation.put("dueDate",
       dueDate.toString(ISODateTimeFormat.dateTime()));
@@ -79,5 +67,21 @@ public class Loan {
 
   private String getStatus() {
     return getNestedStringProperty(representation, STATUS_PROPERTY_NAME, "name");
+  }
+
+  public String getItemId() {
+    return representation.getString("itemId");
+  }
+
+  public DateTime getLoanDate() {
+    return DateTime.parse(representation.getString("loanDate"));
+  }
+
+  String getUserId() {
+    return representation.getString("userId");
+  }
+
+  String getProxyUserId() {
+    return representation.getString("proxyUserId");
   }
 }
