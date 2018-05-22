@@ -39,7 +39,7 @@ public class RequestCollectionResource extends CollectionResource {
   private void create(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
 
-    JsonObject request = routingContext.getBodyAsJson();
+    JsonObject representation = routingContext.getBodyAsJson();
 
     final Clients clients = Clients.create(context, client);
 
@@ -51,9 +51,9 @@ public class RequestCollectionResource extends CollectionResource {
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> new ValidationErrorFailure(
       "proxyUserId is not valid", "proxyUserId",
-      request.getString("proxyUserId")));
+      representation.getString("proxyUserId")));
 
-    RequestStatus status = RequestStatus.from(request);
+    RequestStatus status = RequestStatus.from(representation);
 
     HttpServerResponse response = routingContext.response();
     if(!status.isValid()) {
@@ -62,17 +62,17 @@ public class RequestCollectionResource extends CollectionResource {
       return;
     }
     else {
-      status.writeTo(request);
+      status.writeTo(representation);
     }
 
-    removeRelatedRecordInformation(request);
+    removeRelatedRecordInformation(representation);
 
-    final String itemId = getItemId(request);
-    final String requestingUserId = request.getString("requesterId");
-    final String proxyUserId = request.getString("proxyUserId");
+    final String itemId = getItemId(representation);
+    final String requestingUserId = representation.getString("requesterId");
+    final String proxyUserId = representation.getString("proxyUserId");
 
-    completedFuture(HttpResult.success(new RequestAndRelatedRecords(request)))
-      .thenCombineAsync(inventoryFetcher.fetch(request), this::addInventoryRecords)
+    completedFuture(HttpResult.success(new RequestAndRelatedRecords(new Request(representation))))
+      .thenCombineAsync(inventoryFetcher.fetch(representation), this::addInventoryRecords)
       .thenApply(this::refuseWhenItemDoesNotExist)
       .thenApply(this::refuseWhenItemIsNotValid)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
@@ -91,7 +91,7 @@ public class RequestCollectionResource extends CollectionResource {
     final WebContext context = new WebContext(routingContext);
 
     String id = routingContext.request().getParam("id");
-    JsonObject request = routingContext.getBodyAsJson();
+    JsonObject representation = routingContext.getBodyAsJson();
 
     final Clients clients = Clients.create(context, client);
 
@@ -101,15 +101,15 @@ public class RequestCollectionResource extends CollectionResource {
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> new ValidationErrorFailure(
       "proxyUserId is not valid", "proxyUserId",
-      request.getString("proxyUserId")));
+      representation.getString("proxyUserId")));
 
-    removeRelatedRecordInformation(request);
+    removeRelatedRecordInformation(representation);
 
-    final String requestingUserId = request.getString("requesterId");
-    final String proxyUserId = request.getString("proxyUserId");
+    final String requestingUserId = representation.getString("requesterId");
+    final String proxyUserId = representation.getString("proxyUserId");
 
-    completedFuture(HttpResult.success(new RequestAndRelatedRecords(request)))
-      .thenCombineAsync(inventoryFetcher.fetch(request), this::addInventoryRecords)
+    completedFuture(HttpResult.success(new RequestAndRelatedRecords(new Request(representation))))
+      .thenCombineAsync(inventoryFetcher.fetch(representation), this::addInventoryRecords)
       .thenCombineAsync(userFetcher.getUser(requestingUserId, false), this::addUser)
       .thenCombineAsync(userFetcher.getUser(proxyUserId, false), this::addProxyUser)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
@@ -125,11 +125,11 @@ public class RequestCollectionResource extends CollectionResource {
         final JsonObject requester = result.value().requestingUser;
         final JsonObject proxy = result.value().proxyUser;
 
-        addStoredItemProperties(request, item, instance);
-        addStoredRequesterProperties(request, requester);
-        addStoredProxyProperties(request, proxy);
+        addStoredItemProperties(representation, item, instance);
+        addStoredRequesterProperties(representation, requester);
+        addStoredProxyProperties(representation, proxy);
 
-        clients.requestsStorage().put(id, request, response -> {
+        clients.requestsStorage().put(id, representation, response -> {
           if(response.getStatusCode() == 204) {
             SuccessResponse.noContent(routingContext.response());
           }
@@ -403,7 +403,7 @@ public class RequestCollectionResource extends CollectionResource {
     HttpResult<RequestAndRelatedRecords> result) {
 
     return result.next(requestAndRelatedRecords -> {
-      JsonObject request = requestAndRelatedRecords.request;
+      Request request = requestAndRelatedRecords.request;
       JsonObject item = requestAndRelatedRecords.inventoryRecords.item;
 
       RequestType requestType = RequestType.from(request);
@@ -427,7 +427,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     CompletableFuture<HttpResult<RequestAndRelatedRecords>> onCreated = new CompletableFuture<>();
 
-    JsonObject request = requestAndRelatedRecords.request;
+    JsonObject request = requestAndRelatedRecords.request.asJson();
 
     JsonObject item = requestAndRelatedRecords.inventoryRecords.getItem();
     JsonObject instance = requestAndRelatedRecords.inventoryRecords.getInstance();
@@ -441,7 +441,7 @@ public class RequestCollectionResource extends CollectionResource {
     clients.requestsStorage().post(request, response -> {
       if (response.getStatusCode() == 201) {
         onCreated.complete(HttpResult.success(
-          requestAndRelatedRecords.withRequest(response.getJson())));
+          requestAndRelatedRecords.withRequest(new Request(response.getJson()))));
       } else {
         onCreated.complete(HttpResult.failure(new ForwardOnFailure(response)));
       }
@@ -454,8 +454,10 @@ public class RequestCollectionResource extends CollectionResource {
     JsonObject item = requestAndRelatedRecords.inventoryRecords.getItem();
     JsonObject holding = requestAndRelatedRecords.inventoryRecords.getHolding();
 
-    addAdditionalItemProperties(requestAndRelatedRecords.request, holding, item);
+    final JsonObject representation = requestAndRelatedRecords.request.asJson();
 
-    return requestAndRelatedRecords.request;
+    addAdditionalItemProperties(representation, holding, item);
+
+    return representation;
   }
 }

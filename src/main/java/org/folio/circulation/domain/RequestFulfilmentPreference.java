@@ -1,13 +1,11 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonObject;
-
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.AWAITING_PICKUP;
 
 public class RequestFulfilmentPreference {
-  public static final String HOLD_SHELF = "Hold Shelf";
-  public static final String DELIVERY = "Delivery";
+  static final String HOLD_SHELF = "Hold Shelf";
+  private static final String DELIVERY = "Delivery";
 
   public final String value;
 
@@ -15,11 +13,11 @@ public class RequestFulfilmentPreference {
     this.value = value;
   }
 
-  public static RequestFulfilmentPreference from(JsonObject request) {
+  public static RequestFulfilmentPreference from(Request request) {
     return new RequestFulfilmentPreference(request.getString("fulfilmentPreference"));
   }
 
-  public String toCheckedInItemStatus() {
+  String toCheckedInItemStatus() {
     switch(value) {
       case RequestFulfilmentPreference.HOLD_SHELF:
         return AWAITING_PICKUP;

@@ -149,18 +149,18 @@ public class LoanValidation {
       return false;
     }
     else {
-      final JsonObject highestPriority = requestQueue.getHighestPriorityFulfillableRequest();
+      final Request highestPriority = requestQueue.getHighestPriorityFulfillableRequest();
 
       return isAwaitingPickup(highestPriority)
         && !isFor(highestPriority, requestingUser);
     }
   }
 
-  private static boolean isFor(JsonObject request, JsonObject user) {
+  private static boolean isFor(Request request, JsonObject user) {
     return StringUtils.equals(request.getString("requesterId"), user.getString("id"));
   }
 
-  private static boolean isAwaitingPickup(JsonObject highestPriority) {
+  private static boolean isAwaitingPickup(Request highestPriority) {
     return StringUtils.equals(highestPriority.getString("status"), OPEN_AWAITING_PICKUP);
   }
 

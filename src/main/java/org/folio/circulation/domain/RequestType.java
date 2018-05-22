@@ -12,7 +12,7 @@ public class RequestType {
 
   public final String value;
 
-  public static RequestType from(JsonObject request) {
+  public static RequestType from(Request request) {
     return new RequestType(request.getString("requestType"));
   }
 
@@ -36,7 +36,7 @@ public class RequestType {
     }
   }
 
-  public String toCheckedOutItemStatus() {
+  String toCheckedOutItemStatus() {
     switch(value) {
       case RequestType.HOLD:
         return CHECKED_OUT_HELD;
@@ -53,7 +53,7 @@ public class RequestType {
     }
   }
 
-  public String toLoanAction() {
+  String toLoanAction() {
     switch (this.value) {
       case HOLD:
         return "holdrequested";

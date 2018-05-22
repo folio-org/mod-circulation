@@ -4,14 +4,14 @@ import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.InventoryRecords;
 
 public class RequestAndRelatedRecords {
-  public final JsonObject request;
+  public final Request request;
   public final InventoryRecords inventoryRecords;
-  public final RequestQueue requestQueue;
+  final RequestQueue requestQueue;
   public final User requestingUser;
   public final User proxyUser;
 
   private RequestAndRelatedRecords(
-    JsonObject request,
+    Request request,
     InventoryRecords inventoryRecords,
     RequestQueue requestQueue,
     User requestingUser,
@@ -24,11 +24,11 @@ public class RequestAndRelatedRecords {
     this.proxyUser = proxyUser;
   }
 
-  public RequestAndRelatedRecords(JsonObject request) {
+  public RequestAndRelatedRecords(Request request) {
     this(request, null, null, null, null);
   }
 
-  public RequestAndRelatedRecords withItem(JsonObject updatedItem) {
+  RequestAndRelatedRecords withItem(JsonObject updatedItem) {
     return new RequestAndRelatedRecords(this.request,
       new InventoryRecords(updatedItem,
       this.inventoryRecords.getHolding(),
@@ -38,7 +38,7 @@ public class RequestAndRelatedRecords {
       this.proxyUser);
   }
 
-  public RequestAndRelatedRecords withRequest(JsonObject newRequest) {
+  public RequestAndRelatedRecords withRequest(Request newRequest) {
     return new RequestAndRelatedRecords(newRequest,
       this.inventoryRecords,
       this.requestQueue,

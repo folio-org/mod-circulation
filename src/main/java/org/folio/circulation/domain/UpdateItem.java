@@ -160,7 +160,9 @@ public class UpdateItem {
 
     if(loan.isClosed()) {
       prospectiveStatus = requestQueue.hasOutstandingFulfillableRequests()
-        ? RequestFulfilmentPreference.from(requestQueue.getHighestPriorityFulfillableRequest()).toCheckedInItemStatus()
+        ? RequestFulfilmentPreference.from(
+          requestQueue.getHighestPriorityFulfillableRequest())
+        .toCheckedInItemStatus()
         : AVAILABLE;
     }
     else {

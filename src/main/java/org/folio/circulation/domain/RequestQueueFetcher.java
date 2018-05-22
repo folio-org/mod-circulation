@@ -13,6 +13,7 @@ import java.lang.invoke.MethodHandles;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
@@ -54,12 +55,18 @@ public class RequestQueueFetcher {
 
     this.clients.requestsStorage().getMany(cqlQuery, 1000, 0, fetchRequestsResponse -> {
       if (fetchRequestsResponse.getStatusCode() == 200) {
-        final JsonArray foundRequests = fetchRequestsResponse.getJson().getJsonArray("requests");
+        final JsonArray foundRequests = fetchRequestsResponse.getJson()
+          .getJsonArray("requests");
 
         log.info("Found request queue: {}", foundRequests.encodePrettily());
 
+        //TODO: Extract map from JsonArray to list of other type (using function parameter)
         requestQueueFetched.complete(HttpResult.success(
-          new RequestQueue(JsonArrayHelper.toList(foundRequests))));
+          new RequestQueue(
+            JsonArrayHelper.toList(foundRequests)
+              .stream()
+              .map(Request::new)
+              .collect(Collectors.toList()))));
       } else {
         requestQueueFetched.complete(HttpResult.failure(new ServerErrorFailure(
           String.format("Failed to fetch request queue: %s: %s",

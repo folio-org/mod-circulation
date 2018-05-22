@@ -3,6 +3,7 @@ package org.folio.circulation.support;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpClientResponse;
 
+import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.http.entity.ContentType;
@@ -28,7 +29,7 @@ public class CollectionResourceClient {
     this.collectionRoot = collectionRoot;
   }
 
-  public void post(Object resourceRepresentation,
+  public void post(JsonObject resourceRepresentation,
                    Consumer<Response> responseHandler) {
 
     client.post(collectionRoot,
@@ -36,7 +37,7 @@ public class CollectionResourceClient {
       responseConversationHandler(responseHandler));
   }
 
-  public void put(Object resourceRepresentation,
+  public void put(JsonObject resourceRepresentation,
       Consumer<Response> responseHandler) {
 
     client.put(collectionRoot,
@@ -44,7 +45,7 @@ public class CollectionResourceClient {
         responseConversationHandler(responseHandler));
   }
 
-  public void put(String id, Object resourceRepresentation,
+  public void put(String id, JsonObject resourceRepresentation,
                      Consumer<Response> responseHandler) {
 
     client.put(individualRecordUrl(id),
