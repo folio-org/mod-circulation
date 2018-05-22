@@ -1,6 +1,8 @@
 package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
+import org.joda.time.DateTime;
+import org.joda.time.format.ISODateTimeFormat;
 
 public class Loan {
   private final JsonObject representation;
@@ -37,7 +39,20 @@ public class Loan {
     return representation.getJsonObject(propertyName);
   }
 
-  public void put(String propertyName, String value) {
-    representation.put(propertyName, value);
+  public void changeDueDate(DateTime dueDate) {
+    representation.put("dueDate",
+      dueDate.toString(ISODateTimeFormat.dateTime()));
+  }
+
+  public void changeUser(String userId) {
+    representation.put("userId", userId);
+  }
+
+  public void changeItem(String itemId) {
+    representation.put("itemId", itemId);
+  }
+
+  public void changeProxyUser(String userId) {
+    representation.put("proxyUserId", userId);
   }
 }

@@ -99,8 +99,7 @@ public class CheckOutByBarcodeResource extends CollectionResource {
 
     return loanPolicy.calculate(loan)
       .map(dueDate -> {
-        loanAndRelatedRecords.loan.put("dueDate",
-          dueDate.toString(ISODateTimeFormat.dateTime()));
+        loanAndRelatedRecords.loan.changeDueDate(dueDate);
 
         return loanAndRelatedRecords;
       });
@@ -120,11 +119,11 @@ public class CheckOutByBarcodeResource extends CollectionResource {
     return loanAndRelatedRecords -> {
       final Loan loan = loanAndRelatedRecords.loan;
 
-      loan.put("userId", loanAndRelatedRecords.requestingUser.getString("id"));
-      loan.put("itemId", loanAndRelatedRecords.inventoryRecords.item.getString("id"));
+      loan.changeUser(loanAndRelatedRecords.requestingUser.getString("id"));
+      loan.changeItem(loanAndRelatedRecords.inventoryRecords.item.getString("id"));
 
       if(loanAndRelatedRecords.proxyingUser != null) {
-        loan.put("proxyUserId", loanAndRelatedRecords.proxyingUser.getString("id"));
+        loan.changeProxyUser(loanAndRelatedRecords.proxyingUser.getString("id"));
       }
 
       return loanAndRelatedRecords;
