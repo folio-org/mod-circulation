@@ -353,32 +353,11 @@ public class LoanCollectionResource extends CollectionResource {
   }
 
   private HttpResult<LoanAndRelatedRecords> refuseWhenNotOpenOrClosed(
-    HttpResult<LoanAndRelatedRecords> result) {
+    HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
-    return result.next(loanAndRelatedRecords -> {
-      Loan loan = loanAndRelatedRecords.loan;
-
-      if(loan == null) {
-        return HttpResult.failure(new ServerErrorFailure(
-          "Cannot check loan status when no loan"));
-      }
-
-      if(!loan.containsKey("status")) {
-        return HttpResult.failure(new ServerErrorFailure(
-          "Loan does not have a status"));
-      }
-
-      String status = loan.getJsonObject("status").getString("name");
-
-      switch(status) {
-        case "Open":
-        case "Closed":
-          return result;
-
-        default:
-          return HttpResult.failure(new ValidationErrorFailure(
-            "Loan status must be \"Open\" or \"Closed\"", "status", status));
-      }
-    });
+    return loanAndRelatedRecords
+      .map(r -> r.loan)
+      .next(Loan::isValidStatus)
+      .next(v -> loanAndRelatedRecords);
   }
 }

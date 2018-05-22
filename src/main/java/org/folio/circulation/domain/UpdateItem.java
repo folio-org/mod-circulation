@@ -32,7 +32,7 @@ public class UpdateItem {
       RequestQueue requestQueue = relatedRecords.requestQueue;
 
       //Hack for creating returned loan - should distinguish further up the chain
-      if(isClosed(relatedRecords.loan)) {
+      if(relatedRecords.loan.isClosed()) {
         return skip(relatedRecords);
       }
 
@@ -155,16 +155,10 @@ public class UpdateItem {
     return CompletableFuture.completedFuture(HttpResult.success(previousResult));
   }
 
-  private boolean isClosed(Loan loan) {
-    return StringUtils.equals(loan.getJsonObject("status").getString("name"), "Closed");
-  }
-
   private String itemStatusFrom(Loan loan, RequestQueue requestQueue) {
     String prospectiveStatus;
 
-    boolean closed = isClosed(loan);
-
-    if(closed) {
+    if(loan.isClosed()) {
       prospectiveStatus = requestQueue.hasOutstandingFulfillableRequests()
         ? RequestFulfilmentPreference.from(requestQueue.getHighestPriorityFulfillableRequest()).toCheckedInItemStatus()
         : AVAILABLE;
