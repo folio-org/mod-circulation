@@ -38,4 +38,12 @@ public class Request implements ItemRelatedRecord {
   public String getItemId() {
     return representation.getString("itemId");
   }
+
+  String getRequesterId() {
+    return getString("requesterId");
+  }
+
+  String getProxyUserId() {
+    return getString("proxyUserId");
+  }
 }
