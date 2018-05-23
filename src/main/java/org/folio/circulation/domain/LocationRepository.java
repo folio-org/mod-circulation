@@ -26,20 +26,20 @@ public class LocationRepository {
     LoanAndRelatedRecords relatedRecords) {
 
     //Cannot find location for unknown item
-    if(relatedRecords.inventoryRecords.item == null) {
+    if(relatedRecords.getInventoryRecords().item == null) {
       return CompletableFuture.completedFuture(HttpResult.success(relatedRecords));
     }
 
     //Cannot find location for unknown holding
-    if(relatedRecords.inventoryRecords.holding == null) {
+    if(relatedRecords.getInventoryRecords().holding == null) {
       return CompletableFuture.completedFuture(HttpResult.success(relatedRecords));
     }
 
     final String locationId = LoanValidation.determineLocationIdForItem(
-      relatedRecords.inventoryRecords.item, relatedRecords.inventoryRecords.holding);
+      relatedRecords.getInventoryRecords().item, relatedRecords.getInventoryRecords().holding);
 
     return getLocation(locationId,
-      relatedRecords.inventoryRecords.item.getString("id"))
+      relatedRecords.getInventoryRecords().item.getString("id"))
       .thenApply(result -> result.map(relatedRecords::withLocation));
   }
 

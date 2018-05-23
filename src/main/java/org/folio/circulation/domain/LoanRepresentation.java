@@ -13,12 +13,12 @@ public class LoanRepresentation {
   private static final String CONTRIBUTORS_PROPERTY = "contributors";
 
   public JsonObject extendedLoan(LoanAndRelatedRecords relatedRecords) {
-    return extendedLoan(relatedRecords.loan.asJson(),
-      relatedRecords.inventoryRecords.item,
-      relatedRecords.inventoryRecords.holding,
-      relatedRecords.inventoryRecords.instance,
-      relatedRecords.location,
-      relatedRecords.materialType);
+    return extendedLoan(relatedRecords.getLoan().asJson(),
+      relatedRecords.getLoan().getInventoryRecords().item,
+      relatedRecords.getLoan().getInventoryRecords().holding,
+      relatedRecords.getLoan().getInventoryRecords().instance,
+      relatedRecords.getLocation(),
+      relatedRecords.getMaterialType());
   }
 
   public JsonObject createItemSummary(

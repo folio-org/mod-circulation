@@ -17,8 +17,8 @@ public class LoanValidation {
     HttpResult<LoanAndRelatedRecords> result) {
 
     return result.next(loan -> {
-      if(loan.inventoryRecords.getItem() == null) {
-        final String itemId = loan.loan.getItemId();
+      if(loan.getInventoryRecords().getItem() == null) {
+        final String itemId = loan.getLoan().getItemId();
 
         return HttpResult.failure(new ValidationErrorFailure(
           "Item does not exist", "itemId", itemId));
@@ -33,7 +33,7 @@ public class LoanValidation {
     HttpResult<LoanAndRelatedRecords> result, String barcode) {
 
     return result.next(loanAndRelatedRecords -> {
-      if(loanAndRelatedRecords.inventoryRecords.getItem() == null) {
+      if(loanAndRelatedRecords.getInventoryRecords().getItem() == null) {
         return HttpResult.failure(new ValidationErrorFailure(
           String.format("No item with barcode %s exists", barcode),
           "itemBarcode", barcode));
@@ -59,13 +59,13 @@ public class LoanValidation {
 
     return loanAndRelatedRecords
       .next(loan -> {
-      final RequestQueue requestQueue = loan.requestQueue;
-      final JsonObject requestingUser = loan.requestingUser;
+      final RequestQueue requestQueue = loan.getRequestQueue();
+      final JsonObject requestingUser = loan.getRequestingUser();
 
       if(hasAwaitingPickupRequestForOtherPatron(requestQueue, requestingUser)) {
         return HttpResult.failure(new ValidationErrorFailure(
           "User checking out must be requester awaiting pickup",
-          "userId", loan.loan.getUserId()));
+          "userId", loan.getLoan().getUserId()));
       }
       else {
         return loanAndRelatedRecords;
@@ -78,8 +78,8 @@ public class LoanValidation {
 
     //TODO: Extract duplication between this and above
     return loanAndRelatedRecords.next(loan -> {
-      final RequestQueue requestQueue = loan.requestQueue;
-      final JsonObject requestingUser = loan.requestingUser;
+      final RequestQueue requestQueue = loan.getRequestQueue();
+      final JsonObject requestingUser = loan.getRequestingUser();
 
       if(hasAwaitingPickupRequestForOtherPatron(requestQueue, requestingUser)) {
         return HttpResult.failure(new ValidationErrorFailure(
@@ -97,7 +97,7 @@ public class LoanValidation {
 
     return loanAndRelatedRecords.next(loan -> {
       try {
-        final User requestingUser = loan.requestingUser;
+        final User requestingUser = loan.getRequestingUser();
 
         if (!requestingUser.containsKey("active")) {
           return HttpResult.failure(new ValidationErrorFailure(
@@ -120,7 +120,7 @@ public class LoanValidation {
     HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords, String barcode) {
 
     return loanAndRelatedRecords.next(loan -> {
-      final User proxyingUser = loan.proxyingUser;
+      final User proxyingUser = loan.getProxyingUser();
 
       if(proxyingUser == null) {
         return loanAndRelatedRecords;
@@ -184,7 +184,7 @@ public class LoanValidation {
     LoanRepository loanRepository,
     String barcode) {
 
-    final String itemId = loanAndRelatedRecords.loan.getItemId();
+    final String itemId = loanAndRelatedRecords.getLoan().getItemId();
 
     return loanRepository.hasOpenLoan(itemId)
       .thenApply(r -> r.next(openLoan -> {
@@ -202,7 +202,7 @@ public class LoanValidation {
     HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
     return loanAndRelatedRecords.next(loan -> {
-      final JsonObject item = loan.inventoryRecords.item;
+      final JsonObject item = loan.getInventoryRecords().item;
 
       if(ItemStatus.isCheckedOut(item)) {
         return HttpResult.failure(new ValidationErrorFailure(
@@ -219,7 +219,7 @@ public class LoanValidation {
 
     //TODO: Extract duplication with above
     return loanAndRelatedRecords.next(loan -> {
-      final JsonObject item = loan.inventoryRecords.item;
+      final JsonObject item = loan.getInventoryRecords().item;
 
       if(ItemStatus.isCheckedOut(item)) {
         return HttpResult.failure(new ValidationErrorFailure(

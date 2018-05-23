@@ -3,6 +3,7 @@ package org.folio.circulation.domain;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.InventoryRecords;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.joda.time.DateTime;
@@ -14,6 +15,7 @@ public class Loan implements ItemRelatedRecord {
   private static final String STATUS_PROPERTY_NAME = "status";
 
   private final JsonObject representation;
+  private InventoryRecords inventoryRecords;
 
   public Loan(JsonObject representation) {
     this.representation = representation;
@@ -23,7 +25,7 @@ public class Loan implements ItemRelatedRecord {
     return new Loan(representation);
   }
 
-  public JsonObject asJson() {
+  JsonObject asJson() {
     return representation.copy();
   }
 
@@ -84,5 +86,13 @@ public class Loan implements ItemRelatedRecord {
 
   String getProxyUserId() {
     return representation.getString("proxyUserId");
+  }
+
+  public InventoryRecords getInventoryRecords() {
+    return inventoryRecords;
+  }
+
+  void setInventoryRecords(InventoryRecords inventoryRecords) {
+    this.inventoryRecords = inventoryRecords;
   }
 }

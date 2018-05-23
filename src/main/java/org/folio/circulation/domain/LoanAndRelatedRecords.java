@@ -5,18 +5,16 @@ import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.support.InventoryRecords;
 
 public class LoanAndRelatedRecords {
-  public final Loan loan;
-  public final InventoryRecords inventoryRecords;
-  public final RequestQueue requestQueue;
-  public final User requestingUser;
-  public final User proxyingUser;
-  public final LoanPolicy loanPolicy;
-  public final JsonObject location;
-  public final JsonObject materialType;
+  private final Loan loan;
+  private final RequestQueue requestQueue;
+  private final User requestingUser;
+  private final User proxyingUser;
+  private final LoanPolicy loanPolicy;
+  private final JsonObject location;
+  private final JsonObject materialType;
 
   private LoanAndRelatedRecords(
     Loan loan,
-    InventoryRecords inventoryRecords,
     RequestQueue requestQueue,
     User requestingUser,
     User proxyingUser,
@@ -25,7 +23,6 @@ public class LoanAndRelatedRecords {
     JsonObject materialType) {
 
     this.loan = loan;
-    this.inventoryRecords = inventoryRecords;
     this.requestQueue = requestQueue;
     this.requestingUser = requestingUser;
     this.proxyingUser = proxyingUser;
@@ -35,57 +32,88 @@ public class LoanAndRelatedRecords {
   }
 
   public LoanAndRelatedRecords(Loan loan) {
-    this(loan, null, null, null, null, null, null, null);
+    this(loan, null, null, null, null, null, null);
+  }
+
+  LoanAndRelatedRecords withItem(JsonObject updatedItem) {
+    return withInventoryRecords(new InventoryRecords(updatedItem,
+      loan.getInventoryRecords().holding, loan.getInventoryRecords().instance));
+  }
+
+  LoanAndRelatedRecords withLoan(Loan newLoan) {
+    //TODO: find a better way to carry over related records
+    newLoan.setInventoryRecords(loan.getInventoryRecords());
+
+    return new LoanAndRelatedRecords(newLoan, requestQueue,
+      requestingUser, proxyingUser, loanPolicy, location, this.materialType);
+  }
+
+  public LoanAndRelatedRecords withRequestingUser(User newUser) {
+    return new LoanAndRelatedRecords(loan, requestQueue,
+      newUser, proxyingUser, loanPolicy, location, this.materialType);
+  }
+
+  public LoanAndRelatedRecords withProxyingUser(User newProxyingUser) {
+    return new LoanAndRelatedRecords(loan, requestQueue,
+      requestingUser, newProxyingUser, loanPolicy, location, this.materialType);
+  }
+
+  public LoanAndRelatedRecords withLoanPolicy(LoanPolicy newLoanPolicy) {
+    return new LoanAndRelatedRecords(loan, requestQueue,
+      requestingUser, proxyingUser, newLoanPolicy, location, this.materialType);
+  }
+
+  public LoanAndRelatedRecords withRequestQueue(RequestQueue newRequestQueue) {
+    return new LoanAndRelatedRecords(loan, newRequestQueue,
+      requestingUser, proxyingUser, loanPolicy, location, this.materialType);
+  }
+
+  LoanAndRelatedRecords withLocation(JsonObject newLocation) {
+    return new LoanAndRelatedRecords(loan, requestQueue,
+      requestingUser, proxyingUser, loanPolicy, newLocation, this.materialType);
+  }
+
+  public LoanAndRelatedRecords withInventoryRecords(InventoryRecords newInventoryRecords) {
+    loan.setInventoryRecords(newInventoryRecords);
+
+    return new LoanAndRelatedRecords(loan, requestQueue,
+      requestingUser, proxyingUser, loanPolicy, location, this.materialType);
+  }
+
+  LoanAndRelatedRecords withMaterialType(JsonObject newMaterialType) {
+    return new LoanAndRelatedRecords(loan, requestQueue,
+      requestingUser, proxyingUser, loanPolicy, location, newMaterialType);
+  }
+
+  public InventoryRecords getInventoryRecords() {
+    return loan.getInventoryRecords();
   }
 
   public Loan getLoan() {
     return loan;
   }
 
-  public LoanAndRelatedRecords withItem(JsonObject updatedItem) {
-    return new LoanAndRelatedRecords(loan, new InventoryRecords(updatedItem,
-      inventoryRecords.getHolding(), inventoryRecords.getInstance()),
-      requestQueue, requestingUser, proxyingUser, loanPolicy, location,
-      this.materialType);
+  RequestQueue getRequestQueue() {
+    return requestQueue;
   }
 
-  public LoanAndRelatedRecords withLoan(Loan newLoan) {
-    return new LoanAndRelatedRecords(newLoan, inventoryRecords, requestQueue,
-      requestingUser, proxyingUser, loanPolicy, location, this.materialType);
+  public User getRequestingUser() {
+    return requestingUser;
   }
 
-  public LoanAndRelatedRecords withRequestingUser(User newUser) {
-    return new LoanAndRelatedRecords(loan, inventoryRecords, requestQueue,
-      newUser, proxyingUser, loanPolicy, location, this.materialType);
+  public User getProxyingUser() {
+    return proxyingUser;
   }
 
-  public LoanAndRelatedRecords withProxyingUser(User newProxyingUser) {
-    return new LoanAndRelatedRecords(loan, inventoryRecords, requestQueue,
-      requestingUser, newProxyingUser, loanPolicy, location, this.materialType);
+  public LoanPolicy getLoanPolicy() {
+    return loanPolicy;
   }
 
-  public LoanAndRelatedRecords withLoanPolicy(LoanPolicy newLoanPolicy) {
-    return new LoanAndRelatedRecords(loan, inventoryRecords, requestQueue,
-      requestingUser, proxyingUser, newLoanPolicy, location, this.materialType);
+  public JsonObject getLocation() {
+    return location;
   }
 
-  public LoanAndRelatedRecords withRequestQueue(RequestQueue newRequestQueue) {
-    return new LoanAndRelatedRecords(loan, inventoryRecords, newRequestQueue,
-      requestingUser, proxyingUser, loanPolicy, location, this.materialType);
-  }
-
-  public LoanAndRelatedRecords withLocation(JsonObject newLocation) {
-    return new LoanAndRelatedRecords(loan, inventoryRecords, requestQueue,
-      requestingUser, proxyingUser, loanPolicy, newLocation, this.materialType);
-  }
-
-  public LoanAndRelatedRecords withInventoryRecords(InventoryRecords newInventoryRecords) {
-    return new LoanAndRelatedRecords(loan, newInventoryRecords, requestQueue,
-      requestingUser, proxyingUser, loanPolicy, location, this.materialType);
-  }
-
-  public LoanAndRelatedRecords withMaterialType(JsonObject newMaterialType) {
-    return new LoanAndRelatedRecords(loan, inventoryRecords, requestQueue,
-      requestingUser, proxyingUser, loanPolicy, location, newMaterialType);
+  public JsonObject getMaterialType() {
+    return materialType;
   }
 }

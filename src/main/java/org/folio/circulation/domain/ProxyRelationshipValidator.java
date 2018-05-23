@@ -40,8 +40,8 @@ public class ProxyRelationshipValidator {
 
     //TODO: Improve mapping back null result to records
     return refuseWhenInvalid(
-      loanAndRelatedRecords.loan.getProxyUserId(),
-      loanAndRelatedRecords.loan.getUserId())
+      loanAndRelatedRecords.getLoan().getProxyUserId(),
+      loanAndRelatedRecords.getLoan().getUserId())
       .thenApply(result -> result.map(v -> loanAndRelatedRecords));
   }
 

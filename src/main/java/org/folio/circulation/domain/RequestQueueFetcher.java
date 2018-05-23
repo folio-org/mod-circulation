@@ -28,7 +28,7 @@ public class RequestQueueFetcher {
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> get(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
-    return get(loanAndRelatedRecords.loan.getItemId())
+    return get(loanAndRelatedRecords.getLoan().getItemId())
       .thenApply(result -> result.map(loanAndRelatedRecords::withRequestQueue));
   }
 

@@ -94,12 +94,12 @@ public class CheckOutByBarcodeResource extends Resource {
   private HttpResult<LoanAndRelatedRecords> calculateDueDate(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
-    final Loan loan = loanAndRelatedRecords.loan;
-    final LoanPolicy loanPolicy = loanAndRelatedRecords.loanPolicy;
+    final Loan loan = loanAndRelatedRecords.getLoan();
+    final LoanPolicy loanPolicy = loanAndRelatedRecords.getLoanPolicy();
 
     return loanPolicy.calculate(loan)
       .map(dueDate -> {
-        loanAndRelatedRecords.loan.changeDueDate(dueDate);
+        loanAndRelatedRecords.getLoan().changeDueDate(dueDate);
 
         return loanAndRelatedRecords;
       });
@@ -117,13 +117,13 @@ public class CheckOutByBarcodeResource extends Resource {
 
   private Function<LoanAndRelatedRecords, LoanAndRelatedRecords> mapBarcodes() {
     return loanAndRelatedRecords -> {
-      final Loan loan = loanAndRelatedRecords.loan;
+      final Loan loan = loanAndRelatedRecords.getLoan();
 
-      loan.changeUser(loanAndRelatedRecords.requestingUser.getString("id"));
-      loan.changeItem(loanAndRelatedRecords.inventoryRecords.item.getString("id"));
+      loan.changeUser(loanAndRelatedRecords.getRequestingUser().getString("id"));
+      loan.changeItem(loanAndRelatedRecords.getLoan().getInventoryRecords().item.getString("id"));
 
-      if(loanAndRelatedRecords.proxyingUser != null) {
-        loan.changeProxyUser(loanAndRelatedRecords.proxyingUser.getString("id"));
+      if(loanAndRelatedRecords.getProxyingUser() != null) {
+        loan.changeProxyUser(loanAndRelatedRecords.getProxyingUser().getString("id"));
       }
 
       return loanAndRelatedRecords;

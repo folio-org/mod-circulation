@@ -28,11 +28,11 @@ public class UpdateItem {
     LoanAndRelatedRecords relatedRecords) {
 
     try {
-      JsonObject item = relatedRecords.inventoryRecords.getItem();
-      RequestQueue requestQueue = relatedRecords.requestQueue;
+      JsonObject item = relatedRecords.getInventoryRecords().getItem();
+      RequestQueue requestQueue = relatedRecords.getRequestQueue();
 
       //Hack for creating returned loan - should distinguish further up the chain
-      if(relatedRecords.loan.isClosed()) {
+      if(relatedRecords.getLoan().isClosed()) {
         return skip(relatedRecords);
       }
 
@@ -67,10 +67,10 @@ public class UpdateItem {
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
     try {
-      JsonObject item = loanAndRelatedRecords.inventoryRecords.getItem();
+      JsonObject item = loanAndRelatedRecords.getInventoryRecords().getItem();
 
       final String prospectiveStatus = itemStatusFrom(
-        loanAndRelatedRecords.loan, loanAndRelatedRecords.requestQueue);
+        loanAndRelatedRecords.getLoan(), loanAndRelatedRecords.getRequestQueue());
 
       if(isNotSameStatus(item, prospectiveStatus)) {
         return internalUpdate(item, prospectiveStatus)

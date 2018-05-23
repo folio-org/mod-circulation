@@ -332,9 +332,9 @@ public class LoanCollectionResource extends CollectionResource {
     HttpResult<LoanAndRelatedRecords> result) {
 
     return result.next(loan -> {
-      if(loan.inventoryRecords.getHolding() == null) {
+      if(loan.getLoan().getInventoryRecords().getHolding() == null) {
         return HttpResult.failure(new ValidationErrorFailure(
-          "Holding does not exist", "itemId", loan.loan.getItemId()));
+          "Holding does not exist", "itemId", loan.getLoan().getItemId()));
       }
       else {
         return result;
@@ -346,7 +346,7 @@ public class LoanCollectionResource extends CollectionResource {
     HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
     return loanAndRelatedRecords
-      .map(r -> r.loan)
+      .map(LoanAndRelatedRecords::getLoan)
       .next(Loan::isValidStatus)
       .next(v -> loanAndRelatedRecords);
   }
