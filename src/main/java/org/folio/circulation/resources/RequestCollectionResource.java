@@ -55,12 +55,14 @@ public class RequestCollectionResource extends CollectionResource {
 
     removeRelatedRecordInformation(representation);
 
-    final String itemId = getItemId(representation);
-    final String requestingUserId = representation.getString("requesterId");
-    final String proxyUserId = representation.getString("proxyUserId");
+    final Request request = new Request(representation);
 
-    completedFuture(HttpResult.success(new RequestAndRelatedRecords(new Request(representation))))
-      .thenCombineAsync(inventoryFetcher.fetch(representation), this::addInventoryRecords)
+    final String itemId = request.getItemId();
+    final String requestingUserId = request.getString("requesterId");
+    final String proxyUserId = request.getString("proxyUserId");
+
+    completedFuture(HttpResult.success(new RequestAndRelatedRecords(request)))
+      .thenCombineAsync(inventoryFetcher.fetch(request), this::addInventoryRecords)
       .thenApply(this::refuseWhenItemDoesNotExist)
       .thenApply(this::refuseWhenItemIsNotValid)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
@@ -96,8 +98,10 @@ public class RequestCollectionResource extends CollectionResource {
     final String requestingUserId = representation.getString("requesterId");
     final String proxyUserId = representation.getString("proxyUserId");
 
-    completedFuture(HttpResult.success(new RequestAndRelatedRecords(new Request(representation))))
-      .thenCombineAsync(inventoryFetcher.fetch(representation), this::addInventoryRecords)
+    final Request request = new Request(representation);
+
+    completedFuture(HttpResult.success(new RequestAndRelatedRecords(request)))
+      .thenCombineAsync(inventoryFetcher.fetch(request), this::addInventoryRecords)
       .thenCombineAsync(userFetcher.getUser(requestingUserId, false), this::addUser)
       .thenCombineAsync(userFetcher.getUser(proxyUserId, false), this::addProxyUser)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
@@ -136,12 +140,12 @@ public class RequestCollectionResource extends CollectionResource {
 
     clients.requestsStorage().get(id, requestResponse -> {
       if(requestResponse.getStatusCode() == 200) {
-        JsonObject request = requestResponse.getJson();
+        Request request = new Request(requestResponse.getJson());
 
         InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
 
         CompletableFuture<HttpResult<InventoryRecords>> inventoryRecordsCompleted =
-          inventoryFetcher.fetch(getItemId(request));
+          inventoryFetcher.fetch(request);
 
         inventoryRecordsCompleted.thenAccept(r -> {
           if(r.failed()) {
@@ -149,10 +153,12 @@ public class RequestCollectionResource extends CollectionResource {
             return;
           }
 
-          addAdditionalItemProperties(request, r.value().getHolding(),
+          final JsonObject representation = request.asJson();
+
+          addAdditionalItemProperties(representation, r.value().getHolding(),
             r.value().getItem());
 
-          JsonResponse.success(routingContext.response(), request);
+          JsonResponse.success(routingContext.response(), representation);
         });
       }
       else {
@@ -199,7 +205,8 @@ public class RequestCollectionResource extends CollectionResource {
         final Collection<JsonObject> requests = wrappedRequests.getRecords();
 
         List<String> itemIds = requests.stream()
-          .map(this::getItemId)
+          .map(Request::new)
+          .map(Request::getItemId)
           .filter(Objects::nonNull)
           .collect(Collectors.toList());
 
@@ -209,9 +216,12 @@ public class RequestCollectionResource extends CollectionResource {
           inventoryFetcher.fetch(itemIds, e ->
             ServerErrorResponse.internalError(routingContext.response(), e.toString()));
 
+        //TODO: Refactor this to map to new representations
+        // rather than alter the storage representations
         inventoryRecordsFetched.thenAccept(records -> {
-          requests.forEach( request -> {
-              Optional<JsonObject> possibleItem = records.findItemById(getItemId(request));
+          requests.forEach(request -> {
+              Optional<JsonObject> possibleItem = records.findItemById(
+                new Request(request).getItemId());
 
               if(possibleItem.isPresent()) {
                 JsonObject item = possibleItem.get();
@@ -244,10 +254,6 @@ public class RequestCollectionResource extends CollectionResource {
         ForwardResponse.forward(routingContext.response(), response);
       }
     });
-  }
-
-  private String getItemId(JsonObject request) {
-    return request.getString("itemId");
   }
 
   private void addStoredItemProperties(

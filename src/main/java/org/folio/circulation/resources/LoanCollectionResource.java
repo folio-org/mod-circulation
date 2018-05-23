@@ -26,12 +26,12 @@ public class LoanCollectionResource extends CollectionResource {
   public LoanCollectionResource(HttpClient client) {
     super(client, "/circulation/loans");
   }
-  
+
   void create(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
 
-    JsonObject loan = routingContext.getBodyAsJson();
-    defaultStatusAndAction(loan);
+    JsonObject incomingRepresentation = routingContext.getBodyAsJson();
+    defaultStatusAndAction(incomingRepresentation);
 
     final Clients clients = Clients.create(context, client);
 
@@ -49,14 +49,16 @@ public class LoanCollectionResource extends CollectionResource {
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> new ValidationErrorFailure(
         "proxyUserId is not valid", "proxyUserId",
-        loan.getString("proxyUserId")));
+        incomingRepresentation.getString("proxyUserId")));
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
-    final String itemId = loan.getString("itemId");
-    final String requestingUserId = loan.getString("userId");
+    final String itemId = incomingRepresentation.getString("itemId");
+    final String requestingUserId = incomingRepresentation.getString("userId");
 
-    completedFuture(HttpResult.success(new LoanAndRelatedRecords(Loan.from(loan))))
+    final Loan loan = Loan.from(incomingRepresentation);
+
+    completedFuture(HttpResult.success(new LoanAndRelatedRecords(loan)))
       .thenApply(this::refuseWhenNotOpenOrClosed)
       .thenCombineAsync(inventoryFetcher.fetch(loan), this::addInventoryRecords)
       .thenApply(LoanValidation::refuseWhenItemDoesNotExist)
@@ -80,11 +82,11 @@ public class LoanCollectionResource extends CollectionResource {
   void replace(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
 
-    JsonObject loan = routingContext.getBodyAsJson();
+    JsonObject incomingRepresentation = routingContext.getBodyAsJson();
 
-    loan.put("id", routingContext.request().getParam("id"));
+    incomingRepresentation.put("id", routingContext.request().getParam("id"));
 
-    defaultStatusAndAction(loan);
+    defaultStatusAndAction(incomingRepresentation);
 
     final Clients clients = Clients.create(context, client);
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
@@ -96,11 +98,13 @@ public class LoanCollectionResource extends CollectionResource {
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> new ValidationErrorFailure(
         "proxyUserId is not valid", "proxyUserId",
-        loan.getString("proxyUserId")));
+        incomingRepresentation.getString("proxyUserId")));
 
-    String itemId = loan.getString("itemId");
+    final Loan loan = Loan.from(incomingRepresentation);
 
-    completedFuture(HttpResult.success(new LoanAndRelatedRecords(Loan.from(loan))))
+    String itemId = loan.getItemId();
+
+    completedFuture(HttpResult.success(new LoanAndRelatedRecords(loan)))
       .thenApply(this::refuseWhenNotOpenOrClosed)
       .thenCombineAsync(inventoryFetcher.fetch(loan), this::addInventoryRecords)
       .thenApply(LoanValidation::refuseWhenItemDoesNotExist)

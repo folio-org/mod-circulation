@@ -3,7 +3,7 @@ package org.folio.circulation.domain;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 
-public class Request {
+public class Request implements ItemRelatedRecord {
   private final JsonObject representation;
 
   public Request(JsonObject representation) {
@@ -32,5 +32,10 @@ public class Request {
 
     return StringUtils.equals(status, RequestStatus.OPEN_AWAITING_PICKUP)
       || StringUtils.equals(status, RequestStatus.OPEN_NOT_YET_FILLED);
+  }
+
+  @Override
+  public String getItemId() {
+    return representation.getString("itemId");
   }
 }

@@ -10,7 +10,7 @@ import org.joda.time.format.ISODateTimeFormat;
 
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 
-public class Loan {
+public class Loan implements ItemRelatedRecord {
   private static final String STATUS_PROPERTY_NAME = "status";
 
   private final JsonObject representation;
@@ -69,6 +69,7 @@ public class Loan {
     return getNestedStringProperty(representation, STATUS_PROPERTY_NAME, "name");
   }
 
+  @Override
   public String getItemId() {
     return representation.getString("itemId");
   }

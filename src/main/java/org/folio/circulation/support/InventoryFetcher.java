@@ -1,6 +1,7 @@
 package org.folio.circulation.support;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.ItemRelatedRecord;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
@@ -36,12 +37,8 @@ public class InventoryFetcher {
     this.instancesClient = instancesClient;
   }
 
-  public CompletableFuture<HttpResult<InventoryRecords>> fetch(JsonObject loan) {
-    return fetch(loan.getString("itemId"));
-  }
-
-  public CompletableFuture<HttpResult<InventoryRecords>> fetch(String itemId) {
-    return fetchItem(itemId)
+  public CompletableFuture<HttpResult<InventoryRecords>> fetch(ItemRelatedRecord record) {
+    return fetchItem(record.getItemId())
       .thenComposeAsync(this::fetchHolding)
       .thenComposeAsync(this::fetchInstance);
   }
@@ -256,7 +253,7 @@ public class InventoryFetcher {
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
     return
-      fetch(loanAndRelatedRecords.loan.asJson())
+      fetch(loanAndRelatedRecords.loan)
       .thenApply(result -> result.map(loanAndRelatedRecords::withInventoryRecords));
   }
 }
