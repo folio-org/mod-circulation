@@ -3,7 +3,6 @@ package org.folio.circulation.domain;
 import io.vertx.core.json.JsonArray;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,9 +12,9 @@ import java.lang.invoke.MethodHandles;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 
 public class RequestQueueFetcher {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -60,13 +59,8 @@ public class RequestQueueFetcher {
 
         log.info("Found request queue: {}", foundRequests.encodePrettily());
 
-        //TODO: Extract map from JsonArray to list of other type (using function parameter)
         requestQueueFetched.complete(HttpResult.success(
-          new RequestQueue(
-            JsonArrayHelper.toList(foundRequests)
-              .stream()
-              .map(Request::new)
-              .collect(Collectors.toList()))));
+          new RequestQueue(mapToList(foundRequests, Request::new))));
       } else {
         requestQueueFetched.complete(HttpResult.failure(new ServerErrorFailure(
           String.format("Failed to fetch request queue: %s: %s",
