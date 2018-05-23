@@ -2,6 +2,7 @@ package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.domain.representations.ItemProperties;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
@@ -9,8 +10,13 @@ import org.folio.circulation.support.ValidationErrorFailure;
 import java.util.concurrent.CompletableFuture;
 
 import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
+import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
 
 public class LoanValidation {
+  private static final String ITEM_BARCODE_PROPERTY_NAME = "itemBarcode";
+  private static final String USER_BARCODE_PROPERTY_NAME = "userBarcode";
+  private static final String PROXY_USER_BARCODE_PROPERTY_NAME = "proxyUserBarcode";
+
   private LoanValidation() { }
 
   public static HttpResult<LoanAndRelatedRecords> refuseWhenItemDoesNotExist(
@@ -21,7 +27,7 @@ public class LoanValidation {
         final String itemId = loan.getLoan().getItemId();
 
         return HttpResult.failure(new ValidationErrorFailure(
-          "Item does not exist", "itemId", itemId));
+          "Item does not exist", ITEM_ID, itemId));
       }
       else {
         return result;
@@ -36,7 +42,7 @@ public class LoanValidation {
       if(loanAndRelatedRecords.getInventoryRecords().getItem() == null) {
         return HttpResult.failure(new ValidationErrorFailure(
           String.format("No item with barcode %s exists", barcode),
-          "itemBarcode", barcode));
+          ITEM_BARCODE_PROPERTY_NAME, barcode));
       }
       else {
         return result;
@@ -84,7 +90,7 @@ public class LoanValidation {
       if(hasAwaitingPickupRequestForOtherPatron(requestQueue, requestingUser)) {
         return HttpResult.failure(new ValidationErrorFailure(
           "User checking out must be requester awaiting pickup",
-          "userBarcode", barcode));
+          USER_BARCODE_PROPERTY_NAME, barcode));
       }
       else {
         return loanAndRelatedRecords;
@@ -102,12 +108,12 @@ public class LoanValidation {
         if (!requestingUser.containsKey("active")) {
           return HttpResult.failure(new ValidationErrorFailure(
             "Cannot determine if user is active or not",
-            "userBarcode", barcode));
+            USER_BARCODE_PROPERTY_NAME, barcode));
         }
         if (requestingUser.isInactive()) {
           return HttpResult.failure(new ValidationErrorFailure(
             "Cannot check out to inactive user",
-            "userBarcode", barcode));
+            USER_BARCODE_PROPERTY_NAME, barcode));
         } else {
           return HttpResult.success(loan);
         }
@@ -128,12 +134,12 @@ public class LoanValidation {
       else if (!proxyingUser.containsKey("active")) {
         return HttpResult.failure(new ValidationErrorFailure(
           "Cannot determine if proxying user is active or not",
-          "proxyUserBarcode", barcode));
+          PROXY_USER_BARCODE_PROPERTY_NAME, barcode));
       }
       else if(proxyingUser.isInactive()) {
         return HttpResult.failure(new ValidationErrorFailure(
           "Cannot check out via inactive proxying user",
-          "proxyUserBarcode", barcode));
+          PROXY_USER_BARCODE_PROPERTY_NAME, barcode));
       }
       else {
         return loanAndRelatedRecords;
@@ -165,14 +171,14 @@ public class LoanValidation {
   }
 
   public static String determineLocationIdForItem(JsonObject item, JsonObject holding) {
-    if(item != null && item.containsKey("temporaryLocationId")) {
-      return item.getString("temporaryLocationId");
+    if(item != null && item.containsKey(ItemProperties.TEMPORARY_LOCATION_ID)) {
+      return item.getString(ItemProperties.TEMPORARY_LOCATION_ID);
     }
-    else if(holding != null && holding.containsKey("permanentLocationId")) {
-      return holding.getString("permanentLocationId");
+    else if(holding != null && holding.containsKey(ItemProperties.PERMANENT_LOCATION_ID)) {
+      return holding.getString(ItemProperties.PERMANENT_LOCATION_ID);
     }
-    else if(item != null && item.containsKey("permanentLocationId")) {
-      return item.getString("permanentLocationId");
+    else if(item != null && item.containsKey(ItemProperties.PERMANENT_LOCATION_ID)) {
+      return item.getString(ItemProperties.PERMANENT_LOCATION_ID);
     }
     else {
       return null;
@@ -190,7 +196,7 @@ public class LoanValidation {
       .thenApply(r -> r.next(openLoan -> {
         if(openLoan) {
           return HttpResult.failure(new ValidationErrorFailure(
-            "Cannot check out item that already has an open loan", "itemBarcode", barcode));
+            "Cannot check out item that already has an open loan", ITEM_BARCODE_PROPERTY_NAME, barcode));
         }
         else {
           return HttpResult.success(loanAndRelatedRecords);
@@ -223,7 +229,7 @@ public class LoanValidation {
 
       if(ItemStatus.isCheckedOut(item)) {
         return HttpResult.failure(new ValidationErrorFailure(
-          "Item is already checked out", "itemBarcode", barcode));
+          "Item is already checked out", ITEM_BARCODE_PROPERTY_NAME, barcode));
       }
       else {
         return loanAndRelatedRecords;

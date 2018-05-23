@@ -3,6 +3,7 @@ package org.folio.circulation.domain.policy;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanValidation;
+import org.folio.circulation.domain.representations.ItemProperties;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
@@ -11,6 +12,8 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
+
+import static org.folio.circulation.domain.representations.ItemProperties.MATERIAL_TYPE_ID;
 
 public class LoanPolicyRepository {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -91,7 +94,7 @@ public class LoanPolicyRepository {
     String locationId = LoanValidation.determineLocationIdForItem(item, holding);
 
     //Got instance record, we're good to continue
-    String materialTypeId = item.getString("materialTypeId");
+    String materialTypeId = item.getString(MATERIAL_TYPE_ID);
 
     String patronGroupId = user.getString("patronGroup");
 
@@ -121,8 +124,8 @@ public class LoanPolicyRepository {
   }
 
   private static String determineLoanTypeForItem(JsonObject item) {
-    return item.containsKey("temporaryLoanTypeId") && !item.getString("temporaryLoanTypeId").isEmpty()
-      ? item.getString("temporaryLoanTypeId")
-      : item.getString("permanentLoanTypeId");
+    return item.containsKey(ItemProperties.TEMPORARY_LOAN_TYPE_ID) && !item.getString(ItemProperties.TEMPORARY_LOAN_TYPE_ID).isEmpty()
+      ? item.getString(ItemProperties.TEMPORARY_LOAN_TYPE_ID)
+      : item.getString(ItemProperties.PERMANENT_LOAN_TYPE_ID);
   }
 }

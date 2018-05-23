@@ -3,6 +3,8 @@ package org.folio.circulation.domain;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 
+import static org.folio.circulation.domain.representations.RequestProperties.STATUS;
+
 public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private final JsonObject representation;
 
@@ -20,7 +22,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   boolean isOpen() {
-    String status = representation.getString("status");
+    String status = representation.getString(STATUS);
 
     return StringUtils.equals(status, RequestStatus.OPEN_AWAITING_PICKUP)
       || StringUtils.equals(status, RequestStatus.OPEN_NOT_YET_FILLED);
@@ -54,10 +56,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   String getStatus() {
-    return representation.getString("status");
+    return representation.getString(STATUS);
   }
 
   void changeStatus(String status) {
-    representation.put("status", status);
+    representation.put(STATUS, status);
   }
 }

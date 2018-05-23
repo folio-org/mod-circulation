@@ -6,6 +6,8 @@ import io.vertx.ext.web.RoutingContext;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.*;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
+import org.folio.circulation.domain.representations.ItemProperties;
+import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.*;
@@ -21,8 +23,6 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.LoanValidation.defaultStatusAndAction;
 
 public class LoanCollectionResource extends CollectionResource {
-  private static final String MT_ID_PROPERTY = "materialTypeId";
-
   public LoanCollectionResource(HttpClient client) {
     super(client, "/circulation/loans");
   }
@@ -174,7 +174,7 @@ public class LoanCollectionResource extends CollectionResource {
       final Collection<JsonObject> loans = wrappedLoans.getRecords();
 
       List<String> itemIds = loans.stream()
-        .map(loan -> loan.getString("itemId"))
+        .map(loan -> loan.getString(LoanProperties.ITEM_ID))
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
 
@@ -209,7 +209,7 @@ public class LoanCollectionResource extends CollectionResource {
 
           //Also get a list of material types
           List<String> materialTypeIds = records.getItems().stream()
-            .map(item -> item.getString(MT_ID_PROPERTY))
+            .map(item -> item.getString(ItemProperties.MATERIAL_TYPE_ID))
             .filter(StringUtils::isNotBlank)
             .collect(Collectors.toList());
           CompletableFuture<Response> materialTypesFetched = new CompletableFuture<>();
@@ -229,7 +229,7 @@ public class LoanCollectionResource extends CollectionResource {
 
             loans.forEach( loan -> {
               Optional<JsonObject> possibleItem = records.findItemById(
-                loan.getString("itemId"));
+                loan.getString(LoanProperties.ITEM_ID));
 
               //No need to pass on the itemStatus property,
               // as only used to populate the history
@@ -240,7 +240,7 @@ public class LoanCollectionResource extends CollectionResource {
               String[] materialTypeId = new String[]{null};
               if(possibleItem.isPresent()) {
                 JsonObject item = possibleItem.get();
-                materialTypeId[0] = item.getString(MT_ID_PROPERTY);
+                materialTypeId[0] = item.getString(ItemProperties.MATERIAL_TYPE_ID);
 
                 Optional<JsonObject> possibleHolding = records.findHoldingById(
                   item.getString("holdingsRecordId"));
@@ -329,7 +329,7 @@ public class LoanCollectionResource extends CollectionResource {
     return result.next(loan -> {
       if(loan.getLoan().getInventoryRecords().getHolding() == null) {
         return HttpResult.failure(new ValidationErrorFailure(
-          "Holding does not exist", "itemId", loan.getLoan().getItemId()));
+          "Holding does not exist", LoanProperties.ITEM_ID, loan.getLoan().getItemId()));
       }
       else {
         return result;
