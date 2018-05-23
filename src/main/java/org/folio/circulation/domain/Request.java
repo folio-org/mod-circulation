@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
+import org.apache.commons.lang3.StringUtils;
 
 public class Request {
   private final JsonObject representation;
@@ -19,5 +20,17 @@ public class Request {
 
   public void put(String propertyName, String value) {
     representation.put(propertyName, value);
+  }
+
+  boolean isFulfillable() {
+    return StringUtils.equals(getString("fulfilmentPreference"),
+      RequestFulfilmentPreference.HOLD_SHELF);
+  }
+
+  boolean isOpen() {
+    String status = getString("status");
+
+    return StringUtils.equals(status, RequestStatus.OPEN_AWAITING_PICKUP)
+      || StringUtils.equals(status, RequestStatus.OPEN_NOT_YET_FILLED);
   }
 }
