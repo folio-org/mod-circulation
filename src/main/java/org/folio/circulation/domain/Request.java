@@ -3,7 +3,7 @@ package org.folio.circulation.domain;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 
-public class Request implements ItemRelatedRecord {
+public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private final JsonObject representation;
 
   public Request(JsonObject representation) {
@@ -39,11 +39,13 @@ public class Request implements ItemRelatedRecord {
     return representation.getString("itemId");
   }
 
-  String getRequesterId() {
+  @Override
+  public String getRequesterId() {
     return getString("requesterId");
   }
 
-  String getProxyUserId() {
+  @Override
+  public String getProxyUserId() {
     return getString("proxyUserId");
   }
 }
