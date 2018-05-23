@@ -30,8 +30,8 @@ public class ProxyRelationshipValidator {
 
     //TODO: Improve mapping back null result to records
     return refuseWhenInvalid(
-      requestAndRelatedRecords.request.getString("proxyUserId"),
-      requestAndRelatedRecords.request.getString("requesterId"))
+      requestAndRelatedRecords.getRequest().getString("proxyUserId"),
+      requestAndRelatedRecords.getRequest().getString("requesterId"))
       .thenApply(result -> result.map(v -> requestAndRelatedRecords));
   }
 

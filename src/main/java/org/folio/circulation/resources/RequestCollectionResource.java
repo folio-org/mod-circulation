@@ -111,11 +111,11 @@ public class RequestCollectionResource extends CollectionResource {
           return;
         }
 
-        final InventoryRecords inventoryRecords = result.value().inventoryRecords;
+        final InventoryRecords inventoryRecords = result.value().getInventoryRecords();
         final JsonObject item = inventoryRecords.getItem();
         final JsonObject instance = inventoryRecords.getInstance();
-        final JsonObject requester = result.value().requestingUser;
-        final JsonObject proxy = result.value().proxyUser;
+        final JsonObject requester = result.value().getRequestingUser();
+        final JsonObject proxy = result.value().getProxyUser();
 
         addStoredItemProperties(representation, item, instance);
         addStoredRequesterProperties(representation, requester);
@@ -382,10 +382,10 @@ public class RequestCollectionResource extends CollectionResource {
     HttpResult<RequestAndRelatedRecords> result) {
 
     return result.next(requestAndRelatedRecords -> {
-      if(requestAndRelatedRecords.inventoryRecords.getItem() == null) {
+      if(requestAndRelatedRecords.getInventoryRecords().getItem() == null) {
         return HttpResult.failure(new ValidationErrorFailure(
           "Item does not exist", "itemId",
-          requestAndRelatedRecords.request.getString("itemId")));
+          requestAndRelatedRecords.getRequest().getString("itemId")));
       }
       else {
         return result;
@@ -397,8 +397,8 @@ public class RequestCollectionResource extends CollectionResource {
     HttpResult<RequestAndRelatedRecords> result) {
 
     return result.next(requestAndRelatedRecords -> {
-      Request request = requestAndRelatedRecords.request;
-      JsonObject item = requestAndRelatedRecords.inventoryRecords.item;
+      Request request = requestAndRelatedRecords.getRequest();
+      JsonObject item = requestAndRelatedRecords.getInventoryRecords().item;
 
       RequestType requestType = RequestType.from(request);
 
@@ -421,12 +421,12 @@ public class RequestCollectionResource extends CollectionResource {
 
     CompletableFuture<HttpResult<RequestAndRelatedRecords>> onCreated = new CompletableFuture<>();
 
-    JsonObject request = requestAndRelatedRecords.request.asJson();
+    JsonObject request = requestAndRelatedRecords.getRequest().asJson();
 
-    JsonObject item = requestAndRelatedRecords.inventoryRecords.getItem();
-    JsonObject instance = requestAndRelatedRecords.inventoryRecords.getInstance();
-    JsonObject requestingUser = requestAndRelatedRecords.requestingUser;
-    JsonObject proxyUser = requestAndRelatedRecords.proxyUser;
+    JsonObject item = requestAndRelatedRecords.getInventoryRecords().getItem();
+    JsonObject instance = requestAndRelatedRecords.getInventoryRecords().getInstance();
+    JsonObject requestingUser = requestAndRelatedRecords.getRequestingUser();
+    JsonObject proxyUser = requestAndRelatedRecords.getProxyUser();
 
     addStoredItemProperties(request, item, instance);
     addStoredRequesterProperties(request, requestingUser);
@@ -445,10 +445,10 @@ public class RequestCollectionResource extends CollectionResource {
   }
 
   private JsonObject extendedRequest(RequestAndRelatedRecords requestAndRelatedRecords) {
-    JsonObject item = requestAndRelatedRecords.inventoryRecords.getItem();
-    JsonObject holding = requestAndRelatedRecords.inventoryRecords.getHolding();
+    JsonObject item = requestAndRelatedRecords.getInventoryRecords().getItem();
+    JsonObject holding = requestAndRelatedRecords.getInventoryRecords().getHolding();
 
-    final JsonObject representation = requestAndRelatedRecords.request.asJson();
+    final JsonObject representation = requestAndRelatedRecords.getRequest().asJson();
 
     addAdditionalItemProperties(representation, holding, item);
 

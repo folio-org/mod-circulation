@@ -27,18 +27,18 @@ public class UpdateLoanActionHistory {
   public CompletableFuture<HttpResult<RequestAndRelatedRecords>> onRequestCreation(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    RequestType requestType = RequestType.from(requestAndRelatedRecords.request);
+    RequestType requestType = RequestType.from(requestAndRelatedRecords.getRequest());
 
     String action = requestType.toLoanAction();
     String itemStatus = ItemStatus.getStatus(
-      requestAndRelatedRecords.inventoryRecords.item);
+      requestAndRelatedRecords.getInventoryRecords().item);
 
     //Do not change any loans if no new status
     if(StringUtils.isEmpty(action)) {
       return skip(requestAndRelatedRecords);
     }
 
-    String itemId = requestAndRelatedRecords.request.getString("itemId");
+    String itemId = requestAndRelatedRecords.getRequest().getString("itemId");
 
     String queryTemplate = "query=itemId=%s+and+status.name=Open";
     String query = String.format(queryTemplate, itemId);
