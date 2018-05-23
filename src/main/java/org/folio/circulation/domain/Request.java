@@ -10,25 +10,17 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     this.representation = representation;
   }
 
-  public String getString(String propertyName) {
-    return representation.getString(propertyName);
-  }
-
   public JsonObject asJson() {
     return representation.copy();
   }
 
-  public void put(String propertyName, String value) {
-    representation.put(propertyName, value);
-  }
-
   boolean isFulfillable() {
-    return StringUtils.equals(getString("fulfilmentPreference"),
+    return StringUtils.equals(getFulfilmentPreference(),
       RequestFulfilmentPreference.HOLD_SHELF);
   }
 
   boolean isOpen() {
-    String status = getString("status");
+    String status = representation.getString("status");
 
     return StringUtils.equals(status, RequestStatus.OPEN_AWAITING_PICKUP)
       || StringUtils.equals(status, RequestStatus.OPEN_NOT_YET_FILLED);
@@ -41,11 +33,31 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   @Override
   public String getRequesterId() {
-    return getString("requesterId");
+    return representation.getString("requesterId");
   }
 
   @Override
   public String getProxyUserId() {
-    return getString("proxyUserId");
+    return representation.getString("proxyUserId");
+  }
+
+  String getFulfilmentPreference() {
+    return representation.getString("fulfilmentPreference");
+  }
+
+  String getId() {
+    return representation.getString("id");
+  }
+
+  String getRequestType() {
+    return representation.getString("requestType");
+  }
+
+  String getStatus() {
+    return representation.getString("status");
+  }
+
+  void changeStatus(String status) {
+    representation.put("status", status);
   }
 }

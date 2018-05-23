@@ -33,6 +33,8 @@ public class LoanCollectionResource extends CollectionResource {
     JsonObject incomingRepresentation = routingContext.getBodyAsJson();
     defaultStatusAndAction(incomingRepresentation);
 
+    final Loan loan = Loan.from(incomingRepresentation);
+
     final Clients clients = Clients.create(context, client);
 
     final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
@@ -49,14 +51,9 @@ public class LoanCollectionResource extends CollectionResource {
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> new ValidationErrorFailure(
         "proxyUserId is not valid", "proxyUserId",
-        incomingRepresentation.getString("proxyUserId")));
+        loan.getProxyUserId()));
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
-
-    final String itemId = incomingRepresentation.getString("itemId");
-    final String requestingUserId = incomingRepresentation.getString("userId");
-
-    final Loan loan = Loan.from(incomingRepresentation);
 
     completedFuture(HttpResult.success(new LoanAndRelatedRecords(loan)))
       .thenApply(this::refuseWhenNotOpenOrClosed)
@@ -65,8 +62,8 @@ public class LoanCollectionResource extends CollectionResource {
       .thenApply(this::refuseWhenHoldingDoesNotExist)
       .thenApply(LoanValidation::refuseWhenItemIsAlreadyCheckedOut)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
-      .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
-      .thenCombineAsync(userFetcher.getUser(requestingUserId), this::addUser)
+      .thenCombineAsync(requestQueueFetcher.get(loan.getItemId()), this::addRequestQueue)
+      .thenCombineAsync(userFetcher.getUser(loan.getRequesterId()), this::addUser)
       .thenApply(LoanValidation::refuseWhenUserIsNotAwaitingPickup)
       .thenComposeAsync(r -> r.after(locationRepository::getLocation))
       .thenComposeAsync(r -> r.after(materialTypeRepository::getMaterialType))
@@ -88,6 +85,8 @@ public class LoanCollectionResource extends CollectionResource {
 
     defaultStatusAndAction(incomingRepresentation);
 
+    final Loan loan = Loan.from(incomingRepresentation);
+
     final Clients clients = Clients.create(context, client);
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
     final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
@@ -98,18 +97,14 @@ public class LoanCollectionResource extends CollectionResource {
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> new ValidationErrorFailure(
         "proxyUserId is not valid", "proxyUserId",
-        incomingRepresentation.getString("proxyUserId")));
-
-    final Loan loan = Loan.from(incomingRepresentation);
-
-    String itemId = loan.getItemId();
+        loan.getProxyUserId()));
 
     completedFuture(HttpResult.success(new LoanAndRelatedRecords(loan)))
       .thenApply(this::refuseWhenNotOpenOrClosed)
       .thenCombineAsync(inventoryFetcher.fetch(loan), this::addInventoryRecords)
       .thenApply(LoanValidation::refuseWhenItemDoesNotExist)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
-      .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
+      .thenCombineAsync(requestQueueFetcher.get(loan.getItemId()), this::addRequestQueue)
       .thenComposeAsync(result -> result.after(requestQueueUpdate::onCheckIn))
       .thenComposeAsync(result -> result.after(updateItem::onLoanUpdate))
       .thenComposeAsync(result -> result.after(loanRepository::updateLoan))

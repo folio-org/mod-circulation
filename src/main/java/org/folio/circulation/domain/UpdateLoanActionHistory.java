@@ -38,7 +38,7 @@ public class UpdateLoanActionHistory {
       return skip(requestAndRelatedRecords);
     }
 
-    String itemId = requestAndRelatedRecords.getRequest().getString("itemId");
+    String itemId = requestAndRelatedRecords.getRequest().getItemId();
 
     String queryTemplate = "query=itemId=%s+and+status.name=Open";
     String query = String.format(queryTemplate, itemId);

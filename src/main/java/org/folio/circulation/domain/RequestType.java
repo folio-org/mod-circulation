@@ -13,7 +13,7 @@ public class RequestType {
   public final String value;
 
   public static RequestType from(Request request) {
-    return new RequestType(request.getString("requestType"));
+    return new RequestType(request.getRequestType());
   }
 
   private RequestType(String value) {

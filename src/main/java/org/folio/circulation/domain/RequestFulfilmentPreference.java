@@ -14,7 +14,7 @@ public class RequestFulfilmentPreference {
   }
 
   public static RequestFulfilmentPreference from(Request request) {
-    return new RequestFulfilmentPreference(request.getString("fulfilmentPreference"));
+    return new RequestFulfilmentPreference(request.getFulfilmentPreference());
   }
 
   String toCheckedInItemStatus() {

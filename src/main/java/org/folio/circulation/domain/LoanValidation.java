@@ -157,11 +157,11 @@ public class LoanValidation {
   }
 
   private static boolean isFor(Request request, JsonObject user) {
-    return StringUtils.equals(request.getString("requesterId"), user.getString("id"));
+    return StringUtils.equals(request.getRequesterId(), user.getString("id"));
   }
 
   private static boolean isAwaitingPickup(Request highestPriority) {
-    return StringUtils.equals(highestPriority.getString("status"), OPEN_AWAITING_PICKUP);
+    return StringUtils.equals(highestPriority.getStatus(), OPEN_AWAITING_PICKUP);
   }
 
   public static String determineLocationIdForItem(JsonObject item, JsonObject holding) {

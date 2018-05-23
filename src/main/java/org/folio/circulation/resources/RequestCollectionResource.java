@@ -5,6 +5,7 @@ import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.domain.*;
+import org.folio.circulation.domain.representations.RequestProperties;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.server.*;
 
@@ -29,18 +30,6 @@ public class RequestCollectionResource extends CollectionResource {
 
     JsonObject representation = routingContext.getBodyAsJson();
 
-    final Clients clients = Clients.create(context, client);
-
-    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
-    final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
-    final UserFetcher userFetcher = new UserFetcher(clients);
-    final UpdateItem updateItem = new UpdateItem(clients);
-    final UpdateLoanActionHistory updateLoanActionHistory = new UpdateLoanActionHistory(clients);
-    final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
-      clients, () -> new ValidationErrorFailure(
-      "proxyUserId is not valid", "proxyUserId",
-      representation.getString("proxyUserId")));
-
     RequestStatus status = RequestStatus.from(representation);
 
     HttpServerResponse response = routingContext.response();
@@ -57,18 +46,26 @@ public class RequestCollectionResource extends CollectionResource {
 
     final Request request = new Request(representation);
 
-    final String itemId = request.getItemId();
-    final String requestingUserId = request.getString("requesterId");
-    final String proxyUserId = request.getString("proxyUserId");
+    final Clients clients = Clients.create(context, client);
+
+    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
+    final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
+    final UserFetcher userFetcher = new UserFetcher(clients);
+    final UpdateItem updateItem = new UpdateItem(clients);
+    final UpdateLoanActionHistory updateLoanActionHistory = new UpdateLoanActionHistory(clients);
+    final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
+      clients, () -> new ValidationErrorFailure(
+      "proxyUserId is not valid", RequestProperties.PROXY_USER_ID,
+      request.getProxyUserId()));
 
     completedFuture(HttpResult.success(new RequestAndRelatedRecords(request)))
       .thenCombineAsync(inventoryFetcher.fetch(request), this::addInventoryRecords)
       .thenApply(this::refuseWhenItemDoesNotExist)
       .thenApply(this::refuseWhenItemIsNotValid)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
-      .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
-      .thenCombineAsync(userFetcher.getUser(requestingUserId, false), this::addUser)
-      .thenCombineAsync(userFetcher.getUser(proxyUserId, false), this::addProxyUser)
+      .thenCombineAsync(requestQueueFetcher.get(request.getItemId()), this::addRequestQueue)
+      .thenCombineAsync(userFetcher.getUser(request.getRequesterId(), false), this::addUser)
+      .thenCombineAsync(userFetcher.getUser(request.getProxyUserId(), false), this::addProxyUser)
       .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
       .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreation))
       .thenComposeAsync(r -> r.after(records -> createRequest(records, clients)))
@@ -83,6 +80,10 @@ public class RequestCollectionResource extends CollectionResource {
     String id = routingContext.request().getParam("id");
     JsonObject representation = routingContext.getBodyAsJson();
 
+    removeRelatedRecordInformation(representation);
+
+    final Request request = new Request(representation);
+
     final Clients clients = Clients.create(context, client);
 
     final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
@@ -90,20 +91,13 @@ public class RequestCollectionResource extends CollectionResource {
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> new ValidationErrorFailure(
-      "proxyUserId is not valid", "proxyUserId",
-      representation.getString("proxyUserId")));
-
-    removeRelatedRecordInformation(representation);
-
-    final String requestingUserId = representation.getString("requesterId");
-    final String proxyUserId = representation.getString("proxyUserId");
-
-    final Request request = new Request(representation);
+      "proxyUserId is not valid", RequestProperties.PROXY_USER_ID,
+      request.getProxyUserId()));
 
     completedFuture(HttpResult.success(new RequestAndRelatedRecords(request)))
       .thenCombineAsync(inventoryFetcher.fetch(request), this::addInventoryRecords)
-      .thenCombineAsync(userFetcher.getUser(requestingUserId, false), this::addUser)
-      .thenCombineAsync(userFetcher.getUser(proxyUserId, false), this::addProxyUser)
+      .thenCombineAsync(userFetcher.getUser(request.getRequesterId(), false), this::addUser)
+      .thenCombineAsync(userFetcher.getUser(request.getProxyUserId(), false), this::addProxyUser)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenAcceptAsync(result -> {
         if(result.failed()) {
@@ -385,7 +379,7 @@ public class RequestCollectionResource extends CollectionResource {
       if(requestAndRelatedRecords.getInventoryRecords().getItem() == null) {
         return HttpResult.failure(new ValidationErrorFailure(
           "Item does not exist", "itemId",
-          requestAndRelatedRecords.getRequest().getString("itemId")));
+          requestAndRelatedRecords.getRequest().getItemId()));
       }
       else {
         return result;
@@ -406,7 +400,7 @@ public class RequestCollectionResource extends CollectionResource {
         return HttpResult.failure(new ValidationErrorFailure(
           String.format("Item is not %s, %s or %s", CHECKED_OUT,
             CHECKED_OUT_HELD, CHECKED_OUT_RECALLED),
-          "itemId", request.getString("itemId")
+          "itemId", request.getItemId()
         ));
       }
       else {

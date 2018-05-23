@@ -21,9 +21,9 @@ public class UpdateRequestQueue {
     if (relatedRecords.getRequestQueue().hasOutstandingFulfillableRequests()) {
       Request firstRequest = relatedRecords.getRequestQueue().getHighestPriorityFulfillableRequest();
 
-      firstRequest.put("status", RequestStatus.OPEN_AWAITING_PICKUP);
+      firstRequest.changeStatus(RequestStatus.OPEN_AWAITING_PICKUP);
 
-      clients.requestsStorage().put(firstRequest.getString("id"), firstRequest.asJson(),
+      clients.requestsStorage().put(firstRequest.getId(), firstRequest.asJson(),
         updateRequestResponse -> {
           if (updateRequestResponse.getStatusCode() == 204) {
             requestUpdated.complete(HttpResult.success(relatedRecords));
@@ -53,9 +53,9 @@ public class UpdateRequestQueue {
     if (requestQueue.hasOutstandingFulfillableRequests()) {
       Request firstRequest = requestQueue.getHighestPriorityFulfillableRequest();
 
-      firstRequest.put("status", RequestStatus.CLOSED_FILLED);
+      firstRequest.changeStatus(RequestStatus.CLOSED_FILLED);
 
-      clients.requestsStorage().put(firstRequest.getString("id"), firstRequest.asJson(),
+      clients.requestsStorage().put(firstRequest.getId(), firstRequest.asJson(),
         updateRequestResponse -> {
           if (updateRequestResponse.getStatusCode() == 204) {
             requestUpdated.complete(HttpResult.success(requestQueue));
