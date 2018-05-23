@@ -26,9 +26,8 @@ public class LoanCollectionResource extends CollectionResource {
   public LoanCollectionResource(HttpClient client) {
     super(client, "/circulation/loans");
   }
-
-  //TODO: Add exceptional completion of futures to create failed results
-  protected void create(RoutingContext routingContext) {
+  
+  void create(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
 
     JsonObject loan = routingContext.getBodyAsJson();
@@ -158,133 +157,132 @@ public class LoanCollectionResource extends CollectionResource {
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
     clients.loansStorage().getMany(routingContext.request().query(), loansResponse -> {
-      if(loansResponse.getStatusCode() == 200) {
-        final MultipleRecordsWrapper wrappedLoans = MultipleRecordsWrapper.fromBody(
-          loansResponse.getBody(), "loans");
+      if (loansResponse.getStatusCode() != 200) {
+        ServerErrorResponse.internalError(routingContext.response(),
+          "Failed to fetch loans from storage");
+        return;
+      }
 
-        if(wrappedLoans.isEmpty()) {
-          JsonResponse.success(routingContext.response(),
-            wrappedLoans.toJson());
+      final MultipleRecordsWrapper wrappedLoans = MultipleRecordsWrapper.fromBody(
+        loansResponse.getBody(), "loans");
 
-          return;
-        }
+      if(wrappedLoans.isEmpty()) {
+        JsonResponse.success(routingContext.response(),
+          wrappedLoans.toJson());
+        return;
+      }
 
-        final Collection<JsonObject> loans = wrappedLoans.getRecords();
+      final Collection<JsonObject> loans = wrappedLoans.getRecords();
 
-        List<String> itemIds = loans.stream()
-          .map(loan -> loan.getString("itemId"))
-          .filter(Objects::nonNull)
+      List<String> itemIds = loans.stream()
+        .map(loan -> loan.getString("itemId"))
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
+
+      InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
+
+      CompletableFuture<MultipleInventoryRecords> inventoryRecordsFetched =
+        inventoryFetcher.fetch(itemIds, e ->
+          ServerErrorResponse.internalError(routingContext.response(), e.toString()));
+
+      inventoryRecordsFetched.thenAccept(records -> {
+        List<String> locationIds = records.getItems().stream()
+          .map(item -> LoanValidation.determineLocationIdForItem(item,
+            records.findHoldingById(item.getString("holdingsRecordId")).orElse(null)))
+          .filter(StringUtils::isNotBlank)
           .collect(Collectors.toList());
 
-        InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
+        CompletableFuture<Response> locationsFetched = new CompletableFuture<>();
 
-        CompletableFuture<MultipleInventoryRecords> inventoryRecordsFetched =
-          inventoryFetcher.fetch(itemIds, e ->
-            ServerErrorResponse.internalError(routingContext.response(), e.toString()));
+        String locationsQuery = CqlHelper.multipleRecordsCqlQuery(locationIds);
 
-        inventoryRecordsFetched.thenAccept(records -> {
-          List<String> locationIds = records.getItems().stream()
-            .map(item -> LoanValidation.determineLocationIdForItem(item,
-              records.findHoldingById(item.getString("holdingsRecordId")).orElse(null)))
+        clients.locationsStorage().getMany(locationsQuery, locationIds.size(), 0,
+          locationsFetched::complete);
+
+        locationsFetched.thenAccept(locationsResponse -> {
+          if(locationsResponse.getStatusCode() != 200) {
+            ServerErrorResponse.internalError(routingContext.response(),
+              String.format("Locations request (%s) failed %s: %s",
+                locationsQuery, locationsResponse.getStatusCode(),
+                locationsResponse.getBody()));
+            return;
+          }
+
+          //Also get a list of material types
+          List<String> materialTypeIds = records.getItems().stream()
+            .map(item -> item.getString(MT_ID_PROPERTY))
             .filter(StringUtils::isNotBlank)
             .collect(Collectors.toList());
+          CompletableFuture<Response> materialTypesFetched = new CompletableFuture<>();
+          String materialTypesQuery = CqlHelper.multipleRecordsCqlQuery(materialTypeIds);
 
-          CompletableFuture<Response> locationsFetched = new CompletableFuture<>();
+          clients.materialTypesStorage().getMany(materialTypesQuery,
+            materialTypeIds.size(), 0, materialTypesFetched::complete);
 
-          String locationsQuery = CqlHelper.multipleRecordsCqlQuery(locationIds);
-
-          clients.locationsStorage().getMany(locationsQuery, locationIds.size(), 0,
-            locationsFetched::complete);
-
-          locationsFetched.thenAccept(locationsResponse -> {
-            if(locationsResponse.getStatusCode() != 200) {
+          materialTypesFetched.thenAccept(materialTypesResponse -> {
+            if(materialTypesResponse.getStatusCode() != 200) {
               ServerErrorResponse.internalError(routingContext.response(),
-                String.format("Locations request (%s) failed %s: %s",
-                  locationsQuery, locationsResponse.getStatusCode(),
-                  locationsResponse.getBody()));
+                String.format("Material Types request (%s) failed %s: %s",
+                  materialTypesQuery, materialTypesResponse.getStatusCode(),
+                  materialTypesResponse.getBody()));
               return;
             }
 
-            //Also get a list of material types
-            List<String> materialTypeIds = records.getItems().stream()
-              .map(item -> item.getString(MT_ID_PROPERTY))
-              .filter(StringUtils::isNotBlank)
-              .collect(Collectors.toList());
-            CompletableFuture<Response> materialTypesFetched = new CompletableFuture<>();
-            String materialTypesQuery = CqlHelper.multipleRecordsCqlQuery(materialTypeIds);
+            loans.forEach( loan -> {
+              Optional<JsonObject> possibleItem = records.findItemById(
+                loan.getString("itemId"));
 
-            clients.materialTypesStorage().getMany(materialTypesQuery,
-              materialTypeIds.size(), 0, materialTypesFetched::complete);
+              //No need to pass on the itemStatus property,
+              // as only used to populate the history
+              //and could be confused with aggregation of current status
+              loan.remove("itemStatus");
 
-            materialTypesFetched.thenAccept(materialTypesResponse -> {
-              if(materialTypesResponse.getStatusCode() != 200) {
-                ServerErrorResponse.internalError(routingContext.response(),
-                  String.format("Material Types request (%s) failed %s: %s",
-                    materialTypesQuery, materialTypesResponse.getStatusCode(),
-                    materialTypesResponse.getBody()));
-                return;
-              }
+              Optional<JsonObject> possibleInstance = Optional.empty();
+              String[] materialTypeId = new String[]{null};
+              if(possibleItem.isPresent()) {
+                JsonObject item = possibleItem.get();
+                materialTypeId[0] = item.getString(MT_ID_PROPERTY);
 
-              loans.forEach( loan -> {
-                Optional<JsonObject> possibleItem = records.findItemById(
-                  loan.getString("itemId"));
+                Optional<JsonObject> possibleHolding = records.findHoldingById(
+                  item.getString("holdingsRecordId"));
 
-                //No need to pass on the itemStatus property,
-                // as only used to populate the history
-                //and could be confused with aggregation of current status
-                loan.remove("itemStatus");
+                if(possibleHolding.isPresent()) {
+                  JsonObject holding = possibleHolding.get();
 
-                Optional<JsonObject> possibleInstance = Optional.empty();
-                String[] materialTypeId = new String[]{null};
-                if(possibleItem.isPresent()) {
-                  JsonObject item = possibleItem.get();
-                  materialTypeId[0] = item.getString(MT_ID_PROPERTY);
-
-                  Optional<JsonObject> possibleHolding = records.findHoldingById(
-                    item.getString("holdingsRecordId"));
-
-                  if(possibleHolding.isPresent()) {
-                    JsonObject holding = possibleHolding.get();
-
-                    possibleInstance = records.findInstanceById(
-                      holding.getString("instanceId"));
-                  }
-
-                  List<JsonObject> locations = JsonArrayHelper.toList(
-                    locationsResponse.getJson().getJsonArray("locations"));
-
-                  Optional<JsonObject> possibleLocation = locations.stream()
-                    .filter(location -> location.getString("id").equals(
-                      LoanValidation.determineLocationIdForItem(item, possibleHolding.orElse(null))))
-                    .findFirst();
-
-                  List<JsonObject> materialTypes = JsonArrayHelper.toList(
-                    materialTypesResponse.getJson().getJsonArray("mtypes"));
-
-
-                  Optional<JsonObject> possibleMaterialType = materialTypes.stream()
-                    .filter(materialType -> materialType.getString("id")
-                    .equals(materialTypeId[0])).findFirst();
-
-                  loan.put("item", loanRepresentation.createItemSummary(item,
-                    possibleInstance.orElse(null),
-                      possibleHolding.orElse(null),
-                      possibleLocation.orElse(null),
-                      possibleMaterialType.orElse(null)));
+                  possibleInstance = records.findInstanceById(
+                    holding.getString("instanceId"));
                 }
-              });
 
-              JsonResponse.success(routingContext.response(),
-                wrappedLoans.toJson());
+                List<JsonObject> locations = JsonArrayHelper.toList(
+                  locationsResponse.getJson().getJsonArray("locations"));
 
+                Optional<JsonObject> possibleLocation = locations.stream()
+                  .filter(location -> location.getString("id").equals(
+                    LoanValidation.determineLocationIdForItem(item, possibleHolding.orElse(null))))
+                  .findFirst();
+
+                List<JsonObject> materialTypes = JsonArrayHelper.toList(
+                  materialTypesResponse.getJson().getJsonArray("mtypes"));
+
+
+                Optional<JsonObject> possibleMaterialType = materialTypes.stream()
+                  .filter(materialType -> materialType.getString("id")
+                  .equals(materialTypeId[0])).findFirst();
+
+                loan.put("item", loanRepresentation.createItemSummary(item,
+                  possibleInstance.orElse(null),
+                    possibleHolding.orElse(null),
+                    possibleLocation.orElse(null),
+                    possibleMaterialType.orElse(null)));
+              }
             });
+
+            JsonResponse.success(routingContext.response(),
+              wrappedLoans.toJson());
+
           });
         });
-      }
-      else {
-        ServerErrorResponse.internalError(routingContext.response(),
-          "Failed to fetch loans from storage");
-      }
+      });
     });
   }
 
