@@ -5,42 +5,35 @@ import org.folio.circulation.support.InventoryRecords;
 
 public class RequestAndRelatedRecords {
   private final Request request;
-  private final InventoryRecords inventoryRecords;
   private final RequestQueue requestQueue;
   private final User requestingUser;
   private final User proxyUser;
 
   private RequestAndRelatedRecords(
     Request request,
-    InventoryRecords inventoryRecords,
     RequestQueue requestQueue,
     User requestingUser,
     User proxyUser) {
 
     this.request = request;
-    this.inventoryRecords = inventoryRecords;
     this.requestQueue = requestQueue;
     this.requestingUser = requestingUser;
     this.proxyUser = proxyUser;
   }
 
   public RequestAndRelatedRecords(Request request) {
-    this(request, null, null, null, null);
+    this(request, null, null, null);
   }
 
   RequestAndRelatedRecords withItem(JsonObject updatedItem) {
-    return new RequestAndRelatedRecords(this.request,
-      new InventoryRecords(updatedItem,
-      this.inventoryRecords.getHolding(),
-      this.inventoryRecords.getInstance()),
-      this.requestQueue,
-      this.requestingUser,
-      this.proxyUser);
+    return withInventoryRecords(new InventoryRecords(updatedItem,
+      getInventoryRecords().holding, getInventoryRecords().instance));
   }
 
   public RequestAndRelatedRecords withRequest(Request newRequest) {
+    newRequest.setInventoryRecords(request.getInventoryRecords());
+
     return new RequestAndRelatedRecords(newRequest,
-      this.inventoryRecords,
       this.requestQueue,
       this.requestingUser,
       this.proxyUser);
@@ -49,16 +42,16 @@ public class RequestAndRelatedRecords {
   public RequestAndRelatedRecords withRequestQueue(RequestQueue newRequestQueue) {
     return new RequestAndRelatedRecords(
       this.request,
-      this.inventoryRecords,
       newRequestQueue,
       this.requestingUser,
       this.proxyUser);
   }
 
   public RequestAndRelatedRecords withInventoryRecords(InventoryRecords newInventoryRecords) {
+    this.request.setInventoryRecords(newInventoryRecords);
+
     return new RequestAndRelatedRecords(
       this.request,
-      newInventoryRecords,
       this.requestQueue,
       this.requestingUser,
       this.proxyUser);
@@ -67,7 +60,6 @@ public class RequestAndRelatedRecords {
   public RequestAndRelatedRecords withRequestingUser(User newUser) {
     return new RequestAndRelatedRecords(
       this.request,
-      this.inventoryRecords,
       this.requestQueue,
       newUser,
       this.proxyUser);
@@ -76,7 +68,6 @@ public class RequestAndRelatedRecords {
   public RequestAndRelatedRecords withProxyUser(User newProxyUser) {
     return new RequestAndRelatedRecords(
       this.request,
-      this.inventoryRecords,
       this.requestQueue,
       this.requestingUser,
       newProxyUser);
@@ -87,7 +78,7 @@ public class RequestAndRelatedRecords {
   }
 
   public InventoryRecords getInventoryRecords() {
-    return inventoryRecords;
+    return request.getInventoryRecords();
   }
 
   RequestQueue getRequestQueue() {

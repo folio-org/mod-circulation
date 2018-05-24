@@ -4,7 +4,6 @@ import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.InventoryRecords;
 
 public class RelatedRecords {
-
   public final InventoryRecords inventoryRecords;
   public final RequestQueue requestQueue;
   public final JsonObject requestingUser;

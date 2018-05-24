@@ -2,11 +2,14 @@ package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.support.InventoryRecords;
 
 import static org.folio.circulation.domain.representations.RequestProperties.STATUS;
 
 public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private final JsonObject representation;
+
+  private InventoryRecords inventoryRecords;
 
   public Request(JsonObject representation) {
     this.representation = representation;
@@ -61,5 +64,13 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   void changeStatus(String status) {
     representation.put(STATUS, status);
+  }
+
+  public InventoryRecords getInventoryRecords() {
+    return inventoryRecords;
+  }
+
+  void setInventoryRecords(InventoryRecords inventoryRecords) {
+    this.inventoryRecords = inventoryRecords;
   }
 }
