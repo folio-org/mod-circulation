@@ -64,7 +64,7 @@ public class RequestCollectionResource extends CollectionResource {
       .thenApply(this::refuseWhenItemIsNotValid)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenCombineAsync(requestQueueFetcher.get(request.getItemId()), this::addRequestQueue)
-      .thenCombineAsync(userFetcher.getUser(request.getRequesterId(), false), this::addUser)
+      .thenCombineAsync(userFetcher.getUser(request.getUserId(), false), this::addUser)
       .thenCombineAsync(userFetcher.getUser(request.getProxyUserId(), false), this::addProxyUser)
       .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
       .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreation))
@@ -96,7 +96,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     completedFuture(HttpResult.success(new RequestAndRelatedRecords(request)))
       .thenCombineAsync(inventoryFetcher.fetch(request), this::addInventoryRecords)
-      .thenCombineAsync(userFetcher.getUser(request.getRequesterId(), false), this::addUser)
+      .thenCombineAsync(userFetcher.getUser(request.getUserId(), false), this::addUser)
       .thenCombineAsync(userFetcher.getUser(request.getProxyUserId(), false), this::addProxyUser)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenAcceptAsync(result -> {

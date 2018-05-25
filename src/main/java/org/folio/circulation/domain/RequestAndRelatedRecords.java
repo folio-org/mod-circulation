@@ -3,7 +3,7 @@ package org.folio.circulation.domain;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.InventoryRecords;
 
-public class RequestAndRelatedRecords {
+public class RequestAndRelatedRecords implements UserRelatedRecord {
   private final Request request;
   private final RequestQueue requestQueue;
   private final User requestingUser;
@@ -91,5 +91,15 @@ public class RequestAndRelatedRecords {
 
   public User getProxyUser() {
     return proxyUser;
+  }
+
+  @Override
+  public String getUserId() {
+    return request.getUserId();
+  }
+
+  @Override
+  public String getProxyUserId() {
+    return request.getProxyUserId();
   }
 }

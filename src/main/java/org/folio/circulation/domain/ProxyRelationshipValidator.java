@@ -25,24 +25,14 @@ public class ProxyRelationshipValidator {
     this.invalidRelationshipErrorSupplier = invalidRelationshipErrorSupplier;
   }
 
-  public CompletableFuture<HttpResult<RequestAndRelatedRecords>> refuseWhenInvalid(
-    RequestAndRelatedRecords requestAndRelatedRecords) {
+  public <T extends UserRelatedRecord> CompletableFuture<HttpResult<T>> refuseWhenInvalid(
+    T userRelatedRecord) {
 
     //TODO: Improve mapping back null result to records
     return refuseWhenInvalid(
-      requestAndRelatedRecords.getRequest().getProxyUserId(),
-      requestAndRelatedRecords.getRequest().getRequesterId())
-      .thenApply(result -> result.map(v -> requestAndRelatedRecords));
-  }
-
-  public CompletableFuture<HttpResult<LoanAndRelatedRecords>> refuseWhenInvalid(
-    LoanAndRelatedRecords loanAndRelatedRecords) {
-
-    //TODO: Improve mapping back null result to records
-    return refuseWhenInvalid(
-      loanAndRelatedRecords.getLoan().getProxyUserId(),
-      loanAndRelatedRecords.getLoan().getUserId())
-      .thenApply(result -> result.map(v -> loanAndRelatedRecords));
+      userRelatedRecord.getProxyUserId(),
+      userRelatedRecord.getUserId())
+      .thenApply(result -> result.map(v -> userRelatedRecord));
   }
 
   private CompletableFuture<HttpResult<Void>> refuseWhenInvalid(

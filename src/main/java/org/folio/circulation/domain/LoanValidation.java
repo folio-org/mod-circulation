@@ -163,7 +163,7 @@ public class LoanValidation {
   }
 
   private static boolean isFor(Request request, JsonObject user) {
-    return StringUtils.equals(request.getRequesterId(), user.getString("id"));
+    return StringUtils.equals(request.getUserId(), user.getString("id"));
   }
 
   private static boolean isAwaitingPickup(Request highestPriority) {

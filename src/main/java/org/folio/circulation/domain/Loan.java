@@ -80,13 +80,9 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return DateTime.parse(representation.getString("loanDate"));
   }
 
-  String getUserId() {
-    return representation.getString("userId");
-  }
-
   @Override
-  public String getRequesterId() {
-    return getUserId();
+  public String getUserId() {
+    return representation.getString("userId");
   }
 
   @Override

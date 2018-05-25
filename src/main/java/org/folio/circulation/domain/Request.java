@@ -37,7 +37,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   @Override
-  public String getRequesterId() {
+  public String getUserId() {
     return representation.getString("requesterId");
   }
 
