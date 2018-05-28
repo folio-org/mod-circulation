@@ -518,4 +518,30 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat(response.getJson(), hasSoleErrorFor(
       "proxyUserBarcode", james.getJson().getString("barcode")));
   }
+
+  @Test
+  public void cannotCheckOutWhenLoanPolicyDoesNotExist()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final UUID nonExistentloanPolicyId = UUID.randomUUID();
+
+    useLoanPolicyAsFallback(nonExistentloanPolicyId);
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+
+    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
+
+    final Response response = loansFixture.attemptCheckOutByBarcode(500,
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .at(loanDate));
+
+    assertThat(response.getBody(), is(String.format(
+      "Loan policy %s could not be found, please check loan rules", nonExistentloanPolicyId)));
+  }
 }

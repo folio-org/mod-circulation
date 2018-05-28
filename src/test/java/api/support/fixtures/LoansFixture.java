@@ -163,6 +163,11 @@ public class LoansFixture {
   }
 
   public Response attemptCheckOutByBarcode(CheckOutByBarcodeRequestBuilder builder) {
+    return attemptCheckOutByBarcode(422, builder);
+  }
+
+  public Response attemptCheckOutByBarcode(
+    int expectedStatusCode, CheckOutByBarcodeRequestBuilder builder) {
 
     JsonObject request = builder.create();
 
@@ -174,7 +179,7 @@ public class LoansFixture {
       .when().post(InterfaceUrls.checkOutByBarcodeUrl())
       .then()
       .log().all()
-      .statusCode(422)
+      .statusCode(expectedStatusCode)
       .extract().response();
 
     return from(response);

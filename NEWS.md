@@ -1,8 +1,9 @@
-## 10.2 Unreleased
+## 10.2.1 Unreleased
 
 * Fixed due date schedule limits are applied for rolling loan policies during check out (CIRC-106)
 * Check out requests using a rolling loan policy with missing policy definition respond with an error message (CIRC-108) 
 * Proxy validation uses properties from either root or meta object whilst transitioning between models (CIRC-107)
+* Reports an error if the loan rules match to a non-existent policy (CIRC-111)
 
 ## 10.1.2 2018-05-01
 
