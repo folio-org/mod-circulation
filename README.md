@@ -72,7 +72,7 @@ run `./scripts/lint-raml-cop.sh` to validate the RAML and JSON.Schema descriptio
 
 ### Check Out By Barcode
 
-In additional to the typical loan creation API, it is possible to check out an item to a loanee (optionally via a proxy), using barcodes. 
+In additional to the typical loan creation API, it is possible to check out an item to a loanee (optionally via a proxy), using barcodes.
 
 #### Example Request
 
@@ -164,7 +164,7 @@ content-length: 200
 
 #### Validation
 
-Below is a short summary summary of most of the validation checks performed when using this endpoint. 
+Below is a short summary summary of most of the validation checks performed when using this endpoint.
 
 Each includes an example of the error message provided and the parameter key included with the error.
 
