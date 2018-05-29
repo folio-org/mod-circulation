@@ -1,7 +1,7 @@
 ## 10.2.1 Unreleased
 
 * Fixed due date schedule limits are applied for rolling loan policies during check out (CIRC-106)
-* Check out requests using a rolling loan policy with missing policy definition respond with an error message (CIRC-108) 
+* Check out requests using a rolling loan policy with missing policy definition respond with an error message (CIRC-108)
 * Proxy validation uses properties from either root or meta object whilst transitioning between models (CIRC-107)
 * Reports an error if the loan rules match to a non-existent policy (CIRC-111)
 
@@ -19,7 +19,7 @@
 * Implement antlr parser; wire loan rules against UUIDs of controlled vocabularies (CIRC-35)
 * Fix "Loan rule is not processed when no space after colon between rule and policy" (CIRC-73)
 * Fix for multiple value headers in storage module responses (CIRC-103)
-* Adds missing location permission for getting loans in module descriptor (CIRC-105) 
+* Adds missing location permission for getting loans in module descriptor (CIRC-105)
 * Forward on X-Okapi-Request-Id header if present (CIRC-99)
 * Provides `circulation` interface 3.1 (CIRC-98, CIRC-33, CIRC-74)
 * Requires `loan-storage` interface 4.0 (CIRC-98)
