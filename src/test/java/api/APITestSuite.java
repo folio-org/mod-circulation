@@ -549,7 +549,9 @@ public class APITestSuite {
     LoanPolicyBuilder canCirculateRollingLoanPolicy = new LoanPolicyBuilder()
       .withName("Can Circulate Rolling")
       .withDescription("Can circulate item")
-      .rolling(Period.weeks(3));
+      .rolling(Period.weeks(3))
+      .unlimitedRenewals()
+      .renewFromSystemDate();
 
     canCirculateRollingLoanPolicyId = loanPoliciesClient.create(
       canCirculateRollingLoanPolicy).getId();

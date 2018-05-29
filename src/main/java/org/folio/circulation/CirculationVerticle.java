@@ -29,6 +29,7 @@ public class CirculationVerticle extends AbstractVerticle {
     this.server = vertx.createHttpServer();
 
     new CheckOutByBarcodeResource(client).register(router);
+    new RenewByBarcodeResource(client).register(router);
     new LoanCollectionResource(client).register(router);
     new RequestCollectionResource(client).register(router);
 

@@ -3,6 +3,7 @@ package api.support.fixtures;
 import api.APITestSuite;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanBuilder;
+import api.support.builders.RenewByBarcodeRequestBuilder;
 import api.support.http.InterfaceUrls;
 import api.support.http.ResourceClient;
 import io.restassured.RestAssured;
@@ -15,6 +16,7 @@ import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
+import org.joda.time.DateTime;
 
 import java.net.MalformedURLException;
 import java.util.UUID;
@@ -44,11 +46,23 @@ public class LoansFixture {
     InterruptedException,
     ExecutionException,
     TimeoutException {
+    return checkOut(item, to, DateTime.now());
+  }
+
+  public IndividualResource checkOut(
+    IndividualResource item,
+    IndividualResource to,
+    DateTime loanDate)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
 
     return loansClient.create(new LoanBuilder()
       .open()
       .withItemId(item.getId())
-      .withUserId(to.getId()));
+      .withUserId(to.getId())
+      .withLoanDate(loanDate));
   }
 
   public IndividualResource checkOutItem(UUID itemId)
@@ -214,5 +228,25 @@ public class LoansFixture {
     return new Response(response.statusCode(), response.body().print(),
       response.contentType(),
       mappedHeaders);
+  }
+
+  public IndividualResource renewLoan(IndividualResource item, IndividualResource user) {
+    JsonObject request = new RenewByBarcodeRequestBuilder()
+      .forItem(item)
+      .forUser(user)
+      .create();
+
+    io.restassured.response.Response response = given()
+      .log().all()
+      .spec(defaultHeaders())
+      .spec(timeoutConfig())
+      .body(request.encodePrettily())
+      .when().post(InterfaceUrls.renewByBarcodeUrl())
+      .then()
+      .log().all()
+      .statusCode(200)
+      .extract().response();
+
+    return new IndividualResource(from(response));
   }
 }
