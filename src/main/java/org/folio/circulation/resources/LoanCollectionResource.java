@@ -272,7 +272,10 @@ public class LoanCollectionResource extends CollectionResource {
                   possibleInstance.orElse(null),
                     possibleHolding.orElse(null),
                     possibleLocation.orElse(null),
-                    possibleMaterialType.orElse(null)));
+                    possibleMaterialType.orElse(null),
+                  new InventoryRecords(item,
+                    possibleHolding.orElse(null),
+                    possibleInstance.orElse(null))));
               }
             });
 

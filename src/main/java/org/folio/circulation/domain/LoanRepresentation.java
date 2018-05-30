@@ -2,10 +2,13 @@ package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.support.InventoryRecords;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
+
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 public class LoanRepresentation {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -14,6 +17,7 @@ public class LoanRepresentation {
 
   public JsonObject extendedLoan(LoanAndRelatedRecords relatedRecords) {
     return extendedLoan(relatedRecords.getLoan().asJson(),
+      relatedRecords.getLoan().getInventoryRecords(),
       relatedRecords.getLoan().getInventoryRecords().item,
       relatedRecords.getLoan().getInventoryRecords().holding,
       relatedRecords.getLoan().getInventoryRecords().instance,
@@ -26,10 +30,10 @@ public class LoanRepresentation {
     JsonObject instance,
     JsonObject holding,
     JsonObject location,
-    JsonObject materialType) {
+    JsonObject materialType,
+    InventoryRecords inventoryRecords) {
     JsonObject itemSummary = new JsonObject();
 
-    final String titleProperty = "title";
     final String barcodeProperty = "barcode";
     final String statusProperty = "status";
     final String holdingsRecordIdProperty = "holdingsRecordId";
@@ -37,11 +41,7 @@ public class LoanRepresentation {
     final String callNumberProperty = "callNumber";
     final String materialTypeProperty = "materialType";
 
-    if(instance != null && instance.containsKey(titleProperty)) {
-      itemSummary.put(titleProperty, instance.getString(titleProperty));
-    } else if (item.containsKey("title")) {
-      itemSummary.put(titleProperty, item.getString(titleProperty));
-    }
+    write(itemSummary, "title", inventoryRecords.getTitle());
 
     if(instance != null && instance.containsKey(CONTRIBUTORS_PROPERTY)) {
       JsonArray instanceContributors = instance.getJsonArray(CONTRIBUTORS_PROPERTY);
@@ -98,6 +98,7 @@ public class LoanRepresentation {
 
   private JsonObject extendedLoan(
     JsonObject loan,
+    InventoryRecords inventoryRecords,
     JsonObject item,
     JsonObject holding,
     JsonObject instance,
@@ -106,7 +107,7 @@ public class LoanRepresentation {
 
     if(item != null) {
       loan.put("item", new LoanRepresentation().createItemSummary(item, instance, holding, location,
-        materialType));
+        materialType, inventoryRecords));
     }
 
     //No need to pass on the itemStatus property, as only used to populate the history

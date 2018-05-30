@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.*;
 import static org.folio.circulation.support.JsonPropertyCopier.copyStringIfExists;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 public class RequestCollectionResource extends CollectionResource {
   public RequestCollectionResource(HttpClient client) {
@@ -111,7 +112,7 @@ public class RequestCollectionResource extends CollectionResource {
         final JsonObject requester = result.value().getRequestingUser();
         final JsonObject proxy = result.value().getProxyUser();
 
-        addStoredItemProperties(representation, item, instance);
+        addStoredItemProperties(representation, item, inventoryRecords);
         addStoredRequesterProperties(representation, requester);
         addStoredProxyProperties(representation, proxy);
 
@@ -253,7 +254,7 @@ public class RequestCollectionResource extends CollectionResource {
   private void addStoredItemProperties(
     JsonObject request,
     JsonObject item,
-    JsonObject instance) {
+    InventoryRecords inventoryRecords) {
 
     if(item == null) {
       return;
@@ -261,11 +262,9 @@ public class RequestCollectionResource extends CollectionResource {
 
     JsonObject itemSummary = new JsonObject();
 
-    final String titleProperty = "title";
+    final String title = inventoryRecords.getTitle();
 
-    if(instance != null && instance.containsKey(titleProperty)) {
-      itemSummary.put(titleProperty, instance.getString(titleProperty));
-    } else copyStringIfExists(titleProperty, item, itemSummary);
+    write(itemSummary, "title", title);
 
     copyStringIfExists("barcode", item, itemSummary);
 
@@ -422,7 +421,7 @@ public class RequestCollectionResource extends CollectionResource {
     JsonObject requestingUser = requestAndRelatedRecords.getRequestingUser();
     JsonObject proxyUser = requestAndRelatedRecords.getProxyUser();
 
-    addStoredItemProperties(request, item, instance);
+    addStoredItemProperties(request, item, requestAndRelatedRecords.getInventoryRecords());
     addStoredRequesterProperties(request, requestingUser);
     addStoredProxyProperties(request, proxyUser);
 

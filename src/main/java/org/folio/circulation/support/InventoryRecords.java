@@ -3,6 +3,8 @@ package org.folio.circulation.support;
 import io.vertx.core.json.JsonObject;
 
 public class InventoryRecords {
+  private static final String TITLE_PROPERTY = "title";
+
   public final JsonObject item;
   public final JsonObject holding;
   public final JsonObject instance;
@@ -27,5 +29,16 @@ public class InventoryRecords {
 
   public JsonObject getInstance() {
     return instance;
+  }
+
+  public String getTitle() {
+    if(getInstance() != null && getInstance().containsKey(TITLE_PROPERTY)) {
+      return getInstance().getString(TITLE_PROPERTY);
+    } else if(getItem() != null) {
+      return getItem().getString(TITLE_PROPERTY);
+    }
+    else {
+      return null;
+    }
   }
 }
