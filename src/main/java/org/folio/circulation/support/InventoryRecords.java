@@ -1,5 +1,6 @@
 package org.folio.circulation.support;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class InventoryRecords {
@@ -40,5 +41,20 @@ public class InventoryRecords {
     else {
       return null;
     }
+  }
+
+  public JsonArray getContributorNames() {
+    JsonArray contributors = new JsonArray();
+
+    if(getInstance() != null && getInstance().containsKey("contributors")) {
+      JsonArray instanceContributors = getInstance().getJsonArray("contributors");
+      if(instanceContributors != null && !instanceContributors.isEmpty()) {
+        for(Object ob : instanceContributors) {
+          String name = ((JsonObject)ob).getString("name");
+          contributors.add(new JsonObject().put("name", name));
+        }
+      }
+    }
+    return contributors;
   }
 }

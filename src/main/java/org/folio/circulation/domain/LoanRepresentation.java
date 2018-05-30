@@ -1,6 +1,5 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.InventoryRecords;
 import org.slf4j.Logger;
@@ -13,21 +12,17 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
 public class LoanRepresentation {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  private static final String CONTRIBUTORS_PROPERTY = "contributors";
-
   public JsonObject extendedLoan(LoanAndRelatedRecords relatedRecords) {
     return extendedLoan(relatedRecords.getLoan().asJson(),
       relatedRecords.getLoan().getInventoryRecords(),
       relatedRecords.getLoan().getInventoryRecords().item,
       relatedRecords.getLoan().getInventoryRecords().holding,
-      relatedRecords.getLoan().getInventoryRecords().instance,
       relatedRecords.getLocation(),
       relatedRecords.getMaterialType());
   }
 
   public JsonObject createItemSummary(
     JsonObject item,
-    JsonObject instance,
     JsonObject holding,
     JsonObject location,
     JsonObject materialType,
@@ -43,18 +38,7 @@ public class LoanRepresentation {
 
     write(itemSummary, "title", inventoryRecords.getTitle());
 
-    if(instance != null && instance.containsKey(CONTRIBUTORS_PROPERTY)) {
-      JsonArray instanceContributors = instance.getJsonArray(CONTRIBUTORS_PROPERTY);
-
-      if(instanceContributors != null && !instanceContributors.isEmpty()) {
-        JsonArray contributors = new JsonArray();
-        for(Object ob : instanceContributors) {
-          String name = ((JsonObject)ob).getString("name");
-          contributors.add(new JsonObject().put("name", name));
-        }
-        itemSummary.put(CONTRIBUTORS_PROPERTY, contributors);
-      }
-    }
+    write(itemSummary, "contributors", inventoryRecords.getContributorNames());
 
     if(item.containsKey(barcodeProperty)) {
       itemSummary.put(barcodeProperty, item.getString(barcodeProperty));
@@ -101,12 +85,11 @@ public class LoanRepresentation {
     InventoryRecords inventoryRecords,
     JsonObject item,
     JsonObject holding,
-    JsonObject instance,
     JsonObject location,
     JsonObject materialType) {
 
     if(item != null) {
-      loan.put("item", new LoanRepresentation().createItemSummary(item, instance, holding, location,
+      loan.put("item", new LoanRepresentation().createItemSummary(item, holding, location,
         materialType, inventoryRecords));
     }
 

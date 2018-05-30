@@ -269,8 +269,7 @@ public class LoanCollectionResource extends CollectionResource {
                   .equals(materialTypeId[0])).findFirst();
 
                 loan.put("item", loanRepresentation.createItemSummary(item,
-                  possibleInstance.orElse(null),
-                    possibleHolding.orElse(null),
+                  possibleHolding.orElse(null),
                     possibleLocation.orElse(null),
                     possibleMaterialType.orElse(null),
                   new InventoryRecords(item,
