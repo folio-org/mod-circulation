@@ -63,4 +63,13 @@ public class JsonPropertyFetcher {
       return null;
     }
   }
+
+  static String getProperty(JsonObject representation, String propertyName) {
+    if(representation != null) {
+      return representation.getString(propertyName);
+    }
+    else {
+      return null;
+    }
+  }
 }

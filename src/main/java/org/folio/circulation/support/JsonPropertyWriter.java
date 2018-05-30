@@ -26,4 +26,24 @@ public class JsonPropertyWriter {
       to.put(propertyName, value);
     }
   }
+
+  public static void write(
+    JsonObject to,
+    String propertyName,
+    JsonObject value) {
+
+    if(value != null) {
+      to.put(propertyName, value);
+    }
+  }
+
+  public static void writeNamedObject(
+    JsonObject to,
+    String propertyName,
+    String value) {
+
+    if(StringUtils.isNotBlank(value)) {
+      to.put(propertyName, new JsonObject().put("name", value));
+    }
+  }
 }

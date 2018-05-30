@@ -3,6 +3,9 @@ package org.folio.circulation.support;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
+import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+
 public class InventoryRecords {
   private static final String TITLE_PROPERTY = "title";
 
@@ -34,9 +37,9 @@ public class InventoryRecords {
 
   public String getTitle() {
     if(getInstance() != null && getInstance().containsKey(TITLE_PROPERTY)) {
-      return getInstance().getString(TITLE_PROPERTY);
+      return getProperty(getInstance(), TITLE_PROPERTY);
     } else if(getItem() != null) {
-      return getItem().getString(TITLE_PROPERTY);
+      return getProperty(getItem(), TITLE_PROPERTY);
     }
     else {
       return null;
@@ -56,5 +59,29 @@ public class InventoryRecords {
       }
     }
     return contributors;
+  }
+
+  public String getBarcode() {
+    return getProperty(getItem(), "barcode");
+  }
+
+  public String getItemId() {
+    return getProperty(getItem(), "id");
+  }
+
+  public String getHoldingsRecordId() {
+    return getProperty(getItem(), "holdingsRecordId");
+  }
+
+  public String getInstanceId() {
+    return getProperty(getHolding(), "instanceId");
+  }
+
+  public String getCallNumber() {
+    return getProperty(getHolding(), "callNumber");
+  }
+
+  public String getStatus() {
+    return getNestedStringProperty(getItem(), "status", "name");
   }
 }

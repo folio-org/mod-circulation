@@ -107,12 +107,10 @@ public class RequestCollectionResource extends CollectionResource {
         }
 
         final InventoryRecords inventoryRecords = result.value().getInventoryRecords();
-        final JsonObject item = inventoryRecords.getItem();
-        final JsonObject instance = inventoryRecords.getInstance();
         final JsonObject requester = result.value().getRequestingUser();
         final JsonObject proxy = result.value().getProxyUser();
 
-        addStoredItemProperties(representation, item, inventoryRecords);
+        addStoredItemProperties(representation, inventoryRecords);
         addStoredRequesterProperties(representation, requester);
         addStoredProxyProperties(representation, proxy);
 
@@ -150,8 +148,7 @@ public class RequestCollectionResource extends CollectionResource {
 
           final JsonObject representation = request.asJson();
 
-          addAdditionalItemProperties(representation, r.value().getHolding(),
-            r.value().getItem());
+          addAdditionalItemProperties(representation, r.value());
 
           JsonResponse.success(routingContext.response(), representation);
         });
@@ -225,8 +222,8 @@ public class RequestCollectionResource extends CollectionResource {
                   item.getString("holdingsRecordId"));
 
                 addAdditionalItemProperties(request,
-                  possibleHolding.orElse(null),
-                  possibleItem.orElse(null));
+                  new InventoryRecords(possibleItem.orElse(null),
+                    possibleHolding.orElse(null), null));
               }
             });
 
@@ -253,41 +250,34 @@ public class RequestCollectionResource extends CollectionResource {
 
   private void addStoredItemProperties(
     JsonObject request,
-    JsonObject item,
     InventoryRecords inventoryRecords) {
 
-    if(item == null) {
+    if(inventoryRecords == null || inventoryRecords.getItem() == null) {
       return;
     }
 
     JsonObject itemSummary = new JsonObject();
 
-    final String title = inventoryRecords.getTitle();
-
-    write(itemSummary, "title", title);
-
-    copyStringIfExists("barcode", item, itemSummary);
+    write(itemSummary, "title", inventoryRecords.getTitle());
+    write(itemSummary, "barcode", inventoryRecords.getBarcode());
 
     request.put("item", itemSummary);
   }
 
   private void addAdditionalItemProperties(
     JsonObject request,
-    JsonObject holding,
-    JsonObject item) {
+    InventoryRecords inventoryRecords) {
 
-    if(item == null)
+    if(inventoryRecords == null || inventoryRecords.getItem() == null) {
       return;
+    }
 
     JsonObject itemSummary = request.containsKey("item")
       ? request.getJsonObject("item")
       : new JsonObject();
 
-    copyStringIfExists("holdingsRecordId", item, itemSummary);
-
-    if(holding != null) {
-      copyStringIfExists("instanceId", holding, itemSummary);
-    }
+    write(itemSummary, "holdingsRecordId", inventoryRecords.getHoldingsRecordId());
+    write(itemSummary, "instanceId", inventoryRecords.getInstanceId());
 
     request.put("item", itemSummary);
   }
@@ -416,12 +406,10 @@ public class RequestCollectionResource extends CollectionResource {
 
     JsonObject request = requestAndRelatedRecords.getRequest().asJson();
 
-    JsonObject item = requestAndRelatedRecords.getInventoryRecords().getItem();
-    JsonObject instance = requestAndRelatedRecords.getInventoryRecords().getInstance();
     JsonObject requestingUser = requestAndRelatedRecords.getRequestingUser();
     JsonObject proxyUser = requestAndRelatedRecords.getProxyUser();
 
-    addStoredItemProperties(request, item, requestAndRelatedRecords.getInventoryRecords());
+    addStoredItemProperties(request, requestAndRelatedRecords.getInventoryRecords());
     addStoredRequesterProperties(request, requestingUser);
     addStoredProxyProperties(request, proxyUser);
 
@@ -438,12 +426,10 @@ public class RequestCollectionResource extends CollectionResource {
   }
 
   private JsonObject extendedRequest(RequestAndRelatedRecords requestAndRelatedRecords) {
-    JsonObject item = requestAndRelatedRecords.getInventoryRecords().getItem();
-    JsonObject holding = requestAndRelatedRecords.getInventoryRecords().getHolding();
-
     final JsonObject representation = requestAndRelatedRecords.getRequest().asJson();
 
-    addAdditionalItemProperties(representation, holding, item);
+    addAdditionalItemProperties(representation,
+      requestAndRelatedRecords.getInventoryRecords());
 
     return representation;
   }

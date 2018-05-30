@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.invoke.MethodHandles;
 
 import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.JsonPropertyWriter.writeNamedObject;
 
 public class LoanRepresentation {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -15,55 +16,33 @@ public class LoanRepresentation {
   public JsonObject extendedLoan(LoanAndRelatedRecords relatedRecords) {
     return extendedLoan(relatedRecords.getLoan().asJson(),
       relatedRecords.getLoan().getInventoryRecords(),
-      relatedRecords.getLoan().getInventoryRecords().item,
-      relatedRecords.getLoan().getInventoryRecords().holding,
+      relatedRecords.getLoan().getInventoryRecords().getItem(),
       relatedRecords.getLocation(),
       relatedRecords.getMaterialType());
   }
 
   public JsonObject createItemSummary(
     JsonObject item,
-    JsonObject holding,
     JsonObject location,
     JsonObject materialType,
     InventoryRecords inventoryRecords) {
+
     JsonObject itemSummary = new JsonObject();
 
-    final String barcodeProperty = "barcode";
-    final String statusProperty = "status";
-    final String holdingsRecordIdProperty = "holdingsRecordId";
-    final String instanceIdProperty = "instanceId";
-    final String callNumberProperty = "callNumber";
-    final String materialTypeProperty = "materialType";
-
+    write(itemSummary, "holdingsRecordId", inventoryRecords.getHoldingsRecordId());
+    write(itemSummary, "instanceId", inventoryRecords.getInstanceId());
     write(itemSummary, "title", inventoryRecords.getTitle());
-
+    write(itemSummary, "barcode", inventoryRecords.getBarcode());
     write(itemSummary, "contributors", inventoryRecords.getContributorNames());
-
-    if(item.containsKey(barcodeProperty)) {
-      itemSummary.put(barcodeProperty, item.getString(barcodeProperty));
-    }
-
-    if(item.containsKey(holdingsRecordIdProperty)) {
-      itemSummary.put(holdingsRecordIdProperty, item.getString(holdingsRecordIdProperty));
-    }
-
-    if(holding != null && holding.containsKey(instanceIdProperty)) {
-      itemSummary.put(instanceIdProperty, holding.getString(instanceIdProperty));
-    }
-
-    if(holding != null && holding.containsKey(callNumberProperty)) {
-      itemSummary.put(callNumberProperty, holding.getString(callNumberProperty));
-    }
-
-    if(item.containsKey(statusProperty)) {
-      itemSummary.put(statusProperty, item.getJsonObject(statusProperty));
-    }
+    write(itemSummary, "callNumber", inventoryRecords.getCallNumber());
+    writeNamedObject(itemSummary, "status", inventoryRecords.getStatus());
 
     if(location != null && location.containsKey("name")) {
       itemSummary.put("location", new JsonObject()
         .put("name", location.getString("name")));
     }
+
+    final String materialTypeProperty = "materialType";
 
     if(materialType != null) {
       if(materialType.containsKey("name") && materialType.getString("name") != null) {
@@ -71,10 +50,10 @@ public class LoanRepresentation {
           .put("name", materialType.getString("name")));
       } else {
         log.warn("Missing or null property for material type for item id {}",
-          item.getString("id"));
+          inventoryRecords.getItemId());
       }
     } else {
-      log.warn("Null materialType object for item {}", item.getString("id"));
+      log.warn("Null materialType object for item {}", inventoryRecords.getItemId());
     }
 
     return itemSummary;
@@ -84,12 +63,11 @@ public class LoanRepresentation {
     JsonObject loan,
     InventoryRecords inventoryRecords,
     JsonObject item,
-    JsonObject holding,
     JsonObject location,
     JsonObject materialType) {
 
-    if(item != null) {
-      loan.put("item", new LoanRepresentation().createItemSummary(item, holding, location,
+    if(inventoryRecords != null && item != null) {
+      loan.put("item", new LoanRepresentation().createItemSummary(item, location,
         materialType, inventoryRecords));
     }
 
