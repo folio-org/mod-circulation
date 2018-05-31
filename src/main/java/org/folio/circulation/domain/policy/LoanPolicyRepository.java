@@ -2,7 +2,6 @@ package org.folio.circulation.domain.policy;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.domain.LoanValidation;
 import org.folio.circulation.domain.representations.ItemProperties;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
@@ -13,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
+import static org.folio.circulation.domain.LoanValidation.determineLocationIdForItem;
 import static org.folio.circulation.domain.representations.ItemProperties.MATERIAL_TYPE_ID;
 
 public class LoanPolicyRepository {
@@ -91,7 +91,7 @@ public class LoanPolicyRepository {
     }
 
     String loanTypeId = determineLoanTypeForItem(item);
-    String locationId = LoanValidation.determineLocationIdForItem(item, holding);
+    String locationId = determineLocationIdForItem(item, holding);
 
     //Got instance record, we're good to continue
     String materialTypeId = item.getString(MATERIAL_TYPE_ID);

@@ -186,9 +186,9 @@ public class LoanCollectionResource extends CollectionResource {
           ServerErrorResponse.internalError(routingContext.response(), e.toString()));
 
       inventoryRecordsFetched.thenAccept(records -> {
-        List<String> locationIds = records.getItems().stream()
-          .map(item -> determineLocationIdForItem(item,
-            records.findHoldingById(item.getString("holdingsRecordId")).orElse(null)))
+
+        List<String> locationIds = records.getRecords().stream()
+          .map(LoanValidation::determineLocationIdForItem)
           .filter(StringUtils::isNotBlank)
           .collect(Collectors.toList());
 

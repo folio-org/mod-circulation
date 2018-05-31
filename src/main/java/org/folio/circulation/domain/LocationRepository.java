@@ -13,6 +13,8 @@ import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
+import static org.folio.circulation.domain.LoanValidation.determineLocationIdForItem;
+
 public class LocationRepository {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -35,11 +37,9 @@ public class LocationRepository {
       return CompletableFuture.completedFuture(HttpResult.success(relatedRecords));
     }
 
-    final String locationId = LoanValidation.determineLocationIdForItem(
-      relatedRecords.getInventoryRecords().getItem(), relatedRecords.getInventoryRecords().getHolding());
+    final String locationId = determineLocationIdForItem(relatedRecords.getInventoryRecords());
 
-    return getLocation(locationId,
-      relatedRecords.getInventoryRecords().getItem().getString("id"))
+    return getLocation(locationId, relatedRecords.getInventoryRecords().getItemId())
       .thenApply(result -> result.map(relatedRecords::withLocation));
   }
 
