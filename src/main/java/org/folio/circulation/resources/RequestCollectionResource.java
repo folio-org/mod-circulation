@@ -48,7 +48,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final Clients clients = Clients.create(context, client);
 
-    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
+    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients, false);
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
     final UserFetcher userFetcher = new UserFetcher(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
@@ -59,7 +59,7 @@ public class RequestCollectionResource extends CollectionResource {
       request.getProxyUserId()));
 
     completedFuture(HttpResult.success(new RequestAndRelatedRecords(request)))
-      .thenCombineAsync(inventoryFetcher.fetch(request), this::addInventoryRecords)
+      .thenCombineAsync(inventoryFetcher.fetchFor(request), this::addInventoryRecords)
       .thenApply(this::refuseWhenItemDoesNotExist)
       .thenApply(this::refuseWhenItemIsNotValid)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
@@ -86,7 +86,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final Clients clients = Clients.create(context, client);
 
-    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
+    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients, false);
     final UserFetcher userFetcher = new UserFetcher(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
@@ -95,7 +95,7 @@ public class RequestCollectionResource extends CollectionResource {
       request.getProxyUserId()));
 
     completedFuture(HttpResult.success(new RequestAndRelatedRecords(request)))
-      .thenCombineAsync(inventoryFetcher.fetch(request), this::addInventoryRecords)
+      .thenCombineAsync(inventoryFetcher.fetchFor(request), this::addInventoryRecords)
       .thenCombineAsync(userFetcher.getUser(request.getUserId(), false), this::addUser)
       .thenCombineAsync(userFetcher.getUser(request.getProxyUserId(), false), this::addProxyUser)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
@@ -134,10 +134,10 @@ public class RequestCollectionResource extends CollectionResource {
       if(requestResponse.getStatusCode() == 200) {
         Request request = new Request(requestResponse.getJson());
 
-        InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
+        InventoryFetcher inventoryFetcher = new InventoryFetcher(clients, false);
 
         CompletableFuture<HttpResult<InventoryRecords>> inventoryRecordsCompleted =
-          inventoryFetcher.fetch(request);
+          inventoryFetcher.fetchFor(request);
 
         inventoryRecordsCompleted.thenAccept(r -> {
           if(r.failed()) {
@@ -201,10 +201,10 @@ public class RequestCollectionResource extends CollectionResource {
           .filter(Objects::nonNull)
           .collect(Collectors.toList());
 
-        InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
+        InventoryFetcher inventoryFetcher = new InventoryFetcher(clients, false);
 
         CompletableFuture<MultipleInventoryRecords> inventoryRecordsFetched =
-          inventoryFetcher.fetch(itemIds, e ->
+          inventoryFetcher.fetchFor(itemIds, e ->
             ServerErrorResponse.internalError(routingContext.response(), e.toString()));
 
         //TODO: Refactor this to map to new representations

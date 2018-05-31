@@ -36,7 +36,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     final Clients clients = Clients.create(context, client);
 
-    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
+    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients, true);
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
     final UserFetcher userFetcher = new UserFetcher(clients);
 
@@ -45,7 +45,6 @@ public class LoanCollectionResource extends CollectionResource {
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final MaterialTypeRepository materialTypeRepository = new MaterialTypeRepository(clients);
-    final LocationRepository locationRepository = new LocationRepository(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> new ValidationErrorFailure(
@@ -56,7 +55,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     completedFuture(HttpResult.success(new LoanAndRelatedRecords(loan)))
       .thenApply(this::refuseWhenNotOpenOrClosed)
-      .thenCombineAsync(inventoryFetcher.fetch(loan), this::addInventoryRecords)
+      .thenCombineAsync(inventoryFetcher.fetchFor(loan), this::addInventoryRecords)
       .thenApply(LoanValidation::refuseWhenItemDoesNotExist)
       .thenApply(this::refuseWhenHoldingDoesNotExist)
       .thenApply(LoanValidation::refuseWhenItemIsAlreadyCheckedOut)
@@ -64,7 +63,6 @@ public class LoanCollectionResource extends CollectionResource {
       .thenCombineAsync(requestQueueFetcher.get(loan.getItemId()), this::addRequestQueue)
       .thenCombineAsync(userFetcher.getUser(loan.getUserId()), this::addUser)
       .thenApply(LoanValidation::refuseWhenUserIsNotAwaitingPickup)
-      .thenComposeAsync(r -> r.after(locationRepository::getLocation))
       .thenComposeAsync(r -> r.after(materialTypeRepository::getMaterialType))
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
@@ -88,7 +86,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     final Clients clients = Clients.create(context, client);
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
-    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
+    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients, false);
 
     final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
@@ -100,7 +98,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     completedFuture(HttpResult.success(new LoanAndRelatedRecords(loan)))
       .thenApply(this::refuseWhenNotOpenOrClosed)
-      .thenCombineAsync(inventoryFetcher.fetch(loan), this::addInventoryRecords)
+      .thenCombineAsync(inventoryFetcher.fetchFor(loan), this::addInventoryRecords)
       .thenApply(LoanValidation::refuseWhenItemDoesNotExist)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenCombineAsync(requestQueueFetcher.get(loan.getItemId()), this::addRequestQueue)
@@ -114,10 +112,9 @@ public class LoanCollectionResource extends CollectionResource {
   void get(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
-    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
+    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients, true);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final MaterialTypeRepository materialTypeRepository = new MaterialTypeRepository(clients);
-    final LocationRepository locationRepository = new LocationRepository(clients);
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
@@ -125,7 +122,6 @@ public class LoanCollectionResource extends CollectionResource {
 
     loanRepository.getById(id)
       .thenComposeAsync(result -> result.after(inventoryFetcher::getInventoryRecords))
-      .thenComposeAsync(r -> r.after(locationRepository::getLocation))
       .thenComposeAsync(r -> r.after(materialTypeRepository::getMaterialType))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(OkJsonHttpResult::from)
@@ -177,10 +173,10 @@ public class LoanCollectionResource extends CollectionResource {
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
 
-      InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
+      InventoryFetcher inventoryFetcher = new InventoryFetcher(clients, false);
 
       CompletableFuture<MultipleInventoryRecords> inventoryRecordsFetched =
-        inventoryFetcher.fetch(itemIds, e ->
+        inventoryFetcher.fetchFor(itemIds, e ->
           ServerErrorResponse.internalError(routingContext.response(), e.toString()));
 
       inventoryRecordsFetched.thenAccept(records -> {

@@ -3,6 +3,7 @@ package org.folio.circulation.support;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.ItemRelatedRecord;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.LocationRepository;
 import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,38 +24,57 @@ public class InventoryFetcher {
   private final CollectionResourceClient itemsClient;
   private final CollectionResourceClient holdingsClient;
   private final CollectionResourceClient instancesClient;
+  private final LocationRepository locationRepository;
+  private final boolean fetchLocation;
 
-  public InventoryFetcher(Clients clients) {
+  public InventoryFetcher(Clients clients, boolean fetchLocation) {
     this(clients.itemsStorage(),
       clients.holdingsStorage(),
-      clients.instancesStorage());
+      clients.instancesStorage(),
+      new LocationRepository(clients),
+      fetchLocation);
   }
 
   private InventoryFetcher(
     CollectionResourceClient itemsClient,
     CollectionResourceClient holdingsClient,
-    CollectionResourceClient instancesClient) {
+    CollectionResourceClient instancesClient,
+    LocationRepository locationRepository,
+    boolean fetchLocation) {
 
     this.itemsClient = itemsClient;
     this.holdingsClient = holdingsClient;
     this.instancesClient = instancesClient;
+    this.locationRepository = locationRepository;
+    this.fetchLocation = fetchLocation;
   }
 
-  public CompletableFuture<HttpResult<InventoryRecords>> fetch(ItemRelatedRecord record) {
+  public CompletableFuture<HttpResult<InventoryRecords>> fetchFor(ItemRelatedRecord record) {
     return fetchItem(record.getItemId())
       .thenComposeAsync(this::fetchHolding)
       .thenComposeAsync(this::fetchInstance)
-      .thenApply(r -> r.map(InventoryRecordsBuilder::create));
+      .thenApply(r -> r.map(InventoryRecordsBuilder::create))
+      .thenComposeAsync(this::fetchLocation);
+  }
+
+  private CompletableFuture<HttpResult<InventoryRecords>> fetchLocation(HttpResult<InventoryRecords> result) {
+    if(fetchLocation) {
+      return result.after(locationRepository::getLocation);
+    }
+    else {
+      return completedFuture(result);
+    }
   }
 
   public CompletableFuture<HttpResult<InventoryRecords>> fetchByBarcode(String barcode) {
     return fetchItemByBarcode(barcode)
       .thenComposeAsync(this::fetchHolding)
       .thenComposeAsync(this::fetchInstance)
-      .thenApply(r -> r.map(InventoryRecordsBuilder::create));
+      .thenApply(r -> r.map(InventoryRecordsBuilder::create))
+      .thenComposeAsync(this::fetchLocation);
   }
 
-  public CompletableFuture<MultipleInventoryRecords> fetch(
+  public CompletableFuture<MultipleInventoryRecords> fetchFor(
     Collection<String> itemIds,
     Consumer<Exception> onFailure) {
 
@@ -254,7 +274,7 @@ public class InventoryFetcher {
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
     return
-      fetch(loanAndRelatedRecords.getLoan())
+      fetchFor(loanAndRelatedRecords.getLoan())
       .thenApply(result -> result.map(loanAndRelatedRecords::withInventoryRecords));
   }
 

@@ -17,7 +17,10 @@ public class LoanRepresentation {
     final InventoryRecords inventoryRecords = relatedRecords.getLoan().getInventoryRecords();
 
     //Temporary, until location and material type are included in inventory records
-    inventoryRecords.setLocation(relatedRecords.getLocation());
+    if(inventoryRecords.getLocation() == null) {
+      inventoryRecords.setLocation(relatedRecords.getLocation());
+    }
+
     inventoryRecords.setMaterialType(relatedRecords.getMaterialType());
 
     return extendedLoan(relatedRecords.getLoan().asJson(), inventoryRecords);

@@ -160,4 +160,9 @@ public class InventoryRecords {
   public boolean doesNotHaveHolding() {
     return holding == null;
   }
+
+  public InventoryRecords withLocation(JsonObject newLocation) {
+    return new InventoryRecords(this.item, this.holding, this.instance,
+      newLocation, this.materialType);
+  }
 }

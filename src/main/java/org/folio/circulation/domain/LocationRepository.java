@@ -19,23 +19,11 @@ public class LocationRepository {
     locationsStorageClient = clients.locationsStorage();
   }
 
-  public CompletableFuture<HttpResult<LoanAndRelatedRecords>> getLocation(
-    LoanAndRelatedRecords relatedRecords) {
+  public CompletableFuture<HttpResult<InventoryRecords>> getLocation(
+    InventoryRecords inventoryRecords) {
 
-    //Cannot find location for unknown item
-    if(relatedRecords.getInventoryRecords().isNotFound()) {
-      return CompletableFuture.completedFuture(HttpResult.success(relatedRecords));
-    }
-
-    //Cannot find location for unknown holding
-    if(relatedRecords.getInventoryRecords().doesNotHaveHolding()) {
-      return CompletableFuture.completedFuture(HttpResult.success(relatedRecords));
-    }
-
-    final String locationId = relatedRecords.getInventoryRecords().determineLocationIdForItem();
-
-    return getLocation(locationId, relatedRecords.getInventoryRecords().getItemId())
-      .thenApply(result -> result.map(relatedRecords::withLocation));
+    return getLocation(inventoryRecords.determineLocationIdForItem(), inventoryRecords.getItemId())
+      .thenApply(result -> result.map(inventoryRecords::withLocation));
   }
 
   private CompletableFuture<HttpResult<JsonObject>> getLocation(
