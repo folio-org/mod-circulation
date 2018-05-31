@@ -7,9 +7,20 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class MultipleInventoryRecords {
+  private final Collection<JsonObject> items;
+  private final Collection<JsonObject> holdings;
+  private final Collection<JsonObject> instances;
   private final Collection<InventoryRecords> records;
 
-  public MultipleInventoryRecords(Collection<InventoryRecords> records) {
+  public MultipleInventoryRecords(
+    Collection<JsonObject> items,
+    Collection<JsonObject> holdings,
+    Collection<JsonObject> instances,
+    Collection<InventoryRecords> records) {
+
+    this.items = items;
+    this.holdings = holdings;
+    this.instances = instances;
     this.records = records;
   }
 
@@ -18,9 +29,10 @@ public class MultipleInventoryRecords {
     Collection<JsonObject> holdings,
     Collection<JsonObject> instances) {
 
-    return new MultipleInventoryRecords(items.stream()
-      .map(item -> itemToInventoryRecords(item, holdings, instances))
-      .collect(Collectors.toList()));
+    return new MultipleInventoryRecords(items, holdings, instances,
+      items.stream()
+        .map(item -> itemToInventoryRecords(item, holdings, instances))
+        .collect(Collectors.toList()));
   }
 
   private static InventoryRecords itemToInventoryRecords(
@@ -61,5 +73,17 @@ public class MultipleInventoryRecords {
     return collection.stream()
       .filter(item -> item.getString("id").equals(id))
       .findFirst();
+  }
+
+  public Collection<JsonObject> getItems() {
+    return items;
+  }
+
+  public Collection<JsonObject> getHoldings() {
+    return holdings;
+  }
+
+  public Collection<JsonObject> getInstances() {
+    return instances;
   }
 }
