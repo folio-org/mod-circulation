@@ -11,8 +11,6 @@ import org.slf4j.LoggerFactory;
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
-import static org.folio.circulation.domain.LoanValidation.determineLocationIdForItem;
-
 public class LoanPolicyRepository {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -86,7 +84,7 @@ public class LoanPolicyRepository {
     }
 
     String loanTypeId = inventoryRecords.determineLoanTypeForItem();
-    String locationId = determineLocationIdForItem(inventoryRecords);
+    String locationId = inventoryRecords.determineLocationIdForItem();
 
     String materialTypeId = inventoryRecords.getMaterialTypeId();
 

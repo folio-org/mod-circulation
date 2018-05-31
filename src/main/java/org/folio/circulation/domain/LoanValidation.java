@@ -4,7 +4,6 @@ import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.representations.ItemProperties;
 import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.InventoryRecords;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 
@@ -169,25 +168,6 @@ public class LoanValidation {
 
   private static boolean isAwaitingPickup(Request highestPriority) {
     return StringUtils.equals(highestPriority.getStatus(), OPEN_AWAITING_PICKUP);
-  }
-
-  public static String determineLocationIdForItem(InventoryRecords inventoryRecords) {
-    return determineLocationIdForItem(inventoryRecords.getItem(), inventoryRecords.getHolding());
-  }
-
-  public static String determineLocationIdForItem(JsonObject item, JsonObject holding) {
-    if(item != null && item.containsKey(ItemProperties.TEMPORARY_LOCATION_ID)) {
-      return item.getString(ItemProperties.TEMPORARY_LOCATION_ID);
-    }
-    else if(holding != null && holding.containsKey(ItemProperties.PERMANENT_LOCATION_ID)) {
-      return holding.getString(ItemProperties.PERMANENT_LOCATION_ID);
-    }
-    else if(item != null && item.containsKey(ItemProperties.PERMANENT_LOCATION_ID)) {
-      return item.getString(ItemProperties.PERMANENT_LOCATION_ID);
-    }
-    else {
-      return null;
-    }
   }
 
   public static CompletableFuture<HttpResult<LoanAndRelatedRecords>> refuseWhenHasOpenLoan(

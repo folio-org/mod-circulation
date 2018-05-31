@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.LoanValidation.defaultStatusAndAction;
-import static org.folio.circulation.domain.LoanValidation.determineLocationIdForItem;
 
 public class LoanCollectionResource extends CollectionResource {
   public LoanCollectionResource(HttpClient client) {
@@ -188,7 +187,7 @@ public class LoanCollectionResource extends CollectionResource {
       inventoryRecordsFetched.thenAccept(records -> {
 
         List<String> locationIds = records.getRecords().stream()
-          .map(LoanValidation::determineLocationIdForItem)
+          .map(InventoryRecords::determineLocationIdForItem)
           .filter(StringUtils::isNotBlank)
           .collect(Collectors.toList());
 
@@ -256,13 +255,19 @@ public class LoanCollectionResource extends CollectionResource {
                     holding.getString("instanceId"));
                 }
 
+                final InventoryRecords inventoryRecords = new InventoryRecords(item,
+                  possibleHolding.orElse(null), possibleInstance.orElse(null),
+                  null, null);
+
                 List<JsonObject> locations = JsonArrayHelper.toList(
                   locationsResponse.getJson().getJsonArray("locations"));
 
                 Optional<JsonObject> possibleLocation = locations.stream()
                   .filter(location -> location.getString("id").equals(
-                    determineLocationIdForItem(item, possibleHolding.orElse(null))))
+                    inventoryRecords.determineLocationIdForItem()))
                   .findFirst();
+
+                inventoryRecords.setLocation(possibleLocation.orElse(null));
 
                 List<JsonObject> materialTypes = JsonArrayHelper.toList(
                   materialTypesResponse.getJson().getJsonArray("mtypes"));
@@ -271,12 +276,9 @@ public class LoanCollectionResource extends CollectionResource {
                   .filter(materialType -> materialType.getString("id")
                   .equals(materialTypeId[0])).findFirst();
 
-                loan.put("item", loanRepresentation.createItemSummary(
-                  new InventoryRecords(item,
-                    possibleHolding.orElse(null),
-                    possibleInstance.orElse(null),
-                    possibleLocation.orElse(null),
-                    possibleMaterialType.orElse(null))));
+                inventoryRecords.setMaterialType(possibleMaterialType.orElse(null));
+
+                loan.put("item", loanRepresentation.createItemSummary(inventoryRecords));
               }
             });
 

@@ -31,15 +31,6 @@ public class InventoryRecords {
     this.materialType = materialType;
   }
 
-  public String determineLoanTypeForItem() {
-    JsonObject item = getItem();
-
-    return item.containsKey(ItemProperties.TEMPORARY_LOAN_TYPE_ID)
-      && !item.getString(ItemProperties.TEMPORARY_LOAN_TYPE_ID).isEmpty()
-      ? item.getString(ItemProperties.TEMPORARY_LOAN_TYPE_ID)
-      : item.getString(ItemProperties.PERMANENT_LOAN_TYPE_ID);
-  }
-
   public JsonObject getItem() {
     return item;
   }
@@ -114,5 +105,33 @@ public class InventoryRecords {
 
   public String getMaterialTypeId() {
     return getProperty(getItem(), ItemProperties.MATERIAL_TYPE_ID);
+  }
+
+  public String determineLocationIdForItem() {
+    return determineLocationIdForItem(getItem(), getHolding());
+  }
+
+  private static String determineLocationIdForItem(JsonObject item, JsonObject holding) {
+    if(item != null && item.containsKey(ItemProperties.TEMPORARY_LOCATION_ID)) {
+      return item.getString(ItemProperties.TEMPORARY_LOCATION_ID);
+    }
+    else if(holding != null && holding.containsKey(ItemProperties.PERMANENT_LOCATION_ID)) {
+      return holding.getString(ItemProperties.PERMANENT_LOCATION_ID);
+    }
+    else if(item != null && item.containsKey(ItemProperties.PERMANENT_LOCATION_ID)) {
+      return item.getString(ItemProperties.PERMANENT_LOCATION_ID);
+    }
+    else {
+      return null;
+    }
+  }
+
+  public String determineLoanTypeForItem() {
+    JsonObject item = getItem();
+
+    return item.containsKey(ItemProperties.TEMPORARY_LOAN_TYPE_ID)
+      && !item.getString(ItemProperties.TEMPORARY_LOAN_TYPE_ID).isEmpty()
+      ? item.getString(ItemProperties.TEMPORARY_LOAN_TYPE_ID)
+      : item.getString(ItemProperties.PERMANENT_LOAN_TYPE_ID);
   }
 }
