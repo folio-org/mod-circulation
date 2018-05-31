@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -78,26 +79,11 @@ public class InventoryFetcher {
 
     CompletableFuture<HttpResult<MultipleInventoryRecords>> fetchCompleted = new CompletableFuture<>();
 
-    CompletableFuture<Response> itemsFetched = new CompletableFuture<>();
+    CompletableFuture<HttpResult<MultipleInventoryRecords>> itemsFetched = fetchItems(itemIds);
 
-    String itemsQuery = CqlHelper.multipleRecordsCqlQuery(itemIds);
-
-    itemsClient.getMany(itemsQuery, itemIds.size(), 0, itemsFetched::complete);
-
-    itemsFetched.thenAccept(itemsResponse -> {
-      if(itemsResponse.getStatusCode() != 200) {
-        fetchCompleted.complete(HttpResult.failure(
-          new ServerErrorFailure(String.format("Items request (%s) failed %s: %s",
-          itemsQuery, itemsResponse.getStatusCode(), itemsResponse.getBody()))));
-
-        return;
-      }
-
-      final List<JsonObject> items = JsonArrayHelper.toList(
-        itemsResponse.getJson().getJsonArray("items"));
-
-      List<String> holdingsIds = items.stream()
-        .map(item -> item.getString("holdingsRecordId"))
+    itemsFetched.thenAccept(result -> {
+      List<String> holdingsIds = result.value().getRecords().stream()
+        .map(InventoryRecords::getHoldingsRecordId)
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
 
@@ -148,19 +134,20 @@ public class InventoryFetcher {
             instancesResponse.getJson().getJsonArray("instances"));
 
           final MultipleInventoryRecords multipleInventoryRecords = MultipleInventoryRecords.from(
-            items, holdings, instances);
+            result.value().getRecords().stream().map(InventoryRecords::getItem).collect(Collectors.toList()),
+            holdings, instances);
 
           final Collection<InventoryRecords> records = multipleInventoryRecords.getRecords();
 
           if(fetchLocation) {
-            locationRepository.getLocations(records).thenAccept(result -> {
-              if (result.failed()) {
-                fetchCompleted.complete(HttpResult.failure(result.cause()));
+            locationRepository.getLocations(records).thenAccept(locationResult -> {
+              if (locationResult.failed()) {
+                fetchCompleted.complete(HttpResult.failure(locationResult.cause()));
               }
 
               fetchCompleted.complete(HttpResult.success(new MultipleInventoryRecords(
                 records.stream()
-                  .map(r -> r.withLocation(result.value().getOrDefault(r.getLocationId(), null)))
+                  .map(r -> r.withLocation(locationResult.value().getOrDefault(r.getLocationId(), null)))
                   .collect(Collectors.toList()))));
             });
           }
@@ -172,6 +159,34 @@ public class InventoryFetcher {
     });
 
     return fetchCompleted;
+  }
+
+  private CompletableFuture<HttpResult<MultipleInventoryRecords>> fetchItems(
+    Collection<String> itemIds) {
+
+    String itemsQuery = CqlHelper.multipleRecordsCqlQuery(itemIds);
+
+    return getItemsResponse(itemIds, itemsQuery)
+      .thenApply(response -> {
+          if(response.getStatusCode() != 200) {
+            return HttpResult.failure(
+              new ServerErrorFailure(String.format("Items request (%s) failed %s: %s",
+                itemsQuery, response.getStatusCode(), response.getBody())));
+          }
+
+        final List<JsonObject> items = JsonArrayHelper.toList(
+          response.getJson().getJsonArray("items"));
+
+        return HttpResult.success(MultipleInventoryRecords.from(items,
+          new ArrayList<>(), new ArrayList<>()));
+      });
+  }
+
+  private CompletableFuture<Response> getItemsResponse(Collection<String> itemIds, String itemsQuery) {
+    CompletableFuture<Response> itemsFetched = new CompletableFuture<>();
+
+    itemsClient.getMany(itemsQuery, itemIds.size(), 0, itemsFetched::complete);
+    return itemsFetched;
   }
 
   private JsonObject getRecordFromResponse(Response response) {
