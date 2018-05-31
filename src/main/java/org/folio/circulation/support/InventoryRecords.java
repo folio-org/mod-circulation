@@ -3,6 +3,7 @@ package org.folio.circulation.support;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
+import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
@@ -47,18 +48,12 @@ public class InventoryRecords {
   }
 
   public JsonArray getContributorNames() {
-    JsonArray contributors = new JsonArray();
-
-    if(getInstance() != null && getInstance().containsKey("contributors")) {
-      JsonArray instanceContributors = getInstance().getJsonArray("contributors");
-      if(instanceContributors != null && !instanceContributors.isEmpty()) {
-        for(Object ob : instanceContributors) {
-          String name = ((JsonObject)ob).getString("name");
-          contributors.add(new JsonObject().put("name", name));
-        }
-      }
+    if(getInstance() == null) {
+      return new JsonArray();
     }
-    return contributors;
+
+    return new JsonArray(mapToList(getInstance(), "contributors",
+      contributor -> new JsonObject().put("name", contributor.getString("name"))));
   }
 
   public String getBarcode() {

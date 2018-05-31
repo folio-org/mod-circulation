@@ -35,6 +35,18 @@ public class JsonArrayHelper {
       .collect(Collectors.toList());
   }
 
+  public static <T> List<T> mapToList(
+    JsonObject within,
+    String arrayPropertyName,
+    Function<JsonObject, T> mapper) {
+
+    if(within == null) {
+      return new ArrayList<>();
+    }
+
+    return mapToList(within.getJsonArray(arrayPropertyName), mapper);
+  }
+
   private static Stream<JsonObject> toStream(JsonArray array) {
     return array
       .stream()
