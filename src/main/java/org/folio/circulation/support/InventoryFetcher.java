@@ -4,6 +4,7 @@ import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.ItemRelatedRecord;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LocationRepository;
+import org.folio.circulation.domain.MaterialTypeRepository;
 import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,14 +26,21 @@ public class InventoryFetcher {
   private final CollectionResourceClient holdingsClient;
   private final CollectionResourceClient instancesClient;
   private final LocationRepository locationRepository;
+  private final MaterialTypeRepository materialTypeRepository;
   private final boolean fetchLocation;
+  private final boolean fetchMaterialType;
 
-  public InventoryFetcher(Clients clients, boolean fetchLocation) {
+  public InventoryFetcher(
+    Clients clients,
+    boolean fetchLocation,
+    boolean fetchMaterialType) {
+
     this(clients.itemsStorage(),
       clients.holdingsStorage(),
       clients.instancesStorage(),
       new LocationRepository(clients),
-      fetchLocation);
+      new MaterialTypeRepository(clients),
+      fetchLocation, fetchMaterialType);
   }
 
   private InventoryFetcher(
@@ -40,13 +48,17 @@ public class InventoryFetcher {
     CollectionResourceClient holdingsClient,
     CollectionResourceClient instancesClient,
     LocationRepository locationRepository,
-    boolean fetchLocation) {
+    MaterialTypeRepository materialTypeRepository,
+    boolean fetchLocation,
+    boolean fetchMaterialType) {
 
     this.itemsClient = itemsClient;
     this.holdingsClient = holdingsClient;
     this.instancesClient = instancesClient;
     this.locationRepository = locationRepository;
+    this.materialTypeRepository = materialTypeRepository;
     this.fetchLocation = fetchLocation;
+    this.fetchMaterialType = fetchMaterialType;
   }
 
   public CompletableFuture<HttpResult<InventoryRecords>> fetchFor(ItemRelatedRecord record) {
@@ -54,7 +66,8 @@ public class InventoryFetcher {
       .thenComposeAsync(this::fetchHolding)
       .thenComposeAsync(this::fetchInstance)
       .thenApply(r -> r.map(InventoryRecordsBuilder::create))
-      .thenComposeAsync(this::fetchLocation);
+      .thenComposeAsync(this::fetchLocation)
+      .thenComposeAsync(this::fetchMaterialType);
   }
 
   private CompletableFuture<HttpResult<InventoryRecords>> fetchLocation(
@@ -68,12 +81,24 @@ public class InventoryFetcher {
     }
   }
 
+  private CompletableFuture<HttpResult<InventoryRecords>> fetchMaterialType(
+    HttpResult<InventoryRecords> result) {
+
+    if(fetchMaterialType) {
+      return result.after(materialTypeRepository::getMaterialType);
+    }
+    else {
+      return completedFuture(result);
+    }
+  }
+
   public CompletableFuture<HttpResult<InventoryRecords>> fetchByBarcode(String barcode) {
     return fetchItemByBarcode(barcode)
       .thenComposeAsync(this::fetchHolding)
       .thenComposeAsync(this::fetchInstance)
       .thenApply(r -> r.map(InventoryRecordsBuilder::create))
-      .thenComposeAsync(this::fetchLocation);
+      .thenComposeAsync(this::fetchLocation)
+      .thenComposeAsync(this::fetchMaterialType);
   }
 
   public CompletableFuture<HttpResult<MultipleInventoryRecords>> fetchFor(
@@ -82,7 +107,8 @@ public class InventoryFetcher {
     return fetchItems(itemIds)
       .thenComposeAsync(this::fetchHoldingRecords)
       .thenComposeAsync(this::fetchInstances)
-      .thenComposeAsync(this::fetchLocations);
+      .thenComposeAsync(this::fetchLocations)
+      .thenComposeAsync(this::fetchMaterialTypes);
   }
 
   private CompletableFuture<HttpResult<MultipleInventoryRecords>> fetchLocations(
@@ -100,13 +126,39 @@ public class InventoryFetcher {
               result.value().getHoldings(),
               result.value().getInstances(),
               result.value().getRecords().stream()
-                .map(r -> r.withLocation(locationResult.value().getOrDefault(r.getLocationId(), null)))
+                .map(r -> r.withLocation(locationResult.value()
+                  .getOrDefault(r.getLocationId(), null)))
                 .collect(Collectors.toList())));
         });
       }
       else {
         return completedFuture(result);
       }
+  }
+
+  private CompletableFuture<HttpResult<MultipleInventoryRecords>> fetchMaterialTypes(
+    HttpResult<MultipleInventoryRecords> result) {
+
+    if(fetchMaterialType) {
+      return materialTypeRepository.getMaterialTypes(result.value().getRecords())
+        .thenApply(materialTypeResult -> {
+          if (materialTypeResult.failed()) {
+            return HttpResult.failure(materialTypeResult.cause());
+          }
+
+          return HttpResult.success(new MultipleInventoryRecords(
+            result.value().getItems(),
+            result.value().getHoldings(),
+            result.value().getInstances(),
+            result.value().getRecords().stream()
+              .map(r -> r.withMaterialType(materialTypeResult.value()
+                .getOrDefault(r.getMaterialTypeId(), null)))
+              .collect(Collectors.toList())));
+        });
+    }
+    else {
+      return completedFuture(result);
+    }
   }
 
   private CompletableFuture<HttpResult<MultipleInventoryRecords>> fetchInstances(

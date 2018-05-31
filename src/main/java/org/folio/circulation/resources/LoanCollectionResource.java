@@ -3,15 +3,15 @@ package org.folio.circulation.resources;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
-import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.*;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.*;
-import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.*;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -33,7 +33,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     final Clients clients = Clients.create(context, client);
 
-    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients, true);
+    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients, true, true);
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
     final UserFetcher userFetcher = new UserFetcher(clients);
 
@@ -41,7 +41,6 @@ public class LoanCollectionResource extends CollectionResource {
     final UpdateItem updateItem = new UpdateItem(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
-    final MaterialTypeRepository materialTypeRepository = new MaterialTypeRepository(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> new ValidationErrorFailure(
@@ -60,7 +59,6 @@ public class LoanCollectionResource extends CollectionResource {
       .thenCombineAsync(requestQueueFetcher.get(loan.getItemId()), this::addRequestQueue)
       .thenCombineAsync(userFetcher.getUser(loan.getUserId()), this::addUser)
       .thenApply(LoanValidation::refuseWhenUserIsNotAwaitingPickup)
-      .thenComposeAsync(r -> r.after(materialTypeRepository::getMaterialType))
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
@@ -83,7 +81,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     final Clients clients = Clients.create(context, client);
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
-    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients, false);
+    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients, false, false);
 
     final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
@@ -109,9 +107,8 @@ public class LoanCollectionResource extends CollectionResource {
   void get(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
-    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients, true);
+    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients, true, true);
     final LoanRepository loanRepository = new LoanRepository(clients);
-    final MaterialTypeRepository materialTypeRepository = new MaterialTypeRepository(clients);
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
@@ -119,7 +116,6 @@ public class LoanCollectionResource extends CollectionResource {
 
     loanRepository.getById(id)
       .thenComposeAsync(result -> result.after(inventoryFetcher::getInventoryRecords))
-      .thenComposeAsync(r -> r.after(materialTypeRepository::getMaterialType))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(OkJsonHttpResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
@@ -170,7 +166,7 @@ public class LoanCollectionResource extends CollectionResource {
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
 
-      InventoryFetcher inventoryFetcher = new InventoryFetcher(clients, true);
+      InventoryFetcher inventoryFetcher = new InventoryFetcher(clients, true, true);
 
       CompletableFuture<HttpResult<MultipleInventoryRecords>> inventoryRecordsFetched =
         inventoryFetcher.fetchFor(itemIds);
@@ -183,52 +179,21 @@ public class LoanCollectionResource extends CollectionResource {
 
         final MultipleInventoryRecords records = result.value();
 
-        //Also get a list of material types
-        List<String> materialTypeIds = records.getRecords().stream()
-          .map(InventoryRecords::getMaterialTypeId)
-          .filter(StringUtils::isNotBlank)
-          .collect(Collectors.toList());
+        loans.forEach( loan -> {
+          //No need to pass on the itemStatus property,
+          // as only used to populate the history
+          //and could be confused with aggregation of current status
+          loan.remove("itemStatus");
 
-        CompletableFuture<Response> materialTypesFetched = new CompletableFuture<>();
-        String materialTypesQuery = CqlHelper.multipleRecordsCqlQuery(materialTypeIds);
+          final InventoryRecords record = records.findRecordByItemId(
+            loan.getString(LoanProperties.ITEM_ID));
 
-        clients.materialTypesStorage().getMany(materialTypesQuery,
-          materialTypeIds.size(), 0, materialTypesFetched::complete);
-
-        materialTypesFetched.thenAccept(materialTypesResponse -> {
-          if(materialTypesResponse.getStatusCode() != 200) {
-            ServerErrorResponse.internalError(routingContext.response(),
-              String.format("Material Types request (%s) failed %s: %s",
-                materialTypesQuery, materialTypesResponse.getStatusCode(),
-                materialTypesResponse.getBody()));
-            return;
+          if(record.isFound()) {
+            loan.put("item", loanRepresentation.createItemSummary(record));
           }
-
-          loans.forEach( loan -> {
-            //No need to pass on the itemStatus property,
-            // as only used to populate the history
-            //and could be confused with aggregation of current status
-            loan.remove("itemStatus");
-
-            final InventoryRecords record = records.findRecordByItemId(
-              loan.getString(LoanProperties.ITEM_ID));
-
-            if(record.isFound()) {
-              List<JsonObject> materialTypes = JsonArrayHelper.toList(
-                materialTypesResponse.getJson().getJsonArray("mtypes"));
-
-              Optional<JsonObject> possibleMaterialType = materialTypes.stream()
-                .filter(materialType -> materialType.getString("id")
-                .equals(record.getMaterialTypeId())).findFirst();
-
-              record.setMaterialType(possibleMaterialType.orElse(null));
-
-              loan.put("item", loanRepresentation.createItemSummary(record));
-            }
-          });
-
-          JsonResponse.success(routingContext.response(), wrappedLoans.toJson());
         });
+
+        JsonResponse.success(routingContext.response(), wrappedLoans.toJson());
       });
     });
   }

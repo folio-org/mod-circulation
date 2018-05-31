@@ -48,7 +48,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final Clients clients = Clients.create(context, client);
 
-    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients, false);
+    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients, false, false);
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
     final UserFetcher userFetcher = new UserFetcher(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
@@ -86,7 +86,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final Clients clients = Clients.create(context, client);
 
-    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients, false);
+    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients, false, false);
     final UserFetcher userFetcher = new UserFetcher(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
@@ -134,7 +134,7 @@ public class RequestCollectionResource extends CollectionResource {
       if(requestResponse.getStatusCode() == 200) {
         Request request = new Request(requestResponse.getJson());
 
-        InventoryFetcher inventoryFetcher = new InventoryFetcher(clients, false);
+        InventoryFetcher inventoryFetcher = new InventoryFetcher(clients, false, false);
 
         CompletableFuture<HttpResult<InventoryRecords>> inventoryRecordsCompleted =
           inventoryFetcher.fetchFor(request);
@@ -201,7 +201,7 @@ public class RequestCollectionResource extends CollectionResource {
           .filter(Objects::nonNull)
           .collect(Collectors.toList());
 
-        InventoryFetcher inventoryFetcher = new InventoryFetcher(clients, false);
+        InventoryFetcher inventoryFetcher = new InventoryFetcher(clients, false, false);
 
         CompletableFuture<HttpResult<MultipleInventoryRecords>> inventoryRecordsFetched =
           inventoryFetcher.fetchFor(itemIds);

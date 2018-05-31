@@ -161,4 +161,9 @@ public class InventoryRecords {
     return new InventoryRecords(this.item, this.holding, this.instance,
       newLocation, this.materialType);
   }
+
+  public InventoryRecords withMaterialType(JsonObject newMaterialType) {
+    return new InventoryRecords(this.item, this.holding, this.instance,
+      this.location, newMaterialType);
+  }
 }

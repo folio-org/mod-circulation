@@ -49,11 +49,10 @@ public class CheckOutByBarcodeResource extends Resource {
     final Clients clients = Clients.create(context, client);
 
     final UserFetcher userFetcher = new UserFetcher(clients);
-    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients, true);
+    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients, true, true);
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
-    final MaterialTypeRepository materialTypeRepository = new MaterialTypeRepository(clients);
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> new ValidationErrorFailure(
       "Cannot check out item via proxy when relationship is invalid", "proxyUserBarcode",
@@ -78,7 +77,6 @@ public class CheckOutByBarcodeResource extends Resource {
         refuseWhenHasOpenLoan(records, loanRepository, itemBarcode)))
       .thenComposeAsync(r -> r.after(requestQueueFetcher::get))
       .thenApply(r -> refuseWhenUserIsNotAwaitingPickup(r, userBarcode))
-      .thenComposeAsync(r -> r.after(materialTypeRepository::getMaterialType))
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenApply(r -> r.next(this::calculateDueDate))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))

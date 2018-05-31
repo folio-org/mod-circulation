@@ -12,7 +12,7 @@ public class MultipleInventoryRecords {
   private final Collection<JsonObject> instances;
   private final Collection<InventoryRecords> records;
 
-  public MultipleInventoryRecords(
+  MultipleInventoryRecords(
     Collection<JsonObject> items,
     Collection<JsonObject> holdings,
     Collection<JsonObject> instances,

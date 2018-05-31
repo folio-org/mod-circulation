@@ -1,14 +1,19 @@
 package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
+import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class MaterialTypeRepository {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -17,6 +22,13 @@ public class MaterialTypeRepository {
 
   public MaterialTypeRepository(Clients clients) {
     materialTypesStorageClient = clients.materialTypesStorage();
+  }
+
+  public CompletableFuture<HttpResult<InventoryRecords>> getMaterialType(
+    InventoryRecords inventoryRecords) {
+
+    return getMaterialType(inventoryRecords.getMaterialTypeId(), inventoryRecords.getItemId())
+      .thenApply(result -> result.map(inventoryRecords::withMaterialType));
   }
 
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> getMaterialType(
@@ -40,9 +52,9 @@ public class MaterialTypeRepository {
     String materialTypeId,
     String itemId) {
 
-    CompletableFuture<Response> getLocationCompleted = new CompletableFuture<>();
+    CompletableFuture<Response> getMaterialTypeCompleted = new CompletableFuture<>();
 
-    materialTypesStorageClient.get(materialTypeId, getLocationCompleted::complete);
+    materialTypesStorageClient.get(materialTypeId, getMaterialTypeCompleted::complete);
 
     //TODO: Add functions to explicitly distinguish between fatal not found
     // and allowable not found
@@ -58,8 +70,41 @@ public class MaterialTypeRepository {
       }
     };
 
-    return getLocationCompleted
+    return getMaterialTypeCompleted
       .thenApply(mapResponse)
       .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
+  }
+
+  public CompletableFuture<HttpResult<Map<String, JsonObject>>> getMaterialTypes(
+    Collection<InventoryRecords> inventoryRecords) {
+
+    List<String> materialTypeIds = inventoryRecords.stream()
+      .map(InventoryRecords::getMaterialTypeId)
+      .filter(StringUtils::isNotBlank)
+      .collect(Collectors.toList());
+
+    CompletableFuture<Response> materialTypesFetched = new CompletableFuture<>();
+
+    String materialTypesQuery = CqlHelper.multipleRecordsCqlQuery(materialTypeIds);
+
+    materialTypesStorageClient.getMany(materialTypesQuery, materialTypeIds.size(), 0,
+      materialTypesFetched::complete);
+
+    return materialTypesFetched
+      .thenApply(materialTypesResponse -> {
+        if(materialTypesResponse.getStatusCode() != 200) {
+          return HttpResult.failure(new ServerErrorFailure(
+            String.format("Material Types request (%s) failed %s: %s",
+              materialTypesQuery, materialTypesResponse.getStatusCode(),
+              materialTypesResponse.getBody())));
+        }
+
+        List<JsonObject> materialTypes = JsonArrayHelper.toList(
+          materialTypesResponse.getJson().getJsonArray("mtypes"));
+
+        return HttpResult.success(materialTypes.stream().collect(
+          Collectors.toMap(m -> m.getString("id"),
+            Function.identity())));
+      });
   }
 }
