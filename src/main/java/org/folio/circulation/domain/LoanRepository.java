@@ -32,7 +32,7 @@ public class LoanRepository {
     CompletableFuture<HttpResult<LoanAndRelatedRecords>> onCreated = new CompletableFuture<>();
 
     JsonObject storageLoan = convertLoanToStorageRepresentation(
-      loanAndRelatedRecords.getLoan(), loanAndRelatedRecords.getLoan().getInventoryRecords().item);
+      loanAndRelatedRecords.getLoan(), loanAndRelatedRecords.getLoan().getInventoryRecords().getItem());
 
     if(loanAndRelatedRecords.getLoanPolicy() != null) {
       storageLoan.put("loanPolicyId", loanAndRelatedRecords.getLoanPolicy().getId());
@@ -56,7 +56,7 @@ public class LoanRepository {
     CompletableFuture<HttpResult<LoanAndRelatedRecords>> onUpdated = new CompletableFuture<>();
 
     JsonObject storageLoan = convertLoanToStorageRepresentation(
-      loanAndRelatedRecords.getLoan(), loanAndRelatedRecords.getLoan().getInventoryRecords().item);
+      loanAndRelatedRecords.getLoan(), loanAndRelatedRecords.getLoan().getInventoryRecords().getItem());
 
     loansStorageClient.put(storageLoan.getString("id"), storageLoan, response -> {
       if (response.getStatusCode() == 204) {

@@ -100,8 +100,8 @@ public class UpdateItem {
         ? RequestType.from(requestQueue.getHighestPriorityRequest()).toCheckedOutItemStatus()
         : requestType.toCheckedOutItemStatus();
 
-      if (isNotSameStatus(requestAndRelatedRecords.getInventoryRecords().item, newStatus)) {
-        return internalUpdate(requestAndRelatedRecords.getInventoryRecords().item, newStatus)
+      if (isNotSameStatus(requestAndRelatedRecords.getInventoryRecords().getItem(), newStatus)) {
+        return internalUpdate(requestAndRelatedRecords.getInventoryRecords().getItem(), newStatus)
           .thenApply(updatedItemResult ->
             updatedItemResult.map(requestAndRelatedRecords::withItem));
       } else {

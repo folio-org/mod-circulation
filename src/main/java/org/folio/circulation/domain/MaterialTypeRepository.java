@@ -25,7 +25,7 @@ public class MaterialTypeRepository {
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> getMaterialType(
     LoanAndRelatedRecords relatedRecords) {
 
-    JsonObject item = relatedRecords.getInventoryRecords().item;
+    JsonObject item = relatedRecords.getInventoryRecords().getItem();
 
     //Cannot find material type for unknown item
     if(item == null) {

@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.LoanValidation.defaultStatusAndAction;
+import static org.folio.circulation.domain.LoanValidation.determineLocationIdForItem;
 
 public class LoanCollectionResource extends CollectionResource {
   public LoanCollectionResource(HttpClient client) {
@@ -186,7 +187,7 @@ public class LoanCollectionResource extends CollectionResource {
 
       inventoryRecordsFetched.thenAccept(records -> {
         List<String> locationIds = records.getItems().stream()
-          .map(item -> LoanValidation.determineLocationIdForItem(item,
+          .map(item -> determineLocationIdForItem(item,
             records.findHoldingById(item.getString("holdingsRecordId")).orElse(null)))
           .filter(StringUtils::isNotBlank)
           .collect(Collectors.toList());
@@ -237,7 +238,9 @@ public class LoanCollectionResource extends CollectionResource {
               loan.remove("itemStatus");
 
               Optional<JsonObject> possibleInstance = Optional.empty();
+
               String[] materialTypeId = new String[]{null};
+
               if(possibleItem.isPresent()) {
                 JsonObject item = possibleItem.get();
                 materialTypeId[0] = item.getString(ItemProperties.MATERIAL_TYPE_ID);
@@ -257,23 +260,22 @@ public class LoanCollectionResource extends CollectionResource {
 
                 Optional<JsonObject> possibleLocation = locations.stream()
                   .filter(location -> location.getString("id").equals(
-                    LoanValidation.determineLocationIdForItem(item, possibleHolding.orElse(null))))
+                    determineLocationIdForItem(item, possibleHolding.orElse(null))))
                   .findFirst();
 
                 List<JsonObject> materialTypes = JsonArrayHelper.toList(
                   materialTypesResponse.getJson().getJsonArray("mtypes"));
 
-
                 Optional<JsonObject> possibleMaterialType = materialTypes.stream()
                   .filter(materialType -> materialType.getString("id")
                   .equals(materialTypeId[0])).findFirst();
 
-                loan.put("item", loanRepresentation.createItemSummary(item,
-                  possibleLocation.orElse(null),
-                    possibleMaterialType.orElse(null),
+                loan.put("item", loanRepresentation.createItemSummary(
                   new InventoryRecords(item,
                     possibleHolding.orElse(null),
-                    possibleInstance.orElse(null))));
+                    possibleInstance.orElse(null),
+                    possibleLocation.orElse(null),
+                    possibleMaterialType.orElse(null))));
               }
             });
 

@@ -10,18 +10,24 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 public class InventoryRecords {
   private static final String TITLE_PROPERTY = "title";
 
-  public final JsonObject item;
-  public final JsonObject holding;
-  public final JsonObject instance;
+  private final JsonObject item;
+  private final JsonObject holding;
+  private final JsonObject instance;
+  private JsonObject location;
+  private JsonObject materialType;
 
   public InventoryRecords(
     JsonObject item,
     JsonObject holding,
-    JsonObject instance) {
+    JsonObject instance,
+    JsonObject location,
+    JsonObject materialType) {
 
     this.item = item;
     this.holding = holding;
     this.instance = instance;
+    this.location = location;
+    this.materialType = materialType;
   }
 
   public JsonObject getItem() {
@@ -78,5 +84,21 @@ public class InventoryRecords {
 
   public String getStatus() {
     return getNestedStringProperty(getItem(), "status", "name");
+  }
+
+  public JsonObject getLocation() {
+    return location;
+  }
+
+  public void setLocation(JsonObject location) {
+    this.location = location;
+  }
+
+  public JsonObject getMaterialType() {
+    return materialType;
+  }
+
+  public void setMaterialType(JsonObject materialType) {
+    this.materialType = materialType;
   }
 }

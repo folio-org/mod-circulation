@@ -208,7 +208,7 @@ public class LoanValidation {
     HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
     return loanAndRelatedRecords.next(loan -> {
-      final JsonObject item = loan.getInventoryRecords().item;
+      final JsonObject item = loan.getInventoryRecords().getItem();
 
       if(ItemStatus.isCheckedOut(item)) {
         return HttpResult.failure(new ValidationErrorFailure(
@@ -225,7 +225,7 @@ public class LoanValidation {
 
     //TODO: Extract duplication with above
     return loanAndRelatedRecords.next(loan -> {
-      final JsonObject item = loan.getInventoryRecords().item;
+      final JsonObject item = loan.getInventoryRecords().getItem();
 
       if(ItemStatus.isCheckedOut(item)) {
         return HttpResult.failure(new ValidationErrorFailure(

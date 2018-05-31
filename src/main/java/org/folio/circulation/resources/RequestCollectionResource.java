@@ -223,7 +223,7 @@ public class RequestCollectionResource extends CollectionResource {
 
                 addAdditionalItemProperties(request,
                   new InventoryRecords(possibleItem.orElse(null),
-                    possibleHolding.orElse(null), null));
+                    possibleHolding.orElse(null), null, null, null));
               }
             });
 
@@ -381,7 +381,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     return result.next(requestAndRelatedRecords -> {
       Request request = requestAndRelatedRecords.getRequest();
-      JsonObject item = requestAndRelatedRecords.getInventoryRecords().item;
+      JsonObject item = requestAndRelatedRecords.getInventoryRecords().getItem();
 
       RequestType requestType = RequestType.from(request);
 

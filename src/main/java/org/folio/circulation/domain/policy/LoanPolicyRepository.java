@@ -33,7 +33,7 @@ public class LoanPolicyRepository {
 
     return lookupLoanPolicyId(
       relatedRecords.getLoan().getInventoryRecords().getItem(),
-      relatedRecords.getLoan().getInventoryRecords().holding,
+      relatedRecords.getLoan().getInventoryRecords().getHolding(),
       relatedRecords.getRequestingUser())
       .thenComposeAsync(r -> r.after(this::lookupLoanPolicy))
       .thenApply(result -> result.map(this::toLoanPolicy))

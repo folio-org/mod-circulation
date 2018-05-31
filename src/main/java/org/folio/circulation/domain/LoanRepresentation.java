@@ -14,18 +14,18 @@ public class LoanRepresentation {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   public JsonObject extendedLoan(LoanAndRelatedRecords relatedRecords) {
+    final InventoryRecords inventoryRecords = relatedRecords.getLoan().getInventoryRecords();
+
+    //Temporary, until location and material type are included in inventory records
+    inventoryRecords.setLocation(relatedRecords.getLocation());
+    inventoryRecords.setMaterialType(relatedRecords.getMaterialType());
+
     return extendedLoan(relatedRecords.getLoan().asJson(),
-      relatedRecords.getLoan().getInventoryRecords(),
-      relatedRecords.getLoan().getInventoryRecords().getItem(),
-      relatedRecords.getLocation(),
-      relatedRecords.getMaterialType());
+      inventoryRecords
+    );
   }
 
-  public JsonObject createItemSummary(
-    JsonObject item,
-    JsonObject location,
-    JsonObject materialType,
-    InventoryRecords inventoryRecords) {
+  public JsonObject createItemSummary(InventoryRecords inventoryRecords) {
 
     JsonObject itemSummary = new JsonObject();
 
@@ -37,12 +37,16 @@ public class LoanRepresentation {
     write(itemSummary, "callNumber", inventoryRecords.getCallNumber());
     writeNamedObject(itemSummary, "status", inventoryRecords.getStatus());
 
+    final JsonObject location = inventoryRecords.getLocation();
+
     if(location != null && location.containsKey("name")) {
       itemSummary.put("location", new JsonObject()
         .put("name", location.getString("name")));
     }
 
     final String materialTypeProperty = "materialType";
+
+    final JsonObject materialType = inventoryRecords.getMaterialType();
 
     if(materialType != null) {
       if(materialType.containsKey("name") && materialType.getString("name") != null) {
@@ -61,14 +65,10 @@ public class LoanRepresentation {
 
   private JsonObject extendedLoan(
     JsonObject loan,
-    InventoryRecords inventoryRecords,
-    JsonObject item,
-    JsonObject location,
-    JsonObject materialType) {
+    InventoryRecords inventoryRecords) {
 
-    if(inventoryRecords != null && item != null) {
-      loan.put("item", new LoanRepresentation().createItemSummary(item, location,
-        materialType, inventoryRecords));
+    if(inventoryRecords != null && inventoryRecords.getItem() != null) {
+      loan.put("item", new LoanRepresentation().createItemSummary(inventoryRecords));
     }
 
     //No need to pass on the itemStatus property, as only used to populate the history

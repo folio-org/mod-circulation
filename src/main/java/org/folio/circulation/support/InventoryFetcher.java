@@ -24,7 +24,8 @@ public class InventoryFetcher {
 
   public InventoryFetcher(Clients clients) {
     this(clients.itemsStorage(),
-      clients.holdingsStorage(), clients.instancesStorage());
+      clients.holdingsStorage(),
+      clients.instancesStorage());
   }
 
   private InventoryFetcher(
@@ -199,7 +200,7 @@ public class InventoryFetcher {
       if(item == null) {
         log.info("Item was not found, aborting fetching holding or instance");
         return CompletableFuture.completedFuture(
-          HttpResult.success(new InventoryRecords(null, null, null)));
+          HttpResult.success(new InventoryRecords(null, null, null, null, item)));
       }
       else {
         final String holdingsRecordId = item.getString("holdingsRecordId");
@@ -212,7 +213,7 @@ public class InventoryFetcher {
 
         return holdingRequestCompleted
           .thenApply(response -> HttpResult.success(new InventoryRecords(item,
-            getRecordFromResponse(response), null)))
+            getRecordFromResponse(response), null, null, item)))
           .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
       }
     });
@@ -229,7 +230,7 @@ public class InventoryFetcher {
 
         return CompletableFuture.completedFuture(
           HttpResult.success(new InventoryRecords(
-            inventoryRecords.getItem(), null, null)));
+            inventoryRecords.getItem(), null, null, null, holding)));
       }
       else {
         final String instanceId = holding.getString("instanceId");
@@ -243,7 +244,7 @@ public class InventoryFetcher {
         return instanceRequestCompleted
           .thenApply(response -> HttpResult.success(new InventoryRecords(
             inventoryRecords.getItem(), inventoryRecords.getHolding(),
-            getRecordFromResponse(response))))
+            getRecordFromResponse(response), null, holding)))
           .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
       }
     });
