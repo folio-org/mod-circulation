@@ -2,6 +2,7 @@ package org.folio.circulation.support;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.representations.ItemProperties;
 
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
@@ -100,5 +101,9 @@ public class InventoryRecords {
 
   public void setMaterialType(JsonObject materialType) {
     this.materialType = materialType;
+  }
+
+  public String getMaterialTypeId() {
+    return getProperty(getItem(), ItemProperties.MATERIAL_TYPE_ID);
   }
 }

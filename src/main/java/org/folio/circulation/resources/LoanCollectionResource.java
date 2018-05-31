@@ -209,10 +209,11 @@ public class LoanCollectionResource extends CollectionResource {
           }
 
           //Also get a list of material types
-          List<String> materialTypeIds = records.getItems().stream()
-            .map(item -> item.getString(ItemProperties.MATERIAL_TYPE_ID))
+          List<String> materialTypeIds = records.getRecords().stream()
+            .map(InventoryRecords::getMaterialTypeId)
             .filter(StringUtils::isNotBlank)
             .collect(Collectors.toList());
+
           CompletableFuture<Response> materialTypesFetched = new CompletableFuture<>();
           String materialTypesQuery = CqlHelper.multipleRecordsCqlQuery(materialTypeIds);
 

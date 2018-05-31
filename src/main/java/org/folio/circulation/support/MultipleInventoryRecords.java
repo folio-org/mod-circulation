@@ -42,7 +42,7 @@ public class MultipleInventoryRecords {
     if(!holdingsRecord.isPresent()) {
       return Optional.of(new InventoryRecords(item.get(), null, null, null, null));
     }
-
+    
     final Optional<JsonObject> instance = findInstanceById(
       holdingsRecord.get().getString("instanceId"));
 
@@ -61,19 +61,6 @@ public class MultipleInventoryRecords {
 
   public Optional<JsonObject> findInstanceById(String instanceId) {
     return findById(instanceId, instances);
-  }
-
-
-  public Collection<JsonObject> getItems() {
-    return items;
-  }
-
-  public Collection<JsonObject> getHoldings() {
-    return holdings;
-  }
-
-  public Collection<JsonObject> getInstances() {
-    return instances;
   }
 
   private Optional<JsonObject> findById(
