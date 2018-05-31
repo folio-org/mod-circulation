@@ -124,7 +124,7 @@ public class InventoryFetcher {
           final List<JsonObject> instances = JsonArrayHelper.toList(
             instancesResponse.getJson().getJsonArray("instances"));
 
-          fetchCompleted.complete(new MultipleInventoryRecords(items, holdings, instances));
+          fetchCompleted.complete(MultipleInventoryRecords.from(items, holdings, instances));
         });
       });
     });
