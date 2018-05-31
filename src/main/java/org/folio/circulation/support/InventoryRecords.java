@@ -31,6 +31,15 @@ public class InventoryRecords {
     this.materialType = materialType;
   }
 
+  public String determineLoanTypeForItem() {
+    JsonObject item = getItem();
+
+    return item.containsKey(ItemProperties.TEMPORARY_LOAN_TYPE_ID)
+      && !item.getString(ItemProperties.TEMPORARY_LOAN_TYPE_ID).isEmpty()
+      ? item.getString(ItemProperties.TEMPORARY_LOAN_TYPE_ID)
+      : item.getString(ItemProperties.PERMANENT_LOAN_TYPE_ID);
+  }
+
   public JsonObject getItem() {
     return item;
   }
