@@ -50,11 +50,11 @@ public class MultipleInventoryRecords {
         null, null);
   }
 
-  public Optional<JsonObject> findHoldingById(String holdingsId) {
+  private Optional<JsonObject> findHoldingById(String holdingsId) {
     return findById(holdingsId, holdings);
   }
 
-  public Optional<JsonObject> findItemById(String itemId) {
+  private Optional<JsonObject> findItemById(String itemId) {
     return findById(itemId, items);
   }
 

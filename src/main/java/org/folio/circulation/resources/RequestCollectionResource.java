@@ -12,7 +12,6 @@ import org.folio.circulation.support.http.server.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -212,18 +211,11 @@ public class RequestCollectionResource extends CollectionResource {
         // rather than alter the storage representations
         inventoryRecordsFetched.thenAccept(records -> {
           requests.forEach(request -> {
-              Optional<JsonObject> possibleItem = records.findItemById(
+              InventoryRecords record = records.findRecordByItemId(
                 new Request(request).getItemId());
 
-              if(possibleItem.isPresent()) {
-                JsonObject item = possibleItem.get();
-
-                Optional<JsonObject> possibleHolding = records.findHoldingById(
-                  item.getString("holdingsRecordId"));
-
-                addAdditionalItemProperties(request,
-                  new InventoryRecords(possibleItem.orElse(null),
-                    possibleHolding.orElse(null), null, null, null));
+              if(record.getItem() != null) {
+                addAdditionalItemProperties(request, record);
               }
             });
 
