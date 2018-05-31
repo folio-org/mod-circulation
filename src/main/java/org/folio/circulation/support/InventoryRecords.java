@@ -2,6 +2,8 @@ package org.folio.circulation.support;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.representations.ItemProperties;
 
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
@@ -29,6 +31,18 @@ public class InventoryRecords {
     this.instance = instance;
     this.location = location;
     this.materialType = materialType;
+  }
+
+  public boolean isCheckedOut() {
+    String status = getStatus();
+
+    return status.equals(ItemStatus.CHECKED_OUT)
+      || status.equals(ItemStatus.CHECKED_OUT_HELD)
+      || status.equals(ItemStatus.CHECKED_OUT_RECALLED);
+  }
+
+  public boolean isNotSameStatus(String prospectiveStatus) {
+    return !StringUtils.equals(getStatus(), prospectiveStatus);
   }
 
   public JsonObject getItem() {
@@ -127,11 +141,13 @@ public class InventoryRecords {
   }
 
   public String determineLoanTypeForItem() {
-    JsonObject item = getItem();
+    return getItem().containsKey(ItemProperties.TEMPORARY_LOAN_TYPE_ID)
+      && !getItem().getString(ItemProperties.TEMPORARY_LOAN_TYPE_ID).isEmpty()
+      ? getItem().getString(ItemProperties.TEMPORARY_LOAN_TYPE_ID)
+      : getItem().getString(ItemProperties.PERMANENT_LOAN_TYPE_ID);
+  }
 
-    return item.containsKey(ItemProperties.TEMPORARY_LOAN_TYPE_ID)
-      && !item.getString(ItemProperties.TEMPORARY_LOAN_TYPE_ID).isEmpty()
-      ? item.getString(ItemProperties.TEMPORARY_LOAN_TYPE_ID)
-      : item.getString(ItemProperties.PERMANENT_LOAN_TYPE_ID);
+  public void changeStatus(String newStatus) {
+    getItem().put("status", new JsonObject().put("name", newStatus));
   }
 }

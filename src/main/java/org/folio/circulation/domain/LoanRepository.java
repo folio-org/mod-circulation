@@ -32,7 +32,7 @@ public class LoanRepository {
     CompletableFuture<HttpResult<LoanAndRelatedRecords>> onCreated = new CompletableFuture<>();
 
     JsonObject storageLoan = convertLoanToStorageRepresentation(
-      loanAndRelatedRecords.getLoan(), loanAndRelatedRecords.getLoan().getInventoryRecords().getItem());
+      loanAndRelatedRecords.getLoan(), loanAndRelatedRecords.getLoan().getInventoryRecords());
 
     if(loanAndRelatedRecords.getLoanPolicy() != null) {
       storageLoan.put("loanPolicyId", loanAndRelatedRecords.getLoanPolicy().getId());
@@ -56,7 +56,7 @@ public class LoanRepository {
     CompletableFuture<HttpResult<LoanAndRelatedRecords>> onUpdated = new CompletableFuture<>();
 
     JsonObject storageLoan = convertLoanToStorageRepresentation(
-      loanAndRelatedRecords.getLoan(), loanAndRelatedRecords.getLoan().getInventoryRecords().getItem());
+      loanAndRelatedRecords.getLoan(), loanAndRelatedRecords.getLoan().getInventoryRecords());
 
     loansStorageClient.put(storageLoan.getString("id"), storageLoan, response -> {
       if (response.getStatusCode() == 204) {
@@ -90,13 +90,13 @@ public class LoanRepository {
 
   private static JsonObject convertLoanToStorageRepresentation(
     Loan loan,
-    JsonObject item) {
+    InventoryRecords inventoryRecords) {
 
     JsonObject storageLoan = loan.asJson();
 
     storageLoan.remove("item");
     storageLoan.remove("itemStatus");
-    storageLoan.put("itemStatus", ItemStatus.getStatus(item));
+    storageLoan.put("itemStatus", inventoryRecords.getStatus());
 
     return storageLoan;
   }

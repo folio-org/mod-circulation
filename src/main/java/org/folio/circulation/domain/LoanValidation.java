@@ -3,6 +3,7 @@ package org.folio.circulation.domain;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.InventoryRecords;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 
@@ -192,11 +193,11 @@ public class LoanValidation {
     HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
     return loanAndRelatedRecords.next(loan -> {
-      final JsonObject item = loan.getInventoryRecords().getItem();
+      final InventoryRecords records = loan.getInventoryRecords();
 
-      if(ItemStatus.isCheckedOut(item)) {
+      if(records.isCheckedOut()) {
         return HttpResult.failure(new ValidationErrorFailure(
-          "Item is already checked out", "itemId", item.getString("id")));
+          "Item is already checked out", "itemId", records.getItemId()));
       }
       else {
         return loanAndRelatedRecords;
@@ -209,9 +210,7 @@ public class LoanValidation {
 
     //TODO: Extract duplication with above
     return loanAndRelatedRecords.next(loan -> {
-      final JsonObject item = loan.getInventoryRecords().getItem();
-
-      if(ItemStatus.isCheckedOut(item)) {
+      if(loan.getInventoryRecords().isCheckedOut()) {
         return HttpResult.failure(new ValidationErrorFailure(
           "Item is already checked out", ITEM_BARCODE_PROPERTY_NAME, barcode));
       }
