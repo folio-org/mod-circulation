@@ -82,60 +82,64 @@ public class InventoryFetcher {
     CompletableFuture<HttpResult<MultipleInventoryRecords>> fetchCompleted = new CompletableFuture<>();
 
     CompletableFuture<HttpResult<MultipleInventoryRecords>> fetched = fetchItems(itemIds)
-      .thenComposeAsync(this::fetchHoldingRecords);
+      .thenComposeAsync(this::fetchHoldingRecords)
+      .thenComposeAsync(this::fetchInstances);
 
     fetched.thenAccept(result -> {
-      List<String> instanceIds = result.value().getRecords().stream()
-        .map(InventoryRecords::getInstanceId)
-        .filter(Objects::nonNull)
-        .collect(Collectors.toList());
+      if(fetchLocation) {
+          locationRepository.getLocations(result.value().getRecords())
+          .thenAccept(locationResult -> {
+            if (locationResult.failed()) {
+              fetchCompleted.complete(HttpResult.failure(locationResult.cause()));
+              return;
+            }
 
-      CompletableFuture<Response> instancesFetched = new CompletableFuture<>();
-
-      String instancesQuery = CqlHelper.multipleRecordsCqlQuery(instanceIds);
-
-      instancesClient.getMany(instancesQuery, instanceIds.size(), 0,
-        instancesFetched::complete);
-
-      instancesFetched.thenAccept(instancesResponse -> {
-        if (instancesResponse.getStatusCode() != 200) {
-          fetchCompleted.complete(HttpResult.failure(
-            new ServerErrorFailure(String.format("Instances request (%s) failed %s: %s",
-              instancesQuery, instancesResponse.getStatusCode(),
-              instancesResponse.getBody()))));
-
-          return;
-        }
-
-        final List<JsonObject> instances = JsonArrayHelper.toList(
-          instancesResponse.getJson().getJsonArray("instances"));
-
-        final MultipleInventoryRecords multipleInventoryRecords = MultipleInventoryRecords.from(
-          result.value().getItems(), result.value().getHoldings(), instances);
-
-        if(fetchLocation) {
-          locationRepository.getLocations(multipleInventoryRecords.getRecords())
-            .thenAccept(locationResult -> {
-              if (locationResult.failed()) {
-                fetchCompleted.complete(HttpResult.failure(locationResult.cause()));
-              }
-
-              fetchCompleted.complete(HttpResult.success(new MultipleInventoryRecords(
-                multipleInventoryRecords.getItems(),
-                multipleInventoryRecords.getHoldings(),
-                multipleInventoryRecords.getInstances(),
-                multipleInventoryRecords.getRecords().stream()
-                  .map(r -> r.withLocation(locationResult.value().getOrDefault(r.getLocationId(), null)))
-                  .collect(Collectors.toList()))));
-          });
-        }
-        else {
-          fetchCompleted.complete(HttpResult.success(multipleInventoryRecords));
-        }
-      });
+            fetchCompleted.complete(HttpResult.success(new MultipleInventoryRecords(
+              result.value().getItems(),
+              result.value().getHoldings(),
+              result.value().getInstances(),
+              result.value().getRecords().stream()
+                .map(r -> r.withLocation(locationResult.value().getOrDefault(r.getLocationId(), null)))
+                .collect(Collectors.toList()))));
+        });
+      }
+      else {
+        fetchCompleted.complete(result);
+      }
     });
 
     return fetchCompleted;
+  }
+
+  private CompletableFuture<HttpResult<MultipleInventoryRecords>> fetchInstances(
+    HttpResult<MultipleInventoryRecords> result) {
+
+    List<String> instanceIds = result.value().getRecords().stream()
+      .map(InventoryRecords::getInstanceId)
+      .filter(Objects::nonNull)
+      .collect(Collectors.toList());
+
+    CompletableFuture<Response> instancesFetched = new CompletableFuture<>();
+
+    String instancesQuery = CqlHelper.multipleRecordsCqlQuery(instanceIds);
+
+    instancesClient.getMany(instancesQuery, instanceIds.size(), 0,
+      instancesFetched::complete);
+
+    return instancesFetched.thenApply(instancesResponse -> {
+      if (instancesResponse.getStatusCode() != 200) {
+          return HttpResult.failure(new ServerErrorFailure(
+            String.format("Instances request (%s) failed %s: %s",
+            instancesQuery, instancesResponse.getStatusCode(),
+            instancesResponse.getBody())));
+      }
+
+      final List<JsonObject> instances = JsonArrayHelper.toList(
+        instancesResponse.getJson().getJsonArray("instances"));
+
+      return HttpResult.success(MultipleInventoryRecords.from(
+        result.value().getItems(), result.value().getHoldings(), instances));
+    });
   }
 
   private CompletableFuture<HttpResult<MultipleInventoryRecords>> fetchHoldingRecords(
