@@ -79,36 +79,34 @@ public class InventoryFetcher {
   public CompletableFuture<HttpResult<MultipleInventoryRecords>> fetchFor(
     Collection<String> itemIds) {
 
-    CompletableFuture<HttpResult<MultipleInventoryRecords>> fetchCompleted = new CompletableFuture<>();
-
-    CompletableFuture<HttpResult<MultipleInventoryRecords>> fetched = fetchItems(itemIds)
+    return fetchItems(itemIds)
       .thenComposeAsync(this::fetchHoldingRecords)
-      .thenComposeAsync(this::fetchInstances);
+      .thenComposeAsync(this::fetchInstances)
+      .thenComposeAsync(this::fetchLocations);
+  }
 
-    fetched.thenAccept(result -> {
-      if(fetchLocation) {
-          locationRepository.getLocations(result.value().getRecords())
-          .thenAccept(locationResult -> {
+  private CompletableFuture<HttpResult<MultipleInventoryRecords>> fetchLocations(
+    HttpResult<MultipleInventoryRecords> result) {
+
+    if(fetchLocation) {
+      return locationRepository.getLocations(result.value().getRecords())
+        .thenApply(locationResult -> {
             if (locationResult.failed()) {
-              fetchCompleted.complete(HttpResult.failure(locationResult.cause()));
-              return;
+              return HttpResult.failure(locationResult.cause());
             }
 
-            fetchCompleted.complete(HttpResult.success(new MultipleInventoryRecords(
+            return HttpResult.success(new MultipleInventoryRecords(
               result.value().getItems(),
               result.value().getHoldings(),
               result.value().getInstances(),
               result.value().getRecords().stream()
                 .map(r -> r.withLocation(locationResult.value().getOrDefault(r.getLocationId(), null)))
-                .collect(Collectors.toList()))));
+                .collect(Collectors.toList())));
         });
       }
       else {
-        fetchCompleted.complete(result);
+        return completedFuture(result);
       }
-    });
-
-    return fetchCompleted;
   }
 
   private CompletableFuture<HttpResult<MultipleInventoryRecords>> fetchInstances(
