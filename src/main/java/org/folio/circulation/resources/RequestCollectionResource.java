@@ -214,7 +214,7 @@ public class RequestCollectionResource extends CollectionResource {
               InventoryRecords record = records.findRecordByItemId(
                 new Request(request).getItemId());
 
-              if(record.getItem() != null) {
+              if(record.isFound()) {
                 addAdditionalItemProperties(request, record);
               }
             });
@@ -244,7 +244,7 @@ public class RequestCollectionResource extends CollectionResource {
     JsonObject request,
     InventoryRecords inventoryRecords) {
 
-    if(inventoryRecords == null || inventoryRecords.getItem() == null) {
+    if(inventoryRecords == null || inventoryRecords.isNotFound()) {
       return;
     }
 
@@ -260,7 +260,7 @@ public class RequestCollectionResource extends CollectionResource {
     JsonObject request,
     InventoryRecords inventoryRecords) {
 
-    if(inventoryRecords == null || inventoryRecords.getItem() == null) {
+    if(inventoryRecords == null || inventoryRecords.isNotFound()) {
       return;
     }
 
@@ -357,7 +357,7 @@ public class RequestCollectionResource extends CollectionResource {
     HttpResult<RequestAndRelatedRecords> result) {
 
     return result.next(requestAndRelatedRecords -> {
-      if(requestAndRelatedRecords.getInventoryRecords().getItem() == null) {
+      if(requestAndRelatedRecords.getInventoryRecords().isNotFound()) {
         return HttpResult.failure(new ValidationErrorFailure(
           "Item does not exist", "itemId",
           requestAndRelatedRecords.getRequest().getItemId()));
@@ -373,11 +373,10 @@ public class RequestCollectionResource extends CollectionResource {
 
     return result.next(requestAndRelatedRecords -> {
       Request request = requestAndRelatedRecords.getRequest();
-      JsonObject item = requestAndRelatedRecords.getInventoryRecords().getItem();
 
       RequestType requestType = RequestType.from(request);
 
-      if (!requestType.canCreateRequestForItem(item)) {
+      if (!requestType.canCreateRequestForItem(requestAndRelatedRecords.getInventoryRecords())) {
         return HttpResult.failure(new ValidationErrorFailure(
           String.format("Item is not %s, %s or %s", CHECKED_OUT,
             CHECKED_OUT_HELD, CHECKED_OUT_RECALLED),

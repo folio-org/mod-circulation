@@ -23,7 +23,7 @@ public class LoanValidation {
     HttpResult<LoanAndRelatedRecords> result) {
 
     return result.next(loan -> {
-      if(loan.getInventoryRecords().getItem() == null) {
+      if(loan.getInventoryRecords().isNotFound()) {
         final String itemId = loan.getLoan().getItemId();
 
         return HttpResult.failure(new ValidationErrorFailure(
@@ -39,7 +39,7 @@ public class LoanValidation {
     HttpResult<LoanAndRelatedRecords> result, String barcode) {
 
     return result.next(loanAndRelatedRecords -> {
-      if(loanAndRelatedRecords.getInventoryRecords().getItem() == null) {
+      if(loanAndRelatedRecords.getInventoryRecords().isNotFound()) {
         return HttpResult.failure(new ValidationErrorFailure(
           String.format("No item with barcode %s exists", barcode),
           ITEM_BARCODE_PROPERTY_NAME, barcode));

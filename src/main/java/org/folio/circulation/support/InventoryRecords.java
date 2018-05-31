@@ -150,4 +150,14 @@ public class InventoryRecords {
   public void changeStatus(String newStatus) {
     getItem().put("status", new JsonObject().put("name", newStatus));
   }
+
+  public boolean isNotFound() {
+    return !isFound();
+  }
+
+  public boolean isFound() {
+    //TODO: Possibly replace with unknown item when migrated
+    return getItem() != null;
+  }
+
 }

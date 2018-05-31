@@ -255,7 +255,7 @@ public class LoanCollectionResource extends CollectionResource {
 
               record.setMaterialType(possibleMaterialType.orElse(null));
 
-              if(record.getItem() != null) {
+              if(record.isFound()) {
                 loan.put("item", loanRepresentation.createItemSummary(record));
               }
             });

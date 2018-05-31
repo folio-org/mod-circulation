@@ -1,7 +1,7 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.support.InventoryRecords;
 
 import static org.folio.circulation.domain.ItemStatus.*;
 
@@ -20,8 +20,8 @@ public class RequestType {
     this.value = value;
   }
 
-  public boolean canCreateRequestForItem(JsonObject item) {
-    String status = item.getJsonObject("status").getString("name");
+  public boolean canCreateRequestForItem(InventoryRecords inventoryRecords) {
+    String status = inventoryRecords.getStatus();
 
     switch (value) {
       case HOLD:

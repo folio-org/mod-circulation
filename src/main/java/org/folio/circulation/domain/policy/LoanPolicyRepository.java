@@ -73,7 +73,7 @@ public class LoanPolicyRepository {
     CompletableFuture<HttpResult<String>> findLoanPolicyCompleted
       = new CompletableFuture<>();
 
-    if(inventoryRecords.getItem() == null) {
+    if(inventoryRecords.isNotFound()) {
       return CompletableFuture.completedFuture(HttpResult.failure(
         new ServerErrorFailure("Unable to apply loan rules for unknown item")));
     }

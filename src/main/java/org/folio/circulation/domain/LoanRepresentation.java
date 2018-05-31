@@ -25,7 +25,7 @@ public class LoanRepresentation {
 
   public JsonObject createItemSummary(InventoryRecords inventoryRecords) {
 
-    if(inventoryRecords.getItem() == null) {
+    if(inventoryRecords.isNotFound()) {
       return new JsonObject();
     }
 
@@ -73,7 +73,7 @@ public class LoanRepresentation {
     //and could be confused with aggregation of current status
     loan.remove("itemStatus");
 
-    if(inventoryRecords != null && inventoryRecords.getItem() != null) {
+    if(inventoryRecords != null && inventoryRecords.isFound()) {
       loan.put("item", new LoanRepresentation().createItemSummary(inventoryRecords));
     }
 

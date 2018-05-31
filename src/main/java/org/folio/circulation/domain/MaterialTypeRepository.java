@@ -1,10 +1,7 @@
 package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,17 +22,17 @@ public class MaterialTypeRepository {
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> getMaterialType(
     LoanAndRelatedRecords relatedRecords) {
 
-    JsonObject item = relatedRecords.getInventoryRecords().getItem();
+    final InventoryRecords inventoryRecords = relatedRecords.getInventoryRecords();
 
     //Cannot find material type for unknown item
-    if(item == null) {
+    if(inventoryRecords.isNotFound()) {
       return CompletableFuture.completedFuture(HttpResult.success(relatedRecords));
     }
 
-    String materialTypeId = item.getString("materialTypeId");
+    String materialTypeId = inventoryRecords.getMaterialTypeId();
 
     return getMaterialType(materialTypeId,
-      item.getString("id"))
+      inventoryRecords.getItemId())
       .thenApply(result -> result.map(relatedRecords::withMaterialType));
   }
 

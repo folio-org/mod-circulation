@@ -26,7 +26,7 @@ public class LocationRepository {
     LoanAndRelatedRecords relatedRecords) {
 
     //Cannot find location for unknown item
-    if(relatedRecords.getInventoryRecords().getItem() == null) {
+    if(relatedRecords.getInventoryRecords().isNotFound()) {
       return CompletableFuture.completedFuture(HttpResult.success(relatedRecords));
     }
 
