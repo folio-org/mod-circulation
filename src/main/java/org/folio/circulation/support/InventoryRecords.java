@@ -97,10 +97,6 @@ public class InventoryRecords {
     return location;
   }
 
-  public void setLocation(JsonObject location) {
-    this.location = location;
-  }
-
   public JsonObject getMaterialType() {
     return materialType;
   }
@@ -113,11 +109,11 @@ public class InventoryRecords {
     return getProperty(getItem(), ItemProperties.MATERIAL_TYPE_ID);
   }
 
-  public String determineLocationIdForItem() {
-    return determineLocationIdForItem(getItem(), holding);
+  public String getLocationId() {
+    return getLocationId(getItem(), holding);
   }
 
-  private static String determineLocationIdForItem(JsonObject item, JsonObject holding) {
+  private static String getLocationId(JsonObject item, JsonObject holding) {
     if(item != null && item.containsKey(ItemProperties.TEMPORARY_LOCATION_ID)) {
       return item.getString(ItemProperties.TEMPORARY_LOCATION_ID);
     }

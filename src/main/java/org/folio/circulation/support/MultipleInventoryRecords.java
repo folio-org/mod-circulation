@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 public class MultipleInventoryRecords {
   private final Collection<InventoryRecords> records;
 
-  private MultipleInventoryRecords(Collection<InventoryRecords> records) {
+  public MultipleInventoryRecords(Collection<InventoryRecords> records) {
     this.records = records;
   }
 

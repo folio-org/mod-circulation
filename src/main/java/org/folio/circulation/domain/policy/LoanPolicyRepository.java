@@ -84,7 +84,7 @@ public class LoanPolicyRepository {
     }
 
     String loanTypeId = inventoryRecords.determineLoanTypeForItem();
-    String locationId = inventoryRecords.determineLocationIdForItem();
+    String locationId = inventoryRecords.getLocationId();
 
     String materialTypeId = inventoryRecords.getMaterialTypeId();
 

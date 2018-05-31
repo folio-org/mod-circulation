@@ -148,7 +148,27 @@ public class InventoryFetcher {
           final List<JsonObject> instances = JsonArrayHelper.toList(
             instancesResponse.getJson().getJsonArray("instances"));
 
-          fetchCompleted.complete(MultipleInventoryRecords.from(items, holdings, instances));
+          final MultipleInventoryRecords multipleInventoryRecords = MultipleInventoryRecords.from(
+            items, holdings, instances);
+
+          final Collection<InventoryRecords> records = multipleInventoryRecords.getRecords();
+
+          if(fetchLocation) {
+            locationRepository.getLocations(records).thenAccept(result -> {
+              if (result.failed()) {
+                onFailure.accept(new Exception(result.cause().toString()));
+                return;
+              }
+
+              fetchCompleted.complete(new MultipleInventoryRecords(
+                records.stream()
+                  .map(r -> r.withLocation(result.value().getOrDefault(r.getLocationId(), null)))
+                  .collect(Collectors.toList())));
+            });
+          }
+          else {
+            fetchCompleted.complete(multipleInventoryRecords);
+          }
         });
       });
     });
