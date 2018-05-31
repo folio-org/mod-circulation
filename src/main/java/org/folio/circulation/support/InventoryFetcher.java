@@ -13,7 +13,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -74,25 +73,23 @@ public class InventoryFetcher {
       .thenComposeAsync(this::fetchLocation);
   }
 
-  public CompletableFuture<MultipleInventoryRecords> fetchFor(
-    Collection<String> itemIds,
-    Consumer<Exception> onFailure) {
+  public CompletableFuture<HttpResult<MultipleInventoryRecords>> fetchFor(
+    Collection<String> itemIds) {
 
-    CompletableFuture<MultipleInventoryRecords> fetchCompleted = new CompletableFuture<>();
+    CompletableFuture<HttpResult<MultipleInventoryRecords>> fetchCompleted = new CompletableFuture<>();
 
     CompletableFuture<Response> itemsFetched = new CompletableFuture<>();
 
     String itemsQuery = CqlHelper.multipleRecordsCqlQuery(itemIds);
 
-    itemsClient.getMany(itemsQuery, itemIds.size(), 0,
-      itemsFetched::complete);
+    itemsClient.getMany(itemsQuery, itemIds.size(), 0, itemsFetched::complete);
 
     itemsFetched.thenAccept(itemsResponse -> {
       if(itemsResponse.getStatusCode() != 200) {
-        //Improve this to not need an exception
-        onFailure.accept(new Exception(
-          String.format("Items request (%s) failed %s: %s",
-            itemsQuery, itemsResponse.getStatusCode(), itemsResponse.getBody())));
+        fetchCompleted.complete(HttpResult.failure(
+          new ServerErrorFailure(String.format("Items request (%s) failed %s: %s",
+          itemsQuery, itemsResponse.getStatusCode(), itemsResponse.getBody()))));
+
         return;
       }
 
@@ -114,10 +111,11 @@ public class InventoryFetcher {
 
       holdingsFetched.thenAccept(holdingsResponse -> {
         if(holdingsResponse.getStatusCode() != 200) {
-          //Improve this to not need an exception
-          onFailure.accept(new Exception(String.format("Holdings request (%s) failed %s: %s",
-            holdingsQuery, holdingsResponse.getStatusCode(),
-            holdingsResponse.getBody())));
+          fetchCompleted.complete(HttpResult.failure(
+            new ServerErrorFailure(String.format("Holdings request (%s) failed %s: %s",
+              holdingsQuery, holdingsResponse.getStatusCode(),
+              holdingsResponse.getBody()))));
+
           return;
         }
 
@@ -138,10 +136,11 @@ public class InventoryFetcher {
 
         instancesFetched.thenAccept(instancesResponse -> {
           if (instancesResponse.getStatusCode() != 200) {
-            //Improve this to not need an exception
-            onFailure.accept(new Exception(String.format("Instances request (%s) failed %s: %s",
-              instancesQuery, instancesResponse.getStatusCode(),
-              instancesResponse.getBody())));
+            fetchCompleted.complete(HttpResult.failure(
+              new ServerErrorFailure(String.format("Instances request (%s) failed %s: %s",
+                instancesQuery, instancesResponse.getStatusCode(),
+                instancesResponse.getBody()))));
+
             return;
           }
 
@@ -156,18 +155,17 @@ public class InventoryFetcher {
           if(fetchLocation) {
             locationRepository.getLocations(records).thenAccept(result -> {
               if (result.failed()) {
-                onFailure.accept(new Exception(result.cause().toString()));
-                return;
+                fetchCompleted.complete(HttpResult.failure(result.cause()));
               }
 
-              fetchCompleted.complete(new MultipleInventoryRecords(
+              fetchCompleted.complete(HttpResult.success(new MultipleInventoryRecords(
                 records.stream()
                   .map(r -> r.withLocation(result.value().getOrDefault(r.getLocationId(), null)))
-                  .collect(Collectors.toList())));
+                  .collect(Collectors.toList()))));
             });
           }
           else {
-            fetchCompleted.complete(multipleInventoryRecords);
+            fetchCompleted.complete(HttpResult.success(multipleInventoryRecords));
           }
         });
       });

@@ -203,13 +203,19 @@ public class RequestCollectionResource extends CollectionResource {
 
         InventoryFetcher inventoryFetcher = new InventoryFetcher(clients, false);
 
-        CompletableFuture<MultipleInventoryRecords> inventoryRecordsFetched =
-          inventoryFetcher.fetchFor(itemIds, e ->
-            ServerErrorResponse.internalError(routingContext.response(), e.toString()));
+        CompletableFuture<HttpResult<MultipleInventoryRecords>> inventoryRecordsFetched =
+          inventoryFetcher.fetchFor(itemIds);
 
         //TODO: Refactor this to map to new representations
         // rather than alter the storage representations
-        inventoryRecordsFetched.thenAccept(records -> {
+        inventoryRecordsFetched.thenAccept(result -> {
+          if(result.failed()) {
+            result.cause().writeTo(routingContext.response());
+            return;
+          }
+
+          final MultipleInventoryRecords records = result.value();
+
           requests.forEach(request -> {
               InventoryRecords record = records.findRecordByItemId(
                 new Request(request).getItemId());

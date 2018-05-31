@@ -145,8 +145,6 @@ public class LoanCollectionResource extends CollectionResource {
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context, client);
 
-    final LocationRepository locationRepository = new LocationRepository(clients);
-
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
     clients.loansStorage().getMany(routingContext.request().query(), loansResponse -> {
@@ -174,11 +172,17 @@ public class LoanCollectionResource extends CollectionResource {
 
       InventoryFetcher inventoryFetcher = new InventoryFetcher(clients, true);
 
-      CompletableFuture<MultipleInventoryRecords> inventoryRecordsFetched =
-        inventoryFetcher.fetchFor(itemIds, e ->
-          ServerErrorResponse.internalError(routingContext.response(), e.toString()));
+      CompletableFuture<HttpResult<MultipleInventoryRecords>> inventoryRecordsFetched =
+        inventoryFetcher.fetchFor(itemIds);
 
-      inventoryRecordsFetched.thenAccept(records -> {
+      inventoryRecordsFetched.thenAccept(result -> {
+        if(result.failed()) {
+          result.cause().writeTo(routingContext.response());
+          return;
+        }
+
+        final MultipleInventoryRecords records = result.value();
+
         //Also get a list of material types
         List<String> materialTypeIds = records.getRecords().stream()
           .map(InventoryRecords::getMaterialTypeId)
@@ -223,8 +227,7 @@ public class LoanCollectionResource extends CollectionResource {
             }
           });
 
-          JsonResponse.success(routingContext.response(),
-            wrappedLoans.toJson());
+          JsonResponse.success(routingContext.response(), wrappedLoans.toJson());
         });
       });
     });
