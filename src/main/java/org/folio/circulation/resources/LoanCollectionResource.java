@@ -311,7 +311,7 @@ public class LoanCollectionResource extends CollectionResource {
     HttpResult<LoanAndRelatedRecords> result) {
 
     return result.next(loan -> {
-      if(loan.getLoan().getInventoryRecords().getHolding() == null) {
+      if(loan.getLoan().getInventoryRecords().doesNotHaveHolding()) {
         return HttpResult.failure(new ValidationErrorFailure(
           "Holding does not exist", LoanProperties.ITEM_ID, loan.getLoan().getItemId()));
       }

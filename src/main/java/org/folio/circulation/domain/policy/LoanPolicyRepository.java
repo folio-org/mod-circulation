@@ -78,7 +78,7 @@ public class LoanPolicyRepository {
         new ServerErrorFailure("Unable to apply loan rules for unknown item")));
     }
 
-    if(inventoryRecords.getHolding() == null) {
+    if(inventoryRecords.doesNotHaveHolding()) {
       return CompletableFuture.completedFuture(HttpResult.failure(
         new ServerErrorFailure("Unable to apply loan rules for unknown holding")));
     }

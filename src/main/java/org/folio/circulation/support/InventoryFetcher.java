@@ -15,6 +15,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+
 public class InventoryFetcher {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -41,13 +43,15 @@ public class InventoryFetcher {
   public CompletableFuture<HttpResult<InventoryRecords>> fetch(ItemRelatedRecord record) {
     return fetchItem(record.getItemId())
       .thenComposeAsync(this::fetchHolding)
-      .thenComposeAsync(this::fetchInstance);
+      .thenComposeAsync(this::fetchInstance)
+      .thenApply(r -> r.map(InventoryRecordsBuilder::create));
   }
 
   public CompletableFuture<HttpResult<InventoryRecords>> fetchByBarcode(String barcode) {
     return fetchItemByBarcode(barcode)
       .thenComposeAsync(this::fetchHolding)
-      .thenComposeAsync(this::fetchInstance);
+      .thenComposeAsync(this::fetchInstance)
+      .thenApply(r -> r.map(InventoryRecordsBuilder::create));
   }
 
   public CompletableFuture<MultipleInventoryRecords> fetch(
@@ -150,12 +154,13 @@ public class InventoryFetcher {
     }
   }
 
-  private CompletableFuture<HttpResult<JsonObject>> fetchItem(String itemId) {
+  private CompletableFuture<HttpResult<InventoryRecordsBuilder>> fetchItem(String itemId) {
     return new SingleRecordFetcher(itemsClient, "item")
-      .fetchSingleRecord(itemId);
+      .fetchSingleRecord(itemId)
+      .thenApply(r -> r.map(InventoryRecordsBuilder::new));
   }
 
-  private CompletableFuture<HttpResult<JsonObject>> fetchItemByBarcode(String barcode) {
+  private CompletableFuture<HttpResult<InventoryRecordsBuilder>> fetchItemByBarcode(String barcode) {
     CompletableFuture<Response> itemRequestCompleted = new CompletableFuture<>();
 
     log.info("Fetching item with barcode: {}", barcode);
@@ -165,6 +170,7 @@ public class InventoryFetcher {
 
     return itemRequestCompleted
       .thenApply(this::mapMultipleToResult)
+      .thenApply(r -> r.map(InventoryRecordsBuilder::new))
       .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
   }
 
@@ -193,17 +199,16 @@ public class InventoryFetcher {
     }
   }
 
-  private CompletableFuture<HttpResult<InventoryRecords>> fetchHolding(
-    HttpResult<JsonObject> itemResult) {
+  private CompletableFuture<HttpResult<InventoryRecordsBuilder>> fetchHolding(
+    HttpResult<InventoryRecordsBuilder> result) {
 
-    return itemResult.after(item -> {
-      if(item == null) {
+    return result.after(builder -> {
+      if(builder == null || builder.item == null) {
         log.info("Item was not found, aborting fetching holding or instance");
-        return CompletableFuture.completedFuture(
-          HttpResult.success(new InventoryRecords(null, null, null, null, item)));
+        return completedFuture(HttpResult.success(builder));
       }
       else {
-        final String holdingsRecordId = item.getString("holdingsRecordId");
+        final String holdingsRecordId = builder.getItem().getString("holdingsRecordId");
 
         log.info("Fetching holding with ID: {}", holdingsRecordId);
 
@@ -212,25 +217,22 @@ public class InventoryFetcher {
         holdingsClient.get(holdingsRecordId, holdingRequestCompleted::complete);
 
         return holdingRequestCompleted
-          .thenApply(response -> HttpResult.success(new InventoryRecords(item,
-            getRecordFromResponse(response), null, null, item)))
+          .thenApply(response -> HttpResult.success(builder.withHoldingsRecord(getRecordFromResponse(response))))
           .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
       }
     });
   }
 
-  private CompletableFuture<HttpResult<InventoryRecords>> fetchInstance(
-    HttpResult<InventoryRecords> holdingResult) {
+  private CompletableFuture<HttpResult<InventoryRecordsBuilder>> fetchInstance(
+    HttpResult<InventoryRecordsBuilder> holdingResult) {
 
-    return holdingResult.after(inventoryRecords -> {
-      final JsonObject holding = inventoryRecords.getHolding();
+    return holdingResult.after(builder -> {
+      final JsonObject holding = builder.getHoldingsRecord();
 
       if(holding == null) {
         log.info("Holding was not found, aborting fetching instance");
 
-        return CompletableFuture.completedFuture(
-          HttpResult.success(new InventoryRecords(
-            inventoryRecords.getItem(), null, null, null, holding)));
+        return completedFuture(HttpResult.success(builder));
       }
       else {
         final String instanceId = holding.getString("instanceId");
@@ -242,9 +244,7 @@ public class InventoryFetcher {
         instancesClient.get(instanceId, instanceRequestCompleted::complete);
 
         return instanceRequestCompleted
-          .thenApply(response -> HttpResult.success(new InventoryRecords(
-            inventoryRecords.getItem(), inventoryRecords.getHolding(),
-            getRecordFromResponse(response), null, holding)))
+          .thenApply(response -> HttpResult.success(builder.withInstance(getRecordFromResponse(response))))
           .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
       }
     });
@@ -256,5 +256,57 @@ public class InventoryFetcher {
     return
       fetch(loanAndRelatedRecords.getLoan())
       .thenApply(result -> result.map(loanAndRelatedRecords::withInventoryRecords));
+  }
+
+  private class InventoryRecordsBuilder {
+    private final JsonObject item;
+    private final JsonObject holdingsRecord;
+    private final JsonObject instance;
+
+    InventoryRecordsBuilder(JsonObject item) {
+      this(item, null, null);
+    }
+
+    private InventoryRecordsBuilder(
+      JsonObject item,
+      JsonObject holdingsRecord,
+      JsonObject instance) {
+
+      this.item = item;
+      this.holdingsRecord = holdingsRecord;
+      this.instance = instance;
+    }
+
+    public InventoryRecords create() {
+      return new InventoryRecords(item, holdingsRecord, instance, null, null);
+    }
+
+    InventoryRecordsBuilder withHoldingsRecord(JsonObject newHoldingsRecord) {
+      return new InventoryRecordsBuilder(
+        this.item,
+        newHoldingsRecord,
+        this.instance
+      );
+    }
+
+    InventoryRecordsBuilder withInstance(JsonObject newInstance) {
+      return new InventoryRecordsBuilder(
+        this.item,
+        this.holdingsRecord,
+        newInstance
+      );
+    }
+
+    public JsonObject getItem() {
+      return item;
+    }
+
+    JsonObject getHoldingsRecord() {
+      return holdingsRecord;
+    }
+
+    public JsonObject getInstance() {
+      return instance;
+    }
   }
 }

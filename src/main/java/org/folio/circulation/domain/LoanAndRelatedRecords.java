@@ -36,8 +36,7 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   }
 
   LoanAndRelatedRecords withItem(JsonObject updatedItem) {
-    return withInventoryRecords(new InventoryRecords(updatedItem,
-      loan.getInventoryRecords().getHolding(), loan.getInventoryRecords().getInstance(), null, null));
+    return withInventoryRecords(loan.getInventoryRecords().updateItem(updatedItem));
   }
 
   LoanAndRelatedRecords withLoan(Loan newLoan) {

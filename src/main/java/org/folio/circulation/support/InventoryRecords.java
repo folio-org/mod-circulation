@@ -49,17 +49,9 @@ public class InventoryRecords {
     return item;
   }
 
-  public JsonObject getHolding() {
-    return holding;
-  }
-
-  public JsonObject getInstance() {
-    return instance;
-  }
-
   public String getTitle() {
-    if(getInstance() != null && getInstance().containsKey(TITLE_PROPERTY)) {
-      return getProperty(getInstance(), TITLE_PROPERTY);
+    if(instance != null && instance.containsKey(TITLE_PROPERTY)) {
+      return getProperty(instance, TITLE_PROPERTY);
     } else if(getItem() != null) {
       return getProperty(getItem(), TITLE_PROPERTY);
     }
@@ -69,11 +61,11 @@ public class InventoryRecords {
   }
 
   public JsonArray getContributorNames() {
-    if(getInstance() == null) {
+    if(instance == null) {
       return new JsonArray();
     }
 
-    return new JsonArray(mapToList(getInstance(), "contributors",
+    return new JsonArray(mapToList(instance, "contributors",
       contributor -> new JsonObject().put("name", contributor.getString("name"))));
   }
 
@@ -90,11 +82,11 @@ public class InventoryRecords {
   }
 
   public String getInstanceId() {
-    return getProperty(getHolding(), "instanceId");
+    return getProperty(holding, "instanceId");
   }
 
   public String getCallNumber() {
-    return getProperty(getHolding(), "callNumber");
+    return getProperty(holding, "callNumber");
   }
 
   public String getStatus() {
@@ -122,7 +114,7 @@ public class InventoryRecords {
   }
 
   public String determineLocationIdForItem() {
-    return determineLocationIdForItem(getItem(), getHolding());
+    return determineLocationIdForItem(getItem(), holding);
   }
 
   private static String determineLocationIdForItem(JsonObject item, JsonObject holding) {
@@ -160,4 +152,12 @@ public class InventoryRecords {
     return getItem() != null;
   }
 
+  public InventoryRecords updateItem(JsonObject updatedItem) {
+    return new InventoryRecords(updatedItem,
+      holding, instance, getLocation(), getMaterialType());
+  }
+
+  public boolean doesNotHaveHolding() {
+    return holding == null;
+  }
 }

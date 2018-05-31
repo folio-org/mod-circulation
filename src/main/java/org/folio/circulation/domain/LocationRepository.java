@@ -1,10 +1,7 @@
 package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +28,7 @@ public class LocationRepository {
     }
 
     //Cannot find location for unknown holding
-    if(relatedRecords.getInventoryRecords().getHolding() == null) {
+    if(relatedRecords.getInventoryRecords().doesNotHaveHolding()) {
       return CompletableFuture.completedFuture(HttpResult.success(relatedRecords));
     }
 

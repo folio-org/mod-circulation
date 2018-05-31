@@ -26,8 +26,7 @@ public class RequestAndRelatedRecords implements UserRelatedRecord {
   }
 
   RequestAndRelatedRecords withItem(JsonObject updatedItem) {
-    return withInventoryRecords(new InventoryRecords(updatedItem,
-      getInventoryRecords().getHolding(), getInventoryRecords().getInstance(), null, null));
+    return withInventoryRecords(getInventoryRecords().updateItem(updatedItem));
   }
 
   public RequestAndRelatedRecords withRequest(Request newRequest) {
