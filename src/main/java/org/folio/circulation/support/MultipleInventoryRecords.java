@@ -23,32 +23,31 @@ public class MultipleInventoryRecords {
 
   public Collection<InventoryRecords> getRecords() {
     return items.stream()
-      .map(item -> findRecordByItemId(item.getString("id")))
-      .filter(Optional::isPresent)
-      .map(Optional::get)
+      .map(record -> findRecordByItemId(record.getString("id")))
+      .filter(record -> record.getItem() != null)
       .collect(Collectors.toList());
   }
 
-  private Optional<InventoryRecords> findRecordByItemId(String itemId) {
+  public InventoryRecords findRecordByItemId(String itemId) {
     final Optional<JsonObject> item = findItemById(itemId);
 
     if(!item.isPresent()) {
-      return Optional.empty();
+      return new InventoryRecords(null, null, null, null, null);
     }
 
     final Optional<JsonObject> holdingsRecord = findHoldingById(
       item.get().getString("holdingsRecordId"));
 
     if(!holdingsRecord.isPresent()) {
-      return Optional.of(new InventoryRecords(item.get(), null, null, null, null));
+      return new InventoryRecords(item.get(), null, null, null, null);
     }
-    
+
     final Optional<JsonObject> instance = findInstanceById(
       holdingsRecord.get().getString("instanceId"));
 
-    return Optional.of(
+    return
       new InventoryRecords(item.get(), holdingsRecord.get(), instance.orElse(null),
-        null, null));
+        null, null);
   }
 
   public Optional<JsonObject> findHoldingById(String holdingsId) {
@@ -59,7 +58,7 @@ public class MultipleInventoryRecords {
     return findById(itemId, items);
   }
 
-  public Optional<JsonObject> findInstanceById(String instanceId) {
+  private Optional<JsonObject> findInstanceById(String instanceId) {
     return findById(instanceId, instances);
   }
 

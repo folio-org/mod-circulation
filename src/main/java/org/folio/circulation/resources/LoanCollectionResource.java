@@ -6,7 +6,6 @@ import io.vertx.ext.web.RoutingContext;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.*;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
-import org.folio.circulation.domain.representations.ItemProperties;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
@@ -229,56 +228,35 @@ public class LoanCollectionResource extends CollectionResource {
             }
 
             loans.forEach( loan -> {
-              Optional<JsonObject> possibleItem = records.findItemById(
-                loan.getString(LoanProperties.ITEM_ID));
-
               //No need to pass on the itemStatus property,
               // as only used to populate the history
               //and could be confused with aggregation of current status
               loan.remove("itemStatus");
 
-              Optional<JsonObject> possibleInstance = Optional.empty();
+              final InventoryRecords record = records.findRecordByItemId(
+                loan.getString(LoanProperties.ITEM_ID));
 
-              String[] materialTypeId = new String[]{null};
+              List<JsonObject> locations = JsonArrayHelper.toList(
+                locationsResponse.getJson().getJsonArray("locations"));
 
-              if(possibleItem.isPresent()) {
-                JsonObject item = possibleItem.get();
-                materialTypeId[0] = item.getString(ItemProperties.MATERIAL_TYPE_ID);
+              Optional<JsonObject> possibleLocation = locations.stream()
+                .filter(location -> location.getString("id").equals(
+                  record.determineLocationIdForItem()))
+                .findFirst();
 
-                Optional<JsonObject> possibleHolding = records.findHoldingById(
-                  item.getString("holdingsRecordId"));
+              record.setLocation(possibleLocation.orElse(null));
 
-                if(possibleHolding.isPresent()) {
-                  JsonObject holding = possibleHolding.get();
+              List<JsonObject> materialTypes = JsonArrayHelper.toList(
+                materialTypesResponse.getJson().getJsonArray("mtypes"));
 
-                  possibleInstance = records.findInstanceById(
-                    holding.getString("instanceId"));
-                }
+              Optional<JsonObject> possibleMaterialType = materialTypes.stream()
+                .filter(materialType -> materialType.getString("id")
+                .equals(record.getMaterialTypeId())).findFirst();
 
-                final InventoryRecords inventoryRecords = new InventoryRecords(item,
-                  possibleHolding.orElse(null), possibleInstance.orElse(null),
-                  null, null);
+              record.setMaterialType(possibleMaterialType.orElse(null));
 
-                List<JsonObject> locations = JsonArrayHelper.toList(
-                  locationsResponse.getJson().getJsonArray("locations"));
-
-                Optional<JsonObject> possibleLocation = locations.stream()
-                  .filter(location -> location.getString("id").equals(
-                    inventoryRecords.determineLocationIdForItem()))
-                  .findFirst();
-
-                inventoryRecords.setLocation(possibleLocation.orElse(null));
-
-                List<JsonObject> materialTypes = JsonArrayHelper.toList(
-                  materialTypesResponse.getJson().getJsonArray("mtypes"));
-
-                Optional<JsonObject> possibleMaterialType = materialTypes.stream()
-                  .filter(materialType -> materialType.getString("id")
-                  .equals(materialTypeId[0])).findFirst();
-
-                inventoryRecords.setMaterialType(possibleMaterialType.orElse(null));
-
-                loan.put("item", loanRepresentation.createItemSummary(inventoryRecords));
+              if(record.getItem() != null) {
+                loan.put("item", loanRepresentation.createItemSummary(record));
               }
             });
 

@@ -20,12 +20,14 @@ public class LoanRepresentation {
     inventoryRecords.setLocation(relatedRecords.getLocation());
     inventoryRecords.setMaterialType(relatedRecords.getMaterialType());
 
-    return extendedLoan(relatedRecords.getLoan().asJson(),
-      inventoryRecords
-    );
+    return extendedLoan(relatedRecords.getLoan().asJson(), inventoryRecords);
   }
 
   public JsonObject createItemSummary(InventoryRecords inventoryRecords) {
+
+    if(inventoryRecords.getItem() == null) {
+      return new JsonObject();
+    }
 
     JsonObject itemSummary = new JsonObject();
 
@@ -67,13 +69,13 @@ public class LoanRepresentation {
     JsonObject loan,
     InventoryRecords inventoryRecords) {
 
-    if(inventoryRecords != null && inventoryRecords.getItem() != null) {
-      loan.put("item", new LoanRepresentation().createItemSummary(inventoryRecords));
-    }
-
     //No need to pass on the itemStatus property, as only used to populate the history
     //and could be confused with aggregation of current status
     loan.remove("itemStatus");
+
+    if(inventoryRecords != null && inventoryRecords.getItem() != null) {
+      loan.put("item", new LoanRepresentation().createItemSummary(inventoryRecords));
+    }
 
     return loan;
   }
