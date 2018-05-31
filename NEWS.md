@@ -1,3 +1,7 @@
+## 10.3.0 Unreleased
+
+* Support `users` interface 15.0 which removes `meta` property from proxy relationships (CIRC-113)
+
 ## 10.2.1 2018-05-31
 
 * Fixed due date schedule limits are applied for rolling loan policies during check out (CIRC-106)
