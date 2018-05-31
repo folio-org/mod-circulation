@@ -115,46 +115,48 @@ public class InventoryFetcher {
     HttpResult<MultipleInventoryRecords> result) {
 
     if(fetchLocation) {
-      return locationRepository.getLocations(result.value().getRecords())
-        .thenApply(locationResult -> {
+      return result.after(records ->
+        locationRepository.getLocations(result.value().getRecords())
+          .thenApply(locationResult -> {
             if (locationResult.failed()) {
               return HttpResult.failure(locationResult.cause());
             }
 
             return HttpResult.success(new MultipleInventoryRecords(
-              result.value().getItems(),
-              result.value().getHoldings(),
-              result.value().getInstances(),
-              result.value().getRecords().stream()
+              records.getItems(),
+              records.getHoldings(),
+              records.getInstances(),
+              records.getRecords().stream()
                 .map(r -> r.withLocation(locationResult.value()
                   .getOrDefault(r.getLocationId(), null)))
                 .collect(Collectors.toList())));
-        });
-      }
-      else {
-        return completedFuture(result);
-      }
+        }));
+    }
+    else {
+      return completedFuture(result);
+    }
   }
 
   private CompletableFuture<HttpResult<MultipleInventoryRecords>> fetchMaterialTypes(
     HttpResult<MultipleInventoryRecords> result) {
 
     if(fetchMaterialType) {
-      return materialTypeRepository.getMaterialTypes(result.value().getRecords())
-        .thenApply(materialTypeResult -> {
-          if (materialTypeResult.failed()) {
-            return HttpResult.failure(materialTypeResult.cause());
-          }
+      return result.after(records ->
+        materialTypeRepository.getMaterialTypes(records.getRecords())
+          .thenApply(materialTypeResult -> {
+            if (materialTypeResult.failed()) {
+              return HttpResult.failure(materialTypeResult.cause());
+            }
 
-          return HttpResult.success(new MultipleInventoryRecords(
-            result.value().getItems(),
-            result.value().getHoldings(),
-            result.value().getInstances(),
-            result.value().getRecords().stream()
-              .map(r -> r.withMaterialType(materialTypeResult.value()
-                .getOrDefault(r.getMaterialTypeId(), null)))
-              .collect(Collectors.toList())));
-        });
+            return HttpResult.success(new MultipleInventoryRecords(
+              records.getItems(),
+              records.getHoldings(),
+              records.getInstances(),
+              records.getRecords().stream()
+                .map(r -> r.withMaterialType(materialTypeResult.value()
+                  .getOrDefault(r.getMaterialTypeId(), null)))
+                .collect(Collectors.toList())));
+        }));
     }
     else {
       return completedFuture(result);
@@ -164,62 +166,66 @@ public class InventoryFetcher {
   private CompletableFuture<HttpResult<MultipleInventoryRecords>> fetchInstances(
     HttpResult<MultipleInventoryRecords> result) {
 
-    List<String> instanceIds = result.value().getRecords().stream()
-      .map(InventoryRecords::getInstanceId)
-      .filter(Objects::nonNull)
-      .collect(Collectors.toList());
+    return result.after(records -> {
+      List<String> instanceIds = records.getRecords().stream()
+        .map(InventoryRecords::getInstanceId)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
 
-    CompletableFuture<Response> instancesFetched = new CompletableFuture<>();
+      CompletableFuture<Response> instancesFetched = new CompletableFuture<>();
 
-    String instancesQuery = CqlHelper.multipleRecordsCqlQuery(instanceIds);
+      String instancesQuery = CqlHelper.multipleRecordsCqlQuery(instanceIds);
 
-    instancesClient.getMany(instancesQuery, instanceIds.size(), 0,
-      instancesFetched::complete);
+      instancesClient.getMany(instancesQuery, instanceIds.size(), 0,
+        instancesFetched::complete);
 
-    return instancesFetched.thenApply(instancesResponse -> {
-      if (instancesResponse.getStatusCode() != 200) {
+      return instancesFetched.thenApply(instancesResponse -> {
+        if (instancesResponse.getStatusCode() != 200) {
           return HttpResult.failure(new ServerErrorFailure(
             String.format("Instances request (%s) failed %s: %s",
-            instancesQuery, instancesResponse.getStatusCode(),
-            instancesResponse.getBody())));
-      }
+              instancesQuery, instancesResponse.getStatusCode(),
+              instancesResponse.getBody())));
+        }
 
-      final List<JsonObject> instances = JsonArrayHelper.toList(
-        instancesResponse.getJson().getJsonArray("instances"));
+        final List<JsonObject> instances = JsonArrayHelper.toList(
+          instancesResponse.getJson().getJsonArray("instances"));
 
-      return HttpResult.success(MultipleInventoryRecords.from(
-        result.value().getItems(), result.value().getHoldings(), instances));
+        return HttpResult.success(MultipleInventoryRecords.from(
+          records.getItems(), records.getHoldings(), instances));
+      });
     });
   }
 
   private CompletableFuture<HttpResult<MultipleInventoryRecords>> fetchHoldingRecords(
-    HttpResult<MultipleInventoryRecords> itemsResult) {
+    HttpResult<MultipleInventoryRecords> result) {
 
-    List<String> holdingsIds = itemsResult.value().getRecords().stream()
-      .map(InventoryRecords::getHoldingsRecordId)
-      .filter(Objects::nonNull)
-      .collect(Collectors.toList());
+    return result.after(records -> {
+      List<String> holdingsIds = records.getRecords().stream()
+        .map(InventoryRecords::getHoldingsRecordId)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
 
-    CompletableFuture<Response> holdingsFetched = new CompletableFuture<>();
+      CompletableFuture<Response> holdingsFetched = new CompletableFuture<>();
 
-    String holdingsQuery = CqlHelper.multipleRecordsCqlQuery(holdingsIds);
+      String holdingsQuery = CqlHelper.multipleRecordsCqlQuery(holdingsIds);
 
-    holdingsClient.getMany(holdingsQuery, holdingsIds.size(), 0,
-      holdingsFetched::complete);
+      holdingsClient.getMany(holdingsQuery, holdingsIds.size(), 0,
+        holdingsFetched::complete);
 
-    return holdingsFetched.thenApply(holdingsResponse -> {
-      if(holdingsResponse.getStatusCode() != 200) {
-        return HttpResult.failure(
-          new ServerErrorFailure(String.format("Holdings request (%s) failed %s: %s",
-            holdingsQuery, holdingsResponse.getStatusCode(),
-            holdingsResponse.getBody())));
-      }
+      return holdingsFetched.thenApply(holdingsResponse -> {
+        if(holdingsResponse.getStatusCode() != 200) {
+          return HttpResult.failure(
+            new ServerErrorFailure(String.format("Holdings request (%s) failed %s: %s",
+              holdingsQuery, holdingsResponse.getStatusCode(),
+              holdingsResponse.getBody())));
+        }
 
-      final List<JsonObject> holdings = JsonArrayHelper.toList(
-        holdingsResponse.getJson().getJsonArray("holdingsRecords"));
+        final List<JsonObject> holdings = JsonArrayHelper.toList(
+          holdingsResponse.getJson().getJsonArray("holdingsRecords"));
 
-      return HttpResult.success(MultipleInventoryRecords.from(
-        itemsResult.value().getItems(), holdings, new ArrayList<>()));
+        return HttpResult.success(MultipleInventoryRecords.from(
+          records.getItems(), holdings, new ArrayList<>()));
+      });
     });
   }
 
@@ -328,7 +334,8 @@ public class InventoryFetcher {
         holdingsClient.get(holdingsRecordId, holdingRequestCompleted::complete);
 
         return holdingRequestCompleted
-          .thenApply(response -> HttpResult.success(builder.withHoldingsRecord(getRecordFromResponse(response))))
+          .thenApply(response -> HttpResult.success(
+            builder.withHoldingsRecord(getRecordFromResponse(response))))
           .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
       }
     });
@@ -355,7 +362,8 @@ public class InventoryFetcher {
         instancesClient.get(instanceId, instanceRequestCompleted::complete);
 
         return instanceRequestCompleted
-          .thenApply(response -> HttpResult.success(builder.withInstance(getRecordFromResponse(response))))
+          .thenApply(response -> HttpResult.success(
+            builder.withInstance(getRecordFromResponse(response))))
           .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
       }
     });
