@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import java.io.UnsupportedEncodingException;
 import java.lang.invoke.MethodHandles;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
@@ -24,13 +25,20 @@ public class CqlHelper {
         .distinct()
         .collect(Collectors.joining(" or ")));
 
-      try {
-        return URLEncoder.encode(query, "UTF-8");
+      return encodeQuery(query).orElse(null);
+    }
+  }
 
-      } catch (UnsupportedEncodingException e) {
-        log.error(String.format("Cannot encode query %s", query));
-        return null;
-      }
+  public static HttpResult<String> encodeQuery(String cqlQuery) {
+    try {
+      log.info("Encoding query {}", cqlQuery);
+
+      return HttpResult.success(URLEncoder.encode(cqlQuery,
+        String.valueOf(StandardCharsets.UTF_8)));
+
+    } catch (UnsupportedEncodingException e) {
+      return HttpResult.failure(
+        new ServerErrorFailure("Failed to encode CQL query"));
     }
   }
 }

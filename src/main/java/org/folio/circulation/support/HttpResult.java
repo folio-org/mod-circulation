@@ -37,6 +37,10 @@ public interface HttpResult<T> {
   T value();
   HttpFailure cause();
 
+  default boolean succeeded() {
+    return !failed();
+  }
+
   static <T> HttpResult<T> success(T value) {
     return new SuccessfulHttpResult<>(value);
   }
@@ -70,5 +74,11 @@ public interface HttpResult<T> {
     else {
       return HttpResult.success(map.apply(value()));
     }
+  }
+
+  default T orElse(T other) {
+    return succeeded()
+      ? value()
+      : other;
   }
 }

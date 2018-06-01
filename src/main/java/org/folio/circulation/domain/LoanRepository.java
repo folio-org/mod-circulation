@@ -1,22 +1,16 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.UnsupportedEncodingException;
 import java.lang.invoke.MethodHandles;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.MultipleRecordsWrapper.fromBody;
 
 public class LoanRepository {
@@ -117,12 +111,17 @@ public class LoanRepository {
         loans.getTotalRecords()))));
   }
 
-  public CompletableFuture<HttpResult<MultipleRecords<Loan>>> findBy(String cql) {
+  public CompletableFuture<HttpResult<MultipleRecords<Loan>>> findBy(String query) {
     CompletableFuture<Response> responseReceived = new CompletableFuture<>();
 
-    loansStorageClient.getMany(cql, responseReceived::complete);
+    loansStorageClient.getMany(query, responseReceived::complete);
 
-    final Function<Response, HttpResult<MultipleRecords<Loan>>> mapResponse = response -> {
+    return responseReceived
+      .thenApply(this::mapResponseToLoans)
+      .thenComposeAsync(this::fetchItems);
+  }
+
+  private HttpResult<MultipleRecords<Loan>> mapResponseToLoans(Response response) {
       if (response.getStatusCode() != 200) {
         return HttpResult.failure(new ServerErrorFailure("Failed to fetch loans from storage"));
       }
@@ -141,11 +140,6 @@ public class LoanRepository {
         wrappedLoans.getTotalRecords());
 
       return HttpResult.success(mapped);
-    };
-
-    return responseReceived
-      .thenApply(mapResponse)
-      .thenComposeAsync(this::fetchItems);
   }
 
   private static JsonObject convertLoanToStorageRepresentation(
@@ -162,38 +156,18 @@ public class LoanRepository {
   }
 
   CompletableFuture<HttpResult<Boolean>> hasOpenLoan(String itemId) {
-    final String cqlQuery;
-
-    try {
-      String unencodedQuery = String.format(
+    final String openLoans = String.format(
         "itemId==%s and status.name==\"%s\"", itemId, "Open");
 
-      log.info("Finding open loans with {}", unencodedQuery);
+    return CqlHelper.encodeQuery(openLoans).after(query -> {
+      final CompletableFuture<Response> fetched = new CompletableFuture<>();
 
-      cqlQuery = URLEncoder.encode(unencodedQuery,
-        String.valueOf(StandardCharsets.UTF_8));
-    } catch (UnsupportedEncodingException e) {
-      return completedFuture(HttpResult.failure(
-        new ServerErrorFailure("Failed to encode CQL query for finding open loans")));
-    }
+      loansStorageClient.getMany(query, 1, 0, fetched::complete);
 
-    CompletableFuture<HttpResult<Collection<JsonObject>>> loansFetched = new CompletableFuture<>();
-
-    loansStorageClient.getMany(cqlQuery, 1, 0, fetchLoansResponse -> {
-      if (fetchLoansResponse.getStatusCode() == 200) {
-        final JsonArray foundLoans = fetchLoansResponse.getJson().getJsonArray("loans");
-
-        log.info("Found open loans: {}", foundLoans.encodePrettily());
-
-        loansFetched.complete(HttpResult.success(JsonArrayHelper.toList(foundLoans)));
-      } else {
-        loansFetched.complete(HttpResult.failure(new ServerErrorFailure(
-          String.format("Failed to fetch open loans: %s: %s",
-            fetchLoansResponse.getStatusCode(), fetchLoansResponse.getBody()))));
-      }
+      return fetched
+        .thenApply(this::mapResponseToLoans)
+        .thenApply(r -> r.map(loans -> !loans.getRecords().isEmpty()));
     });
-
-    return loansFetched
-      .thenApply(r -> r.next(items -> HttpResult.success(!items.isEmpty())));
   }
+
 }
