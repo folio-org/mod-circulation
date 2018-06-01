@@ -181,7 +181,8 @@ public class LoanValidation {
       .thenApply(r -> r.next(openLoan -> {
         if(openLoan) {
           return HttpResult.failure(new ValidationErrorFailure(
-            "Cannot check out item that already has an open loan", ITEM_BARCODE_PROPERTY_NAME, barcode));
+            "Cannot check out item that already has an open loan",
+            ITEM_BARCODE_PROPERTY_NAME, barcode));
         }
         else {
           return HttpResult.success(loanAndRelatedRecords);

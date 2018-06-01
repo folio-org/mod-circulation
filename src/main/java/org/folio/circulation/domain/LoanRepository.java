@@ -169,5 +169,4 @@ public class LoanRepository {
         .thenApply(r -> r.map(loans -> !loans.getRecords().isEmpty()));
     });
   }
-
 }

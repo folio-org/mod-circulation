@@ -4,16 +4,14 @@ import io.vertx.core.json.JsonArray;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.UnsupportedEncodingException;
 import java.lang.invoke.MethodHandles;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.CqlHelper.encodeQuery;
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 
 public class RequestQueueFetcher {
@@ -33,41 +31,31 @@ public class RequestQueueFetcher {
   }
 
   public CompletableFuture<HttpResult<RequestQueue>> get(String itemId) {
-    final String cqlQuery;
-
-    try {
       String unencodedQuery = String.format(
         "itemId==%s and status==(\"%s\" or \"%s\") sortBy requestDate/sort.ascending",
-        itemId, RequestStatus.OPEN_AWAITING_PICKUP, RequestStatus.OPEN_NOT_YET_FILLED);
+        itemId,
+        RequestStatus.OPEN_AWAITING_PICKUP,
+        RequestStatus.OPEN_NOT_YET_FILLED);
 
-      log.info("Finding request queue with {}", unencodedQuery);
+    return encodeQuery(unencodedQuery).after(query -> {
+      CompletableFuture<Response> requestQueueFetched = new CompletableFuture<>();
 
-      cqlQuery = URLEncoder.encode(
-        unencodedQuery,
-        String.valueOf(StandardCharsets.UTF_8));
-    } catch (UnsupportedEncodingException e) {
-      return completedFuture(HttpResult.failure(
-        new ServerErrorFailure("Failed to encode CQL query for fetching request queue")));
-    }
+      this.clients.requestsStorage().getMany(query, 1000, 0, requestQueueFetched::complete);
 
-    CompletableFuture<HttpResult<RequestQueue>> requestQueueFetched = new CompletableFuture<>();
+      return requestQueueFetched.thenApply(response -> {
+        if (response.getStatusCode() == 200) {
+          final JsonArray foundRequests = response.getJson().getJsonArray("requests");
 
-    this.clients.requestsStorage().getMany(cqlQuery, 1000, 0, fetchRequestsResponse -> {
-      if (fetchRequestsResponse.getStatusCode() == 200) {
-        final JsonArray foundRequests = fetchRequestsResponse.getJson()
-          .getJsonArray("requests");
+          log.info("Found request queue: {}", foundRequests.encodePrettily());
 
-        log.info("Found request queue: {}", foundRequests.encodePrettily());
-
-        requestQueueFetched.complete(HttpResult.success(
-          new RequestQueue(mapToList(foundRequests, Request::new))));
-      } else {
-        requestQueueFetched.complete(HttpResult.failure(new ServerErrorFailure(
-          String.format("Failed to fetch request queue: %s: %s",
-            fetchRequestsResponse.getStatusCode(), fetchRequestsResponse.getBody()))));
-      }
+          return HttpResult.success(
+            new RequestQueue(mapToList(foundRequests, Request::new)));
+        } else {
+          return HttpResult.failure(new ServerErrorFailure(
+            String.format("Failed to fetch request queue: %s: %s",
+              response.getStatusCode(), response.getBody())));
+        }
+      });
     });
-
-    return requestQueueFetched;
   }
 }
