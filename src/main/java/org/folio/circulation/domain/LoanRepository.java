@@ -103,31 +103,49 @@ public class LoanRepository {
         item -> Loan.from(loan.asJson(), item))));
   }
 
+  private CompletableFuture<HttpResult<MultipleRecords<Loan>>> fetchItems(
+    HttpResult<MultipleRecords<Loan>> result) {
+
+    return result.after(
+      loans -> itemRepository.fetchFor(loans.getRecords().stream()
+      .map(Loan::getItemId)
+      .collect(Collectors.toList()))
+      .thenApply(r -> r.map(items ->
+        new MultipleRecords<>(loans.getRecords().stream().map(
+          loan -> Loan.from(loan.asJson(),
+            items.findRecordByItemId(loan.getItemId()))).collect(Collectors.toList()),
+        loans.getTotalRecords()))));
+  }
+
   public CompletableFuture<HttpResult<MultipleRecords<Loan>>> findBy(String cql) {
     CompletableFuture<Response> responseReceived = new CompletableFuture<>();
 
     loansStorageClient.getMany(cql, responseReceived::complete);
 
-    return responseReceived.thenApply(response -> {
-        if (response.getStatusCode() != 200) {
-          return HttpResult.failure(new ServerErrorFailure("Failed to fetch loans from storage"));
-        }
+    final Function<Response, HttpResult<MultipleRecords<Loan>>> mapResponse = response -> {
+      if (response.getStatusCode() != 200) {
+        return HttpResult.failure(new ServerErrorFailure("Failed to fetch loans from storage"));
+      }
 
-        final MultipleRecordsWrapper wrappedLoans = fromBody(response.getBody(), "loans");
+      final MultipleRecordsWrapper wrappedLoans = fromBody(response.getBody(), "loans");
 
-        if (wrappedLoans.isEmpty()) {
-          return HttpResult.success(MultipleRecords.empty());
-        }
+      if (wrappedLoans.isEmpty()) {
+        return HttpResult.success(MultipleRecords.empty());
+      }
 
-        final MultipleRecords<Loan> mapped = new MultipleRecords<>(
-          wrappedLoans.getRecords()
-            .stream()
-            .map(Loan::from)
-            .collect(Collectors.toList()),
-          wrappedLoans.getTotalRecords());
+      final MultipleRecords<Loan> mapped = new MultipleRecords<>(
+        wrappedLoans.getRecords()
+          .stream()
+          .map(Loan::from)
+          .collect(Collectors.toList()),
+        wrappedLoans.getTotalRecords());
 
-        return HttpResult.success(mapped);
-    });
+      return HttpResult.success(mapped);
+    };
+
+    return responseReceived
+      .thenApply(mapResponse)
+      .thenComposeAsync(this::fetchItems);
   }
 
   private static JsonObject convertLoanToStorageRepresentation(

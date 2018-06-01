@@ -13,8 +13,6 @@ import org.folio.circulation.support.http.server.SuccessResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
 import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -153,34 +151,13 @@ public class LoanCollectionResource extends CollectionResource {
 
         final MultipleRecords<Loan> loans = result.value();
 
-        List<String> itemIds = loans.getRecords().stream()
-          .map(Loan::getItemId)
-          .filter(Objects::nonNull)
+        final List<JsonObject> mappedLoans = loans.getRecords().stream()
+          .map(loanRepresentation::extendedLoan)
           .collect(Collectors.toList());
 
-        ItemRepository itemRepository = new ItemRepository(clients, true, true);
-
-        CompletableFuture<HttpResult<MultipleInventoryRecords>> inventoryRecordsFetched =
-          itemRepository.fetchFor(itemIds);
-
-        inventoryRecordsFetched.thenAccept(itemsResult -> {
-          if(itemsResult.failed()) {
-            itemsResult.cause().writeTo(routingContext.response());
-            return;
-          }
-
-          final MultipleInventoryRecords records = itemsResult.value();
-
-          final List<JsonObject> mappedLoans = loans.getRecords().stream().map(loan -> {
-
-            final Item item = records.findRecordByItemId(loan.getItemId());
-
-            return loanRepresentation.extendedLoan(loan.asJson(), item);
-          }).collect(Collectors.toList());
-
           JsonResponse.success(routingContext.response(),
-            new MultipleRecordsWrapper(mappedLoans, "loans", loans.getTotalRecords()).toJson());
-        });
+            new MultipleRecordsWrapper(mappedLoans, "loans", loans.getTotalRecords())
+              .toJson());
       });
   }
 
