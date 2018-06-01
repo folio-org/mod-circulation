@@ -37,9 +37,6 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   }
 
   LoanAndRelatedRecords withLoan(Loan newLoan) {
-    //TODO: find a better way to carry over related records
-    newLoan.setItem(loan.getItem());
-
     return new LoanAndRelatedRecords(newLoan, requestQueue,
       requestingUser, proxyingUser, loanPolicy, this.materialType);
   }

@@ -108,15 +108,13 @@ public class LoanCollectionResource extends CollectionResource {
   void get(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
-    final ItemRepository itemRepository = new ItemRepository(clients, true, true);
-    final LoanRepository loanRepository = new LoanRepository(clients);
 
+    final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
     String id = routingContext.request().getParam("id");
 
     loanRepository.getById(id)
-      .thenComposeAsync(result -> result.after(itemRepository::getInventoryRecords))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(OkJsonHttpResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));

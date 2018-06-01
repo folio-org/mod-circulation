@@ -21,9 +21,11 @@ public class LoanRepository {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final CollectionResourceClient loansStorageClient;
+  private final ItemRepository itemRepository;
 
   public LoanRepository(Clients clients) {
     loansStorageClient = clients.loansStorage();
+    itemRepository = new ItemRepository(clients, true, true);
   }
 
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> createLoan(
@@ -41,7 +43,8 @@ public class LoanRepository {
     loansStorageClient.post(storageLoan, response -> {
       if (response.getStatusCode() == 201) {
         onCreated.complete(HttpResult.success(
-          loanAndRelatedRecords.withLoan(Loan.from(response.getJson()))));
+          loanAndRelatedRecords.withLoan(Loan.from(response.getJson(),
+            loanAndRelatedRecords.getLoan().getItem()))));
       } else {
         onCreated.complete(HttpResult.failure(new ForwardOnFailure(response)));
       }
@@ -85,7 +88,20 @@ public class LoanRepository {
 
     return getLoanCompleted
       .thenApply(mapResponse)
+      .thenComposeAsync(this::fetchItem)
       .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
+  }
+
+  private CompletableFuture<HttpResult<LoanAndRelatedRecords>> fetchItem(
+    HttpResult<LoanAndRelatedRecords> result) {
+
+    return result.after(loanAndRelatedRecords -> {
+        return itemRepository.fetchFor(loanAndRelatedRecords.getLoan())
+          .thenApply(itemResult -> {
+            return itemResult.map(item -> loanAndRelatedRecords.withLoan(
+              Loan.from(loanAndRelatedRecords.getLoan().asJson(), item)));
+            });
+          });
   }
 
   private static JsonObject convertLoanToStorageRepresentation(
