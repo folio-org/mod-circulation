@@ -45,7 +45,7 @@ public class MaterialTypeRepository {
 
     return getMaterialType(materialTypeId,
       item.getItemId())
-      .thenApply(result -> result.map(relatedRecords::withMaterialType));
+      .thenApply(result -> result.map((JsonObject t) -> relatedRecords.withMaterialType()));
   }
 
   private CompletableFuture<HttpResult<JsonObject>> getMaterialType(
