@@ -7,9 +7,11 @@ import org.folio.circulation.domain.*;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.*;
-import org.folio.circulation.support.http.server.*;
+import org.folio.circulation.support.http.server.ForwardResponse;
+import org.folio.circulation.support.http.server.JsonResponse;
+import org.folio.circulation.support.http.server.SuccessResponse;
+import org.folio.circulation.support.http.server.WebContext;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -17,7 +19,6 @@ import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.LoanValidation.defaultStatusAndAction;
-import static org.folio.circulation.support.MultipleRecordsWrapper.fromBody;
 
 public class LoanCollectionResource extends CollectionResource {
   public LoanCollectionResource(HttpClient client) {
@@ -141,60 +142,46 @@ public class LoanCollectionResource extends CollectionResource {
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context, client);
 
+    final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
-    clients.loansStorage().getMany(routingContext.request().query(), loansResponse -> {
-      if (loansResponse.getStatusCode() != 200) {
-        ServerErrorResponse.internalError(routingContext.response(),
-          "Failed to fetch loans from storage");
-        return;
-      }
-
-      final MultipleRecordsWrapper wrappedLoans = fromBody(loansResponse.getBody(), "loans");
-
-      if(wrappedLoans.isEmpty()) {
-        JsonResponse.success(routingContext.response(),
-          wrappedLoans.toJson());
-        return;
-      }
-
-      final Collection<JsonObject> loans = wrappedLoans.getRecords();
-
-      List<String> itemIds = loans.stream()
-        .map(loan -> loan.getString(LoanProperties.ITEM_ID))
-        .filter(Objects::nonNull)
-        .collect(Collectors.toList());
-
-      ItemRepository itemRepository = new ItemRepository(clients, true, true);
-
-      CompletableFuture<HttpResult<MultipleInventoryRecords>> inventoryRecordsFetched =
-        itemRepository.fetchFor(itemIds);
-
-      inventoryRecordsFetched.thenAccept(result -> {
+    loanRepository.findBy(routingContext.request().query())
+      .thenAccept(result -> {
         if(result.failed()) {
           result.cause().writeTo(routingContext.response());
-          return;
         }
 
-        final MultipleInventoryRecords records = result.value();
+        final MultipleRecords<Loan> loans = result.value();
 
-        loans.forEach( loan -> {
-          //No need to pass on the itemStatus property,
-          // as only used to populate the history
-          //and could be confused with aggregation of current status
-          loan.remove("itemStatus");
+        List<String> itemIds = loans.getRecords().stream()
+          .map(Loan::getItemId)
+          .filter(Objects::nonNull)
+          .collect(Collectors.toList());
 
-          final Item record = records.findRecordByItemId(
-            loan.getString(LoanProperties.ITEM_ID));
+        ItemRepository itemRepository = new ItemRepository(clients, true, true);
 
-          if(record.isFound()) {
-            loan.put("item", loanRepresentation.createItemSummary(record));
+        CompletableFuture<HttpResult<MultipleInventoryRecords>> inventoryRecordsFetched =
+          itemRepository.fetchFor(itemIds);
+
+        inventoryRecordsFetched.thenAccept(itemsResult -> {
+          if(itemsResult.failed()) {
+            itemsResult.cause().writeTo(routingContext.response());
+            return;
           }
-        });
 
-        JsonResponse.success(routingContext.response(), wrappedLoans.toJson());
+          final MultipleInventoryRecords records = itemsResult.value();
+
+          final List<JsonObject> mappedLoans = loans.getRecords().stream().map(loan -> {
+
+            final Item item = records.findRecordByItemId(loan.getItemId());
+
+            return loanRepresentation.extendedLoan(loan.asJson(), item);
+          }).collect(Collectors.toList());
+
+          JsonResponse.success(routingContext.response(),
+            new MultipleRecordsWrapper(mappedLoans, "loans", loans.getTotalRecords()).toJson());
+        });
       });
-    });
   }
 
   void empty(RoutingContext routingContext) {

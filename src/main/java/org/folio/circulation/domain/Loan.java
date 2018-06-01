@@ -33,7 +33,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return loan;
   }
 
-  JsonObject asJson() {
+  public JsonObject asJson() {
     return representation.copy();
   }
 

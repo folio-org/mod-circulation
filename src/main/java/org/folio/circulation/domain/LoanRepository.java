@@ -14,8 +14,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.MultipleRecordsWrapper.fromBody;
 
 public class LoanRepository {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -99,6 +101,33 @@ public class LoanRepository {
       itemRepository.fetchFor(loan)
       .thenApply(itemResult -> itemResult.map(
         item -> Loan.from(loan.asJson(), item))));
+  }
+
+  public CompletableFuture<HttpResult<MultipleRecords<Loan>>> findBy(String cql) {
+    CompletableFuture<Response> responseReceived = new CompletableFuture<>();
+
+    loansStorageClient.getMany(cql, responseReceived::complete);
+
+    return responseReceived.thenApply(response -> {
+        if (response.getStatusCode() != 200) {
+          return HttpResult.failure(new ServerErrorFailure("Failed to fetch loans from storage"));
+        }
+
+        final MultipleRecordsWrapper wrappedLoans = fromBody(response.getBody(), "loans");
+
+        if (wrappedLoans.isEmpty()) {
+          return HttpResult.success(MultipleRecords.empty());
+        }
+
+        final MultipleRecords<Loan> mapped = new MultipleRecords<>(
+          wrappedLoans.getRecords()
+            .stream()
+            .map(Loan::from)
+            .collect(Collectors.toList()),
+          wrappedLoans.getTotalRecords());
+
+        return HttpResult.success(mapped);
+    });
   }
 
   private static JsonObject convertLoanToStorageRepresentation(
