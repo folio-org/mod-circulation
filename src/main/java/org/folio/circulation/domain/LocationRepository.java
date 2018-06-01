@@ -35,10 +35,6 @@ public class LocationRepository {
     String locationId,
     String itemId) {
 
-    CompletableFuture<Response> getLocationCompleted = new CompletableFuture<>();
-
-    locationsStorageClient.get(locationId, getLocationCompleted::complete);
-
     //TODO: Add functions to explicitly distinguish between fatal not found
     // and allowable not found
     final Function<Response, HttpResult<JsonObject>> mapResponse = response -> {
@@ -53,7 +49,7 @@ public class LocationRepository {
       }
     };
 
-    return getLocationCompleted
+    return locationsStorageClient.get(locationId)
       .thenApply(mapResponse)
       .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
   }

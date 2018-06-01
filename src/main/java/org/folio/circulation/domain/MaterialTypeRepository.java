@@ -52,10 +52,6 @@ public class MaterialTypeRepository {
     String materialTypeId,
     String itemId) {
 
-    CompletableFuture<Response> getMaterialTypeCompleted = new CompletableFuture<>();
-
-    materialTypesStorageClient.get(materialTypeId, getMaterialTypeCompleted::complete);
-
     //TODO: Add functions to explicitly distinguish between fatal not found
     // and allowable not found
     final Function<Response, HttpResult<JsonObject>> mapResponse = response -> {
@@ -70,7 +66,7 @@ public class MaterialTypeRepository {
       }
     };
 
-    return getMaterialTypeCompleted
+    return materialTypesStorageClient.get(materialTypeId)
       .thenApply(mapResponse)
       .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
   }

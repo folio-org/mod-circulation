@@ -29,18 +29,15 @@ public class SingleRecordFetcher {
   public CompletableFuture<HttpResult<JsonObject>> fetchSingleRecord(
     String id,
     Supplier<HttpResult<JsonObject>> resultOnFailure) {
-    CompletableFuture<Response> itemRequestCompleted = new CompletableFuture<>();
 
     log.info("Fetching {} with ID: {}", recordType, id);
 
-    client.get(id, itemRequestCompleted::complete);
-
-    return itemRequestCompleted
+    return client.get(id)
       .thenApply(r -> mapToResult(r, resultOnFailure))
       .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
   }
 
-  public HttpResult<JsonObject> mapToResult(
+  private HttpResult<JsonObject> mapToResult(
     Response response,
     Supplier<HttpResult<JsonObject>> resultOnFailure) {
 

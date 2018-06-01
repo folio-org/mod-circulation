@@ -76,10 +76,6 @@ public class UserFetcher {
     String userId,
     boolean failOnNotFound) {
 
-    CompletableFuture<Response> getUserCompleted = new CompletableFuture<>();
-
-    this.usersStorageClient.get(userId, getUserCompleted::complete);
-
     final Function<Response, HttpResult<User>> mapResponse = response -> {
       if(response.getStatusCode() == 404) {
         if(failOnNotFound) {
@@ -98,7 +94,7 @@ public class UserFetcher {
       }
     };
 
-    return getUserCompleted
+    return this.usersStorageClient.get(userId)
       .thenApply(mapResponse)
       .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
   }

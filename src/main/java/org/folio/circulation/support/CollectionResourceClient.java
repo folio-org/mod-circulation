@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
 import java.net.URL;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 public class CollectionResourceClient {
@@ -58,9 +59,13 @@ public class CollectionResourceClient {
       responseConversationHandler(responseHandler));
   }
 
-  public void get(String id, Consumer<Response> responseHandler) {
+  public CompletableFuture<Response> get(String id) {
+    final CompletableFuture<Response> future = new CompletableFuture<>();
+
     client.get(individualRecordUrl(id),
-      responseConversationHandler(responseHandler));
+      responseConversationHandler(future::complete));
+
+    return future;
   }
 
   public void delete(String id, Consumer<Response> responseHandler) {

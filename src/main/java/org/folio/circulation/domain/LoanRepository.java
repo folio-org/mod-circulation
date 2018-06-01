@@ -69,10 +69,6 @@ public class LoanRepository {
   }
 
   public CompletableFuture<HttpResult<Loan>> getById(String id) {
-    CompletableFuture<Response> getLoanCompleted = new CompletableFuture<>();
-
-    loansStorageClient.get(id, getLoanCompleted::complete);
-
     final Function<Response, HttpResult<Loan>> mapResponse = response -> {
       if(response != null && response.getStatusCode() == 200) {
         return HttpResult.success(Loan.from(response.getJson()));
@@ -82,7 +78,7 @@ public class LoanRepository {
       }
     };
 
-    return getLoanCompleted
+    return loansStorageClient.get(id)
       .thenApply(mapResponse)
       .thenComposeAsync(this::fetchItem)
       .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));

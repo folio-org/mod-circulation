@@ -2,7 +2,6 @@ package org.folio.circulation.support;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.ItemRelatedRecord;
-import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LocationRepository;
 import org.folio.circulation.domain.MaterialTypeRepository;
 import org.folio.circulation.support.http.client.Response;
@@ -329,11 +328,7 @@ public class ItemRepository {
 
         log.info("Fetching holding with ID: {}", holdingsRecordId);
 
-        CompletableFuture<Response> holdingRequestCompleted = new CompletableFuture<>();
-
-        holdingsClient.get(holdingsRecordId, holdingRequestCompleted::complete);
-
-        return holdingRequestCompleted
+        return holdingsClient.get(holdingsRecordId)
           .thenApply(response -> HttpResult.success(
             builder.withHoldingsRecord(getRecordFromResponse(response))))
           .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
@@ -357,24 +352,12 @@ public class ItemRepository {
 
         log.info("Fetching instance with ID: {}", instanceId);
 
-        CompletableFuture<Response> instanceRequestCompleted = new CompletableFuture<>();
-
-        instancesClient.get(instanceId, instanceRequestCompleted::complete);
-
-        return instanceRequestCompleted
+        return instancesClient.get(instanceId)
           .thenApply(response -> HttpResult.success(
             builder.withInstance(getRecordFromResponse(response))))
           .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
       }
     });
-  }
-
-  public CompletableFuture<HttpResult<LoanAndRelatedRecords>> getInventoryRecords(
-    LoanAndRelatedRecords loanAndRelatedRecords) {
-
-    return
-      fetchFor(loanAndRelatedRecords.getLoan())
-      .thenApply(result -> result.map(loanAndRelatedRecords::withInventoryRecords));
   }
 
   private class InventoryRecordsBuilder {

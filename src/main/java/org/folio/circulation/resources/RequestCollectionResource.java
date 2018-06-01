@@ -130,32 +130,33 @@ public class RequestCollectionResource extends CollectionResource {
 
     String id = routingContext.request().getParam("id");
 
-    clients.requestsStorage().get(id, requestResponse -> {
-      if(requestResponse.getStatusCode() == 200) {
-        Request request = new Request(requestResponse.getJson());
+    clients.requestsStorage().get(id)
+      .thenAccept(requestResponse -> {
+        if(requestResponse.getStatusCode() == 200) {
+          Request request = new Request(requestResponse.getJson());
 
-        ItemRepository itemRepository = new ItemRepository(clients, false, false);
+          ItemRepository itemRepository = new ItemRepository(clients, false, false);
 
-        CompletableFuture<HttpResult<Item>> inventoryRecordsCompleted =
-          itemRepository.fetchFor(request);
+          CompletableFuture<HttpResult<Item>> inventoryRecordsCompleted =
+            itemRepository.fetchFor(request);
 
-        inventoryRecordsCompleted.thenAccept(r -> {
-          if(r.failed()) {
-            r.cause().writeTo(routingContext.response());
-            return;
-          }
+          inventoryRecordsCompleted.thenAccept(r -> {
+            if(r.failed()) {
+              r.cause().writeTo(routingContext.response());
+              return;
+            }
 
-          final JsonObject representation = request.asJson();
+            final JsonObject representation = request.asJson();
 
-          addAdditionalItemProperties(representation, r.value());
+            addAdditionalItemProperties(representation, r.value());
 
-          JsonResponse.success(routingContext.response(), representation);
-        });
-      }
-      else {
-        ForwardResponse.forward(routingContext.response(), requestResponse);
-      }
-    });
+            JsonResponse.success(routingContext.response(), representation);
+          });
+        }
+        else {
+          ForwardResponse.forward(routingContext.response(), requestResponse);
+        }
+      });
   }
 
   void delete(RoutingContext routingContext) {
