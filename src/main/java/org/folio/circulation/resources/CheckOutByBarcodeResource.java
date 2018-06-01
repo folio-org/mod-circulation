@@ -82,6 +82,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
       .thenComposeAsync(r -> r.after(loanRepository::createLoan))
+      .thenApply(r -> r.map(LoanAndRelatedRecords::getLoan))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(this::createdLoanFrom)
       .thenAccept(result -> result.writeTo(routingContext.response()));

@@ -72,14 +72,14 @@ public class LoanRepository {
     return onUpdated;
   }
 
-  public CompletableFuture<HttpResult<LoanAndRelatedRecords>> getById(String id) {
+  public CompletableFuture<HttpResult<Loan>> getById(String id) {
     CompletableFuture<Response> getLoanCompleted = new CompletableFuture<>();
 
     loansStorageClient.get(id, getLoanCompleted::complete);
 
-    final Function<Response, HttpResult<LoanAndRelatedRecords>> mapResponse = response -> {
+    final Function<Response, HttpResult<Loan>> mapResponse = response -> {
       if(response != null && response.getStatusCode() == 200) {
-        return HttpResult.success(new LoanAndRelatedRecords(Loan.from(response.getJson())));
+        return HttpResult.success(Loan.from(response.getJson()));
       }
       else {
         return HttpResult.failure(new ForwardOnFailure(response));
@@ -92,16 +92,13 @@ public class LoanRepository {
       .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
   }
 
-  private CompletableFuture<HttpResult<LoanAndRelatedRecords>> fetchItem(
-    HttpResult<LoanAndRelatedRecords> result) {
+  private CompletableFuture<HttpResult<Loan>> fetchItem(
+    HttpResult<Loan> result) {
 
-    return result.after(loanAndRelatedRecords -> {
-        return itemRepository.fetchFor(loanAndRelatedRecords.getLoan())
-          .thenApply(itemResult -> {
-            return itemResult.map(item -> loanAndRelatedRecords.withLoan(
-              Loan.from(loanAndRelatedRecords.getLoan().asJson(), item)));
-            });
-          });
+    return result.after(loan ->
+      itemRepository.fetchFor(loan)
+      .thenApply(itemResult -> itemResult.map(
+        item -> Loan.from(loan.asJson(), item))));
   }
 
   private static JsonObject convertLoanToStorageRepresentation(

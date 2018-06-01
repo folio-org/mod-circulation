@@ -13,14 +13,11 @@ import static org.folio.circulation.support.JsonPropertyWriter.writeNamedObject;
 public class LoanRepresentation {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  public JsonObject extendedLoan(LoanAndRelatedRecords relatedRecords) {
-    final Item item = relatedRecords.getLoan().getItem();
-
-    return extendedLoan(relatedRecords.getLoan().asJson(), item);
+  public JsonObject extendedLoan(Loan loan) {
+    return extendedLoan(loan.asJson(), loan.getItem());
   }
 
   public JsonObject createItemSummary(Item item) {
-
     if(item.isNotFound()) {
       return new JsonObject();
     }
