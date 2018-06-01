@@ -44,8 +44,7 @@ public class LoanPolicyRepository {
 
     if(fixedDueDateScheduleId != null) {
       final SingleRecordFetcher fetcher = new SingleRecordFetcher(
-        fixedDueDateSchedulesStorageClient,
-        "fixed due date schedule");
+        fixedDueDateSchedulesStorageClient, "fixed due date schedule");
 
       return fetcher
         .fetchSingleRecord(fixedDueDateScheduleId)
@@ -60,10 +59,10 @@ public class LoanPolicyRepository {
   private CompletableFuture<HttpResult<JsonObject>> lookupLoanPolicy(
     String loanPolicyId) {
 
-    return new SingleRecordFetcher(loanPoliciesStorageClient, "loan policy")
-      .fetchSingleRecord(loanPolicyId,
-        () -> HttpResult.failure(new ServerErrorFailure(
-          String.format("Loan policy %s could not be found, please check loan rules", loanPolicyId))));
+    return new SingleRecordFetcher(loanPoliciesStorageClient, "loan policy",
+      () -> HttpResult.failure(new ServerErrorFailure(
+        String.format("Loan policy %s could not be found, please check loan rules", loanPolicyId))))
+      .fetchSingleRecord(loanPolicyId);
   }
 
   private CompletableFuture<HttpResult<String>> lookupLoanPolicyId(

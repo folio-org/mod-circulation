@@ -14,26 +14,27 @@ public class SingleRecordFetcher {
 
   private final CollectionResourceClient client;
   private final String recordType;
+  private final Supplier<HttpResult<JsonObject>> resultOnFailure;
 
   public SingleRecordFetcher(CollectionResourceClient client, String recordType) {
+    this(client, recordType, () -> HttpResult.success(null));
+  }
+
+  public SingleRecordFetcher(
+    CollectionResourceClient client,
+    String recordType,
+    Supplier<HttpResult<JsonObject>> resultOnFailure) {
     this.client = client;
     this.recordType = recordType;
+    this.resultOnFailure = resultOnFailure;
   }
 
-  public CompletableFuture<HttpResult<JsonObject>> fetchSingleRecord(
-    String id) {
-    //TODO: Should be more discriminating about failure
-    return fetchSingleRecord(id, () -> HttpResult.success(null));
-  }
-
-  public CompletableFuture<HttpResult<JsonObject>> fetchSingleRecord(
-    String id,
-    Supplier<HttpResult<JsonObject>> resultOnFailure) {
+  public CompletableFuture<HttpResult<JsonObject>> fetchSingleRecord(String id) {
 
     log.info("Fetching {} with ID: {}", recordType, id);
 
     return client.get(id)
-      .thenApply(r -> mapToResult(r, resultOnFailure))
+      .thenApply(r -> mapToResult(r, this.resultOnFailure))
       .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
   }
 
@@ -48,7 +49,6 @@ public class SingleRecordFetcher {
       if (response.getStatusCode() == 200) {
         return HttpResult.success(response.getJson());
       } else {
-        //TODO: Possibly should be constructor argument, rather than parameter?
         return resultOnFailure.get();
       }
     }
