@@ -1,7 +1,7 @@
 package org.folio.circulation.domain;
 
 import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.support.InventoryRecords;
+import org.folio.circulation.support.Item;
 
 import static org.folio.circulation.domain.ItemStatus.*;
 
@@ -20,8 +20,8 @@ public class RequestType {
     this.value = value;
   }
 
-  public boolean canCreateRequestForItem(InventoryRecords inventoryRecords) {
-    String status = inventoryRecords.getStatus();
+  public boolean canCreateRequestForItem(Item item) {
+    String status = item.getStatus();
 
     switch (value) {
       case HOLD:

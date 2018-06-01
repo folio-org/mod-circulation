@@ -3,7 +3,7 @@ package org.folio.circulation.domain;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.InventoryRecords;
+import org.folio.circulation.support.Item;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.joda.time.DateTime;
@@ -15,7 +15,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   private static final String STATUS_PROPERTY_NAME = "status";
 
   private final JsonObject representation;
-  private InventoryRecords inventoryRecords;
+  private Item item;
 
   public Loan(JsonObject representation) {
     this.representation = representation;
@@ -25,10 +25,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return new Loan(representation);
   }
 
-  public static Loan from(JsonObject representation, InventoryRecords inventoryRecords) {
+  public static Loan from(JsonObject representation, Item item) {
     final Loan loan = new Loan(representation);
 
-    loan.setInventoryRecords(inventoryRecords);
+    loan.setItem(item);
 
     return loan;
   }
@@ -98,11 +98,11 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return representation.getString("proxyUserId");
   }
 
-  public InventoryRecords getInventoryRecords() {
-    return inventoryRecords;
+  public Item getItem() {
+    return item;
   }
 
-  void setInventoryRecords(InventoryRecords inventoryRecords) {
-    this.inventoryRecords = inventoryRecords;
+  void setItem(Item item) {
+    this.item = item;
   }
 }

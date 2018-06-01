@@ -67,26 +67,26 @@ public class LoanPolicyRepository {
   }
 
   private CompletableFuture<HttpResult<String>> lookupLoanPolicyId(
-    InventoryRecords inventoryRecords,
+    Item item,
     JsonObject user) {
 
     CompletableFuture<HttpResult<String>> findLoanPolicyCompleted
       = new CompletableFuture<>();
 
-    if(inventoryRecords.isNotFound()) {
+    if(item.isNotFound()) {
       return CompletableFuture.completedFuture(HttpResult.failure(
         new ServerErrorFailure("Unable to apply loan rules for unknown item")));
     }
 
-    if(inventoryRecords.doesNotHaveHolding()) {
+    if(item.doesNotHaveHolding()) {
       return CompletableFuture.completedFuture(HttpResult.failure(
         new ServerErrorFailure("Unable to apply loan rules for unknown holding")));
     }
 
-    String loanTypeId = inventoryRecords.determineLoanTypeForItem();
-    String locationId = inventoryRecords.getLocationId();
+    String loanTypeId = item.determineLoanTypeForItem();
+    String locationId = item.getLocationId();
 
-    String materialTypeId = inventoryRecords.getMaterialTypeId();
+    String materialTypeId = item.getMaterialTypeId();
 
     String patronGroupId = user.getString("patronGroup");
 

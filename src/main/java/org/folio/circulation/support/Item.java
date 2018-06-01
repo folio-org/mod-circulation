@@ -10,7 +10,7 @@ import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
-public class InventoryRecords {
+public class Item {
   private static final String TITLE_PROPERTY = "title";
 
   private final JsonObject item;
@@ -19,7 +19,7 @@ public class InventoryRecords {
   private JsonObject location;
   private JsonObject materialType;
 
-  public InventoryRecords(
+  public Item(
     JsonObject item,
     JsonObject holding,
     JsonObject instance,
@@ -148,8 +148,8 @@ public class InventoryRecords {
     return getItem() != null;
   }
 
-  public InventoryRecords updateItem(JsonObject updatedItem) {
-    return new InventoryRecords(updatedItem,
+  public Item updateItem(JsonObject updatedItem) {
+    return new Item(updatedItem,
       holding, instance, getLocation(), getMaterialType());
   }
 
@@ -157,13 +157,13 @@ public class InventoryRecords {
     return holding == null;
   }
 
-  public InventoryRecords withLocation(JsonObject newLocation) {
-    return new InventoryRecords(this.item, this.holding, this.instance,
+  public Item withLocation(JsonObject newLocation) {
+    return new Item(this.item, this.holding, this.instance,
       newLocation, this.materialType);
   }
 
-  public InventoryRecords withMaterialType(JsonObject newMaterialType) {
-    return new InventoryRecords(this.item, this.holding, this.instance,
+  public Item withMaterialType(JsonObject newMaterialType) {
+    return new Item(this.item, this.holding, this.instance,
       this.location, newMaterialType);
   }
 }

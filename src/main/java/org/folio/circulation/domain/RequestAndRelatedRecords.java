@@ -1,7 +1,7 @@
 package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.InventoryRecords;
+import org.folio.circulation.support.Item;
 
 public class RequestAndRelatedRecords implements UserRelatedRecord {
   private final Request request;
@@ -30,7 +30,7 @@ public class RequestAndRelatedRecords implements UserRelatedRecord {
   }
 
   public RequestAndRelatedRecords withRequest(Request newRequest) {
-    newRequest.setInventoryRecords(request.getInventoryRecords());
+    newRequest.setItem(request.getItem());
 
     return new RequestAndRelatedRecords(newRequest,
       this.requestQueue,
@@ -46,8 +46,8 @@ public class RequestAndRelatedRecords implements UserRelatedRecord {
       this.proxyUser);
   }
 
-  public RequestAndRelatedRecords withInventoryRecords(InventoryRecords newInventoryRecords) {
-    this.request.setInventoryRecords(newInventoryRecords);
+  public RequestAndRelatedRecords withInventoryRecords(Item newItem) {
+    this.request.setItem(newItem);
 
     return new RequestAndRelatedRecords(
       this.request,
@@ -76,8 +76,8 @@ public class RequestAndRelatedRecords implements UserRelatedRecord {
     return request;
   }
 
-  public InventoryRecords getInventoryRecords() {
-    return request.getInventoryRecords();
+  public Item getInventoryRecords() {
+    return request.getItem();
   }
 
   RequestQueue getRequestQueue() {

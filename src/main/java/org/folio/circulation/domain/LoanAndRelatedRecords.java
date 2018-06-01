@@ -2,7 +2,7 @@ package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.policy.LoanPolicy;
-import org.folio.circulation.support.InventoryRecords;
+import org.folio.circulation.support.Item;
 
 public class LoanAndRelatedRecords implements UserRelatedRecord {
   private final Loan loan;
@@ -33,12 +33,12 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   }
 
   LoanAndRelatedRecords withItem(JsonObject updatedItem) {
-    return withInventoryRecords(loan.getInventoryRecords().updateItem(updatedItem));
+    return withInventoryRecords(loan.getItem().updateItem(updatedItem));
   }
 
   LoanAndRelatedRecords withLoan(Loan newLoan) {
     //TODO: find a better way to carry over related records
-    newLoan.setInventoryRecords(loan.getInventoryRecords());
+    newLoan.setItem(loan.getItem());
 
     return new LoanAndRelatedRecords(newLoan, requestQueue,
       requestingUser, proxyingUser, loanPolicy, this.materialType);
@@ -69,8 +69,8 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
       requestingUser, proxyingUser, loanPolicy, this.materialType);
   }
 
-  public LoanAndRelatedRecords withInventoryRecords(InventoryRecords newInventoryRecords) {
-    loan.setInventoryRecords(newInventoryRecords);
+  public LoanAndRelatedRecords withInventoryRecords(Item newItem) {
+    loan.setItem(newItem);
 
     return new LoanAndRelatedRecords(loan, requestQueue,
       requestingUser, proxyingUser, loanPolicy, this.materialType);
@@ -81,8 +81,8 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
       requestingUser, proxyingUser, loanPolicy, newMaterialType);
   }
 
-  public InventoryRecords getInventoryRecords() {
-    return loan.getInventoryRecords();
+  public Item getInventoryRecords() {
+    return loan.getItem();
   }
 
   public Loan getLoan() {

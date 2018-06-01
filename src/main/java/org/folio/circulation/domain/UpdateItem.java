@@ -62,13 +62,13 @@ public class UpdateItem {
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
     try {
-      final InventoryRecords inventoryRecords = loanAndRelatedRecords.getInventoryRecords();
+      final Item item = loanAndRelatedRecords.getInventoryRecords();
 
       final String prospectiveStatus = itemStatusFrom(
         loanAndRelatedRecords.getLoan(), loanAndRelatedRecords.getRequestQueue());
 
-      if(inventoryRecords.isNotSameStatus(prospectiveStatus)) {
-        return internalUpdate(inventoryRecords, prospectiveStatus)
+      if(item.isNotSameStatus(prospectiveStatus)) {
+        return internalUpdate(item, prospectiveStatus)
           .thenApply(updatedItemResult ->
             updatedItemResult.map(loanAndRelatedRecords::withItem));
       }
@@ -111,17 +111,17 @@ public class UpdateItem {
   }
 
   private CompletableFuture<HttpResult<JsonObject>> internalUpdate(
-    InventoryRecords inventoryRecords,
+    Item item,
     String newStatus) {
 
     CompletableFuture<HttpResult<JsonObject>> itemUpdated = new CompletableFuture<>();
 
-    inventoryRecords.changeStatus(newStatus);
+    item.changeStatus(newStatus);
 
-    this.itemsStorageClient.put(inventoryRecords.getItemId(),
-      inventoryRecords.getItem(), putItemResponse -> {
+    this.itemsStorageClient.put(item.getItemId(),
+      item.getItem(), putItemResponse -> {
         if(putItemResponse.getStatusCode() == 204) {
-          itemUpdated.complete(HttpResult.success(inventoryRecords.getItem()));
+          itemUpdated.complete(HttpResult.success(item.getItem()));
         }
         else {
           itemUpdated.complete(HttpResult.failure(

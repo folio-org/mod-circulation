@@ -61,7 +61,7 @@ public class ItemRepository {
     this.fetchMaterialType = fetchMaterialType;
   }
 
-  public CompletableFuture<HttpResult<InventoryRecords>> fetchFor(ItemRelatedRecord record) {
+  public CompletableFuture<HttpResult<Item>> fetchFor(ItemRelatedRecord record) {
     return fetchItem(record.getItemId())
       .thenComposeAsync(this::fetchHolding)
       .thenComposeAsync(this::fetchInstance)
@@ -70,8 +70,8 @@ public class ItemRepository {
       .thenComposeAsync(this::fetchMaterialType);
   }
 
-  private CompletableFuture<HttpResult<InventoryRecords>> fetchLocation(
-    HttpResult<InventoryRecords> result) {
+  private CompletableFuture<HttpResult<Item>> fetchLocation(
+    HttpResult<Item> result) {
 
     if(fetchLocation) {
       return result.after(locationRepository::getLocation);
@@ -81,8 +81,8 @@ public class ItemRepository {
     }
   }
 
-  private CompletableFuture<HttpResult<InventoryRecords>> fetchMaterialType(
-    HttpResult<InventoryRecords> result) {
+  private CompletableFuture<HttpResult<Item>> fetchMaterialType(
+    HttpResult<Item> result) {
 
     if(fetchMaterialType) {
       return result.after(materialTypeRepository::getMaterialType);
@@ -92,7 +92,7 @@ public class ItemRepository {
     }
   }
 
-  public CompletableFuture<HttpResult<InventoryRecords>> fetchByBarcode(String barcode) {
+  public CompletableFuture<HttpResult<Item>> fetchByBarcode(String barcode) {
     return fetchItemByBarcode(barcode)
       .thenComposeAsync(this::fetchHolding)
       .thenComposeAsync(this::fetchInstance)
@@ -168,7 +168,7 @@ public class ItemRepository {
 
     return result.after(records -> {
       List<String> instanceIds = records.getRecords().stream()
-        .map(InventoryRecords::getInstanceId)
+        .map(Item::getInstanceId)
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
 
@@ -201,7 +201,7 @@ public class ItemRepository {
 
     return result.after(records -> {
       List<String> holdingsIds = records.getRecords().stream()
-        .map(InventoryRecords::getHoldingsRecordId)
+        .map(Item::getHoldingsRecordId)
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
 
@@ -396,8 +396,8 @@ public class ItemRepository {
       this.instance = instance;
     }
 
-    public InventoryRecords create() {
-      return new InventoryRecords(item, holdingsRecord, instance, null, null);
+    public Item create() {
+      return new Item(item, holdingsRecord, instance, null, null);
     }
 
     InventoryRecordsBuilder withHoldingsRecord(JsonObject newHoldingsRecord) {

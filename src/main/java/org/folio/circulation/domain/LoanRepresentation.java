@@ -1,7 +1,7 @@
 package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.InventoryRecords;
+import org.folio.circulation.support.Item;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,28 +14,28 @@ public class LoanRepresentation {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   public JsonObject extendedLoan(LoanAndRelatedRecords relatedRecords) {
-    final InventoryRecords inventoryRecords = relatedRecords.getLoan().getInventoryRecords();
+    final Item item = relatedRecords.getLoan().getItem();
 
-    return extendedLoan(relatedRecords.getLoan().asJson(), inventoryRecords);
+    return extendedLoan(relatedRecords.getLoan().asJson(), item);
   }
 
-  public JsonObject createItemSummary(InventoryRecords inventoryRecords) {
+  public JsonObject createItemSummary(Item item) {
 
-    if(inventoryRecords.isNotFound()) {
+    if(item.isNotFound()) {
       return new JsonObject();
     }
 
     JsonObject itemSummary = new JsonObject();
 
-    write(itemSummary, "holdingsRecordId", inventoryRecords.getHoldingsRecordId());
-    write(itemSummary, "instanceId", inventoryRecords.getInstanceId());
-    write(itemSummary, "title", inventoryRecords.getTitle());
-    write(itemSummary, "barcode", inventoryRecords.getBarcode());
-    write(itemSummary, "contributors", inventoryRecords.getContributorNames());
-    write(itemSummary, "callNumber", inventoryRecords.getCallNumber());
-    writeNamedObject(itemSummary, "status", inventoryRecords.getStatus());
+    write(itemSummary, "holdingsRecordId", item.getHoldingsRecordId());
+    write(itemSummary, "instanceId", item.getInstanceId());
+    write(itemSummary, "title", item.getTitle());
+    write(itemSummary, "barcode", item.getBarcode());
+    write(itemSummary, "contributors", item.getContributorNames());
+    write(itemSummary, "callNumber", item.getCallNumber());
+    writeNamedObject(itemSummary, "status", item.getStatus());
 
-    final JsonObject location = inventoryRecords.getLocation();
+    final JsonObject location = item.getLocation();
 
     if(location != null && location.containsKey("name")) {
       itemSummary.put("location", new JsonObject()
@@ -44,7 +44,7 @@ public class LoanRepresentation {
 
     final String materialTypeProperty = "materialType";
 
-    final JsonObject materialType = inventoryRecords.getMaterialType();
+    final JsonObject materialType = item.getMaterialType();
 
     if(materialType != null) {
       if(materialType.containsKey("name") && materialType.getString("name") != null) {
@@ -52,10 +52,10 @@ public class LoanRepresentation {
           .put("name", materialType.getString("name")));
       } else {
         log.warn("Missing or null property for material type for item id {}",
-          inventoryRecords.getItemId());
+          item.getItemId());
       }
     } else {
-      log.warn("Null materialType object for item {}", inventoryRecords.getItemId());
+      log.warn("Null materialType object for item {}", item.getItemId());
     }
 
     return itemSummary;
@@ -63,14 +63,14 @@ public class LoanRepresentation {
 
   private JsonObject extendedLoan(
     JsonObject loan,
-    InventoryRecords inventoryRecords) {
+    Item item) {
 
     //No need to pass on the itemStatus property, as only used to populate the history
     //and could be confused with aggregation of current status
     loan.remove("itemStatus");
 
-    if(inventoryRecords != null && inventoryRecords.isFound()) {
-      loan.put("item", new LoanRepresentation().createItemSummary(inventoryRecords));
+    if(item != null && item.isFound()) {
+      loan.put("item", new LoanRepresentation().createItemSummary(item));
     }
 
     return loan;

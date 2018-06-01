@@ -10,13 +10,13 @@ public class MultipleInventoryRecords {
   private final Collection<JsonObject> items;
   private final Collection<JsonObject> holdings;
   private final Collection<JsonObject> instances;
-  private final Collection<InventoryRecords> records;
+  private final Collection<Item> records;
 
   MultipleInventoryRecords(
     Collection<JsonObject> items,
     Collection<JsonObject> holdings,
     Collection<JsonObject> instances,
-    Collection<InventoryRecords> records) {
+    Collection<Item> records) {
 
     this.items = items;
     this.holdings = holdings;
@@ -35,7 +35,7 @@ public class MultipleInventoryRecords {
         .collect(Collectors.toList()));
   }
 
-  private static InventoryRecords itemToInventoryRecords(
+  private static Item itemToInventoryRecords(
     JsonObject item,
     Collection<JsonObject> holdings,
     Collection<JsonObject> instances) {
@@ -44,26 +44,26 @@ public class MultipleInventoryRecords {
       item.getString("holdingsRecordId"), holdings);
 
     if(!holdingsRecord.isPresent()) {
-      return new InventoryRecords(item, null, null, null, null);
+      return new Item(item, null, null, null, null);
     }
 
     final Optional<JsonObject> instance = findById(
       holdingsRecord.get().getString("instanceId"), instances);
 
     return
-      new InventoryRecords(item, holdingsRecord.get(), instance.orElse(null),
+      new Item(item, holdingsRecord.get(), instance.orElse(null),
         null, null);
   }
 
-  public Collection<InventoryRecords> getRecords() {
+  public Collection<Item> getRecords() {
     return records;
   }
 
-  public InventoryRecords findRecordByItemId(String itemId) {
+  public Item findRecordByItemId(String itemId) {
     return records.stream()
       .filter(record -> record.getItemId().equals(itemId))
       .findFirst()
-      .orElseGet(() -> new InventoryRecords(null, null, null, null, null));
+      .orElseGet(() -> new Item(null, null, null, null, null));
   }
 
   private static Optional<JsonObject> findById(

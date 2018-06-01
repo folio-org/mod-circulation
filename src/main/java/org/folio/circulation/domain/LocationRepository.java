@@ -24,11 +24,11 @@ public class LocationRepository {
     locationsStorageClient = clients.locationsStorage();
   }
 
-  public CompletableFuture<HttpResult<InventoryRecords>> getLocation(
-    InventoryRecords inventoryRecords) {
+  public CompletableFuture<HttpResult<Item>> getLocation(
+    Item item) {
 
-    return getLocation(inventoryRecords.getLocationId(), inventoryRecords.getItemId())
-      .thenApply(result -> result.map(inventoryRecords::withLocation));
+    return getLocation(item.getLocationId(), item.getItemId())
+      .thenApply(result -> result.map(item::withLocation));
   }
 
   private CompletableFuture<HttpResult<JsonObject>> getLocation(
@@ -59,10 +59,10 @@ public class LocationRepository {
   }
 
   public CompletableFuture<HttpResult<Map<String, JsonObject>>> getLocations(
-    Collection<InventoryRecords> inventoryRecords) {
+    Collection<Item> inventoryRecords) {
 
     List<String> locationIds = inventoryRecords.stream()
-      .map(InventoryRecords::getLocationId)
+      .map(Item::getLocationId)
       .filter(StringUtils::isNotBlank)
       .collect(Collectors.toList());
 

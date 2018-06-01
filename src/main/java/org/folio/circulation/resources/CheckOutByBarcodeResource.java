@@ -116,7 +116,7 @@ public class CheckOutByBarcodeResource extends Resource {
       final Loan loan = loanAndRelatedRecords.getLoan();
 
       loan.changeUser(loanAndRelatedRecords.getRequestingUser().getString("id"));
-      loan.changeItem(loanAndRelatedRecords.getLoan().getInventoryRecords().getItemId());
+      loan.changeItem(loanAndRelatedRecords.getLoan().getItem().getItemId());
 
       if(loanAndRelatedRecords.getProxyingUser() != null) {
         loan.changeProxyUser(loanAndRelatedRecords.getProxyingUser().getString("id"));
@@ -154,7 +154,7 @@ public class CheckOutByBarcodeResource extends Resource {
 
   private HttpResult<LoanAndRelatedRecords> addInventoryRecords(
     HttpResult<LoanAndRelatedRecords> loanResult,
-    HttpResult<InventoryRecords> inventoryRecordsResult) {
+    HttpResult<Item> inventoryRecordsResult) {
 
     return HttpResult.combine(loanResult, inventoryRecordsResult,
       LoanAndRelatedRecords::withInventoryRecords);

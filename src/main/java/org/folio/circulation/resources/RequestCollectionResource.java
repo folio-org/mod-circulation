@@ -105,11 +105,11 @@ public class RequestCollectionResource extends CollectionResource {
           return;
         }
 
-        final InventoryRecords inventoryRecords = result.value().getInventoryRecords();
+        final Item item = result.value().getInventoryRecords();
         final JsonObject requester = result.value().getRequestingUser();
         final JsonObject proxy = result.value().getProxyUser();
 
-        addStoredItemProperties(representation, inventoryRecords);
+        addStoredItemProperties(representation, item);
         addStoredRequesterProperties(representation, requester);
         addStoredProxyProperties(representation, proxy);
 
@@ -136,7 +136,7 @@ public class RequestCollectionResource extends CollectionResource {
 
         ItemRepository itemRepository = new ItemRepository(clients, false, false);
 
-        CompletableFuture<HttpResult<InventoryRecords>> inventoryRecordsCompleted =
+        CompletableFuture<HttpResult<Item>> inventoryRecordsCompleted =
           itemRepository.fetchFor(request);
 
         inventoryRecordsCompleted.thenAccept(r -> {
@@ -217,7 +217,7 @@ public class RequestCollectionResource extends CollectionResource {
           final MultipleInventoryRecords records = result.value();
 
           requests.forEach(request -> {
-              InventoryRecords record = records.findRecordByItemId(
+              Item record = records.findRecordByItemId(
                 new Request(request).getItemId());
 
               if(record.isFound()) {
@@ -248,25 +248,25 @@ public class RequestCollectionResource extends CollectionResource {
 
   private void addStoredItemProperties(
     JsonObject request,
-    InventoryRecords inventoryRecords) {
+    Item item) {
 
-    if(inventoryRecords == null || inventoryRecords.isNotFound()) {
+    if(item == null || item.isNotFound()) {
       return;
     }
 
     JsonObject itemSummary = new JsonObject();
 
-    write(itemSummary, "title", inventoryRecords.getTitle());
-    write(itemSummary, "barcode", inventoryRecords.getBarcode());
+    write(itemSummary, "title", item.getTitle());
+    write(itemSummary, "barcode", item.getBarcode());
 
     request.put("item", itemSummary);
   }
 
   private void addAdditionalItemProperties(
     JsonObject request,
-    InventoryRecords inventoryRecords) {
+    Item item) {
 
-    if(inventoryRecords == null || inventoryRecords.isNotFound()) {
+    if(item == null || item.isNotFound()) {
       return;
     }
 
@@ -274,8 +274,8 @@ public class RequestCollectionResource extends CollectionResource {
       ? request.getJsonObject("item")
       : new JsonObject();
 
-    write(itemSummary, "holdingsRecordId", inventoryRecords.getHoldingsRecordId());
-    write(itemSummary, "instanceId", inventoryRecords.getInstanceId());
+    write(itemSummary, "holdingsRecordId", item.getHoldingsRecordId());
+    write(itemSummary, "instanceId", item.getInstanceId());
 
     request.put("item", itemSummary);
   }
@@ -329,7 +329,7 @@ public class RequestCollectionResource extends CollectionResource {
 
   private HttpResult<RequestAndRelatedRecords> addInventoryRecords(
     HttpResult<RequestAndRelatedRecords> loanResult,
-    HttpResult<InventoryRecords> inventoryRecordsResult) {
+    HttpResult<Item> inventoryRecordsResult) {
 
     return HttpResult.combine(loanResult, inventoryRecordsResult,
       RequestAndRelatedRecords::withInventoryRecords);

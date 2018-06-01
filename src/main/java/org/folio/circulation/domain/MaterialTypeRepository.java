@@ -24,27 +24,27 @@ public class MaterialTypeRepository {
     materialTypesStorageClient = clients.materialTypesStorage();
   }
 
-  public CompletableFuture<HttpResult<InventoryRecords>> getMaterialType(
-    InventoryRecords inventoryRecords) {
+  public CompletableFuture<HttpResult<Item>> getMaterialType(
+    Item item) {
 
-    return getMaterialType(inventoryRecords.getMaterialTypeId(), inventoryRecords.getItemId())
-      .thenApply(result -> result.map(inventoryRecords::withMaterialType));
+    return getMaterialType(item.getMaterialTypeId(), item.getItemId())
+      .thenApply(result -> result.map(item::withMaterialType));
   }
 
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> getMaterialType(
     LoanAndRelatedRecords relatedRecords) {
 
-    final InventoryRecords inventoryRecords = relatedRecords.getInventoryRecords();
+    final Item item = relatedRecords.getInventoryRecords();
 
     //Cannot find material type for unknown item
-    if(inventoryRecords.isNotFound()) {
+    if(item.isNotFound()) {
       return CompletableFuture.completedFuture(HttpResult.success(relatedRecords));
     }
 
-    String materialTypeId = inventoryRecords.getMaterialTypeId();
+    String materialTypeId = item.getMaterialTypeId();
 
     return getMaterialType(materialTypeId,
-      inventoryRecords.getItemId())
+      item.getItemId())
       .thenApply(result -> result.map(relatedRecords::withMaterialType));
   }
 
@@ -76,10 +76,10 @@ public class MaterialTypeRepository {
   }
 
   public CompletableFuture<HttpResult<Map<String, JsonObject>>> getMaterialTypes(
-    Collection<InventoryRecords> inventoryRecords) {
+    Collection<Item> inventoryRecords) {
 
     List<String> materialTypeIds = inventoryRecords.stream()
-      .map(InventoryRecords::getMaterialTypeId)
+      .map(Item::getMaterialTypeId)
       .filter(StringUtils::isNotBlank)
       .collect(Collectors.toList());
 

@@ -185,7 +185,7 @@ public class LoanCollectionResource extends CollectionResource {
           //and could be confused with aggregation of current status
           loan.remove("itemStatus");
 
-          final InventoryRecords record = records.findRecordByItemId(
+          final Item record = records.findRecordByItemId(
             loan.getString(LoanProperties.ITEM_ID));
 
           if(record.isFound()) {
@@ -214,7 +214,7 @@ public class LoanCollectionResource extends CollectionResource {
 
   private HttpResult<LoanAndRelatedRecords> addInventoryRecords(
     HttpResult<LoanAndRelatedRecords> loanResult,
-    HttpResult<InventoryRecords> inventoryRecordsResult) {
+    HttpResult<Item> inventoryRecordsResult) {
 
     return HttpResult.combine(loanResult, inventoryRecordsResult,
       LoanAndRelatedRecords::withInventoryRecords);
@@ -240,7 +240,7 @@ public class LoanCollectionResource extends CollectionResource {
     HttpResult<LoanAndRelatedRecords> result) {
 
     return result.next(loan -> {
-      if(loan.getLoan().getInventoryRecords().doesNotHaveHolding()) {
+      if(loan.getLoan().getItem().doesNotHaveHolding()) {
         return HttpResult.failure(new ValidationErrorFailure(
           "Holding does not exist", LoanProperties.ITEM_ID, loan.getLoan().getItemId()));
       }
