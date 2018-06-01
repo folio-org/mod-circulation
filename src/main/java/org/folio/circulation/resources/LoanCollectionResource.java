@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.LoanValidation.defaultStatusAndAction;
+import static org.folio.circulation.support.MultipleRecordsWrapper.fromBody;
 
 public class LoanCollectionResource extends CollectionResource {
   public LoanCollectionResource(HttpClient client) {
@@ -33,7 +34,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     final Clients clients = Clients.create(context, client);
 
-    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients, true, true);
+    final ItemRepository itemRepository = new ItemRepository(clients, true, true);
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
     final UserFetcher userFetcher = new UserFetcher(clients);
 
@@ -51,7 +52,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     completedFuture(HttpResult.success(new LoanAndRelatedRecords(loan)))
       .thenApply(this::refuseWhenNotOpenOrClosed)
-      .thenCombineAsync(inventoryFetcher.fetchFor(loan), this::addInventoryRecords)
+      .thenCombineAsync(itemRepository.fetchFor(loan), this::addInventoryRecords)
       .thenApply(LoanValidation::refuseWhenItemDoesNotExist)
       .thenApply(this::refuseWhenHoldingDoesNotExist)
       .thenApply(LoanValidation::refuseWhenItemIsAlreadyCheckedOut)
@@ -81,7 +82,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     final Clients clients = Clients.create(context, client);
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
-    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients, false, false);
+    final ItemRepository itemRepository = new ItemRepository(clients, false, false);
 
     final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
@@ -93,7 +94,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     completedFuture(HttpResult.success(new LoanAndRelatedRecords(loan)))
       .thenApply(this::refuseWhenNotOpenOrClosed)
-      .thenCombineAsync(inventoryFetcher.fetchFor(loan), this::addInventoryRecords)
+      .thenCombineAsync(itemRepository.fetchFor(loan), this::addInventoryRecords)
       .thenApply(LoanValidation::refuseWhenItemDoesNotExist)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenCombineAsync(requestQueueFetcher.get(loan.getItemId()), this::addRequestQueue)
@@ -107,7 +108,7 @@ public class LoanCollectionResource extends CollectionResource {
   void get(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
-    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients, true, true);
+    final ItemRepository itemRepository = new ItemRepository(clients, true, true);
     final LoanRepository loanRepository = new LoanRepository(clients);
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
@@ -115,7 +116,7 @@ public class LoanCollectionResource extends CollectionResource {
     String id = routingContext.request().getParam("id");
 
     loanRepository.getById(id)
-      .thenComposeAsync(result -> result.after(inventoryFetcher::getInventoryRecords))
+      .thenComposeAsync(result -> result.after(itemRepository::getInventoryRecords))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(OkJsonHttpResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
@@ -150,8 +151,7 @@ public class LoanCollectionResource extends CollectionResource {
         return;
       }
 
-      final MultipleRecordsWrapper wrappedLoans = MultipleRecordsWrapper.fromBody(
-        loansResponse.getBody(), "loans");
+      final MultipleRecordsWrapper wrappedLoans = fromBody(loansResponse.getBody(), "loans");
 
       if(wrappedLoans.isEmpty()) {
         JsonResponse.success(routingContext.response(),
@@ -166,10 +166,10 @@ public class LoanCollectionResource extends CollectionResource {
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
 
-      InventoryFetcher inventoryFetcher = new InventoryFetcher(clients, true, true);
+      ItemRepository itemRepository = new ItemRepository(clients, true, true);
 
       CompletableFuture<HttpResult<MultipleInventoryRecords>> inventoryRecordsFetched =
-        inventoryFetcher.fetchFor(itemIds);
+        itemRepository.fetchFor(itemIds);
 
       inventoryRecordsFetched.thenAccept(result -> {
         if(result.failed()) {

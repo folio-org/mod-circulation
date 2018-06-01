@@ -25,6 +25,14 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return new Loan(representation);
   }
 
+  public static Loan from(JsonObject representation, InventoryRecords inventoryRecords) {
+    final Loan loan = new Loan(representation);
+
+    loan.setInventoryRecords(inventoryRecords);
+
+    return loan;
+  }
+
   JsonObject asJson() {
     return representation.copy();
   }

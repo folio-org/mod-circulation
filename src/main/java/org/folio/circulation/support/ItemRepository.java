@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
-public class InventoryFetcher {
+public class ItemRepository {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final CollectionResourceClient itemsClient;
@@ -30,7 +30,7 @@ public class InventoryFetcher {
   private final boolean fetchLocation;
   private final boolean fetchMaterialType;
 
-  public InventoryFetcher(
+  public ItemRepository(
     Clients clients,
     boolean fetchLocation,
     boolean fetchMaterialType) {
@@ -43,7 +43,7 @@ public class InventoryFetcher {
       fetchLocation, fetchMaterialType);
   }
 
-  private InventoryFetcher(
+  private ItemRepository(
     CollectionResourceClient itemsClient,
     CollectionResourceClient holdingsClient,
     CollectionResourceClient instancesClient,

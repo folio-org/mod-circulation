@@ -49,7 +49,7 @@ public class CheckOutByBarcodeResource extends Resource {
     final Clients clients = Clients.create(context, client);
 
     final UserFetcher userFetcher = new UserFetcher(clients);
-    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients, true, true);
+    final ItemRepository itemRepository = new ItemRepository(clients, true, true);
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
@@ -68,7 +68,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenCombineAsync(userFetcher.getProxyUserByBarcode(proxyUserBarcode), this::addProxyUser)
       .thenApply(r -> refuseWhenRequestingUserIsInactive(r, userBarcode))
       .thenApply(r -> refuseWhenProxyingUserIsInactive(r, proxyUserBarcode))
-      .thenCombineAsync(inventoryFetcher.fetchByBarcode(itemBarcode), this::addInventoryRecords)
+      .thenCombineAsync(itemRepository.fetchByBarcode(itemBarcode), this::addInventoryRecords)
       .thenApply(r -> r.next(v -> refuseWhenItemBarcodeDoesNotExist(r, itemBarcode)))
       .thenApply(r -> r.map(mapBarcodes()))
       .thenApply(r -> refuseWhenItemIsAlreadyCheckedOut(r, itemBarcode))
