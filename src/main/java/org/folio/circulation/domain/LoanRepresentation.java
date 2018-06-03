@@ -58,7 +58,7 @@ public class LoanRepresentation {
     return itemSummary;
   }
 
-  public JsonObject extendedLoan(JsonObject loan, Item item) {
+  private JsonObject extendedLoan(JsonObject loan, Item item) {
     //No need to pass on the itemStatus property, as only used to populate the history
     //and could be confused with aggregation of current status
     loan.remove("itemStatus");

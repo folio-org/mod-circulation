@@ -6,31 +6,31 @@ import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.representations.ItemProperties;
 
+import static org.folio.circulation.domain.representations.ItemProperties.TITLE_PROPERTY;
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 public class Item {
-  private static final String TITLE_PROPERTY = "title";
 
-  private final JsonObject item;
-  private final JsonObject holding;
-  private final JsonObject instance;
-  private JsonObject location;
-  private JsonObject materialType;
+  private final JsonObject itemRepresentation;
+  private final JsonObject holdingRepresentation;
+  private final JsonObject instanceRepresentation;
+  private JsonObject locationRepresentation;
+  private JsonObject materialTypeRepresentation;
 
   public Item(
-    JsonObject item,
-    JsonObject holding,
-    JsonObject instance,
-    JsonObject location,
-    JsonObject materialType) {
+    JsonObject itemRepresentation,
+    JsonObject holdingRepresentation,
+    JsonObject instanceRepresentation,
+    JsonObject locationRepresentation,
+    JsonObject materialTypeRepresentation) {
 
-    this.item = item;
-    this.holding = holding;
-    this.instance = instance;
-    this.location = location;
-    this.materialType = materialType;
+    this.itemRepresentation = itemRepresentation;
+    this.holdingRepresentation = holdingRepresentation;
+    this.instanceRepresentation = instanceRepresentation;
+    this.locationRepresentation = locationRepresentation;
+    this.materialTypeRepresentation = materialTypeRepresentation;
   }
 
   public boolean isCheckedOut() {
@@ -46,12 +46,12 @@ public class Item {
   }
 
   public JsonObject getItem() {
-    return item;
+    return itemRepresentation;
   }
 
   public String getTitle() {
-    if(instance != null && instance.containsKey(TITLE_PROPERTY)) {
-      return getProperty(instance, TITLE_PROPERTY);
+    if(instanceRepresentation != null && instanceRepresentation.containsKey(TITLE_PROPERTY)) {
+      return getProperty(instanceRepresentation, TITLE_PROPERTY);
     } else if(getItem() != null) {
       return getProperty(getItem(), TITLE_PROPERTY);
     }
@@ -61,11 +61,11 @@ public class Item {
   }
 
   public JsonArray getContributorNames() {
-    if(instance == null) {
+    if(instanceRepresentation == null) {
       return new JsonArray();
     }
 
-    return new JsonArray(mapToList(instance, "contributors",
+    return new JsonArray(mapToList(instanceRepresentation, "contributors",
       contributor -> new JsonObject().put("name", contributor.getString("name"))));
   }
 
@@ -82,11 +82,11 @@ public class Item {
   }
 
   public String getInstanceId() {
-    return getProperty(holding, "instanceId");
+    return getProperty(holdingRepresentation, "instanceId");
   }
 
   public String getCallNumber() {
-    return getProperty(holding, "callNumber");
+    return getProperty(holdingRepresentation, "callNumber");
   }
 
   public String getStatus() {
@@ -94,15 +94,11 @@ public class Item {
   }
 
   public JsonObject getLocation() {
-    return location;
+    return locationRepresentation;
   }
 
   public JsonObject getMaterialType() {
-    return materialType;
-  }
-
-  public void setMaterialType(JsonObject materialType) {
-    this.materialType = materialType;
+    return materialTypeRepresentation;
   }
 
   public String getMaterialTypeId() {
@@ -110,7 +106,7 @@ public class Item {
   }
 
   public String getLocationId() {
-    return getLocationId(getItem(), holding);
+    return getLocationId(getItem(), holdingRepresentation);
   }
 
   private static String getLocationId(JsonObject item, JsonObject holding) {
@@ -150,20 +146,20 @@ public class Item {
 
   public Item updateItem(JsonObject updatedItem) {
     return new Item(updatedItem,
-      holding, instance, getLocation(), getMaterialType());
+      holdingRepresentation, instanceRepresentation, getLocation(), getMaterialType());
   }
 
   public boolean doesNotHaveHolding() {
-    return holding == null;
+    return holdingRepresentation == null;
   }
 
   public Item withLocation(JsonObject newLocation) {
-    return new Item(this.item, this.holding, this.instance,
-      newLocation, this.materialType);
+    return new Item(this.itemRepresentation, this.holdingRepresentation, this.instanceRepresentation,
+      newLocation, this.materialTypeRepresentation);
   }
 
   public Item withMaterialType(JsonObject newMaterialType) {
-    return new Item(this.item, this.holding, this.instance,
-      this.location, newMaterialType);
+    return new Item(this.itemRepresentation, this.holdingRepresentation, this.instanceRepresentation,
+      this.locationRepresentation, newMaterialType);
   }
 }
