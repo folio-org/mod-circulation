@@ -4,6 +4,7 @@ import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
 
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -61,6 +62,24 @@ public class LoanRepository {
     });
 
     return onUpdated;
+  }
+
+  public CompletableFuture<HttpResult<Loan>> findOpenLoanByBarcode(FindByBarcodeQuery query) {
+    return itemRepository.fetchByBarcode(query.getItemBarcode())
+      .thenComposeAsync(itemResult -> itemResult.after(item -> findOpenLoans(item)
+        .thenApply(loanResult -> loanResult.next(loans -> {
+
+        //TODO: Check loan is for correct user
+        final Optional<Loan> first = loans.getRecords().stream().findFirst();
+
+        if(loans.getTotalRecords() == 1 && first.isPresent()) {
+          return HttpResult.success(Loan.from(first.get().asJson(), item));
+        }
+        else {
+          return HttpResult.failure(new ServerErrorFailure(
+            String.format("More than one open loan for item %s", query.getItemBarcode())));
+        }
+    }))));
   }
 
   public CompletableFuture<HttpResult<Loan>> getById(String id) {
@@ -143,12 +162,20 @@ public class LoanRepository {
   }
 
   CompletableFuture<HttpResult<Boolean>> hasOpenLoan(String itemId) {
+    return findOpenLoans(itemId)
+      .thenApply(r -> r.map(loans -> !loans.getRecords().isEmpty()));
+  }
+
+  private CompletableFuture<HttpResult<MultipleRecords<Loan>>> findOpenLoans(Item item) {
+    return findOpenLoans(item.getItemId());
+  }
+
+  private CompletableFuture<HttpResult<MultipleRecords<Loan>>> findOpenLoans(String itemId) {
     final String openLoans = String.format(
-        "itemId==%s and status.name==\"%s\"", itemId, "Open");
+      "itemId==%s and status.name==\"%s\"", itemId, "Open");
 
     return CqlHelper.encodeQuery(openLoans).after(query ->
       loansStorageClient.getMany(query, 1, 0)
-      .thenApply(this::mapResponseToLoans)
-      .thenApply(r -> r.map(loans -> !loans.getRecords().isEmpty())));
+        .thenApply(this::mapResponseToLoans));
   }
 }

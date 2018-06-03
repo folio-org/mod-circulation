@@ -5,13 +5,20 @@ import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.http.server.JsonResponse;
 
 public class OkJsonHttpResult extends JsonHttpResult {
+  private final String location;
+
   private OkJsonHttpResult(JsonObject body) {
+    this(body, null);
+  }
+
+  public OkJsonHttpResult(JsonObject body, String location) {
     super(body);
+    this.location = location;
   }
 
   @Override
   public void writeTo(HttpServerResponse response) {
-    JsonResponse.success(response, body);
+    JsonResponse.success(response, body, location);
   }
 
   public static WritableHttpResult<JsonObject> from(HttpResult<JsonObject> result) {
