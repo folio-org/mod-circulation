@@ -116,9 +116,6 @@ public class CheckOutByBarcodeResource extends Resource {
     return loanAndRelatedRecords -> {
       final Loan loan = loanAndRelatedRecords.getLoan();
 
-      loan.changeUser(loanAndRelatedRecords.getRequestingUser().getString("id"));
-      loan.changeItem(loanAndRelatedRecords.getLoan().getItem().getItemId());
-
       if(loanAndRelatedRecords.getProxyingUser() != null) {
         loan.changeProxyUser(loanAndRelatedRecords.getProxyingUser().getString("id"));
       }
@@ -158,6 +155,6 @@ public class CheckOutByBarcodeResource extends Resource {
     HttpResult<Item> inventoryRecordsResult) {
 
     return HttpResult.combine(loanResult, inventoryRecordsResult,
-      LoanAndRelatedRecords::withInventoryRecords);
+      LoanAndRelatedRecords::withItem);
   }
 }

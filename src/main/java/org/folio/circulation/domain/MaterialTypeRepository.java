@@ -31,23 +31,6 @@ public class MaterialTypeRepository {
       .thenApply(result -> result.map(item::withMaterialType));
   }
 
-  public CompletableFuture<HttpResult<LoanAndRelatedRecords>> getMaterialType(
-    LoanAndRelatedRecords relatedRecords) {
-
-    final Item item = relatedRecords.getInventoryRecords();
-
-    //Cannot find material type for unknown item
-    if(item.isNotFound()) {
-      return CompletableFuture.completedFuture(HttpResult.success(relatedRecords));
-    }
-
-    String materialTypeId = item.getMaterialTypeId();
-
-    return getMaterialType(materialTypeId,
-      item.getItemId())
-      .thenApply(result -> result.map((JsonObject t) -> relatedRecords.withMaterialType()));
-  }
-
   private CompletableFuture<HttpResult<JsonObject>> getMaterialType(
     String materialTypeId,
     String itemId) {

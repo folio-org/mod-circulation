@@ -12,6 +12,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   private final JsonObject representation;
   private Item item;
+  private User user;
 
   public Loan(JsonObject representation) {
     this.representation = representation;
@@ -22,9 +23,14 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public static Loan from(JsonObject representation, Item item) {
+    return from(representation, item, null);
+  }
+
+  public static Loan from(JsonObject representation, Item item, User user) {
     final Loan loan = new Loan(representation);
 
     loan.setItem(item);
+    loan.setUser(user);
 
     return loan;
   }
@@ -39,14 +45,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   private void changeAction(String action) {
     representation.put("action", action);
-  }
-
-  public void changeUser(String userId) {
-    representation.put("userId", userId);
-  }
-
-  public void changeItem(String itemId) {
-    representation.put("itemId", itemId);
   }
 
   public void changeProxyUser(String userId) {
@@ -101,8 +99,24 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return item;
   }
 
-  void setItem(Item item) {
-    this.item = item;
+  private void setItem(Item newItem) {
+    //TODO: Refuse if ID does not match property in representation
+    if(newItem != null) {
+      representation.put("itemId", newItem.getItemId());
+    }
+    this.item = newItem;
+  }
+
+  public User getUser() {
+    return user;
+  }
+
+  private void setUser(User newUser) {
+    //TODO: Refuse if ID does not match property in representation
+    if(newUser != null) {
+      representation.put("userId", newUser.getString("id"));
+    }
+    this.user = newUser;
   }
 
   void renew() {

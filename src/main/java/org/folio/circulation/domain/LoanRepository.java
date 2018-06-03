@@ -14,10 +14,12 @@ import static org.folio.circulation.support.MultipleRecordsWrapper.fromBody;
 public class LoanRepository {
   private final CollectionResourceClient loansStorageClient;
   private final ItemRepository itemRepository;
+  private final UserRepository userRepository;
 
   public LoanRepository(Clients clients) {
     loansStorageClient = clients.loansStorage();
     itemRepository = new ItemRepository(clients, true, true);
+    userRepository = new UserRepository(clients);
   }
 
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> createLoan(
@@ -79,7 +81,8 @@ public class LoanRepository {
           return HttpResult.failure(new ServerErrorFailure(
             String.format("More than one open loan for item %s", query.getItemBarcode())));
         }
-    }))));
+      }))))
+      .thenComposeAsync(this::fetchUser);
   }
 
   public CompletableFuture<HttpResult<Loan>> getById(String id) {
@@ -95,16 +98,22 @@ public class LoanRepository {
     return loansStorageClient.get(id)
       .thenApply(mapResponse)
       .thenComposeAsync(this::fetchItem)
+      .thenComposeAsync(this::fetchUser)
       .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
   }
 
-  private CompletableFuture<HttpResult<Loan>> fetchItem(
-    HttpResult<Loan> result) {
-
+  private CompletableFuture<HttpResult<Loan>> fetchItem(HttpResult<Loan> result) {
     return result.after(loan ->
       itemRepository.fetchFor(loan)
       .thenApply(itemResult -> itemResult.map(
         item -> Loan.from(loan.asJson(), item))));
+  }
+
+  private CompletableFuture<HttpResult<Loan>> fetchUser(HttpResult<Loan> result) {
+    return result.after(loan ->
+      userRepository.getUser(loan)
+        .thenApply(userResult -> userResult.map(
+          user -> Loan.from(loan.asJson(), loan.getItem(), user))));
   }
 
   private CompletableFuture<HttpResult<MultipleRecords<Loan>>> fetchItems(
@@ -122,6 +131,7 @@ public class LoanRepository {
   }
 
   public CompletableFuture<HttpResult<MultipleRecords<Loan>>> findBy(String query) {
+    //TODO: Should fetch users for all loans
     return loansStorageClient.getMany(query)
       .thenApply(this::mapResponseToLoans)
       .thenComposeAsync(this::fetchItems);

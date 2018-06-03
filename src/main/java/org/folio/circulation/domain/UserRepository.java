@@ -16,6 +16,10 @@ public class UserRepository {
     usersStorageClient = clients.usersStorage();
   }
 
+  CompletableFuture<HttpResult<User>> getUser(UserRelatedRecord userRelatedRecord) {
+    return getUser(userRelatedRecord.getUserId());
+  }
+
   public CompletableFuture<HttpResult<User>> getUser(String userId) {
     return getUser(userId, true);
   }

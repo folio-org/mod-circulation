@@ -180,7 +180,7 @@ public class LoanCollectionResource extends CollectionResource {
     HttpResult<Item> inventoryRecordsResult) {
 
     return HttpResult.combine(loanResult, inventoryRecordsResult,
-      LoanAndRelatedRecords::withInventoryRecords);
+      LoanAndRelatedRecords::withItem);
   }
 
   private HttpResult<LoanAndRelatedRecords> addRequestQueue(

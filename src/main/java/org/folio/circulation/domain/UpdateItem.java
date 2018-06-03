@@ -42,8 +42,8 @@ public class UpdateItem {
         prospectiveStatus = CHECKED_OUT;
       }
 
-      if(relatedRecords.getInventoryRecords().isNotSameStatus(prospectiveStatus)) {
-        return internalUpdate(relatedRecords.getInventoryRecords(), prospectiveStatus)
+      if(relatedRecords.getLoan().getItem().isNotSameStatus(prospectiveStatus)) {
+        return internalUpdate(relatedRecords.getLoan().getItem(), prospectiveStatus)
           .thenApply(updatedItemResult -> updatedItemResult.map(
             relatedRecords::withItem));
       }
@@ -62,7 +62,7 @@ public class UpdateItem {
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
     try {
-      final Item item = loanAndRelatedRecords.getInventoryRecords();
+      final Item item = loanAndRelatedRecords.getLoan().getItem();
 
       final String prospectiveStatus = itemStatusFrom(
         loanAndRelatedRecords.getLoan(), loanAndRelatedRecords.getRequestQueue());

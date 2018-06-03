@@ -7,76 +7,55 @@ import org.folio.circulation.support.Item;
 public class LoanAndRelatedRecords implements UserRelatedRecord {
   private final Loan loan;
   private final RequestQueue requestQueue;
-  private final User requestingUser;
   private final User proxyingUser;
   private final LoanPolicy loanPolicy;
 
   private LoanAndRelatedRecords(
     Loan loan,
     RequestQueue requestQueue,
-    User requestingUser,
     User proxyingUser,
     LoanPolicy loanPolicy) {
 
     this.loan = loan;
     this.requestQueue = requestQueue;
-    this.requestingUser = requestingUser;
     this.proxyingUser = proxyingUser;
     this.loanPolicy = loanPolicy;
   }
 
   public LoanAndRelatedRecords(Loan loan) {
-    this(loan, null, null, null, null);
+    this(loan, null, null, null);
   }
 
   LoanAndRelatedRecords withItem(JsonObject updatedItem) {
-    return withInventoryRecords(loan.getItem().updateItem(updatedItem));
+    return withItem(loan.getItem().updateItem(updatedItem));
   }
 
   LoanAndRelatedRecords withLoan(Loan newLoan) {
     return new LoanAndRelatedRecords(newLoan, requestQueue,
-      requestingUser, proxyingUser, loanPolicy);
+      proxyingUser, loanPolicy);
   }
 
   public LoanAndRelatedRecords withRequestingUser(User newUser) {
-    return new LoanAndRelatedRecords(loan, requestQueue,
-      newUser, proxyingUser, loanPolicy);
+    return withLoan(Loan.from(loan.asJson(), loan.getItem(), newUser));
   }
 
   public LoanAndRelatedRecords withProxyingUser(User newProxyingUser) {
     return new LoanAndRelatedRecords(loan, requestQueue,
-      requestingUser, newProxyingUser, loanPolicy);
+      newProxyingUser, loanPolicy);
   }
 
   public LoanAndRelatedRecords withLoanPolicy(LoanPolicy newLoanPolicy) {
     return new LoanAndRelatedRecords(loan, requestQueue,
-      requestingUser, proxyingUser, newLoanPolicy);
+      proxyingUser, newLoanPolicy);
   }
 
   public LoanAndRelatedRecords withRequestQueue(RequestQueue newRequestQueue) {
     return new LoanAndRelatedRecords(loan, newRequestQueue,
-      requestingUser, proxyingUser, loanPolicy);
+      proxyingUser, loanPolicy);
   }
 
-  LoanAndRelatedRecords withLocation() {
-    return new LoanAndRelatedRecords(loan, requestQueue,
-      requestingUser, proxyingUser, loanPolicy);
-  }
-
-  public LoanAndRelatedRecords withInventoryRecords(Item newItem) {
-    loan.setItem(newItem);
-
-    return new LoanAndRelatedRecords(loan, requestQueue,
-      requestingUser, proxyingUser, loanPolicy);
-  }
-
-  LoanAndRelatedRecords withMaterialType() {
-    return new LoanAndRelatedRecords(loan, requestQueue,
-      requestingUser, proxyingUser, loanPolicy);
-  }
-
-  public Item getInventoryRecords() {
-    return loan.getItem();
+  public LoanAndRelatedRecords withItem(Item newItem) {
+    return withLoan(Loan.from(loan.asJson(), newItem, loan.getUser()));
   }
 
   public Loan getLoan() {
@@ -85,10 +64,6 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
 
   RequestQueue getRequestQueue() {
     return requestQueue;
-  }
-
-  public User getRequestingUser() {
-    return requestingUser;
   }
 
   public User getProxyingUser() {
