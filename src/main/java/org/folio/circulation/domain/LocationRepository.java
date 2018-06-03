@@ -62,14 +62,9 @@ public class LocationRepository {
       .filter(StringUtils::isNotBlank)
       .collect(Collectors.toList());
 
-    CompletableFuture<Response> locationsFetched = new CompletableFuture<>();
-
     String locationsQuery = CqlHelper.multipleRecordsCqlQuery(locationIds);
 
-    locationsStorageClient.getMany(locationsQuery, locationIds.size(), 0,
-      locationsFetched::complete);
-
-    return locationsFetched
+    return locationsStorageClient.getMany(locationsQuery, locationIds.size(), 0)
       .thenApply(response -> {
         if(response.getStatusCode() != 200) {
           return HttpResult.failure(new ServerErrorFailure(

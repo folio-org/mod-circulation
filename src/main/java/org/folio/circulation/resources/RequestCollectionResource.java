@@ -180,8 +180,8 @@ public class RequestCollectionResource extends CollectionResource {
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context, client);
 
-    clients.requestsStorage().getMany(routingContext.request().query(),
-      requestsResponse -> {
+    clients.requestsStorage().getMany(routingContext.request().query())
+      .thenAccept(requestsResponse -> {
 
       if(requestsResponse.getStatusCode() == 200) {
         final MultipleRecordsWrapper wrappedRequests = MultipleRecordsWrapper.fromBody(

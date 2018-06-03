@@ -44,7 +44,7 @@ public class UpdateLoanActionHistory {
 
     CompletableFuture<HttpResult<RequestAndRelatedRecords>> completed = new CompletableFuture<>();
 
-    this.loansStorageClient.getMany(query, getLoansResponse -> {
+    this.loansStorageClient.getMany(query).thenAccept(getLoansResponse -> {
       if(getLoansResponse.getStatusCode() == 200) {
         List<JsonObject> loans = JsonArrayHelper.toList(
           getLoansResponse.getJson().getJsonArray("loans"));

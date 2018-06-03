@@ -86,6 +86,26 @@ public class CollectionResourceClient {
       client.get(url, responseConversationHandler(responseHandler));
   }
 
+  public CompletableFuture<Response> getMany(String urlEncodedQuery) {
+    final CompletableFuture<Response> future = new CompletableFuture<>();
+
+    getMany(urlEncodedQuery, future::complete);
+
+    return future;
+  }
+
+  public CompletableFuture<Response> getMany(
+    String urlEncodedCqlQuery,
+    Integer pageLimit,
+    Integer pageOffset) {
+
+    final CompletableFuture<Response> future = new CompletableFuture<>();
+
+    getMany(urlEncodedCqlQuery, pageLimit, pageOffset, future::complete);
+
+    return future;
+  }
+
   public void getMany(
     String urlEncodedCqlQuery,
     Integer pageLimit,
@@ -94,14 +114,6 @@ public class CollectionResourceClient {
 
     String url = collectionRoot + createQueryString(urlEncodedCqlQuery, pageLimit, pageOffset);
     client.get(url, responseConversationHandler(responseHandler));
-  }
-
-  /**
-   * Get all records (up to Integer.MAX_VALUE).
-   * @param responseHandler  the result
-   */
-  public void getAll(Consumer<Response> responseHandler) {
-    getMany(null, Integer.MAX_VALUE, null, responseHandler);
   }
 
   private static boolean isProvided(String query) {

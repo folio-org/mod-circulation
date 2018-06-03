@@ -3,10 +3,7 @@ package org.folio.circulation.domain;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -14,8 +11,6 @@ import java.util.stream.Collectors;
 import static org.folio.circulation.support.MultipleRecordsWrapper.fromBody;
 
 public class LoanRepository {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
   private final CollectionResourceClient loansStorageClient;
   private final ItemRepository itemRepository;
 
@@ -108,11 +103,7 @@ public class LoanRepository {
   }
 
   public CompletableFuture<HttpResult<MultipleRecords<Loan>>> findBy(String query) {
-    CompletableFuture<Response> responseReceived = new CompletableFuture<>();
-
-    loansStorageClient.getMany(query, responseReceived::complete);
-
-    return responseReceived
+    return loansStorageClient.getMany(query)
       .thenApply(this::mapResponseToLoans)
       .thenComposeAsync(this::fetchItems);
   }
@@ -155,14 +146,9 @@ public class LoanRepository {
     final String openLoans = String.format(
         "itemId==%s and status.name==\"%s\"", itemId, "Open");
 
-    return CqlHelper.encodeQuery(openLoans).after(query -> {
-      final CompletableFuture<Response> fetched = new CompletableFuture<>();
-
-      loansStorageClient.getMany(query, 1, 0, fetched::complete);
-
-      return fetched
-        .thenApply(this::mapResponseToLoans)
-        .thenApply(r -> r.map(loans -> !loans.getRecords().isEmpty()));
-    });
+    return CqlHelper.encodeQuery(openLoans).after(query ->
+      loansStorageClient.getMany(query, 1, 0)
+      .thenApply(this::mapResponseToLoans)
+      .thenApply(r -> r.map(loans -> !loans.getRecords().isEmpty())));
   }
 }

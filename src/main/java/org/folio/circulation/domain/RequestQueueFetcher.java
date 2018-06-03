@@ -4,7 +4,6 @@ import io.vertx.core.json.JsonArray;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ServerErrorFailure;
-import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,25 +36,21 @@ public class RequestQueueFetcher {
         RequestStatus.OPEN_AWAITING_PICKUP,
         RequestStatus.OPEN_NOT_YET_FILLED);
 
-    return encodeQuery(unencodedQuery).after(query -> {
-      CompletableFuture<Response> requestQueueFetched = new CompletableFuture<>();
+    return encodeQuery(unencodedQuery).after(
+      query -> clients.requestsStorage().getMany(query, 1000, 0).thenApply(
+        response -> {
+          if (response.getStatusCode() == 200) {
+            final JsonArray foundRequests = response.getJson().getJsonArray("requests");
 
-      this.clients.requestsStorage().getMany(query, 1000, 0, requestQueueFetched::complete);
+            log.info("Found request queue: {}", foundRequests.encodePrettily());
 
-      return requestQueueFetched.thenApply(response -> {
-        if (response.getStatusCode() == 200) {
-          final JsonArray foundRequests = response.getJson().getJsonArray("requests");
-
-          log.info("Found request queue: {}", foundRequests.encodePrettily());
-
-          return HttpResult.success(
-            new RequestQueue(mapToList(foundRequests, Request::new)));
-        } else {
-          return HttpResult.failure(new ServerErrorFailure(
-            String.format("Failed to fetch request queue: %s: %s",
-              response.getStatusCode(), response.getBody())));
-        }
-      });
-    });
+            return HttpResult.success(
+              new RequestQueue(mapToList(foundRequests, Request::new)));
+          } else {
+            return HttpResult.failure(new ServerErrorFailure(
+              String.format("Failed to fetch request queue: %s: %s",
+                response.getStatusCode(), response.getBody())));
+          }
+    }));
   }
 }

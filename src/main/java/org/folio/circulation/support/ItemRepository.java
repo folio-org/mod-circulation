@@ -171,14 +171,9 @@ public class ItemRepository {
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
 
-      CompletableFuture<Response> instancesFetched = new CompletableFuture<>();
-
       String instancesQuery = CqlHelper.multipleRecordsCqlQuery(instanceIds);
 
-      instancesClient.getMany(instancesQuery, instanceIds.size(), 0,
-        instancesFetched::complete);
-
-      return instancesFetched.thenApply(instancesResponse -> {
+      return instancesClient.getMany(instancesQuery, instanceIds.size(), 0).thenApply(instancesResponse -> {
         if (instancesResponse.getStatusCode() != 200) {
           return HttpResult.failure(new ServerErrorFailure(
             String.format("Instances request (%s) failed %s: %s",
@@ -204,14 +199,9 @@ public class ItemRepository {
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
 
-      CompletableFuture<Response> holdingsFetched = new CompletableFuture<>();
-
       String holdingsQuery = CqlHelper.multipleRecordsCqlQuery(holdingsIds);
 
-      holdingsClient.getMany(holdingsQuery, holdingsIds.size(), 0,
-        holdingsFetched::complete);
-
-      return holdingsFetched.thenApply(holdingsResponse -> {
+      return holdingsClient.getMany(holdingsQuery, holdingsIds.size(), 0).thenApply(holdingsResponse -> {
         if(holdingsResponse.getStatusCode() != 200) {
           return HttpResult.failure(
             new ServerErrorFailure(String.format("Holdings request (%s) failed %s: %s",
@@ -233,11 +223,7 @@ public class ItemRepository {
 
     String itemsQuery = CqlHelper.multipleRecordsCqlQuery(itemIds);
 
-    CompletableFuture<Response> itemsFetched = new CompletableFuture<>();
-
-    itemsClient.getMany(itemsQuery, itemIds.size(), 0, itemsFetched::complete);
-
-    return itemsFetched.thenApply(response -> {
+    return itemsClient.getMany(itemsQuery, itemIds.size(), 0).thenApply(response -> {
       if(response.getStatusCode() != 200) {
         return HttpResult.failure(
           new ServerErrorFailure(String.format("Items request (%s) failed %s: %s",
@@ -277,14 +263,9 @@ public class ItemRepository {
   }
 
   private CompletableFuture<HttpResult<InventoryRecordsBuilder>> fetchItemByBarcode(String barcode) {
-    CompletableFuture<Response> itemRequestCompleted = new CompletableFuture<>();
-
     log.info("Fetching item with barcode: {}", barcode);
 
-    itemsClient.getMany(
-      String.format("barcode==%s", barcode), 1, 0, itemRequestCompleted::complete);
-
-    return itemRequestCompleted
+    return itemsClient.getMany(String.format("barcode==%s", barcode), 1, 0)
       .thenApply(this::mapMultipleToResult)
       .thenApply(r -> r.map(InventoryRecordsBuilder::new))
       .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));

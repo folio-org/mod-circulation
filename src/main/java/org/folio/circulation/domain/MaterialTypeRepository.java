@@ -79,14 +79,9 @@ public class MaterialTypeRepository {
       .filter(StringUtils::isNotBlank)
       .collect(Collectors.toList());
 
-    CompletableFuture<Response> materialTypesFetched = new CompletableFuture<>();
-
     String materialTypesQuery = CqlHelper.multipleRecordsCqlQuery(materialTypeIds);
 
-    materialTypesStorageClient.getMany(materialTypesQuery, materialTypeIds.size(), 0,
-      materialTypesFetched::complete);
-
-    return materialTypesFetched
+    return materialTypesStorageClient.getMany(materialTypesQuery, materialTypeIds.size(), 0)
       .thenApply(materialTypesResponse -> {
         if(materialTypesResponse.getStatusCode() != 200) {
           return HttpResult.failure(new ServerErrorFailure(
