@@ -9,11 +9,10 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
-public class UserFetcher {
-
+public class UserRepository {
   private final CollectionResourceClient usersStorageClient;
 
-  public UserFetcher(Clients clients) {
+  public UserRepository(Clients clients) {
     usersStorageClient = clients.usersStorage();
   }
 

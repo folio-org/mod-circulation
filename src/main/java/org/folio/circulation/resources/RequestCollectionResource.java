@@ -50,7 +50,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final ItemRepository itemRepository = new ItemRepository(clients, false, false);
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
-    final UserFetcher userFetcher = new UserFetcher(clients);
+    final UserRepository userRepository = new UserRepository(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateLoanActionHistory updateLoanActionHistory = new UpdateLoanActionHistory(clients);
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
@@ -64,8 +64,8 @@ public class RequestCollectionResource extends CollectionResource {
       .thenApply(this::refuseWhenItemIsNotValid)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenCombineAsync(requestQueueFetcher.get(request.getItemId()), this::addRequestQueue)
-      .thenCombineAsync(userFetcher.getUser(request.getUserId(), false), this::addUser)
-      .thenCombineAsync(userFetcher.getUser(request.getProxyUserId(), false), this::addProxyUser)
+      .thenCombineAsync(userRepository.getUser(request.getUserId(), false), this::addUser)
+      .thenCombineAsync(userRepository.getUser(request.getProxyUserId(), false), this::addProxyUser)
       .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
       .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreation))
       .thenComposeAsync(r -> r.after(records -> createRequest(records, clients)))
@@ -87,7 +87,7 @@ public class RequestCollectionResource extends CollectionResource {
     final Clients clients = Clients.create(context, client);
 
     final ItemRepository itemRepository = new ItemRepository(clients, false, false);
-    final UserFetcher userFetcher = new UserFetcher(clients);
+    final UserRepository userRepository = new UserRepository(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> new ValidationErrorFailure(
@@ -96,8 +96,8 @@ public class RequestCollectionResource extends CollectionResource {
 
     completedFuture(HttpResult.success(new RequestAndRelatedRecords(request)))
       .thenCombineAsync(itemRepository.fetchFor(request), this::addInventoryRecords)
-      .thenCombineAsync(userFetcher.getUser(request.getUserId(), false), this::addUser)
-      .thenCombineAsync(userFetcher.getUser(request.getProxyUserId(), false), this::addProxyUser)
+      .thenCombineAsync(userRepository.getUser(request.getUserId(), false), this::addUser)
+      .thenCombineAsync(userRepository.getUser(request.getProxyUserId(), false), this::addProxyUser)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenAcceptAsync(result -> {
         if(result.failed()) {

@@ -48,7 +48,7 @@ public class CheckOutByBarcodeResource extends Resource {
 
     final Clients clients = Clients.create(context, client);
 
-    final UserFetcher userFetcher = new UserFetcher(clients);
+    final UserRepository userRepository = new UserRepository(clients);
     final ItemRepository itemRepository = new ItemRepository(clients, true, true);
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
@@ -64,8 +64,8 @@ public class CheckOutByBarcodeResource extends Resource {
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
     completedFuture(HttpResult.success(new LoanAndRelatedRecords(Loan.from(loan))))
-      .thenCombineAsync(userFetcher.getUserByBarcode(userBarcode), this::addUser)
-      .thenCombineAsync(userFetcher.getProxyUserByBarcode(proxyUserBarcode), this::addProxyUser)
+      .thenCombineAsync(userRepository.getUserByBarcode(userBarcode), this::addUser)
+      .thenCombineAsync(userRepository.getProxyUserByBarcode(proxyUserBarcode), this::addProxyUser)
       .thenApply(r -> refuseWhenRequestingUserIsInactive(r, userBarcode))
       .thenApply(r -> refuseWhenProxyingUserIsInactive(r, proxyUserBarcode))
       .thenCombineAsync(itemRepository.fetchByBarcode(itemBarcode), this::addInventoryRecords)

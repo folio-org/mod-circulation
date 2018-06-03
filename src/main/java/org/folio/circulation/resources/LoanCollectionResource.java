@@ -35,7 +35,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     final ItemRepository itemRepository = new ItemRepository(clients, true, true);
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
-    final UserFetcher userFetcher = new UserFetcher(clients);
+    final UserRepository userRepository = new UserRepository(clients);
 
     final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
@@ -57,7 +57,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenApply(LoanValidation::refuseWhenItemIsAlreadyCheckedOut)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenCombineAsync(requestQueueFetcher.get(loan.getItemId()), this::addRequestQueue)
-      .thenCombineAsync(userFetcher.getUser(loan.getUserId()), this::addUser)
+      .thenCombineAsync(userRepository.getUser(loan.getUserId()), this::addUser)
       .thenApply(LoanValidation::refuseWhenUserIsNotAwaitingPickup)
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
