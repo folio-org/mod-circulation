@@ -17,7 +17,7 @@ public class LoanRepresentation {
     return extendedLoan(loan.asJson(), loan.getItem());
   }
 
-  public JsonObject createItemSummary(Item item) {
+  private JsonObject createItemSummary(Item item) {
     if(item.isNotFound()) {
       return new JsonObject();
     }

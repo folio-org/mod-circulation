@@ -6,7 +6,6 @@ import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.MalformedURLException;
@@ -21,9 +20,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class RenewByBarcodeTests extends APITests {
-
   @Test
-  @Ignore
   public void canRenewRollingLoanFromSystemDate()
     throws InterruptedException,
     MalformedURLException,
@@ -33,7 +30,7 @@ public class RenewByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    final UUID loanId = loansFixture.checkOut(smallAngryPlanet, jessica,
+    final UUID loanId = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43))
       .getId();
 
@@ -61,7 +58,7 @@ public class RenewByBarcodeTests extends APITests {
     assertThat("last loan policy should be stored",
       renewedLoan.getString("loanPolicyId"), is(APITestSuite.canCirculateRollingLoanPolicyId().toString()));
 
-    assertThat("due date should be 3 weeks after loan date, based upon loan policy",
+    assertThat("due date should be 3 weeks after approxiate renewal date, based upon loan policy",
       renewedLoan.getString("dueDate"),
       withinSecondsAfter(Seconds.seconds(10), approximateRenewalDate.plusWeeks(3)));
 

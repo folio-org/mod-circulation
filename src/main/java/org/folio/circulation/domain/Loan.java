@@ -2,12 +2,8 @@ package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.Item;
-import org.folio.circulation.support.ServerErrorFailure;
-import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.*;
 import org.joda.time.DateTime;
-import org.joda.time.format.ISODateTimeFormat;
 
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 
@@ -33,13 +29,16 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return loan;
   }
 
-  public JsonObject asJson() {
+  JsonObject asJson() {
     return representation.copy();
   }
 
   public void changeDueDate(DateTime dueDate) {
-    representation.put("dueDate",
-      dueDate.toString(ISODateTimeFormat.dateTime()));
+    JsonPropertyWriter.write(representation, "dueDate", dueDate);
+  }
+
+  private void changeAction(String action) {
+    representation.put("action", action);
   }
 
   public void changeUser(String userId) {
@@ -104,5 +103,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   void setItem(Item item) {
     this.item = item;
+  }
+
+  void renew() {
+    changeAction("renewed");
+    changeDueDate(DateTime.now().plusWeeks(3));
   }
 }

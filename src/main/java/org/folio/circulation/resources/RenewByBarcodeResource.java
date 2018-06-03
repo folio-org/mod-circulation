@@ -4,6 +4,7 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import org.folio.circulation.domain.LoanRenewalService;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.support.*;
@@ -26,12 +27,14 @@ public class RenewByBarcodeResource extends Resource {
     final Clients clients = Clients.create(context, client);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
+    final LoanRenewalService loanRenewalService = new LoanRenewalService();
 
     RenewByBarcodeRequest.from(routingContext.getBodyAsJson())
       .after(loanRepository::findOpenLoanByBarcode)
+      .thenApply(r -> r.next(loanRenewalService::renew))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(this::toRenewedLoanResponse)
-      .thenAccept(result -> result.writeTo(routingContext.response()));;
+      .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
   private WritableHttpResult<JsonObject> toRenewedLoanResponse(HttpResult<JsonObject> result) {

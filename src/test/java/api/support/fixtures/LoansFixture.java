@@ -62,7 +62,8 @@ public class LoansFixture {
       .open()
       .withItemId(item.getId())
       .withUserId(to.getId())
-      .withLoanDate(loanDate));
+      .withLoanDate(loanDate)
+      .withDueDate(loanDate.plusWeeks(3)));
   }
 
   public IndividualResource checkOutItem(UUID itemId)
@@ -144,9 +145,21 @@ public class LoansFixture {
   public IndividualResource checkOutByBarcode(
     IndividualResource item,
     IndividualResource to) {
+
     return checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
       .forItem(item)
       .to(to));
+  }
+
+  public IndividualResource checkOutByBarcode(
+    IndividualResource item,
+    IndividualResource to,
+    DateTime loanDate) {
+
+    return checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
+      .forItem(item)
+      .to(to)
+      .at(loanDate));
   }
 
   public IndividualResource checkOutByBarcode(CheckOutByBarcodeRequestBuilder builder) {
