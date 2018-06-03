@@ -35,7 +35,7 @@ class RollingDueDateStrategy extends DueDateStrategy {
   }
 
   @Override
-  HttpResult<DateTime> calculate(Loan loan) {
+  HttpResult<DateTime> calculateInitialDueDate(Loan loan) {
     final DateTime loanDate = loan.getLoanDate();
 
     logApplying(String.format("Rolling %s %s due date calculation", duration, intervalId));
@@ -44,8 +44,13 @@ class RollingDueDateStrategy extends DueDateStrategy {
       .next(dueDate -> limitDueDateBySchedule(loanDate, dueDate));
   }
 
+  @Override
+  HttpResult<DateTime> calculateRenewalDueDate(Loan loan) {
+    return calculateRollingDueDate(DateTime.now(), intervalId, duration);
+  }
+
   private HttpResult<DateTime> calculateRollingDueDate(
-    DateTime loanDate,
+    DateTime from,
     String interval,
     Integer duration) {
 
@@ -63,15 +68,15 @@ class RollingDueDateStrategy extends DueDateStrategy {
 
     switch (interval) {
       case "Months":
-        return HttpResult.success(loanDate.plusMonths(duration));
+        return HttpResult.success(from.plusMonths(duration));
       case "Weeks":
-        return HttpResult.success(loanDate.plusWeeks(duration));
+        return HttpResult.success(from.plusWeeks(duration));
       case "Days":
-        return HttpResult.success(loanDate.plusDays(duration));
+        return HttpResult.success(from.plusDays(duration));
       case "Hours":
-        return HttpResult.success(loanDate.plusHours(duration));
+        return HttpResult.success(from.plusHours(duration));
       case "Minutes":
-        return HttpResult.success(loanDate.plusMinutes(duration));
+        return HttpResult.success(from.plusMinutes(duration));
       default:
         return fail(String.format(UNRECOGNISED_INTERVAL_MESSAGE, interval));
     }

@@ -27,7 +27,7 @@ public class RenewByBarcodeResource extends Resource {
     final Clients clients = Clients.create(context, client);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
-    final LoanRenewalService loanRenewalService = new LoanRenewalService();
+    final LoanRenewalService loanRenewalService = LoanRenewalService.using(clients);
 
     RenewByBarcodeRequest.from(routingContext.getBodyAsJson())
       .after(loanRepository::findOpenLoanByBarcode)

@@ -119,8 +119,17 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     this.user = newUser;
   }
 
-  void renew() {
+  private void changeLoanPolicy(String newLoanPolicyId) {
+    if(newLoanPolicyId != null) {
+      representation.put("loanPolicyId", newLoanPolicyId);
+    }
+  }
+
+  public Loan renew(DateTime dueDate, String basedUponLoanPolicyId) {
     changeAction("renewed");
-    changeDueDate(DateTime.now().plusWeeks(3));
+    changeLoanPolicy(basedUponLoanPolicyId);
+    changeDueDate(dueDate);
+
+    return this;
   }
 }

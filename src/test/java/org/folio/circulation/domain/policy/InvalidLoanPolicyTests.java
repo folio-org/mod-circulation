@@ -32,7 +32,7 @@ public class InvalidLoanPolicyTests {
       .withLoanDate(loanDate)
       .asDomainObject();
 
-    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
+    final HttpResult<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
 
     //TODO: This is fairly ugly, replace with a better message
     assertThat(result, isValidationFailure(

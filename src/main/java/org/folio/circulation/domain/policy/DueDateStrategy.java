@@ -21,9 +21,10 @@ abstract class DueDateStrategy {
     this.loanPolicyName = loanPolicyName;
   }
 
-  abstract HttpResult<DateTime> calculate(Loan loan);
+  abstract HttpResult<DateTime> calculateInitialDueDate(Loan loan);
+  abstract HttpResult<DateTime> calculateRenewalDueDate(Loan loan);
 
-  protected HttpResult<DateTime> fail(String reason) {
+  protected <T> HttpResult<T> fail(String reason) {
     final String message = String.format(
       "%s Please review \"%s\" before retrying checking out", reason, loanPolicyName);
 

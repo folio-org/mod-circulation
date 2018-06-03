@@ -1,7 +1,9 @@
 package org.folio.circulation.domain.policy;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.User;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
@@ -24,15 +26,25 @@ public class LoanPolicyRepository {
     fixedDueDateSchedulesStorageClient = clients.fixedDueDateSchedules();
   }
 
+  public CompletableFuture<HttpResult<LoanPolicy>> lookupLoanPolicy(Loan loan) {
+    return lookupLoanPolicy(loan.getItem(), loan.getUser());
+  }
+
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> lookupLoanPolicy(
     LoanAndRelatedRecords relatedRecords) {
 
-    return lookupLoanPolicyId(
-      relatedRecords.getLoan().getItem(), relatedRecords.getLoan().getUser())
+    return lookupLoanPolicy(relatedRecords.getLoan())
+      .thenApply(result -> result.map(relatedRecords::withLoanPolicy));
+  }
+
+  private CompletableFuture<HttpResult<LoanPolicy>> lookupLoanPolicy(
+    Item item,
+    User user) {
+
+    return lookupLoanPolicyId(item, user)
       .thenComposeAsync(r -> r.after(this::lookupLoanPolicy))
       .thenApply(result -> result.map(this::toLoanPolicy))
-      .thenComposeAsync(r -> r.after(this::lookupSchedules))
-      .thenApply(result -> result.map(relatedRecords::withLoanPolicy));
+      .thenComposeAsync(r -> r.after(this::lookupSchedules));
   }
 
   private LoanPolicy toLoanPolicy(JsonObject representation) {

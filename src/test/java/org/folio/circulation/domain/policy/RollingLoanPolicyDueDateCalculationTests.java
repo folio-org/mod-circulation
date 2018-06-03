@@ -37,7 +37,7 @@ public class RollingLoanPolicyDueDateCalculationTests {
     Loan loan = loanFor(loanDate);
 
     final HttpResult<DateTime> calculationResult = loanPolicy
-      .calculate(loan);
+      .calculateInitialDueDate(loan);
 
     assertThat(calculationResult.value(), is(loanDate.plusMonths(duration)));
   }
@@ -61,7 +61,7 @@ public class RollingLoanPolicyDueDateCalculationTests {
     Loan loan = loanFor(loanDate);
 
     final HttpResult<DateTime> calculationResult = loanPolicy
-      .calculate(loan);
+      .calculateInitialDueDate(loan);
 
     assertThat(calculationResult.value(), is(loanDate.plusWeeks(duration)));
   }
@@ -86,7 +86,7 @@ public class RollingLoanPolicyDueDateCalculationTests {
     Loan loan = loanFor(loanDate);
 
     final HttpResult<DateTime> calculationResult = loanPolicy
-      .calculate(loan);
+      .calculateInitialDueDate(loan);
 
     assertThat(calculationResult.value(), is(loanDate.plusDays(duration)));
   }
@@ -111,7 +111,7 @@ public class RollingLoanPolicyDueDateCalculationTests {
     Loan loan = loanFor(loanDate);
 
     final HttpResult<DateTime> calculationResult = loanPolicy
-      .calculate(loan);
+      .calculateInitialDueDate(loan);
 
     assertThat(calculationResult.value(), is(loanDate.plusHours(duration)));
   }
@@ -134,7 +134,7 @@ public class RollingLoanPolicyDueDateCalculationTests {
     Loan loan = loanFor(loanDate);
 
     final HttpResult<DateTime> calculationResult = loanPolicy
-      .calculate(loan);
+      .calculateInitialDueDate(loan);
 
     assertThat(calculationResult.value(), is(loanDate.plusMinutes(duration)));
   }
@@ -150,7 +150,7 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate);
 
-    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
+    final HttpResult<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
 
     assertThat(result, isValidationFailure(
       "Item can't be checked out as the interval \"Unknown\" in the loan policy is not recognised. " +
@@ -172,7 +172,7 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate);
 
-    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
+    final HttpResult<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
 
     assertThat(result, isValidationFailure(
       "Item can't be checked out as the loan period in the loan policy is not recognised. " +
@@ -194,7 +194,7 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate);
 
-    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
+    final HttpResult<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
 
     assertThat(result, isValidationFailure(
       "Item can't be checked out as the loan period in the loan policy is not recognised. " +
@@ -216,7 +216,7 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate);
 
-    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
+    final HttpResult<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
 
     assertThat(result, isValidationFailure(
       "Item can't be checked out as the loan period in the loan policy is not recognised. " +
@@ -240,7 +240,7 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate);
 
-    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
+    final HttpResult<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
 
     assertThat(result, isValidationFailure(
       String.format(
@@ -265,7 +265,7 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate);
 
-    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
+    final HttpResult<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
 
     assertThat(result.value(), is(new DateTime(2018, 4, 10, 23, 59, 59, DateTimeZone.UTC)));
   }
@@ -286,7 +286,7 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate);
 
-    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
+    final HttpResult<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
 
     assertThat(result.value(), is(new DateTime(2018, 3, 25, 16, 21, 43, DateTimeZone.UTC)));
   }
@@ -309,7 +309,7 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate);
 
-    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
+    final HttpResult<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
 
     assertThat(result, isValidationFailure(
       "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy. " +
@@ -331,7 +331,7 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate);
 
-    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
+    final HttpResult<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
 
     assertThat(result, isValidationFailure(
       "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy. " +

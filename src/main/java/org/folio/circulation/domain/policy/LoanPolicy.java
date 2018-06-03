@@ -29,8 +29,14 @@ public class LoanPolicy {
     return new LoanPolicy(representation);
   }
 
-  public HttpResult<DateTime> calculate(Loan loan) {
-    return determineStrategy().calculate(loan);
+  //TODO: make this have similar signature to renew
+  public HttpResult<DateTime> calculateInitialDueDate(Loan loan) {
+    return determineStrategy().calculateInitialDueDate(loan);
+  }
+
+  public HttpResult<Loan> renew(Loan loan) {
+    return determineStrategy().calculateRenewalDueDate(loan)
+      .map(dueDate -> loan.renew(dueDate, getId()));
   }
 
   private DueDateStrategy determineStrategy() {

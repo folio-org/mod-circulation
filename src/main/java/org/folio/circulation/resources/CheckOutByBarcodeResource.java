@@ -94,7 +94,7 @@ public class CheckOutByBarcodeResource extends Resource {
     final Loan loan = loanAndRelatedRecords.getLoan();
     final LoanPolicy loanPolicy = loanAndRelatedRecords.getLoanPolicy();
 
-    return loanPolicy.calculate(loan)
+    return loanPolicy.calculateInitialDueDate(loan)
       .map(dueDate -> {
         loanAndRelatedRecords.getLoan().changeDueDate(dueDate);
 

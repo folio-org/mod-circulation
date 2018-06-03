@@ -26,7 +26,7 @@ public class UnknownLoanPolicyProfileTests {
       .withLoanDate(loanDate)
       .asDomainObject();
 
-    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
+    final HttpResult<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
 
     assertThat(result, isValidationFailure(
       "Item can't be checked out as profile \"Unknown profile\" in the loan policy is not recognised. " +
