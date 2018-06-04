@@ -2,7 +2,13 @@ package org.folio.circulation.domain.policy;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.joda.time.DateTime;
+
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+import static org.folio.circulation.support.HttpResult.failure;
 
 class RollingDueDateStrategy extends DueDateStrategy {
   private static final String NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE =
@@ -21,6 +27,7 @@ class RollingDueDateStrategy extends DueDateStrategy {
   private final Integer duration;
   private final FixedDueDateSchedules dueDateLimitSchedules;
   private final Period period;
+  private final Function<String, ValidationErrorFailure> loanPolicyRelatedError;
 
   RollingDueDateStrategy(
     String loanPolicyId,
@@ -35,6 +42,8 @@ class RollingDueDateStrategy extends DueDateStrategy {
     this.dueDateLimitSchedules = dueDateLimitSchedules;
 
     period = Period.from(duration, intervalId);
+
+    loanPolicyRelatedError = this::validationError;
   }
 
   @Override
@@ -43,27 +52,40 @@ class RollingDueDateStrategy extends DueDateStrategy {
 
     logApplying(String.format("Rolling %s %s due date calculation", duration, intervalId));
 
-    return addTo(loanDate, period)
+    return addTo(loanDate, period,
+      () -> loanPolicyRelatedError.apply(UNRECOGNISED_PERIOD_MESSAGE),
+      interval -> loanPolicyRelatedError.apply(String.format(UNRECOGNISED_INTERVAL_MESSAGE, interval)),
+      duration -> loanPolicyRelatedError.apply(String.format(INVALID_DURATION_MESSAGE, duration)))
       .next(dueDate -> limitDueDateBySchedule(loanDate, dueDate));
   }
 
   @Override
   HttpResult<DateTime> calculateRenewalDueDate(Loan loan, DateTime systemDate) {
-    return addTo(systemDate, period);
+    return addTo(systemDate, period,
+      () -> loanPolicyRelatedError.apply(UNRECOGNISED_PERIOD_MESSAGE),
+      interval -> loanPolicyRelatedError.apply(String.format(UNRECOGNISED_INTERVAL_MESSAGE, interval)),
+      duration -> loanPolicyRelatedError.apply(String.format(INVALID_DURATION_MESSAGE, duration)));
   }
 
-  private HttpResult<DateTime> addTo(DateTime from, Period period) {
+  private HttpResult<DateTime> addTo(
+    DateTime from,
+    Period period,
+    Supplier<ValidationErrorFailure> onUnrecognisedPeriod,
+    Function<String, ValidationErrorFailure> onUnrecognisedInterval,
+    Function<Integer, ValidationErrorFailure> onUnrecognisedDuration) {
 
     if(period.getInterval() == null) {
-      return fail(UNRECOGNISED_PERIOD_MESSAGE);
+      return failure(onUnrecognisedPeriod.get());
     }
 
     if(period.getDuration() == null) {
-      return fail(UNRECOGNISED_PERIOD_MESSAGE);
+      return failure(onUnrecognisedPeriod.get());
     }
 
     if(period.getDuration() <= 0) {
-      return fail(String.format(INVALID_DURATION_MESSAGE, period.getDuration()));
+
+
+      return failure(onUnrecognisedDuration.apply(period.getDuration()));
     }
 
     switch (period.getInterval()) {
@@ -78,7 +100,7 @@ class RollingDueDateStrategy extends DueDateStrategy {
       case "Minutes":
         return HttpResult.success(from.plusMinutes(period.getDuration()));
       default:
-        return fail(String.format(UNRECOGNISED_INTERVAL_MESSAGE, period.getInterval()));
+        return failure(onUnrecognisedInterval.apply(period.getInterval()));
     }
   }
 
@@ -90,7 +112,8 @@ class RollingDueDateStrategy extends DueDateStrategy {
       return dueDateLimitSchedules.findDueDateFor(loanDate)
         .map(limit -> earliest(dueDate, limit))
         .map(HttpResult::success)
-        .orElseGet(() -> fail(NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE));
+        .orElseGet(() -> failure(
+          validationError(NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE)));
     }
     else {
       return HttpResult.success(dueDate);
