@@ -31,16 +31,14 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
   RollingRenewalDueDateStrategy(
     String loanPolicyId,
     String loanPolicyName,
-    String intervalId,
-    Integer duration,
     DateTime systemDate,
-    String renewFrom) {
+    String renewFrom,
+    Period period) {
 
     super(loanPolicyId, loanPolicyName);
     this.systemDate = systemDate;
     this.renewFrom = renewFrom;
-
-    period = Period.from(duration, intervalId);
+    this.period = period;
 
     error = this::validationError;
   }

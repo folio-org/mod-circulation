@@ -29,12 +29,11 @@ class RollingCheckOutDueDateStrategy extends DueDateStrategy {
   RollingCheckOutDueDateStrategy(
     String loanPolicyId,
     String loanPolicyName,
-    String intervalId,
-    Integer duration,
-    FixedDueDateSchedules dueDateLimitSchedules) {
+    FixedDueDateSchedules dueDateLimitSchedules,
+    Period period) {
 
     super(loanPolicyId, loanPolicyName);
-    this.period = Period.from(duration, intervalId);
+    this.period = period;
     this.dueDateLimitSchedules = dueDateLimitSchedules;
 
     error = this::validationError;

@@ -51,28 +51,13 @@ public class LoanPolicy {
     }
 
     if(isRolling(loansPolicy)) {
-      final String interval;
-      final Integer duration;
-
       if(isRenewal) {
-        if(useDifferentPeriod(renewalsPolicy)) {
-          interval = getNestedStringProperty(renewalsPolicy, "period", "intervalId");
-          duration = getNestedIntegerProperty(renewalsPolicy, "period", "duration");
-        }
-        else {
-          interval = getNestedStringProperty(loansPolicy, "period", "intervalId");
-          duration = getNestedIntegerProperty(loansPolicy, "period", "duration");
-        }
-
         return new RollingRenewalDueDateStrategy(getId(), getName(),
-          interval, duration, systemDate, getRenewFrom());
+          systemDate, getRenewFrom(), getRenewalPeriod(loansPolicy, renewalsPolicy));
       }
       else {
-        interval = getNestedStringProperty(loansPolicy, "period", "intervalId");
-        duration = getNestedIntegerProperty(loansPolicy, "period", "duration");
-
         return new RollingCheckOutDueDateStrategy(getId(), getName(),
-          interval, duration, fixedDueDateSchedules);
+          fixedDueDateSchedules, getPeriod(loansPolicy));
       }
     }
     else if(isFixed(loansPolicy)) {
@@ -83,6 +68,27 @@ public class LoanPolicy {
       return new UnknownDueDateStrategy(getId(), getName(),
         getProfileId(loansPolicy), isRenewal);
     }
+  }
+
+  private Period getRenewalPeriod(JsonObject loansPolicy, JsonObject renewalsPolicy) {
+    Period period;
+    if(useDifferentPeriod(renewalsPolicy)) {
+      period = getPeriod(renewalsPolicy);
+    }
+    else {
+      period = getPeriod(loansPolicy);
+    }
+    return period;
+  }
+
+  private Period getPeriod(JsonObject policy) {
+    String interval;
+    Integer duration;
+    Period period;
+    interval = getNestedStringProperty(policy, "period", "intervalId");
+    duration = getNestedIntegerProperty(policy, "period", "duration");
+    period = Period.from(duration, interval);
+    return period;
   }
 
   private Boolean useDifferentPeriod(JsonObject renewalsPolicy) {
