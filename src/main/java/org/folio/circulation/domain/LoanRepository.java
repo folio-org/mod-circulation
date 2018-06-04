@@ -50,16 +50,25 @@ public class LoanRepository {
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> updateLoan(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
-    CompletableFuture<HttpResult<LoanAndRelatedRecords>> onUpdated = new CompletableFuture<>();
+    return updateLoan(loanAndRelatedRecords.getLoan())
+      .thenApply(r -> r.map(loanAndRelatedRecords::withLoan));
+  }
 
-    JsonObject storageLoan = convertLoanToStorageRepresentation(
-      loanAndRelatedRecords.getLoan(), loanAndRelatedRecords.getLoan().getItem());
+  public CompletableFuture<HttpResult<Loan>> updateLoan(
+    Loan loan) {
+
+    CompletableFuture<HttpResult<Loan>> onUpdated = new CompletableFuture<>();
+
+    JsonObject storageLoan = convertLoanToStorageRepresentation(loan, loan.getItem());
 
     loansStorageClient.put(storageLoan.getString("id"), storageLoan, response -> {
       if (response.getStatusCode() == 204) {
-        onUpdated.complete(HttpResult.success(loanAndRelatedRecords));
+        //TODO: Maybe refresh the representation from storage?
+        onUpdated.complete(HttpResult.success(loan));
       } else {
-        onUpdated.complete(HttpResult.failure(new ServerErrorFailure("Failed to update loan")));
+        onUpdated.complete(HttpResult.failure(
+          new ServerErrorFailure(String.format("Failed to update loan (%s:%s)",
+            response.getStatusCode(), response.getBody()))));
       }
     });
 

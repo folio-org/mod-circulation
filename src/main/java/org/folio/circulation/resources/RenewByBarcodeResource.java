@@ -32,6 +32,7 @@ public class RenewByBarcodeResource extends Resource {
     RenewByBarcodeRequest.from(routingContext.getBodyAsJson())
       .after(loanRepository::findOpenLoanByBarcode)
       .thenComposeAsync(r -> r.after(loanRenewalService::renew))
+      .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(this::toRenewedLoanResponse)
       .thenAccept(result -> result.writeTo(routingContext.response()));
