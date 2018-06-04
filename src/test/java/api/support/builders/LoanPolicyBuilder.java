@@ -195,6 +195,14 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
   }
 
   public LoanPolicyBuilder renewFromSystemDate() {
+    return renewFrom(RENEW_FROM_SYSTEM_DATE);
+  }
+
+  public LoanPolicyBuilder renewFromCurrentDueDate() {
+    return renewFrom(RENEW_FROM_DUE_DATE);
+  }
+
+  private LoanPolicyBuilder renewFrom(String renewFrom) {
     return new LoanPolicyBuilder(
       this.id,
       this.name,
@@ -203,6 +211,6 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.loanPeriod,
       this.fixedDueDateScheduleId,
       this.unlimitedRenewals,
-      RENEW_FROM_SYSTEM_DATE);
+      renewFrom);
   }
 }

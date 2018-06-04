@@ -4,6 +4,7 @@ import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.JsonPropertyFetcher;
 import org.joda.time.DateTime;
 
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedIntegerProperty;
@@ -53,7 +54,7 @@ public class LoanPolicy {
 
       if(isRenewal) {
         return new RollingRenewalDueDateStrategy(getId(), getName(),
-          interval, duration, systemDate);
+          interval, duration, systemDate, getRenewFrom());
       }
       else {
         return new RollingCheckOutDueDateStrategy(getId(), getName(),
@@ -68,6 +69,10 @@ public class LoanPolicy {
       return new UnknownDueDateStrategy(getId(), getName(),
         getProfileId(loansPolicy), isRenewal);
     }
+  }
+
+  private String getRenewFrom() {
+    return JsonPropertyFetcher.getNestedStringProperty(representation, "renewalsPolicy", "renewFromId");
   }
 
   private String getProfileId(JsonObject loansPolicy) {

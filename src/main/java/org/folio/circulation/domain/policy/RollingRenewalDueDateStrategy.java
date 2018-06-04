@@ -8,6 +8,9 @@ import org.joda.time.DateTime;
 import java.util.function.Function;
 
 class RollingRenewalDueDateStrategy extends DueDateStrategy {
+  private static final String RENEW_FROM_SYSTEM_DATE = "SYSTEM_DATE";
+  private static final String RENEW_FROM_DUE_DATE = "CURRENT_DUE_DATE";
+
   private static final String RENEWAL_UNRECOGNISED_INTERVAL_MESSAGE =
     "Item can't be renewed as the interval \"%s\" in the loan policy is not recognised.";
 
@@ -17,19 +20,25 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
   private static final String RENEWAL_UNRECOGNISED_PERIOD_MESSAGE =
     "Item can't be renewed as the loan period in the loan policy is not recognised.";
 
+  private static final String RENEW_FROM_UNRECOGNISED_MESSAGE =
+    "Item can't be renewed as cannot determine when to renew from.";
+
   private final Period period;
   private final Function<String, ValidationErrorFailure> error;
   private final DateTime systemDate;
+  private final String renewFrom;
 
   RollingRenewalDueDateStrategy(
     String loanPolicyId,
     String loanPolicyName,
     String intervalId,
     Integer duration,
-    DateTime systemDate) {
+    DateTime systemDate,
+    String renewFrom) {
 
     super(loanPolicyId, loanPolicyName);
     this.systemDate = systemDate;
+    this.renewFrom = renewFrom;
 
     period = Period.from(duration, intervalId);
 
@@ -38,7 +47,18 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
 
   @Override
   HttpResult<DateTime> calculateDueDate(Loan loan) {
-    return period.addTo(this.systemDate,
+    switch (renewFrom) {
+      case RENEW_FROM_DUE_DATE:
+        return calculateDueDate(loan.getDueDate());
+      case RENEW_FROM_SYSTEM_DATE:
+        return calculateDueDate(systemDate);
+      default:
+        return HttpResult.failure(error.apply(RENEW_FROM_UNRECOGNISED_MESSAGE));
+    }
+  }
+
+  private HttpResult<DateTime> calculateDueDate(DateTime from) {
+    return period.addTo(from,
       () -> error.apply(RENEWAL_UNRECOGNISED_PERIOD_MESSAGE),
       interval -> error.apply(String.format(RENEWAL_UNRECOGNISED_INTERVAL_MESSAGE, interval)),
       duration -> error.apply(String.format(RENEWAL_INVALID_DURATION_MESSAGE, duration)));
