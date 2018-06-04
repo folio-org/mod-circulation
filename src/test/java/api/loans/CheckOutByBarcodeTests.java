@@ -510,8 +510,6 @@ public class CheckOutByBarcodeTests extends APITests {
         .to(jessica)
         .proxiedBy(james));
 
-    assertThat(response.getBody(), response.getStatusCode(), is(422));
-
     assertThat(response.getJson(),
       hasSoleErrorMessageContaining("Cannot check out item via proxy when relationship is invalid"));
 

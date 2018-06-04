@@ -19,6 +19,7 @@ import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
 
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -166,18 +167,8 @@ public class LoansFixture {
 
     JsonObject request = builder.create();
 
-    io.restassured.response.Response response = given()
-      .log().all()
-      .spec(defaultHeaders())
-      .spec(timeoutConfig())
-      .body(request.encodePrettily())
-      .when().post(InterfaceUrls.checkOutByBarcodeUrl())
-      .then()
-      .log().all()
-      .statusCode(201)
-      .extract().response();
-
-    return new IndividualResource(from(response));
+    return new IndividualResource(
+      from(post(request, InterfaceUrls.checkOutByBarcodeUrl(), 201)));
   }
 
   public Response attemptCheckOutByBarcode(
@@ -194,23 +185,11 @@ public class LoansFixture {
   }
 
   public Response attemptCheckOutByBarcode(
-    int expectedStatusCode,
-    CheckOutByBarcodeRequestBuilder builder) {
+    int expectedStatusCode, CheckOutByBarcodeRequestBuilder builder) {
 
     JsonObject request = builder.create();
 
-    io.restassured.response.Response response = given()
-      .log().all()
-      .spec(defaultHeaders())
-      .spec(timeoutConfig())
-      .body(request.encodePrettily())
-      .when().post(InterfaceUrls.checkOutByBarcodeUrl())
-      .then()
-      .log().all()
-      .statusCode(expectedStatusCode)
-      .extract().response();
-
-    return from(response);
+    return from(post(request, InterfaceUrls.checkOutByBarcodeUrl(), expectedStatusCode));
   }
 
   private RequestSpecification defaultHeaders() {
@@ -250,18 +229,7 @@ public class LoansFixture {
       .forUser(user)
       .create();
 
-    io.restassured.response.Response response = given()
-      .log().all()
-      .spec(defaultHeaders())
-      .spec(timeoutConfig())
-      .body(request.encodePrettily())
-      .when().post(InterfaceUrls.renewByBarcodeUrl())
-      .then()
-      .log().all()
-      .statusCode(200)
-      .extract().response();
-
-    return new IndividualResource(from(response));
+    return new IndividualResource(from(post(request, InterfaceUrls.renewByBarcodeUrl(), 200)));
   }
 
   public Response attemptLoanRenewal(IndividualResource item, IndividualResource user) {
@@ -270,17 +238,23 @@ public class LoansFixture {
       .forUser(user)
       .create();
 
-    io.restassured.response.Response response = given()
+    return from(post(request, InterfaceUrls.renewByBarcodeUrl(), 422));
+  }
+
+  private io.restassured.response.Response post(
+    JsonObject representation,
+    URL url,
+    int expectedStatusCode) {
+
+    return given()
       .log().all()
       .spec(defaultHeaders())
       .spec(timeoutConfig())
-      .body(request.encodePrettily())
-      .when().post(InterfaceUrls.renewByBarcodeUrl())
+      .body(representation.encodePrettily())
+      .when().post(url)
       .then()
       .log().all()
-      .statusCode(422)
+      .statusCode(expectedStatusCode)
       .extract().response();
-
-    return from(response);
   }
 }
