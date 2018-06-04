@@ -66,7 +66,7 @@ public class LoanValidation {
     return loanAndRelatedRecords
       .next(loan -> {
       final RequestQueue requestQueue = loan.getRequestQueue();
-      final JsonObject requestingUser = loan.getLoan().getUser();
+      final JsonObject requestingUser = loan.getLoan().getUser().asJson();
 
       if(hasAwaitingPickupRequestForOtherPatron(requestQueue, requestingUser)) {
         return HttpResult.failure(new ValidationErrorFailure(
@@ -85,7 +85,7 @@ public class LoanValidation {
     //TODO: Extract duplication between this and above
     return loanAndRelatedRecords.next(loan -> {
       final RequestQueue requestQueue = loan.getRequestQueue();
-      final JsonObject requestingUser = loan.getLoan().getUser();
+      final JsonObject requestingUser = loan.getLoan().getUser().asJson();
 
       if(hasAwaitingPickupRequestForOtherPatron(requestQueue, requestingUser)) {
         return HttpResult.failure(new ValidationErrorFailure(
@@ -105,7 +105,7 @@ public class LoanValidation {
       try {
         final User requestingUser = loan.getLoan().getUser();
 
-        if (!requestingUser.containsKey("active")) {
+        if (requestingUser.canDetermineStatus()) {
           return HttpResult.failure(new ValidationErrorFailure(
             "Cannot determine if user is active or not",
             USER_BARCODE_PROPERTY_NAME, barcode));
@@ -132,7 +132,7 @@ public class LoanValidation {
       if(proxyingUser == null) {
         return loanAndRelatedRecords;
       }
-      else if (!proxyingUser.containsKey("active")) {
+      else if (proxyingUser.canDetermineStatus()) {
         return HttpResult.failure(new ValidationErrorFailure(
           "Cannot determine if proxying user is active or not",
           PROXY_USER_BARCODE_PROPERTY_NAME, barcode));

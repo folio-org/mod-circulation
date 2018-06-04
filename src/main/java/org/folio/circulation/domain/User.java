@@ -5,13 +5,15 @@ import org.joda.time.DateTime;
 
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
-public class User extends JsonObject {
+public class User {
   private final JsonObject representation;
 
   public User(JsonObject representation) {
-    super(representation.getMap());
-
     this.representation = representation;
+  }
+
+  boolean canDetermineStatus() {
+    return !representation.containsKey("active");
   }
 
   Boolean isInactive() {
@@ -38,5 +40,13 @@ public class User extends JsonObject {
 
   public String getBarcode() {
     return getProperty(representation, "barcode");
+  }
+
+  public JsonObject asJson() {
+    return representation.copy();
+  }
+
+  public String getId() {
+    return getProperty(representation, "id");
   }
 }

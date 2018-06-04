@@ -114,7 +114,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   private void setUser(User newUser) {
     //TODO: Refuse if ID does not match property in representation
     if(newUser != null) {
-      representation.put("userId", newUser.getString("id"));
+      representation.put("userId", newUser.getId());
     }
     this.user = newUser;
   }

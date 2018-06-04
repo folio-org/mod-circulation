@@ -41,7 +41,7 @@ public class LoanPolicyRepository {
     Item item,
     User user) {
 
-    return lookupLoanPolicyId(item, user)
+    return lookupLoanPolicyId(item, user.asJson())
       .thenComposeAsync(r -> r.after(this::lookupLoanPolicy))
       .thenApply(result -> result.map(this::toLoanPolicy))
       .thenComposeAsync(r -> r.after(this::lookupSchedules));

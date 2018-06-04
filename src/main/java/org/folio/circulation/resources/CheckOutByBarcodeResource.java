@@ -117,7 +117,7 @@ public class CheckOutByBarcodeResource extends Resource {
       final Loan loan = loanAndRelatedRecords.getLoan();
 
       if(loanAndRelatedRecords.getProxyingUser() != null) {
-        loan.changeProxyUser(loanAndRelatedRecords.getProxyingUser().getString("id"));
+        loan.changeProxyUser(loanAndRelatedRecords.getProxyingUser().getId());
       }
 
       return loanAndRelatedRecords;

@@ -106,8 +106,8 @@ public class RequestCollectionResource extends CollectionResource {
         }
 
         final Item item = result.value().getInventoryRecords();
-        final JsonObject requester = result.value().getRequestingUser();
-        final JsonObject proxy = result.value().getProxyUser();
+        final JsonObject requester = result.value().getRequestingUser().asJson();
+        final JsonObject proxy = result.value().getProxyUser().asJson();
 
         addStoredItemProperties(representation, item);
         addStoredRequesterProperties(representation, requester);
@@ -404,8 +404,8 @@ public class RequestCollectionResource extends CollectionResource {
 
     JsonObject request = requestAndRelatedRecords.getRequest().asJson();
 
-    JsonObject requestingUser = requestAndRelatedRecords.getRequestingUser();
-    JsonObject proxyUser = requestAndRelatedRecords.getProxyUser();
+    JsonObject requestingUser = requestAndRelatedRecords.getRequestingUser().asJson();
+    JsonObject proxyUser = requestAndRelatedRecords.getProxyUser().asJson();
 
     addStoredItemProperties(request, requestAndRelatedRecords.getInventoryRecords());
     addStoredRequesterProperties(request, requestingUser);
