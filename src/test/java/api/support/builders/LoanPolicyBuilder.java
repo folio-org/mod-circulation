@@ -147,7 +147,7 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.name,
       this.description,
       "Rolling",
-      createPeriod(period),
+      period.asJson(),
       null,
       this.unlimitedRenewals,
       this.renewFrom);
@@ -204,14 +204,5 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.fixedDueDateScheduleId,
       this.unlimitedRenewals,
       RENEW_FROM_SYSTEM_DATE);
-  }
-
-  private static JsonObject createPeriod(Period period) {
-    JsonObject representation = new JsonObject();
-
-    representation.put("duration", period.getDuration());
-    representation.put("intervalId", period.getInterval());
-
-    return representation;
   }
 }

@@ -1,5 +1,15 @@
 package org.folio.circulation.domain.policy;
 
+import io.vertx.core.json.JsonObject;
+import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.ValidationErrorFailure;
+import org.joda.time.DateTime;
+
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+import static org.folio.circulation.support.HttpResult.failure;
+
 public class Period {
   private final Integer duration;
   private final String interval;
@@ -33,11 +43,46 @@ public class Period {
     return new Period(duration, interval);
   }
 
-  public Integer getDuration() {
-    return duration;
+  HttpResult<DateTime> addTo(
+    DateTime from,
+    Supplier<ValidationErrorFailure> onUnrecognisedPeriod,
+    Function<String, ValidationErrorFailure> onUnrecognisedInterval,
+    Function<Integer, ValidationErrorFailure> onUnrecognisedDuration) {
+
+    if(interval == null) {
+      return failure(onUnrecognisedPeriod.get());
+    }
+
+    if(duration == null) {
+      return failure(onUnrecognisedPeriod.get());
+    }
+
+    if(duration <= 0) {
+      return failure(onUnrecognisedDuration.apply(duration));
+    }
+
+    switch (interval) {
+      case "Months":
+        return HttpResult.success(from.plusMonths(duration));
+      case "Weeks":
+        return HttpResult.success(from.plusWeeks(duration));
+      case "Days":
+        return HttpResult.success(from.plusDays(duration));
+      case "Hours":
+        return HttpResult.success(from.plusHours(duration));
+      case "Minutes":
+        return HttpResult.success(from.plusMinutes(duration));
+      default:
+        return failure(onUnrecognisedInterval.apply(interval));
+    }
   }
 
-  public String getInterval() {
-    return interval;
+  public JsonObject asJson() {
+    JsonObject representation = new JsonObject();
+
+    representation.put("duration", duration);
+    representation.put("intervalId", interval);
+
+    return representation;
   }
 }

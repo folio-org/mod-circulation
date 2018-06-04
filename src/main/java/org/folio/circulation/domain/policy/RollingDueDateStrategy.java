@@ -6,7 +6,6 @@ import org.folio.circulation.support.ValidationErrorFailure;
 import org.joda.time.DateTime;
 
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import static org.folio.circulation.support.HttpResult.failure;
 
@@ -52,7 +51,7 @@ class RollingDueDateStrategy extends DueDateStrategy {
 
     logApplying(String.format("Rolling %s %s due date calculation", duration, intervalId));
 
-    return addTo(loanDate, period,
+    return period.addTo(loanDate,
       () -> loanPolicyRelatedError.apply(UNRECOGNISED_PERIOD_MESSAGE),
       interval -> loanPolicyRelatedError.apply(String.format(UNRECOGNISED_INTERVAL_MESSAGE, interval)),
       duration -> loanPolicyRelatedError.apply(String.format(INVALID_DURATION_MESSAGE, duration)))
@@ -61,47 +60,10 @@ class RollingDueDateStrategy extends DueDateStrategy {
 
   @Override
   HttpResult<DateTime> calculateRenewalDueDate(Loan loan, DateTime systemDate) {
-    return addTo(systemDate, period,
+    return period.addTo(systemDate,
       () -> loanPolicyRelatedError.apply(UNRECOGNISED_PERIOD_MESSAGE),
       interval -> loanPolicyRelatedError.apply(String.format(UNRECOGNISED_INTERVAL_MESSAGE, interval)),
       duration -> loanPolicyRelatedError.apply(String.format(INVALID_DURATION_MESSAGE, duration)));
-  }
-
-  private HttpResult<DateTime> addTo(
-    DateTime from,
-    Period period,
-    Supplier<ValidationErrorFailure> onUnrecognisedPeriod,
-    Function<String, ValidationErrorFailure> onUnrecognisedInterval,
-    Function<Integer, ValidationErrorFailure> onUnrecognisedDuration) {
-
-    if(period.getInterval() == null) {
-      return failure(onUnrecognisedPeriod.get());
-    }
-
-    if(period.getDuration() == null) {
-      return failure(onUnrecognisedPeriod.get());
-    }
-
-    if(period.getDuration() <= 0) {
-
-
-      return failure(onUnrecognisedDuration.apply(period.getDuration()));
-    }
-
-    switch (period.getInterval()) {
-      case "Months":
-        return HttpResult.success(from.plusMonths(period.getDuration()));
-      case "Weeks":
-        return HttpResult.success(from.plusWeeks(period.getDuration()));
-      case "Days":
-        return HttpResult.success(from.plusDays(period.getDuration()));
-      case "Hours":
-        return HttpResult.success(from.plusHours(period.getDuration()));
-      case "Minutes":
-        return HttpResult.success(from.plusMinutes(period.getDuration()));
-      default:
-        return failure(onUnrecognisedInterval.apply(period.getInterval()));
-    }
   }
 
   private HttpResult<DateTime> limitDueDateBySchedule(
