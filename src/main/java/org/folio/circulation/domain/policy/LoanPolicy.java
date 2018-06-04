@@ -7,6 +7,7 @@ import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.JsonPropertyFetcher;
 import org.joda.time.DateTime;
 
+import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedIntegerProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 
@@ -42,6 +43,7 @@ public class LoanPolicy {
 
   private DueDateStrategy determineStrategy(boolean isRenewal, DateTime systemDate) {
     final JsonObject loansPolicy = representation.getJsonObject("loansPolicy");
+    final JsonObject renewalsPolicy = representation.getJsonObject("renewalsPolicy");
 
     //TODO: Temporary until have better logic for missing loans policy
     if(loansPolicy == null) {
@@ -49,14 +51,26 @@ public class LoanPolicy {
     }
 
     if(isRolling(loansPolicy)) {
-      final String interval = getNestedStringProperty(loansPolicy, "period", "intervalId");
-      final Integer duration = getNestedIntegerProperty(loansPolicy, "period", "duration");
+      final String interval;
+      final Integer duration;
 
       if(isRenewal) {
+        if(useDifferentPeriod(renewalsPolicy)) {
+          interval = getNestedStringProperty(renewalsPolicy, "period", "intervalId");
+          duration = getNestedIntegerProperty(renewalsPolicy, "period", "duration");
+        }
+        else {
+          interval = getNestedStringProperty(loansPolicy, "period", "intervalId");
+          duration = getNestedIntegerProperty(loansPolicy, "period", "duration");
+        }
+
         return new RollingRenewalDueDateStrategy(getId(), getName(),
           interval, duration, systemDate, getRenewFrom());
       }
       else {
+        interval = getNestedStringProperty(loansPolicy, "period", "intervalId");
+        duration = getNestedIntegerProperty(loansPolicy, "period", "duration");
+
         return new RollingCheckOutDueDateStrategy(getId(), getName(),
           interval, duration, fixedDueDateSchedules);
       }
@@ -69,6 +83,10 @@ public class LoanPolicy {
       return new UnknownDueDateStrategy(getId(), getName(),
         getProfileId(loansPolicy), isRenewal);
     }
+  }
+
+  private Boolean useDifferentPeriod(JsonObject renewalsPolicy) {
+    return getBooleanProperty(renewalsPolicy, "differentPeriod");
   }
 
   private String getRenewFrom() {

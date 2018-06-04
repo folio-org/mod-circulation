@@ -72,4 +72,13 @@ public class JsonPropertyFetcher {
       return null;
     }
   }
+
+  public static Boolean getBooleanProperty(JsonObject representation, String propertyName) {
+    if(representation != null) {
+      return representation.getBoolean(propertyName);
+    }
+    else {
+      return false;
+    }
+  }
 }

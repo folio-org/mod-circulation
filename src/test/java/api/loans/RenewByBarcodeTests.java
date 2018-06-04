@@ -26,7 +26,6 @@ import static api.support.matchers.JsonObjectMatchers.hasSoleErrorMessageContain
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static java.net.HttpURLConnection.HTTP_OK;
-import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -94,7 +93,6 @@ public class RenewByBarcodeTests extends APITests {
       new DateTime(2018, 4, 21, 11, 21, 43));
 
     final UUID loanId = loan.getId();
-    final DateTime initialDueDate = getDateTimeProperty(loan.getJson(), "dueDate");
 
     LoanPolicyBuilder currentDueDateRollingPolicy = new LoanPolicyBuilder()
       .withName("Current Due Date Rolling Policy")
@@ -132,6 +130,64 @@ public class RenewByBarcodeTests extends APITests {
     assertThat("due date should be 2 months after initial due date date",
       renewedLoan.getString("dueDate"),
         isEquivalentTo(new DateTime(2018, 7, 12, 11, 21, 43)));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+
+    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+  }
+
+  @Test
+  public void canRenewRollingLoanUsingDifferentPeriod()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+      new DateTime(2018, 4, 21, 11, 21, 43));
+
+    final UUID loanId = loan.getId();
+
+    LoanPolicyBuilder currentDueDateRollingPolicy = new LoanPolicyBuilder()
+      .withName("Current Due Date Alternative Rolling Policy")
+      .rolling(Period.months(2))
+      .renewFromCurrentDueDate()
+      .renewWith(Period.months(1));
+
+    UUID dueDateLimitedPolicyId = loanPolicyClient.create(currentDueDateRollingPolicy).getId();
+
+    //Need to remember in order to delete after test
+    policiesToDelete.add(dueDateLimitedPolicyId);
+
+    useLoanPolicyAsFallback(dueDateLimitedPolicyId);
+
+    final JsonObject renewedLoan = loansFixture
+      .renewLoan(smallAngryPlanet, jessica)
+      .getJson();
+
+    assertThat(renewedLoan.getString("id"), is(loanId.toString()));
+
+    assertThat("user ID should match barcode",
+      renewedLoan.getString("userId"), is(jessica.getId().toString()));
+
+    assertThat("item ID should match barcode",
+      renewedLoan.getString("itemId"), is(smallAngryPlanet.getId().toString()));
+
+    assertThat("status should be open",
+      renewedLoan.getJsonObject("status").getString("name"), is("Open"));
+
+    assertThat("action should be renewed",
+      renewedLoan.getString("action"), is("renewed"));
+
+    assertThat("last loan policy should be stored",
+      renewedLoan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
+
+    assertThat("due date should be 2 months after initial due date date",
+      renewedLoan.getString("dueDate"),
+      isEquivalentTo(new DateTime(2018, 6, 12, 11, 21, 43)));
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
