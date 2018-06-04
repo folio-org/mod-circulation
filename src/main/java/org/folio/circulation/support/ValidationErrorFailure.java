@@ -1,17 +1,16 @@
 package org.folio.circulation.support;
 
 import io.vertx.core.http.HttpServerResponse;
-import org.folio.circulation.support.http.server.JsonResponse;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import org.folio.circulation.support.http.server.ValidationError;
+
+import static org.folio.circulation.support.http.server.JsonResponse.response;
 
 public class ValidationErrorFailure implements HttpFailure {
-  public final String reason;
+  private final String reason;
   private final String propertyName;
   private final String propertyValue;
-
-  public ValidationErrorFailure(
-    String reason) {
-    this(reason, null, null);
-  }
 
   public ValidationErrorFailure(
     String reason,
@@ -25,8 +24,17 @@ public class ValidationErrorFailure implements HttpFailure {
 
   @Override
   public void writeTo(HttpServerResponse response) {
-    JsonResponse.unprocessableEntity(response,
-      reason, propertyName, propertyValue);
+    response(response, asJson(), 422);
+  }
+
+  private JsonObject asJson() {
+    ValidationError error = new ValidationError(reason, propertyName, propertyValue);
+
+    JsonArray errors = new JsonArray();
+
+    errors.add(error.toJson());
+
+    return new JsonObject().put("errors", errors);
   }
 
   @Override
@@ -34,5 +42,17 @@ public class ValidationErrorFailure implements HttpFailure {
     return String.format("Validation failure, reason: \"%s\", " +
         "property name: \"%s\" value: \"%s\"",
       reason, propertyName, propertyValue);
+  }
+
+  public String getReason() {
+    return reason;
+  }
+
+  public String getPropertyName() {
+    return propertyName;
+  }
+
+  public String getPropertyValue() {
+    return propertyValue;
   }
 }

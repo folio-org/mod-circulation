@@ -97,7 +97,7 @@ public class JsonResponse {
     response.end();
   }
 
-  private static void response(
+  public static void response(
     HttpServerResponse response,
     JsonObject body,
     int statusCode) {
