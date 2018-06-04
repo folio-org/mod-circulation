@@ -2,7 +2,6 @@ package org.folio.circulation.domain.policy;
 
 import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
-import api.support.builders.Period;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
@@ -159,7 +158,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
   @Ignore("Need to refactor how failure messages are determined")
   public void shouldFailForUnrecognisedInterval() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
-      .rolling(new Period(5, "Unknown"))
+      .rolling(Period.from(5, "Unknown"))
       .withName("Invalid Loan Policy")
       .create());
 
@@ -178,7 +177,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
   @Ignore("Need to refactor how failure messages are determined")
   public void shouldFailWhenNoPeriodProvided() {
     final JsonObject representation = new LoanPolicyBuilder()
-      .rolling(new Period(5, "Unknown"))
+      .rolling(Period.from(5, "Unknown"))
       .withName("Invalid Loan Policy")
       .create();
 
@@ -201,7 +200,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
   @Ignore("Need to refactor how failure messages are determined")
   public void shouldFailWhenNoPeriodDurationProvided() {
     final JsonObject representation = new LoanPolicyBuilder()
-      .rolling(new Period(5, "Weeks"))
+      .rolling(Period.from(5, "Weeks"))
       .withName("Invalid Loan Policy")
       .create();
 
@@ -224,7 +223,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
   @Ignore("Need to refactor how failure messages are determined")
   public void shouldFailWhenNoPeriodIntervalProvided() {
     final JsonObject representation = new LoanPolicyBuilder()
-      .rolling(new Period(5, "Weeks"))
+      .rolling(Period.from(5, "Weeks"))
       .withName("Invalid Loan Policy")
       .create();
 

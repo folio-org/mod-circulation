@@ -2,7 +2,6 @@ package org.folio.circulation.domain.policy;
 
 import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
-import api.support.builders.Period;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
@@ -17,7 +16,7 @@ public class InvalidLoanPolicyTests {
   @Test
   public void shouldFailWhenNoLoanPolicyProvided() {
     final JsonObject representation = new LoanPolicyBuilder()
-      .rolling(new Period(5, "Unknown"))
+      .rolling(Period.from(5, "Unknown"))
       .withName("Invalid Loan Policy")
       .create();
 

@@ -10,6 +10,7 @@ import api.support.http.URLHelper;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.CirculationVerticle;
+import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.VertxAssistant;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.joda.time.DateTime;

@@ -142,7 +142,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
   @Test
   public void shouldFailForUnrecognisedInterval() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
-      .rolling(new Period(5, "Unknown"))
+      .rolling(Period.from(5, "Unknown"))
       .withName("Invalid Loan Policy")
       .create());
 
@@ -160,7 +160,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
   @Test
   public void shouldFailWhenNoPeriodProvided() {
     final JsonObject representation = new LoanPolicyBuilder()
-      .rolling(new Period(5, "Unknown"))
+      .rolling(Period.from(5, "Unknown"))
       .withName("Invalid Loan Policy")
       .create();
 
@@ -182,7 +182,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
   @Test
   public void shouldFailWhenNoPeriodDurationProvided() {
     final JsonObject representation = new LoanPolicyBuilder()
-      .rolling(new Period(5, "Weeks"))
+      .rolling(Period.weeks(5))
       .withName("Invalid Loan Policy")
       .create();
 
@@ -204,7 +204,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
   @Test
   public void shouldFailWhenNoPeriodIntervalProvided() {
     final JsonObject representation = new LoanPolicyBuilder()
-      .rolling(new Period(5, "Weeks"))
+      .rolling(Period.weeks(5))
       .withName("Invalid Loan Policy")
       .create();
 

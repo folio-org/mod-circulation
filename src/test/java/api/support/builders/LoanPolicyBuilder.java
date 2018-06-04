@@ -1,6 +1,7 @@
 package api.support.builders;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.policy.Period;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -208,8 +209,8 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
   private static JsonObject createPeriod(Period period) {
     JsonObject representation = new JsonObject();
 
-    representation.put("duration", period.duration);
-    representation.put("intervalId", period.interval);
+    representation.put("duration", period.getDuration());
+    representation.put("intervalId", period.getInterval());
 
     return representation;
   }

@@ -20,6 +20,7 @@ class RollingDueDateStrategy extends DueDateStrategy {
   private final String intervalId;
   private final Integer duration;
   private final FixedDueDateSchedules dueDateLimitSchedules;
+  private final Period period;
 
   RollingDueDateStrategy(
     String loanPolicyId,
@@ -32,6 +33,8 @@ class RollingDueDateStrategy extends DueDateStrategy {
     this.intervalId = intervalId;
     this.duration = duration;
     this.dueDateLimitSchedules = dueDateLimitSchedules;
+
+    period = Period.from(duration, intervalId);
   }
 
   @Override
@@ -40,45 +43,42 @@ class RollingDueDateStrategy extends DueDateStrategy {
 
     logApplying(String.format("Rolling %s %s due date calculation", duration, intervalId));
 
-    return calculateRollingDueDate(loanDate, intervalId, duration)
+    return addTo(loanDate, period)
       .next(dueDate -> limitDueDateBySchedule(loanDate, dueDate));
   }
 
   @Override
   HttpResult<DateTime> calculateRenewalDueDate(Loan loan, DateTime systemDate) {
-    return calculateRollingDueDate(systemDate, intervalId, duration);
+    return addTo(systemDate, period);
   }
 
-  private HttpResult<DateTime> calculateRollingDueDate(
-    DateTime from,
-    String interval,
-    Integer duration) {
+  private HttpResult<DateTime> addTo(DateTime from, Period period) {
 
-    if(interval == null) {
+    if(period.getInterval() == null) {
       return fail(UNRECOGNISED_PERIOD_MESSAGE);
     }
 
-    if(duration == null) {
+    if(period.getDuration() == null) {
       return fail(UNRECOGNISED_PERIOD_MESSAGE);
     }
 
-    if(duration <= 0) {
-      return fail(String.format(INVALID_DURATION_MESSAGE, duration));
+    if(period.getDuration() <= 0) {
+      return fail(String.format(INVALID_DURATION_MESSAGE, period.getDuration()));
     }
 
-    switch (interval) {
+    switch (period.getInterval()) {
       case "Months":
-        return HttpResult.success(from.plusMonths(duration));
+        return HttpResult.success(from.plusMonths(period.getDuration()));
       case "Weeks":
-        return HttpResult.success(from.plusWeeks(duration));
+        return HttpResult.success(from.plusWeeks(period.getDuration()));
       case "Days":
-        return HttpResult.success(from.plusDays(duration));
+        return HttpResult.success(from.plusDays(period.getDuration()));
       case "Hours":
-        return HttpResult.success(from.plusHours(duration));
+        return HttpResult.success(from.plusHours(period.getDuration()));
       case "Minutes":
-        return HttpResult.success(from.plusMinutes(duration));
+        return HttpResult.success(from.plusMinutes(period.getDuration()));
       default:
-        return fail(String.format(UNRECOGNISED_INTERVAL_MESSAGE, interval));
+        return fail(String.format(UNRECOGNISED_INTERVAL_MESSAGE, period.getInterval()));
     }
   }
 
