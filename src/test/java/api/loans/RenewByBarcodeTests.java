@@ -19,6 +19,8 @@ import java.util.concurrent.TimeoutException;
 
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
+import static api.support.matchers.JsonObjectMatchers.hasSoleErrorFor;
+import static api.support.matchers.JsonObjectMatchers.hasSoleErrorMessageContaining;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static org.hamcrest.CoreMatchers.is;
@@ -126,5 +128,28 @@ public class RenewByBarcodeTests extends APITests {
     assertThat("due date should be approximately 3 weeks after renewal date, based upon loan policy",
       renewedLoan.getString("dueDate"),
       withinSecondsAfter(Seconds.seconds(10), approximateRenewalDate.plusWeeks(3)));
+  }
+
+  @Test
+  public void cannotRenewLoanForDifferentUser()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource james = usersFixture.james();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+      new DateTime(2018, 4, 21, 11, 21, 43));
+
+    final Response response = loansFixture.attemptLoanRenewal(smallAngryPlanet, james);
+
+    assertThat(response.getJson(), hasSoleErrorFor(
+      "userBarcode", james.getJson().getString("barcode")));
+
+    assertThat(response.getJson(),
+      hasSoleErrorMessageContaining("Cannot renew item checked out to different user"));
   }
 }

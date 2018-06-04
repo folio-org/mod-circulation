@@ -29,6 +29,8 @@ public class RenewByBarcodeResource extends Resource {
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
     final LoanRenewalService loanRenewalService = LoanRenewalService.using(clients);
 
+    //TODO: Validation check for same user should be in the domain service
+
     RenewByBarcodeRequest.from(routingContext.getBodyAsJson())
       .after(loanRepository::findOpenLoanByBarcode)
       .thenComposeAsync(r -> r.after(loanRenewalService::renew))

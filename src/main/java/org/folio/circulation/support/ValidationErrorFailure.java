@@ -12,6 +12,22 @@ public class ValidationErrorFailure implements HttpFailure {
   private final String propertyName;
   private final String propertyValue;
 
+  public static <T> HttpResult<T> failure(
+    String reason,
+    String propertyName,
+    String propertyValue) {
+
+    return HttpResult.failure(error(reason, propertyName, propertyValue));
+  }
+
+  public static <T> ValidationErrorFailure error(
+    String reason,
+    String propertyName,
+    String propertyValue) {
+
+    return new ValidationErrorFailure(reason, propertyName, propertyValue);
+  }
+
   public ValidationErrorFailure(
     String reason,
     String propertyName,

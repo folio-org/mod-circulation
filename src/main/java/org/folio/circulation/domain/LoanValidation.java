@@ -122,6 +122,7 @@ public class LoanValidation {
       }
     });
   }
+
   public static HttpResult<LoanAndRelatedRecords> refuseWhenProxyingUserIsInactive(
     HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords, String barcode) {
 

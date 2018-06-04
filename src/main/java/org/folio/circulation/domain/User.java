@@ -3,16 +3,18 @@ package org.folio.circulation.domain;
 import io.vertx.core.json.JsonObject;
 import org.joda.time.DateTime;
 
+import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+
 public class User extends JsonObject {
   public User(JsonObject representation) {
     super(representation.getMap());
   }
 
-  public Boolean isInactive() {
+  Boolean isInactive() {
     return !isActive();
   }
 
-  public Boolean isActive() {
+  Boolean isActive() {
     final Boolean active = getBoolean("active");
 
     return active && !isExpired();
@@ -27,5 +29,9 @@ public class User extends JsonObject {
     else {
       return false;
     }
+  }
+
+  public String getBarcode() {
+    return getProperty(this, "barcode");
   }
 }

@@ -194,7 +194,8 @@ public class LoansFixture {
   }
 
   public Response attemptCheckOutByBarcode(
-    int expectedStatusCode, CheckOutByBarcodeRequestBuilder builder) {
+    int expectedStatusCode,
+    CheckOutByBarcodeRequestBuilder builder) {
 
     JsonObject request = builder.create();
 
@@ -261,5 +262,25 @@ public class LoansFixture {
       .extract().response();
 
     return new IndividualResource(from(response));
+  }
+
+  public Response attemptLoanRenewal(IndividualResource item, IndividualResource user) {
+    JsonObject request = new RenewByBarcodeRequestBuilder()
+      .forItem(item)
+      .forUser(user)
+      .create();
+
+    io.restassured.response.Response response = given()
+      .log().all()
+      .spec(defaultHeaders())
+      .spec(timeoutConfig())
+      .body(request.encodePrettily())
+      .when().post(InterfaceUrls.renewByBarcodeUrl())
+      .then()
+      .log().all()
+      .statusCode(422)
+      .extract().response();
+
+    return from(response);
   }
 }

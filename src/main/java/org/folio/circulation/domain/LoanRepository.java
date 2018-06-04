@@ -9,6 +9,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static org.folio.circulation.support.HttpResult.failure;
+import static org.folio.circulation.support.HttpResult.success;
 import static org.folio.circulation.support.MultipleRecordsWrapper.fromBody;
 
 public class LoanRepository {
@@ -36,11 +38,11 @@ public class LoanRepository {
 
     loansStorageClient.post(storageLoan, response -> {
       if (response.getStatusCode() == 201) {
-        onCreated.complete(HttpResult.success(
+        onCreated.complete(success(
           loanAndRelatedRecords.withLoan(Loan.from(response.getJson(),
             loanAndRelatedRecords.getLoan().getItem()))));
       } else {
-        onCreated.complete(HttpResult.failure(new ForwardOnFailure(response)));
+        onCreated.complete(failure(new ForwardOnFailure(response)));
       }
     });
 
@@ -64,9 +66,9 @@ public class LoanRepository {
     loansStorageClient.put(storageLoan.getString("id"), storageLoan, response -> {
       if (response.getStatusCode() == 204) {
         //TODO: Maybe refresh the representation from storage?
-        onUpdated.complete(HttpResult.success(loan));
+        onUpdated.complete(success(loan));
       } else {
-        onUpdated.complete(HttpResult.failure(
+        onUpdated.complete(failure(
           new ServerErrorFailure(String.format("Failed to update loan (%s:%s)",
             response.getStatusCode(), response.getBody()))));
       }
@@ -79,28 +81,40 @@ public class LoanRepository {
     return itemRepository.fetchByBarcode(query.getItemBarcode())
       .thenComposeAsync(itemResult -> itemResult.after(item -> findOpenLoans(item)
         .thenApply(loanResult -> loanResult.next(loans -> {
-
-        //TODO: Check loan is for correct user
-        final Optional<Loan> first = loans.getRecords().stream().findFirst();
+        final Optional<Loan> first = loans.getRecords().stream()
+          .findFirst();
 
         if(loans.getTotalRecords() == 1 && first.isPresent()) {
-          return HttpResult.success(Loan.from(first.get().asJson(), item));
+          return success(Loan.from(first.get().asJson(), item));
         }
         else {
-          return HttpResult.failure(new ServerErrorFailure(
+          return failure(new ServerErrorFailure(
             String.format("More than one open loan for item %s", query.getItemBarcode())));
         }
       }))))
-      .thenComposeAsync(this::fetchUser);
+      .thenComposeAsync(this::fetchUser)
+      .thenApply(r -> r.next(loan -> refuseWhenDifferentUser(loan, query)));
+  }
+
+  private HttpResult<Loan> refuseWhenDifferentUser(
+    Loan loan,
+    FindByBarcodeQuery query) {
+
+    if(query.userMatches(loan.getUser())) {
+      return success(loan);
+    }
+    else {
+      return failure(query.userDoesNotMatchError());
+    }
   }
 
   public CompletableFuture<HttpResult<Loan>> getById(String id) {
     final Function<Response, HttpResult<Loan>> mapResponse = response -> {
       if(response != null && response.getStatusCode() == 200) {
-        return HttpResult.success(Loan.from(response.getJson()));
+        return success(Loan.from(response.getJson()));
       }
       else {
-        return HttpResult.failure(new ForwardOnFailure(response));
+        return failure(new ForwardOnFailure(response));
       }
     };
 
@@ -108,7 +122,7 @@ public class LoanRepository {
       .thenApply(mapResponse)
       .thenComposeAsync(this::fetchItem)
       .thenComposeAsync(this::fetchUser)
-      .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
+      .exceptionally(e -> failure(new ServerErrorFailure(e)));
   }
 
   private CompletableFuture<HttpResult<Loan>> fetchItem(HttpResult<Loan> result) {
@@ -148,13 +162,13 @@ public class LoanRepository {
 
   private HttpResult<MultipleRecords<Loan>> mapResponseToLoans(Response response) {
       if (response.getStatusCode() != 200) {
-        return HttpResult.failure(new ServerErrorFailure("Failed to fetch loans from storage"));
+        return failure(new ServerErrorFailure("Failed to fetch loans from storage"));
       }
 
       final MultipleRecordsWrapper wrappedLoans = fromBody(response.getBody(), "loans");
 
       if (wrappedLoans.isEmpty()) {
-        return HttpResult.success(MultipleRecords.empty());
+        return success(MultipleRecords.empty());
       }
 
       final MultipleRecords<Loan> mapped = new MultipleRecords<>(
@@ -164,7 +178,7 @@ public class LoanRepository {
           .collect(Collectors.toList()),
         wrappedLoans.getTotalRecords());
 
-      return HttpResult.success(mapped);
+      return success(mapped);
   }
 
   private static JsonObject convertLoanToStorageRepresentation(
