@@ -22,7 +22,7 @@ abstract class DueDateStrategy {
   }
 
   abstract HttpResult<DateTime> calculateInitialDueDate(Loan loan);
-  abstract HttpResult<DateTime> calculateRenewalDueDate(Loan loan);
+  abstract HttpResult<DateTime> calculateRenewalDueDate(Loan loan, DateTime systemDate);
 
   protected <T> HttpResult<T> fail(String reason) {
     final String message = String.format(

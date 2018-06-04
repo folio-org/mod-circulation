@@ -43,10 +43,6 @@ public class User {
     return getProperty(representation, "barcode");
   }
 
-  public JsonObject asJson() {
-    return representation.copy();
-  }
-
   public String getId() {
     return getProperty(representation, "id");
   }

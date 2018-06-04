@@ -2,14 +2,19 @@ package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.support.*;
+import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Item;
+import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.joda.time.DateTime;
 
+import static org.folio.circulation.domain.representations.LoanProperties.DUE_DATE;
+import static org.folio.circulation.domain.representations.LoanProperties.STATUS;
+import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 public class Loan implements ItemRelatedRecord, UserRelatedRecord {
-  private static final String STATUS_PROPERTY_NAME = "status";
-
   private final JsonObject representation;
   private Item item;
   private User user;
@@ -40,7 +45,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public void changeDueDate(DateTime dueDate) {
-    JsonPropertyWriter.write(representation, "dueDate", dueDate);
+    write(representation, DUE_DATE, dueDate);
   }
 
   private void changeAction(String action) {
@@ -52,7 +57,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public HttpResult<Void> isValidStatus() {
-    if(!representation.containsKey(STATUS_PROPERTY_NAME)) {
+    if(!representation.containsKey(STATUS)) {
       return HttpResult.failure(new ServerErrorFailure(
         "Loan does not have a status"));
     }
@@ -64,7 +69,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
       default:
         return HttpResult.failure(new ValidationErrorFailure(
-          "Loan status must be \"Open\" or \"Closed\"", STATUS_PROPERTY_NAME, getStatus()));
+          "Loan status must be \"Open\" or \"Closed\"", STATUS, getStatus()));
     }
   }
 
@@ -73,7 +78,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   private String getStatus() {
-    return getNestedStringProperty(representation, STATUS_PROPERTY_NAME, "name");
+    return getNestedStringProperty(representation, STATUS, "name");
   }
 
   @Override
@@ -131,5 +136,9 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     changeDueDate(dueDate);
 
     return this;
+  }
+
+  public DateTime getDueDate() {
+    return getDateTimeProperty(representation, DUE_DATE);
   }
 }

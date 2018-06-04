@@ -45,8 +45,8 @@ class RollingDueDateStrategy extends DueDateStrategy {
   }
 
   @Override
-  HttpResult<DateTime> calculateRenewalDueDate(Loan loan) {
-    return calculateRollingDueDate(DateTime.now(), intervalId, duration);
+  HttpResult<DateTime> calculateRenewalDueDate(Loan loan, DateTime systemDate) {
+    return calculateRollingDueDate(systemDate, intervalId, duration);
   }
 
   private HttpResult<DateTime> calculateRollingDueDate(

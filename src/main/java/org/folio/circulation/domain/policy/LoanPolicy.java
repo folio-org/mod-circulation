@@ -34,8 +34,8 @@ public class LoanPolicy {
     return determineStrategy().calculateInitialDueDate(loan);
   }
 
-  public HttpResult<Loan> renew(Loan loan) {
-    return determineStrategy().calculateRenewalDueDate(loan)
+  public HttpResult<Loan> renew(Loan loan, DateTime systemDate) {
+    return determineStrategy().calculateRenewalDueDate(loan, systemDate)
       .map(dueDate -> loan.renew(dueDate, getId()));
   }
 

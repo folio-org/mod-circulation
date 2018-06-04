@@ -3,6 +3,7 @@ package org.folio.circulation.domain;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpResult;
+import org.joda.time.DateTime;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -19,6 +20,6 @@ public class LoanRenewalService {
 
   public CompletableFuture<HttpResult<Loan>> renew(Loan loan) {
     return loanPolicyRepository.lookupLoanPolicy(loan)
-      .thenApply(r -> r.next(loanPolicy -> loanPolicy.renew(loan)));
+      .thenApply(r -> r.next(policy -> policy.renew(loan, DateTime.now())));
   }
 }

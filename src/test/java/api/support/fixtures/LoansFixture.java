@@ -232,13 +232,21 @@ public class LoansFixture {
     return new IndividualResource(from(post(request, InterfaceUrls.renewByBarcodeUrl(), 200)));
   }
 
-  public Response attemptLoanRenewal(IndividualResource item, IndividualResource user) {
+  public Response attemptRenewal(IndividualResource item, IndividualResource user) {
+    return attemptRenewal(422, item, user);
+  }
+
+  public Response attemptRenewal(
+    int expectedStatusCode,
+    IndividualResource item,
+    IndividualResource user) {
+
     JsonObject request = new RenewByBarcodeRequestBuilder()
       .forItem(item)
       .forUser(user)
       .create();
 
-    return from(post(request, InterfaceUrls.renewByBarcodeUrl(), 422));
+    return from(post(request, InterfaceUrls.renewByBarcodeUrl(), expectedStatusCode));
   }
 
   private io.restassured.response.Response post(

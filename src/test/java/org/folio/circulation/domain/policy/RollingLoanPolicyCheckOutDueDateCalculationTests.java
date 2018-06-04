@@ -18,7 +18,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 @RunWith(JUnitParamsRunner.class)
-public class RollingLoanPolicyDueDateCalculationTests {
+public class RollingLoanPolicyCheckOutDueDateCalculationTests {
 
   @Test
   @Parameters({

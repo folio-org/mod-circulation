@@ -42,7 +42,7 @@ class FixedScheduleDueDateStrategy extends DueDateStrategy {
   }
 
   @Override
-  HttpResult<DateTime> calculateRenewalDueDate(Loan loan) {
+  HttpResult<DateTime> calculateRenewalDueDate(Loan loan, DateTime systemDate) {
     return HttpResult.failure(new ServerErrorFailure("Cannot renew using fixed profile"));
   }
 }

@@ -144,12 +144,35 @@ public class RenewByBarcodeTests extends APITests {
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43));
 
-    final Response response = loansFixture.attemptLoanRenewal(smallAngryPlanet, james);
+    final Response response = loansFixture.attemptRenewal(smallAngryPlanet, james);
 
     assertThat(response.getJson(), hasSoleErrorFor(
       "userBarcode", james.getJson().getString("barcode")));
 
     assertThat(response.getJson(),
       hasSoleErrorMessageContaining("Cannot renew item checked out to different user"));
+  }
+
+  @Test
+  public void cannotCheckOutWhenLoanPolicyDoesNotExist()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    final UUID nonExistentloanPolicyId = UUID.randomUUID();
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+      new DateTime(2018, 4, 21, 11, 21, 43));
+
+    useLoanPolicyAsFallback(nonExistentloanPolicyId);
+
+    final Response response = loansFixture.attemptRenewal(500, smallAngryPlanet, jessica);
+
+    assertThat(response.getBody(), is(String.format(
+      "Loan policy %s could not be found, please check loan rules", nonExistentloanPolicyId)));
   }
 }
