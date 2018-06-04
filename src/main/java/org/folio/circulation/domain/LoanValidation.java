@@ -66,7 +66,7 @@ public class LoanValidation {
     return loanAndRelatedRecords
       .next(loan -> {
       final RequestQueue requestQueue = loan.getRequestQueue();
-      final JsonObject requestingUser = loan.getLoan().getUser().asJson();
+      final User requestingUser = loan.getLoan().getUser();
 
       if(hasAwaitingPickupRequestForOtherPatron(requestQueue, requestingUser)) {
         return HttpResult.failure(new ValidationErrorFailure(
@@ -85,7 +85,7 @@ public class LoanValidation {
     //TODO: Extract duplication between this and above
     return loanAndRelatedRecords.next(loan -> {
       final RequestQueue requestQueue = loan.getRequestQueue();
-      final JsonObject requestingUser = loan.getLoan().getUser().asJson();
+      final User requestingUser = loan.getLoan().getUser();
 
       if(hasAwaitingPickupRequestForOtherPatron(requestQueue, requestingUser)) {
         return HttpResult.failure(new ValidationErrorFailure(
@@ -150,7 +150,7 @@ public class LoanValidation {
 
   private static boolean hasAwaitingPickupRequestForOtherPatron(
     RequestQueue requestQueue,
-    JsonObject requestingUser) {
+    User requestingUser) {
 
     if(!requestQueue.hasOutstandingFulfillableRequests()) {
       return false;
@@ -163,8 +163,8 @@ public class LoanValidation {
     }
   }
 
-  private static boolean isFor(Request request, JsonObject user) {
-    return StringUtils.equals(request.getUserId(), user.getString("id"));
+  private static boolean isFor(Request request, User user) {
+    return StringUtils.equals(request.getUserId(), user.getId());
   }
 
   private static boolean isAwaitingPickup(Request highestPriority) {

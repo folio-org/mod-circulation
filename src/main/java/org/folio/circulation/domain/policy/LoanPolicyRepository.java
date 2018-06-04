@@ -41,7 +41,7 @@ public class LoanPolicyRepository {
     Item item,
     User user) {
 
-    return lookupLoanPolicyId(item, user.asJson())
+    return lookupLoanPolicyId(item, user)
       .thenComposeAsync(r -> r.after(this::lookupLoanPolicy))
       .thenApply(result -> result.map(this::toLoanPolicy))
       .thenComposeAsync(r -> r.after(this::lookupSchedules));
@@ -79,7 +79,7 @@ public class LoanPolicyRepository {
 
   private CompletableFuture<HttpResult<String>> lookupLoanPolicyId(
     Item item,
-    JsonObject user) {
+    User user) {
 
     CompletableFuture<HttpResult<String>> findLoanPolicyCompleted
       = new CompletableFuture<>();
@@ -99,7 +99,7 @@ public class LoanPolicyRepository {
 
     String materialTypeId = item.getMaterialTypeId();
 
-    String patronGroupId = user.getString("patronGroup");
+    String patronGroupId = user.getPatronGroup();
 
     CompletableFuture<Response> loanRulesResponse = new CompletableFuture<>();
 
@@ -125,4 +125,5 @@ public class LoanPolicyRepository {
 
     return findLoanPolicyCompleted;
   }
+
 }

@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.*;
-import static org.folio.circulation.support.JsonPropertyCopier.copyStringIfExists;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 public class RequestCollectionResource extends CollectionResource {
@@ -106,8 +105,8 @@ public class RequestCollectionResource extends CollectionResource {
         }
 
         final Item item = result.value().getInventoryRecords();
-        final JsonObject requester = result.value().getRequestingUser().asJson();
-        final JsonObject proxy = result.value().getProxyUser().asJson();
+        final User requester = result.value().getRequestingUser();
+        final User proxy = result.value().getProxyUser();
 
         addStoredItemProperties(representation, item);
         addStoredRequesterProperties(representation, requester);
@@ -283,43 +282,26 @@ public class RequestCollectionResource extends CollectionResource {
 
   private void addStoredRequesterProperties
     (JsonObject requestWithAdditionalInformation,
-     JsonObject requester) {
+     User requester) {
 
     if(requester == null) {
       return;
     }
 
-    JsonObject requesterSummary = createUserSummary(requester);
+    JsonObject requesterSummary = requester.createUserSummary();
 
     requestWithAdditionalInformation.put("requester", requesterSummary);
   }
 
   private void addStoredProxyProperties
     (JsonObject requestWithAdditionalInformation,
-     JsonObject proxy) {
+     User proxy) {
 
     if(proxy == null) {
       return;
     }
 
-    JsonObject proxySummary = createUserSummary(proxy);
-
-    requestWithAdditionalInformation.put("proxy", proxySummary);
-  }
-
-  private JsonObject createUserSummary(JsonObject user) {
-    JsonObject requesterSummary = new JsonObject();
-
-    if(user.containsKey("personal")) {
-      JsonObject personalDetails = user.getJsonObject("personal");
-
-      copyStringIfExists("lastName", personalDetails, requesterSummary);
-      copyStringIfExists("firstName", personalDetails, requesterSummary);
-      copyStringIfExists("middleName", personalDetails, requesterSummary);
-    }
-
-    copyStringIfExists("barcode", user, requesterSummary);
-    return requesterSummary;
+    requestWithAdditionalInformation.put("proxy", proxy.createUserSummary());
   }
 
   private void removeRelatedRecordInformation(JsonObject request) {
@@ -404,8 +386,8 @@ public class RequestCollectionResource extends CollectionResource {
 
     JsonObject request = requestAndRelatedRecords.getRequest().asJson();
 
-    JsonObject requestingUser = requestAndRelatedRecords.getRequestingUser().asJson();
-    JsonObject proxyUser = requestAndRelatedRecords.getProxyUser().asJson();
+    User requestingUser = requestAndRelatedRecords.getRequestingUser();
+    User proxyUser = requestAndRelatedRecords.getProxyUser();
 
     addStoredItemProperties(request, requestAndRelatedRecords.getInventoryRecords());
     addStoredRequesterProperties(request, requestingUser);

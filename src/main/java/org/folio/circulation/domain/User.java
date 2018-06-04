@@ -3,6 +3,7 @@ package org.folio.circulation.domain;
 import io.vertx.core.json.JsonObject;
 import org.joda.time.DateTime;
 
+import static org.folio.circulation.support.JsonPropertyCopier.copyStringIfExists;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 public class User {
@@ -48,5 +49,26 @@ public class User {
 
   public String getId() {
     return getProperty(representation, "id");
+  }
+
+  public String getPatronGroup() {
+    return getProperty(representation, "patronGroup");
+  }
+
+  public JsonObject createUserSummary() {
+    //TODO: Extract to visitor based adapter
+    JsonObject userSummary = new JsonObject();
+
+    if(representation.containsKey("personal")) {
+      JsonObject personalDetails = representation.getJsonObject("personal");
+
+      copyStringIfExists("lastName", personalDetails, userSummary);
+      copyStringIfExists("firstName", personalDetails, userSummary);
+      copyStringIfExists("middleName", personalDetails, userSummary);
+    }
+
+    copyStringIfExists("barcode", representation, userSummary);
+
+    return userSummary;
   }
 }
