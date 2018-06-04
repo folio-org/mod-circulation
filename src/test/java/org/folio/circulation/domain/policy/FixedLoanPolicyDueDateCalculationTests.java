@@ -245,7 +245,7 @@ public class FixedLoanPolicyDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate);
 
-    final HttpResult<DateTime> result = calculator.calculateInitialDueDate(loan);
+    final HttpResult<DateTime> result = calculator.calculateDueDate(loan, DateTime.now());
 
     assertThat(result, isValidationFailure(
       "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy. " +

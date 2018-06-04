@@ -19,7 +19,7 @@ public class Period {
     this.interval = interval;
   }
 
-  static Period months(int duration) {
+  public static Period months(int duration) {
     return from(duration, "Months");
   }
 

@@ -21,7 +21,7 @@ class FixedScheduleDueDateStrategy extends DueDateStrategy {
   }
 
   @Override
-  HttpResult<DateTime> calculateInitialDueDate(Loan loan) {
+  HttpResult<DateTime> calculateDueDate(Loan loan, DateTime systemDate) {
     final DateTime loanDate = loan.getLoanDate();
 
     logApplying("Fixed schedule due date calculation");
@@ -39,10 +39,5 @@ class FixedScheduleDueDateStrategy extends DueDateStrategy {
       logException(e, "Error occurred during fixed schedule due date calculation");
       return HttpResult.failure(new ServerErrorFailure(e));
     }
-  }
-
-  @Override
-  HttpResult<DateTime> calculateRenewalDueDate(Loan loan, DateTime systemDate) {
-    return HttpResult.failure(new ServerErrorFailure("Cannot renew using fixed profile"));
   }
 }

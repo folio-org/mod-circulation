@@ -11,24 +11,27 @@ class UnknownDueDateStrategy extends DueDateStrategy {
   private static final String RENEWAL_UNRECOGNISED_PROFILE_MESSAGE =
     "Item can't be renewed as profile \"%s\" in the loan policy is not recognised.";
 
-  private String profileId;
+  private final String profileId;
+  private final boolean isRenewal;
 
   UnknownDueDateStrategy(
     String loanPolicyId,
     String loanPolicyName,
-    String profileId) {
+    String profileId,
+    boolean isRenewal) {
 
     super(loanPolicyId, loanPolicyName);
     this.profileId = profileId;
+    this.isRenewal = isRenewal;
   }
 
   @Override
-  HttpResult<DateTime> calculateInitialDueDate(Loan loan) {
-    return fail(String.format(CHECK_OUT_UNRECOGNISED_PROFILE_MESSAGE, profileId));
-  }
-
-  @Override
-  HttpResult<DateTime> calculateRenewalDueDate(Loan loan, DateTime systemDate) {
-    return fail(String.format(RENEWAL_UNRECOGNISED_PROFILE_MESSAGE, profileId));
+  HttpResult<DateTime> calculateDueDate(Loan loan, DateTime systemDate) {
+    if(isRenewal) {
+      return fail(String.format(RENEWAL_UNRECOGNISED_PROFILE_MESSAGE, profileId));
+    }
+    else {
+      return fail(String.format(CHECK_OUT_UNRECOGNISED_PROFILE_MESSAGE, profileId));
+    }
   }
 }

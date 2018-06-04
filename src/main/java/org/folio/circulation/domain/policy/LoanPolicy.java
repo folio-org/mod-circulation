@@ -31,41 +31,63 @@ public class LoanPolicy {
 
   //TODO: make this have similar signature to renew
   public HttpResult<DateTime> calculateInitialDueDate(Loan loan) {
-    return determineStrategy().calculateInitialDueDate(loan);
+    return determineStrategy(false).calculateDueDate(loan, DateTime.now());
   }
 
   public HttpResult<Loan> renew(Loan loan, DateTime systemDate) {
-    return determineStrategy().calculateRenewalDueDate(loan, systemDate)
+    return determineStrategy(true).calculateDueDate(loan, systemDate)
       .map(dueDate -> loan.renew(dueDate, getId()));
   }
 
-  private DueDateStrategy determineStrategy() {
-    final String loanPolicyId = representation.getString("id");
-    final String loanPolicyName = representation.getString("name");
-
+  private DueDateStrategy determineStrategy(boolean isRenewal) {
     final JsonObject loansPolicy = representation.getJsonObject("loansPolicy");
 
     //TODO: Temporary until have better logic for missing loans policy
     if(loansPolicy == null) {
-      return new UnknownDueDateStrategy(loanPolicyId, loanPolicyName, "");
+      return new UnknownDueDateStrategy(getId(), getName(), "", isRenewal);
     }
 
-    final String profileId = loansPolicy.getString("profileId");
-
-    if(StringUtils.equalsIgnoreCase(profileId, "Rolling")) {
+    if(isRolling(loansPolicy)) {
       final String interval = getNestedStringProperty(loansPolicy, "period", "intervalId");
       final Integer duration = getNestedIntegerProperty(loansPolicy, "period", "duration");
 
-      return new RollingDueDateStrategy(loanPolicyId, loanPolicyName,
-        interval, duration, fixedDueDateSchedules);
+      if(isRenewal) {
+        return new RollingRenewalDueDateStrategy(getId(), getName(),
+          interval, duration);
+      }
+      else {
+        return new RollingCheckOutDueDateStrategy(getId(), getName(),
+          interval, duration, fixedDueDateSchedules);
+      }
     }
-    else if(StringUtils.equalsIgnoreCase(profileId, "Fixed")) {
-      return new FixedScheduleDueDateStrategy(loanPolicyId, loanPolicyName,
+    else if(isFixed(loansPolicy)) {
+      return new FixedScheduleDueDateStrategy(getId(), getName(),
         fixedDueDateSchedules);
     }
     else {
-      return new UnknownDueDateStrategy(loanPolicyId, loanPolicyName, profileId);
+      return new UnknownDueDateStrategy(getId(), getName(),
+        getProfileId(loansPolicy), isRenewal);
     }
+  }
+
+  private String getProfileId(JsonObject loansPolicy) {
+    return loansPolicy.getString("profileId");
+  }
+
+  private String getName() {
+    return representation.getString("name");
+  }
+
+  private boolean isFixed(JsonObject loansPolicy) {
+    return isProfile(loansPolicy, "Fixed");
+  }
+
+  private boolean isRolling(JsonObject loansPolicy) {
+    return isProfile(loansPolicy, "Rolling");
+  }
+
+  private boolean isProfile(JsonObject loansPolicy, String profileId) {
+    return StringUtils.equalsIgnoreCase(getProfileId(loansPolicy), profileId);
   }
 
   LoanPolicy withDueDateSchedules(FixedDueDateSchedules fixedDueDateSchedules) {
@@ -84,15 +106,5 @@ public class LoanPolicy {
   String getLoansFixedDueDateScheduleId() {
     return getNestedStringProperty(representation, "loansPolicy",
       "fixedDueDateScheduleId");
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    return super.equals(o);
-  }
-
-  @Override
-  public int hashCode() {
-    return super.hashCode();
   }
 }
