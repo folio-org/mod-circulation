@@ -13,20 +13,29 @@ class RollingDueDateStrategy extends DueDateStrategy {
   private static final String NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE =
     "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy.";
 
-  private static final String UNRECOGNISED_INTERVAL_MESSAGE =
+  private static final String CHECK_OUT_UNRECOGNISED_INTERVAL_MESSAGE =
     "Item can't be checked out as the interval \"%s\" in the loan policy is not recognised.";
 
-  private static final String INVALID_DURATION_MESSAGE =
+  private static final String CHECKOUT_INVALID_DURATION_MESSAGE =
     "Item can't be checked out as the duration \"%s\" in the loan policy is invalid.";
 
-  private static final String UNRECOGNISED_PERIOD_MESSAGE =
+  private static final String CHECK_OUT_UNRECOGNISED_PERIOD_MESSAGE =
     "Item can't be checked out as the loan period in the loan policy is not recognised.";
+
+  private static final String RENEWAL_UNRECOGNISED_INTERVAL_MESSAGE =
+    "Item can't be renewed as the interval \"%s\" in the loan policy is not recognised.";
+
+  private static final String RENEWAL_INVALID_DURATION_MESSAGE =
+    "Item can't be renewed as the duration \"%s\" in the loan policy is invalid.";
+
+  private static final String RENEWAL_UNRECOGNISED_PERIOD_MESSAGE =
+    "Item can't be renewed as the loan period in the loan policy is not recognised.";
 
   private final String intervalId;
   private final Integer duration;
   private final FixedDueDateSchedules dueDateLimitSchedules;
   private final Period period;
-  private final Function<String, ValidationErrorFailure> loanPolicyRelatedError;
+  private final Function<String, ValidationErrorFailure> error;
 
   RollingDueDateStrategy(
     String loanPolicyId,
@@ -42,7 +51,7 @@ class RollingDueDateStrategy extends DueDateStrategy {
 
     period = Period.from(duration, intervalId);
 
-    loanPolicyRelatedError = this::validationError;
+    error = this::validationError;
   }
 
   @Override
@@ -52,18 +61,18 @@ class RollingDueDateStrategy extends DueDateStrategy {
     logApplying(String.format("Rolling %s %s due date calculation", duration, intervalId));
 
     return period.addTo(loanDate,
-      () -> loanPolicyRelatedError.apply(UNRECOGNISED_PERIOD_MESSAGE),
-      interval -> loanPolicyRelatedError.apply(String.format(UNRECOGNISED_INTERVAL_MESSAGE, interval)),
-      duration -> loanPolicyRelatedError.apply(String.format(INVALID_DURATION_MESSAGE, duration)))
+      () -> error.apply(CHECK_OUT_UNRECOGNISED_PERIOD_MESSAGE),
+      interval -> error.apply(String.format(CHECK_OUT_UNRECOGNISED_INTERVAL_MESSAGE, interval)),
+      duration -> error.apply(String.format(CHECKOUT_INVALID_DURATION_MESSAGE, duration)))
       .next(dueDate -> limitDueDateBySchedule(loanDate, dueDate));
   }
 
   @Override
   HttpResult<DateTime> calculateRenewalDueDate(Loan loan, DateTime systemDate) {
     return period.addTo(systemDate,
-      () -> loanPolicyRelatedError.apply(UNRECOGNISED_PERIOD_MESSAGE),
-      interval -> loanPolicyRelatedError.apply(String.format(UNRECOGNISED_INTERVAL_MESSAGE, interval)),
-      duration -> loanPolicyRelatedError.apply(String.format(INVALID_DURATION_MESSAGE, duration)));
+      () -> error.apply(RENEWAL_UNRECOGNISED_PERIOD_MESSAGE),
+      interval -> error.apply(String.format(RENEWAL_UNRECOGNISED_INTERVAL_MESSAGE, interval)),
+      duration -> error.apply(String.format(RENEWAL_INVALID_DURATION_MESSAGE, duration)));
   }
 
   private HttpResult<DateTime> limitDueDateBySchedule(

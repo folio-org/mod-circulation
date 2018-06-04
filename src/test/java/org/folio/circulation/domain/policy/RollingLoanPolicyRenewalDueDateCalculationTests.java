@@ -9,7 +9,6 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -155,7 +154,6 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  @Ignore("Need to refactor how failure messages are determined")
   public void shouldFailForUnrecognisedInterval() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.from(5, "Unknown"))
@@ -170,11 +168,10 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     assertThat(result, isValidationFailure(
       "Item can't be renewed as the interval \"Unknown\" in the loan policy is not recognised. " +
-        "Please review \"Invalid Loan Policy\" before retrying renewal"));
+        "Please review \"Invalid Loan Policy\" before retrying"));
   }
 
   @Test
-  @Ignore("Need to refactor how failure messages are determined")
   public void shouldFailWhenNoPeriodProvided() {
     final JsonObject representation = new LoanPolicyBuilder()
       .rolling(Period.from(5, "Unknown"))
@@ -193,11 +190,10 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     assertThat(result, isValidationFailure(
       "Item can't be renewed as the loan period in the loan policy is not recognised. " +
-        "Please review \"Invalid Loan Policy\" before retrying renewal"));
+        "Please review \"Invalid Loan Policy\" before retrying"));
   }
 
   @Test
-  @Ignore("Need to refactor how failure messages are determined")
   public void shouldFailWhenNoPeriodDurationProvided() {
     final JsonObject representation = new LoanPolicyBuilder()
       .rolling(Period.from(5, "Weeks"))
@@ -216,11 +212,10 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     assertThat(result, isValidationFailure(
       "Item can't be renewed as the loan period in the loan policy is not recognised. " +
-        "Please review \"Invalid Loan Policy\" before retrying renewal"));
+        "Please review \"Invalid Loan Policy\" before retrying"));
   }
 
   @Test
-  @Ignore("Need to refactor how failure messages are determined")
   public void shouldFailWhenNoPeriodIntervalProvided() {
     final JsonObject representation = new LoanPolicyBuilder()
       .rolling(Period.from(5, "Weeks"))
@@ -239,7 +234,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     assertThat(result, isValidationFailure(
       "Item can't be renewed as the loan period in the loan policy is not recognised. " +
-        "Please review \"Invalid Loan Policy\" before retrying renewal"));
+        "Please review \"Invalid Loan Policy\" before retrying"));
   }
 
   @Test
@@ -247,7 +242,6 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     "0",
     "-1",
   })
-  @Ignore("Need to refactor how failure messages are determined")
   public void shouldFailWhenDurationIsInvalid(int duration) {
     final JsonObject representation = new LoanPolicyBuilder()
       .rolling(Period.minutes(duration))
@@ -265,7 +259,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     assertThat(result, isValidationFailure(
       String.format(
         "Item can't be renewed as the duration \"%s\" in the loan policy is invalid. " +
-        "Please review \"Invalid Loan Policy\" before retrying renewal", duration)));
+        "Please review \"Invalid Loan Policy\" before retrying", duration)));
   }
 
   private Loan loanFor(DateTime loanDate) {

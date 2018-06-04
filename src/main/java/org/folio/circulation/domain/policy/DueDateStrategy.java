@@ -24,15 +24,15 @@ abstract class DueDateStrategy {
   abstract HttpResult<DateTime> calculateInitialDueDate(Loan loan);
   abstract HttpResult<DateTime> calculateRenewalDueDate(Loan loan, DateTime systemDate);
 
-  protected <T> HttpResult<T> fail(String reason) {
+  <T> HttpResult<T> fail(String reason) {
     log.error(reason);
     return HttpResult.failure(validationError(reason));
   }
 
-  public ValidationErrorFailure validationError(String reason) {
+  ValidationErrorFailure validationError(String reason) {
     return new ValidationErrorFailure(
       String.format(
-        "%s Please review \"%s\" before retrying checking out", reason, loanPolicyName),
+        "%s Please review \"%s\" before retrying", reason, loanPolicyName),
       "loanPolicyId", this.loanPolicyId);
   }
 

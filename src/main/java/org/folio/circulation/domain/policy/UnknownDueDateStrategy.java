@@ -5,8 +5,11 @@ import org.folio.circulation.support.HttpResult;
 import org.joda.time.DateTime;
 
 class UnknownDueDateStrategy extends DueDateStrategy {
-  private static final String UNRECOGNISED_PROFILE_MESSAGE =
+  private static final String CHECK_OUT_UNRECOGNISED_PROFILE_MESSAGE =
     "Item can't be checked out as profile \"%s\" in the loan policy is not recognised.";
+
+  private static final String RENEWAL_UNRECOGNISED_PROFILE_MESSAGE =
+    "Item can't be renewed as profile \"%s\" in the loan policy is not recognised.";
 
   private String profileId;
 
@@ -21,11 +24,11 @@ class UnknownDueDateStrategy extends DueDateStrategy {
 
   @Override
   HttpResult<DateTime> calculateInitialDueDate(Loan loan) {
-    return fail(String.format(UNRECOGNISED_PROFILE_MESSAGE, profileId));
+    return fail(String.format(CHECK_OUT_UNRECOGNISED_PROFILE_MESSAGE, profileId));
   }
 
   @Override
   HttpResult<DateTime> calculateRenewalDueDate(Loan loan, DateTime systemDate) {
-    return fail(String.format(UNRECOGNISED_PROFILE_MESSAGE, profileId));
+    return fail(String.format(RENEWAL_UNRECOGNISED_PROFILE_MESSAGE, profileId));
   }
 }

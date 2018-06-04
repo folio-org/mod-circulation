@@ -154,7 +154,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
 
     assertThat(result, isValidationFailure(
       "Item can't be checked out as the interval \"Unknown\" in the loan policy is not recognised. " +
-        "Please review \"Invalid Loan Policy\" before retrying checking out"));
+        "Please review \"Invalid Loan Policy\" before retrying"));
   }
 
   @Test
@@ -176,7 +176,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
 
     assertThat(result, isValidationFailure(
       "Item can't be checked out as the loan period in the loan policy is not recognised. " +
-        "Please review \"Invalid Loan Policy\" before retrying checking out"));
+        "Please review \"Invalid Loan Policy\" before retrying"));
   }
 
   @Test
@@ -198,7 +198,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
 
     assertThat(result, isValidationFailure(
       "Item can't be checked out as the loan period in the loan policy is not recognised. " +
-        "Please review \"Invalid Loan Policy\" before retrying checking out"));
+        "Please review \"Invalid Loan Policy\" before retrying"));
   }
 
   @Test
@@ -220,7 +220,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
 
     assertThat(result, isValidationFailure(
       "Item can't be checked out as the loan period in the loan policy is not recognised. " +
-        "Please review \"Invalid Loan Policy\" before retrying checking out"));
+        "Please review \"Invalid Loan Policy\" before retrying"));
   }
 
   @Test
@@ -245,7 +245,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
     assertThat(result, isValidationFailure(
       String.format(
         "Item can't be checked out as the duration \"%s\" in the loan policy is invalid. " +
-        "Please review \"Invalid Loan Policy\" before retrying checking out", duration)));
+        "Please review \"Invalid Loan Policy\" before retrying", duration)));
   }
 
   @Test
@@ -313,7 +313,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
 
     assertThat(result, isValidationFailure(
       "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy. " +
-        "Please review \"One Month\" before retrying checking out"));
+        "Please review \"One Month\" before retrying"));
   }
 
   @Test
@@ -335,7 +335,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
 
     assertThat(result, isValidationFailure(
       "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy. " +
-        "Please review \"One Month\" before retrying checking out"));
+        "Please review \"One Month\" before retrying"));
   }
 
   private Loan loanFor(DateTime loanDate) {
