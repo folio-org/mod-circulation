@@ -26,7 +26,7 @@ class UnknownDueDateStrategy extends DueDateStrategy {
   }
 
   @Override
-  HttpResult<DateTime> calculateDueDate(Loan loan, DateTime systemDate) {
+  HttpResult<DateTime> calculateDueDate(Loan loan) {
     if(isRenewal) {
       return fail(String.format(RENEWAL_UNRECOGNISED_PROFILE_MESSAGE, profileId));
     }

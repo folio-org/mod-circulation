@@ -21,7 +21,7 @@ class FixedScheduleDueDateStrategy extends DueDateStrategy {
   }
 
   @Override
-  HttpResult<DateTime> calculateDueDate(Loan loan, DateTime systemDate) {
+  HttpResult<DateTime> calculateDueDate(Loan loan) {
     final DateTime loanDate = loan.getLoanDate();
 
     logApplying("Fixed schedule due date calculation");

@@ -21,7 +21,7 @@ abstract class DueDateStrategy {
     this.loanPolicyName = loanPolicyName;
   }
 
-  abstract HttpResult<DateTime> calculateDueDate(Loan loan, DateTime systemDate);
+  abstract HttpResult<DateTime> calculateDueDate(Loan loan);
 
   <T> HttpResult<T> fail(String reason) {
     log.error(reason);

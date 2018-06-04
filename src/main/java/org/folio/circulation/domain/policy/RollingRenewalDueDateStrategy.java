@@ -19,14 +19,17 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
 
   private final Period period;
   private final Function<String, ValidationErrorFailure> error;
+  private final DateTime systemDate;
 
   RollingRenewalDueDateStrategy(
     String loanPolicyId,
     String loanPolicyName,
     String intervalId,
-    Integer duration) {
+    Integer duration,
+    DateTime systemDate) {
 
     super(loanPolicyId, loanPolicyName);
+    this.systemDate = systemDate;
 
     period = Period.from(duration, intervalId);
 
@@ -34,8 +37,8 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
   }
 
   @Override
-  HttpResult<DateTime> calculateDueDate(Loan loan, DateTime systemDate) {
-    return period.addTo(systemDate,
+  HttpResult<DateTime> calculateDueDate(Loan loan) {
+    return period.addTo(this.systemDate,
       () -> error.apply(RENEWAL_UNRECOGNISED_PERIOD_MESSAGE),
       interval -> error.apply(String.format(RENEWAL_UNRECOGNISED_INTERVAL_MESSAGE, interval)),
       duration -> error.apply(String.format(RENEWAL_INVALID_DURATION_MESSAGE, duration)));

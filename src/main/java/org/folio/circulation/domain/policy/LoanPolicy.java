@@ -31,15 +31,15 @@ public class LoanPolicy {
 
   //TODO: make this have similar signature to renew
   public HttpResult<DateTime> calculateInitialDueDate(Loan loan) {
-    return determineStrategy(false).calculateDueDate(loan, DateTime.now());
+    return determineStrategy(false, null).calculateDueDate(loan);
   }
 
   public HttpResult<Loan> renew(Loan loan, DateTime systemDate) {
-    return determineStrategy(true).calculateDueDate(loan, systemDate)
+    return determineStrategy(true, systemDate).calculateDueDate(loan)
       .map(dueDate -> loan.renew(dueDate, getId()));
   }
 
-  private DueDateStrategy determineStrategy(boolean isRenewal) {
+  private DueDateStrategy determineStrategy(boolean isRenewal, DateTime systemDate) {
     final JsonObject loansPolicy = representation.getJsonObject("loansPolicy");
 
     //TODO: Temporary until have better logic for missing loans policy
@@ -53,7 +53,7 @@ public class LoanPolicy {
 
       if(isRenewal) {
         return new RollingRenewalDueDateStrategy(getId(), getName(),
-          interval, duration);
+          interval, duration, systemDate);
       }
       else {
         return new RollingCheckOutDueDateStrategy(getId(), getName(),
