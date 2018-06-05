@@ -4,19 +4,16 @@ import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.JsonPropertyFetcher;
 import org.joda.time.DateTime;
 
-import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getNestedIntegerProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.*;
 
 public class LoanPolicy {
   private final JsonObject representation;
   private final FixedDueDateSchedules fixedDueDateSchedules;
 
   private LoanPolicy(JsonObject representation) {
-    this(representation, null);
+    this(representation, new NoFixedDueDateSchedules());
   }
 
   LoanPolicy(
@@ -90,7 +87,7 @@ public class LoanPolicy {
   }
 
   private String getRenewFrom() {
-    return JsonPropertyFetcher.getNestedStringProperty(representation, "renewalsPolicy", "renewFromId");
+    return getNestedStringProperty(representation, "renewalsPolicy", "renewFromId");
   }
 
   private String getProfileId(JsonObject loansPolicy) {
@@ -119,7 +116,7 @@ public class LoanPolicy {
 
   //TODO: potentially remove this, when builder can create class or JSON representation
   LoanPolicy withDueDateSchedules(JsonObject fixedDueDateSchedules) {
-    return withDueDateSchedules(new FixedDueDateSchedules(fixedDueDateSchedules));
+    return withDueDateSchedules(FixedDueDateSchedules.from(fixedDueDateSchedules));
   }
 
   public String getId() {

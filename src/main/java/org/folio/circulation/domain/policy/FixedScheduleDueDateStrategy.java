@@ -17,7 +17,14 @@ class FixedScheduleDueDateStrategy extends DueDateStrategy {
     FixedDueDateSchedules fixedDueDateSchedules) {
 
     super(loanPolicyId, loanPolicyName);
-    this.fixedDueDateSchedules = fixedDueDateSchedules;
+
+    //TODO: Find a better way to fail
+    if(fixedDueDateSchedules != null) {
+      this.fixedDueDateSchedules = fixedDueDateSchedules;
+    }
+    else {
+      this.fixedDueDateSchedules = new NoFixedDueDateSchedules();
+    }
   }
 
   @Override
@@ -25,10 +32,6 @@ class FixedScheduleDueDateStrategy extends DueDateStrategy {
     final DateTime loanDate = loan.getLoanDate();
 
     logApplying("Fixed schedule due date calculation");
-
-    if(fixedDueDateSchedules == null) {
-      return fail(NO_APPLICABLE_DUE_DATE_SCHEDULE_MESSAGE);
-    }
 
     try {
       return fixedDueDateSchedules.findDueDateFor(loanDate)

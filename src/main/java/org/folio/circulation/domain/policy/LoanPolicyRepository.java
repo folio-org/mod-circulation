@@ -48,7 +48,7 @@ public class LoanPolicyRepository {
   }
 
   private LoanPolicy toLoanPolicy(JsonObject representation) {
-    return new LoanPolicy(representation, null);
+    return new LoanPolicy(representation, new NoFixedDueDateSchedules());
   }
 
   private CompletableFuture<HttpResult<LoanPolicy>> lookupSchedules(LoanPolicy loanPolicy) {
@@ -60,7 +60,7 @@ public class LoanPolicyRepository {
 
       return fetcher
         .fetchSingleRecord(fixedDueDateScheduleId)
-        .thenApply(r -> r.map(FixedDueDateSchedules::new))
+        .thenApply(r -> r.map(FixedDueDateSchedules::from))
         .thenApply(r -> r.map(loanPolicy::withDueDateSchedules));
     }
     else {

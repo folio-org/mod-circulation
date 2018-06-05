@@ -16,9 +16,19 @@ import static org.folio.circulation.support.HttpResult.failure;
 class FixedDueDateSchedules {
   private final List<JsonObject> schedules;
 
-  FixedDueDateSchedules(JsonObject representation) {
-    schedules = JsonArrayHelper.toList(
-      representation.getJsonArray("schedules"));
+  FixedDueDateSchedules(List<JsonObject> schedules) {
+    this.schedules = schedules;
+  }
+
+  static FixedDueDateSchedules from(JsonObject representation) {
+    //TODO: Replace this with better check
+    if(representation == null) {
+      return new NoFixedDueDateSchedules();
+    }
+    else {
+      return new FixedDueDateSchedules(JsonArrayHelper.toList(
+        representation.getJsonArray("schedules")));
+    }
   }
 
   Optional<DateTime> findDueDateFor(DateTime date) {

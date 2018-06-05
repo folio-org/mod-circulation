@@ -20,8 +20,8 @@ class RollingCheckOutDueDateStrategy extends DueDateStrategy {
   private static final String CHECK_OUT_UNRECOGNISED_PERIOD_MESSAGE =
     "Item can't be checked out as the loan period in the loan policy is not recognised.";
 
-  final FixedDueDateSchedules dueDateLimitSchedules;
   private final Period period;
+  private final FixedDueDateSchedules dueDateLimitSchedules;
   private final Function<String, ValidationErrorFailure> error;
 
   RollingCheckOutDueDateStrategy(
@@ -41,25 +41,22 @@ class RollingCheckOutDueDateStrategy extends DueDateStrategy {
   HttpResult<DateTime> calculateDueDate(Loan loan) {
     final DateTime loanDate = loan.getLoanDate();
 
+    return initialDueDate(loanDate)
+      .next(dueDate -> truncateDueDateBySchedule(loanDate, dueDate));
+  }
+
+  private HttpResult<DateTime> initialDueDate(DateTime loanDate) {
     return period.addTo(loanDate,
       () -> error.apply(CHECK_OUT_UNRECOGNISED_PERIOD_MESSAGE),
       interval -> error.apply(String.format(CHECK_OUT_UNRECOGNISED_INTERVAL_MESSAGE, interval)),
-      duration -> error.apply(String.format(CHECKOUT_INVALID_DURATION_MESSAGE, duration)))
-      .next(dueDate -> truncateDueDateBySchedule(loanDate, dueDate));
+      duration -> error.apply(String.format(CHECKOUT_INVALID_DURATION_MESSAGE, duration)));
   }
 
   private HttpResult<DateTime> truncateDueDateBySchedule(
     DateTime loanDate,
     DateTime dueDate) {
 
-    //TODO: Replace with null object
-    if(dueDateLimitSchedules != null) {
-      return dueDateLimitSchedules.truncateDueDate(dueDate, loanDate,
-        () -> validationError(NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE));
-    }
-    else {
-      return HttpResult.success(dueDate);
-    }
+    return dueDateLimitSchedules.truncateDueDate(dueDate, loanDate,
+      () -> validationError(NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE));
   }
-
 }
