@@ -249,7 +249,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
-  public void shouldLimitDueDateWhenWithinDueDateLimitSchedule() {
+  public void shouldTruncateDueDateWhenWithinDueDateLimitSchedule() {
     //TODO: Slight hack to use the same builder, the schedule is fed in later
     //TODO: Introduce builder for individual schedules
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -271,7 +271,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
-  public void shouldNotLimitDueDateWhenWithinDueDateLimitScheduleButInitialDateIsSooner() {
+  public void shouldNotTruncateDueDateWhenWithinDueDateLimitScheduleButInitialDateIsSooner() {
     //TODO: Slight hack to use the same builder, the schedule is fed in later
     //TODO: Introduce builder for individual schedules
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()

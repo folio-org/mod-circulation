@@ -50,11 +50,12 @@ public class LoanPolicy {
     if(isRolling(loansPolicy)) {
       if(isRenewal) {
         return new RollingRenewalDueDateStrategy(getId(), getName(),
-          systemDate, getRenewFrom(), getRenewalPeriod(loansPolicy, renewalsPolicy));
+          systemDate, getRenewFrom(), getRenewalPeriod(loansPolicy, renewalsPolicy),
+          fixedDueDateSchedules);
       }
       else {
         return new RollingCheckOutDueDateStrategy(getId(), getName(),
-          fixedDueDateSchedules, getPeriod(loansPolicy));
+          getPeriod(loansPolicy), fixedDueDateSchedules);
       }
     }
     else if(isFixed(loansPolicy)) {

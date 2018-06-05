@@ -27,8 +27,7 @@ class RollingCheckOutDueDateStrategy extends DueDateStrategy {
   RollingCheckOutDueDateStrategy(
     String loanPolicyId,
     String loanPolicyName,
-    FixedDueDateSchedules dueDateLimitSchedules,
-    Period period) {
+    Period period, FixedDueDateSchedules dueDateLimitSchedules) {
 
     super(loanPolicyId, loanPolicyName);
     this.period = period;

@@ -1,5 +1,7 @@
 package org.folio.circulation.domain.policy;
 
+import api.support.builders.FixedDueDateSchedule;
+import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import io.vertx.core.json.JsonObject;
@@ -11,6 +13,8 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.UUID;
 
 import static api.support.matchers.FailureMatcher.isValidationFailure;
 import static org.hamcrest.CoreMatchers.is;
@@ -35,7 +39,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    Loan loan = loanFor(loanDate);
+    Loan loan = loanFor(loanDate, loanDate.plusMonths(duration));
 
     DateTime systemDate = new DateTime(2018, 6, 1, 21, 32, 11, DateTimeZone.UTC);
 
@@ -62,7 +66,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    Loan loan = loanFor(loanDate);
+    Loan loan = loanFor(loanDate, loanDate.plusWeeks(duration));
 
     DateTime systemDate = new DateTime(2018, 6, 1, 21, 32, 11, DateTimeZone.UTC);
 
@@ -90,7 +94,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    Loan loan = loanFor(loanDate);
+    Loan loan = loanFor(loanDate, loanDate.plusDays(duration));
 
     DateTime systemDate = new DateTime(2018, 6, 1, 21, 32, 11, DateTimeZone.UTC);
 
@@ -118,7 +122,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    Loan loan = loanFor(loanDate);
+    Loan loan = loanFor(loanDate, loanDate.plusHours(duration));
 
     DateTime systemDate = new DateTime(2018, 6, 1, 21, 32, 11, DateTimeZone.UTC);
 
@@ -262,11 +266,111 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
         "Please review \"Invalid Loan Policy\" before retrying", duration)));
   }
 
+  @Test
+  public void shouldTruncateDueDateWhenWithinDueDateLimitSchedule() {
+    //TODO: Slight hack to use the same builder, the schedule is fed in later
+    //TODO: Introduce builder for individual schedules
+    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
+      .rolling(Period.days(15))
+      .limitedBySchedule(UUID.randomUUID())
+      .renewFromCurrentDueDate()
+      .create())
+      .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
+        .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 3,
+          new DateTime(2018, 4, 10, 23, 59, 59, DateTimeZone.UTC)))
+        .create());
+
+    DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
+
+    Loan loan = loanFor(loanDate, loanDate.plusDays(15));
+
+    final HttpResult<Loan> result = loanPolicy.renew(loan, DateTime.now());
+
+    assertThat(result.value().getDueDate(),
+      is(new DateTime(2018, 4, 10, 23, 59, 59, DateTimeZone.UTC)));
+  }
+
+  @Test
+  public void shouldNotTruncateDueDateWhenWithinDueDateLimitScheduleButInitialDateIsSooner() {
+    //TODO: Slight hack to use the same builder, the schedule is fed in later
+    //TODO: Introduce builder for individual schedules
+    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
+      .rolling(Period.days(6))
+      .limitedBySchedule(UUID.randomUUID())
+      .renewFromCurrentDueDate()
+      .create())
+      .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
+        .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 3))
+        .create());
+
+    DateTime loanDate = new DateTime(2018, 3, 11, 16, 21, 43, DateTimeZone.UTC);
+
+    Loan loan = loanFor(loanDate, loanDate.plusDays(6));
+
+    final HttpResult<Loan> result = loanPolicy.renew(loan, DateTime.now());
+
+    assertThat(result.value().getDueDate(),
+      is(new DateTime(2018, 3, 23, 16, 21, 43, DateTimeZone.UTC)));
+  }
+
+  @Test
+  public void shouldFailWhenNotWithinOneOfProvidedDueDateLimitSchedules() {
+    //TODO: Slight hack to use the same builder, the schedule is fed in later
+    //TODO: Introduce builder for individual schedules
+    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
+      .withName("One Month")
+      .rolling(Period.months(1))
+      .renewFromCurrentDueDate()
+      .limitedBySchedule(UUID.randomUUID())
+      .create())
+      .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
+        .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 3))
+        .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 5))
+        .create());
+
+    DateTime loanDate = new DateTime(2018, 4, 3, 9, 25, 43, DateTimeZone.UTC);
+
+    Loan loan = loanFor(loanDate);
+
+    final HttpResult<Loan> result = loanPolicy.renew(loan, DateTime.now());
+
+    assertThat(result, isValidationFailure(
+      "Item can't be renewed as the loan date falls outside of the date ranges in the loan policy. " +
+        "Please review \"One Month\" before retrying"));
+  }
+
+  @Test
+  public void shouldFailWhenNoDueDateLimitSchedules() {
+    //TODO: Slight hack to use the same builder, the schedule is fed in later
+    //TODO: Introduce builder for individual schedules
+    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
+      .rolling(Period.months(1))
+      .withName("One Month")
+      .renewFromCurrentDueDate()
+      .limitedBySchedule(UUID.randomUUID())
+      .create())
+      .withDueDateSchedules(new FixedDueDateSchedulesBuilder().create());
+
+    DateTime loanDate = new DateTime(2018, 4, 3, 9, 25, 43, DateTimeZone.UTC);
+
+    Loan loan = loanFor(loanDate);
+
+    final HttpResult<Loan> result = loanPolicy.renew(loan, DateTime.now());
+
+    assertThat(result, isValidationFailure(
+      "Item can't be renewed as the loan date falls outside of the date ranges in the loan policy. " +
+        "Please review \"One Month\" before retrying"));
+  }
+
   private Loan loanFor(DateTime loanDate) {
+    return loanFor(loanDate, loanDate.plusWeeks(2));
+  }
+
+  private Loan loanFor(DateTime loanDate, DateTime dueDate) {
     return new LoanBuilder()
       .open()
       .withLoanDate(loanDate)
-      .withDueDate(loanDate.plusWeeks(2))
+      .withDueDate(dueDate)
       .asDomainObject();
   }
 }
