@@ -7,8 +7,6 @@ import org.joda.time.DateTime;
 
 import java.util.function.Function;
 
-import static org.folio.circulation.support.HttpResult.failure;
-
 class RollingCheckOutDueDateStrategy extends DueDateStrategy {
   private static final String NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE =
     "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy.";
@@ -22,7 +20,7 @@ class RollingCheckOutDueDateStrategy extends DueDateStrategy {
   private static final String CHECK_OUT_UNRECOGNISED_PERIOD_MESSAGE =
     "Item can't be checked out as the loan period in the loan policy is not recognised.";
 
-  private final FixedDueDateSchedules dueDateLimitSchedules;
+  final FixedDueDateSchedules dueDateLimitSchedules;
   private final Period period;
   private final Function<String, ValidationErrorFailure> error;
 
@@ -47,28 +45,21 @@ class RollingCheckOutDueDateStrategy extends DueDateStrategy {
       () -> error.apply(CHECK_OUT_UNRECOGNISED_PERIOD_MESSAGE),
       interval -> error.apply(String.format(CHECK_OUT_UNRECOGNISED_INTERVAL_MESSAGE, interval)),
       duration -> error.apply(String.format(CHECKOUT_INVALID_DURATION_MESSAGE, duration)))
-      .next(dueDate -> limitDueDateBySchedule(loanDate, dueDate));
+      .next(dueDate -> truncateDueDateBySchedule(loanDate, dueDate));
   }
 
-  private HttpResult<DateTime> limitDueDateBySchedule(
+  private HttpResult<DateTime> truncateDueDateBySchedule(
     DateTime loanDate,
     DateTime dueDate) {
 
+    //TODO: Replace with null object
     if(dueDateLimitSchedules != null) {
-      return dueDateLimitSchedules.findDueDateFor(loanDate)
-        .map(limit -> earliest(dueDate, limit))
-        .map(HttpResult::success)
-        .orElseGet(() -> failure(
-          validationError(NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE)));
+      return dueDateLimitSchedules.truncateDueDate(dueDate, loanDate,
+        () -> validationError(NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE));
     }
     else {
       return HttpResult.success(dueDate);
     }
   }
 
-  private DateTime earliest(DateTime rollingDueDate, DateTime limit) {
-    return limit.isBefore(rollingDueDate)
-      ? limit
-      : rollingDueDate;
-  }
 }

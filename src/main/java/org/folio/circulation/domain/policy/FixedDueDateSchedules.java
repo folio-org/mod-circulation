@@ -1,12 +1,17 @@
 package org.folio.circulation.domain.policy;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.JsonArrayHelper;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.joda.time.DateTime;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
+
+import static org.folio.circulation.support.HttpResult.failure;
 
 class FixedDueDateSchedules {
   private final List<JsonObject> schedules;
@@ -43,5 +48,22 @@ class FixedDueDateSchedules {
 
   public boolean isEmpty() {
     return schedules.isEmpty();
+  }
+
+  HttpResult<DateTime> truncateDueDate(
+    DateTime dueDate,
+    DateTime loanDate,
+    Supplier<ValidationErrorFailure> noApplicableScheduleError) {
+
+    return findDueDateFor(loanDate)
+      .map(limit -> earliest(dueDate, limit))
+      .map(HttpResult::success)
+      .orElseGet(() -> failure(noApplicableScheduleError.get()));
+  }
+
+  private DateTime earliest(DateTime rollingDueDate, DateTime limit) {
+    return limit.isBefore(rollingDueDate)
+      ? limit
+      : rollingDueDate;
   }
 }

@@ -70,25 +70,19 @@ public class LoanPolicy {
     }
   }
 
-  private Period getRenewalPeriod(JsonObject loansPolicy, JsonObject renewalsPolicy) {
-    Period period;
-    if(useDifferentPeriod(renewalsPolicy)) {
-      period = getPeriod(renewalsPolicy);
-    }
-    else {
-      period = getPeriod(loansPolicy);
-    }
-    return period;
+  private Period getRenewalPeriod(
+    JsonObject loansPolicy,
+    JsonObject renewalsPolicy) {
+
+    return useDifferentPeriod(renewalsPolicy)
+      ? getPeriod(renewalsPolicy)
+      : getPeriod(loansPolicy);
   }
 
   private Period getPeriod(JsonObject policy) {
-    String interval;
-    Integer duration;
-    Period period;
-    interval = getNestedStringProperty(policy, "period", "intervalId");
-    duration = getNestedIntegerProperty(policy, "period", "duration");
-    period = Period.from(duration, interval);
-    return period;
+    String interval = getNestedStringProperty(policy, "period", "intervalId");
+    Integer duration = getNestedIntegerProperty(policy, "period", "duration");
+    return Period.from(duration, interval);
   }
 
   private Boolean useDifferentPeriod(JsonObject renewalsPolicy) {
