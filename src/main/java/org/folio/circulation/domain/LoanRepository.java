@@ -3,7 +3,10 @@ package org.folio.circulation.domain;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -14,6 +17,8 @@ import static org.folio.circulation.support.HttpResult.success;
 import static org.folio.circulation.support.MultipleRecordsWrapper.fromBody;
 
 public class LoanRepository {
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
   private final CollectionResourceClient loansStorageClient;
   private final ItemRepository itemRepository;
   private final UserRepository userRepository;
@@ -29,7 +34,7 @@ public class LoanRepository {
 
     CompletableFuture<HttpResult<LoanAndRelatedRecords>> onCreated = new CompletableFuture<>();
 
-    JsonObject storageLoan = convertLoanToStorageRepresentation(
+    JsonObject storageLoan = mapToStorageRepresentation(
       loanAndRelatedRecords.getLoan(), loanAndRelatedRecords.getLoan().getItem());
 
     if(loanAndRelatedRecords.getLoanPolicy() != null) {
@@ -61,7 +66,7 @@ public class LoanRepository {
 
     CompletableFuture<HttpResult<Loan>> onUpdated = new CompletableFuture<>();
 
-    JsonObject storageLoan = convertLoanToStorageRepresentation(loan, loan.getItem());
+    JsonObject storageLoan = mapToStorageRepresentation(loan, loan.getItem());
 
     loansStorageClient.put(storageLoan.getString("id"), storageLoan, response -> {
       if (response.getStatusCode() == 204) {
@@ -161,8 +166,14 @@ public class LoanRepository {
   }
 
   private HttpResult<MultipleRecords<Loan>> mapResponseToLoans(Response response) {
+    if(response != null) {
+      log.info("Response received, status code: {} body: {}",
+        response.getStatusCode(), response.getBody());
+
       if (response.getStatusCode() != 200) {
-        return failure(new ServerErrorFailure("Failed to fetch loans from storage"));
+        return failure(new ServerErrorFailure(
+          String.format("Failed to fetch loans from storage (%s:%s)",
+            response.getStatusCode(), response.getBody())));
       }
 
       final MultipleRecordsWrapper wrappedLoans = fromBody(response.getBody(), "loans");
@@ -179,14 +190,18 @@ public class LoanRepository {
         wrappedLoans.getTotalRecords());
 
       return success(mapped);
+    }
+    else {
+      log.warn("Did not receive response to request");
+      return failure(new ServerErrorFailure(
+        "Did not receive response to request for multiple loans"));
+    }
   }
 
-  private static JsonObject convertLoanToStorageRepresentation(
-    Loan loan,
-    Item item) {
-
+  private static JsonObject mapToStorageRepresentation(Loan loan, Item item) {
     JsonObject storageLoan = loan.asJson();
 
+    storageLoan.remove("metadata");
     storageLoan.remove("item");
     storageLoan.remove("itemStatus");
     storageLoan.put("itemStatus", item.getStatus());
