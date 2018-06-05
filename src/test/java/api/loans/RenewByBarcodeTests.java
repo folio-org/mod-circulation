@@ -71,6 +71,9 @@ public class RenewByBarcodeTests extends APITests {
     assertThat("action should be renewed",
       renewedLoan.getString("action"), is("renewed"));
 
+    assertThat("renewal count should be incremented",
+      renewedLoan.getInteger("renewalCount"), is(1));
+
     assertThat("last loan policy should be stored",
       renewedLoan.getString("loanPolicyId"),
       is(APITestSuite.canCirculateRollingLoanPolicyId().toString()));
@@ -128,6 +131,9 @@ public class RenewByBarcodeTests extends APITests {
 
     assertThat("action should be renewed",
       renewedLoan.getString("action"), is("renewed"));
+
+    assertThat("renewal count should be incremented",
+      renewedLoan.getInteger("renewalCount"), is(1));
 
     assertThat("last loan policy should be stored",
       renewedLoan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
@@ -239,6 +245,9 @@ public class RenewByBarcodeTests extends APITests {
 
     assertThat("action should be renewed",
       renewedLoan.getString("action"), is("renewed"));
+
+    assertThat("renewal count should be incremented",
+      renewedLoan.getInteger("renewalCount"), is(1));
 
     assertThat("last loan policy should be stored",
       renewedLoan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
@@ -359,9 +368,71 @@ public class RenewByBarcodeTests extends APITests {
     assertThat("last loan policy should be stored",
       loan.getString("loanPolicyId"), is(fixedDueDatePolicyId.toString()));
 
+    assertThat("renewal count should be incremented",
+      loan.getInteger("renewalCount"), is(1));
+
     assertThat("due date should be limited by schedule",
       loan.getString("dueDate"),
       isEquivalentTo(new DateTime(2018, 3, 31, 23, 59, 59, DateTimeZone.UTC)));
+  }
+
+  @Test
+  public void canRenewMultipleTimesUpToRenewalLimit()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    LoanPolicyBuilder limitedRenewalsPolicy = new LoanPolicyBuilder()
+      .withName("Limited Renewals Policy")
+      .rolling(Period.days(2))
+      .renewFromCurrentDueDate()
+      .limitedRenewals(3);
+
+    UUID limitedRenewalsPolicyId = loanPolicyClient.create(limitedRenewalsPolicy).getId();
+
+    //Need to remember in order to delete after test
+    policiesToDelete.add(limitedRenewalsPolicyId);
+
+    useLoanPolicyAsFallback(limitedRenewalsPolicyId);
+
+    final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+      new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
+
+    final UUID loanId = loan.getId();
+
+    loansFixture.renewLoan(smallAngryPlanet, jessica).getJson();
+
+    loansFixture.renewLoan(smallAngryPlanet, jessica);
+
+    final JsonObject renewedLoan = loansFixture
+      .renewLoan(smallAngryPlanet, jessica)
+      .getJson();
+
+    assertThat(renewedLoan.getString("id"), is(loanId.toString()));
+
+    assertThat("status should be open",
+      renewedLoan.getJsonObject("status").getString("name"), is("Open"));
+
+    assertThat("action should be renewed",
+      renewedLoan.getString("action"), is("renewed"));
+
+    assertThat("renewal count should be incremented",
+      renewedLoan.getInteger("renewalCount"), is(3));
+
+    assertThat("last loan policy should be stored",
+      renewedLoan.getString("loanPolicyId"), is(limitedRenewalsPolicyId.toString()));
+
+    assertThat("due date should be 8 days after initial loan date date",
+      renewedLoan.getString("dueDate"),
+      isEquivalentTo(new DateTime(2018, 4, 29, 11, 21, 43, DateTimeZone.UTC)));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+
+    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
   }
 
   @Test
@@ -408,6 +479,9 @@ public class RenewByBarcodeTests extends APITests {
 
     assertThat("action should be renewed",
       renewedLoan.getString("action"), is("renewed"));
+
+    assertThat("renewal count should be incremented",
+      renewedLoan.getInteger("renewalCount"), is(1));
 
     assertThat("last loan policy should be stored",
       renewedLoan.getString("loanPolicyId"),

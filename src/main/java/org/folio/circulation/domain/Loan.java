@@ -10,9 +10,7 @@ import org.joda.time.DateTime;
 
 import static org.folio.circulation.domain.representations.LoanProperties.DUE_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.STATUS;
-import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.*;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 public class Loan implements ItemRelatedRecord, UserRelatedRecord {
@@ -139,8 +137,17 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     changeAction("renewed");
     changeLoanPolicy(basedUponLoanPolicyId);
     changeDueDate(dueDate);
+    incrementRenewalCount();
 
     return this;
+  }
+
+  private void incrementRenewalCount() {
+    write(representation, "renewalCount", getRenewalCount() + 1);
+  }
+
+  private Integer getRenewalCount() {
+    return getIntegerProperty(representation, "renewalCount", 0);
   }
 
   public DateTime getDueDate() {

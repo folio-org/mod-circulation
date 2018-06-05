@@ -39,6 +39,16 @@ public class JsonPropertyWriter {
     }
   }
 
+  public static void write(
+    JsonObject to,
+    String propertyName,
+    Integer value) {
+
+    if(value != null) {
+      to.put(propertyName, value);
+    }
+  }
+
   public static void write(JsonObject to, String propertyName, DateTime value) {
     if(value != null) {
       write(to, propertyName, value.toString(ISODateTimeFormat.dateTime()));

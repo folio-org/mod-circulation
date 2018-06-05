@@ -81,4 +81,17 @@ public class JsonPropertyFetcher {
       return false;
     }
   }
+
+  public static Integer getIntegerProperty(
+    JsonObject representation,
+    String propertyName,
+    Integer defaultValue) {
+
+    if(representation != null) {
+      return representation.getInteger(propertyName, defaultValue);
+    }
+    else {
+      return defaultValue;
+    }
+  }
 }

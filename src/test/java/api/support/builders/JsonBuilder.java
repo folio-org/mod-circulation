@@ -13,6 +13,12 @@ public class JsonBuilder {
     }
   }
 
+  protected void put(JsonObject representation, String property, Integer value) {
+    if(value != null) {
+      representation.put(property, value);
+    }
+  }
+
   protected void put(JsonObject representation, String property, UUID value) {
     if(value != null) {
       representation.put(property, value.toString());
