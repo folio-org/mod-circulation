@@ -1,5 +1,6 @@
 package org.folio.circulation.support;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -8,6 +9,7 @@ import java.lang.invoke.MethodHandles;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class CqlHelper {
@@ -20,10 +22,13 @@ public class CqlHelper {
       return null;
     }
     else {
-      String query = String.format("id==(%s)", recordIds.stream()
-        .map(String::toString)
-        .distinct()
-        .collect(Collectors.joining(" or ")));
+      String query = String.format("id==(%s)",
+        recordIds.stream()
+          .filter(Objects::nonNull)
+          .map(String::toString)
+          .filter(StringUtils::isNotBlank)
+          .distinct()
+          .collect(Collectors.joining(" or ")));
 
       return encodeQuery(query).orElse(null);
     }

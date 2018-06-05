@@ -11,7 +11,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+
+import static org.folio.circulation.support.CqlHelper.multipleRecordsCqlQuery;
+import static org.folio.circulation.support.HttpResult.success;
 
 public class LoanPolicyRepository {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -48,24 +56,53 @@ public class LoanPolicyRepository {
   }
 
   private LoanPolicy toLoanPolicy(JsonObject representation) {
-    return new LoanPolicy(representation, new NoFixedDueDateSchedules());
+    return new LoanPolicy(representation,
+      new NoFixedDueDateSchedules(), new NoFixedDueDateSchedules());
   }
 
   private CompletableFuture<HttpResult<LoanPolicy>> lookupSchedules(LoanPolicy loanPolicy) {
-    final String fixedDueDateScheduleId = loanPolicy.getLoansFixedDueDateScheduleId();
+    List<String> scheduleIds = new ArrayList<>();
 
-    if(fixedDueDateScheduleId != null) {
-      final SingleRecordFetcher fetcher = new SingleRecordFetcher(
-        fixedDueDateSchedulesStorageClient, "fixed due date schedule");
+    scheduleIds.add(loanPolicy.getLoansFixedDueDateScheduleId());
+    scheduleIds.add(loanPolicy.getAlternateRenewalsFixedDueDateScheduleId());
 
-      return fetcher
-        .fetchSingleRecord(fixedDueDateScheduleId)
-        .thenApply(r -> r.map(FixedDueDateSchedules::from))
-        .thenApply(r -> r.map(loanPolicy::withDueDateSchedules));
-    }
-    else {
-      return CompletableFuture.completedFuture(HttpResult.success(loanPolicy));
-    }
+    return getSchedules(scheduleIds)
+      .thenApply(r -> r.next(schedules -> {
+        final FixedDueDateSchedules loanSchedule = schedules.getOrDefault(
+          loanPolicy.getLoansFixedDueDateScheduleId(), new NoFixedDueDateSchedules());
+
+        final FixedDueDateSchedules renewalSchedule = schedules.getOrDefault(
+          loanPolicy.getAlternateRenewalsFixedDueDateScheduleId(), new NoFixedDueDateSchedules());
+
+        return success(loanPolicy
+          .withDueDateSchedules(loanSchedule)
+          .withAlternateRenewalSchedules(renewalSchedule));
+      }));
+  }
+
+  private CompletableFuture<HttpResult<Map<String, FixedDueDateSchedules>>> getSchedules(
+    Collection<String> schedulesIds) {
+
+    String schedulesQuery = multipleRecordsCqlQuery(schedulesIds);
+
+    return fixedDueDateSchedulesStorageClient.getMany(schedulesQuery,
+      schedulesIds.size(), 0)
+      .thenApply(schedulesResponse -> {
+        if(schedulesResponse.getStatusCode() != 200) {
+          return HttpResult.failure(new ServerErrorFailure(
+            String.format("Fixed due date schedules request (%s) failed %s: %s",
+              schedulesQuery, schedulesResponse.getStatusCode(),
+              schedulesResponse.getBody())));
+        }
+
+        List<JsonObject> schedules = JsonArrayHelper.toList(
+          schedulesResponse.getJson().getJsonArray("fixedDueDateSchedules"));
+
+        return success(schedules.stream()
+          .collect(Collectors.toMap(
+            s -> s.getString("id"),
+            FixedDueDateSchedules::from)));
+      });
   }
 
   private CompletableFuture<HttpResult<JsonObject>> lookupLoanPolicy(
@@ -119,7 +156,7 @@ public class LoanPolicyRepository {
           new ForwardOnFailure(response)));
       } else {
         String policyId = response.getJson().getString("loanPolicyId");
-        findLoanPolicyCompleted.complete(HttpResult.success(policyId));
+        findLoanPolicyCompleted.complete(success(policyId));
       }
     });
 

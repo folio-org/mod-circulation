@@ -2,6 +2,9 @@ package api.loans;
 
 import api.APITestSuite;
 import api.support.APITests;
+import api.support.builders.CheckOutByBarcodeRequestBuilder;
+import api.support.builders.FixedDueDateSchedule;
+import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.policy.Period;
@@ -9,6 +12,7 @@ import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.joda.time.Seconds;
 import org.junit.Test;
 
@@ -137,6 +141,59 @@ public class RenewByBarcodeTests extends APITests {
   }
 
   @Test
+  public void canRenewUsingDueDateLimitedRollingLoanPolicy()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
+      .withName("March Only Due Date Limit")
+      .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 3));
+
+    final UUID dueDateLimitScheduleId = fixedDueDateScheduleClient.create(
+      dueDateLimitSchedule).getId();
+
+    //Need to remember in order to delete after test
+    schedulesToDelete.add(dueDateLimitScheduleId);
+
+    LoanPolicyBuilder dueDateLimitedPolicy = new LoanPolicyBuilder()
+      .withName("Due Date Limited Rolling Policy")
+      .rolling(Period.weeks(5))
+      .limitedBySchedule(dueDateLimitScheduleId)
+      .renewFromCurrentDueDate();
+
+    UUID dueDateLimitedPolicyId = loanPolicyClient.create(dueDateLimitedPolicy).getId();
+
+    //Need to remember in order to delete after test
+    policiesToDelete.add(dueDateLimitedPolicyId);
+
+    useLoanPolicyAsFallback(dueDateLimitedPolicyId);
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+
+    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
+
+    loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .at(loanDate));
+
+    final IndividualResource response = loansFixture.renewLoan(smallAngryPlanet, steve);
+
+    final JsonObject loan = response.getJson();
+
+    assertThat("last loan policy should be stored",
+      loan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
+
+    assertThat("due date should be limited by schedule",
+      loan.getString("dueDate"),
+      isEquivalentTo(new DateTime(2018, 3, 31, 23, 59, 59, DateTimeZone.UTC)));
+  }
+
+  @Test
   public void canRenewRollingLoanUsingDifferentPeriod()
     throws InterruptedException,
     MalformedURLException,
@@ -152,7 +209,7 @@ public class RenewByBarcodeTests extends APITests {
     final UUID loanId = loan.getId();
 
     LoanPolicyBuilder currentDueDateRollingPolicy = new LoanPolicyBuilder()
-      .withName("Current Due Date Alternative Rolling Policy")
+      .withName("Current Due Date Different Period Rolling Policy")
       .rolling(Period.months(2))
       .renewFromCurrentDueDate()
       .renewWith(Period.months(1));
@@ -192,6 +249,59 @@ public class RenewByBarcodeTests extends APITests {
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
     assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+  }
+
+  @Test
+  public void canRenewUsingAlternateDueDateLimitedRollingLoanPolicy()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
+      .withName("March Only Due Date Limit")
+      .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 3));
+
+    final UUID dueDateLimitScheduleId = fixedDueDateScheduleClient.create(
+      dueDateLimitSchedule).getId();
+
+    //Need to remember in order to delete after test
+    schedulesToDelete.add(dueDateLimitScheduleId);
+
+    LoanPolicyBuilder dueDateLimitedPolicy = new LoanPolicyBuilder()
+      .withName("Due Date Limited Rolling Policy")
+      .rolling(Period.weeks(5))
+      .renewFromCurrentDueDate()
+      .renewWith(Period.days(8), dueDateLimitScheduleId);
+
+    UUID dueDateLimitedPolicyId = loanPolicyClient.create(dueDateLimitedPolicy).getId();
+
+    //Need to remember in order to delete after test
+    policiesToDelete.add(dueDateLimitedPolicyId);
+
+    useLoanPolicyAsFallback(dueDateLimitedPolicyId);
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+
+    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
+
+    loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .at(loanDate));
+
+    final IndividualResource response = loansFixture.renewLoan(smallAngryPlanet, steve);
+
+    final JsonObject loan = response.getJson();
+
+    assertThat("last loan policy should be stored",
+      loan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
+
+    assertThat("due date should be limited by schedule",
+      loan.getString("dueDate"),
+      isEquivalentTo(new DateTime(2018, 3, 31, 23, 59, 59, DateTimeZone.UTC)));
   }
 
   @Test

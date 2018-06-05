@@ -31,6 +31,12 @@ public class JsonBuilder {
     }
   }
 
+  protected void put(JsonObject representation, String property, JsonObject value) {
+    if(value != null) {
+      representation.put(property, value);
+    }
+  }
+
   protected void put(
     JsonObject request,
     String property,

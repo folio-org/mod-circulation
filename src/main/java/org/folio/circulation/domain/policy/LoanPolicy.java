@@ -11,17 +11,22 @@ import static org.folio.circulation.support.JsonPropertyFetcher.*;
 public class LoanPolicy {
   private final JsonObject representation;
   private final FixedDueDateSchedules fixedDueDateSchedules;
+  private final FixedDueDateSchedules alternateRenewalFixedDueDateSchedules;
 
   private LoanPolicy(JsonObject representation) {
-    this(representation, new NoFixedDueDateSchedules());
+    this(representation,
+      new NoFixedDueDateSchedules(),
+      new NoFixedDueDateSchedules());
   }
 
   LoanPolicy(
     JsonObject representation,
-    FixedDueDateSchedules fixedDueDateSchedules) {
+    FixedDueDateSchedules fixedDueDateSchedules,
+    FixedDueDateSchedules alternateRenewalFixedDueDateSchedules) {
 
     this.representation = representation;
     this.fixedDueDateSchedules = fixedDueDateSchedules;
+    this.alternateRenewalFixedDueDateSchedules = alternateRenewalFixedDueDateSchedules;
   }
 
   static LoanPolicy from(JsonObject representation) {
@@ -39,8 +44,8 @@ public class LoanPolicy {
   }
 
   private DueDateStrategy determineStrategy(boolean isRenewal, DateTime systemDate) {
-    final JsonObject loansPolicy = representation.getJsonObject("loansPolicy");
-    final JsonObject renewalsPolicy = representation.getJsonObject("renewalsPolicy");
+    final JsonObject loansPolicy = getLoansPolicy();
+    final JsonObject renewalsPolicy = getRenewalsPolicy();
 
     //TODO: Temporary until have better logic for missing loans policy
     if(loansPolicy == null) {
@@ -51,7 +56,7 @@ public class LoanPolicy {
       if(isRenewal) {
         return new RollingRenewalDueDateStrategy(getId(), getName(),
           systemDate, getRenewFrom(), getRenewalPeriod(loansPolicy, renewalsPolicy),
-          fixedDueDateSchedules);
+          getRenewalDueDateLimitSchedule());
       }
       else {
         return new RollingCheckOutDueDateStrategy(getId(), getName(),
@@ -66,6 +71,20 @@ public class LoanPolicy {
       return new UnknownDueDateStrategy(getId(), getName(),
         getProfileId(loansPolicy), isRenewal);
     }
+  }
+
+  private JsonObject getLoansPolicy() {
+    return representation.getJsonObject("loansPolicy");
+  }
+
+  private JsonObject getRenewalsPolicy() {
+    return representation.getJsonObject("renewalsPolicy");
+  }
+
+  private FixedDueDateSchedules getRenewalDueDateLimitSchedule() {
+    return useDifferentPeriod(getRenewalsPolicy())
+      ? alternateRenewalFixedDueDateSchedules
+      : fixedDueDateSchedules;
   }
 
   private Period getRenewalPeriod(
@@ -111,13 +130,18 @@ public class LoanPolicy {
     return StringUtils.equalsIgnoreCase(getProfileId(loansPolicy), profileId);
   }
 
-  LoanPolicy withDueDateSchedules(FixedDueDateSchedules fixedDueDateSchedules) {
-    return new LoanPolicy(representation, fixedDueDateSchedules);
+  LoanPolicy withDueDateSchedules(FixedDueDateSchedules loanSchedules) {
+    return new LoanPolicy(representation, loanSchedules,
+      alternateRenewalFixedDueDateSchedules);
   }
 
   //TODO: potentially remove this, when builder can create class or JSON representation
   LoanPolicy withDueDateSchedules(JsonObject fixedDueDateSchedules) {
     return withDueDateSchedules(FixedDueDateSchedules.from(fixedDueDateSchedules));
+  }
+
+  LoanPolicy withAlternateRenewalSchedules(FixedDueDateSchedules renewalSchedules) {
+    return new LoanPolicy(representation, fixedDueDateSchedules, renewalSchedules);
   }
 
   public String getId() {
@@ -127,5 +151,10 @@ public class LoanPolicy {
   String getLoansFixedDueDateScheduleId() {
     return getNestedStringProperty(representation, "loansPolicy",
       "fixedDueDateScheduleId");
+  }
+
+  String getAlternateRenewalsFixedDueDateScheduleId() {
+    return getNestedStringProperty(representation, "renewalsPolicy",
+      "alternateFixedDueDateScheduleId");
   }
 }
