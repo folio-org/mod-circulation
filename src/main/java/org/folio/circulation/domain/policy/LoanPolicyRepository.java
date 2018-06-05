@@ -63,16 +63,28 @@ public class LoanPolicyRepository {
   private CompletableFuture<HttpResult<LoanPolicy>> lookupSchedules(LoanPolicy loanPolicy) {
     List<String> scheduleIds = new ArrayList<>();
 
-    scheduleIds.add(loanPolicy.getLoansFixedDueDateScheduleId());
-    scheduleIds.add(loanPolicy.getAlternateRenewalsFixedDueDateScheduleId());
+    final String loanScheduleId = loanPolicy.getLoansFixedDueDateScheduleId();
+    final String alternateRenewalsSchedulesId = loanPolicy.getAlternateRenewalsFixedDueDateScheduleId();
+
+    if(loanScheduleId != null) {
+      scheduleIds.add(loanScheduleId);
+    }
+
+    if(alternateRenewalsSchedulesId != null) {
+      scheduleIds.add(alternateRenewalsSchedulesId);
+    }
+
+    if(scheduleIds.isEmpty()) {
+      return CompletableFuture.completedFuture(success(loanPolicy));
+    }
 
     return getSchedules(scheduleIds)
       .thenApply(r -> r.next(schedules -> {
         final FixedDueDateSchedules loanSchedule = schedules.getOrDefault(
-          loanPolicy.getLoansFixedDueDateScheduleId(), new NoFixedDueDateSchedules());
+          loanScheduleId, new NoFixedDueDateSchedules());
 
         final FixedDueDateSchedules renewalSchedule = schedules.getOrDefault(
-          loanPolicy.getAlternateRenewalsFixedDueDateScheduleId(), new NoFixedDueDateSchedules());
+          alternateRenewalsSchedulesId, new NoFixedDueDateSchedules());
 
         return success(loanPolicy
           .withDueDateSchedules(loanSchedule)

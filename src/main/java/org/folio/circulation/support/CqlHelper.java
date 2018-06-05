@@ -9,7 +9,6 @@ import java.lang.invoke.MethodHandles;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class CqlHelper {
@@ -22,13 +21,18 @@ public class CqlHelper {
       return null;
     }
     else {
+      final Collection<String> filteredIds = recordIds.stream()
+        .map(String::toString)
+        .filter(StringUtils::isNotBlank)
+        .distinct()
+        .collect(Collectors.toList());
+
+      if(filteredIds.isEmpty()) {
+        return null;
+      }
+
       String query = String.format("id==(%s)",
-        recordIds.stream()
-          .filter(Objects::nonNull)
-          .map(String::toString)
-          .filter(StringUtils::isNotBlank)
-          .distinct()
-          .collect(Collectors.joining(" or ")));
+        filteredIds.stream().collect(Collectors.joining(" or ")));
 
       return encodeQuery(query).orElse(null);
     }
