@@ -1,4 +1,4 @@
-## 10.3.0 Unreleased
+## 10.3.0 2018-06-05
 
 * Support `users` interface 15.0 which removes `meta` property from proxy relationships (CIRC-113)
 
