@@ -4,8 +4,12 @@ import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.joda.time.DateTime;
 
+import static org.folio.circulation.support.HttpResult.failure;
+import static org.folio.circulation.support.HttpResult.success;
 import static org.folio.circulation.support.JsonPropertyFetcher.*;
 
 public class LoanPolicy {
@@ -39,8 +43,37 @@ public class LoanPolicy {
   }
 
   public HttpResult<Loan> renew(Loan loan, DateTime systemDate) {
-    return determineStrategy(true, systemDate).calculateDueDate(loan)
-      .map(dueDate -> loan.renew(dueDate, getId()));
+    //TODO: Create HttpResult wrapper that traps exceptions
+    try {
+      return rejectIfExceedsRenewalLimit(loan)
+          .next(v -> determineStrategy(true, systemDate).calculateDueDate(loan))
+          .map(dueDate -> loan.renew(dueDate, getId()));
+    }
+    catch(Exception e) {
+      return failure(new ServerErrorFailure(e));
+    }
+  }
+
+  private HttpResult<Loan> rejectIfExceedsRenewalLimit(Loan loan) {
+    if(hasUnlimitedRenewals()) {
+      return success(loan);
+    }
+    else if(loan.getRenewalCount() >= getRenewalLimit()) {
+      return failure(new ValidationErrorFailure(
+        "Item can't be renewed as it has reached it's maximum number of renewals",
+        "loanPolicyId", getId()));
+    }
+    else {
+      return success(loan);
+    }
+  }
+
+  private boolean hasUnlimitedRenewals() {
+    return getBooleanProperty(getRenewalsPolicy(), "unlimited");
+  }
+
+  private Integer getRenewalLimit() {
+    return getIntegerProperty(getRenewalsPolicy(), "numberAllowed", null);
   }
 
   private DueDateStrategy determineStrategy(boolean isRenewal, DateTime systemDate) {

@@ -146,7 +146,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     write(representation, "renewalCount", getRenewalCount() + 1);
   }
 
-  private Integer getRenewalCount() {
+  public Integer getRenewalCount() {
     return getIntegerProperty(representation, "renewalCount", 0);
   }
 

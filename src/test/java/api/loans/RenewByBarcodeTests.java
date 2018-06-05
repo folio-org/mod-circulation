@@ -516,7 +516,7 @@ public class RenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenLoanPolicyDoesNotExist()
+  public void cannotRenewWhenLoanPolicyDoesNotExist()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -536,5 +536,46 @@ public class RenewByBarcodeTests extends APITests {
 
     assertThat(response.getBody(), is(String.format(
       "Loan policy %s could not be found, please check loan rules", nonExistentloanPolicyId)));
+  }
+
+  @Test
+  public void cannotRenewWhenRenewalLimitReached()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    LoanPolicyBuilder limitedRenewalsPolicy = new LoanPolicyBuilder()
+      .withName("Limited Renewals Policy")
+      .rolling(Period.days(2))
+      .renewFromCurrentDueDate()
+      .limitedRenewals(3);
+
+    UUID limitedRenewalsPolicyId = loanPolicyClient.create(limitedRenewalsPolicy).getId();
+
+    //Need to remember in order to delete after test
+    policiesToDelete.add(limitedRenewalsPolicyId);
+
+    useLoanPolicyAsFallback(limitedRenewalsPolicyId);
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+      new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
+
+    loansFixture.renewLoan(smallAngryPlanet, jessica);
+
+    loansFixture.renewLoan(smallAngryPlanet, jessica);
+
+    loansFixture.renewLoan(smallAngryPlanet, jessica);
+
+    final Response response = loansFixture.attemptRenewal(smallAngryPlanet, jessica);
+
+    assertThat(response.getJson(), hasSoleErrorFor(
+      "loanPolicyId", limitedRenewalsPolicyId.toString()));
+
+    assertThat(response.getJson(), hasSoleErrorMessageContaining(
+        "Item can't be renewed as it has reached it's maximum number of renewals"));
   }
 }
