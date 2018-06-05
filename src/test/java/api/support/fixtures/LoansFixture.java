@@ -197,6 +197,7 @@ public class LoansFixture {
       .addHeader(OKAPI_URL, APITestSuite.okapiUrl().toString())
       .addHeader(TENANT, APITestSuite.TENANT_ID)
       .addHeader(TOKEN, APITestSuite.TOKEN)
+      .addHeader(USER_ID, APITestSuite.USER_ID)
       .addHeader(REQUEST_ID, APITestSuite.REQUEST_ID)
       .setAccept("application/json, text/plain")
       .setContentType("application/json")
