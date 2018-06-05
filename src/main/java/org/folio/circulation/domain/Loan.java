@@ -12,6 +12,7 @@ import static org.folio.circulation.domain.representations.LoanProperties.DUE_DA
 import static org.folio.circulation.domain.representations.LoanProperties.STATUS;
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 public class Loan implements ItemRelatedRecord, UserRelatedRecord {
@@ -81,13 +82,17 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return getNestedStringProperty(representation, STATUS, "name");
   }
 
+  public String getId() {
+    return getProperty(representation, "id");
+  }
+
   @Override
   public String getItemId() {
-    return representation.getString("itemId");
+    return getProperty(representation, "itemId");
   }
 
   public DateTime getLoanDate() {
-    return DateTime.parse(representation.getString("loanDate"));
+    return getDateTimeProperty(representation, "loanDate");
   }
 
   @Override

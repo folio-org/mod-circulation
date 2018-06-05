@@ -61,25 +61,24 @@ public class LoanRepository {
       .thenApply(r -> r.map(loanAndRelatedRecords::withLoan));
   }
 
-  public CompletableFuture<HttpResult<Loan>> updateLoan(
-    Loan loan) {
-
-    CompletableFuture<HttpResult<Loan>> onUpdated = new CompletableFuture<>();
-
+  public CompletableFuture<HttpResult<Loan>> updateLoan(Loan loan) {
     JsonObject storageLoan = mapToStorageRepresentation(loan, loan.getItem());
 
-    loansStorageClient.put(storageLoan.getString("id"), storageLoan, response -> {
+    final Function<Response, HttpResult<Loan>> mapResponse = response -> {
       if (response.getStatusCode() == 204) {
-        //TODO: Maybe refresh the representation from storage?
-        onUpdated.complete(success(loan));
+        return success(loan);
       } else {
-        onUpdated.complete(failure(
+        return failure(
           new ServerErrorFailure(String.format("Failed to update loan (%s:%s)",
-            response.getStatusCode(), response.getBody()))));
+            response.getStatusCode(), response.getBody())));
       }
-    });
+    };
 
-    return onUpdated;
+    return loansStorageClient.put(loan.getId(), storageLoan)
+      .thenApply(mapResponse)
+      .thenComposeAsync(r -> r.after(
+        //Fetch updated loan without having to get the item and the user again
+        l -> fetchLoan(l.getId(), loan.getItem(), loan.getUser())));
   }
 
   public CompletableFuture<HttpResult<Loan>> findOpenLoanByBarcode(FindByBarcodeQuery query) {
@@ -114,9 +113,24 @@ public class LoanRepository {
   }
 
   public CompletableFuture<HttpResult<Loan>> getById(String id) {
+    return fetchLoan(id)
+      .thenComposeAsync(this::fetchItem)
+      .thenComposeAsync(this::fetchUser)
+      .exceptionally(e -> failure(new ServerErrorFailure(e)));
+  }
+
+  private CompletableFuture<HttpResult<Loan>> fetchLoan(String id) {
+    return fetchLoan(id, null, null);
+  }
+
+  private CompletableFuture<HttpResult<Loan>> fetchLoan(
+    String id,
+    Item item,
+    User user) {
+
     final Function<Response, HttpResult<Loan>> mapResponse = response -> {
       if(response != null && response.getStatusCode() == 200) {
-        return success(Loan.from(response.getJson()));
+        return success(Loan.from(response.getJson(), item, user));
       }
       else {
         return failure(new ForwardOnFailure(response));
@@ -124,10 +138,7 @@ public class LoanRepository {
     };
 
     return loansStorageClient.get(id)
-      .thenApply(mapResponse)
-      .thenComposeAsync(this::fetchItem)
-      .thenComposeAsync(this::fetchUser)
-      .exceptionally(e -> failure(new ServerErrorFailure(e)));
+      .thenApply(mapResponse);
   }
 
   private CompletableFuture<HttpResult<Loan>> fetchItem(HttpResult<Loan> result) {

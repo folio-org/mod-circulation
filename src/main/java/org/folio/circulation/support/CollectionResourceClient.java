@@ -30,24 +30,41 @@ public class CollectionResourceClient {
     this.collectionRoot = collectionRoot;
   }
 
-  public void post(JsonObject resourceRepresentation,
-                   Consumer<Response> responseHandler) {
+  public void post(
+    JsonObject resourceRepresentation,
+    Consumer<Response> responseHandler) {
 
     client.post(collectionRoot,
       resourceRepresentation,
       responseConversationHandler(responseHandler));
   }
 
-  public void put(JsonObject resourceRepresentation,
-      Consumer<Response> responseHandler) {
+  public void put(
+    JsonObject resourceRepresentation,
+    Consumer<Response> responseHandler) {
 
     client.put(collectionRoot,
         resourceRepresentation,
         responseConversationHandler(responseHandler));
   }
 
-  public void put(String id, JsonObject resourceRepresentation,
-                     Consumer<Response> responseHandler) {
+  public CompletableFuture<Response> put(
+    String id,
+    JsonObject resourceRepresentation) {
+
+    CompletableFuture<Response> future = new CompletableFuture<>();
+
+    client.put(individualRecordUrl(id),
+      resourceRepresentation,
+      responseConversationHandler(future::complete));
+
+    return future;
+  }
+
+  public void put(
+    String id,
+    JsonObject resourceRepresentation,
+    Consumer<Response> responseHandler) {
 
     client.put(individualRecordUrl(id),
       resourceRepresentation,
