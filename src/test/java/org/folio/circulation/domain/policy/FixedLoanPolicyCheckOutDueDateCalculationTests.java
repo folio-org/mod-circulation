@@ -16,7 +16,7 @@ import static api.support.matchers.FailureMatcher.isValidationFailure;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-public class FixedLoanPolicyDueDateCalculationTests {
+public class FixedLoanPolicyCheckOutDueDateCalculationTests {
   @Test
   public void shouldUseOnlyScheduleAvailableWhenLoanDateFits() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -237,8 +237,8 @@ public class FixedLoanPolicyDueDateCalculationTests {
 
   @Test
   public void shouldFailWhenSchedulesCollectionIsNull() {
-    final FixedScheduleDueDateStrategy calculator =
-      new FixedScheduleDueDateStrategy(UUID.randomUUID().toString(),
+    final FixedScheduleCheckOutDueDateStrategy calculator =
+      new FixedScheduleCheckOutDueDateStrategy(UUID.randomUUID().toString(),
         "Example Fixed Schedule Loan Policy", null);
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
@@ -255,8 +255,8 @@ public class FixedLoanPolicyDueDateCalculationTests {
 
   @Test
   public void shouldFailWhenNoSchedules() {
-    final FixedScheduleDueDateStrategy calculator =
-      new FixedScheduleDueDateStrategy(UUID.randomUUID().toString(),
+    final FixedScheduleCheckOutDueDateStrategy calculator =
+      new FixedScheduleCheckOutDueDateStrategy(UUID.randomUUID().toString(),
         "Example Fixed Schedule Loan Policy", new NoFixedDueDateSchedules());
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);

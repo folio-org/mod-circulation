@@ -56,7 +56,7 @@ public class LoanPolicy {
       if(isRenewal) {
         return new RollingRenewalDueDateStrategy(getId(), getName(),
           systemDate, getRenewFrom(), getRenewalPeriod(loansPolicy, renewalsPolicy),
-          getRenewalDueDateLimitSchedule());
+          getRenewalDueDateLimitSchedules());
       }
       else {
         return new RollingCheckOutDueDateStrategy(getId(), getName(),
@@ -64,8 +64,14 @@ public class LoanPolicy {
       }
     }
     else if(isFixed(loansPolicy)) {
-      return new FixedScheduleDueDateStrategy(getId(), getName(),
-        fixedDueDateSchedules);
+      if(isRenewal) {
+        return new FixedScheduleRenewalDueDateStrategy(getId(), getName(),
+          getRenewalFixedDueDateSchedules(), systemDate);
+      }
+      else {
+        return new FixedScheduleCheckOutDueDateStrategy(getId(), getName(),
+          fixedDueDateSchedules);
+      }
     }
     else {
       return new UnknownDueDateStrategy(getId(), getName(),
@@ -81,8 +87,8 @@ public class LoanPolicy {
     return representation.getJsonObject("renewalsPolicy");
   }
 
-  private FixedDueDateSchedules getRenewalDueDateLimitSchedule() {
-    return useDifferentPeriod(getRenewalsPolicy())
+  private FixedDueDateSchedules getRenewalDueDateLimitSchedules() {
+    return useDifferentPeriod()
       ? alternateRenewalFixedDueDateSchedules
       : fixedDueDateSchedules;
   }
@@ -91,7 +97,7 @@ public class LoanPolicy {
     JsonObject loansPolicy,
     JsonObject renewalsPolicy) {
 
-    return useDifferentPeriod(renewalsPolicy)
+    return useDifferentPeriod()
       ? getPeriod(renewalsPolicy)
       : getPeriod(loansPolicy);
   }
@@ -102,12 +108,18 @@ public class LoanPolicy {
     return Period.from(duration, interval);
   }
 
-  private Boolean useDifferentPeriod(JsonObject renewalsPolicy) {
-    return getBooleanProperty(renewalsPolicy, "differentPeriod");
+  private Boolean useDifferentPeriod() {
+    return getBooleanProperty(getRenewalsPolicy(), "differentPeriod");
   }
 
   private String getRenewFrom() {
     return getNestedStringProperty(representation, "renewalsPolicy", "renewFromId");
+  }
+
+  private FixedDueDateSchedules getRenewalFixedDueDateSchedules() {
+    return useDifferentPeriod()
+      ? alternateRenewalFixedDueDateSchedules
+      : fixedDueDateSchedules;
   }
 
   private String getProfileId(JsonObject loansPolicy) {
@@ -142,6 +154,11 @@ public class LoanPolicy {
 
   LoanPolicy withAlternateRenewalSchedules(FixedDueDateSchedules renewalSchedules) {
     return new LoanPolicy(representation, fixedDueDateSchedules, renewalSchedules);
+  }
+
+  //TODO: potentially remove this, when builder can create class or JSON representation
+  LoanPolicy withAlternateRenewalSchedules(JsonObject renewalSchedules) {
+    return withAlternateRenewalSchedules(FixedDueDateSchedules.from(renewalSchedules));
   }
 
   public String getId() {

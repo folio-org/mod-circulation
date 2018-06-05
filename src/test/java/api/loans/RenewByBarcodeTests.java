@@ -14,6 +14,7 @@ import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Seconds;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.MalformedURLException;
@@ -298,6 +299,65 @@ public class RenewByBarcodeTests extends APITests {
 
     assertThat("last loan policy should be stored",
       loan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
+
+    assertThat("due date should be limited by schedule",
+      loan.getString("dueDate"),
+      isEquivalentTo(new DateTime(2018, 3, 31, 23, 59, 59, DateTimeZone.UTC)));
+  }
+
+  @Test
+  @Ignore("Need to be able to inject system date to run this reliably")
+  public void canCheckOutUsingFixedDueDateLoanPolicy()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
+      .withName("February and March Only Due Date Limit")
+      .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 2))
+      .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 3));
+
+    final UUID fixedDueDateSchedulesId = fixedDueDateScheduleClient.create(
+      fixedDueDateSchedules).getId();
+
+    //Need to remember in order to delete after test
+    schedulesToDelete.add(fixedDueDateSchedulesId);
+
+    LoanPolicyBuilder dueDateLimitedPolicy = new LoanPolicyBuilder()
+      .withName("Fixed Due Date Policy")
+      .fixed(fixedDueDateSchedulesId)
+      .renewFromSystemDate();
+
+    UUID fixedDueDatePolicyId = loanPolicyClient.create(dueDateLimitedPolicy).getId();
+
+    //Need to remember in order to delete after test
+    policiesToDelete.add(fixedDueDatePolicyId);
+
+    useLoanPolicyAsFallback(fixedDueDatePolicyId);
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+
+    final DateTime loanDate = new DateTime(2018, 2, 10, 34, 23, 12, DateTimeZone.UTC);
+
+    loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .at(loanDate));
+
+    //TODO: Need to be able to inject system date here
+    final DateTime renewalDate = new DateTime(2018, 3, 14, 9, 21, 32, DateTimeZone.UTC);
+
+    //e.g. Clock.freeze(renewalDate)
+
+    final IndividualResource response = loansFixture.renewLoan(smallAngryPlanet, steve);
+
+    final JsonObject loan = response.getJson();
+
+    assertThat("last loan policy should be stored",
+      loan.getString("loanPolicyId"), is(fixedDueDatePolicyId.toString()));
 
     assertThat("due date should be limited by schedule",
       loan.getString("dueDate"),

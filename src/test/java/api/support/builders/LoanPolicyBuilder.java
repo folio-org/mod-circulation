@@ -198,7 +198,7 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       null,
       fixedDueDateScheduleId,
       this.unlimitedRenewals,
-      this.renewFrom,
+      RENEW_FROM_SYSTEM_DATE,
       this.renewWithDifferentPeriod,
       this.differentRenewalPeriod,
       this.alternateFixedDueDateScheduleId);
@@ -267,7 +267,6 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
   }
 
   public LoanPolicyBuilder renewWith(Period period, UUID dueDateLimitScheduleId) {
-
     return new LoanPolicyBuilder(
       this.id,
       this.name,
@@ -280,5 +279,24 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       true,
       period.asJson(),
       dueDateLimitScheduleId);
+  }
+
+  public Builder renewWith(UUID fixedDueDateScheduleId) {
+    if(!Objects.equals(profile, "Fixed")) {
+      throw new IllegalArgumentException("Can only be used with fixed profile");
+    }
+
+    return new LoanPolicyBuilder(
+      this.id,
+      this.name,
+      this.description,
+      this.profile,
+      this.loanPeriod,
+      this.fixedDueDateScheduleId,
+      this.unlimitedRenewals,
+      this.renewFrom,
+      true,
+      null,
+      fixedDueDateScheduleId);
   }
 }
