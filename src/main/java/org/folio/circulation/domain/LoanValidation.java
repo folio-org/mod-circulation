@@ -11,6 +11,8 @@ import java.util.concurrent.CompletableFuture;
 
 import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
+import static org.folio.circulation.support.HttpResult.failure;
+import static org.folio.circulation.support.HttpResult.success;
 
 public class LoanValidation {
   private static final String ITEM_BARCODE_PROPERTY_NAME = "itemBarcode";
@@ -26,7 +28,7 @@ public class LoanValidation {
       if(loan.getLoan().getItem().isNotFound()) {
         final String itemId = loan.getLoan().getItemId();
 
-        return HttpResult.failure(new ValidationErrorFailure(
+        return failure(ValidationErrorFailure.error(
           "Item does not exist", ITEM_ID, itemId));
       }
       else {
@@ -40,7 +42,7 @@ public class LoanValidation {
 
     return result.next(loanAndRelatedRecords -> {
       if(loanAndRelatedRecords.getLoan().getItem().isNotFound()) {
-        return HttpResult.failure(new ValidationErrorFailure(
+        return failure(ValidationErrorFailure.error(
           String.format("No item with barcode %s exists", barcode),
           ITEM_BARCODE_PROPERTY_NAME, barcode));
       }
@@ -69,7 +71,7 @@ public class LoanValidation {
       final User requestingUser = loan.getLoan().getUser();
 
       if(hasAwaitingPickupRequestForOtherPatron(requestQueue, requestingUser)) {
-        return HttpResult.failure(new ValidationErrorFailure(
+        return failure(ValidationErrorFailure.error(
           "User checking out must be requester awaiting pickup",
           "userId", loan.getLoan().getUserId()));
       }
@@ -88,7 +90,7 @@ public class LoanValidation {
       final User requestingUser = loan.getLoan().getUser();
 
       if(hasAwaitingPickupRequestForOtherPatron(requestQueue, requestingUser)) {
-        return HttpResult.failure(new ValidationErrorFailure(
+        return failure(ValidationErrorFailure.error(
           "User checking out must be requester awaiting pickup",
           USER_BARCODE_PROPERTY_NAME, barcode));
       }
@@ -106,19 +108,19 @@ public class LoanValidation {
         final User requestingUser = loan.getLoan().getUser();
 
         if (requestingUser.canDetermineStatus()) {
-          return HttpResult.failure(new ValidationErrorFailure(
+          return failure(ValidationErrorFailure.error(
             "Cannot determine if user is active or not",
             USER_BARCODE_PROPERTY_NAME, barcode));
         }
         if (requestingUser.isInactive()) {
-          return HttpResult.failure(new ValidationErrorFailure(
+          return failure(ValidationErrorFailure.error(
             "Cannot check out to inactive user",
             USER_BARCODE_PROPERTY_NAME, barcode));
         } else {
-          return HttpResult.success(loan);
+          return success(loan);
         }
       } catch (Exception e) {
-        return HttpResult.failure(new ServerErrorFailure(e));
+        return failure(new ServerErrorFailure(e));
       }
     });
   }
@@ -133,12 +135,12 @@ public class LoanValidation {
         return loanAndRelatedRecords;
       }
       else if (proxyingUser.canDetermineStatus()) {
-        return HttpResult.failure(new ValidationErrorFailure(
+        return failure(ValidationErrorFailure.error(
           "Cannot determine if proxying user is active or not",
           PROXY_USER_BARCODE_PROPERTY_NAME, barcode));
       }
       else if(proxyingUser.isInactive()) {
-        return HttpResult.failure(new ValidationErrorFailure(
+        return failure(ValidationErrorFailure.error(
           "Cannot check out via inactive proxying user",
           PROXY_USER_BARCODE_PROPERTY_NAME, barcode));
       }
@@ -181,12 +183,12 @@ public class LoanValidation {
     return loanRepository.hasOpenLoan(itemId)
       .thenApply(r -> r.next(openLoan -> {
         if(openLoan) {
-          return HttpResult.failure(new ValidationErrorFailure(
+          return failure(ValidationErrorFailure.error(
             "Cannot check out item that already has an open loan",
             ITEM_BARCODE_PROPERTY_NAME, barcode));
         }
         else {
-          return HttpResult.success(loanAndRelatedRecords);
+          return success(loanAndRelatedRecords);
         }
       }));
   }
@@ -198,7 +200,7 @@ public class LoanValidation {
       final Item records = loan.getLoan().getItem();
 
       if(records.isCheckedOut()) {
-        return HttpResult.failure(new ValidationErrorFailure(
+        return failure(ValidationErrorFailure.error(
           "Item is already checked out", "itemId", records.getItemId()));
       }
       else {
@@ -213,7 +215,7 @@ public class LoanValidation {
     //TODO: Extract duplication with above
     return loanAndRelatedRecords.next(loan -> {
       if(loan.getLoan().getItem().isCheckedOut()) {
-        return HttpResult.failure(new ValidationErrorFailure(
+        return failure(ValidationErrorFailure.error(
           "Item is already checked out", ITEM_BARCODE_PROPERTY_NAME, barcode));
       }
       else {

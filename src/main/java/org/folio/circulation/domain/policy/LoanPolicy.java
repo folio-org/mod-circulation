@@ -59,7 +59,7 @@ public class LoanPolicy {
     DateTime provisionalDueDate,
     Loan loan) {
 
-    final ValidationErrorFailure error = new ValidationErrorFailure(
+    final ValidationErrorFailure error = ValidationErrorFailure.error(
       "Renewal at this time would not change the due date",
       "loanPolicyId", getId());
 
@@ -79,7 +79,7 @@ public class LoanPolicy {
       return success(loan);
     }
     else if(loan.getRenewalCount() >= getRenewalLimit()) {
-      return failure(new ValidationErrorFailure(
+      return failure(ValidationErrorFailure.error(
         "Item can't be renewed as it has reached it's maximum number of renewals",
         "loanPolicyId", getId()));
     }

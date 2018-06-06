@@ -54,7 +54,7 @@ public class CheckOutByBarcodeResource extends Resource {
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
-      clients, () -> new ValidationErrorFailure(
+      clients, () -> ValidationErrorFailure.error(
       "Cannot check out item via proxy when relationship is invalid", "proxyUserBarcode",
       proxyUserBarcode));
 

@@ -59,7 +59,7 @@ public class UserRepository {
         final Optional<JsonObject> firstUser = wrappedUsers.getRecords().stream().findFirst();
 
         return firstUser.map(User::new).map(HttpResult::success).orElseGet(
-          () -> HttpResult.failure(new ValidationErrorFailure(
+          () -> HttpResult.failure(ValidationErrorFailure.error(
           "Could not find user with matching barcode", propertyName, barcode)));
       }
     };

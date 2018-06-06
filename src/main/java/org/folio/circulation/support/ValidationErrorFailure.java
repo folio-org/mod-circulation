@@ -20,7 +20,7 @@ public class ValidationErrorFailure implements HttpFailure {
     return HttpResult.failure(error(reason, propertyName, propertyValue));
   }
 
-  public static <T> ValidationErrorFailure error(
+  public static ValidationErrorFailure error(
     String reason,
     String propertyName,
     String propertyValue) {
@@ -28,7 +28,7 @@ public class ValidationErrorFailure implements HttpFailure {
     return new ValidationErrorFailure(reason, propertyName, propertyValue);
   }
 
-  public ValidationErrorFailure(
+  private ValidationErrorFailure(
     String reason,
     String propertyName,
     String propertyValue) {

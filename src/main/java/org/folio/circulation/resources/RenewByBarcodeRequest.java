@@ -48,7 +48,7 @@ public class RenewByBarcodeRequest implements FindByBarcodeQuery {
 
   @Override
   public ValidationErrorFailure userDoesNotMatchError() {
-    return new ValidationErrorFailure("Cannot renew item checked out to different user",
+    return ValidationErrorFailure.error("Cannot renew item checked out to different user",
       "userBarcode", getUserBarcode());
   }
 

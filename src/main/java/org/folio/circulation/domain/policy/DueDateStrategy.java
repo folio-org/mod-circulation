@@ -29,7 +29,7 @@ abstract class DueDateStrategy {
   }
 
   ValidationErrorFailure validationError(String reason) {
-    return new ValidationErrorFailure(
+    return ValidationErrorFailure.error(
       String.format(
         "%s Please review \"%s\" before retrying", reason, loanPolicyName),
       "loanPolicyId", this.loanPolicyId);

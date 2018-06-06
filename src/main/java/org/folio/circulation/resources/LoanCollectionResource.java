@@ -43,7 +43,7 @@ public class LoanCollectionResource extends CollectionResource {
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
-      clients, () -> new ValidationErrorFailure(
+      clients, () -> ValidationErrorFailure.error(
         "proxyUserId is not valid", "proxyUserId",
         loan.getProxyUserId()));
 
@@ -88,7 +88,7 @@ public class LoanCollectionResource extends CollectionResource {
     final UpdateItem updateItem = new UpdateItem(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
-      clients, () -> new ValidationErrorFailure(
+      clients, () -> ValidationErrorFailure.error(
         "proxyUserId is not valid", "proxyUserId",
         loan.getProxyUserId()));
 
@@ -204,7 +204,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     return result.next(loan -> {
       if(loan.getLoan().getItem().doesNotHaveHolding()) {
-        return HttpResult.failure(new ValidationErrorFailure(
+        return HttpResult.failure(ValidationErrorFailure.error(
           "Holding does not exist", LoanProperties.ITEM_ID, loan.getLoan().getItemId()));
       }
       else {

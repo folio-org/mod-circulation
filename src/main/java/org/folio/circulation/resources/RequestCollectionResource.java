@@ -53,7 +53,7 @@ public class RequestCollectionResource extends CollectionResource {
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateLoanActionHistory updateLoanActionHistory = new UpdateLoanActionHistory(clients);
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
-      clients, () -> new ValidationErrorFailure(
+      clients, () -> ValidationErrorFailure.error(
       "proxyUserId is not valid", RequestProperties.PROXY_USER_ID,
       request.getProxyUserId()));
 
@@ -89,7 +89,7 @@ public class RequestCollectionResource extends CollectionResource {
     final UserRepository userRepository = new UserRepository(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
-      clients, () -> new ValidationErrorFailure(
+      clients, () -> ValidationErrorFailure.error(
       "proxyUserId is not valid", RequestProperties.PROXY_USER_ID,
       request.getProxyUserId()));
 
@@ -347,7 +347,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     return result.next(requestAndRelatedRecords -> {
       if(requestAndRelatedRecords.getInventoryRecords().isNotFound()) {
-        return HttpResult.failure(new ValidationErrorFailure(
+        return HttpResult.failure(ValidationErrorFailure.error(
           "Item does not exist", "itemId",
           requestAndRelatedRecords.getRequest().getItemId()));
       }
@@ -366,7 +366,7 @@ public class RequestCollectionResource extends CollectionResource {
       RequestType requestType = RequestType.from(request);
 
       if (!requestType.canCreateRequestForItem(requestAndRelatedRecords.getInventoryRecords())) {
-        return HttpResult.failure(new ValidationErrorFailure(
+        return HttpResult.failure(ValidationErrorFailure.error(
           String.format("Item is not %s, %s or %s", CHECKED_OUT,
             CHECKED_OUT_HELD, CHECKED_OUT_RECALLED),
           "itemId", request.getItemId()

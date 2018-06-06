@@ -38,21 +38,6 @@ public class JsonResponse {
 
   public static void unprocessableEntity(
     HttpServerResponse response,
-    String message,
-    String propertyName,
-    String value) {
-
-    ValidationError error = new ValidationError(message, propertyName, value);
-
-    JsonArray errors = new JsonArray();
-
-    errors.add(error.toJson());
-
-    response(response, new JsonObject().put("errors", errors), 422);
-  }
-
-  public static void unprocessableEntity(
-    HttpServerResponse response,
     List<ValidationError> errors) {
 
     JsonArray errorsArray = new JsonArray();

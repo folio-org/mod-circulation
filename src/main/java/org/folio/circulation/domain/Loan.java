@@ -10,6 +10,7 @@ import org.joda.time.DateTime;
 
 import static org.folio.circulation.domain.representations.LoanProperties.DUE_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.STATUS;
+import static org.folio.circulation.support.HttpResult.failure;
 import static org.folio.circulation.support.JsonPropertyFetcher.*;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
@@ -57,7 +58,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public HttpResult<Void> isValidStatus() {
     if(!representation.containsKey(STATUS)) {
-      return HttpResult.failure(new ServerErrorFailure(
+      return failure(new ServerErrorFailure(
         "Loan does not have a status"));
     }
 
@@ -67,7 +68,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
         return HttpResult.success(null);
 
       default:
-        return HttpResult.failure(new ValidationErrorFailure(
+        return failure(ValidationErrorFailure.error(
           "Loan status must be \"Open\" or \"Closed\"", STATUS, getStatus()));
     }
   }
