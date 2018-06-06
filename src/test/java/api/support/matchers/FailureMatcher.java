@@ -23,7 +23,7 @@ public class FailureMatcher {
         else if(failedResult.cause() instanceof ValidationErrorFailure) {
           final ValidationErrorFailure cause = (ValidationErrorFailure) failedResult.cause();
 
-          return cause.hasReason(expectedReason);
+          return cause.hasErrorWithReason(expectedReason);
         }
         else {
           return false;

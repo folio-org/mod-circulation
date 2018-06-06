@@ -26,4 +26,10 @@ public class ValidationError {
       .put("message", reason)
       .put("parameters", parameters);
   }
+
+  @Override
+  public String toString() {
+    return String.format("reason: \"%s\", " +
+        "key: \"%s\" value: \"%s\"", reason, key, value);
+  }
 }

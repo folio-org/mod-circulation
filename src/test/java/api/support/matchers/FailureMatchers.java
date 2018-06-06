@@ -25,14 +25,14 @@ public class FailureMatchers {
         if(failure.cause() instanceof ValidationErrorFailure) {
           ValidationErrorFailure error = (ValidationErrorFailure) failure.cause();
 
-          if(!error.isForKey(propertyName)) {
+          if(!error.hasErrorForKey(propertyName)) {
             description.appendText("not for ").appendValue(propertyName).appendText(" property");
             return false;
           }
 
           description.appendValue(error.toString());
 
-          return error.hasReason(reason);
+          return error.hasErrorWithReason(reason);
         }
         else {
           description.appendText("is not a validation error failure");

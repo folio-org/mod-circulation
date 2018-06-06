@@ -6,10 +6,14 @@ import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.http.server.ValidationError;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.stream.Collectors;
+
 import static org.folio.circulation.support.http.server.JsonResponse.response;
 
 public class ValidationErrorFailure implements HttpFailure {
-  private final ValidationError error;
+  private final Collection<ValidationError> errors = new ArrayList<>();
 
   public static <T> HttpResult<T> failure(
     String reason,
@@ -24,15 +28,14 @@ public class ValidationErrorFailure implements HttpFailure {
     String propertyName,
     String propertyValue) {
 
-    return new ValidationErrorFailure(reason, propertyName, propertyValue);
+    new ArrayList<>();
+
+    return new ValidationErrorFailure(
+      new ValidationError(reason, propertyName, propertyValue));
   }
 
-  private ValidationErrorFailure(
-    String reason,
-    String propertyName,
-    String propertyValue) {
-
-    this.error = new ValidationError(reason, propertyName, propertyValue);
+  private ValidationErrorFailure(ValidationError error) {
+    this.errors.add(error);
   }
 
   @Override
@@ -41,25 +44,29 @@ public class ValidationErrorFailure implements HttpFailure {
   }
 
   private JsonObject asJson() {
-    JsonArray errors = new JsonArray();
+    JsonArray mappedErrors = new JsonArray(
+      errors.stream()
+      .map(ValidationError::toJson)
+      .collect(Collectors.toList()));
 
-    errors.add(error.toJson());
-
-    return new JsonObject().put("errors", errors);
+    return new JsonObject().put("errors", mappedErrors);
   }
 
   @Override
   public String toString() {
-    return String.format("Validation failure, reason: \"%s\", " +
-        "key: \"%s\" value: \"%s\"",
-      error.reason, error.key, error.value);
+    return String.format("Validation failure:\n%s",
+      errors.stream()
+        .map(ValidationError::toString)
+        .collect(Collectors.joining("\n")));
   }
 
-  public boolean hasReason(String reason) {
-    return StringUtils.equals(error.reason, reason);
+  public boolean hasErrorWithReason(String reason) {
+    return errors.stream()
+      .anyMatch(error -> StringUtils.equals(error.reason, reason));
   }
 
-  public boolean isForKey(String key) {
-    return StringUtils.equals(error.key, key);
+  public boolean hasErrorForKey(String key) {
+    return errors.stream()
+      .anyMatch(error -> StringUtils.equals(error.key, key));
   }
 }
