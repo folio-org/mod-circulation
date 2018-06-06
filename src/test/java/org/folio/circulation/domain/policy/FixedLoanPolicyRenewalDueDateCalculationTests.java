@@ -80,20 +80,24 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
   @Test
   public void shouldUseFirstScheduleAvailableWhenLoanDateFits() {
-    final FixedDueDateSchedule expectedSchedule = FixedDueDateSchedule.wholeMonth(2018, 1);
+    final FixedDueDateSchedule expectedSchedule = FixedDueDateSchedule.wholeMonth(2018, 2);
 
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .create())
       .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
         .addSchedule(expectedSchedule)
-        .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 2))
         .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 3))
+        .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 4))
         .create());
 
-    Loan loan = existingLoan();
+    Loan loan = new LoanBuilder()
+      .open()
+      .withLoanDate(new DateTime(2018, 1, 20, 13, 45, 21, DateTimeZone.UTC))
+      .withDueDate(new DateTime(2018, 1, 31, 23, 59, 59, DateTimeZone.UTC))
+      .asDomainObject();
 
-    DateTime renewalDate = new DateTime(2018, 1, 8, 11, 14, 54, DateTimeZone.UTC);
+    DateTime renewalDate = new DateTime(2018, 2, 8, 11, 14, 54, DateTimeZone.UTC);
 
     final HttpResult<Loan> result = loanPolicy.renew(loan, renewalDate);
 
@@ -190,6 +194,54 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     assertThat(result, isValidationFailure(
       "Item can't be renewed as the renewal date falls outside of the date ranges in the loan policy. " +
         "Please review \"Example Fixed Schedule Loan Policy\" before retrying"));
+  }
+
+  @Test
+  public void shouldFailWhenRenewalWouldNotChangeDueDate() {
+    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
+      .fixed(UUID.randomUUID())
+      .withName("Example Fixed Schedule Loan Policy")
+      .create())
+      .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
+        .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 1))
+        .create());
+
+    Loan loan = new LoanBuilder()
+      .open()
+      .withLoanDate(new DateTime(2018, 1, 20, 13, 45, 21, DateTimeZone.UTC))
+      .withDueDate(new DateTime(2018, 1, 31, 23, 59, 59, DateTimeZone.UTC))
+      .asDomainObject();
+
+    DateTime renewalDate = new DateTime(2018, 1, 3, 8, 12, 32, DateTimeZone.UTC);
+
+    final HttpResult<Loan> result = loanPolicy.renew(loan, renewalDate);
+
+    assertThat(result,
+      isValidationFailure("Renewal at this time would not change the due date"));
+  }
+
+  @Test
+  public void shouldFailWhenRenewalWouldMeanEarlierDueDate() {
+    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
+      .fixed(UUID.randomUUID())
+      .withName("Example Fixed Schedule Loan Policy")
+      .create())
+      .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
+        .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 1))
+        .create());
+
+    Loan loan = new LoanBuilder()
+      .open()
+      .withLoanDate(new DateTime(2018, 1, 20, 13, 45, 21, DateTimeZone.UTC))
+      .withDueDate(new DateTime(2018, 2, 28, 23, 59, 59, DateTimeZone.UTC))
+      .asDomainObject();
+
+    DateTime renewalDate = new DateTime(2018, 1, 3, 8, 12, 32, DateTimeZone.UTC);
+
+    final HttpResult<Loan> result = loanPolicy.renew(loan, renewalDate);
+
+    assertThat(result,
+      isValidationFailure("Renewal at this time would not change the due date"));
   }
 
   @Test

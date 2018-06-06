@@ -47,10 +47,30 @@ public class LoanPolicy {
     try {
       return rejectIfExceedsRenewalLimit(loan)
           .next(v -> determineStrategy(true, systemDate).calculateDueDate(loan))
+          .next(dueDate -> rejectIfDueDateEarlierOrUnchanged(dueDate, loan))
           .map(dueDate -> loan.renew(dueDate, getId()));
     }
     catch(Exception e) {
       return failure(new ServerErrorFailure(e));
+    }
+  }
+
+  private HttpResult<DateTime> rejectIfDueDateEarlierOrUnchanged(
+    DateTime provisionalDueDate,
+    Loan loan) {
+
+    final ValidationErrorFailure error = new ValidationErrorFailure(
+      "Renewal at this time would not change the due date",
+      "loanPolicyId", getId());
+
+    if(provisionalDueDate.isEqual(loan.getDueDate())) {
+      return failure(error);
+    }
+    else if(provisionalDueDate.isBefore(loan.getDueDate())) {
+      return failure(error);
+    }
+    else {
+      return HttpResult.success(provisionalDueDate);
     }
   }
 

@@ -362,6 +362,56 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
         "Please review \"One Month\" before retrying"));
   }
 
+  @Test
+  public void shouldFailWhenRenewalWouldNotChangeDueDate() {
+    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
+      .rolling(Period.weeks(2))
+      .withName("Example Rolling Loan Policy")
+      .renewFromSystemDate()
+      .renewWith(Period.days(3))
+      .create());
+
+    final DateTime initialDueDate = new DateTime(2018, 1, 17, 13, 45, 21, DateTimeZone.UTC);
+
+    Loan loan = new LoanBuilder()
+      .open()
+      .withLoanDate(new DateTime(2018, 1, 20, 13, 45, 21, DateTimeZone.UTC))
+      .withDueDate(initialDueDate)
+      .asDomainObject();
+
+    DateTime renewalDate = initialDueDate.minusDays(3);
+
+    final HttpResult<Loan> result = loanPolicy.renew(loan, renewalDate);
+
+    assertThat(result,
+      isValidationFailure("Renewal at this time would not change the due date"));
+  }
+
+  @Test
+  public void shouldFailWhenRenewalWouldMeanEarlierDueDate() {
+    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
+      .rolling(Period.weeks(2))
+      .withName("Example Rolling Loan Policy")
+      .renewFromSystemDate()
+      .renewWith(Period.days(3))
+      .create());
+
+    final DateTime initialDueDate = new DateTime(2018, 1, 17, 13, 45, 21, DateTimeZone.UTC);
+
+    Loan loan = new LoanBuilder()
+      .open()
+      .withLoanDate(new DateTime(2018, 1, 20, 13, 45, 21, DateTimeZone.UTC))
+      .withDueDate(initialDueDate)
+      .asDomainObject();
+
+    DateTime renewalDate = initialDueDate.minusDays(4);
+
+    final HttpResult<Loan> result = loanPolicy.renew(loan, renewalDate);
+
+    assertThat(result,
+      isValidationFailure("Renewal at this time would not change the due date"));
+  }
+
   private Loan loanFor(DateTime loanDate) {
     return loanFor(loanDate, loanDate.plusWeeks(2));
   }

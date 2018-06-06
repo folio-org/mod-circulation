@@ -166,7 +166,7 @@ public class RenewByBarcodeTests extends APITests {
 
     LoanPolicyBuilder dueDateLimitedPolicy = new LoanPolicyBuilder()
       .withName("Due Date Limited Rolling Policy")
-      .rolling(Period.weeks(5))
+      .rolling(Period.weeks(2))
       .limitedBySchedule(dueDateLimitScheduleId)
       .renewFromCurrentDueDate();
 
@@ -180,7 +180,7 @@ public class RenewByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
+    final DateTime loanDate = new DateTime(2018, 3, 7, 11, 43, 54, DateTimeZone.UTC);
 
     loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -280,7 +280,7 @@ public class RenewByBarcodeTests extends APITests {
 
     LoanPolicyBuilder dueDateLimitedPolicy = new LoanPolicyBuilder()
       .withName("Due Date Limited Rolling Policy")
-      .rolling(Period.weeks(5))
+      .rolling(Period.weeks(3))
       .renewFromCurrentDueDate()
       .renewWith(Period.days(8), dueDateLimitScheduleId);
 
@@ -294,7 +294,7 @@ public class RenewByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
+    final DateTime loanDate = new DateTime(2018, 3, 4, 11, 43, 54, DateTimeZone.UTC);
 
     loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
