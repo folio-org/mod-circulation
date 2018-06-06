@@ -16,7 +16,7 @@ import org.junit.runner.RunWith;
 
 import java.util.UUID;
 
-import static api.support.matchers.FailureMatcher.isValidationFailure;
+import static api.support.matchers.FailureMatcher.hasValidationFailure;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
@@ -170,7 +170,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     final HttpResult<Loan> result = loanPolicy.renew(loan, DateTime.now());
 
-    assertThat(result, isValidationFailure(
+    assertThat(result, hasValidationFailure(
       "Item can't be renewed as the interval \"Unknown\" in the loan policy is not recognised. " +
         "Please review \"Invalid Loan Policy\" before retrying"));
   }
@@ -192,7 +192,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     final HttpResult<Loan> result = loanPolicy.renew(loan, DateTime.now());
 
-    assertThat(result, isValidationFailure(
+    assertThat(result, hasValidationFailure(
       "Item can't be renewed as the loan period in the loan policy is not recognised. " +
         "Please review \"Invalid Loan Policy\" before retrying"));
   }
@@ -214,7 +214,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     final HttpResult<Loan> result = loanPolicy.renew(loan, DateTime.now());
 
-    assertThat(result, isValidationFailure(
+    assertThat(result, hasValidationFailure(
       "Item can't be renewed as the loan period in the loan policy is not recognised. " +
         "Please review \"Invalid Loan Policy\" before retrying"));
   }
@@ -236,7 +236,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     final HttpResult<Loan> result = loanPolicy.renew(loan, DateTime.now());
 
-    assertThat(result, isValidationFailure(
+    assertThat(result, hasValidationFailure(
       "Item can't be renewed as the loan period in the loan policy is not recognised. " +
         "Please review \"Invalid Loan Policy\" before retrying"));
   }
@@ -260,7 +260,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     final HttpResult<Loan> result = loanPolicy.renew(loan, DateTime.now());
 
-    assertThat(result, isValidationFailure(
+    assertThat(result, hasValidationFailure(
       String.format(
         "Item can't be renewed as the duration \"%s\" in the loan policy is invalid. " +
         "Please review \"Invalid Loan Policy\" before retrying", duration)));
@@ -334,7 +334,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     final HttpResult<Loan> result = loanPolicy.renew(loan, DateTime.now());
 
-    assertThat(result, isValidationFailure(
+    assertThat(result, hasValidationFailure(
       "Item can't be renewed as the loan date falls outside of the date ranges in the loan policy. " +
         "Please review \"One Month\" before retrying"));
   }
@@ -357,7 +357,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     final HttpResult<Loan> result = loanPolicy.renew(loan, DateTime.now());
 
-    assertThat(result, isValidationFailure(
+    assertThat(result, hasValidationFailure(
       "Item can't be renewed as the loan date falls outside of the date ranges in the loan policy. " +
         "Please review \"One Month\" before retrying"));
   }
@@ -384,7 +384,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     final HttpResult<Loan> result = loanPolicy.renew(loan, renewalDate);
 
     assertThat(result,
-      isValidationFailure("Renewal at this time would not change the due date"));
+      hasValidationFailure("Renewal at this time would not change the due date"));
   }
 
   @Test
@@ -409,7 +409,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     final HttpResult<Loan> result = loanPolicy.renew(loan, renewalDate);
 
     assertThat(result,
-      isValidationFailure("Renewal at this time would not change the due date"));
+      hasValidationFailure("Renewal at this time would not change the due date"));
   }
 
   private Loan loanFor(DateTime loanDate) {

@@ -8,7 +8,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
-import static api.support.matchers.FailureMatcher.isValidationFailure;
+import static api.support.matchers.FailureMatcher.hasValidationFailure;
 import static org.junit.Assert.assertThat;
 
 public class UnknownLoanPolicyProfileTests {
@@ -28,7 +28,7 @@ public class UnknownLoanPolicyProfileTests {
 
     final HttpResult<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
 
-    assertThat(result, isValidationFailure(
+    assertThat(result, hasValidationFailure(
       "Item can't be checked out as profile \"Unknown profile\" in the loan policy is not recognised. " +
         "Please review \"Invalid Loan Policy\" before retrying"));
   }
@@ -49,7 +49,7 @@ public class UnknownLoanPolicyProfileTests {
 
     final HttpResult<Loan> result = loanPolicy.renew(loan, DateTime.now());
 
-    assertThat(result, isValidationFailure(
+    assertThat(result, hasValidationFailure(
       "Item can't be renewed as profile \"Unknown profile\" in the loan policy is not recognised. " +
         "Please review \"Invalid Loan Policy\" before retrying"));
   }

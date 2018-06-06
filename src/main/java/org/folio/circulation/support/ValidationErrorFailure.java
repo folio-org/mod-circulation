@@ -65,12 +65,17 @@ public class ValidationErrorFailure implements HttpFailure {
   }
 
   public boolean hasErrorWithReason(String reason) {
+    //TODO: Should be equals rather than contains
     return errors.stream()
-      .anyMatch(error -> StringUtils.equals(error.reason, reason));
+      .anyMatch(error -> StringUtils.containsIgnoreCase(error.reason, reason));
   }
 
   public boolean hasErrorForKey(String key) {
     return errors.stream()
       .anyMatch(error -> StringUtils.equals(error.key, key));
+  }
+
+  public Collection<ValidationError> getErrors() {
+    return new ArrayList<>(errors);
   }
 }

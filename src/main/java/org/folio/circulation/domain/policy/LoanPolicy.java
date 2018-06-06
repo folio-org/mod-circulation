@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.folio.circulation.support.HttpResult.failure;
-import static org.folio.circulation.support.HttpResult.success;
 import static org.folio.circulation.support.JsonPropertyFetcher.*;
 
 public class LoanPolicy {
@@ -53,16 +52,22 @@ public class LoanPolicy {
         determineStrategy(true, systemDate)
           .calculateDueDate(loan);
 
-      //TODO: Hack, won't do multiple errors if due date calculation fails
-      if(proposedDueDateResult.failed()) {
-        return proposedDueDateResult.map(r -> loan);
-      }
-
       List<ValidationError> errors = new ArrayList<>();
 
-      errorWhenReachedRenewalLimit(loan, errors);
+      //TODO: Need a more elegent way of combining validation errors
+      if(proposedDueDateResult.failed()) {
+        if (proposedDueDateResult.cause() instanceof ValidationErrorFailure) {
+          ValidationErrorFailure failureCause =
+            (ValidationErrorFailure) proposedDueDateResult.cause();
 
-      errorWhenEarlierOrSameDueDate(loan, proposedDueDateResult.value(), errors);
+          errors.addAll(failureCause.getErrors());
+        }
+      }
+      else {
+        errorWhenEarlierOrSameDueDate(loan, proposedDueDateResult.value(), errors);
+      }
+
+      errorWhenReachedRenewalLimit(loan, errors);
 
       if(errors.isEmpty()) {
         return proposedDueDateResult.map(dueDate -> loan.renew(dueDate, getId()));
@@ -98,39 +103,6 @@ public class LoanPolicy {
     }
     else if(proposedDueDate.isBefore(loan.getDueDate())) {
       errors.add(dueDateError);
-    }
-  }
-
-  private HttpResult<DateTime> rejectIfDueDateEarlierOrUnchanged(
-    DateTime provisionalDueDate,
-    Loan loan) {
-
-    final ValidationErrorFailure error = ValidationErrorFailure.error(
-      "Renewal at this time would not change the due date",
-      "loanPolicyId", getId());
-
-    if(provisionalDueDate.isEqual(loan.getDueDate())) {
-      return failure(error);
-    }
-    else if(provisionalDueDate.isBefore(loan.getDueDate())) {
-      return failure(error);
-    }
-    else {
-      return HttpResult.success(provisionalDueDate);
-    }
-  }
-
-  private HttpResult<Loan> rejectIfExceedsRenewalLimit(Loan loan) {
-    if(unlimitedRenewals()) {
-      return success(loan);
-    }
-    else if(reachedNumberOfRenewalsLimit(loan)) {
-      return failure(ValidationErrorFailure.error(
-        "Item can't be renewed as it has reached it's maximum number of renewals",
-        "loanPolicyId", getId()));
-    }
-    else {
-      return success(loan);
     }
   }
 

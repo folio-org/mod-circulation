@@ -12,7 +12,7 @@ import org.junit.Test;
 
 import java.util.UUID;
 
-import static api.support.matchers.FailureMatcher.isValidationFailure;
+import static api.support.matchers.FailureMatcher.hasValidationFailure;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
@@ -53,7 +53,7 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
 
     final HttpResult<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
 
-    assertThat(result, isValidationFailure(
+    assertThat(result, hasValidationFailure(
       "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy. " +
         "Please review \"Example Fixed Schedule Loan Policy\" before retrying"));
   }
@@ -74,7 +74,7 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
 
     final HttpResult<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
 
-    assertThat(result, isValidationFailure(
+    assertThat(result, hasValidationFailure(
       "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy. " +
         "Please review \"Example Fixed Schedule Loan Policy\" before retrying"));
   }
@@ -166,7 +166,7 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
 
     final HttpResult<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
 
-    assertThat(result, isValidationFailure(
+    assertThat(result, hasValidationFailure(
       "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy. " +
         "Please review \"Example Fixed Schedule Loan Policy\" before retrying"));
   }
@@ -189,7 +189,7 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
 
     final HttpResult<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
 
-    assertThat(result, isValidationFailure(
+    assertThat(result, hasValidationFailure(
       "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy. " +
         "Please review \"Example Fixed Schedule Loan Policy\" before retrying"));
   }
@@ -211,7 +211,7 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
 
     final HttpResult<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
 
-    assertThat(result, isValidationFailure(
+    assertThat(result, hasValidationFailure(
       "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy. " +
         "Please review \"Example Fixed Schedule Loan Policy\" before retrying"));
   }
@@ -230,7 +230,7 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
 
     final HttpResult<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
 
-    assertThat(result, isValidationFailure(
+    assertThat(result, hasValidationFailure(
       "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy. " +
         "Please review \"Example Fixed Schedule Loan Policy\" before retrying"));
   }
@@ -248,7 +248,7 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
     final HttpResult<DateTime> result = calculator.calculateDueDate(loan);
 
     assertThat(result.failed(), is(true));
-    assertThat(result, isValidationFailure(
+    assertThat(result, hasValidationFailure(
       "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy. " +
         "Please review \"Example Fixed Schedule Loan Policy\" before retrying"));
   }
@@ -265,7 +265,7 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
 
     final HttpResult<DateTime> result = calculator.calculateDueDate(loan);
 
-    assertThat(result, isValidationFailure(
+    assertThat(result, hasValidationFailure(
       "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy. " +
         "Please review \"Example Fixed Schedule Loan Policy\" before retrying"));
   }
