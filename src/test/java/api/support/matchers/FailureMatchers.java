@@ -1,6 +1,5 @@
 package api.support.matchers;
 
-import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.hamcrest.Description;
@@ -26,14 +25,14 @@ public class FailureMatchers {
         if(failure.cause() instanceof ValidationErrorFailure) {
           ValidationErrorFailure error = (ValidationErrorFailure) failure.cause();
 
-          if(!StringUtils.equals(propertyName, error.getPropertyName())) {
+          if(!error.isForKey(propertyName)) {
             description.appendText("not for ").appendValue(propertyName).appendText(" property");
             return false;
           }
 
-          description.appendValue(error.getReason())
-            .appendText(" for ").appendValue(propertyName);
-          return reason.matches(error.getReason());
+          description.appendValue(error.toString());
+
+          return error.hasReason(reason);
         }
         else {
           description.appendText("is not a validation error failure");

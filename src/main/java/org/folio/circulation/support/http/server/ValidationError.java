@@ -5,13 +5,13 @@ import io.vertx.core.json.JsonObject;
 
 public class ValidationError {
 
-  public final String message;
-  public final String propertyName;
+  public final String reason;
+  public final String key;
   public final String value;
 
-  public ValidationError(String message, String propertyName, String value) {
-    this.message = message;
-    this.propertyName = propertyName;
+  public ValidationError(String reason, String key, String value) {
+    this.reason = reason;
+    this.key = key;
     this.value = value;
   }
 
@@ -19,11 +19,11 @@ public class ValidationError {
     JsonArray parameters = new JsonArray();
 
     parameters.add(new JsonObject()
-      .put("key", propertyName)
+      .put("key", key)
       .put("value", value));
 
     return new JsonObject()
-      .put("message", message)
+      .put("message", reason)
       .put("parameters", parameters);
   }
 }
