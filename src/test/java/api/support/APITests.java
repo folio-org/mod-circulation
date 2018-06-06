@@ -11,6 +11,7 @@ import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -116,7 +117,7 @@ public abstract class APITests {
     }
   }
 
-  @Before
+  @After
   public void afterEach()
     throws InterruptedException,
     MalformedURLException,

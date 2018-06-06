@@ -6,7 +6,9 @@ import io.vertx.core.json.JsonObject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class JsonArrayHelper {
   private JsonArrayHelper() { }
@@ -16,17 +18,50 @@ public class JsonArrayHelper {
       return new ArrayList<>();
     }
 
+    return toStream(array)
+      .collect(Collectors.toList());
+  }
+
+  public static <T> List<T> mapToList(
+    JsonArray array,
+    Function<JsonObject, T> mapper) {
+
+    if(array == null) {
+      return new ArrayList<>();
+    }
+
+    return toStream(array)
+      .map(mapper)
+      .collect(Collectors.toList());
+  }
+
+  public static <T> List<T> mapToList(
+    JsonObject within,
+    String arrayPropertyName,
+    Function<JsonObject, T> mapper) {
+
+    if(within == null) {
+      return new ArrayList<>();
+    }
+
+    return mapToList(within.getJsonArray(arrayPropertyName), mapper);
+  }
+
+  private static Stream<JsonObject> toStream(JsonArray array) {
     return array
       .stream()
-      .map(loan -> {
-        if(loan instanceof JsonObject) {
-          return (JsonObject)loan;
-        }
-        else {
-          return null;
-        }
-      })
-      .filter(Objects::nonNull)
-      .collect(Collectors.toList());
+      .map(castToJsonObject())
+      .filter(Objects::nonNull);
+  }
+
+  private static Function<Object, JsonObject> castToJsonObject() {
+    return loan -> {
+      if(loan instanceof JsonObject) {
+        return (JsonObject)loan;
+      }
+      else {
+        return null;
+      }
+    };
   }
 }

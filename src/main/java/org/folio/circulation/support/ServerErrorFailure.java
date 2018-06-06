@@ -35,7 +35,7 @@ public class ServerErrorFailure implements HttpFailure {
       reason = "Unknown internal error";
     }
 
-    return String.format("%s\n%s", reason, ExceptionUtils.getStackTrace(e));
+    return String.format("%s%n%s", reason, ExceptionUtils.getStackTrace(e));
   }
 
   @Override

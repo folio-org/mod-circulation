@@ -3,25 +3,33 @@ package org.folio.circulation.domain;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Item;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 
 import java.util.concurrent.CompletableFuture;
 
 import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
+import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
+import static org.folio.circulation.support.HttpResult.failure;
+import static org.folio.circulation.support.HttpResult.success;
 
 public class LoanValidation {
+  private static final String ITEM_BARCODE_PROPERTY_NAME = "itemBarcode";
+  private static final String USER_BARCODE_PROPERTY_NAME = "userBarcode";
+  private static final String PROXY_USER_BARCODE_PROPERTY_NAME = "proxyUserBarcode";
+
   private LoanValidation() { }
 
   public static HttpResult<LoanAndRelatedRecords> refuseWhenItemDoesNotExist(
     HttpResult<LoanAndRelatedRecords> result) {
 
     return result.next(loan -> {
-      if(loan.inventoryRecords.getItem() == null) {
-        final String itemId = loan.loan.getString("itemId");
+      if(loan.getLoan().getItem().isNotFound()) {
+        final String itemId = loan.getLoan().getItemId();
 
-        return HttpResult.failure(new ValidationErrorFailure(
-          "Item does not exist", "itemId", itemId));
+        return failure(ValidationErrorFailure.error(
+          "Item does not exist", ITEM_ID, itemId));
       }
       else {
         return result;
@@ -33,10 +41,10 @@ public class LoanValidation {
     HttpResult<LoanAndRelatedRecords> result, String barcode) {
 
     return result.next(loanAndRelatedRecords -> {
-      if(loanAndRelatedRecords.inventoryRecords.getItem() == null) {
-        return HttpResult.failure(new ValidationErrorFailure(
+      if(loanAndRelatedRecords.getLoan().getItem().isNotFound()) {
+        return failure(ValidationErrorFailure.error(
           String.format("No item with barcode %s exists", barcode),
-          "itemBarcode", barcode));
+          ITEM_BARCODE_PROPERTY_NAME, barcode));
       }
       else {
         return result;
@@ -57,14 +65,15 @@ public class LoanValidation {
   public static HttpResult<LoanAndRelatedRecords> refuseWhenUserIsNotAwaitingPickup(
     HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
-    return loanAndRelatedRecords.next(loan -> {
-      final RequestQueue requestQueue = loan.requestQueue;
-      final JsonObject requestingUser = loan.requestingUser;
+    return loanAndRelatedRecords
+      .next(loan -> {
+      final RequestQueue requestQueue = loan.getRequestQueue();
+      final User requestingUser = loan.getLoan().getUser();
 
       if(hasAwaitingPickupRequestForOtherPatron(requestQueue, requestingUser)) {
-        return HttpResult.failure(new ValidationErrorFailure(
+        return failure(ValidationErrorFailure.error(
           "User checking out must be requester awaiting pickup",
-          "userId", loan.loan.getString("userId")));
+          "userId", loan.getLoan().getUserId()));
       }
       else {
         return loanAndRelatedRecords;
@@ -77,13 +86,13 @@ public class LoanValidation {
 
     //TODO: Extract duplication between this and above
     return loanAndRelatedRecords.next(loan -> {
-      final RequestQueue requestQueue = loan.requestQueue;
-      final JsonObject requestingUser = loan.requestingUser;
+      final RequestQueue requestQueue = loan.getRequestQueue();
+      final User requestingUser = loan.getLoan().getUser();
 
       if(hasAwaitingPickupRequestForOtherPatron(requestQueue, requestingUser)) {
-        return HttpResult.failure(new ValidationErrorFailure(
+        return failure(ValidationErrorFailure.error(
           "User checking out must be requester awaiting pickup",
-          "userBarcode", barcode));
+          USER_BARCODE_PROPERTY_NAME, barcode));
       }
       else {
         return loanAndRelatedRecords;
@@ -96,43 +105,44 @@ public class LoanValidation {
 
     return loanAndRelatedRecords.next(loan -> {
       try {
-        final User requestingUser = loan.requestingUser;
+        final User requestingUser = loan.getLoan().getUser();
 
-        if (!requestingUser.containsKey("active")) {
-          return HttpResult.failure(new ValidationErrorFailure(
+        if (requestingUser.canDetermineStatus()) {
+          return failure(ValidationErrorFailure.error(
             "Cannot determine if user is active or not",
-            "userBarcode", barcode));
+            USER_BARCODE_PROPERTY_NAME, barcode));
         }
         if (requestingUser.isInactive()) {
-          return HttpResult.failure(new ValidationErrorFailure(
+          return failure(ValidationErrorFailure.error(
             "Cannot check out to inactive user",
-            "userBarcode", barcode));
+            USER_BARCODE_PROPERTY_NAME, barcode));
         } else {
-          return HttpResult.success(loan);
+          return success(loan);
         }
       } catch (Exception e) {
-        return HttpResult.failure(new ServerErrorFailure(e));
+        return failure(new ServerErrorFailure(e));
       }
     });
   }
+
   public static HttpResult<LoanAndRelatedRecords> refuseWhenProxyingUserIsInactive(
     HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords, String barcode) {
 
     return loanAndRelatedRecords.next(loan -> {
-      final User proxyingUser = loan.proxyingUser;
+      final User proxyingUser = loan.getProxyingUser();
 
       if(proxyingUser == null) {
         return loanAndRelatedRecords;
       }
-      else if (!proxyingUser.containsKey("active")) {
-        return HttpResult.failure(new ValidationErrorFailure(
+      else if (proxyingUser.canDetermineStatus()) {
+        return failure(ValidationErrorFailure.error(
           "Cannot determine if proxying user is active or not",
-          "proxyUserBarcode", barcode));
+          PROXY_USER_BARCODE_PROPERTY_NAME, barcode));
       }
       else if(proxyingUser.isInactive()) {
-        return HttpResult.failure(new ValidationErrorFailure(
+        return failure(ValidationErrorFailure.error(
           "Cannot check out via inactive proxying user",
-          "proxyUserBarcode", barcode));
+          PROXY_USER_BARCODE_PROPERTY_NAME, barcode));
       }
       else {
         return loanAndRelatedRecords;
@@ -142,40 +152,25 @@ public class LoanValidation {
 
   private static boolean hasAwaitingPickupRequestForOtherPatron(
     RequestQueue requestQueue,
-    JsonObject requestingUser) {
+    User requestingUser) {
 
     if(!requestQueue.hasOutstandingFulfillableRequests()) {
       return false;
     }
     else {
-      final JsonObject highestPriority = requestQueue.getHighestPriorityFulfillableRequest();
+      final Request highestPriority = requestQueue.getHighestPriorityFulfillableRequest();
 
       return isAwaitingPickup(highestPriority)
         && !isFor(highestPriority, requestingUser);
     }
   }
 
-  private static boolean isFor(JsonObject request, JsonObject user) {
-    return StringUtils.equals(request.getString("requesterId"), user.getString("id"));
+  private static boolean isFor(Request request, User user) {
+    return StringUtils.equals(request.getUserId(), user.getId());
   }
 
-  private static boolean isAwaitingPickup(JsonObject highestPriority) {
-    return StringUtils.equals(highestPriority.getString("status"), OPEN_AWAITING_PICKUP);
-  }
-
-  public static String determineLocationIdForItem(JsonObject item, JsonObject holding) {
-    if(item != null && item.containsKey("temporaryLocationId")) {
-      return item.getString("temporaryLocationId");
-    }
-    else if(holding != null && holding.containsKey("permanentLocationId")) {
-      return holding.getString("permanentLocationId");
-    }
-    else if(item != null && item.containsKey("permanentLocationId")) {
-      return item.getString("permanentLocationId");
-    }
-    else {
-      return null;
-    }
+  private static boolean isAwaitingPickup(Request highestPriority) {
+    return StringUtils.equals(highestPriority.getStatus(), OPEN_AWAITING_PICKUP);
   }
 
   public static CompletableFuture<HttpResult<LoanAndRelatedRecords>> refuseWhenHasOpenLoan(
@@ -183,16 +178,17 @@ public class LoanValidation {
     LoanRepository loanRepository,
     String barcode) {
 
-    final String itemId = loanAndRelatedRecords.loan.getString("itemId");
+    final String itemId = loanAndRelatedRecords.getLoan().getItemId();
 
     return loanRepository.hasOpenLoan(itemId)
       .thenApply(r -> r.next(openLoan -> {
         if(openLoan) {
-          return HttpResult.failure(new ValidationErrorFailure(
-            "Cannot check out item that already has an open loan", "itemBarcode", barcode));
+          return failure(ValidationErrorFailure.error(
+            "Cannot check out item that already has an open loan",
+            ITEM_BARCODE_PROPERTY_NAME, barcode));
         }
         else {
-          return HttpResult.success(loanAndRelatedRecords);
+          return success(loanAndRelatedRecords);
         }
       }));
   }
@@ -201,11 +197,11 @@ public class LoanValidation {
     HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
     return loanAndRelatedRecords.next(loan -> {
-      final JsonObject item = loan.inventoryRecords.item;
+      final Item records = loan.getLoan().getItem();
 
-      if(ItemStatus.isCheckedOut(item)) {
-        return HttpResult.failure(new ValidationErrorFailure(
-          "Item is already checked out", "itemId", item.getString("id")));
+      if(records.isCheckedOut()) {
+        return failure(ValidationErrorFailure.error(
+          "Item is already checked out", "itemId", records.getItemId()));
       }
       else {
         return loanAndRelatedRecords;
@@ -218,11 +214,9 @@ public class LoanValidation {
 
     //TODO: Extract duplication with above
     return loanAndRelatedRecords.next(loan -> {
-      final JsonObject item = loan.inventoryRecords.item;
-
-      if(ItemStatus.isCheckedOut(item)) {
-        return HttpResult.failure(new ValidationErrorFailure(
-          "Item is already checked out", "itemBarcode", barcode));
+      if(loan.getLoan().getItem().isCheckedOut()) {
+        return failure(ValidationErrorFailure.error(
+          "Item is already checked out", ITEM_BARCODE_PROPERTY_NAME, barcode));
       }
       else {
         return loanAndRelatedRecords;

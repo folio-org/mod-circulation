@@ -4,6 +4,7 @@ import api.support.builders.*;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
+import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -12,12 +13,12 @@ import org.junit.runner.RunWith;
 
 import java.util.UUID;
 
-import static api.support.matchers.FailureMatcher.isValidationFailure;
+import static api.support.matchers.FailureMatcher.hasValidationFailure;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 @RunWith(JUnitParamsRunner.class)
-public class RollingLoanPolicyDueDateCalculationTests {
+public class RollingLoanPolicyCheckOutDueDateCalculationTests {
 
   @Test
   @Parameters({
@@ -33,13 +34,10 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    JsonObject loan = new LoanBuilder()
-      .open()
-      .withLoanDate(loanDate)
-      .create();
+    Loan loan = loanFor(loanDate);
 
     final HttpResult<DateTime> calculationResult = loanPolicy
-      .calculate(loan);
+      .calculateInitialDueDate(loan);
 
     assertThat(calculationResult.value(), is(loanDate.plusMonths(duration)));
   }
@@ -60,13 +58,10 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    JsonObject loan = new LoanBuilder()
-      .open()
-      .withLoanDate(loanDate)
-      .create();
+    Loan loan = loanFor(loanDate);
 
     final HttpResult<DateTime> calculationResult = loanPolicy
-      .calculate(loan);
+      .calculateInitialDueDate(loan);
 
     assertThat(calculationResult.value(), is(loanDate.plusWeeks(duration)));
   }
@@ -88,13 +83,10 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    JsonObject loan = new LoanBuilder()
-      .open()
-      .withLoanDate(loanDate)
-      .create();
+    Loan loan = loanFor(loanDate);
 
     final HttpResult<DateTime> calculationResult = loanPolicy
-      .calculate(loan);
+      .calculateInitialDueDate(loan);
 
     assertThat(calculationResult.value(), is(loanDate.plusDays(duration)));
   }
@@ -116,13 +108,10 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    JsonObject loan = new LoanBuilder()
-      .open()
-      .withLoanDate(loanDate)
-      .create();
+    Loan loan = loanFor(loanDate);
 
     final HttpResult<DateTime> calculationResult = loanPolicy
-      .calculate(loan);
+      .calculateInitialDueDate(loan);
 
     assertThat(calculationResult.value(), is(loanDate.plusHours(duration)));
   }
@@ -142,13 +131,10 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    JsonObject loan = new LoanBuilder()
-      .open()
-      .withLoanDate(loanDate)
-      .create();
+    Loan loan = loanFor(loanDate);
 
     final HttpResult<DateTime> calculationResult = loanPolicy
-      .calculate(loan);
+      .calculateInitialDueDate(loan);
 
     assertThat(calculationResult.value(), is(loanDate.plusMinutes(duration)));
   }
@@ -156,28 +142,24 @@ public class RollingLoanPolicyDueDateCalculationTests {
   @Test
   public void shouldFailForUnrecognisedInterval() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
-      .rolling(new Period(5, "Unknown"))
+      .rolling(Period.from(5, "Unknown"))
       .withName("Invalid Loan Policy")
       .create());
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    JsonObject loan = new LoanBuilder()
-      .open()
-      .withLoanDate(loanDate)
-      .create();
+    Loan loan = loanFor(loanDate);
 
-    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
+    final HttpResult<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
 
-    assertThat(result, isValidationFailure(
-      "Item can't be checked out as the interval \"Unknown\" in the loan policy is not recognised. " +
-        "Please review \"Invalid Loan Policy\" before retrying checking out"));
+    assertThat(result, hasValidationFailure(
+      "the interval \"Unknown\" in the loan policy is not recognised"));
   }
 
   @Test
   public void shouldFailWhenNoPeriodProvided() {
     final JsonObject representation = new LoanPolicyBuilder()
-      .rolling(new Period(5, "Unknown"))
+      .rolling(Period.from(5, "Unknown"))
       .withName("Invalid Loan Policy")
       .create();
 
@@ -187,22 +169,18 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    JsonObject loan = new LoanBuilder()
-      .open()
-      .withLoanDate(loanDate)
-      .create();
+    Loan loan = loanFor(loanDate);
 
-    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
+    final HttpResult<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
 
-    assertThat(result, isValidationFailure(
-      "Item can't be checked out as the loan period in the loan policy is not recognised. " +
-        "Please review \"Invalid Loan Policy\" before retrying checking out"));
+    assertThat(result, hasValidationFailure(
+      "the loan period in the loan policy is not recognised"));
   }
 
   @Test
   public void shouldFailWhenNoPeriodDurationProvided() {
     final JsonObject representation = new LoanPolicyBuilder()
-      .rolling(new Period(5, "Weeks"))
+      .rolling(Period.weeks(5))
       .withName("Invalid Loan Policy")
       .create();
 
@@ -212,22 +190,18 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    JsonObject loan = new LoanBuilder()
-      .open()
-      .withLoanDate(loanDate)
-      .create();
+    Loan loan = loanFor(loanDate);
 
-    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
+    final HttpResult<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
 
-    assertThat(result, isValidationFailure(
-      "Item can't be checked out as the loan period in the loan policy is not recognised. " +
-        "Please review \"Invalid Loan Policy\" before retrying checking out"));
+    assertThat(result, hasValidationFailure(
+      "the loan period in the loan policy is not recognised"));
   }
 
   @Test
   public void shouldFailWhenNoPeriodIntervalProvided() {
     final JsonObject representation = new LoanPolicyBuilder()
-      .rolling(new Period(5, "Weeks"))
+      .rolling(Period.weeks(5))
       .withName("Invalid Loan Policy")
       .create();
 
@@ -237,16 +211,12 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    JsonObject loan = new LoanBuilder()
-      .open()
-      .withLoanDate(loanDate)
-      .create();
+    Loan loan = loanFor(loanDate);
 
-    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
+    final HttpResult<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
 
-    assertThat(result, isValidationFailure(
-      "Item can't be checked out as the loan period in the loan policy is not recognised. " +
-        "Please review \"Invalid Loan Policy\" before retrying checking out"));
+    assertThat(result, hasValidationFailure(
+      "the loan period in the loan policy is not recognised"));
   }
 
   @Test
@@ -264,21 +234,17 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    JsonObject loan = new LoanBuilder()
-      .open()
-      .withLoanDate(loanDate)
-      .create();
+    Loan loan = loanFor(loanDate);
 
-    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
+    final HttpResult<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
 
-    assertThat(result, isValidationFailure(
+    assertThat(result, hasValidationFailure(
       String.format(
-        "Item can't be checked out as the duration \"%s\" in the loan policy is invalid. " +
-        "Please review \"Invalid Loan Policy\" before retrying checking out", duration)));
+        "the duration \"%s\" in the loan policy is invalid", duration)));
   }
 
   @Test
-  public void shouldLimitDueDateWhenWithinDueDateLimitSchedule() {
+  public void shouldTruncateDueDateWhenWithinDueDateLimitSchedule() {
     //TODO: Slight hack to use the same builder, the schedule is fed in later
     //TODO: Introduce builder for individual schedules
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -292,18 +258,15 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    JsonObject loan = new LoanBuilder()
-      .open()
-      .withLoanDate(loanDate)
-      .create();
+    Loan loan = loanFor(loanDate);
 
-    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
+    final HttpResult<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
 
     assertThat(result.value(), is(new DateTime(2018, 4, 10, 23, 59, 59, DateTimeZone.UTC)));
   }
 
   @Test
-  public void shouldNotLimitDueDateWhenWithinDueDateLimitScheduleButInitialDateIsSooner() {
+  public void shouldNotTruncateDueDateWhenWithinDueDateLimitScheduleButInitialDateIsSooner() {
     //TODO: Slight hack to use the same builder, the schedule is fed in later
     //TODO: Introduce builder for individual schedules
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -316,12 +279,9 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 11, 16, 21, 43, DateTimeZone.UTC);
 
-    JsonObject loan = new LoanBuilder()
-      .open()
-      .withLoanDate(loanDate)
-      .create();
+    Loan loan = loanFor(loanDate);
 
-    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
+    final HttpResult<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
 
     assertThat(result.value(), is(new DateTime(2018, 3, 25, 16, 21, 43, DateTimeZone.UTC)));
   }
@@ -342,16 +302,12 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 4, 3, 9, 25, 43, DateTimeZone.UTC);
 
-    JsonObject loan = new LoanBuilder()
-      .open()
-      .withLoanDate(loanDate)
-      .create();
+    Loan loan = loanFor(loanDate);
 
-    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
+    final HttpResult<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
 
-    assertThat(result, isValidationFailure(
-      "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy. " +
-        "Please review \"One Month\" before retrying checking out"));
+    assertThat(result, hasValidationFailure(
+      "loan date falls outside of the date ranges in the loan policy"));
   }
 
   @Test
@@ -367,15 +323,18 @@ public class RollingLoanPolicyDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 4, 3, 9, 25, 43, DateTimeZone.UTC);
 
-    JsonObject loan = new LoanBuilder()
+    Loan loan = loanFor(loanDate);
+
+    final HttpResult<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
+
+    assertThat(result, hasValidationFailure(
+      "loan date falls outside of the date ranges in the loan policy"));
+  }
+
+  private Loan loanFor(DateTime loanDate) {
+    return new LoanBuilder()
       .open()
       .withLoanDate(loanDate)
-      .create();
-
-    final HttpResult<DateTime> result = loanPolicy.calculate(loan);
-
-    assertThat(result, isValidationFailure(
-      "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy. " +
-        "Please review \"One Month\" before retrying checking out"));
+      .asDomainObject();
   }
 }

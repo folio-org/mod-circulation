@@ -1,6 +1,5 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ServerErrorFailure;
@@ -19,12 +18,12 @@ public class UpdateRequestQueue {
 
     CompletableFuture<HttpResult<LoanAndRelatedRecords>> requestUpdated = new CompletableFuture<>();
 
-    if (relatedRecords.requestQueue.hasOutstandingFulfillableRequests()) {
-      JsonObject firstRequest = relatedRecords.requestQueue.getHighestPriorityFulfillableRequest();
+    if (relatedRecords.getRequestQueue().hasOutstandingFulfillableRequests()) {
+      Request firstRequest = relatedRecords.getRequestQueue().getHighestPriorityFulfillableRequest();
 
-      firstRequest.put("status", RequestStatus.OPEN_AWAITING_PICKUP);
+      firstRequest.changeStatus(RequestStatus.OPEN_AWAITING_PICKUP);
 
-      clients.requestsStorage().put(firstRequest.getString("id"), firstRequest,
+      clients.requestsStorage().put(firstRequest.getId(), firstRequest.asJson(),
         updateRequestResponse -> {
           if (updateRequestResponse.getStatusCode() == 204) {
             requestUpdated.complete(HttpResult.success(relatedRecords));
@@ -44,7 +43,7 @@ public class UpdateRequestQueue {
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> onCheckOut(
     LoanAndRelatedRecords relatedRecords) {
 
-    return onCheckOut(relatedRecords.requestQueue)
+    return onCheckOut(relatedRecords.getRequestQueue())
       .thenApply(result -> result.map(relatedRecords::withRequestQueue));
   }
 
@@ -52,11 +51,11 @@ public class UpdateRequestQueue {
     CompletableFuture<HttpResult<RequestQueue>> requestUpdated = new CompletableFuture<>();
 
     if (requestQueue.hasOutstandingFulfillableRequests()) {
-      JsonObject firstRequest = requestQueue.getHighestPriorityFulfillableRequest();
+      Request firstRequest = requestQueue.getHighestPriorityFulfillableRequest();
 
-      firstRequest.put("status", RequestStatus.CLOSED_FILLED);
+      firstRequest.changeStatus(RequestStatus.CLOSED_FILLED);
 
-      clients.requestsStorage().put(firstRequest.getString("id"), firstRequest,
+      clients.requestsStorage().put(firstRequest.getId(), firstRequest.asJson(),
         updateRequestResponse -> {
           if (updateRequestResponse.getStatusCode() == 204) {
             requestUpdated.complete(HttpResult.success(requestQueue));

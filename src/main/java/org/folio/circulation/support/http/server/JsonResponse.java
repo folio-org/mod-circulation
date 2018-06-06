@@ -6,12 +6,14 @@ import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.loanrules.LoanRulesException;
 
 import java.util.List;
 
 public class JsonResponse {
-  //TODO: Needs a location
+  private JsonResponse() { }
+
   public static void created(
     HttpServerResponse response,
     JsonObject body) {
@@ -23,22 +25,15 @@ public class JsonResponse {
     HttpServerResponse response,
     JsonObject body) {
 
-    response(response, body, 200);
+    success(response, body, null);
   }
 
-  public static void unprocessableEntity(
+  public static void success(
     HttpServerResponse response,
-    String message,
-    String propertyName,
-    String value) {
+    JsonObject body,
+    String location) {
 
-    ValidationError error = new ValidationError(message, propertyName, value);
-
-    JsonArray errors = new JsonArray();
-
-    errors.add(error.toJson());
-
-    response(response, new JsonObject().put("errors", errors), 422);
+    response(response, body, 200, location);
   }
 
   public static void unprocessableEntity(
@@ -66,9 +61,11 @@ public class JsonResponse {
     response(response, body, 422);
   }
 
-  private static void response(HttpServerResponse response,
-                               JsonObject body,
-                               int statusCode) {
+  private static void response(
+    HttpServerResponse response,
+    JsonObject body,
+    int statusCode,
+    String location) {
 
     String json = Json.encodePrettily(body);
     Buffer buffer = Buffer.buffer(json, "UTF-8");
@@ -77,7 +74,20 @@ public class JsonResponse {
     response.putHeader("content-type", "application/json; charset=utf-8");
     response.putHeader("content-length", Integer.toString(buffer.length()));
 
+    if(StringUtils.isNotBlank(location)) {
+      response.putHeader("location", location);
+    }
+
     response.write(buffer);
     response.end();
+  }
+
+  public static void response(
+    HttpServerResponse response,
+    JsonObject body,
+    int statusCode) {
+
+    response(response, body, statusCode, null);
+
   }
 }

@@ -1,8 +1,9 @@
 package org.folio.circulation.domain.policy;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.domain.LoanValidation;
+import org.folio.circulation.domain.User;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
@@ -10,7 +11,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+
+import static org.folio.circulation.support.CqlHelper.multipleRecordsCqlQuery;
+import static org.folio.circulation.support.HttpResult.success;
 
 public class LoanPolicyRepository {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -25,75 +34,121 @@ public class LoanPolicyRepository {
     fixedDueDateSchedulesStorageClient = clients.fixedDueDateSchedules();
   }
 
+  public CompletableFuture<HttpResult<LoanPolicy>> lookupLoanPolicy(Loan loan) {
+    return lookupLoanPolicy(loan.getItem(), loan.getUser());
+  }
+
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> lookupLoanPolicy(
     LoanAndRelatedRecords relatedRecords) {
 
-    return lookupLoanPolicyId(
-      relatedRecords.inventoryRecords.getItem(),
-      relatedRecords.inventoryRecords.holding,
-      relatedRecords.requestingUser)
-      .thenComposeAsync(r -> r.after(this::lookupLoanPolicy))
-      .thenApply(result -> result.map(this::toLoanPolicy))
-      .thenComposeAsync(r -> r.after(this::lookupSchedules))
+    return lookupLoanPolicy(relatedRecords.getLoan())
       .thenApply(result -> result.map(relatedRecords::withLoanPolicy));
   }
 
+  private CompletableFuture<HttpResult<LoanPolicy>> lookupLoanPolicy(
+    Item item,
+    User user) {
+
+    return lookupLoanPolicyId(item, user)
+      .thenComposeAsync(r -> r.after(this::lookupLoanPolicy))
+      .thenApply(result -> result.map(this::toLoanPolicy))
+      .thenComposeAsync(r -> r.after(this::lookupSchedules));
+  }
+
   private LoanPolicy toLoanPolicy(JsonObject representation) {
-    return new LoanPolicy(representation, null);
+    return new LoanPolicy(representation,
+      new NoFixedDueDateSchedules(), new NoFixedDueDateSchedules());
   }
 
   private CompletableFuture<HttpResult<LoanPolicy>> lookupSchedules(LoanPolicy loanPolicy) {
-    final String fixedDueDateScheduleId = loanPolicy.getLoansFixedDueDateScheduleId();
+    List<String> scheduleIds = new ArrayList<>();
 
-    if(fixedDueDateScheduleId != null) {
-      final SingleRecordFetcher fetcher = new SingleRecordFetcher(
-        fixedDueDateSchedulesStorageClient,
-        "fixed due date schedule");
+    final String loanScheduleId = loanPolicy.getLoansFixedDueDateScheduleId();
+    final String alternateRenewalsSchedulesId = loanPolicy.getAlternateRenewalsFixedDueDateScheduleId();
 
-      return fetcher
-        .fetchSingleRecord(fixedDueDateScheduleId)
-        .thenApply(r -> r.map(FixedDueDateSchedules::new))
-        .thenApply(r -> r.map(loanPolicy::withDueDateSchedules));
+    if(loanScheduleId != null) {
+      scheduleIds.add(loanScheduleId);
     }
-    else {
-      return CompletableFuture.completedFuture(HttpResult.success(loanPolicy));
+
+    if(alternateRenewalsSchedulesId != null) {
+      scheduleIds.add(alternateRenewalsSchedulesId);
     }
+
+    if(scheduleIds.isEmpty()) {
+      return CompletableFuture.completedFuture(success(loanPolicy));
+    }
+
+    return getSchedules(scheduleIds)
+      .thenApply(r -> r.next(schedules -> {
+        final FixedDueDateSchedules loanSchedule = schedules.getOrDefault(
+          loanScheduleId, new NoFixedDueDateSchedules());
+
+        final FixedDueDateSchedules renewalSchedule = schedules.getOrDefault(
+          alternateRenewalsSchedulesId, new NoFixedDueDateSchedules());
+
+        return success(loanPolicy
+          .withDueDateSchedules(loanSchedule)
+          .withAlternateRenewalSchedules(renewalSchedule));
+      }));
+  }
+
+  private CompletableFuture<HttpResult<Map<String, FixedDueDateSchedules>>> getSchedules(
+    Collection<String> schedulesIds) {
+
+    String schedulesQuery = multipleRecordsCqlQuery(schedulesIds);
+
+    return fixedDueDateSchedulesStorageClient.getMany(schedulesQuery,
+      schedulesIds.size(), 0)
+      .thenApply(schedulesResponse -> {
+        if(schedulesResponse.getStatusCode() != 200) {
+          return HttpResult.failure(new ServerErrorFailure(
+            String.format("Fixed due date schedules request (%s) failed %s: %s",
+              schedulesQuery, schedulesResponse.getStatusCode(),
+              schedulesResponse.getBody())));
+        }
+
+        List<JsonObject> schedules = JsonArrayHelper.toList(
+          schedulesResponse.getJson().getJsonArray("fixedDueDateSchedules"));
+
+        return success(schedules.stream()
+          .collect(Collectors.toMap(
+            s -> s.getString("id"),
+            FixedDueDateSchedules::from)));
+      });
   }
 
   private CompletableFuture<HttpResult<JsonObject>> lookupLoanPolicy(
     String loanPolicyId) {
 
-    return new SingleRecordFetcher(loanPoliciesStorageClient, "loan policy")
-      .fetchSingleRecord(loanPolicyId,
-        () -> HttpResult.failure(new ServerErrorFailure(
-          String.format("Loan policy %s could not be found, please check loan rules", loanPolicyId))));
+    return new SingleRecordFetcher(loanPoliciesStorageClient, "loan policy",
+      () -> HttpResult.failure(new ServerErrorFailure(
+        String.format("Loan policy %s could not be found, please check loan rules", loanPolicyId))))
+      .fetchSingleRecord(loanPolicyId);
   }
 
   private CompletableFuture<HttpResult<String>> lookupLoanPolicyId(
-    JsonObject item,
-    JsonObject holding,
-    JsonObject user) {
+    Item item,
+    User user) {
 
     CompletableFuture<HttpResult<String>> findLoanPolicyCompleted
       = new CompletableFuture<>();
 
-    if(item == null) {
+    if(item.isNotFound()) {
       return CompletableFuture.completedFuture(HttpResult.failure(
         new ServerErrorFailure("Unable to apply loan rules for unknown item")));
     }
 
-    if(holding == null) {
+    if(item.doesNotHaveHolding()) {
       return CompletableFuture.completedFuture(HttpResult.failure(
         new ServerErrorFailure("Unable to apply loan rules for unknown holding")));
     }
 
-    String loanTypeId = determineLoanTypeForItem(item);
-    String locationId = LoanValidation.determineLocationIdForItem(item, holding);
+    String loanTypeId = item.determineLoanTypeForItem();
+    String locationId = item.getLocationId();
 
-    //Got instance record, we're good to continue
-    String materialTypeId = item.getString("materialTypeId");
+    String materialTypeId = item.getMaterialTypeId();
 
-    String patronGroupId = user.getString("patronGroup");
+    String patronGroupId = user.getPatronGroup();
 
     CompletableFuture<Response> loanRulesResponse = new CompletableFuture<>();
 
@@ -113,16 +168,11 @@ public class LoanPolicyRepository {
           new ForwardOnFailure(response)));
       } else {
         String policyId = response.getJson().getString("loanPolicyId");
-        findLoanPolicyCompleted.complete(HttpResult.success(policyId));
+        findLoanPolicyCompleted.complete(success(policyId));
       }
     });
 
     return findLoanPolicyCompleted;
   }
 
-  private static String determineLoanTypeForItem(JsonObject item) {
-    return item.containsKey("temporaryLoanTypeId") && !item.getString("temporaryLoanTypeId").isEmpty()
-      ? item.getString("temporaryLoanTypeId")
-      : item.getString("permanentLoanTypeId");
-  }
 }

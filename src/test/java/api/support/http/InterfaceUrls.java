@@ -89,6 +89,10 @@ public class InterfaceUrls {
     return APITestSuite.circulationModuleUrl("/circulation/check-out-by-barcode");
   }
 
+  public static URL renewByBarcodeUrl() {
+    return APITestSuite.circulationModuleUrl("/circulation/renew-by-barcode");
+  }
+
   public static URL loansUrl() {
     return loansUrl("");
   }

@@ -1,38 +1,81 @@
 package org.folio.circulation.support;
 
 import io.vertx.core.http.HttpServerResponse;
-import org.folio.circulation.support.http.server.JsonResponse;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.support.http.server.ValidationError;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.stream.Collectors;
+
+import static org.folio.circulation.support.http.server.JsonResponse.response;
 
 public class ValidationErrorFailure implements HttpFailure {
-  public final String reason;
-  private final String propertyName;
-  private final String propertyValue;
+  private final Collection<ValidationError> errors = new ArrayList<>();
 
-  public ValidationErrorFailure(
-    String reason) {
-    this(reason, null, null);
+  public static <T> HttpResult<T> failure(
+    String reason,
+    String key,
+    String value) {
+
+    return HttpResult.failure(error(reason, key, value));
   }
 
-  public ValidationErrorFailure(
+  public static ValidationErrorFailure error(
     String reason,
     String propertyName,
     String propertyValue) {
 
-    this.reason = reason;
-    this.propertyName = propertyName;
-    this.propertyValue = propertyValue;
+    new ArrayList<>();
+
+    return new ValidationErrorFailure(
+      new ValidationError(reason, propertyName, propertyValue));
+  }
+
+  private ValidationErrorFailure(ValidationError error) {
+    this.errors.add(error);
+  }
+
+  public ValidationErrorFailure(Collection<ValidationError> errors) {
+    this.errors.addAll(errors);
   }
 
   @Override
   public void writeTo(HttpServerResponse response) {
-    JsonResponse.unprocessableEntity(response,
-      reason, propertyName, propertyValue);
+    response(response, asJson(), 422);
+  }
+
+  private JsonObject asJson() {
+    JsonArray mappedErrors = new JsonArray(
+      errors.stream()
+      .map(ValidationError::toJson)
+      .collect(Collectors.toList()));
+
+    return new JsonObject().put("errors", mappedErrors);
   }
 
   @Override
   public String toString() {
-    return String.format("Validation failure, reason: \"%s\", " +
-        "property name: \"%s\" value: \"%s\"",
-      reason, propertyName, propertyValue);
+    return String.format("Validation failure:\n%s",
+      errors.stream()
+        .map(ValidationError::toString)
+        .collect(Collectors.joining("\n")));
+  }
+
+  public boolean hasErrorWithReason(String reason) {
+    //TODO: Should be equals rather than contains
+    return errors.stream()
+      .anyMatch(error -> StringUtils.equals(error.reason, reason));
+  }
+
+  public boolean hasErrorForKey(String key) {
+    return errors.stream()
+      .anyMatch(error -> StringUtils.equals(error.key, key));
+  }
+
+  public Collection<ValidationError> getErrors() {
+    return new ArrayList<>(errors);
   }
 }

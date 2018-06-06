@@ -4,6 +4,8 @@ import io.vertx.core.http.HttpServerResponse;
 import org.apache.http.entity.ContentType;
 
 public class ClientErrorResponse {
+  private ClientErrorResponse() { }
+
   public static void notFound(HttpServerResponse response) {
     response.setStatusCode(404);
     response.end("Not Found");

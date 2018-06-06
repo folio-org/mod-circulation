@@ -1,11 +1,7 @@
 package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
-import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,11 +24,10 @@ public class UpdateItem {
     LoanAndRelatedRecords relatedRecords) {
 
     try {
-      JsonObject item = relatedRecords.inventoryRecords.getItem();
-      RequestQueue requestQueue = relatedRecords.requestQueue;
+      RequestQueue requestQueue = relatedRecords.getRequestQueue();
 
       //Hack for creating returned loan - should distinguish further up the chain
-      if(isClosed(relatedRecords.loan)) {
+      if(relatedRecords.getLoan().isClosed()) {
         return skip(relatedRecords);
       }
 
@@ -47,8 +42,8 @@ public class UpdateItem {
         prospectiveStatus = CHECKED_OUT;
       }
 
-      if(isNotSameStatus(item, prospectiveStatus)) {
-        return internalUpdate(item, prospectiveStatus)
+      if(relatedRecords.getLoan().getItem().isNotSameStatus(prospectiveStatus)) {
+        return internalUpdate(relatedRecords.getLoan().getItem(), prospectiveStatus)
           .thenApply(updatedItemResult -> updatedItemResult.map(
             relatedRecords::withItem));
       }
@@ -67,12 +62,12 @@ public class UpdateItem {
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
     try {
-      JsonObject item = loanAndRelatedRecords.inventoryRecords.getItem();
+      final Item item = loanAndRelatedRecords.getLoan().getItem();
 
       final String prospectiveStatus = itemStatusFrom(
-        loanAndRelatedRecords.loan, loanAndRelatedRecords.requestQueue);
+        loanAndRelatedRecords.getLoan(), loanAndRelatedRecords.getRequestQueue());
 
-      if(isNotSameStatus(item, prospectiveStatus)) {
+      if(item.isNotSameStatus(prospectiveStatus)) {
         return internalUpdate(item, prospectiveStatus)
           .thenApply(updatedItemResult ->
             updatedItemResult.map(loanAndRelatedRecords::withItem));
@@ -92,16 +87,16 @@ public class UpdateItem {
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     try {
-      RequestType requestType = RequestType.from(requestAndRelatedRecords.request);
+      RequestType requestType = RequestType.from(requestAndRelatedRecords.getRequest());
 
-      RequestQueue requestQueue = requestAndRelatedRecords.requestQueue;
+      RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
 
       String newStatus = requestQueue.hasOutstandingRequests()
         ? RequestType.from(requestQueue.getHighestPriorityRequest()).toCheckedOutItemStatus()
         : requestType.toCheckedOutItemStatus();
 
-      if (isNotSameStatus(requestAndRelatedRecords.inventoryRecords.item, newStatus)) {
-        return internalUpdate(requestAndRelatedRecords.inventoryRecords.item, newStatus)
+      if (requestAndRelatedRecords.getInventoryRecords().isNotSameStatus(newStatus)) {
+        return internalUpdate(requestAndRelatedRecords.getInventoryRecords(), newStatus)
           .thenApply(updatedItemResult ->
             updatedItemResult.map(requestAndRelatedRecords::withItem));
       } else {
@@ -116,17 +111,17 @@ public class UpdateItem {
   }
 
   private CompletableFuture<HttpResult<JsonObject>> internalUpdate(
-    JsonObject item,
+    Item item,
     String newStatus) {
 
     CompletableFuture<HttpResult<JsonObject>> itemUpdated = new CompletableFuture<>();
 
-    item.put("status", new JsonObject().put("name", newStatus));
+    item.changeStatus(newStatus);
 
-    this.itemsStorageClient.put(item.getString("id"),
-      item, putItemResponse -> {
+    this.itemsStorageClient.put(item.getItemId(),
+      item.getItem(), putItemResponse -> {
         if(putItemResponse.getStatusCode() == 204) {
-          itemUpdated.complete(HttpResult.success(item));
+          itemUpdated.complete(HttpResult.success(item.getItem()));
         }
         else {
           itemUpdated.complete(HttpResult.failure(
@@ -137,49 +132,18 @@ public class UpdateItem {
     return itemUpdated;
   }
 
-  private static boolean isNotSameStatus(
-    JsonObject item,
-    String prospectiveStatus) {
-
-    return isNotSameStatus(ItemStatus.getStatus(item), prospectiveStatus);
-  }
-
-  private static boolean isNotSameStatus(
-    String currentStatus,
-    String prospectiveStatus) {
-
-    return !StringUtils.equals(currentStatus, prospectiveStatus);
-  }
-
-  private String itemStatusFrom(JsonObject loan) {
-    switch(loan.getJsonObject("status").getString("name")) {
-      case "Open":
-        return CHECKED_OUT;
-
-      case "Closed":
-        return AVAILABLE;
-
-      default:
-        return "";
-    }
-  }
-
   private <T> CompletableFuture<HttpResult<T>> skip(T previousResult) {
     return CompletableFuture.completedFuture(HttpResult.success(previousResult));
   }
 
-  private boolean isClosed(JsonObject loan) {
-    return StringUtils.equals(loan.getJsonObject("status").getString("name"), "Closed");
-  }
-
-  private String itemStatusFrom(JsonObject loan, RequestQueue requestQueue) {
+  private String itemStatusFrom(Loan loan, RequestQueue requestQueue) {
     String prospectiveStatus;
 
-    boolean closed = isClosed(loan);
-
-    if(closed) {
+    if(loan.isClosed()) {
       prospectiveStatus = requestQueue.hasOutstandingFulfillableRequests()
-        ? RequestFulfilmentPreference.from(requestQueue.getHighestPriorityFulfillableRequest()).toCheckedInItemStatus()
+        ? RequestFulfilmentPreference.from(
+          requestQueue.getHighestPriorityFulfillableRequest())
+        .toCheckedInItemStatus()
         : AVAILABLE;
     }
     else {

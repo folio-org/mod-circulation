@@ -25,7 +25,7 @@ import java.lang.invoke.MethodHandles;
 /**
  * Write and read the loan rules.
  */
-public class LoanRulesResource extends CollectionResource {
+public class LoanRulesResource extends Resource {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final String rootPath;
@@ -77,6 +77,8 @@ public class LoanRulesResource extends CollectionResource {
     });
   }
 
+  //Cannot combine exception catching as cannot resolve overloaded method for error
+  @SuppressWarnings("squid:S2147")
   private void put(RoutingContext routingContext) {
     CollectionResourceClient loansRulesClient = ClientUtil.getLoanRulesClient(routingContext);
 

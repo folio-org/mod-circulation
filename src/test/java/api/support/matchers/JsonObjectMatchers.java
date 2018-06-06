@@ -81,4 +81,28 @@ public class JsonObjectMatchers {
     };
   }
 
+  public static TypeSafeMatcher<JsonObject> hasErrorMessageContaining(String message) {
+    return new TypeSafeMatcher<JsonObject>() {
+      @Override
+      public void describeTo(Description description) {
+        description.appendText(String.format(
+          "a validation error message containing: %s", message));
+      }
+
+      @Override
+      protected boolean matchesSafely(JsonObject body) {
+        System.out.println(String.format("Inspecting for validation errors: %s",
+          body.encodePrettily()));
+
+        if (!body.containsKey("errors")) {
+          return false;
+        }
+
+        final List<JsonObject> errors = toList(body.getJsonArray("errors"));
+
+        return errors.stream()
+          .anyMatch(error -> error.getString("message").contains(message));
+      }
+    };
+  }
 }

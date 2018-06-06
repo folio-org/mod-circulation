@@ -1,7 +1,7 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.support.Item;
 
 import static org.folio.circulation.domain.ItemStatus.*;
 
@@ -12,16 +12,16 @@ public class RequestType {
 
   public final String value;
 
-  public static RequestType from(JsonObject request) {
-    return new RequestType(request.getString("requestType"));
+  public static RequestType from(Request request) {
+    return new RequestType(request.getRequestType());
   }
 
   private RequestType(String value) {
     this.value = value;
   }
 
-  public boolean canCreateRequestForItem(JsonObject item) {
-    String status = item.getJsonObject("status").getString("name");
+  public boolean canCreateRequestForItem(Item item) {
+    String status = item.getStatus();
 
     switch (value) {
       case HOLD:
@@ -36,7 +36,7 @@ public class RequestType {
     }
   }
 
-  public String toCheckedOutItemStatus() {
+  String toCheckedOutItemStatus() {
     switch(value) {
       case RequestType.HOLD:
         return CHECKED_OUT_HELD;
@@ -53,7 +53,7 @@ public class RequestType {
     }
   }
 
-  public String toLoanAction() {
+  String toLoanAction() {
     switch (this.value) {
       case HOLD:
         return "holdrequested";

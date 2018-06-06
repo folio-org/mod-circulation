@@ -3,57 +3,33 @@ package org.folio.circulation.resources;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.domain.*;
+import org.folio.circulation.domain.representations.RequestProperties;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.server.*;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.*;
-import static org.folio.circulation.support.JsonPropertyCopier.copyStringIfExists;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 public class RequestCollectionResource extends CollectionResource {
   public RequestCollectionResource(HttpClient client) {
-    super(client);
+    super(client, "/circulation/requests");
   }
 
-  public void register(Router router) {
-    RouteRegistration routeRegistration = new RouteRegistration("/circulation/requests", router);
-
-    routeRegistration.create(this::create);
-    routeRegistration.get(this::get);
-    routeRegistration.getMany(this::getMany);
-    routeRegistration.replace(this::replace);
-    routeRegistration.delete(this::delete);
-    routeRegistration.deleteAll(this::empty);
-  }
-
-  private void create(RoutingContext routingContext) {
+  void create(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
 
-    JsonObject request = routingContext.getBodyAsJson();
+    JsonObject representation = routingContext.getBodyAsJson();
 
-    final Clients clients = Clients.create(context, client);
-
-    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
-    final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
-    final UserFetcher userFetcher = new UserFetcher(clients);
-    final UpdateItem updateItem = new UpdateItem(clients);
-    final UpdateLoanActionHistory updateLoanActionHistory = new UpdateLoanActionHistory(clients);
-    final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
-      clients, () -> new ValidationErrorFailure(
-      "proxyUserId is not valid", "proxyUserId",
-      request.getString("proxyUserId")));
-
-    RequestStatus status = RequestStatus.from(request);
+    RequestStatus status = RequestStatus.from(representation);
 
     HttpServerResponse response = routingContext.response();
     if(!status.isValid()) {
@@ -62,23 +38,33 @@ public class RequestCollectionResource extends CollectionResource {
       return;
     }
     else {
-      status.writeTo(request);
+      status.writeTo(representation);
     }
 
-    removeRelatedRecordInformation(request);
+    removeRelatedRecordInformation(representation);
 
-    final String itemId = getItemId(request);
-    final String requestingUserId = request.getString("requesterId");
-    final String proxyUserId = request.getString("proxyUserId");
+    final Request request = new Request(representation);
+
+    final Clients clients = Clients.create(context, client);
+
+    final ItemRepository itemRepository = new ItemRepository(clients, false, false);
+    final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
+    final UserRepository userRepository = new UserRepository(clients);
+    final UpdateItem updateItem = new UpdateItem(clients);
+    final UpdateLoanActionHistory updateLoanActionHistory = new UpdateLoanActionHistory(clients);
+    final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
+      clients, () -> ValidationErrorFailure.error(
+      "proxyUserId is not valid", RequestProperties.PROXY_USER_ID,
+      request.getProxyUserId()));
 
     completedFuture(HttpResult.success(new RequestAndRelatedRecords(request)))
-      .thenCombineAsync(inventoryFetcher.fetch(request), this::addInventoryRecords)
+      .thenCombineAsync(itemRepository.fetchFor(request), this::addInventoryRecords)
       .thenApply(this::refuseWhenItemDoesNotExist)
       .thenApply(this::refuseWhenItemIsNotValid)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
-      .thenCombineAsync(requestQueueFetcher.get(itemId), this::addRequestQueue)
-      .thenCombineAsync(userFetcher.getUser(requestingUserId, false), this::addUser)
-      .thenCombineAsync(userFetcher.getUser(proxyUserId, false), this::addProxyUser)
+      .thenCombineAsync(requestQueueFetcher.get(request.getItemId()), this::addRequestQueue)
+      .thenCombineAsync(userRepository.getUser(request.getUserId(), false), this::addUser)
+      .thenCombineAsync(userRepository.getUser(request.getProxyUserId(), false), this::addProxyUser)
       .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
       .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreation))
       .thenComposeAsync(r -> r.after(records -> createRequest(records, clients)))
@@ -87,31 +73,30 @@ public class RequestCollectionResource extends CollectionResource {
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
-  private void replace(RoutingContext routingContext) {
+  void replace(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
 
     String id = routingContext.request().getParam("id");
-    JsonObject request = routingContext.getBodyAsJson();
+    JsonObject representation = routingContext.getBodyAsJson();
+
+    removeRelatedRecordInformation(representation);
+
+    final Request request = new Request(representation);
 
     final Clients clients = Clients.create(context, client);
 
-    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
-    final UserFetcher userFetcher = new UserFetcher(clients);
+    final ItemRepository itemRepository = new ItemRepository(clients, false, false);
+    final UserRepository userRepository = new UserRepository(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
-      clients, () -> new ValidationErrorFailure(
-      "proxyUserId is not valid", "proxyUserId",
-      request.getString("proxyUserId")));
-
-    removeRelatedRecordInformation(request);
-
-    final String requestingUserId = request.getString("requesterId");
-    final String proxyUserId = request.getString("proxyUserId");
+      clients, () -> ValidationErrorFailure.error(
+      "proxyUserId is not valid", RequestProperties.PROXY_USER_ID,
+      request.getProxyUserId()));
 
     completedFuture(HttpResult.success(new RequestAndRelatedRecords(request)))
-      .thenCombineAsync(inventoryFetcher.fetch(request), this::addInventoryRecords)
-      .thenCombineAsync(userFetcher.getUser(requestingUserId, false), this::addUser)
-      .thenCombineAsync(userFetcher.getUser(proxyUserId, false), this::addProxyUser)
+      .thenCombineAsync(itemRepository.fetchFor(request), this::addInventoryRecords)
+      .thenCombineAsync(userRepository.getUser(request.getUserId(), false), this::addUser)
+      .thenCombineAsync(userRepository.getUser(request.getProxyUserId(), false), this::addProxyUser)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenAcceptAsync(result -> {
         if(result.failed()) {
@@ -119,17 +104,15 @@ public class RequestCollectionResource extends CollectionResource {
           return;
         }
 
-        final InventoryRecords inventoryRecords = result.value().inventoryRecords;
-        final JsonObject item = inventoryRecords.getItem();
-        final JsonObject instance = inventoryRecords.getInstance();
-        final JsonObject requester = result.value().requestingUser;
-        final JsonObject proxy = result.value().proxyUser;
+        final Item item = result.value().getInventoryRecords();
+        final User requester = result.value().getRequestingUser();
+        final User proxy = result.value().getProxyUser();
 
-        addStoredItemProperties(request, item, instance);
-        addStoredRequesterProperties(request, requester);
-        addStoredProxyProperties(request, proxy);
+        addStoredItemProperties(representation, item);
+        addStoredRequesterProperties(representation, requester);
+        addStoredProxyProperties(representation, proxy);
 
-        clients.requestsStorage().put(id, request, response -> {
+        clients.requestsStorage().put(id, representation, response -> {
           if(response.getStatusCode() == 204) {
             SuccessResponse.noContent(routingContext.response());
           }
@@ -140,40 +123,42 @@ public class RequestCollectionResource extends CollectionResource {
       });
   }
 
-  private void get(RoutingContext routingContext) {
+  void get(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context, client);
 
     String id = routingContext.request().getParam("id");
 
-    clients.requestsStorage().get(id, requestResponse -> {
-      if(requestResponse.getStatusCode() == 200) {
-        JsonObject request = requestResponse.getJson();
+    clients.requestsStorage().get(id)
+      .thenAccept(requestResponse -> {
+        if(requestResponse.getStatusCode() == 200) {
+          Request request = new Request(requestResponse.getJson());
 
-        InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
+          ItemRepository itemRepository = new ItemRepository(clients, false, false);
 
-        CompletableFuture<HttpResult<InventoryRecords>> inventoryRecordsCompleted =
-          inventoryFetcher.fetch(getItemId(request));
+          CompletableFuture<HttpResult<Item>> inventoryRecordsCompleted =
+            itemRepository.fetchFor(request);
 
-        inventoryRecordsCompleted.thenAccept(r -> {
-          if(r.failed()) {
-            r.cause().writeTo(routingContext.response());
-            return;
-          }
+          inventoryRecordsCompleted.thenAccept(r -> {
+            if(r.failed()) {
+              r.cause().writeTo(routingContext.response());
+              return;
+            }
 
-          addAdditionalItemProperties(request, r.value().getHolding(),
-            r.value().getItem());
+            final JsonObject representation = request.asJson();
 
-          JsonResponse.success(routingContext.response(), request);
-        });
-      }
-      else {
-        ForwardResponse.forward(routingContext.response(), requestResponse);
-      }
-    });
+            addAdditionalItemProperties(representation, r.value());
+
+            JsonResponse.success(routingContext.response(), representation);
+          });
+        }
+        else {
+          ForwardResponse.forward(routingContext.response(), requestResponse);
+        }
+      });
   }
 
-  private void delete(RoutingContext routingContext) {
+  void delete(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context, client);
 
@@ -189,13 +174,13 @@ public class RequestCollectionResource extends CollectionResource {
     });
   }
 
-  private void getMany(RoutingContext routingContext) {
+  void getMany(RoutingContext routingContext) {
 
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context, client);
 
-    clients.requestsStorage().getMany(routingContext.request().query(),
-      requestsResponse -> {
+    clients.requestsStorage().getMany(routingContext.request().query())
+      .thenAccept(requestsResponse -> {
 
       if(requestsResponse.getStatusCode() == 200) {
         final MultipleRecordsWrapper wrappedRequests = MultipleRecordsWrapper.fromBody(
@@ -211,29 +196,32 @@ public class RequestCollectionResource extends CollectionResource {
         final Collection<JsonObject> requests = wrappedRequests.getRecords();
 
         List<String> itemIds = requests.stream()
-          .map(this::getItemId)
+          .map(Request::new)
+          .map(Request::getItemId)
           .filter(Objects::nonNull)
           .collect(Collectors.toList());
 
-        InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
+        ItemRepository itemRepository = new ItemRepository(clients, false, false);
 
-        CompletableFuture<MultipleInventoryRecords> inventoryRecordsFetched =
-          inventoryFetcher.fetch(itemIds, e ->
-            ServerErrorResponse.internalError(routingContext.response(), e.toString()));
+        CompletableFuture<HttpResult<MultipleInventoryRecords>> inventoryRecordsFetched =
+          itemRepository.fetchFor(itemIds);
 
-        inventoryRecordsFetched.thenAccept(records -> {
-          requests.forEach( request -> {
-              Optional<JsonObject> possibleItem = records.findItemById(getItemId(request));
+        //TODO: Refactor this to map to new representations
+        // rather than alter the storage representations
+        inventoryRecordsFetched.thenAccept(result -> {
+          if(result.failed()) {
+            result.cause().writeTo(routingContext.response());
+            return;
+          }
 
-              if(possibleItem.isPresent()) {
-                JsonObject item = possibleItem.get();
+          final MultipleInventoryRecords records = result.value();
 
-                Optional<JsonObject> possibleHolding = records.findHoldingById(
-                  item.getString("holdingsRecordId"));
+          requests.forEach(request -> {
+              Item record = records.findRecordByItemId(
+                new Request(request).getItemId());
 
-                addAdditionalItemProperties(request,
-                  possibleHolding.orElse(null),
-                  possibleItem.orElse(null));
+              if(record.isFound()) {
+                addAdditionalItemProperties(request, record);
               }
             });
 
@@ -244,7 +232,7 @@ public class RequestCollectionResource extends CollectionResource {
     });
   }
 
-  private void empty(RoutingContext routingContext) {
+  void empty(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context, client);
 
@@ -258,92 +246,62 @@ public class RequestCollectionResource extends CollectionResource {
     });
   }
 
-  private String getItemId(JsonObject request) {
-    return request.getString("itemId");
-  }
-
   private void addStoredItemProperties(
     JsonObject request,
-    JsonObject item,
-    JsonObject instance) {
+    Item item) {
 
-    if(item == null) {
+    if(item == null || item.isNotFound()) {
       return;
     }
 
     JsonObject itemSummary = new JsonObject();
 
-    final String titleProperty = "title";
-
-    if(instance != null && instance.containsKey(titleProperty)) {
-      itemSummary.put(titleProperty, instance.getString(titleProperty));
-    } else copyStringIfExists(titleProperty, item, itemSummary);
-
-    copyStringIfExists("barcode", item, itemSummary);
+    write(itemSummary, "title", item.getTitle());
+    write(itemSummary, "barcode", item.getBarcode());
 
     request.put("item", itemSummary);
   }
 
   private void addAdditionalItemProperties(
     JsonObject request,
-    JsonObject holding,
-    JsonObject item) {
+    Item item) {
 
-    if(item == null)
+    if(item == null || item.isNotFound()) {
       return;
+    }
 
     JsonObject itemSummary = request.containsKey("item")
       ? request.getJsonObject("item")
       : new JsonObject();
 
-    copyStringIfExists("holdingsRecordId", item, itemSummary);
-
-    if(holding != null) {
-      copyStringIfExists("instanceId", holding, itemSummary);
-    }
+    write(itemSummary, "holdingsRecordId", item.getHoldingsRecordId());
+    write(itemSummary, "instanceId", item.getInstanceId());
 
     request.put("item", itemSummary);
   }
 
   private void addStoredRequesterProperties
     (JsonObject requestWithAdditionalInformation,
-     JsonObject requester) {
+     User requester) {
 
     if(requester == null) {
       return;
     }
 
-    JsonObject requesterSummary = createUserSummary(requester);
+    JsonObject requesterSummary = requester.createUserSummary();
 
     requestWithAdditionalInformation.put("requester", requesterSummary);
   }
 
   private void addStoredProxyProperties
     (JsonObject requestWithAdditionalInformation,
-     JsonObject proxy) {
+     User proxy) {
 
     if(proxy == null) {
       return;
     }
 
-    JsonObject proxySummary = createUserSummary(proxy);
-
-    requestWithAdditionalInformation.put("proxy", proxySummary);
-  }
-
-  private JsonObject createUserSummary(JsonObject user) {
-    JsonObject requesterSummary = new JsonObject();
-
-    if(user.containsKey("personal")) {
-      JsonObject personalDetails = user.getJsonObject("personal");
-
-      copyStringIfExists("lastName", personalDetails, requesterSummary);
-      copyStringIfExists("firstName", personalDetails, requesterSummary);
-      copyStringIfExists("middleName", personalDetails, requesterSummary);
-    }
-
-    copyStringIfExists("barcode", user, requesterSummary);
-    return requesterSummary;
+    requestWithAdditionalInformation.put("proxy", proxy.createUserSummary());
   }
 
   private void removeRelatedRecordInformation(JsonObject request) {
@@ -354,7 +312,7 @@ public class RequestCollectionResource extends CollectionResource {
 
   private HttpResult<RequestAndRelatedRecords> addInventoryRecords(
     HttpResult<RequestAndRelatedRecords> loanResult,
-    HttpResult<InventoryRecords> inventoryRecordsResult) {
+    HttpResult<Item> inventoryRecordsResult) {
 
     return HttpResult.combine(loanResult, inventoryRecordsResult,
       RequestAndRelatedRecords::withInventoryRecords);
@@ -388,10 +346,10 @@ public class RequestCollectionResource extends CollectionResource {
     HttpResult<RequestAndRelatedRecords> result) {
 
     return result.next(requestAndRelatedRecords -> {
-      if(requestAndRelatedRecords.inventoryRecords.getItem() == null) {
-        return HttpResult.failure(new ValidationErrorFailure(
+      if(requestAndRelatedRecords.getInventoryRecords().isNotFound()) {
+        return HttpResult.failure(ValidationErrorFailure.error(
           "Item does not exist", "itemId",
-          requestAndRelatedRecords.request.getString("itemId")));
+          requestAndRelatedRecords.getRequest().getItemId()));
       }
       else {
         return result;
@@ -403,16 +361,15 @@ public class RequestCollectionResource extends CollectionResource {
     HttpResult<RequestAndRelatedRecords> result) {
 
     return result.next(requestAndRelatedRecords -> {
-      JsonObject request = requestAndRelatedRecords.request;
-      JsonObject item = requestAndRelatedRecords.inventoryRecords.item;
+      Request request = requestAndRelatedRecords.getRequest();
 
       RequestType requestType = RequestType.from(request);
 
-      if (!requestType.canCreateRequestForItem(item)) {
-        return HttpResult.failure(new ValidationErrorFailure(
+      if (!requestType.canCreateRequestForItem(requestAndRelatedRecords.getInventoryRecords())) {
+        return HttpResult.failure(ValidationErrorFailure.error(
           String.format("Item is not %s, %s or %s", CHECKED_OUT,
             CHECKED_OUT_HELD, CHECKED_OUT_RECALLED),
-          "itemId", request.getString("itemId")
+          "itemId", request.getItemId()
         ));
       }
       else {
@@ -427,21 +384,19 @@ public class RequestCollectionResource extends CollectionResource {
 
     CompletableFuture<HttpResult<RequestAndRelatedRecords>> onCreated = new CompletableFuture<>();
 
-    JsonObject request = requestAndRelatedRecords.request;
+    JsonObject request = requestAndRelatedRecords.getRequest().asJson();
 
-    JsonObject item = requestAndRelatedRecords.inventoryRecords.getItem();
-    JsonObject instance = requestAndRelatedRecords.inventoryRecords.getInstance();
-    JsonObject requestingUser = requestAndRelatedRecords.requestingUser;
-    JsonObject proxyUser = requestAndRelatedRecords.proxyUser;
+    User requestingUser = requestAndRelatedRecords.getRequestingUser();
+    User proxyUser = requestAndRelatedRecords.getProxyUser();
 
-    addStoredItemProperties(request, item, instance);
+    addStoredItemProperties(request, requestAndRelatedRecords.getInventoryRecords());
     addStoredRequesterProperties(request, requestingUser);
     addStoredProxyProperties(request, proxyUser);
 
     clients.requestsStorage().post(request, response -> {
       if (response.getStatusCode() == 201) {
         onCreated.complete(HttpResult.success(
-          requestAndRelatedRecords.withRequest(response.getJson())));
+          requestAndRelatedRecords.withRequest(new Request(response.getJson()))));
       } else {
         onCreated.complete(HttpResult.failure(new ForwardOnFailure(response)));
       }
@@ -451,11 +406,11 @@ public class RequestCollectionResource extends CollectionResource {
   }
 
   private JsonObject extendedRequest(RequestAndRelatedRecords requestAndRelatedRecords) {
-    JsonObject item = requestAndRelatedRecords.inventoryRecords.getItem();
-    JsonObject holding = requestAndRelatedRecords.inventoryRecords.getHolding();
+    final JsonObject representation = requestAndRelatedRecords.getRequest().asJson();
 
-    addAdditionalItemProperties(requestAndRelatedRecords.request, holding, item);
+    addAdditionalItemProperties(representation,
+      requestAndRelatedRecords.getInventoryRecords());
 
-    return requestAndRelatedRecords.request;
+    return representation;
   }
 }

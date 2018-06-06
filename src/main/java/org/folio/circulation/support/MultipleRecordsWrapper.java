@@ -26,6 +26,16 @@ public class MultipleRecordsWrapper {
     this.totalRecords = wrapper.getInteger(TOTAL_RECORDS_PROPERTY_NAME);
   }
 
+  public MultipleRecordsWrapper(
+    Collection<JsonObject> records,
+    String recordsPropertyName,
+    Integer totalRecords) {
+
+    this.recordsPropertyName = recordsPropertyName;
+    this.records = records;
+    this.totalRecords = totalRecords;
+  }
+
   public Integer getTotalRecords() {
     return totalRecords;
   }

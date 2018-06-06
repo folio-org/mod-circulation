@@ -25,24 +25,14 @@ public class ProxyRelationshipValidator {
     this.invalidRelationshipErrorSupplier = invalidRelationshipErrorSupplier;
   }
 
-  public CompletableFuture<HttpResult<RequestAndRelatedRecords>> refuseWhenInvalid(
-    RequestAndRelatedRecords requestAndRelatedRecords) {
+  public <T extends UserRelatedRecord> CompletableFuture<HttpResult<T>> refuseWhenInvalid(
+    T userRelatedRecord) {
 
     //TODO: Improve mapping back null result to records
     return refuseWhenInvalid(
-      requestAndRelatedRecords.request.getString("proxyUserId"),
-      requestAndRelatedRecords.request.getString("requesterId"))
-      .thenApply(result -> result.map(v -> requestAndRelatedRecords));
-  }
-
-  public CompletableFuture<HttpResult<LoanAndRelatedRecords>> refuseWhenInvalid(
-    LoanAndRelatedRecords loanAndRelatedRecords) {
-
-    //TODO: Improve mapping back null result to records
-    return refuseWhenInvalid(
-      loanAndRelatedRecords.loan.getProxyUserId(),
-      loanAndRelatedRecords.loan.getUserId())
-      .thenApply(result -> result.map(v -> loanAndRelatedRecords));
+      userRelatedRecord.getProxyUserId(),
+      userRelatedRecord.getUserId())
+      .thenApply(result -> result.map(v -> userRelatedRecord));
   }
 
   private CompletableFuture<HttpResult<Void>> refuseWhenInvalid(
@@ -63,30 +53,31 @@ public class ProxyRelationshipValidator {
 
     CompletableFuture<HttpResult<Void>> future = new CompletableFuture<>();
 
-    proxyRelationshipsClient.getMany(proxyRelationshipQuery, 1000, 0, proxyValidResponse -> {
-      if (proxyValidResponse != null) {
-        if (proxyValidResponse.getStatusCode() != 200) {
-          future.complete(HttpResult.failure(new ForwardOnFailure(proxyValidResponse)));
-          return;
+    proxyRelationshipsClient.getMany(proxyRelationshipQuery, 1000, 0)
+      .thenAccept(proxyValidResponse -> {
+        if (proxyValidResponse != null) {
+          if (proxyValidResponse.getStatusCode() != 200) {
+            future.complete(HttpResult.failure(new ForwardOnFailure(proxyValidResponse)));
+            return;
+          }
+
+          final MultipleRecordsWrapper proxyRelationships = MultipleRecordsWrapper.fromBody(
+            proxyValidResponse.getBody(), "proxiesFor");
+
+          final boolean activeRelationship = proxyRelationships.getRecords()
+            .stream()
+            .map(ProxyRelationship::new)
+            .anyMatch(ProxyRelationship::isActive);
+
+          future.complete(
+            activeRelationship
+              ? HttpResult.success(null)
+              : HttpResult.failure(invalidRelationshipErrorSupplier.get()));
         }
-
-        final MultipleRecordsWrapper proxyRelationships = MultipleRecordsWrapper.fromBody(
-          proxyValidResponse.getBody(), "proxiesFor");
-
-        final boolean activeRelationship = proxyRelationships.getRecords()
-          .stream()
-          .map(ProxyRelationship::new)
-          .anyMatch(ProxyRelationship::isActive);
-
-        future.complete(
-          activeRelationship
-            ? HttpResult.success(null)
-            : HttpResult.failure(invalidRelationshipErrorSupplier.get()));
-      }
-      else {
-        future.complete(HttpResult.failure(
-          new ServerErrorFailure("No response when requesting proxies")));
-      }
+        else {
+          future.complete(HttpResult.failure(
+            new ServerErrorFailure("No response when requesting proxies")));
+        }
     });
 
     return future;

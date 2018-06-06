@@ -63,4 +63,35 @@ public class JsonPropertyFetcher {
       return null;
     }
   }
+
+  public static String getProperty(JsonObject representation, String propertyName) {
+    if(representation != null) {
+      return representation.getString(propertyName);
+    }
+    else {
+      return null;
+    }
+  }
+
+  public static Boolean getBooleanProperty(JsonObject representation, String propertyName) {
+    if(representation != null) {
+      return representation.getBoolean(propertyName);
+    }
+    else {
+      return false;
+    }
+  }
+
+  public static Integer getIntegerProperty(
+    JsonObject representation,
+    String propertyName,
+    Integer defaultValue) {
+
+    if(representation != null) {
+      return representation.getInteger(propertyName, defaultValue);
+    }
+    else {
+      return defaultValue;
+    }
+  }
 }

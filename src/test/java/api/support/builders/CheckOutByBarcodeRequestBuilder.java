@@ -16,7 +16,9 @@ public class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Buil
 
   private CheckOutByBarcodeRequestBuilder(
     String itemBarcode,
-    String userBarcode, String proxyBarcode, DateTime loanDate) {
+    String userBarcode,
+    String proxyBarcode,
+    DateTime loanDate) {
 
     this.itemBarcode = itemBarcode;
     this.userBarcode = userBarcode;

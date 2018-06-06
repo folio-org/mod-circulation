@@ -61,6 +61,7 @@ public class OkapiHttpClient {
     request.exceptionHandler(this.exceptionHandler::accept);
 
     if(body != null) {
+      //TODO: Catch encoding exceptions here
       String encodedBody = Json.encodePrettily(body);
 
       log.info("POST {}, Request: {}", url, encodedBody);
@@ -93,6 +94,7 @@ public class OkapiHttpClient {
 
     request.exceptionHandler(this.exceptionHandler::accept);
 
+    //TODO: Catch encoding exceptions here
     String encodedBody = Json.encodePrettily(body);
 
     log.info("PUT {}, Request: {}", url, encodedBody);

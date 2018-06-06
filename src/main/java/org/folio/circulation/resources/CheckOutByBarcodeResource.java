@@ -19,7 +19,7 @@ import java.util.function.Function;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.LoanValidation.*;
 
-public class CheckOutByBarcodeResource extends CollectionResource {
+public class CheckOutByBarcodeResource extends Resource {
   public CheckOutByBarcodeResource(HttpClient client) {
     super(client);
   }
@@ -48,15 +48,13 @@ public class CheckOutByBarcodeResource extends CollectionResource {
 
     final Clients clients = Clients.create(context, client);
 
-    final UserFetcher userFetcher = new UserFetcher(clients);
-    final InventoryFetcher inventoryFetcher = new InventoryFetcher(clients);
+    final UserRepository userRepository = new UserRepository(clients);
+    final ItemRepository itemRepository = new ItemRepository(clients, true, true);
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
-    final MaterialTypeRepository materialTypeRepository = new MaterialTypeRepository(clients);
-    final LocationRepository locationRepository = new LocationRepository(clients);
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
-      clients, () -> new ValidationErrorFailure(
+      clients, () -> ValidationErrorFailure.error(
       "Cannot check out item via proxy when relationship is invalid", "proxyUserBarcode",
       proxyUserBarcode));
 
@@ -66,11 +64,11 @@ public class CheckOutByBarcodeResource extends CollectionResource {
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
     completedFuture(HttpResult.success(new LoanAndRelatedRecords(Loan.from(loan))))
-      .thenCombineAsync(userFetcher.getUserByBarcode(userBarcode), this::addUser)
-      .thenCombineAsync(userFetcher.getProxyUserByBarcode(proxyUserBarcode), this::addProxyUser)
+      .thenCombineAsync(userRepository.getUserByBarcode(userBarcode), this::addUser)
+      .thenCombineAsync(userRepository.getProxyUserByBarcode(proxyUserBarcode), this::addProxyUser)
       .thenApply(r -> refuseWhenRequestingUserIsInactive(r, userBarcode))
       .thenApply(r -> refuseWhenProxyingUserIsInactive(r, proxyUserBarcode))
-      .thenCombineAsync(inventoryFetcher.fetchByBarcode(itemBarcode), this::addInventoryRecords)
+      .thenCombineAsync(itemRepository.fetchByBarcode(itemBarcode), this::addInventoryRecords)
       .thenApply(r -> r.next(v -> refuseWhenItemBarcodeDoesNotExist(r, itemBarcode)))
       .thenApply(r -> r.map(mapBarcodes()))
       .thenApply(r -> refuseWhenItemIsAlreadyCheckedOut(r, itemBarcode))
@@ -79,13 +77,12 @@ public class CheckOutByBarcodeResource extends CollectionResource {
         refuseWhenHasOpenLoan(records, loanRepository, itemBarcode)))
       .thenComposeAsync(r -> r.after(requestQueueFetcher::get))
       .thenApply(r -> refuseWhenUserIsNotAwaitingPickup(r, userBarcode))
-      .thenComposeAsync(r -> r.after(materialTypeRepository::getMaterialType))
-      .thenComposeAsync(r -> r.after(locationRepository::getLocation))
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenApply(r -> r.next(this::calculateDueDate))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
       .thenComposeAsync(r -> r.after(loanRepository::createLoan))
+      .thenApply(r -> r.map(LoanAndRelatedRecords::getLoan))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(this::createdLoanFrom)
       .thenAccept(result -> result.writeTo(routingContext.response()));
@@ -94,13 +91,12 @@ public class CheckOutByBarcodeResource extends CollectionResource {
   private HttpResult<LoanAndRelatedRecords> calculateDueDate(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
-    final JsonObject loan = loanAndRelatedRecords.loan;
-    final LoanPolicy loanPolicy = loanAndRelatedRecords.loanPolicy;
+    final Loan loan = loanAndRelatedRecords.getLoan();
+    final LoanPolicy loanPolicy = loanAndRelatedRecords.getLoanPolicy();
 
-    return loanPolicy.calculate(loan)
+    return loanPolicy.calculateInitialDueDate(loan)
       .map(dueDate -> {
-        loanAndRelatedRecords.loan.put("dueDate",
-          dueDate.toString(ISODateTimeFormat.dateTime()));
+        loanAndRelatedRecords.getLoan().changeDueDate(dueDate);
 
         return loanAndRelatedRecords;
       });
@@ -118,13 +114,10 @@ public class CheckOutByBarcodeResource extends CollectionResource {
 
   private Function<LoanAndRelatedRecords, LoanAndRelatedRecords> mapBarcodes() {
     return loanAndRelatedRecords -> {
-      final JsonObject loan = loanAndRelatedRecords.loan;
+      final Loan loan = loanAndRelatedRecords.getLoan();
 
-      loan.put("userId", loanAndRelatedRecords.requestingUser.getString("id"));
-      loan.put("itemId", loanAndRelatedRecords.inventoryRecords.item.getString("id"));
-
-      if(loanAndRelatedRecords.proxyingUser != null) {
-        loan.put("proxyUserId", loanAndRelatedRecords.proxyingUser.getString("id"));
+      if(loanAndRelatedRecords.getProxyingUser() != null) {
+        loan.changeProxyUser(loanAndRelatedRecords.getProxyingUser().getId());
       }
 
       return loanAndRelatedRecords;
@@ -159,9 +152,9 @@ public class CheckOutByBarcodeResource extends CollectionResource {
 
   private HttpResult<LoanAndRelatedRecords> addInventoryRecords(
     HttpResult<LoanAndRelatedRecords> loanResult,
-    HttpResult<InventoryRecords> inventoryRecordsResult) {
+    HttpResult<Item> inventoryRecordsResult) {
 
     return HttpResult.combine(loanResult, inventoryRecordsResult,
-      LoanAndRelatedRecords::withInventoryRecords);
+      LoanAndRelatedRecords::withItem);
   }
 }

@@ -1,6 +1,6 @@
 package org.folio.circulation.domain.policy;
 
-import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.joda.time.DateTime;
@@ -8,6 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
+
+import static org.folio.circulation.support.HttpResult.failure;
 
 abstract class DueDateStrategy {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -21,16 +23,16 @@ abstract class DueDateStrategy {
     this.loanPolicyName = loanPolicyName;
   }
 
-  abstract HttpResult<DateTime> calculate(JsonObject loan);
+  abstract HttpResult<DateTime> calculateDueDate(Loan loan);
 
-  protected HttpResult<DateTime> fail(String reason) {
-    final String message = String.format(
-      "%s Please review \"%s\" before retrying checking out", reason, loanPolicyName);
+  <T> HttpResult<T> fail(String reason) {
+    log.error(reason);
+    return failure(validationError(reason));
+  }
 
-    log.warn(message);
-
-    return HttpResult.failure(new ValidationErrorFailure(
-      message, "loanPolicyId", this.loanPolicyId));
+  ValidationErrorFailure validationError(String reason) {
+    return ValidationErrorFailure.error(
+      reason, "loanPolicyId", this.loanPolicyId);
   }
 
   void logApplying(String message) {

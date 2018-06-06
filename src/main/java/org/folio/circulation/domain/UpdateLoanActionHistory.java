@@ -27,25 +27,24 @@ public class UpdateLoanActionHistory {
   public CompletableFuture<HttpResult<RequestAndRelatedRecords>> onRequestCreation(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    RequestType requestType = RequestType.from(requestAndRelatedRecords.request);
+    RequestType requestType = RequestType.from(requestAndRelatedRecords.getRequest());
 
     String action = requestType.toLoanAction();
-    String itemStatus = ItemStatus.getStatus(
-      requestAndRelatedRecords.inventoryRecords.item);
+    String itemStatus = requestAndRelatedRecords.getInventoryRecords().getStatus();
 
     //Do not change any loans if no new status
     if(StringUtils.isEmpty(action)) {
       return skip(requestAndRelatedRecords);
     }
 
-    String itemId = requestAndRelatedRecords.request.getString("itemId");
+    String itemId = requestAndRelatedRecords.getRequest().getItemId();
 
     String queryTemplate = "query=itemId=%s+and+status.name=Open";
     String query = String.format(queryTemplate, itemId);
 
     CompletableFuture<HttpResult<RequestAndRelatedRecords>> completed = new CompletableFuture<>();
 
-    this.loansStorageClient.getMany(query, getLoansResponse -> {
+    this.loansStorageClient.getMany(query).thenAccept(getLoansResponse -> {
       if(getLoansResponse.getStatusCode() == 200) {
         List<JsonObject> loans = JsonArrayHelper.toList(
           getLoansResponse.getJson().getJsonArray("loans"));

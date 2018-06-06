@@ -10,6 +10,7 @@ import api.support.http.URLHelper;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.CirculationVerticle;
+import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.VertxAssistant;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.joda.time.DateTime;
@@ -39,6 +40,7 @@ import java.util.function.Consumer;
 
 @Suite.SuiteClasses({
   CheckOutByBarcodeTests.class,
+  RenewByBarcodeTests.class,
   LoanAPITests.class,
   LoanAPILocationTests.class,
   LoanAPITitleTests.class,
@@ -549,7 +551,9 @@ public class APITestSuite {
     LoanPolicyBuilder canCirculateRollingLoanPolicy = new LoanPolicyBuilder()
       .withName("Can Circulate Rolling")
       .withDescription("Can circulate item")
-      .rolling(Period.weeks(3));
+      .rolling(Period.weeks(3))
+      .unlimitedRenewals()
+      .renewFromSystemDate();
 
     canCirculateRollingLoanPolicyId = loanPoliciesClient.create(
       canCirculateRollingLoanPolicy).getId();

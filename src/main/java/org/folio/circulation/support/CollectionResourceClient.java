@@ -3,6 +3,7 @@ package org.folio.circulation.support;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpClientResponse;
 
+import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.http.entity.ContentType;
@@ -13,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
 import java.net.URL;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 public class CollectionResourceClient {
@@ -28,24 +30,41 @@ public class CollectionResourceClient {
     this.collectionRoot = collectionRoot;
   }
 
-  public void post(Object resourceRepresentation,
-                   Consumer<Response> responseHandler) {
+  public void post(
+    JsonObject resourceRepresentation,
+    Consumer<Response> responseHandler) {
 
     client.post(collectionRoot,
       resourceRepresentation,
       responseConversationHandler(responseHandler));
   }
 
-  public void put(Object resourceRepresentation,
-      Consumer<Response> responseHandler) {
+  public void put(
+    JsonObject resourceRepresentation,
+    Consumer<Response> responseHandler) {
 
     client.put(collectionRoot,
         resourceRepresentation,
         responseConversationHandler(responseHandler));
   }
 
-  public void put(String id, Object resourceRepresentation,
-                     Consumer<Response> responseHandler) {
+  public CompletableFuture<Response> put(
+    String id,
+    JsonObject resourceRepresentation) {
+
+    CompletableFuture<Response> future = new CompletableFuture<>();
+
+    client.put(individualRecordUrl(id),
+      resourceRepresentation,
+      responseConversationHandler(future::complete));
+
+    return future;
+  }
+
+  public void put(
+    String id,
+    JsonObject resourceRepresentation,
+    Consumer<Response> responseHandler) {
 
     client.put(individualRecordUrl(id),
       resourceRepresentation,
@@ -57,9 +76,13 @@ public class CollectionResourceClient {
       responseConversationHandler(responseHandler));
   }
 
-  public void get(String id, Consumer<Response> responseHandler) {
+  public CompletableFuture<Response> get(String id) {
+    final CompletableFuture<Response> future = new CompletableFuture<>();
+
     client.get(individualRecordUrl(id),
-      responseConversationHandler(responseHandler));
+      responseConversationHandler(future::complete));
+
+    return future;
   }
 
   public void delete(String id, Consumer<Response> responseHandler) {
@@ -80,6 +103,26 @@ public class CollectionResourceClient {
       client.get(url, responseConversationHandler(responseHandler));
   }
 
+  public CompletableFuture<Response> getMany(String urlEncodedQuery) {
+    final CompletableFuture<Response> future = new CompletableFuture<>();
+
+    getMany(urlEncodedQuery, future::complete);
+
+    return future;
+  }
+
+  public CompletableFuture<Response> getMany(
+    String urlEncodedCqlQuery,
+    Integer pageLimit,
+    Integer pageOffset) {
+
+    final CompletableFuture<Response> future = new CompletableFuture<>();
+
+    getMany(urlEncodedCqlQuery, pageLimit, pageOffset, future::complete);
+
+    return future;
+  }
+
   public void getMany(
     String urlEncodedCqlQuery,
     Integer pageLimit,
@@ -88,14 +131,6 @@ public class CollectionResourceClient {
 
     String url = collectionRoot + createQueryString(urlEncodedCqlQuery, pageLimit, pageOffset);
     client.get(url, responseConversationHandler(responseHandler));
-  }
-
-  /**
-   * Get all records (up to Integer.MAX_VALUE).
-   * @param responseHandler  the result
-   */
-  public void getAll(Consumer<Response> responseHandler) {
-    getMany(null, Integer.MAX_VALUE, null, responseHandler);
   }
 
   private static boolean isProvided(String query) {

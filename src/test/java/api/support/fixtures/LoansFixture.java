@@ -3,6 +3,7 @@ package api.support.fixtures;
 import api.APITestSuite;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanBuilder;
+import api.support.builders.RenewByBarcodeRequestBuilder;
 import api.support.http.InterfaceUrls;
 import api.support.http.ResourceClient;
 import io.restassured.RestAssured;
@@ -15,8 +16,10 @@ import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
+import org.joda.time.DateTime;
 
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -44,11 +47,24 @@ public class LoansFixture {
     InterruptedException,
     ExecutionException,
     TimeoutException {
+    return checkOut(item, to, DateTime.now());
+  }
+
+  public IndividualResource checkOut(
+    IndividualResource item,
+    IndividualResource to,
+    DateTime loanDate)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
 
     return loansClient.create(new LoanBuilder()
       .open()
       .withItemId(item.getId())
-      .withUserId(to.getId()));
+      .withUserId(to.getId())
+      .withLoanDate(loanDate)
+      .withDueDate(loanDate.plusWeeks(3)));
   }
 
   public IndividualResource checkOutItem(UUID itemId)
@@ -130,27 +146,29 @@ public class LoansFixture {
   public IndividualResource checkOutByBarcode(
     IndividualResource item,
     IndividualResource to) {
+
     return checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
       .forItem(item)
       .to(to));
+  }
+
+  public IndividualResource checkOutByBarcode(
+    IndividualResource item,
+    IndividualResource to,
+    DateTime loanDate) {
+
+    return checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
+      .forItem(item)
+      .to(to)
+      .at(loanDate));
   }
 
   public IndividualResource checkOutByBarcode(CheckOutByBarcodeRequestBuilder builder) {
 
     JsonObject request = builder.create();
 
-    io.restassured.response.Response response = given()
-      .log().all()
-      .spec(defaultHeaders())
-      .spec(timeoutConfig())
-      .body(request.encodePrettily())
-      .when().post(InterfaceUrls.checkOutByBarcodeUrl())
-      .then()
-      .log().all()
-      .statusCode(201)
-      .extract().response();
-
-    return new IndividualResource(from(response));
+    return new IndividualResource(
+      from(post(request, InterfaceUrls.checkOutByBarcodeUrl(), 201)));
   }
 
   public Response attemptCheckOutByBarcode(
@@ -171,18 +189,7 @@ public class LoansFixture {
 
     JsonObject request = builder.create();
 
-    io.restassured.response.Response response = given()
-      .log().all()
-      .spec(defaultHeaders())
-      .spec(timeoutConfig())
-      .body(request.encodePrettily())
-      .when().post(InterfaceUrls.checkOutByBarcodeUrl())
-      .then()
-      .log().all()
-      .statusCode(expectedStatusCode)
-      .extract().response();
-
-    return from(response);
+    return from(post(request, InterfaceUrls.checkOutByBarcodeUrl(), expectedStatusCode));
   }
 
   private RequestSpecification defaultHeaders() {
@@ -190,6 +197,7 @@ public class LoansFixture {
       .addHeader(OKAPI_URL, APITestSuite.okapiUrl().toString())
       .addHeader(TENANT, APITestSuite.TENANT_ID)
       .addHeader(TOKEN, APITestSuite.TOKEN)
+      .addHeader(USER_ID, APITestSuite.USER_ID)
       .addHeader(REQUEST_ID, APITestSuite.REQUEST_ID)
       .setAccept("application/json, text/plain")
       .setContentType("application/json")
@@ -214,5 +222,48 @@ public class LoansFixture {
     return new Response(response.statusCode(), response.body().print(),
       response.contentType(),
       mappedHeaders);
+  }
+
+  public IndividualResource renewLoan(IndividualResource item, IndividualResource user) {
+    JsonObject request = new RenewByBarcodeRequestBuilder()
+      .forItem(item)
+      .forUser(user)
+      .create();
+
+    return new IndividualResource(from(post(request, InterfaceUrls.renewByBarcodeUrl(), 200)));
+  }
+
+  public Response attemptRenewal(IndividualResource item, IndividualResource user) {
+    return attemptRenewal(422, item, user);
+  }
+
+  public Response attemptRenewal(
+    int expectedStatusCode,
+    IndividualResource item,
+    IndividualResource user) {
+
+    JsonObject request = new RenewByBarcodeRequestBuilder()
+      .forItem(item)
+      .forUser(user)
+      .create();
+
+    return from(post(request, InterfaceUrls.renewByBarcodeUrl(), expectedStatusCode));
+  }
+
+  private io.restassured.response.Response post(
+    JsonObject representation,
+    URL url,
+    int expectedStatusCode) {
+
+    return given()
+      .log().all()
+      .spec(defaultHeaders())
+      .spec(timeoutConfig())
+      .body(representation.encodePrettily())
+      .when().post(url)
+      .then()
+      .log().all()
+      .statusCode(expectedStatusCode)
+      .extract().response();
   }
 }

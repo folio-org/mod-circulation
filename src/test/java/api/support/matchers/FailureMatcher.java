@@ -7,7 +7,7 @@ import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 
 public class FailureMatcher {
-  public static <T> Matcher<HttpResult<T>> isValidationFailure(String expectedReason) {
+  public static <T> Matcher<HttpResult<T>> hasValidationFailure(String expectedReason) {
     return new TypeSafeMatcher<HttpResult<T>>() {
       @Override
       public void describeTo(Description description) {
@@ -23,7 +23,7 @@ public class FailureMatcher {
         else if(failedResult.cause() instanceof ValidationErrorFailure) {
           final ValidationErrorFailure cause = (ValidationErrorFailure) failedResult.cause();
 
-          return cause.reason.equals(expectedReason);
+          return cause.hasErrorWithReason(expectedReason);
         }
         else {
           return false;

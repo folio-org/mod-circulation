@@ -1,11 +1,13 @@
 package org.folio.circulation.support;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
 import java.lang.invoke.MethodHandles;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
@@ -19,18 +21,33 @@ public class CqlHelper {
       return null;
     }
     else {
-      String query = String.format("id==(%s)", recordIds.stream()
+      final Collection<String> filteredIds = recordIds.stream()
         .map(String::toString)
+        .filter(StringUtils::isNotBlank)
         .distinct()
-        .collect(Collectors.joining(" or ")));
+        .collect(Collectors.toList());
 
-      try {
-        return URLEncoder.encode(query, "UTF-8");
-
-      } catch (UnsupportedEncodingException e) {
-        log.error(String.format("Cannot encode query %s", query));
+      if(filteredIds.isEmpty()) {
         return null;
       }
+
+      String query = String.format("id==(%s)",
+        filteredIds.stream().collect(Collectors.joining(" or ")));
+
+      return encodeQuery(query).orElse(null);
+    }
+  }
+
+  public static HttpResult<String> encodeQuery(String cqlQuery) {
+    try {
+      log.info("Encoding query {}", cqlQuery);
+
+      return HttpResult.success(URLEncoder.encode(cqlQuery,
+        String.valueOf(StandardCharsets.UTF_8)));
+
+    } catch (UnsupportedEncodingException e) {
+      return HttpResult.failure(
+        new ServerErrorFailure("Failed to encode CQL query"));
     }
   }
 }

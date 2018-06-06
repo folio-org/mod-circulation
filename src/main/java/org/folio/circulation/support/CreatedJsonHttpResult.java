@@ -15,6 +15,7 @@ public class CreatedJsonHttpResult extends JsonHttpResult {
 
   @Override
   public void writeTo(HttpServerResponse response) {
+    //TODO: Consolidate JsonHttpResult classes and JSONResponse class
     String json = Json.encodePrettily(body);
     Buffer buffer = Buffer.buffer(json, "UTF-8");
 

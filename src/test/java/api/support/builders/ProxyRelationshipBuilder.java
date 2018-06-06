@@ -78,21 +78,23 @@ public class ProxyRelationshipBuilder implements Builder {
     if(this.requestForSponsor != null) {
       objectToPutValidationPropertiesOn.put("requestForSponsor" , this.requestForSponsor);
     }
-    if(this.createdDate != null) {
-      objectToPutValidationPropertiesOn.put("createdDate" , this.createdDate);
-    }
+
     if(this.expirationDate != null) {
       objectToPutValidationPropertiesOn.put("expirationDate" , this.expirationDate);
     }
+
     if(this.status != null) {
       objectToPutValidationPropertiesOn.put("status" , this.status);
     }
+
     if(this.accrueTo != null) {
       objectToPutValidationPropertiesOn.put("accrueTo" , this.accrueTo);
     }
+
     if(this.notificationsTo != null) {
       objectToPutValidationPropertiesOn.put("notificationsTo" , this.notificationsTo);
     }
+
     return request;
   }
 

@@ -1,17 +1,19 @@
 package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.ServerErrorFailure;
+import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class LocationRepository {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -22,34 +24,16 @@ public class LocationRepository {
     locationsStorageClient = clients.locationsStorage();
   }
 
-  public CompletableFuture<HttpResult<LoanAndRelatedRecords>> getLocation(
-    LoanAndRelatedRecords relatedRecords) {
+  public CompletableFuture<HttpResult<Item>> getLocation(
+    Item item) {
 
-    //Cannot find location for unknown item
-    if(relatedRecords.inventoryRecords.item == null) {
-      return CompletableFuture.completedFuture(HttpResult.success(relatedRecords));
-    }
-
-    //Cannot find location for unknown holding
-    if(relatedRecords.inventoryRecords.holding == null) {
-      return CompletableFuture.completedFuture(HttpResult.success(relatedRecords));
-    }
-
-    final String locationId = LoanValidation.determineLocationIdForItem(
-      relatedRecords.inventoryRecords.item, relatedRecords.inventoryRecords.holding);
-
-    return getLocation(locationId,
-      relatedRecords.inventoryRecords.item.getString("id"))
-      .thenApply(result -> result.map(relatedRecords::withLocation));
+    return getLocation(item.getLocationId(), item.getItemId())
+      .thenApply(result -> result.map(item::withLocation));
   }
 
   private CompletableFuture<HttpResult<JsonObject>> getLocation(
     String locationId,
     String itemId) {
-
-    CompletableFuture<Response> getLocationCompleted = new CompletableFuture<>();
-
-    locationsStorageClient.get(locationId, getLocationCompleted::complete);
 
     //TODO: Add functions to explicitly distinguish between fatal not found
     // and allowable not found
@@ -65,8 +49,36 @@ public class LocationRepository {
       }
     };
 
-    return getLocationCompleted
+    return locationsStorageClient.get(locationId)
       .thenApply(mapResponse)
       .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
+  }
+
+  public CompletableFuture<HttpResult<Map<String, JsonObject>>> getLocations(
+    Collection<Item> inventoryRecords) {
+
+    List<String> locationIds = inventoryRecords.stream()
+      .map(Item::getLocationId)
+      .filter(StringUtils::isNotBlank)
+      .collect(Collectors.toList());
+
+    String locationsQuery = CqlHelper.multipleRecordsCqlQuery(locationIds);
+
+    return locationsStorageClient.getMany(locationsQuery, locationIds.size(), 0)
+      .thenApply(response -> {
+        if(response.getStatusCode() != 200) {
+          return HttpResult.failure(new ServerErrorFailure(
+            String.format("Locations request (%s) failed %s: %s",
+              locationsQuery, response.getStatusCode(),
+              response.getBody())));
+        }
+
+        List<JsonObject> locations = JsonArrayHelper.toList(
+          response.getJson().getJsonArray("locations"));
+
+        return HttpResult.success(locations.stream().collect(
+          Collectors.toMap(l -> l.getString("id"),
+            Function.identity())));
+      });
   }
 }

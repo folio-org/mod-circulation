@@ -9,7 +9,7 @@ import static org.junit.Assert.assertThat;
 public class FixedDueDateSchedulesTests {
   @Test
   public void shouldHaveNoSchedulesWhenPropertyMissingInJSON() {
-    final FixedDueDateSchedules schedules = new FixedDueDateSchedules(new JsonObject());
+    final FixedDueDateSchedules schedules = FixedDueDateSchedules.from(new JsonObject());
 
     assertThat(schedules.isEmpty(), is(true));
   }

@@ -5,6 +5,7 @@ import api.support.APITests;
 import api.support.builders.*;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
@@ -509,8 +510,6 @@ public class CheckOutByBarcodeTests extends APITests {
         .forItem(smallAngryPlanet)
         .to(jessica)
         .proxiedBy(james));
-
-    assertThat(response.getBody(), response.getStatusCode(), is(422));
 
     assertThat(response.getJson(),
       hasSoleErrorMessageContaining("Cannot check out item via proxy when relationship is invalid"));

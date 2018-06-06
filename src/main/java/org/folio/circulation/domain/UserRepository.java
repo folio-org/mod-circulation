@@ -9,12 +9,15 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
-public class UserFetcher {
-
+public class UserRepository {
   private final CollectionResourceClient usersStorageClient;
 
-  public UserFetcher(Clients clients) {
+  public UserRepository(Clients clients) {
     usersStorageClient = clients.usersStorage();
+  }
+
+  CompletableFuture<HttpResult<User>> getUser(UserRelatedRecord userRelatedRecord) {
+    return getUser(userRelatedRecord.getUserId());
   }
 
   public CompletableFuture<HttpResult<User>> getUser(String userId) {
@@ -41,11 +44,6 @@ public class UserFetcher {
     String barcode,
     String propertyName) {
 
-    CompletableFuture<Response> getUserCompleted = new CompletableFuture<>();
-
-    this.usersStorageClient.getMany(
-      String.format("barcode==%s", barcode), 1, 0, getUserCompleted::complete);
-
     final Function<Response, HttpResult<User>> mapResponse = response -> {
       if(response.getStatusCode() == 404) {
         return HttpResult.failure(new ServerErrorFailure("Unable to locate User"));
@@ -61,12 +59,12 @@ public class UserFetcher {
         final Optional<JsonObject> firstUser = wrappedUsers.getRecords().stream().findFirst();
 
         return firstUser.map(User::new).map(HttpResult::success).orElseGet(
-          () -> HttpResult.failure(new ValidationErrorFailure(
+          () -> HttpResult.failure(ValidationErrorFailure.error(
           "Could not find user with matching barcode", propertyName, barcode)));
       }
     };
 
-    return getUserCompleted
+    return usersStorageClient.getMany(String.format("barcode==%s", barcode), 1, 0)
       .thenApply(mapResponse)
       .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
   }
@@ -75,10 +73,6 @@ public class UserFetcher {
   public CompletableFuture<HttpResult<User>> getUser(
     String userId,
     boolean failOnNotFound) {
-
-    CompletableFuture<Response> getUserCompleted = new CompletableFuture<>();
-
-    this.usersStorageClient.get(userId, getUserCompleted::complete);
 
     final Function<Response, HttpResult<User>> mapResponse = response -> {
       if(response.getStatusCode() == 404) {
@@ -98,7 +92,7 @@ public class UserFetcher {
       }
     };
 
-    return getUserCompleted
+    return this.usersStorageClient.get(userId)
       .thenApply(mapResponse)
       .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
   }

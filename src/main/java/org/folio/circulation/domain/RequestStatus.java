@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.representations.RequestProperties;
 
 import java.util.HashSet;
 
@@ -17,8 +18,8 @@ public class RequestStatus {
   }
 
   public static RequestStatus from(JsonObject request) {
-    String status = request.containsKey("status")
-      ? request.getString("status")
+    String status = request.containsKey(RequestProperties.STATUS)
+      ? request.getString(RequestProperties.STATUS)
       : OPEN_NOT_YET_FILLED;
 
     return new RequestStatus(status);
@@ -39,6 +40,6 @@ public class RequestStatus {
   }
 
   public void writeTo(JsonObject request) {
-    request.put("status", value);
+    request.put(RequestProperties.STATUS, value);
   }
 }
