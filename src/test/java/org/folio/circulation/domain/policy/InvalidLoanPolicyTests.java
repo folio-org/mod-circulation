@@ -35,8 +35,7 @@ public class InvalidLoanPolicyTests {
 
     //TODO: This is fairly ugly, replace with a better message
     assertThat(result, hasValidationFailure(
-      "Item can't be checked out as profile \"\" in the loan policy is not recognised. " +
-        "Please review \"Invalid Loan Policy\" before retrying"));
+      "profile \"\" in the loan policy is not recognised"));
   }
 
   @Test
@@ -61,7 +60,6 @@ public class InvalidLoanPolicyTests {
 
     //TODO: This is fairly ugly, replace with a better message
     assertThat(result, hasValidationFailure(
-      "Item can't be renewed as profile \"\" in the loan policy is not recognised. " +
-        "Please review \"Invalid Loan Policy\" before retrying"));
+      "profile \"\" in the loan policy is not recognised"));
   }
 }

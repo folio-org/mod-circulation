@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
 
+import static org.folio.circulation.support.HttpResult.failure;
+
 abstract class DueDateStrategy {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -25,14 +27,12 @@ abstract class DueDateStrategy {
 
   <T> HttpResult<T> fail(String reason) {
     log.error(reason);
-    return HttpResult.failure(validationError(reason));
+    return failure(validationError(reason));
   }
 
   ValidationErrorFailure validationError(String reason) {
     return ValidationErrorFailure.error(
-      String.format(
-        "%s Please review \"%s\" before retrying", reason, loanPolicyName),
-      "loanPolicyId", this.loanPolicyId);
+      reason, "loanPolicyId", this.loanPolicyId);
   }
 
   void logApplying(String message) {

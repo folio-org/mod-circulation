@@ -7,24 +7,26 @@ import org.joda.time.DateTime;
 
 import java.util.function.Function;
 
+import static org.folio.circulation.support.HttpResult.failure;
+
 class RollingRenewalDueDateStrategy extends DueDateStrategy {
   private static final String RENEW_FROM_SYSTEM_DATE = "SYSTEM_DATE";
   private static final String RENEW_FROM_DUE_DATE = "CURRENT_DUE_DATE";
 
   private static final String NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE =
-    "Item can't be renewed as the loan date falls outside of the date ranges in the loan policy.";
+    "renewal date falls outside of the date ranges in the loan policy";
 
   private static final String RENEWAL_UNRECOGNISED_INTERVAL_MESSAGE =
-    "Item can't be renewed as the interval \"%s\" in the loan policy is not recognised.";
+    "the interval \"%s\" in the loan policy is not recognised";
 
   private static final String RENEWAL_INVALID_DURATION_MESSAGE =
-    "Item can't be renewed as the duration \"%s\" in the loan policy is invalid.";
+    "the duration \"%s\" in the loan policy is invalid";
 
   private static final String RENEWAL_UNRECOGNISED_PERIOD_MESSAGE =
-    "Item can't be renewed as the loan period in the loan policy is not recognised.";
+    "the loan period in the loan policy is not recognised";
 
   private static final String RENEW_FROM_UNRECOGNISED_MESSAGE =
-    "Item can't be renewed as cannot determine when to renew from.";
+    "cannot determine when to renew from";
 
   private final DateTime systemDate;
   private final String renewFrom;
@@ -57,7 +59,7 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
       case RENEW_FROM_SYSTEM_DATE:
         return calculateDueDate(systemDate, loan.getLoanDate());
       default:
-        return HttpResult.failure(error.apply(RENEW_FROM_UNRECOGNISED_MESSAGE));
+        return failure(error.apply(RENEW_FROM_UNRECOGNISED_MESSAGE));
     }
   }
 

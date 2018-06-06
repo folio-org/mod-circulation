@@ -6,10 +6,10 @@ import org.joda.time.DateTime;
 
 class UnknownDueDateStrategy extends DueDateStrategy {
   private static final String CHECK_OUT_UNRECOGNISED_PROFILE_MESSAGE =
-    "Item can't be checked out as profile \"%s\" in the loan policy is not recognised.";
+    "profile \"%s\" in the loan policy is not recognised";
 
   private static final String RENEWAL_UNRECOGNISED_PROFILE_MESSAGE =
-    "Item can't be renewed as profile \"%s\" in the loan policy is not recognised.";
+    "profile \"%s\" in the loan policy is not recognised";
 
   private final String profileId;
   private final boolean isRenewal;

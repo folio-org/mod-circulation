@@ -9,16 +9,16 @@ import java.util.function.Function;
 
 class RollingCheckOutDueDateStrategy extends DueDateStrategy {
   private static final String NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE =
-    "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy.";
+    "loan date falls outside of the date ranges in the loan policy";
 
   private static final String CHECK_OUT_UNRECOGNISED_INTERVAL_MESSAGE =
-    "Item can't be checked out as the interval \"%s\" in the loan policy is not recognised.";
+    "the interval \"%s\" in the loan policy is not recognised";
 
   private static final String CHECKOUT_INVALID_DURATION_MESSAGE =
-    "Item can't be checked out as the duration \"%s\" in the loan policy is invalid.";
+    "the duration \"%s\" in the loan policy is invalid";
 
   private static final String CHECK_OUT_UNRECOGNISED_PERIOD_MESSAGE =
-    "Item can't be checked out as the loan period in the loan policy is not recognised.";
+    "the loan period in the loan policy is not recognised";
 
   private final Period period;
   private final FixedDueDateSchedules dueDateLimitSchedules;

@@ -5,9 +5,11 @@ import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.joda.time.DateTime;
 
+import static org.folio.circulation.support.HttpResult.failure;
+
 class FixedScheduleRenewalDueDateStrategy extends DueDateStrategy {
   private static final String NO_APPLICABLE_DUE_DATE_SCHEDULE_MESSAGE =
-    "Item can't be renewed as the renewal date falls outside of the date ranges in the loan policy.";
+    "renewal date falls outside of the date ranges in the loan policy";
 
   private final FixedDueDateSchedules fixedDueDateSchedules;
   private final DateTime systemDate;
@@ -42,7 +44,7 @@ class FixedScheduleRenewalDueDateStrategy extends DueDateStrategy {
     }
     catch(Exception e) {
       logException(e, "Error occurred during fixed schedule renewal due date calculation");
-      return HttpResult.failure(new ServerErrorFailure(e));
+      return failure(new ServerErrorFailure(e));
     }
   }
 }

@@ -7,7 +7,7 @@ import org.joda.time.DateTime;
 
 class FixedScheduleCheckOutDueDateStrategy extends DueDateStrategy {
   private static final String NO_APPLICABLE_DUE_DATE_SCHEDULE_MESSAGE =
-    "Item can't be checked out as the loan date falls outside of the date ranges in the loan policy.";
+    "loan date falls outside of the date ranges in the loan policy";
 
   private final FixedDueDateSchedules fixedDueDateSchedules;
 

@@ -1,9 +1,6 @@
 ## 10.4.0 Unreleased
 
-* Early preview of renewal API for renewing an item to a loanee using their barcodes (CIRC-100),
-does not include:
-  * Responding with multiple messages upon failure
-  * Refusing renewals where the due date would not change
+* Initial renewal API for renewing an item to a loanee using their barcodes (CIRC-100)
 
 ## 10.3.0 2018-06-05
 

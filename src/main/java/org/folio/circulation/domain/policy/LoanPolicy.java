@@ -84,7 +84,7 @@ public class LoanPolicy {
   private void errorWhenReachedRenewalLimit(Loan loan, List<ValidationError> errors) {
     if(!unlimitedRenewals() && reachedNumberOfRenewalsLimit(loan)) {
       errors.add(new ValidationError(
-        "Item can't be renewed as it has reached it's maximum number of renewals",
+        "loan has reached it's maximum number of renewals",
         "loanPolicyId", getId()));
     }
   }
@@ -95,7 +95,7 @@ public class LoanPolicy {
     List<ValidationError> errors) {
 
     final ValidationError dueDateError = new ValidationError(
-      "Renewal at this time would not change the due date",
+      "renewal at this time would not change the due date",
       "loanPolicyId", getId());
 
     if(proposedDueDate.isEqual(loan.getDueDate())) {
