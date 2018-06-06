@@ -38,6 +38,10 @@ public class ValidationErrorFailure implements HttpFailure {
     this.errors.add(error);
   }
 
+  public ValidationErrorFailure(Collection<ValidationError> errors) {
+    this.errors.addAll(errors);
+  }
+
   @Override
   public void writeTo(HttpServerResponse response) {
     response(response, asJson(), 422);

@@ -47,4 +47,23 @@ public class FixedDueDateSchedule {
 
     return new FixedDueDateSchedule(firstOfMonth, lastOfMonth, dueDate);
   }
+
+  public static FixedDueDateSchedule todayOnly() {
+    return forDay(DateTime.now(DateTimeZone.UTC));
+  }
+
+  public static FixedDueDateSchedule yesterdayOnly() {
+    return forDay(DateTime.now(DateTimeZone.UTC).minusDays(1));
+  }
+
+  private static FixedDueDateSchedule forDay(DateTime day) {
+    final DateTime beginningOfDay = day.withTimeAtStartOfDay();
+
+    final DateTime endOfDay = beginningOfDay
+      .withHourOfDay(23)
+      .withMinuteOfHour(59)
+      .withSecondOfMinute(59);
+
+    return new FixedDueDateSchedule(beginningOfDay, endOfDay, endOfDay);
+  }
 }

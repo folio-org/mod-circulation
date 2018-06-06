@@ -6,7 +6,11 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.folio.circulation.support.HttpResult.failure;
 import static org.folio.circulation.support.HttpResult.success;
@@ -45,13 +49,55 @@ public class LoanPolicy {
   public HttpResult<Loan> renew(Loan loan, DateTime systemDate) {
     //TODO: Create HttpResult wrapper that traps exceptions
     try {
-      return rejectIfExceedsRenewalLimit(loan)
-          .next(v -> determineStrategy(true, systemDate).calculateDueDate(loan))
-          .next(dueDate -> rejectIfDueDateEarlierOrUnchanged(dueDate, loan))
-          .map(dueDate -> loan.renew(dueDate, getId()));
+      final HttpResult<DateTime> proposedDueDateResult =
+        determineStrategy(true, systemDate)
+          .calculateDueDate(loan);
+
+      //TODO: Hack, won't do multiple errors if due date calculation fails
+      if(proposedDueDateResult.failed()) {
+        return proposedDueDateResult.map(r -> loan);
+      }
+
+      List<ValidationError> errors = new ArrayList<>();
+
+      errorWhenReachedRenewalLimit(loan, errors);
+
+      errorWhenEarlierOrSameDueDate(loan, proposedDueDateResult.value(), errors);
+
+      if(errors.isEmpty()) {
+        return proposedDueDateResult.map(dueDate -> loan.renew(dueDate, getId()));
+      }
+      else {
+        return HttpResult.failure(new ValidationErrorFailure(errors));
+      }
     }
     catch(Exception e) {
       return failure(new ServerErrorFailure(e));
+    }
+  }
+
+  private void errorWhenReachedRenewalLimit(Loan loan, List<ValidationError> errors) {
+    if(!unlimitedRenewals() && reachedNumberOfRenewalsLimit(loan)) {
+      errors.add(new ValidationError(
+        "Item can't be renewed as it has reached it's maximum number of renewals",
+        "loanPolicyId", getId()));
+    }
+  }
+
+  private void errorWhenEarlierOrSameDueDate(
+    Loan loan,
+    DateTime proposedDueDate,
+    List<ValidationError> errors) {
+
+    final ValidationError dueDateError = new ValidationError(
+      "Renewal at this time would not change the due date",
+      "loanPolicyId", getId());
+
+    if(proposedDueDate.isEqual(loan.getDueDate())) {
+      errors.add(dueDateError);
+    }
+    else if(proposedDueDate.isBefore(loan.getDueDate())) {
+      errors.add(dueDateError);
     }
   }
 
@@ -75,10 +121,10 @@ public class LoanPolicy {
   }
 
   private HttpResult<Loan> rejectIfExceedsRenewalLimit(Loan loan) {
-    if(hasUnlimitedRenewals()) {
+    if(unlimitedRenewals()) {
       return success(loan);
     }
-    else if(loan.getRenewalCount() >= getRenewalLimit()) {
+    else if(reachedNumberOfRenewalsLimit(loan)) {
       return failure(ValidationErrorFailure.error(
         "Item can't be renewed as it has reached it's maximum number of renewals",
         "loanPolicyId", getId()));
@@ -88,7 +134,11 @@ public class LoanPolicy {
     }
   }
 
-  private boolean hasUnlimitedRenewals() {
+  private boolean reachedNumberOfRenewalsLimit(Loan loan) {
+    return loan.getRenewalCount() >= getRenewalLimit();
+  }
+
+  private boolean unlimitedRenewals() {
     return getBooleanProperty(getRenewalsPolicy(), "unlimited");
   }
 

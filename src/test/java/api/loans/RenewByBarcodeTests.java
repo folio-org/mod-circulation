@@ -26,6 +26,7 @@ import java.util.concurrent.TimeoutException;
 
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
+import static api.support.matchers.JsonObjectMatchers.hasErrorMessageContaining;
 import static api.support.matchers.JsonObjectMatchers.hasSoleErrorFor;
 import static api.support.matchers.JsonObjectMatchers.hasSoleErrorMessageContaining;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -576,6 +577,57 @@ public class RenewByBarcodeTests extends APITests {
       "loanPolicyId", limitedRenewalsPolicyId.toString()));
 
     assertThat(response.getJson(), hasSoleErrorMessageContaining(
-        "Item can't be renewed as it has reached it's maximum number of renewals"));
+      "Item can't be renewed as it has reached it's maximum number of renewals"));
+  }
+
+  @Test
+  public void multipleReasonsWhyCannotRenewWhenRenewalLimitReachedAndDueDateNotChanged()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    //TODO: Replace with better example when can fix system date
+    FixedDueDateSchedulesBuilder yesterdayAndTodayOnlySchedules = new FixedDueDateSchedulesBuilder()
+      .withName("Yesterday and Today Only Due Date Limit")
+      .addSchedule(FixedDueDateSchedule.yesterdayOnly())
+      .addSchedule(FixedDueDateSchedule.todayOnly());
+
+    final UUID yesterdayAndTodayOnlySchedulesId = fixedDueDateScheduleClient.create(
+      yesterdayAndTodayOnlySchedules).getId();
+
+    //Need to remember in order to delete after test
+    schedulesToDelete.add(yesterdayAndTodayOnlySchedulesId);
+
+    LoanPolicyBuilder limitedRenewalsPolicy = new LoanPolicyBuilder()
+      .withName("Limited Renewals And Limited Due Date Policy")
+      .fixed(yesterdayAndTodayOnlySchedulesId)
+      .limitedRenewals(1);
+
+    UUID limitedRenewalsPolicyId = loanPolicyClient.create(limitedRenewalsPolicy).getId();
+
+    //Need to remember in order to delete after test
+    policiesToDelete.add(limitedRenewalsPolicyId);
+
+    useLoanPolicyAsFallback(limitedRenewalsPolicyId);
+
+    final JsonObject loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+      DateTime.now(DateTimeZone.UTC).minusDays(1)).getJson();
+
+    loansFixture.renewLoan(smallAngryPlanet, jessica);
+
+    final Response response = loansFixture.attemptRenewal(smallAngryPlanet, jessica);
+
+    assertThat(response.getJson(), hasSoleErrorFor(
+      "loanPolicyId", limitedRenewalsPolicyId.toString()));
+
+    assertThat(response.getJson(), hasErrorMessageContaining(
+      "Item can't be renewed as it has reached it's maximum number of renewals"));
+
+    assertThat(response.getJson(),
+      hasErrorMessageContaining("Renewal at this time would not change the due date"));
   }
 }
