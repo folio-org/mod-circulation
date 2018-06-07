@@ -497,6 +497,7 @@
       "description": "Entire set of permissions needed to use the circulation",
       "subPermissions": [
         "circulation.check-out-by-barcode.post",
+        "circulation.renew-by-barcode.post",
         "circulation.loans.collection.get",
         "circulation.loans.item.get",
         "circulation.loans.item.post",
