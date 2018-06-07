@@ -31,7 +31,7 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
   private final DateTime systemDate;
   private final String renewFrom;
   private final Period period;
-  private final FixedDueDateSchedules DueDateLimitSchedules;
+  private final FixedDueDateSchedules dueDateLimitSchedules;
   private final Function<String, ValidationErrorFailure> error;
 
   RollingRenewalDueDateStrategy(
@@ -40,13 +40,13 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
     DateTime systemDate,
     String renewFrom,
     Period period,
-    FixedDueDateSchedules DueDateLimitSchedules) {
+    FixedDueDateSchedules dueDateLimitSchedules) {
 
     super(loanPolicyId, loanPolicyName);
     this.systemDate = systemDate;
     this.renewFrom = renewFrom;
     this.period = period;
-    this.DueDateLimitSchedules = DueDateLimitSchedules;
+    this.dueDateLimitSchedules = dueDateLimitSchedules;
 
     error = this::validationError;
   }
@@ -79,7 +79,7 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
     DateTime loanDate,
     DateTime dueDate) {
 
-    return DueDateLimitSchedules.truncateDueDate(dueDate, loanDate,
+    return dueDateLimitSchedules.truncateDueDate(dueDate, loanDate,
       () -> validationError(NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE));
   }
 }
