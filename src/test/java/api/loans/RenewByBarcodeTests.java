@@ -316,6 +316,60 @@ public class RenewByBarcodeTests extends APITests {
   }
 
   @Test
+  public void canRenewUsingLoanDueDateLimitSchedulesWhenDifferentPeriodAndNotAlternateLimits()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
+      .withName("March Only Due Date Limit")
+      .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 3));
+
+    final UUID dueDateLimitScheduleId = fixedDueDateScheduleClient.create(
+      dueDateLimitSchedule).getId();
+
+    //Need to remember in order to delete after test
+    schedulesToDelete.add(dueDateLimitScheduleId);
+
+    LoanPolicyBuilder dueDateLimitedPolicy = new LoanPolicyBuilder()
+      .withName("Due Date Limited Rolling Policy")
+      .rolling(Period.weeks(3))
+      .limitedBySchedule(dueDateLimitScheduleId)
+      .renewFromCurrentDueDate()
+      .renewWith(Period.days(8));
+
+    UUID dueDateLimitedPolicyId = loanPolicyClient.create(dueDateLimitedPolicy).getId();
+
+    //Need to remember in order to delete after test
+    policiesToDelete.add(dueDateLimitedPolicyId);
+
+    useLoanPolicyAsFallback(dueDateLimitedPolicyId);
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+
+    final DateTime loanDate = new DateTime(2018, 3, 4, 11, 43, 54, DateTimeZone.UTC);
+
+    loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .at(loanDate));
+
+    final IndividualResource response = loansFixture.renewLoan(smallAngryPlanet, steve);
+
+    final JsonObject loan = response.getJson();
+
+    assertThat("last loan policy should be stored",
+      loan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
+
+    assertThat("due date should be limited by schedule",
+      loan.getString("dueDate"),
+      isEquivalentTo(new DateTime(2018, 3, 31, 23, 59, 59, DateTimeZone.UTC)));
+  }
+
+  @Test
   @Ignore("Need to be able to inject system date to run this reliably")
   public void canCheckOutUsingFixedDueDateLoanPolicy()
     throws InterruptedException,

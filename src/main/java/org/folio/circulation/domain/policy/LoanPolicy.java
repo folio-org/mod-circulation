@@ -11,6 +11,7 @@ import org.joda.time.DateTime;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static org.folio.circulation.support.HttpResult.failure;
 import static org.folio.circulation.support.JsonPropertyFetcher.*;
@@ -174,9 +175,17 @@ public class LoanPolicy {
   }
 
   private FixedDueDateSchedules getRenewalDueDateLimitSchedules() {
-    return useDifferentPeriod()
-      ? alternateRenewalFixedDueDateSchedules
-      : fixedDueDateSchedules;
+    if(useDifferentPeriod()) {
+      if(Objects.isNull(alternateRenewalFixedDueDateSchedules)
+        || alternateRenewalFixedDueDateSchedules instanceof NoFixedDueDateSchedules)
+        return fixedDueDateSchedules;
+      else {
+        return alternateRenewalFixedDueDateSchedules;
+      }
+    }
+    else {
+      return fixedDueDateSchedules;
+    }
   }
 
   private Period getRenewalPeriod(
