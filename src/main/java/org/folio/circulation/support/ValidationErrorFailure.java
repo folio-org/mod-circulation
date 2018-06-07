@@ -20,7 +20,8 @@ public class ValidationErrorFailure implements HttpFailure {
     String key,
     String value) {
 
-    return HttpResult.failure(failure(new ValidationError(reason, key, value)));
+    return HttpResult.failure(
+      failure(new ValidationError(reason, key, value)));
   }
 
   public static <T> HttpResult<T> failedResult(ValidationError error) {
@@ -72,12 +73,12 @@ public class ValidationErrorFailure implements HttpFailure {
 
   public boolean hasErrorWithReason(String reason) {
     return errors.stream()
-      .anyMatch(error -> StringUtils.equals(error.reason, reason));
+      .anyMatch(error -> StringUtils.equals(error.getReason(), reason));
   }
 
   public boolean hasErrorForKey(String key) {
     return errors.stream()
-      .anyMatch(error -> StringUtils.equals(error.key, key));
+      .anyMatch(error -> error.hasParameterWithKey(key));
   }
 
   public Collection<ValidationError> getErrors() {
