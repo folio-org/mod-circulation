@@ -48,9 +48,14 @@ public class LoanPolicy {
   public HttpResult<Loan> renew(Loan loan, DateTime systemDate) {
     //TODO: Create HttpResult wrapper that traps exceptions
     try {
+      if(isNotRenewable()) {
+        return HttpResult.failure(ValidationErrorFailure.error(
+          "items with this loan policy cannot be renewed",
+          "loanPolicyId", getId()));
+      }
+
       final HttpResult<DateTime> proposedDueDateResult =
-        determineStrategy(true, systemDate)
-          .calculateDueDate(loan);
+        determineStrategy(true, systemDate).calculateDueDate(loan);
 
       List<ValidationError> errors = new ArrayList<>();
 
@@ -79,6 +84,10 @@ public class LoanPolicy {
     catch(Exception e) {
       return failure(new ServerErrorFailure(e));
     }
+  }
+
+  public boolean isNotRenewable() {
+    return !getBooleanProperty(representation, "renewable");
   }
 
   private void errorWhenReachedRenewalLimit(Loan loan, List<ValidationError> errors) {
@@ -117,7 +126,7 @@ public class LoanPolicy {
   }
 
   private Integer getRenewalLimit() {
-    return getIntegerProperty(getRenewalsPolicy(), "numberAllowed", null);
+    return getIntegerProperty(getRenewalsPolicy(), "numberAllowed", 0);
   }
 
   private DueDateStrategy determineStrategy(boolean isRenewal, DateTime systemDate) {

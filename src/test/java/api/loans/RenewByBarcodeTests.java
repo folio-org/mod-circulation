@@ -630,4 +630,77 @@ public class RenewByBarcodeTests extends APITests {
     assertThat(response.getJson(),
       hasErrorMessageContaining("renewal at this time would not change the due date"));
   }
+
+  @Test
+  public void cannotRenewWhenNonRenewableRollingPolicy()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    LoanPolicyBuilder limitedRenewalsPolicy = new LoanPolicyBuilder()
+      .withName("Non Renewable Policy")
+      .rolling(Period.days(2))
+      .notRenewable();
+
+    UUID notRenewablePolicyId = loanPolicyClient.create(limitedRenewalsPolicy).getId();
+
+    //Need to remember in order to delete after test
+    policiesToDelete.add(notRenewablePolicyId);
+
+    useLoanPolicyAsFallback(notRenewablePolicyId);
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+      new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
+
+    final Response response = loansFixture.attemptRenewal(smallAngryPlanet, jessica);
+
+    assertThat(response.getJson(), hasSoleErrorMessageContaining(
+      "items with this loan policy cannot be renewed"));
+  }
+
+  @Test
+  public void cannotRenewWhenNonRenewableFixedPolicy()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    //TODO: Replace with better example when can fix system date
+    FixedDueDateSchedulesBuilder todayOnlySchedules = new FixedDueDateSchedulesBuilder()
+      .withName("Today Only Due Date Limit")
+      .addSchedule(FixedDueDateSchedule.todayOnly());
+
+    final UUID todayOnlySchedulesId = fixedDueDateScheduleClient.create(
+      todayOnlySchedules).getId();
+
+    //Need to remember in order to delete after test
+    schedulesToDelete.add(todayOnlySchedulesId);
+
+    LoanPolicyBuilder limitedRenewalsPolicy = new LoanPolicyBuilder()
+      .withName("Non Renewable Policy")
+      .fixed(todayOnlySchedulesId)
+      .notRenewable();
+
+    UUID notRenewablePolicyId = loanPolicyClient.create(limitedRenewalsPolicy).getId();
+
+    //Need to remember in order to delete after test
+    policiesToDelete.add(notRenewablePolicyId);
+
+    useLoanPolicyAsFallback(notRenewablePolicyId);
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+      DateTime.now(DateTimeZone.UTC));
+
+    final Response response = loansFixture.attemptRenewal(smallAngryPlanet, jessica);
+
+    assertThat(response.getJson(), hasSoleErrorMessageContaining(
+      "items with this loan policy cannot be renewed"));
+  }
 }

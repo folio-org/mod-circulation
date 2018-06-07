@@ -1,5 +1,6 @@
 package org.folio.circulation.domain.policy;
 
+import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ValidationErrorFailure;
@@ -53,6 +54,10 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
 
   @Override
   HttpResult<DateTime> calculateDueDate(Loan loan) {
+    if(StringUtils.isBlank(renewFrom)) {
+      return failure(error.apply(RENEW_FROM_UNRECOGNISED_MESSAGE));
+    }
+
     switch (renewFrom) {
       case RENEW_FROM_DUE_DATE:
         return calculateDueDate(loan.getDueDate(), loan.getLoanDate());
