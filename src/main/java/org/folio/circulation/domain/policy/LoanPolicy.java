@@ -15,6 +15,7 @@ import java.util.Objects;
 
 import static org.folio.circulation.support.HttpResult.failure;
 import static org.folio.circulation.support.JsonPropertyFetcher.*;
+import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
 
 public class LoanPolicy {
   private final JsonObject representation;
@@ -50,9 +51,7 @@ public class LoanPolicy {
     //TODO: Create HttpResult wrapper that traps exceptions
     try {
       if(isNotRenewable()) {
-        return HttpResult.failure(ValidationErrorFailure.error(
-          "items with this loan policy cannot be renewed",
-          "loanPolicyId", getId()));
+        return failedResult(errorForPolicy("items with this loan policy cannot be renewed"));
       }
 
       final HttpResult<DateTime> proposedDueDateResult =
@@ -87,15 +86,17 @@ public class LoanPolicy {
     }
   }
 
-  public boolean isNotRenewable() {
+  private ValidationError errorForPolicy(String reason) {
+    return new ValidationError(reason, "loanPolicyId", getId());
+  }
+
+  private boolean isNotRenewable() {
     return !getBooleanProperty(representation, "renewable");
   }
 
   private void errorWhenReachedRenewalLimit(Loan loan, List<ValidationError> errors) {
     if(!unlimitedRenewals() && reachedNumberOfRenewalsLimit(loan)) {
-      errors.add(new ValidationError(
-        "loan has reached it's maximum number of renewals",
-        "loanPolicyId", getId()));
+      errors.add(errorForPolicy("loan has reached it's maximum number of renewals"));
     }
   }
 
@@ -104,12 +105,9 @@ public class LoanPolicy {
     DateTime proposedDueDate,
     List<ValidationError> errors) {
 
-    final ValidationError dueDateError = new ValidationError(
-      "renewal at this time would not change the due date",
-      "loanPolicyId", getId());
-
     if(isSameOrBefore(loan, proposedDueDate)) {
-      errors.add(dueDateError);
+      errors.add(errorForPolicy(
+        "renewal at this time would not change the due date"));
     }
   }
 

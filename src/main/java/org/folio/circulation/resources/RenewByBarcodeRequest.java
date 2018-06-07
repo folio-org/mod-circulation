@@ -9,7 +9,7 @@ import org.folio.circulation.support.ValidationErrorFailure;
 
 import static org.folio.circulation.support.HttpResult.success;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
+import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
 
 public class RenewByBarcodeRequest implements FindByBarcodeQuery {
   private static final String USER_BARCODE = "userBarcode";
@@ -27,13 +27,13 @@ public class RenewByBarcodeRequest implements FindByBarcodeQuery {
     final String itemBarcode = getProperty(json, ITEM_BARCODE);
 
     if(StringUtils.isBlank(itemBarcode)) {
-      return failure("Renewal request must have an item barcode", ITEM_BARCODE, null);
+      return failedResult("Renewal request must have an item barcode", ITEM_BARCODE, null);
     }
 
     final String userBarcode = getProperty(json, USER_BARCODE);
 
     if(StringUtils.isBlank(userBarcode)) {
-      return failure("Renewal request must have a user barcode", USER_BARCODE, null);
+      return failedResult("Renewal request must have a user barcode", USER_BARCODE, null);
     }
 
     return success(new RenewByBarcodeRequest(itemBarcode, userBarcode));
@@ -51,7 +51,7 @@ public class RenewByBarcodeRequest implements FindByBarcodeQuery {
 
   @Override
   public ValidationErrorFailure userDoesNotMatchError() {
-    return ValidationErrorFailure.error("Cannot renew item checked out to different user",
+    return ValidationErrorFailure.failure("Cannot renew item checked out to different user",
       USER_BARCODE, getUserBarcode());
   }
 

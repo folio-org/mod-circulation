@@ -4,7 +4,6 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class ValidationError {
-
   public final String reason;
   public final String key;
   public final String value;

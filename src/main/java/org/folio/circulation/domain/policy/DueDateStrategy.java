@@ -31,7 +31,7 @@ abstract class DueDateStrategy {
   }
 
   ValidationErrorFailure validationError(String reason) {
-    return ValidationErrorFailure.error(
+    return ValidationErrorFailure.failure(
       reason, "loanPolicyId", this.loanPolicyId);
   }
 

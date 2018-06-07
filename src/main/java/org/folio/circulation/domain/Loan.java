@@ -68,7 +68,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
         return HttpResult.success(null);
 
       default:
-        return failure(ValidationErrorFailure.error(
+        return failure(ValidationErrorFailure.failure(
           "Loan status must be \"Open\" or \"Closed\"", STATUS, getStatus()));
     }
   }

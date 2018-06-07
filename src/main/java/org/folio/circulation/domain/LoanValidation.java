@@ -28,7 +28,7 @@ public class LoanValidation {
       if(loan.getLoan().getItem().isNotFound()) {
         final String itemId = loan.getLoan().getItemId();
 
-        return failure(ValidationErrorFailure.error(
+        return failure(ValidationErrorFailure.failure(
           "Item does not exist", ITEM_ID, itemId));
       }
       else {
@@ -42,7 +42,7 @@ public class LoanValidation {
 
     return result.next(loanAndRelatedRecords -> {
       if(loanAndRelatedRecords.getLoan().getItem().isNotFound()) {
-        return failure(ValidationErrorFailure.error(
+        return failure(ValidationErrorFailure.failure(
           String.format("No item with barcode %s exists", barcode),
           ITEM_BARCODE_PROPERTY_NAME, barcode));
       }
@@ -71,7 +71,7 @@ public class LoanValidation {
       final User requestingUser = loan.getLoan().getUser();
 
       if(hasAwaitingPickupRequestForOtherPatron(requestQueue, requestingUser)) {
-        return failure(ValidationErrorFailure.error(
+        return failure(ValidationErrorFailure.failure(
           "User checking out must be requester awaiting pickup",
           "userId", loan.getLoan().getUserId()));
       }
@@ -90,7 +90,7 @@ public class LoanValidation {
       final User requestingUser = loan.getLoan().getUser();
 
       if(hasAwaitingPickupRequestForOtherPatron(requestQueue, requestingUser)) {
-        return failure(ValidationErrorFailure.error(
+        return failure(ValidationErrorFailure.failure(
           "User checking out must be requester awaiting pickup",
           USER_BARCODE_PROPERTY_NAME, barcode));
       }
@@ -108,12 +108,12 @@ public class LoanValidation {
         final User requestingUser = loan.getLoan().getUser();
 
         if (requestingUser.canDetermineStatus()) {
-          return failure(ValidationErrorFailure.error(
+          return failure(ValidationErrorFailure.failure(
             "Cannot determine if user is active or not",
             USER_BARCODE_PROPERTY_NAME, barcode));
         }
         if (requestingUser.isInactive()) {
-          return failure(ValidationErrorFailure.error(
+          return failure(ValidationErrorFailure.failure(
             "Cannot check out to inactive user",
             USER_BARCODE_PROPERTY_NAME, barcode));
         } else {
@@ -135,12 +135,12 @@ public class LoanValidation {
         return loanAndRelatedRecords;
       }
       else if (proxyingUser.canDetermineStatus()) {
-        return failure(ValidationErrorFailure.error(
+        return failure(ValidationErrorFailure.failure(
           "Cannot determine if proxying user is active or not",
           PROXY_USER_BARCODE_PROPERTY_NAME, barcode));
       }
       else if(proxyingUser.isInactive()) {
-        return failure(ValidationErrorFailure.error(
+        return failure(ValidationErrorFailure.failure(
           "Cannot check out via inactive proxying user",
           PROXY_USER_BARCODE_PROPERTY_NAME, barcode));
       }
@@ -183,7 +183,7 @@ public class LoanValidation {
     return loanRepository.hasOpenLoan(itemId)
       .thenApply(r -> r.next(openLoan -> {
         if(openLoan) {
-          return failure(ValidationErrorFailure.error(
+          return failure(ValidationErrorFailure.failure(
             "Cannot check out item that already has an open loan",
             ITEM_BARCODE_PROPERTY_NAME, barcode));
         }
@@ -200,7 +200,7 @@ public class LoanValidation {
       final Item records = loan.getLoan().getItem();
 
       if(records.isCheckedOut()) {
-        return failure(ValidationErrorFailure.error(
+        return failure(ValidationErrorFailure.failure(
           "Item is already checked out", "itemId", records.getItemId()));
       }
       else {
@@ -215,7 +215,7 @@ public class LoanValidation {
     //TODO: Extract duplication with above
     return loanAndRelatedRecords.next(loan -> {
       if(loan.getLoan().getItem().isCheckedOut()) {
-        return failure(ValidationErrorFailure.error(
+        return failure(ValidationErrorFailure.failure(
           "Item is already checked out", ITEM_BARCODE_PROPERTY_NAME, barcode));
       }
       else {
