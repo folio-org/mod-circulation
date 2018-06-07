@@ -134,33 +134,34 @@ public class LoanPolicy {
 
     //TODO: Temporary until have better logic for missing loans policy
     if(loansPolicy == null) {
-      return new UnknownDueDateStrategy(getId(), getName(), "", isRenewal);
+      return new UnknownDueDateStrategy(getId(), getName(), "", isRenewal,
+        this::errorForPolicy);
     }
 
     if(isRolling(loansPolicy)) {
       if(isRenewal) {
         return new RollingRenewalDueDateStrategy(getId(), getName(),
           systemDate, getRenewFrom(), getRenewalPeriod(loansPolicy, renewalsPolicy),
-          getRenewalDueDateLimitSchedules());
+          getRenewalDueDateLimitSchedules(), this::errorForPolicy);
       }
       else {
         return new RollingCheckOutDueDateStrategy(getId(), getName(),
-          getPeriod(loansPolicy), fixedDueDateSchedules);
+          getPeriod(loansPolicy), fixedDueDateSchedules, this::errorForPolicy);
       }
     }
     else if(isFixed(loansPolicy)) {
       if(isRenewal) {
         return new FixedScheduleRenewalDueDateStrategy(getId(), getName(),
-          getRenewalFixedDueDateSchedules(), systemDate);
+          getRenewalFixedDueDateSchedules(), systemDate, this::errorForPolicy);
       }
       else {
         return new FixedScheduleCheckOutDueDateStrategy(getId(), getName(),
-          fixedDueDateSchedules);
+          fixedDueDateSchedules, this::errorForPolicy);
       }
     }
     else {
       return new UnknownDueDateStrategy(getId(), getName(),
-        getProfileId(loansPolicy), isRenewal);
+        getProfileId(loansPolicy), isRenewal, this::errorForPolicy);
     }
   }
 
