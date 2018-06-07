@@ -190,7 +190,7 @@ public class LoanPolicy {
   }
 
   private String getRenewFrom() {
-    return getNestedStringProperty(representation, "renewalsPolicy", "renewFromId");
+    return getProperty(getRenewalsPolicy(), "renewFromId");
   }
 
   private FixedDueDateSchedules getRenewalFixedDueDateSchedules() {
@@ -243,12 +243,10 @@ public class LoanPolicy {
   }
 
   String getLoansFixedDueDateScheduleId() {
-    return getNestedStringProperty(representation, "loansPolicy",
-      "fixedDueDateScheduleId");
+    return getProperty(getLoansPolicy(), "fixedDueDateScheduleId");
   }
 
   String getAlternateRenewalsFixedDueDateScheduleId() {
-    return getNestedStringProperty(representation, "renewalsPolicy",
-      "alternateFixedDueDateScheduleId");
+    return getProperty(getRenewalsPolicy(), "alternateFixedDueDateScheduleId");
   }
 }
