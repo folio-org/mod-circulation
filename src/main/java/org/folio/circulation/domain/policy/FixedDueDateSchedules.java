@@ -76,8 +76,4 @@ class FixedDueDateSchedules {
       ? limit
       : rollingDueDate;
   }
-
-  public String getId(String id) {
-    return null;
-  }
 }
