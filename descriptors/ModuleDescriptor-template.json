@@ -16,6 +16,7 @@
           ],
           "modulePermissions": [
             "circulation-storage.loans.item.post",
+            "circulation-storage.loans.item.get",
             "circulation-storage.loans.collection.get",
             "circulation.loan-rules.apply.get",
             "circulation-storage.requests.collection.get",
@@ -32,8 +33,10 @@
             "users.item.get",
             "proxiesfor.collection.get",
             "inventory-storage.material-types.item.get",
+            "inventory-storage.material-types.collection.get",
             "circulation-storage.loan-policies.item.get",
-            "circulation-storage.fixed-due-date-schedules.item.get"
+            "circulation-storage.fixed-due-date-schedules.item.get",
+            "circulation-storage.fixed-due-date-schedules.collection.get"
           ]
         },
         {
@@ -46,6 +49,7 @@
           ],
           "modulePermissions": [
             "circulation-storage.loans.item.put",
+            "circulation-storage.loans.item.get",
             "circulation-storage.loans.collection.get",
             "circulation.loan-rules.apply.get",
             "circulation-storage.requests.collection.get",
@@ -59,11 +63,14 @@
             "inventory-storage.holdings.item.get",
             "inventory-storage.instances.collection.get",
             "inventory-storage.instances.item.get",
-            "users.item.get",
-            "proxiesfor.collection.get",
             "inventory-storage.material-types.item.get",
+            "inventory-storage.material-types.collection.get",
+            "users.item.get",
+            "users.collection.get",
+            "proxiesfor.collection.get",
             "circulation-storage.loan-policies.item.get",
-            "circulation-storage.fixed-due-date-schedules.item.get"
+            "circulation-storage.fixed-due-date-schedules.item.get",
+            "circulation-storage.fixed-due-date-schedules.collection.get"
           ]
         },
         {
@@ -84,7 +91,10 @@
             "inventory-storage.holdings.item.get",
             "inventory-storage.instances.collection.get",
             "inventory-storage.instances.item.get",
-            "inventory-storage.material-types.collection.get"
+            "inventory-storage.material-types.collection.get",
+            "inventory-storage.material-types.item.get",
+            "users.collection.get",
+            "users.item.get"
           ]
         },
         {
@@ -97,6 +107,7 @@
           ],
           "modulePermissions": [
             "circulation-storage.loans.item.post",
+            "circulation-storage.loans.item.get",
             "circulation-storage.loans.collection.get",
             "circulation.loan-rules.apply.get",
             "circulation-storage.requests.collection.get",
@@ -114,7 +125,8 @@
             "proxiesfor.collection.get",
             "inventory-storage.material-types.item.get",
             "circulation-storage.loan-policies.item.get",
-            "circulation-storage.fixed-due-date-schedules.item.get"
+            "circulation-storage.fixed-due-date-schedules.item.get",
+            "circulation-storage.fixed-due-date-schedules.collection.get"
           ]
         },
         {
@@ -395,6 +407,11 @@
       "description": "check out an item using barcodes for item and loanee"
     },
     {
+      "permissionName": "circulation.renew-by-barcode.post",
+      "displayName": "circulation - renew loan by barcode",
+      "description": "renew a loan using barcodes for item and loanee"
+    },
+    {
       "permissionName": "circulation.loans.collection.get",
       "displayName": "circulation - get loan collection",
       "description": "get loan collection"
@@ -480,6 +497,7 @@
       "description": "Entire set of permissions needed to use the circulation",
       "subPermissions": [
         "circulation.check-out-by-barcode.post",
+        "circulation.renew-by-barcode.post",
         "circulation.loans.collection.get",
         "circulation.loans.item.get",
         "circulation.loans.item.post",

@@ -58,14 +58,13 @@ public class ValidationErrorFailure implements HttpFailure {
 
   @Override
   public String toString() {
-    return String.format("Validation failure:\n%s",
+    return String.format("Validation failure:%n%s",
       errors.stream()
         .map(ValidationError::toString)
-        .collect(Collectors.joining("\n")));
+        .collect(Collectors.joining("%n")));
   }
 
   public boolean hasErrorWithReason(String reason) {
-    //TODO: Should be equals rather than contains
     return errors.stream()
       .anyMatch(error -> StringUtils.equals(error.reason, reason));
   }
