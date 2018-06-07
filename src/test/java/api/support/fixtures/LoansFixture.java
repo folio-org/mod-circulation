@@ -4,7 +4,6 @@ import api.APITestSuite;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.builders.RenewByBarcodeRequestBuilder;
-import api.support.http.InterfaceUrls;
 import api.support.http.ResourceClient;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
@@ -27,13 +26,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
+import static api.support.http.InterfaceUrls.*;
 import static io.restassured.RestAssured.given;
 import static org.folio.circulation.support.http.OkapiHeader.*;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class LoansFixture {
-
   private final ResourceClient loansClient;
   private final OkapiHttpClient client;
 
@@ -128,7 +127,7 @@ public class LoansFixture {
 
     CompletableFuture<Response> createCompleted = new CompletableFuture<>();
 
-    client.post(InterfaceUrls.loansUrl(), new LoanBuilder()
+    client.post(loansUrl(), new LoanBuilder()
         .open()
         .withItemId(item.getId())
         .withUserId(to.getId()).create(),
@@ -168,7 +167,8 @@ public class LoansFixture {
     JsonObject request = builder.create();
 
     return new IndividualResource(
-      from(post(request, InterfaceUrls.checkOutByBarcodeUrl(), 201)));
+      from(post(request, checkOutByBarcodeUrl(), 201,
+        "check-out-by-barcode-request")));
   }
 
   public Response attemptCheckOutByBarcode(
@@ -189,16 +189,17 @@ public class LoansFixture {
 
     JsonObject request = builder.create();
 
-    return from(post(request, InterfaceUrls.checkOutByBarcodeUrl(), expectedStatusCode));
+    return from(post(request, checkOutByBarcodeUrl(),
+      expectedStatusCode, "check-out-by-barcode-request"));
   }
 
-  private RequestSpecification defaultHeaders() {
+  private RequestSpecification defaultHeaders(String requestId) {
     return new RequestSpecBuilder()
       .addHeader(OKAPI_URL, APITestSuite.okapiUrl().toString())
       .addHeader(TENANT, APITestSuite.TENANT_ID)
       .addHeader(TOKEN, APITestSuite.TOKEN)
       .addHeader(USER_ID, APITestSuite.USER_ID)
-      .addHeader(REQUEST_ID, APITestSuite.REQUEST_ID)
+      .addHeader(REQUEST_ID, requestId)
       .setAccept("application/json, text/plain")
       .setContentType("application/json")
       .build();
@@ -230,7 +231,8 @@ public class LoansFixture {
       .forUser(user)
       .create();
 
-    return new IndividualResource(from(post(request, InterfaceUrls.renewByBarcodeUrl(), 200)));
+    return new IndividualResource(from(post(request, renewByBarcodeUrl(), 200,
+      "renewal-by-barcode-request")));
   }
 
   public Response attemptRenewal(IndividualResource item, IndividualResource user) {
@@ -247,17 +249,27 @@ public class LoansFixture {
       .forUser(user)
       .create();
 
-    return from(post(request, InterfaceUrls.renewByBarcodeUrl(), expectedStatusCode));
+    return from(post(request, renewByBarcodeUrl(),
+      expectedStatusCode, "renewal-by-barcode-request"));
   }
 
   private io.restassured.response.Response post(
     JsonObject representation,
     URL url,
     int expectedStatusCode) {
+    return post(representation, url, expectedStatusCode,
+      APITestSuite.REQUEST_ID);
+  }
+
+  private io.restassured.response.Response post(
+    JsonObject representation,
+    URL url,
+    int expectedStatusCode,
+    String requestId) {
 
     return given()
       .log().all()
-      .spec(defaultHeaders())
+      .spec(defaultHeaders(requestId))
       .spec(timeoutConfig())
       .body(representation.encodePrettily())
       .when().post(url)
