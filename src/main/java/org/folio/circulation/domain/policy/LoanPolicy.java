@@ -10,6 +10,7 @@ import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
@@ -87,7 +88,11 @@ public class LoanPolicy {
   }
 
   private ValidationError errorForPolicy(String reason) {
-    return new ValidationError(reason, "loanPolicyId", getId());
+    HashMap<String, String> parameters = new HashMap<>();
+    parameters.put("loanPolicyId", getId());
+    parameters.put("loanPolicyName", getName());
+
+    return new ValidationError(reason, parameters);
   }
 
   private boolean isNotRenewable() {
