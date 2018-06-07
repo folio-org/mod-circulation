@@ -1,6 +1,7 @@
 ## 10.4.0 Unreleased
 
 * Initial renewal API for renewing an item to a loanee using their barcodes (CIRC-100)
+* Provides `circulation` interface 3.2 (CIRC-100)
 
 ## 10.3.0 2018-06-05
 
