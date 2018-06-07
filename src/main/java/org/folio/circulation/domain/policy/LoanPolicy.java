@@ -98,12 +98,14 @@ public class LoanPolicy {
       "renewal at this time would not change the due date",
       "loanPolicyId", getId());
 
-    if(proposedDueDate.isEqual(loan.getDueDate())) {
+    if(isSameOrBefore(loan, proposedDueDate)) {
       errors.add(dueDateError);
     }
-    else if(proposedDueDate.isBefore(loan.getDueDate())) {
-      errors.add(dueDateError);
-    }
+  }
+
+  private boolean isSameOrBefore(Loan loan, DateTime proposedDueDate) {
+    return proposedDueDate.isEqual(loan.getDueDate())
+      || proposedDueDate.isBefore(loan.getDueDate());
   }
 
   private boolean reachedNumberOfRenewalsLimit(Loan loan) {
