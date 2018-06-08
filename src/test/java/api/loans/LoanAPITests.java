@@ -1,14 +1,12 @@
 package api.loans;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 import api.APITestSuite;
 import api.support.APITests;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.builders.UserBuilder;
-import api.support.http.InterfaceUrls;
-import api.support.http.ResourceClient;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -31,13 +29,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
 import static api.support.fixtures.UserExamples.basedUponJessicaPontefract;
 import static api.support.fixtures.UserExamples.basedUponStevenJones;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.InterfaceUrls.loansUrl;
 import static api.support.matchers.JsonObjectMatchers.hasSoleErrorMessageContaining;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -170,7 +168,7 @@ public class LoanAPITests extends APITests {
 
     final UUID nonExistantItemId = UUID.randomUUID();
 
-    client.post(InterfaceUrls.loansUrl(), new LoanBuilder()
+    client.post(loansUrl(), new LoanBuilder()
         .open()
         .withId(id)
         .withUserId(userId)
@@ -211,7 +209,7 @@ public class LoanAPITests extends APITests {
 
     CompletableFuture<Response> createCompleted = new CompletableFuture<>();
 
-    client.post(InterfaceUrls.loansUrl(), new LoanBuilder()
+    client.post(loansUrl(), new LoanBuilder()
       .open()
       .withId(id)
       .withUserId(userId)
@@ -247,17 +245,19 @@ public class LoanAPITests extends APITests {
 
     CompletableFuture<Response> createCompleted = new CompletableFuture<>();
 
-    client.post(InterfaceUrls.loansUrl(), new LoanBuilder()
+    client.post(loansUrl(), new LoanBuilder()
         .withId(id)
         .withUserId(UUID.randomUUID())
         .withItemId(itemId)
         .withLoanDate(loanDate)
         .withDueDate(dueDate)
-        .withStatus("Open").create(),
+        .open()
+        .create(),
       ResponseHandler.any(createCompleted));
 
     Response response = createCompleted.get(5, TimeUnit.SECONDS);
 
+    //TODO: Should this be a 422 with a error?
     assertThat(String.format("Should not create loan: %s", response.getBody()),
       response.getStatusCode(), is(HTTP_INTERNAL_ERROR));
 
