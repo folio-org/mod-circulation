@@ -100,6 +100,15 @@ public class ItemRepository {
       .thenComposeAsync(this::fetchMaterialType);
   }
 
+  public CompletableFuture<HttpResult<Item>> fetchById(String itemId) {
+    return fetchItem(itemId)
+      .thenComposeAsync(this::fetchHolding)
+      .thenComposeAsync(this::fetchInstance)
+      .thenApply(r -> r.map(InventoryRecordsBuilder::create))
+      .thenComposeAsync(this::fetchLocation)
+      .thenComposeAsync(this::fetchMaterialType);
+  }
+
   public CompletableFuture<HttpResult<MultipleInventoryRecords>> fetchFor(
     Collection<String> itemIds) {
 

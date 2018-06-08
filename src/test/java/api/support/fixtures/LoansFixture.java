@@ -4,6 +4,7 @@ import api.APITestSuite;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.builders.RenewByBarcodeRequestBuilder;
+import api.support.builders.RenewByIdRequestBuilder;
 import api.support.http.ResourceClient;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
@@ -233,6 +234,16 @@ public class LoansFixture {
 
     return new IndividualResource(from(post(request, renewByBarcodeUrl(), 200,
       "renewal-by-barcode-request")));
+  }
+
+  public IndividualResource renewLoanById(IndividualResource item, IndividualResource user) {
+    JsonObject request = new RenewByIdRequestBuilder()
+      .forItem(item)
+      .forUser(user)
+      .create();
+
+    return new IndividualResource(from(post(request, renewByIdUrl(), 200,
+      "renewal-by-id-request")));
   }
 
   public Response attemptRenewal(IndividualResource item, IndividualResource user) {

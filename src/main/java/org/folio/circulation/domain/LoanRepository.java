@@ -100,9 +100,28 @@ public class LoanRepository {
       .thenApply(r -> r.next(loan -> refuseWhenDifferentUser(loan, query)));
   }
 
+  public CompletableFuture<HttpResult<Loan>> findOpenLoanById(FindByIdQuery query) {
+    return itemRepository.fetchById(query.getItemId())
+      .thenComposeAsync(itemResult -> itemResult.after(item -> findOpenLoans(item)
+        .thenApply(loanResult -> loanResult.next(loans -> {
+          final Optional<Loan> first = loans.getRecords().stream()
+            .findFirst();
+
+          if(loans.getTotalRecords() == 1 && first.isPresent()) {
+            return success(Loan.from(first.get().asJson(), item));
+          }
+          else {
+            return failure(new ServerErrorFailure(
+              String.format("More than one open loan for item %s", query.getItemId())));
+          }
+        }))))
+      .thenComposeAsync(this::fetchUser)
+      .thenApply(r -> r.next(loan -> refuseWhenDifferentUser(loan, query)));
+  }
+
   private HttpResult<Loan> refuseWhenDifferentUser(
     Loan loan,
-    FindByBarcodeQuery query) {
+    UserRelatedQuery query) {
 
     if(query.userMatches(loan.getUser())) {
       return success(loan);

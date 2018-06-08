@@ -31,17 +31,17 @@ public class RenewByIdRequestBuilder extends JsonBuilder implements Builder {
 
   public RenewByIdRequestBuilder forItem(IndividualResource item) {
     return new RenewByIdRequestBuilder(
-      getBarcode(item),
+      getId(item),
       this.userId);
   }
 
   public RenewByIdRequestBuilder forUser(IndividualResource loanee) {
     return new RenewByIdRequestBuilder(
       this.itemId,
-      getBarcode(loanee));
+      getId(loanee));
   }
 
-  private String getBarcode(IndividualResource record) {
-    return record.getJson().getString("barcode");
+  private String getId(IndividualResource record) {
+    return record.getJson().getString("id");
   }
 }
