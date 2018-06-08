@@ -253,13 +253,20 @@ public class LoansFixture {
       expectedStatusCode, "renewal-by-barcode-request"));
   }
 
-  private io.restassured.response.Response post(
-    JsonObject representation,
-    URL url,
-    int expectedStatusCode) {
-    return post(representation, url, expectedStatusCode,
-      APITestSuite.REQUEST_ID);
+  public Response attemptRenewalById(
+    int expectedStatusCode,
+    IndividualResource item,
+    IndividualResource user) {
+
+    JsonObject request = new RenewByBarcodeRequestBuilder()
+      .forItem(item)
+      .forUser(user)
+      .create();
+
+    return from(post(request, renewByIdUrl(),
+      expectedStatusCode, "renewal-by-id-request"));
   }
+
 
   private io.restassured.response.Response post(
     JsonObject representation,

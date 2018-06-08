@@ -41,6 +41,7 @@ import java.util.function.Consumer;
 @Suite.SuiteClasses({
   CheckOutByBarcodeTests.class,
   RenewByBarcodeTests.class,
+  RenewByIdTests.class,
   LoanAPITests.class,
   LoanAPILocationTests.class,
   LoanAPITitleTests.class,

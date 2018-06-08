@@ -30,6 +30,7 @@ public class CirculationVerticle extends AbstractVerticle {
 
     new CheckOutByBarcodeResource(client).register(router);
     new RenewByBarcodeResource(client).register(router);
+    new RenewByIdResource(client).register(router);
     new LoanCollectionResource(client).register(router);
     new RequestCollectionResource(client).register(router);
 

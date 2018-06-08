@@ -93,6 +93,10 @@ public class InterfaceUrls {
     return APITestSuite.circulationModuleUrl("/circulation/renew-by-barcode");
   }
 
+  public static URL renewByIdUrl() {
+    return APITestSuite.circulationModuleUrl("/circulation/renew-by-id");
+  }
+
   public static URL loansUrl() {
     return loansUrl("");
   }

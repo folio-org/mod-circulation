@@ -1,3 +1,8 @@
+## 10.6.0 Unreleased
+
+* Initial renewal API for renewing an item to a loanee using IDs (CIRC-117)
+* Provides `circulation` interface 3.4 (CIRC-117)
+
 ## 10.5.0 2018-06-27
 
 * Add support for 'Cancelled - Closed' request status (CIRC-90)

@@ -75,6 +75,40 @@
         },
         {
           "methods": [
+            "POST"
+          ],
+          "pathPattern": "/circulation/renew-by-id",
+          "permissionsRequired": [
+            "circulation.renew-by-id.post"
+          ],
+          "modulePermissions": [
+            "circulation-storage.loans.item.put",
+            "circulation-storage.loans.item.get",
+            "circulation-storage.loans.collection.get",
+            "circulation.loan-rules.apply.get",
+            "circulation-storage.requests.collection.get",
+            "circulation-storage.requests.item.put",
+            "inventory-storage.items.item.put",
+            "inventory-storage.items.item.get",
+            "inventory-storage.items.collection.get",
+            "inventory-storage.locations.item.get",
+            "inventory-storage.locations.collection.get",
+            "inventory-storage.holdings.collection.get",
+            "inventory-storage.holdings.item.get",
+            "inventory-storage.instances.collection.get",
+            "inventory-storage.instances.item.get",
+            "inventory-storage.material-types.item.get",
+            "inventory-storage.material-types.collection.get",
+            "users.item.get",
+            "users.collection.get",
+            "proxiesfor.collection.get",
+            "circulation-storage.loan-policies.item.get",
+            "circulation-storage.fixed-due-date-schedules.item.get",
+            "circulation-storage.fixed-due-date-schedules.collection.get"
+          ]
+        },
+        {
+          "methods": [
             "GET"
           ],
           "pathPattern": "/circulation/loans",
@@ -412,6 +446,11 @@
       "description": "renew a loan using barcodes for item and loanee"
     },
     {
+      "permissionName": "circulation.renew-by-id.post",
+      "displayName": "circulation - renew loan using id",
+      "description": "renew a loan using IDs for item and loanee"
+    },
+    {
       "permissionName": "circulation.loans.collection.get",
       "displayName": "circulation - get loan collection",
       "description": "get loan collection"
@@ -498,6 +537,7 @@
       "subPermissions": [
         "circulation.check-out-by-barcode.post",
         "circulation.renew-by-barcode.post",
+        "circulation.renew-by-id.post",
         "circulation.loans.collection.get",
         "circulation.loans.item.get",
         "circulation.loans.item.post",
