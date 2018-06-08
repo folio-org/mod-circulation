@@ -631,7 +631,7 @@ public class RenewByBarcodeTests extends APITests {
       "loanPolicyId", limitedRenewalsPolicyId.toString()));
 
     assertThat(response.getJson(), hasSoleErrorMessageContaining(
-      "loan has reached it's maximum number of renewals"));
+      "loan has reached its maximum number of renewals"));
   }
 
   @Test
@@ -679,7 +679,7 @@ public class RenewByBarcodeTests extends APITests {
       "loanPolicyId", limitedRenewalsPolicyId.toString()));
 
     assertThat(response.getJson(), hasErrorMessageContaining(
-      "loan has reached it's maximum number of renewals"));
+      "loan has reached its maximum number of renewals"));
 
     assertThat(response.getJson(),
       hasErrorMessageContaining("renewal at this time would not change the due date"));
