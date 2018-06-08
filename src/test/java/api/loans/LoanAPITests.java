@@ -33,9 +33,9 @@ import static api.support.fixtures.UserExamples.basedUponJessicaPontefract;
 import static api.support.fixtures.UserExamples.basedUponStevenJones;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.InterfaceUrls.loansUrl;
+import static api.support.matchers.JsonObjectMatchers.hasSoleErrorFor;
 import static api.support.matchers.JsonObjectMatchers.hasSoleErrorMessageContaining;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -186,6 +186,9 @@ public class LoanAPITests extends APITests {
 
     assertThat(response.getJson(),
       hasSoleErrorMessageContaining("Item does not exist"));
+
+    assertThat(response.getJson(), hasSoleErrorFor(
+      "itemId", nonExistantItemId.toString()));
   }
 
   @Test
@@ -239,6 +242,7 @@ public class LoanAPITests extends APITests {
     UUID id = UUID.randomUUID();
 
     final UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    final UUID nonExistentUserId = UUID.randomUUID();
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
@@ -247,7 +251,7 @@ public class LoanAPITests extends APITests {
 
     client.post(loansUrl(), new LoanBuilder()
         .withId(id)
-        .withUserId(UUID.randomUUID())
+        .withUserId(nonExistentUserId)
         .withItemId(itemId)
         .withLoanDate(loanDate)
         .withDueDate(dueDate)
@@ -257,11 +261,14 @@ public class LoanAPITests extends APITests {
 
     Response response = createCompleted.get(5, TimeUnit.SECONDS);
 
-    //TODO: Should this be a 422 with a error?
     assertThat(String.format("Should not create loan: %s", response.getBody()),
-      response.getStatusCode(), is(HTTP_INTERNAL_ERROR));
+      response.getStatusCode(), is(UNPROCESSABLE_ENTITY));
 
-    assertThat(response.getBody(), is("Unable to locate User"));
+    assertThat(response.getJson(), hasSoleErrorMessageContaining(
+      "user is not found"));
+
+    assertThat(response.getJson(), hasSoleErrorFor(
+      "userId", nonExistentUserId.toString()));
   }
 
   @Test

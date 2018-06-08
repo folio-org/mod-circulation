@@ -757,4 +757,50 @@ public class RenewByBarcodeTests extends APITests {
     assertThat(response.getJson(), hasSoleErrorMessageContaining(
       "items with this loan policy cannot be renewed"));
   }
+
+  @Test
+  public void cannotRenewWhenLoaneeCannotBeFound()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+
+    loansFixture.checkOut(smallAngryPlanet, steve);
+
+    usersClient.delete(steve.getId());
+
+    Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, steve);
+
+    assertThat(response.getJson(), hasSoleErrorMessageContaining(
+      "Could not find user with matching barcode"));
+
+    assertThat(response.getJson(), hasSoleErrorFor(
+      "userBarcode", steve.getJson().getString("barcode")));
+  }
+
+  @Test
+  public void cannotRenewWhenItemCannotBeFound()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+
+    loansFixture.checkOut(smallAngryPlanet, steve);
+
+    itemsClient.delete(smallAngryPlanet.getId());
+
+    Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, steve);
+
+    assertThat(response.getJson(),
+      hasSoleErrorMessageContaining("No item with barcode 036000291452 exists"));
+
+    assertThat(response.getJson(), hasSoleErrorFor(
+      "itemBarcode", smallAngryPlanet.getJson().getString("barcode")));
+  }
 }

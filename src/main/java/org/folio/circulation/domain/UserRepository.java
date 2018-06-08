@@ -4,6 +4,7 @@ import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.server.ValidationError;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -77,7 +78,8 @@ public class UserRepository {
     final Function<Response, HttpResult<User>> mapResponse = response -> {
       if(response.getStatusCode() == 404) {
         if(failOnNotFound) {
-          return HttpResult.failure(new ServerErrorFailure("Unable to locate User"));
+          return HttpResult.failure(new ValidationErrorFailure(
+            new ValidationError("user is not found", "userId", userId)));
         }
         else {
           return HttpResult.success(null);
