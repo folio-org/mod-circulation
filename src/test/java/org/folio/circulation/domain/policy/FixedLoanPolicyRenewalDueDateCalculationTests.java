@@ -271,7 +271,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
       "renewal date falls outside of the date ranges in the loan policy"));
 
     assertThat(result, hasValidationFailure(
-      "loan has reached it's maximum number of renewals"));
+      "loan has reached its maximum number of renewals"));
 
   }
 
