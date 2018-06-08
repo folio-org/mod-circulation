@@ -10,10 +10,13 @@ import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 
 import static org.folio.circulation.support.HttpResult.failure;
 import static org.folio.circulation.support.JsonPropertyFetcher.*;
+import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
 
 public class LoanPolicy {
   private final JsonObject representation;
@@ -48,9 +51,12 @@ public class LoanPolicy {
   public HttpResult<Loan> renew(Loan loan, DateTime systemDate) {
     //TODO: Create HttpResult wrapper that traps exceptions
     try {
+      if(isNotRenewable()) {
+        return failedResult(errorForPolicy("items with this loan policy cannot be renewed"));
+      }
+
       final HttpResult<DateTime> proposedDueDateResult =
-        determineStrategy(true, systemDate)
-          .calculateDueDate(loan);
+        determineStrategy(true, systemDate).calculateDueDate(loan);
 
       List<ValidationError> errors = new ArrayList<>();
 
@@ -81,11 +87,21 @@ public class LoanPolicy {
     }
   }
 
+  private ValidationError errorForPolicy(String reason) {
+    HashMap<String, String> parameters = new HashMap<>();
+    parameters.put("loanPolicyId", getId());
+    parameters.put("loanPolicyName", getName());
+
+    return new ValidationError(reason, parameters);
+  }
+
+  private boolean isNotRenewable() {
+    return !getBooleanProperty(representation, "renewable");
+  }
+
   private void errorWhenReachedRenewalLimit(Loan loan, List<ValidationError> errors) {
     if(!unlimitedRenewals() && reachedNumberOfRenewalsLimit(loan)) {
-      errors.add(new ValidationError(
-        "loan has reached it's maximum number of renewals",
-        "loanPolicyId", getId()));
+      errors.add(errorForPolicy("loan has reached it's maximum number of renewals"));
     }
   }
 
@@ -94,12 +110,9 @@ public class LoanPolicy {
     DateTime proposedDueDate,
     List<ValidationError> errors) {
 
-    final ValidationError dueDateError = new ValidationError(
-      "renewal at this time would not change the due date",
-      "loanPolicyId", getId());
-
     if(isSameOrBefore(loan, proposedDueDate)) {
-      errors.add(dueDateError);
+      errors.add(errorForPolicy(
+        "renewal at this time would not change the due date"));
     }
   }
 
@@ -117,7 +130,7 @@ public class LoanPolicy {
   }
 
   private Integer getRenewalLimit() {
-    return getIntegerProperty(getRenewalsPolicy(), "numberAllowed", null);
+    return getIntegerProperty(getRenewalsPolicy(), "numberAllowed", 0);
   }
 
   private DueDateStrategy determineStrategy(boolean isRenewal, DateTime systemDate) {
@@ -126,33 +139,34 @@ public class LoanPolicy {
 
     //TODO: Temporary until have better logic for missing loans policy
     if(loansPolicy == null) {
-      return new UnknownDueDateStrategy(getId(), getName(), "", isRenewal);
+      return new UnknownDueDateStrategy(getId(), getName(), "", isRenewal,
+        this::errorForPolicy);
     }
 
     if(isRolling(loansPolicy)) {
       if(isRenewal) {
         return new RollingRenewalDueDateStrategy(getId(), getName(),
           systemDate, getRenewFrom(), getRenewalPeriod(loansPolicy, renewalsPolicy),
-          getRenewalDueDateLimitSchedules());
+          getRenewalDueDateLimitSchedules(), this::errorForPolicy);
       }
       else {
         return new RollingCheckOutDueDateStrategy(getId(), getName(),
-          getPeriod(loansPolicy), fixedDueDateSchedules);
+          getPeriod(loansPolicy), fixedDueDateSchedules, this::errorForPolicy);
       }
     }
     else if(isFixed(loansPolicy)) {
       if(isRenewal) {
         return new FixedScheduleRenewalDueDateStrategy(getId(), getName(),
-          getRenewalFixedDueDateSchedules(), systemDate);
+          getRenewalFixedDueDateSchedules(), systemDate, this::errorForPolicy);
       }
       else {
         return new FixedScheduleCheckOutDueDateStrategy(getId(), getName(),
-          fixedDueDateSchedules);
+          fixedDueDateSchedules, this::errorForPolicy);
       }
     }
     else {
       return new UnknownDueDateStrategy(getId(), getName(),
-        getProfileId(loansPolicy), isRenewal);
+        getProfileId(loansPolicy), isRenewal, this::errorForPolicy);
     }
   }
 
@@ -165,9 +179,17 @@ public class LoanPolicy {
   }
 
   private FixedDueDateSchedules getRenewalDueDateLimitSchedules() {
-    return useDifferentPeriod()
-      ? alternateRenewalFixedDueDateSchedules
-      : fixedDueDateSchedules;
+    if(useDifferentPeriod()) {
+      if(Objects.isNull(alternateRenewalFixedDueDateSchedules)
+        || alternateRenewalFixedDueDateSchedules instanceof NoFixedDueDateSchedules)
+        return fixedDueDateSchedules;
+      else {
+        return alternateRenewalFixedDueDateSchedules;
+      }
+    }
+    else {
+      return fixedDueDateSchedules;
+    }
   }
 
   private Period getRenewalPeriod(

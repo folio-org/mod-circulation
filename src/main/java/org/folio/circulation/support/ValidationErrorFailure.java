@@ -15,26 +15,33 @@ import static org.folio.circulation.support.http.server.JsonResponse.response;
 public class ValidationErrorFailure implements HttpFailure {
   private final Collection<ValidationError> errors = new ArrayList<>();
 
-  public static <T> HttpResult<T> failure(
+  public static <T> HttpResult<T> failedResult(
     String reason,
     String key,
     String value) {
 
-    return HttpResult.failure(error(reason, key, value));
+    return HttpResult.failure(
+      failure(new ValidationError(reason, key, value)));
   }
 
-  public static ValidationErrorFailure error(
+  public static <T> HttpResult<T> failedResult(ValidationError error) {
+
+    return HttpResult.failure(failure(error));
+  }
+
+  public static ValidationErrorFailure failure(
     String reason,
     String propertyName,
     String propertyValue) {
 
-    new ArrayList<>();
-
-    return new ValidationErrorFailure(
-      new ValidationError(reason, propertyName, propertyValue));
+    return failure(new ValidationError(reason, propertyName, propertyValue));
   }
 
-  private ValidationErrorFailure(ValidationError error) {
+  public static ValidationErrorFailure failure(ValidationError error) {
+    return new ValidationErrorFailure(error);
+  }
+
+  public ValidationErrorFailure(ValidationError error) {
     this.errors.add(error);
   }
 
@@ -66,12 +73,12 @@ public class ValidationErrorFailure implements HttpFailure {
 
   public boolean hasErrorWithReason(String reason) {
     return errors.stream()
-      .anyMatch(error -> StringUtils.equals(error.reason, reason));
+      .anyMatch(error -> StringUtils.equals(error.getReason(), reason));
   }
 
   public boolean hasErrorForKey(String key) {
     return errors.stream()
-      .anyMatch(error -> StringUtils.equals(error.key, key));
+      .anyMatch(error -> error.hasParameterWithKey(key));
   }
 
   public Collection<ValidationError> getErrors() {

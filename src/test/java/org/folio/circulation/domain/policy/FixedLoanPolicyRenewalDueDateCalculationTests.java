@@ -6,6 +6,7 @@ import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
@@ -342,7 +343,8 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     final FixedScheduleRenewalDueDateStrategy calculator =
       new FixedScheduleRenewalDueDateStrategy(UUID.randomUUID().toString(),
-        "Example Fixed Schedule Loan Policy", null, renewalDate);
+        "Example Fixed Schedule Loan Policy", null, renewalDate,
+        s -> new ValidationError(s, null, null));
 
     Loan loan = existingLoan();
 
@@ -359,7 +361,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     final FixedScheduleRenewalDueDateStrategy calculator =
       new FixedScheduleRenewalDueDateStrategy(UUID.randomUUID().toString(),
         "Example Fixed Schedule Loan Policy", new NoFixedDueDateSchedules(),
-        renewalDate);
+        renewalDate, s -> new ValidationError(s, null, null));
 
     Loan loan = existingLoan();
 

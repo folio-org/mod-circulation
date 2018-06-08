@@ -1,8 +1,9 @@
 package org.folio.circulation.domain.policy;
 
+import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 
 import java.util.function.Function;
@@ -32,7 +33,6 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
   private final String renewFrom;
   private final Period period;
   private final FixedDueDateSchedules dueDateLimitSchedules;
-  private final Function<String, ValidationErrorFailure> error;
 
   RollingRenewalDueDateStrategy(
     String loanPolicyId,
@@ -40,26 +40,29 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
     DateTime systemDate,
     String renewFrom,
     Period period,
-    FixedDueDateSchedules dueDateLimitSchedules) {
+    FixedDueDateSchedules dueDateLimitSchedules,
+    Function<String, ValidationError> errorForPolicy) {
 
-    super(loanPolicyId, loanPolicyName);
+    super(loanPolicyId, loanPolicyName, errorForPolicy);
     this.systemDate = systemDate;
     this.renewFrom = renewFrom;
     this.period = period;
     this.dueDateLimitSchedules = dueDateLimitSchedules;
-
-    error = this::validationError;
   }
 
   @Override
   HttpResult<DateTime> calculateDueDate(Loan loan) {
+    if(StringUtils.isBlank(renewFrom)) {
+      return failure(validationError(RENEW_FROM_UNRECOGNISED_MESSAGE));
+    }
+
     switch (renewFrom) {
       case RENEW_FROM_DUE_DATE:
         return calculateDueDate(loan.getDueDate(), loan.getLoanDate());
       case RENEW_FROM_SYSTEM_DATE:
         return calculateDueDate(systemDate, loan.getLoanDate());
       default:
-        return failure(error.apply(RENEW_FROM_UNRECOGNISED_MESSAGE));
+        return failure(validationError(RENEW_FROM_UNRECOGNISED_MESSAGE));
     }
   }
 
@@ -70,9 +73,9 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
 
   private HttpResult<DateTime> renewalDueDate(DateTime from) {
     return period.addTo(from,
-      () -> error.apply(RENEWAL_UNRECOGNISED_PERIOD_MESSAGE),
-      interval -> error.apply(String.format(RENEWAL_UNRECOGNISED_INTERVAL_MESSAGE, interval)),
-      duration -> error.apply(String.format(RENEWAL_INVALID_DURATION_MESSAGE, duration)));
+      () -> validationError(RENEWAL_UNRECOGNISED_PERIOD_MESSAGE),
+      interval -> validationError(String.format(RENEWAL_UNRECOGNISED_INTERVAL_MESSAGE, interval)),
+      duration -> validationError(String.format(RENEWAL_INVALID_DURATION_MESSAGE, duration)));
   }
 
   private HttpResult<DateTime> truncateDueDateBySchedule(

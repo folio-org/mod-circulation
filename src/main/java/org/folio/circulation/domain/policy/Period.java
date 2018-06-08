@@ -43,6 +43,7 @@ public class Period {
     return new Period(duration, interval);
   }
 
+  //TODO: Change this to use ValidationError instead of ValidationErrorFailure
   HttpResult<DateTime> addTo(
     DateTime from,
     Supplier<ValidationErrorFailure> onUnrecognisedPeriod,

@@ -68,7 +68,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
         return HttpResult.success(null);
 
       default:
-        return failure(ValidationErrorFailure.error(
+        return failure(ValidationErrorFailure.failure(
           "Loan status must be \"Open\" or \"Closed\"", STATUS, getStatus()));
     }
   }
@@ -109,8 +109,9 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   private void setItem(Item newItem) {
-    //TODO: Refuse if ID does not match property in representation
-    if(newItem != null) {
+    //TODO: Refuse if ID does not match property in representation,
+    // and possibly convert isFound to unknown item class
+    if(newItem != null && newItem.isFound()) {
       representation.put("itemId", newItem.getItemId());
     }
     this.item = newItem;

@@ -2,7 +2,7 @@ package org.folio.circulation.domain.policy;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 
 import java.util.function.Function;
@@ -22,18 +22,17 @@ class RollingCheckOutDueDateStrategy extends DueDateStrategy {
 
   private final Period period;
   private final FixedDueDateSchedules dueDateLimitSchedules;
-  private final Function<String, ValidationErrorFailure> error;
 
   RollingCheckOutDueDateStrategy(
     String loanPolicyId,
     String loanPolicyName,
-    Period period, FixedDueDateSchedules dueDateLimitSchedules) {
+    Period period,
+    FixedDueDateSchedules dueDateLimitSchedules,
+    Function<String, ValidationError> errorForPolicy) {
 
-    super(loanPolicyId, loanPolicyName);
+    super(loanPolicyId, loanPolicyName, errorForPolicy);
     this.period = period;
     this.dueDateLimitSchedules = dueDateLimitSchedules;
-
-    error = this::validationError;
   }
 
   @Override
@@ -46,9 +45,9 @@ class RollingCheckOutDueDateStrategy extends DueDateStrategy {
 
   private HttpResult<DateTime> initialDueDate(DateTime loanDate) {
     return period.addTo(loanDate,
-      () -> error.apply(CHECK_OUT_UNRECOGNISED_PERIOD_MESSAGE),
-      interval -> error.apply(String.format(CHECK_OUT_UNRECOGNISED_INTERVAL_MESSAGE, interval)),
-      duration -> error.apply(String.format(CHECKOUT_INVALID_DURATION_MESSAGE, duration)));
+      () -> validationError(CHECK_OUT_UNRECOGNISED_PERIOD_MESSAGE),
+      interval -> validationError(String.format(CHECK_OUT_UNRECOGNISED_INTERVAL_MESSAGE, interval)),
+      duration -> validationError(String.format(CHECKOUT_INVALID_DURATION_MESSAGE, duration)));
   }
 
   private HttpResult<DateTime> truncateDueDateBySchedule(

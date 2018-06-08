@@ -316,6 +316,60 @@ public class RenewByBarcodeTests extends APITests {
   }
 
   @Test
+  public void canRenewUsingLoanDueDateLimitSchedulesWhenDifferentPeriodAndNotAlternateLimits()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
+      .withName("March Only Due Date Limit")
+      .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 3));
+
+    final UUID dueDateLimitScheduleId = fixedDueDateScheduleClient.create(
+      dueDateLimitSchedule).getId();
+
+    //Need to remember in order to delete after test
+    schedulesToDelete.add(dueDateLimitScheduleId);
+
+    LoanPolicyBuilder dueDateLimitedPolicy = new LoanPolicyBuilder()
+      .withName("Due Date Limited Rolling Policy")
+      .rolling(Period.weeks(3))
+      .limitedBySchedule(dueDateLimitScheduleId)
+      .renewFromCurrentDueDate()
+      .renewWith(Period.days(8));
+
+    UUID dueDateLimitedPolicyId = loanPolicyClient.create(dueDateLimitedPolicy).getId();
+
+    //Need to remember in order to delete after test
+    policiesToDelete.add(dueDateLimitedPolicyId);
+
+    useLoanPolicyAsFallback(dueDateLimitedPolicyId);
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+
+    final DateTime loanDate = new DateTime(2018, 3, 4, 11, 43, 54, DateTimeZone.UTC);
+
+    loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .at(loanDate));
+
+    final IndividualResource response = loansFixture.renewLoan(smallAngryPlanet, steve);
+
+    final JsonObject loan = response.getJson();
+
+    assertThat("last loan policy should be stored",
+      loan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
+
+    assertThat("due date should be limited by schedule",
+      loan.getString("dueDate"),
+      isEquivalentTo(new DateTime(2018, 3, 31, 23, 59, 59, DateTimeZone.UTC)));
+  }
+
+  @Test
   @Ignore("Need to be able to inject system date to run this reliably")
   public void canCheckOutUsingFixedDueDateLoanPolicy()
     throws InterruptedException,
@@ -629,5 +683,124 @@ public class RenewByBarcodeTests extends APITests {
 
     assertThat(response.getJson(),
       hasErrorMessageContaining("renewal at this time would not change the due date"));
+  }
+
+  @Test
+  public void cannotRenewWhenNonRenewableRollingPolicy()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    LoanPolicyBuilder limitedRenewalsPolicy = new LoanPolicyBuilder()
+      .withName("Non Renewable Policy")
+      .rolling(Period.days(2))
+      .notRenewable();
+
+    UUID notRenewablePolicyId = loanPolicyClient.create(limitedRenewalsPolicy).getId();
+
+    //Need to remember in order to delete after test
+    policiesToDelete.add(notRenewablePolicyId);
+
+    useLoanPolicyAsFallback(notRenewablePolicyId);
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+      new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
+
+    final Response response = loansFixture.attemptRenewal(smallAngryPlanet, jessica);
+
+    assertThat(response.getJson(), hasSoleErrorMessageContaining(
+      "items with this loan policy cannot be renewed"));
+  }
+
+  @Test
+  public void cannotRenewWhenNonRenewableFixedPolicy()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    //TODO: Replace with better example when can fix system date
+    FixedDueDateSchedulesBuilder todayOnlySchedules = new FixedDueDateSchedulesBuilder()
+      .withName("Today Only Due Date Limit")
+      .addSchedule(FixedDueDateSchedule.todayOnly());
+
+    final UUID todayOnlySchedulesId = fixedDueDateScheduleClient.create(
+      todayOnlySchedules).getId();
+
+    //Need to remember in order to delete after test
+    schedulesToDelete.add(todayOnlySchedulesId);
+
+    LoanPolicyBuilder limitedRenewalsPolicy = new LoanPolicyBuilder()
+      .withName("Non Renewable Policy")
+      .fixed(todayOnlySchedulesId)
+      .notRenewable();
+
+    UUID notRenewablePolicyId = loanPolicyClient.create(limitedRenewalsPolicy).getId();
+
+    //Need to remember in order to delete after test
+    policiesToDelete.add(notRenewablePolicyId);
+
+    useLoanPolicyAsFallback(notRenewablePolicyId);
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+      DateTime.now(DateTimeZone.UTC));
+
+    final Response response = loansFixture.attemptRenewal(smallAngryPlanet, jessica);
+
+    assertThat(response.getJson(), hasSoleErrorMessageContaining(
+      "items with this loan policy cannot be renewed"));
+  }
+
+  @Test
+  public void cannotRenewWhenLoaneeCannotBeFound()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+
+    loansFixture.checkOut(smallAngryPlanet, steve);
+
+    usersClient.delete(steve.getId());
+
+    Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, steve);
+
+    assertThat(response.getJson(), hasSoleErrorMessageContaining(
+      "Could not find user with matching barcode"));
+
+    assertThat(response.getJson(), hasSoleErrorFor(
+      "userBarcode", steve.getJson().getString("barcode")));
+  }
+
+  @Test
+  public void cannotRenewWhenItemCannotBeFound()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+
+    loansFixture.checkOut(smallAngryPlanet, steve);
+
+    itemsClient.delete(smallAngryPlanet.getId());
+
+    Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, steve);
+
+    assertThat(response.getJson(),
+      hasSoleErrorMessageContaining("No item with barcode 036000291452 exists"));
+
+    assertThat(response.getJson(), hasSoleErrorFor(
+      "itemBarcode", smallAngryPlanet.getJson().getString("barcode")));
   }
 }
