@@ -180,6 +180,115 @@ Each includes an example of the error message provided and the parameter key inc
 |User needs to be active and not expired|Cannot check out to inactive user|userBarcode| |
 |Proxy user needs to be active and not expired|Cannot check out via inactive proxying user|proxyUserBarcode|only if proxying|
 
+### Renew By Barcode
+
+It is possible to renew an item to a loanee (optionally via a proxy), using barcodes for the item and loanee.
+
+#### Example Request
+
+```
+POST http://localhost:9605/circulation/renew-by-barcode
+{
+    "itemBarcode": "036000291452",
+    "userBarcode": "5694596854"
+}
+```
+
+#### Example Success Response
+
+```
+HTTP/1.1 200 OK
+content-type: application/json; charset=utf-8
+content-length: 1114
+location: /circulation/loans/a2494e15-cecf-4f68-a5bf-701389b278ed
+
+{
+    "id": "a2494e15-cecf-4f68-a5bf-701389b278ed",
+    "status": {
+        "name": "Open"
+    },
+    "action": "renewed",
+    "loanDate": "2018-03-04T11:43:54.000Z",
+    "userId": "891fa646-a46e-4152-9989-efe3b0311e04",
+    "itemId": "9edc9877-df4c-4dd8-9306-3f1d1444c3f8",
+    "dueDate": "2018-03-31T23:59:59.000Z",
+    "loanPolicyId": "750fd537-3438-4f06-b854-94a1c34d199d",
+    "renewalCount": 1,
+    "metadata": {
+        "createdDate": "2018-06-08T13:35:39.097Z",
+        "createdByUserId": "79ff2a8b-d9c3-5b39-ad4a-0a84025ab085",
+        "updatedDate": "2018-06-08T13:35:39.162Z",
+        "updatedByUserId": "79ff2a8b-d9c3-5b39-ad4a-0a84025ab085"
+    },
+    "item": {
+        "holdingsRecordId": "092c24f3-44e8-44a5-9389-5b3f50e4895a",
+        "instanceId": "a1039600-2076-4248-af75-6b561fdb0f09",
+        "title": "The Long Way to a Small, Angry Planet",
+        "barcode": "036000291452",
+        "contributors": [
+            {
+                "name": "Chambers, Becky"
+            }
+        ],
+        "callNumber": "123456",
+        "status": {
+            "name": "Checked out"
+        },
+        "location": {
+            "name": "3rd Floor"
+        },
+        "materialType": {
+            "name": "Book"
+        }
+    }
+}
+```
+
+#### Example Failure Response
+
+Below is an example of a failure response.
+
+The message explains the reason for the refusal of the request.
+
+The parameters refer to what part of the request caused the request to be refused.
+
+```
+HTTP/1.1 422 Unprocessable Entity
+content-type: application/json; charset=utf-8
+content-length: 611
+
+{
+    "errors": [
+        {
+            "message": "renewal at this time would not change the due date",
+            "parameters": [
+                {
+                    "key": "loanPolicyName",
+                    "value": "Limited Renewals And Limited Due Date Policy"
+                },
+                {
+                    "key": "loanPolicyId",
+                    "value": "9b28ec73-0582-4751-bd5c-65c03965ae65"
+                }
+            ]
+        },
+        {
+            "message": "loan has reached it's maximum number of renewals",
+            "parameters": [
+                {
+                    "key": "loanPolicyName",
+                    "value": "Limited Renewals And Limited Due Date Policy"
+                },
+                {
+                    "key": "loanPolicyId",
+                    "value": "9b28ec73-0582-4751-bd5c-65c03965ae65"
+                }
+            ]
+        }
+    ]
+}
+```
+
 ### Loan Rules Caching
 
 The loan rules engine used for applying loan rules has an internal, local cache which is refreshed every 5 seconds and
