@@ -1,5 +1,5 @@
 {
-  "$schema" : "http://json-schema.org/draft-04/schema#",
+  "$schema": "http://json-schema.org/draft-04/schema#",
   "title": "Loan rule match schema",
   "type": "object",
   "properties": {
@@ -16,5 +16,5 @@
   "required": [
     "loanRuleLine",
     "loanPolicyId"
-   ]
+  ]
 }
