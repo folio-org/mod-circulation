@@ -38,8 +38,18 @@
       "enum": [
         "Open - Not yet filled",
         "Open - Awaiting pickup",
-        "Closed - Filled"
+        "Closed - Filled",
+        "Closed - Cancelled"
       ]
+    },
+    "cancellationReason": {
+      "description": "Reason the request was cancelled",
+      "type": "string"
+    },
+    "cancelledDate": {
+      "description": "Date the request was cancelled",
+      "type": "string",
+      "format": "date-time"
     },
     "item": {
       "description": "Information about the requested item (some of which is stored and used for searching and sorting)",

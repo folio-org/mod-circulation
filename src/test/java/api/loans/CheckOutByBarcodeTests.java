@@ -423,7 +423,7 @@ public class CheckOutByBarcodeTests extends APITests {
     Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, rebecca);
 
     assertThat(response.getJson(),
-      hasSoleErrorMessageContaining("User checking out must be requester awaiting pickup"));
+      hasSoleErrorMessageContaining("it is awaiting pickup by another patron"));
 
     assertThat(response.getJson(), hasSoleErrorFor(
       "userBarcode", rebecca.getJson().getString("barcode")));

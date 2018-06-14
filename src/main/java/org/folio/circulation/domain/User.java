@@ -46,6 +46,10 @@ public class User {
   public String getId() {
     return getProperty(representation, "id");
   }
+  
+  public String getUsername() {
+    return getProperty(representation, "username");
+  }
 
   public String getPatronGroup() {
     return getProperty(representation, "patronGroup");

@@ -100,7 +100,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     Response response = loansFixture.attemptCheckOut(smallAngryPlanet, rebecca);
 
     assertThat(response.getJson(),
-      hasSoleErrorMessageContaining("User checking out must be requester awaiting pickup"));
+      hasSoleErrorMessageContaining("it is awaiting pickup by another patron"));
 
     Response request = requestsClient.getById(requestByJessica.getId());
 

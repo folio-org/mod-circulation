@@ -165,7 +165,7 @@ public class MultipleHoldShelfRequestsTests extends APITests {
     Response response = loansFixture.attemptCheckOut(smallAngryPlanet, rebecca);
 
     assertThat(response.getJson(),
-      hasSoleErrorMessageContaining("User checking out must be requester awaiting pickup"));
+      hasSoleErrorMessageContaining("it is awaiting pickup by another patron"));
 
     requestByJessica = requestsClient.get(requestByJessica);
 
@@ -205,7 +205,7 @@ public class MultipleHoldShelfRequestsTests extends APITests {
     Response response = loansFixture.attemptCheckOut(smallAngryPlanet, steve);
 
     assertThat(response.getJson(),
-      hasSoleErrorMessageContaining("User checking out must be requester awaiting pickup"));
+      hasSoleErrorMessageContaining("it is awaiting pickup by another patron"));
 
     requestByJessica = requestsClient.get(requestByJessica);
 

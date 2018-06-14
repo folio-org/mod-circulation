@@ -69,10 +69,14 @@ public class LoanValidation {
       .next(loan -> {
       final RequestQueue requestQueue = loan.getRequestQueue();
       final User requestingUser = loan.getLoan().getUser();
+      String itemTitle = loan.getLoan().getItem().getTitle();
+      String itemBarcode = loan.getLoan().getItem().getBarcode();
+      String username = requestingUser.getUsername();
 
       if(hasAwaitingPickupRequestForOtherPatron(requestQueue, requestingUser)) {
         return failure(ValidationErrorFailure.failure(
-          "User checking out must be requester awaiting pickup",
+          String.format("%s (Barcode: %s) cannot be checked out to user %s because it is awaiting pickup by another patron",
+          itemTitle, itemBarcode, username),
           "userId", loan.getLoan().getUserId()));
       }
       else {
@@ -88,10 +92,14 @@ public class LoanValidation {
     return loanAndRelatedRecords.next(loan -> {
       final RequestQueue requestQueue = loan.getRequestQueue();
       final User requestingUser = loan.getLoan().getUser();
+      String itemTitle = loan.getLoan().getItem().getTitle();
+      String itemBarcode = loan.getLoan().getItem().getBarcode();
+      String username = requestingUser.getUsername();      
 
       if(hasAwaitingPickupRequestForOtherPatron(requestQueue, requestingUser)) {
         return failure(ValidationErrorFailure.failure(
-          "User checking out must be requester awaiting pickup",
+          String.format("%s (Barcode: %s) cannot be checked out to user %s because it is awaiting pickup by another patron",
+          itemTitle, itemBarcode, username),
           USER_BARCODE_PROPERTY_NAME, barcode));
       }
       else {

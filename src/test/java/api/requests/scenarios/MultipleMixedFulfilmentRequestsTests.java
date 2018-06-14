@@ -185,7 +185,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     Response response = loansFixture.attemptCheckOut(smallAngryPlanet, rebecca);
 
     assertThat(response.getJson(),
-      hasSoleErrorMessageContaining("User checking out must be requester awaiting pickup"));
+      hasSoleErrorMessageContaining("it is awaiting pickup by another patron"));
 
     requestByRebecca = requestsClient.get(requestByRebecca);
 
@@ -234,7 +234,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     Response response = loansFixture.attemptCheckOut(smallAngryPlanet, charlotte);
 
     assertThat(response.getJson(),
-      hasSoleErrorMessageContaining("User checking out must be requester awaiting pickup"));
+      hasSoleErrorMessageContaining("it is awaiting pickup by another patron"));
 
     requestByRebecca = requestsClient.get(requestByRebecca);
 
@@ -282,7 +282,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     Response response = loansFixture.attemptCheckOut(smallAngryPlanet, steve);
 
     assertThat(response.getJson(),
-      hasSoleErrorMessageContaining("User checking out must be requester awaiting pickup"));
+      hasSoleErrorMessageContaining("it is awaiting pickup by another patron"));
 
     deliveryRequestByRebecca = requestsClient.get(deliveryRequestByRebecca);
 
