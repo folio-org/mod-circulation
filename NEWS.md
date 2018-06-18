@@ -2,6 +2,8 @@
 
 * Add support for 'Cancelled - Closed' request status (CIRC-90)
 * Add support for 'cancellationReason' and 'cancellationDate' request fields (CIRC-90)
+* Changes validation message when attempting to check out to user other than requester to include more information (CIRC-114)
+* Provides `circulation` interface 3.3 (CIRC-90)
 
 ## 10.4.0 2018-06-18
 
