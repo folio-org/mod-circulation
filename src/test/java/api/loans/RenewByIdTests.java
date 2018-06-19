@@ -13,6 +13,7 @@ import java.net.MalformedURLException;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.function.BiFunction;
 
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
@@ -23,6 +24,9 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class RenewByIdTests extends APITests {
+  private BiFunction<IndividualResource, IndividualResource, Response> attemptRenewalFunction =
+    loansFixture::attemptRenewalById;
+
   @Test
   public void canRenewRollingLoanFromSystemDate()
     throws InterruptedException,
@@ -89,7 +93,7 @@ public class RenewByIdTests extends APITests {
 
     itemsClient.delete(smallAngryPlanet.getId());
 
-    Response response = loansFixture.attemptRenewalById(smallAngryPlanet, steve);
+    Response response = attemptRenewalFunction.apply(smallAngryPlanet, steve);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage(String.format("No item with ID %s exists", smallAngryPlanet.getId())),
@@ -110,7 +114,7 @@ public class RenewByIdTests extends APITests {
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43));
 
-    final Response response = loansFixture.attemptRenewalById(smallAngryPlanet, james);
+    final Response response = attemptRenewalFunction.apply(smallAngryPlanet, james);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
         hasMessage("Cannot renew item checked out to different user"),
