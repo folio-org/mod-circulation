@@ -772,13 +772,14 @@ public class RenewByBarcodeTests extends APITests {
 
     usersClient.delete(steve.getId());
 
-    Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, steve);
+    Response response = loansFixture.attemptRenewal(smallAngryPlanet, steve);
 
+    //TODO: Replace this with an error that has the user barcode as a parameter
     assertThat(response.getJson(), hasSoleErrorMessageContaining(
-      "Could not find user with matching barcode"));
+      "user is not found"));
 
     assertThat(response.getJson(), hasSoleErrorFor(
-      "userBarcode", steve.getJson().getString("barcode")));
+      "userId", steve.getId().toString()));
   }
 
   @Test
@@ -795,7 +796,7 @@ public class RenewByBarcodeTests extends APITests {
 
     itemsClient.delete(smallAngryPlanet.getId());
 
-    Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, steve);
+    Response response = loansFixture.attemptRenewal(smallAngryPlanet, steve);
 
     assertThat(response.getJson(),
       hasSoleErrorMessageContaining("No item with barcode 036000291452 exists"));

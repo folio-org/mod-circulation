@@ -83,19 +83,27 @@ public class LoanRepository {
 
   public CompletableFuture<HttpResult<Loan>> findOpenLoanByBarcode(FindByBarcodeQuery query) {
     return itemRepository.fetchByBarcode(query.getItemBarcode())
-      .thenComposeAsync(itemResult -> itemResult.after(item -> findOpenLoans(item)
-        .thenApply(loanResult -> loanResult.next(loans -> {
-        final Optional<Loan> first = loans.getRecords().stream()
-          .findFirst();
+      .thenComposeAsync(itemResult -> itemResult.after(item -> {
+        if(item.isNotFound()) {
+          return CompletableFuture.completedFuture(ValidationErrorFailure.failedResult(
+            String.format("No item with barcode %s exists", query.getItemBarcode()),
+            "itemBarcode", query.getItemBarcode()));
+        }
 
-        if(loans.getTotalRecords() == 1 && first.isPresent()) {
-          return success(Loan.from(first.get().asJson(), item));
-        }
-        else {
-          return failure(new ServerErrorFailure(
-            String.format("More than one open loan for item %s", query.getItemBarcode())));
-        }
-      }))))
+        return findOpenLoans(item)
+          .thenApply(loanResult -> loanResult.next(loans -> {
+            final Optional<Loan> first = loans.getRecords().stream()
+              .findFirst();
+
+            if (loans.getTotalRecords() == 1 && first.isPresent()) {
+              return success(Loan.from(first.get().asJson(), item));
+            } else {
+              return failure(new ServerErrorFailure(
+                String.format("More than one open loan for item %s", query.getItemBarcode())));
+            }
+          }));
+      }))
+      //TODO: Replace with fetch user by barcode to improve error message
       .thenComposeAsync(this::fetchUser)
       .thenApply(r -> r.next(loan -> refuseWhenDifferentUser(loan, query)));
   }
