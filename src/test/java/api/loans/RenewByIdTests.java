@@ -16,8 +16,6 @@ import java.util.concurrent.TimeoutException;
 
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
-import static api.support.matchers.JsonObjectMatchers.hasSoleErrorFor;
-import static api.support.matchers.JsonObjectMatchers.hasSoleErrorMessageContaining;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.ValidationErrorMatchers.*;
 import static org.hamcrest.CoreMatchers.allOf;
@@ -93,12 +91,9 @@ public class RenewByIdTests extends APITests {
 
     Response response = loansFixture.attemptRenewalById(smallAngryPlanet, steve);
 
-    assertThat(response.getJson(),
-      hasSoleErrorMessageContaining(String.format("No item with ID %s exists",
-        smallAngryPlanet.getId())));
-
-    assertThat(response.getJson(), hasSoleErrorFor("itemId",
-      smallAngryPlanet.getId().toString()));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage(String.format("No item with ID %s exists", smallAngryPlanet.getId())),
+      hasParameter("itemId", smallAngryPlanet.getId().toString()))));
   }
 
   @Test
