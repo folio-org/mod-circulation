@@ -5,6 +5,8 @@ import api.support.APITests;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.server.ValidationError;
+import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 import org.junit.Test;
@@ -14,6 +16,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
@@ -29,6 +32,9 @@ public class RenewByIdTests extends APITests {
 
   private BiFunction<IndividualResource, IndividualResource, IndividualResource>
     renewalFunction = loansFixture::renewLoanById;
+
+  private Function<IndividualResource, Matcher<ValidationError>>
+    matchUserRelatedParameter = user -> hasParameter("userId", user.getId().toString());
 
   @Test
   public void canRenewRollingLoanFromSystemDate()
@@ -120,6 +126,6 @@ public class RenewByIdTests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
         hasMessage("Cannot renew item checked out to different user"),
-        hasParameter("userId", james.getId().toString()))));
+        matchUserRelatedParameter.apply(james))));
   }
 }
