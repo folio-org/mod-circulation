@@ -20,11 +20,12 @@ import static api.support.matchers.JsonObjectMatchers.hasSoleErrorFor;
 import static api.support.matchers.JsonObjectMatchers.hasSoleErrorMessageContaining;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.ValidationErrorMatchers.error;
+import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasProperty;
-import static org.hamcrest.core.AllOf.allOf;
 
 public class RenewByIdTests extends APITests {
   @Test
@@ -121,9 +122,7 @@ public class RenewByIdTests extends APITests {
 
     assertThat(response.getJson(),
       error(allOf(
-        hasProperty("message", equalTo("Cannot renew item checked out to different user")))));
-
-    //    assertThat(response.getJson(), hasSoleErrorFor(
-//      "userId", james.getId().toString()));
+        hasProperty("message", equalTo("Cannot renew item checked out to different user")),
+        hasParameter("userId", james.getId().toString()))));
   }
 }

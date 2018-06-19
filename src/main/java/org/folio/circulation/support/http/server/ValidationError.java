@@ -71,4 +71,8 @@ public class ValidationError {
     return StringUtils.equals(
       parameters.getOrDefault(key, null), value);
   }
+
+  public String getParameter(String key) {
+    return parameters.getOrDefault(key, null);
+  }
 }
