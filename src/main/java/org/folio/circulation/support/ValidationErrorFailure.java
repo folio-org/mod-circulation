@@ -73,7 +73,7 @@ public class ValidationErrorFailure implements HttpFailure {
 
   public boolean hasErrorWithReason(String reason) {
     return errors.stream()
-      .anyMatch(error -> StringUtils.equals(error.getReason(), reason));
+      .anyMatch(error -> StringUtils.equals(error.getMessage(), reason));
   }
 
   public boolean hasErrorForKey(String key) {

@@ -40,11 +40,35 @@ public class JsonArrayHelper {
     String arrayPropertyName,
     Function<JsonObject, T> mapper) {
 
-    if(within == null) {
+    if(within == null || !within.containsKey(arrayPropertyName)) {
       return new ArrayList<>();
     }
 
     return mapToList(within.getJsonArray(arrayPropertyName), mapper);
+  }
+
+  public static <T> Stream<T> toStream(
+    JsonObject within,
+    String arrayPropertyName,
+    Function<JsonObject, T> mapper) {
+
+    if(within == null || !within.containsKey(arrayPropertyName)) {
+      return null;
+    }
+
+    return toStream(within.getJsonArray(arrayPropertyName))
+      .map(mapper);
+  }
+
+  public static Stream<JsonObject> toStream(
+    JsonObject within,
+    String arrayPropertyName) {
+
+    if(within == null || !within.containsKey(arrayPropertyName)) {
+      return new ArrayList<JsonObject>().stream();
+    }
+
+    return toStream(within.getJsonArray(arrayPropertyName));
   }
 
   private static Stream<JsonObject> toStream(JsonArray array) {
