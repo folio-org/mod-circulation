@@ -98,4 +98,27 @@ public class RenewByIdTests extends APITests {
     assertThat(response.getJson(), hasSoleErrorFor("itemId",
       smallAngryPlanet.getId().toString()));
   }
+
+  @Test
+  public void cannotRenewLoanForDifferentUser()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource james = usersFixture.james();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+      new DateTime(2018, 4, 21, 11, 21, 43));
+
+    final Response response = loansFixture.attemptRenewalById(smallAngryPlanet, james);
+
+    assertThat(response.getJson(), hasSoleErrorFor(
+      "userId", james.getId().toString()));
+
+    assertThat(response.getJson(),
+      hasSoleErrorMessageContaining("Cannot renew item checked out to different user"));
+  }
 }
