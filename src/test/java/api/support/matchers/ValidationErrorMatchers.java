@@ -10,9 +10,11 @@ import org.hamcrest.core.IsCollectionContaining;
 import java.util.List;
 
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasProperty;
 
 public class ValidationErrorMatchers {
-  public static TypeSafeDiagnosingMatcher<JsonObject> error(Matcher<ValidationError> matcher) {
+  public static TypeSafeDiagnosingMatcher<JsonObject> hasErrorWith(Matcher<ValidationError> matcher) {
 
     return new TypeSafeDiagnosingMatcher<JsonObject>() {
       @Override
@@ -55,6 +57,24 @@ public class ValidationErrorMatchers {
         }
 
         return hasParameter;
+      }
+    };
+  }
+
+  public static TypeSafeDiagnosingMatcher<ValidationError> hasMessage(String message) {
+    return new TypeSafeDiagnosingMatcher<ValidationError>() {
+      @Override
+      public void describeTo(Description description) {
+        description.appendText("has message ").appendValue(message);
+      }
+
+      @Override
+      protected boolean matchesSafely(ValidationError error, Description description) {
+        final Matcher<Object> matcher = hasProperty("message", equalTo(message));
+
+        matcher.describeMismatch(error, description);
+
+        return matcher.matches(error);
       }
     };
   }
