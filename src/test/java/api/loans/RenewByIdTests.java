@@ -36,6 +36,9 @@ public class RenewByIdTests extends APITests {
   private Function<IndividualResource, Matcher<ValidationError>>
     matchUserRelatedParameter = user -> hasParameter("userId", user.getId().toString());
 
+  private Function<IndividualResource, Matcher<ValidationError>>
+    matchItemRelatedParameter = item -> hasParameter("itemId", item.getId().toString());
+
   @Test
   public void canRenewRollingLoanFromSystemDate()
     throws InterruptedException,
@@ -105,7 +108,7 @@ public class RenewByIdTests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage(String.format("No item with ID %s exists", smallAngryPlanet.getId())),
-      hasParameter("itemId", smallAngryPlanet.getId().toString()))));
+      matchItemRelatedParameter.apply(smallAngryPlanet))));
   }
 
   @Test
