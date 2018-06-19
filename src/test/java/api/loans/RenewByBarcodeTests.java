@@ -1,7 +1,6 @@
 package api.loans;
 
 import api.APITestSuite;
-import api.support.APITests;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.FixedDueDateSchedule;
 import api.support.builders.FixedDueDateSchedulesBuilder;
@@ -11,6 +10,8 @@ import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
+import org.folio.circulation.support.http.server.ValidationError;
+import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Seconds;
@@ -26,68 +27,16 @@ import java.util.concurrent.TimeoutException;
 
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
-import static api.support.matchers.JsonObjectMatchers.hasErrorMessageContaining;
-import static api.support.matchers.JsonObjectMatchers.hasSoleErrorFor;
-import static api.support.matchers.JsonObjectMatchers.hasSoleErrorMessageContaining;
+import static api.support.matchers.JsonObjectMatchers.*;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
+import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class RenewByBarcodeTests extends APITests {
-  @Test
-  public void canRenewRollingLoanFromSystemDate()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource jessica = usersFixture.jessica();
-
-    final UUID loanId = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      new DateTime(2018, 4, 21, 11, 21, 43))
-      .getId();
-
-    //TODO: Renewal based upon system date,
-    // needs to be approximated, at least until we introduce a calendar and clock
-    DateTime approximateRenewalDate = DateTime.now();
-
-    final JsonObject renewedLoan = loansFixture
-      .renewLoan(smallAngryPlanet, jessica)
-      .getJson();
-
-    assertThat(renewedLoan.getString("id"), is(loanId.toString()));
-
-    assertThat("user ID should match barcode",
-      renewedLoan.getString("userId"), is(jessica.getId().toString()));
-
-    assertThat("item ID should match barcode",
-      renewedLoan.getString("itemId"), is(smallAngryPlanet.getId().toString()));
-
-    assertThat("status should be open",
-      renewedLoan.getJsonObject("status").getString("name"), is("Open"));
-
-    assertThat("action should be renewed",
-      renewedLoan.getString("action"), is("renewed"));
-
-    assertThat("renewal count should be incremented",
-      renewedLoan.getInteger("renewalCount"), is(1));
-
-    assertThat("last loan policy should be stored",
-      renewedLoan.getString("loanPolicyId"),
-      is(APITestSuite.canCirculateRollingLoanPolicyId().toString()));
-
-    assertThat("due date should be approximately 3 weeks after renewal date, based upon loan policy",
-      renewedLoan.getString("dueDate"),
-      withinSecondsAfter(Seconds.seconds(10), approximateRenewalDate.plusWeeks(3)));
-
-    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
-
-    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
-  }
-
+public class RenewByBarcodeTests extends RenewalTests {
   @Test
   public void canRenewRollingLoanFromCurrentDueDate()
     throws InterruptedException,
@@ -115,9 +64,7 @@ public class RenewByBarcodeTests extends APITests {
 
     useLoanPolicyAsFallback(dueDateLimitedPolicyId);
 
-    final JsonObject renewedLoan = loansFixture
-      .renewLoan(smallAngryPlanet, jessica)
-      .getJson();
+    final JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
 
     assertThat(renewedLoan.getString("id"), is(loanId.toString()));
 
@@ -189,7 +136,7 @@ public class RenewByBarcodeTests extends APITests {
         .to(steve)
         .at(loanDate));
 
-    final IndividualResource response = loansFixture.renewLoan(smallAngryPlanet, steve);
+    final IndividualResource response = renew(smallAngryPlanet, steve);
 
     final JsonObject loan = response.getJson();
 
@@ -229,9 +176,7 @@ public class RenewByBarcodeTests extends APITests {
 
     useLoanPolicyAsFallback(dueDateLimitedPolicyId);
 
-    final JsonObject renewedLoan = loansFixture
-      .renewLoan(smallAngryPlanet, jessica)
-      .getJson();
+    final JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
 
     assertThat(renewedLoan.getString("id"), is(loanId.toString()));
 
@@ -303,7 +248,7 @@ public class RenewByBarcodeTests extends APITests {
         .to(steve)
         .at(loanDate));
 
-    final IndividualResource response = loansFixture.renewLoan(smallAngryPlanet, steve);
+    final IndividualResource response = renew(smallAngryPlanet, steve);
 
     final JsonObject loan = response.getJson();
 
@@ -357,7 +302,7 @@ public class RenewByBarcodeTests extends APITests {
         .to(steve)
         .at(loanDate));
 
-    final IndividualResource response = loansFixture.renewLoan(smallAngryPlanet, steve);
+    final IndividualResource response = renew(smallAngryPlanet, steve);
 
     final JsonObject loan = response.getJson();
 
@@ -413,10 +358,9 @@ public class RenewByBarcodeTests extends APITests {
 
     //TODO: Need to be able to inject system date here
     final DateTime renewalDate = new DateTime(2018, 3, 14, 9, 21, 32, DateTimeZone.UTC);
-
     //e.g. Clock.freeze(renewalDate)
 
-    final IndividualResource response = loansFixture.renewLoan(smallAngryPlanet, steve);
+    final IndividualResource response = renew(smallAngryPlanet, steve);
 
     final JsonObject loan = response.getJson();
 
@@ -459,13 +403,11 @@ public class RenewByBarcodeTests extends APITests {
 
     final UUID loanId = loan.getId();
 
-    loansFixture.renewLoan(smallAngryPlanet, jessica).getJson();
+    renew(smallAngryPlanet, jessica).getJson();
 
-    loansFixture.renewLoan(smallAngryPlanet, jessica);
+    renew(smallAngryPlanet, jessica);
 
-    final JsonObject renewedLoan = loansFixture
-      .renewLoan(smallAngryPlanet, jessica)
-      .getJson();
+    final JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
 
     assertThat(renewedLoan.getString("id"), is(loanId.toString()));
 
@@ -508,7 +450,7 @@ public class RenewByBarcodeTests extends APITests {
     // needs to be approximated, at least until we introduce a calendar and clock
     DateTime approximateRenewalDate = DateTime.now();
 
-    final IndividualResource response = loansFixture.renewLoan(smallAngryPlanet, jessica);
+    final IndividualResource response = renew(smallAngryPlanet, jessica);
 
     final CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
@@ -545,29 +487,6 @@ public class RenewByBarcodeTests extends APITests {
     assertThat("due date should be approximately 3 weeks after renewal date, based upon loan policy",
       renewedLoan.getString("dueDate"),
       withinSecondsAfter(Seconds.seconds(10), approximateRenewalDate.plusWeeks(3)));
-  }
-
-  @Test
-  public void cannotRenewLoanForDifferentUser()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource james = usersFixture.james();
-    final IndividualResource jessica = usersFixture.jessica();
-
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      new DateTime(2018, 4, 21, 11, 21, 43));
-
-    final Response response = loansFixture.attemptRenewal(smallAngryPlanet, james);
-
-    assertThat(response.getJson(), hasSoleErrorFor(
-      "userBarcode", james.getJson().getString("barcode")));
-
-    assertThat(response.getJson(),
-      hasSoleErrorMessageContaining("Cannot renew item checked out to different user"));
   }
 
   @Test
@@ -619,13 +538,11 @@ public class RenewByBarcodeTests extends APITests {
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
 
-    loansFixture.renewLoan(smallAngryPlanet, jessica);
+    renew(smallAngryPlanet, jessica);
+    renew(smallAngryPlanet, jessica);
+    renew(smallAngryPlanet, jessica);
 
-    loansFixture.renewLoan(smallAngryPlanet, jessica);
-
-    loansFixture.renewLoan(smallAngryPlanet, jessica);
-
-    final Response response = loansFixture.attemptRenewal(smallAngryPlanet, jessica);
+    final Response response = attemptRenewal(smallAngryPlanet, jessica);
 
     assertThat(response.getJson(), hasSoleErrorFor(
       "loanPolicyId", limitedRenewalsPolicyId.toString()));
@@ -668,12 +585,12 @@ public class RenewByBarcodeTests extends APITests {
 
     useLoanPolicyAsFallback(limitedRenewalsPolicyId);
 
-    final JsonObject loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       DateTime.now(DateTimeZone.UTC).minusDays(1)).getJson();
 
-    loansFixture.renewLoan(smallAngryPlanet, jessica);
+    renew(smallAngryPlanet, jessica);
 
-    final Response response = loansFixture.attemptRenewal(smallAngryPlanet, jessica);
+    final Response response = attemptRenewal(smallAngryPlanet, jessica);
 
     assertThat(response.getJson(), hasSoleErrorFor(
       "loanPolicyId", limitedRenewalsPolicyId.toString()));
@@ -710,7 +627,7 @@ public class RenewByBarcodeTests extends APITests {
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
 
-    final Response response = loansFixture.attemptRenewal(smallAngryPlanet, jessica);
+    final Response response = attemptRenewal(smallAngryPlanet, jessica);
 
     assertThat(response.getJson(), hasSoleErrorMessageContaining(
       "items with this loan policy cannot be renewed"));
@@ -752,7 +669,7 @@ public class RenewByBarcodeTests extends APITests {
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       DateTime.now(DateTimeZone.UTC));
 
-    final Response response = loansFixture.attemptRenewal(smallAngryPlanet, jessica);
+    final Response response = attemptRenewal(smallAngryPlanet, jessica);
 
     assertThat(response.getJson(), hasSoleErrorMessageContaining(
       "items with this loan policy cannot be renewed"));
@@ -772,7 +689,7 @@ public class RenewByBarcodeTests extends APITests {
 
     usersClient.delete(steve.getId());
 
-    Response response = loansFixture.attemptRenewal(smallAngryPlanet, steve);
+    Response response = attemptRenewal(smallAngryPlanet, steve);
 
     assertThat(response.getJson(), hasSoleErrorMessageContaining(
       "user is not found"));
@@ -782,26 +699,29 @@ public class RenewByBarcodeTests extends APITests {
       "userId", steve.getId().toString()));
   }
 
-  @Test
-  public void cannotRenewWhenItemCannotBeFound()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  @Override
+  Response attemptRenewal(IndividualResource user, IndividualResource item) {
+    return loansFixture.attemptRenewal(user, item);
+  }
 
-    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource steve = usersFixture.steve();
+  @Override
+  IndividualResource renew(IndividualResource user, IndividualResource item) {
+    return loansFixture.renewLoan(user, item);
+  }
 
-    loansFixture.checkOut(smallAngryPlanet, steve);
+  @Override
+  Matcher<ValidationError> matchUserRelatedParameter(IndividualResource user) {
+    return hasParameter("userBarcode", user.getJson().getString("barcode"));
+  }
 
-    itemsClient.delete(smallAngryPlanet.getId());
+  @Override
+  Matcher<ValidationError> matchItemRelatedParameter(IndividualResource item) {
+    return hasParameter("itemBarcode", item.getJson().getString("barcode"));
+  }
 
-    Response response = loansFixture.attemptRenewal(smallAngryPlanet, steve);
-
-    assertThat(response.getJson(),
-      hasSoleErrorMessageContaining("No item with barcode 036000291452 exists"));
-
-    assertThat(response.getJson(), hasSoleErrorFor(
-      "itemBarcode", smallAngryPlanet.getJson().getString("barcode")));
+  @Override
+  Matcher<ValidationError> matchItemNotFoundMessage(IndividualResource item) {
+    return hasMessage(String.format("No item with barcode %s exists",
+      item.getJson().getString("barcode")));
   }
 }

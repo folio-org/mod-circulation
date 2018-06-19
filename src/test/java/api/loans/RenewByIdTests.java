@@ -5,6 +5,7 @@ import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.hamcrest.Matcher;
 
+import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 
 public class RenewByIdTests extends RenewalTests {
@@ -15,7 +16,7 @@ public class RenewByIdTests extends RenewalTests {
 
   @Override
   IndividualResource renew(IndividualResource user, IndividualResource item) {
-    return loansFixture.renewLoan(user, item);
+    return loansFixture.renewLoanById(user, item);
   }
 
   @Override
@@ -26,5 +27,10 @@ public class RenewByIdTests extends RenewalTests {
   @Override
   Matcher<ValidationError> matchItemRelatedParameter(IndividualResource item) {
     return hasParameter("itemId", item.getId().toString());
+  }
+
+  @Override
+  Matcher<ValidationError> matchItemNotFoundMessage(IndividualResource item) {
+    return hasMessage(String.format("No item with ID %s exists", item.getId()));
   }
 }

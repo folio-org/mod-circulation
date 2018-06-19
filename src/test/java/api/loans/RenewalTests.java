@@ -93,7 +93,7 @@ abstract class RenewalTests extends APITests {
     Response response = attemptRenewal(smallAngryPlanet, steve);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage(String.format("No item with ID %s exists", smallAngryPlanet.getId())),
+      matchItemNotFoundMessage(smallAngryPlanet),
       matchItemRelatedParameter(smallAngryPlanet))));
   }
 
@@ -122,4 +122,6 @@ abstract class RenewalTests extends APITests {
   abstract IndividualResource renew(IndividualResource user, IndividualResource item);
   abstract Matcher<ValidationError> matchUserRelatedParameter(IndividualResource user);
   abstract Matcher<ValidationError> matchItemRelatedParameter(IndividualResource item);
+  abstract Matcher<ValidationError> matchItemNotFoundMessage(IndividualResource item);
+
 }
