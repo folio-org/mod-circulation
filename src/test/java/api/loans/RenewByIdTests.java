@@ -4,6 +4,7 @@ import api.APITestSuite;
 import api.support.APITests;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 import org.junit.Test;
@@ -15,6 +16,8 @@ import java.util.concurrent.TimeoutException;
 
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
+import static api.support.matchers.JsonObjectMatchers.hasSoleErrorFor;
+import static api.support.matchers.JsonObjectMatchers.hasSoleErrorMessageContaining;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -70,5 +73,29 @@ public class RenewByIdTests extends APITests {
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
     assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+  }
+
+  @Test
+  public void cannotRenewWhenItemCannotBeFound()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+
+    loansFixture.checkOut(smallAngryPlanet, steve);
+
+    itemsClient.delete(smallAngryPlanet.getId());
+
+    Response response = loansFixture.attemptRenewalById(smallAngryPlanet, steve);
+
+    assertThat(response.getJson(),
+      hasSoleErrorMessageContaining(String.format("No item with ID %s exists",
+        smallAngryPlanet.getId())));
+
+    assertThat(response.getJson(), hasSoleErrorFor("itemId",
+      smallAngryPlanet.getId().toString()));
   }
 }

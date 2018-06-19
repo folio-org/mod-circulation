@@ -265,19 +265,17 @@ public class LoansFixture {
   }
 
   public Response attemptRenewalById(
-    int expectedStatusCode,
     IndividualResource item,
     IndividualResource user) {
 
-    JsonObject request = new RenewByBarcodeRequestBuilder()
+    JsonObject request = new RenewByIdRequestBuilder()
       .forItem(item)
       .forUser(user)
       .create();
 
     return from(post(request, renewByIdUrl(),
-      expectedStatusCode, "renewal-by-id-request"));
+      422, "renewal-by-id-request"));
   }
-
 
   private io.restassured.response.Response post(
     JsonObject representation,

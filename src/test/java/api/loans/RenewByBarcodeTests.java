@@ -774,10 +774,10 @@ public class RenewByBarcodeTests extends APITests {
 
     Response response = loansFixture.attemptRenewal(smallAngryPlanet, steve);
 
-    //TODO: Replace this with an error that has the user barcode as a parameter
     assertThat(response.getJson(), hasSoleErrorMessageContaining(
       "user is not found"));
 
+    //Occurs when current loanee is not found, so relates to loan rather than user in request
     assertThat(response.getJson(), hasSoleErrorFor(
       "userId", steve.getId().toString()));
   }

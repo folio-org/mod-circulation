@@ -110,19 +110,26 @@ public class LoanRepository {
 
   public CompletableFuture<HttpResult<Loan>> findOpenLoanById(FindByIdQuery query) {
     return itemRepository.fetchById(query.getItemId())
-      .thenComposeAsync(itemResult -> itemResult.after(item -> findOpenLoans(item)
-        .thenApply(loanResult -> loanResult.next(loans -> {
-          final Optional<Loan> first = loans.getRecords().stream()
-            .findFirst();
+      .thenComposeAsync(itemResult -> itemResult.after(item -> {
+        if(item.isNotFound()) {
+          return CompletableFuture.completedFuture(ValidationErrorFailure.failedResult(
+            String.format("No item with ID %s exists", query.getItemId()),
+            "itemId", query.getItemId()));
+        }
 
-          if(loans.getTotalRecords() == 1 && first.isPresent()) {
-            return success(Loan.from(first.get().asJson(), item));
-          }
-          else {
-            return failure(new ServerErrorFailure(
-              String.format("More than one open loan for item %s", query.getItemId())));
-          }
-        }))))
+        return findOpenLoans(item)
+          .thenApply(loanResult -> loanResult.next(loans -> {
+            final Optional<Loan> first = loans.getRecords().stream()
+              .findFirst();
+
+            if (loans.getTotalRecords() == 1 && first.isPresent()) {
+              return success(Loan.from(first.get().asJson(), item));
+            } else {
+              return failure(new ServerErrorFailure(
+                String.format("More than one open loan for item %s", query.getItemId())));
+            }
+          }));
+      }))
       .thenComposeAsync(this::fetchUser)
       .thenApply(r -> r.next(loan -> refuseWhenDifferentUser(loan, query)));
   }
