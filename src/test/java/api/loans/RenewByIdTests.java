@@ -1,7 +1,6 @@
 package api.loans;
 
 import api.APITestSuite;
-import api.support.APITests;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -15,8 +14,6 @@ import java.net.MalformedURLException;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
@@ -26,19 +23,7 @@ import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class RenewByIdTests extends APITests {
-  private BiFunction<IndividualResource, IndividualResource, Response>
-    attemptRenewalFunction = loansFixture::attemptRenewalById;
-
-  private BiFunction<IndividualResource, IndividualResource, IndividualResource>
-    renewalFunction = loansFixture::renewLoanById;
-
-  private Function<IndividualResource, Matcher<ValidationError>>
-    matchUserRelatedParameter = user -> hasParameter("userId", user.getId().toString());
-
-  private Function<IndividualResource, Matcher<ValidationError>>
-    matchItemRelatedParameter = item -> hasParameter("itemId", item.getId().toString());
-
+public class RenewByIdTests extends RenewalTests {
   @Test
   public void canRenewRollingLoanFromSystemDate()
     throws InterruptedException,
@@ -57,8 +42,7 @@ public class RenewByIdTests extends APITests {
     // needs to be approximated, at least until we introduce a calendar and clock
     DateTime approximateRenewalDate = DateTime.now();
 
-    final JsonObject renewedLoan = renewalFunction.apply(smallAngryPlanet, jessica)
-      .getJson();
+    final JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
 
     assertThat(renewedLoan.getString("id"), is(loanId.toString()));
 
@@ -104,11 +88,11 @@ public class RenewByIdTests extends APITests {
 
     itemsClient.delete(smallAngryPlanet.getId());
 
-    Response response = attemptRenewalFunction.apply(smallAngryPlanet, steve);
+    Response response = attemptRenewal(smallAngryPlanet, steve);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage(String.format("No item with ID %s exists", smallAngryPlanet.getId())),
-      matchItemRelatedParameter.apply(smallAngryPlanet))));
+      matchItemRelatedParameter(smallAngryPlanet))));
   }
 
   @Test
@@ -125,10 +109,30 @@ public class RenewByIdTests extends APITests {
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43));
 
-    final Response response = attemptRenewalFunction.apply(smallAngryPlanet, james);
+    final Response response = attemptRenewal(smallAngryPlanet, james);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
         hasMessage("Cannot renew item checked out to different user"),
-        matchUserRelatedParameter.apply(james))));
+        matchUserRelatedParameter(james))));
+  }
+
+  @Override
+  Response attemptRenewal(IndividualResource user, IndividualResource item) {
+    return loansFixture.attemptRenewalById(user, item);
+  }
+
+  @Override
+  IndividualResource renew(IndividualResource user, IndividualResource item) {
+    return loansFixture.renewLoan(user, item);
+  }
+
+  @Override
+  Matcher<ValidationError> matchUserRelatedParameter(IndividualResource user) {
+    return hasParameter("userId", user.getId().toString());
+  }
+
+  @Override
+  Matcher<ValidationError> matchItemRelatedParameter(IndividualResource item) {
+    return hasParameter("itemId", item.getId().toString());
   }
 }
