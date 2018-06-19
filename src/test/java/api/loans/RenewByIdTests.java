@@ -24,8 +24,11 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class RenewByIdTests extends APITests {
-  private BiFunction<IndividualResource, IndividualResource, Response> attemptRenewalFunction =
-    loansFixture::attemptRenewalById;
+  private BiFunction<IndividualResource, IndividualResource, Response>
+    attemptRenewalFunction = loansFixture::attemptRenewalById;
+
+  private BiFunction<IndividualResource, IndividualResource, IndividualResource>
+    renewalFunction = loansFixture::renewLoanById;
 
   @Test
   public void canRenewRollingLoanFromSystemDate()
@@ -45,8 +48,7 @@ public class RenewByIdTests extends APITests {
     // needs to be approximated, at least until we introduce a calendar and clock
     DateTime approximateRenewalDate = DateTime.now();
 
-    final JsonObject renewedLoan = loansFixture
-      .renewLoanById(smallAngryPlanet, jessica)
+    final JsonObject renewedLoan = renewalFunction.apply(smallAngryPlanet, jessica)
       .getJson();
 
     assertThat(renewedLoan.getString("id"), is(loanId.toString()));
