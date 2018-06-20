@@ -56,7 +56,7 @@ public class FixedDueDateSchedule {
     return forDay(DateTime.now(DateTimeZone.UTC).minusDays(1));
   }
 
-  private static FixedDueDateSchedule forDay(DateTime day) {
+  public static FixedDueDateSchedule forDay(DateTime day) {
     final DateTime beginningOfDay = day.withTimeAtStartOfDay();
 
     final DateTime endOfDay = beginningOfDay

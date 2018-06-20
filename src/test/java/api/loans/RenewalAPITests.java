@@ -16,7 +16,6 @@ import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Seconds;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.MalformedURLException;
@@ -26,13 +25,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static api.support.builders.FixedDueDateSchedule.forDay;
+import static api.support.builders.FixedDueDateSchedule.wholeMonth;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
-import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
-import static api.support.matchers.ValidationErrorMatchers.hasMessage;
-import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static api.support.matchers.ValidationErrorMatchers.*;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
@@ -162,7 +161,7 @@ abstract class RenewalAPITests extends APITests {
 
     FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
       .withName("March Only Due Date Limit")
-      .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 3));
+      .addSchedule(wholeMonth(2018, 3));
 
     final UUID dueDateLimitScheduleId = fixedDueDateScheduleClient.create(
       dueDateLimitSchedule).getId();
@@ -274,7 +273,7 @@ abstract class RenewalAPITests extends APITests {
 
     FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
       .withName("March Only Due Date Limit")
-      .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 3));
+      .addSchedule(wholeMonth(2018, 3));
 
     final UUID dueDateLimitScheduleId = fixedDueDateScheduleClient.create(
       dueDateLimitSchedule).getId();
@@ -327,7 +326,7 @@ abstract class RenewalAPITests extends APITests {
 
     FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
       .withName("March Only Due Date Limit")
-      .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 3));
+      .addSchedule(wholeMonth(2018, 3));
 
     final UUID dueDateLimitScheduleId = fixedDueDateScheduleClient.create(
       dueDateLimitSchedule).getId();
@@ -373,17 +372,20 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  @Ignore("Need to be able to inject system date to run this reliably")
   public void canCheckOutUsingFixedDueDateLoanPolicy()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
 
+    //TODO: Need to be able to inject system date here
+    final DateTime renewalDate = DateTime.now();
+    //e.g. Clock.freeze(renewalDate)
+
     FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
-      .withName("February and March Only Due Date Limit")
-      .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 2))
-      .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 3));
+      .withName("Kludgy Fixed Due Date Schedule")
+      .addSchedule(wholeMonth(2018, 2))
+      .addSchedule(forDay(renewalDate));
 
     final UUID fixedDueDateSchedulesId = fixedDueDateScheduleClient.create(
       fixedDueDateSchedules).getId();
@@ -406,17 +408,13 @@ abstract class RenewalAPITests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    final DateTime loanDate = new DateTime(2018, 2, 10, 34, 23, 12, DateTimeZone.UTC);
+    final DateTime loanDate = new DateTime(2018, 2, 10, 11, 23, 12, DateTimeZone.UTC);
 
     loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
         .at(loanDate));
-
-    //TODO: Need to be able to inject system date here
-    final DateTime renewalDate = new DateTime(2018, 3, 14, 9, 21, 32, DateTimeZone.UTC);
-    //e.g. Clock.freeze(renewalDate)
 
     final IndividualResource response = renew(smallAngryPlanet, steve);
 
@@ -428,9 +426,14 @@ abstract class RenewalAPITests extends APITests {
     assertThat("renewal count should be incremented",
       loan.getInteger("renewalCount"), is(1));
 
-    assertThat("due date should be limited by schedule",
-      loan.getString("dueDate"),
-      isEquivalentTo(new DateTime(2018, 3, 31, 23, 59, 59, DateTimeZone.UTC)));
+    final DateTime endOfRenewalDate = renewalDate
+      .withTimeAtStartOfDay()
+      .withHourOfDay(23)
+      .withMinuteOfHour(59)
+      .withSecondOfMinute(59);
+
+    assertThat("due date should be defined by schedule",
+      loan.getString("dueDate"), isEquivalentTo(endOfRenewalDate));
   }
 
   @Test
