@@ -15,7 +15,8 @@ import static api.support.builders.ItemBuilder.AWAITING_PICKUP;
 import static api.support.builders.ItemBuilder.CHECKED_OUT_HELD;
 import static api.support.builders.RequestBuilder.*;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
-import static api.support.matchers.JsonObjectMatchers.hasSoleErrorMessageContaining;
+import static api.support.matchers.ValidationErrorMatchers.*;
+import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -184,11 +185,11 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
 
     Response response = loansFixture.attemptCheckOut(smallAngryPlanet, rebecca);
 
-    assertThat(response.getJson(),
-      hasSoleErrorMessageContaining(
-        "Long Way to a Small, Angry Planet (Barcode: 036000291452) " +
-          "cannot be checked out to user Stuart, Rebecca " +
-          "because it is awaiting pickup by another patron"));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("The Long Way to a Small, Angry Planet (Barcode: 036000291452) " +
+        "cannot be checked out to user Stuart, Rebecca " +
+        "because it is awaiting pickup by another patron"),
+      hasParameter("userId", rebecca.getId().toString()))));
 
     requestByRebecca = requestsClient.get(requestByRebecca);
 
@@ -236,11 +237,11 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
 
     Response response = loansFixture.attemptCheckOut(smallAngryPlanet, charlotte);
 
-    assertThat(response.getJson(),
-      hasSoleErrorMessageContaining(
-        "Long Way to a Small, Angry Planet (Barcode: 036000291452) " +
-          "cannot be checked out to user Broadwell, Charlotte " +
-          "because it is awaiting pickup by another patron"));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("The Long Way to a Small, Angry Planet (Barcode: 036000291452) " +
+        "cannot be checked out to user Broadwell, Charlotte " +
+        "because it is awaiting pickup by another patron"),
+      hasParameter("userId", charlotte.getId().toString()))));
 
     requestByRebecca = requestsClient.get(requestByRebecca);
 
@@ -287,11 +288,11 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
 
     Response response = loansFixture.attemptCheckOut(smallAngryPlanet, steve);
 
-    assertThat(response.getJson(),
-      hasSoleErrorMessageContaining(
-        "Long Way to a Small, Angry Planet (Barcode: 036000291452) " +
-          "cannot be checked out to user Jones, Steven " +
-          "because it is awaiting pickup by another patron"));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("The Long Way to a Small, Angry Planet (Barcode: 036000291452) " +
+        "cannot be checked out to user Jones, Steven " +
+        "because it is awaiting pickup by another patron"),
+      hasParameter("userId", steve.getId().toString()))));
 
     deliveryRequestByRebecca = requestsClient.get(deliveryRequestByRebecca);
 
