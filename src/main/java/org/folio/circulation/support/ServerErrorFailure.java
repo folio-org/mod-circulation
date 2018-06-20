@@ -23,8 +23,6 @@ public class ServerErrorFailure implements HttpFailure {
   private static String mapToString(Throwable e) {
     final String reason;
 
-
-
     if(e.getMessage() != null) {
       reason = e.getMessage();
     }

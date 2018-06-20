@@ -4,6 +4,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
@@ -27,7 +28,7 @@ public class JsonArrayHelper {
     Function<JsonObject, T> mapper) {
 
     if(array == null) {
-      return new ArrayList<>();
+      return Collections.emptyList();
     }
 
     return toStream(array)
@@ -41,7 +42,7 @@ public class JsonArrayHelper {
     Function<JsonObject, T> mapper) {
 
     if(within == null || !within.containsKey(arrayPropertyName)) {
-      return new ArrayList<>();
+      return Collections.emptyList();
     }
 
     return mapToList(within.getJsonArray(arrayPropertyName), mapper);
@@ -53,7 +54,7 @@ public class JsonArrayHelper {
     Function<JsonObject, T> mapper) {
 
     if(within == null || !within.containsKey(arrayPropertyName)) {
-      return null;
+      return Stream.empty();
     }
 
     return toStream(within.getJsonArray(arrayPropertyName))
@@ -65,7 +66,7 @@ public class JsonArrayHelper {
     String arrayPropertyName) {
 
     if(within == null || !within.containsKey(arrayPropertyName)) {
-      return new ArrayList<JsonObject>().stream();
+      return Stream.empty();
     }
 
     return toStream(within.getJsonArray(arrayPropertyName));
