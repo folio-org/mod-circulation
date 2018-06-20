@@ -17,9 +17,8 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import static api.support.matchers.JsonObjectMatchers.*;
-import static api.support.matchers.ValidationErrorMatchers.hasMessage;
-import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static api.support.matchers.ValidationErrorMatchers.*;
+import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -35,17 +34,17 @@ public class RenewByBarcodeTests extends RenewalTests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    final UUID nonExistentloanPolicyId = UUID.randomUUID();
+    final UUID unknownLoanPolicyId = UUID.randomUUID();
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43));
 
-    useLoanPolicyAsFallback(nonExistentloanPolicyId);
+    useLoanPolicyAsFallback(unknownLoanPolicyId);
 
     final Response response = loansFixture.attemptRenewal(500, smallAngryPlanet, jessica);
 
     assertThat(response.getBody(), is(String.format(
-      "Loan policy %s could not be found, please check loan rules", nonExistentloanPolicyId)));
+      "Loan policy %s could not be found, please check loan rules", unknownLoanPolicyId)));
   }
 
   @Test
@@ -80,11 +79,9 @@ public class RenewByBarcodeTests extends RenewalTests {
 
     final Response response = attemptRenewal(smallAngryPlanet, jessica);
 
-    assertThat(response.getJson(), hasSoleErrorFor(
-      "loanPolicyId", limitedRenewalsPolicyId.toString()));
-
-    assertThat(response.getJson(), hasSoleErrorMessageContaining(
-      "loan has reached its maximum number of renewals"));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("loan has reached its maximum number of renewals"),
+      hasLoanPolicyIdParameter(limitedRenewalsPolicyId))));
   }
 
   @Test
@@ -128,14 +125,13 @@ public class RenewByBarcodeTests extends RenewalTests {
 
     final Response response = attemptRenewal(smallAngryPlanet, jessica);
 
-    assertThat(response.getJson(), hasSoleErrorFor(
-      "loanPolicyId", limitedRenewalsPolicyId.toString()));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("loan has reached its maximum number of renewals"),
+      hasLoanPolicyIdParameter(limitedRenewalsPolicyId))));
 
-    assertThat(response.getJson(), hasErrorMessageContaining(
-      "loan has reached its maximum number of renewals"));
-
-    assertThat(response.getJson(),
-      hasErrorMessageContaining("renewal at this time would not change the due date"));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("renewal at this time would not change the due date"),
+      hasLoanPolicyIdParameter(limitedRenewalsPolicyId))));
   }
 
   @Test
@@ -165,8 +161,9 @@ public class RenewByBarcodeTests extends RenewalTests {
 
     final Response response = attemptRenewal(smallAngryPlanet, jessica);
 
-    assertThat(response.getJson(), hasSoleErrorMessageContaining(
-      "items with this loan policy cannot be renewed"));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("items with this loan policy cannot be renewed"),
+      hasLoanPolicyIdParameter(notRenewablePolicyId))));
   }
 
   @Test
@@ -207,8 +204,9 @@ public class RenewByBarcodeTests extends RenewalTests {
 
     final Response response = attemptRenewal(smallAngryPlanet, jessica);
 
-    assertThat(response.getJson(), hasSoleErrorMessageContaining(
-      "items with this loan policy cannot be renewed"));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("items with this loan policy cannot be renewed"),
+      hasLoanPolicyIdParameter(notRenewablePolicyId))));
   }
 
   @Test
@@ -227,12 +225,10 @@ public class RenewByBarcodeTests extends RenewalTests {
 
     Response response = attemptRenewal(smallAngryPlanet, steve);
 
-    assertThat(response.getJson(), hasSoleErrorMessageContaining(
-      "user is not found"));
-
     //Occurs when current loanee is not found, so relates to loan rather than user in request
-    assertThat(response.getJson(), hasSoleErrorFor(
-      "userId", steve.getId().toString()));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("user is not found"),
+      hasParameter("userId", steve.getId().toString()))));
   }
 
   @Override
@@ -259,5 +255,9 @@ public class RenewByBarcodeTests extends RenewalTests {
   Matcher<ValidationError> hasItemNotFoundMessage(IndividualResource item) {
     return hasMessage(String.format("No item with barcode %s exists",
       item.getJson().getString("barcode")));
+  }
+
+  private Matcher<ValidationError> hasLoanPolicyIdParameter(UUID loanPolicyId) {
+    return hasParameter("loanPolicyId", loanPolicyId.toString());
   }
 }
