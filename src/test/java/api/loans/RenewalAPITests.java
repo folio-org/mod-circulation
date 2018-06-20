@@ -38,7 +38,7 @@ import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-abstract class RenewalTests extends APITests {
+abstract class RenewalAPITests extends APITests {
   abstract Response attemptRenewal(IndividualResource user, IndividualResource item);
   abstract IndividualResource renew(IndividualResource user, IndividualResource item);
   abstract Matcher<ValidationError> hasUserRelatedParameter(IndividualResource user);

@@ -8,7 +8,7 @@ import org.hamcrest.Matcher;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 
-public class RenewByIdTests extends RenewalTests {
+public class RenewByIdTests extends RenewalAPITests {
   @Override
   Response attemptRenewal(IndividualResource user, IndividualResource item) {
     return loansFixture.attemptRenewalById(user, item);
