@@ -604,7 +604,8 @@ abstract class RenewalAPITests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("loan has reached its maximum number of renewals"),
-      hasLoanPolicyIdParameter(limitedRenewalsPolicyId))));
+      hasLoanPolicyIdParameter(limitedRenewalsPolicyId),
+      hasLoanPolicyNameParameter("Limited Renewals Policy"))));
   }
 
   @Test
@@ -650,11 +651,13 @@ abstract class RenewalAPITests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("loan has reached its maximum number of renewals"),
-      hasLoanPolicyIdParameter(limitedRenewalsPolicyId))));
+      hasLoanPolicyIdParameter(limitedRenewalsPolicyId),
+      hasLoanPolicyNameParameter("Limited Renewals And Limited Due Date Policy"))));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("renewal at this time would not change the due date"),
-      hasLoanPolicyIdParameter(limitedRenewalsPolicyId))));
+      hasLoanPolicyIdParameter(limitedRenewalsPolicyId),
+      hasLoanPolicyNameParameter("Limited Renewals And Limited Due Date Policy"))));
   }
 
   @Test
@@ -686,7 +689,8 @@ abstract class RenewalAPITests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("items with this loan policy cannot be renewed"),
-      hasLoanPolicyIdParameter(notRenewablePolicyId))));
+      hasLoanPolicyIdParameter(notRenewablePolicyId),
+      hasLoanPolicyNameParameter("Non Renewable Policy"))));
   }
 
   @Test
@@ -729,7 +733,8 @@ abstract class RenewalAPITests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("items with this loan policy cannot be renewed"),
-      hasLoanPolicyIdParameter(notRenewablePolicyId))));
+      hasLoanPolicyIdParameter(notRenewablePolicyId),
+      hasLoanPolicyNameParameter("Non Renewable Policy"))));
   }
 
   @Test
@@ -798,5 +803,9 @@ abstract class RenewalAPITests extends APITests {
 
   private Matcher<ValidationError> hasLoanPolicyIdParameter(UUID loanPolicyId) {
     return hasParameter("loanPolicyId", loanPolicyId.toString());
+  }
+
+  private Matcher<ValidationError> hasLoanPolicyNameParameter(String policyName) {
+    return hasParameter("loanPolicyName", policyName);
   }
 }
