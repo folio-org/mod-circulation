@@ -33,9 +33,9 @@ import static api.support.fixtures.UserExamples.basedUponJessicaPontefract;
 import static api.support.fixtures.UserExamples.basedUponStevenJones;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.InterfaceUrls.loansUrl;
-import static api.support.matchers.JsonObjectMatchers.hasSoleErrorFor;
-import static api.support.matchers.JsonObjectMatchers.hasSoleErrorMessageContaining;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static api.support.matchers.ValidationErrorMatchers.*;
+import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -166,13 +166,13 @@ public class LoanAPITests extends APITests {
 
     CompletableFuture<Response> createCompleted = new CompletableFuture<>();
 
-    final UUID nonExistantItemId = UUID.randomUUID();
+    final UUID unknownItemId = UUID.randomUUID();
 
     client.post(loansUrl(), new LoanBuilder()
         .open()
         .withId(id)
         .withUserId(userId)
-        .withItemId(nonExistantItemId)
+        .withItemId(unknownItemId)
         .withLoanDate(loanDate)
         .withDueDate(dueDate)
         .create(),
@@ -184,11 +184,9 @@ public class LoanAPITests extends APITests {
       String.format("Should not create loan: %s", response.getBody()),
       response.getStatusCode(), is(UNPROCESSABLE_ENTITY));
 
-    assertThat(response.getJson(),
-      hasSoleErrorMessageContaining("Item does not exist"));
-
-    assertThat(response.getJson(), hasSoleErrorFor(
-      "itemId", nonExistantItemId.toString()));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Item does not exist"),
+      hasParameter("itemId", unknownItemId.toString()))));
   }
 
   @Test
@@ -228,8 +226,9 @@ public class LoanAPITests extends APITests {
       String.format("Should not create loan: %s", response.getBody()),
       response.getStatusCode(), is(UNPROCESSABLE_ENTITY));
 
-    assertThat(response.getJson(),
-      hasSoleErrorMessageContaining("Holding does not exist"));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Holding does not exist"),
+      hasParameter("itemId", item.getId().toString()))));
   }
 
   @Test
@@ -242,7 +241,7 @@ public class LoanAPITests extends APITests {
     UUID id = UUID.randomUUID();
 
     final UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
-    final UUID nonExistentUserId = UUID.randomUUID();
+    final UUID unknownUserId = UUID.randomUUID();
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
@@ -251,7 +250,7 @@ public class LoanAPITests extends APITests {
 
     client.post(loansUrl(), new LoanBuilder()
         .withId(id)
-        .withUserId(nonExistentUserId)
+        .withUserId(unknownUserId)
         .withItemId(itemId)
         .withLoanDate(loanDate)
         .withDueDate(dueDate)
@@ -264,11 +263,9 @@ public class LoanAPITests extends APITests {
     assertThat(String.format("Should not create loan: %s", response.getBody()),
       response.getStatusCode(), is(UNPROCESSABLE_ENTITY));
 
-    assertThat(response.getJson(), hasSoleErrorMessageContaining(
-      "user is not found"));
-
-    assertThat(response.getJson(), hasSoleErrorFor(
-      "userId", nonExistentUserId.toString()));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("user is not found"),
+      hasParameter("userId", unknownUserId.toString()))));
   }
 
   @Test
@@ -319,8 +316,9 @@ public class LoanAPITests extends APITests {
 
     Response response = loansFixture.attemptCheckOut(smallAngryPlanet, jessica);
 
-    assertThat(response.getJson(),
-      hasSoleErrorMessageContaining("Item is already checked out"));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Item is already checked out"),
+      hasParameter("itemId", smallAngryPlanet.getId().toString()))));
   }
 
   @Test
@@ -342,8 +340,8 @@ public class LoanAPITests extends APITests {
       String.format("Should not be able to create loan: %s", response.getBody()),
       response.getStatusCode(), Matchers.is(UNPROCESSABLE_ENTITY));
 
-    assertThat(response.getJson(),
-      hasSoleErrorMessageContaining("Loan status must be \"Open\" or \"Closed\""));
+    assertThat(response.getJson(), hasErrorWith(
+      hasMessage("Loan status must be \"Open\" or \"Closed\"")));
   }
 
   @Test
