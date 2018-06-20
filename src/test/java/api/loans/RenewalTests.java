@@ -32,12 +32,69 @@ import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 abstract class RenewalTests extends APITests {
+  abstract Response attemptRenewal(IndividualResource user, IndividualResource item);
+  abstract IndividualResource renew(IndividualResource user, IndividualResource item);
+  abstract Matcher<ValidationError> hasUserRelatedParameter(IndividualResource user);
+  abstract Matcher<ValidationError> hasItemRelatedParameter(IndividualResource item);
+  abstract Matcher<ValidationError> hasItemNotFoundMessage(IndividualResource item);
+
+  @Test
+  public void canRenewRollingLoanFromSystemDate()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    final UUID loanId = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+      new DateTime(2018, 4, 21, 11, 21, 43))
+      .getId();
+
+    //TODO: Renewal based upon system date,
+    // needs to be approximated, at least until we introduce a calendar and clock
+    DateTime approximateRenewalDate = DateTime.now();
+
+    final JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
+
+    assertThat(renewedLoan.getString("id"), is(loanId.toString()));
+
+    assertThat("user ID should match barcode",
+      renewedLoan.getString("userId"), is(jessica.getId().toString()));
+
+    assertThat("item ID should match barcode",
+      renewedLoan.getString("itemId"), is(smallAngryPlanet.getId().toString()));
+
+    assertThat("status should be open",
+      renewedLoan.getJsonObject("status").getString("name"), is("Open"));
+
+    assertThat("action should be renewed",
+      renewedLoan.getString("action"), is("renewed"));
+
+    assertThat("renewal count should be incremented",
+      renewedLoan.getInteger("renewalCount"), is(1));
+
+    assertThat("last loan policy should be stored",
+      renewedLoan.getString("loanPolicyId"),
+      is(APITestSuite.canCirculateRollingLoanPolicyId().toString()));
+
+    assertThat("due date should be approximately 3 weeks after renewal date, based upon loan policy",
+      renewedLoan.getString("dueDate"),
+      withinSecondsAfter(Seconds.seconds(10), approximateRenewalDate.plusWeeks(3)));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+
+    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+  }
+
   @Test
   public void canRenewRollingLoanFromCurrentDueDate()
     throws InterruptedException,
@@ -490,14 +547,8 @@ abstract class RenewalTests extends APITests {
       withinSecondsAfter(Seconds.seconds(10), approximateRenewalDate.plusWeeks(3)));
   }
 
-  abstract Response attemptRenewal(IndividualResource user, IndividualResource item);
-  abstract IndividualResource renew(IndividualResource user, IndividualResource item);
-  abstract Matcher<ValidationError> hasUserRelatedParameter(IndividualResource user);
-  abstract Matcher<ValidationError> hasItemRelatedParameter(IndividualResource item);
-  abstract Matcher<ValidationError> hasItemNotFoundMessage(IndividualResource item);
-
   @Test
-  public void canRenewRollingLoanFromSystemDate()
+  public void cannotRenewWhenLoanPolicyDoesNotExist()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -506,44 +557,201 @@ abstract class RenewalTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    final UUID loanId = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      new DateTime(2018, 4, 21, 11, 21, 43))
-      .getId();
+    final UUID unknownLoanPolicyId = UUID.randomUUID();
 
-    //TODO: Renewal based upon system date,
-    // needs to be approximated, at least until we introduce a calendar and clock
-    DateTime approximateRenewalDate = DateTime.now();
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+      new DateTime(2018, 4, 21, 11, 21, 43));
 
-    final JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
+    useLoanPolicyAsFallback(unknownLoanPolicyId);
 
-    assertThat(renewedLoan.getString("id"), is(loanId.toString()));
+    final Response response = loansFixture.attemptRenewal(500, smallAngryPlanet, jessica);
 
-    assertThat("user ID should match barcode",
-      renewedLoan.getString("userId"), is(jessica.getId().toString()));
+    assertThat(response.getBody(), is(String.format(
+      "Loan policy %s could not be found, please check loan rules", unknownLoanPolicyId)));
+  }
 
-    assertThat("item ID should match barcode",
-      renewedLoan.getString("itemId"), is(smallAngryPlanet.getId().toString()));
+  @Test
+  public void cannotRenewWhenRenewalLimitReached()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
 
-    assertThat("status should be open",
-      renewedLoan.getJsonObject("status").getString("name"), is("Open"));
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
 
-    assertThat("action should be renewed",
-      renewedLoan.getString("action"), is("renewed"));
+    LoanPolicyBuilder limitedRenewalsPolicy = new LoanPolicyBuilder()
+      .withName("Limited Renewals Policy")
+      .rolling(Period.days(2))
+      .renewFromCurrentDueDate()
+      .limitedRenewals(3);
 
-    assertThat("renewal count should be incremented",
-      renewedLoan.getInteger("renewalCount"), is(1));
+    UUID limitedRenewalsPolicyId = loanPolicyClient.create(limitedRenewalsPolicy).getId();
 
-    assertThat("last loan policy should be stored",
-      renewedLoan.getString("loanPolicyId"),
-      is(APITestSuite.canCirculateRollingLoanPolicyId().toString()));
+    //Need to remember in order to delete after test
+    policiesToDelete.add(limitedRenewalsPolicyId);
 
-    assertThat("due date should be approximately 3 weeks after renewal date, based upon loan policy",
-      renewedLoan.getString("dueDate"),
-      withinSecondsAfter(Seconds.seconds(10), approximateRenewalDate.plusWeeks(3)));
+    useLoanPolicyAsFallback(limitedRenewalsPolicyId);
 
-    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+      new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
 
-    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+    renew(smallAngryPlanet, jessica);
+    renew(smallAngryPlanet, jessica);
+    renew(smallAngryPlanet, jessica);
+
+    final Response response = attemptRenewal(smallAngryPlanet, jessica);
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("loan has reached its maximum number of renewals"),
+      hasLoanPolicyIdParameter(limitedRenewalsPolicyId))));
+  }
+
+  @Test
+  public void multipleReasonsWhyCannotRenewWhenRenewalLimitReachedAndDueDateNotChanged()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    //TODO: Replace with better example when can fix system date
+    FixedDueDateSchedulesBuilder yesterdayAndTodayOnlySchedules = new FixedDueDateSchedulesBuilder()
+      .withName("Yesterday and Today Only Due Date Limit")
+      .addSchedule(FixedDueDateSchedule.yesterdayOnly())
+      .addSchedule(FixedDueDateSchedule.todayOnly());
+
+    final UUID yesterdayAndTodayOnlySchedulesId = fixedDueDateScheduleClient.create(
+      yesterdayAndTodayOnlySchedules).getId();
+
+    //Need to remember in order to delete after test
+    schedulesToDelete.add(yesterdayAndTodayOnlySchedulesId);
+
+    LoanPolicyBuilder limitedRenewalsPolicy = new LoanPolicyBuilder()
+      .withName("Limited Renewals And Limited Due Date Policy")
+      .fixed(yesterdayAndTodayOnlySchedulesId)
+      .limitedRenewals(1);
+
+    UUID limitedRenewalsPolicyId = loanPolicyClient.create(limitedRenewalsPolicy).getId();
+
+    //Need to remember in order to delete after test
+    policiesToDelete.add(limitedRenewalsPolicyId);
+
+    useLoanPolicyAsFallback(limitedRenewalsPolicyId);
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+      DateTime.now(DateTimeZone.UTC).minusDays(1)).getJson();
+
+    renew(smallAngryPlanet, jessica);
+
+    final Response response = attemptRenewal(smallAngryPlanet, jessica);
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("loan has reached its maximum number of renewals"),
+      hasLoanPolicyIdParameter(limitedRenewalsPolicyId))));
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("renewal at this time would not change the due date"),
+      hasLoanPolicyIdParameter(limitedRenewalsPolicyId))));
+  }
+
+  @Test
+  public void cannotRenewWhenNonRenewableRollingPolicy()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    LoanPolicyBuilder limitedRenewalsPolicy = new LoanPolicyBuilder()
+      .withName("Non Renewable Policy")
+      .rolling(Period.days(2))
+      .notRenewable();
+
+    UUID notRenewablePolicyId = loanPolicyClient.create(limitedRenewalsPolicy).getId();
+
+    //Need to remember in order to delete after test
+    policiesToDelete.add(notRenewablePolicyId);
+
+    useLoanPolicyAsFallback(notRenewablePolicyId);
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+      new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
+
+    final Response response = attemptRenewal(smallAngryPlanet, jessica);
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("items with this loan policy cannot be renewed"),
+      hasLoanPolicyIdParameter(notRenewablePolicyId))));
+  }
+
+  @Test
+  public void cannotRenewWhenNonRenewableFixedPolicy()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    //TODO: Replace with better example when can fix system date
+    FixedDueDateSchedulesBuilder todayOnlySchedules = new FixedDueDateSchedulesBuilder()
+      .withName("Today Only Due Date Limit")
+      .addSchedule(FixedDueDateSchedule.todayOnly());
+
+    final UUID todayOnlySchedulesId = fixedDueDateScheduleClient.create(
+      todayOnlySchedules).getId();
+
+    //Need to remember in order to delete after test
+    schedulesToDelete.add(todayOnlySchedulesId);
+
+    LoanPolicyBuilder limitedRenewalsPolicy = new LoanPolicyBuilder()
+      .withName("Non Renewable Policy")
+      .fixed(todayOnlySchedulesId)
+      .notRenewable();
+
+    UUID notRenewablePolicyId = loanPolicyClient.create(limitedRenewalsPolicy).getId();
+
+    //Need to remember in order to delete after test
+    policiesToDelete.add(notRenewablePolicyId);
+
+    useLoanPolicyAsFallback(notRenewablePolicyId);
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+      DateTime.now(DateTimeZone.UTC));
+
+    final Response response = attemptRenewal(smallAngryPlanet, jessica);
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("items with this loan policy cannot be renewed"),
+      hasLoanPolicyIdParameter(notRenewablePolicyId))));
+  }
+
+  @Test
+  public void cannotRenewWhenLoaneeCannotBeFound()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+
+    loansFixture.checkOut(smallAngryPlanet, steve);
+
+    usersClient.delete(steve.getId());
+
+    Response response = attemptRenewal(smallAngryPlanet, steve);
+
+    //Occurs when current loanee is not found, so relates to loan rather than user in request
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("user is not found"),
+      hasParameter("userId", steve.getId().toString()))));
   }
 
   @Test
@@ -586,5 +794,9 @@ abstract class RenewalTests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
         hasMessage("Cannot renew item checked out to different user"),
         hasUserRelatedParameter(james))));
+  }
+
+  private Matcher<ValidationError> hasLoanPolicyIdParameter(UUID loanPolicyId) {
+    return hasParameter("loanPolicyId", loanPolicyId.toString());
   }
 }
