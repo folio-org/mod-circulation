@@ -50,6 +50,22 @@ public class ValidationError {
       getProperty(representation, "message"), parameters);
   }
 
+  public String getMessage() {
+    return message;
+  }
+
+  public boolean hasParameter(String key) {
+    return parameters.containsKey(key);
+  }
+
+  public boolean hasParameter(String key, String value) {
+    return StringUtils.equals(getParameter(key), value);
+  }
+
+  public String getParameter(String key) {
+    return parameters.getOrDefault(key, null);
+  }
+
   @Override
   public String toString() {
     return String.format("reason: \"%s\", parameters: %s", message,
@@ -57,22 +73,5 @@ public class ValidationError {
         .map(key ->
           String.format("key: %s, value: %s", key, parameters.get(key)))
         .collect(Collectors.joining("%n")));
-  }
-
-  public String getMessage() {
-    return message;
-  }
-
-  public boolean hasParameterWithKey(String key) {
-    return parameters.containsKey(key);
-  }
-
-  public boolean hasParameter(String key, String value) {
-    return StringUtils.equals(
-      parameters.getOrDefault(key, null), value);
-  }
-
-  public String getParameter(String key) {
-    return parameters.getOrDefault(key, null);
   }
 }

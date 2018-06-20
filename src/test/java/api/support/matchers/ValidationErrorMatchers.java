@@ -48,7 +48,7 @@ public class ValidationErrorMatchers {
         final boolean hasParameter = error.hasParameter(key, value);
 
         if(!hasParameter) {
-          if(!error.hasParameterWithKey(key)) {
+          if(!error.hasParameter(key)) {
             description.appendText("does not have parameter ").appendValue(key);
           }
           else {

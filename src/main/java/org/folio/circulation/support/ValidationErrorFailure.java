@@ -78,7 +78,7 @@ public class ValidationErrorFailure implements HttpFailure {
 
   public boolean hasErrorForKey(String key) {
     return errors.stream()
-      .anyMatch(error -> error.hasParameterWithKey(key));
+      .anyMatch(error -> error.hasParameter(key));
   }
 
   public Collection<ValidationError> getErrors() {
