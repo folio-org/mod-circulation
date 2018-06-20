@@ -20,17 +20,17 @@ public class RenewByIdTests extends RenewalTests {
   }
 
   @Override
-  Matcher<ValidationError> matchUserRelatedParameter(IndividualResource user) {
+  Matcher<ValidationError> hasUserRelatedParameter(IndividualResource user) {
     return hasParameter("userId", user.getId().toString());
   }
 
   @Override
-  Matcher<ValidationError> matchItemRelatedParameter(IndividualResource item) {
+  Matcher<ValidationError> hasItemRelatedParameter(IndividualResource item) {
     return hasParameter("itemId", item.getId().toString());
   }
 
   @Override
-  Matcher<ValidationError> matchItemNotFoundMessage(IndividualResource item) {
+  Matcher<ValidationError> hasItemNotFoundMessage(IndividualResource item) {
     return hasMessage(String.format("No item with ID %s exists", item.getId()));
   }
 }

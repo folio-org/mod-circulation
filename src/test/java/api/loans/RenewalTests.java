@@ -26,6 +26,12 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 abstract class RenewalTests extends APITests {
+  abstract Response attemptRenewal(IndividualResource user, IndividualResource item);
+  abstract IndividualResource renew(IndividualResource user, IndividualResource item);
+  abstract Matcher<ValidationError> hasUserRelatedParameter(IndividualResource user);
+  abstract Matcher<ValidationError> hasItemRelatedParameter(IndividualResource item);
+  abstract Matcher<ValidationError> hasItemNotFoundMessage(IndividualResource item);
+  
   @Test
   public void canRenewRollingLoanFromSystemDate()
     throws InterruptedException,
@@ -93,8 +99,8 @@ abstract class RenewalTests extends APITests {
     Response response = attemptRenewal(smallAngryPlanet, steve);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      matchItemNotFoundMessage(smallAngryPlanet),
-      matchItemRelatedParameter(smallAngryPlanet))));
+      hasItemNotFoundMessage(smallAngryPlanet),
+      hasItemRelatedParameter(smallAngryPlanet))));
   }
 
   @Test
@@ -115,13 +121,6 @@ abstract class RenewalTests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
         hasMessage("Cannot renew item checked out to different user"),
-        matchUserRelatedParameter(james))));
+        hasUserRelatedParameter(james))));
   }
-
-  abstract Response attemptRenewal(IndividualResource user, IndividualResource item);
-  abstract IndividualResource renew(IndividualResource user, IndividualResource item);
-  abstract Matcher<ValidationError> matchUserRelatedParameter(IndividualResource user);
-  abstract Matcher<ValidationError> matchItemRelatedParameter(IndividualResource item);
-  abstract Matcher<ValidationError> matchItemNotFoundMessage(IndividualResource item);
-
 }

@@ -710,17 +710,17 @@ public class RenewByBarcodeTests extends RenewalTests {
   }
 
   @Override
-  Matcher<ValidationError> matchUserRelatedParameter(IndividualResource user) {
+  Matcher<ValidationError> hasUserRelatedParameter(IndividualResource user) {
     return hasParameter("userBarcode", user.getJson().getString("barcode"));
   }
 
   @Override
-  Matcher<ValidationError> matchItemRelatedParameter(IndividualResource item) {
+  Matcher<ValidationError> hasItemRelatedParameter(IndividualResource item) {
     return hasParameter("itemBarcode", item.getJson().getString("barcode"));
   }
 
   @Override
-  Matcher<ValidationError> matchItemNotFoundMessage(IndividualResource item) {
+  Matcher<ValidationError> hasItemNotFoundMessage(IndividualResource item) {
     return hasMessage(String.format("No item with barcode %s exists",
       item.getJson().getString("barcode")));
   }
