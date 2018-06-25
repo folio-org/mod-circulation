@@ -42,8 +42,16 @@
         "Closed - Cancelled"
       ]
     },
-    "cancellationReason": {
-      "description": "Reason the request was cancelled",
+    "cancellationReasonId": {
+      "description": "The id of the request reason",
+      "type": "string"
+    },
+    "cancelledByUserId": {
+      "description": "The id of the user that cancelled the request",
+      "type": "string"
+    },
+    "cancellationAdditionalInformation": {
+      "description": "Additional information about a cancellation",
       "type": "string"
     },
     "cancelledDate": {

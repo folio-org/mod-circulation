@@ -127,6 +127,11 @@ public class ResourceClient {
     return new ResourceClient(client, InterfaceUrls::locationsStorageUrl,
       "locations");
   }
+  
+  public static ResourceClient forCancellationReasons(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::cancellationReasonsStorageUrl,
+        "cancellationReasons");
+  }
 
   private ResourceClient(
     OkapiHttpClient client,

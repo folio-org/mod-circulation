@@ -171,6 +171,15 @@ public class FakeOkapi extends AbstractVerticle {
         "libraryId")
       .create()
       .register(router);
+    
+    new FakeStorageModuleBuilder()
+        .withRecordName("cancellationReason")
+        .withCollectionPropertyName("cancellationReasons")
+        .withRootPath("/cancellation-reason-storage/cancellation-reasons")
+        .withRequiredProperties("name", "description")
+        .withChangeMetadata()
+        .create()
+        .register(router);
 
     server.requestHandler(router::accept)
       .listen(PORT_TO_USE, result -> {
