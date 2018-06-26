@@ -2,10 +2,7 @@ package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.Item;
-import org.folio.circulation.support.ServerErrorFailure;
-import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.*;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -63,11 +60,14 @@ public class LoanValidation {
   }
   
   private static String getPersonalName(User user) {
-    JsonObject summaryObject = user.createUserSummary();
-    try {
-      return String.format("%s, %s", summaryObject.getString("lastName"),
-          summaryObject.getString("firstName"));
-    } catch(Exception e) {
+    if(StringUtils.isNotBlank(user.getFirstName()) &&
+      StringUtils.isNotBlank(user.getLastName())) {
+
+      return String.format("%s, %s", user.getLastName(),
+        user.getFirstName());
+    }
+    else {
+      //Fallback to user name if insufficient personal details
       return user.getUsername();
     }
   }
