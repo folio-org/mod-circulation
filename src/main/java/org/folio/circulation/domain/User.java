@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
@@ -80,5 +81,18 @@ public class User {
     write(userSummary, "barcode", getBarcode());
 
     return userSummary;
+  }
+
+  String getPersonalName() {
+    if(StringUtils.isNotBlank(getFirstName()) &&
+      StringUtils.isNotBlank(getLastName())) {
+
+      return String.format("%s, %s", getLastName(),
+        getFirstName());
+    }
+    else {
+      //Fallback to user name if insufficient personal details
+      return getUsername();
+    }
   }
 }

@@ -58,20 +58,7 @@ public class LoanValidation {
       }
     }
   }
-  
-  private static String getPersonalName(User user) {
-    if(StringUtils.isNotBlank(user.getFirstName()) &&
-      StringUtils.isNotBlank(user.getLastName())) {
 
-      return String.format("%s, %s", user.getLastName(),
-        user.getFirstName());
-    }
-    else {
-      //Fallback to user name if insufficient personal details
-      return user.getUsername();
-    }
-  }
-  
 
   public static HttpResult<LoanAndRelatedRecords> refuseWhenUserIsNotAwaitingPickup(
     HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
@@ -86,7 +73,7 @@ public class LoanValidation {
         if(hasAwaitingPickupRequestForOtherPatron(requestQueue, requestingUser)) {
         return failure(ValidationErrorFailure.failure(
           String.format("%s (Barcode: %s) cannot be checked out to user %s because it is awaiting pickup by another patron",
-          itemTitle, itemBarcode, getPersonalName(requestingUser)),
+          itemTitle, itemBarcode, requestingUser.getPersonalName()),
           "userId", loan.getLoan().getUserId()));
       }
       else {
@@ -109,7 +96,7 @@ public class LoanValidation {
       if(hasAwaitingPickupRequestForOtherPatron(requestQueue, requestingUser)) {
         return failure(ValidationErrorFailure.failure(
           String.format("%s (Barcode: %s) cannot be checked out to user %s because it is awaiting pickup by another patron",
-          itemTitle, itemBarcode, getPersonalName(requestingUser)),
+          itemTitle, itemBarcode, requestingUser.getPersonalName()),
           USER_BARCODE_PROPERTY_NAME, barcode));
       }
       else {
