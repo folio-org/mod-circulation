@@ -38,8 +38,26 @@
       "enum": [
         "Open - Not yet filled",
         "Open - Awaiting pickup",
-        "Closed - Filled"
+        "Closed - Filled",
+        "Closed - Cancelled"
       ]
+    },
+    "cancellationReasonId": {
+      "description": "The id of the request reason",
+      "type": "string"
+    },
+    "cancelledByUserId": {
+      "description": "The id of the user that cancelled the request",
+      "type": "string"
+    },
+    "cancellationAdditionalInformation": {
+      "description": "Additional information about a cancellation",
+      "type": "string"
+    },
+    "cancelledDate": {
+      "description": "Date the request was cancelled",
+      "type": "string",
+      "format": "date-time"
     },
     "item": {
       "description": "Information about the requested item (some of which is stored and used for searching and sorting)",

@@ -51,6 +51,7 @@ import java.util.function.Consumer;
   LoanRulesEngineAPITests.class,
   RequestsAPICreationTests.class,
   RequestsAPICreateMultipleRequestsTests.class,
+  RequestsAPIModificationTests.class,
   RequestsAPIDeletionTests.class,
   RequestsAPIRetrievalTests.class,
   RequestsAPIUpdatingTests.class,
@@ -104,6 +105,10 @@ public class APITestSuite {
   private static UUID canCirculateRollingLoanPolicyId;
   private static UUID canCirculateFixedLoanPolicyId;
   private static UUID exampleFixedDueDateSchedulesId;
+  
+  private static UUID courseReservesCancellationReasonId;
+  private static UUID patronRequestCancellationReasonId;
+  private static UUID noLongerAvailableCancellationReasonId;
 
   public static int circulationModulePort() {
     return port;
@@ -201,6 +206,18 @@ public class APITestSuite {
   public static UUID canCirculateFixedLoanPolicyId() {
     return canCirculateFixedLoanPolicyId;
   }
+  
+  public static UUID courseReservesCancellationReasonId() {
+    return courseReservesCancellationReasonId;
+  }
+  
+  public static UUID patronRequestCancellationReasonId() {
+    return patronRequestCancellationReasonId;
+  }
+  
+  private static UUID noLongerAvailableCancellationReasonId() {
+    return noLongerAvailableCancellationReasonId;
+  }
 
   @BeforeClass
   public static void before()
@@ -249,6 +266,7 @@ public class APITestSuite {
     createGroups();
     createUsers();
     createLoanPolicies();
+    createCancellationReasons();
 
     initialised = true;
   }
@@ -281,6 +299,7 @@ public class APITestSuite {
     deleteContributorTypes();
     deleteInstanceTypes();
     deleteLoanPolicies();
+    deleteCancellationReasons();
 
     CompletableFuture<Void> circulationModuleUndeployed =
       vertxAssistant.undeployVerticle(circulationModuleDeploymentId);
@@ -646,6 +665,46 @@ public class APITestSuite {
 
     return createReferenceRecord(client, new JsonObject()
       .put("name", name));
+  }
+  
+  private static void createCancellationReasons() 
+      throws MalformedURLException,
+      InterruptedException,
+      ExecutionException,
+      TimeoutException {
+    
+    courseReservesCancellationReasonId = createReferenceRecord(
+        ResourceClient.forCancellationReasons(createClient()),
+        new JsonObject()
+            .put("name", "Course Reserves")
+            .put("description", "Item Needed for Course Reserves")
+    );
+    
+    patronRequestCancellationReasonId = createReferenceRecord(
+        ResourceClient.forCancellationReasons(createClient()),
+        new JsonObject()
+            .put("name", "Patron Request")
+            .put("description", "Item cancelled at Patron request")
+    );
+    
+    noLongerAvailableCancellationReasonId = createReferenceRecord(
+        ResourceClient.forCancellationReasons(createClient()),
+        new JsonObject()
+            .put("name", "No Longer Available")
+            .put("description", "Item No longer Available")
+    );
+  }
+  
+  private static void deleteCancellationReasons() 
+      throws MalformedURLException,
+      InterruptedException,
+      ExecutionException,
+      TimeoutException {
+    ResourceClient cancellationReasonClient = 
+        ResourceClient.forCancellationReasons(createClient());
+    cancellationReasonClient.delete(courseReservesCancellationReasonId);
+    cancellationReasonClient.delete(patronRequestCancellationReasonId);
+    cancellationReasonClient.delete(noLongerAvailableCancellationReasonId);
   }
 
   private static UUID findFirstByName(List<JsonObject> existingRecords, String name) {

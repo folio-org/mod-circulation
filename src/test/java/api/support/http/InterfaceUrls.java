@@ -108,4 +108,13 @@ public class InterfaceUrls {
   public static URL loanRulesUrl(String subPath) {
     return APITestSuite.circulationModuleUrl("/circulation/loan-rules" + subPath);
   }
+  
+  public static URL cancellationReasonsStorageUrl(String subPath) {
+    return APITestSuite.viaOkapiModuleUrl(
+        "/cancellation-reason-storage/cancellation-reasons" + subPath);
+  }
+  
+  public static URL cancellationReasonsStorageUrl() {
+    return cancellationReasonsStorageUrl("");
+  }
 }

@@ -2,10 +2,7 @@ package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.Item;
-import org.folio.circulation.support.ServerErrorFailure;
-import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.*;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -62,6 +59,7 @@ public class LoanValidation {
     }
   }
 
+
   public static HttpResult<LoanAndRelatedRecords> refuseWhenUserIsNotAwaitingPickup(
     HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
@@ -69,10 +67,13 @@ public class LoanValidation {
       .next(loan -> {
       final RequestQueue requestQueue = loan.getRequestQueue();
       final User requestingUser = loan.getLoan().getUser();
+      String itemTitle = loan.getLoan().getItem().getTitle();
+      String itemBarcode = loan.getLoan().getItem().getBarcode();
 
-      if(hasAwaitingPickupRequestForOtherPatron(requestQueue, requestingUser)) {
+        if(hasAwaitingPickupRequestForOtherPatron(requestQueue, requestingUser)) {
         return failure(ValidationErrorFailure.failure(
-          "User checking out must be requester awaiting pickup",
+          String.format("%s (Barcode: %s) cannot be checked out to user %s because it is awaiting pickup by another patron",
+          itemTitle, itemBarcode, requestingUser.getPersonalName()),
           "userId", loan.getLoan().getUserId()));
       }
       else {
@@ -88,10 +89,14 @@ public class LoanValidation {
     return loanAndRelatedRecords.next(loan -> {
       final RequestQueue requestQueue = loan.getRequestQueue();
       final User requestingUser = loan.getLoan().getUser();
+      String itemTitle = loan.getLoan().getItem().getTitle();
+      String itemBarcode = loan.getLoan().getItem().getBarcode();
+      String username = requestingUser.getUsername();      
 
       if(hasAwaitingPickupRequestForOtherPatron(requestQueue, requestingUser)) {
         return failure(ValidationErrorFailure.failure(
-          "User checking out must be requester awaiting pickup",
+          String.format("%s (Barcode: %s) cannot be checked out to user %s because it is awaiting pickup by another patron",
+          itemTitle, itemBarcode, requestingUser.getPersonalName()),
           USER_BARCODE_PROPERTY_NAME, barcode));
       }
       else {

@@ -5,6 +5,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.Item;
 
 import static org.folio.circulation.domain.representations.RequestProperties.STATUS;
+import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import org.joda.time.DateTime;
 
 public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private final JsonObject representation;
@@ -73,4 +76,21 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   void setItem(Item item) {
     this.item = item;
   }
+  
+  public String getCancellationReasonId() {
+    return getProperty(representation, "cancellationReasonId");
+  }
+  
+  public String getCancelledByUserId() {
+    return getProperty(representation, "cancelledByUserId");
+  }
+  
+  public DateTime getCancelledDate() {
+    return getDateTimeProperty(representation, "cancelledDate");
+  }
+  
+  public String getCancellationAdditionalInformation() {
+    return getProperty(representation, "cancellationAdditionalInformation");
+  }
+  
 }

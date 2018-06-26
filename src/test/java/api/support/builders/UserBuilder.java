@@ -65,15 +65,17 @@ public class UserBuilder extends JsonBuilder implements Builder {
     put(request, "active", active);
     put(request, "expirationDate", expirationDate);
 
-    JsonObject personalInformation = new JsonObject()
-      .put("lastName", this.lastName)
-      .put("firstName", this.firstName);
+    if(firstName != null || lastName != null) {
+      JsonObject personalInformation = new JsonObject()
+        .put("lastName", this.lastName)
+        .put("firstName", this.firstName);
 
-    if(this.middleName != null) {
-      personalInformation.put("middleName", this.middleName);
+      if(this.middleName != null) {
+        personalInformation.put("middleName", this.middleName);
+      }
+
+      request.put("personal", personalInformation);
     }
-
-    request.put("personal", personalInformation);
 
     return request;
   }
@@ -96,6 +98,18 @@ public class UserBuilder extends JsonBuilder implements Builder {
       lastName,
       firstName,
       middleName,
+      this.barcode,
+      this.patronGroupId,
+      this.active,
+      this.expirationDate);
+  }
+
+  public UserBuilder withNoPersonalDetails() {
+    return new UserBuilder(
+      this.username,
+      null,
+      null,
+      null,
       this.barcode,
       this.patronGroupId,
       this.active,
