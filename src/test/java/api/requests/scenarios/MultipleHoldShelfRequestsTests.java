@@ -165,7 +165,10 @@ public class MultipleHoldShelfRequestsTests extends APITests {
     Response response = loansFixture.attemptCheckOut(smallAngryPlanet, rebecca);
 
     assertThat(response.getJson(),
-      hasSoleErrorMessageContaining("it is awaiting pickup by another patron"));
+      hasSoleErrorMessageContaining(
+        "Long Way to a Small, Angry Planet (Barcode: 036000291452) " +
+          "cannot be checked out to user Stuart, Rebecca " +
+          "because it is awaiting pickup by another patron"));
 
     requestByJessica = requestsClient.get(requestByJessica);
 
@@ -205,7 +208,10 @@ public class MultipleHoldShelfRequestsTests extends APITests {
     Response response = loansFixture.attemptCheckOut(smallAngryPlanet, steve);
 
     assertThat(response.getJson(),
-      hasSoleErrorMessageContaining("it is awaiting pickup by another patron"));
+      hasSoleErrorMessageContaining(
+        "Long Way to a Small, Angry Planet (Barcode: 036000291452) " +
+          "cannot be checked out to user Jones, Steven " +
+          "because it is awaiting pickup by another patron"));
 
     requestByJessica = requestsClient.get(requestByJessica);
 

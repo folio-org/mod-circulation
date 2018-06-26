@@ -62,12 +62,11 @@ public class LoanValidation {
     }
   }
   
-  public static String getPersonalName(User user) {
+  private static String getPersonalName(User user) {
     JsonObject summaryObject = user.createUserSummary();
     try {
-      JsonObject personalDetails = summaryObject.getJsonObject("personal");
-      return String.format("%s, %s", personalDetails.getString("lastName"),
-          personalDetails.getString("firstName"));
+      return String.format("%s, %s", summaryObject.getString("lastName"),
+          summaryObject.getString("firstName"));
     } catch(Exception e) {
       return user.getUsername();
     }
@@ -83,9 +82,8 @@ public class LoanValidation {
       final User requestingUser = loan.getLoan().getUser();
       String itemTitle = loan.getLoan().getItem().getTitle();
       String itemBarcode = loan.getLoan().getItem().getBarcode();
-      String username = requestingUser.getUsername();
 
-      if(hasAwaitingPickupRequestForOtherPatron(requestQueue, requestingUser)) {
+        if(hasAwaitingPickupRequestForOtherPatron(requestQueue, requestingUser)) {
         return failure(ValidationErrorFailure.failure(
           String.format("%s (Barcode: %s) cannot be checked out to user %s because it is awaiting pickup by another patron",
           itemTitle, itemBarcode, getPersonalName(requestingUser)),

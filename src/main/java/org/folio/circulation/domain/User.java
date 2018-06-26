@@ -65,9 +65,8 @@ public class User {
       copyStringIfExists("lastName", personalDetails, userSummary);
       copyStringIfExists("firstName", personalDetails, userSummary);
       copyStringIfExists("middleName", personalDetails, userSummary);
-      userSummary.put("personal", personalDetails);
     }
-
+  
     copyStringIfExists("barcode", representation, userSummary);
 
     return userSummary;

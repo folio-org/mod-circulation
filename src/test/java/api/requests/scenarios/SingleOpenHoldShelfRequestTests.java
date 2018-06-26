@@ -11,9 +11,7 @@ import java.net.MalformedURLException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import static api.support.builders.ItemBuilder.AVAILABLE;
-import static api.support.builders.ItemBuilder.AWAITING_PICKUP;
-import static api.support.builders.ItemBuilder.CHECKED_OUT;
+import static api.support.builders.ItemBuilder.*;
 import static api.support.builders.RequestBuilder.CLOSED_FILLED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
@@ -100,7 +98,10 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     Response response = loansFixture.attemptCheckOut(smallAngryPlanet, rebecca);
 
     assertThat(response.getJson(),
-      hasSoleErrorMessageContaining("it is awaiting pickup by another patron"));
+      hasSoleErrorMessageContaining(
+        "Long Way to a Small, Angry Planet (Barcode: 036000291452) " +
+          "cannot be checked out to user Stuart, Rebecca " +
+          "because it is awaiting pickup by another patron"));
 
     Response request = requestsClient.getById(requestByJessica.getId());
 
