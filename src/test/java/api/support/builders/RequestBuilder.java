@@ -15,6 +15,7 @@ public class RequestBuilder implements Builder {
   public static final String OPEN_NOT_YET_FILLED = "Open - Not yet filled";
   public static final String OPEN_AWAITING_PICKUP = "Open - Awaiting pickup";
   public static final String CLOSED_FILLED = "Closed - Filled";
+  public static final String CLOSED_CANCELLED = "Closed - Cancelled";
 
   private final UUID id;
   private final String requestType;
@@ -146,6 +147,22 @@ public class RequestBuilder implements Builder {
 
     if(proxyUserId != null){
       request.put("proxyUserId", proxyUserId.toString());
+    }
+    
+    if(cancellationReasonId != null) {
+      request.put("cancellationReasonId", cancellationReasonId.toString());
+    }
+    
+    if(cancelledByUserId != null) {
+      request.put("cancelledByUserId", cancelledByUserId.toString());
+    }
+    
+    if(cancellationAdditionalInformation != null) {
+      request.put("cancellationAdditionalInformation", cancellationAdditionalInformation);
+    }
+    
+    if(cancelledDate != null) {
+      request.put("cancelledDate", formatDateTime(cancelledDate));
     }
 
     return request;
@@ -426,6 +443,10 @@ public class RequestBuilder implements Builder {
 
   public RequestBuilder fulfilled() {
     return withStatus(CLOSED_FILLED);
+  }
+  
+  public RequestBuilder cancelled() {
+    return withStatus(CLOSED_CANCELLED);
   }
 
   public RequestBuilder withUserProxyId(UUID userProxyId) {
