@@ -3,10 +3,13 @@ package org.folio.circulation.domain;
 import io.vertx.core.json.JsonObject;
 import org.joda.time.DateTime;
 
-import static org.folio.circulation.support.JsonPropertyCopier.copyStringIfExists;
+import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 public class User {
+  private static final String PERSONAL_PROPERTY_NAME = "personal";
+
   private final JsonObject representation;
 
   public User(JsonObject representation) {
@@ -55,19 +58,26 @@ public class User {
     return getProperty(representation, "patronGroup");
   }
 
+  public String getLastName() {
+    return getNestedStringProperty(representation, PERSONAL_PROPERTY_NAME, "lastName");
+  }
+
+  public String getFirstName() {
+    return getNestedStringProperty(representation, PERSONAL_PROPERTY_NAME, "firstName");
+  }
+
+  public String getMiddleName() {
+    return getNestedStringProperty(representation, PERSONAL_PROPERTY_NAME, "middleName");
+  }
+
   public JsonObject createUserSummary() {
     //TODO: Extract to visitor based adapter
     JsonObject userSummary = new JsonObject();
 
-    if(representation.containsKey("personal")) {
-      JsonObject personalDetails = representation.getJsonObject("personal");
-
-      copyStringIfExists("lastName", personalDetails, userSummary);
-      copyStringIfExists("firstName", personalDetails, userSummary);
-      copyStringIfExists("middleName", personalDetails, userSummary);
-    }
-  
-    copyStringIfExists("barcode", representation, userSummary);
+    write(userSummary, "lastName", getLastName());
+    write(userSummary, "firstName", getFirstName());
+    write(userSummary, "middleName", getMiddleName());
+    write(userSummary, "barcode", getBarcode());
 
     return userSummary;
   }
