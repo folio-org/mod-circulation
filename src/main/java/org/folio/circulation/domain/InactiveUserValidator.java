@@ -4,30 +4,46 @@ import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 
+import java.util.function.Function;
+
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
-import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.USER_BARCODE;
 import static org.folio.circulation.support.HttpResult.failure;
 import static org.folio.circulation.support.HttpResult.success;
 
 public class InactiveUserValidator {
-  public HttpResult<LoanAndRelatedRecords> refuseWhenRequestingUserIsInactive(
+  private final Function<String, ValidationErrorFailure> inactiveUserErrorFunction;
+  private final String inactiveUserMessage;
+  private final String cannotDetermineMessage;
+  private final Function<LoanAndRelatedRecords, User> userFunction;
+
+  public InactiveUserValidator(
+    Function<LoanAndRelatedRecords, User> userFunction, String inactiveUserMessage, String cannotDetermineMessage, Function<String, ValidationErrorFailure> inactiveUserErrorFunction) {
+
+    this.inactiveUserErrorFunction = inactiveUserErrorFunction;
+    this.inactiveUserMessage = inactiveUserMessage;
+    this.cannotDetermineMessage = cannotDetermineMessage;
+    this.userFunction = userFunction;
+  }
+
+  public HttpResult<LoanAndRelatedRecords> refuseWhenUserIsInactive(
     HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
-    return loanAndRelatedRecords.next(loan -> {
+    return loanAndRelatedRecords.next(records -> {
       try {
-        final User requestingUser = loan.getLoan().getUser();
+        final User user = userFunction.apply(records);
 
-        if (requestingUser.canDetermineStatus()) {
-          return failure(ValidationErrorFailure.failure(
-            "Cannot determine if user is active or not",
-            USER_BARCODE, requestingUser.getBarcode()));
+        if(user == null) {
+          return loanAndRelatedRecords;
         }
-        if (requestingUser.isInactive()) {
-          return failure(ValidationErrorFailure.failure(
-            "Cannot check out to inactive user",
-            USER_BARCODE, requestingUser.getBarcode()));
+        else if (user.canDetermineStatus()) {
+          return failure(inactiveUserErrorFunction.apply(
+            cannotDetermineMessage));
+        }
+        if (user.isInactive()) {
+          return failure(inactiveUserErrorFunction.apply(
+            inactiveUserMessage));
         } else {
-          return success(loan);
+          return success(records);
         }
       } catch (Exception e) {
         return failure(new ServerErrorFailure(e));

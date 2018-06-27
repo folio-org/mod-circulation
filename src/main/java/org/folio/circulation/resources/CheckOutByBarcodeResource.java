@@ -20,6 +20,9 @@ import java.util.function.Function;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.LoanValidation.*;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.USER_BARCODE;
+import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 public class CheckOutByBarcodeResource extends Resource {
   public CheckOutByBarcodeResource(HttpClient client) {
@@ -56,22 +59,32 @@ public class CheckOutByBarcodeResource extends Resource {
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
-      clients, () -> ValidationErrorFailure.failure(
+      clients, () -> failure(
       "Cannot check out item via proxy when relationship is invalid",
       CheckOutByBarcodeRequest.PROXY_USER_BARCODE,
       proxyUserBarcode));
 
     final AwaitingPickupValidator awaitingPickupValidator = new AwaitingPickupValidator(
-      message -> ValidationErrorFailure.failure(message,
+      message -> failure(message,
         CheckOutByBarcodeRequest.USER_BARCODE, userBarcode));
 
     final AlreadyCheckedOutValidator alreadyCheckedOutValidator = new AlreadyCheckedOutValidator(
-      message -> ValidationErrorFailure.failure(message, ITEM_BARCODE, itemBarcode));
+      message -> failure(message, ITEM_BARCODE, itemBarcode));
 
     final ItemNotFoundValidator itemNotFoundValidator = new ItemNotFoundValidator(
-      message -> ValidationErrorFailure.failure(message, ITEM_BARCODE, itemBarcode));
+      message -> failure(message, ITEM_BARCODE, itemBarcode));
 
-    final InactiveUserValidator inactiveUserValidator = new InactiveUserValidator();
+    final InactiveUserValidator inactiveUserValidator = new InactiveUserValidator(
+      records -> records.getLoan().getUser(),
+      "Cannot check out to inactive user",
+      "Cannot determine if user is active or not",
+      message -> failure(message, USER_BARCODE, userBarcode));
+
+    final InactiveUserValidator inactiveProxyUserValidator = new InactiveUserValidator(
+      LoanAndRelatedRecords::getProxyingUser,
+      "Cannot check out via inactive proxying user",
+      "Cannot determine if proxying user is active or not",
+      message -> failure(message, PROXY_USER_BARCODE, proxyUserBarcode));
 
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
@@ -81,8 +94,8 @@ public class CheckOutByBarcodeResource extends Resource {
     completedFuture(HttpResult.success(new LoanAndRelatedRecords(Loan.from(loan))))
       .thenCombineAsync(userRepository.getUserByBarcode(userBarcode), this::addUser)
       .thenCombineAsync(userRepository.getProxyUserByBarcode(proxyUserBarcode), this::addProxyUser)
-      .thenApply(inactiveUserValidator::refuseWhenRequestingUserIsInactive)
-      .thenApply(inactiveUserValidator::refuseWhenProxyingUserIsInactive)
+      .thenApply(inactiveUserValidator::refuseWhenUserIsInactive)
+      .thenApply(inactiveProxyUserValidator::refuseWhenUserIsInactive)
       .thenCombineAsync(itemRepository.fetchByBarcode(itemBarcode), this::addInventoryRecords)
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
       .thenApply(r -> r.map(mapBarcodes()))
