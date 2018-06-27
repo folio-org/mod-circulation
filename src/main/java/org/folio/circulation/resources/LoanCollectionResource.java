@@ -50,6 +50,8 @@ public class LoanCollectionResource extends CollectionResource {
     final AwaitingPickupValidator awaitingPickupValidator = new AwaitingPickupValidator(
       message -> ValidationErrorFailure.failure(message, "userId", loan.getUserId()));
 
+    final AlreadyCheckedOutValidator alreadyCheckedOutValidator = new AlreadyCheckedOutValidator();
+
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
     completedFuture(HttpResult.success(new LoanAndRelatedRecords(loan)))
@@ -57,7 +59,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenCombineAsync(itemRepository.fetchFor(loan), this::addInventoryRecords)
       .thenApply(LoanValidation::refuseWhenItemDoesNotExist)
       .thenApply(this::refuseWhenHoldingDoesNotExist)
-      .thenApply(LoanValidation::refuseWhenItemIsAlreadyCheckedOut)
+      .thenApply(loanAndRelatedRecords -> alreadyCheckedOutValidator.refuseWhenItemIsAlreadyCheckedOut(loanAndRelatedRecords))
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenCombineAsync(requestQueueFetcher.get(loan.getItemId()), this::addRequestQueue)
       .thenCombineAsync(userRepository.getUser(loan.getUserId()), this::addUser)

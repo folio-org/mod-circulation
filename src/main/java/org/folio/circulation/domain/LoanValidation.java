@@ -2,7 +2,6 @@ package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.Item;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 
@@ -126,36 +125,5 @@ public class LoanValidation {
           return success(loanAndRelatedRecords);
         }
       }));
-  }
-
-  public static HttpResult<LoanAndRelatedRecords> refuseWhenItemIsAlreadyCheckedOut(
-    HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
-
-    return loanAndRelatedRecords.next(loan -> {
-      final Item records = loan.getLoan().getItem();
-
-      if(records.isCheckedOut()) {
-        return failure(ValidationErrorFailure.failure(
-          "Item is already checked out", "itemId", records.getItemId()));
-      }
-      else {
-        return loanAndRelatedRecords;
-      }
-    });
-  }
-
-  public static HttpResult<LoanAndRelatedRecords> refuseWhenItemIsAlreadyCheckedOut(
-    HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords, String barcode) {
-
-    //TODO: Extract duplication with above
-    return loanAndRelatedRecords.next(loan -> {
-      if(loan.getLoan().getItem().isCheckedOut()) {
-        return failure(ValidationErrorFailure.failure(
-          "Item is already checked out", ITEM_BARCODE_PROPERTY_NAME, barcode));
-      }
-      else {
-        return loanAndRelatedRecords;
-      }
-    });
   }
 }

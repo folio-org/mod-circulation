@@ -54,6 +54,7 @@ public class CheckOutByBarcodeResource extends Resource {
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
+
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> ValidationErrorFailure.failure(
       "Cannot check out item via proxy when relationship is invalid",
@@ -63,6 +64,8 @@ public class CheckOutByBarcodeResource extends Resource {
     final AwaitingPickupValidator awaitingPickupValidator = new AwaitingPickupValidator(
       message -> ValidationErrorFailure.failure(message,
         CheckOutByBarcodeRequest.USER_BARCODE_PROPERTY_NAME, userBarcode));
+
+    final AlreadyCheckedOutValidator alreadyCheckedOutValidator = new AlreadyCheckedOutValidator();
 
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
@@ -77,7 +80,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenCombineAsync(itemRepository.fetchByBarcode(itemBarcode), this::addInventoryRecords)
       .thenApply(r -> r.next(v -> refuseWhenItemBarcodeDoesNotExist(r, itemBarcode)))
       .thenApply(r -> r.map(mapBarcodes()))
-      .thenApply(r -> refuseWhenItemIsAlreadyCheckedOut(r, itemBarcode))
+      .thenApply(r -> alreadyCheckedOutValidator.refuseWhenItemIsAlreadyCheckedOut(r, itemBarcode))
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenComposeAsync(r -> r.after(records ->
         refuseWhenHasOpenLoan(records, loanRepository, itemBarcode)))
