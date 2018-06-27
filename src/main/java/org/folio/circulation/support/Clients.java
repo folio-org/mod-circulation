@@ -19,6 +19,7 @@ public class Clients {
   private final CollectionResourceClient loanPoliciesStorageClient;
   private final CollectionResourceClient fixedDueDateSchedulesStorageClient;
   private final LoanRulesClient loanRulesClient;
+  private final CollectionResourceClient loanRulesStorageClient;
 
   public static Clients create(WebContext context, HttpClient httpClient) {
     return new Clients(context.createHttpClient(httpClient), context);
@@ -40,6 +41,7 @@ public class Clients {
       materialTypesStorageClient = createMaterialTypesStorageClient(client, context);
       proxiesForClient = createProxyUsersStorageClient(client, context);
       loanRulesClient = new LoanRulesClient(client, context);
+      loanRulesStorageClient = createLoanRulesStorageClient(client, context);
       loanPoliciesStorageClient = createLoanPoliciesStorageClient(client, context);
       fixedDueDateSchedulesStorageClient = createFixedDueDateSchedulesStorageClient(client, context);
     }
@@ -56,11 +58,11 @@ public class Clients {
     return itemsStorageClient;
   }
 
-  public CollectionResourceClient holdingsStorage() {
+  CollectionResourceClient holdingsStorage() {
     return holdingsStorageClient;
   }
 
-  public CollectionResourceClient instancesStorage() {
+  CollectionResourceClient instancesStorage() {
     return instancesStorageClient;
   }
 
@@ -94,6 +96,10 @@ public class Clients {
 
   public LoanRulesClient loanRules() {
     return loanRulesClient;
+  }
+
+  public CollectionResourceClient loanRulesStorage() {
+    return loanRulesStorageClient;
   }
 
   private static CollectionResourceClient getCollectionResourceClient(
@@ -195,5 +201,14 @@ public class Clients {
 
     return getCollectionResourceClient(client, context,
       "/fixed-due-date-schedule-storage/fixed-due-date-schedules");
+  }
+
+  private CollectionResourceClient createLoanRulesStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context,
+      "/loan-rules-storage");
   }
 }

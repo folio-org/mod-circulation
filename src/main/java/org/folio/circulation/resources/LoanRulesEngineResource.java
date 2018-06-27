@@ -7,16 +7,12 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.folio.circulation.loanrules.Drools;
 import org.folio.circulation.loanrules.Text2Drools;
-import org.folio.circulation.support.ClientUtil;
+import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.http.server.ClientErrorResponse;
-import org.folio.circulation.support.http.server.ForwardResponse;
-import org.folio.circulation.support.http.server.JsonResponse;
-import org.folio.circulation.support.http.server.ServerErrorResponse;
+import org.folio.circulation.support.http.server.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,7 +87,7 @@ public class LoanRulesEngineResource extends Resource {
    * This doesn't rebuild the drools rules if the loan rules haven't changed.
    * @param tenantId  id of the tenant
    */
-  public static void clearCache(String tenantId) {
+  static void clearCache(String tenantId) {
     Rules rules = rulesMap.get(tenantId);
     if (rules == null) {
       return;
@@ -154,8 +150,10 @@ public class LoanRulesEngineResource extends Resource {
    * @param routingContext - where to report any error
    * @param done - invoked after success
    */
-  public void reloadRules(Rules rules, RoutingContext routingContext, Handler<Void> done) {
-    CollectionResourceClient loansRulesClient = ClientUtil.getLoanRulesClient(routingContext);
+  private void reloadRules(Rules rules, RoutingContext routingContext, Handler<Void> done) {
+    final Clients clients = Clients.create(new WebContext(routingContext), client);
+    CollectionResourceClient loansRulesClient = clients.loanRulesStorage();
+
     if (loansRulesClient == null) {
       return;
     }

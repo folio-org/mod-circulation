@@ -6,17 +6,12 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
-
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.folio.circulation.loanrules.LoanRulesException;
 import org.folio.circulation.loanrules.Text2Drools;
-import org.folio.circulation.support.ClientUtil;
+import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.http.server.ForwardResponse;
-import org.folio.circulation.support.http.server.JsonResponse;
-import org.folio.circulation.support.http.server.ServerErrorResponse;
-import org.folio.circulation.support.http.server.SuccessResponse;
-import org.folio.circulation.support.http.server.WebContext;
+import org.folio.circulation.support.http.server.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +47,9 @@ public class LoanRulesResource extends Resource {
   }
 
   private void get(RoutingContext routingContext) {
-    CollectionResourceClient loansRulesClient = ClientUtil.getLoanRulesClient(routingContext);
+    final Clients clients = Clients.create(new WebContext(routingContext), client);
+    CollectionResourceClient loansRulesClient = clients.loanRulesStorage();
+
     log.debug("get(RoutingContext) client={}", loansRulesClient);
 
     if (loansRulesClient == null) {
@@ -80,7 +77,8 @@ public class LoanRulesResource extends Resource {
   //Cannot combine exception catching as cannot resolve overloaded method for error
   @SuppressWarnings("squid:S2147")
   private void put(RoutingContext routingContext) {
-    CollectionResourceClient loansRulesClient = ClientUtil.getLoanRulesClient(routingContext);
+    final Clients clients = Clients.create(new WebContext(routingContext), client);
+    CollectionResourceClient loansRulesClient = clients.loanRulesStorage();
 
     if (loansRulesClient == null) {
       ServerErrorResponse.internalError(routingContext.response(),
