@@ -25,7 +25,6 @@ public class ValidationErrorFailure implements HttpFailure {
   }
 
   public static <T> HttpResult<T> failedResult(ValidationError error) {
-
     return HttpResult.failed(failure(error));
   }
 
@@ -39,6 +38,10 @@ public class ValidationErrorFailure implements HttpFailure {
 
   public static ValidationErrorFailure failure(ValidationError error) {
     return new ValidationErrorFailure(error);
+  }
+
+  public static ValidationErrorFailure failure(Collection<ValidationError> errors) {
+    return new ValidationErrorFailure(errors);
   }
 
   public ValidationErrorFailure(ValidationError error) {
