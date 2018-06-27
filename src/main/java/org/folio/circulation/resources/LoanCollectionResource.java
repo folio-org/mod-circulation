@@ -44,8 +44,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> ValidationErrorFailure.failure(
-        "proxyUserId is not valid", "proxyUserId",
-        loan.getProxyUserId()));
+        "proxyUserId is not valid", "proxyUserId", loan.getProxyUserId()));
 
     final AwaitingPickupValidator awaitingPickupValidator = new AwaitingPickupValidator(
       message -> ValidationErrorFailure.failure(message, "userId", loan.getUserId()));
@@ -53,12 +52,14 @@ public class LoanCollectionResource extends CollectionResource {
     final AlreadyCheckedOutValidator alreadyCheckedOutValidator = new AlreadyCheckedOutValidator(
       message -> ValidationErrorFailure.failure(message, "itemId", loan.getItemId()));
 
+    final ItemNotFoundValidator itemNotFoundValidator = new ItemNotFoundValidator();
+
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
     completedFuture(HttpResult.success(new LoanAndRelatedRecords(loan)))
       .thenApply(this::refuseWhenNotOpenOrClosed)
       .thenCombineAsync(itemRepository.fetchFor(loan), this::addInventoryRecords)
-      .thenApply(LoanValidation::refuseWhenItemDoesNotExist)
+      .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
       .thenApply(this::refuseWhenHoldingDoesNotExist)
       .thenApply(alreadyCheckedOutValidator::refuseWhenItemIsAlreadyCheckedOut)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
@@ -98,10 +99,12 @@ public class LoanCollectionResource extends CollectionResource {
         "proxyUserId is not valid", "proxyUserId",
         loan.getProxyUserId()));
 
+    final ItemNotFoundValidator itemNotFoundValidator = new ItemNotFoundValidator();
+
     completedFuture(HttpResult.success(new LoanAndRelatedRecords(loan)))
       .thenApply(this::refuseWhenNotOpenOrClosed)
       .thenCombineAsync(itemRepository.fetchFor(loan), this::addInventoryRecords)
-      .thenApply(LoanValidation::refuseWhenItemDoesNotExist)
+      .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenCombineAsync(requestQueueFetcher.get(loan.getItemId()), this::addRequestQueue)
       .thenComposeAsync(result -> result.after(requestQueueUpdate::onCheckIn))

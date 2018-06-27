@@ -15,37 +15,6 @@ import static org.folio.circulation.support.HttpResult.success;
 public class LoanValidation {
   private LoanValidation() { }
 
-  public static HttpResult<LoanAndRelatedRecords> refuseWhenItemDoesNotExist(
-    HttpResult<LoanAndRelatedRecords> result) {
-
-    return result.next(loan -> {
-      if(loan.getLoan().getItem().isNotFound()) {
-        final String itemId = loan.getLoan().getItemId();
-
-        return failure(ValidationErrorFailure.failure(
-          "Item does not exist", ITEM_ID, itemId));
-      }
-      else {
-        return result;
-      }
-    });
-  }
-
-  public static HttpResult<LoanAndRelatedRecords> refuseWhenItemBarcodeDoesNotExist(
-    HttpResult<LoanAndRelatedRecords> result, String barcode) {
-
-    return result.next(loanAndRelatedRecords -> {
-      if(loanAndRelatedRecords.getLoan().getItem().isNotFound()) {
-        return failure(ValidationErrorFailure.failure(
-          String.format("No item with barcode %s exists", barcode),
-          ITEM_BARCODE_PROPERTY_NAME, barcode));
-      }
-      else {
-        return result;
-      }
-    });
-  }
-
   public static void defaultStatusAndAction(JsonObject loan) {
     if(!loan.containsKey("status")) {
       loan.put("status", new JsonObject().put("name", "Open"));
