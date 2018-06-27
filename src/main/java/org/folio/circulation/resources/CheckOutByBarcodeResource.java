@@ -58,6 +58,8 @@ public class CheckOutByBarcodeResource extends Resource {
       "Cannot check out item via proxy when relationship is invalid", "proxyUserBarcode",
       proxyUserBarcode));
 
+    final AwaitingPickupValidator awaitingPickupValidator = new AwaitingPickupValidator();
+
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
 
@@ -76,7 +78,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(records ->
         refuseWhenHasOpenLoan(records, loanRepository, itemBarcode)))
       .thenComposeAsync(r -> r.after(requestQueueFetcher::get))
-      .thenApply(r -> refuseWhenUserIsNotAwaitingPickup(r, userBarcode))
+      .thenApply(r -> awaitingPickupValidator.refuseWhenUserIsNotAwaitingPickup(r, userBarcode))
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenApply(r -> r.next(this::calculateDueDate))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))

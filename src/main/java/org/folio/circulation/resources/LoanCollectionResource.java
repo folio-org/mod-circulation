@@ -47,6 +47,8 @@ public class LoanCollectionResource extends CollectionResource {
         "proxyUserId is not valid", "proxyUserId",
         loan.getProxyUserId()));
 
+    final AwaitingPickupValidator awaitingPickupValidator = new AwaitingPickupValidator();
+
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
     completedFuture(HttpResult.success(new LoanAndRelatedRecords(loan)))
@@ -58,7 +60,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenCombineAsync(requestQueueFetcher.get(loan.getItemId()), this::addRequestQueue)
       .thenCombineAsync(userRepository.getUser(loan.getUserId()), this::addUser)
-      .thenApply(LoanValidation::refuseWhenUserIsNotAwaitingPickup)
+      .thenApply(loanAndRelatedRecords -> awaitingPickupValidator.refuseWhenUserIsNotAwaitingPickup(loanAndRelatedRecords))
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
