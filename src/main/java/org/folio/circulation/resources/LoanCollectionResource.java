@@ -47,7 +47,8 @@ public class LoanCollectionResource extends CollectionResource {
         "proxyUserId is not valid", "proxyUserId",
         loan.getProxyUserId()));
 
-    final AwaitingPickupValidator awaitingPickupValidator = new AwaitingPickupValidator();
+    final AwaitingPickupValidator awaitingPickupValidator = new AwaitingPickupValidator(
+      message -> ValidationErrorFailure.failure(message, "userId", loan.getUserId()));
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 

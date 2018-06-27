@@ -60,7 +60,9 @@ public class CheckOutByBarcodeResource extends Resource {
       CheckOutByBarcodeRequest.PROXY_USER_BARCODE_PROPERTY_NAME,
       proxyUserBarcode));
 
-    final AwaitingPickupValidator awaitingPickupValidator = new AwaitingPickupValidator();
+    final AwaitingPickupValidator awaitingPickupValidator = new AwaitingPickupValidator(
+      message -> ValidationErrorFailure.failure(message,
+        CheckOutByBarcodeRequest.USER_BARCODE_PROPERTY_NAME, userBarcode));
 
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
@@ -80,7 +82,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(records ->
         refuseWhenHasOpenLoan(records, loanRepository, itemBarcode)))
       .thenComposeAsync(r -> r.after(requestQueueFetcher::get))
-      .thenApply(r -> awaitingPickupValidator.refuseWhenUserIsNotAwaitingPickup(r, userBarcode))
+      .thenApply(awaitingPickupValidator::refuseWhenUserIsNotAwaitingPickup)
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenApply(r -> r.next(this::calculateDueDate))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
