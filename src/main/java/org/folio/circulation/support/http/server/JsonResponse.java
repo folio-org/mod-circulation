@@ -14,13 +14,6 @@ import java.util.List;
 public class JsonResponse {
   private JsonResponse() { }
 
-  public static void created(
-    HttpServerResponse response,
-    JsonObject body) {
-
-    response(response, body, 201);
-  }
-
   public static void success(
     HttpServerResponse response,
     JsonObject body) {

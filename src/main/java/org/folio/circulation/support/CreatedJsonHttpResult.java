@@ -4,6 +4,7 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
+import org.apache.commons.lang3.StringUtils;
 
 public class CreatedJsonHttpResult extends JsonHttpResult {
   private final String location;
@@ -15,7 +16,6 @@ public class CreatedJsonHttpResult extends JsonHttpResult {
 
   @Override
   public void writeTo(HttpServerResponse response) {
-    //TODO: Consolidate JsonHttpResult classes and JSONResponse class
     String json = Json.encodePrettily(body);
     Buffer buffer = Buffer.buffer(json, "UTF-8");
 
@@ -23,8 +23,7 @@ public class CreatedJsonHttpResult extends JsonHttpResult {
     response.putHeader("content-type", "application/json; charset=utf-8");
     response.putHeader("content-length", Integer.toString(buffer.length()));
 
-
-    if(location != null) {
+    if(StringUtils.isNotBlank(location)) {
       response.putHeader("location", location);
     }
 
