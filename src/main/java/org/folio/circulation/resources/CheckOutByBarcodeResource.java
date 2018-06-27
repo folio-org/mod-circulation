@@ -19,7 +19,7 @@ import java.util.function.Function;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.LoanValidation.*;
-import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE_PROPERTY_NAME;
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 
 public class CheckOutByBarcodeResource extends Resource {
   public CheckOutByBarcodeResource(HttpClient client) {
@@ -58,18 +58,18 @@ public class CheckOutByBarcodeResource extends Resource {
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> ValidationErrorFailure.failure(
       "Cannot check out item via proxy when relationship is invalid",
-      CheckOutByBarcodeRequest.PROXY_USER_BARCODE_PROPERTY_NAME,
+      CheckOutByBarcodeRequest.PROXY_USER_BARCODE,
       proxyUserBarcode));
 
     final AwaitingPickupValidator awaitingPickupValidator = new AwaitingPickupValidator(
       message -> ValidationErrorFailure.failure(message,
-        CheckOutByBarcodeRequest.USER_BARCODE_PROPERTY_NAME, userBarcode));
+        CheckOutByBarcodeRequest.USER_BARCODE, userBarcode));
 
     final AlreadyCheckedOutValidator alreadyCheckedOutValidator = new AlreadyCheckedOutValidator(
-      message -> ValidationErrorFailure.failure(message, ITEM_BARCODE_PROPERTY_NAME, itemBarcode));
+      message -> ValidationErrorFailure.failure(message, ITEM_BARCODE, itemBarcode));
 
     final ItemNotFoundValidator itemNotFoundValidator = new ItemNotFoundValidator(
-      message -> ValidationErrorFailure.failure(message, ITEM_BARCODE_PROPERTY_NAME, itemBarcode));
+      message -> ValidationErrorFailure.failure(message, ITEM_BARCODE, itemBarcode));
 
     final InactiveUserValidator inactiveUserValidator = new InactiveUserValidator();
 

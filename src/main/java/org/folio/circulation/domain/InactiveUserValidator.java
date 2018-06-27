@@ -4,8 +4,8 @@ import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 
-import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE_PROPERTY_NAME;
-import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.USER_BARCODE_PROPERTY_NAME;
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.USER_BARCODE;
 import static org.folio.circulation.support.HttpResult.failure;
 import static org.folio.circulation.support.HttpResult.success;
 
@@ -20,12 +20,12 @@ public class InactiveUserValidator {
         if (requestingUser.canDetermineStatus()) {
           return failure(ValidationErrorFailure.failure(
             "Cannot determine if user is active or not",
-            USER_BARCODE_PROPERTY_NAME, requestingUser.getBarcode()));
+            USER_BARCODE, requestingUser.getBarcode()));
         }
         if (requestingUser.isInactive()) {
           return failure(ValidationErrorFailure.failure(
             "Cannot check out to inactive user",
-            USER_BARCODE_PROPERTY_NAME, requestingUser.getBarcode()));
+            USER_BARCODE, requestingUser.getBarcode()));
         } else {
           return success(loan);
         }
@@ -47,12 +47,12 @@ public class InactiveUserValidator {
       else if (proxyingUser.canDetermineStatus()) {
         return failure(ValidationErrorFailure.failure(
           "Cannot determine if proxying user is active or not",
-          PROXY_USER_BARCODE_PROPERTY_NAME, proxyingUser.getBarcode()));
+          PROXY_USER_BARCODE, proxyingUser.getBarcode()));
       }
       else if(proxyingUser.isInactive()) {
         return failure(ValidationErrorFailure.failure(
           "Cannot check out via inactive proxying user",
-          PROXY_USER_BARCODE_PROPERTY_NAME, proxyingUser.getBarcode()));
+          PROXY_USER_BARCODE, proxyingUser.getBarcode()));
       }
       else {
         return loanAndRelatedRecords;

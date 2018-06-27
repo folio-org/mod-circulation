@@ -5,8 +5,7 @@ import org.folio.circulation.support.ValidationErrorFailure;
 
 import java.util.concurrent.CompletableFuture;
 
-import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE_PROPERTY_NAME;
-import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE_PROPERTY_NAME;
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.support.HttpResult.failure;
 import static org.folio.circulation.support.HttpResult.success;
 
@@ -25,7 +24,7 @@ public class LoanValidation {
         if(openLoan) {
           return failure(ValidationErrorFailure.failure(
             "Cannot check out item that already has an open loan",
-            ITEM_BARCODE_PROPERTY_NAME, barcode));
+            ITEM_BARCODE, barcode));
         }
         else {
           return success(loanAndRelatedRecords);
