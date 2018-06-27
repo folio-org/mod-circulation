@@ -54,7 +54,7 @@ public class ValidationErrorFailure implements HttpFailure {
 
   @Override
   public void writeTo(HttpServerResponse response) {
-    response(response, asJson(), 422);
+    response(response, asJson());
   }
 
   private JsonObject asJson() {

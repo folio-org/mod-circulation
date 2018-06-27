@@ -12,6 +12,7 @@ import org.folio.circulation.loanrules.Drools;
 import org.folio.circulation.loanrules.Text2Drools;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.OkJsonHttpResult;
 import org.folio.circulation.support.http.server.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -271,7 +272,9 @@ public class LoanRulesEngineResource extends Resource {
         String shelvingLocationId = request.getParam(SHELVING_LOCATION_ID_NAME);
         String loanPolicyId = drools.loanPolicy(itemTypeId, loanTypeId, patronGroupId, shelvingLocationId);
         JsonObject json = new JsonObject().put("loanPolicyId", loanPolicyId);
-        JsonResponse.success(routingContext.response(), json);
+
+        new OkJsonHttpResult(json)
+          .writeTo(routingContext.response());
       }
       catch (Exception e) {
         log.error("apply", e);
@@ -310,7 +313,9 @@ public class LoanRulesEngineResource extends Resource {
       String shelvingLocationId = request.getParam(SHELVING_LOCATION_ID_NAME);
       JsonArray matches = drools.loanPolicies(itemTypeId, loanTypeId, patronGroupId, shelvingLocationId);
       JsonObject json = new JsonObject().put("loanRuleMatches", matches);
-      JsonResponse.success(routingContext.response(), json);
+
+      new OkJsonHttpResult(json)
+        .writeTo(routingContext.response());
     }
     catch (Exception e) {
       log.error("applyAll", e);

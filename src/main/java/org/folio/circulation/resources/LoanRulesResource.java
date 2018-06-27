@@ -11,6 +11,7 @@ import org.folio.circulation.loanrules.LoanRulesException;
 import org.folio.circulation.loanrules.Text2Drools;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.OkJsonHttpResult;
 import org.folio.circulation.support.http.server.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,7 +67,9 @@ public class LoanRulesResource extends Resource {
         }
         JsonObject loanRules = new JsonObject(response.getBody());
         loanRules.put("loanRulesAsDrools", Text2Drools.convert(loanRules.getString("loanRulesAsTextFile")));
-        JsonResponse.success(routingContext.response(), loanRules);
+
+        new OkJsonHttpResult(loanRules)
+          .writeTo(routingContext.response());
       }
       catch (Exception e) {
         ServerErrorResponse.internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));

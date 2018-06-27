@@ -151,7 +151,8 @@ public class RequestCollectionResource extends CollectionResource {
 
             addAdditionalItemProperties(representation, r.value());
 
-            JsonResponse.success(routingContext.response(), representation);
+            new OkJsonHttpResult(representation)
+              .writeTo(routingContext.response());
           });
         }
         else {
@@ -189,8 +190,9 @@ public class RequestCollectionResource extends CollectionResource {
           requestsResponse.getBody(), "requests");
 
         if(wrappedRequests.isEmpty()) {
-          JsonResponse.success(routingContext.response(),
-            wrappedRequests.toJson());
+
+          new OkJsonHttpResult(wrappedRequests.toJson())
+            .writeTo(routingContext.response());
 
           return;
         }
@@ -227,8 +229,8 @@ public class RequestCollectionResource extends CollectionResource {
               }
             });
 
-            JsonResponse.success(routingContext.response(),
-              wrappedRequests.toJson());
+          new OkJsonHttpResult(wrappedRequests.toJson())
+            .writeTo(routingContext.response());
         });
       }
     });
