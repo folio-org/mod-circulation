@@ -9,6 +9,8 @@ import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
+import org.folio.circulation.support.http.server.ValidationError;
+import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Seconds;
@@ -26,13 +28,11 @@ import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.builders.RequestBuilder.CLOSED_FILLED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
-import static api.support.matchers.JsonObjectMatchers.hasSoleErrorFor;
-import static api.support.matchers.JsonObjectMatchers.hasSoleErrorMessageContaining;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
+import static api.support.matchers.ValidationErrorMatchers.*;
 import static java.net.HttpURLConnection.HTTP_OK;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class CheckOutByBarcodeTests extends APITests {
@@ -280,11 +280,9 @@ public class CheckOutByBarcodeTests extends APITests {
 
     final Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, steve);
 
-    assertThat(response.getJson(), hasSoleErrorMessageContaining(
-      "Could not find user with matching barcode"));
-
-    assertThat(response.getJson(), hasSoleErrorFor(
-      "userBarcode", steve.getJson().getString("barcode")));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Could not find user with matching barcode"),
+      hasUserBarcodeParameter(steve))));
   }
 
   @Test
@@ -299,11 +297,9 @@ public class CheckOutByBarcodeTests extends APITests {
 
     final Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, steve);
 
-    assertThat(response.getJson(), hasSoleErrorMessageContaining(
-      "Cannot check out to inactive user"));
-
-    assertThat(response.getJson(), hasSoleErrorFor(
-      "userBarcode", steve.getJson().getString("barcode")));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Cannot check out to inactive user"),
+      hasUserBarcodeParameter(steve))));
   }
 
   @Test
@@ -326,11 +322,31 @@ public class CheckOutByBarcodeTests extends APITests {
         .to(james)
         .proxiedBy(steve));
 
-    assertThat(response.getJson(), hasSoleErrorMessageContaining(
-      "Cannot check out via inactive proxying user"));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Cannot check out via inactive proxying user"),
+      hasProxyUserBarcodeParameter(steve))));
+  }
 
-    assertThat(response.getJson(), hasSoleErrorFor(
-      "proxyUserBarcode", steve.getJson().getString("barcode")));
+  @Test
+  public void cannotCheckOutByProxyWhenNoRelationship()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource james = usersFixture.james();
+    IndividualResource jessica = usersFixture.jessica();
+
+    final Response response = loansFixture.attemptCheckOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(jessica)
+        .proxiedBy(james));
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Cannot check out item via proxy when relationship is invalid"),
+      hasProxyUserBarcodeParameter(james))));
   }
 
   @Test
@@ -347,11 +363,9 @@ public class CheckOutByBarcodeTests extends APITests {
 
     final Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, steve);
 
-    assertThat(response.getJson(),
-      hasSoleErrorMessageContaining("No item with barcode 036000291452 exists"));
-
-    assertThat(response.getJson(), hasSoleErrorFor(
-      "itemBarcode", smallAngryPlanet.getJson().getString("barcode")));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("No item with barcode 036000291452 exists"),
+      hasItemBarcodeParameter(smallAngryPlanet))));
   }
 
   @Test
@@ -369,11 +383,9 @@ public class CheckOutByBarcodeTests extends APITests {
 
     final Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, steve);
 
-    assertThat(response.getJson(),
-      hasSoleErrorMessageContaining("Item is already checked out"));
-
-    assertThat(response.getJson(), hasSoleErrorFor(
-      "itemBarcode", smallAngryPlanet.getJson().getString("barcode")));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Item is already checked out"),
+      hasItemBarcodeParameter(smallAngryPlanet))));
   }
 
   @Test
@@ -394,11 +406,9 @@ public class CheckOutByBarcodeTests extends APITests {
 
     final Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, steve);
 
-    assertThat(response.getJson(),
-      hasSoleErrorMessageContaining("Cannot check out item that already has an open loan"));
-
-    assertThat(response.getJson(), hasSoleErrorFor(
-      "itemBarcode", smallAngryPlanet.getJson().getString("barcode")));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Cannot check out item that already has an open loan"),
+      hasItemBarcodeParameter(smallAngryPlanet))));
   }
 
   @Test
@@ -422,14 +432,11 @@ public class CheckOutByBarcodeTests extends APITests {
 
     Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, rebecca);
 
-    assertThat(response.getJson(),
-      hasSoleErrorMessageContaining(
-        "Long Way to a Small, Angry Planet (Barcode: 036000291452) " +
-          "cannot be checked out to user Stuart, Rebecca " +
-          "because it is awaiting pickup by another patron"));
-
-    assertThat(response.getJson(), hasSoleErrorFor(
-      "userBarcode", rebecca.getJson().getString("barcode")));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("The Long Way to a Small, Angry Planet (Barcode: 036000291452) " +
+        "cannot be checked out to user Stuart, Rebecca " +
+        "because it is awaiting pickup by another patron"),
+      hasUserBarcodeParameter(rebecca))));
 
     Response request = requestsClient.getById(requestByJessica.getId());
 
@@ -498,30 +505,6 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutByProxyWhenNoRelationship()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
-
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource james = usersFixture.james();
-    IndividualResource jessica = usersFixture.jessica();
-
-    final Response response = loansFixture.attemptCheckOutByBarcode(
-      new CheckOutByBarcodeRequestBuilder()
-        .forItem(smallAngryPlanet)
-        .to(jessica)
-        .proxiedBy(james));
-
-    assertThat(response.getJson(),
-      hasSoleErrorMessageContaining("Cannot check out item via proxy when relationship is invalid"));
-
-    assertThat(response.getJson(), hasSoleErrorFor(
-      "proxyUserBarcode", james.getJson().getString("barcode")));
-  }
-
-  @Test
   public void cannotCheckOutWhenLoanPolicyDoesNotExist()
     throws InterruptedException,
     MalformedURLException,
@@ -545,5 +528,17 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat(response.getBody(), is(String.format(
       "Loan policy %s could not be found, please check loan rules", nonExistentloanPolicyId)));
+  }
+
+  private Matcher<ValidationError> hasUserBarcodeParameter(IndividualResource user) {
+    return hasParameter("userBarcode", user.getJson().getString("barcode"));
+  }
+
+  private Matcher<ValidationError> hasItemBarcodeParameter(IndividualResource item) {
+    return hasParameter("itemBarcode", item.getJson().getString("barcode"));
+  }
+
+  private Matcher<ValidationError> hasProxyUserBarcodeParameter(IndividualResource proxyUser) {
+    return hasParameter("proxyUserBarcode", proxyUser.getJson().getString("barcode"));
   }
 }

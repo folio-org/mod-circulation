@@ -1,8 +1,8 @@
 package api.requests.scenarios;
 
+import api.support.APITests;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
-import api.support.APITests;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
@@ -17,13 +17,15 @@ import java.util.concurrent.TimeoutException;
 import static api.support.builders.ItemBuilder.AWAITING_PICKUP;
 import static api.support.builders.RequestBuilder.*;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
-import static api.support.matchers.JsonObjectMatchers.hasSoleErrorMessageContaining;
+import static api.support.matchers.ValidationErrorMatchers.*;
+import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 @RunWith(JUnitParamsRunner.class)
 public class MultipleHoldShelfRequestsTests extends APITests {
 
+  @Test
   public void statusOfOldestRequestChangesToAwaitingPickupWhenItemCheckedIn()
     throws InterruptedException,
     MalformedURLException,
@@ -164,11 +166,11 @@ public class MultipleHoldShelfRequestsTests extends APITests {
 
     Response response = loansFixture.attemptCheckOut(smallAngryPlanet, rebecca);
 
-    assertThat(response.getJson(),
-      hasSoleErrorMessageContaining(
-        "Long Way to a Small, Angry Planet (Barcode: 036000291452) " +
-          "cannot be checked out to user Stuart, Rebecca " +
-          "because it is awaiting pickup by another patron"));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("The Long Way to a Small, Angry Planet (Barcode: 036000291452) " +
+        "cannot be checked out to user Stuart, Rebecca " +
+        "because it is awaiting pickup by another patron"),
+      hasParameter("userId", rebecca.getId().toString()))));
 
     requestByJessica = requestsClient.get(requestByJessica);
 
@@ -207,11 +209,11 @@ public class MultipleHoldShelfRequestsTests extends APITests {
 
     Response response = loansFixture.attemptCheckOut(smallAngryPlanet, steve);
 
-    assertThat(response.getJson(),
-      hasSoleErrorMessageContaining(
-        "Long Way to a Small, Angry Planet (Barcode: 036000291452) " +
-          "cannot be checked out to user Jones, Steven " +
-          "because it is awaiting pickup by another patron"));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("The Long Way to a Small, Angry Planet (Barcode: 036000291452) " +
+        "cannot be checked out to user Jones, Steven " +
+        "because it is awaiting pickup by another patron"),
+      hasParameter("userId", steve.getId().toString()))));
 
     requestByJessica = requestsClient.get(requestByJessica);
 

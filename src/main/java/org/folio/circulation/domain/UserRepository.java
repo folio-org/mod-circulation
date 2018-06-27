@@ -35,9 +35,7 @@ public class UserRepository {
     }
   }
 
-  public CompletableFuture<HttpResult<User>> getUserByBarcode(
-    String barcode) {
-
+  public CompletableFuture<HttpResult<User>> getUserByBarcode(String barcode) {
     return getUserByBarcode(barcode, "userBarcode");
   }
 

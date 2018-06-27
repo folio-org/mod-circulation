@@ -79,6 +79,30 @@ resourceTypes:
           body:
             text/plain:
               example: "Internal server error"
+  /renew-by-id:
+    displayName: Renew an existing loan using IDs of the item and loanee
+    post:
+      description: Updates the due date of an existing loan
+      is: [
+        secured,
+        language,
+        validate
+      ]
+      body:
+        application/json:
+          schema: !include renew-by-id-request.json
+          example: !include examples/renew-by-id-request.json
+      responses:
+        201:
+          body:
+            application/json:
+              schema: loan.json
+              example: !include examples/loan.json
+        500:
+          description: "Internal server error"
+          body:
+            text/plain:
+              example: "Internal server error"
   /loans:
     displayName: Loans
     type:

@@ -8,30 +8,29 @@ import org.hamcrest.Matcher;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 
-public class RenewByBarcodeTests extends RenewalAPITests {
+public class RenewByIdTests extends RenewalAPITests {
   @Override
   Response attemptRenewal(IndividualResource user, IndividualResource item) {
-    return loansFixture.attemptRenewal(user, item);
+    return loansFixture.attemptRenewalById(user, item);
   }
 
   @Override
   IndividualResource renew(IndividualResource user, IndividualResource item) {
-    return loansFixture.renewLoan(user, item);
+    return loansFixture.renewLoanById(user, item);
   }
 
   @Override
   Matcher<ValidationError> hasUserRelatedParameter(IndividualResource user) {
-    return hasParameter("userBarcode", user.getJson().getString("barcode"));
+    return hasParameter("userId", user.getId().toString());
   }
 
   @Override
   Matcher<ValidationError> hasItemRelatedParameter(IndividualResource item) {
-    return hasParameter("itemBarcode", item.getJson().getString("barcode"));
+    return hasParameter("itemId", item.getId().toString());
   }
 
   @Override
   Matcher<ValidationError> hasItemNotFoundMessage(IndividualResource item) {
-    return hasMessage(String.format("No item with barcode %s exists",
-      item.getJson().getString("barcode")));
+    return hasMessage(String.format("No item with ID %s exists", item.getId()));
   }
 }

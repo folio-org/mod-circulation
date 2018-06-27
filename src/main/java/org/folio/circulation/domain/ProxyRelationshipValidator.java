@@ -88,7 +88,7 @@ public class ProxyRelationshipValidator {
     //having to look in two different parts of the representation for the properties
     //and CQL implementation does not currently support > comparison on optional properties
 
-    String validateProxyQuery = String.format("proxyUserId=%s and userId=%s",
+    String validateProxyQuery = String.format("proxyUserId==%s and userId==%s",
       proxyUserId, sponsorUserId);
 
     try {

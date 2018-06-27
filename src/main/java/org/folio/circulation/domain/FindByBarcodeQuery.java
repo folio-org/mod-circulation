@@ -1,10 +1,6 @@
 package org.folio.circulation.domain;
 
-import org.folio.circulation.support.ValidationErrorFailure;
-
-public interface FindByBarcodeQuery {
+public interface FindByBarcodeQuery extends UserRelatedQuery {
   String getItemBarcode();
   String getUserBarcode();
-  boolean userMatches(User user);
-  ValidationErrorFailure userDoesNotMatchError();
 }

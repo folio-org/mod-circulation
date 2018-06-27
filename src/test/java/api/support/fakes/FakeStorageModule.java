@@ -18,8 +18,11 @@ import org.joda.time.format.ISODateTimeFormat;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-class FakeStorageModule extends AbstractVerticle {
+public class FakeStorageModule extends AbstractVerticle {
+  private static final Set<String> queries = Collections.synchronizedSet(new HashSet<>());
+
   private final String rootPath;
   private final String collectionPropertyName;
   private final boolean hasCollectionDelete;
@@ -29,6 +32,10 @@ class FakeStorageModule extends AbstractVerticle {
   private final Collection<String> uniqueProperties;
   private final Boolean includeChangeMetadata;
   private final String changeMetadataPropertyName = "metadata";
+
+  public static Stream<String> getQueries() {
+    return queries.stream();
+  }
 
   FakeStorageModule(
     String rootPath,
@@ -193,6 +200,10 @@ class FakeStorageModule extends AbstractVerticle {
     String query = context.getStringParameter("query", null);
 
     System.out.println(String.format("Handling %s", routingContext.request().uri()));
+
+    if(query != null) {
+      queries.add(String.format("%s?%s", routingContext.request().path(), query));
+    }
 
     Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
 

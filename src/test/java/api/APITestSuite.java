@@ -3,8 +3,12 @@ package api;
 import api.loans.*;
 import api.requests.*;
 import api.requests.scenarios.*;
-import api.support.builders.*;
+import api.support.builders.FixedDueDateSchedule;
+import api.support.builders.FixedDueDateSchedulesBuilder;
+import api.support.builders.LoanPolicyBuilder;
+import api.support.builders.UserBuilder;
 import api.support.fakes.FakeOkapi;
+import api.support.fakes.FakeStorageModule;
 import api.support.http.ResourceClient;
 import api.support.http.URLHelper;
 import io.vertx.core.Vertx;
@@ -34,6 +38,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 
 @RunWith(Suite.class)
@@ -41,6 +46,7 @@ import java.util.function.Consumer;
 @Suite.SuiteClasses({
   CheckOutByBarcodeTests.class,
   RenewByBarcodeTests.class,
+  RenewByIdTests.class,
   LoanAPITests.class,
   LoanAPILocationTests.class,
   LoanAPITitleTests.class,
@@ -74,7 +80,7 @@ public class APITestSuite {
   public static final String TENANT_ID = "test_tenant";
   public static final String USER_ID = "79ff2a8b-d9c3-5b39-ad4a-0a84025ab085";
   public static final String TOKEN = "eyJhbGciOiJIUzUxMiJ9eyJzdWIiOiJhZG1pbiIsInVzZXJfaWQiOiI3OWZmMmE4Yi1kOWMzLTViMzktYWQ0YS0wYTg0MDI1YWIwODUiLCJ0ZW5hbnQiOiJ0ZXN0X3RlbmFudCJ9BShwfHcNClt5ZXJ8ImQTMQtAM1sQEnhsfWNmXGsYVDpuaDN3RVQ9";
-  public static final String REQUEST_ID = createFakeRequestId();
+  private static final String REQUEST_ID = createFakeRequestId();
 
   private static VertxAssistant vertxAssistant;
   private static int port;
@@ -307,6 +313,10 @@ public class APITestSuite {
     CompletableFuture<Void> fakeOkapiUndeployed = new CompletableFuture<>();
 
     if (!useOkapiForStorage) {
+      log.info("Queries performed: " + FakeStorageModule.getQueries()
+        .sorted()
+        .collect(Collectors.joining("\n")));
+
       vertxAssistant.undeployVerticle(fakeOkapiDeploymentId,
         fakeOkapiUndeployed);
     } else {

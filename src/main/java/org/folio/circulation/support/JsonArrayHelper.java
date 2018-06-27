@@ -4,6 +4,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
@@ -27,7 +28,7 @@ public class JsonArrayHelper {
     Function<JsonObject, T> mapper) {
 
     if(array == null) {
-      return new ArrayList<>();
+      return Collections.emptyList();
     }
 
     return toStream(array)
@@ -40,11 +41,35 @@ public class JsonArrayHelper {
     String arrayPropertyName,
     Function<JsonObject, T> mapper) {
 
-    if(within == null) {
-      return new ArrayList<>();
+    if(within == null || !within.containsKey(arrayPropertyName)) {
+      return Collections.emptyList();
     }
 
     return mapToList(within.getJsonArray(arrayPropertyName), mapper);
+  }
+
+  public static <T> Stream<T> toStream(
+    JsonObject within,
+    String arrayPropertyName,
+    Function<JsonObject, T> mapper) {
+
+    if(within == null || !within.containsKey(arrayPropertyName)) {
+      return Stream.empty();
+    }
+
+    return toStream(within.getJsonArray(arrayPropertyName))
+      .map(mapper);
+  }
+
+  public static Stream<JsonObject> toStream(
+    JsonObject within,
+    String arrayPropertyName) {
+
+    if(within == null || !within.containsKey(arrayPropertyName)) {
+      return Stream.empty();
+    }
+
+    return toStream(within.getJsonArray(arrayPropertyName));
   }
 
   private static Stream<JsonObject> toStream(JsonArray array) {
