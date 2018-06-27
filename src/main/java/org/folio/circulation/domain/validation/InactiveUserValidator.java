@@ -8,7 +8,6 @@ import org.folio.circulation.support.ValidationErrorFailure;
 
 import java.util.function.Function;
 
-import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
 
@@ -19,7 +18,10 @@ public class InactiveUserValidator {
   private final Function<LoanAndRelatedRecords, User> userFunction;
 
   public InactiveUserValidator(
-    Function<LoanAndRelatedRecords, User> userFunction, String inactiveUserMessage, String cannotDetermineMessage, Function<String, ValidationErrorFailure> inactiveUserErrorFunction) {
+    Function<LoanAndRelatedRecords, User> userFunction,
+    String inactiveUserMessage,
+    String cannotDetermineMessage,
+    Function<String, ValidationErrorFailure> inactiveUserErrorFunction) {
 
     this.inactiveUserErrorFunction = inactiveUserErrorFunction;
     this.inactiveUserMessage = inactiveUserMessage;
@@ -49,31 +51,6 @@ public class InactiveUserValidator {
         }
       } catch (Exception e) {
         return failed(new ServerErrorFailure(e));
-      }
-    });
-  }
-
-  public HttpResult<LoanAndRelatedRecords> refuseWhenProxyingUserIsInactive(
-    HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
-
-    return loanAndRelatedRecords.next(loan -> {
-      final User proxyingUser = loan.getProxyingUser();
-
-      if(proxyingUser == null) {
-        return loanAndRelatedRecords;
-      }
-      else if (proxyingUser.canDetermineStatus()) {
-        return failed(ValidationErrorFailure.failure(
-          "Cannot determine if proxying user is active or not",
-          PROXY_USER_BARCODE, proxyingUser.getBarcode()));
-      }
-      else if(proxyingUser.isInactive()) {
-        return failed(ValidationErrorFailure.failure(
-          "Cannot check out via inactive proxying user",
-          PROXY_USER_BARCODE, proxyingUser.getBarcode()));
-      }
-      else {
-        return loanAndRelatedRecords;
       }
     });
   }
