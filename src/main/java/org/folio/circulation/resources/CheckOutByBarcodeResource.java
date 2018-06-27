@@ -18,7 +18,6 @@ import java.util.UUID;
 import java.util.function.Function;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.LoanValidation.*;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.USER_BARCODE;
@@ -86,6 +85,9 @@ public class CheckOutByBarcodeResource extends Resource {
       "Cannot determine if proxying user is active or not",
       message -> failure(message, PROXY_USER_BARCODE, proxyUserBarcode));
 
+    final ExistingOpenLoanValidator openLoanValidator = new ExistingOpenLoanValidator(
+      loanRepository, message -> failure(message, ITEM_BARCODE, itemBarcode));
+
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
 
@@ -101,8 +103,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(r -> r.map(mapBarcodes()))
       .thenApply(alreadyCheckedOutValidator::refuseWhenItemIsAlreadyCheckedOut)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
-      .thenComposeAsync(r -> r.after(records ->
-        refuseWhenHasOpenLoan(records, loanRepository, itemBarcode)))
+      .thenComposeAsync(r -> r.after(openLoanValidator::refuseWhenHasOpenLoan))
       .thenComposeAsync(r -> r.after(requestQueueFetcher::get))
       .thenApply(awaitingPickupValidator::refuseWhenUserIsNotAwaitingPickup)
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
