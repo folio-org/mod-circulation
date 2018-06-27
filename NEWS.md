@@ -1,4 +1,4 @@
-## 10.5.0 Unreleased
+## 10.5.0 2018-06-27
 
 * Add support for 'Cancelled - Closed' request status (CIRC-90)
 * Add support for 'cancellationReason' and 'cancellationDate' request fields (CIRC-90)
