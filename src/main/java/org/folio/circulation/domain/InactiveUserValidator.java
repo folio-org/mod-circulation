@@ -7,8 +7,8 @@ import org.folio.circulation.support.ValidationErrorFailure;
 import java.util.function.Function;
 
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
-import static org.folio.circulation.support.HttpResult.failure;
-import static org.folio.circulation.support.HttpResult.success;
+import static org.folio.circulation.support.HttpResult.failed;
+import static org.folio.circulation.support.HttpResult.succeeded;
 
 public class InactiveUserValidator {
   private final Function<String, ValidationErrorFailure> inactiveUserErrorFunction;
@@ -36,17 +36,17 @@ public class InactiveUserValidator {
           return loanAndRelatedRecords;
         }
         else if (user.canDetermineStatus()) {
-          return failure(inactiveUserErrorFunction.apply(
+          return failed(inactiveUserErrorFunction.apply(
             cannotDetermineMessage));
         }
         if (user.isInactive()) {
-          return failure(inactiveUserErrorFunction.apply(
+          return failed(inactiveUserErrorFunction.apply(
             inactiveUserMessage));
         } else {
-          return success(records);
+          return succeeded(records);
         }
       } catch (Exception e) {
-        return failure(new ServerErrorFailure(e));
+        return failed(new ServerErrorFailure(e));
       }
     });
   }
@@ -61,12 +61,12 @@ public class InactiveUserValidator {
         return loanAndRelatedRecords;
       }
       else if (proxyingUser.canDetermineStatus()) {
-        return failure(ValidationErrorFailure.failure(
+        return failed(ValidationErrorFailure.failure(
           "Cannot determine if proxying user is active or not",
           PROXY_USER_BARCODE, proxyingUser.getBarcode()));
       }
       else if(proxyingUser.isInactive()) {
-        return failure(ValidationErrorFailure.failure(
+        return failed(ValidationErrorFailure.failure(
           "Cannot check out via inactive proxying user",
           PROXY_USER_BARCODE, proxyingUser.getBarcode()));
       }

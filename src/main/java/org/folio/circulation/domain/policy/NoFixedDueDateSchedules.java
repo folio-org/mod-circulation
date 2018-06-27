@@ -24,6 +24,6 @@ class NoFixedDueDateSchedules extends FixedDueDateSchedules {
     DateTime loanDate,
     Supplier<ValidationErrorFailure> noApplicableScheduleError) {
 
-    return HttpResult.success(dueDate);
+    return HttpResult.succeeded(dueDate);
   }
 }

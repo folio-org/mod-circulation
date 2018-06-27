@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
-import static org.folio.circulation.support.HttpResult.failure;
+import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.JsonPropertyFetcher.*;
 import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
 
@@ -79,11 +79,11 @@ public class LoanPolicy {
         return proposedDueDateResult.map(dueDate -> loan.renew(dueDate, getId()));
       }
       else {
-        return HttpResult.failure(new ValidationErrorFailure(errors));
+        return HttpResult.failed(new ValidationErrorFailure(errors));
       }
     }
     catch(Exception e) {
-      return failure(new ServerErrorFailure(e));
+      return failed(new ServerErrorFailure(e));
     }
   }
 

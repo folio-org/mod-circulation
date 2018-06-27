@@ -7,9 +7,10 @@ import org.folio.circulation.domain.User;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ValidationErrorFailure;
 
-import static org.folio.circulation.support.HttpResult.success;
+import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
+import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 public class RenewByIdRequest implements FindByIdQuery {
   private static final String USER_ID = "userId";
@@ -36,7 +37,7 @@ public class RenewByIdRequest implements FindByIdQuery {
       return failedResult("Renewal request must have a user ID", USER_ID, null);
     }
 
-    return success(new RenewByIdRequest(itemBarcode, userBarcode));
+    return succeeded(new RenewByIdRequest(itemBarcode, userBarcode));
   }
 
   @Override
@@ -51,7 +52,7 @@ public class RenewByIdRequest implements FindByIdQuery {
 
   @Override
   public ValidationErrorFailure userDoesNotMatchError() {
-    return ValidationErrorFailure.failure("Cannot renew item checked out to different user",
+    return failure("Cannot renew item checked out to different user",
       USER_ID, getUserId());
   }
 

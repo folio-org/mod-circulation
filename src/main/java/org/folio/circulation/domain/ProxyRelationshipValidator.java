@@ -41,13 +41,13 @@ public class ProxyRelationshipValidator {
 
     //No need to validate as not proxied activity
     if (proxyUserId == null) {
-      return CompletableFuture.completedFuture(HttpResult.success(null));
+      return CompletableFuture.completedFuture(HttpResult.succeeded(null));
     }
 
     String proxyRelationshipQuery = proxyRelationshipQuery(proxyUserId, userId);
 
     if(proxyRelationshipQuery == null) {
-      return CompletableFuture.completedFuture(HttpResult.failure(
+      return CompletableFuture.completedFuture(HttpResult.failed(
         new ServerErrorFailure("Unable to fetch proxy relationships")));
     }
 
@@ -57,7 +57,7 @@ public class ProxyRelationshipValidator {
       .thenAccept(proxyValidResponse -> {
         if (proxyValidResponse != null) {
           if (proxyValidResponse.getStatusCode() != 200) {
-            future.complete(HttpResult.failure(new ForwardOnFailure(proxyValidResponse)));
+            future.complete(HttpResult.failed(new ForwardOnFailure(proxyValidResponse)));
             return;
           }
 
@@ -71,11 +71,11 @@ public class ProxyRelationshipValidator {
 
           future.complete(
             activeRelationship
-              ? HttpResult.success(null)
-              : HttpResult.failure(invalidRelationshipErrorSupplier.get()));
+              ? HttpResult.succeeded(null)
+              : HttpResult.failed(invalidRelationshipErrorSupplier.get()));
         }
         else {
-          future.complete(HttpResult.failure(
+          future.complete(HttpResult.failed(
             new ServerErrorFailure("No response when requesting proxies")));
         }
     });

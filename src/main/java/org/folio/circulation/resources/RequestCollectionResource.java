@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.*;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 public class RequestCollectionResource extends CollectionResource {
   public RequestCollectionResource(HttpClient client) {
@@ -53,11 +54,11 @@ public class RequestCollectionResource extends CollectionResource {
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateLoanActionHistory updateLoanActionHistory = new UpdateLoanActionHistory(clients);
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
-      clients, () -> ValidationErrorFailure.failure(
+      clients, () -> failure(
       "proxyUserId is not valid", RequestProperties.PROXY_USER_ID,
       request.getProxyUserId()));
 
-    completedFuture(HttpResult.success(new RequestAndRelatedRecords(request)))
+    completedFuture(HttpResult.succeeded(new RequestAndRelatedRecords(request)))
       .thenCombineAsync(itemRepository.fetchFor(request), this::addInventoryRecords)
       .thenApply(this::refuseWhenItemDoesNotExist)
       .thenApply(this::refuseWhenItemIsNotValid)
@@ -89,11 +90,11 @@ public class RequestCollectionResource extends CollectionResource {
     final UserRepository userRepository = new UserRepository(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
-      clients, () -> ValidationErrorFailure.failure(
+      clients, () -> failure(
       "proxyUserId is not valid", RequestProperties.PROXY_USER_ID,
       request.getProxyUserId()));
 
-    completedFuture(HttpResult.success(new RequestAndRelatedRecords(request)))
+    completedFuture(HttpResult.succeeded(new RequestAndRelatedRecords(request)))
       .thenCombineAsync(itemRepository.fetchFor(request), this::addInventoryRecords)
       .thenCombineAsync(userRepository.getUser(request.getUserId(), false), this::addUser)
       .thenCombineAsync(userRepository.getUser(request.getProxyUserId(), false), this::addProxyUser)
@@ -347,7 +348,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     return result.next(requestAndRelatedRecords -> {
       if(requestAndRelatedRecords.getInventoryRecords().isNotFound()) {
-        return HttpResult.failure(ValidationErrorFailure.failure(
+        return HttpResult.failed(failure(
           "Item does not exist", "itemId",
           requestAndRelatedRecords.getRequest().getItemId()));
       }
@@ -366,7 +367,7 @@ public class RequestCollectionResource extends CollectionResource {
       RequestType requestType = RequestType.from(request);
 
       if (!requestType.canCreateRequestForItem(requestAndRelatedRecords.getInventoryRecords())) {
-        return HttpResult.failure(ValidationErrorFailure.failure(
+        return HttpResult.failed(failure(
           String.format("Item is not %s, %s or %s", CHECKED_OUT,
             CHECKED_OUT_HELD, CHECKED_OUT_RECALLED),
           "itemId", request.getItemId()
@@ -395,10 +396,10 @@ public class RequestCollectionResource extends CollectionResource {
 
     clients.requestsStorage().post(request, response -> {
       if (response.getStatusCode() == 201) {
-        onCreated.complete(HttpResult.success(
+        onCreated.complete(HttpResult.succeeded(
           requestAndRelatedRecords.withRequest(new Request(response.getJson()))));
       } else {
-        onCreated.complete(HttpResult.failure(new ForwardOnFailure(response)));
+        onCreated.complete(HttpResult.failed(new ForwardOnFailure(response)));
       }
     });
 

@@ -5,7 +5,7 @@ import org.folio.circulation.support.ValidationErrorFailure;
 
 import java.util.function.Function;
 
-import static org.folio.circulation.support.HttpResult.failure;
+import static org.folio.circulation.support.HttpResult.failed;
 
 public class AwaitingPickupValidator {
   private final Function<String, ValidationErrorFailure> awaitingPickupErrorFunction;
@@ -27,7 +27,7 @@ public class AwaitingPickupValidator {
       String itemBarcode = loan.getLoan().getItem().getBarcode();
 
         if(requestQueue.hasAwaitingPickupRequestForOtherPatron(requestingUser)) {
-        return failure(awaitingPickupErrorFunction.apply(
+        return failed(awaitingPickupErrorFunction.apply(
             String.format("%s (Barcode: %s) cannot be checked out to user %s because it is awaiting pickup by another patron",
               itemTitle, itemBarcode, requestingUser.getPersonalName())));
       }

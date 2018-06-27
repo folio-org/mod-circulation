@@ -44,10 +44,10 @@ public class RequestQueueFetcher {
 
             log.info("Found request queue: {}", foundRequests.encodePrettily());
 
-            return HttpResult.success(
+            return HttpResult.succeeded(
               new RequestQueue(mapToList(foundRequests, Request::new)));
           } else {
-            return HttpResult.failure(new ServerErrorFailure(
+            return HttpResult.failed(new ServerErrorFailure(
               String.format("Failed to fetch request queue: %s: %s",
                 response.getStatusCode(), response.getBody())));
           }

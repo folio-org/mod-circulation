@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
+import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 public class LoanCollectionResource extends CollectionResource {
   public LoanCollectionResource(HttpClient client) {
@@ -41,21 +42,21 @@ public class LoanCollectionResource extends CollectionResource {
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
-      clients, () -> ValidationErrorFailure.failure(
+      clients, () -> failure(
         "proxyUserId is not valid", "proxyUserId", loan.getProxyUserId()));
 
     final AwaitingPickupValidator awaitingPickupValidator = new AwaitingPickupValidator(
-      message -> ValidationErrorFailure.failure(message, "userId", loan.getUserId()));
+      message -> failure(message, "userId", loan.getUserId()));
 
     final AlreadyCheckedOutValidator alreadyCheckedOutValidator = new AlreadyCheckedOutValidator(
-      message -> ValidationErrorFailure.failure(message, "itemId", loan.getItemId()));
+      message -> failure(message, "itemId", loan.getItemId()));
 
     final ItemNotFoundValidator itemNotFoundValidator = new ItemNotFoundValidator(
-      message -> ValidationErrorFailure.failure(message, ITEM_ID, loan.getItemId()));
+      message -> failure(message, ITEM_ID, loan.getItemId()));
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
-    completedFuture(HttpResult.success(new LoanAndRelatedRecords(loan)))
+    completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(loan)))
       .thenApply(this::refuseWhenNotOpenOrClosed)
       .thenCombineAsync(itemRepository.fetchFor(loan), this::addInventoryRecords)
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
@@ -93,14 +94,14 @@ public class LoanCollectionResource extends CollectionResource {
     final LoanRepository loanRepository = new LoanRepository(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
-      clients, () -> ValidationErrorFailure.failure(
+      clients, () -> failure(
         "proxyUserId is not valid", "proxyUserId",
         loan.getProxyUserId()));
 
     final ItemNotFoundValidator itemNotFoundValidator = new ItemNotFoundValidator(
-      message -> ValidationErrorFailure.failure(message, ITEM_ID, loan.getItemId()));
+      message -> failure(message, ITEM_ID, loan.getItemId()));
 
-    completedFuture(HttpResult.success(new LoanAndRelatedRecords(loan)))
+    completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(loan)))
       .thenApply(this::refuseWhenNotOpenOrClosed)
       .thenCombineAsync(itemRepository.fetchFor(loan), this::addInventoryRecords)
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
@@ -212,7 +213,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     return result.next(loan -> {
       if(loan.getLoan().getItem().doesNotHaveHolding()) {
-        return HttpResult.failure(ValidationErrorFailure.failure(
+        return HttpResult.failed(failure(
           "Holding does not exist", ITEM_ID, loan.getLoan().getItemId()));
       }
       else {

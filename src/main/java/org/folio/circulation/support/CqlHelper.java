@@ -42,11 +42,11 @@ public class CqlHelper {
     try {
       log.info("Encoding query {}", cqlQuery);
 
-      return HttpResult.success(URLEncoder.encode(cqlQuery,
+      return HttpResult.succeeded(URLEncoder.encode(cqlQuery,
         String.valueOf(StandardCharsets.UTF_8)));
 
     } catch (UnsupportedEncodingException e) {
-      return HttpResult.failure(
+      return HttpResult.failed(
         new ServerErrorFailure("Failed to encode CQL query"));
     }
   }

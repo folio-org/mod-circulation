@@ -19,7 +19,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static org.folio.circulation.support.CqlHelper.multipleRecordsCqlQuery;
-import static org.folio.circulation.support.HttpResult.success;
+import static org.folio.circulation.support.HttpResult.succeeded;
 
 public class LoanPolicyRepository {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -75,7 +75,7 @@ public class LoanPolicyRepository {
     }
 
     if(scheduleIds.isEmpty()) {
-      return CompletableFuture.completedFuture(success(loanPolicy));
+      return CompletableFuture.completedFuture(succeeded(loanPolicy));
     }
 
     return getSchedules(scheduleIds)
@@ -86,7 +86,7 @@ public class LoanPolicyRepository {
         final FixedDueDateSchedules renewalSchedule = schedules.getOrDefault(
           alternateRenewalsSchedulesId, new NoFixedDueDateSchedules());
 
-        return success(loanPolicy
+        return succeeded(loanPolicy
           .withDueDateSchedules(loanSchedule)
           .withAlternateRenewalSchedules(renewalSchedule));
       }));
@@ -101,7 +101,7 @@ public class LoanPolicyRepository {
       schedulesIds.size(), 0)
       .thenApply(schedulesResponse -> {
         if(schedulesResponse.getStatusCode() != 200) {
-          return HttpResult.failure(new ServerErrorFailure(
+          return HttpResult.failed(new ServerErrorFailure(
             String.format("Fixed due date schedules request (%s) failed %s: %s",
               schedulesQuery, schedulesResponse.getStatusCode(),
               schedulesResponse.getBody())));
@@ -110,7 +110,7 @@ public class LoanPolicyRepository {
         List<JsonObject> schedules = JsonArrayHelper.toList(
           schedulesResponse.getJson().getJsonArray("fixedDueDateSchedules"));
 
-        return success(schedules.stream()
+        return succeeded(schedules.stream()
           .collect(Collectors.toMap(
             s -> s.getString("id"),
             FixedDueDateSchedules::from)));
@@ -121,7 +121,7 @@ public class LoanPolicyRepository {
     String loanPolicyId) {
 
     return new SingleRecordFetcher(loanPoliciesStorageClient, "loan policy",
-      () -> HttpResult.failure(new ServerErrorFailure(
+      () -> HttpResult.failed(new ServerErrorFailure(
         String.format("Loan policy %s could not be found, please check loan rules", loanPolicyId))))
       .fetchSingleRecord(loanPolicyId);
   }
@@ -134,12 +134,12 @@ public class LoanPolicyRepository {
       = new CompletableFuture<>();
 
     if(item.isNotFound()) {
-      return CompletableFuture.completedFuture(HttpResult.failure(
+      return CompletableFuture.completedFuture(HttpResult.failed(
         new ServerErrorFailure("Unable to apply loan rules for unknown item")));
     }
 
     if(item.doesNotHaveHolding()) {
-      return CompletableFuture.completedFuture(HttpResult.failure(
+      return CompletableFuture.completedFuture(HttpResult.failed(
         new ServerErrorFailure("Unable to apply loan rules for unknown holding")));
     }
 
@@ -161,14 +161,14 @@ public class LoanPolicyRepository {
 
     loanRulesResponse.thenAcceptAsync(response -> {
       if (response.getStatusCode() == 404) {
-        findLoanPolicyCompleted.complete(HttpResult.failure(
+        findLoanPolicyCompleted.complete(HttpResult.failed(
           new ServerErrorFailure("Unable to apply loan rules")));
       } else if (response.getStatusCode() != 200) {
-        findLoanPolicyCompleted.complete(HttpResult.failure(
+        findLoanPolicyCompleted.complete(HttpResult.failed(
           new ForwardOnFailure(response)));
       } else {
         String policyId = response.getJson().getString("loanPolicyId");
-        findLoanPolicyCompleted.complete(success(policyId));
+        findLoanPolicyCompleted.complete(succeeded(policyId));
       }
     });
 

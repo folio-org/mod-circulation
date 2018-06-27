@@ -43,7 +43,7 @@ public class RenewByBarcodeResource extends Resource {
   private WritableHttpResult<JsonObject> toRenewedLoanResponse(HttpResult<JsonObject> result) {
     //TODO: Extract and clean up this check for writable http result
     if(result.failed()) {
-      return HttpResult.failure(result.cause());
+      return HttpResult.failed(result.cause());
     }
     else {
       return new OkJsonHttpResult(result.value(),

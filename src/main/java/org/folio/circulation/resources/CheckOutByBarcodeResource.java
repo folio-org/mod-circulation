@@ -91,7 +91,7 @@ public class CheckOutByBarcodeResource extends Resource {
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
-    completedFuture(HttpResult.success(new LoanAndRelatedRecords(Loan.from(loan))))
+    completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(Loan.from(loan))))
       .thenCombineAsync(userRepository.getUserByBarcode(userBarcode), this::addUser)
       .thenCombineAsync(userRepository.getProxyUserByBarcode(proxyUserBarcode), this::addProxyUser)
       .thenApply(inactiveUserValidator::refuseWhenUserIsInactive)
@@ -154,7 +154,7 @@ public class CheckOutByBarcodeResource extends Resource {
 
   private WritableHttpResult<JsonObject> createdLoanFrom(HttpResult<JsonObject> result) {
     if(result.failed()) {
-      return HttpResult.failure(result.cause());
+      return HttpResult.failed(result.cause());
     }
     else {
       return new CreatedJsonHttpResult(result.value(),

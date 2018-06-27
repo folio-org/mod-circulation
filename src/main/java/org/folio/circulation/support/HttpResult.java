@@ -21,13 +21,13 @@ public interface HttpResult<T> {
     BiFunction<T, U, V> combiner) {
 
     if(firstResult.failed()) {
-      return failure(firstResult.cause());
+      return failed(firstResult.cause());
     }
     else if(secondResult.failed()) {
-      return failure(secondResult.cause());
+      return failed(secondResult.cause());
     }
     else {
-      return success(combiner.apply(firstResult.value(),
+      return succeeded(combiner.apply(firstResult.value(),
         secondResult.value()));
     }
   }
@@ -41,11 +41,11 @@ public interface HttpResult<T> {
     return !failed();
   }
 
-  static <T> HttpResult<T> success(T value) {
+  static <T> HttpResult<T> succeeded(T value) {
     return new SuccessfulHttpResult<>(value);
   }
 
-  static <T> WritableHttpResult<T> failure(HttpFailure cause) {
+  static <T> WritableHttpResult<T> failed(HttpFailure cause) {
     return new FailedHttpResult<>(cause);
   }
 
@@ -53,7 +53,7 @@ public interface HttpResult<T> {
     Function<T, CompletableFuture<HttpResult<R>>> action) {
 
     if(failed()) {
-      return CompletableFuture.completedFuture(failure(cause()));
+      return CompletableFuture.completedFuture(failed(cause()));
     }
 
     return action.apply(value());
@@ -61,7 +61,7 @@ public interface HttpResult<T> {
 
   default <R> HttpResult<R> next(Function<T, HttpResult<R>> action) {
     if(failed()) {
-      return failure(cause());
+      return failed(cause());
     }
 
     return action.apply(value());
@@ -69,10 +69,10 @@ public interface HttpResult<T> {
 
   default <U> HttpResult<U> map(Function<T, U> map) {
     if(failed()) {
-      return failure(cause());
+      return failed(cause());
     }
     else {
-      return HttpResult.success(map.apply(value()));
+      return HttpResult.succeeded(map.apply(value()));
     }
   }
 

@@ -12,8 +12,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.folio.circulation.support.HttpResult.failure;
-import static org.folio.circulation.support.HttpResult.success;
+import static org.folio.circulation.support.HttpResult.failed;
+import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.MultipleRecordsWrapper.fromBody;
 
 public class LoanRepository {
@@ -43,11 +43,11 @@ public class LoanRepository {
 
     loansStorageClient.post(storageLoan, response -> {
       if (response.getStatusCode() == 201) {
-        onCreated.complete(success(
+        onCreated.complete(succeeded(
           loanAndRelatedRecords.withLoan(Loan.from(response.getJson(),
             loanAndRelatedRecords.getLoan().getItem()))));
       } else {
-        onCreated.complete(failure(new ForwardOnFailure(response)));
+        onCreated.complete(failed(new ForwardOnFailure(response)));
       }
     });
 
@@ -66,9 +66,9 @@ public class LoanRepository {
 
     final Function<Response, HttpResult<Loan>> mapResponse = response -> {
       if (response.getStatusCode() == 204) {
-        return success(loan);
+        return succeeded(loan);
       } else {
-        return failure(
+        return failed(
           new ServerErrorFailure(String.format("Failed to update loan (%s:%s)",
             response.getStatusCode(), response.getBody())));
       }
@@ -96,9 +96,9 @@ public class LoanRepository {
               .findFirst();
 
             if (loans.getTotalRecords() == 1 && first.isPresent()) {
-              return success(Loan.from(first.get().asJson(), item));
+              return succeeded(Loan.from(first.get().asJson(), item));
             } else {
-              return failure(new ServerErrorFailure(
+              return failed(new ServerErrorFailure(
                 String.format("More than one open loan for item %s", query.getItemBarcode())));
             }
           }));
@@ -123,9 +123,9 @@ public class LoanRepository {
               .findFirst();
 
             if (loans.getTotalRecords() == 1 && first.isPresent()) {
-              return success(Loan.from(first.get().asJson(), item));
+              return succeeded(Loan.from(first.get().asJson(), item));
             } else {
-              return failure(new ServerErrorFailure(
+              return failed(new ServerErrorFailure(
                 String.format("More than one open loan for item %s", query.getItemId())));
             }
           }));
@@ -139,10 +139,10 @@ public class LoanRepository {
     UserRelatedQuery query) {
 
     if(query.userMatches(loan.getUser())) {
-      return success(loan);
+      return succeeded(loan);
     }
     else {
-      return failure(query.userDoesNotMatchError());
+      return failed(query.userDoesNotMatchError());
     }
   }
 
@@ -150,7 +150,7 @@ public class LoanRepository {
     return fetchLoan(id)
       .thenComposeAsync(this::fetchItem)
       .thenComposeAsync(this::fetchUser)
-      .exceptionally(e -> failure(new ServerErrorFailure(e)));
+      .exceptionally(e -> failed(new ServerErrorFailure(e)));
   }
 
   private CompletableFuture<HttpResult<Loan>> fetchLoan(String id) {
@@ -164,10 +164,10 @@ public class LoanRepository {
 
     final Function<Response, HttpResult<Loan>> mapResponse = response -> {
       if(response != null && response.getStatusCode() == 200) {
-        return success(Loan.from(response.getJson(), item, user));
+        return succeeded(Loan.from(response.getJson(), item, user));
       }
       else {
-        return failure(new ForwardOnFailure(response));
+        return failed(new ForwardOnFailure(response));
       }
     };
 
@@ -216,7 +216,7 @@ public class LoanRepository {
         response.getStatusCode(), response.getBody());
 
       if (response.getStatusCode() != 200) {
-        return failure(new ServerErrorFailure(
+        return failed(new ServerErrorFailure(
           String.format("Failed to fetch loans from storage (%s:%s)",
             response.getStatusCode(), response.getBody())));
       }
@@ -224,7 +224,7 @@ public class LoanRepository {
       final MultipleRecordsWrapper wrappedLoans = fromBody(response.getBody(), "loans");
 
       if (wrappedLoans.isEmpty()) {
-        return success(MultipleRecords.empty());
+        return succeeded(MultipleRecords.empty());
       }
 
       final MultipleRecords<Loan> mapped = new MultipleRecords<>(
@@ -234,11 +234,11 @@ public class LoanRepository {
           .collect(Collectors.toList()),
         wrappedLoans.getTotalRecords());
 
-      return success(mapped);
+      return succeeded(mapped);
     }
     else {
       log.warn("Did not receive response to request");
-      return failure(new ServerErrorFailure(
+      return failed(new ServerErrorFailure(
         "Did not receive response to request for multiple loans"));
     }
   }

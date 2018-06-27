@@ -5,7 +5,7 @@ import org.folio.circulation.support.ValidationErrorFailure;
 
 import java.util.function.Function;
 
-import static org.folio.circulation.support.HttpResult.failure;
+import static org.folio.circulation.support.HttpResult.failed;
 
 public class AlreadyCheckedOutValidator {
   private final Function<String, ValidationErrorFailure> alreadyCheckedOutErrorFunction;
@@ -21,7 +21,7 @@ public class AlreadyCheckedOutValidator {
 
     return loanAndRelatedRecords.next(records -> {
       if(records.getLoan().getItem().isCheckedOut()) {
-        return failure(alreadyCheckedOutErrorFunction.apply("Item is already checked out"));
+        return failed(alreadyCheckedOutErrorFunction.apply("Item is already checked out"));
       }
       else {
         return loanAndRelatedRecords;
