@@ -19,6 +19,7 @@ import java.util.function.Function;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.LoanValidation.*;
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE_PROPERTY_NAME;
 
 public class CheckOutByBarcodeResource extends Resource {
   public CheckOutByBarcodeResource(HttpClient client) {
@@ -65,7 +66,8 @@ public class CheckOutByBarcodeResource extends Resource {
       message -> ValidationErrorFailure.failure(message,
         CheckOutByBarcodeRequest.USER_BARCODE_PROPERTY_NAME, userBarcode));
 
-    final AlreadyCheckedOutValidator alreadyCheckedOutValidator = new AlreadyCheckedOutValidator();
+    final AlreadyCheckedOutValidator alreadyCheckedOutValidator = new AlreadyCheckedOutValidator(
+      message -> ValidationErrorFailure.failure(message, ITEM_BARCODE_PROPERTY_NAME, itemBarcode));
 
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
@@ -80,7 +82,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenCombineAsync(itemRepository.fetchByBarcode(itemBarcode), this::addInventoryRecords)
       .thenApply(r -> r.next(v -> refuseWhenItemBarcodeDoesNotExist(r, itemBarcode)))
       .thenApply(r -> r.map(mapBarcodes()))
-      .thenApply(r -> alreadyCheckedOutValidator.refuseWhenItemIsAlreadyCheckedOut(r, itemBarcode))
+      .thenApply(alreadyCheckedOutValidator::refuseWhenItemIsAlreadyCheckedOut)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenComposeAsync(r -> r.after(records ->
         refuseWhenHasOpenLoan(records, loanRepository, itemBarcode)))

@@ -1,37 +1,27 @@
 package org.folio.circulation.domain;
 
 import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.Item;
 import org.folio.circulation.support.ValidationErrorFailure;
 
-import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE_PROPERTY_NAME;
+import java.util.function.Function;
+
 import static org.folio.circulation.support.HttpResult.failure;
 
 public class AlreadyCheckedOutValidator {
-  public HttpResult<LoanAndRelatedRecords> refuseWhenItemIsAlreadyCheckedOut(
-    HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
+  private final Function<String, ValidationErrorFailure> alreadyCheckedOutErrorFunction;
 
-    return loanAndRelatedRecords.next(loan -> {
-      final Item records = loan.getLoan().getItem();
+  public AlreadyCheckedOutValidator(
+    Function<String, ValidationErrorFailure> alreadyCheckedOutErrorFunction) {
 
-      if(records.isCheckedOut()) {
-        return failure(ValidationErrorFailure.failure(
-          "Item is already checked out", "itemId", records.getItemId()));
-      }
-      else {
-        return loanAndRelatedRecords;
-      }
-    });
+    this.alreadyCheckedOutErrorFunction = alreadyCheckedOutErrorFunction;
   }
 
   public HttpResult<LoanAndRelatedRecords> refuseWhenItemIsAlreadyCheckedOut(
-    HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords, String barcode) {
+    HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
-    //TODO: Extract duplication with above
-    return loanAndRelatedRecords.next(loan -> {
-      if(loan.getLoan().getItem().isCheckedOut()) {
-        return failure(ValidationErrorFailure.failure(
-          "Item is already checked out", ITEM_BARCODE_PROPERTY_NAME, barcode));
+    return loanAndRelatedRecords.next(records -> {
+      if(records.getLoan().getItem().isCheckedOut()) {
+        return failure(alreadyCheckedOutErrorFunction.apply("Item is already checked out"));
       }
       else {
         return loanAndRelatedRecords;
