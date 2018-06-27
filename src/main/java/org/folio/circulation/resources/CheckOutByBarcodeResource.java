@@ -41,7 +41,6 @@ public class CheckOutByBarcodeResource extends Resource {
     final JsonObject loan = new JsonObject();
     loan.put("id", UUID.randomUUID().toString());
 
-    defaultStatusAndAction(loan);
     copyOrDefaultLoanDate(request, loan);
 
     final String itemBarcode = request.getString("itemBarcode");

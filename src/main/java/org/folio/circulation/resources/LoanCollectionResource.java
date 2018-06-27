@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.LoanValidation.defaultStatusAndAction;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
 
 public class LoanCollectionResource extends CollectionResource {
@@ -27,7 +26,6 @@ public class LoanCollectionResource extends CollectionResource {
     final WebContext context = new WebContext(routingContext);
 
     JsonObject incomingRepresentation = routingContext.getBodyAsJson();
-    defaultStatusAndAction(incomingRepresentation);
 
     final Loan loan = Loan.from(incomingRepresentation);
 
@@ -83,8 +81,6 @@ public class LoanCollectionResource extends CollectionResource {
     JsonObject incomingRepresentation = routingContext.getBodyAsJson();
 
     incomingRepresentation.put("id", routingContext.request().getParam("id"));
-
-    defaultStatusAndAction(incomingRepresentation);
 
     final Loan loan = Loan.from(incomingRepresentation);
 
