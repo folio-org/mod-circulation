@@ -7,7 +7,7 @@ import org.joda.time.DateTime;
 
 import java.util.function.Function;
 
-import static org.folio.circulation.support.HttpResult.failure;
+import static org.folio.circulation.support.HttpResult.failed;
 
 class UnknownDueDateStrategy extends DueDateStrategy {
   private static final String CHECK_OUT_UNRECOGNISED_PROFILE_MESSAGE =
@@ -33,11 +33,11 @@ class UnknownDueDateStrategy extends DueDateStrategy {
   @Override
   HttpResult<DateTime> calculateDueDate(Loan loan) {
     if(isRenewal) {
-      return failure(validationError(
+      return failed(validationError(
           String.format(RENEWAL_UNRECOGNISED_PROFILE_MESSAGE, profileId)));
     }
     else {
-      return failure(validationError(
+      return failed(validationError(
         String.format(CHECK_OUT_UNRECOGNISED_PROFILE_MESSAGE, profileId)));
     }
   }

@@ -20,7 +20,7 @@ public class UpdateLoanActionHistory {
   }
 
   private static <T> CompletableFuture<HttpResult<T>> skip(T previousResult) {
-    return CompletableFuture.completedFuture(HttpResult.success(previousResult));
+    return CompletableFuture.completedFuture(HttpResult.succeeded(previousResult));
   }
 
   //Updates the single open loan for the item related to a request
@@ -53,7 +53,7 @@ public class UpdateLoanActionHistory {
           log.warn("No open loans found for item {}", itemId);
           //Only success in the sense that it can't be done, but no
           //compensating action to take
-          completed.complete(HttpResult.success(requestAndRelatedRecords));
+          completed.complete(HttpResult.succeeded(requestAndRelatedRecords));
         }
         else if(loans.size() == 1) {
           JsonObject changedLoan = loans.get(0).copy();
@@ -63,7 +63,7 @@ public class UpdateLoanActionHistory {
 
           this.loansStorageClient.put(changedLoan.getString("id"), changedLoan,
             putLoanResponse ->
-              completed.complete(HttpResult.success(requestAndRelatedRecords)));
+              completed.complete(HttpResult.succeeded(requestAndRelatedRecords)));
         }
         else {
           String moreThanOneOpenLoanError = String.format(
@@ -71,14 +71,14 @@ public class UpdateLoanActionHistory {
             loans.size(), itemId);
 
           log.error(moreThanOneOpenLoanError);
-          completed.complete(HttpResult.failure(
+          completed.complete(HttpResult.failed(
             new ServerErrorFailure(moreThanOneOpenLoanError)));
         }
       } else {
         String failedError = String.format("Could not get open loans for item %s", itemId);
 
         log.error(failedError);
-        completed.complete(HttpResult.failure(
+        completed.complete(HttpResult.failed(
           new ServerErrorFailure(failedError)));
       }
     });

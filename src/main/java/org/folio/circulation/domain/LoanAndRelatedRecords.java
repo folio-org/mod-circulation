@@ -62,7 +62,7 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
     return loan;
   }
 
-  RequestQueue getRequestQueue() {
+  public RequestQueue getRequestQueue() {
     return requestQueue;
   }
 

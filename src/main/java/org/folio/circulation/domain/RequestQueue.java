@@ -26,6 +26,20 @@ public class RequestQueue {
     return fulfillableRequests().get(0);
   }
 
+  public boolean hasAwaitingPickupRequestForOtherPatron(
+    User requestingUser) {
+
+    if(!hasOutstandingFulfillableRequests()) {
+      return false;
+    }
+    else {
+      final Request highestPriority = getHighestPriorityFulfillableRequest();
+
+      return highestPriority.isAwaitingPickup()
+        && !highestPriority.isFor(requestingUser);
+    }
+  }
+
   private List<Request> fulfillableRequests() {
     return requests
       .stream()

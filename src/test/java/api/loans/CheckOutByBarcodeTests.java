@@ -364,7 +364,7 @@ public class CheckOutByBarcodeTests extends APITests {
     final Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, steve);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("No item with barcode 036000291452 exists"),
+      hasMessage("item could not be found"),
       hasItemBarcodeParameter(smallAngryPlanet))));
   }
 

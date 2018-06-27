@@ -2,6 +2,7 @@ package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.Item;
 import org.folio.circulation.support.ServerErrorFailure;
@@ -10,7 +11,7 @@ import org.joda.time.DateTime;
 
 import static org.folio.circulation.domain.representations.LoanProperties.DUE_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.STATUS;
-import static org.folio.circulation.support.HttpResult.failure;
+import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.JsonPropertyFetcher.*;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
@@ -24,7 +25,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public static Loan from(JsonObject representation) {
-    return new Loan(representation);
+    return from(representation, null);
   }
 
   public static Loan from(JsonObject representation, Item item) {
@@ -32,6 +33,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public static Loan from(JsonObject representation, Item item, User user) {
+    defaultStatusAndAction(representation);
     final Loan loan = new Loan(representation);
 
     loan.setItem(item);
@@ -49,7 +51,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   private void changeAction(String action) {
-    representation.put("action", action);
+    representation.put(LoanProperties.ACTION, action);
   }
 
   public void changeProxyUser(String userId) {
@@ -58,17 +60,17 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public HttpResult<Void> isValidStatus() {
     if(!representation.containsKey(STATUS)) {
-      return failure(new ServerErrorFailure(
+      return failed(new ServerErrorFailure(
         "Loan does not have a status"));
     }
 
     switch(getStatus()) {
       case "Open":
       case "Closed":
-        return HttpResult.success(null);
+        return HttpResult.succeeded(null);
 
       default:
-        return failure(ValidationErrorFailure.failure(
+        return failed(ValidationErrorFailure.failure(
           "Loan status must be \"Open\" or \"Closed\"", STATUS, getStatus()));
     }
   }
@@ -154,5 +156,15 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public DateTime getDueDate() {
     return getDateTimeProperty(representation, DUE_DATE);
+  }
+
+  private static void defaultStatusAndAction(JsonObject loan) {
+    if(!loan.containsKey(LoanProperties.STATUS)) {
+      loan.put(LoanProperties.STATUS, new JsonObject().put("name", "Open"));
+
+      if(!loan.containsKey(LoanProperties.ACTION)) {
+        loan.put(LoanProperties.ACTION, "checkedout");
+      }
+    }
   }
 }

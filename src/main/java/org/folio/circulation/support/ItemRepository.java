@@ -127,10 +127,10 @@ public class ItemRepository {
         locationRepository.getLocations(result.value().getRecords())
           .thenApply(locationResult -> {
             if (locationResult.failed()) {
-              return HttpResult.failure(locationResult.cause());
+              return HttpResult.failed(locationResult.cause());
             }
 
-            return HttpResult.success(new MultipleInventoryRecords(
+            return HttpResult.succeeded(new MultipleInventoryRecords(
               records.getItems(),
               records.getHoldings(),
               records.getInstances(),
@@ -153,10 +153,10 @@ public class ItemRepository {
         materialTypeRepository.getMaterialTypes(records.getRecords())
           .thenApply(materialTypeResult -> {
             if (materialTypeResult.failed()) {
-              return HttpResult.failure(materialTypeResult.cause());
+              return HttpResult.failed(materialTypeResult.cause());
             }
 
-            return HttpResult.success(new MultipleInventoryRecords(
+            return HttpResult.succeeded(new MultipleInventoryRecords(
               records.getItems(),
               records.getHoldings(),
               records.getInstances(),
@@ -184,7 +184,7 @@ public class ItemRepository {
 
       return instancesClient.getMany(instancesQuery, instanceIds.size(), 0).thenApply(instancesResponse -> {
         if (instancesResponse.getStatusCode() != 200) {
-          return HttpResult.failure(new ServerErrorFailure(
+          return HttpResult.failed(new ServerErrorFailure(
             String.format("Instances request (%s) failed %s: %s",
               instancesQuery, instancesResponse.getStatusCode(),
               instancesResponse.getBody())));
@@ -193,7 +193,7 @@ public class ItemRepository {
         final List<JsonObject> instances = JsonArrayHelper.toList(
           instancesResponse.getJson().getJsonArray("instances"));
 
-        return HttpResult.success(MultipleInventoryRecords.from(
+        return HttpResult.succeeded(MultipleInventoryRecords.from(
           records.getItems(), records.getHoldings(), instances));
       });
     });
@@ -212,7 +212,7 @@ public class ItemRepository {
 
       return holdingsClient.getMany(holdingsQuery, holdingsIds.size(), 0).thenApply(holdingsResponse -> {
         if(holdingsResponse.getStatusCode() != 200) {
-          return HttpResult.failure(
+          return HttpResult.failed(
             new ServerErrorFailure(String.format("Holdings request (%s) failed %s: %s",
               holdingsQuery, holdingsResponse.getStatusCode(),
               holdingsResponse.getBody())));
@@ -221,7 +221,7 @@ public class ItemRepository {
         final List<JsonObject> holdings = JsonArrayHelper.toList(
           holdingsResponse.getJson().getJsonArray("holdingsRecords"));
 
-        return HttpResult.success(MultipleInventoryRecords.from(
+        return HttpResult.succeeded(MultipleInventoryRecords.from(
           records.getItems(), holdings, new ArrayList<>()));
       });
     });
@@ -234,7 +234,7 @@ public class ItemRepository {
 
     return itemsClient.getMany(itemsQuery, itemIds.size(), 0).thenApply(response -> {
       if(response.getStatusCode() != 200) {
-        return HttpResult.failure(
+        return HttpResult.failed(
           new ServerErrorFailure(String.format("Items request (%s) failed %s: %s",
             itemsQuery, response.getStatusCode(), response.getBody())));
       }
@@ -242,7 +242,7 @@ public class ItemRepository {
       final List<JsonObject> items = JsonArrayHelper.toList(
         response.getJson().getJsonArray("items"));
 
-      return HttpResult.success(MultipleInventoryRecords.from(items,
+      return HttpResult.succeeded(MultipleInventoryRecords.from(items,
         new ArrayList<>(), new ArrayList<>()));
     });
   }
@@ -277,7 +277,7 @@ public class ItemRepository {
     return itemsClient.getMany(String.format("barcode==%s", barcode), 1, 0)
       .thenApply(this::mapMultipleToResult)
       .thenApply(r -> r.map(InventoryRecordsBuilder::new))
-      .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
+      .exceptionally(e -> HttpResult.failed(new ServerErrorFailure(e)));
   }
 
   private HttpResult<JsonObject> mapMultipleToResult(Response response) {
@@ -290,18 +290,18 @@ public class ItemRepository {
         final MultipleRecordsWrapper wrappedItems =
           MultipleRecordsWrapper.fromBody(response.getBody(), "items");
 
-        return HttpResult.success(wrappedItems.getRecords().stream()
+        return HttpResult.succeeded(wrappedItems.getRecords().stream()
           .findFirst()
           .orElse(null));
 
       } else {
-        return HttpResult.success(null);
+        return HttpResult.succeeded(null);
       }
     }
     else {
       //TODO: Replace with failure result
       log.warn("Did not receive response to request");
-      return HttpResult.success(null);
+      return HttpResult.succeeded(null);
     }
   }
 
@@ -311,7 +311,7 @@ public class ItemRepository {
     return result.after(builder -> {
       if(builder == null || builder.item == null) {
         log.info("Item was not found, aborting fetching holding or instance");
-        return completedFuture(HttpResult.success(builder));
+        return completedFuture(HttpResult.succeeded(builder));
       }
       else {
         final String holdingsRecordId = builder.getItem().getString("holdingsRecordId");
@@ -319,9 +319,9 @@ public class ItemRepository {
         log.info("Fetching holding with ID: {}", holdingsRecordId);
 
         return holdingsClient.get(holdingsRecordId)
-          .thenApply(response -> HttpResult.success(
+          .thenApply(response -> HttpResult.succeeded(
             builder.withHoldingsRecord(getRecordFromResponse(response))))
-          .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
+          .exceptionally(e -> HttpResult.failed(new ServerErrorFailure(e)));
       }
     });
   }
@@ -335,7 +335,7 @@ public class ItemRepository {
       if(holding == null) {
         log.info("Holding was not found, aborting fetching instance");
 
-        return completedFuture(HttpResult.success(builder));
+        return completedFuture(HttpResult.succeeded(builder));
       }
       else {
         final String instanceId = holding.getString("instanceId");
@@ -343,9 +343,9 @@ public class ItemRepository {
         log.info("Fetching instance with ID: {}", instanceId);
 
         return instancesClient.get(instanceId)
-          .thenApply(response -> HttpResult.success(
+          .thenApply(response -> HttpResult.succeeded(
             builder.withInstance(getRecordFromResponse(response))))
-          .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
+          .exceptionally(e -> HttpResult.failed(new ServerErrorFailure(e)));
       }
     });
   }

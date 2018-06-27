@@ -26,15 +26,15 @@ public class UpdateRequestQueue {
       clients.requestsStorage().put(firstRequest.getId(), firstRequest.asJson(),
         updateRequestResponse -> {
           if (updateRequestResponse.getStatusCode() == 204) {
-            requestUpdated.complete(HttpResult.success(relatedRecords));
+            requestUpdated.complete(HttpResult.succeeded(relatedRecords));
           } else {
-            requestUpdated.complete(HttpResult.failure(new ServerErrorFailure(
+            requestUpdated.complete(HttpResult.failed(new ServerErrorFailure(
               String.format("Failed to update request: %s: %s",
                 updateRequestResponse.getStatusCode(), updateRequestResponse.getBody()))));
           }
         });
     } else {
-      requestUpdated.complete(HttpResult.success(relatedRecords));
+      requestUpdated.complete(HttpResult.succeeded(relatedRecords));
     }
 
     return requestUpdated;
@@ -58,15 +58,15 @@ public class UpdateRequestQueue {
       clients.requestsStorage().put(firstRequest.getId(), firstRequest.asJson(),
         updateRequestResponse -> {
           if (updateRequestResponse.getStatusCode() == 204) {
-            requestUpdated.complete(HttpResult.success(requestQueue));
+            requestUpdated.complete(HttpResult.succeeded(requestQueue));
           } else {
-            requestUpdated.complete(HttpResult.failure(new ServerErrorFailure(
+            requestUpdated.complete(HttpResult.failed(new ServerErrorFailure(
               String.format("Failed to update request: %s: %s",
                 updateRequestResponse.getStatusCode(), updateRequestResponse.getBody()))));
           }
       });
     } else {
-      requestUpdated.complete(HttpResult.success(requestQueue));
+      requestUpdated.complete(HttpResult.succeeded(requestQueue));
     }
 
     return requestUpdated;

@@ -5,7 +5,10 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.domain.*;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
-import org.folio.circulation.domain.representations.LoanProperties;
+import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
+import org.folio.circulation.domain.validation.AwaitingPickupValidator;
+import org.folio.circulation.domain.validation.ItemNotFoundValidator;
+import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.server.ForwardResponse;
 import org.folio.circulation.support.http.server.JsonResponse;
@@ -16,7 +19,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.LoanValidation.defaultStatusAndAction;
+import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
+import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 public class LoanCollectionResource extends CollectionResource {
   public LoanCollectionResource(HttpClient client) {
@@ -27,7 +31,6 @@ public class LoanCollectionResource extends CollectionResource {
     final WebContext context = new WebContext(routingContext);
 
     JsonObject incomingRepresentation = routingContext.getBodyAsJson();
-    defaultStatusAndAction(incomingRepresentation);
 
     final Loan loan = Loan.from(incomingRepresentation);
 
@@ -43,22 +46,30 @@ public class LoanCollectionResource extends CollectionResource {
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
-      clients, () -> ValidationErrorFailure.failure(
-        "proxyUserId is not valid", "proxyUserId",
-        loan.getProxyUserId()));
+      clients, () -> failure(
+        "proxyUserId is not valid", "proxyUserId", loan.getProxyUserId()));
+
+    final AwaitingPickupValidator awaitingPickupValidator = new AwaitingPickupValidator(
+      message -> failure(message, "userId", loan.getUserId()));
+
+    final AlreadyCheckedOutValidator alreadyCheckedOutValidator = new AlreadyCheckedOutValidator(
+      message -> failure(message, "itemId", loan.getItemId()));
+
+    final ItemNotFoundValidator itemNotFoundValidator = new ItemNotFoundValidator(
+      message -> failure(message, ITEM_ID, loan.getItemId()));
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
-    completedFuture(HttpResult.success(new LoanAndRelatedRecords(loan)))
+    completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(loan)))
       .thenApply(this::refuseWhenNotOpenOrClosed)
       .thenCombineAsync(itemRepository.fetchFor(loan), this::addInventoryRecords)
-      .thenApply(LoanValidation::refuseWhenItemDoesNotExist)
+      .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
       .thenApply(this::refuseWhenHoldingDoesNotExist)
-      .thenApply(LoanValidation::refuseWhenItemIsAlreadyCheckedOut)
+      .thenApply(alreadyCheckedOutValidator::refuseWhenItemIsAlreadyCheckedOut)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenCombineAsync(requestQueueFetcher.get(loan.getItemId()), this::addRequestQueue)
       .thenCombineAsync(userRepository.getUser(loan.getUserId()), this::addUser)
-      .thenApply(LoanValidation::refuseWhenUserIsNotAwaitingPickup)
+      .thenApply(awaitingPickupValidator::refuseWhenUserIsNotAwaitingPickup)
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
@@ -76,8 +87,6 @@ public class LoanCollectionResource extends CollectionResource {
 
     incomingRepresentation.put("id", routingContext.request().getParam("id"));
 
-    defaultStatusAndAction(incomingRepresentation);
-
     final Loan loan = Loan.from(incomingRepresentation);
 
     final Clients clients = Clients.create(context, client);
@@ -87,15 +96,19 @@ public class LoanCollectionResource extends CollectionResource {
     final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
+
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
-      clients, () -> ValidationErrorFailure.failure(
+      clients, () -> failure(
         "proxyUserId is not valid", "proxyUserId",
         loan.getProxyUserId()));
 
-    completedFuture(HttpResult.success(new LoanAndRelatedRecords(loan)))
+    final ItemNotFoundValidator itemNotFoundValidator = new ItemNotFoundValidator(
+      message -> failure(message, ITEM_ID, loan.getItemId()));
+
+    completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(loan)))
       .thenApply(this::refuseWhenNotOpenOrClosed)
       .thenCombineAsync(itemRepository.fetchFor(loan), this::addInventoryRecords)
-      .thenApply(LoanValidation::refuseWhenItemDoesNotExist)
+      .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenCombineAsync(requestQueueFetcher.get(loan.getItemId()), this::addRequestQueue)
       .thenComposeAsync(result -> result.after(requestQueueUpdate::onCheckIn))
@@ -204,8 +217,8 @@ public class LoanCollectionResource extends CollectionResource {
 
     return result.next(loan -> {
       if(loan.getLoan().getItem().doesNotHaveHolding()) {
-        return HttpResult.failure(ValidationErrorFailure.failure(
-          "Holding does not exist", LoanProperties.ITEM_ID, loan.getLoan().getItemId()));
+        return HttpResult.failed(failure(
+          "Holding does not exist", ITEM_ID, loan.getLoan().getItemId()));
       }
       else {
         return result;

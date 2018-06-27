@@ -54,7 +54,7 @@ public class UpdateItem {
     catch (Exception ex) {
       logException(ex);
       return CompletableFuture.completedFuture(
-        HttpResult.failure(new ServerErrorFailure(ex)));
+        HttpResult.failed(new ServerErrorFailure(ex)));
     }
   }
 
@@ -79,7 +79,7 @@ public class UpdateItem {
     catch (Exception ex) {
       logException(ex);
       return CompletableFuture.completedFuture(
-        HttpResult.failure(new ServerErrorFailure(ex)));
+        HttpResult.failed(new ServerErrorFailure(ex)));
     }
   }
 
@@ -106,7 +106,7 @@ public class UpdateItem {
     catch (Exception ex) {
       logException(ex);
       return CompletableFuture.completedFuture(
-        HttpResult.failure(new ServerErrorFailure(ex)));
+        HttpResult.failed(new ServerErrorFailure(ex)));
     }
   }
 
@@ -121,10 +121,10 @@ public class UpdateItem {
     this.itemsStorageClient.put(item.getItemId(),
       item.getItem(), putItemResponse -> {
         if(putItemResponse.getStatusCode() == 204) {
-          itemUpdated.complete(HttpResult.success(item.getItem()));
+          itemUpdated.complete(HttpResult.succeeded(item.getItem()));
         }
         else {
-          itemUpdated.complete(HttpResult.failure(
+          itemUpdated.complete(HttpResult.failed(
             new ServerErrorFailure("Failed to update item")));
         }
       });
@@ -133,7 +133,7 @@ public class UpdateItem {
   }
 
   private <T> CompletableFuture<HttpResult<T>> skip(T previousResult) {
-    return CompletableFuture.completedFuture(HttpResult.success(previousResult));
+    return CompletableFuture.completedFuture(HttpResult.succeeded(previousResult));
   }
 
   private String itemStatusFrom(Loan loan, RequestQueue requestQueue) {

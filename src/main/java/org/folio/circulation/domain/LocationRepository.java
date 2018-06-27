@@ -39,19 +39,19 @@ public class LocationRepository {
     // and allowable not found
     final Function<Response, HttpResult<JsonObject>> mapResponse = response -> {
       if(response != null && response.getStatusCode() == 200) {
-        return HttpResult.success(response.getJson());
+        return HttpResult.succeeded(response.getJson());
       }
       else {
         log.warn("Could not get location {} for item {}",
           locationId, itemId);
 
-        return HttpResult.success(null);
+        return HttpResult.succeeded(null);
       }
     };
 
     return locationsStorageClient.get(locationId)
       .thenApply(mapResponse)
-      .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
+      .exceptionally(e -> HttpResult.failed(new ServerErrorFailure(e)));
   }
 
   public CompletableFuture<HttpResult<Map<String, JsonObject>>> getLocations(
@@ -67,7 +67,7 @@ public class LocationRepository {
     return locationsStorageClient.getMany(locationsQuery, locationIds.size(), 0)
       .thenApply(response -> {
         if(response.getStatusCode() != 200) {
-          return HttpResult.failure(new ServerErrorFailure(
+          return HttpResult.failed(new ServerErrorFailure(
             String.format("Locations request (%s) failed %s: %s",
               locationsQuery, response.getStatusCode(),
               response.getBody())));
@@ -76,7 +76,7 @@ public class LocationRepository {
         List<JsonObject> locations = JsonArrayHelper.toList(
           response.getJson().getJsonArray("locations"));
 
-        return HttpResult.success(locations.stream().collect(
+        return HttpResult.succeeded(locations.stream().collect(
           Collectors.toMap(l -> l.getString("id"),
             Function.identity())));
       });

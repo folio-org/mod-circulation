@@ -7,6 +7,8 @@ import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.domain.*;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
+import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
+import org.folio.circulation.domain.validation.*;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.server.WebContext;
 import org.joda.time.DateTime;
@@ -17,7 +19,10 @@ import java.util.UUID;
 import java.util.function.Function;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.LoanValidation.*;
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.USER_BARCODE;
+import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 public class CheckOutByBarcodeResource extends Resource {
   public CheckOutByBarcodeResource(HttpClient client) {
@@ -39,7 +44,6 @@ public class CheckOutByBarcodeResource extends Resource {
     final JsonObject loan = new JsonObject();
     loan.put("id", UUID.randomUUID().toString());
 
-    defaultStatusAndAction(loan);
     copyOrDefaultLoanDate(request, loan);
 
     final String itemBarcode = request.getString("itemBarcode");
@@ -53,30 +57,56 @@ public class CheckOutByBarcodeResource extends Resource {
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
+
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
-      clients, () -> ValidationErrorFailure.failure(
-      "Cannot check out item via proxy when relationship is invalid", "proxyUserBarcode",
+      clients, () -> failure(
+      "Cannot check out item via proxy when relationship is invalid",
+      CheckOutByBarcodeRequest.PROXY_USER_BARCODE,
       proxyUserBarcode));
+
+    final AwaitingPickupValidator awaitingPickupValidator = new AwaitingPickupValidator(
+      message -> failure(message,
+        CheckOutByBarcodeRequest.USER_BARCODE, userBarcode));
+
+    final AlreadyCheckedOutValidator alreadyCheckedOutValidator = new AlreadyCheckedOutValidator(
+      message -> failure(message, ITEM_BARCODE, itemBarcode));
+
+    final ItemNotFoundValidator itemNotFoundValidator = new ItemNotFoundValidator(
+      message -> failure(message, ITEM_BARCODE, itemBarcode));
+
+    final InactiveUserValidator inactiveUserValidator = new InactiveUserValidator(
+      records -> records.getLoan().getUser(),
+      "Cannot check out to inactive user",
+      "Cannot determine if user is active or not",
+      message -> failure(message, USER_BARCODE, userBarcode));
+
+    final InactiveUserValidator inactiveProxyUserValidator = new InactiveUserValidator(
+      LoanAndRelatedRecords::getProxyingUser,
+      "Cannot check out via inactive proxying user",
+      "Cannot determine if proxying user is active or not",
+      message -> failure(message, PROXY_USER_BARCODE, proxyUserBarcode));
+
+    final ExistingOpenLoanValidator openLoanValidator = new ExistingOpenLoanValidator(
+      loanRepository, message -> failure(message, ITEM_BARCODE, itemBarcode));
 
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
-    completedFuture(HttpResult.success(new LoanAndRelatedRecords(Loan.from(loan))))
+    completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(Loan.from(loan))))
       .thenCombineAsync(userRepository.getUserByBarcode(userBarcode), this::addUser)
       .thenCombineAsync(userRepository.getProxyUserByBarcode(proxyUserBarcode), this::addProxyUser)
-      .thenApply(r -> refuseWhenRequestingUserIsInactive(r, userBarcode))
-      .thenApply(r -> refuseWhenProxyingUserIsInactive(r, proxyUserBarcode))
+      .thenApply(inactiveUserValidator::refuseWhenUserIsInactive)
+      .thenApply(inactiveProxyUserValidator::refuseWhenUserIsInactive)
       .thenCombineAsync(itemRepository.fetchByBarcode(itemBarcode), this::addInventoryRecords)
-      .thenApply(r -> r.next(v -> refuseWhenItemBarcodeDoesNotExist(r, itemBarcode)))
+      .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
       .thenApply(r -> r.map(mapBarcodes()))
-      .thenApply(r -> refuseWhenItemIsAlreadyCheckedOut(r, itemBarcode))
+      .thenApply(alreadyCheckedOutValidator::refuseWhenItemIsAlreadyCheckedOut)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
-      .thenComposeAsync(r -> r.after(records ->
-        refuseWhenHasOpenLoan(records, loanRepository, itemBarcode)))
+      .thenComposeAsync(r -> r.after(openLoanValidator::refuseWhenHasOpenLoan))
       .thenComposeAsync(r -> r.after(requestQueueFetcher::get))
-      .thenApply(r -> refuseWhenUserIsNotAwaitingPickup(r, userBarcode))
+      .thenApply(awaitingPickupValidator::refuseWhenUserIsNotAwaitingPickup)
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenApply(r -> r.next(this::calculateDueDate))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
@@ -126,7 +156,7 @@ public class CheckOutByBarcodeResource extends Resource {
 
   private WritableHttpResult<JsonObject> createdLoanFrom(HttpResult<JsonObject> result) {
     if(result.failed()) {
-      return HttpResult.failure(result.cause());
+      return HttpResult.failed(result.cause());
     }
     else {
       return new CreatedJsonHttpResult(result.value(),

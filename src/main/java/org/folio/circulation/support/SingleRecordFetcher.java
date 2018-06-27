@@ -17,7 +17,7 @@ public class SingleRecordFetcher {
   private final Supplier<HttpResult<JsonObject>> resultOnFailure;
 
   public SingleRecordFetcher(CollectionResourceClient client, String recordType) {
-    this(client, recordType, () -> HttpResult.success(null));
+    this(client, recordType, () -> HttpResult.succeeded(null));
   }
 
   public SingleRecordFetcher(
@@ -35,7 +35,7 @@ public class SingleRecordFetcher {
 
     return client.get(id)
       .thenApply(r -> mapToResult(r, this.resultOnFailure))
-      .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
+      .exceptionally(e -> HttpResult.failed(new ServerErrorFailure(e)));
   }
 
   private HttpResult<JsonObject> mapToResult(
@@ -47,14 +47,14 @@ public class SingleRecordFetcher {
         response.getStatusCode(), response.getBody());
 
       if (response.getStatusCode() == 200) {
-        return HttpResult.success(response.getJson());
+        return HttpResult.succeeded(response.getJson());
       } else {
         return resultOnFailure.get();
       }
     }
     else {
       log.warn("Did not receive response to request");
-      return HttpResult.failure(new ServerErrorFailure("Did not receive response to request"));
+      return HttpResult.failed(new ServerErrorFailure("Did not receive response to request"));
     }
   }
 }

@@ -11,7 +11,7 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import static org.folio.circulation.support.HttpResult.failure;
+import static org.folio.circulation.support.HttpResult.failed;
 
 class FixedDueDateSchedules {
   private final List<JsonObject> schedules;
@@ -67,8 +67,8 @@ class FixedDueDateSchedules {
 
     return findDueDateFor(loanDate)
       .map(limit -> earliest(dueDate, limit))
-      .map(HttpResult::success)
-      .orElseGet(() -> failure(noApplicableScheduleError.get()));
+      .map(HttpResult::succeeded)
+      .orElseGet(() -> failed(noApplicableScheduleError.get()));
   }
 
   private DateTime earliest(DateTime rollingDueDate, DateTime limit) {

@@ -8,7 +8,7 @@ import org.joda.time.DateTime;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static org.folio.circulation.support.HttpResult.failure;
+import static org.folio.circulation.support.HttpResult.failed;
 
 public class Period {
   private final Integer duration;
@@ -51,30 +51,30 @@ public class Period {
     Function<Integer, ValidationErrorFailure> onUnrecognisedDuration) {
 
     if(interval == null) {
-      return failure(onUnrecognisedPeriod.get());
+      return failed(onUnrecognisedPeriod.get());
     }
 
     if(duration == null) {
-      return failure(onUnrecognisedPeriod.get());
+      return failed(onUnrecognisedPeriod.get());
     }
 
     if(duration <= 0) {
-      return failure(onUnrecognisedDuration.apply(duration));
+      return failed(onUnrecognisedDuration.apply(duration));
     }
 
     switch (interval) {
       case "Months":
-        return HttpResult.success(from.plusMonths(duration));
+        return HttpResult.succeeded(from.plusMonths(duration));
       case "Weeks":
-        return HttpResult.success(from.plusWeeks(duration));
+        return HttpResult.succeeded(from.plusWeeks(duration));
       case "Days":
-        return HttpResult.success(from.plusDays(duration));
+        return HttpResult.succeeded(from.plusDays(duration));
       case "Hours":
-        return HttpResult.success(from.plusHours(duration));
+        return HttpResult.succeeded(from.plusHours(duration));
       case "Minutes":
-        return HttpResult.success(from.plusMinutes(duration));
+        return HttpResult.succeeded(from.plusMinutes(duration));
       default:
-        return failure(onUnrecognisedInterval.apply(interval));
+        return failed(onUnrecognisedInterval.apply(interval));
     }
   }
 

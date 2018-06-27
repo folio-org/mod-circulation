@@ -39,19 +39,19 @@ public class MaterialTypeRepository {
     // and allowable not found
     final Function<Response, HttpResult<JsonObject>> mapResponse = response -> {
       if(response != null && response.getStatusCode() == 200) {
-        return HttpResult.success(response.getJson());
+        return HttpResult.succeeded(response.getJson());
       }
       else {
         log.warn("Could not get material type {} for item {}",
           materialTypeId, itemId);
 
-        return HttpResult.success(null);
+        return HttpResult.succeeded(null);
       }
     };
 
     return materialTypesStorageClient.get(materialTypeId)
       .thenApply(mapResponse)
-      .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
+      .exceptionally(e -> HttpResult.failed(new ServerErrorFailure(e)));
   }
 
   public CompletableFuture<HttpResult<Map<String, JsonObject>>> getMaterialTypes(
@@ -67,7 +67,7 @@ public class MaterialTypeRepository {
     return materialTypesStorageClient.getMany(materialTypesQuery, materialTypeIds.size(), 0)
       .thenApply(materialTypesResponse -> {
         if(materialTypesResponse.getStatusCode() != 200) {
-          return HttpResult.failure(new ServerErrorFailure(
+          return HttpResult.failed(new ServerErrorFailure(
             String.format("Material Types request (%s) failed %s: %s",
               materialTypesQuery, materialTypesResponse.getStatusCode(),
               materialTypesResponse.getBody())));
@@ -76,7 +76,7 @@ public class MaterialTypeRepository {
         List<JsonObject> materialTypes = JsonArrayHelper.toList(
           materialTypesResponse.getJson().getJsonArray("mtypes"));
 
-        return HttpResult.success(materialTypes.stream().collect(
+        return HttpResult.succeeded(materialTypes.stream().collect(
           Collectors.toMap(m -> m.getString("id"),
             Function.identity())));
       });

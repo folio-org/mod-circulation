@@ -20,13 +20,13 @@ public class ValidationErrorFailure implements HttpFailure {
     String key,
     String value) {
 
-    return HttpResult.failure(
+    return HttpResult.failed(
       failure(new ValidationError(reason, key, value)));
   }
 
   public static <T> HttpResult<T> failedResult(ValidationError error) {
 
-    return HttpResult.failure(failure(error));
+    return HttpResult.failed(failure(error));
   }
 
   public static ValidationErrorFailure failure(

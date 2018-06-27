@@ -23,7 +23,7 @@ public class OkJsonHttpResult extends JsonHttpResult {
 
   public static WritableHttpResult<JsonObject> from(HttpResult<JsonObject> result) {
     if(result.failed()) {
-      return HttpResult.failure(result.cause());
+      return HttpResult.failed(result.cause());
     }
     else {
       return new OkJsonHttpResult(result.value());

@@ -26,7 +26,7 @@ public class NoContentHttpResult implements WritableHttpResult<Void> {
 
   public static <T>  WritableHttpResult<Void> from(HttpResult<T> result) {
     if(result.failed()) {
-      return HttpResult.failure(result.cause());
+      return HttpResult.failed(result.cause());
     }
     else {
       return new NoContentHttpResult();

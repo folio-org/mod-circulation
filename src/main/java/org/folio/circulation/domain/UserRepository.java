@@ -10,6 +10,9 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
+import static org.folio.circulation.support.HttpResult.failed;
+import static org.folio.circulation.support.ValidationErrorFailure.failure;
+
 public class UserRepository {
   private final CollectionResourceClient usersStorageClient;
 
@@ -28,7 +31,7 @@ public class UserRepository {
   public CompletableFuture<HttpResult<User>> getProxyUserByBarcode(String barcode) {
     //Not proxying, so no need to get proxy user
     if(StringUtils.isBlank(barcode)) {
-      return CompletableFuture.completedFuture(HttpResult.success(null));
+      return CompletableFuture.completedFuture(HttpResult.succeeded(null));
     }
     else {
       return getUserByBarcode(barcode, "proxyUserBarcode");
@@ -45,10 +48,10 @@ public class UserRepository {
 
     final Function<Response, HttpResult<User>> mapResponse = response -> {
       if(response.getStatusCode() == 404) {
-        return HttpResult.failure(new ServerErrorFailure("Unable to locate User"));
+        return failed(new ServerErrorFailure("Unable to locate User"));
       }
       else if(response.getStatusCode() != 200) {
-        return HttpResult.failure(new ForwardOnFailure(response));
+        return failed(new ForwardOnFailure(response));
       }
       else {
         //TODO: Check for multiple total records
@@ -57,15 +60,15 @@ public class UserRepository {
 
         final Optional<JsonObject> firstUser = wrappedUsers.getRecords().stream().findFirst();
 
-        return firstUser.map(User::new).map(HttpResult::success).orElseGet(
-          () -> HttpResult.failure(ValidationErrorFailure.failure(
+        return firstUser.map(User::new).map(HttpResult::succeeded).orElseGet(
+          () -> failed(failure(
           "Could not find user with matching barcode", propertyName, barcode)));
       }
     };
 
     return usersStorageClient.getMany(String.format("barcode==%s", barcode), 1, 0)
       .thenApply(mapResponse)
-      .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
+      .exceptionally(e -> failed(new ServerErrorFailure(e)));
   }
 
   //TODO: Need a better way of choosing behaviour for not found
@@ -76,24 +79,24 @@ public class UserRepository {
     final Function<Response, HttpResult<User>> mapResponse = response -> {
       if(response.getStatusCode() == 404) {
         if(failOnNotFound) {
-          return HttpResult.failure(new ValidationErrorFailure(
+          return failed(new ValidationErrorFailure(
             new ValidationError("user is not found", "userId", userId)));
         }
         else {
-          return HttpResult.success(null);
+          return HttpResult.succeeded(null);
         }
       }
       else if(response.getStatusCode() != 200) {
-        return HttpResult.failure(new ForwardOnFailure(response));
+        return failed(new ForwardOnFailure(response));
       }
       else {
         //Got user record, we're good to continue
-        return HttpResult.success(new User(response.getJson()));
+        return HttpResult.succeeded(new User(response.getJson()));
       }
     };
 
     return this.usersStorageClient.get(userId)
       .thenApply(mapResponse)
-      .exceptionally(e -> HttpResult.failure(new ServerErrorFailure(e)));
+      .exceptionally(e -> failed(new ServerErrorFailure(e)));
   }
 }
