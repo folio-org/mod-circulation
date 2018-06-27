@@ -5,7 +5,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.domain.*;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
-import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.server.ForwardResponse;
 import org.folio.circulation.support.http.server.JsonResponse;
@@ -17,6 +16,7 @@ import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.LoanValidation.defaultStatusAndAction;
+import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
 
 public class LoanCollectionResource extends CollectionResource {
   public LoanCollectionResource(HttpClient client) {
@@ -52,7 +52,8 @@ public class LoanCollectionResource extends CollectionResource {
     final AlreadyCheckedOutValidator alreadyCheckedOutValidator = new AlreadyCheckedOutValidator(
       message -> ValidationErrorFailure.failure(message, "itemId", loan.getItemId()));
 
-    final ItemNotFoundValidator itemNotFoundValidator = new ItemNotFoundValidator();
+    final ItemNotFoundValidator itemNotFoundValidator = new ItemNotFoundValidator(
+      message -> ValidationErrorFailure.failure(message, ITEM_ID, loan.getItemId()));
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
@@ -94,12 +95,14 @@ public class LoanCollectionResource extends CollectionResource {
     final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
+
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> ValidationErrorFailure.failure(
         "proxyUserId is not valid", "proxyUserId",
         loan.getProxyUserId()));
 
-    final ItemNotFoundValidator itemNotFoundValidator = new ItemNotFoundValidator();
+    final ItemNotFoundValidator itemNotFoundValidator = new ItemNotFoundValidator(
+      message -> ValidationErrorFailure.failure(message, ITEM_ID, loan.getItemId()));
 
     completedFuture(HttpResult.success(new LoanAndRelatedRecords(loan)))
       .thenApply(this::refuseWhenNotOpenOrClosed)
@@ -214,7 +217,7 @@ public class LoanCollectionResource extends CollectionResource {
     return result.next(loan -> {
       if(loan.getLoan().getItem().doesNotHaveHolding()) {
         return HttpResult.failure(ValidationErrorFailure.failure(
-          "Holding does not exist", LoanProperties.ITEM_ID, loan.getLoan().getItemId()));
+          "Holding does not exist", ITEM_ID, loan.getLoan().getItemId()));
       }
       else {
         return result;

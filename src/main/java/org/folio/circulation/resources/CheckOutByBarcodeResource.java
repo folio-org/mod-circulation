@@ -69,7 +69,8 @@ public class CheckOutByBarcodeResource extends Resource {
     final AlreadyCheckedOutValidator alreadyCheckedOutValidator = new AlreadyCheckedOutValidator(
       message -> ValidationErrorFailure.failure(message, ITEM_BARCODE_PROPERTY_NAME, itemBarcode));
 
-    final ItemNotFoundValidator itemNotFoundValidator = new ItemNotFoundValidator();
+    final ItemNotFoundValidator itemNotFoundValidator = new ItemNotFoundValidator(
+      message -> ValidationErrorFailure.failure(message, ITEM_BARCODE_PROPERTY_NAME, itemBarcode));
 
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
@@ -82,7 +83,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(r -> refuseWhenRequestingUserIsInactive(r, userBarcode))
       .thenApply(r -> refuseWhenProxyingUserIsInactive(r, proxyUserBarcode))
       .thenCombineAsync(itemRepository.fetchByBarcode(itemBarcode), this::addInventoryRecords)
-      .thenApply(r -> r.next(v -> itemNotFoundValidator.refuseWhenItemNotFound(r, itemBarcode)))
+      .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
       .thenApply(r -> r.map(mapBarcodes()))
       .thenApply(alreadyCheckedOutValidator::refuseWhenItemIsAlreadyCheckedOut)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
