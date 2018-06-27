@@ -71,6 +71,8 @@ public class CheckOutByBarcodeResource extends Resource {
     final ItemNotFoundValidator itemNotFoundValidator = new ItemNotFoundValidator(
       message -> ValidationErrorFailure.failure(message, ITEM_BARCODE_PROPERTY_NAME, itemBarcode));
 
+    final InactiveUserValidator inactiveUserValidator = new InactiveUserValidator();
+
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
 
@@ -79,8 +81,8 @@ public class CheckOutByBarcodeResource extends Resource {
     completedFuture(HttpResult.success(new LoanAndRelatedRecords(Loan.from(loan))))
       .thenCombineAsync(userRepository.getUserByBarcode(userBarcode), this::addUser)
       .thenCombineAsync(userRepository.getProxyUserByBarcode(proxyUserBarcode), this::addProxyUser)
-      .thenApply(r -> refuseWhenRequestingUserIsInactive(r, userBarcode))
-      .thenApply(r -> refuseWhenProxyingUserIsInactive(r, proxyUserBarcode))
+      .thenApply(inactiveUserValidator::refuseWhenRequestingUserIsInactive)
+      .thenApply(inactiveUserValidator::refuseWhenProxyingUserIsInactive)
       .thenCombineAsync(itemRepository.fetchByBarcode(itemBarcode), this::addInventoryRecords)
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
       .thenApply(r -> r.map(mapBarcodes()))
