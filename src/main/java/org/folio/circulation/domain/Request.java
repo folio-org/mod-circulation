@@ -3,11 +3,12 @@ package org.folio.circulation.domain;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.Item;
+import org.joda.time.DateTime;
 
+import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
 import static org.folio.circulation.domain.representations.RequestProperties.STATUS;
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
-import org.joda.time.DateTime;
 
 public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private final JsonObject representation;
@@ -32,6 +33,14 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
     return StringUtils.equals(status, RequestStatus.OPEN_AWAITING_PICKUP)
       || StringUtils.equals(status, RequestStatus.OPEN_NOT_YET_FILLED);
+  }
+
+  boolean isFor(User user) {
+    return StringUtils.equals(getUserId(), user.getId());
+  }
+
+  boolean isAwaitingPickup() {
+    return StringUtils.equals(getStatus(), OPEN_AWAITING_PICKUP);
   }
 
   @Override

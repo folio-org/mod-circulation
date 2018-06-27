@@ -1,11 +1,9 @@
 package org.folio.circulation.domain;
 
-import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ValidationErrorFailure;
 
-import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
 import static org.folio.circulation.support.HttpResult.failure;
 
 public class AwaitingPickupValidator {
@@ -19,7 +17,7 @@ public class AwaitingPickupValidator {
       String itemTitle = loan.getLoan().getItem().getTitle();
       String itemBarcode = loan.getLoan().getItem().getBarcode();
 
-        if(hasAwaitingPickupRequestForOtherPatron(requestQueue, requestingUser)) {
+        if(requestQueue.hasAwaitingPickupRequestForOtherPatron(requestingUser)) {
         return failure(ValidationErrorFailure.failure(
           String.format("%s (Barcode: %s) cannot be checked out to user %s because it is awaiting pickup by another patron",
           itemTitle, itemBarcode, requestingUser.getPersonalName()),
@@ -41,7 +39,7 @@ public class AwaitingPickupValidator {
       String itemTitle = loan.getLoan().getItem().getTitle();
       String itemBarcode = loan.getLoan().getItem().getBarcode();
 
-      if(hasAwaitingPickupRequestForOtherPatron(requestQueue, requestingUser)) {
+      if(requestQueue.hasAwaitingPickupRequestForOtherPatron(requestingUser)) {
         return failure(ValidationErrorFailure.failure(
           String.format("%s (Barcode: %s) cannot be checked out to user %s because it is awaiting pickup by another patron",
           itemTitle, itemBarcode, requestingUser.getPersonalName()),
@@ -51,28 +49,5 @@ public class AwaitingPickupValidator {
         return loanAndRelatedRecords;
       }
     });
-  }
-
-  private static boolean hasAwaitingPickupRequestForOtherPatron(
-    RequestQueue requestQueue,
-    User requestingUser) {
-
-    if(!requestQueue.hasOutstandingFulfillableRequests()) {
-      return false;
-    }
-    else {
-      final Request highestPriority = requestQueue.getHighestPriorityFulfillableRequest();
-
-      return isAwaitingPickup(highestPriority)
-        && !isFor(highestPriority, requestingUser);
-    }
-  }
-
-  private static boolean isFor(Request request, User user) {
-    return StringUtils.equals(request.getUserId(), user.getId());
-  }
-
-  private static boolean isAwaitingPickup(Request highestPriority) {
-    return StringUtils.equals(highestPriority.getStatus(), OPEN_AWAITING_PICKUP);
   }
 }
