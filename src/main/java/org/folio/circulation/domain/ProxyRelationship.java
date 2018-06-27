@@ -8,12 +8,12 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimePrope
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 
-class ProxyRelationship {
+public class ProxyRelationship {
 
   private final DateTime expirationDate;
   private final boolean active;
 
-  ProxyRelationship(JsonObject representation) {
+  public ProxyRelationship(JsonObject representation) {
     this.active = getActive(representation);
     this.expirationDate = getExpirationDate(representation);
 
@@ -49,7 +49,7 @@ class ProxyRelationship {
     return StringUtils.equalsIgnoreCase(status, "Active");
   }
 
-  boolean isActive() {
+  public boolean isActive() {
       boolean expired = expirationDate != null
         && expirationDate.isBefore(DateTime.now());
 

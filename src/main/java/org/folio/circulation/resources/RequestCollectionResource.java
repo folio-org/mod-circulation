@@ -6,6 +6,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.domain.*;
 import org.folio.circulation.domain.representations.RequestProperties;
+import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.server.*;
 

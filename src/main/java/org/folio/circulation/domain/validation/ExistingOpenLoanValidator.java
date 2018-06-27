@@ -1,5 +1,7 @@
-package org.folio.circulation.domain;
+package org.folio.circulation.domain.validation;
 
+import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ValidationErrorFailure;
 
@@ -26,7 +28,7 @@ public class ExistingOpenLoanValidator {
 
     final String itemId = loanAndRelatedRecords.getLoan().getItemId();
 
-    return this.loanRepository.hasOpenLoan(itemId)
+    return loanRepository.hasOpenLoan(itemId)
       .thenApply(r -> r.next(openLoan -> {
         if(openLoan) {
           return failed(existingOpenLoanErrorFunction.apply(

@@ -26,7 +26,7 @@ public class RequestQueue {
     return fulfillableRequests().get(0);
   }
 
-  boolean hasAwaitingPickupRequestForOtherPatron(
+  public boolean hasAwaitingPickupRequestForOtherPatron(
     User requestingUser) {
 
     if(!hasOutstandingFulfillableRequests()) {

@@ -8,6 +8,7 @@ import org.folio.circulation.domain.*;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
+import org.folio.circulation.domain.validation.*;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.server.WebContext;
 import org.joda.time.DateTime;

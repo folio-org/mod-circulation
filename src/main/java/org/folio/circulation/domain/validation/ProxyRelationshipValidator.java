@@ -1,5 +1,7 @@
-package org.folio.circulation.domain;
+package org.folio.circulation.domain.validation;
 
+import org.folio.circulation.domain.ProxyRelationship;
+import org.folio.circulation.domain.UserRelatedRecord;
 import org.folio.circulation.support.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

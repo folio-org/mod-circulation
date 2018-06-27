@@ -17,11 +17,11 @@ public class User {
     this.representation = representation;
   }
 
-  boolean canDetermineStatus() {
+  public boolean canDetermineStatus() {
     return !representation.containsKey("active");
   }
 
-  Boolean isInactive() {
+  public Boolean isInactive() {
     return !isActive();
   }
 
@@ -83,7 +83,7 @@ public class User {
     return userSummary;
   }
 
-  String getPersonalName() {
+  public String getPersonalName() {
     if(StringUtils.isNotBlank(getFirstName()) &&
       StringUtils.isNotBlank(getLastName())) {
 

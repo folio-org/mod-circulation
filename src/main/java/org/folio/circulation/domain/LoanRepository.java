@@ -254,7 +254,7 @@ public class LoanRepository {
     return storageLoan;
   }
 
-  CompletableFuture<HttpResult<Boolean>> hasOpenLoan(String itemId) {
+  public CompletableFuture<HttpResult<Boolean>> hasOpenLoan(String itemId) {
     return findOpenLoans(itemId)
       .thenApply(r -> r.map(loans -> !loans.getRecords().isEmpty()));
   }
