@@ -10,8 +10,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-import static org.folio.circulation.support.http.server.JsonResponse.response;
-
 public class ValidationErrorFailure implements HttpFailure {
   private final Collection<ValidationError> errors = new ArrayList<>();
 
@@ -54,7 +52,7 @@ public class ValidationErrorFailure implements HttpFailure {
 
   @Override
   public void writeTo(HttpServerResponse response) {
-    response(response, asJson());
+    new JsonHttpResult(422, asJson(), null).writeTo(response);
   }
 
   private JsonObject asJson() {

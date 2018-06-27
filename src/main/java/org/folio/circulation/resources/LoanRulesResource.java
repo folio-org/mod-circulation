@@ -1,6 +1,7 @@
 package org.folio.circulation.resources;
 
 import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
@@ -11,6 +12,7 @@ import org.folio.circulation.loanrules.LoanRulesException;
 import org.folio.circulation.loanrules.Text2Drools;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.JsonHttpResult;
 import org.folio.circulation.support.OkJsonHttpResult;
 import org.folio.circulation.support.http.server.*;
 import org.slf4j.Logger;
@@ -95,10 +97,10 @@ public class LoanRulesResource extends Resource {
       rulesInput = routingContext.getBodyAsJson();
       Text2Drools.convert(rulesInput.getString("loanRulesAsTextFile"));
     } catch (LoanRulesException e) {
-      JsonResponse.loanRulesError(routingContext.response(), e);
+      loanRulesError(routingContext.response(), e);
       return;
     } catch (DecodeException e) {
-      JsonResponse.loanRulesError(routingContext.response(), e);
+      loanRulesError(routingContext.response(), e);
       return;
     } catch (Exception e) {
       ServerErrorResponse.internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
@@ -114,5 +116,19 @@ public class LoanRulesResource extends Resource {
         ForwardResponse.forward(routingContext.response(), response);
       }
     });
+  }
+
+  private static void loanRulesError(HttpServerResponse response, LoanRulesException e) {
+    JsonObject body = new JsonObject();
+    body.put("message", e.getMessage());
+    body.put("line", e.getLine());
+    body.put("column", e.getColumn());
+    new JsonHttpResult(422, body, null).writeTo(response);
+  }
+
+  private static void loanRulesError(HttpServerResponse response, DecodeException e) {
+    JsonObject body = new JsonObject();
+    body.put("message", e.getMessage());  // already contains line and column number
+    new JsonHttpResult(422, body, null).writeTo(response);
   }
 }
