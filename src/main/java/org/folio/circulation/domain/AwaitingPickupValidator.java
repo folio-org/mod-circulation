@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ValidationErrorFailure;
 
@@ -44,7 +45,7 @@ public class AwaitingPickupValidator {
         return failure(ValidationErrorFailure.failure(
           String.format("%s (Barcode: %s) cannot be checked out to user %s because it is awaiting pickup by another patron",
           itemTitle, itemBarcode, requestingUser.getPersonalName()),
-          LoanValidation.USER_BARCODE_PROPERTY_NAME, barcode));
+          CheckOutByBarcodeRequest.USER_BARCODE_PROPERTY_NAME, barcode));
       }
       else {
         return loanAndRelatedRecords;

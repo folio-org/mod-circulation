@@ -7,6 +7,7 @@ import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.domain.*;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
+import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.server.WebContext;
 import org.joda.time.DateTime;
@@ -55,7 +56,8 @@ public class CheckOutByBarcodeResource extends Resource {
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> ValidationErrorFailure.failure(
-      "Cannot check out item via proxy when relationship is invalid", "proxyUserBarcode",
+      "Cannot check out item via proxy when relationship is invalid",
+      CheckOutByBarcodeRequest.PROXY_USER_BARCODE_PROPERTY_NAME,
       proxyUserBarcode));
 
     final AwaitingPickupValidator awaitingPickupValidator = new AwaitingPickupValidator();

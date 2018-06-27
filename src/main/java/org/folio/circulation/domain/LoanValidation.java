@@ -1,21 +1,19 @@
 package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
-import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.support.*;
+import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Item;
+import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.ValidationErrorFailure;
 
 import java.util.concurrent.CompletableFuture;
 
-import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.*;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
 import static org.folio.circulation.support.HttpResult.failure;
 import static org.folio.circulation.support.HttpResult.success;
 
 public class LoanValidation {
-  private static final String ITEM_BARCODE_PROPERTY_NAME = "itemBarcode";
-  public static final String USER_BARCODE_PROPERTY_NAME = "userBarcode";
-  private static final String PROXY_USER_BARCODE_PROPERTY_NAME = "proxyUserBarcode";
-
   private LoanValidation() { }
 
   public static HttpResult<LoanAndRelatedRecords> refuseWhenItemDoesNotExist(
