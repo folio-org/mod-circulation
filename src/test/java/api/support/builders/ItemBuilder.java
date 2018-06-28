@@ -19,13 +19,14 @@ public class ItemBuilder extends JsonBuilder implements Builder {
   private final String barcode;
   private final String status;
   private final UUID materialTypeId;
+  private final UUID permanentLocationId;
   private final UUID temporaryLocationId;
   private final UUID permanentLoanTypeId;
   private final UUID temporaryLoanTypeId;
 
   public ItemBuilder() {
     this(UUID.randomUUID(), null, "565578437802", AVAILABLE,
-      null, null, null);
+      null, null, null, null);
   }
 
   private ItemBuilder(
@@ -33,7 +34,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     UUID holdingId,
     String barcode,
     String status,
-    UUID temporaryLocationId,
+    UUID permanentLocationId, UUID temporaryLocationId,
     UUID materialTypeId,
     UUID temporaryLoanTypeId) {
 
@@ -43,6 +44,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     this.status = status;
     this.temporaryLocationId = temporaryLocationId;
     this.materialTypeId = materialTypeId;
+    this.permanentLocationId = permanentLocationId;
     this.temporaryLoanTypeId = temporaryLoanTypeId;
 
     //TODO: Figure out a better way of injecting defaults in different situations
@@ -59,6 +61,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     put(itemRequest, "materialTypeId", materialTypeId);
     put(itemRequest, "permanentLoanTypeId", permanentLoanTypeId);
     put(itemRequest, "temporaryLoanTypeId", temporaryLoanTypeId);
+    put(itemRequest, "permanentLocationId", permanentLocationId);
     put(itemRequest, "temporaryLocationId", temporaryLocationId);
     put(itemRequest, "status", status, new JsonObject().put("name", status));
 
@@ -79,6 +82,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.holdingId,
       this.barcode,
       status,
+      this.permanentLocationId,
       this.temporaryLocationId,
       this.materialTypeId,
       this.temporaryLoanTypeId);
@@ -90,6 +94,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.holdingId,
       barcode,
       this.status,
+      this.permanentLocationId,
       this.temporaryLocationId,
       this.materialTypeId,
       this.temporaryLoanTypeId);
@@ -99,19 +104,36 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     return withBarcode(null);
   }
 
-  public ItemBuilder withNoTemporaryLocation() {
-    return withTemporaryLocation(null);
-  }
-
-  public ItemBuilder withTemporaryLocation(UUID temporaryLocationId) {
+  public ItemBuilder withPermanentLocation(UUID locationId) {
     return new ItemBuilder(
       this.id,
       this.holdingId,
       this.barcode,
       this.status,
-      temporaryLocationId,
+      locationId,
+      this.temporaryLocationId,
       this.materialTypeId,
       this.temporaryLoanTypeId);
+  }
+
+  public ItemBuilder withNoPermanentLocation() {
+    return withPermanentLocation(null);
+  }
+
+  public ItemBuilder withTemporaryLocation(UUID locationId) {
+    return new ItemBuilder(
+      this.id,
+      this.holdingId,
+      this.barcode,
+      this.status,
+      this.permanentLocationId,
+      locationId,
+      this.materialTypeId,
+      this.temporaryLoanTypeId);
+  }
+
+  public ItemBuilder withNoTemporaryLocation() {
+    return withTemporaryLocation(null);
   }
 
   public ItemBuilder forHolding(UUID holdingId) {
@@ -120,6 +142,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       holdingId,
       this.barcode,
       this.status,
+      this.permanentLocationId,
       this.temporaryLocationId,
       this.materialTypeId,
       this.temporaryLoanTypeId);
@@ -131,6 +154,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.holdingId,
       this.barcode,
       this.status,
+      this.permanentLocationId,
       this.temporaryLocationId,
       materialTypeId,
       this.temporaryLoanTypeId);
@@ -142,9 +166,9 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.holdingId,
       this.barcode,
       this.status,
+      this.permanentLocationId,
       this.temporaryLocationId,
       this.materialTypeId,
       loanTypeId);
-
   }
 }

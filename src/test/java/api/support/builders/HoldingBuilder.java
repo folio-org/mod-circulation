@@ -6,7 +6,6 @@ import api.APITestSuite;
 import java.util.UUID;
 
 public class HoldingBuilder extends JsonBuilder implements Builder {
-
   private final UUID instanceId;
   private final UUID permanentLocationId;
   private final UUID temporaryLocationId;
@@ -59,12 +58,20 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
       this.callNumber);
   }
 
-  public Builder withTemporaryLocation(UUID locationId) {
+  public HoldingBuilder withNoPermanentLocation() {
+    return withPermanentLocation(null);
+  }
+
+  public HoldingBuilder withTemporaryLocation(UUID locationId) {
     return new HoldingBuilder(
       this.instanceId,
       this.permanentLocationId,
       locationId,
       this.callNumber);
+  }
+
+  public HoldingBuilder withNoTemporaryLocation() {
+    return withTemporaryLocation(null);
   }
 
   public HoldingBuilder withCallNumber(String callNumber) {

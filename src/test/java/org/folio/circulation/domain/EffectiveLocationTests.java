@@ -16,8 +16,14 @@ public class EffectiveLocationTests {
     final UUID popularReadingLocationId = UUID.randomUUID();
 
     final Item item = new Item(
-      new ItemBuilder().create(),
-      new HoldingBuilder().withPermanentLocation(popularReadingLocationId).create(),
+      new ItemBuilder()
+        .withNoPermanentLocation()
+        .withNoTemporaryLocation()
+        .create(),
+      new HoldingBuilder()
+        .withPermanentLocation(popularReadingLocationId)
+        .withNoTemporaryLocation()
+        .create(),
       new InstanceBuilder("").create(),
       null, null);
 
@@ -30,7 +36,10 @@ public class EffectiveLocationTests {
     final UUID secondFloorEconomicsLocationId = UUID.randomUUID();
 
     final Item item = new Item(
-      new ItemBuilder().create(),
+      new ItemBuilder()
+        .withNoPermanentLocation()
+        .withNoTemporaryLocation()
+        .create(),
       new HoldingBuilder()
         .withPermanentLocation(popularReadingLocationId)
         .withTemporaryLocation(secondFloorEconomicsLocationId)
@@ -42,13 +51,55 @@ public class EffectiveLocationTests {
   }
 
   @Test
+  public void itemTemporaryLocationTakesPrecedenceOverItemPermanentLocation() {
+    final UUID secondFloorEconomicsLocationId = UUID.randomUUID();
+    final UUID thirdFloorDisplayCaseLocationId = UUID.randomUUID();
+
+    final Item item = new Item(
+      new ItemBuilder()
+        .withPermanentLocation(secondFloorEconomicsLocationId)
+        .withTemporaryLocation(thirdFloorDisplayCaseLocationId).create(),
+      new HoldingBuilder()
+        .withNoPermanentLocation()
+        .withNoTemporaryLocation()
+        .create(),
+      new InstanceBuilder("").create(),
+      null, null);
+
+    assertThat(item.getLocationId(), is(thirdFloorDisplayCaseLocationId));
+  }
+
+  @Test
+  public void itemTemporaryLocationTakesPrecedenceOverAllOtherLocations() {
+    final UUID popularReadingLocationId = UUID.randomUUID();
+    final UUID secondFloorEconomicsLocationId = UUID.randomUUID();
+    final UUID firstFloorComputerScienceLocationId = UUID.randomUUID();
+    final UUID thirdFloorDisplayCaseLocationId = UUID.randomUUID();
+
+    final Item item = new Item(
+      new ItemBuilder()
+        .withPermanentLocation(secondFloorEconomicsLocationId)
+        .withTemporaryLocation(thirdFloorDisplayCaseLocationId).create(),
+      new HoldingBuilder()
+        .withPermanentLocation(firstFloorComputerScienceLocationId)
+        .withTemporaryLocation(popularReadingLocationId)
+        .create(),
+      new InstanceBuilder("").create(),
+      null, null);
+
+    assertThat(item.getLocationId(), is(thirdFloorDisplayCaseLocationId));
+  }
+
+  @Test
   public void itemTemporaryLocationTakesPrecedenceOverHoldingTemporaryLocation() {
     final UUID popularReadingLocationId = UUID.randomUUID();
     final UUID secondFloorEconomicsLocationId = UUID.randomUUID();
     final UUID firstFloorComputerScienceLocationId = UUID.randomUUID();
 
     final Item item = new Item(
-      new ItemBuilder().withTemporaryLocation(secondFloorEconomicsLocationId).create(),
+      new ItemBuilder()
+        .withNoPermanentLocation()
+        .withTemporaryLocation(secondFloorEconomicsLocationId).create(),
       new HoldingBuilder()
         .withPermanentLocation(firstFloorComputerScienceLocationId)
         .withTemporaryLocation(popularReadingLocationId)
@@ -58,16 +109,19 @@ public class EffectiveLocationTests {
 
     assertThat(item.getLocationId(), is(secondFloorEconomicsLocationId));
   }
-  
+
   @Test
   public void itemTemporaryLocationTakesPrecedenceOverHoldingPermanent() {
     final UUID popularReadingLocationId = UUID.randomUUID();
     final UUID firstFloorComputerScienceLocationId = UUID.randomUUID();
 
     final Item item = new Item(
-      new ItemBuilder().withTemporaryLocation(popularReadingLocationId).create(),
+      new ItemBuilder()
+        .withNoPermanentLocation()
+        .withTemporaryLocation(popularReadingLocationId).create(),
       new HoldingBuilder()
         .withPermanentLocation(firstFloorComputerScienceLocationId)
+        .withNoTemporaryLocation()
         .create(),
       new InstanceBuilder("").create(),
       null, null);
