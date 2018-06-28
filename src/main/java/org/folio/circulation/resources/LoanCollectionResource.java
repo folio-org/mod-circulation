@@ -55,8 +55,7 @@ public class LoanCollectionResource extends CollectionResource {
     final AlreadyCheckedOutValidator alreadyCheckedOutValidator = new AlreadyCheckedOutValidator(
       message -> failure(message, "itemId", loan.getItemId()));
 
-    final ItemNotFoundValidator itemNotFoundValidator = new ItemNotFoundValidator(
-      message -> failure(message, ITEM_ID, loan.getItemId()));
+    final ItemNotFoundValidator itemNotFoundValidator = createItemNotFoundValidator(loan);
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
@@ -102,8 +101,7 @@ public class LoanCollectionResource extends CollectionResource {
         "proxyUserId is not valid", "proxyUserId",
         loan.getProxyUserId()));
 
-    final ItemNotFoundValidator itemNotFoundValidator = new ItemNotFoundValidator(
-      message -> failure(message, ITEM_ID, loan.getItemId()));
+    final ItemNotFoundValidator itemNotFoundValidator = createItemNotFoundValidator(loan);
 
     completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(loan)))
       .thenApply(this::refuseWhenNotOpenOrClosed)
@@ -233,5 +231,11 @@ public class LoanCollectionResource extends CollectionResource {
       .map(LoanAndRelatedRecords::getLoan)
       .next(Loan::isValidStatus)
       .next(v -> loanAndRelatedRecords);
+  }
+
+  private ItemNotFoundValidator createItemNotFoundValidator(Loan loan) {
+    return new ItemNotFoundValidator(
+      () -> failure(String.format("No item with ID %s could be found", loan.getItemId()),
+        ITEM_ID, loan.getItemId()));
   }
 }

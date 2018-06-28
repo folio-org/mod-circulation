@@ -185,7 +185,7 @@ public class LoanAPITests extends APITests {
       response.getStatusCode(), is(UNPROCESSABLE_ENTITY));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("item could not be found"),
+      hasMessage(String.format("No item with ID %s could be found", unknownItemId)),
       hasParameter("itemId", unknownItemId.toString()))));
   }
 

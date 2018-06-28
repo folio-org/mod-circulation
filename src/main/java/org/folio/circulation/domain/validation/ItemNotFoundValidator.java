@@ -4,15 +4,15 @@ import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ValidationErrorFailure;
 
-import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static org.folio.circulation.support.HttpResult.failed;
 
 public class ItemNotFoundValidator {
-  private final Function<String, ValidationErrorFailure> itemNotFoundErrorFunction;
+  private final Supplier<ValidationErrorFailure> itemNotFoundErrorFunction;
 
   public ItemNotFoundValidator(
-    Function<String, ValidationErrorFailure> itemNotFoundErrorFunction) {
+    Supplier<ValidationErrorFailure> itemNotFoundErrorFunction) {
 
     this.itemNotFoundErrorFunction = itemNotFoundErrorFunction;
   }
@@ -22,7 +22,7 @@ public class ItemNotFoundValidator {
 
     return result.next(loanAndRelatedRecords -> {
       if(loanAndRelatedRecords.getLoan().getItem().isNotFound()) {
-        return failed(itemNotFoundErrorFunction.apply("item could not be found"));
+        return failed(itemNotFoundErrorFunction.get());
       }
       else {
         return result;
