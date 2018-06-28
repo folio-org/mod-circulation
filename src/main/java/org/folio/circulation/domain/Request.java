@@ -2,7 +2,6 @@ package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.support.Item;
 import org.joda.time.DateTime;
 
 import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;

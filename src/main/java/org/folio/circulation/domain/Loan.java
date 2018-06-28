@@ -4,7 +4,6 @@ import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.Item;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.joda.time.DateTime;

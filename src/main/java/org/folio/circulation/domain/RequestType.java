@@ -1,7 +1,6 @@
 package org.folio.circulation.domain;
 
 import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.support.Item;
 
 import static org.folio.circulation.domain.ItemStatus.*;
 
