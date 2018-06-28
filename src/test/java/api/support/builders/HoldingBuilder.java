@@ -5,7 +5,7 @@ import api.APITestSuite;
 
 import java.util.UUID;
 
-public class HoldingBuilder implements Builder {
+public class HoldingBuilder extends JsonBuilder implements Builder {
 
   private final UUID instanceId;
   private final UUID permanentLocationId;
@@ -29,10 +29,13 @@ public class HoldingBuilder implements Builder {
 
   @Override
   public JsonObject create() {
-    return new JsonObject()
-      .put("instanceId", instanceId.toString())
-      .put("permanentLocationId", permanentLocationId.toString())
-      .put("callNumber", callNumber);
+    final JsonObject holdings = new JsonObject();
+
+    put(holdings, "instanceId", instanceId);
+    put(holdings, "permanentLocationId", permanentLocationId);
+    put(holdings, "callNumber", callNumber);
+
+    return holdings;
   }
 
   public HoldingBuilder withPermanentLocation(UUID permanentLocationId) {

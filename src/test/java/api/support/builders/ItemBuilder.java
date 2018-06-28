@@ -1,11 +1,12 @@
 package api.support.builders;
 
-import io.vertx.core.json.JsonObject;
 import api.APITestSuite;
+import io.vertx.core.json.JsonObject;
 
+import java.util.Optional;
 import java.util.UUID;
 
-public class ItemBuilder implements Builder {
+public class ItemBuilder extends JsonBuilder implements Builder {
 
   public static final String AVAILABLE = "Available";
   public static final String CHECKED_OUT = "Checked out";
@@ -19,6 +20,7 @@ public class ItemBuilder implements Builder {
   private final String status;
   private final UUID materialTypeId;
   private final UUID temporaryLocationId;
+  private final UUID permanentLoanTypeId;
   private final UUID temporaryLoanTypeId;
 
   public ItemBuilder() {
@@ -42,37 +44,23 @@ public class ItemBuilder implements Builder {
     this.temporaryLocationId = temporaryLocationId;
     this.materialTypeId = materialTypeId;
     this.temporaryLoanTypeId = temporaryLoanTypeId;
+
+    //TODO: Figure out a better way of injecting defaults in different situations
+    permanentLoanTypeId = Optional.ofNullable(APITestSuite.canCirculateLoanTypeId())
+      .orElse(null);
   }
 
   public JsonObject create() {
     JsonObject itemRequest = new JsonObject();
 
-    if(id != null) {
-      itemRequest.put("id", id.toString());
-    }
-
-    if(barcode != null) {
-      itemRequest.put("barcode", barcode);
-    }
-
-    if(holdingId != null) {
-      itemRequest.put("holdingsRecordId", holdingId.toString());
-    }
-
-    if(materialTypeId != null) {
-      itemRequest.put("materialTypeId", materialTypeId.toString());
-    }
-
-    itemRequest.put("status", new JsonObject().put("name", status));
-    itemRequest.put("permanentLoanTypeId", APITestSuite.canCirculateLoanTypeId().toString());
-
-    if(temporaryLocationId != null) {
-      itemRequest.put("temporaryLocationId", temporaryLocationId.toString());
-    }
-
-    if(temporaryLoanTypeId != null) {
-      itemRequest.put("temporaryLoanTypeId", temporaryLoanTypeId.toString());
-    }
+    put(itemRequest, "id", id);
+    put(itemRequest, "barcode", barcode);
+    put(itemRequest, "holdingsRecordId", holdingId);
+    put(itemRequest, "materialTypeId", materialTypeId);
+    put(itemRequest, "permanentLoanTypeId", permanentLoanTypeId);
+    put(itemRequest, "temporaryLoanTypeId", temporaryLoanTypeId);
+    put(itemRequest, "temporaryLocationId", temporaryLocationId);
+    put(itemRequest, "status", status, new JsonObject().put("name", status));
 
     return itemRequest;
   }
@@ -85,7 +73,7 @@ public class ItemBuilder implements Builder {
     return withStatus(AVAILABLE);
   }
 
-  public ItemBuilder withStatus(String status) {
+  private ItemBuilder withStatus(String status) {
     return new ItemBuilder(
       this.id,
       this.holdingId,

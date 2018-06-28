@@ -6,7 +6,7 @@ import api.APITestSuite;
 
 import java.util.UUID;
 
-public class InstanceBuilder implements Builder {
+public class InstanceBuilder extends JsonBuilder implements Builder {
   private final String title;
   private final UUID id;
   private final JsonArray contributors;
@@ -17,27 +17,29 @@ public class InstanceBuilder implements Builder {
     this.contributors = new JsonArray();
   }
 
-  public InstanceBuilder(UUID id, String title) {
+  private InstanceBuilder(UUID id, String title) {
     this.id = id;
     this.title = title;
     this.contributors = new JsonArray();
   }
 
-  public InstanceBuilder(UUID id, String title, JsonArray contributors) {
+  private InstanceBuilder(UUID id, String title, JsonArray contributors) {
     this.id = id;
     this.title = title;
     this.contributors = contributors;
   }
 
-
   @Override
   public JsonObject create() {
-    return new JsonObject()
-      .put("id", id.toString())
-      .put("title", title)
-      .put("source", "Local")
-      .put("instanceTypeId", APITestSuite.booksInstanceTypeId().toString())
-      .put("contributors", contributors);
+    final JsonObject instance = new JsonObject();
+
+    put(instance, "id", id);
+    put(instance, "title", title);
+    put(instance, "source", "Local");
+    put(instance, "instanceTypeId", APITestSuite.booksInstanceTypeId());
+    put(instance, "contributors", contributors);
+
+    return instance;
   }
 
   public InstanceBuilder withId(UUID id) {
@@ -54,7 +56,7 @@ public class InstanceBuilder implements Builder {
     );
   }
 
-  public InstanceBuilder withContributors(JsonArray contributors) {
+  private InstanceBuilder withContributors(JsonArray contributors) {
     return new InstanceBuilder(
       this.id,
       this.title,
