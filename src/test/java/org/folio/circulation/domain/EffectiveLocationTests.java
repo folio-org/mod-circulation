@@ -12,7 +12,7 @@ import static org.junit.Assert.assertThat;
 
 public class EffectiveLocationTests {
   @Test
-  public void locationIsPermanentLocationFromHoldingWhenNoOther() {
+  public void holdingPermanentLocationIsDefaultWhenNoOtherLocations() {
     final UUID popularReadingLocationId = UUID.randomUUID();
 
     final Item item = new Item(
@@ -25,16 +25,53 @@ public class EffectiveLocationTests {
   }
 
   @Test
-  public void locationIsTemporaryLocationFromItemWhenProvided() {
+  public void holdingTemporaryLocationTakesPrecedenceOverHoldingPermanentLocation() {
     final UUID popularReadingLocationId = UUID.randomUUID();
     final UUID secondFloorEconomicsLocationId = UUID.randomUUID();
 
     final Item item = new Item(
-      new ItemBuilder().withTemporaryLocation(secondFloorEconomicsLocationId).create(),
-      new HoldingBuilder().withPermanentLocation(popularReadingLocationId).create(),
+      new ItemBuilder().create(),
+      new HoldingBuilder()
+        .withPermanentLocation(popularReadingLocationId)
+        .withTemporaryLocation(secondFloorEconomicsLocationId)
+        .create(),
       new InstanceBuilder("").create(),
       null, null);
 
     assertThat(item.getLocationId(), is(secondFloorEconomicsLocationId));
+  }
+
+  @Test
+  public void itemTemporaryLocationTakesPrecedenceOverHoldingTemporaryLocation() {
+    final UUID popularReadingLocationId = UUID.randomUUID();
+    final UUID secondFloorEconomicsLocationId = UUID.randomUUID();
+    final UUID firstFloorComputerScienceLocationId = UUID.randomUUID();
+
+    final Item item = new Item(
+      new ItemBuilder().withTemporaryLocation(secondFloorEconomicsLocationId).create(),
+      new HoldingBuilder()
+        .withPermanentLocation(firstFloorComputerScienceLocationId)
+        .withTemporaryLocation(popularReadingLocationId)
+        .create(),
+      new InstanceBuilder("").create(),
+      null, null);
+
+    assertThat(item.getLocationId(), is(secondFloorEconomicsLocationId));
+  }
+  
+  @Test
+  public void itemTemporaryLocationTakesPrecedenceOverHoldingPermanent() {
+    final UUID popularReadingLocationId = UUID.randomUUID();
+    final UUID firstFloorComputerScienceLocationId = UUID.randomUUID();
+
+    final Item item = new Item(
+      new ItemBuilder().withTemporaryLocation(popularReadingLocationId).create(),
+      new HoldingBuilder()
+        .withPermanentLocation(firstFloorComputerScienceLocationId)
+        .create(),
+      new InstanceBuilder("").create(),
+      null, null);
+
+    assertThat(item.getLocationId(), is(popularReadingLocationId));
   }
 }
