@@ -2,6 +2,8 @@
 
 * Provide different error messages when item not found in different circumstances (CIRC-123)
 * Determine location using permanent and temporary locations from both the holdings and item (CIRC-121)
+* Requires `item-storage` interface 5.3 (CIRC-121)
+* Requires `holdings-storage` interface 1.3 (CIRC-121)
 
 ## 10.6.0 2018-06-28
 

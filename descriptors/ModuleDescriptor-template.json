@@ -399,7 +399,7 @@
     },
     {
       "id": "item-storage",
-      "version": "5.0"
+      "version": "5.3"
     },
     {
       "id": "instance-storage",
@@ -407,7 +407,7 @@
     },
     {
       "id": "holdings-storage",
-      "version": "1.0"
+      "version": "1.3"
     },
     {
       "id": "request-storage",
