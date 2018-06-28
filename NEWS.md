@@ -1,4 +1,4 @@
-## 10.6.0 Unreleased
+## 10.6.0 2018-06-28
 
 * Initial renewal API for renewing an item to a loanee using IDs (CIRC-117)
 * Provides `circulation` interface 3.4 (CIRC-117)
