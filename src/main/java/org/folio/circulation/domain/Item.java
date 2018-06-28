@@ -5,6 +5,8 @@ import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.representations.ItemProperties;
 
+import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOCATION_ID;
+import static org.folio.circulation.domain.representations.ItemProperties.TEMPORARY_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.TITLE_PROPERTY;
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
@@ -108,14 +110,11 @@ public class Item {
   }
 
   private static String getLocationId(JsonObject item, JsonObject holding) {
-    if(item != null && item.containsKey(ItemProperties.TEMPORARY_LOCATION_ID)) {
-      return item.getString(ItemProperties.TEMPORARY_LOCATION_ID);
+    if(item != null && item.containsKey(TEMPORARY_LOCATION_ID)) {
+      return item.getString(TEMPORARY_LOCATION_ID);
     }
-    else if(holding != null && holding.containsKey(ItemProperties.PERMANENT_LOCATION_ID)) {
-      return holding.getString(ItemProperties.PERMANENT_LOCATION_ID);
-    }
-    else if(item != null && item.containsKey(ItemProperties.PERMANENT_LOCATION_ID)) {
-      return item.getString(ItemProperties.PERMANENT_LOCATION_ID);
+    else if(holding != null && holding.containsKey(PERMANENT_LOCATION_ID)) {
+      return holding.getString(PERMANENT_LOCATION_ID);
     }
     else {
       return null;
@@ -129,7 +128,7 @@ public class Item {
       : getItem().getString(ItemProperties.PERMANENT_LOAN_TYPE_ID);
   }
 
-  public void changeStatus(String newStatus) {
+  void changeStatus(String newStatus) {
     getItem().put("status", new JsonObject().put("name", newStatus));
   }
 
@@ -142,7 +141,7 @@ public class Item {
     return getItem() != null;
   }
 
-  public Item updateItem(JsonObject updatedItem) {
+  Item updateItem(JsonObject updatedItem) {
     return new Item(updatedItem,
       holdingRepresentation, instanceRepresentation, getLocation(), getMaterialType());
   }
