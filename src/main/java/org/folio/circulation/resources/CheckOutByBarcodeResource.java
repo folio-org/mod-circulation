@@ -72,7 +72,8 @@ public class CheckOutByBarcodeResource extends Resource {
       message -> failure(message, ITEM_BARCODE, itemBarcode));
 
     final ItemNotFoundValidator itemNotFoundValidator = new ItemNotFoundValidator(
-      message -> failure(message, ITEM_BARCODE, itemBarcode));
+      () -> failure(String.format("No item with barcode %s could be found", itemBarcode),
+        ITEM_BARCODE, itemBarcode));
 
     final InactiveUserValidator inactiveUserValidator = new InactiveUserValidator(
       records -> records.getLoan().getUser(),

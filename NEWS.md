@@ -1,3 +1,7 @@
+## 10.6.1 Unreleased
+
+* Provide different error messages when item not found in different circumstances (CIRC-123)
+
 ## 10.6.0 2018-06-28
 
 * Initial renewal API for renewing an item to a loanee using IDs (CIRC-117)
