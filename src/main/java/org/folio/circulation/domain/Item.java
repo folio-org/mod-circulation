@@ -113,6 +113,9 @@ public class Item {
     if(item != null && item.containsKey(TEMPORARY_LOCATION_ID)) {
       return item.getString(TEMPORARY_LOCATION_ID);
     }
+    if(item != null && item.containsKey(PERMANENT_LOCATION_ID)) {
+      return item.getString(PERMANENT_LOCATION_ID);
+    }
     else if(holding != null && holding.containsKey(TEMPORARY_LOCATION_ID)) {
       return holding.getString(TEMPORARY_LOCATION_ID);
     }
