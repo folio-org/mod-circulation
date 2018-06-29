@@ -37,20 +37,25 @@ public class RequestQueueFetcher {
         RequestStatus.OPEN_NOT_YET_FILLED);
 
     return encodeQuery(unencodedQuery).after(
-      query -> clients.requestsStorage().getMany(query, 1000, 0).thenApply(
-        response -> {
-          if (response.getStatusCode() == 200) {
-            final JsonArray foundRequests = response.getJson().getJsonArray("requests");
+      query -> {
+        final int maximumSupportedRequestQueueSize = 1000;
 
-            log.info("Found request queue: {}", foundRequests.encodePrettily());
+        return clients.requestsStorage().getMany(query, maximumSupportedRequestQueueSize, 0)
+          .thenApply(
+            response -> {
+              if (response.getStatusCode() == 200) {
+                final JsonArray foundRequests = response.getJson().getJsonArray("requests");
 
-            return HttpResult.succeeded(
-              new RequestQueue(mapToList(foundRequests, Request::new)));
-          } else {
-            return HttpResult.failed(new ServerErrorFailure(
-              String.format("Failed to fetch request queue: %s: %s",
-                response.getStatusCode(), response.getBody())));
-          }
-    }));
+                log.info("Found request queue: {}", foundRequests.encodePrettily());
+
+                return HttpResult.succeeded(
+                  new RequestQueue(mapToList(foundRequests, Request::new)));
+              } else {
+                return HttpResult.failed(new ServerErrorFailure(
+                  String.format("Failed to fetch request queue: %s: %s",
+                    response.getStatusCode(), response.getBody())));
+              }
+        });
+      });
   }
 }
