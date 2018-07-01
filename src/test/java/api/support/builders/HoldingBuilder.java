@@ -1,7 +1,6 @@
 package api.support.builders;
 
 import io.vertx.core.json.JsonObject;
-import api.APITestSuite;
 
 import java.util.UUID;
 
@@ -12,10 +11,7 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
   private final String callNumber;
 
   public HoldingBuilder() {
-    this(
-      null,
-      APITestSuite.mainLibraryLocationId(),
-      null, null);
+    this(null, null, null, null);
   }
 
   private HoldingBuilder(
