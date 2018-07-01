@@ -16,7 +16,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import static api.APITestSuite.mainLibraryLocationId;
+import static api.APITestSuite.thirdFloorLocationId;
 import static api.support.JsonCollectionAssistant.getRecordById;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -36,7 +36,7 @@ public class LoanAPITitleTests extends APITests {
     UUID holdingId = holdingsClient.create(
       new HoldingBuilder()
         .forInstance(instanceId)
-        .withPermanentLocation(mainLibraryLocationId())
+        .withPermanentLocation(thirdFloorLocationId())
         .create())
       .getId();
 
@@ -87,7 +87,7 @@ public class LoanAPITitleTests extends APITests {
     UUID holdingId = holdingsClient.create(
       new HoldingBuilder()
         .forInstance(instanceId)
-        .withPermanentLocation(mainLibraryLocationId())
+        .withPermanentLocation(thirdFloorLocationId())
         .create())
       .getId();
 
@@ -132,7 +132,7 @@ public class LoanAPITitleTests extends APITests {
     UUID firstHoldingId = holdingsClient.create(
       new HoldingBuilder()
         .forInstance(firstInstanceId)
-        .withPermanentLocation(mainLibraryLocationId())
+        .withPermanentLocation(thirdFloorLocationId())
         .create())
       .getId();
 
@@ -147,7 +147,7 @@ public class LoanAPITitleTests extends APITests {
     UUID secondHoldingId = holdingsClient.create(
       new HoldingBuilder()
         .forInstance(secondInstanceId)
-        .withPermanentLocation(mainLibraryLocationId())
+        .withPermanentLocation(thirdFloorLocationId())
         .create())
       .getId();
 
@@ -198,7 +198,7 @@ public class LoanAPITitleTests extends APITests {
     UUID firstHoldingId = holdingsClient.create(
       new HoldingBuilder()
         .forInstance(firstInstanceId)
-        .withPermanentLocation(mainLibraryLocationId())
+        .withPermanentLocation(thirdFloorLocationId())
         .create())
       .getId();
 
@@ -213,7 +213,7 @@ public class LoanAPITitleTests extends APITests {
     UUID secondHoldingId = holdingsClient.create(
       new HoldingBuilder()
         .forInstance(secondInstanceId)
-        .withPermanentLocation(mainLibraryLocationId())
+        .withPermanentLocation(thirdFloorLocationId())
         .create())
       .getId();
 

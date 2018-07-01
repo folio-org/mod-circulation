@@ -8,26 +8,23 @@ import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 
 import java.net.MalformedURLException;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
 import static api.APITestSuite.booksInstanceTypeId;
-import static api.APITestSuite.mainLibraryLocationId;
+import static api.APITestSuite.thirdFloorLocationId;
 
 public class ItemsFixture {
 
   private final ResourceClient itemsClient;
   private final ResourceClient holdingsClient;
   private final ResourceClient instancesClient;
-  private final UUID defaultPermanentLocation;
 
   public ItemsFixture(OkapiHttpClient client) {
     itemsClient = ResourceClient.forItems(client);
     holdingsClient = ResourceClient.forHoldings(client);
     instancesClient = ResourceClient.forInstances(client);
-    defaultPermanentLocation = mainLibraryLocationId();
   }
 
   public IndividualResource basedUponDunkirk()
@@ -186,12 +183,10 @@ public class ItemsFixture {
     IndividualResource instance = instancesClient.create(
       instanceBuilder.withInstanceTypeId(booksInstanceTypeId()));
 
-    HoldingBuilder holdingBuilder = new HoldingBuilder()
+    IndividualResource holding = holdingsClient.create(new HoldingBuilder()
       .forInstance(instance.getId())
-      .withPermanentLocation(defaultPermanentLocation);
-
-    IndividualResource holding = holdingsClient.create(holdingBuilder
-      .withPermanentLocation(mainLibraryLocationId())
+      .withPermanentLocation(thirdFloorLocationId())
+      .withNoTemporaryLocation()
       .withCallNumber("123456"));
 
     return itemsClient.create(
