@@ -83,6 +83,18 @@
           "description": "The ID of the instance for the item",
           "type": "string",
           "readonly": true
+        },
+        "location": {
+          "description": "The effective location of the item",
+          "type": "object",
+          "readonly": true,
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "The name of the location",
+              "readonly": true
+            }
+          }
         }
       },
       "additionalProperties": false
