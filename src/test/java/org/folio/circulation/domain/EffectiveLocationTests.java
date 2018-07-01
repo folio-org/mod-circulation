@@ -333,4 +333,47 @@ public class EffectiveLocationTests {
 
     assertThat(item.getLocationId(), nullValue());
   }
+
+  @Test
+  public void noItem() {
+    final UUID secondFloorEconomicsLocationId = UUID.randomUUID();
+
+    final Item item = new Item(
+      null,
+      new HoldingBuilder()
+        .withPermanentLocation(secondFloorEconomicsLocationId)
+        .withNoTemporaryLocation()
+        .create(),
+      new InstanceBuilder("").create(),
+      null, null);
+
+    assertThat(item.getLocationId(), is(secondFloorEconomicsLocationId));
+  }
+
+  @Test
+  public void noHolding() {
+    final UUID secondFloorEconomicsLocationId = UUID.randomUUID();
+
+    final Item item = new Item(
+      new ItemBuilder()
+        .withPermanentLocation(secondFloorEconomicsLocationId)
+        .withNoTemporaryLocation()
+        .create(),
+      null,
+      new InstanceBuilder("").create(),
+      null, null);
+
+    assertThat(item.getLocationId(), is(secondFloorEconomicsLocationId));
+  }
+
+  @Test
+  public void noItemOrHolding() {
+    final Item item = new Item(
+      null,
+      null,
+      new InstanceBuilder("").create(),
+      null, null);
+
+    assertThat(item.getLocationId(), nullValue());
+  }
 }
