@@ -1,8 +1,8 @@
-package api.loans;
+package api.requests;
 
 import api.support.APITests;
 import api.support.builders.HoldingBuilder;
-import api.support.builders.LoanBuilder;
+import api.support.builders.RequestBuilder;
 import api.support.fixtures.InstanceExamples;
 import api.support.fixtures.ItemExamples;
 import io.vertx.core.json.JsonObject;
@@ -16,16 +16,14 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import static api.APITestSuite.mezzanineDisplayCaseLocationId;
-import static api.APITestSuite.secondFloorEconomicsLocationId;
-import static api.APITestSuite.thirdFloorLocationId;
+import static api.APITestSuite.*;
 import static api.support.JsonCollectionAssistant.getRecordById;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-public class LoanAPILocationTests extends APITests {
+public class RequestAPILocationTests extends APITests {
   @Test
-  public void locationIsIncludedForSingleLoan()
+  public void locationIsIncludedForSingleRequest()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -42,33 +40,36 @@ public class LoanAPILocationTests extends APITests {
         .create())
       .getId();
 
-    UUID itemId = itemsClient.create(
+    IndividualResource item = itemsClient.create(
       ItemExamples.basedUponSmallAngryPlanet()
         .forHolding(holdingId)
         .withNoPermanentLocation()
-        .withTemporaryLocation(secondFloorEconomicsLocationId()))
-      .getId();
+        .withTemporaryLocation(secondFloorEconomicsLocationId()));
 
-    UUID loanId = UUID.randomUUID();
+    loansFixture.checkOut(item, usersFixture.jessica());
 
-    IndividualResource response = loansClient.create(new LoanBuilder()
-      .withId(loanId)
-      .withItemId(itemId));
+    IndividualResource requester = usersFixture.steve();
 
-    JsonObject createdLoan = response.getJson();
+    IndividualResource request = requestsFixture.place(new RequestBuilder()
+      .open()
+      .hold()
+      .forItem(item)
+      .by(requester));
+
+    JsonObject representation = request.getJson();
 
     assertThat("has item location",
-      createdLoan.getJsonObject("item").containsKey("location"), is(true));
+      representation.getJsonObject("item").containsKey("location"), is(true));
 
     assertThat(
-      createdLoan.getJsonObject("item").getJsonObject("location").getString("name"),
+      representation.getJsonObject("item").getJsonObject("location").getString("name"),
       is("2nd Floor - Economics"));
 
-    Response fetchedLoanResponse = loansClient.getById(loanId);
+    Response fetchedRequestResponse = requestsClient.getById(request.getId());
 
-    assertThat(fetchedLoanResponse.getStatusCode(), is(200));
+    assertThat(fetchedRequestResponse.getStatusCode(), is(200));
 
-    JsonObject fetchedLoan = fetchedLoanResponse.getJson();
+    JsonObject fetchedLoan = fetchedRequestResponse.getJson();
 
     assertThat("has item location",
       fetchedLoan.getJsonObject("item").containsKey("location"), is(true));
@@ -79,7 +80,7 @@ public class LoanAPILocationTests extends APITests {
   }
 
   @Test
-  public void locationIncludedForMultipleLoans()
+  public void locationIncludedForMultipleRequests()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -95,14 +96,18 @@ public class LoanAPILocationTests extends APITests {
         .create())
       .getId();
 
-    UUID firstItemId = itemsClient.create(
+    final IndividualResource firstItem = itemsClient.create(
       ItemExamples.basedUponSmallAngryPlanet()
         .forHolding(firstHoldingId)
-        .withPermanentLocation(thirdFloorLocationId()))
-      .getId();
+        .withPermanentLocation(thirdFloorLocationId()));
 
-    UUID firstLoanId = loansClient.create(new LoanBuilder()
-      .withItemId(firstItemId)).getId();
+    loansFixture.checkOut(firstItem, usersFixture.james());
+
+    IndividualResource firstRequest = requestsFixture.place(new RequestBuilder()
+      .open()
+      .hold()
+      .forItem(firstItem)
+      .by(usersFixture.rebecca()));
 
     UUID secondInstanceId = instancesClient.create(
       InstanceExamples.basedUponTemeraire()).getId();
@@ -115,42 +120,46 @@ public class LoanAPILocationTests extends APITests {
         .create())
       .getId();
 
-    UUID secondItemId = itemsClient.create(
+    IndividualResource secondItem = itemsClient.create(
       ItemExamples.basedUponTemeraire()
-        .forHolding(secondHoldingId))
-      .getId();
+        .forHolding(secondHoldingId));
 
-    UUID secondLoanId = loansClient.create(new LoanBuilder()
-      .withItemId(secondItemId)).getId();
+    loansFixture.checkOut(secondItem, usersFixture.jessica());
 
-    List<JsonObject> fetchedLoansResponse = loansClient.getAll();
+    IndividualResource secondRequest = requestsFixture.place(new RequestBuilder()
+      .open()
+      .hold()
+      .forItem(secondItem)
+      .by(usersFixture.steve()));
 
-    assertThat(fetchedLoansResponse.size(), is(2));
+    List<JsonObject> fetchedRequestsResponse = requestsClient.getAll();
 
-    JsonObject firstFetchedLoan = getRecordById(
-      fetchedLoansResponse, firstLoanId).get();
+    assertThat(fetchedRequestsResponse.size(), is(2));
+
+    JsonObject firstFetchedRequest = getRecordById(
+      fetchedRequestsResponse, firstRequest.getId()).get();
 
     assertThat("has item",
-      firstFetchedLoan.containsKey("item"), is(true));
+      firstFetchedRequest.containsKey("item"), is(true));
 
     assertThat("has item location",
-      firstFetchedLoan.getJsonObject("item").containsKey("location"), is(true));
+      firstFetchedRequest.getJsonObject("item").containsKey("location"), is(true));
 
     assertThat(
-      firstFetchedLoan.getJsonObject("item").getJsonObject("location").getString("name"),
+      firstFetchedRequest.getJsonObject("item").getJsonObject("location").getString("name"),
       is("3rd Floor"));
 
-    JsonObject secondFetchedLoan = getRecordById(
-      fetchedLoansResponse, secondLoanId).get();
+    JsonObject secondFetchedRequest = getRecordById(
+      fetchedRequestsResponse, secondRequest.getId()).get();
 
     assertThat("has item",
-      secondFetchedLoan.containsKey("item"), is(true));
+      secondFetchedRequest.containsKey("item"), is(true));
 
     assertThat("has item location",
-      secondFetchedLoan.getJsonObject("item").containsKey("location"), is(true));
+      secondFetchedRequest.getJsonObject("item").containsKey("location"), is(true));
 
     assertThat(
-      secondFetchedLoan.getJsonObject("item").getJsonObject("location").getString("name"),
+      secondFetchedRequest.getJsonObject("item").getJsonObject("location").getString("name"),
       is("Display Case, Mezzanine"));
   }
 }

@@ -1,7 +1,6 @@
 package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.Item;
 
 public class RequestAndRelatedRecords implements UserRelatedRecord {
   private final Request request;

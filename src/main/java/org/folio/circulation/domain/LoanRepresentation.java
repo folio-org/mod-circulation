@@ -1,7 +1,6 @@
 package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.Item;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

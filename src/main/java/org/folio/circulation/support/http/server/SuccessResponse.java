@@ -6,7 +6,6 @@ public class SuccessResponse {
   private SuccessResponse() { }
 
   public static void noContent(HttpServerResponse response) {
-
     response.setStatusCode(204);
     response.end();
   }

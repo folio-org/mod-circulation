@@ -15,7 +15,6 @@ import static org.hamcrest.Matchers.hasProperty;
 
 public class ValidationErrorMatchers {
   public static TypeSafeDiagnosingMatcher<JsonObject> hasErrorWith(Matcher<ValidationError> matcher) {
-
     return new TypeSafeDiagnosingMatcher<JsonObject>() {
       @Override
       public void describeTo(Description description) {

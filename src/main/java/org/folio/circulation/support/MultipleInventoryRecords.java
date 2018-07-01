@@ -1,6 +1,7 @@
 package org.folio.circulation.support;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.Item;
 
 import java.util.Collection;
 import java.util.Optional;

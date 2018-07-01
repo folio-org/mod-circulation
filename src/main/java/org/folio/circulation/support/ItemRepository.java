@@ -1,6 +1,7 @@
 package org.folio.circulation.support;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemRelatedRecord;
 import org.folio.circulation.domain.LocationRepository;
 import org.folio.circulation.domain.MaterialTypeRepository;

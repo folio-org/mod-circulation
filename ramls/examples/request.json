@@ -5,5 +5,10 @@
   "requesterId": "21932a85-bd00-446b-9565-46e0c1a5490b",
   "itemId": "195efae1-588f-47bd-a181-13a2eb437701",
   "fulfilmentPreference": "Hold Shelf",
-  "requestExpirationDate": "2017-07-25"
+  "requestExpirationDate": "2017-07-25",
+  "item": {
+    "location": {
+      "name": "Main Library"
+    }
+  }
 }

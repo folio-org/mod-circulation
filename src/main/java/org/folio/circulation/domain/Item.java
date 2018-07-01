@@ -1,18 +1,18 @@
-package org.folio.circulation.support;
+package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.representations.ItemProperties;
 
+import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOCATION_ID;
+import static org.folio.circulation.domain.representations.ItemProperties.TEMPORARY_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.TITLE_PROPERTY;
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 public class Item {
-
   private final JsonObject itemRepresentation;
   private final JsonObject holdingRepresentation;
   private final JsonObject instanceRepresentation;
@@ -41,7 +41,7 @@ public class Item {
       || status.equals(ItemStatus.CHECKED_OUT_RECALLED);
   }
 
-  public boolean isNotSameStatus(String prospectiveStatus) {
+  boolean isNotSameStatus(String prospectiveStatus) {
     return !StringUtils.equals(getStatus(), prospectiveStatus);
   }
 
@@ -60,7 +60,7 @@ public class Item {
     }
   }
 
-  public JsonArray getContributorNames() {
+  JsonArray getContributorNames() {
     if(instanceRepresentation == null) {
       return new JsonArray();
     }
@@ -85,7 +85,7 @@ public class Item {
     return getProperty(holdingRepresentation, "instanceId");
   }
 
-  public String getCallNumber() {
+  String getCallNumber() {
     return getProperty(holdingRepresentation, "callNumber");
   }
 
@@ -97,7 +97,7 @@ public class Item {
     return locationRepresentation;
   }
 
-  public JsonObject getMaterialType() {
+  JsonObject getMaterialType() {
     return materialTypeRepresentation;
   }
 
@@ -110,14 +110,17 @@ public class Item {
   }
 
   private static String getLocationId(JsonObject item, JsonObject holding) {
-    if(item != null && item.containsKey(ItemProperties.TEMPORARY_LOCATION_ID)) {
-      return item.getString(ItemProperties.TEMPORARY_LOCATION_ID);
+    if(item != null && item.containsKey(TEMPORARY_LOCATION_ID)) {
+      return item.getString(TEMPORARY_LOCATION_ID);
     }
-    else if(holding != null && holding.containsKey(ItemProperties.PERMANENT_LOCATION_ID)) {
-      return holding.getString(ItemProperties.PERMANENT_LOCATION_ID);
+    if(item != null && item.containsKey(PERMANENT_LOCATION_ID)) {
+      return item.getString(PERMANENT_LOCATION_ID);
     }
-    else if(item != null && item.containsKey(ItemProperties.PERMANENT_LOCATION_ID)) {
-      return item.getString(ItemProperties.PERMANENT_LOCATION_ID);
+    else if(holding != null && holding.containsKey(TEMPORARY_LOCATION_ID)) {
+      return holding.getString(TEMPORARY_LOCATION_ID);
+    }
+    else if(holding != null && holding.containsKey(PERMANENT_LOCATION_ID)) {
+      return holding.getString(PERMANENT_LOCATION_ID);
     }
     else {
       return null;
@@ -131,7 +134,7 @@ public class Item {
       : getItem().getString(ItemProperties.PERMANENT_LOAN_TYPE_ID);
   }
 
-  public void changeStatus(String newStatus) {
+  void changeStatus(String newStatus) {
     getItem().put("status", new JsonObject().put("name", newStatus));
   }
 
@@ -144,7 +147,7 @@ public class Item {
     return getItem() != null;
   }
 
-  public Item updateItem(JsonObject updatedItem) {
+  Item updateItem(JsonObject updatedItem) {
     return new Item(updatedItem,
       holdingRepresentation, instanceRepresentation, getLocation(), getMaterialType());
   }

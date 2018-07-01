@@ -11,6 +11,9 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.support.CreatedJsonHttpResult;
+import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.*;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -108,7 +111,8 @@ public class FakeStorageModule extends AbstractVerticle {
     System.out.println(
       String.format("Created %s resource: %s", recordTypeName, id));
 
-    JsonResponse.created(routingContext.response(), body);
+    new CreatedJsonHttpResult(body, null)
+      .writeTo(routingContext.response());
   }
 
   private void replace(RoutingContext routingContext) {
@@ -325,7 +329,8 @@ public class FakeStorageModule extends AbstractVerticle {
       routingContext.next();
     }
     else {
-      JsonResponse.unprocessableEntity(routingContext.response(), errors);
+      HttpResult.failed(ValidationErrorFailure.failure(errors))
+        .writeTo(routingContext.response());
     }
   }
 
@@ -352,8 +357,8 @@ public class FakeStorageModule extends AbstractVerticle {
           String.format("%s with this %s already exists", recordTypeName, uniqueProperty),
           uniqueProperty, proposedValue));
 
-        JsonResponse.unprocessableEntity(routingContext.response(),
-          errors);
+        HttpResult.failed(ValidationErrorFailure.failure(errors))
+          .writeTo(routingContext.response());
       }
     });
 

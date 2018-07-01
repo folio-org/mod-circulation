@@ -1,5 +1,6 @@
 package api.support.builders;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.joda.time.DateTime;
 import org.joda.time.format.ISODateTimeFormat;
@@ -37,7 +38,11 @@ public class JsonBuilder {
     }
   }
 
-  protected void put(JsonObject representation, String property, JsonObject value) {
+  protected void put(
+    JsonObject representation,
+    String property,
+    JsonObject value) {
+
     if(value != null) {
       representation.put(property, value);
     }
@@ -51,6 +56,16 @@ public class JsonBuilder {
 
     if(check != null) {
       request.put(property, value);
+    }
+  }
+
+  protected void put(
+    JsonObject representation,
+    String property,
+    JsonArray value) {
+
+    if(value != null) {
+      representation.put(property, value);
     }
   }
 }

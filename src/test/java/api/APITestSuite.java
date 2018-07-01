@@ -107,11 +107,12 @@ public class APITestSuite {
   private static UUID businessLibrary;
   private static UUID thirdFloorLocationId;
   private static UUID mezzanineDisplayCaseLocationId;
+  private static UUID secondFloorEconomicsLocationId;
 
   private static UUID canCirculateRollingLoanPolicyId;
   private static UUID canCirculateFixedLoanPolicyId;
   private static UUID exampleFixedDueDateSchedulesId;
-  
+
   private static UUID courseReservesCancellationReasonId;
   private static UUID patronRequestCancellationReasonId;
   private static UUID noLongerAvailableCancellationReasonId;
@@ -169,12 +170,16 @@ public class APITestSuite {
     return readingRoomLoanTypeId;
   }
 
-  public static UUID mainLibraryLocationId() {
+  public static UUID thirdFloorLocationId() {
     return thirdFloorLocationId;
   }
 
-  public static UUID annexLocationId() {
+  public static UUID mezzanineDisplayCaseLocationId() {
     return mezzanineDisplayCaseLocationId;
+  }
+
+  public static UUID secondFloorEconomicsLocationId() {
+    return secondFloorEconomicsLocationId;
   }
 
   public static UUID booksInstanceTypeId() {
@@ -509,6 +514,14 @@ public class APITestSuite {
         .put("campusId", jubileeCampus.toString())
         .put("libraryId", djanoglyLibrary.toString()));
 
+    secondFloorEconomicsLocationId = createReferenceRecord(locationsClient,
+      new JsonObject()
+        .put("name", "2nd Floor - Economics")
+        .put("code", "NU/JC/DL/2FE")
+        .put("institutionId", nottinghamUniversityInstitution.toString())
+        .put("campusId", jubileeCampus.toString())
+        .put("libraryId", djanoglyLibrary.toString()));
+
     mezzanineDisplayCaseLocationId = createReferenceRecord(locationsClient,
       new JsonObject()
         .put("name", "Display Case, Mezzanine")
@@ -531,6 +544,7 @@ public class APITestSuite {
     //Use the same ID as old locations for continuity
     locationsClient.delete(thirdFloorLocationId);
     locationsClient.delete(mezzanineDisplayCaseLocationId);
+    locationsClient.delete(secondFloorEconomicsLocationId);
 
     ResourceClient librariesClient = ResourceClient.forLibraries(client);
 

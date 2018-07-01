@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.policy;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.User;

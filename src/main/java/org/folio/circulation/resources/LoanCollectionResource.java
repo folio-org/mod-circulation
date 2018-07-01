@@ -11,7 +11,6 @@ import org.folio.circulation.domain.validation.ItemNotFoundValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.server.ForwardResponse;
-import org.folio.circulation.support.http.server.JsonResponse;
 import org.folio.circulation.support.http.server.SuccessResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
@@ -166,9 +165,9 @@ public class LoanCollectionResource extends CollectionResource {
           .map(loanRepresentation::extendedLoan)
           .collect(Collectors.toList());
 
-          JsonResponse.success(routingContext.response(),
-            new MultipleRecordsWrapper(mappedLoans, "loans", loans.getTotalRecords())
-              .toJson());
+        new OkJsonHttpResult(
+          new MultipleRecordsWrapper(mappedLoans, "loans", loans.getTotalRecords())
+            .toJson()).writeTo(routingContext.response());
       });
   }
 

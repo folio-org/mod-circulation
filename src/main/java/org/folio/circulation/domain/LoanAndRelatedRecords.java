@@ -2,7 +2,6 @@ package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.policy.LoanPolicy;
-import org.folio.circulation.support.Item;
 
 public class LoanAndRelatedRecords implements UserRelatedRecord {
   private final Loan loan;

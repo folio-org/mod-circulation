@@ -49,7 +49,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final Clients clients = Clients.create(context, client);
 
-    final ItemRepository itemRepository = new ItemRepository(clients, false, false);
+    final ItemRepository itemRepository = new ItemRepository(clients, true, false);
     final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
     final UserRepository userRepository = new UserRepository(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
@@ -136,7 +136,7 @@ public class RequestCollectionResource extends CollectionResource {
         if(requestResponse.getStatusCode() == 200) {
           Request request = new Request(requestResponse.getJson());
 
-          ItemRepository itemRepository = new ItemRepository(clients, false, false);
+          ItemRepository itemRepository = new ItemRepository(clients, true, false);
 
           CompletableFuture<HttpResult<Item>> inventoryRecordsCompleted =
             itemRepository.fetchFor(request);
@@ -151,7 +151,8 @@ public class RequestCollectionResource extends CollectionResource {
 
             addAdditionalItemProperties(representation, r.value());
 
-            JsonResponse.success(routingContext.response(), representation);
+            new OkJsonHttpResult(representation)
+              .writeTo(routingContext.response());
           });
         }
         else {
@@ -189,8 +190,9 @@ public class RequestCollectionResource extends CollectionResource {
           requestsResponse.getBody(), "requests");
 
         if(wrappedRequests.isEmpty()) {
-          JsonResponse.success(routingContext.response(),
-            wrappedRequests.toJson());
+
+          new OkJsonHttpResult(wrappedRequests.toJson())
+            .writeTo(routingContext.response());
 
           return;
         }
@@ -203,7 +205,7 @@ public class RequestCollectionResource extends CollectionResource {
           .filter(Objects::nonNull)
           .collect(Collectors.toList());
 
-        ItemRepository itemRepository = new ItemRepository(clients, false, false);
+        ItemRepository itemRepository = new ItemRepository(clients, true, false);
 
         CompletableFuture<HttpResult<MultipleInventoryRecords>> inventoryRecordsFetched =
           itemRepository.fetchFor(itemIds);
@@ -227,8 +229,8 @@ public class RequestCollectionResource extends CollectionResource {
               }
             });
 
-            JsonResponse.success(routingContext.response(),
-              wrappedRequests.toJson());
+          new OkJsonHttpResult(wrappedRequests.toJson())
+            .writeTo(routingContext.response());
         });
       }
     });
@@ -278,6 +280,13 @@ public class RequestCollectionResource extends CollectionResource {
 
     write(itemSummary, "holdingsRecordId", item.getHoldingsRecordId());
     write(itemSummary, "instanceId", item.getInstanceId());
+
+    final JsonObject location = item.getLocation();
+
+    if(location != null && location.containsKey("name")) {
+      itemSummary.put("location", new JsonObject()
+        .put("name", location.getString("name")));
+    }
 
     request.put("item", itemSummary);
   }

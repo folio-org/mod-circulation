@@ -1,11 +1,10 @@
 package api.support.builders;
 
 import io.vertx.core.json.JsonObject;
-import api.APITestSuite;
 
 import java.util.UUID;
 
-public class ItemBuilder implements Builder {
+public class ItemBuilder extends JsonBuilder implements Builder {
 
   public static final String AVAILABLE = "Available";
   public static final String CHECKED_OUT = "Checked out";
@@ -18,12 +17,14 @@ public class ItemBuilder implements Builder {
   private final String barcode;
   private final String status;
   private final UUID materialTypeId;
+  private final UUID permanentLocationId;
   private final UUID temporaryLocationId;
+  private final UUID permanentLoanTypeId;
   private final UUID temporaryLoanTypeId;
 
   public ItemBuilder() {
     this(UUID.randomUUID(), null, "565578437802", AVAILABLE,
-      null, null, null);
+      null, null, null, null, null);
   }
 
   private ItemBuilder(
@@ -31,8 +32,10 @@ public class ItemBuilder implements Builder {
     UUID holdingId,
     String barcode,
     String status,
+    UUID permanentLocationId,
     UUID temporaryLocationId,
     UUID materialTypeId,
+    UUID permanentLoanTypeId,
     UUID temporaryLoanTypeId) {
 
     this.id = id;
@@ -41,38 +44,23 @@ public class ItemBuilder implements Builder {
     this.status = status;
     this.temporaryLocationId = temporaryLocationId;
     this.materialTypeId = materialTypeId;
+    this.permanentLocationId = permanentLocationId;
     this.temporaryLoanTypeId = temporaryLoanTypeId;
+    this.permanentLoanTypeId = permanentLoanTypeId;
   }
 
   public JsonObject create() {
     JsonObject itemRequest = new JsonObject();
 
-    if(id != null) {
-      itemRequest.put("id", id.toString());
-    }
-
-    if(barcode != null) {
-      itemRequest.put("barcode", barcode);
-    }
-
-    if(holdingId != null) {
-      itemRequest.put("holdingsRecordId", holdingId.toString());
-    }
-
-    if(materialTypeId != null) {
-      itemRequest.put("materialTypeId", materialTypeId.toString());
-    }
-
-    itemRequest.put("status", new JsonObject().put("name", status));
-    itemRequest.put("permanentLoanTypeId", APITestSuite.canCirculateLoanTypeId().toString());
-
-    if(temporaryLocationId != null) {
-      itemRequest.put("temporaryLocationId", temporaryLocationId.toString());
-    }
-
-    if(temporaryLoanTypeId != null) {
-      itemRequest.put("temporaryLoanTypeId", temporaryLoanTypeId.toString());
-    }
+    put(itemRequest, "id", id);
+    put(itemRequest, "barcode", barcode);
+    put(itemRequest, "holdingsRecordId", holdingId);
+    put(itemRequest, "materialTypeId", materialTypeId);
+    put(itemRequest, "permanentLoanTypeId", permanentLoanTypeId);
+    put(itemRequest, "temporaryLoanTypeId", temporaryLoanTypeId);
+    put(itemRequest, "permanentLocationId", permanentLocationId);
+    put(itemRequest, "temporaryLocationId", temporaryLocationId);
+    put(itemRequest, "status", status, new JsonObject().put("name", status));
 
     return itemRequest;
   }
@@ -85,14 +73,16 @@ public class ItemBuilder implements Builder {
     return withStatus(AVAILABLE);
   }
 
-  public ItemBuilder withStatus(String status) {
+  private ItemBuilder withStatus(String status) {
     return new ItemBuilder(
       this.id,
       this.holdingId,
       this.barcode,
       status,
+      this.permanentLocationId,
       this.temporaryLocationId,
       this.materialTypeId,
+      this.permanentLoanTypeId,
       this.temporaryLoanTypeId);
   }
 
@@ -102,8 +92,10 @@ public class ItemBuilder implements Builder {
       this.holdingId,
       barcode,
       this.status,
+      this.permanentLocationId,
       this.temporaryLocationId,
       this.materialTypeId,
+      this.permanentLoanTypeId,
       this.temporaryLoanTypeId);
   }
 
@@ -111,19 +103,38 @@ public class ItemBuilder implements Builder {
     return withBarcode(null);
   }
 
-  public ItemBuilder withNoTemporaryLocation() {
-    return withTemporaryLocation(null);
-  }
-
-  public ItemBuilder withTemporaryLocation(UUID temporaryLocationId) {
+  public ItemBuilder withPermanentLocation(UUID locationId) {
     return new ItemBuilder(
       this.id,
       this.holdingId,
       this.barcode,
       this.status,
-      temporaryLocationId,
+      locationId,
+      this.temporaryLocationId,
       this.materialTypeId,
+      this.permanentLoanTypeId,
       this.temporaryLoanTypeId);
+  }
+
+  public ItemBuilder withNoPermanentLocation() {
+    return withPermanentLocation(null);
+  }
+
+  public ItemBuilder withTemporaryLocation(UUID locationId) {
+    return new ItemBuilder(
+      this.id,
+      this.holdingId,
+      this.barcode,
+      this.status,
+      this.permanentLocationId,
+      locationId,
+      this.materialTypeId,
+      this.permanentLoanTypeId,
+      this.temporaryLoanTypeId);
+  }
+
+  public ItemBuilder withNoTemporaryLocation() {
+    return withTemporaryLocation(null);
   }
 
   public ItemBuilder forHolding(UUID holdingId) {
@@ -132,8 +143,10 @@ public class ItemBuilder implements Builder {
       holdingId,
       this.barcode,
       this.status,
+      this.permanentLocationId,
       this.temporaryLocationId,
       this.materialTypeId,
+      this.permanentLoanTypeId,
       this.temporaryLoanTypeId);
   }
 
@@ -143,8 +156,23 @@ public class ItemBuilder implements Builder {
       this.holdingId,
       this.barcode,
       this.status,
+      this.permanentLocationId,
       this.temporaryLocationId,
       materialTypeId,
+      this.permanentLoanTypeId,
+      this.temporaryLoanTypeId);
+  }
+
+  public ItemBuilder withPermanentLoanType(UUID loanTypeId) {
+    return new ItemBuilder(
+      this.id,
+      this.holdingId,
+      this.barcode,
+      this.status,
+      this.permanentLocationId,
+      this.temporaryLocationId,
+      this.materialTypeId,
+      loanTypeId,
       this.temporaryLoanTypeId);
   }
 
@@ -154,9 +182,10 @@ public class ItemBuilder implements Builder {
       this.holdingId,
       this.barcode,
       this.status,
+      this.permanentLocationId,
       this.temporaryLocationId,
       this.materialTypeId,
+      this.permanentLoanTypeId,
       loanTypeId);
-
   }
 }
