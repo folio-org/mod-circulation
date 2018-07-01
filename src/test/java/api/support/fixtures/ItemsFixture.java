@@ -1,6 +1,5 @@
 package api.support.fixtures;
 
-import api.APITestSuite;
 import api.support.builders.HoldingBuilder;
 import api.support.builders.InstanceBuilder;
 import api.support.builders.ItemBuilder;
@@ -14,6 +13,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
+import static api.APITestSuite.booksInstanceTypeId;
+import static api.APITestSuite.mainLibraryLocationId;
+
 public class ItemsFixture {
 
   private final ResourceClient itemsClient;
@@ -25,7 +27,7 @@ public class ItemsFixture {
     itemsClient = ResourceClient.forItems(client);
     holdingsClient = ResourceClient.forHoldings(client);
     instancesClient = ResourceClient.forInstances(client);
-    defaultPermanentLocation = APITestSuite.mainLibraryLocationId();
+    defaultPermanentLocation = mainLibraryLocationId();
   }
 
   public IndividualResource basedUponDunkirk()
@@ -182,14 +184,14 @@ public class ItemsFixture {
     TimeoutException {
 
     IndividualResource instance = instancesClient.create(
-      instanceBuilder);
+      instanceBuilder.withInstanceTypeId(booksInstanceTypeId()));
 
     HoldingBuilder holdingBuilder = new HoldingBuilder()
       .forInstance(instance.getId())
       .withPermanentLocation(defaultPermanentLocation);
 
     IndividualResource holding = holdingsClient.create(holdingBuilder
-      .withPermanentLocation(APITestSuite.mainLibraryLocationId())
+      .withPermanentLocation(mainLibraryLocationId())
       .withCallNumber("123456"));
 
     return itemsClient.create(
