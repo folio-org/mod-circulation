@@ -1,9 +1,7 @@
 package api.support.builders;
 
-import api.APITestSuite;
 import io.vertx.core.json.JsonObject;
 
-import java.util.Optional;
 import java.util.UUID;
 
 public class ItemBuilder extends JsonBuilder implements Builder {
@@ -26,7 +24,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
 
   public ItemBuilder() {
     this(UUID.randomUUID(), null, "565578437802", AVAILABLE,
-      null, null, null, null);
+      null, null, null, null, null);
   }
 
   private ItemBuilder(
@@ -34,8 +32,10 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     UUID holdingId,
     String barcode,
     String status,
-    UUID permanentLocationId, UUID temporaryLocationId,
+    UUID permanentLocationId,
+    UUID temporaryLocationId,
     UUID materialTypeId,
+    UUID permanentLoanTypeId,
     UUID temporaryLoanTypeId) {
 
     this.id = id;
@@ -46,10 +46,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     this.materialTypeId = materialTypeId;
     this.permanentLocationId = permanentLocationId;
     this.temporaryLoanTypeId = temporaryLoanTypeId;
-
-    //TODO: Figure out a better way of injecting defaults in different situations
-    permanentLoanTypeId = Optional.ofNullable(APITestSuite.canCirculateLoanTypeId())
-      .orElse(null);
+    this.permanentLoanTypeId = permanentLoanTypeId;
   }
 
   public JsonObject create() {
@@ -85,6 +82,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.permanentLocationId,
       this.temporaryLocationId,
       this.materialTypeId,
+      this.permanentLoanTypeId,
       this.temporaryLoanTypeId);
   }
 
@@ -97,6 +95,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.permanentLocationId,
       this.temporaryLocationId,
       this.materialTypeId,
+      this.permanentLoanTypeId,
       this.temporaryLoanTypeId);
   }
 
@@ -113,6 +112,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       locationId,
       this.temporaryLocationId,
       this.materialTypeId,
+      this.permanentLoanTypeId,
       this.temporaryLoanTypeId);
   }
 
@@ -129,6 +129,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.permanentLocationId,
       locationId,
       this.materialTypeId,
+      this.permanentLoanTypeId,
       this.temporaryLoanTypeId);
   }
 
@@ -145,6 +146,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.permanentLocationId,
       this.temporaryLocationId,
       this.materialTypeId,
+      this.permanentLoanTypeId,
       this.temporaryLoanTypeId);
   }
 
@@ -157,6 +159,20 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.permanentLocationId,
       this.temporaryLocationId,
       materialTypeId,
+      this.permanentLoanTypeId,
+      this.temporaryLoanTypeId);
+  }
+
+  public ItemBuilder withPermanentLoanType(UUID loanTypeId) {
+    return new ItemBuilder(
+      this.id,
+      this.holdingId,
+      this.barcode,
+      this.status,
+      this.permanentLocationId,
+      this.temporaryLocationId,
+      this.materialTypeId,
+      loanTypeId,
       this.temporaryLoanTypeId);
   }
 
@@ -169,6 +185,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.permanentLocationId,
       this.temporaryLocationId,
       this.materialTypeId,
+      this.permanentLoanTypeId,
       loanTypeId);
   }
 }
