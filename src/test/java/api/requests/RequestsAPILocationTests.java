@@ -21,7 +21,7 @@ import static api.support.JsonCollectionAssistant.getRecordById;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-public class RequestAPILocationTests extends APITests {
+public class RequestsAPILocationTests extends APITests {
   @Test
   public void locationIsIncludedForSingleRequest()
     throws InterruptedException,
