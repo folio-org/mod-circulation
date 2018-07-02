@@ -8,9 +8,11 @@ import org.folio.circulation.domain.*;
 import org.folio.circulation.domain.representations.RequestProperties;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.support.*;
-import org.folio.circulation.support.http.server.*;
+import org.folio.circulation.support.http.server.ClientErrorResponse;
+import org.folio.circulation.support.http.server.ForwardResponse;
+import org.folio.circulation.support.http.server.SuccessResponse;
+import org.folio.circulation.support.http.server.WebContext;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -178,29 +180,20 @@ public class RequestCollectionResource extends CollectionResource {
   }
 
   void getMany(RoutingContext routingContext) {
-
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context, client);
 
-    clients.requestsStorage().getMany(routingContext.request().query())
-      .thenAccept(requestsResponse -> {
+    final RequestRepository requestRepository = RequestRepository.using(clients);
 
-      if(requestsResponse.getStatusCode() == 200) {
-        final MultipleRecordsWrapper wrappedRequests = MultipleRecordsWrapper.fromBody(
-          requestsResponse.getBody(), "requests");
+    requestRepository.findBy(routingContext.request().query())
+      .thenAccept(requestsResult -> {
+          if (requestsResult.failed()) {
+            requestsResult.cause().writeTo(routingContext.response());
+          }
 
-        if(wrappedRequests.isEmpty()) {
+        final MultipleRecords<Request> requests = requestsResult.value();
 
-          new OkJsonHttpResult(wrappedRequests.toJson())
-            .writeTo(routingContext.response());
-
-          return;
-        }
-
-        final Collection<JsonObject> requests = wrappedRequests.getRecords();
-
-        List<String> itemIds = requests.stream()
-          .map(Request::new)
+        List<String> itemIds = requests.getRecords().stream()
           .map(Request::getItemId)
           .filter(Objects::nonNull)
           .collect(Collectors.toList());
@@ -210,8 +203,6 @@ public class RequestCollectionResource extends CollectionResource {
         CompletableFuture<HttpResult<MultipleInventoryRecords>> inventoryRecordsFetched =
           itemRepository.fetchFor(itemIds);
 
-        //TODO: Refactor this to map to new representations
-        // rather than alter the storage representations
         inventoryRecordsFetched.thenAccept(result -> {
           if(result.failed()) {
             result.cause().writeTo(routingContext.response());
@@ -220,20 +211,24 @@ public class RequestCollectionResource extends CollectionResource {
 
           final MultipleInventoryRecords records = result.value();
 
-          requests.forEach(request -> {
-              Item record = records.findRecordByItemId(
-                new Request(request).getItemId());
+          final List<JsonObject> mappedRequests = requests.getRecords().stream()
+            .map(request -> {
+              Item record = records.findRecordByItemId(request.getItemId());
 
-              if(record.isFound()) {
-                addAdditionalItemProperties(request, record);
+              final JsonObject requestRepresentation = request.asJson();
+
+              if (record.isFound()) {
+                addAdditionalItemProperties(requestRepresentation, record);
               }
-            });
 
-          new OkJsonHttpResult(wrappedRequests.toJson())
-            .writeTo(routingContext.response());
+              return requestRepresentation;
+            }).collect(Collectors.toList());
+
+          new OkJsonHttpResult(
+            new MultipleRecordsWrapper(mappedRequests, "requests", requests.getTotalRecords())
+              .toJson()).writeTo(routingContext.response());
         });
-      }
-    });
+      });
   }
 
   void empty(RoutingContext routingContext) {
