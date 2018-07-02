@@ -64,6 +64,7 @@ import java.util.stream.Collectors;
   RequestsAPIStatusChangeTests.class,
   RequestsAPILoanRenewalTests.class,
   RequestsAPILoanHistoryTests.class,
+  RequestsAPILocationTests.class,
   RequestsAPITitleTests.class,
   RequestsAPIProxyTests.class,
   RequestsAPIRelatedRecordsTests.class,
