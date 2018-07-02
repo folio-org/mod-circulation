@@ -11,18 +11,25 @@ import static org.folio.circulation.support.HttpResult.succeeded;
 
 public class RequestRepository {
   private final CollectionResourceClient requestsStorageClient;
+  private final ItemRepository itemRepository;
 
-  private RequestRepository(CollectionResourceClient requestsStorageClient) {
+  private RequestRepository(
+    CollectionResourceClient requestsStorageClient,
+    ItemRepository itemRepository) {
+
     this.requestsStorageClient = requestsStorageClient;
+    this.itemRepository = itemRepository;
   }
 
   public static RequestRepository using(Clients clients) {
-    return new RequestRepository(clients.requestsStorage());
+    return new RequestRepository(clients.requestsStorage(),
+      new ItemRepository(clients, true, false));
   }
 
   public CompletableFuture<HttpResult<MultipleRecords<Request>>> findBy(String query) {
     return requestsStorageClient.getMany(query)
-      .thenApply(this::mapResponseToRequests);
+      .thenApply(this::mapResponseToRequests)
+      .thenComposeAsync(this::fetchItems);
   }
 
   private HttpResult<MultipleRecords<Request>> mapResponseToRequests(Response response) {
@@ -48,4 +55,19 @@ public class RequestRepository {
 
     return succeeded(mapped);
   }
+
+  private CompletableFuture<HttpResult<MultipleRecords<Request>>> fetchItems(
+    HttpResult<MultipleRecords<Request>> result) {
+
+    return result.after(
+      requests -> itemRepository.fetchFor(requests.getRecords().stream()
+        .map(Request::getItemId)
+        .collect(Collectors.toList()))
+        .thenApply(r -> r.map(items ->
+          new MultipleRecords<>(requests.getRecords().stream().map(
+            request -> Request.from(request.asJson(),
+              items.findRecordByItemId(request.getItemId()))).collect(Collectors.toList()),
+            requests.getTotalRecords()))));
+  }
+
 }

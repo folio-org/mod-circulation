@@ -14,7 +14,6 @@ import org.folio.circulation.support.http.server.SuccessResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -193,41 +192,18 @@ public class RequestCollectionResource extends CollectionResource {
 
         final MultipleRecords<Request> requests = requestsResult.value();
 
-        List<String> itemIds = requests.getRecords().stream()
-          .map(Request::getItemId)
-          .filter(Objects::nonNull)
-          .collect(Collectors.toList());
+        final List<JsonObject> mappedRequests = requests.getRecords().stream()
+          .map(request -> {
+            final JsonObject requestRepresentation = request.asJson();
+            addAdditionalItemProperties(requestRepresentation, request.getItem());
 
-        ItemRepository itemRepository = new ItemRepository(clients, true, false);
+            return requestRepresentation;
 
-        CompletableFuture<HttpResult<MultipleInventoryRecords>> inventoryRecordsFetched =
-          itemRepository.fetchFor(itemIds);
+          }).collect(Collectors.toList());
 
-        inventoryRecordsFetched.thenAccept(result -> {
-          if(result.failed()) {
-            result.cause().writeTo(routingContext.response());
-            return;
-          }
-
-          final MultipleInventoryRecords records = result.value();
-
-          final List<JsonObject> mappedRequests = requests.getRecords().stream()
-            .map(request -> {
-              Item record = records.findRecordByItemId(request.getItemId());
-
-              final JsonObject requestRepresentation = request.asJson();
-
-              if (record.isFound()) {
-                addAdditionalItemProperties(requestRepresentation, record);
-              }
-
-              return requestRepresentation;
-            }).collect(Collectors.toList());
-
-          new OkJsonHttpResult(
-            new MultipleRecordsWrapper(mappedRequests, "requests", requests.getTotalRecords())
-              .toJson()).writeTo(routingContext.response());
-        });
+        new OkJsonHttpResult(
+          new MultipleRecordsWrapper(mappedRequests, "requests", requests.getTotalRecords())
+            .toJson()).writeTo(routingContext.response());
       });
   }
 

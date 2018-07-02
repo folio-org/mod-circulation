@@ -18,6 +18,14 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     this.representation = representation;
   }
 
+  public static Request from(JsonObject representation, Item item) {
+    final Request request = new Request(representation);
+
+    request.setItem(item);
+
+    return request;
+  }
+
   public JsonObject asJson() {
     return representation.copy();
   }
