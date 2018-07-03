@@ -186,23 +186,18 @@ public class RequestCollectionResource extends CollectionResource {
     final RequestRepository requestRepository = RequestRepository.using(clients);
 
     requestRepository.findBy(routingContext.request().query())
-      .thenApply(requestsResult -> {
-        if (requestsResult.failed()) {
-          requestsResult.cause().writeTo(routingContext.response());
-        }
-
-        final MultipleRecords<Request> requests = requestsResult.value();
-
-        final List<JsonObject> mappedRequests = requests.getRecords().stream()
-          .map(this::toRepresentation)
-          .collect(Collectors.toList());
-
-          return succeeded(new MultipleRecordsWrapper(mappedRequests,
-            "requests", requests.getTotalRecords()));
-
-      })
+      .thenApply(r -> r.map(this::mapToRepresentations))
       .thenApply(OkJsonHttpResult::fromMultiple)
       .thenAccept(result -> result.writeTo(routingContext.response()));
+  }
+
+  private MultipleRecordsWrapper mapToRepresentations(MultipleRecords<Request> requests) {
+    final List<JsonObject> mappedRequests = requests.getRecords().stream()
+      .map(this::toRepresentation)
+      .collect(Collectors.toList());
+
+    return new MultipleRecordsWrapper(mappedRequests,
+      "requests", requests.getTotalRecords());
   }
 
   private JsonObject toRepresentation(Request request) {
