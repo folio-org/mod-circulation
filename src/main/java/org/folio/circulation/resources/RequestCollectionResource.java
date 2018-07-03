@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.*;
+import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
@@ -60,7 +61,7 @@ public class RequestCollectionResource extends CollectionResource {
       "proxyUserId is not valid", RequestProperties.PROXY_USER_ID,
       request.getProxyUserId()));
 
-    completedFuture(HttpResult.succeeded(new RequestAndRelatedRecords(request)))
+    completedFuture(succeeded(new RequestAndRelatedRecords(request)))
       .thenCombineAsync(itemRepository.fetchFor(request), this::addInventoryRecords)
       .thenApply(this::refuseWhenItemDoesNotExist)
       .thenApply(this::refuseWhenItemIsNotValid)
@@ -96,7 +97,7 @@ public class RequestCollectionResource extends CollectionResource {
       "proxyUserId is not valid", RequestProperties.PROXY_USER_ID,
       request.getProxyUserId()));
 
-    completedFuture(HttpResult.succeeded(new RequestAndRelatedRecords(request)))
+    completedFuture(succeeded(new RequestAndRelatedRecords(request)))
       .thenCombineAsync(itemRepository.fetchFor(request), this::addInventoryRecords)
       .thenCombineAsync(userRepository.getUser(request.getUserId(), false), this::addUser)
       .thenCombineAsync(userRepository.getUser(request.getProxyUserId(), false), this::addProxyUser)
@@ -185,26 +186,30 @@ public class RequestCollectionResource extends CollectionResource {
     final RequestRepository requestRepository = RequestRepository.using(clients);
 
     requestRepository.findBy(routingContext.request().query())
-      .thenAccept(requestsResult -> {
-          if (requestsResult.failed()) {
-            requestsResult.cause().writeTo(routingContext.response());
-          }
+      .thenApply(requestsResult -> {
+        if (requestsResult.failed()) {
+          requestsResult.cause().writeTo(routingContext.response());
+        }
 
         final MultipleRecords<Request> requests = requestsResult.value();
 
         final List<JsonObject> mappedRequests = requests.getRecords().stream()
-          .map(request -> {
-            final JsonObject requestRepresentation = request.asJson();
-            addAdditionalItemProperties(requestRepresentation, request.getItem());
+          .map(this::toRepresentation)
+          .collect(Collectors.toList());
 
-            return requestRepresentation;
+          return succeeded(new MultipleRecordsWrapper(mappedRequests,
+            "requests", requests.getTotalRecords()));
 
-          }).collect(Collectors.toList());
+      })
+      .thenApply(OkJsonHttpResult::fromMultiple)
+      .thenAccept(result -> result.writeTo(routingContext.response()));
+  }
 
-        new OkJsonHttpResult(
-          new MultipleRecordsWrapper(mappedRequests, "requests", requests.getTotalRecords())
-            .toJson()).writeTo(routingContext.response());
-      });
+  private JsonObject toRepresentation(Request request) {
+    final JsonObject requestRepresentation = request.asJson();
+    addAdditionalItemProperties(requestRepresentation, request.getItem());
+
+    return requestRepresentation;
   }
 
   void empty(RoutingContext routingContext) {
@@ -377,7 +382,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     clients.requestsStorage().post(request, response -> {
       if (response.getStatusCode() == 201) {
-        onCreated.complete(HttpResult.succeeded(
+        onCreated.complete(succeeded(
           requestAndRelatedRecords.withRequest(new Request(response.getJson()))));
       } else {
         onCreated.complete(HttpResult.failed(new ForwardOnFailure(response)));

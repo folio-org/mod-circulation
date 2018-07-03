@@ -19,4 +19,14 @@ public class OkJsonHttpResult extends JsonHttpResult {
       return new OkJsonHttpResult(result.value());
     }
   }
+
+  public static WritableHttpResult<JsonObject> fromMultiple(
+    HttpResult<MultipleRecordsWrapper> result) {
+    if(result.failed()) {
+      return HttpResult.failed(result.cause());
+    }
+    else {
+      return new OkJsonHttpResult(result.value().toJson());
+    }
+  }
 }
