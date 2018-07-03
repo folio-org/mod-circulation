@@ -14,9 +14,6 @@ import org.folio.circulation.support.http.server.ForwardResponse;
 import org.folio.circulation.support.http.server.SuccessResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
@@ -154,21 +151,10 @@ public class LoanCollectionResource extends CollectionResource {
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
     loanRepository.findBy(routingContext.request().query())
-      .thenAccept(result -> {
-        if(result.failed()) {
-          result.cause().writeTo(routingContext.response());
-        }
-
-        final MultipleRecords<Loan> loans = result.value();
-
-        final List<JsonObject> mappedLoans = loans.getRecords().stream()
-          .map(loanRepresentation::extendedLoan)
-          .collect(Collectors.toList());
-
-        new OkJsonHttpResult(
-          new MultipleRecordsWrapper(mappedLoans, "loans", loans.getTotalRecords())
-            .toJson()).writeTo(routingContext.response());
-      });
+      .thenApply(r -> r.map(loans ->
+        loans.mapToRepresentations(loanRepresentation::extendedLoan, "loans")))
+      .thenApply(OkJsonHttpResult::fromMultiple)
+      .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
   void empty(RoutingContext routingContext) {
