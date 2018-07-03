@@ -1,10 +1,7 @@
 package org.folio.circulation.support;
 
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.ItemRelatedRecord;
-import org.folio.circulation.domain.LocationRepository;
-import org.folio.circulation.domain.MaterialTypeRepository;
+import org.folio.circulation.domain.*;
 import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -349,6 +346,19 @@ public class ItemRepository {
           .exceptionally(e -> HttpResult.failed(new ServerErrorFailure(e)));
       }
     });
+  }
+
+  public <T extends ItemRelatedRecord<T>> CompletableFuture<HttpResult<MultipleRecords<T>>> fetchItemsFor(
+    HttpResult<MultipleRecords<T>> result) {
+    return result.after(
+      records -> fetchFor(records.getRecords().stream()
+      .map(ItemRelatedRecord::getItemId)
+      .collect(Collectors.toList()))
+      .thenApply(r -> r.map(items ->
+        new MultipleRecords<>(records.getRecords().stream().map(
+          record -> record.withItem(
+            items.findRecordByItemId(record.getItemId()))).collect(Collectors.toList()),
+        records.getTotalRecords()))));
   }
 
   private class InventoryRecordsBuilder {

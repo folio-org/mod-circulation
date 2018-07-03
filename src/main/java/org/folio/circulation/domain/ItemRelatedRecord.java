@@ -1,5 +1,6 @@
 package org.folio.circulation.domain;
 
-public interface ItemRelatedRecord {
+public interface ItemRelatedRecord<T> {
   String getItemId();
+  T withItem(Item item);
 }

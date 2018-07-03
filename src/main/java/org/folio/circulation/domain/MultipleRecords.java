@@ -17,7 +17,7 @@ public class MultipleRecords<T> {
     return new MultipleRecords<>(new ArrayList<>(), 0);
   }
 
-  MultipleRecords(Collection<T> records, Integer totalRecords) {
+  public MultipleRecords(Collection<T> records, Integer totalRecords) {
     this.records = records;
     this.totalRecords = totalRecords;
   }

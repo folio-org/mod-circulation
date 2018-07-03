@@ -189,25 +189,11 @@ public class LoanRepository {
           user -> Loan.from(loan.asJson(), loan.getItem(), user))));
   }
 
-  private CompletableFuture<HttpResult<MultipleRecords<Loan>>> fetchItems(
-    HttpResult<MultipleRecords<Loan>> result) {
-
-    return result.after(
-      loans -> itemRepository.fetchFor(loans.getRecords().stream()
-      .map(Loan::getItemId)
-      .collect(Collectors.toList()))
-      .thenApply(r -> r.map(items ->
-        new MultipleRecords<>(loans.getRecords().stream().map(
-          loan -> Loan.from(loan.asJson(),
-            items.findRecordByItemId(loan.getItemId()))).collect(Collectors.toList()),
-        loans.getTotalRecords()))));
-  }
-
   public CompletableFuture<HttpResult<MultipleRecords<Loan>>> findBy(String query) {
     //TODO: Should fetch users for all loans
     return loansStorageClient.getMany(query)
       .thenApply(this::mapResponseToLoans)
-      .thenComposeAsync(this::fetchItems);
+      .thenComposeAsync(itemRepository::fetchItemsFor);
   }
 
   private HttpResult<MultipleRecords<Loan>> mapResponseToLoans(Response response) {

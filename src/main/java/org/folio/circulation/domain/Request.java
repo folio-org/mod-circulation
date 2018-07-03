@@ -56,6 +56,15 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   @Override
+  public Request withItem(Item item) {
+    final Request request = new Request(representation);
+
+    request.setItem(item);
+
+    return request;
+  }
+
+  @Override
   public String getUserId() {
     return representation.getString("requesterId");
   }
@@ -92,7 +101,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   void setItem(Item item) {
     this.item = item;
   }
-  
+
   public String getCancellationReasonId() {
     return getProperty(representation, "cancellationReasonId");
   }

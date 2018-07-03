@@ -16,11 +16,22 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   private final JsonObject representation;
-  private Item item;
+  private final Item item;
   private User user;
 
   public Loan(JsonObject representation) {
+    this(representation, null);
+  }
+
+  public Loan(JsonObject representation, Item item) {
     this.representation = representation;
+    this.item = item;
+
+    //TODO: Refuse if ID does not match property in representation,
+    // and possibly convert isFound to unknown item class
+    if(item != null && item.isFound()) {
+      representation.put("itemId", item.getItemId());
+    }
   }
 
   public static Loan from(JsonObject representation) {
@@ -33,9 +44,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public static Loan from(JsonObject representation, Item item, User user) {
     defaultStatusAndAction(representation);
-    final Loan loan = new Loan(representation);
+    final Loan loan = new Loan(representation, item);
 
-    loan.setItem(item);
     loan.setUser(user);
 
     return loan;
@@ -109,13 +119,9 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return item;
   }
 
-  private void setItem(Item newItem) {
-    //TODO: Refuse if ID does not match property in representation,
-    // and possibly convert isFound to unknown item class
-    if(newItem != null && newItem.isFound()) {
-      representation.put("itemId", newItem.getItemId());
-    }
-    this.item = newItem;
+  @Override
+  public Loan withItem(Item item) {
+    return new Loan(representation, item);
   }
 
   public User getUser() {
