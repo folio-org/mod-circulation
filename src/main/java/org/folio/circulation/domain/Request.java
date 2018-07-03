@@ -55,7 +55,6 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return representation.getString("itemId");
   }
 
-  @Override
   public Request withItem(Item item) {
     final Request request = new Request(representation);
 

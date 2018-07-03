@@ -193,7 +193,7 @@ public class LoanRepository {
     //TODO: Should fetch users for all loans
     return loansStorageClient.getMany(query)
       .thenApply(this::mapResponseToLoans)
-      .thenComposeAsync(itemRepository::fetchItemsFor);
+      .thenComposeAsync(loans -> itemRepository.fetchItemsFor(loans, Loan::withItem));
   }
 
   private HttpResult<MultipleRecords<Loan>> mapResponseToLoans(Response response) {

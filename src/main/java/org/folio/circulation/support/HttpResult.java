@@ -32,6 +32,25 @@ public interface HttpResult<T> {
     }
   }
 
+  /**
+   * Combines a result together with the result of an action, if both succeed.
+   * If the first result is a failure then it is returned, and the action is not invoked
+   * otherwise if the result of the action is a failure it is returned
+   *
+   * @param nextAction the action to invoke if the current result succeeded
+   * @param combiner function to combine the values together
+   * @return either failure from the first result, failure from the action
+   * or successful result with the values combined
+   */
+  default <U, V> CompletableFuture<HttpResult<V>> combineAfter(
+    Function<T, CompletableFuture<HttpResult<U>>> nextAction, BiFunction<
+    T, U, V> combiner) {
+
+    return this.after(nextAction)
+      .thenApply(actionResult -> actionResult.map(r ->
+        combiner.apply(value(), r)));
+  }
+  
   boolean failed();
 
   T value();

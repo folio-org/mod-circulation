@@ -29,7 +29,8 @@ public class RequestRepository {
   public CompletableFuture<HttpResult<MultipleRecords<Request>>> findBy(String query) {
     return requestsStorageClient.getMany(query)
       .thenApply(this::mapResponseToRequests)
-      .thenComposeAsync(itemRepository::fetchItemsFor);
+      .thenComposeAsync(requests ->
+        itemRepository.fetchItemsFor(requests, Request::withItem));
   }
 
   private HttpResult<MultipleRecords<Request>> mapResponseToRequests(Response response) {

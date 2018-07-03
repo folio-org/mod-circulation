@@ -119,7 +119,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return item;
   }
 
-  @Override
   public Loan withItem(Item item) {
     return new Loan(representation, item);
   }
