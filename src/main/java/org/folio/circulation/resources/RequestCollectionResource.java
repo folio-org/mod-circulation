@@ -13,9 +13,7 @@ import org.folio.circulation.support.http.server.ForwardResponse;
 import org.folio.circulation.support.http.server.SuccessResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.*;
@@ -186,18 +184,10 @@ public class RequestCollectionResource extends CollectionResource {
     final RequestRepository requestRepository = RequestRepository.using(clients);
 
     requestRepository.findBy(routingContext.request().query())
-      .thenApply(r -> r.map(this::mapToRepresentations))
+      .thenApply(r -> r.map(requests ->
+        requests.mapToRepresentations(this::toRepresentation, "requests")))
       .thenApply(OkJsonHttpResult::fromMultiple)
       .thenAccept(result -> result.writeTo(routingContext.response()));
-  }
-
-  private MultipleRecordsWrapper mapToRepresentations(MultipleRecords<Request> requests) {
-    final List<JsonObject> mappedRequests = requests.getRecords().stream()
-      .map(this::toRepresentation)
-      .collect(Collectors.toList());
-
-    return new MultipleRecordsWrapper(mappedRequests,
-      "requests", requests.getTotalRecords());
   }
 
   private JsonObject toRepresentation(Request request) {
