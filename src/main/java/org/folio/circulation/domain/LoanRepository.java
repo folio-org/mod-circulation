@@ -162,17 +162,12 @@ public class LoanRepository {
   }
 
   private CompletableFuture<HttpResult<Loan>> fetchItem(HttpResult<Loan> result) {
-    return result.after(loan ->
-      itemRepository.fetchFor(loan)
-      .thenApply(itemResult -> itemResult.map(
-        item -> Loan.from(loan.asJson(), item))));
+    return result.combineAfter(itemRepository::fetchFor, Loan::withItem);
   }
 
   private CompletableFuture<HttpResult<Loan>> fetchUser(HttpResult<Loan> result) {
-    return result.after(loan ->
-      userRepository.getUser(loan)
-        .thenApply(userResult -> userResult.map(
-          user -> Loan.from(loan.asJson(), loan.getItem(), user))));
+    return result.combineAfter(userRepository::getUser,
+      (loan, user) -> Loan.from(loan.asJson(), loan.getItem(), user));
   }
 
   public CompletableFuture<HttpResult<MultipleRecords<Loan>>> findBy(String query) {
