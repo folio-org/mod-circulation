@@ -40,9 +40,9 @@ public class RequestRepository {
   }
 
   private CompletableFuture<HttpResult<Request>> fetchRequest(String id) {
+    final SingleRecordMapper<Request> mapper = new SingleRecordMapper<>(Request::from);
+
     return requestsStorageClient.get(id)
-      .thenApply(response -> response != null && response.getStatusCode() == 200
-        ? HttpResult.succeeded(Request.from(response.getJson()))
-        : HttpResult.failed(new ForwardOnFailure(response)));
+      .thenApply(mapper::mapFrom);
   }
 }

@@ -155,10 +155,9 @@ public class LoanRepository {
     Item item,
     User user) {
 
-    return loansStorageClient.get(id)
-      .thenApply(response -> response != null && response.getStatusCode() == 200
-        ? succeeded(Loan.from(response.getJson(), item, user))
-        : failed(new ForwardOnFailure(response)));
+    final SingleRecordMapper<Loan> mapper = new SingleRecordMapper<>(Loan::from);
+
+    return loansStorageClient.get(id).thenApply(mapper::mapFrom);
   }
 
   private CompletableFuture<HttpResult<Loan>> fetchItem(HttpResult<Loan> result) {

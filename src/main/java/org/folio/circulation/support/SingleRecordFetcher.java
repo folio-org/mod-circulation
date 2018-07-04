@@ -16,7 +16,7 @@ public class SingleRecordFetcher {
   private final String recordType;
   private final Supplier<HttpResult<JsonObject>> resultOnFailure;
 
-  public SingleRecordFetcher(CollectionResourceClient client, String recordType) {
+  SingleRecordFetcher(CollectionResourceClient client, String recordType) {
     this(client, recordType, () -> HttpResult.succeeded(null));
   }
 
