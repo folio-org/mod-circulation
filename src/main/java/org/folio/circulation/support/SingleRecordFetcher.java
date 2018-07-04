@@ -9,31 +9,35 @@ import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
+import static java.util.function.Function.identity;
+
 public class SingleRecordFetcher {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final CollectionResourceClient client;
   private final String recordType;
-  private final Function<Response, HttpResult<JsonObject>> resultOnFailure;
+  private final SingleRecordMapper<JsonObject> mapper;
 
-  SingleRecordFetcher(CollectionResourceClient client, String recordType) {
-    this(client, recordType, response -> HttpResult.succeeded(null));
+
+  private SingleRecordFetcher(
+    CollectionResourceClient client,
+    String recordType, SingleRecordMapper<JsonObject> mapper) {
+    this.client = client;
+    this.recordType = recordType;
+    this.mapper = mapper;
   }
 
-  public SingleRecordFetcher(
+  public static SingleRecordFetcher json(
     CollectionResourceClient client,
     String recordType,
     Function<Response, HttpResult<JsonObject>> resultOnFailure) {
-    this.client = client;
-    this.recordType = recordType;
-    this.resultOnFailure = resultOnFailure;
+
+    return new SingleRecordFetcher(client, recordType, new SingleRecordMapper<>(
+      identity(), resultOnFailure));
   }
 
   public CompletableFuture<HttpResult<JsonObject>> fetchSingleRecord(String id) {
     log.info("Fetching {} with ID: {}", recordType, id);
-
-    final SingleRecordMapper<JsonObject> mapper = new SingleRecordMapper<>(
-      r -> r, resultOnFailure);
 
     return client.get(id)
       .thenApply(mapper::mapFrom)

@@ -256,7 +256,7 @@ public class ItemRepository {
   }
 
   private CompletableFuture<HttpResult<InventoryRecordsBuilder>> fetchItem(String itemId) {
-    return new SingleRecordFetcher(itemsClient, "item")
+    return SingleRecordFetcher.json(itemsClient, "item", response -> HttpResult.succeeded(null))
       .fetchSingleRecord(itemId)
       .thenApply(r -> r.map(InventoryRecordsBuilder::new));
   }
