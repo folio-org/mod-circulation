@@ -33,14 +33,11 @@ public class SingleRecordFetcher {
     log.info("Fetching {} with ID: {}", recordType, id);
 
     return client.get(id)
-      .thenApply(r -> mapToResult(r, this.resultOnFailure))
+      .thenApply(this::mapToResult)
       .exceptionally(e -> HttpResult.failed(new ServerErrorFailure(e)));
   }
 
-  private HttpResult<JsonObject> mapToResult(
-    Response response,
-    Function<Response, HttpResult<JsonObject>> resultOnFailure) {
-
+  private HttpResult<JsonObject> mapToResult(Response response) {
     if(response != null) {
       log.info("Response received, status code: {} body: {}",
         response.getStatusCode(), response.getBody());
@@ -48,7 +45,7 @@ public class SingleRecordFetcher {
       if (response.getStatusCode() == 200) {
         return HttpResult.succeeded(response.getJson());
       } else {
-        return resultOnFailure.apply(response);
+        return this.resultOnFailure.apply(response);
       }
     }
     else {
