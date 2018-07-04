@@ -49,7 +49,7 @@ public class RequestQueueFetcher {
                 log.info("Found request queue: {}", foundRequests.encodePrettily());
 
                 return HttpResult.succeeded(
-                  new RequestQueue(mapToList(foundRequests, Request::new)));
+                  new RequestQueue(mapToList(foundRequests, Request::from)));
               } else {
                 return HttpResult.failed(new ServerErrorFailure(
                   String.format("Failed to fetch request queue: %s: %s",

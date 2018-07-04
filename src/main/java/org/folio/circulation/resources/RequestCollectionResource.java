@@ -45,7 +45,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     removeRelatedRecordInformation(representation);
 
-    final Request request = new Request(representation);
+    final Request request = Request.from(representation);
 
     final Clients clients = Clients.create(context, client);
 
@@ -83,7 +83,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     removeRelatedRecordInformation(representation);
 
-    final Request request = new Request(representation);
+    final Request request = Request.from(representation);
 
     final Clients clients = Clients.create(context, client);
 
@@ -134,7 +134,7 @@ public class RequestCollectionResource extends CollectionResource {
     clients.requestsStorage().get(id)
       .thenAccept(requestResponse -> {
         if(requestResponse.getStatusCode() == 200) {
-          Request request = new Request(requestResponse.getJson());
+          Request request = Request.from(requestResponse.getJson());
 
           ItemRepository itemRepository = new ItemRepository(clients, true, false);
 
@@ -368,7 +368,7 @@ public class RequestCollectionResource extends CollectionResource {
     clients.requestsStorage().post(request, response -> {
       if (response.getStatusCode() == 201) {
         onCreated.complete(succeeded(
-          requestAndRelatedRecords.withRequest(new Request(response.getJson()))));
+          requestAndRelatedRecords.withRequest(Request.from(response.getJson()))));
       } else {
         onCreated.complete(HttpResult.failed(new ForwardOnFailure(response)));
       }

@@ -29,9 +29,7 @@ public class RequestAndRelatedRecords implements UserRelatedRecord {
   }
 
   public RequestAndRelatedRecords withRequest(Request newRequest) {
-    newRequest.setItem(request.getItem());
-
-    return new RequestAndRelatedRecords(newRequest,
+    return new RequestAndRelatedRecords(newRequest.withItem(request.getItem()),
       this.requestQueue,
       this.requestingUser,
       this.proxyUser);
@@ -46,10 +44,8 @@ public class RequestAndRelatedRecords implements UserRelatedRecord {
   }
 
   public RequestAndRelatedRecords withInventoryRecords(Item newItem) {
-    this.request.setItem(newItem);
-
     return new RequestAndRelatedRecords(
-      this.request,
+      this.request.withItem(newItem),
       this.requestQueue,
       this.requestingUser,
       this.proxyUser);

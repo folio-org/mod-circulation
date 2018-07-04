@@ -2,20 +2,17 @@ package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.DateTime;
 
 import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
 import static org.folio.circulation.domain.representations.RequestProperties.STATUS;
-import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private final JsonObject representation;
+  private final Item item;
 
-  private Item item;
-
-  public Request(JsonObject representation) {
+  public Request(JsonObject representation, Item item) {
     this.representation = representation;
+    this.item = item;
   }
 
   public static Request from(JsonObject representation) {
@@ -23,11 +20,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public static Request from(JsonObject representation, Item item) {
-    final Request request = new Request(representation);
-
-    request.setItem(item);
-
-    return request;
+    return new Request(representation, item);
   }
 
   public JsonObject asJson() {
@@ -59,12 +52,8 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return representation.getString("itemId");
   }
 
-  public Request withItem(Item item) {
-    final Request request = new Request(representation);
-
-    request.setItem(item);
-
-    return request;
+  public Request withItem(Item newItem) {
+    return new Request(representation, newItem);
   }
 
   @Override
@@ -100,25 +89,4 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   public Item getItem() {
     return item;
   }
-
-  void setItem(Item item) {
-    this.item = item;
-  }
-
-  public String getCancellationReasonId() {
-    return getProperty(representation, "cancellationReasonId");
-  }
-  
-  public String getCancelledByUserId() {
-    return getProperty(representation, "cancelledByUserId");
-  }
-  
-  public DateTime getCancelledDate() {
-    return getDateTimeProperty(representation, "cancelledDate");
-  }
-  
-  public String getCancellationAdditionalInformation() {
-    return getProperty(representation, "cancellationAdditionalInformation");
-  }
-  
 }
