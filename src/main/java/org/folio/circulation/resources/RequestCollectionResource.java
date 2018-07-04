@@ -132,32 +132,43 @@ public class RequestCollectionResource extends CollectionResource {
     String id = routingContext.request().getParam("id");
 
     clients.requestsStorage().get(id)
-      .thenAccept(requestResponse -> {
+      .thenApply(requestResponse -> {
+        final HttpResult<Request> mapResult;
+
         if(requestResponse.getStatusCode() == 200) {
-          Request request = Request.from(requestResponse.getJson());
-
-          ItemRepository itemRepository = new ItemRepository(clients, true, false);
-
-          CompletableFuture<HttpResult<Item>> inventoryRecordsCompleted =
-            itemRepository.fetchFor(request);
-
-          inventoryRecordsCompleted.thenAccept(r -> {
-            if(r.failed()) {
-              r.cause().writeTo(routingContext.response());
-              return;
-            }
-
-            final JsonObject representation = request.asJson();
-
-            addAdditionalItemProperties(representation, r.value());
-
-            new OkJsonHttpResult(representation)
-              .writeTo(routingContext.response());
-          });
+          mapResult = HttpResult.succeeded(Request.from(requestResponse.getJson()));
         }
         else {
-          ForwardResponse.forward(routingContext.response(), requestResponse);
+          mapResult = HttpResult.failed(new ForwardOnFailure(requestResponse));
         }
+
+        return mapResult;
+      })
+      .thenAcceptAsync(result -> {
+          if(result.failed()) {
+            result.cause().writeTo(routingContext.response());
+          }
+          else {
+            Request request = result.value();
+            ItemRepository itemRepository = new ItemRepository(clients, true, false);
+
+            CompletableFuture<HttpResult<Item>> inventoryRecordsCompleted =
+              itemRepository.fetchFor(request);
+
+            inventoryRecordsCompleted.thenAccept(r -> {
+              if(r.failed()) {
+                r.cause().writeTo(routingContext.response());
+                return;
+              }
+
+              final JsonObject representation = request.asJson();
+
+              addAdditionalItemProperties(representation, r.value());
+
+              new OkJsonHttpResult(representation)
+                .writeTo(routingContext.response());
+            });
+          }
       });
   }
 
