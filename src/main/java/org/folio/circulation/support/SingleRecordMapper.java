@@ -18,7 +18,7 @@ public class SingleRecordMapper<T> {
     this(mapper, (response -> HttpResult.failed(new ForwardOnFailure(response))));
   }
 
-  private SingleRecordMapper(
+  SingleRecordMapper(
     Function<JsonObject, T> mapper,
     Function<Response, HttpResult<T>> responseHttpResultFunction) {
     this.mapper = mapper;

@@ -32,25 +32,11 @@ public class SingleRecordFetcher {
   public CompletableFuture<HttpResult<JsonObject>> fetchSingleRecord(String id) {
     log.info("Fetching {} with ID: {}", recordType, id);
 
+    final SingleRecordMapper<JsonObject> mapper = new SingleRecordMapper<>(
+      r -> r, resultOnFailure);
+
     return client.get(id)
-      .thenApply(this::mapToResult)
+      .thenApply(mapper::mapFrom)
       .exceptionally(e -> HttpResult.failed(new ServerErrorFailure(e)));
-  }
-
-  private HttpResult<JsonObject> mapToResult(Response response) {
-    if(response != null) {
-      log.info("Response received, status code: {} body: {}",
-        response.getStatusCode(), response.getBody());
-
-      if (response.getStatusCode() == 200) {
-        return HttpResult.succeeded(response.getJson());
-      } else {
-        return this.resultOnFailure.apply(response);
-      }
-    }
-    else {
-      log.warn("Did not receive response to request");
-      return HttpResult.failed(new ServerErrorFailure("Did not receive response to request"));
-    }
   }
 }
