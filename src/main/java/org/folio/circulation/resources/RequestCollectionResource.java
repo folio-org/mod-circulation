@@ -134,17 +134,9 @@ public class RequestCollectionResource extends CollectionResource {
     String id = routingContext.request().getParam("id");
 
     requestRepository.getById(id)
-      .thenAcceptAsync(result -> {
-        if(result.failed()) {
-          result.cause().writeTo(routingContext.response());
-        }
-        else {
-          Request request = result.value();
-
-          new OkJsonHttpResult(toRepresentation(request))
-            .writeTo(routingContext.response());
-          }
-      });
+      .thenApply(r -> r.map(this::toRepresentation))
+      .thenApply(OkJsonHttpResult::from)
+      .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
   void delete(RoutingContext routingContext) {
