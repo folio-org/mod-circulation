@@ -155,17 +155,10 @@ public class LoanRepository {
     Item item,
     User user) {
 
-    final Function<Response, HttpResult<Loan>> mapResponse = response -> {
-      if(response != null && response.getStatusCode() == 200) {
-        return succeeded(Loan.from(response.getJson(), item, user));
-      }
-      else {
-        return failed(new ForwardOnFailure(response));
-      }
-    };
-
     return loansStorageClient.get(id)
-      .thenApply(mapResponse);
+      .thenApply(response -> response != null && response.getStatusCode() == 200
+        ? succeeded(Loan.from(response.getJson(), item, user))
+        : failed(new ForwardOnFailure(response)));
   }
 
   private CompletableFuture<HttpResult<Loan>> fetchItem(HttpResult<Loan> result) {
