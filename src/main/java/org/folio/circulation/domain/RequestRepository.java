@@ -34,9 +34,20 @@ public class RequestRepository {
   }
 
   public CompletableFuture<HttpResult<Request>> getById(String id) {
+    return fetchRequest(id)
+      .thenComposeAsync(this::fetchItem);
+  }
+
+  private CompletableFuture<HttpResult<Request>> fetchRequest(String id) {
     return requestsStorageClient.get(id)
       .thenApply(response -> response.getStatusCode() == 200
         ? HttpResult.succeeded(Request.from(response.getJson()))
         : HttpResult.failed(new ForwardOnFailure(response)));
+  }
+
+  private CompletableFuture<HttpResult<Request>> fetchItem(HttpResult<Request> result) {
+    return result.after(request ->
+      itemRepository.fetchFor(request)
+        .thenApply(itemResult -> itemResult.map(request::withItem)));
   }
 }

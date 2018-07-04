@@ -135,29 +135,14 @@ public class RequestCollectionResource extends CollectionResource {
 
     requestRepository.getById(id)
       .thenAcceptAsync(result -> {
-          if(result.failed()) {
-            result.cause().writeTo(routingContext.response());
-          }
-          else {
-            Request request = result.value();
-            ItemRepository itemRepository = new ItemRepository(clients, true, false);
+        if(result.failed()) {
+          result.cause().writeTo(routingContext.response());
+        }
+        else {
+          Request request = result.value();
 
-            CompletableFuture<HttpResult<Item>> inventoryRecordsCompleted =
-              itemRepository.fetchFor(request);
-
-            inventoryRecordsCompleted.thenAccept(r -> {
-              if(r.failed()) {
-                r.cause().writeTo(routingContext.response());
-                return;
-              }
-
-              final JsonObject representation = request.asJson();
-
-              addAdditionalItemProperties(representation, r.value());
-
-              new OkJsonHttpResult(representation)
-                .writeTo(routingContext.response());
-            });
+          new OkJsonHttpResult(toRepresentation(request))
+            .writeTo(routingContext.response());
           }
       });
   }
