@@ -8,13 +8,13 @@ import org.slf4j.LoggerFactory;
 import java.lang.invoke.MethodHandles;
 import java.util.function.Function;
 
-public class SingleRecordMapper<T> {
+class SingleRecordMapper<T> {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final Function<JsonObject, T> mapper;
   private final Function<Response, HttpResult<T>> resultOnFailure;
 
-  public SingleRecordMapper(Function<JsonObject, T> mapper) {
+  SingleRecordMapper(Function<JsonObject, T> mapper) {
     this(mapper, (response -> HttpResult.failed(new ForwardOnFailure(response))));
   }
 
@@ -25,7 +25,7 @@ public class SingleRecordMapper<T> {
     resultOnFailure = responseHttpResultFunction;
   }
 
-  public HttpResult<T> mapFrom(Response response) {
+  HttpResult<T> mapFrom(Response response) {
     if(response != null) {
       log.info("Response received, status code: {} body: {}",
         response.getStatusCode(), response.getBody());
@@ -40,6 +40,5 @@ public class SingleRecordMapper<T> {
       log.warn("Did not receive response to request");
       return HttpResult.failed(new ServerErrorFailure("Did not receive response to request"));
     }
-
   }
 }

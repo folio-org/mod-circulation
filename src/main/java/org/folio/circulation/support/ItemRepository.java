@@ -256,9 +256,10 @@ public class ItemRepository {
   }
 
   private CompletableFuture<HttpResult<InventoryRecordsBuilder>> fetchItem(String itemId) {
-    return SingleRecordFetcher.json(itemsClient, "item", response -> HttpResult.succeeded(null))
-      .fetchSingleRecord(itemId)
-      .thenApply(r -> r.map(InventoryRecordsBuilder::new));
+    return new SingleRecordFetcher<>(itemsClient, "item",
+      InventoryRecordsBuilder::new,
+      response -> HttpResult.succeeded(new InventoryRecordsBuilder(null)))
+      .fetchSingleRecord(itemId);
   }
 
   private CompletableFuture<HttpResult<InventoryRecordsBuilder>> fetchItemByBarcode(String barcode) {

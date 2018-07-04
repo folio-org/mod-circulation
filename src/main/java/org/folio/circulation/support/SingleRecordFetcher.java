@@ -11,32 +11,49 @@ import java.util.function.Function;
 
 import static java.util.function.Function.identity;
 
-public class SingleRecordFetcher {
+public class SingleRecordFetcher<T> {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final CollectionResourceClient client;
   private final String recordType;
-  private final SingleRecordMapper<JsonObject> mapper;
+  private final SingleRecordMapper<T> mapper;
 
-
-  private SingleRecordFetcher(
+  public SingleRecordFetcher(
     CollectionResourceClient client,
-    String recordType, SingleRecordMapper<JsonObject> mapper) {
+    String recordType, SingleRecordMapper<T> mapper) {
     this.client = client;
     this.recordType = recordType;
     this.mapper = mapper;
   }
 
-  public static SingleRecordFetcher json(
+  SingleRecordFetcher(
+    CollectionResourceClient client,
+    String recordType,
+    Function<JsonObject, T> mapper,
+    Function<Response, HttpResult<T>> resultOnFailure) {
+
+    this(client, recordType,
+      new SingleRecordMapper<>(mapper, resultOnFailure));
+  }
+
+  public SingleRecordFetcher(
+    CollectionResourceClient client,
+    String recordType,
+    Function<JsonObject, T> mapper) {
+
+    this(client, recordType, new SingleRecordMapper<>(mapper));
+  }
+
+  public static SingleRecordFetcher<JsonObject> json(
     CollectionResourceClient client,
     String recordType,
     Function<Response, HttpResult<JsonObject>> resultOnFailure) {
 
-    return new SingleRecordFetcher(client, recordType, new SingleRecordMapper<>(
-      identity(), resultOnFailure));
+    return new SingleRecordFetcher<>(client, recordType,
+      new SingleRecordMapper<>(identity(), resultOnFailure));
   }
 
-  public CompletableFuture<HttpResult<JsonObject>> fetchSingleRecord(String id) {
+  public CompletableFuture<HttpResult<T>> fetchSingleRecord(String id) {
     log.info("Fetching {} with ID: {}", recordType, id);
 
     return client.get(id)

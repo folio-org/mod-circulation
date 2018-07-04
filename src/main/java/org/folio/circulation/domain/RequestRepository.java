@@ -40,9 +40,7 @@ public class RequestRepository {
   }
 
   private CompletableFuture<HttpResult<Request>> fetchRequest(String id) {
-    final SingleRecordMapper<Request> mapper = new SingleRecordMapper<>(Request::from);
-
-    return requestsStorageClient.get(id)
-      .thenApply(mapper::mapFrom);
+    return new SingleRecordFetcher<>(requestsStorageClient, "request", Request::from)
+      .fetchSingleRecord(id);
   }
 }
