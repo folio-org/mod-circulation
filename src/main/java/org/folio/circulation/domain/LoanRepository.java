@@ -3,22 +3,15 @@ package org.folio.circulation.domain;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.lang.invoke.MethodHandles;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
-import static org.folio.circulation.support.MultipleRecordsWrapper.fromBody;
 
 public class LoanRepository {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
   private final CollectionResourceClient loansStorageClient;
   private final ItemRepository itemRepository;
   private final UserRepository userRepository;
@@ -197,36 +190,7 @@ public class LoanRepository {
   }
 
   private HttpResult<MultipleRecords<Loan>> mapResponseToLoans(Response response) {
-    if(response != null) {
-      log.info("Response received, status code: {} body: {}",
-        response.getStatusCode(), response.getBody());
-
-      if (response.getStatusCode() != 200) {
-        return failed(new ServerErrorFailure(
-          String.format("Failed to fetch loans from storage (%s:%s)",
-            response.getStatusCode(), response.getBody())));
-      }
-
-      final MultipleRecordsWrapper wrappedLoans = fromBody(response.getBody(), "loans");
-
-      if (wrappedLoans.isEmpty()) {
-        return succeeded(MultipleRecords.empty());
-      }
-
-      final MultipleRecords<Loan> mapped = new MultipleRecords<>(
-        wrappedLoans.getRecords()
-          .stream()
-          .map(Loan::from)
-          .collect(Collectors.toList()),
-        wrappedLoans.getTotalRecords());
-
-      return succeeded(mapped);
-    }
-    else {
-      log.warn("Did not receive response to request");
-      return failed(new ServerErrorFailure(
-        "Did not receive response to request for multiple loans"));
-    }
+    return MultipleRecords.from(response, Loan::from, "loans");
   }
 
   private static JsonObject mapToStorageRepresentation(Loan loan, Item item) {
