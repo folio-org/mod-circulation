@@ -129,21 +129,11 @@ public class RequestCollectionResource extends CollectionResource {
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context, client);
 
+    final RequestRepository requestRepository = RequestRepository.using(clients);
+
     String id = routingContext.request().getParam("id");
 
-    clients.requestsStorage().get(id)
-      .thenApply(requestResponse -> {
-        final HttpResult<Request> mapResult;
-
-        if(requestResponse.getStatusCode() == 200) {
-          mapResult = HttpResult.succeeded(Request.from(requestResponse.getJson()));
-        }
-        else {
-          mapResult = HttpResult.failed(new ForwardOnFailure(requestResponse));
-        }
-
-        return mapResult;
-      })
+    requestRepository.getById(id)
       .thenAcceptAsync(result -> {
           if(result.failed()) {
             result.cause().writeTo(routingContext.response());

@@ -1,9 +1,6 @@
 package org.folio.circulation.domain;
 
-import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
 
 import java.util.concurrent.CompletableFuture;
@@ -34,5 +31,12 @@ public class RequestRepository {
 
   private HttpResult<MultipleRecords<Request>> mapResponseToRequests(Response response) {
     return MultipleRecords.from(response, Request::from, "requests");
+  }
+
+  public CompletableFuture<HttpResult<Request>> getById(String id) {
+    return requestsStorageClient.get(id)
+      .thenApply(response -> response.getStatusCode() == 200
+        ? HttpResult.succeeded(Request.from(response.getJson()))
+        : HttpResult.failed(new ForwardOnFailure(response)));
   }
 }
