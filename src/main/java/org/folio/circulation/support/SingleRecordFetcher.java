@@ -7,30 +7,29 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 public class SingleRecordFetcher {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final CollectionResourceClient client;
   private final String recordType;
-  private final Supplier<HttpResult<JsonObject>> resultOnFailure;
+  private final Function<Response, HttpResult<JsonObject>> resultOnFailure;
 
   SingleRecordFetcher(CollectionResourceClient client, String recordType) {
-    this(client, recordType, () -> HttpResult.succeeded(null));
+    this(client, recordType, response -> HttpResult.succeeded(null));
   }
 
   public SingleRecordFetcher(
     CollectionResourceClient client,
     String recordType,
-    Supplier<HttpResult<JsonObject>> resultOnFailure) {
+    Function<Response, HttpResult<JsonObject>> resultOnFailure) {
     this.client = client;
     this.recordType = recordType;
     this.resultOnFailure = resultOnFailure;
   }
 
   public CompletableFuture<HttpResult<JsonObject>> fetchSingleRecord(String id) {
-
     log.info("Fetching {} with ID: {}", recordType, id);
 
     return client.get(id)
@@ -40,7 +39,7 @@ public class SingleRecordFetcher {
 
   private HttpResult<JsonObject> mapToResult(
     Response response,
-    Supplier<HttpResult<JsonObject>> resultOnFailure) {
+    Function<Response, HttpResult<JsonObject>> resultOnFailure) {
 
     if(response != null) {
       log.info("Response received, status code: {} body: {}",
@@ -49,7 +48,7 @@ public class SingleRecordFetcher {
       if (response.getStatusCode() == 200) {
         return HttpResult.succeeded(response.getJson());
       } else {
-        return resultOnFailure.get();
+        return resultOnFailure.apply(response);
       }
     }
     else {

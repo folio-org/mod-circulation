@@ -122,7 +122,7 @@ public class LoanPolicyRepository {
     String loanPolicyId) {
 
     return new SingleRecordFetcher(loanPoliciesStorageClient, "loan policy",
-      () -> HttpResult.failed(new ServerErrorFailure(
+      response -> HttpResult.failed(new ServerErrorFailure(
         String.format("Loan policy %s could not be found, please check loan rules", loanPolicyId))))
       .fetchSingleRecord(loanPolicyId);
   }
