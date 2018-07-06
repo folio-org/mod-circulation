@@ -65,26 +65,16 @@ public class ItemRepository {
     return fetchById(record.getItemId());
   }
 
-  private CompletableFuture<HttpResult<Item>> fetchLocation(
-    HttpResult<Item> result) {
-
-    if(fetchLocation) {
-      return result.after(locationRepository::getLocation);
-    }
-    else {
-      return completedFuture(result);
-    }
+  private CompletableFuture<HttpResult<Item>> fetchLocation(HttpResult<Item> result) {
+    return fetchLocation
+      ? result.after(locationRepository::getLocation)
+      : completedFuture(result);
   }
 
-  private CompletableFuture<HttpResult<Item>> fetchMaterialType(
-    HttpResult<Item> result) {
-
-    if(fetchMaterialType) {
-      return result.after(materialTypeRepository::getMaterialType);
-    }
-    else {
-      return completedFuture(result);
-    }
+  private CompletableFuture<HttpResult<Item>> fetchMaterialType(HttpResult<Item> result) {
+    return fetchMaterialType
+      ? result.after(materialTypeRepository::getMaterialType)
+      : completedFuture(result);
   }
 
   public CompletableFuture<HttpResult<Item>> fetchByBarcode(String barcode) {
