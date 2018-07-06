@@ -33,6 +33,10 @@ public class Item {
     this.materialTypeRepresentation = materialTypeRepresentation;
   }
 
+  public static Item from(JsonObject representation) {
+    return new Item(representation, null, null, null, null);
+  }
+
   public boolean isCheckedOut() {
     String status = getStatus();
 
@@ -149,7 +153,10 @@ public class Item {
 
   Item updateItem(JsonObject updatedItem) {
     return new Item(updatedItem,
-      holdingRepresentation, instanceRepresentation, getLocation(), getMaterialType());
+      holdingRepresentation,
+      instanceRepresentation,
+      getLocation(),
+      getMaterialType());
   }
 
   public boolean doesNotHaveHolding() {
@@ -157,12 +164,38 @@ public class Item {
   }
 
   public Item withLocation(JsonObject newLocation) {
-    return new Item(this.itemRepresentation, this.holdingRepresentation, this.instanceRepresentation,
-      newLocation, this.materialTypeRepresentation);
+    return new Item(
+      this.itemRepresentation,
+      this.holdingRepresentation,
+      this.instanceRepresentation,
+      newLocation,
+      this.materialTypeRepresentation);
   }
 
   public Item withMaterialType(JsonObject newMaterialType) {
-    return new Item(this.itemRepresentation, this.holdingRepresentation, this.instanceRepresentation,
-      this.locationRepresentation, newMaterialType);
+    return new Item(
+      this.itemRepresentation,
+      this.holdingRepresentation,
+      this.instanceRepresentation,
+      this.locationRepresentation,
+      newMaterialType);
+  }
+
+  public Item withHoldingsRecord(JsonObject newHoldingsRecordRepresentation) {
+    return new Item(
+      this.itemRepresentation,
+      newHoldingsRecordRepresentation,
+      this.instanceRepresentation,
+      this.locationRepresentation,
+      this.materialTypeRepresentation);
+  }
+
+  public Item withInstance(JsonObject newInstanceRepresentation) {
+    return new Item(
+      this.itemRepresentation,
+      this.holdingRepresentation,
+      newInstanceRepresentation,
+      this.locationRepresentation,
+      this.materialTypeRepresentation);
   }
 }
