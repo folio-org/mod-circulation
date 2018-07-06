@@ -79,20 +79,12 @@ public class ItemRepository {
 
   public CompletableFuture<HttpResult<Item>> fetchByBarcode(String barcode) {
     return fetchItemByBarcode(barcode)
-      .thenComposeAsync(this::fetchHoldingsRecord)
-      .thenComposeAsync(this::fetchInstance)
-      .thenApply(r -> r.map(InventoryRecordsBuilder::create))
-      .thenComposeAsync(this::fetchLocation)
-      .thenComposeAsync(this::fetchMaterialType);
+      .thenComposeAsync(this::fetchItemRelatedRecords);
   }
 
   public CompletableFuture<HttpResult<Item>> fetchById(String itemId) {
     return fetchItem(itemId)
-      .thenComposeAsync(this::fetchHoldingsRecord)
-      .thenComposeAsync(this::fetchInstance)
-      .thenApply(r -> r.map(InventoryRecordsBuilder::create))
-      .thenComposeAsync(this::fetchLocation)
-      .thenComposeAsync(this::fetchMaterialType);
+      .thenComposeAsync(this::fetchItemRelatedRecords);
   }
 
   private CompletableFuture<HttpResult<MultipleInventoryRecords>> fetchLocations(
@@ -341,6 +333,16 @@ public class ItemRepository {
     return records.getRecords().stream()
       .map(r -> includeItemMap.apply(r, items.findRecordByItemId(r.getItemId())))
       .collect(Collectors.toList());
+  }
+
+  private CompletableFuture<HttpResult<Item>> fetchItemRelatedRecords(
+    HttpResult<InventoryRecordsBuilder> builder) {
+
+    return fetchHoldingsRecord(builder)
+      .thenComposeAsync(this::fetchInstance)
+      .thenApply(r -> r.map(InventoryRecordsBuilder::create))
+      .thenComposeAsync(this::fetchLocation)
+      .thenComposeAsync(this::fetchMaterialType);
   }
 
   private class InventoryRecordsBuilder {
