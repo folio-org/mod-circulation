@@ -47,19 +47,19 @@ public class MultipleRecords<T> {
             recordsPropertyName, response.getStatusCode(), response.getBody())));
       }
 
-      final MultipleRecordsWrapper wrappedLoans = fromBody(response.getBody(),
+      final MultipleRecordsWrapper wrappedRecords = fromBody(response.getBody(),
         recordsPropertyName);
 
-      if (wrappedLoans.isEmpty()) {
+      if (wrappedRecords.isEmpty()) {
         return succeeded(empty());
       }
 
       final MultipleRecords<T> mapped = new MultipleRecords<>(
-        wrappedLoans.getRecords()
+        wrappedRecords.getRecords()
           .stream()
           .map(mapper)
           .collect(Collectors.toList()),
-        wrappedLoans.getTotalRecords());
+        wrappedRecords.getTotalRecords());
 
       return succeeded(mapped);
     }

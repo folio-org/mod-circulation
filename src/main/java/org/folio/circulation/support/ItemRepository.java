@@ -17,6 +17,7 @@ import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.function.Function.identity;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
 
@@ -94,16 +95,10 @@ public class ItemRepository {
     if(fetchLocation) {
       return result.after(items ->
         locationRepository.getLocations(items)
-          .thenApply(locationResult -> {
-            if (locationResult.failed()) {
-              return failed(locationResult.cause());
-            }
-
-            return succeeded(items.stream()
-              .map(item -> item.withLocation(locationResult.value()
+          .thenApply(r -> r.map(locations -> items.stream()
+              .map(item -> item.withLocation(locations
                 .getOrDefault(item.getLocationId(), null)))
-              .collect(Collectors.toList()));
-        }));
+              .collect(Collectors.toList()))));
     }
     else {
       return completedFuture(result);
@@ -116,16 +111,10 @@ public class ItemRepository {
     if(fetchMaterialType) {
       return result.after(items ->
         materialTypeRepository.getMaterialTypes(items)
-          .thenApply(materialTypeResult -> {
-            if (materialTypeResult.failed()) {
-              return failed(materialTypeResult.cause());
-            }
-
-            return succeeded(items.stream()
-              .map(item -> item.withMaterialType(materialTypeResult.value()
+          .thenApply(r -> r.map(materialTypes -> items.stream()
+              .map(item -> item.withMaterialType(materialTypes
                 .getOrDefault(item.getMaterialTypeId(), null)))
-              .collect(Collectors.toList()));
-        }));
+              .collect(Collectors.toList()))));
     }
     else {
       return completedFuture(result);
@@ -143,22 +132,13 @@ public class ItemRepository {
 
       String instancesQuery = CqlHelper.multipleRecordsCqlQuery(instanceIds);
 
-      return instancesClient.getMany(instancesQuery, instanceIds.size(), 0).thenApply(instancesResponse -> {
-        if (instancesResponse.getStatusCode() != 200) {
-          return failed(new ServerErrorFailure(
-            String.format("Instances request (%s) failed %s: %s",
-              instancesQuery, instancesResponse.getStatusCode(),
-              instancesResponse.getBody())));
-        }
-
-        final List<JsonObject> instances = JsonArrayHelper.toList(
-          instancesResponse.getJson().getJsonArray("instances"));
-
-        return succeeded(items.stream()
+      return instancesClient.getMany(instancesQuery, instanceIds.size(), 0)
+        .thenApply(instancesResponse ->
+          MultipleRecords.from(instancesResponse, identity(), "instances"))
+        .thenApply(r -> r.map(instances -> items.stream()
           .map(item -> item.withInstance(
-            findById(item.getInstanceId(), instances).orElse(null)))
-          .collect(Collectors.toList()));
-      });
+            findById(item.getInstanceId(), instances.getRecords()).orElse(null)))
+          .collect(Collectors.toList())));
     });
   }
 
@@ -173,22 +153,13 @@ public class ItemRepository {
 
       String holdingsQuery = CqlHelper.multipleRecordsCqlQuery(holdingsIds);
 
-      return holdingsClient.getMany(holdingsQuery, holdingsIds.size(), 0).thenApply(holdingsResponse -> {
-        if(holdingsResponse.getStatusCode() != 200) {
-          return failed(
-            new ServerErrorFailure(String.format("Holdings request (%s) failed %s: %s",
-              holdingsQuery, holdingsResponse.getStatusCode(),
-              holdingsResponse.getBody())));
-        }
-
-        final List<JsonObject> holdings = JsonArrayHelper.toList(
-          holdingsResponse.getJson().getJsonArray("holdingsRecords"));
-
-        return succeeded(items.stream()
+      return holdingsClient.getMany(holdingsQuery, holdingsIds.size(), 0)
+        .thenApply(holdingsResponse ->
+          MultipleRecords.from(holdingsResponse, identity(), "holdingsRecords"))
+        .thenApply(r -> r.map(holdings -> items.stream()
           .map(item -> item.withHoldingsRecord(
-            findById(item.getHoldingsRecordId(), holdings).orElse(null)))
-          .collect(Collectors.toList()));
-      });
+            findById(item.getHoldingsRecordId(), holdings.getRecords()).orElse(null)))
+          .collect(Collectors.toList())));
     });
   }
 
