@@ -198,28 +198,8 @@ public class ItemRepository {
   }
 
   private HttpResult<JsonObject> mapMultipleToResult(Response response) {
-    if(response != null) {
-      log.info("Response received, status code: {} body: {}",
-        response.getStatusCode(), response.getBody());
-
-      if (response.getStatusCode() == 200) {
-        //TODO: Check for multiple total records
-        final MultipleRecordsWrapper wrappedItems =
-          MultipleRecordsWrapper.fromBody(response.getBody(), "items");
-
-        return succeeded(wrappedItems.getRecords().stream()
-          .findFirst()
-          .orElse(null));
-
-      } else {
-        return succeeded(null);
-      }
-    }
-    else {
-      //TODO: Replace with failure result
-      log.warn("Did not receive response to request");
-      return succeeded(null);
-    }
+    return MultipleRecords.from(response, identity(), "items")
+      .map(items -> items.getRecords().stream().findFirst().orElse(null));
   }
 
   private CompletableFuture<HttpResult<Item>> fetchHoldingsRecord(

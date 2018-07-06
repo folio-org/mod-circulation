@@ -48,7 +48,7 @@ public class MultipleRecordsWrapper {
     return records.isEmpty();
   }
 
-  public JsonObject toJson() {
+  JsonObject toJson() {
     return new JsonObject()
       .put(recordsPropertyName, new JsonArray(new ArrayList<>(records)))
       .put(TOTAL_RECORDS_PROPERTY_NAME, totalRecords);
