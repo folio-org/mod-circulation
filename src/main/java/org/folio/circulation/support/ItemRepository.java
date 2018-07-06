@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
+import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
 
 public class ItemRepository {
@@ -118,7 +119,7 @@ public class ItemRepository {
         locationRepository.getLocations(result.value().getRecords())
           .thenApply(locationResult -> {
             if (locationResult.failed()) {
-              return HttpResult.failed(locationResult.cause());
+              return failed(locationResult.cause());
             }
 
             return succeeded(new MultipleInventoryRecords(
@@ -144,7 +145,7 @@ public class ItemRepository {
         materialTypeRepository.getMaterialTypes(records.getRecords())
           .thenApply(materialTypeResult -> {
             if (materialTypeResult.failed()) {
-              return HttpResult.failed(materialTypeResult.cause());
+              return failed(materialTypeResult.cause());
             }
 
             return succeeded(new MultipleInventoryRecords(
@@ -175,7 +176,7 @@ public class ItemRepository {
 
       return instancesClient.getMany(instancesQuery, instanceIds.size(), 0).thenApply(instancesResponse -> {
         if (instancesResponse.getStatusCode() != 200) {
-          return HttpResult.failed(new ServerErrorFailure(
+          return failed(new ServerErrorFailure(
             String.format("Instances request (%s) failed %s: %s",
               instancesQuery, instancesResponse.getStatusCode(),
               instancesResponse.getBody())));
@@ -203,7 +204,7 @@ public class ItemRepository {
 
       return holdingsClient.getMany(holdingsQuery, holdingsIds.size(), 0).thenApply(holdingsResponse -> {
         if(holdingsResponse.getStatusCode() != 200) {
-          return HttpResult.failed(
+          return failed(
             new ServerErrorFailure(String.format("Holdings request (%s) failed %s: %s",
               holdingsQuery, holdingsResponse.getStatusCode(),
               holdingsResponse.getBody())));
@@ -225,7 +226,7 @@ public class ItemRepository {
 
     return itemsClient.getMany(itemsQuery, itemIds.size(), 0).thenApply(response -> {
       if(response.getStatusCode() != 200) {
-        return HttpResult.failed(
+        return failed(
           new ServerErrorFailure(String.format("Items request (%s) failed %s: %s",
             itemsQuery, response.getStatusCode(), response.getBody())));
       }
@@ -256,7 +257,7 @@ public class ItemRepository {
     return itemsClient.getMany(String.format("barcode==%s", barcode), 1, 0)
       .thenApply(this::mapMultipleToResult)
       .thenApply(r -> r.map(InventoryRecordsBuilder::new))
-      .exceptionally(e -> HttpResult.failed(new ServerErrorFailure(e)));
+      .exceptionally(e -> failed(new ServerErrorFailure(e)));
   }
 
   private HttpResult<JsonObject> mapMultipleToResult(Response response) {
@@ -271,7 +272,7 @@ public class ItemRepository {
 
         return succeeded(wrappedItems.getRecords().stream()
           .findFirst()
-          .orElse(null)); 
+          .orElse(null));
 
       } else {
         return succeeded(null);
@@ -297,10 +298,11 @@ public class ItemRepository {
 
         log.info("Fetching holding with ID: {}", holdingsRecordId);
 
-        return holdingsClient.get(holdingsRecordId)
-          .thenApply(response -> succeeded(
-            builder.withHoldingsRecord(getRecordFromResponse(response))))
-          .exceptionally(e -> HttpResult.failed(new ServerErrorFailure(e)));
+        return new SingleRecordFetcher<>(holdingsClient, "holding",
+          identity(), r -> HttpResult.succeeded(null))
+          .fetchSingleRecord(holdingsRecordId)
+          .exceptionally(e -> failed(new ServerErrorFailure(e)))
+          .thenApply(r -> r.map(builder::withHoldingsRecord));
       }
     });
   }
@@ -324,7 +326,7 @@ public class ItemRepository {
         return instancesClient.get(instanceId)
           .thenApply(response -> succeeded(
             builder.withInstance(getRecordFromResponse(response))))
-          .exceptionally(e -> HttpResult.failed(new ServerErrorFailure(e)));
+          .exceptionally(e -> failed(new ServerErrorFailure(e)));
       }
     });
   }
