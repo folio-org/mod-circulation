@@ -16,6 +16,7 @@ import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.function.Function.identity;
 import static org.folio.circulation.support.HttpResult.succeeded;
 
 public class ItemRepository {
@@ -238,27 +239,14 @@ public class ItemRepository {
   }
 
   private JsonObject getRecordFromResponse(Response response) {
-    if(response != null) {
-      log.info("Response received, status code: {} body: {}",
-        response.getStatusCode(), response.getBody());
-
-      if (response.getStatusCode() == 200) {
-        return response.getJson();
-      } else {
-        return null;
-      }
-    }
-    else {
-      //TODO: needs more context in log message
-      log.warn("Did not receive response to request");
-      return null;
-    }
+    return new SingleRecordMapper<>(identity(), r -> succeeded(null))
+      .mapFrom(response).orElse(null);
   }
 
   private CompletableFuture<HttpResult<InventoryRecordsBuilder>> fetchItem(String itemId) {
     return new SingleRecordFetcher<>(itemsClient, "item",
       InventoryRecordsBuilder::new,
-      response -> HttpResult.succeeded(new InventoryRecordsBuilder(null)))
+      response -> succeeded(new InventoryRecordsBuilder(null)))
       .fetchSingleRecord(itemId);
   }
 
@@ -283,7 +271,7 @@ public class ItemRepository {
 
         return succeeded(wrappedItems.getRecords().stream()
           .findFirst()
-          .orElse(null));
+          .orElse(null)); 
 
       } else {
         return succeeded(null);
