@@ -16,6 +16,7 @@ import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.function.Function.identity;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
 
@@ -200,19 +201,11 @@ public class ItemRepository {
 
     String itemsQuery = CqlHelper.multipleRecordsCqlQuery(itemIds);
 
-    return itemsClient.getMany(itemsQuery, itemIds.size(), 0).thenApply(response -> {
-      if(response.getStatusCode() != 200) {
-        return failed(
-          new ServerErrorFailure(String.format("Items request (%s) failed %s: %s",
-            itemsQuery, response.getStatusCode(), response.getBody())));
-      }
-
-      final List<JsonObject> items = JsonArrayHelper.toList(
-        response.getJson().getJsonArray("items"));
-
-      return succeeded(MultipleInventoryRecords.from(items,
-        new ArrayList<>(), new ArrayList<>()));
-    });
+    return itemsClient.getMany(itemsQuery, itemIds.size(), 0)
+      .thenApply(r -> MultipleRecords.from(r, identity(), "items"))
+      .thenApply(r -> r.map(multipleItems ->
+        MultipleInventoryRecords.from(multipleItems.getRecords(),
+          new ArrayList<>(), new ArrayList<>())));
   }
 
   private CompletableFuture<HttpResult<InventoryRecordsBuilder>> fetchItem(String itemId) {
@@ -321,8 +314,8 @@ public class ItemRepository {
 
   private <T extends ItemRelatedRecord> List<String> getItemIds(MultipleRecords<T> records) {
     return records.getRecords().stream()
-    .map(ItemRelatedRecord::getItemId)
-    .collect(Collectors.toList());
+      .map(ItemRelatedRecord::getItemId)
+      .collect(Collectors.toList());
   }
 
   private <T extends ItemRelatedRecord> Collection<T> matchItemToRecord(

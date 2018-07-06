@@ -34,7 +34,7 @@ public class MultipleRecords<T> {
     this.totalRecords = totalRecords;
   }
 
-  static <T> HttpResult<MultipleRecords<T>> from(
+  public static <T> HttpResult<MultipleRecords<T>> from(
     Response response,
     Function<JsonObject, T> mapper, String recordsPropertyName) {
     if(response != null) {
