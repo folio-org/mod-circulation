@@ -10,6 +10,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 import static java.util.function.Function.identity;
+import static org.folio.circulation.support.HttpResult.failed;
 
 public class SingleRecordFetcher<T> {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -18,7 +19,7 @@ public class SingleRecordFetcher<T> {
   private final String recordType;
   private final SingleRecordMapper<T> mapper;
 
-  public SingleRecordFetcher(
+  private SingleRecordFetcher(
     CollectionResourceClient client,
     String recordType, SingleRecordMapper<T> mapper) {
     this.client = client;
@@ -53,11 +54,18 @@ public class SingleRecordFetcher<T> {
       new SingleRecordMapper<>(identity(), resultOnFailure));
   }
 
+  static SingleRecordFetcher<JsonObject> jsonOrNull(
+    CollectionResourceClient client,
+    String recordType) {
+
+    return json(client, recordType, r -> HttpResult.succeeded(null));
+  }
+
   public CompletableFuture<HttpResult<T>> fetchSingleRecord(String id) {
     log.info("Fetching {} with ID: {}", recordType, id);
 
     return client.get(id)
       .thenApply(mapper::mapFrom)
-      .exceptionally(e -> HttpResult.failed(new ServerErrorFailure(e)));
+      .exceptionally(e -> failed(new ServerErrorFailure(e)));
   }
 }

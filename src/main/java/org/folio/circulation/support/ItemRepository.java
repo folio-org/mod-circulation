@@ -16,7 +16,6 @@ import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static java.util.function.Function.identity;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
 
@@ -63,12 +62,7 @@ public class ItemRepository {
   }
 
   public CompletableFuture<HttpResult<Item>> fetchFor(ItemRelatedRecord record) {
-    return fetchItem(record.getItemId())
-      .thenComposeAsync(this::fetchHolding)
-      .thenComposeAsync(this::fetchInstance)
-      .thenApply(r -> r.map(InventoryRecordsBuilder::create))
-      .thenComposeAsync(this::fetchLocation)
-      .thenComposeAsync(this::fetchMaterialType);
+    return fetchById(record.getItemId());
   }
 
   private CompletableFuture<HttpResult<Item>> fetchLocation(
@@ -95,7 +89,7 @@ public class ItemRepository {
 
   public CompletableFuture<HttpResult<Item>> fetchByBarcode(String barcode) {
     return fetchItemByBarcode(barcode)
-      .thenComposeAsync(this::fetchHolding)
+      .thenComposeAsync(this::fetchHoldingsRecord)
       .thenComposeAsync(this::fetchInstance)
       .thenApply(r -> r.map(InventoryRecordsBuilder::create))
       .thenComposeAsync(this::fetchLocation)
@@ -104,7 +98,7 @@ public class ItemRepository {
 
   public CompletableFuture<HttpResult<Item>> fetchById(String itemId) {
     return fetchItem(itemId)
-      .thenComposeAsync(this::fetchHolding)
+      .thenComposeAsync(this::fetchHoldingsRecord)
       .thenComposeAsync(this::fetchInstance)
       .thenApply(r -> r.map(InventoryRecordsBuilder::create))
       .thenComposeAsync(this::fetchLocation)
@@ -239,16 +233,10 @@ public class ItemRepository {
     });
   }
 
-  private JsonObject getRecordFromResponse(Response response) {
-    return new SingleRecordMapper<>(identity(), r -> succeeded(null))
-      .mapFrom(response).orElse(null);
-  }
-
   private CompletableFuture<HttpResult<InventoryRecordsBuilder>> fetchItem(String itemId) {
-    return new SingleRecordFetcher<>(itemsClient, "item",
-      InventoryRecordsBuilder::new,
-      response -> succeeded(new InventoryRecordsBuilder(null)))
-      .fetchSingleRecord(itemId);
+    return SingleRecordFetcher.jsonOrNull(itemsClient, "item")
+      .fetchSingleRecord(itemId)
+      .thenApply(r -> r.map(InventoryRecordsBuilder::new));
   }
 
   private CompletableFuture<HttpResult<InventoryRecordsBuilder>> fetchItemByBarcode(String barcode) {
@@ -285,7 +273,7 @@ public class ItemRepository {
     }
   }
 
-  private CompletableFuture<HttpResult<InventoryRecordsBuilder>> fetchHolding(
+  private CompletableFuture<HttpResult<InventoryRecordsBuilder>> fetchHoldingsRecord(
     HttpResult<InventoryRecordsBuilder> result) {
 
     return result.after(builder -> {
@@ -298,10 +286,8 @@ public class ItemRepository {
 
         log.info("Fetching holding with ID: {}", holdingsRecordId);
 
-        return new SingleRecordFetcher<>(holdingsClient, "holding",
-          identity(), r -> HttpResult.succeeded(null))
+        return SingleRecordFetcher.jsonOrNull(holdingsClient, "holding")
           .fetchSingleRecord(holdingsRecordId)
-          .exceptionally(e -> failed(new ServerErrorFailure(e)))
           .thenApply(r -> r.map(builder::withHoldingsRecord));
       }
     });
@@ -323,10 +309,9 @@ public class ItemRepository {
 
         log.info("Fetching instance with ID: {}", instanceId);
 
-        return instancesClient.get(instanceId)
-          .thenApply(response -> succeeded(
-            builder.withInstance(getRecordFromResponse(response))))
-          .exceptionally(e -> failed(new ServerErrorFailure(e)));
+        return SingleRecordFetcher.jsonOrNull(instancesClient, "instance")
+          .fetchSingleRecord(instanceId)
+          .thenApply(r -> r.map(builder::withInstance));
       }
     });
   }
