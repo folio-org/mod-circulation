@@ -1,5 +1,6 @@
 package org.folio.circulation.domain.validation;
 
+import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.ProxyRelationship;
 import org.folio.circulation.domain.UserRelatedRecord;
 import org.folio.circulation.support.*;
@@ -48,41 +49,13 @@ public class ProxyRelationshipValidator {
 
     String proxyRelationshipQuery = proxyRelationshipQuery(proxyUserId, userId);
 
-    if(proxyRelationshipQuery == null) {
-      return CompletableFuture.completedFuture(HttpResult.failed(
-        new ServerErrorFailure("Unable to fetch proxy relationships")));
-    }
-
-    CompletableFuture<HttpResult<Void>> future = new CompletableFuture<>();
-
-    proxyRelationshipsClient.getMany(proxyRelationshipQuery, 1000, 0)
-      .thenAccept(proxyValidResponse -> {
-        if (proxyValidResponse != null) {
-          if (proxyValidResponse.getStatusCode() != 200) {
-            future.complete(HttpResult.failed(new ForwardOnFailure(proxyValidResponse)));
-            return;
-          }
-
-          final MultipleRecordsWrapper proxyRelationships = MultipleRecordsWrapper.fromBody(
-            proxyValidResponse.getBody(), "proxiesFor");
-
-          final boolean activeRelationship = proxyRelationships.getRecords()
-            .stream()
-            .map(ProxyRelationship::new)
-            .anyMatch(ProxyRelationship::isActive);
-
-          future.complete(
-            activeRelationship
-              ? HttpResult.succeeded(null)
-              : HttpResult.failed(invalidRelationshipErrorSupplier.get()));
-        }
-        else {
-          future.complete(HttpResult.failed(
-            new ServerErrorFailure("No response when requesting proxies")));
-        }
-    });
-
-    return future;
+    return proxyRelationshipsClient.getMany(proxyRelationshipQuery, 1000, 0)
+      .thenApply(response -> MultipleRecords.from(response, ProxyRelationship::new, "proxiesFor")
+        .map(MultipleRecords::getRecords)
+        .map(relationships -> relationships.stream().anyMatch(ProxyRelationship::isActive))
+        .next(found -> found
+          ? HttpResult.succeeded(null)
+          : HttpResult.failed(invalidRelationshipErrorSupplier.get())));
   }
 
   private String proxyRelationshipQuery(String proxyUserId, String sponsorUserId) {
