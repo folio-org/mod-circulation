@@ -1,12 +1,10 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
 
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -46,29 +44,12 @@ public class UserRepository {
     String barcode,
     String propertyName) {
 
-    final Function<Response, HttpResult<User>> mapResponse = response -> {
-      if(response.getStatusCode() == 404) {
-        return failed(new ServerErrorFailure("Unable to locate User"));
-      }
-      else if(response.getStatusCode() != 200) {
-        return failed(new ForwardOnFailure(response));
-      }
-      else {
-        //TODO: Check for multiple total records
-        final MultipleRecordsWrapper wrappedUsers =
-          MultipleRecordsWrapper.fromBody(response.getBody(), "users");
-
-        final Optional<JsonObject> firstUser = wrappedUsers.getRecords().stream().findFirst();
-
-        return firstUser.map(User::new).map(HttpResult::succeeded).orElseGet(
-          () -> failed(failure(
-          "Could not find user with matching barcode", propertyName, barcode)));
-      }
-    };
-
     return usersStorageClient.getMany(String.format("barcode==%s", barcode), 1, 0)
-      .thenApply(mapResponse)
-      .exceptionally(e -> failed(new ServerErrorFailure(e)));
+      .thenApply(response -> MultipleRecords.from(response, User::new, "users")
+        .map(MultipleRecords::getRecords)
+        .map(users -> users.stream().findFirst())
+        .next(user -> user.map(HttpResult::succeeded).orElseGet(() -> failed(failure(
+          "Could not find user with matching barcode", propertyName, barcode)))));
   }
 
   //TODO: Need a better way of choosing behaviour for not found
