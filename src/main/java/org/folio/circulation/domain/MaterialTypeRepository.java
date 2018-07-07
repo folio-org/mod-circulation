@@ -15,6 +15,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static java.util.function.Function.identity;
+
 public class MaterialTypeRepository {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -65,20 +67,9 @@ public class MaterialTypeRepository {
     String materialTypesQuery = CqlHelper.multipleRecordsCqlQuery(materialTypeIds);
 
     return materialTypesStorageClient.getMany(materialTypesQuery, materialTypeIds.size(), 0)
-      .thenApply(materialTypesResponse -> {
-        if(materialTypesResponse.getStatusCode() != 200) {
-          return HttpResult.failed(new ServerErrorFailure(
-            String.format("Material Types request (%s) failed %s: %s",
-              materialTypesQuery, materialTypesResponse.getStatusCode(),
-              materialTypesResponse.getBody())));
-        }
-
-        List<JsonObject> materialTypes = JsonArrayHelper.toList(
-          materialTypesResponse.getJson().getJsonArray("mtypes"));
-
-        return HttpResult.succeeded(materialTypes.stream().collect(
-          Collectors.toMap(m -> m.getString("id"),
-            Function.identity())));
-      });
+      .thenApply(response ->
+        MultipleRecords.from(response, identity(), "mtypes"))
+      .thenApply(r -> r.map(materialTypes ->
+        materialTypes.toMap(record -> record.getString("id"))));
   }
 }
