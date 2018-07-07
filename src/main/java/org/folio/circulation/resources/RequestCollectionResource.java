@@ -163,8 +163,8 @@ public class RequestCollectionResource extends CollectionResource {
 
     requestRepository.findBy(routingContext.request().query())
       .thenApply(r -> r.map(requests ->
-        requests.mapToRepresentations(this::toRepresentation, "requests")))
-      .thenApply(OkJsonHttpResult::fromMultiple)
+        requests.asJson(this::toRepresentation, "requests")))
+      .thenApply(OkJsonHttpResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 

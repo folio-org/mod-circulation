@@ -152,8 +152,8 @@ public class LoanCollectionResource extends CollectionResource {
 
     loanRepository.findBy(routingContext.request().query())
       .thenApply(r -> r.map(loans ->
-        loans.mapToRepresentations(loanRepresentation::extendedLoan, "loans")))
-      .thenApply(OkJsonHttpResult::fromMultiple)
+        loans.asJson(loanRepresentation::extendedLoan, "loans")))
+      .thenApply(OkJsonHttpResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 

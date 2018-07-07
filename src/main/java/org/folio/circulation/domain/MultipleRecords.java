@@ -71,8 +71,7 @@ public class MultipleRecords<T> {
     }
   }
 
-  //TODO: Maybe skip the wrapper and go straight to JSON?
-  public MultipleRecordsWrapper mapToRepresentations(
+  public JsonObject asJson(
     Function<T, JsonObject> mapper,
     String recordsPropertyName) {
 
@@ -81,7 +80,7 @@ public class MultipleRecords<T> {
       .collect(Collectors.toList());
 
     return new MultipleRecordsWrapper(mappedRequests,
-      recordsPropertyName, getTotalRecords());
+      recordsPropertyName, getTotalRecords()).toJson();
   }
 
   public Collection<T> getRecords() {
