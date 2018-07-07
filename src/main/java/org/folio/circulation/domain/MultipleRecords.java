@@ -12,9 +12,11 @@ import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static java.util.function.Function.identity;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
@@ -66,6 +68,11 @@ public class MultipleRecords<T> {
         String.format("Did not receive response to request for multiple %s",
           recordsPropertyName)));
     }
+  }
+
+  Map<String, T> toMap(Function<T, String> keyMapper) {
+    return getRecords().stream().collect(
+      Collectors.toMap(keyMapper, identity()));
   }
 
   public JsonObject asJson(

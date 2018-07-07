@@ -15,6 +15,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static java.util.function.Function.identity;
+
 public class LocationRepository {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -65,20 +67,9 @@ public class LocationRepository {
     String locationsQuery = CqlHelper.multipleRecordsCqlQuery(locationIds);
 
     return locationsStorageClient.getMany(locationsQuery, locationIds.size(), 0)
-      .thenApply(response -> {
-        if(response.getStatusCode() != 200) {
-          return HttpResult.failed(new ServerErrorFailure(
-            String.format("Locations request (%s) failed %s: %s",
-              locationsQuery, response.getStatusCode(),
-              response.getBody())));
-        }
-
-        List<JsonObject> locations = JsonArrayHelper.toList(
-          response.getJson().getJsonArray("locations"));
-
-        return HttpResult.succeeded(locations.stream().collect(
-          Collectors.toMap(l -> l.getString("id"),
-            Function.identity())));
-      });
+      .thenApply(response ->
+        MultipleRecords.from(response, identity(), "locations"))
+      .thenApply(r -> r.map(locations ->
+        locations.toMap(record -> record.getString("id"))));
   }
 }
