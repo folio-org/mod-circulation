@@ -1,8 +1,8 @@
 package org.folio.circulation.domain;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.MultipleRecordsWrapper;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
@@ -21,6 +21,7 @@ import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 
 public class MultipleRecords<T> {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final String TOTAL_RECORDS_PROPERTY_NAME = "totalRecords";
 
   private final Collection<T> records;
   private final Integer totalRecords;
@@ -49,14 +50,12 @@ public class MultipleRecords<T> {
             recordsPropertyName, response.getStatusCode(), response.getBody())));
       }
 
-      List<T> wrappedRecords = mapToList(response.getJson(),
+      final JsonObject json = response.getJson();
+
+      List<T> wrappedRecords = mapToList(json,
         recordsPropertyName, mapper);
 
-      Integer totalRecords = response.getJson().getInteger("totalRecords");
-
-      if (wrappedRecords.isEmpty()) {
-        return succeeded(empty());
-      }
+      Integer totalRecords = json.getInteger(TOTAL_RECORDS_PROPERTY_NAME);
 
       return succeeded(new MultipleRecords<>(
         wrappedRecords, totalRecords));
@@ -73,12 +72,13 @@ public class MultipleRecords<T> {
     Function<T, JsonObject> mapper,
     String recordsPropertyName) {
 
-    final List<JsonObject> mappedRequests = getRecords().stream()
+    final List<JsonObject> mappedRecords = getRecords().stream()
       .map(mapper)
       .collect(Collectors.toList());
 
-    return new MultipleRecordsWrapper(mappedRequests,
-      recordsPropertyName, getTotalRecords()).toJson();
+    return new JsonObject()
+      .put(recordsPropertyName, new JsonArray(mappedRecords))
+      .put(TOTAL_RECORDS_PROPERTY_NAME, totalRecords);
   }
 
   public Collection<T> getRecords() {
