@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
-import static org.folio.circulation.support.MultipleRecordsWrapper.fromBody;
+import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 
 public class MultipleRecords<T> {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -36,7 +36,9 @@ public class MultipleRecords<T> {
 
   public static <T> HttpResult<MultipleRecords<T>> from(
     Response response,
-    Function<JsonObject, T> mapper, String recordsPropertyName) {
+    Function<JsonObject, T> mapper,
+    String recordsPropertyName) {
+
     if(response != null) {
       log.info("Response received, status code: {} body: {}",
         response.getStatusCode(), response.getBody());
@@ -47,21 +49,17 @@ public class MultipleRecords<T> {
             recordsPropertyName, response.getStatusCode(), response.getBody())));
       }
 
-      final MultipleRecordsWrapper wrappedRecords = fromBody(response.getBody(),
-        recordsPropertyName);
+      List<T> wrappedRecords = mapToList(response.getJson(),
+        recordsPropertyName, mapper);
+
+      Integer totalRecords = response.getJson().getInteger("totalRecords");
 
       if (wrappedRecords.isEmpty()) {
         return succeeded(empty());
       }
 
-      final MultipleRecords<T> mapped = new MultipleRecords<>(
-        wrappedRecords.getRecords()
-          .stream()
-          .map(mapper)
-          .collect(Collectors.toList()),
-        wrappedRecords.getTotalRecords());
-
-      return succeeded(mapped);
+      return succeeded(new MultipleRecords<>(
+        wrappedRecords, totalRecords));
     }
     else {
       log.warn("Did not receive response to request");

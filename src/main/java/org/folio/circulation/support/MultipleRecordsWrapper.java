@@ -9,22 +9,9 @@ import java.util.Collection;
 public class MultipleRecordsWrapper {
   private static final String TOTAL_RECORDS_PROPERTY_NAME = "totalRecords";
 
-  public static MultipleRecordsWrapper fromBody(
-    String body,
-    String recordsPropertyName) {
-
-    return new MultipleRecordsWrapper(new JsonObject(body), recordsPropertyName);
-  }
-
   private final Collection<JsonObject> records;
   private final Integer totalRecords;
   private final String recordsPropertyName;
-
-  private MultipleRecordsWrapper(JsonObject wrapper, String recordsPropertyName) {
-    this.recordsPropertyName = recordsPropertyName;
-    this.records = JsonArrayHelper.toList(wrapper.getJsonArray(recordsPropertyName));
-    this.totalRecords = wrapper.getInteger(TOTAL_RECORDS_PROPERTY_NAME);
-  }
 
   public MultipleRecordsWrapper(
     Collection<JsonObject> records,
