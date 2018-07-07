@@ -19,15 +19,10 @@ public class MaterialTypeRepository {
     materialTypesStorageClient = clients.materialTypesStorage();
   }
 
-  public CompletableFuture<HttpResult<Item>> getMaterialType(Item item) {
-    return getMaterialType(item.getMaterialTypeId())
-      .thenApply(result -> result.map(item::withMaterialType));
-  }
-
-  private CompletableFuture<HttpResult<JsonObject>> getMaterialType(String materialTypeId) {
+  public CompletableFuture<HttpResult<JsonObject>> getFor(Item item) {
     return SingleRecordFetcher.json(materialTypesStorageClient, "material types",
       response -> HttpResult.succeeded(null))
-      .fetchSingleRecord(materialTypeId);
+      .fetchSingleRecord(item.getMaterialTypeId());
   }
 
   public CompletableFuture<HttpResult<Map<String, JsonObject>>> getMaterialTypes(

@@ -69,13 +69,13 @@ public class ItemRepository {
 
   private CompletableFuture<HttpResult<Item>> fetchLocation(HttpResult<Item> result) {
     return fetchLocation
-      ? result.after(locationRepository::getLocation)
+      ? result.combineAfter(locationRepository::getLocation, Item::withLocation)
       : completedFuture(result);
   }
 
   private CompletableFuture<HttpResult<Item>> fetchMaterialType(HttpResult<Item> result) {
     return fetchMaterialType
-      ? result.after(materialTypeRepository::getMaterialType)
+      ? result.combineAfter(materialTypeRepository::getFor, Item::withMaterialType)
       : completedFuture(result);
   }
 
