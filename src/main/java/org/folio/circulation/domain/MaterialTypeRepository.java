@@ -3,57 +3,31 @@ package org.folio.circulation.domain;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.*;
-import org.folio.circulation.support.http.client.Response;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.function.Function.identity;
 
 public class MaterialTypeRepository {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
   private final CollectionResourceClient materialTypesStorageClient;
 
   public MaterialTypeRepository(Clients clients) {
     materialTypesStorageClient = clients.materialTypesStorage();
   }
 
-  public CompletableFuture<HttpResult<Item>> getMaterialType(
-    Item item) {
-
-    return getMaterialType(item.getMaterialTypeId(), item.getItemId())
+  public CompletableFuture<HttpResult<Item>> getMaterialType(Item item) {
+    return getMaterialType(item.getMaterialTypeId())
       .thenApply(result -> result.map(item::withMaterialType));
   }
 
-  private CompletableFuture<HttpResult<JsonObject>> getMaterialType(
-    String materialTypeId,
-    String itemId) {
-
-    //TODO: Add functions to explicitly distinguish between fatal not found
-    // and allowable not found
-    final Function<Response, HttpResult<JsonObject>> mapResponse = response -> {
-      if(response != null && response.getStatusCode() == 200) {
-        return HttpResult.succeeded(response.getJson());
-      }
-      else {
-        log.warn("Could not get material type {} for item {}",
-          materialTypeId, itemId);
-
-        return HttpResult.succeeded(null);
-      }
-    };
-
-    return materialTypesStorageClient.get(materialTypeId)
-      .thenApply(mapResponse)
-      .exceptionally(e -> HttpResult.failed(new ServerErrorFailure(e)));
+  private CompletableFuture<HttpResult<JsonObject>> getMaterialType(String materialTypeId) {
+    return SingleRecordFetcher.json(materialTypesStorageClient, "material types",
+      response -> HttpResult.succeeded(null))
+      .fetchSingleRecord(materialTypeId);
   }
 
   public CompletableFuture<HttpResult<Map<String, JsonObject>>> getMaterialTypes(

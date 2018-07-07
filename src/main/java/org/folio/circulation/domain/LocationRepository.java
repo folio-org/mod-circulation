@@ -25,9 +25,6 @@ public class LocationRepository {
   }
 
   private CompletableFuture<HttpResult<JsonObject>> getLocation(String locationId) {
-
-    //TODO: Add functions to explicitly distinguish between fatal not found
-    // and allowable not found
     return SingleRecordFetcher.json(locationsStorageClient, "locations",
       response -> HttpResult.succeeded(null))
       .fetchSingleRecord(locationId);
