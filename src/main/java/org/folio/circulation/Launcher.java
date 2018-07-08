@@ -5,7 +5,6 @@ import org.folio.circulation.support.VertxAssistant;
 
 import java.lang.invoke.MethodHandles;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -30,16 +29,13 @@ public class Launcher {
 
     Logging.initialiseFormat();
 
-    Integer port = Integer.getInteger("port", 9801);
-
     final Launcher launcher = new Launcher(new VertxAssistant());
-
-    HashMap<String, Object> config = new HashMap<>();
-    putNonNullConfig("port", port, config);
 
     Runtime.getRuntime().addShutdownHook(new Thread(launcher::stop));
 
-    launcher.start(config);
+    Integer port = Integer.getInteger("port", 9801);
+
+    launcher.start(port);
   }
 
   private void stop() {
@@ -57,10 +53,14 @@ public class Launcher {
     log.info("Server Stopped");
   }
 
-  public void start(Map<String, Object> config) throws
+  public void start(Integer port) throws
     InterruptedException,
     ExecutionException,
     TimeoutException {
+
+    if(port == null) {
+      throw new IllegalArgumentException("port should not be null");
+    }
 
     vertxAssistant.start();
 
@@ -68,19 +68,14 @@ public class Launcher {
 
     CompletableFuture<String> deployed = new CompletableFuture<>();
 
+    HashMap<String, Object> config = new HashMap<>();
+    config.put("port", port);
+
     vertxAssistant.deployVerticle(CirculationVerticle.class.getName(),
       config, deployed);
 
     deployed.thenAccept(result -> log.info("Server Started"));
 
     moduleDeploymentId = deployed.get(10, TimeUnit.SECONDS);
-  }
-
-  private static void putNonNullConfig(String key,
-                                       Object value,
-                                       Map<String, Object> config) {
-    if(value != null) {
-      config.put(key, value);
-    }
   }
 }
