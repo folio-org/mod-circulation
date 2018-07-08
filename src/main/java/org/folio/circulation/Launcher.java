@@ -14,11 +14,13 @@ import java.util.concurrent.TimeoutException;
 import static io.vertx.core.logging.LoggerFactory.getLogger;
 
 public class Launcher {
-  private String moduleDeploymentId;
   private final VertxAssistant vertxAssistant;
+  private final Logger log;
+  private String moduleDeploymentId;
 
   private Launcher(VertxAssistant vertxAssistant) {
     this.vertxAssistant = vertxAssistant;
+    log = getLogger(MethodHandles.lookup().lookupClass());
   }
 
   public static void main(String[] args) throws
@@ -28,12 +30,11 @@ public class Launcher {
 
     Logging.initialiseFormat();
 
+    Integer port = Integer.getInteger("port", 9801);
+
     final Launcher launcher = new Launcher(new VertxAssistant());
 
     HashMap<String, Object> config = new HashMap<>();
-
-    Integer port = Integer.getInteger("port", 9801);
-
     putNonNullConfig("port", port, config);
 
     Runtime.getRuntime().addShutdownHook(new Thread(launcher::stop));
@@ -45,8 +46,6 @@ public class Launcher {
     CompletableFuture<Void> undeployed = new CompletableFuture<>();
     CompletableFuture<Void> stopped = new CompletableFuture<>();
     CompletableFuture<Void> all = CompletableFuture.allOf(undeployed, stopped);
-
-    final Logger log = getLogger(MethodHandles.lookup().lookupClass());
 
     log.info("Server Stopping");
 
@@ -64,8 +63,6 @@ public class Launcher {
     TimeoutException {
 
     vertxAssistant.start();
-
-    final Logger log = getLogger(MethodHandles.lookup().lookupClass());
 
     log.info("Server Starting");
 
