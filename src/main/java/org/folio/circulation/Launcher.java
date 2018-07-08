@@ -15,7 +15,11 @@ import static io.vertx.core.logging.LoggerFactory.getLogger;
 
 public class Launcher {
   private String moduleDeploymentId;
-  private final VertxAssistant vertxAssistant = new VertxAssistant();
+  private final VertxAssistant vertxAssistant;
+
+  private Launcher(VertxAssistant vertxAssistant) {
+    this.vertxAssistant = vertxAssistant;
+  }
 
   public static void main(String[] args) throws
     InterruptedException,
@@ -24,7 +28,7 @@ public class Launcher {
 
     Logging.initialiseFormat();
 
-    final Launcher launcher = new Launcher();
+    final Launcher launcher = new Launcher(new VertxAssistant());
 
     HashMap<String, Object> config = new HashMap<>();
 
