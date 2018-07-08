@@ -14,8 +14,8 @@ import java.util.concurrent.TimeoutException;
 import static io.vertx.core.logging.LoggerFactory.getLogger;
 
 public class Launcher {
-  private static String moduleDeploymentId;
-  private static VertxAssistant vertxAssistant = new VertxAssistant();
+  private String moduleDeploymentId;
+  private final VertxAssistant vertxAssistant = new VertxAssistant();
 
   public static void main(String[] args) throws
     InterruptedException,
@@ -24,7 +24,7 @@ public class Launcher {
 
     Logging.initialiseFormat();
 
-    Runtime.getRuntime().addShutdownHook(new Thread(Launcher::stop));
+    final Launcher launcher = new Launcher();
 
     HashMap<String, Object> config = new HashMap<>();
 
@@ -32,10 +32,29 @@ public class Launcher {
 
     putNonNullConfig("port", port, config);
 
-    start(config);
+    Runtime.getRuntime().addShutdownHook(new Thread(launcher::stop));
+
+    launcher.start(config);
   }
 
-  public static void start(Map<String, Object> config) throws
+  private void stop() {
+    CompletableFuture<Void> undeployed = new CompletableFuture<>();
+    CompletableFuture<Void> stopped = new CompletableFuture<>();
+    CompletableFuture<Void> all = CompletableFuture.allOf(undeployed, stopped);
+
+    final Logger log = getLogger(MethodHandles.lookup().lookupClass());
+
+    log.info("Server Stopping");
+
+    vertxAssistant.undeployVerticle(moduleDeploymentId, undeployed);
+
+    undeployed.thenAccept(result -> vertxAssistant.stop(stopped));
+
+    all.join();
+    log.info("Server Stopped");
+  }
+
+  public void start(Map<String, Object> config) throws
     InterruptedException,
     ExecutionException,
     TimeoutException {
@@ -54,23 +73,6 @@ public class Launcher {
     deployed.thenAccept(result -> log.info("Server Started"));
 
     moduleDeploymentId = deployed.get(10, TimeUnit.SECONDS);
-  }
-
-  public static void stop() {
-    CompletableFuture<Void> undeployed = new CompletableFuture<>();
-    CompletableFuture<Void> stopped = new CompletableFuture<>();
-    CompletableFuture<Void> all = CompletableFuture.allOf(undeployed, stopped);
-
-    final Logger log = getLogger(MethodHandles.lookup().lookupClass());
-
-    log.info("Server Stopping");
-
-    vertxAssistant.undeployVerticle(moduleDeploymentId, undeployed);
-
-    undeployed.thenAccept(result -> vertxAssistant.stop(stopped));
-
-    all.join();
-    log.info("Server Stopped");
   }
 
   private static void putNonNullConfig(String key,
