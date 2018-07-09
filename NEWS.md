@@ -6,6 +6,7 @@
 * Provides `circulation` interface 3.4 (CIRC-121)
 * Requires `item-storage` interface 5.3 (CIRC-121)
 * Requires `holdings-storage` interface 1.3 (CIRC-121)
+* Update to RMB 19.1.5, fixing /requests StackOverflowError (CIRC-119)
 
 ## 10.6.0 2018-06-28
 
