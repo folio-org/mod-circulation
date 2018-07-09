@@ -40,6 +40,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import static org.folio.circulation.support.JsonPropertyWriter.write;
+
 
 @RunWith(Suite.class)
 
@@ -568,7 +570,7 @@ public class APITestSuite {
     TimeoutException {
 
     booksInstanceTypeId = createReferenceRecord(
-      ResourceClient.forInstanceTypes(createClient()), "Books");
+      ResourceClient.forInstanceTypes(createClient()), "Books", "BO", "tests");
   }
 
   private static void deleteInstanceTypes()
@@ -687,9 +689,26 @@ public class APITestSuite {
     InterruptedException,
     ExecutionException,
     TimeoutException {
+    return createReferenceRecord(client, name, null, null);
+  }
 
-    return createReferenceRecord(client, new JsonObject()
-      .put("name", name));
+  private static UUID createReferenceRecord(
+    ResourceClient client,
+    String name,
+    String code,
+    String source)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    final JsonObject referenceRecord = new JsonObject();
+
+    write(referenceRecord, "name", name);
+    write(referenceRecord, "code", code);
+    write(referenceRecord, "source", source);
+
+    return createReferenceRecord(client, referenceRecord);
   }
   
   private static void createCancellationReasons() 
