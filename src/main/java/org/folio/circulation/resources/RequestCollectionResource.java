@@ -67,6 +67,7 @@ public class RequestCollectionResource extends CollectionResource {
       .thenCombineAsync(requestQueueFetcher.get(request.getItemId()), this::addRequestQueue)
       .thenCombineAsync(userRepository.getUser(request.getUserId(), false), this::addUser)
       .thenCombineAsync(userRepository.getUser(request.getProxyUserId(), false), this::addProxyUser)
+      .thenApply(r -> r.next(this::setRequestQueuePosition))
       .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
       .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreation))
       .thenComposeAsync(r -> r.after(records -> createRequest(records, clients)))
@@ -168,13 +169,6 @@ public class RequestCollectionResource extends CollectionResource {
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
-  private JsonObject toRepresentation(Request request) {
-    final JsonObject requestRepresentation = request.asJson();
-    addAdditionalItemProperties(requestRepresentation, request.getItem());
-
-    return requestRepresentation;
-  }
-
   void empty(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context, client);
@@ -187,6 +181,13 @@ public class RequestCollectionResource extends CollectionResource {
         ForwardResponse.forward(routingContext.response(), response);
       }
     });
+  }
+
+  private JsonObject toRepresentation(Request request) {
+    final JsonObject requestRepresentation = request.asJson();
+    addAdditionalItemProperties(requestRepresentation, request.getItem());
+
+    return requestRepresentation;
   }
 
   private void addStoredItemProperties(
@@ -362,5 +363,13 @@ public class RequestCollectionResource extends CollectionResource {
       requestAndRelatedRecords.getInventoryRecords());
 
     return representation;
+  }
+
+  private HttpResult<RequestAndRelatedRecords> setRequestQueuePosition(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    requestAndRelatedRecords.withRequest(requestAndRelatedRecords.getRequest().changePosition(1));
+
+    return HttpResult.succeeded(requestAndRelatedRecords);
   }
 }

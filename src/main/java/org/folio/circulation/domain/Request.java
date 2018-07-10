@@ -5,6 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
 import static org.folio.circulation.domain.representations.RequestProperties.STATUS;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private final JsonObject representation;
@@ -88,5 +89,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   public Item getItem() {
     return item;
+  }
+
+  public Request changePosition(int newPosition) {
+    write(representation, "position", newPosition);
+    return this;
   }
 }

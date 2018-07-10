@@ -1,11 +1,11 @@
 package api.support.fakes;
 
+import api.APITestSuite;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpServer;
 import io.vertx.ext.web.Router;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import api.APITestSuite;
 import org.folio.circulation.support.http.client.BufferHelper;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.server.ForwardResponse;
