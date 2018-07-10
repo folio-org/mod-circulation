@@ -1,4 +1,4 @@
-## 10.7.0 Unreleased
+## 10.7.0 2018-07-10
 
 * Provide different error messages when item not found in different circumstances (CIRC-123)
 * Determine location using permanent and temporary locations from both the holdings and item (CIRC-121)
