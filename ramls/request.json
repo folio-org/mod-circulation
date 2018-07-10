@@ -59,6 +59,10 @@
       "type": "string",
       "format": "date-time"
     },
+    "position": {
+      "description": "position of the request in a per-item request queue",
+      "type": "integer"
+    },
     "item": {
       "description": "Information about the requested item (some of which is stored and used for searching and sorting)",
       "readOnly": true,

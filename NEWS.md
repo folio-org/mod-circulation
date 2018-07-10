@@ -1,3 +1,9 @@
+## 10.8.0 Unreleased
+
+* Introduce request `position` property (CIRC-83)
+* Provides `circulation` interface 3.5 (CIRC-83)  
+* Requires `request-storage` interface 2.2 (CIRC-83)
+
 ## 10.7.0 2018-07-10
 
 * Provide different error messages when item not found in different circumstances (CIRC-123)
