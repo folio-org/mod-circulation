@@ -3,7 +3,9 @@ package org.folio.circulation.domain;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 
+import static org.folio.circulation.domain.RequestStatus.CLOSED_CANCELLED;
 import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
+import static org.folio.circulation.domain.RequestStatus.OPEN_NOT_YET_FILLED;
 import static org.folio.circulation.domain.representations.RequestProperties.STATUS;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
@@ -34,10 +36,14 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   boolean isOpen() {
-    String status = representation.getString(STATUS);
+    String status = getStatus();
 
-    return StringUtils.equals(status, RequestStatus.OPEN_AWAITING_PICKUP)
-      || StringUtils.equals(status, RequestStatus.OPEN_NOT_YET_FILLED);
+    return StringUtils.equals(status, OPEN_AWAITING_PICKUP)
+      || StringUtils.equals(status, OPEN_NOT_YET_FILLED);
+  }
+
+  public boolean isCancelled() {
+    return StringUtils.equals(getStatus(), CLOSED_CANCELLED);
   }
 
   boolean isFor(User user) {
@@ -91,8 +97,13 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return item;
   }
 
-  public Request changePosition(int newPosition) {
+  public Request changePosition(Integer newPosition) {
     write(representation, "position", newPosition);
+    return this;
+  }
+
+  public Request removePosition() {
+    representation.remove("position");
     return this;
   }
 }

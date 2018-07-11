@@ -2,6 +2,9 @@ package org.folio.circulation.support;
 
 import io.vertx.core.json.JsonObject;
 import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
+
+import java.util.UUID;
 
 public class JsonPropertyFetcher {
   private JsonPropertyFetcher() {
@@ -55,9 +58,32 @@ public class JsonPropertyFetcher {
     JsonObject representation,
     String propertyName) {
 
-    if (representation.containsKey(propertyName)) {
+    if (representation != null && representation.containsKey(propertyName)) {
       return DateTime.parse(
         representation.getString(propertyName));
+    }
+    else {
+      return null;
+    }
+  }
+
+  public static LocalDate getLocalDateProperty(
+    JsonObject representation,
+    String propertyName) {
+
+    if (representation != null && representation.containsKey(propertyName)) {
+      return LocalDate.parse(
+        representation.getString(propertyName));
+    }
+    else {
+      return null;
+    }
+  }
+
+
+  public static UUID getUUIDProperty(JsonObject representation, String propertyName) {
+    if(representation != null && representation.containsKey(propertyName)) {
+      return UUID.fromString(representation.getString(propertyName));
     }
     else {
       return null;
@@ -72,6 +98,7 @@ public class JsonPropertyFetcher {
       return null;
     }
   }
+
 
   public static Boolean getBooleanProperty(JsonObject representation, String propertyName) {
     if(representation != null) {

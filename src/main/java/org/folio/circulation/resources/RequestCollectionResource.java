@@ -90,6 +90,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final ItemRepository itemRepository = new ItemRepository(clients, false, false);
     final UserRepository userRepository = new UserRepository(clients);
+    final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> failure(
@@ -100,7 +101,9 @@ public class RequestCollectionResource extends CollectionResource {
       .thenCombineAsync(itemRepository.fetchFor(request), this::addInventoryRecords)
       .thenCombineAsync(userRepository.getUser(request.getUserId(), false), this::addUser)
       .thenCombineAsync(userRepository.getUser(request.getProxyUserId(), false), this::addProxyUser)
+      .thenCombineAsync(requestQueueFetcher.get(request.getItemId()), this::addRequestQueue)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
+      .thenApply(r -> r.next(this::removeRequestQueuePositionWhenCancelled))
       .thenAcceptAsync(result -> {
         if(result.failed()) {
           result.cause().writeTo(routingContext.response());
@@ -372,5 +375,18 @@ public class RequestCollectionResource extends CollectionResource {
       .changePosition(requestAndRelatedRecords.getRequestQueue().nextAvailablePosition()));
 
     return HttpResult.succeeded(requestAndRelatedRecords);
+  }
+
+  private HttpResult<RequestAndRelatedRecords> removeRequestQueuePositionWhenCancelled(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    final Request request = requestAndRelatedRecords.getRequest();
+
+    //TODO: Extract to cancel method
+    if(request.isCancelled()) {
+      requestAndRelatedRecords.withRequest(request.removePosition());
+    }
+
+    return succeeded(requestAndRelatedRecords);
   }
 }
