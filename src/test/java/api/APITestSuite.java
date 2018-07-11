@@ -76,6 +76,7 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
   MultipleHoldShelfRequestsTests.class,
   MultipleOutOfOrderRequestsTests.class,
   MultipleMixedFulfilmentRequestsTests.class,
+  RequestsForDifferentItemsTests.class,
 })
 public class APITestSuite {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());

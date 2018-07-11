@@ -9,6 +9,9 @@ import java.net.MalformedURLException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+
 public class RequestsAPICreateMultipleRequestsTests extends APITests {
 
   @Test
@@ -22,23 +25,27 @@ public class RequestsAPICreateMultipleRequestsTests extends APITests {
 
     loansFixture.checkOut(smallAngryPlanet, usersFixture.steve());
 
-    requestsClient.create(new RequestBuilder()
+    final IndividualResource firstRequest = requestsClient.create(new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
       .by(usersFixture.jessica())
       .create());
 
-    requestsClient.create(new RequestBuilder()
+    final IndividualResource secondRequest = requestsClient.create(new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
       .by(usersFixture.rebecca())
       .create());
 
-    requestsClient.create(new RequestBuilder()
+    final IndividualResource thirdRequest = requestsClient.create(new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
       .by(usersFixture.charlotte())
       .create());
+
+    assertThat(firstRequest.getJson().getInteger("position"), is(1));
+    assertThat(secondRequest.getJson().getInteger("position"), is(2));
+    assertThat(thirdRequest.getJson().getInteger("position"), is(3));
   }
 
   @Test
@@ -52,22 +59,26 @@ public class RequestsAPICreateMultipleRequestsTests extends APITests {
 
     loansFixture.checkOut(smallAngryPlanet, usersFixture.rebecca());
 
-    requestsClient.create(new RequestBuilder()
+    final IndividualResource firstRequest = requestsClient.create(new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
       .by(usersFixture.james())
       .create());
 
-    requestsClient.create(new RequestBuilder()
+    final IndividualResource secondRequest = requestsClient.create(new RequestBuilder()
       .page()
       .forItem(smallAngryPlanet)
       .by(usersFixture.charlotte())
       .create());
 
-    requestsClient.create(new RequestBuilder()
+    final IndividualResource thirdRequest = requestsClient.create(new RequestBuilder()
       .recall()
       .forItem(smallAngryPlanet)
       .by(usersFixture.steve())
       .create());
+
+    assertThat(firstRequest.getJson().getInteger("position"), is(1));
+    assertThat(secondRequest.getJson().getInteger("position"), is(2));
+    assertThat(thirdRequest.getJson().getInteger("position"), is(3));
   }
 }
