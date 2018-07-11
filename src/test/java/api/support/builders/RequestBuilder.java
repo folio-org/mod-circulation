@@ -5,8 +5,6 @@ import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.ISODateTimeFormat;
 
 import java.util.UUID;
 
@@ -126,73 +124,41 @@ public class RequestBuilder extends JsonBuilder implements Builder {
   public JsonObject create() {
     JsonObject request = new JsonObject();
 
-    if(this.id != null) {
-      request.put("id", this.id.toString());
-    }
-
-    request.put("requestType", this.requestType);
-    request.put("requestDate", formatDateTime(this.requestDate));
-    request.put("itemId", this.itemId.toString());
-    request.put("requesterId", this.requesterId.toString());
-    request.put("fulfilmentPreference", this.fulfilmentPreference);
+    put(request, "id", this.id);
+    put(request, "requestType", this.requestType);
+    put(request, "requestDate", this.requestDate);
+    put(request, "itemId", this.itemId);
+    put(request, "requesterId", this.requesterId);
+    put(request, "fulfilmentPreference", this.fulfilmentPreference);
     put(request, "position", this.position);
-
-    if(status != null) {
-      request.put("status", this.status);
-    }
-
-    if(deliveryAddressTypeId != null) {
-      request.put("deliveryAddressTypeId", this.deliveryAddressTypeId.toString());
-    }
-
-    if(requestExpirationDate != null) {
-      request.put("requestExpirationDate",
-        formatDateOnly(this.requestExpirationDate));
-    }
-
-    if(holdShelfExpirationDate != null) {
-      request.put("holdShelfExpirationDate",
-        formatDateOnly(this.holdShelfExpirationDate));
-    }
+    put(request, "status", this.status);
+    put(request, "deliveryAddressTypeId", this.deliveryAddressTypeId);
+    put(request, "requestExpirationDate", this.requestExpirationDate);
+    put(request, "holdShelfExpirationDate", this.holdShelfExpirationDate);
+    put(request, "proxyUserId", proxyUserId);
+    put(request, "cancellationReasonId", cancellationReasonId);
+    put(request, "cancelledByUserId", cancelledByUserId);
+    put(request, "cancellationAdditionalInformation", cancellationAdditionalInformation);
+    put(request, "cancelledDate", cancelledDate);
 
     if(itemSummary != null) {
-      request.put("item", new JsonObject()
-        .put("title", itemSummary.title)
-        .put("barcode", itemSummary.barcode));
+      final JsonObject itemRepresentation = new JsonObject();
+
+      put(itemRepresentation, "title", itemSummary.title);
+      put(itemRepresentation, "barcode", itemSummary.barcode);
+
+      put(request, "item", itemRepresentation);
     }
 
     if(requesterSummary != null) {
-      JsonObject requester = new JsonObject()
-        .put("lastName", requesterSummary.lastName)
-        .put("firstName", requesterSummary.firstName);
+      JsonObject requester = new JsonObject();
 
-      if(requesterSummary.middleName != null) {
-        requester.put("middleName", requesterSummary.middleName);
-      }
+      put(requester, "lastName", requesterSummary.lastName);
+      put(requester, "firstName", requesterSummary.firstName);
+      put(requester, "middleName", requesterSummary.middleName);
+      put(requester, "barcode", requesterSummary.barcode);
 
-      requester.put("barcode", requesterSummary.barcode);
-
-      request.put("requester", requester);
-    }
-
-    if(proxyUserId != null){
-      request.put("proxyUserId", proxyUserId.toString());
-    }
-    
-    if(cancellationReasonId != null) {
-      request.put("cancellationReasonId", cancellationReasonId.toString());
-    }
-    
-    if(cancelledByUserId != null) {
-      request.put("cancelledByUserId", cancelledByUserId.toString());
-    }
-    
-    if(cancellationAdditionalInformation != null) {
-      request.put("cancellationAdditionalInformation", cancellationAdditionalInformation);
-    }
-    
-    if(cancelledDate != null) {
-      request.put("cancelledDate", formatDateTime(cancelledDate));
+      put(request, "requester", requester);
     }
 
     return request;
@@ -534,7 +500,9 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.position);
   }
   
-  public RequestBuilder withCancellationAdditionalInformation(String cancellationAdditionalInformation) {
+  public RequestBuilder withCancellationAdditionalInformation(
+    String cancellationAdditionalInformation) {
+
     return new RequestBuilder(
       this.id,
       this.requestType,
@@ -580,14 +548,6 @@ public class RequestBuilder extends JsonBuilder implements Builder {
 
   public RequestBuilder proxiedBy(IndividualResource proxy) {
     return withUserProxyId(proxy.getId());
-  }
-
-  private String formatDateTime(DateTime requestDate) {
-    return requestDate.toString(ISODateTimeFormat.dateTime());
-  }
-
-  private String formatDateOnly(LocalDate date) {
-    return date.toString(DateTimeFormat.forPattern("yyyy-MM-dd"));
   }
 
   private class ItemSummary {
