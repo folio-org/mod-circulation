@@ -360,6 +360,7 @@
           "modulePermissions": [
             "circulation-storage.requests.item.put",
             "circulation-storage.requests.item.post",
+            "circulation-storage.requests.collection.get",
             "inventory-storage.items.item.get",
             "inventory-storage.items.collection.get",
             "inventory-storage.items.item.put",
