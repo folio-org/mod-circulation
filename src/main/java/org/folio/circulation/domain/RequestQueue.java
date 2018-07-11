@@ -52,4 +52,8 @@ public class RequestQueue {
       .filter(Request::isOpen)
       .collect(Collectors.toList());
   }
+
+  public Integer nextAvailablePosition() {
+    return 1;
+  }
 }

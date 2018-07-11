@@ -75,7 +75,7 @@ public class RequestAndRelatedRecords implements UserRelatedRecord {
     return request.getItem();
   }
 
-  RequestQueue getRequestQueue() {
+  public RequestQueue getRequestQueue() {
     return requestQueue;
   }
 

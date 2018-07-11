@@ -368,7 +368,8 @@ public class RequestCollectionResource extends CollectionResource {
   private HttpResult<RequestAndRelatedRecords> setRequestQueuePosition(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    requestAndRelatedRecords.withRequest(requestAndRelatedRecords.getRequest().changePosition(1));
+    requestAndRelatedRecords.withRequest(requestAndRelatedRecords.getRequest()
+      .changePosition(requestAndRelatedRecords.getRequestQueue().nextAvailablePosition()));
 
     return HttpResult.succeeded(requestAndRelatedRecords);
   }
