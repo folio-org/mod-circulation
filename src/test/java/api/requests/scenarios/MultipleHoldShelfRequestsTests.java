@@ -66,7 +66,9 @@ public class MultipleHoldShelfRequestsTests extends APITests {
     "Recall|Checked out - Recalled",
     "Page|Checked out"
   })
-  public void statusOfOldestRequestChangesToFulfilledWhenItemCheckedOutToRequester(String requestType, String itemStatus)
+  public void statusOfOldestRequestChangesToFulfilledWhenItemCheckedOutToRequester(
+    String requestType,
+    String itemStatus)
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
