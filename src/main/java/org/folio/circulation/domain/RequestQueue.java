@@ -1,13 +1,15 @@
 package org.folio.circulation.domain;
 
-import java.util.Comparator;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class RequestQueue {
-  private final List<Request> requests;
+import static java.util.Comparator.naturalOrder;
 
-  RequestQueue(List<Request> requests) {
+public class RequestQueue {
+  private Collection<Request> requests;
+
+  RequestQueue(Collection<Request> requests) {
     this.requests = requests;
   }
 
@@ -62,6 +64,35 @@ public class RequestQueue {
     return requests.stream()
       .filter(Request::isOpen)
       .map(request -> request.asJson().getInteger("position"))
-      .max(Comparator.naturalOrder()).orElse(0);
+      .max(naturalOrder()).orElse(0);
+  }
+
+  void remove(Request request) {
+    requests = removeInCollection(request);
+    removeGapsInPositions();
+  }
+
+  private List<Request> removeInCollection(Request request) {
+    return requests.stream()
+      .filter(r -> !r.getId().equals(request.getId()))
+      .collect(Collectors.toList());
+  }
+
+  private void removeGapsInPositions() {
+    Integer currentPosition = 1;
+
+    for (Request request : requests) {
+      request.changePosition(currentPosition);
+      currentPosition++;
+    }
+  }
+
+  public Integer size() {
+    return requests.size();
+  }
+
+  public Boolean contains(Request request) {
+      return requests.stream()
+        .anyMatch(r -> r.getId().equals(request.getId()));
   }
 }

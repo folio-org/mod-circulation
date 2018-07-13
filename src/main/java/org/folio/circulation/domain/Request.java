@@ -2,11 +2,11 @@ package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.domain.representations.RequestProperties;
 
-import static org.folio.circulation.domain.RequestStatus.CLOSED_CANCELLED;
-import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
-import static org.folio.circulation.domain.RequestStatus.OPEN_NOT_YET_FILLED;
+import static org.folio.circulation.domain.RequestStatus.*;
 import static org.folio.circulation.domain.representations.RequestProperties.STATUS;
+import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 public class Request implements ItemRelatedRecord, UserRelatedRecord {
@@ -98,12 +98,16 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Request changePosition(Integer newPosition) {
-    write(representation, "position", newPosition);
+    write(representation, RequestProperties.POSITION, newPosition);
     return this;
   }
 
   public Request removePosition() {
-    representation.remove("position");
+    representation.remove(RequestProperties.POSITION);
     return this;
+  }
+
+  public Integer getPosition() {
+    return getIntegerProperty(representation, RequestProperties.POSITION, null);
   }
 }

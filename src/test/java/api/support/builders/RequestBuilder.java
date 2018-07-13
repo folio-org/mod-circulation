@@ -550,6 +550,28 @@ public class RequestBuilder extends JsonBuilder implements Builder {
     return withUserProxyId(proxy.getId());
   }
 
+  public RequestBuilder withPosition(Integer newPosition) {
+    return new RequestBuilder(
+      this.id,
+      this.requestType,
+      this.requestDate,
+      this.itemId,
+      this.requesterId,
+      this.fulfilmentPreference,
+      this.deliveryAddressTypeId,
+      this.requestExpirationDate,
+      this.holdShelfExpirationDate,
+      this.itemSummary,
+      this.requesterSummary,
+      this.status,
+      this.proxyUserId,
+      this.cancellationReasonId,
+      this.cancelledByUserId,
+      this.cancellationAdditionalInformation,
+      this.cancelledDate,
+      newPosition);
+  }
+
   private class ItemSummary {
     public final String title;
     public final String barcode;
