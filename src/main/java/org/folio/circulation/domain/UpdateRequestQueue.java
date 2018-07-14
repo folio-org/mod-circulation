@@ -15,7 +15,7 @@ public class UpdateRequestQueue {
 
   public UpdateRequestQueue(Clients clients) {
     this.clients = clients;
-    this.repository = new RequestQueueRepository(clients);
+    this.repository = RequestQueueRepository.using(clients);
   }
 
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> onCheckIn(

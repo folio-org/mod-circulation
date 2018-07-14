@@ -107,8 +107,8 @@ public class RequestRepository {
   private CompletableFuture<HttpResult<Request>> fetchRequester(HttpResult<Request> result) {
     return result.combineAfter(request ->
         userRepository.getUser(request.getUserId(), false),
-        (request, requester) ->
-          Request.from(request.asJson(), request.getItem(), requester, null));
+      (request, requester) ->
+        Request.from(request.asJson(), request.getItem(), requester, request.getProxy()));
   }
 
   //TODO: Check if need to request proxy

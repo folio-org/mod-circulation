@@ -49,7 +49,7 @@ public class RequestCollectionResource extends CollectionResource {
     final Clients clients = Clients.create(context, client);
 
     final ItemRepository itemRepository = new ItemRepository(clients, true, false);
-    final RequestQueueRepository requestQueueRepository = new RequestQueueRepository(clients);
+    final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final RequestRepository requestRepository = RequestRepository.using(clients);
     final UserRepository userRepository = new UserRepository(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
@@ -97,7 +97,7 @@ public class RequestCollectionResource extends CollectionResource {
     final ItemRepository itemRepository = new ItemRepository(clients, false, false);
     final UserRepository userRepository = new UserRepository(clients);
     final RequestRepository requestRepository = RequestRepository.using(clients);
-    final RequestQueueRepository requestQueueRepository = new RequestQueueRepository(clients);
+    final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(

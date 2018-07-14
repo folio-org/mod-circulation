@@ -1,7 +1,7 @@
 package org.folio.circulation.domain;
 
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.ForwardOnFailure;
+import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.HttpResult;
 
 import java.util.Collection;
@@ -9,14 +9,23 @@ import java.util.concurrent.CompletableFuture;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.CqlHelper.encodeQuery;
-import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
 
 public class RequestQueueRepository {
-  private final Clients clients;
+  private final CollectionResourceClient requestsStorageClient;
+  private final RequestRepository requestRepository;
 
-  public RequestQueueRepository(Clients clients) {
-    this.clients = clients;
+  private RequestQueueRepository(
+    CollectionResourceClient requestsStorageClient,
+    RequestRepository requestRepository) {
+
+    this.requestsStorageClient = requestsStorageClient;
+    this.requestRepository = requestRepository;
+  }
+
+  public static RequestQueueRepository using(Clients clients) {
+    return new RequestQueueRepository(clients.requestsStorage(),
+      RequestRepository.using(clients));
   }
 
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> get(
@@ -37,7 +46,7 @@ public class RequestQueueRepository {
       query -> {
         final int maximumSupportedRequestQueueSize = 1000;
 
-        return clients.requestsStorage().getMany(query, maximumSupportedRequestQueueSize, 0)
+        return requestsStorageClient.getMany(query, maximumSupportedRequestQueueSize, 0)
           .thenApply(response ->
             MultipleRecords.from(response, Request::from, "requests")
               .map(MultipleRecords::getRecords)
@@ -63,25 +72,9 @@ public class RequestQueueRepository {
 
     for (Request request : changedRequests) {
       requestUpdated = requestUpdated.thenComposeAsync(
-        r -> r.after(notUsed -> updateRequest(request)));
+        r -> r.after(notUsed -> requestRepository.update(request)));
     }
 
     return requestUpdated.thenApply(r -> r.map(notUsed -> requestQueue));
-  }
-
-  private CompletableFuture<HttpResult<Request>> updateRequest(Request request) {
-    CompletableFuture<HttpResult<Request>> requestUpdated = new CompletableFuture<>();
-
-    //TODO: May need to refresh stored item and requester properties
-    //Or retain them at least
-    clients.requestsStorage().put(request.getId(), request.asJson(),
-      response -> {
-        if (response.getStatusCode() == 204) {
-          requestUpdated.complete(succeeded(request));
-        } else {
-          requestUpdated.complete(failed(new ForwardOnFailure(response)));
-        }
-      });
-    return requestUpdated;
   }
 }
