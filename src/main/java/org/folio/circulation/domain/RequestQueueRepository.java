@@ -1,7 +1,6 @@
 package org.folio.circulation.domain;
 
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.HttpResult;
 
 import java.util.Collection;
@@ -12,20 +11,15 @@ import static org.folio.circulation.support.CqlHelper.encodeQuery;
 import static org.folio.circulation.support.HttpResult.succeeded;
 
 public class RequestQueueRepository {
-  private final CollectionResourceClient requestsStorageClient;
   private final RequestRepository requestRepository;
 
-  private RequestQueueRepository(
-    CollectionResourceClient requestsStorageClient,
-    RequestRepository requestRepository) {
+  private RequestQueueRepository(RequestRepository requestRepository) {
 
-    this.requestsStorageClient = requestsStorageClient;
     this.requestRepository = requestRepository;
   }
 
   public static RequestQueueRepository using(Clients clients) {
-    return new RequestQueueRepository(clients.requestsStorage(),
-      RequestRepository.using(clients));
+    return new RequestQueueRepository(RequestRepository.using(clients));
   }
 
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> get(
@@ -42,16 +36,12 @@ public class RequestQueueRepository {
         RequestStatus.OPEN_AWAITING_PICKUP,
         RequestStatus.OPEN_NOT_YET_FILLED);
 
-    return encodeQuery(unencodedQuery).after(
-      query -> {
-        final int maximumSupportedRequestQueueSize = 1000;
+    final int maximumSupportedRequestQueueSize = 1000;
 
-        return requestsStorageClient.getMany(query, maximumSupportedRequestQueueSize, 0)
-          .thenApply(response ->
-            MultipleRecords.from(response, Request::from, "requests")
-              .map(MultipleRecords::getRecords)
-              .map(RequestQueue::new));
-      });
+    return encodeQuery(unencodedQuery).after(
+      query -> requestRepository.findBy(query, maximumSupportedRequestQueueSize)
+        .thenApply(r -> r.map(MultipleRecords::getRecords))
+        .thenApply(r -> r.map(RequestQueue::new)));
   }
 
   CompletableFuture<HttpResult<RequestQueue>> updateRequestsWithChangedPositions(

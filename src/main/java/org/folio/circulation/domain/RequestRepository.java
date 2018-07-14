@@ -37,6 +37,17 @@ public class RequestRepository {
         itemRepository.fetchItemsFor(requests, Request::withItem));
   }
 
+  //TODO: try to consolidate this further with above
+  CompletableFuture<HttpResult<MultipleRecords<Request>>> findBy(
+    String query,
+    Integer pageLimit) {
+
+    return requestsStorageClient.getMany(query, pageLimit, 0)
+      .thenApply(this::mapResponseToRequests)
+      .thenComposeAsync(requests ->
+        itemRepository.fetchItemsFor(requests, Request::withItem));
+  }
+
   private HttpResult<MultipleRecords<Request>> mapResponseToRequests(Response response) {
     return MultipleRecords.from(response, Request::from, "requests");
   }
@@ -106,16 +117,16 @@ public class RequestRepository {
   //TODO: Check if need to request requester
   private CompletableFuture<HttpResult<Request>> fetchRequester(HttpResult<Request> result) {
     return result.combineAfter(request ->
-        userRepository.getUser(request.getUserId(), false),
-      (request, requester) ->
-        Request.from(request.asJson(), request.getItem(), requester, request.getProxy()));
+      getUser(request.getUserId()), Request::withRequester);
   }
 
   //TODO: Check if need to request proxy
   private CompletableFuture<HttpResult<Request>> fetchProxy(HttpResult<Request> result) {
     return result.combineAfter(request ->
-        userRepository.getUser(request.getProxyUserId(), false),
-      (request, proxy) ->
-        Request.from(request.asJson(), request.getItem(), request.getRequester(), proxy));
+      getUser(request.getProxyUserId()), Request::withProxy);
+  }
+
+  private CompletableFuture<HttpResult<User>> getUser(String proxyUserId) {
+    return userRepository.getUser(proxyUserId, false);
   }
 }
