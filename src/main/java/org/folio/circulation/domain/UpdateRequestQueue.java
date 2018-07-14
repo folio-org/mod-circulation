@@ -6,11 +6,16 @@ import org.folio.circulation.support.ServerErrorFailure;
 
 import java.util.concurrent.CompletableFuture;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.HttpResult.succeeded;
+
 public class UpdateRequestQueue {
   private final Clients clients;
+  private final RequestQueueRepository repository;
 
   public UpdateRequestQueue(Clients clients) {
     this.clients = clients;
+    this.repository = new RequestQueueRepository(clients);
   }
 
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> onCheckIn(
@@ -70,5 +75,18 @@ public class UpdateRequestQueue {
     }
 
     return requestUpdated;
+  }
+
+  public CompletableFuture<HttpResult<RequestAndRelatedRecords>> onCancellation(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    if(requestAndRelatedRecords.getRequest().isCancelled()) {
+      return repository.updateRequestsWithChangedPositions(
+        requestAndRelatedRecords.getRequestQueue())
+        .thenApply(result -> result.map(requestAndRelatedRecords::withRequestQueue));
+    }
+    else {
+      return completedFuture(succeeded(requestAndRelatedRecords));
+    }
   }
 }

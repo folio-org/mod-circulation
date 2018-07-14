@@ -98,6 +98,7 @@ public class RequestCollectionResource extends CollectionResource {
     final UserRepository userRepository = new UserRepository(clients);
     final RequestRepository requestRepository = RequestRepository.using(clients);
     final RequestQueueRepository requestQueueRepository = new RequestQueueRepository(clients);
+    final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> failure(
@@ -111,7 +112,8 @@ public class RequestCollectionResource extends CollectionResource {
       .thenCombineAsync(requestQueueRepository.get(request.getItemId()), this::addRequestQueue)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenApply(r -> r.next(this::removeRequestQueuePositionWhenCancelled))
-      .thenComposeAsync(result -> result.after(requestRepository::updateRequest))
+      .thenComposeAsync(result -> result.after(requestRepository::update))
+      .thenComposeAsync(r -> r.after(updateRequestQueue::onCancellation))
       .thenApply(NoContentHttpResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
   }

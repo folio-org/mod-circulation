@@ -28,6 +28,8 @@ public class RequestQueuePositionTests extends APITests {
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource steve = usersFixture.steve();
+    IndividualResource charlotte = usersFixture.charlotte();
+    IndividualResource rebecca = usersFixture.rebecca();
 
     loansFixture.checkOut(smallAngryPlanet, james);
 
@@ -38,7 +40,10 @@ public class RequestQueuePositionTests extends APITests {
       smallAngryPlanet, steve, new DateTime(2017, 10, 27, 11, 54, 37, DateTimeZone.UTC));
 
     IndividualResource requestByCharlotte = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, steve, new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC));
+      smallAngryPlanet, charlotte, new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC));
+
+    IndividualResource requestByRebecca = requestsFixture.placeHoldShelfRequest(
+      smallAngryPlanet, rebecca, new DateTime(2018, 2, 4, 7, 4, 53, DateTimeZone.UTC));
 
     //Cancel one of the requests
     final RequestBuilder cancelledRequestBySteve = RequestBuilder.from(requestBySteve)
@@ -51,5 +56,17 @@ public class RequestQueuePositionTests extends APITests {
 
     assertThat("Should not have a position",
       requestBySteve.getJson().containsKey("position"), is(false));
+
+    requestByJessica = requestsClient.get(requestByJessica);
+
+    assertThat(requestByJessica.getJson().getInteger("position"), is(1));
+
+    requestByCharlotte = requestsClient.get(requestByCharlotte);
+
+    assertThat(requestByCharlotte.getJson().getInteger("position"), is(2));
+
+    requestByRebecca = requestsClient.get(requestByRebecca);
+
+    assertThat(requestByRebecca.getJson().getInteger("position"), is(3));
   }
 }

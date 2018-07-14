@@ -48,7 +48,7 @@ public class RequestRepository {
       .fetchSingleRecord(id);
   }
 
-  public CompletableFuture<HttpResult<RequestAndRelatedRecords>> updateRequest(
+  public CompletableFuture<HttpResult<RequestAndRelatedRecords>> update(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     CompletableFuture<HttpResult<RequestAndRelatedRecords>> requestUpdated =

@@ -75,11 +75,11 @@ public class RequestAndRelatedRecords implements UserRelatedRecord {
     return requestQueue;
   }
 
-  public User getRequestingUser() {
+  User getRequestingUser() {
     return requestingUser;
   }
 
-  public User getProxyUser() {
+  User getProxyUser() {
     return proxyUser;
   }
 
