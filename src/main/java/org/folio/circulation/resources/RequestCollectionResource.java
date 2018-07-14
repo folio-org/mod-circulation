@@ -114,7 +114,7 @@ public class RequestCollectionResource extends CollectionResource {
   private CompletableFuture<HttpResult<RequestAndRelatedRecords>> updateRequest(
     Clients clients,
     RequestAndRelatedRecords requestAndRelatedRecords) {
-    
+
     CompletableFuture<HttpResult<RequestAndRelatedRecords>> requestUpdated =
       new CompletableFuture<>();
 
@@ -124,11 +124,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final Request request = requestAndRelatedRecords.getRequest();
 
-    final JsonObject representation = request.asJson();
-
-    addStoredItemProperties(representation, item);
-    addStoredRequesterProperties(representation, requester);
-    addStoredProxyProperties(representation, proxy);
+    final JsonObject representation = storedRequest(request, item, requester, proxy);
 
     clients.requestsStorage().put(request.getId(), representation, response -> {
       if(response.getStatusCode() == 204) {
@@ -140,6 +136,21 @@ public class RequestCollectionResource extends CollectionResource {
     });
 
     return requestUpdated;
+  }
+
+  private JsonObject storedRequest(
+    Request request,
+    Item item,
+    User requester,
+    User proxy) {
+
+    final JsonObject representation = request.asJson();
+
+    addStoredItemProperties(representation, item);
+    addStoredRequesterProperties(representation, requester);
+    addStoredProxyProperties(representation, proxy);
+
+    return representation;
   }
 
   void get(RoutingContext routingContext) {
@@ -351,16 +362,14 @@ public class RequestCollectionResource extends CollectionResource {
 
     CompletableFuture<HttpResult<RequestAndRelatedRecords>> onCreated = new CompletableFuture<>();
 
-    JsonObject request = requestAndRelatedRecords.getRequest().asJson();
+    final Request request = requestAndRelatedRecords.getRequest();
+    final User requestingUser = requestAndRelatedRecords.getRequestingUser();
+    final User proxyUser = requestAndRelatedRecords.getProxyUser();
 
-    User requestingUser = requestAndRelatedRecords.getRequestingUser();
-    User proxyUser = requestAndRelatedRecords.getProxyUser();
+    JsonObject representation = storedRequest(request,
+      requestAndRelatedRecords.getInventoryRecords(), requestingUser, proxyUser);
 
-    addStoredItemProperties(request, requestAndRelatedRecords.getInventoryRecords());
-    addStoredRequesterProperties(request, requestingUser);
-    addStoredProxyProperties(request, proxyUser);
-
-    clients.requestsStorage().post(request, response -> {
+    clients.requestsStorage().post(representation, response -> {
       if (response.getStatusCode() == 201) {
         onCreated.complete(succeeded(
           requestAndRelatedRecords.withRequest(Request.from(response.getJson()))));
