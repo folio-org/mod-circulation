@@ -104,15 +104,13 @@ public class RequestCollectionResource extends CollectionResource {
       .thenCombineAsync(requestQueueRepository.get(request.getItemId()), this::addRequestQueue)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenApply(r -> r.next(this::removeRequestQueuePositionWhenCancelled))
-      .thenAcceptAsync(result -> {
-        if(result.failed()) {
-          result.cause().writeTo(routingContext.response());
-          return;
-        }
+      .thenComposeAsync(result -> result.after(requestAndRelatedRecords -> {
+        CompletableFuture<HttpResult<RequestAndRelatedRecords>> requestUpdated =
+          new CompletableFuture<>();
 
-        final Item item = result.value().getInventoryRecords();
-        final User requester = result.value().getRequestingUser();
-        final User proxy = result.value().getProxyUser();
+        final Item item = requestAndRelatedRecords.getInventoryRecords();
+        final User requester = requestAndRelatedRecords.getRequestingUser();
+        final User proxy = requestAndRelatedRecords.getProxyUser();
 
         addStoredItemProperties(representation, item);
         addStoredRequesterProperties(representation, requester);
@@ -120,13 +118,17 @@ public class RequestCollectionResource extends CollectionResource {
 
         clients.requestsStorage().put(id, representation, response -> {
           if(response.getStatusCode() == 204) {
-            SuccessResponse.noContent(routingContext.response());
+            requestUpdated.complete(result);
           }
           else {
-            ForwardResponse.forward(routingContext.response(), response);
+            requestUpdated.complete(HttpResult.failed(new ForwardOnFailure(response)));
           }
         });
-      });
+
+        return requestUpdated;
+      }))
+      .thenApply(NoContentHttpResult::from)
+      .thenAccept(r -> r.writeTo(routingContext.response()));
   }
 
   void get(RoutingContext routingContext) {
