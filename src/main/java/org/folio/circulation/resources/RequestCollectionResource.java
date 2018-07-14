@@ -124,7 +124,8 @@ public class RequestCollectionResource extends CollectionResource {
 
     final Request request = requestAndRelatedRecords.getRequest();
 
-    final JsonObject representation = storedRequest(request, item, requester, proxy);
+    final JsonObject representation = new RequestRepresentation().storedRequest(request, item, requester, proxy
+    );
 
     clients.requestsStorage().put(request.getId(), representation, response -> {
       if(response.getStatusCode() == 204) {
@@ -136,21 +137,6 @@ public class RequestCollectionResource extends CollectionResource {
     });
 
     return requestUpdated;
-  }
-
-  private JsonObject storedRequest(
-    Request request,
-    Item item,
-    User requester,
-    User proxy) {
-
-    final JsonObject representation = request.asJson();
-
-    addStoredItemProperties(representation, item);
-    addStoredRequesterProperties(representation, requester);
-    addStoredProxyProperties(representation, proxy);
-
-    return representation;
   }
 
   void get(RoutingContext routingContext) {
@@ -217,22 +203,6 @@ public class RequestCollectionResource extends CollectionResource {
     return requestRepresentation;
   }
 
-  private void addStoredItemProperties(
-    JsonObject request,
-    Item item) {
-
-    if(item == null || item.isNotFound()) {
-      return;
-    }
-
-    JsonObject itemSummary = new JsonObject();
-
-    write(itemSummary, "title", item.getTitle());
-    write(itemSummary, "barcode", item.getBarcode());
-
-    request.put("item", itemSummary);
-  }
-
   private void addAdditionalItemProperties(
     JsonObject request,
     Item item) {
@@ -256,30 +226,6 @@ public class RequestCollectionResource extends CollectionResource {
     }
 
     request.put("item", itemSummary);
-  }
-
-  private void addStoredRequesterProperties
-    (JsonObject requestWithAdditionalInformation,
-     User requester) {
-
-    if(requester == null) {
-      return;
-    }
-
-    JsonObject requesterSummary = requester.createUserSummary();
-
-    requestWithAdditionalInformation.put("requester", requesterSummary);
-  }
-
-  private void addStoredProxyProperties
-    (JsonObject requestWithAdditionalInformation,
-     User proxy) {
-
-    if(proxy == null) {
-      return;
-    }
-
-    requestWithAdditionalInformation.put("proxy", proxy.createUserSummary());
   }
 
   private void removeRelatedRecordInformation(JsonObject request) {
@@ -366,8 +312,9 @@ public class RequestCollectionResource extends CollectionResource {
     final User requestingUser = requestAndRelatedRecords.getRequestingUser();
     final User proxyUser = requestAndRelatedRecords.getProxyUser();
 
-    JsonObject representation = storedRequest(request,
-      requestAndRelatedRecords.getInventoryRecords(), requestingUser, proxyUser);
+    JsonObject representation = new RequestRepresentation().storedRequest(request,
+      requestAndRelatedRecords.getInventoryRecords(), requestingUser, proxyUser
+    );
 
     clients.requestsStorage().post(representation, response -> {
       if (response.getStatusCode() == 201) {
