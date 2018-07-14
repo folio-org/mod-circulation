@@ -8,6 +8,8 @@ import java.util.UUID;
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.collection.IsEmptyCollection.empty;
+import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class RequestQueueTests {
@@ -29,6 +31,9 @@ public class RequestQueueTests {
 
     assertThat("Removed request should not have a position",
       onlyRequest.getPosition(), is(nullValue()));
+
+    assertThat("No requests have changed position",
+      requestQueue.getRequestsWithChangedPosition(), is(empty()));
   }
 
   @Test
@@ -64,6 +69,9 @@ public class RequestQueueTests {
 
     assertThat("Second request should still in correct position",
       secondRequest.getPosition(), is(2));
+
+    assertThat("No requests have changed position",
+      requestQueue.getRequestsWithChangedPosition(), is(empty()));
   }
 
   @Test
@@ -99,6 +107,9 @@ public class RequestQueueTests {
 
     assertThat("Third request should have moved up the queue",
       thirdRequest.getPosition(), is(2));
+
+    assertThat("Second and third requests have changed position",
+      requestQueue.getRequestsWithChangedPosition(), contains(secondRequest, thirdRequest));
   }
 
   @Test
@@ -140,6 +151,9 @@ public class RequestQueueTests {
 
     assertThat("Fourth request should have moved up the queue",
       fourthRequest.getPosition(), is(3));
+
+    assertThat("Second and third requests have changed position",
+      requestQueue.getRequestsWithChangedPosition(), contains(thirdRequest, fourthRequest));
   }
 
   private Request requestAtPosition(UUID itemId, Integer position) {

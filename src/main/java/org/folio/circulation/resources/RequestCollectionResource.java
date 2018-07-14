@@ -371,6 +371,7 @@ public class RequestCollectionResource extends CollectionResource {
   private HttpResult<RequestAndRelatedRecords> setRequestQueuePosition(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
+    //TODO: Extract to method to add to queue
     requestAndRelatedRecords.withRequest(requestAndRelatedRecords.getRequest()
       .changePosition(requestAndRelatedRecords.getRequestQueue().nextAvailablePosition()));
 

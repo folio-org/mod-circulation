@@ -4,6 +4,8 @@ import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.representations.RequestProperties;
 
+import java.util.Objects;
+
 import static org.folio.circulation.domain.RequestStatus.*;
 import static org.folio.circulation.domain.representations.RequestProperties.STATUS;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
@@ -12,6 +14,7 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
 public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private final JsonObject representation;
   private final Item item;
+  private boolean changedPosition = false;
 
   public Request(JsonObject representation, Item item) {
     this.representation = representation;
@@ -98,15 +101,24 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Request changePosition(Integer newPosition) {
-    write(representation, RequestProperties.POSITION, newPosition);
+    if(!Objects.equals(getPosition(), newPosition)) {
+      write(representation, RequestProperties.POSITION, newPosition);
+      changedPosition = true;
+    }
+
     return this;
   }
 
   void removePosition() {
     representation.remove(RequestProperties.POSITION);
+    changedPosition = true;
   }
 
   public Integer getPosition() {
     return getIntegerProperty(representation, RequestProperties.POSITION, null);
+  }
+
+  boolean hasChangedPosition() {
+    return changedPosition;
   }
 }

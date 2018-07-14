@@ -96,4 +96,10 @@ public class RequestQueue {
       return requests.stream()
         .anyMatch(r -> r.getId().equals(request.getId()));
   }
+
+  Collection<Request> getRequestsWithChangedPosition() {
+    return requests.stream()
+      .filter(Request::hasChangedPosition)
+      .collect(Collectors.toList());
+  }
 }
