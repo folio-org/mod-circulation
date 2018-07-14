@@ -80,7 +80,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return representation.getString("fulfilmentPreference");
   }
 
-  String getId() {
+  public String getId() {
     return representation.getString("id");
   }
 

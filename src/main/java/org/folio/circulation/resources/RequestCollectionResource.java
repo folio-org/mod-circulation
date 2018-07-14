@@ -17,6 +17,7 @@ import java.util.concurrent.CompletableFuture;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.*;
+import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
@@ -104,31 +105,41 @@ public class RequestCollectionResource extends CollectionResource {
       .thenCombineAsync(requestQueueRepository.get(request.getItemId()), this::addRequestQueue)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenApply(r -> r.next(this::removeRequestQueuePositionWhenCancelled))
-      .thenComposeAsync(result -> result.after(requestAndRelatedRecords -> {
-        CompletableFuture<HttpResult<RequestAndRelatedRecords>> requestUpdated =
-          new CompletableFuture<>();
-
-        final Item item = requestAndRelatedRecords.getInventoryRecords();
-        final User requester = requestAndRelatedRecords.getRequestingUser();
-        final User proxy = requestAndRelatedRecords.getProxyUser();
-
-        addStoredItemProperties(representation, item);
-        addStoredRequesterProperties(representation, requester);
-        addStoredProxyProperties(representation, proxy);
-
-        clients.requestsStorage().put(id, representation, response -> {
-          if(response.getStatusCode() == 204) {
-            requestUpdated.complete(result);
-          }
-          else {
-            requestUpdated.complete(HttpResult.failed(new ForwardOnFailure(response)));
-          }
-        });
-
-        return requestUpdated;
-      }))
+      .thenComposeAsync(result -> result.after(requestAndRelatedRecords ->
+        updateRequest(clients, requestAndRelatedRecords)))
       .thenApply(NoContentHttpResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
+  }
+
+  private CompletableFuture<HttpResult<RequestAndRelatedRecords>> updateRequest(
+    Clients clients,
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+    
+    CompletableFuture<HttpResult<RequestAndRelatedRecords>> requestUpdated =
+      new CompletableFuture<>();
+
+    final Item item = requestAndRelatedRecords.getInventoryRecords();
+    final User requester = requestAndRelatedRecords.getRequestingUser();
+    final User proxy = requestAndRelatedRecords.getProxyUser();
+
+    final Request request = requestAndRelatedRecords.getRequest();
+
+    final JsonObject representation = request.asJson();
+
+    addStoredItemProperties(representation, item);
+    addStoredRequesterProperties(representation, requester);
+    addStoredProxyProperties(representation, proxy);
+
+    clients.requestsStorage().put(request.getId(), representation, response -> {
+      if(response.getStatusCode() == 204) {
+        requestUpdated.complete(succeeded(requestAndRelatedRecords));
+      }
+      else {
+        requestUpdated.complete(failed(new ForwardOnFailure(response)));
+      }
+    });
+
+    return requestUpdated;
   }
 
   void get(RoutingContext routingContext) {
@@ -303,7 +314,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     return result.next(requestAndRelatedRecords -> {
       if(requestAndRelatedRecords.getInventoryRecords().isNotFound()) {
-        return HttpResult.failed(failure(
+        return failed(failure(
           "Item does not exist", "itemId",
           requestAndRelatedRecords.getRequest().getItemId()));
       }
@@ -322,7 +333,7 @@ public class RequestCollectionResource extends CollectionResource {
       RequestType requestType = RequestType.from(request);
 
       if (!requestType.canCreateRequestForItem(requestAndRelatedRecords.getInventoryRecords())) {
-        return HttpResult.failed(failure(
+        return failed(failure(
           String.format("Item is not %s, %s or %s", CHECKED_OUT,
             CHECKED_OUT_HELD, CHECKED_OUT_RECALLED),
           "itemId", request.getItemId()
@@ -354,7 +365,7 @@ public class RequestCollectionResource extends CollectionResource {
         onCreated.complete(succeeded(
           requestAndRelatedRecords.withRequest(Request.from(response.getJson()))));
       } else {
-        onCreated.complete(HttpResult.failed(new ForwardOnFailure(response)));
+        onCreated.complete(failed(new ForwardOnFailure(response)));
       }
     });
 
@@ -377,7 +388,7 @@ public class RequestCollectionResource extends CollectionResource {
     requestAndRelatedRecords.withRequest(requestAndRelatedRecords.getRequest()
       .changePosition(requestAndRelatedRecords.getRequestQueue().nextAvailablePosition()));
 
-    return HttpResult.succeeded(requestAndRelatedRecords);
+    return succeeded(requestAndRelatedRecords);
   }
 
   private HttpResult<RequestAndRelatedRecords> removeRequestQueuePositionWhenCancelled(
