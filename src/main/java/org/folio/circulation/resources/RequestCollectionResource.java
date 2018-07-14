@@ -80,10 +80,12 @@ public class RequestCollectionResource extends CollectionResource {
   void replace(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
 
-    String id = routingContext.request().getParam("id");
     JsonObject representation = routingContext.getBodyAsJson();
 
     removeRelatedRecordInformation(representation);
+
+    String id = routingContext.request().getParam("id");
+    write(representation, "id", id);
 
     final Request request = Request.from(representation);
 
@@ -91,6 +93,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final ItemRepository itemRepository = new ItemRepository(clients, false, false);
     final UserRepository userRepository = new UserRepository(clients);
+    final RequestRepository requestRepository = RequestRepository.using(clients);
     final RequestQueueRepository requestQueueRepository = new RequestQueueRepository(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
@@ -105,38 +108,9 @@ public class RequestCollectionResource extends CollectionResource {
       .thenCombineAsync(requestQueueRepository.get(request.getItemId()), this::addRequestQueue)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenApply(r -> r.next(this::removeRequestQueuePositionWhenCancelled))
-      .thenComposeAsync(result -> result.after(requestAndRelatedRecords ->
-        updateRequest(clients, requestAndRelatedRecords)))
+      .thenComposeAsync(result -> result.after(requestRepository::updateRequest))
       .thenApply(NoContentHttpResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
-  }
-
-  private CompletableFuture<HttpResult<RequestAndRelatedRecords>> updateRequest(
-    Clients clients,
-    RequestAndRelatedRecords requestAndRelatedRecords) {
-
-    CompletableFuture<HttpResult<RequestAndRelatedRecords>> requestUpdated =
-      new CompletableFuture<>();
-
-    final Item item = requestAndRelatedRecords.getInventoryRecords();
-    final User requester = requestAndRelatedRecords.getRequestingUser();
-    final User proxy = requestAndRelatedRecords.getProxyUser();
-
-    final Request request = requestAndRelatedRecords.getRequest();
-
-    final JsonObject representation = new RequestRepresentation().storedRequest(request, item, requester, proxy
-    );
-
-    clients.requestsStorage().put(request.getId(), representation, response -> {
-      if(response.getStatusCode() == 204) {
-        requestUpdated.complete(succeeded(requestAndRelatedRecords));
-      }
-      else {
-        requestUpdated.complete(failed(new ForwardOnFailure(response)));
-      }
-    });
-
-    return requestUpdated;
   }
 
   void get(RoutingContext routingContext) {

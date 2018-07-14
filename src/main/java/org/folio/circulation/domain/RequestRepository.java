@@ -1,9 +1,13 @@
 package org.folio.circulation.domain;
 
+import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
 
 import java.util.concurrent.CompletableFuture;
+
+import static org.folio.circulation.support.HttpResult.failed;
+import static org.folio.circulation.support.HttpResult.succeeded;
 
 public class RequestRepository {
   private final CollectionResourceClient requestsStorageClient;
@@ -42,5 +46,32 @@ public class RequestRepository {
   private CompletableFuture<HttpResult<Request>> fetchRequest(String id) {
     return new SingleRecordFetcher<>(requestsStorageClient, "request", Request::from)
       .fetchSingleRecord(id);
+  }
+
+  public CompletableFuture<HttpResult<RequestAndRelatedRecords>> updateRequest(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    CompletableFuture<HttpResult<RequestAndRelatedRecords>> requestUpdated =
+      new CompletableFuture<>();
+
+    final Item item = requestAndRelatedRecords.getInventoryRecords();
+    final User requester = requestAndRelatedRecords.getRequestingUser();
+    final User proxy = requestAndRelatedRecords.getProxyUser();
+
+    final Request request = requestAndRelatedRecords.getRequest();
+
+    final JsonObject representation = new RequestRepresentation()
+      .storedRequest(request, item, requester, proxy);
+
+    requestsStorageClient.put(request.getId(), representation, response -> {
+      if(response.getStatusCode() == 204) {
+        requestUpdated.complete(succeeded(requestAndRelatedRecords));
+      }
+      else {
+        requestUpdated.complete(failed(new ForwardOnFailure(response)));
+      }
+    });
+
+    return requestUpdated;
   }
 }
