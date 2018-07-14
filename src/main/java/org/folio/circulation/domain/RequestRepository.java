@@ -54,20 +54,17 @@ public class RequestRepository {
       .fetchSingleRecord(id);
   }
 
-  public CompletableFuture<HttpResult<RequestAndRelatedRecords>> update(
-    RequestAndRelatedRecords requestAndRelatedRecords) {
+  public CompletableFuture<HttpResult<Request>> update(Request request) {
 
-    CompletableFuture<HttpResult<RequestAndRelatedRecords>> requestUpdated =
+    CompletableFuture<HttpResult<Request>> requestUpdated =
       new CompletableFuture<>();
-
-    final Request request = requestAndRelatedRecords.getRequest();
 
     final JsonObject representation = new RequestRepresentation()
       .storedRequest(request);
 
     requestsStorageClient.put(request.getId(), representation, response -> {
       if(response.getStatusCode() == 204) {
-        requestUpdated.complete(succeeded(requestAndRelatedRecords));
+        requestUpdated.complete(succeeded(request));
       }
       else {
         requestUpdated.complete(failed(new ForwardOnFailure(response)));
@@ -75,6 +72,13 @@ public class RequestRepository {
     });
 
     return requestUpdated;
+  }
+
+  public CompletableFuture<HttpResult<RequestAndRelatedRecords>> update(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    return update(requestAndRelatedRecords.getRequest())
+      .thenApply(r -> r.map(requestAndRelatedRecords::withRequest));
   }
 
   public CompletableFuture<HttpResult<RequestAndRelatedRecords>> create(
