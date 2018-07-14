@@ -15,23 +15,19 @@ public class RequestRepresentation {
 
   public JsonObject storedRequest(
     Request request,
-    Item item,
     User requester,
     User proxy) {
 
     final JsonObject representation = request.asJson();
 
-    addStoredItemProperties(representation, item);
+    addStoredItemProperties(representation, request.getItem());
     addStoredRequesterProperties(representation, requester);
     addStoredProxyProperties(representation, proxy);
 
     return representation;
   }
 
-  private static void addStoredItemProperties(
-    JsonObject request,
-    Item item) {
-
+  private static void addStoredItemProperties(JsonObject request, Item item) {
     if(item == null || item.isNotFound()) {
       return;
     }
@@ -44,9 +40,9 @@ public class RequestRepresentation {
     request.put("item", itemSummary);
   }
 
-  private static void addStoredRequesterProperties
-    (JsonObject requestWithAdditionalInformation,
-     User requester) {
+  private static void addStoredRequesterProperties(
+    JsonObject requestWithAdditionalInformation,
+    User requester) {
 
     if(requester == null) {
       return;
@@ -57,9 +53,9 @@ public class RequestRepresentation {
     requestWithAdditionalInformation.put("requester", requesterSummary);
   }
 
-  private static void addStoredProxyProperties
-    (JsonObject requestWithAdditionalInformation,
-     User proxy) {
+  private static void addStoredProxyProperties(
+    JsonObject requestWithAdditionalInformation,
+    User proxy) {
 
     if(proxy == null) {
       return;
@@ -68,10 +64,7 @@ public class RequestRepresentation {
     requestWithAdditionalInformation.put("proxy", proxy.createUserSummary());
   }
 
-  private static void addAdditionalItemProperties(
-    JsonObject request,
-    Item item) {
-
+  private static void addAdditionalItemProperties(JsonObject request, Item item) {
     if(item == null || item.isNotFound()) {
       return;
     }

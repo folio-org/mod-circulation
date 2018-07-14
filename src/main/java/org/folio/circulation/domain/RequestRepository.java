@@ -61,7 +61,7 @@ public class RequestRepository {
     final Request request = requestAndRelatedRecords.getRequest();
 
     final JsonObject representation = new RequestRepresentation()
-      .storedRequest(request, item, requester, proxy);
+      .storedRequest(request, requester, proxy);
 
     requestsStorageClient.put(request.getId(), representation, response -> {
       if(response.getStatusCode() == 204) {

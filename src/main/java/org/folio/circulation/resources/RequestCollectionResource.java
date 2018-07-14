@@ -260,9 +260,8 @@ public class RequestCollectionResource extends CollectionResource {
     final User requestingUser = requestAndRelatedRecords.getRequestingUser();
     final User proxyUser = requestAndRelatedRecords.getProxyUser();
 
-    JsonObject representation = new RequestRepresentation().storedRequest(request,
-      requestAndRelatedRecords.getInventoryRecords(), requestingUser, proxyUser
-    );
+    JsonObject representation = new RequestRepresentation()
+      .storedRequest(request, requestingUser, proxyUser);
 
     clients.requestsStorage().post(representation, response -> {
       if (response.getStatusCode() == 201) {
