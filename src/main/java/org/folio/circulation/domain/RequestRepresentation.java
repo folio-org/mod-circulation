@@ -5,6 +5,14 @@ import io.vertx.core.json.JsonObject;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 public class RequestRepresentation {
+  public JsonObject extendedRepresentation(Request request) {
+    final JsonObject requestRepresentation = request.asJson();
+
+    addAdditionalItemProperties(requestRepresentation, request.getItem());
+
+    return requestRepresentation;
+  }
+
   public JsonObject storedRequest(
     Request request,
     Item item,
@@ -58,5 +66,30 @@ public class RequestRepresentation {
     }
 
     requestWithAdditionalInformation.put("proxy", proxy.createUserSummary());
+  }
+
+  private static void addAdditionalItemProperties(
+    JsonObject request,
+    Item item) {
+
+    if(item == null || item.isNotFound()) {
+      return;
+    }
+
+    JsonObject itemSummary = request.containsKey("item")
+      ? request.getJsonObject("item")
+      : new JsonObject();
+
+    write(itemSummary, "holdingsRecordId", item.getHoldingsRecordId());
+    write(itemSummary, "instanceId", item.getInstanceId());
+
+    final JsonObject location = item.getLocation();
+
+    if(location != null && location.containsKey("name")) {
+      itemSummary.put("location", new JsonObject()
+        .put("name", location.getString("name")));
+    }
+
+    request.put("item", itemSummary);
   }
 }

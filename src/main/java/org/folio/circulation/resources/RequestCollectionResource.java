@@ -55,10 +55,13 @@ public class RequestCollectionResource extends CollectionResource {
     final UserRepository userRepository = new UserRepository(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateLoanActionHistory updateLoanActionHistory = new UpdateLoanActionHistory(clients);
+
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> failure(
       "proxyUserId is not valid", RequestProperties.PROXY_USER_ID,
       request.getProxyUserId()));
+
+    final RequestRepresentation requestRepresentation = new RequestRepresentation();
 
     completedFuture(succeeded(new RequestAndRelatedRecords(request)))
       .thenCombineAsync(itemRepository.fetchFor(request), this::addInventoryRecords)
@@ -72,7 +75,8 @@ public class RequestCollectionResource extends CollectionResource {
       .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
       .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreation))
       .thenComposeAsync(r -> r.after(records -> createRequest(records, clients)))
-      .thenApply(r -> r.map(this::extendedRequest))
+      .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
+      .thenApply(r -> r.map(requestRepresentation::extendedRepresentation))
       .thenApply(CreatedJsonHttpResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
@@ -118,11 +122,12 @@ public class RequestCollectionResource extends CollectionResource {
     Clients clients = Clients.create(context, client);
 
     final RequestRepository requestRepository = RequestRepository.using(clients);
+    final RequestRepresentation requestRepresentation = new RequestRepresentation();
 
     String id = routingContext.request().getParam("id");
 
     requestRepository.getById(id)
-      .thenApply(r -> r.map(this::toRepresentation))
+      .thenApply(r -> r.map(requestRepresentation::extendedRepresentation))
       .thenApply(OkJsonHttpResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
@@ -148,10 +153,11 @@ public class RequestCollectionResource extends CollectionResource {
     Clients clients = Clients.create(context, client);
 
     final RequestRepository requestRepository = RequestRepository.using(clients);
+    final RequestRepresentation requestRepresentation = new RequestRepresentation();
 
     requestRepository.findBy(routingContext.request().query())
       .thenApply(r -> r.map(requests ->
-        requests.asJson(this::toRepresentation, "requests")))
+        requests.asJson(requestRepresentation::extendedRepresentation, "requests")))
       .thenApply(OkJsonHttpResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
@@ -168,38 +174,6 @@ public class RequestCollectionResource extends CollectionResource {
         ForwardResponse.forward(routingContext.response(), response);
       }
     });
-  }
-
-  private JsonObject toRepresentation(Request request) {
-    final JsonObject requestRepresentation = request.asJson();
-    addAdditionalItemProperties(requestRepresentation, request.getItem());
-
-    return requestRepresentation;
-  }
-
-  private void addAdditionalItemProperties(
-    JsonObject request,
-    Item item) {
-
-    if(item == null || item.isNotFound()) {
-      return;
-    }
-
-    JsonObject itemSummary = request.containsKey("item")
-      ? request.getJsonObject("item")
-      : new JsonObject();
-
-    write(itemSummary, "holdingsRecordId", item.getHoldingsRecordId());
-    write(itemSummary, "instanceId", item.getInstanceId());
-
-    final JsonObject location = item.getLocation();
-
-    if(location != null && location.containsKey("name")) {
-      itemSummary.put("location", new JsonObject()
-        .put("name", location.getString("name")));
-    }
-
-    request.put("item", itemSummary);
   }
 
   private void removeRelatedRecordInformation(JsonObject request) {
@@ -300,15 +274,6 @@ public class RequestCollectionResource extends CollectionResource {
     });
 
     return onCreated;
-  }
-
-  private JsonObject extendedRequest(RequestAndRelatedRecords requestAndRelatedRecords) {
-    final JsonObject representation = requestAndRelatedRecords.getRequest().asJson();
-
-    addAdditionalItemProperties(representation,
-      requestAndRelatedRecords.getInventoryRecords());
-
-    return representation;
   }
 
   private HttpResult<RequestAndRelatedRecords> setRequestQueuePosition(
