@@ -45,7 +45,8 @@ public class RequestRepository {
     return fetchRequest(id)
       .thenComposeAsync(result -> result.combineAfter(itemRepository::fetchFor,
         Request::withItem))
-      .thenComposeAsync(this::fetchRequester);
+      .thenComposeAsync(this::fetchRequester)
+      .thenComposeAsync(this::fetchProxy);
   }
 
   private CompletableFuture<HttpResult<Request>> fetchRequest(String id) {
@@ -59,12 +60,10 @@ public class RequestRepository {
     CompletableFuture<HttpResult<RequestAndRelatedRecords>> requestUpdated =
       new CompletableFuture<>();
 
-    final User proxy = requestAndRelatedRecords.getProxy();
-
     final Request request = requestAndRelatedRecords.getRequest();
 
     final JsonObject representation = new RequestRepresentation()
-      .storedRequest(request, proxy);
+      .storedRequest(request);
 
     requestsStorageClient.put(request.getId(), representation, response -> {
       if(response.getStatusCode() == 204) {
@@ -84,10 +83,9 @@ public class RequestRepository {
     CompletableFuture<HttpResult<RequestAndRelatedRecords>> onCreated = new CompletableFuture<>();
 
     final Request request = requestAndRelatedRecords.getRequest();
-    final User proxyUser = requestAndRelatedRecords.getProxy();
 
     JsonObject representation = new RequestRepresentation()
-      .storedRequest(request, proxyUser);
+      .storedRequest(request);
 
     requestsStorageClient.post(representation, response -> {
       if (response.getStatusCode() == 201) {
@@ -101,11 +99,19 @@ public class RequestRepository {
     return onCreated;
   }
 
-  //TODO: Check if need to request user
+  //TODO: Check if need to request requester
   private CompletableFuture<HttpResult<Request>> fetchRequester(HttpResult<Request> result) {
     return result.combineAfter(request ->
         userRepository.getUser(request.getUserId(), false),
         (request, requester) ->
-          Request.from(request.asJson(), request.getItem(), requester));
+          Request.from(request.asJson(), request.getItem(), requester, null));
+  }
+
+  //TODO: Check if need to request proxy
+  private CompletableFuture<HttpResult<Request>> fetchProxy(HttpResult<Request> result) {
+    return result.combineAfter(request ->
+        userRepository.getUser(request.getProxyUserId(), false),
+      (request, proxy) ->
+        Request.from(request.asJson(), request.getItem(), request.getRequester(), proxy));
   }
 }

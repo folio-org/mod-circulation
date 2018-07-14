@@ -15,20 +15,32 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private final JsonObject representation;
   private final Item item;
   private final User requester;
+  private final User proxy;
   private boolean changedPosition = false;
 
-  public Request(JsonObject representation, Item item, User requester) {
+  public Request(
+    JsonObject representation,
+    Item item,
+    User requester,
+    User proxy) {
+
     this.representation = representation;
     this.item = item;
     this.requester = requester;
+    this.proxy = proxy;
   }
 
   public static Request from(JsonObject representation) {
-    return from(representation, null, null);
+    return from(representation, null, null, null);
   }
 
-  public static Request from(JsonObject representation, Item item, User requester) {
-    return new Request(representation, item, requester);
+  public static Request from(
+    JsonObject representation,
+    Item item,
+    User requester,
+    User proxy) {
+
+    return new Request(representation, item, requester, proxy);
   }
 
   public JsonObject asJson() {
@@ -65,11 +77,15 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Request withItem(Item newItem) {
-    return new Request(representation, newItem, requester);
+    return new Request(representation, newItem, requester, proxy);
   }
 
-  public Request withRequester(User newRequester) {
-    return new Request(representation, item, newRequester);
+  Request withRequester(User newRequester) {
+    return new Request(representation, item, newRequester, proxy);
+  }
+
+  Request withProxy(User newProxy) {
+    return new Request(representation, item, requester, newProxy);
   }
   
   @Override
@@ -110,6 +126,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return requester;
   }
 
+  public User getProxy() {
+    return proxy;
+  }
+
   public Request changePosition(Integer newPosition) {
     if(!Objects.equals(getPosition(), newPosition)) {
       write(representation, RequestProperties.POSITION, newPosition);
@@ -131,5 +151,4 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   boolean hasChangedPosition() {
     return changedPosition;
   }
-
 }
