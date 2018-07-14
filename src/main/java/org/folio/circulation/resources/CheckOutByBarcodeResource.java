@@ -54,7 +54,7 @@ public class CheckOutByBarcodeResource extends Resource {
 
     final UserRepository userRepository = new UserRepository(clients);
     final ItemRepository itemRepository = new ItemRepository(clients, true, true);
-    final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
+    final RequestQueueRepository requestQueueRepository = new RequestQueueRepository(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
 
@@ -106,7 +106,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(alreadyCheckedOutValidator::refuseWhenItemIsAlreadyCheckedOut)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenComposeAsync(r -> r.after(openLoanValidator::refuseWhenHasOpenLoan))
-      .thenComposeAsync(r -> r.after(requestQueueFetcher::get))
+      .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenApply(awaitingPickupValidator::refuseWhenUserIsNotAwaitingPickup)
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenApply(r -> r.next(this::calculateDueDate))

@@ -7,10 +7,10 @@ import java.util.concurrent.CompletableFuture;
 
 import static org.folio.circulation.support.CqlHelper.encodeQuery;
 
-public class RequestQueueFetcher {
+public class RequestQueueRepository {
   private final Clients clients;
 
-  public RequestQueueFetcher(Clients clients) {
+  public RequestQueueRepository(Clients clients) {
     this.clients = clients;
   }
 

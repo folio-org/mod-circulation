@@ -50,7 +50,7 @@ public class RequestCollectionResource extends CollectionResource {
     final Clients clients = Clients.create(context, client);
 
     final ItemRepository itemRepository = new ItemRepository(clients, true, false);
-    final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
+    final RequestQueueRepository requestQueueRepository = new RequestQueueRepository(clients);
     final UserRepository userRepository = new UserRepository(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateLoanActionHistory updateLoanActionHistory = new UpdateLoanActionHistory(clients);
@@ -64,7 +64,7 @@ public class RequestCollectionResource extends CollectionResource {
       .thenApply(this::refuseWhenItemDoesNotExist)
       .thenApply(this::refuseWhenItemIsNotValid)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
-      .thenCombineAsync(requestQueueFetcher.get(request.getItemId()), this::addRequestQueue)
+      .thenCombineAsync(requestQueueRepository.get(request.getItemId()), this::addRequestQueue)
       .thenCombineAsync(userRepository.getUser(request.getUserId(), false), this::addUser)
       .thenCombineAsync(userRepository.getUser(request.getProxyUserId(), false), this::addProxyUser)
       .thenApply(r -> r.next(this::setRequestQueuePosition))
@@ -90,7 +90,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final ItemRepository itemRepository = new ItemRepository(clients, false, false);
     final UserRepository userRepository = new UserRepository(clients);
-    final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
+    final RequestQueueRepository requestQueueRepository = new RequestQueueRepository(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> failure(
@@ -101,7 +101,7 @@ public class RequestCollectionResource extends CollectionResource {
       .thenCombineAsync(itemRepository.fetchFor(request), this::addInventoryRecords)
       .thenCombineAsync(userRepository.getUser(request.getUserId(), false), this::addUser)
       .thenCombineAsync(userRepository.getUser(request.getProxyUserId(), false), this::addProxyUser)
-      .thenCombineAsync(requestQueueFetcher.get(request.getItemId()), this::addRequestQueue)
+      .thenCombineAsync(requestQueueRepository.get(request.getItemId()), this::addRequestQueue)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenApply(r -> r.next(this::removeRequestQueuePositionWhenCancelled))
       .thenAcceptAsync(result -> {

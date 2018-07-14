@@ -33,7 +33,7 @@ public class LoanCollectionResource extends CollectionResource {
     final Clients clients = Clients.create(context, client);
 
     final ItemRepository itemRepository = new ItemRepository(clients, true, true);
-    final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
+    final RequestQueueRepository requestQueueRepository = new RequestQueueRepository(clients);
     final UserRepository userRepository = new UserRepository(clients);
 
     final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
@@ -62,7 +62,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenApply(this::refuseWhenHoldingDoesNotExist)
       .thenApply(alreadyCheckedOutValidator::refuseWhenItemIsAlreadyCheckedOut)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
-      .thenCombineAsync(requestQueueFetcher.get(loan.getItemId()), this::addRequestQueue)
+      .thenCombineAsync(requestQueueRepository.get(loan.getItemId()), this::addRequestQueue)
       .thenCombineAsync(userRepository.getUser(loan.getUserId()), this::addUser)
       .thenApply(awaitingPickupValidator::refuseWhenUserIsNotAwaitingPickup)
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
@@ -85,7 +85,7 @@ public class LoanCollectionResource extends CollectionResource {
     final Loan loan = Loan.from(incomingRepresentation);
 
     final Clients clients = Clients.create(context, client);
-    final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
+    final RequestQueueRepository requestQueueRepository = new RequestQueueRepository(clients);
     final ItemRepository itemRepository = new ItemRepository(clients, false, false);
 
     final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
@@ -104,7 +104,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenCombineAsync(itemRepository.fetchFor(loan), this::addInventoryRecords)
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
-      .thenCombineAsync(requestQueueFetcher.get(loan.getItemId()), this::addRequestQueue)
+      .thenCombineAsync(requestQueueRepository.get(loan.getItemId()), this::addRequestQueue)
       .thenComposeAsync(result -> result.after(requestQueueUpdate::onCheckIn))
       .thenComposeAsync(result -> result.after(updateItem::onLoanUpdate))
       .thenComposeAsync(result -> result.after(loanRepository::updateLoan))
