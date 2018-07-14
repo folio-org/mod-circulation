@@ -73,4 +73,28 @@ public class RequestRepository {
 
     return requestUpdated;
   }
+
+  public CompletableFuture<HttpResult<RequestAndRelatedRecords>> create(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    CompletableFuture<HttpResult<RequestAndRelatedRecords>> onCreated = new CompletableFuture<>();
+
+    final Request request = requestAndRelatedRecords.getRequest();
+    final User requestingUser = requestAndRelatedRecords.getRequestingUser();
+    final User proxyUser = requestAndRelatedRecords.getProxyUser();
+
+    JsonObject representation = new RequestRepresentation()
+      .storedRequest(request, requestingUser, proxyUser);
+
+    requestsStorageClient.post(representation, response -> {
+      if (response.getStatusCode() == 201) {
+        onCreated.complete(succeeded(
+          requestAndRelatedRecords.withRequest(Request.from(response.getJson()))));
+      } else {
+        onCreated.complete(failed(new ForwardOnFailure(response)));
+      }
+    });
+
+    return onCreated;
+  }
 }

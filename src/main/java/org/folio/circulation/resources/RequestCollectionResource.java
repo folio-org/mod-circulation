@@ -13,8 +13,6 @@ import org.folio.circulation.support.http.server.ForwardResponse;
 import org.folio.circulation.support.http.server.SuccessResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
-import java.util.concurrent.CompletableFuture;
-
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.*;
 import static org.folio.circulation.support.HttpResult.failed;
@@ -52,6 +50,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final ItemRepository itemRepository = new ItemRepository(clients, true, false);
     final RequestQueueRepository requestQueueRepository = new RequestQueueRepository(clients);
+    final RequestRepository requestRepository = RequestRepository.using(clients);
     final UserRepository userRepository = new UserRepository(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateLoanActionHistory updateLoanActionHistory = new UpdateLoanActionHistory(clients);
@@ -74,7 +73,7 @@ public class RequestCollectionResource extends CollectionResource {
       .thenApply(r -> r.next(this::setRequestQueuePosition))
       .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
       .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreation))
-      .thenComposeAsync(r -> r.after(records -> createRequest(records, clients)))
+      .thenComposeAsync(r -> r.after(requestRepository::create))
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
       .thenApply(r -> r.map(requestRepresentation::extendedRepresentation))
       .thenApply(CreatedJsonHttpResult::from)
@@ -248,31 +247,6 @@ public class RequestCollectionResource extends CollectionResource {
         return result;
       }
     });
-  }
-
-  private CompletableFuture<HttpResult<RequestAndRelatedRecords>> createRequest(
-    RequestAndRelatedRecords requestAndRelatedRecords,
-    Clients clients) {
-
-    CompletableFuture<HttpResult<RequestAndRelatedRecords>> onCreated = new CompletableFuture<>();
-
-    final Request request = requestAndRelatedRecords.getRequest();
-    final User requestingUser = requestAndRelatedRecords.getRequestingUser();
-    final User proxyUser = requestAndRelatedRecords.getProxyUser();
-
-    JsonObject representation = new RequestRepresentation()
-      .storedRequest(request, requestingUser, proxyUser);
-
-    clients.requestsStorage().post(representation, response -> {
-      if (response.getStatusCode() == 201) {
-        onCreated.complete(succeeded(
-          requestAndRelatedRecords.withRequest(Request.from(response.getJson()))));
-      } else {
-        onCreated.complete(failed(new ForwardOnFailure(response)));
-      }
-    });
-
-    return onCreated;
   }
 
   private HttpResult<RequestAndRelatedRecords> setRequestQueuePosition(
