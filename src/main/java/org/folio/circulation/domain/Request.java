@@ -102,9 +102,8 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return this;
   }
 
-  public Request removePosition() {
+  void removePosition() {
     representation.remove(RequestProperties.POSITION);
-    return this;
   }
 
   public Integer getPosition() {

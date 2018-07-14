@@ -384,7 +384,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     //TODO: Extract to cancel method
     if(request.isCancelled()) {
-      requestAndRelatedRecords.withRequest(request.removePosition());
+      requestAndRelatedRecords.getRequestQueue().remove(request);
     }
 
     return succeeded(requestAndRelatedRecords);

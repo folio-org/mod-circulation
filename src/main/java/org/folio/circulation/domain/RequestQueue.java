@@ -67,8 +67,9 @@ public class RequestQueue {
       .max(naturalOrder()).orElse(0);
   }
 
-  void remove(Request request) {
+  public void remove(Request request) {
     requests = removeInCollection(request);
+    request.removePosition();
     removeGapsInPositions();
   }
 
