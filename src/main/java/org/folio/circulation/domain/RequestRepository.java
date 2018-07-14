@@ -54,7 +54,6 @@ public class RequestRepository {
     CompletableFuture<HttpResult<RequestAndRelatedRecords>> requestUpdated =
       new CompletableFuture<>();
 
-    final Item item = requestAndRelatedRecords.getInventoryRecords();
     final User requester = requestAndRelatedRecords.getRequestingUser();
     final User proxy = requestAndRelatedRecords.getProxyUser();
 

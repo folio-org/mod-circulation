@@ -25,7 +25,7 @@ public class RequestAndRelatedRecords implements UserRelatedRecord {
   }
 
   RequestAndRelatedRecords withItem(JsonObject updatedItem) {
-    return withInventoryRecords(getInventoryRecords().updateItem(updatedItem));
+    return withItem(request.getItem().updateItem(updatedItem));
   }
 
   public RequestAndRelatedRecords withRequest(Request newRequest) {
@@ -43,7 +43,7 @@ public class RequestAndRelatedRecords implements UserRelatedRecord {
       this.proxyUser);
   }
 
-  public RequestAndRelatedRecords withInventoryRecords(Item newItem) {
+  public RequestAndRelatedRecords withItem(Item newItem) {
     return new RequestAndRelatedRecords(
       this.request.withItem(newItem),
       this.requestQueue,
@@ -69,10 +69,6 @@ public class RequestAndRelatedRecords implements UserRelatedRecord {
 
   public Request getRequest() {
     return request;
-  }
-
-  public Item getInventoryRecords() {
-    return request.getItem();
   }
 
   public RequestQueue getRequestQueue() {

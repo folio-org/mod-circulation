@@ -187,7 +187,7 @@ public class RequestCollectionResource extends CollectionResource {
     HttpResult<Item> inventoryRecordsResult) {
 
     return HttpResult.combine(loanResult, inventoryRecordsResult,
-      RequestAndRelatedRecords::withInventoryRecords);
+      RequestAndRelatedRecords::withItem);
   }
 
   private HttpResult<RequestAndRelatedRecords> addRequestQueue(
@@ -218,7 +218,7 @@ public class RequestCollectionResource extends CollectionResource {
     HttpResult<RequestAndRelatedRecords> result) {
 
     return result.next(requestAndRelatedRecords -> {
-      if(requestAndRelatedRecords.getInventoryRecords().isNotFound()) {
+      if(requestAndRelatedRecords.getRequest().getItem().isNotFound()) {
         return failed(failure(
           "Item does not exist", "itemId",
           requestAndRelatedRecords.getRequest().getItemId()));
@@ -237,7 +237,7 @@ public class RequestCollectionResource extends CollectionResource {
 
       RequestType requestType = RequestType.from(request);
 
-      if (!requestType.canCreateRequestForItem(requestAndRelatedRecords.getInventoryRecords())) {
+      if (!requestType.canCreateRequestForItem(request.getItem())) {
         return failed(failure(
           String.format("Item is not %s, %s or %s", CHECKED_OUT,
             CHECKED_OUT_HELD, CHECKED_OUT_RECALLED),
