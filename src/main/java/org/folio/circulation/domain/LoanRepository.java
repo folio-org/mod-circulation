@@ -158,7 +158,7 @@ public class LoanRepository {
     User user) {
 
     return new SingleRecordFetcher<>(
-      loansStorageClient, "loan", representation -> Loan.from(representation, item, user))
+      loansStorageClient, "loan", representation -> Loan.from(representation, item, user, null))
       .fetchSingleRecord(id);
   }
 
@@ -169,7 +169,7 @@ public class LoanRepository {
   //TODO: Check if user not found should result in failure?
   private CompletableFuture<HttpResult<Loan>> fetchUser(HttpResult<Loan> result) {
     return result.combineAfter(userRepository::getUser,
-      (loan, user) -> Loan.from(loan.asJson(), loan.getItem(), user));
+      (loan, user) -> Loan.from(loan.asJson(), loan.getItem(), user, null));
   }
 
   public CompletableFuture<HttpResult<MultipleRecords<Loan>>> findBy(String query) {

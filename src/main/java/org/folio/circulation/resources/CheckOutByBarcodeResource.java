@@ -16,12 +16,9 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.format.ISODateTimeFormat;
 
 import java.util.UUID;
-import java.util.function.Function;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
-import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
-import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.USER_BARCODE;
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.*;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 public class CheckOutByBarcodeResource extends Resource {
@@ -82,7 +79,7 @@ public class CheckOutByBarcodeResource extends Resource {
       message -> failure(message, USER_BARCODE, userBarcode));
 
     final InactiveUserValidator inactiveProxyUserValidator = new InactiveUserValidator(
-      LoanAndRelatedRecords::getProxyingUser,
+      LoanAndRelatedRecords::getProxy,
       "Cannot check out via inactive proxying user",
       "Cannot determine if proxying user is active or not",
       message -> failure(message, PROXY_USER_BARCODE, proxyUserBarcode));
@@ -100,9 +97,8 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenCombineAsync(userRepository.getProxyUserByBarcode(proxyUserBarcode), this::addProxyUser)
       .thenApply(inactiveUserValidator::refuseWhenUserIsInactive)
       .thenApply(inactiveProxyUserValidator::refuseWhenUserIsInactive)
-      .thenCombineAsync(itemRepository.fetchByBarcode(itemBarcode), this::addInventoryRecords)
+      .thenCombineAsync(itemRepository.fetchByBarcode(itemBarcode), this::addItem)
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
-      .thenApply(r -> r.map(mapBarcodes()))
       .thenApply(alreadyCheckedOutValidator::refuseWhenItemIsAlreadyCheckedOut)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenComposeAsync(r -> r.after(openLoanValidator::refuseWhenHasOpenLoan))
@@ -143,18 +139,6 @@ public class CheckOutByBarcodeResource extends Resource {
     }
   }
 
-  private Function<LoanAndRelatedRecords, LoanAndRelatedRecords> mapBarcodes() {
-    return loanAndRelatedRecords -> {
-      final Loan loan = loanAndRelatedRecords.getLoan();
-
-      if(loanAndRelatedRecords.getProxyingUser() != null) {
-        loan.changeProxyUser(loanAndRelatedRecords.getProxyingUser().getId());
-      }
-
-      return loanAndRelatedRecords;
-    };
-  }
-
   private WritableHttpResult<JsonObject> createdLoanFrom(HttpResult<JsonObject> result) {
     if(result.failed()) {
       return HttpResult.failed(result.cause());
@@ -181,7 +165,7 @@ public class CheckOutByBarcodeResource extends Resource {
       LoanAndRelatedRecords::withRequestingUser);
   }
 
-  private HttpResult<LoanAndRelatedRecords> addInventoryRecords(
+  private HttpResult<LoanAndRelatedRecords> addItem(
     HttpResult<LoanAndRelatedRecords> loanResult,
     HttpResult<Item> inventoryRecordsResult) {
 

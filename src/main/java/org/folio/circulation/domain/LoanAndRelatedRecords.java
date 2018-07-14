@@ -6,23 +6,20 @@ import org.folio.circulation.domain.policy.LoanPolicy;
 public class LoanAndRelatedRecords implements UserRelatedRecord {
   private final Loan loan;
   private final RequestQueue requestQueue;
-  private final User proxyingUser;
   private final LoanPolicy loanPolicy;
 
   private LoanAndRelatedRecords(
     Loan loan,
     RequestQueue requestQueue,
-    User proxyingUser,
     LoanPolicy loanPolicy) {
 
     this.loan = loan;
     this.requestQueue = requestQueue;
-    this.proxyingUser = proxyingUser;
     this.loanPolicy = loanPolicy;
   }
 
   public LoanAndRelatedRecords(Loan loan) {
-    this(loan, null, null, null);
+    this(loan, null, null);
   }
 
   LoanAndRelatedRecords withItem(JsonObject updatedItem) {
@@ -30,31 +27,29 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   }
 
   LoanAndRelatedRecords withLoan(Loan newLoan) {
-    return new LoanAndRelatedRecords(newLoan, requestQueue,
-      proxyingUser, loanPolicy);
+    return new LoanAndRelatedRecords(newLoan, requestQueue, loanPolicy);
   }
 
   public LoanAndRelatedRecords withRequestingUser(User newUser) {
-    return withLoan(Loan.from(loan.asJson(), loan.getItem(), newUser));
+    return withLoan(loan.withUser(newUser));
   }
 
-  public LoanAndRelatedRecords withProxyingUser(User newProxyingUser) {
-    return new LoanAndRelatedRecords(loan, requestQueue,
-      newProxyingUser, loanPolicy);
+  public LoanAndRelatedRecords withProxyingUser(User newProxy) {
+    return withLoan(loan.withProxy(newProxy));
   }
 
   public LoanAndRelatedRecords withLoanPolicy(LoanPolicy newLoanPolicy) {
     return new LoanAndRelatedRecords(loan, requestQueue,
-      proxyingUser, newLoanPolicy);
+      newLoanPolicy);
   }
 
   public LoanAndRelatedRecords withRequestQueue(RequestQueue newRequestQueue) {
     return new LoanAndRelatedRecords(loan, newRequestQueue,
-      proxyingUser, loanPolicy);
+      loanPolicy);
   }
 
   public LoanAndRelatedRecords withItem(Item newItem) {
-    return withLoan(Loan.from(loan.asJson(), newItem, loan.getUser()));
+    return withLoan(loan.withItem(newItem));
   }
 
   public Loan getLoan() {
@@ -65,8 +60,8 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
     return requestQueue;
   }
 
-  public User getProxyingUser() {
-    return proxyingUser;
+  public User getProxy() {
+    return loan.getProxy();
   }
 
   public LoanPolicy getLoanPolicy() {
