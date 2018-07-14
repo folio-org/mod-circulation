@@ -14,19 +14,21 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
 public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private final JsonObject representation;
   private final Item item;
+  private final User requester;
   private boolean changedPosition = false;
 
-  public Request(JsonObject representation, Item item) {
+  public Request(JsonObject representation, Item item, User requester) {
     this.representation = representation;
     this.item = item;
+    this.requester = requester;
   }
 
   public static Request from(JsonObject representation) {
-    return from(representation, null);
+    return from(representation, null, null);
   }
 
-  public static Request from(JsonObject representation, Item item) {
-    return new Request(representation, item);
+  public static Request from(JsonObject representation, Item item, User requester) {
+    return new Request(representation, item, requester);
   }
 
   public JsonObject asJson() {
@@ -63,9 +65,13 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Request withItem(Item newItem) {
-    return new Request(representation, newItem);
+    return new Request(representation, newItem, requester);
   }
 
+  public Request withRequester(User newRequester) {
+    return new Request(representation, item, newRequester);
+  }
+  
   @Override
   public String getUserId() {
     return representation.getString("requesterId");
@@ -100,6 +106,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return item;
   }
 
+  public User getRequester() {
+    return requester;
+  }
+
   public Request changePosition(Integer newPosition) {
     if(!Objects.equals(getPosition(), newPosition)) {
       write(representation, RequestProperties.POSITION, newPosition);
@@ -121,4 +131,5 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   boolean hasChangedPosition() {
     return changedPosition;
   }
+
 }

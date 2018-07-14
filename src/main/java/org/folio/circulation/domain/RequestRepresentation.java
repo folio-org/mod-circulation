@@ -13,15 +13,11 @@ public class RequestRepresentation {
     return requestRepresentation;
   }
 
-  public JsonObject storedRequest(
-    Request request,
-    User requester,
-    User proxy) {
-
+  JsonObject storedRequest(Request request, User proxy) {
     final JsonObject representation = request.asJson();
 
     addStoredItemProperties(representation, request.getItem());
-    addStoredRequesterProperties(representation, requester);
+    addStoredRequesterProperties(representation, request.getRequester());
     addStoredProxyProperties(representation, proxy);
 
     return representation;

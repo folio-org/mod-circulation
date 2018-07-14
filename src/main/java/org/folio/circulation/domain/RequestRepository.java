@@ -12,18 +12,22 @@ import static org.folio.circulation.support.HttpResult.succeeded;
 public class RequestRepository {
   private final CollectionResourceClient requestsStorageClient;
   private final ItemRepository itemRepository;
+  private final UserRepository userRepository;
 
   private RequestRepository(
     CollectionResourceClient requestsStorageClient,
-    ItemRepository itemRepository) {
+    ItemRepository itemRepository,
+    UserRepository userRepository) {
 
     this.requestsStorageClient = requestsStorageClient;
     this.itemRepository = itemRepository;
+    this.userRepository = userRepository;
   }
 
   public static RequestRepository using(Clients clients) {
     return new RequestRepository(clients.requestsStorage(),
-      new ItemRepository(clients, true, false));
+      new ItemRepository(clients, true, false),
+      new UserRepository(clients));
   }
 
   public CompletableFuture<HttpResult<MultipleRecords<Request>>> findBy(String query) {
@@ -40,7 +44,8 @@ public class RequestRepository {
   public CompletableFuture<HttpResult<Request>> getById(String id) {
     return fetchRequest(id)
       .thenComposeAsync(result -> result.combineAfter(itemRepository::fetchFor,
-        Request::withItem));
+        Request::withItem))
+      .thenComposeAsync(this::fetchRequester);
   }
 
   private CompletableFuture<HttpResult<Request>> fetchRequest(String id) {
@@ -54,13 +59,12 @@ public class RequestRepository {
     CompletableFuture<HttpResult<RequestAndRelatedRecords>> requestUpdated =
       new CompletableFuture<>();
 
-    final User requester = requestAndRelatedRecords.getRequestingUser();
-    final User proxy = requestAndRelatedRecords.getProxyUser();
+    final User proxy = requestAndRelatedRecords.getProxy();
 
     final Request request = requestAndRelatedRecords.getRequest();
 
     final JsonObject representation = new RequestRepresentation()
-      .storedRequest(request, requester, proxy);
+      .storedRequest(request, proxy);
 
     requestsStorageClient.put(request.getId(), representation, response -> {
       if(response.getStatusCode() == 204) {
@@ -80,11 +84,10 @@ public class RequestRepository {
     CompletableFuture<HttpResult<RequestAndRelatedRecords>> onCreated = new CompletableFuture<>();
 
     final Request request = requestAndRelatedRecords.getRequest();
-    final User requestingUser = requestAndRelatedRecords.getRequestingUser();
-    final User proxyUser = requestAndRelatedRecords.getProxyUser();
+    final User proxyUser = requestAndRelatedRecords.getProxy();
 
     JsonObject representation = new RequestRepresentation()
-      .storedRequest(request, requestingUser, proxyUser);
+      .storedRequest(request, proxyUser);
 
     requestsStorageClient.post(representation, response -> {
       if (response.getStatusCode() == 201) {
@@ -96,5 +99,13 @@ public class RequestRepository {
     });
 
     return onCreated;
+  }
+
+  //TODO: Check if need to request user
+  private CompletableFuture<HttpResult<Request>> fetchRequester(HttpResult<Request> result) {
+    return result.combineAfter(request ->
+        userRepository.getUser(request.getUserId(), false),
+        (request, requester) ->
+          Request.from(request.asJson(), request.getItem(), requester));
   }
 }

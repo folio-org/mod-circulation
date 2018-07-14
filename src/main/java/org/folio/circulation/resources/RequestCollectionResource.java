@@ -63,7 +63,7 @@ public class RequestCollectionResource extends CollectionResource {
     final RequestRepresentation requestRepresentation = new RequestRepresentation();
 
     completedFuture(succeeded(new RequestAndRelatedRecords(request)))
-      .thenCombineAsync(itemRepository.fetchFor(request), this::addInventoryRecords)
+      .thenCombineAsync(itemRepository.fetchFor(request), this::addItem)
       .thenApply(this::refuseWhenItemDoesNotExist)
       .thenApply(this::refuseWhenItemIsNotValid)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
@@ -106,7 +106,7 @@ public class RequestCollectionResource extends CollectionResource {
       request.getProxyUserId()));
 
     completedFuture(succeeded(new RequestAndRelatedRecords(request)))
-      .thenCombineAsync(itemRepository.fetchFor(request), this::addInventoryRecords)
+      .thenCombineAsync(itemRepository.fetchFor(request), this::addItem)
       .thenCombineAsync(userRepository.getUser(request.getUserId(), false), this::addUser)
       .thenCombineAsync(userRepository.getUser(request.getProxyUserId(), false), this::addProxyUser)
       .thenCombineAsync(requestQueueRepository.get(request.getItemId()), this::addRequestQueue)
@@ -183,11 +183,11 @@ public class RequestCollectionResource extends CollectionResource {
     request.remove("proxy");
   }
 
-  private HttpResult<RequestAndRelatedRecords> addInventoryRecords(
+  private HttpResult<RequestAndRelatedRecords> addItem(
     HttpResult<RequestAndRelatedRecords> loanResult,
-    HttpResult<Item> inventoryRecordsResult) {
+    HttpResult<Item> item) {
 
-    return HttpResult.combine(loanResult, inventoryRecordsResult,
+    return HttpResult.combine(loanResult, item,
       RequestAndRelatedRecords::withItem);
   }
 

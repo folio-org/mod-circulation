@@ -166,6 +166,7 @@ public class LoanRepository {
     return result.combineAfter(itemRepository::fetchFor, Loan::withItem);
   }
 
+  //TODO: Check if user not found should result in failure?
   private CompletableFuture<HttpResult<Loan>> fetchUser(HttpResult<Loan> result) {
     return result.combineAfter(userRepository::getUser,
       (loan, user) -> Loan.from(loan.asJson(), loan.getItem(), user));

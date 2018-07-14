@@ -57,7 +57,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(loan)))
       .thenApply(this::refuseWhenNotOpenOrClosed)
-      .thenCombineAsync(itemRepository.fetchFor(loan), this::addInventoryRecords)
+      .thenCombineAsync(itemRepository.fetchFor(loan), this::addItem)
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
       .thenApply(this::refuseWhenHoldingDoesNotExist)
       .thenApply(alreadyCheckedOutValidator::refuseWhenItemIsAlreadyCheckedOut)
@@ -101,7 +101,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(loan)))
       .thenApply(this::refuseWhenNotOpenOrClosed)
-      .thenCombineAsync(itemRepository.fetchFor(loan), this::addInventoryRecords)
+      .thenCombineAsync(itemRepository.fetchFor(loan), this::addItem)
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenCombineAsync(requestQueueRepository.get(loan.getItemId()), this::addRequestQueue)
@@ -171,11 +171,11 @@ public class LoanCollectionResource extends CollectionResource {
     });
   }
 
-  private HttpResult<LoanAndRelatedRecords> addInventoryRecords(
+  private HttpResult<LoanAndRelatedRecords> addItem(
     HttpResult<LoanAndRelatedRecords> loanResult,
-    HttpResult<Item> inventoryRecordsResult) {
+    HttpResult<Item> item) {
 
-    return HttpResult.combine(loanResult, inventoryRecordsResult,
+    return HttpResult.combine(loanResult, item,
       LoanAndRelatedRecords::withItem);
   }
 
