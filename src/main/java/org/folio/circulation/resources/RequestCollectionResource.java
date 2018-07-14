@@ -9,8 +9,6 @@ import org.folio.circulation.domain.representations.RequestProperties;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.server.ClientErrorResponse;
-import org.folio.circulation.support.http.server.ForwardResponse;
-import org.folio.circulation.support.http.server.SuccessResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -139,14 +137,9 @@ public class RequestCollectionResource extends CollectionResource {
 
     String id = routingContext.request().getParam("id");
 
-    clients.requestsStorage().delete(id, response -> {
-      if(response.getStatusCode() == 204) {
-        SuccessResponse.noContent(routingContext.response());
-      }
-      else {
-        ForwardResponse.forward(routingContext.response(), response);
-      }
-    });
+    clients.requestsStorage().delete(id)
+      .thenApply(NoContentHttpResult::from)
+      .thenAccept(r -> r.writeTo(routingContext.response()));
   }
 
   void getMany(RoutingContext routingContext) {
@@ -167,14 +160,9 @@ public class RequestCollectionResource extends CollectionResource {
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context, client);
 
-    clients.requestsStorage().delete(response -> {
-      if(response.getStatusCode() == 204) {
-        SuccessResponse.noContent(routingContext.response());
-      }
-      else {
-        ForwardResponse.forward(routingContext.response(), response);
-      }
-    });
+    clients.requestsStorage().delete()
+      .thenApply(NoContentHttpResult::from)
+      .thenAccept(r -> r.writeTo(routingContext.response()));
   }
 
   private void removeRelatedRecordInformation(JsonObject request) {

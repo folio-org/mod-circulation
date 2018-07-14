@@ -23,8 +23,9 @@ public class CollectionResourceClient {
   private final OkapiHttpClient client;
   private final URL collectionRoot;
 
-  public CollectionResourceClient(OkapiHttpClient client,
-                                  URL collectionRoot) {
+  public CollectionResourceClient(
+    OkapiHttpClient client,
+    URL collectionRoot) {
 
     this.client = client;
     this.collectionRoot = collectionRoot;
@@ -85,14 +86,30 @@ public class CollectionResourceClient {
     return future;
   }
 
+  public CompletableFuture<Response> delete(String id) {
+    final CompletableFuture<Response> future = new CompletableFuture<>();
+
+    client.delete(individualRecordUrl(id),
+      responseConversationHandler(future::complete));
+
+    return future;
+  }
+
   public void delete(String id, Consumer<Response> responseHandler) {
     client.delete(individualRecordUrl(id),
       responseConversationHandler(responseHandler));
   }
 
   public void delete(Consumer<Response> responseHandler) {
-    client.delete(collectionRoot,
-      responseConversationHandler(responseHandler));
+    client.delete(collectionRoot, responseConversationHandler(responseHandler));
+  }
+
+  public CompletableFuture<Response> delete() {
+    final CompletableFuture<Response> future = new CompletableFuture<>();
+
+    client.delete(collectionRoot, responseConversationHandler(future::complete));
+
+    return future;
   }
 
   public void getMany(String urlEncodedQuery, Consumer<Response> responseHandler) {
