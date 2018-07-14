@@ -31,16 +31,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public static Request from(JsonObject representation) {
-    return from(representation, null, null, null);
-  }
-
-  public static Request from(
-    JsonObject representation,
-    Item item,
-    User requester,
-    User proxy) {
-
-    return new Request(representation, item, requester, proxy);
+    return new Request(representation, null, null, null);
   }
 
   public JsonObject asJson() {

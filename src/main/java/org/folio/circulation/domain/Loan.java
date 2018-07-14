@@ -17,20 +17,30 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
 public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   private final JsonObject representation;
   private final Item item;
-  private User user;
+  private final User user;
 
   public Loan(JsonObject representation) {
-    this(representation, null);
+    this(representation, null, null);
   }
 
-  public Loan(JsonObject representation, Item item) {
+  public Loan(
+    JsonObject representation,
+    Item item,
+    User user) {
+
     this.representation = representation;
     this.item = item;
+    this.user = user;
 
     //TODO: Refuse if ID does not match property in representation,
     // and possibly convert isFound to unknown item class
     if(item != null && item.isFound()) {
       representation.put("itemId", item.getItemId());
+    }
+
+    //TODO: Refuse if ID does not match property in representation
+    if(user != null) {
+      representation.put("userId", user.getId());
     }
   }
 
@@ -44,11 +54,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public static Loan from(JsonObject representation, Item item, User user) {
     defaultStatusAndAction(representation);
-    final Loan loan = new Loan(representation, item);
-
-    loan.setUser(user);
-
-    return loan;
+    return new Loan(representation, item, user);
   }
 
   JsonObject asJson() {
@@ -120,19 +126,11 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan withItem(Item item) {
-    return new Loan(representation, item);
+    return new Loan(representation, item, null);
   }
 
   public User getUser() {
     return user;
-  }
-
-  private void setUser(User newUser) {
-    //TODO: Refuse if ID does not match property in representation
-    if(newUser != null) {
-      representation.put("userId", newUser.getId());
-    }
-    this.user = newUser;
   }
 
   private void changeLoanPolicy(String newLoanPolicyId) {
