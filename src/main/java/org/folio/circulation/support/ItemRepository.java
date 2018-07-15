@@ -184,7 +184,7 @@ public class ItemRepository {
 
   private CompletableFuture<HttpResult<Item>> fetchItem(String itemId) {
     return SingleRecordFetcher.jsonOrNull(itemsClient, "item")
-      .fetchSingleRecord(itemId)
+      .fetch(itemId)
       .thenApply(r -> r.map(Item::from));
   }
 
@@ -212,7 +212,7 @@ public class ItemRepository {
       }
       else {
         return SingleRecordFetcher.jsonOrNull(holdingsClient, "holding")
-          .fetchSingleRecord(item.getHoldingsRecordId())
+          .fetch(item.getHoldingsRecordId())
           .thenApply(r -> r.map(item::withHoldingsRecord));
       }
     });
@@ -226,7 +226,7 @@ public class ItemRepository {
       }
       else {
         return SingleRecordFetcher.jsonOrNull(instancesClient, "instance")
-          .fetchSingleRecord(item.getInstanceId())
+          .fetch(item.getInstanceId())
           .thenApply(r -> r.map(item::withInstance));
       }
     });

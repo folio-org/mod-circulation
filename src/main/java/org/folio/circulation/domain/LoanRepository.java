@@ -149,7 +149,7 @@ public class LoanRepository {
   private CompletableFuture<HttpResult<Loan>> fetchLoan(String id) {
     return new SingleRecordFetcher<>(
       loansStorageClient, "loan", Loan::from)
-      .fetchSingleRecord(id);
+      .fetch(id);
   }
 
   private CompletableFuture<HttpResult<Loan>> fetchLoan(
@@ -159,7 +159,7 @@ public class LoanRepository {
 
     return new SingleRecordFetcher<>(
       loansStorageClient, "loan", representation -> Loan.from(representation, item, user, null))
-      .fetchSingleRecord(id);
+      .fetch(id);
   }
 
   private CompletableFuture<HttpResult<Loan>> fetchItem(HttpResult<Loan> result) {

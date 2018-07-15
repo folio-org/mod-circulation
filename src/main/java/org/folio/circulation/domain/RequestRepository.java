@@ -62,7 +62,7 @@ public class RequestRepository {
 
   private CompletableFuture<HttpResult<Request>> fetchRequest(String id) {
     return new SingleRecordFetcher<>(requestsStorageClient, "request", Request::from)
-      .fetchSingleRecord(id);
+      .fetch(id);
   }
 
   public CompletableFuture<HttpResult<Request>> update(Request request) {

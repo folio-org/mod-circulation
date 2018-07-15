@@ -2,13 +2,12 @@ package org.folio.circulation.domain;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.*;
-import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 
 import static org.folio.circulation.support.HttpResult.failed;
+import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 public class UserRepository {
@@ -29,7 +28,7 @@ public class UserRepository {
   public CompletableFuture<HttpResult<User>> getProxyUserByBarcode(String barcode) {
     //Not proxying, so no need to get proxy user
     if(StringUtils.isBlank(barcode)) {
-      return CompletableFuture.completedFuture(HttpResult.succeeded(null));
+      return CompletableFuture.completedFuture(succeeded(null));
     }
     else {
       return getUserByBarcode(barcode, "proxyUserBarcode");
@@ -52,32 +51,23 @@ public class UserRepository {
           "Could not find user with matching barcode", propertyName, barcode)))));
   }
 
-  //TODO: Need a better way of choosing behaviour for not found
   public CompletableFuture<HttpResult<User>> getUser(
     String userId,
     boolean failOnNotFound) {
 
-    final Function<Response, HttpResult<User>> mapResponse = response -> {
-      if(response.getStatusCode() == 404) {
-        if(failOnNotFound) {
-          return failed(new ValidationErrorFailure(
-            new ValidationError("user is not found", "userId", userId)));
-        }
-        else {
-          return HttpResult.succeeded(null);
-        }
-      }
-      else if(response.getStatusCode() != 200) {
-        return failed(new ForwardOnFailure(response));
-      }
-      else {
-        //Got user record, we're good to continue
-        return HttpResult.succeeded(new User(response.getJson()));
-      }
-    };
+    final HttpResult<User> notFoundResult = !failOnNotFound
+      ? succeeded(null)
+      : failed(new ValidationErrorFailure(
+          new ValidationError("user is not found", "userId", userId)));
 
-    return this.usersStorageClient.get(userId)
-      .thenApply(mapResponse)
-      .exceptionally(e -> failed(new ServerErrorFailure(e)));
+//    return new SingleRecordFetcher<>(usersStorageClient, "user",
+//      notFound(User::new, notFoundResult))
+//      .fetch(userId);
+
+    return FetchSingleRecord.<User>forRecord("user")
+      .using(usersStorageClient)
+      .mapTo(User::new)
+      .whenNotFound(notFoundResult)
+      .fetch(userId);
   }
 }

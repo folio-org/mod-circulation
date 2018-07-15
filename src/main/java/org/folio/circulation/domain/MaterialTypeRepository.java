@@ -22,7 +22,7 @@ public class MaterialTypeRepository {
   public CompletableFuture<HttpResult<JsonObject>> getFor(Item item) {
     return SingleRecordFetcher.json(materialTypesStorageClient, "material types",
       response -> HttpResult.succeeded(null))
-      .fetchSingleRecord(item.getMaterialTypeId());
+      .fetch(item.getMaterialTypeId());
   }
 
   public CompletableFuture<HttpResult<Map<String, JsonObject>>> getMaterialTypes(

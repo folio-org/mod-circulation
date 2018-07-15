@@ -19,22 +19,14 @@ public class SingleRecordFetcher<T> {
   private final String recordType;
   private final SingleRecordMapper<T> mapper;
 
-  private SingleRecordFetcher(
+  public SingleRecordFetcher(
     CollectionResourceClient client,
-    String recordType, SingleRecordMapper<T> mapper) {
+    String recordType,
+    SingleRecordMapper<T> mapper) {
+
     this.client = client;
     this.recordType = recordType;
     this.mapper = mapper;
-  }
-
-  SingleRecordFetcher(
-    CollectionResourceClient client,
-    String recordType,
-    Function<JsonObject, T> mapper,
-    Function<Response, HttpResult<T>> resultOnFailure) {
-
-    this(client, recordType,
-      new SingleRecordMapper<>(mapper, resultOnFailure));
   }
 
   public SingleRecordFetcher(
@@ -61,7 +53,7 @@ public class SingleRecordFetcher<T> {
     return json(client, recordType, r -> HttpResult.succeeded(null));
   }
 
-  public CompletableFuture<HttpResult<T>> fetchSingleRecord(String id) {
+  public CompletableFuture<HttpResult<T>> fetch(String id) {
     log.info("Fetching {} with ID: {}", recordType, id);
 
     return client.get(id)

@@ -22,7 +22,7 @@ public class LocationRepository {
   public CompletableFuture<HttpResult<JsonObject>> getLocation(Item item) {
     return SingleRecordFetcher.json(locationsStorageClient, "locations",
       response -> HttpResult.succeeded(null))
-      .fetchSingleRecord(item.getLocationId());
+      .fetch(item.getLocationId());
   }
 
   public CompletableFuture<HttpResult<Map<String, JsonObject>>> getLocations(

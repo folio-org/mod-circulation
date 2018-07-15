@@ -124,7 +124,7 @@ public class LoanPolicyRepository {
     return SingleRecordFetcher.json(loanPoliciesStorageClient, "loan policy",
       response -> HttpResult.failed(new ServerErrorFailure(
         String.format("Loan policy %s could not be found, please check loan rules", loanPolicyId))))
-      .fetchSingleRecord(loanPolicyId);
+      .fetch(loanPolicyId);
   }
 
   private CompletableFuture<HttpResult<String>> lookupLoanPolicyId(
