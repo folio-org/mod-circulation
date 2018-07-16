@@ -1,7 +1,6 @@
 package api.requests.scenarios;
 
 import api.support.APITests;
-import api.support.builders.RequestBuilder;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -11,7 +10,6 @@ import java.net.MalformedURLException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import static api.APITestSuite.courseReservesCancellationReasonId;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -45,12 +43,7 @@ public class RequestQueuePositionTests extends APITests {
     IndividualResource requestByRebecca = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, rebecca, new DateTime(2018, 2, 4, 7, 4, 53, DateTimeZone.UTC));
 
-    //Cancel one of the requests
-    final RequestBuilder cancelledRequestBySteve = RequestBuilder.from(requestBySteve)
-      .cancelled()
-      .withCancellationReasonId(courseReservesCancellationReasonId());
-
-    requestsClient.replace(requestBySteve.getId(), cancelledRequestBySteve);
+    requestsFixture.cancelRequest(requestBySteve);
 
     requestBySteve = requestsClient.get(requestBySteve);
 

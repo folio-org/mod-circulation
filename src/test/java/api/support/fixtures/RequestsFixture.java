@@ -10,6 +10,8 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import static api.APITestSuite.courseReservesCancellationReasonId;
+
 public class RequestsFixture {
   private final ResourceClient requestsClient;
 
@@ -24,21 +26,6 @@ public class RequestsFixture {
     ExecutionException {
 
     return requestsClient.create(requestToBuild);
-  }
-
-  public IndividualResource placeHoldShelfRequest(
-    IndividualResource item,
-    IndividualResource by)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    return place(new RequestBuilder()
-      .hold()
-      .fulfilToHoldShelf()
-      .withItemId(item.getId())
-      .withRequesterId(by.getId()));
   }
 
   public IndividualResource placeHoldShelfRequest(
@@ -91,5 +78,18 @@ public class RequestsFixture {
       .withRequestDate(on)
       .withItemId(item.getId())
       .withRequesterId(by.getId()));
+  }
+
+  public void cancelRequest(IndividualResource request)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    final RequestBuilder cancelledRequestBySteve = RequestBuilder.from(request)
+      .cancelled()
+      .withCancellationReasonId(courseReservesCancellationReasonId());
+
+    requestsClient.replace(request.getId(), cancelledRequestBySteve);
   }
 }
