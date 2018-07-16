@@ -70,6 +70,16 @@ run `./scripts/lint-raml-cop.sh` to validate the RAML and JSON.Schema descriptio
 
 ## Design Notes
 
+### Known Limitations
+
+#### Requests Created out of Request Date Order
+
+Requests are assigned a position based upon when they were created. 
+This means the requests could be in a different position in the queue than what
+the request date suggests. We could re-order to queue based upon request date 
+each time it is changed, however this would impede the future requirement 
+for the ability to reorder the queue manually.  
+
 ### Check Out By Barcode
 
 In additional to the typical loan creation API, it is possible to check out an item to a loanee (optionally via a proxy), using barcodes.

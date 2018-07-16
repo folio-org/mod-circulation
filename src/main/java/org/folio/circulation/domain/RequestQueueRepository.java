@@ -31,7 +31,7 @@ public class RequestQueueRepository {
 
   public CompletableFuture<HttpResult<RequestQueue>> get(String itemId) {
       String unencodedQuery = String.format(
-        "itemId==%s and status==(\"%s\" or \"%s\") sortBy requestDate/sort.ascending",
+        "itemId==%s and status==(\"%s\" or \"%s\") sortBy position/sort.ascending",
         itemId,
         RequestStatus.OPEN_AWAITING_PICKUP,
         RequestStatus.OPEN_NOT_YET_FILLED);

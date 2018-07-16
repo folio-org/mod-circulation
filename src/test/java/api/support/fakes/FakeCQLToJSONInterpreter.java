@@ -190,10 +190,10 @@ public class FakeCQLToJSONInterpreter {
         }
 
         return record.getJsonObject(String.format("%s", fields[0]))
-          .getString(String.format("%s", fields[1].trim()));
+          .getValue(String.format("%s", fields[1].trim()), "").toString();
       }
       else {
-        return record.getString(String.format("%s", field.trim()));
+        return record.getValue(String.format("%s", field.trim()), "").toString();
       }
     }
     catch(Exception e) {
