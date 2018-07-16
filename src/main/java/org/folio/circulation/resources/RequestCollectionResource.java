@@ -96,7 +96,7 @@ public class RequestCollectionResource extends CollectionResource {
     final UserRepository userRepository = new UserRepository(clients);
     final RequestRepository requestRepository = RequestRepository.using(clients);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
-    final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(clients);
+    final UpdateRequestQueue updateRequestQueue = UpdateRequestQueue.using(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> failure(

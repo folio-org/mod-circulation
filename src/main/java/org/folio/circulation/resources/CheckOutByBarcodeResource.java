@@ -88,7 +88,7 @@ public class CheckOutByBarcodeResource extends Resource {
       loanRepository, message -> failure(message, ITEM_BARCODE, itemBarcode));
 
     final UpdateItem updateItem = new UpdateItem(clients);
-    final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
+    final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 

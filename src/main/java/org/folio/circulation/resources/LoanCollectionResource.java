@@ -34,7 +34,7 @@ public class LoanCollectionResource extends CollectionResource {
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final UserRepository userRepository = new UserRepository(clients);
 
-    final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
+    final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
@@ -86,7 +86,7 @@ public class LoanCollectionResource extends CollectionResource {
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final ItemRepository itemRepository = new ItemRepository(clients, false, false);
 
-    final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
+    final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
 
