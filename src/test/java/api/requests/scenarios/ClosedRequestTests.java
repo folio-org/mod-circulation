@@ -11,71 +11,54 @@ import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDate;
 import org.junit.Test;
 
 import java.net.MalformedURLException;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import static api.APITestSuite.courseReservesCancellationReasonId;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static api.support.matchers.UUIDMatcher.is;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class ClosedRequestTests extends APITests {
   
   @Test
-  public void canCreateAndCancelARequest() throws InterruptedException,
-      MalformedURLException,
-      TimeoutException,
-      ExecutionException {
-    UUID requestId = UUID.randomUUID();
-    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
-    loansFixture.checkOut(item, usersFixture.jessica());
+  public void canCancelARequest()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+
+    loansFixture.checkOut(smallAngryPlanet, usersFixture.jessica());
+
     IndividualResource requester = usersFixture.steve();
+
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
-     IndividualResource request = requestsClient.create(new RequestBuilder()
-      .withId(requestId)
-      .open()
-      .recall()
-      .forItem(item)
-      .by(requester)
-      .withRequestDate(requestDate)
-      .fulfilToHoldShelf()
-      .withRequestExpiration(new LocalDate(2017, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
-
-    JsonObject representation = request.getJson();
-
-    assertThat(representation.getString("id"), is(requestId.toString()));
-    assertThat(representation.getString("status"), is("Open - Not yet filled"));
+    final IndividualResource request =
+      requestsFixture.placeHoldShelfRequest(smallAngryPlanet, requester, requestDate);
 
     DateTime cancelDate = new DateTime(2018, 1, 14, 8, 30, 45, DateTimeZone.UTC);
-    requestsClient.replace(requestId, new RequestBuilder()
-      .withId(requestId)
-      .cancelled()
-      .recall()
-      .forItem(item)
-      .by(requester)
-      .withRequestDate(requestDate)
-      .fulfilToHoldShelf()
-      .withRequestExpiration(new LocalDate(2017, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
-      .withCancellationReasonId(courseReservesCancellationReasonId())
-      .withCancelledByUserId(requester.getId())
-      .withCancelledDate(cancelDate));
 
-    IndividualResource getRequest = requestsClient.get(requestId);
+    requestsClient.replace(request.getId(),
+      RequestBuilder.from(request)
+        .cancelled()
+        .withCancellationReasonId(courseReservesCancellationReasonId())
+        .withCancelledByUserId(requester.getId())
+        .withCancelledDate(cancelDate));
+
+    IndividualResource getRequest = requestsClient.get(request.getId());
+
     JsonObject getRepresentation = getRequest.getJson();
 
-    assertThat(getRepresentation.getString("id"), is(requestId.toString()));
+    assertThat(getRepresentation.getString("id"), is(request.getId()));
     assertThat(getRepresentation.getString("status"), is("Closed - Cancelled"));
     assertThat(getRepresentation.getString("cancelledByUserId"), is(requester.getId().toString()));
     assertThat(getRepresentation.getString("cancelledDate"), isEquivalentTo(cancelDate));
-
   }
-
 }
