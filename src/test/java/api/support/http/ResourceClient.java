@@ -1,7 +1,7 @@
 package api.support.http;
 
-import io.vertx.core.json.JsonObject;
 import api.support.builders.Builder;
+import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
@@ -202,6 +202,25 @@ public class ResourceClient {
     return new IndividualResource(response);
   }
 
+  public Response attemptReplace(UUID id, Builder builder)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
+
+    String path = "";
+    if (id != null) {
+      path = String.format("/%s", id);
+    }
+
+    client.put(urlMaker.combine(path), builder.create(),
+      ResponseHandler.any(putCompleted));
+
+    return putCompleted.get(5, TimeUnit.SECONDS);
+  }
+
   public void replace(UUID id, Builder builder)
     throws MalformedURLException,
     InterruptedException,
@@ -245,25 +264,6 @@ public class ResourceClient {
       ResponseHandler.any(getCompleted));
 
     return getCompleted.get(5, TimeUnit.SECONDS);
-  }
-
-  public Response attemptReplace(UUID id, Builder builder)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
-
-    String path = "";
-    if (id != null) {
-      path = String.format("/%s", id);
-    }
-
-    client.put(urlMaker.combine(path), builder.create(),
-      ResponseHandler.any(putCompleted));
-
-    return putCompleted.get(5, TimeUnit.SECONDS);
   }
 
   public IndividualResource get(IndividualResource record)

@@ -6,6 +6,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.domain.*;
 import org.folio.circulation.domain.representations.RequestProperties;
+import org.folio.circulation.domain.validation.ClosedRequestValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.server.ClientErrorResponse;
@@ -98,16 +99,20 @@ public class RequestCollectionResource extends CollectionResource {
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final UpdateRequestQueue updateRequestQueue = UpdateRequestQueue.using(clients);
 
-    final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
-      clients, () -> failure(
+    final ProxyRelationshipValidator proxyRelationshipValidator =
+      new ProxyRelationshipValidator(clients, () -> failure(
       "proxyUserId is not valid", RequestProperties.PROXY_USER_ID,
       request.getProxyUserId()));
+
+    final ClosedRequestValidator closedRequestValidator = new ClosedRequestValidator(
+      RequestRepository.using(clients));
 
     completedFuture(succeeded(new RequestAndRelatedRecords(request)))
       .thenCombineAsync(itemRepository.fetchFor(request), this::addItem)
       .thenCombineAsync(userRepository.getUser(request.getUserId(), false), this::addUser)
       .thenCombineAsync(userRepository.getUser(request.getProxyUserId(), false), this::addProxyUser)
       .thenCombineAsync(requestQueueRepository.get(request.getItemId()), this::addRequestQueue)
+      .thenComposeAsync(r -> r.after(closedRequestValidator::refuseWhenAlreadyCancelled))
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenApply(r -> r.next(this::removeRequestQueuePositionWhenCancelled))
       .thenComposeAsync(result -> result.after(requestRepository::update))

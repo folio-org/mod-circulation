@@ -52,6 +52,18 @@ public class RequestRepository {
     return MultipleRecords.from(response, Request::from, "requests");
   }
 
+  public CompletableFuture<HttpResult<Boolean>> exists(String id) {
+    return new SingleRecordFetcher<>(requestsStorageClient, "request",
+      new SingleRecordMapper<>(request -> true, response -> {
+        if (response.getStatusCode() == 404) {
+          return HttpResult.succeeded(false);
+        } else {
+          return HttpResult.failed(new ForwardOnFailure(response));
+        }
+      }))
+      .fetch(id);
+  }
+
   public CompletableFuture<HttpResult<Request>> getById(String id) {
     return fetchRequest(id)
       .thenComposeAsync(result -> result.combineAfter(itemRepository::fetchFor,
