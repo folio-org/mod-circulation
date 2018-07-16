@@ -54,6 +54,15 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return StringUtils.equals(getStatus(), CLOSED_CANCELLED);
   }
 
+  private boolean isFulfilled() {
+    return StringUtils.equals(getStatus(), CLOSED_FILLED);
+  }
+
+  public boolean isClosed() {
+    //Alternatively, check status contains "Closed"
+    return isCancelled() || isFulfilled();
+  }
+
   boolean isFor(User user) {
     return StringUtils.equals(getUserId(), user.getId());
   }

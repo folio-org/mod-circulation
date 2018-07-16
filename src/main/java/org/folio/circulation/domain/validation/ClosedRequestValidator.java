@@ -18,11 +18,11 @@ public class ClosedRequestValidator {
     this.requestRepository = requestRepository;
   }
 
-  public CompletableFuture<HttpResult<RequestAndRelatedRecords>> refuseWhenAlreadyCancelled(
+  public CompletableFuture<HttpResult<RequestAndRelatedRecords>> refuseWhenAlreadyClosed(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     final String requestId = requestAndRelatedRecords.getRequest().getId();
-
+    
     //Should not fail if request does not exist (and so we are creating)
     //TODO: Branch the behaviour between creating at specific location and
     return requestRepository.exists(requestId).thenComposeAsync(
@@ -30,17 +30,16 @@ public class ClosedRequestValidator {
         if (!exists) {
           return completedFuture(succeeded(requestAndRelatedRecords));
         }
-        else {
+
         return requestRepository.getById(requestId)
           .thenApply(r2 -> r2.next(existingRepresentation -> {
-            if (existingRepresentation.isCancelled()) {
+            if (existingRepresentation.isClosed()) {
               return failed(failure(
                 "Cannot edit a closed request", "id", requestId));
             } else {
               return succeeded(requestAndRelatedRecords);
             }
-          }));
-        }
-      }));
+        }));
+    }));
   }
 }

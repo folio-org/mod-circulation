@@ -98,4 +98,40 @@ public class ClosedRequestTests extends APITests {
       hasMessage("Cannot edit a closed request"),
       hasParameter("id", request.getId().toString()))));
   }
+
+  @Test
+  public void cannotEditFulfilledRequest()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+    final IndividualResource steve = usersFixture.steve();
+
+    final IndividualResource loan = loansFixture.checkOut(smallAngryPlanet, jessica);
+
+    DateTime requestDate = new DateTime(2018, 6, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    final IndividualResource request =
+      requestsFixture.placeHoldShelfRequest(smallAngryPlanet,
+        steve, requestDate);
+
+    loansFixture.checkIn(loan);
+
+    loansFixture.checkOut(smallAngryPlanet, steve,
+      new DateTime(2018, 7, 5, 14, 48, 23, DateTimeZone.UTC));
+
+    Response response = requestsClient.attemptReplace(request.getId(),
+      RequestBuilder.from(request)
+        .open()
+        .withRequestExpiration(new LocalDate(2018, 3, 14)));
+
+    assertThat(response.getStatusCode(), is(422));
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Cannot edit a closed request"),
+      hasParameter("id", request.getId().toString()))));
+  }
 }

@@ -112,7 +112,7 @@ public class RequestCollectionResource extends CollectionResource {
       .thenCombineAsync(userRepository.getUser(request.getUserId(), false), this::addUser)
       .thenCombineAsync(userRepository.getUser(request.getProxyUserId(), false), this::addProxyUser)
       .thenCombineAsync(requestQueueRepository.get(request.getItemId()), this::addRequestQueue)
-      .thenComposeAsync(r -> r.after(closedRequestValidator::refuseWhenAlreadyCancelled))
+      .thenComposeAsync(r -> r.after(closedRequestValidator::refuseWhenAlreadyClosed))
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenApply(r -> r.next(this::removeRequestQueuePositionWhenCancelled))
       .thenComposeAsync(result -> result.after(requestRepository::update))
