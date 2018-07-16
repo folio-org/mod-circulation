@@ -64,8 +64,11 @@ public class UpdateRequestQueue {
 
       firstRequest.changeStatus(RequestStatus.CLOSED_FILLED);
 
+      requestQueue.remove(firstRequest);
+
       return requestRepository.update(firstRequest)
-        .thenApply(result -> result.map(v -> requestQueue));
+        .thenComposeAsync(r -> r.after(v ->
+          requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)));
 
     } else {
       return completedFuture(succeeded(requestQueue));
