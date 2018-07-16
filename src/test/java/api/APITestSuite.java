@@ -59,7 +59,7 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
   LoanRulesEngineAPITests.class,
   RequestsAPICreationTests.class,
   RequestsAPICreateMultipleRequestsTests.class,
-  RequestsAPIModificationTests.class,
+  ClosedRequestTests.class,
   RequestsAPIDeletionTests.class,
   RequestsAPIRetrievalTests.class,
   RequestsAPIUpdatingTests.class,
