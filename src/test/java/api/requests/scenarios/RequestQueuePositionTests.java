@@ -50,17 +50,25 @@ public class RequestQueuePositionTests extends APITests {
     assertThat("Should not have a position",
       requestBySteve.getJson().containsKey("position"), is(false));
 
+    retainsStoredSummaries(requestBySteve);
+
     requestByJessica = requestsClient.get(requestByJessica);
 
     assertThat(requestByJessica.getJson().getInteger("position"), is(1));
+
+    retainsStoredSummaries(requestByJessica);
 
     requestByCharlotte = requestsClient.get(requestByCharlotte);
 
     assertThat(requestByCharlotte.getJson().getInteger("position"), is(2));
 
+    retainsStoredSummaries(requestByCharlotte);
+
     requestByRebecca = requestsClient.get(requestByRebecca);
 
     assertThat(requestByRebecca.getJson().getInteger("position"), is(3));
+
+    retainsStoredSummaries(requestByRebecca);
   }
 
   @Test
@@ -102,14 +110,29 @@ public class RequestQueuePositionTests extends APITests {
 
     requestBySteve = requestsClient.get(requestBySteve);
 
+
     assertThat(requestBySteve.getJson().getInteger("position"), is(1));
+
+    retainsStoredSummaries(requestBySteve);
 
     requestByCharlotte = requestsClient.get(requestByCharlotte);
 
     assertThat(requestByCharlotte.getJson().getInteger("position"), is(2));
 
+    retainsStoredSummaries(requestByCharlotte);
+
     requestByRebecca = requestsClient.get(requestByRebecca);
 
     assertThat(requestByRebecca.getJson().getInteger("position"), is(3));
+
+    retainsStoredSummaries(requestByRebecca);
+  }
+
+  private void retainsStoredSummaries(IndividualResource request) {
+    assertThat("Updated request in queue should retain stored item summary",
+      request.getJson().containsKey("item"), is(true));
+
+    assertThat("Updated request in queue should retain stored requester summary",
+      request.getJson().containsKey("requester"), is(true));
   }
 }
