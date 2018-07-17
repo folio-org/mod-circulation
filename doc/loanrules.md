@@ -23,6 +23,16 @@ exceptions placed in the next line using indentation: For the user groups (`g`)
 `visitor` and `undergrad` the streaming subscriptions can be loaned using
 the `in-house` loan policy only.
 
+## Line comment
+
+A hash "#" or a slash "/" starts a line comment; all characters from that position
+until the end of the line are ignored.
+
+## Allowed characters for names
+
+A name of a loan policy, a patron group, a material type, a loan type or a location
+can contain only these characters: a-z, A-Z, 0-9 and minus "-".
+
 ## Loan Policy
 
 The name of a loan policy is appended to a criteria line separated by a colon.
