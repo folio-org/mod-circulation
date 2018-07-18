@@ -12,6 +12,8 @@ import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.server.ClientErrorResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
+import java.util.concurrent.CompletableFuture;
+
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.*;
 import static org.folio.circulation.support.HttpResult.failed;
@@ -112,6 +114,8 @@ public class RequestCollectionResource extends CollectionResource {
       .thenCombineAsync(userRepository.getUser(request.getUserId(), false), this::addUser)
       .thenCombineAsync(userRepository.getUser(request.getProxyUserId(), false), this::addProxyUser)
       .thenCombineAsync(requestQueueRepository.get(request.getItemId()), this::addRequestQueue)
+      .thenComposeAsync(r -> r.after(requestAndRelatedRecords ->
+        setRequestQueuePositionWhenNew(requestAndRelatedRecords, requestRepository)))
       .thenComposeAsync(r -> r.after(closedRequestValidator::refuseWhenAlreadyClosed))
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenApply(r -> r.next(this::removeRequestQueuePositionWhenCancelled))
@@ -252,6 +256,27 @@ public class RequestCollectionResource extends CollectionResource {
       .changePosition(requestAndRelatedRecords.getRequestQueue().nextAvailablePosition()));
 
     return succeeded(requestAndRelatedRecords);
+  }
+
+  private CompletableFuture<HttpResult<RequestAndRelatedRecords>> setRequestQueuePositionWhenNew(
+    RequestAndRelatedRecords requestAndRelatedRecords, RequestRepository requestRepository) {
+
+    final String requestId = requestAndRelatedRecords.getRequest().getId();
+
+    //Should not fail if request does not exist (and so we are creating)
+    //TODO: Branch the behaviour between creating at specific location and
+    return requestRepository.exists(requestId).thenCompose(
+      r -> r.after(exists -> {
+        if (exists) {
+          return completedFuture(succeeded(requestAndRelatedRecords));
+        }
+
+        //TODO: Extract to method to add to queue
+        requestAndRelatedRecords.withRequest(requestAndRelatedRecords.getRequest()
+          .changePosition(requestAndRelatedRecords.getRequestQueue().nextAvailablePosition()));
+
+        return completedFuture(succeeded(requestAndRelatedRecords));
+      }));
   }
 
   private HttpResult<RequestAndRelatedRecords> removeRequestQueuePositionWhenCancelled(

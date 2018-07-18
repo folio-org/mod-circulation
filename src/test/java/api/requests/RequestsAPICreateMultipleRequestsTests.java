@@ -28,20 +28,17 @@ public class RequestsAPICreateMultipleRequestsTests extends APITests {
     final IndividualResource firstRequest = requestsClient.create(new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
-      .by(usersFixture.jessica())
-      .create());
+      .by(usersFixture.jessica()));
 
     final IndividualResource secondRequest = requestsClient.create(new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
-      .by(usersFixture.rebecca())
-      .create());
+      .by(usersFixture.rebecca()));
 
     final IndividualResource thirdRequest = requestsClient.create(new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
-      .by(usersFixture.charlotte())
-      .create());
+      .by(usersFixture.charlotte()));
 
     assertThat(firstRequest.getJson().getInteger("position"), is(1));
     assertThat(secondRequest.getJson().getInteger("position"), is(2));
@@ -62,23 +59,62 @@ public class RequestsAPICreateMultipleRequestsTests extends APITests {
     final IndividualResource firstRequest = requestsClient.create(new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
-      .by(usersFixture.james())
-      .create());
+      .by(usersFixture.james()));
 
     final IndividualResource secondRequest = requestsClient.create(new RequestBuilder()
       .page()
       .forItem(smallAngryPlanet)
-      .by(usersFixture.charlotte())
-      .create());
+      .by(usersFixture.charlotte()));
 
     final IndividualResource thirdRequest = requestsClient.create(new RequestBuilder()
       .recall()
       .forItem(smallAngryPlanet)
-      .by(usersFixture.steve())
-      .create());
+      .by(usersFixture.steve()));
 
     assertThat(firstRequest.getJson().getInteger("position"), is(1));
     assertThat(secondRequest.getJson().getInteger("position"), is(2));
     assertThat(thirdRequest.getJson().getInteger("position"), is(3));
+  }
+
+  @Test
+  public void canCreateMultipleRequestsAtSpecificLocation()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+
+    loansFixture.checkOut(smallAngryPlanet, usersFixture.steve());
+
+    final IndividualResource firstRequest = requestsClient.createAtSpecificLocation(
+      new RequestBuilder()
+        .open()
+        .hold()
+        .forItem(smallAngryPlanet)
+        .by(usersFixture.jessica()));
+
+    final IndividualResource secondRequest = requestsClient.createAtSpecificLocation(
+      new RequestBuilder()
+        .open()
+        .hold()
+        .forItem(smallAngryPlanet)
+        .by(usersFixture.rebecca()));
+
+    final IndividualResource thirdRequest = requestsClient.createAtSpecificLocation(
+      new RequestBuilder()
+        .open()
+        .hold()
+        .forItem(smallAngryPlanet)
+        .by(usersFixture.charlotte()));
+
+    assertThat("First request should have position",
+      firstRequest.getJson().getInteger("position"), is(1));
+
+    assertThat("Second request should have position",
+      secondRequest.getJson().getInteger("position"), is(2));
+
+    assertThat("Third request should have position",
+      thirdRequest.getJson().getInteger("position"), is(3));
   }
 }

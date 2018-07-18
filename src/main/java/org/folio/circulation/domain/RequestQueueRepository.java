@@ -2,7 +2,10 @@ package org.folio.circulation.domain;
 
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
@@ -11,6 +14,8 @@ import static org.folio.circulation.support.CqlHelper.encodeQuery;
 import static org.folio.circulation.support.HttpResult.succeeded;
 
 public class RequestQueueRepository {
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
   private final RequestRepository requestRepository;
 
   private RequestQueueRepository(RequestRepository requestRepository) {
@@ -37,6 +42,8 @@ public class RequestQueueRepository {
         RequestStatus.OPEN_NOT_YET_FILLED);
 
     final int maximumSupportedRequestQueueSize = 1000;
+
+    log.info("Fetch request queue: '{}'", unencodedQuery);
 
     return encodeQuery(unencodedQuery).after(
       query -> requestRepository.findBy(query, maximumSupportedRequestQueueSize)

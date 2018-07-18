@@ -202,6 +202,43 @@ public class ResourceClient {
     return new IndividualResource(response);
   }
 
+  public IndividualResource createAtSpecificLocation(Builder builder)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
+
+    JsonObject representation = builder.create();
+    String id = representation.getString("id");
+
+    final URL location = urlMaker.combine(String.format("/%s", id));
+
+    client.put(location, representation, ResponseHandler.any(createCompleted));
+
+    Response createResponse = createCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(
+      String.format("Failed to create %s %s: %s", resourceName, id, createResponse.getBody()),
+      createResponse.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
+
+    System.out.println(String.format("Created resource %s: %s", resourceName,
+      createResponse.getJson().encodePrettily()));
+
+    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
+
+    client.get(location, ResponseHandler.any(getCompleted));
+
+    Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(
+      String.format("Failed to get %s %s: %s", resourceName, id, getResponse.getBody()),
+      getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+
+    return new IndividualResource(getResponse);
+  }
+
   public Response attemptReplace(UUID id, Builder builder)
     throws MalformedURLException,
     InterruptedException,
