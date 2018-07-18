@@ -247,6 +247,25 @@ public class ResourceClient {
     return getCompleted.get(5, TimeUnit.SECONDS);
   }
 
+  public Response attemptReplace(UUID id, Builder builder)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
+
+    String path = "";
+    if (id != null) {
+      path = String.format("/%s", id);
+    }
+
+    client.put(urlMaker.combine(path), builder.create(),
+      ResponseHandler.any(putCompleted));
+
+    return putCompleted.get(5, TimeUnit.SECONDS);
+  }
+
   public IndividualResource get(IndividualResource record)
     throws MalformedURLException,
     InterruptedException,

@@ -149,6 +149,17 @@ public class FakeStorageModule extends AbstractVerticle {
       System.out.println(
         String.format("Created %s resource: %s", recordTypeName, id));
 
+      if(includeChangeMetadata) {
+        final String fakeUserId = APITestSuite.USER_ID;
+        body.put(changeMetadataPropertyName, new JsonObject()
+          .put("createdDate", new DateTime(DateTimeZone.UTC)
+            .toString(ISODateTimeFormat.dateTime()))
+          .put("createdByUserId", fakeUserId)
+          .put("updatedDate", new DateTime(DateTimeZone.UTC)
+            .toString(ISODateTimeFormat.dateTime()))
+          .put("updatedByUserId", fakeUserId));
+      }
+
       resourcesForTenant.put(id, body);
       SuccessResponse.noContent(routingContext.response());
     }

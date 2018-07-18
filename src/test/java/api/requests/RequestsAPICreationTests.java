@@ -122,6 +122,95 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
+  public void canCreateARequestAtSpecificLocation()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID id = UUID.randomUUID();
+
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+
+    loansFixture.checkOut(item, usersFixture.jessica());
+
+    IndividualResource requester = usersFixture.steve();
+
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    Response response = requestsClient.attemptReplace(id, new RequestBuilder()
+      .withId(id)
+      .open()
+      .recall()
+      .forItem(item)
+      .by(requester)
+      .withRequestDate(requestDate)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(new LocalDate(2017, 7, 30))
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
+
+    assertThat(response.getStatusCode(), is(204));
+
+    IndividualResource request = requestsClient.get(id);
+
+    JsonObject representation = request.getJson();
+
+    assertThat(representation.getString("id"), is(id.toString()));
+    assertThat(representation.getString("requestType"), is("Recall"));
+    assertThat(representation.getString("requestDate"), isEquivalentTo(requestDate));
+    assertThat(representation.getString("itemId"), is(item.getId().toString()));
+    assertThat(representation.getString("requesterId"), is(requester.getId().toString()));
+    assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
+    assertThat(representation.getString("requestExpirationDate"), is("2017-07-30"));
+    assertThat(representation.getString("holdShelfExpirationDate"), is("2017-08-31"));
+    assertThat(representation.getString("status"), is("Open - Not yet filled"));
+
+    assertThat("has information taken from item",
+      representation.containsKey("item"), is(true));
+
+    assertThat("title is taken from item",
+      representation.getJsonObject("item").getString("title"),
+      is("The Long Way to a Small, Angry Planet"));
+
+    assertThat("barcode is taken from item",
+      representation.getJsonObject("item").getString("barcode"),
+      is("036000291452"));
+
+    assertThat("has information taken from requesting user",
+      representation.containsKey("requester"), is(true));
+
+    assertThat("last name is taken from requesting user",
+      representation.getJsonObject("requester").getString("lastName"),
+      is("Jones"));
+
+    assertThat("first name is taken from requesting user",
+      representation.getJsonObject("requester").getString("firstName"),
+      is("Steven"));
+
+    assertThat("middle name is not taken from requesting user",
+      representation.getJsonObject("requester").containsKey("middleName"),
+      is(false));
+
+    assertThat("barcode is taken from requesting user",
+      representation.getJsonObject("requester").getString("barcode"),
+      is("5694596854"));
+
+    assertThat("does not have information taken from proxying user",
+      representation.containsKey("proxy"), is(false));
+
+    assertThat("should have change metadata",
+      representation.containsKey("metadata"), is(true));
+
+    JsonObject changeMetadata = representation.getJsonObject("metadata");
+
+    assertThat("change metadata should have created date",
+      changeMetadata.containsKey("createdDate"), is(true));
+
+    assertThat("change metadata should have updated date",
+      changeMetadata.containsKey("updatedDate"), is(true));
+  }
+
+  @Test
   public void cannotCreateRequestForUnknownItem()
     throws InterruptedException,
     ExecutionException,
