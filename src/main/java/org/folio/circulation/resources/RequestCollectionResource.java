@@ -11,6 +11,7 @@ import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.server.WebContext;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.*;
@@ -105,24 +106,38 @@ public class RequestCollectionResource extends CollectionResource {
         RequestAndRelatedRecords::withRequestQueue));
 
     final CompletableFuture<HttpResult<RequestAndRelatedRecords>> processingFuture = setupFuture.thenComposeAsync(r ->
-      r.after(requestAndRelatedRecords -> {
-        final String requestId = requestAndRelatedRecords.getRequest().getId();
-
-        return requestRepository.exists(requestId).thenCompose(
-          r2 -> r2.after(exists -> {
-            if (exists) {
-              return replaceRequest(requestAndRelatedRecords, requestRepository,
-                updateRequestQueue, proxyRelationshipValidator, closedRequestValidator);
-            } else {
-              return createRequest(requestAndRelatedRecords, requestRepository,
-                updateItem, updateLoanActionHistory);
-            }
-          }));
-      }));
+      when(requestRepository, updateRequestQueue, updateItem, updateLoanActionHistory, proxyRelationshipValidator, closedRequestValidator, r));
 
     processingFuture
       .thenApply(NoContentHttpResult::from)
       .thenAccept(r2 -> r2.writeTo(routingContext.response()));
+  }
+
+  private CompletableFuture<HttpResult<RequestAndRelatedRecords>> when(RequestRepository requestRepository, UpdateRequestQueue updateRequestQueue, UpdateItem updateItem, UpdateLoanActionHistory updateLoanActionHistory, ProxyRelationshipValidator proxyRelationshipValidator, ClosedRequestValidator closedRequestValidator, HttpResult<RequestAndRelatedRecords> result) {
+    Function<RequestAndRelatedRecords, CompletableFuture<HttpResult<RequestAndRelatedRecords>>> replace =
+      (requestAndRelatedRecords -> replaceRequest(requestAndRelatedRecords, requestRepository,
+        updateRequestQueue, proxyRelationshipValidator, closedRequestValidator));
+
+    Function<RequestAndRelatedRecords, CompletableFuture<HttpResult<RequestAndRelatedRecords>>> create =
+      (requestAndRelatedRecords -> createRequest(requestAndRelatedRecords, requestRepository,
+        updateItem, updateLoanActionHistory));
+
+    Function<RequestAndRelatedRecords, CompletableFuture<HttpResult<Boolean>>> predicate =
+      (requestAndRelatedRecords -> {
+        final String requestId = requestAndRelatedRecords.getRequest().getId();
+
+        return requestRepository.exists(requestId);
+      });
+
+    return result.after(requestAndRelatedRecords ->
+      predicate.apply(requestAndRelatedRecords)
+        .thenCompose(r -> r.after(exists -> {
+          if (exists) {
+            return replace.apply(requestAndRelatedRecords);
+          } else {
+            return create.apply(requestAndRelatedRecords);
+          }
+      })));
   }
 
   void get(RoutingContext routingContext) {
