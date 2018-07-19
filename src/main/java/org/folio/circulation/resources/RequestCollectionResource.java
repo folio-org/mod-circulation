@@ -105,37 +105,37 @@ public class RequestCollectionResource extends CollectionResource {
       .thenComposeAsync(r -> r.combineAfter(requestQueueRepository::get,
         RequestAndRelatedRecords::withRequestQueue));
 
-    final CompletableFuture<HttpResult<RequestAndRelatedRecords>> processingFuture = setupFuture.thenComposeAsync(r ->
-      when(requestRepository, updateRequestQueue, updateItem, updateLoanActionHistory, proxyRelationshipValidator, closedRequestValidator, r));
+    final CompletableFuture<HttpResult<RequestAndRelatedRecords>> processingFuture =
+      setupFuture.thenComposeAsync(r ->
+        when(r, (requestAndRelatedRecords -> {
+          final String requestId = requestAndRelatedRecords.getRequest().getId();
+
+          return requestRepository.exists(requestId);
+        }),
+        (requestAndRelatedRecords -> replaceRequest(requestAndRelatedRecords,
+          requestRepository, updateRequestQueue, proxyRelationshipValidator,
+          closedRequestValidator)),
+        (requestAndRelatedRecords -> createRequest(requestAndRelatedRecords,
+          requestRepository, updateItem, updateLoanActionHistory))));
 
     processingFuture
       .thenApply(NoContentHttpResult::from)
-      .thenAccept(r2 -> r2.writeTo(routingContext.response()));
+      .thenAccept(r -> r.writeTo(routingContext.response()));
   }
 
-  private CompletableFuture<HttpResult<RequestAndRelatedRecords>> when(RequestRepository requestRepository, UpdateRequestQueue updateRequestQueue, UpdateItem updateItem, UpdateLoanActionHistory updateLoanActionHistory, ProxyRelationshipValidator proxyRelationshipValidator, ClosedRequestValidator closedRequestValidator, HttpResult<RequestAndRelatedRecords> result) {
-    Function<RequestAndRelatedRecords, CompletableFuture<HttpResult<RequestAndRelatedRecords>>> replace =
-      (requestAndRelatedRecords -> replaceRequest(requestAndRelatedRecords, requestRepository,
-        updateRequestQueue, proxyRelationshipValidator, closedRequestValidator));
+  private CompletableFuture<HttpResult<RequestAndRelatedRecords>> when(
+    HttpResult<RequestAndRelatedRecords> result,
+    Function<RequestAndRelatedRecords, CompletableFuture<HttpResult<Boolean>>> condition,
+    Function<RequestAndRelatedRecords, CompletableFuture<HttpResult<RequestAndRelatedRecords>>> whenTrue,
+    Function<RequestAndRelatedRecords, CompletableFuture<HttpResult<RequestAndRelatedRecords>>> whenFalse) {
 
-    Function<RequestAndRelatedRecords, CompletableFuture<HttpResult<RequestAndRelatedRecords>>> create =
-      (requestAndRelatedRecords -> createRequest(requestAndRelatedRecords, requestRepository,
-        updateItem, updateLoanActionHistory));
-
-    Function<RequestAndRelatedRecords, CompletableFuture<HttpResult<Boolean>>> predicate =
-      (requestAndRelatedRecords -> {
-        final String requestId = requestAndRelatedRecords.getRequest().getId();
-
-        return requestRepository.exists(requestId);
-      });
-
-    return result.after(requestAndRelatedRecords ->
-      predicate.apply(requestAndRelatedRecords)
-        .thenCompose(r -> r.after(exists -> {
-          if (exists) {
-            return replace.apply(requestAndRelatedRecords);
+    return result.after(value ->
+      condition.apply(value)
+        .thenCompose(r -> r.after(conditionResult -> {
+          if (conditionResult) {
+            return whenTrue.apply(value);
           } else {
-            return create.apply(requestAndRelatedRecords);
+            return whenFalse.apply(value);
           }
       })));
   }
