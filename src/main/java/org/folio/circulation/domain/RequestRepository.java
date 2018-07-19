@@ -52,7 +52,17 @@ public class RequestRepository {
     return MultipleRecords.from(response, Request::from, "requests");
   }
 
-  public CompletableFuture<HttpResult<Boolean>> exists(String id) {
+  public CompletableFuture<HttpResult<Boolean>> exists(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    return exists(requestAndRelatedRecords.getRequest());
+  }
+
+  private CompletableFuture<HttpResult<Boolean>> exists(Request request) {
+    return exists(request.getId());
+  }
+
+  private CompletableFuture<HttpResult<Boolean>> exists(String id) {
     return new SingleRecordFetcher<>(requestsStorageClient, "request",
       new SingleRecordMapper<>(request -> true, response -> {
         if (response.getStatusCode() == 404) {

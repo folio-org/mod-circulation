@@ -106,17 +106,8 @@ public class RequestCollectionResource extends CollectionResource {
       .thenComposeAsync(r -> r.combineAfter(requestQueueRepository::get,
         RequestAndRelatedRecords::withRequestQueue));
 
-    final CompletableFuture<HttpResult<RequestAndRelatedRecords>> processingFuture =
-      setupFuture.thenComposeAsync(r ->
-        r.when((requestAndRelatedRecords -> {
-          final String requestId = requestAndRelatedRecords.getRequest().getId();
-
-          return requestRepository.exists(requestId);
-        }),
-        updateRequestService::replaceRequest,
-        createRequestService::createRequest));
-
-    processingFuture
+    setupFuture.thenComposeAsync(r -> r.when(requestRepository::exists,
+      updateRequestService::replaceRequest, createRequestService::createRequest))
       .thenApply(NoContentHttpResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
   }
