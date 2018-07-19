@@ -88,7 +88,7 @@ public class RequestCollectionResource extends CollectionResource {
     String id = routingContext.request().getParam("id");
     write(representation, "id", id);
 
-    completedFuture(succeeded(representation))
+    final CompletableFuture<HttpResult<RequestAndRelatedRecords>> setupFuture = completedFuture(succeeded(representation))
       .thenApply(r -> r.next(this::validateStatus))
       .thenApply(r -> r.map(this::removeRelatedRecordInformation))
       .thenApply(r -> r.map(Request::from))
@@ -97,16 +97,20 @@ public class RequestCollectionResource extends CollectionResource {
       .thenComposeAsync(r -> r.combineAfter(userRepository::getProxyUser, Request::withProxy))
       .thenApply(r -> r.map(RequestAndRelatedRecords::new))
       .thenComposeAsync(r -> r.combineAfter(requestQueueRepository::get,
-        RequestAndRelatedRecords::withRequestQueue))
-      .thenComposeAsync(r -> r.after(requestAndRelatedRecords ->
-        setRequestQueuePositionWhenNew(requestAndRelatedRecords, requestRepository)))
-      .thenComposeAsync(r -> r.after(closedRequestValidator::refuseWhenAlreadyClosed))
-      .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
-      .thenApply(r -> r.next(this::removeRequestQueuePositionWhenCancelled))
-      .thenComposeAsync(result -> result.after(requestRepository::update))
-      .thenComposeAsync(r -> r.after(updateRequestQueue::onCancellation))
+        RequestAndRelatedRecords::withRequestQueue));
+
+    final CompletableFuture<HttpResult<RequestAndRelatedRecords>> processingFuture = setupFuture.thenComposeAsync(r ->
+      r.after(requestAndRelatedRecords ->
+        setRequestQueuePositionWhenNew(requestAndRelatedRecords, requestRepository)
+          .thenComposeAsync(r2 -> r2.after(closedRequestValidator::refuseWhenAlreadyClosed))
+          .thenComposeAsync(r2 -> r2.after(proxyRelationshipValidator::refuseWhenInvalid))
+          .thenApply(r2 -> r2.next(this::removeRequestQueuePositionWhenCancelled))
+          .thenComposeAsync(result -> result.after(requestRepository::update))
+          .thenComposeAsync(r2 -> r2.after(updateRequestQueue::onCancellation))));
+
+    processingFuture
       .thenApply(NoContentHttpResult::from)
-      .thenAccept(r -> r.writeTo(routingContext.response()));
+      .thenAccept(r2 -> r2.writeTo(routingContext.response()));
   }
 
   void get(RoutingContext routingContext) {
