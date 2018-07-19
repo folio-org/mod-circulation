@@ -139,6 +139,6 @@ public class RequestRepository {
   }
 
   private CompletableFuture<HttpResult<User>> getUser(String proxyUserId) {
-    return userRepository.getUser(proxyUserId, false);
+    return userRepository.getUser(proxyUserId);
   }
 }

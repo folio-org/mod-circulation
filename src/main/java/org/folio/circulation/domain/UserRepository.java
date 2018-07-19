@@ -18,15 +18,29 @@ public class UserRepository {
   }
 
   public CompletableFuture<HttpResult<User>> getUser(UserRelatedRecord userRelatedRecord) {
-    return getUser(userRelatedRecord.getUserId(), false);
+    return getUser(userRelatedRecord.getUserId());
   }
 
   public CompletableFuture<HttpResult<User>> getProxyUser(UserRelatedRecord userRelatedRecord) {
-    return getUser(userRelatedRecord.getProxyUserId(), false);
+    return getUser(userRelatedRecord.getProxyUserId());
   }
 
-  public CompletableFuture<HttpResult<User>> getUser(String userId) {
-    return getUser(userId, true);
+  CompletableFuture<HttpResult<User>> getUser(String userId) {
+    return FetchSingleRecord.<User>forRecord("user")
+      .using(usersStorageClient)
+      .mapTo(User::new)
+      .whenNotFound(succeeded(null))
+      .fetch(userId);
+  }
+
+  //TODO: Replace this with validator
+  public CompletableFuture<HttpResult<User>> getUserFailOnNotFound(String userId) {
+    return FetchSingleRecord.<User>forRecord("user")
+      .using(usersStorageClient)
+      .mapTo(User::new)
+      .whenNotFound(failed(new ValidationErrorFailure(
+        new ValidationError("user is not found", "userId", userId))))
+      .fetch(userId);
   }
 
   public CompletableFuture<HttpResult<User>> getProxyUserByBarcode(String barcode) {
@@ -53,21 +67,5 @@ public class UserRepository {
         .map(users -> users.stream().findFirst())
         .next(user -> user.map(HttpResult::succeeded).orElseGet(() -> failed(failure(
           "Could not find user with matching barcode", propertyName, barcode)))));
-  }
-
-  public CompletableFuture<HttpResult<User>> getUser(
-    String userId,
-    boolean failOnNotFound) {
-
-    final HttpResult<User> notFoundResult = !failOnNotFound
-      ? succeeded(null)
-      : failed(new ValidationErrorFailure(
-          new ValidationError("user is not found", "userId", userId)));
-
-    return FetchSingleRecord.<User>forRecord("user")
-      .using(usersStorageClient)
-      .mapTo(User::new)
-      .whenNotFound(notFoundResult)
-      .fetch(userId);
   }
 }

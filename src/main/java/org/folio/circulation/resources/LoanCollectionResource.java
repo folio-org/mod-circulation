@@ -61,7 +61,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenApply(alreadyCheckedOutValidator::refuseWhenItemIsAlreadyCheckedOut)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenCombineAsync(requestQueueRepository.get(loan.getItemId()), this::addRequestQueue)
-      .thenCombineAsync(userRepository.getUser(loan.getUserId()), this::addUser)
+      .thenCombineAsync(userRepository.getUserFailOnNotFound(loan.getUserId()), this::addUser)
       .thenApply(awaitingPickupValidator::refuseWhenUserIsNotAwaitingPickup)
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
