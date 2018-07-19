@@ -13,7 +13,6 @@ import org.folio.circulation.support.http.server.WebContext;
 import java.util.concurrent.CompletableFuture;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.ItemStatus.*;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
@@ -46,7 +45,8 @@ public class RequestCollectionResource extends CollectionResource {
 
     final RequestRepresentation requestRepresentation = new RequestRepresentation();
 
-    completedFuture(succeeded(representation))
+    final CompletableFuture<HttpResult<RequestAndRelatedRecords>> setupFuture =
+      completedFuture(succeeded(representation))
       .thenApply(r -> r.next(this::validateStatus))
       .thenApply(r -> r.map(this::removeRelatedRecordInformation))
       .thenApply(r -> r.map(Request::from))
@@ -56,9 +56,9 @@ public class RequestCollectionResource extends CollectionResource {
       .thenApply(r -> r.map(RequestAndRelatedRecords::new))
       .thenComposeAsync(r -> r.combineAfter(requestQueueRepository::get,
         RequestAndRelatedRecords::withRequestQueue))
-      .thenApply(this::refuseWhenItemDoesNotExist)
-      .thenApply(this::refuseWhenItemIsNotValid)
-      .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
+      .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid));
+
+    setupFuture
       .thenComposeAsync(r -> r.after(createRequestService::createRequest))
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
       .thenApply(r -> r.map(requestRepresentation::extendedRepresentation))
@@ -90,12 +90,15 @@ public class RequestCollectionResource extends CollectionResource {
     final CreateRequestService createRequestService = new CreateRequestService(
       requestRepository, updateItem, updateLoanActionHistory);
 
-    final UpdateRequestService updateRequestService = new UpdateRequestService(requestRepository, updateRequestQueue, proxyRelationshipValidator, closedRequestValidator);
+    final UpdateRequestService updateRequestService = new UpdateRequestService(
+      requestRepository, updateRequestQueue, proxyRelationshipValidator,
+      closedRequestValidator);
 
     String id = routingContext.request().getParam("id");
     write(representation, "id", id);
 
-    final CompletableFuture<HttpResult<RequestAndRelatedRecords>> setupFuture = completedFuture(succeeded(representation))
+    final CompletableFuture<HttpResult<RequestAndRelatedRecords>> setupFuture =
+      completedFuture(succeeded(representation))
       .thenApply(r -> r.next(this::validateStatus))
       .thenApply(r -> r.map(this::removeRelatedRecordInformation))
       .thenApply(r -> r.map(Request::from))
@@ -104,7 +107,8 @@ public class RequestCollectionResource extends CollectionResource {
       .thenComposeAsync(r -> r.combineAfter(userRepository::getProxyUser, Request::withProxy))
       .thenApply(r -> r.map(RequestAndRelatedRecords::new))
       .thenComposeAsync(r -> r.combineAfter(requestQueueRepository::get,
-        RequestAndRelatedRecords::withRequestQueue));
+        RequestAndRelatedRecords::withRequestQueue))
+      .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid));
 
     setupFuture.thenComposeAsync(r -> r.when(requestRepository::exists,
       updateRequestService::replaceRequest, createRequestService::createRequest))
@@ -167,42 +171,6 @@ public class RequestCollectionResource extends CollectionResource {
     request.remove("proxy");
 
     return request;
-  }
-
-  private HttpResult<RequestAndRelatedRecords> refuseWhenItemDoesNotExist(
-    HttpResult<RequestAndRelatedRecords> result) {
-
-    return result.next(requestAndRelatedRecords -> {
-      if(requestAndRelatedRecords.getRequest().getItem().isNotFound()) {
-        return failed(failure(
-          "Item does not exist", "itemId",
-          requestAndRelatedRecords.getRequest().getItemId()));
-      }
-      else {
-        return result;
-      }
-    });
-  }
-
-  private HttpResult<RequestAndRelatedRecords> refuseWhenItemIsNotValid(
-    HttpResult<RequestAndRelatedRecords> result) {
-
-    return result.next(requestAndRelatedRecords -> {
-      Request request = requestAndRelatedRecords.getRequest();
-
-      RequestType requestType = RequestType.from(request);
-
-      if (!requestType.canCreateRequestForItem(request.getItem())) {
-        return failed(failure(
-          String.format("Item is not %s, %s or %s", CHECKED_OUT,
-            CHECKED_OUT_HELD, CHECKED_OUT_RECALLED),
-          "itemId", request.getItemId()
-        ));
-      }
-      else {
-        return result;
-      }
-    });
   }
 
   private HttpResult<JsonObject> validateStatus(JsonObject representation) {

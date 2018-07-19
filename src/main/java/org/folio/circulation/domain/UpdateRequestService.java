@@ -30,7 +30,6 @@ public class UpdateRequestService {
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     return closedRequestValidator.refuseWhenAlreadyClosed(requestAndRelatedRecords)
-      .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenApply(r -> r.next(this::removeRequestQueuePositionWhenCancelled))
       .thenComposeAsync(r -> r.after(requestRepository::update))
       .thenComposeAsync(r -> r.after(updateRequestQueue::onCancellation));

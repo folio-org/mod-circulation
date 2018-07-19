@@ -174,7 +174,8 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat(putResponse.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
+    assertThat(String.format("Should replace request: %s", putResponse.getBody()),
+      putResponse.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
 
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
