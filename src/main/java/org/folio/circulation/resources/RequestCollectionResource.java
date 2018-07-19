@@ -56,7 +56,7 @@ public class RequestCollectionResource extends CollectionResource {
       .thenApply(this::refuseWhenItemDoesNotExist)
       .thenApply(this::refuseWhenItemIsNotValid)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
-      .thenApply(r -> r.next(this::setRequestQueuePosition))
+      .thenComposeAsync(r -> r.after(this::setRequestQueuePosition))
       .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
       .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreation))
       .thenComposeAsync(r -> r.after(requestRepository::create))
@@ -78,6 +78,8 @@ public class RequestCollectionResource extends CollectionResource {
     final RequestRepository requestRepository = RequestRepository.using(clients);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final UpdateRequestQueue updateRequestQueue = UpdateRequestQueue.using(clients);
+    final UpdateItem updateItem = new UpdateItem(clients);
+    final UpdateLoanActionHistory updateLoanActionHistory = new UpdateLoanActionHistory(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator =
       createProxyRelationshipValidator(representation, clients);
@@ -100,13 +102,28 @@ public class RequestCollectionResource extends CollectionResource {
         RequestAndRelatedRecords::withRequestQueue));
 
     final CompletableFuture<HttpResult<RequestAndRelatedRecords>> processingFuture = setupFuture.thenComposeAsync(r ->
-      r.after(requestAndRelatedRecords ->
-        setRequestQueuePositionWhenNew(requestAndRelatedRecords, requestRepository)
-          .thenComposeAsync(r2 -> r2.after(closedRequestValidator::refuseWhenAlreadyClosed))
-          .thenComposeAsync(r2 -> r2.after(proxyRelationshipValidator::refuseWhenInvalid))
-          .thenApply(r2 -> r2.next(this::removeRequestQueuePositionWhenCancelled))
-          .thenComposeAsync(result -> result.after(requestRepository::update))
-          .thenComposeAsync(r2 -> r2.after(updateRequestQueue::onCancellation))));
+      r.after(requestAndRelatedRecords -> {
+        final String requestId = requestAndRelatedRecords.getRequest().getId();
+
+        return requestRepository.exists(requestId).thenCompose(
+          r2 -> r2.after(exists -> {
+            if (exists) {
+              return r.after(requestAndRelatedRecords2 ->
+                setRequestQueuePositionWhenNew(requestAndRelatedRecords2, requestRepository)
+                  .thenComposeAsync(r3 -> r3.after(closedRequestValidator::refuseWhenAlreadyClosed))
+                  .thenComposeAsync(r3 -> r3.after(proxyRelationshipValidator::refuseWhenInvalid))
+                  .thenApply(r3 -> r3.next(this::removeRequestQueuePositionWhenCancelled))
+                  .thenComposeAsync(r3 -> r3.after(requestRepository::update))
+                  .thenComposeAsync(r3 -> r3.after(updateRequestQueue::onCancellation)));
+            } else {
+              return r.after(requestAndRelatedRecords2 ->
+                setRequestQueuePosition(requestAndRelatedRecords2)
+                  .thenComposeAsync(r3 -> r3.after(updateItem::onRequestCreation))
+                  .thenComposeAsync(r3 -> r3.after(updateLoanActionHistory::onRequestCreation))
+                  .thenComposeAsync(r3 -> r3.after(requestRepository::create)));
+            }
+          }));
+      }));
 
     processingFuture
       .thenApply(NoContentHttpResult::from)
@@ -206,14 +223,14 @@ public class RequestCollectionResource extends CollectionResource {
     });
   }
 
-  private HttpResult<RequestAndRelatedRecords> setRequestQueuePosition(
+  private CompletableFuture<HttpResult<RequestAndRelatedRecords>> setRequestQueuePosition(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     //TODO: Extract to method to add to queue
     requestAndRelatedRecords.withRequest(requestAndRelatedRecords.getRequest()
       .changePosition(requestAndRelatedRecords.getRequestQueue().nextAvailablePosition()));
 
-    return succeeded(requestAndRelatedRecords);
+    return completedFuture(succeeded(requestAndRelatedRecords));
   }
 
   private CompletableFuture<HttpResult<RequestAndRelatedRecords>> setRequestQueuePositionWhenNew(
