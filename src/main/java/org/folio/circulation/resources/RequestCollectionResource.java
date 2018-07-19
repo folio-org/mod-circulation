@@ -77,15 +77,14 @@ public class RequestCollectionResource extends CollectionResource {
       requestRepository, updateItem, updateLoanActionHistory);
 
     final UpdateRequestService updateRequestService = new UpdateRequestService(
-      requestRepository, updateRequestQueue, proxyRelationshipValidator,
-      closedRequestValidator);
+      requestRepository, updateRequestQueue, closedRequestValidator);
 
     String id = routingContext.request().getParam("id");
     write(representation, "id", id);
 
     final RequestFromRepresentationService requestFromRepresentationService
       = new RequestFromRepresentationService(itemRepository,
-      requestQueueRepository, userRepository, proxyRelationshipValidator);
+        requestQueueRepository, userRepository, proxyRelationshipValidator);
 
     requestFromRepresentationService.getRequestFrom(representation)
       .thenComposeAsync(r -> r.when(requestRepository::exists,

@@ -22,7 +22,7 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
     return withItem(request.getItem().updateItem(updatedItem));
   }
 
-  public RequestAndRelatedRecords withRequest(Request newRequest) {
+  RequestAndRelatedRecords withRequest(Request newRequest) {
     return new RequestAndRelatedRecords(newRequest.withItem(request.getItem()),
       this.requestQueue
     );
@@ -42,25 +42,11 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
     );
   }
 
-  public RequestAndRelatedRecords withRequestingUser(User newRequester) {
-    return new RequestAndRelatedRecords(
-      this.request.withRequester(newRequester),
-      this.requestQueue
-    );
-  }
-
-  public RequestAndRelatedRecords withProxyUser(User newProxy) {
-    return new RequestAndRelatedRecords(
-      this.request.withProxy(newProxy),
-      this.requestQueue
-    );
-  }
-
   public Request getRequest() {
     return request;
   }
 
-  public RequestQueue getRequestQueue() {
+  RequestQueue getRequestQueue() {
     return requestQueue;
   }
 

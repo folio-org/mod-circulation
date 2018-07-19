@@ -95,15 +95,6 @@ public class CollectionResourceClient {
     return future;
   }
 
-  public void delete(String id, Consumer<Response> responseHandler) {
-    client.delete(individualRecordUrl(id),
-      responseConversationHandler(responseHandler));
-  }
-
-  public void delete(Consumer<Response> responseHandler) {
-    client.delete(collectionRoot, responseConversationHandler(responseHandler));
-  }
-
   public CompletableFuture<Response> delete() {
     final CompletableFuture<Response> future = new CompletableFuture<>();
 

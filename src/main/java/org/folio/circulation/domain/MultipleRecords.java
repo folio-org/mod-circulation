@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -27,10 +26,6 @@ public class MultipleRecords<T> {
 
   private final Collection<T> records;
   private final Integer totalRecords;
-
-  public static <T> MultipleRecords<T> empty() {
-    return new MultipleRecords<>(new ArrayList<>(), 0);
-  }
 
   public MultipleRecords(Collection<T> records, Integer totalRecords) {
     this.records = records;
