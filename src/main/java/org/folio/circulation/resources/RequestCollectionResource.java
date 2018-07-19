@@ -38,10 +38,8 @@ public class RequestCollectionResource extends CollectionResource {
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateLoanActionHistory updateLoanActionHistory = new UpdateLoanActionHistory(clients);
 
-    final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
-      clients, () -> failure(
-      "proxyUserId is not valid", RequestProperties.PROXY_USER_ID,
-      representation.getString(RequestProperties.PROXY_USER_ID)));
+    final ProxyRelationshipValidator proxyRelationshipValidator =
+      createProxyRelationshipValidator(representation, clients);
 
     final RequestRepresentation requestRepresentation = new RequestRepresentation();
 
@@ -74,13 +72,6 @@ public class RequestCollectionResource extends CollectionResource {
 
     JsonObject representation = routingContext.getBodyAsJson();
 
-    removeRelatedRecordInformation(representation);
-
-    String id = routingContext.request().getParam("id");
-    write(representation, "id", id);
-
-    final Request request = Request.from(representation);
-
     final Clients clients = Clients.create(context, client);
 
     final ItemRepository itemRepository = new ItemRepository(clients, false, false);
@@ -90,14 +81,21 @@ public class RequestCollectionResource extends CollectionResource {
     final UpdateRequestQueue updateRequestQueue = UpdateRequestQueue.using(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator =
-      new ProxyRelationshipValidator(clients, () -> failure(
-      "proxyUserId is not valid", RequestProperties.PROXY_USER_ID,
-      request.getProxyUserId()));
+      createProxyRelationshipValidator(representation, clients);
 
     final ClosedRequestValidator closedRequestValidator = new ClosedRequestValidator(
       RequestRepository.using(clients));
 
-    completedFuture(succeeded(new RequestAndRelatedRecords(request)))
+    String id = routingContext.request().getParam("id");
+    write(representation, "id", id);
+
+    final Request request = Request.from(representation);
+
+    completedFuture(succeeded(representation))
+      .thenApply(r -> r.next(this::validateStatus))
+      .thenApply(r -> r.map(this::removeRelatedRecordInformation))
+      .thenApply(r -> r.map(Request::from))
+      .thenApply(r -> r.map(RequestAndRelatedRecords::new))
       .thenCombineAsync(itemRepository.fetchFor(request), this::addItem)
       .thenCombineAsync(userRepository.getUser(request.getUserId(), false), this::addUser)
       .thenCombineAsync(userRepository.getUser(request.getProxyUserId(), false), this::addProxyUser)
@@ -111,6 +109,12 @@ public class RequestCollectionResource extends CollectionResource {
       .thenComposeAsync(r -> r.after(updateRequestQueue::onCancellation))
       .thenApply(NoContentHttpResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
+  }
+
+  private ProxyRelationshipValidator createProxyRelationshipValidator(JsonObject representation, Clients clients) {
+    return new ProxyRelationshipValidator(clients, () -> failure(
+      "proxyUserId is not valid", RequestProperties.PROXY_USER_ID,
+      representation.getString(RequestProperties.PROXY_USER_ID)));
   }
 
   void get(RoutingContext routingContext) {

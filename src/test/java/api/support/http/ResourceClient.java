@@ -202,6 +202,24 @@ public class ResourceClient {
     return new IndividualResource(response);
   }
 
+  public Response attemptCreateAtSpecificLocation(Builder builder)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
+
+    JsonObject representation = builder.create();
+    String id = representation.getString("id");
+
+    final URL location = urlMaker.combine(String.format("/%s", id));
+
+    client.put(location, representation, ResponseHandler.any(createCompleted));
+
+    return createCompleted.get(5, TimeUnit.SECONDS);
+  }
+
   public IndividualResource createAtSpecificLocation(Builder builder)
     throws MalformedURLException,
     InterruptedException,

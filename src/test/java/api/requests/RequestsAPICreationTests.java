@@ -425,38 +425,62 @@ public class RequestsAPICreationTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
-      itemBuilder -> itemBuilder
-        .withBarcode("036000291452"))
-      .getId();
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
-    loansFixture.checkOutItem(itemId);
+    final IndividualResource jessica = usersFixture.jessica();
+    final IndividualResource steve = usersFixture.steve();
 
-    UUID requesterId = usersClient.create(new UserBuilder()
-      .withName("Jones", "Steven")
-      .withBarcode("564376549214"))
-      .getId();
+    loansFixture.checkOut(smallAngryPlanet, jessica);
 
-    JsonObject requestRequest = new RequestBuilder()
-      .recall()
-      .toHoldShelf()
-      .withItemId(itemId)
-      .withRequesterId(requesterId)
-      .withStatus(status)
-      .create();
+    Response response = requestsClient.attemptCreate(
+      new RequestBuilder()
+        .recall()
+        .toHoldShelf()
+        .forItem(smallAngryPlanet)
+        .by(steve)
+        .withStatus(status));
 
-    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+    assertThat(String.format("Should not create request: %s", response.getBody()),
+      response, hasStatus(HTTP_BAD_REQUEST));
 
-    client.post(requestsUrl(), requestRequest,
-      ResponseHandler.any(postCompleted));
+    assertThat(response.getBody(),
+      is("Request status must be \"Open - Not yet filled\", " +
+        "\"Open - Awaiting pickup\" or \"Closed - Filled\""));
+  }
 
-    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
+  //TODO: Replace with validation error message
+  @Test
+  @Parameters({
+    "Non-existent status",
+    ""
+  })
+  public void cannotCreateARequestAtASpecificLocationWithInvalidStatus(String status)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
 
-    assertThat(String.format("Should not create request: %s", postResponse.getBody()),
-      postResponse, hasStatus(HTTP_BAD_REQUEST));
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
-    assertThat(postResponse.getBody(),
-      is("Request status must be \"Open - Not yet filled\", \"Open - Awaiting pickup\" or \"Closed - Filled\""));
+    final IndividualResource jessica = usersFixture.jessica();
+    final IndividualResource steve = usersFixture.steve();
+
+    loansFixture.checkOut(smallAngryPlanet, jessica);
+
+    Response response = requestsClient.attemptCreateAtSpecificLocation(
+      new RequestBuilder()
+        .recall()
+        .toHoldShelf()
+        .forItem(smallAngryPlanet)
+        .by(steve)
+        .withStatus(status));
+
+    assertThat(String.format("Should not create request: %s", response.getBody()),
+      response, hasStatus(HTTP_BAD_REQUEST));
+
+    assertThat(response.getBody(),
+      is("Request status must be \"Open - Not yet filled\", " +
+        "\"Open - Awaiting pickup\" or \"Closed - Filled\""));
   }
 
   @Test
