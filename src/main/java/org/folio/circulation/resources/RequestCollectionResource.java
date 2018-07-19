@@ -49,8 +49,8 @@ public class RequestCollectionResource extends CollectionResource {
       .thenApply(r -> r.next(this::validateStatus))
       .thenApply(r -> r.map(this::removeRelatedRecordInformation))
       .thenApply(r -> r.map(Request::from))
+      .thenComposeAsync(r -> r.combineAfter(itemRepository::fetchFor, Request::withItem))
       .thenApply(r -> r.map(RequestAndRelatedRecords::new))
-      .thenCombineAsync(itemRepository.fetchFor(request), this::addItem)
       .thenApply(this::refuseWhenItemDoesNotExist)
       .thenApply(this::refuseWhenItemIsNotValid)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
@@ -95,8 +95,8 @@ public class RequestCollectionResource extends CollectionResource {
       .thenApply(r -> r.next(this::validateStatus))
       .thenApply(r -> r.map(this::removeRelatedRecordInformation))
       .thenApply(r -> r.map(Request::from))
+      .thenComposeAsync(r -> r.combineAfter(itemRepository::fetchFor, Request::withItem))
       .thenApply(r -> r.map(RequestAndRelatedRecords::new))
-      .thenCombineAsync(itemRepository.fetchFor(request), this::addItem)
       .thenCombineAsync(userRepository.getUser(request.getUserId(), false), this::addUser)
       .thenCombineAsync(userRepository.getUser(request.getProxyUserId(), false), this::addProxyUser)
       .thenCombineAsync(requestQueueRepository.get(request.getItemId()), this::addRequestQueue)
@@ -172,14 +172,6 @@ public class RequestCollectionResource extends CollectionResource {
     request.remove("proxy");
 
     return request;
-  }
-
-  private HttpResult<RequestAndRelatedRecords> addItem(
-    HttpResult<RequestAndRelatedRecords> loanResult,
-    HttpResult<Item> item) {
-
-    return HttpResult.combine(loanResult, item,
-      RequestAndRelatedRecords::withItem);
   }
 
   private HttpResult<RequestAndRelatedRecords> addRequestQueue(
