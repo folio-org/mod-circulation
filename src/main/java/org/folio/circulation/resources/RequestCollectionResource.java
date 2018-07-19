@@ -109,12 +109,11 @@ public class RequestCollectionResource extends CollectionResource {
           r2 -> r2.after(exists -> {
             if (exists) {
               return r.after(requestAndRelatedRecords2 ->
-                setRequestQueuePositionWhenNew(requestAndRelatedRecords2, requestRepository)
-                  .thenComposeAsync(r3 -> r3.after(closedRequestValidator::refuseWhenAlreadyClosed))
+                closedRequestValidator.refuseWhenAlreadyClosed(requestAndRelatedRecords2))
                   .thenComposeAsync(r3 -> r3.after(proxyRelationshipValidator::refuseWhenInvalid))
                   .thenApply(r3 -> r3.next(this::removeRequestQueuePositionWhenCancelled))
                   .thenComposeAsync(r3 -> r3.after(requestRepository::update))
-                  .thenComposeAsync(r3 -> r3.after(updateRequestQueue::onCancellation)));
+                  .thenComposeAsync(r3 -> r3.after(updateRequestQueue::onCancellation));
             } else {
               return r.after(requestAndRelatedRecords2 ->
                 setRequestQueuePosition(requestAndRelatedRecords2)
@@ -231,27 +230,6 @@ public class RequestCollectionResource extends CollectionResource {
       .changePosition(requestAndRelatedRecords.getRequestQueue().nextAvailablePosition()));
 
     return completedFuture(succeeded(requestAndRelatedRecords));
-  }
-
-  private CompletableFuture<HttpResult<RequestAndRelatedRecords>> setRequestQueuePositionWhenNew(
-    RequestAndRelatedRecords requestAndRelatedRecords, RequestRepository requestRepository) {
-
-    final String requestId = requestAndRelatedRecords.getRequest().getId();
-
-    //Should not fail if request does not exist (and so we are creating)
-    //TODO: Branch the behaviour between creating at specific location and
-    return requestRepository.exists(requestId).thenCompose(
-      r -> r.after(exists -> {
-        if (exists) {
-          return completedFuture(succeeded(requestAndRelatedRecords));
-        }
-
-        //TODO: Extract to method to add to queue
-        requestAndRelatedRecords.withRequest(requestAndRelatedRecords.getRequest()
-          .changePosition(requestAndRelatedRecords.getRequestQueue().nextAvailablePosition()));
-
-        return completedFuture(succeeded(requestAndRelatedRecords));
-      }));
   }
 
   private HttpResult<RequestAndRelatedRecords> removeRequestQueuePositionWhenCancelled(
