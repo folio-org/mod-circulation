@@ -50,7 +50,36 @@ public interface HttpResult<T> {
       .thenApply(actionResult -> actionResult.map(r ->
         combiner.apply(value(), r)));
   }
-  
+
+  /**
+   * Allows branching between two paths based upon the outcome of a condition
+   *
+   * Executes the whenTrue function when condition evaluates to true
+   * Executes the whenFalse function when condition evaluates to false
+   * Executes neither if the condition evaluation fails
+   * Forwards on failure if previous result failed
+   *
+   * @param condition on which to branch upon
+   * @param whenTrue executed when condition evaluates to true
+   * @param whenFalse executed when condition evaluates to false
+   * @return Result of whenTrue or whenFalse, unless previous result failed
+   */
+  default CompletableFuture<HttpResult<T>> when(
+    Function<T, CompletableFuture<HttpResult<Boolean>>> condition,
+    Function<T, CompletableFuture<HttpResult<T>>> whenTrue,
+    Function<T, CompletableFuture<HttpResult<T>>> whenFalse) {
+
+    return after(value ->
+      condition.apply(value)
+        .thenCompose(r -> r.after(conditionResult -> {
+          if (conditionResult) {
+            return whenTrue.apply(value);
+          } else {
+            return whenFalse.apply(value);
+          }
+        })));
+  }
+
   boolean failed();
 
   T value();

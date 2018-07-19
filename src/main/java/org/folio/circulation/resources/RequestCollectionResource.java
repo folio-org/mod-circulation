@@ -11,7 +11,6 @@ import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.server.WebContext;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.*;
@@ -107,7 +106,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final CompletableFuture<HttpResult<RequestAndRelatedRecords>> processingFuture =
       setupFuture.thenComposeAsync(r ->
-        when(r, (requestAndRelatedRecords -> {
+        r.when((requestAndRelatedRecords -> {
           final String requestId = requestAndRelatedRecords.getRequest().getId();
 
           return requestRepository.exists(requestId);
@@ -121,23 +120,6 @@ public class RequestCollectionResource extends CollectionResource {
     processingFuture
       .thenApply(NoContentHttpResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
-  }
-
-  private <T> CompletableFuture<HttpResult<T>> when(
-    HttpResult<T> result,
-    Function<T, CompletableFuture<HttpResult<Boolean>>> condition,
-    Function<T, CompletableFuture<HttpResult<T>>> whenTrue,
-    Function<T, CompletableFuture<HttpResult<T>>> whenFalse) {
-
-    return result.after(value ->
-      condition.apply(value)
-        .thenCompose(r -> r.after(conditionResult -> {
-          if (conditionResult) {
-            return whenTrue.apply(value);
-          } else {
-            return whenFalse.apply(value);
-          }
-      })));
   }
 
   void get(RoutingContext routingContext) {
