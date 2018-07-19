@@ -80,11 +80,11 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return new Request(representation, newItem, requester, proxy);
   }
 
-  Request withRequester(User newRequester) {
+  public Request withRequester(User newRequester) {
     return new Request(representation, item, newRequester, proxy);
   }
 
-  Request withProxy(User newProxy) {
+  public Request withProxy(User newProxy) {
     return new Request(representation, item, requester, newProxy);
   }
   

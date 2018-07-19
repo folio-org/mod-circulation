@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.validation.UserNotFoundValidator;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
 
@@ -10,6 +11,7 @@ import java.util.function.Function;
 
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 public class LoanRepository {
   private final CollectionResourceClient loansStorageClient;
@@ -75,6 +77,9 @@ public class LoanRepository {
   }
 
   public CompletableFuture<HttpResult<Loan>> findOpenLoanByBarcode(FindByBarcodeQuery query) {
+    final UserNotFoundValidator userNotFoundValidator = new UserNotFoundValidator(
+      userId -> failure("user is not found", "userId", userId));
+
     return itemRepository.fetchByBarcode(query.getItemBarcode())
       .thenComposeAsync(itemResult -> itemResult.after(item -> {
         if(item.isNotFound()) {
@@ -98,10 +103,15 @@ public class LoanRepository {
       }))
       //TODO: Replace with fetch user by barcode to improve error message
       .thenComposeAsync(this::fetchUser)
+      .thenApply(userNotFoundValidator::refuseWhenUserNotFound)
       .thenApply(r -> r.next(loan -> refuseWhenDifferentUser(loan, query)));
   }
 
   public CompletableFuture<HttpResult<Loan>> findOpenLoanById(FindByIdQuery query) {
+
+    final UserNotFoundValidator userNotFoundValidator = new UserNotFoundValidator(
+      userId -> failure("user is not found", "userId", userId));
+
     return itemRepository.fetchById(query.getItemId())
       .thenComposeAsync(itemResult -> itemResult.after(item -> {
         if(item.isNotFound()) {
@@ -124,6 +134,7 @@ public class LoanRepository {
           }));
       }))
       .thenComposeAsync(this::fetchUser)
+      .thenApply(userNotFoundValidator::refuseWhenUserNotFound)
       .thenApply(r -> r.next(loan -> refuseWhenDifferentUser(loan, query)));
   }
 

@@ -17,8 +17,12 @@ public class UserRepository {
     usersStorageClient = clients.usersStorage();
   }
 
-  CompletableFuture<HttpResult<User>> getUser(UserRelatedRecord userRelatedRecord) {
-    return getUser(userRelatedRecord.getUserId());
+  public CompletableFuture<HttpResult<User>> getUser(UserRelatedRecord userRelatedRecord) {
+    return getUser(userRelatedRecord.getUserId(), false);
+  }
+
+  public CompletableFuture<HttpResult<User>> getProxyUser(UserRelatedRecord userRelatedRecord) {
+    return getUser(userRelatedRecord.getProxyUserId(), false);
   }
 
   public CompletableFuture<HttpResult<User>> getUser(String userId) {
@@ -59,10 +63,6 @@ public class UserRepository {
       ? succeeded(null)
       : failed(new ValidationErrorFailure(
           new ValidationError("user is not found", "userId", userId)));
-
-//    return new SingleRecordFetcher<>(usersStorageClient, "user",
-//      notFound(User::new, notFoundResult))
-//      .fetch(userId);
 
     return FetchSingleRecord.<User>forRecord("user")
       .using(usersStorageClient)

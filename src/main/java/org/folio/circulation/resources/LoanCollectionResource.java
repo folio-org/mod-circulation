@@ -39,9 +39,9 @@ public class LoanCollectionResource extends CollectionResource {
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
 
-    final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
-      clients, () -> failure(
-        "proxyUserId is not valid", "proxyUserId", loan.getProxyUserId()));
+    final ProxyRelationshipValidator proxyRelationshipValidator =
+      new ProxyRelationshipValidator(clients,
+        () -> failure("proxyUserId is not valid", "proxyUserId", loan.getProxyUserId()));
 
     final AwaitingPickupValidator awaitingPickupValidator = new AwaitingPickupValidator(
       message -> failure(message, "userId", loan.getUserId()));
