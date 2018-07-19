@@ -34,6 +34,10 @@ public class RequestQueueRepository {
       .thenApply(result -> result.map(loanAndRelatedRecords::withRequestQueue));
   }
 
+  public CompletableFuture<HttpResult<RequestQueue>> get(ItemRelatedRecord itemRelatedRecord) {
+    return get(itemRelatedRecord.getItemId());
+  }
+
   public CompletableFuture<HttpResult<RequestQueue>> get(String itemId) {
       String unencodedQuery = String.format(
         "itemId==%s and status==(\"%s\" or \"%s\") sortBy position/sort.ascending",

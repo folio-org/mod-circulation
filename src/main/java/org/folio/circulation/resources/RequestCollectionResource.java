@@ -43,8 +43,6 @@ public class RequestCollectionResource extends CollectionResource {
 
     final RequestRepresentation requestRepresentation = new RequestRepresentation();
 
-    final Request request = Request.from(representation);
-
     completedFuture(succeeded(representation))
       .thenApply(r -> r.next(this::validateStatus))
       .thenApply(r -> r.map(this::removeRelatedRecordInformation))
@@ -53,10 +51,11 @@ public class RequestCollectionResource extends CollectionResource {
       .thenComposeAsync(r -> r.combineAfter(userRepository::getUser, Request::withRequester))
       .thenComposeAsync(r -> r.combineAfter(userRepository::getProxyUser, Request::withProxy))
       .thenApply(r -> r.map(RequestAndRelatedRecords::new))
+      .thenComposeAsync(r -> r.combineAfter(requestQueueRepository::get,
+        RequestAndRelatedRecords::withRequestQueue))
       .thenApply(this::refuseWhenItemDoesNotExist)
       .thenApply(this::refuseWhenItemIsNotValid)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
-      .thenCombineAsync(requestQueueRepository.get(request.getItemId()), this::addRequestQueue)
       .thenApply(r -> r.next(this::setRequestQueuePosition))
       .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
       .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreation))
@@ -89,8 +88,6 @@ public class RequestCollectionResource extends CollectionResource {
     String id = routingContext.request().getParam("id");
     write(representation, "id", id);
 
-    final Request request = Request.from(representation);
-
     completedFuture(succeeded(representation))
       .thenApply(r -> r.next(this::validateStatus))
       .thenApply(r -> r.map(this::removeRelatedRecordInformation))
@@ -99,7 +96,8 @@ public class RequestCollectionResource extends CollectionResource {
       .thenComposeAsync(r -> r.combineAfter(userRepository::getUser, Request::withRequester))
       .thenComposeAsync(r -> r.combineAfter(userRepository::getProxyUser, Request::withProxy))
       .thenApply(r -> r.map(RequestAndRelatedRecords::new))
-      .thenCombineAsync(requestQueueRepository.get(request.getItemId()), this::addRequestQueue)
+      .thenComposeAsync(r -> r.combineAfter(requestQueueRepository::get,
+        RequestAndRelatedRecords::withRequestQueue))
       .thenComposeAsync(r -> r.after(requestAndRelatedRecords ->
         setRequestQueuePositionWhenNew(requestAndRelatedRecords, requestRepository)))
       .thenComposeAsync(r -> r.after(closedRequestValidator::refuseWhenAlreadyClosed))
@@ -109,12 +107,6 @@ public class RequestCollectionResource extends CollectionResource {
       .thenComposeAsync(r -> r.after(updateRequestQueue::onCancellation))
       .thenApply(NoContentHttpResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
-  }
-
-  private ProxyRelationshipValidator createProxyRelationshipValidator(JsonObject representation, Clients clients) {
-    return new ProxyRelationshipValidator(clients, () -> failure(
-      "proxyUserId is not valid", RequestProperties.PROXY_USER_ID,
-      representation.getString(RequestProperties.PROXY_USER_ID)));
   }
 
   void get(RoutingContext routingContext) {
@@ -172,30 +164,6 @@ public class RequestCollectionResource extends CollectionResource {
     request.remove("proxy");
 
     return request;
-  }
-
-  private HttpResult<RequestAndRelatedRecords> addRequestQueue(
-    HttpResult<RequestAndRelatedRecords> loanResult,
-    HttpResult<RequestQueue> requestQueueResult) {
-
-    return HttpResult.combine(loanResult, requestQueueResult,
-      RequestAndRelatedRecords::withRequestQueue);
-  }
-
-  private HttpResult<RequestAndRelatedRecords> addUser(
-    HttpResult<RequestAndRelatedRecords> loanResult,
-    HttpResult<User> getUserResult) {
-
-    return HttpResult.combine(loanResult, getUserResult,
-      RequestAndRelatedRecords::withRequestingUser);
-  }
-
-  private HttpResult<RequestAndRelatedRecords> addProxyUser(
-    HttpResult<RequestAndRelatedRecords> loanResult,
-    HttpResult<User> getUserResult) {
-
-    return HttpResult.combine(loanResult, getUserResult,
-      RequestAndRelatedRecords::withProxyUser);
   }
 
   private HttpResult<RequestAndRelatedRecords> refuseWhenItemDoesNotExist(
@@ -279,7 +247,6 @@ public class RequestCollectionResource extends CollectionResource {
   }
 
   private HttpResult<JsonObject> validateStatus(JsonObject representation) {
-
     RequestStatus status = RequestStatus.from(representation);
 
     if(!status.isValid()) {
@@ -291,5 +258,11 @@ public class RequestCollectionResource extends CollectionResource {
       status.writeTo(representation);
       return succeeded(representation);
     }
+  }
+
+  private ProxyRelationshipValidator createProxyRelationshipValidator(JsonObject representation, Clients clients) {
+    return new ProxyRelationshipValidator(clients, () -> failure(
+      "proxyUserId is not valid", RequestProperties.PROXY_USER_ID,
+      representation.getString(RequestProperties.PROXY_USER_ID)));
   }
 }
