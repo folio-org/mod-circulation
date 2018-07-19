@@ -36,6 +36,7 @@ public class RequestStatus {
     allowedValues.add(OPEN_NOT_YET_FILLED);
     allowedValues.add(OPEN_AWAITING_PICKUP);
     allowedValues.add(CLOSED_FILLED);
+    allowedValues.add(CLOSED_CANCELLED);
 
     return allowedValues.contains(value);
   }
