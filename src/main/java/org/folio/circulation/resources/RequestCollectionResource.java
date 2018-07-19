@@ -123,11 +123,11 @@ public class RequestCollectionResource extends CollectionResource {
       .thenAccept(r -> r.writeTo(routingContext.response()));
   }
 
-  private CompletableFuture<HttpResult<RequestAndRelatedRecords>> when(
-    HttpResult<RequestAndRelatedRecords> result,
-    Function<RequestAndRelatedRecords, CompletableFuture<HttpResult<Boolean>>> condition,
-    Function<RequestAndRelatedRecords, CompletableFuture<HttpResult<RequestAndRelatedRecords>>> whenTrue,
-    Function<RequestAndRelatedRecords, CompletableFuture<HttpResult<RequestAndRelatedRecords>>> whenFalse) {
+  private <T> CompletableFuture<HttpResult<T>> when(
+    HttpResult<T> result,
+    Function<T, CompletableFuture<HttpResult<Boolean>>> condition,
+    Function<T, CompletableFuture<HttpResult<T>>> whenTrue,
+    Function<T, CompletableFuture<HttpResult<T>>> whenFalse) {
 
     return result.after(value ->
       condition.apply(value)
