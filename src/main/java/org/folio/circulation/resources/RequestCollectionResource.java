@@ -41,6 +41,9 @@ public class RequestCollectionResource extends CollectionResource {
     final ProxyRelationshipValidator proxyRelationshipValidator =
       createProxyRelationshipValidator(representation, clients);
 
+    final CreateRequestService createRequestService = new CreateRequestService(
+      requestRepository, updateItem, updateLoanActionHistory);
+
     final RequestRepresentation requestRepresentation = new RequestRepresentation();
 
     completedFuture(succeeded(representation))
@@ -56,13 +59,7 @@ public class RequestCollectionResource extends CollectionResource {
       .thenApply(this::refuseWhenItemDoesNotExist)
       .thenApply(this::refuseWhenItemIsNotValid)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
-      .thenComposeAsync(r -> r.after(this::setRequestQueuePosition))
-      .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
-      .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreation))
-      .thenComposeAsync(r -> r.after(requestRepository::create))
-      .thenComposeAsync(r -> r.after(requestAndRelatedRecords -> createRequest(
-        requestAndRelatedRecords, requestRepository, updateItem,
-        updateLoanActionHistory)))
+      .thenComposeAsync(r -> r.after(createRequestService::createRequest))
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
       .thenApply(r -> r.map(requestRepresentation::extendedRepresentation))
       .thenApply(CreatedJsonHttpResult::from)
@@ -90,6 +87,9 @@ public class RequestCollectionResource extends CollectionResource {
     final ClosedRequestValidator closedRequestValidator = new ClosedRequestValidator(
       RequestRepository.using(clients));
 
+    final CreateRequestService createRequestService = new CreateRequestService(
+      requestRepository, updateItem, updateLoanActionHistory);
+
     String id = routingContext.request().getParam("id");
     write(representation, "id", id);
 
@@ -114,8 +114,7 @@ public class RequestCollectionResource extends CollectionResource {
         (requestAndRelatedRecords -> replaceRequest(requestAndRelatedRecords,
           requestRepository, updateRequestQueue, proxyRelationshipValidator,
           closedRequestValidator)),
-        (requestAndRelatedRecords -> createRequest(requestAndRelatedRecords,
-          requestRepository, updateItem, updateLoanActionHistory))));
+        (createRequestService::createRequest)));
 
     processingFuture
       .thenApply(NoContentHttpResult::from)
@@ -215,16 +214,6 @@ public class RequestCollectionResource extends CollectionResource {
     });
   }
 
-  private CompletableFuture<HttpResult<RequestAndRelatedRecords>> setRequestQueuePosition(
-    RequestAndRelatedRecords requestAndRelatedRecords) {
-
-    //TODO: Extract to method to add to queue
-    requestAndRelatedRecords.withRequest(requestAndRelatedRecords.getRequest()
-      .changePosition(requestAndRelatedRecords.getRequestQueue().nextAvailablePosition()));
-
-    return completedFuture(succeeded(requestAndRelatedRecords));
-  }
-
   private HttpResult<RequestAndRelatedRecords> removeRequestQueuePositionWhenCancelled(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
@@ -252,22 +241,13 @@ public class RequestCollectionResource extends CollectionResource {
     }
   }
 
-  private ProxyRelationshipValidator createProxyRelationshipValidator(JsonObject representation, Clients clients) {
+  private ProxyRelationshipValidator createProxyRelationshipValidator(
+    JsonObject representation,
+    Clients clients) {
+
     return new ProxyRelationshipValidator(clients, () -> failure(
       "proxyUserId is not valid", RequestProperties.PROXY_USER_ID,
       representation.getString(RequestProperties.PROXY_USER_ID)));
-  }
-
-  private CompletableFuture<HttpResult<RequestAndRelatedRecords>> createRequest(
-    RequestAndRelatedRecords requestAndRelatedRecords,
-    RequestRepository requestRepository,
-    UpdateItem updateItem,
-    UpdateLoanActionHistory updateLoanActionHistory) {
-
-    return setRequestQueuePosition(requestAndRelatedRecords)
-      .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
-      .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreation))
-      .thenComposeAsync(r -> r.after(requestRepository::create));
   }
 
   private CompletableFuture<HttpResult<RequestAndRelatedRecords>> replaceRequest(
