@@ -45,20 +45,8 @@ public class RequestCollectionResource extends CollectionResource {
 
     final RequestRepresentation requestRepresentation = new RequestRepresentation();
 
-    final CompletableFuture<HttpResult<RequestAndRelatedRecords>> setupFuture =
-      completedFuture(succeeded(representation))
-      .thenApply(r -> r.next(this::validateStatus))
-      .thenApply(r -> r.map(this::removeRelatedRecordInformation))
-      .thenApply(r -> r.map(Request::from))
-      .thenComposeAsync(r -> r.combineAfter(itemRepository::fetchFor, Request::withItem))
-      .thenComposeAsync(r -> r.combineAfter(userRepository::getUser, Request::withRequester))
-      .thenComposeAsync(r -> r.combineAfter(userRepository::getProxyUser, Request::withProxy))
-      .thenApply(r -> r.map(RequestAndRelatedRecords::new))
-      .thenComposeAsync(r -> r.combineAfter(requestQueueRepository::get,
-        RequestAndRelatedRecords::withRequestQueue))
-      .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid));
-
-    setupFuture
+    getRequestFrom(representation, itemRepository, requestQueueRepository,
+      userRepository, proxyRelationshipValidator)
       .thenComposeAsync(r -> r.after(createRequestService::createRequest))
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
       .thenApply(r -> r.map(requestRepresentation::extendedRepresentation))
@@ -97,21 +85,10 @@ public class RequestCollectionResource extends CollectionResource {
     String id = routingContext.request().getParam("id");
     write(representation, "id", id);
 
-    final CompletableFuture<HttpResult<RequestAndRelatedRecords>> setupFuture =
-      completedFuture(succeeded(representation))
-      .thenApply(r -> r.next(this::validateStatus))
-      .thenApply(r -> r.map(this::removeRelatedRecordInformation))
-      .thenApply(r -> r.map(Request::from))
-      .thenComposeAsync(r -> r.combineAfter(itemRepository::fetchFor, Request::withItem))
-      .thenComposeAsync(r -> r.combineAfter(userRepository::getUser, Request::withRequester))
-      .thenComposeAsync(r -> r.combineAfter(userRepository::getProxyUser, Request::withProxy))
-      .thenApply(r -> r.map(RequestAndRelatedRecords::new))
-      .thenComposeAsync(r -> r.combineAfter(requestQueueRepository::get,
-        RequestAndRelatedRecords::withRequestQueue))
-      .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid));
-
-    setupFuture.thenComposeAsync(r -> r.when(requestRepository::exists,
-      updateRequestService::replaceRequest, createRequestService::createRequest))
+    getRequestFrom(representation, itemRepository, requestQueueRepository,
+      userRepository, proxyRelationshipValidator)
+      .thenComposeAsync(r -> r.when(requestRepository::exists,
+        updateRequestService::replaceRequest, createRequestService::createRequest))
       .thenApply(NoContentHttpResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
   }
@@ -196,4 +173,17 @@ public class RequestCollectionResource extends CollectionResource {
       representation.getString(RequestProperties.PROXY_USER_ID)));
   }
 
+  private CompletableFuture<HttpResult<RequestAndRelatedRecords>> getRequestFrom(JsonObject representation, ItemRepository itemRepository, RequestQueueRepository requestQueueRepository, UserRepository userRepository, ProxyRelationshipValidator proxyRelationshipValidator) {
+    return completedFuture(succeeded(representation))
+      .thenApply(r -> r.next(this::validateStatus))
+      .thenApply(r -> r.map(this::removeRelatedRecordInformation))
+      .thenApply(r -> r.map(Request::from))
+      .thenComposeAsync(r -> r.combineAfter(itemRepository::fetchFor, Request::withItem))
+      .thenComposeAsync(r -> r.combineAfter(userRepository::getUser, Request::withRequester))
+      .thenComposeAsync(r -> r.combineAfter(userRepository::getProxyUser, Request::withProxy))
+      .thenApply(r -> r.map(RequestAndRelatedRecords::new))
+      .thenComposeAsync(r -> r.combineAfter(requestQueueRepository::get,
+        RequestAndRelatedRecords::withRequestQueue))
+      .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid));
+  }
 }
