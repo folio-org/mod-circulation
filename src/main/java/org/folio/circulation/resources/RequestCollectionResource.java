@@ -60,6 +60,9 @@ public class RequestCollectionResource extends CollectionResource {
       .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
       .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreation))
       .thenComposeAsync(r -> r.after(requestRepository::create))
+      .thenComposeAsync(r -> r.after(requestAndRelatedRecords -> createRequest(
+        requestAndRelatedRecords, requestRepository, updateItem,
+        updateLoanActionHistory)))
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
       .thenApply(r -> r.map(requestRepresentation::extendedRepresentation))
       .thenApply(CreatedJsonHttpResult::from)
@@ -108,18 +111,11 @@ public class RequestCollectionResource extends CollectionResource {
         return requestRepository.exists(requestId).thenCompose(
           r2 -> r2.after(exists -> {
             if (exists) {
-              return r.after(requestAndRelatedRecords2 ->
-                closedRequestValidator.refuseWhenAlreadyClosed(requestAndRelatedRecords2))
-                  .thenComposeAsync(r3 -> r3.after(proxyRelationshipValidator::refuseWhenInvalid))
-                  .thenApply(r3 -> r3.next(this::removeRequestQueuePositionWhenCancelled))
-                  .thenComposeAsync(r3 -> r3.after(requestRepository::update))
-                  .thenComposeAsync(r3 -> r3.after(updateRequestQueue::onCancellation));
+              return replaceRequest(requestAndRelatedRecords, requestRepository,
+                updateRequestQueue, proxyRelationshipValidator, closedRequestValidator);
             } else {
-              return r.after(requestAndRelatedRecords2 ->
-                setRequestQueuePosition(requestAndRelatedRecords2)
-                  .thenComposeAsync(r3 -> r3.after(updateItem::onRequestCreation))
-                  .thenComposeAsync(r3 -> r3.after(updateLoanActionHistory::onRequestCreation))
-                  .thenComposeAsync(r3 -> r3.after(requestRepository::create)));
+              return createRequest(requestAndRelatedRecords, requestRepository,
+                updateItem, updateLoanActionHistory);
             }
           }));
       }));
@@ -263,5 +259,31 @@ public class RequestCollectionResource extends CollectionResource {
     return new ProxyRelationshipValidator(clients, () -> failure(
       "proxyUserId is not valid", RequestProperties.PROXY_USER_ID,
       representation.getString(RequestProperties.PROXY_USER_ID)));
+  }
+
+  private CompletableFuture<HttpResult<RequestAndRelatedRecords>> createRequest(
+    RequestAndRelatedRecords requestAndRelatedRecords,
+    RequestRepository requestRepository,
+    UpdateItem updateItem,
+    UpdateLoanActionHistory updateLoanActionHistory) {
+
+    return setRequestQueuePosition(requestAndRelatedRecords)
+      .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
+      .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreation))
+      .thenComposeAsync(r -> r.after(requestRepository::create));
+  }
+
+  private CompletableFuture<HttpResult<RequestAndRelatedRecords>> replaceRequest(
+    RequestAndRelatedRecords requestAndRelatedRecords,
+    RequestRepository requestRepository,
+    UpdateRequestQueue updateRequestQueue,
+    ProxyRelationshipValidator proxyRelationshipValidator,
+    ClosedRequestValidator closedRequestValidator) {
+
+    return closedRequestValidator.refuseWhenAlreadyClosed(requestAndRelatedRecords)
+      .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
+      .thenApply(r -> r.next(this::removeRequestQueuePositionWhenCancelled))
+      .thenComposeAsync(r -> r.after(requestRepository::update))
+      .thenComposeAsync(r -> r.after(updateRequestQueue::onCancellation));
   }
 }
