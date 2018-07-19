@@ -90,6 +90,8 @@ public class RequestCollectionResource extends CollectionResource {
     final CreateRequestService createRequestService = new CreateRequestService(
       requestRepository, updateItem, updateLoanActionHistory);
 
+    final UpdateRequestService updateRequestService = new UpdateRequestService(requestRepository, updateRequestQueue, proxyRelationshipValidator, closedRequestValidator);
+
     String id = routingContext.request().getParam("id");
     write(representation, "id", id);
 
@@ -111,10 +113,8 @@ public class RequestCollectionResource extends CollectionResource {
 
           return requestRepository.exists(requestId);
         }),
-        (requestAndRelatedRecords -> replaceRequest(requestAndRelatedRecords,
-          requestRepository, updateRequestQueue, proxyRelationshipValidator,
-          closedRequestValidator)),
-        (createRequestService::createRequest)));
+        updateRequestService::replaceRequest,
+        createRequestService::createRequest));
 
     processingFuture
       .thenApply(NoContentHttpResult::from)
@@ -214,19 +214,6 @@ public class RequestCollectionResource extends CollectionResource {
     });
   }
 
-  private HttpResult<RequestAndRelatedRecords> removeRequestQueuePositionWhenCancelled(
-    RequestAndRelatedRecords requestAndRelatedRecords) {
-
-    final Request request = requestAndRelatedRecords.getRequest();
-
-    //TODO: Extract to cancel method
-    if(request.isCancelled()) {
-      requestAndRelatedRecords.getRequestQueue().remove(request);
-    }
-
-    return succeeded(requestAndRelatedRecords);
-  }
-
   private HttpResult<JsonObject> validateStatus(JsonObject representation) {
     RequestStatus status = RequestStatus.from(representation);
 
@@ -250,17 +237,4 @@ public class RequestCollectionResource extends CollectionResource {
       representation.getString(RequestProperties.PROXY_USER_ID)));
   }
 
-  private CompletableFuture<HttpResult<RequestAndRelatedRecords>> replaceRequest(
-    RequestAndRelatedRecords requestAndRelatedRecords,
-    RequestRepository requestRepository,
-    UpdateRequestQueue updateRequestQueue,
-    ProxyRelationshipValidator proxyRelationshipValidator,
-    ClosedRequestValidator closedRequestValidator) {
-
-    return closedRequestValidator.refuseWhenAlreadyClosed(requestAndRelatedRecords)
-      .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
-      .thenApply(r -> r.next(this::removeRequestQueuePositionWhenCancelled))
-      .thenComposeAsync(r -> r.after(requestRepository::update))
-      .thenComposeAsync(r -> r.after(updateRequestQueue::onCancellation));
-  }
 }

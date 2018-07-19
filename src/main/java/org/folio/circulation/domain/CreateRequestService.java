@@ -27,9 +27,9 @@ public class CreateRequestService {
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     return setRequestQueuePosition(requestAndRelatedRecords)
-      .thenComposeAsync(r -> r.after(this.updateItem::onRequestCreation))
-      .thenComposeAsync(r -> r.after(this.updateLoanActionHistory::onRequestCreation))
-      .thenComposeAsync(r -> r.after(this.requestRepository::create));
+      .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
+      .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreation))
+      .thenComposeAsync(r -> r.after(requestRepository::create));
   }
 
   private static CompletableFuture<HttpResult<RequestAndRelatedRecords>> setRequestQueuePosition(
