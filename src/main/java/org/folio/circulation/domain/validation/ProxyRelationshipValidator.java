@@ -3,7 +3,10 @@ package org.folio.circulation.domain.validation;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.ProxyRelationship;
 import org.folio.circulation.domain.UserRelatedRecord;
-import org.folio.circulation.support.*;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,6 +16,9 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
+
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.HttpResult.succeeded;
 
 public class ProxyRelationshipValidator {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -31,31 +37,27 @@ public class ProxyRelationshipValidator {
   public <T extends UserRelatedRecord> CompletableFuture<HttpResult<T>> refuseWhenInvalid(
     T userRelatedRecord) {
 
-    //TODO: Improve mapping back null result to records
-    return refuseWhenInvalid(
-      userRelatedRecord.getProxyUserId(),
-      userRelatedRecord.getUserId())
-      .thenApply(result -> result.map(v -> userRelatedRecord));
-  }
-
-  private CompletableFuture<HttpResult<Void>> refuseWhenInvalid(
-    String proxyUserId,
-    String userId) {
-
     //No need to validate as not proxied activity
-    if (proxyUserId == null) {
-      return CompletableFuture.completedFuture(HttpResult.succeeded(null));
+    if (userRelatedRecord.getProxyUserId() == null) {
+      return completedFuture(succeeded(userRelatedRecord));
     }
 
-    String proxyRelationshipQuery = proxyRelationshipQuery(proxyUserId, userId);
+    return hasActiveProxyRelationship(userRelatedRecord)
+        .thenApply(r -> r.next(found -> found
+          ? succeeded(userRelatedRecord)
+          : HttpResult.failed(invalidRelationshipErrorSupplier.get())));
+  }
+
+  private CompletableFuture<HttpResult<Boolean>> hasActiveProxyRelationship(
+    UserRelatedRecord userRelatedRecord) {
+
+    String proxyRelationshipQuery = proxyRelationshipQuery(
+      userRelatedRecord.getProxyUserId(), userRelatedRecord.getUserId());
 
     return proxyRelationshipsClient.getMany(proxyRelationshipQuery, 1000, 0)
       .thenApply(response -> MultipleRecords.from(response, ProxyRelationship::new, "proxiesFor")
         .map(MultipleRecords::getRecords)
-        .map(relationships -> relationships.stream().anyMatch(ProxyRelationship::isActive))
-        .next(found -> found
-          ? HttpResult.succeeded(null)
-          : HttpResult.failed(invalidRelationshipErrorSupplier.get())));
+        .map(relationships -> relationships.stream().anyMatch(ProxyRelationship::isActive)));
   }
 
   private String proxyRelationshipQuery(String proxyUserId, String sponsorUserId) {
