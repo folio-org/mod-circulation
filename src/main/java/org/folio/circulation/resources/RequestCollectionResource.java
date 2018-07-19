@@ -31,21 +31,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     JsonObject representation = routingContext.getBodyAsJson();
 
-    RequestStatus status = RequestStatus.from(representation);
-
     HttpServerResponse response = routingContext.response();
-    if(!status.isValid()) {
-      ClientErrorResponse.badRequest(response,
-        RequestStatus.invalidStatusErrorMessage());
-      return;
-    }
-    else {
-      status.writeTo(representation);
-    }
-
-    removeRelatedRecordInformation(representation);
-
-    final Request request = Request.from(representation);
 
     final Clients clients = Clients.create(context, client);
 
@@ -59,11 +45,27 @@ public class RequestCollectionResource extends CollectionResource {
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> failure(
       "proxyUserId is not valid", RequestProperties.PROXY_USER_ID,
-      request.getProxyUserId()));
+      representation.getString(RequestProperties.PROXY_USER_ID)));
 
     final RequestRepresentation requestRepresentation = new RequestRepresentation();
 
-    completedFuture(succeeded(new RequestAndRelatedRecords(request)))
+    RequestStatus status = RequestStatus.from(representation);
+
+    if(!status.isValid()) {
+      ClientErrorResponse.badRequest(response,
+        RequestStatus.invalidStatusErrorMessage());
+      return;
+    }
+    else {
+      status.writeTo(representation);
+    }
+
+    final Request request = Request.from(representation);
+
+    completedFuture(succeeded(representation))
+      .thenApply(r -> r.map(this::removeRelatedRecordInformation))
+      .thenApply(r -> r.map(Request::from))
+      .thenApply(r -> r.map(RequestAndRelatedRecords::new))
       .thenCombineAsync(itemRepository.fetchFor(request), this::addItem)
       .thenApply(this::refuseWhenItemDoesNotExist)
       .thenApply(this::refuseWhenItemIsNotValid)
@@ -174,10 +176,12 @@ public class RequestCollectionResource extends CollectionResource {
       .thenAccept(r -> r.writeTo(routingContext.response()));
   }
 
-  private void removeRelatedRecordInformation(JsonObject request) {
+  private JsonObject removeRelatedRecordInformation(JsonObject request) {
     request.remove("item");
     request.remove("requester");
     request.remove("proxy");
+
+    return request;
   }
 
   private HttpResult<RequestAndRelatedRecords> addItem(
