@@ -1,7 +1,6 @@
 package org.folio.circulation.resources;
 
 import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.domain.*;
@@ -9,7 +8,6 @@ import org.folio.circulation.domain.representations.RequestProperties;
 import org.folio.circulation.domain.validation.ClosedRequestValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.support.*;
-import org.folio.circulation.support.http.server.ClientErrorResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
 import java.util.concurrent.CompletableFuture;
@@ -31,8 +29,6 @@ public class RequestCollectionResource extends CollectionResource {
 
     JsonObject representation = routingContext.getBodyAsJson();
 
-    HttpServerResponse response = routingContext.response();
-
     final Clients clients = Clients.create(context, client);
 
     final ItemRepository itemRepository = new ItemRepository(clients, true, false);
@@ -49,20 +45,10 @@ public class RequestCollectionResource extends CollectionResource {
 
     final RequestRepresentation requestRepresentation = new RequestRepresentation();
 
-    RequestStatus status = RequestStatus.from(representation);
-
-    if(!status.isValid()) {
-      ClientErrorResponse.badRequest(response,
-        RequestStatus.invalidStatusErrorMessage());
-      return;
-    }
-    else {
-      status.writeTo(representation);
-    }
-
     final Request request = Request.from(representation);
 
     completedFuture(succeeded(representation))
+      .thenApply(r -> r.next(this::validateStatus))
       .thenApply(r -> r.map(this::removeRelatedRecordInformation))
       .thenApply(r -> r.map(Request::from))
       .thenApply(r -> r.map(RequestAndRelatedRecords::new))
@@ -294,5 +280,20 @@ public class RequestCollectionResource extends CollectionResource {
     }
 
     return succeeded(requestAndRelatedRecords);
+  }
+
+  private HttpResult<JsonObject> validateStatus(JsonObject representation) {
+
+    RequestStatus status = RequestStatus.from(representation);
+
+    if(!status.isValid()) {
+      //TODO: Replace this with validation error
+      // (but don't want to change behaviour at the moment)
+      return failed(new BadRequestFailure(RequestStatus.invalidStatusErrorMessage()));
+    }
+    else {
+      status.writeTo(representation);
+      return succeeded(representation);
+    }
   }
 }
