@@ -22,7 +22,7 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
     return withItem(request.getItem().updateItem(updatedItem));
   }
 
-  RequestAndRelatedRecords withRequest(Request newRequest) {
+  public RequestAndRelatedRecords withRequest(Request newRequest) {
     return new RequestAndRelatedRecords(newRequest.withItem(request.getItem()),
       this.requestQueue
     );

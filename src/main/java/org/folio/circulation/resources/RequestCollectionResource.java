@@ -87,7 +87,7 @@ public class RequestCollectionResource extends CollectionResource {
         requestQueueRepository, userRepository, proxyRelationshipValidator);
 
     requestFromRepresentationService.getRequestFrom(representation)
-      .thenComposeAsync(r -> r.when(requestRepository::exists,
+      .thenComposeAsync(r -> r.afterWhen(requestRepository::exists,
         updateRequestService::replaceRequest,
         createRequestService::createRequest))
       .thenApply(NoContentHttpResult::from)

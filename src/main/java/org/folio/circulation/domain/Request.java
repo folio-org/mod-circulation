@@ -50,7 +50,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
       || StringUtils.equals(status, OPEN_NOT_YET_FILLED);
   }
 
-  public boolean isCancelled() {
+  boolean isCancelled() {
     return StringUtils.equals(getStatus(), CLOSED_CANCELLED);
   }
 
@@ -130,7 +130,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return proxy;
   }
 
-  public Request changePosition(Integer newPosition) {
+  Request changePosition(Integer newPosition) {
     if(!Objects.equals(getPosition(), newPosition)) {
       write(representation, RequestProperties.POSITION, newPosition);
       changedPosition = true;

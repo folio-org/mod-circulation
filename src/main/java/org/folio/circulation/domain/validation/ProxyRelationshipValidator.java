@@ -18,6 +18,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
 
 public class ProxyRelationshipValidator {
@@ -42,10 +43,11 @@ public class ProxyRelationshipValidator {
       return completedFuture(succeeded(userRelatedRecord));
     }
 
-    return hasActiveProxyRelationship(userRelatedRecord)
-        .thenApply(r -> r.next(found -> found
-          ? succeeded(userRelatedRecord)
-          : HttpResult.failed(invalidRelationshipErrorSupplier.get())));
+    //TODO: Introduce failAfter to simplify this
+    return succeeded(userRelatedRecord).afterWhen(
+      v -> hasActiveProxyRelationship(userRelatedRecord),
+        v -> completedFuture(succeeded(userRelatedRecord)),
+        v -> completedFuture(failed(invalidRelationshipErrorSupplier.get())));
   }
 
   private CompletableFuture<HttpResult<Boolean>> hasActiveProxyRelationship(

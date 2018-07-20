@@ -5,6 +5,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public interface HttpResult<T> {
+
   /**
    * Combines two results together, if both succeed.
    * Otherwise, returns either failure, first result takes precedence
@@ -64,7 +65,7 @@ public interface HttpResult<T> {
    * @param whenFalse executed when condition evaluates to false
    * @return Result of whenTrue or whenFalse, unless previous result failed
    */
-  default CompletableFuture<HttpResult<T>> when(
+  default CompletableFuture<HttpResult<T>> afterWhen(
     Function<T, CompletableFuture<HttpResult<Boolean>>> condition,
     Function<T, CompletableFuture<HttpResult<T>>> whenTrue,
     Function<T, CompletableFuture<HttpResult<T>>> whenFalse) {
@@ -78,6 +79,72 @@ public interface HttpResult<T> {
             return whenFalse.apply(value);
           }
         })));
+  }
+
+  /**
+   * Allows branching between two paths based upon the outcome of a condition
+   *
+   * Executes the whenTrue function when condition evaluates to true
+   * Executes the whenFalse function when condition evaluates to false
+   * Executes neither if the condition evaluation fails
+   * Forwards on failure if previous result failed
+   *
+   * @param condition on which to branch upon
+   * @param whenTrue executed when condition evaluates to true
+   * @param whenFalse executed when condition evaluates to false
+   * @return Result of whenTrue or whenFalse, unless previous result failed
+   */
+  default HttpResult<T> nextWhen(
+    Function<T, HttpResult<Boolean>> condition,
+    Function<T, HttpResult<T>> whenTrue,
+    Function<T, HttpResult<T>> whenFalse) {
+
+    return next(value ->
+      condition.apply(value).next(result -> result
+          ? whenTrue.apply(value)
+          : whenFalse.apply(value)));
+  }
+
+  /**
+   * Fail a result when a condition evaluates to true
+   *
+   * Responds with the result of the failure function when condition evaluates to true
+   * Responds with success of the prior result when condition evaluates to false
+   * Executes neither if the condition evaluation fails
+   * Forwards on failure if previous result failed
+   *
+   * @param condition on which to decide upon
+   * @param failure executed to create failure reason when condition evaluates to true
+   * @return success when condition is false, failure otherwise
+   */
+  default HttpResult<T> failWhen(
+    Function<T, HttpResult<Boolean>> condition,
+    Function<T, HttpFailure> failure) {
+
+    return nextWhen(condition,
+      value -> failed(failure.apply(value)),
+      HttpResult::succeeded);
+  }
+
+  /**
+   * Fail a result when a condition evaluates to true
+   *
+   * Responds with the result of the failure function when condition evaluates to true
+   * Responds with success of the prior result when condition evaluates to false
+   * Executes neither if the condition evaluation fails
+   * Forwards on failure if previous result failed
+   *
+   * @param condition on which to decide upon
+   * @param failure executed to create failure reason when condition evaluates to true
+   * @return success when condition is false, failure otherwise
+   */
+  default HttpResult<T> failWhen(
+    HttpResult<Boolean> condition,
+    HttpFailure failure) {
+
+    return nextWhen((v) -> condition,
+      value -> failed(failure),
+      HttpResult::succeeded);
   }
 
   boolean failed();
