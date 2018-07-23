@@ -28,6 +28,7 @@ traits:
 
 resourceTypes:
   - collection: !include raml-util/rtypes/collection.raml
+  - collection-get: !include raml-util/rtypes/collection-get.raml
   - collection-item: !include raml-util/rtypes/item-collection.raml
 
 /circulation:
@@ -318,3 +319,10 @@ resourceTypes:
         responses:
           501:
             description: "Not implemented yet"
+    /queue:
+      /{itemId}:
+        type:
+          collection-get:
+            exampleCollection: !include examples/request-queue.json
+            schemaCollection: requests
+        get:

@@ -1,6 +1,8 @@
 package api.requests.scenarios;
 
 import api.support.APITests;
+import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
@@ -9,10 +11,14 @@ import org.junit.Test;
 
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 //TODO: Maybe move these tests to scenarios which better describe the situation
@@ -189,5 +195,62 @@ public class RequestQueueTests extends APITests {
     assertThat(requestByRebecca.getJson().getInteger("position"), is(3));
 
     retainsStoredSummaries(requestByRebecca);
+  }
+
+  @Test
+  public void canFetchTheRequestQueueForAnItem()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource james = usersFixture.james();
+    IndividualResource jessica = usersFixture.jessica();
+    IndividualResource steve = usersFixture.steve();
+    IndividualResource charlotte = usersFixture.charlotte();
+    IndividualResource rebecca = usersFixture.rebecca();
+
+    loansFixture.checkOut(smallAngryPlanet, james);
+
+    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+
+    IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
+      smallAngryPlanet, steve, new DateTime(2017, 10, 27, 11, 54, 37, DateTimeZone.UTC));
+
+    IndividualResource requestByCharlotte = requestsFixture.placeHoldShelfRequest(
+      smallAngryPlanet, charlotte, new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC));
+
+    IndividualResource requestByRebecca = requestsFixture.placeHoldShelfRequest(
+      smallAngryPlanet, rebecca, new DateTime(2018, 2, 4, 7, 4, 53, DateTimeZone.UTC));
+
+    MultipleRecords<JsonObject> queue = requestsFixture.getQueueFor(smallAngryPlanet);
+
+    //Correct size
+    assertThat(queue.getTotalRecords(), is(4));
+    assertThat(queue.getRecords().size(), is(4));
+
+    final List<Integer> positions = queue.getRecords().stream()
+      .map(request -> request.getInteger("position"))
+      .collect(Collectors.toList());
+
+    //In position order
+    assertThat(positions, contains(1, 2, 3, 4));
+
+    //Correct requests
+    final List<UUID> ids = queue.getRecords().stream()
+      .map(request -> request.getString("id"))
+      .map(UUID::fromString)
+      .collect(Collectors.toList());
+
+    //In position order
+    assertThat(ids, contains(
+      requestByJessica.getId(),
+      requestBySteve.getId(),
+      requestByCharlotte.getId(),
+      requestByRebecca.getId()));
+
+    //TODO: Check are full requests, with extended info
   }
 }

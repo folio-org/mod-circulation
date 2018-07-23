@@ -3,6 +3,7 @@ package api.support.http;
 import api.APITestSuite;
 
 import java.net.URL;
+import java.util.UUID;
 
 public class InterfaceUrls {
   static URL materialTypesStorageUrl(String subPath) {
@@ -83,6 +84,10 @@ public class InterfaceUrls {
 
   public static URL requestsUrl(String subPath) {
     return APITestSuite.circulationModuleUrl("/circulation/requests" + subPath);
+  }
+
+  public static URL requestQueueUrl(UUID itemId) {
+    return requestsUrl(String.format("/queue/%s", itemId));
   }
 
   public static URL checkOutByBarcodeUrl() {

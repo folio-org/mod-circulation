@@ -1,16 +1,10 @@
 package api.support.fixtures;
 
-import api.APITestSuite;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.builders.RenewByBarcodeRequestBuilder;
 import api.support.builders.RenewByIdRequestBuilder;
 import api.support.http.ResourceClient;
-import io.restassured.RestAssured;
-import io.restassured.builder.RequestSpecBuilder;
-import io.restassured.config.HttpClientConfig;
-import io.restassured.specification.RequestSpecification;
-import io.vertx.core.http.CaseInsensitiveHeaders;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
@@ -19,17 +13,16 @@ import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
 
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static api.support.RestAssuredClient.from;
+import static api.support.RestAssuredClient.post;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.InterfaceUrls.*;
-import static io.restassured.RestAssured.given;
-import static org.folio.circulation.support.http.OkapiHeader.*;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -128,6 +121,7 @@ public class LoansFixture {
 
     CompletableFuture<Response> createCompleted = new CompletableFuture<>();
 
+    //TODO: Remplace with attemptCreate
     client.post(loansUrl(), new LoanBuilder()
         .open()
         .withItemId(item.getId())
@@ -194,38 +188,6 @@ public class LoansFixture {
       expectedStatusCode, "check-out-by-barcode-request"));
   }
 
-  private RequestSpecification defaultHeaders(String requestId) {
-    return new RequestSpecBuilder()
-      .addHeader(OKAPI_URL, APITestSuite.okapiUrl().toString())
-      .addHeader(TENANT, APITestSuite.TENANT_ID)
-      .addHeader(TOKEN, APITestSuite.TOKEN)
-      .addHeader(USER_ID, APITestSuite.USER_ID)
-      .addHeader(REQUEST_ID, requestId)
-      .setAccept("application/json, text/plain")
-      .setContentType("application/json")
-      .build();
-  }
-
-  private RequestSpecification timeoutConfig() {
-    return new RequestSpecBuilder()
-      .setConfig(RestAssured.config()
-        .httpClient(HttpClientConfig.httpClientConfig()
-          .setParam("http.connection.timeout", 5000)
-          .setParam("http.socket.timeout", 5000))).build();
-  }
-
-  private static Response from(io.restassured.response.Response response) {
-    final CaseInsensitiveHeaders mappedHeaders = new CaseInsensitiveHeaders();
-
-    response.headers().iterator().forEachRemaining(h -> {
-      mappedHeaders.add(h.getName(), h.getValue());
-    });
-
-    return new Response(response.statusCode(), response.body().print(),
-      response.contentType(),
-      mappedHeaders);
-  }
-
   public IndividualResource renewLoan(IndividualResource item, IndividualResource user) {
     JsonObject request = new RenewByBarcodeRequestBuilder()
       .forItem(item)
@@ -277,21 +239,4 @@ public class LoansFixture {
       422, "renewal-by-id-request"));
   }
 
-  private io.restassured.response.Response post(
-    JsonObject representation,
-    URL url,
-    int expectedStatusCode,
-    String requestId) {
-
-    return given()
-      .log().all()
-      .spec(defaultHeaders(requestId))
-      .spec(timeoutConfig())
-      .body(representation.encodePrettily())
-      .when().post(url)
-      .then()
-      .log().all()
-      .statusCode(expectedStatusCode)
-      .extract().response();
-  }
 }

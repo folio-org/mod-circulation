@@ -102,4 +102,9 @@ public class RequestQueue {
       .filter(Request::hasChangedPosition)
       .collect(Collectors.toList());
   }
+
+  //TODO: Encapsulate this better
+  public Collection<Request> getRequests() {
+    return requests;
+  }
 }

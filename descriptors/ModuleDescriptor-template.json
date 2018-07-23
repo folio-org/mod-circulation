@@ -346,7 +346,12 @@
             "circulation.requests.item.get"
           ],
           "modulePermissions": [
-            "circulation-storage.requests.item.get"
+            "circulation-storage.requests.item.get",
+            "inventory-storage.items.collection.get",
+            "inventory-storage.holdings.collection.get",
+            "inventory-storage.instances.collection.get",
+            "users.item.get",
+            "users.collection.get"
           ]
         },
         {
@@ -384,6 +389,23 @@
           ],
           "modulePermissions": [
             "circulation-storage.requests.item.delete"
+          ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/requests/queue/{id}",
+          "permissionsRequired": [
+            "circulation.requests.queue.collection.get"
+          ],
+          "modulePermissions": [
+            "circulation-storage.requests.item.get",
+            "inventory-storage.items.collection.get",
+            "inventory-storage.holdings.collection.get",
+            "inventory-storage.instances.collection.get",
+            "users.item.get",
+            "users.collection.get"
           ]
         }
       ]
@@ -532,6 +554,11 @@
       "description": "delete individual request"
     },
     {
+      "permissionName": "circulation.requests.queue.collection.get",
+      "displayName": "circulation - request queue for an item",
+      "description": "get request queue for an item"
+    },
+    {
       "permissionName": "circulation.all",
       "displayName": "circulation - all permissions",
       "description": "Entire set of permissions needed to use the circulation",
@@ -554,7 +581,8 @@
         "circulation.requests.item.post",
         "circulation.requests.item.put",
         "circulation.requests.item.delete",
-        "circulation.requests.collection.delete"
+        "circulation.requests.collection.delete",
+        "circulation.requests.queue.collection.get"
       ]
     }
   ],
