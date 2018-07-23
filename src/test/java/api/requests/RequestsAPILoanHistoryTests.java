@@ -40,8 +40,8 @@ public class RequestsAPILoanHistoryTests extends APITests {
     assertThat("action snapshot in storage is not hold requested",
       loanFromStorage.getString("action"), is("holdrequested"));
 
-    assertThat("item status snapshot in storage is not checked out - held",
-      loanFromStorage.getString("itemStatus"), is("Checked out - Held"));
+    assertThat("item status snapshot in storage is not checked out",
+      loanFromStorage.getString("itemStatus"), is("Checked out"));
   }
 
   @Test
@@ -65,8 +65,8 @@ public class RequestsAPILoanHistoryTests extends APITests {
 
     JsonObject loanFromStorage = loansStorageClient.getById(loanId).getJson();
 
-    assertThat("item status snapshot in storage is not checked out - recalled",
-      loanFromStorage.getString("itemStatus"), is("Checked out - Recalled"));
+    assertThat("item status snapshot in storage is not checked out",
+      loanFromStorage.getString("itemStatus"), is("Checked out"));
   }
 
   @Test

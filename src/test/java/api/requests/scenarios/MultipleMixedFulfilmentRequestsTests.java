@@ -12,7 +12,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import static api.support.builders.ItemBuilder.AWAITING_PICKUP;
-import static api.support.builders.ItemBuilder.CHECKED_OUT_HELD;
+import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.builders.RequestBuilder.*;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.ValidationErrorMatchers.*;
@@ -106,7 +106,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT_HELD));
+    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
   }
 
   //TODO: Add second delivery request in between fulfilled and next request

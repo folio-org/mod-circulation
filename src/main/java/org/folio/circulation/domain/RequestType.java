@@ -19,15 +19,13 @@ public class RequestType {
     this.value = value;
   }
 
-  public boolean canCreateRequestForItem(Item item) {
+  boolean canCreateRequestForItem(Item item) {
     String status = item.getStatus();
 
     switch (value) {
       case HOLD:
       case RECALL:
-        return StringUtils.equalsIgnoreCase(status, CHECKED_OUT) ||
-          StringUtils.equalsIgnoreCase(status, CHECKED_OUT_HELD) ||
-            StringUtils.equalsIgnoreCase(status, CHECKED_OUT_RECALLED);
+        return StringUtils.equalsIgnoreCase(status, CHECKED_OUT);
 
       case PAGE:
       default:
@@ -38,11 +36,7 @@ public class RequestType {
   String toCheckedOutItemStatus() {
     switch(value) {
       case RequestType.HOLD:
-        return CHECKED_OUT_HELD;
-
       case RequestType.RECALL:
-        return CHECKED_OUT_RECALLED;
-
       case RequestType.PAGE:
         return CHECKED_OUT;
 

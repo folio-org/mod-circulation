@@ -46,7 +46,7 @@ public class RequestsAPIStatusChangeTests extends APITests {
     Response changedItem = itemsClient.getById(itemId);
 
     assertThat(changedItem.getJson().getJsonObject("status").getString("name"),
-      is("Checked out - Held"));
+      is("Checked out"));
   }
 
   @Test
@@ -71,7 +71,7 @@ public class RequestsAPIStatusChangeTests extends APITests {
     Response changedItem = itemsClient.getById(itemId);
 
     assertThat(changedItem.getJson().getJsonObject("status").getString("name"),
-      is("Checked out - Recalled"));
+      is("Checked out"));
   }
 
   @Test
@@ -159,7 +159,7 @@ public class RequestsAPIStatusChangeTests extends APITests {
     Response changedItem = itemsClient.getById(itemId);
 
     assertThat(changedItem.getJson().getJsonObject("status").getString("name"),
-      is("Checked out - Recalled"));
+      is("Checked out"));
   }
 
   @Test
@@ -225,7 +225,7 @@ public class RequestsAPIStatusChangeTests extends APITests {
     Response changedItem = itemsClient.getById(itemId);
 
     assertThat(changedItem.getJson().getJsonObject("status").getString("name"),
-      is("Checked out - Recalled"));
+      is("Checked out"));
   }
 
   //This might change when page requests are analysed further
@@ -278,6 +278,6 @@ public class RequestsAPIStatusChangeTests extends APITests {
     Response changedItem = itemsClient.getById(itemId);
 
     assertThat(changedItem.getJson().getJsonObject("status").getString("name"),
-      is("Checked out - Recalled"));
+      is("Checked out"));
   }
 }

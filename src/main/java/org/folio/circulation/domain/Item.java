@@ -40,9 +40,7 @@ public class Item {
   public boolean isCheckedOut() {
     String status = getStatus();
 
-    return status.equals(ItemStatus.CHECKED_OUT)
-      || status.equals(ItemStatus.CHECKED_OUT_HELD)
-      || status.equals(ItemStatus.CHECKED_OUT_RECALLED);
+    return status.equals(ItemStatus.CHECKED_OUT);
   }
 
   boolean isNotSameStatus(String prospectiveStatus) {

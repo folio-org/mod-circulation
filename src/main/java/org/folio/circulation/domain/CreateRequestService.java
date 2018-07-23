@@ -68,8 +68,7 @@ public class CreateRequestService {
 
     if (!requestType.canCreateRequestForItem(request.getItem())) {
       return failed(failure(
-        String.format("Item is not %s, %s or %s", CHECKED_OUT,
-          CHECKED_OUT_HELD, CHECKED_OUT_RECALLED),
+        String.format("Item is not %s", CHECKED_OUT),
         "itemId", request.getItemId()
       ));
     }
