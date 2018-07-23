@@ -6,6 +6,7 @@ import org.folio.circulation.support.http.client.Response;
 
 import java.util.concurrent.CompletableFuture;
 
+import static org.folio.circulation.domain.Request.from;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
 
@@ -89,22 +90,18 @@ public class RequestRepository {
 
   //TODO: May need to fetch updated representation of request
   public CompletableFuture<HttpResult<Request>> update(Request request) {
-    CompletableFuture<HttpResult<Request>> requestUpdated =
-      new CompletableFuture<>();
-
     final JsonObject representation = new RequestRepresentation()
       .storedRequest(request);
 
-    requestsStorageClient.put(request.getId(), representation, response -> {
-      if(response.getStatusCode() == 204) {
-        requestUpdated.complete(succeeded(request));
-      }
-      else {
-        requestUpdated.complete(failed(new ForwardOnFailure(response)));
-      }
+    return requestsStorageClient.put(request.getId(), representation)
+      .thenApply(response -> {
+        if(response.getStatusCode() == 204) {
+          return succeeded(request);
+        }
+        else {
+          return failed(new ForwardOnFailure(response));
+        }
     });
-
-    return requestUpdated;
   }
 
   public CompletableFuture<HttpResult<RequestAndRelatedRecords>> update(
@@ -117,23 +114,19 @@ public class RequestRepository {
   public CompletableFuture<HttpResult<RequestAndRelatedRecords>> create(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    CompletableFuture<HttpResult<RequestAndRelatedRecords>> onCreated = new CompletableFuture<>();
-
     final Request request = requestAndRelatedRecords.getRequest();
 
     JsonObject representation = new RequestRepresentation()
       .storedRequest(request);
 
-    requestsStorageClient.post(representation, response -> {
-      if (response.getStatusCode() == 201) {
-        onCreated.complete(succeeded(
-          requestAndRelatedRecords.withRequest(Request.from(response.getJson()))));
-      } else {
-        onCreated.complete(failed(new ForwardOnFailure(response)));
-      }
+    return requestsStorageClient.post(representation)
+      .thenApply(response -> {
+        if (response.getStatusCode() == 201) {
+          return succeeded(requestAndRelatedRecords.withRequest(from(response.getJson())));
+        } else {
+          return failed(new ForwardOnFailure(response));
+        }
     });
-
-    return onCreated;
   }
 
   public CompletableFuture<HttpResult<RequestAndRelatedRecords>> delete(
@@ -144,13 +137,14 @@ public class RequestRepository {
   }
 
   public CompletableFuture<HttpResult<Request>> delete(Request request) {
-    return requestsStorageClient.delete(request.getId()).thenApply(response -> {
-      if(response.getStatusCode() == 204) {
-        return succeeded(request);
-      }
-      else {
-        return failed(new ForwardOnFailure(response));
-      }
+    return requestsStorageClient.delete(request.getId())
+      .thenApply(response -> {
+        if(response.getStatusCode() == 204) {
+          return succeeded(request);
+        }
+        else {
+          return failed(new ForwardOnFailure(response));
+        }
     });
   }
 

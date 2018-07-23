@@ -31,6 +31,18 @@ public class CollectionResourceClient {
     this.collectionRoot = collectionRoot;
   }
 
+  public CompletableFuture<Response> post(
+    JsonObject resourceRepresentation) {
+
+    CompletableFuture<Response> future = new CompletableFuture<>();
+
+    client.post(collectionRoot,
+      resourceRepresentation,
+      responseConversationHandler(future::complete));
+
+    return future;
+  }
+
   public void post(
     JsonObject resourceRepresentation,
     Consumer<Response> responseHandler) {
