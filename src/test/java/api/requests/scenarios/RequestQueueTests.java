@@ -16,7 +16,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 //TODO: Maybe move these tests to scenarios which better describe the situation
-public class RequestQueuePositionTests extends APITests {
+public class RequestQueueTests extends APITests {
   @Test
   public void cancelledRequestShouldBeRemovedFromQueue()
     throws InterruptedException,
