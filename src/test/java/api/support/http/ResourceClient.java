@@ -354,6 +354,20 @@ public class ResourceClient {
     return new IndividualResource(response);
   }
 
+  public Response attemptGet(IndividualResource resource)
+    throws MalformedURLException,
+      InterruptedException,
+      ExecutionException,
+      TimeoutException {
+
+    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
+
+    client.get(urlMaker.combine(String.format("/%s", resource.getId())),
+      ResponseHandler.any(getCompleted));
+
+    return getCompleted.get(5, TimeUnit.SECONDS);
+  }
+
   public void delete(UUID id)
     throws MalformedURLException,
     InterruptedException,
@@ -369,7 +383,16 @@ public class ResourceClient {
 
     assertThat(String.format(
       "Failed to delete %s %s: %s", resourceName, id, response.getBody()),
-      response.getStatusCode(), is(204));
+      response.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
+  }
+
+  public void delete(IndividualResource resource)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    delete(resource.getId());
   }
 
   public void deleteAll()

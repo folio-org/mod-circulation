@@ -87,8 +87,8 @@ public class RequestRepository {
       .fetch(id);
   }
 
+  //TODO: May need to fetch updated representation of request
   public CompletableFuture<HttpResult<Request>> update(Request request) {
-
     CompletableFuture<HttpResult<Request>> requestUpdated =
       new CompletableFuture<>();
 
@@ -134,6 +134,24 @@ public class RequestRepository {
     });
 
     return onCreated;
+  }
+
+  public CompletableFuture<HttpResult<RequestAndRelatedRecords>> delete(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    return delete(requestAndRelatedRecords.getRequest())
+      .thenApply(r -> r.map(requestAndRelatedRecords::withRequest));
+  }
+
+  public CompletableFuture<HttpResult<Request>> delete(Request request) {
+    return requestsStorageClient.delete(request.getId()).thenApply(response -> {
+      if(response.getStatusCode() == 204) {
+        return succeeded(request);
+      }
+      else {
+        return failed(new ForwardOnFailure(response));
+      }
+    });
   }
 
   //TODO: Check if need to request requester

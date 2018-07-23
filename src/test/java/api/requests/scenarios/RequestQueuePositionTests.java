@@ -2,10 +2,12 @@ package api.requests.scenarios;
 
 import api.support.APITests;
 import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -134,5 +136,58 @@ public class RequestQueuePositionTests extends APITests {
 
     assertThat("Updated request in queue should retain stored requester summary",
       request.getJson().containsKey("requester"), is(true));
+  }
+
+  @Test
+  public void deletedRequestShouldBeRemovedFromQueue()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource james = usersFixture.james();
+    IndividualResource jessica = usersFixture.jessica();
+    IndividualResource steve = usersFixture.steve();
+    IndividualResource charlotte = usersFixture.charlotte();
+    IndividualResource rebecca = usersFixture.rebecca();
+
+    loansFixture.checkOut(smallAngryPlanet, james);
+
+    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+
+    IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
+      smallAngryPlanet, steve, new DateTime(2017, 10, 27, 11, 54, 37, DateTimeZone.UTC));
+
+    IndividualResource requestByCharlotte = requestsFixture.placeHoldShelfRequest(
+      smallAngryPlanet, charlotte, new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC));
+
+    IndividualResource requestByRebecca = requestsFixture.placeHoldShelfRequest(
+      smallAngryPlanet, rebecca, new DateTime(2018, 2, 4, 7, 4, 53, DateTimeZone.UTC));
+
+    requestsClient.delete(requestByCharlotte);
+
+    Response getResponse = requestsClient.attemptGet(requestByCharlotte);
+
+    assertThat(getResponse.getStatusCode(), is(HttpURLConnection.HTTP_NOT_FOUND));
+
+    requestByJessica = requestsClient.get(requestByJessica);
+
+    assertThat(requestByJessica.getJson().getInteger("position"), is(1));
+
+    retainsStoredSummaries(requestByJessica);
+
+    requestBySteve = requestsClient.get(requestBySteve);
+
+    assertThat(requestBySteve.getJson().getInteger("position"), is(2));
+
+    retainsStoredSummaries(requestBySteve);
+
+    requestByRebecca = requestsClient.get(requestByRebecca);
+
+    assertThat(requestByRebecca.getJson().getInteger("position"), is(3));
+
+    retainsStoredSummaries(requestByRebecca);
   }
 }

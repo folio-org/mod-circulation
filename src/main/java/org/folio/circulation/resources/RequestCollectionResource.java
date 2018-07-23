@@ -115,7 +115,13 @@ public class RequestCollectionResource extends CollectionResource {
 
     String id = routingContext.request().getParam("id");
 
-    clients.requestsStorage().delete(id)
+    final RequestRepository requestRepository = RequestRepository.using(clients);
+    final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(
+      RequestQueueRepository.using(clients), requestRepository);
+
+    requestRepository.getById(id)
+      .thenComposeAsync(r -> r.after(requestRepository::delete))
+      .thenComposeAsync(r -> r.after(updateRequestQueue::onDeletion))
       .thenApply(NoContentHttpResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
   }

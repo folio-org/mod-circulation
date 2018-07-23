@@ -12,7 +12,7 @@ public class UpdateRequestQueue {
   private final RequestQueueRepository requestQueueRepository;
   private final RequestRepository requestRepository;
 
-  private UpdateRequestQueue(
+  public UpdateRequestQueue(
     RequestQueueRepository requestQueueRepository,
     RequestRepository requestRepository) {
 
@@ -75,16 +75,27 @@ public class UpdateRequestQueue {
     }
   }
 
-  public CompletableFuture<HttpResult<RequestAndRelatedRecords>> onCancellation(
+  CompletableFuture<HttpResult<RequestAndRelatedRecords>> onCancellation(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     if(requestAndRelatedRecords.getRequest().isCancelled()) {
       return requestQueueRepository.updateRequestsWithChangedPositions(
         requestAndRelatedRecords.getRequestQueue())
-        .thenApply(result -> result.map(requestAndRelatedRecords::withRequestQueue));
+        .thenApply(r -> r.map(requestAndRelatedRecords::withRequestQueue));
     }
     else {
       return completedFuture(succeeded(requestAndRelatedRecords));
     }
+  }
+
+  public CompletableFuture<HttpResult<Request>> onDeletion(Request request) {
+    return requestQueueRepository.get(request.getItemId())
+      .thenApply(r -> r.map(requestQueue -> {
+        requestQueue.remove(request);
+        return requestQueue;
+      }))
+      .thenComposeAsync(r -> r.after(
+        requestQueueRepository::updateRequestsWithChangedPositions))
+      .thenApply(r -> r.map(requestQueue -> request));
   }
 }

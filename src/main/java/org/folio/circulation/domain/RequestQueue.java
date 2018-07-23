@@ -56,7 +56,7 @@ public class RequestQueue {
       .collect(Collectors.toList());
   }
 
-  public Integer nextAvailablePosition() {
+  Integer nextAvailablePosition() {
     return highestPosition() + 1;
   }
 
