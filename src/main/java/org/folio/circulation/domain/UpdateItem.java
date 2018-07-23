@@ -10,6 +10,8 @@ import java.util.concurrent.CompletableFuture;
 
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
+import static org.folio.circulation.support.HttpResult.failed;
+import static org.folio.circulation.support.HttpResult.succeeded;
 
 public class UpdateItem {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -54,7 +56,7 @@ public class UpdateItem {
     catch (Exception ex) {
       logException(ex);
       return CompletableFuture.completedFuture(
-        HttpResult.failed(new ServerErrorFailure(ex)));
+        failed(new ServerErrorFailure(ex)));
     }
   }
 
@@ -79,7 +81,7 @@ public class UpdateItem {
     catch (Exception ex) {
       logException(ex);
       return CompletableFuture.completedFuture(
-        HttpResult.failed(new ServerErrorFailure(ex)));
+        failed(new ServerErrorFailure(ex)));
     }
   }
 
@@ -108,7 +110,7 @@ public class UpdateItem {
     catch (Exception ex) {
       logException(ex);
       return CompletableFuture.completedFuture(
-        HttpResult.failed(new ServerErrorFailure(ex)));
+        failed(new ServerErrorFailure(ex)));
     }
   }
 
@@ -116,26 +118,21 @@ public class UpdateItem {
     Item item,
     String newStatus) {
 
-    CompletableFuture<HttpResult<JsonObject>> itemUpdated = new CompletableFuture<>();
-
     item.changeStatus(newStatus);
 
-    this.itemsStorageClient.put(item.getItemId(),
-      item.getItem(), putItemResponse -> {
+    return this.itemsStorageClient.put(item.getItemId(),
+      item.getItem()).thenApply(putItemResponse -> {
         if(putItemResponse.getStatusCode() == 204) {
-          itemUpdated.complete(HttpResult.succeeded(item.getItem()));
+          return succeeded(item.getItem());
         }
         else {
-          itemUpdated.complete(HttpResult.failed(
-            new ServerErrorFailure("Failed to update item")));
+          return failed(new ServerErrorFailure("Failed to update item"));
         }
       });
-
-    return itemUpdated;
   }
 
   private <T> CompletableFuture<HttpResult<T>> skip(T previousResult) {
-    return CompletableFuture.completedFuture(HttpResult.succeeded(previousResult));
+    return CompletableFuture.completedFuture(succeeded(previousResult));
   }
 
   private String itemStatusFrom(Loan loan, RequestQueue requestQueue) {

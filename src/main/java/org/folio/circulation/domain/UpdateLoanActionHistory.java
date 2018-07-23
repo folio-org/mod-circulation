@@ -3,12 +3,17 @@ package org.folio.circulation.domain;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.*;
+import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.HttpResult.failed;
+import static org.folio.circulation.support.HttpResult.succeeded;
 
 public class UpdateLoanActionHistory {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -20,11 +25,11 @@ public class UpdateLoanActionHistory {
   }
 
   private static <T> CompletableFuture<HttpResult<T>> skip(T previousResult) {
-    return CompletableFuture.completedFuture(HttpResult.succeeded(previousResult));
+    return completedFuture(succeeded(previousResult));
   }
 
   //Updates the single open loan for the item related to a request
-  public CompletableFuture<HttpResult<RequestAndRelatedRecords>> onRequestCreation(
+  CompletableFuture<HttpResult<RequestAndRelatedRecords>> onRequestCreation(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     RequestType requestType = RequestType.from(requestAndRelatedRecords.getRequest());
@@ -42,47 +47,51 @@ public class UpdateLoanActionHistory {
     String queryTemplate = "query=itemId=%s+and+status.name=Open";
     String query = String.format(queryTemplate, itemId);
 
-    CompletableFuture<HttpResult<RequestAndRelatedRecords>> completed = new CompletableFuture<>();
+    return this.loansStorageClient.getMany(query).thenComposeAsync(
+      getLoansResponse -> updateLatestLoan(requestAndRelatedRecords, action,
+        itemStatus, itemId, getLoansResponse));
+  }
 
-    this.loansStorageClient.getMany(query).thenAccept(getLoansResponse -> {
-      if(getLoansResponse.getStatusCode() == 200) {
-        List<JsonObject> loans = JsonArrayHelper.toList(
-          getLoansResponse.getJson().getJsonArray("loans"));
+  private CompletableFuture<HttpResult<RequestAndRelatedRecords>> updateLatestLoan(
+    RequestAndRelatedRecords requestAndRelatedRecords,
+    String action,
+    String itemStatus,
+    String itemId,
+    Response getLoansResponse) {
 
-        if(loans.isEmpty()) {
-          log.warn("No open loans found for item {}", itemId);
-          //Only success in the sense that it can't be done, but no
-          //compensating action to take
-          completed.complete(HttpResult.succeeded(requestAndRelatedRecords));
-        }
-        else if(loans.size() == 1) {
-          JsonObject changedLoan = loans.get(0).copy();
+    if(getLoansResponse.getStatusCode() == 200) {
+      List<JsonObject> loans = JsonArrayHelper.toList(
+        getLoansResponse.getJson().getJsonArray("loans"));
 
-          changedLoan.put("action", action);
-          changedLoan.put("itemStatus", itemStatus);
-
-          this.loansStorageClient.put(changedLoan.getString("id"), changedLoan,
-            putLoanResponse ->
-              completed.complete(HttpResult.succeeded(requestAndRelatedRecords)));
-        }
-        else {
-          String moreThanOneOpenLoanError = String.format(
-            "Received unexpected number (%s) of open loans for item %s",
-            loans.size(), itemId);
-
-          log.error(moreThanOneOpenLoanError);
-          completed.complete(HttpResult.failed(
-            new ServerErrorFailure(moreThanOneOpenLoanError)));
-        }
-      } else {
-        String failedError = String.format("Could not get open loans for item %s", itemId);
-
-        log.error(failedError);
-        completed.complete(HttpResult.failed(
-          new ServerErrorFailure(failedError)));
+      if(loans.isEmpty()) {
+        log.warn("No open loans found for item {}", itemId);
+        //Only success in the sense that it can't be done, but no
+        //compensating action to take
+        return completedFuture(succeeded(requestAndRelatedRecords));
       }
-    });
+      else if(loans.size() == 1) {
+        JsonObject changedLoan = loans.get(0).copy();
 
-    return completed;
+        changedLoan.put("action", action);
+        changedLoan.put("itemStatus", itemStatus);
+
+        return this.loansStorageClient.put(changedLoan.getString("id"), changedLoan)
+          .thenApply(putLoanResponse -> HttpResult.succeeded(requestAndRelatedRecords));
+      }
+      else {
+        String moreThanOneOpenLoanError = String.format(
+          "Received unexpected number (%s) of open loans for item %s",
+          loans.size(), itemId);
+
+        log.error(moreThanOneOpenLoanError);
+        return completedFuture(failed(
+          new ServerErrorFailure(moreThanOneOpenLoanError)));
+      }
+    } else {
+      String failedError = String.format("Could not get open loans for item %s", itemId);
+
+      log.error(failedError);
+      return completedFuture(failed(new ServerErrorFailure(failedError)));
+    }
   }
 }

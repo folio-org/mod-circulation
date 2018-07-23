@@ -20,6 +20,8 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
 
+import static org.folio.circulation.support.http.server.ServerErrorResponse.internalError;
+
 /**
  * Write and read the loan rules.
  */
@@ -56,25 +58,26 @@ public class LoanRulesResource extends Resource {
     log.debug("get(RoutingContext) client={}", loansRulesClient);
 
     if (loansRulesClient == null) {
-      ServerErrorResponse.internalError(routingContext.response(),
+      internalError(routingContext.response(),
         "Cannot initialise client to storage interface");
       return;
     }
 
-    loansRulesClient.get(response -> {
+    loansRulesClient.get().thenAccept(response -> {
       try {
         if (response.getStatusCode() != 200) {
           ForwardResponse.forward(routingContext.response(), response);
           return;
         }
         JsonObject loanRules = new JsonObject(response.getBody());
-        loanRules.put("loanRulesAsDrools", Text2Drools.convert(loanRules.getString("loanRulesAsTextFile")));
+        loanRules.put("loanRulesAsDrools", Text2Drools.convert(
+          loanRules.getString("loanRulesAsTextFile")));
 
         new OkJsonHttpResult(loanRules)
           .writeTo(routingContext.response());
       }
       catch (Exception e) {
-        ServerErrorResponse.internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
+        internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
       }
     });
   }
@@ -86,7 +89,7 @@ public class LoanRulesResource extends Resource {
     CollectionResourceClient loansRulesClient = clients.loanRulesStorage();
 
     if (loansRulesClient == null) {
-      ServerErrorResponse.internalError(routingContext.response(),
+      internalError(routingContext.response(),
         "Cannot initialise client to storage interface");
       return;
     }
@@ -103,13 +106,15 @@ public class LoanRulesResource extends Resource {
       loanRulesError(routingContext.response(), e);
       return;
     } catch (Exception e) {
-      ServerErrorResponse.internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
+      internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
       return;
     }
     LoanRulesEngineResource.clearCache(new WebContext(routingContext).getTenantId());
     JsonObject rules = rulesInput.copy();
+
     rules.remove("loanRulesAsDrools");
-    loansRulesClient.put(rules, response -> {
+
+    loansRulesClient.put(rules).thenAccept(response -> {
       if (response.getStatusCode() == 204) {
         SuccessResponse.noContent(routingContext.response());
       } else {

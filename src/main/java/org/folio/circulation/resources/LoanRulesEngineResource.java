@@ -21,6 +21,8 @@ import java.lang.invoke.MethodHandles;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.folio.circulation.support.http.server.ServerErrorResponse.internalError;
+
 /**
  * The loan rules engine calculates the loan policy based on
  * item type, loan type, patron type and shelving location.
@@ -159,7 +161,7 @@ public class LoanRulesEngineResource extends Resource {
       return;
     }
 
-    loansRulesClient.get(response -> {
+    loansRulesClient.get().thenAccept(response -> {
       try {
         if (response.getStatusCode() != 200) {
           ForwardResponse.forward(routingContext.response(), response);
@@ -192,7 +194,7 @@ public class LoanRulesEngineResource extends Resource {
         if (routingContext.response().ended()) {
           return;
         }
-        ServerErrorResponse.internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
+        internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
       }
     });
   }
@@ -227,12 +229,12 @@ public class LoanRulesEngineResource extends Resource {
           droolsHandler.handle(finalRules.drools);
         } catch (Exception e) {
           log.error("drools droolsHandler", e);
-          ServerErrorResponse.internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
+          internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
         }
       });
     } catch (Exception e) {
       log.error("drools", e);
-      ServerErrorResponse.internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
+      internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
     }
   }
 
@@ -278,7 +280,7 @@ public class LoanRulesEngineResource extends Resource {
       }
       catch (Exception e) {
         log.error("apply", e);
-        ServerErrorResponse.internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
+        internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
       }
     });
   }
@@ -297,7 +299,7 @@ public class LoanRulesEngineResource extends Resource {
     }
     catch (Exception e) {
       log.error("applyAll", e);
-      ServerErrorResponse.internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
+      internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
     }
   }
 
@@ -319,7 +321,7 @@ public class LoanRulesEngineResource extends Resource {
     }
     catch (Exception e) {
       log.error("applyAll", e);
-      ServerErrorResponse.internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
+      internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
     }
   }
 }
