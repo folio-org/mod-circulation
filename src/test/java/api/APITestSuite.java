@@ -13,7 +13,7 @@ import api.support.http.ResourceClient;
 import api.support.http.URLHelper;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.CirculationVerticle;
+import org.folio.circulation.Launcher;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.VertxAssistant;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
@@ -87,7 +87,10 @@ public class APITestSuite {
   private static final String REQUEST_ID = createFakeRequestId();
 
   private static VertxAssistant vertxAssistant;
+  private static Launcher launcher;
   private static int port;
+  private static boolean initialised;
+
   private static String circulationModuleDeploymentId;
   private static String fakeOkapiDeploymentId;
   private static Boolean useOkapiForStorage;
@@ -99,7 +102,6 @@ public class APITestSuite {
   private static UUID booksInstanceTypeId;
   private static UUID regularGroupId;
   private static UUID alternateGroupId;
-  private static boolean initialised;
   private static UUID userId1;
   private static JsonObject userRecord1;
   private static JsonObject userRecord2;
@@ -242,13 +244,9 @@ public class APITestSuite {
     useOkapiForInitialRequests = Boolean.parseBoolean(
       System.getProperty("use.okapi.initial.requests", "false"));
 
-    vertxAssistant = new VertxAssistant();
-
     port = 9605;
-
-    JsonObject config = new JsonObject();
-
-    write(config, "port", port);
+    vertxAssistant = new VertxAssistant();
+    launcher = new Launcher(vertxAssistant);
 
     vertxAssistant.start();
 
@@ -259,12 +257,10 @@ public class APITestSuite {
     } else {
       fakeStorageModuleDeployed = CompletableFuture.completedFuture(null);
     }
-
-    CompletableFuture<String> circulationModuleDeployed =
-      vertxAssistant.deployVerticle(CirculationVerticle.class, config);
+    
+    launcher.start(port);
 
     fakeOkapiDeploymentId = fakeStorageModuleDeployed.get(10, TimeUnit.SECONDS);
-    circulationModuleDeploymentId = circulationModuleDeployed.get(10, TimeUnit.SECONDS);
 
     createMaterialTypes();
     createLoanTypes();
@@ -309,8 +305,7 @@ public class APITestSuite {
     deleteLoanPolicies();
     deleteCancellationReasons();
 
-    CompletableFuture<Void> circulationModuleUndeployed =
-      vertxAssistant.undeployVerticle(circulationModuleDeploymentId);
+    CompletableFuture<Void> circulationModuleUndeployed = launcher.undeploy();
 
     final CompletableFuture<Void> fakeOkapiUndeployed;
 

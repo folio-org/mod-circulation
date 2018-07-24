@@ -18,7 +18,7 @@ public class Launcher {
   private final Logger log;
   private String moduleDeploymentId;
 
-  private Launcher(VertxAssistant vertxAssistant) {
+  public Launcher(VertxAssistant vertxAssistant) {
     Logging.initialiseFormat();
 
     this.vertxAssistant = vertxAssistant;
@@ -47,7 +47,7 @@ public class Launcher {
       .thenAccept(v -> log.info("Server Stopped"));
   }
 
-  private CompletableFuture<Void> undeploy() {
+  public CompletableFuture<Void> undeploy() {
     return vertxAssistant.undeployVerticle(moduleDeploymentId);
   }
 
