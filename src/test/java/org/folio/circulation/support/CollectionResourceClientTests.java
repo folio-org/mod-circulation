@@ -1,11 +1,11 @@
 package org.folio.circulation.support;
 
+import org.junit.Test;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-import org.junit.Test;
-
-public class CollectionResourceClientTest {
+public class CollectionResourceClientTests {
   static private String createQueryString(String urlencodedCqlQuery, Integer pageLimit, Integer pageOffset) {
     return CollectionResourceClient.createQueryString(urlencodedCqlQuery, pageLimit, pageOffset);
   }
