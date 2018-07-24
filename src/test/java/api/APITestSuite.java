@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
 import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
@@ -247,9 +246,9 @@ public class APITestSuite {
 
     port = 9605;
 
-    HashMap<String, Object> config = new HashMap<>();
+    JsonObject config = new JsonObject();
 
-    config.put("port", port);
+    write(config, "port", port);
 
     vertxAssistant.start();
 
@@ -257,14 +256,13 @@ public class APITestSuite {
 
     if (!useOkapiForStorage) {
       vertxAssistant.deployVerticle(FakeOkapi.class.getName(),
-        new HashMap<>(), fakeStorageModuleDeployed);
+        new JsonObject(), fakeStorageModuleDeployed);
     } else {
       fakeStorageModuleDeployed.complete(null);
     }
 
     CompletableFuture<String> circulationModuleDeployed =
-      vertxAssistant.deployVerticle(CirculationVerticle.class.getName(),
-        config);
+      vertxAssistant.deployVerticle(CirculationVerticle.class.getName(), config);
 
     fakeOkapiDeploymentId = fakeStorageModuleDeployed.get(10, TimeUnit.SECONDS);
     circulationModuleDeploymentId = circulationModuleDeployed.get(10, TimeUnit.SECONDS);

@@ -7,7 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -47,15 +46,16 @@ public class VertxAssistant {
     return future;
   }
 
-  public void deployVerticle(String verticleClass,
-                            Map<String, Object> config,
-                            CompletableFuture<String> deployed) {
+  public void deployVerticle(
+    String verticleClass,
+    JsonObject config,
+    CompletableFuture<String> deployed) {
 
     long startTime = System.currentTimeMillis();
 
     DeploymentOptions options = new DeploymentOptions();
 
-    options.setConfig(new JsonObject(config));
+    options.setConfig(config);
     options.setWorker(true);
 
     vertx.deployVerticle(verticleClass, options, result -> {
@@ -71,8 +71,8 @@ public class VertxAssistant {
     });
   }
 
-  public CompletableFuture<String> deployVerticle(String verticleClass,
-                             Map<String, Object> config) {
+  public CompletableFuture<String> deployVerticle(
+    String verticleClass, JsonObject config) {
 
     CompletableFuture<String> deployed = new CompletableFuture<>();
 

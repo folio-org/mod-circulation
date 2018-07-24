@@ -1,16 +1,17 @@
 package org.folio.circulation;
 
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import org.folio.circulation.support.VertxAssistant;
 
 import java.lang.invoke.MethodHandles;
-import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static io.vertx.core.logging.LoggerFactory.getLogger;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 public class Launcher {
   private final VertxAssistant vertxAssistant;
@@ -61,8 +62,8 @@ public class Launcher {
 
     CompletableFuture<String> deployed = new CompletableFuture<>();
 
-    HashMap<String, Object> config = new HashMap<>();
-    config.put("port", port);
+    JsonObject config = new JsonObject();
+    write(config, "port", port);
 
     vertxAssistant.deployVerticle(CirculationVerticle.class.getName(),
       config, deployed);
