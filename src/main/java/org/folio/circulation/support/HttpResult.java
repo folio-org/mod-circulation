@@ -9,6 +9,21 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 public interface HttpResult<T> {
 
   /**
+   * Creates a successful result with the supplied value
+   * unless an exception is thrown
+   *
+   * @param supplier of the result value
+   * @return successful result or failed result with error
+   */
+  static <T> HttpResult<T> of(ThrowingSupplier<T, Exception> supplier) {
+    try {
+      return succeeded(supplier.get());
+    } catch (Exception e) {
+      return failed(new ServerErrorFailure(e));
+    }
+  }
+
+  /**
    * Combines two results together, if both succeed.
    * Otherwise, returns either failure, first result takes precedence
    *

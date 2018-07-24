@@ -4,23 +4,16 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.ProxyRelationship;
 import org.folio.circulation.domain.UserRelatedRecord;
 import org.folio.circulation.support.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.UnsupportedEncodingException;
-import java.lang.invoke.MethodHandles;
 import java.net.URLEncoder;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
 
 public class ProxyRelationshipValidator {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
   private final CollectionResourceClient proxyRelationshipsClient;
   private Supplier<ValidationErrorFailure> invalidRelationshipErrorSupplier;
 
@@ -56,15 +49,14 @@ public class ProxyRelationshipValidator {
           .noneMatch(ProxyRelationship::isActive))));
   }
 
-  private HttpResult<String> proxyRelationshipQuery(String proxyUserId, String sponsorUserId) {
+  private HttpResult<String> proxyRelationshipQuery(
+    String proxyUserId,
+    String sponsorUserId) {
+
     String validateProxyQuery = String.format("proxyUserId==%s and userId==%s",
       proxyUserId, sponsorUserId);
 
-    try {
-      return succeeded(URLEncoder.encode(validateProxyQuery, String.valueOf(UTF_8)));
-    } catch (UnsupportedEncodingException e) {
-      log.error("Failed to encode query for proxies", e);
-      return failed(new ServerErrorFailure("Failed to encode query for proxies"));
-    }
+    return HttpResult.of(() ->
+      URLEncoder.encode(validateProxyQuery, String.valueOf(UTF_8)));
   }
 }
