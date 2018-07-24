@@ -251,6 +251,30 @@ public class RequestQueueTests extends APITests {
       requestByCharlotte.getId(),
       requestByRebecca.getId()));
 
-    //TODO: Check are full requests, with extended info
+    //Has extended item properties
+    queue.getRecords().forEach(request -> {
+      assertThat(String.format("request has an item summary: %s",
+        request.encodePrettily()),
+        request.containsKey("item"), is(true));
+
+      JsonObject item = request.getJsonObject("item");
+
+      assertThat(String.format("item summary has a holdings record ID: %s",
+        request.encodePrettily()),
+        item.containsKey("holdingsRecordId"), is(true));
+
+      assertThat(String.format("item summary has an instance ID: %s",
+        request.encodePrettily()),
+        item.containsKey("instanceId"), is(true));
+
+      assertThat(String.format("item summary has a location: %s",
+        request.encodePrettily()),
+        item.containsKey("location"), is(true));
+
+      JsonObject location = item.getJsonObject("location");
+
+      assertThat(String.format("location has a name: %s", request.encodePrettily()),
+        location.containsKey("name"), is(true));
+    });
   }
 }
