@@ -64,12 +64,11 @@ public class Launcher {
 
     log.info("Server Starting");
 
-
     JsonObject config = new JsonObject();
     write(config, "port", port);
 
     CompletableFuture<String> deployed =
-      vertxAssistant.deployVerticle(CirculationVerticle.class.getName(), config);
+      vertxAssistant.deployVerticle(CirculationVerticle.class, config);
 
     deployed.thenAccept(result -> log.info("Server Started"));
 

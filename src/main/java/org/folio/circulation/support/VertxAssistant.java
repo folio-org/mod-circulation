@@ -11,7 +11,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 public class VertxAssistant {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private Vertx vertx;
 
@@ -46,9 +46,11 @@ public class VertxAssistant {
     return future;
   }
 
-  public CompletableFuture<String> deployVerticle(
-    String verticleClass,
+  public <T> CompletableFuture<String> deployVerticle(
+    Class<T> verticleClass,
     JsonObject config) {
+
+    String verticleClass1 = verticleClass.getName();
 
     CompletableFuture<String> deployed = new CompletableFuture<>();
 
@@ -59,11 +61,11 @@ public class VertxAssistant {
     options.setConfig(config);
     options.setWorker(true);
 
-    vertx.deployVerticle(verticleClass, options, result -> {
+    vertx.deployVerticle(verticleClass1, options, result -> {
       if (result.succeeded()) {
         long elapsedTime = System.currentTimeMillis() - startTime;
 
-        log.info("{} deployed in {} milliseconds", verticleClass, elapsedTime);
+        log.info("{} deployed in {} milliseconds", verticleClass1, elapsedTime);
 
         deployed.complete(result.result());
       } else {

@@ -255,14 +255,14 @@ public class APITestSuite {
     final CompletableFuture<String> fakeStorageModuleDeployed;
 
     if (!useOkapiForStorage) {
-      fakeStorageModuleDeployed = vertxAssistant.deployVerticle(FakeOkapi.class.getName(),
+      fakeStorageModuleDeployed = vertxAssistant.deployVerticle(FakeOkapi.class,
         new JsonObject());
     } else {
       fakeStorageModuleDeployed = CompletableFuture.completedFuture(null);
     }
 
     CompletableFuture<String> circulationModuleDeployed =
-      vertxAssistant.deployVerticle(CirculationVerticle.class.getName(), config);
+      vertxAssistant.deployVerticle(CirculationVerticle.class, config);
 
     fakeOkapiDeploymentId = fakeStorageModuleDeployed.get(10, TimeUnit.SECONDS);
     circulationModuleDeploymentId = circulationModuleDeployed.get(10, TimeUnit.SECONDS);
