@@ -46,16 +46,16 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   boolean isOpen() {
     RequestStatus status = getStatus();
 
-    return Objects.equals(status, OPEN_AWAITING_PICKUP)
-      || Objects.equals(status, OPEN_NOT_YET_FILLED);
+    return status == OPEN_AWAITING_PICKUP
+      || status == OPEN_NOT_YET_FILLED;
   }
 
   boolean isCancelled() {
-    return Objects.equals(getStatus(), CLOSED_CANCELLED);
+    return getStatus() == CLOSED_CANCELLED;
   }
 
   private boolean isFulfilled() {
-    return Objects.equals(getStatus(), CLOSED_FILLED);
+    return getStatus() == CLOSED_FILLED;
   }
 
   public boolean isClosed() {
@@ -64,7 +64,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   boolean isAwaitingPickup() {
-    return Objects.equals(getStatus(), OPEN_AWAITING_PICKUP);
+    return getStatus() == OPEN_AWAITING_PICKUP;
   }
 
   boolean isFor(User user) {
