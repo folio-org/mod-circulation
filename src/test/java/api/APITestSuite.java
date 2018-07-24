@@ -336,9 +336,7 @@ public class APITestSuite {
     circulationModuleUndeployed.get(10, TimeUnit.SECONDS);
     fakeOkapiUndeployed.get(10, TimeUnit.SECONDS);
 
-    CompletableFuture<Void> stopped = new CompletableFuture<>();
-
-    vertxAssistant.stop(stopped);
+    CompletableFuture<Void> stopped = vertxAssistant.stop();
 
     stopped.get(5, TimeUnit.SECONDS);
   }

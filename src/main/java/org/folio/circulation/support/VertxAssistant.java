@@ -29,19 +29,22 @@ public class VertxAssistant {
     vertx.exceptionHandler(ex -> log.error("Unhandled exception caught by vertx", ex));
   }
 
-  public void stop(CompletableFuture<Void> stopped) {
+  public CompletableFuture<Void> stop() {
+    final CompletableFuture<Void> future = new CompletableFuture<>();
 
     if (vertx != null) {
       vertx.close(result -> {
         if (result.succeeded()) {
-          stopped.complete(null);
+          future.complete(null);
         } else {
-          stopped.completeExceptionally(result.cause());
+          future.completeExceptionally(result.cause());
         }
       });
 
-      stopped.thenAccept(result -> this.vertx = null);
+      future.thenAccept(result -> this.vertx = null);
     }
+
+    return future;
   }
 
   public void deployVerticle(String verticleClass,
