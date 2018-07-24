@@ -120,7 +120,6 @@ public class APITestSuite {
 
   private static UUID courseReservesCancellationReasonId;
   private static UUID patronRequestCancellationReasonId;
-  private static UUID noLongerAvailableCancellationReasonId;
 
   public static int circulationModulePort() {
     return port;
@@ -229,10 +228,6 @@ public class APITestSuite {
   
   public static UUID patronRequestCancellationReasonId() {
     return patronRequestCancellationReasonId;
-  }
-  
-  private static UUID noLongerAvailableCancellationReasonId() {
-    return noLongerAvailableCancellationReasonId;
   }
 
   @BeforeClass
@@ -711,10 +706,10 @@ public class APITestSuite {
   }
   
   private static void createCancellationReasons() 
-      throws MalformedURLException,
-      InterruptedException,
-      ExecutionException,
-      TimeoutException {
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
     
     courseReservesCancellationReasonId = createReferenceRecord(
         ResourceClient.forCancellationReasons(createClient()),
@@ -729,25 +724,19 @@ public class APITestSuite {
             .put("name", "Patron Request")
             .put("description", "Item cancelled at Patron request")
     );
-    
-    noLongerAvailableCancellationReasonId = createReferenceRecord(
-        ResourceClient.forCancellationReasons(createClient()),
-        new JsonObject()
-            .put("name", "No Longer Available")
-            .put("description", "Item No longer Available")
-    );
   }
   
   private static void deleteCancellationReasons() 
-      throws MalformedURLException,
-      InterruptedException,
-      ExecutionException,
-      TimeoutException {
-    ResourceClient cancellationReasonClient = 
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    ResourceClient cancellationReasonClient =
         ResourceClient.forCancellationReasons(createClient());
+
     cancellationReasonClient.delete(courseReservesCancellationReasonId);
     cancellationReasonClient.delete(patronRequestCancellationReasonId);
-    cancellationReasonClient.delete(noLongerAvailableCancellationReasonId);
   }
 
   private static UUID findFirstByName(List<JsonObject> existingRecords, String name) {
