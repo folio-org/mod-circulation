@@ -3,45 +3,56 @@ package org.folio.circulation.domain;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.representations.RequestProperties;
 
-import java.util.HashSet;
+import java.util.Arrays;
 
-public class RequestStatus {
-  public static final String OPEN_NOT_YET_FILLED = "Open - Not yet filled";
-  public static final String OPEN_AWAITING_PICKUP = "Open - Awaiting pickup";
-  public static final String CLOSED_FILLED = "Closed - Filled";
-  public static final String CLOSED_CANCELLED = "Closed - Cancelled";
+import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 
-  public final String value;
+public enum RequestStatus {
+  NONE(""),
+  OPEN_NOT_YET_FILLED("Open - Not yet filled"),
+  OPEN_AWAITING_PICKUP("Open - Awaiting pickup"),
+  CLOSED_FILLED("Closed - Filled"),
+  CLOSED_CANCELLED("Closed - Cancelled");
+
+  private final String name;
 
   public static String invalidStatusErrorMessage() {
+    //TODO: Generalise this to join all states
     return String.format("Request status must be \"%s\", \"%s\" or \"%s\"",
-      OPEN_NOT_YET_FILLED, OPEN_AWAITING_PICKUP, CLOSED_FILLED);
+      OPEN_NOT_YET_FILLED.getName(), OPEN_AWAITING_PICKUP.getName(),
+      CLOSED_FILLED.getName());
+  }
+
+  public static RequestStatus from(String name) {
+    return Arrays.stream(values())
+      .filter(status -> status.nameMatches(name))
+      .findFirst()
+      .orElse(NONE);
   }
 
   public static RequestStatus from(JsonObject request) {
-    String status = request.containsKey(RequestProperties.STATUS)
-      ? request.getString(RequestProperties.STATUS)
+    return request.containsKey(RequestProperties.STATUS)
+      ? from(request.getString(RequestProperties.STATUS))
       : OPEN_NOT_YET_FILLED;
-
-    return new RequestStatus(status);
   }
 
-  private RequestStatus(String value) {
-    this.value = value;
+  RequestStatus(String name) {
+    this.name = name;
   }
 
   public boolean isValid() {
-    HashSet<String> allowedValues = new HashSet<>();
-
-    allowedValues.add(OPEN_NOT_YET_FILLED);
-    allowedValues.add(OPEN_AWAITING_PICKUP);
-    allowedValues.add(CLOSED_FILLED);
-    allowedValues.add(CLOSED_CANCELLED);
-
-    return allowedValues.contains(value);
+    return this != NONE;
   }
 
   public void writeTo(JsonObject request) {
-    request.put(RequestProperties.STATUS, value);
+    request.put(RequestProperties.STATUS, name);
+  }
+
+  private boolean nameMatches(String name) {
+    return equalsIgnoreCase(getName(), name);
+  }
+
+  public String getName() {
+    return name;
   }
 }

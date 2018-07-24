@@ -2,13 +2,18 @@ package org.folio.circulation.domain;
 
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.HttpResult.succeeded;
 
 public class UpdateRequestQueue {
+  private final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
   private final RequestQueueRepository requestQueueRepository;
   private final RequestRepository requestRepository;
 
@@ -62,8 +67,10 @@ public class UpdateRequestQueue {
     if (requestQueue.hasOutstandingFulfillableRequests()) {
       Request firstRequest = requestQueue.getHighestPriorityFulfillableRequest();
 
+      log.info("Closing request '{}'", firstRequest.getId());
       firstRequest.changeStatus(RequestStatus.CLOSED_FILLED);
 
+      log.info("Removing request '{}' from queue", firstRequest.getId());
       requestQueue.remove(firstRequest);
 
       return requestRepository.update(firstRequest)

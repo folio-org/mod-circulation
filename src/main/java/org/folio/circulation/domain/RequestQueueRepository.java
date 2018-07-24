@@ -14,7 +14,7 @@ import static org.folio.circulation.support.CqlHelper.encodeQuery;
 import static org.folio.circulation.support.HttpResult.succeeded;
 
 public class RequestQueueRepository {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final RequestRepository requestRepository;
 
@@ -42,12 +42,12 @@ public class RequestQueueRepository {
       String unencodedQuery = String.format(
         "itemId==%s and status==(\"%s\" or \"%s\") sortBy position/sort.ascending",
         itemId,
-        RequestStatus.OPEN_AWAITING_PICKUP,
-        RequestStatus.OPEN_NOT_YET_FILLED);
+        RequestStatus.OPEN_AWAITING_PICKUP.getName(),
+        RequestStatus.OPEN_NOT_YET_FILLED.getName());
 
     final int maximumSupportedRequestQueueSize = 1000;
 
-    log.info("Fetch request queue: '{}'", unencodedQuery);
+    log.info("Fetching request queue: '{}'", unencodedQuery);
 
     return encodeQuery(unencodedQuery).after(
       query -> requestRepository.findBy(query, maximumSupportedRequestQueueSize)

@@ -44,18 +44,18 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   boolean isOpen() {
-    String status = getStatus();
+    RequestStatus status = getStatus();
 
-    return StringUtils.equals(status, OPEN_AWAITING_PICKUP)
-      || StringUtils.equals(status, OPEN_NOT_YET_FILLED);
+    return Objects.equals(status, OPEN_AWAITING_PICKUP)
+      || Objects.equals(status, OPEN_NOT_YET_FILLED);
   }
 
   boolean isCancelled() {
-    return StringUtils.equals(getStatus(), CLOSED_CANCELLED);
+    return Objects.equals(getStatus(), CLOSED_CANCELLED);
   }
 
   private boolean isFulfilled() {
-    return StringUtils.equals(getStatus(), CLOSED_FILLED);
+    return Objects.equals(getStatus(), CLOSED_FILLED);
   }
 
   public boolean isClosed() {
@@ -63,12 +63,12 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return isCancelled() || isFulfilled();
   }
 
-  boolean isFor(User user) {
-    return StringUtils.equals(getUserId(), user.getId());
+  boolean isAwaitingPickup() {
+    return Objects.equals(getStatus(), OPEN_AWAITING_PICKUP);
   }
 
-  boolean isAwaitingPickup() {
-    return StringUtils.equals(getStatus(), OPEN_AWAITING_PICKUP);
+  boolean isFor(User user) {
+    return StringUtils.equals(getUserId(), user.getId());
   }
 
   @Override
@@ -110,12 +110,13 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return representation.getString("requestType");
   }
 
-  String getStatus() {
-    return representation.getString(STATUS);
+  RequestStatus getStatus() {
+    return RequestStatus.from(representation.getString(STATUS));
   }
 
-  void changeStatus(String status) {
-    representation.put(STATUS, status);
+  void changeStatus(RequestStatus status) {
+    //TODO: Check for null status
+    status.writeTo(representation);
   }
 
   public Item getItem() {
