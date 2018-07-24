@@ -46,6 +46,10 @@ public class VertxAssistant {
     return future;
   }
 
+  public <T> CompletableFuture<String> deployVerticle(Class<T> verticleClass) {
+    return deployVerticle(verticleClass, new JsonObject());
+  }
+
   public <T> CompletableFuture<String> deployVerticle(
     Class<T> verticleClass,
     JsonObject config) {
