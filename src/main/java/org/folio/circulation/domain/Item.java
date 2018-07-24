@@ -38,7 +38,7 @@ public class Item {
   }
 
   public boolean isCheckedOut() {
-    String status = getStatus();
+    ItemStatus status = ItemStatus.from(getStatus());
 
     return status.equals(ItemStatus.CHECKED_OUT);
   }

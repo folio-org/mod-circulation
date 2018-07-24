@@ -1,8 +1,7 @@
 package org.folio.circulation.domain;
 
-import org.apache.commons.lang3.StringUtils;
-
-import static org.folio.circulation.domain.ItemStatus.*;
+import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
+import static org.folio.circulation.domain.ItemStatus.NONE;
 
 public class RequestType {
   private static final String RECALL = "Recall";
@@ -25,7 +24,7 @@ public class RequestType {
     switch (value) {
       case HOLD:
       case RECALL:
-        return StringUtils.equalsIgnoreCase(status, CHECKED_OUT);
+        return ItemStatus.from(status).equals(CHECKED_OUT);
 
       case PAGE:
       default:
@@ -33,7 +32,7 @@ public class RequestType {
     }
   }
 
-  String toCheckedOutItemStatus() {
+  ItemStatus toCheckedOutItemStatus() {
     switch(value) {
       case RequestType.HOLD:
       case RequestType.RECALL:
@@ -42,7 +41,7 @@ public class RequestType {
 
       default:
         //TODO: Need to add validation to stop this situation
-        return "";
+        return NONE;
     }
   }
 

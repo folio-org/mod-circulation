@@ -33,7 +33,7 @@ public class UpdateItem {
         return skip(relatedRecords);
       }
 
-      final String prospectiveStatus;
+      final ItemStatus prospectiveStatus;
 
       if(requestQueue != null) {
         prospectiveStatus = requestQueue.hasOutstandingRequests()
@@ -44,8 +44,8 @@ public class UpdateItem {
         prospectiveStatus = CHECKED_OUT;
       }
 
-      if(relatedRecords.getLoan().getItem().isNotSameStatus(prospectiveStatus)) {
-        return internalUpdate(relatedRecords.getLoan().getItem(), prospectiveStatus)
+      if(relatedRecords.getLoan().getItem().isNotSameStatus(prospectiveStatus.getName())) {
+        return internalUpdate(relatedRecords.getLoan().getItem(), prospectiveStatus.getName())
           .thenApply(updatedItemResult -> updatedItemResult.map(
             relatedRecords::withItem));
       }
@@ -85,7 +85,7 @@ public class UpdateItem {
     }
   }
 
-  public CompletableFuture<HttpResult<RequestAndRelatedRecords>> onRequestCreation(
+  CompletableFuture<HttpResult<RequestAndRelatedRecords>> onRequestCreation(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     try {
@@ -93,14 +93,15 @@ public class UpdateItem {
 
       RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
 
-      String newStatus = requestQueue.hasOutstandingRequests()
-        ? RequestType.from(requestQueue.getHighestPriorityRequest()).toCheckedOutItemStatus()
+      ItemStatus newStatus = requestQueue.hasOutstandingRequests()
+        ? RequestType.from(requestQueue.getHighestPriorityRequest())
+          .toCheckedOutItemStatus()
         : requestType.toCheckedOutItemStatus();
 
       final Item item = requestAndRelatedRecords.getRequest().getItem();
 
-      if (item.isNotSameStatus(newStatus)) {
-        return internalUpdate(item, newStatus)
+      if (item.isNotSameStatus(newStatus.getName())) {
+        return internalUpdate(item, newStatus.getName())
           .thenApply(updatedItemResult ->
             updatedItemResult.map(requestAndRelatedRecords::withItem));
       } else {
@@ -136,7 +137,7 @@ public class UpdateItem {
   }
 
   private String itemStatusFrom(Loan loan, RequestQueue requestQueue) {
-    String prospectiveStatus;
+    ItemStatus prospectiveStatus;
 
     if(loan.isClosed()) {
       prospectiveStatus = requestQueue.hasOutstandingFulfillableRequests()
@@ -147,11 +148,12 @@ public class UpdateItem {
     }
     else {
       prospectiveStatus = requestQueue.hasOutstandingRequests()
-        ? RequestType.from(requestQueue.getHighestPriorityRequest()).toCheckedOutItemStatus()
+        ? RequestType.from(requestQueue.getHighestPriorityRequest())
+          .toCheckedOutItemStatus()
         : CHECKED_OUT;
     }
 
-    return prospectiveStatus;
+    return prospectiveStatus.getName();
   }
 
   private void logException(Exception ex) {

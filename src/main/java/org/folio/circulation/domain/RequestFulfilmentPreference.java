@@ -2,6 +2,7 @@ package org.folio.circulation.domain;
 
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.AWAITING_PICKUP;
+import static org.folio.circulation.domain.ItemStatus.NONE;
 
 public class RequestFulfilmentPreference {
   static final String HOLD_SHELF = "Hold Shelf";
@@ -17,7 +18,7 @@ public class RequestFulfilmentPreference {
     return new RequestFulfilmentPreference(request.getFulfilmentPreference());
   }
 
-  String toCheckedInItemStatus() {
+  ItemStatus toCheckedInItemStatus() {
     switch(value) {
       case RequestFulfilmentPreference.HOLD_SHELF:
         return AWAITING_PICKUP;
@@ -27,7 +28,7 @@ public class RequestFulfilmentPreference {
 
       default:
         //TODO: Need to add validation to stop this situation
-        return "";
+        return NONE;
     }
   }
 }
