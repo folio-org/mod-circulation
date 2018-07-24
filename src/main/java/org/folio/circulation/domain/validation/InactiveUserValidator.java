@@ -8,8 +8,11 @@ import org.folio.circulation.support.ValidationErrorFailure;
 
 import java.util.function.Function;
 
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.USER_BARCODE;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 public class InactiveUserValidator {
   private final Function<String, ValidationErrorFailure> inactiveUserErrorFunction;
@@ -17,7 +20,7 @@ public class InactiveUserValidator {
   private final String cannotDetermineMessage;
   private final Function<LoanAndRelatedRecords, User> userFunction;
 
-  public InactiveUserValidator(
+  InactiveUserValidator(
     Function<LoanAndRelatedRecords, User> userFunction,
     String inactiveUserMessage,
     String cannotDetermineMessage,
@@ -29,6 +32,22 @@ public class InactiveUserValidator {
     this.userFunction = userFunction;
   }
 
+  public static InactiveUserValidator forProxy(String proxyUserBarcode) {
+    return new InactiveUserValidator(
+      LoanAndRelatedRecords::getProxy,
+      "Cannot check out via inactive proxying user",
+      "Cannot determine if proxying user is active or not",
+      message -> failure(message, PROXY_USER_BARCODE, proxyUserBarcode));
+  }
+
+  public static InactiveUserValidator forUser(String userBarcode) {
+    return new InactiveUserValidator(
+      records -> records.getLoan().getUser(),
+      "Cannot check out to inactive user",
+      "Cannot determine if user is active or not",
+      message -> failure(message, USER_BARCODE, userBarcode));
+  }
+
   public HttpResult<LoanAndRelatedRecords> refuseWhenUserIsInactive(
     HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
@@ -36,22 +55,28 @@ public class InactiveUserValidator {
       try {
         final User user = userFunction.apply(records);
 
-        if(user == null) {
-          return loanAndRelatedRecords;
-        }
-        else if (user.canDetermineStatus()) {
-          return failed(inactiveUserErrorFunction.apply(
-            cannotDetermineMessage));
-        }
-        if (user.isInactive()) {
-          return failed(inactiveUserErrorFunction.apply(
-            inactiveUserMessage));
-        } else {
-          return succeeded(records);
-        }
+        return refuseWhenUserIsInactive(user, records);
       } catch (Exception e) {
         return failed(new ServerErrorFailure(e));
       }
     });
+  }
+
+  HttpResult<LoanAndRelatedRecords> refuseWhenUserIsInactive(
+    User user, LoanAndRelatedRecords records) {
+
+    if(user == null) {
+      return succeeded(records);
+    }
+    else if (user.canDetermineStatus()) {
+      return failed(inactiveUserErrorFunction.apply(
+        cannotDetermineMessage));
+    }
+    if (user.isInactive()) {
+      return failed(inactiveUserErrorFunction.apply(
+        inactiveUserMessage));
+    } else {
+      return succeeded(records);
+    }
   }
 }

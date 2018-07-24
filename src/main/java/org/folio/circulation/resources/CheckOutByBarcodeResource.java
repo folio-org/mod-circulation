@@ -72,17 +72,8 @@ public class CheckOutByBarcodeResource extends Resource {
       () -> failure(String.format("No item with barcode %s could be found", itemBarcode),
         ITEM_BARCODE, itemBarcode));
 
-    final InactiveUserValidator inactiveUserValidator = new InactiveUserValidator(
-      records -> records.getLoan().getUser(),
-      "Cannot check out to inactive user",
-      "Cannot determine if user is active or not",
-      message -> failure(message, USER_BARCODE, userBarcode));
-
-    final InactiveUserValidator inactiveProxyUserValidator = new InactiveUserValidator(
-      LoanAndRelatedRecords::getProxy,
-      "Cannot check out via inactive proxying user",
-      "Cannot determine if proxying user is active or not",
-      message -> failure(message, PROXY_USER_BARCODE, proxyUserBarcode));
+    final InactiveUserValidator inactiveUserValidator = InactiveUserValidator.forUser(userBarcode);
+    final InactiveUserValidator inactiveProxyUserValidator = InactiveUserValidator.forProxy(proxyUserBarcode);
 
     final ExistingOpenLoanValidator openLoanValidator = new ExistingOpenLoanValidator(
       loanRepository, message -> failure(message, ITEM_BARCODE, itemBarcode));
