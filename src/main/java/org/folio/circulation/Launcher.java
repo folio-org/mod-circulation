@@ -18,16 +18,16 @@ public class Launcher {
   private String moduleDeploymentId;
 
   private Launcher(VertxAssistant vertxAssistant) {
+    Logging.initialiseFormat();
+
     this.vertxAssistant = vertxAssistant;
-    log = getLogger(MethodHandles.lookup().lookupClass());
+    this.log = getLogger(MethodHandles.lookup().lookupClass());
   }
 
   public static void main(String[] args) throws
     InterruptedException,
     ExecutionException,
     TimeoutException {
-
-    Logging.initialiseFormat();
 
     final Launcher launcher = new Launcher(new VertxAssistant());
 
