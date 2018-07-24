@@ -4,6 +4,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+
 public interface HttpResult<T> {
 
   /**
@@ -79,6 +81,27 @@ public interface HttpResult<T> {
             return whenFalse.apply(value);
           }
         })));
+  }
+
+  /**
+   * Fail a result when a condition evaluates to true
+   *
+   * Responds with the result of the failure function when condition evaluates to true
+   * Responds with success of the prior result when condition evaluates to false
+   * Executes neither if the condition evaluation fails
+   * Forwards on failure if previous result failed
+   *
+   * @param condition on which to decide upon
+   * @param failure executed to create failure reason when condition evaluates to true
+   * @return success when condition is false, failure otherwise
+   */
+  default CompletableFuture<HttpResult<T>> failAfter(
+    Function<T, CompletableFuture<HttpResult<Boolean>>> condition,
+    Function<T, HttpFailure> failure) {
+
+    return afterWhen(condition,
+      value -> completedFuture(failed(failure.apply(value))),
+      value -> completedFuture(succeeded(value)));
   }
 
   /**
@@ -168,7 +191,7 @@ public interface HttpResult<T> {
     Function<T, CompletableFuture<HttpResult<R>>> action) {
 
     if(failed()) {
-      return CompletableFuture.completedFuture(failed(cause()));
+      return completedFuture(failed(cause()));
     }
 
     return action.apply(value());
