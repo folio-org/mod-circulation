@@ -42,9 +42,13 @@ public class Launcher {
   private void stop() {
     log.info("Server Stopping");
 
-    vertxAssistant.undeployVerticle(moduleDeploymentId)
+    undeploy()
       .thenComposeAsync(v -> vertxAssistant.stop())
       .thenAccept(v -> log.info("Server Stopped"));
+  }
+
+  private CompletableFuture<Void> undeploy() {
+    return vertxAssistant.undeployVerticle(moduleDeploymentId);
   }
 
   public void start(Integer port) throws
