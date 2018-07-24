@@ -46,10 +46,11 @@ public class VertxAssistant {
     return future;
   }
 
-  public void deployVerticle(
+  public CompletableFuture<String> deployVerticle(
     String verticleClass,
-    JsonObject config,
-    CompletableFuture<String> deployed) {
+    JsonObject config) {
+
+    CompletableFuture<String> deployed = new CompletableFuture<>();
 
     long startTime = System.currentTimeMillis();
 
@@ -69,14 +70,6 @@ public class VertxAssistant {
         deployed.completeExceptionally(result.cause());
       }
     });
-  }
-
-  public CompletableFuture<String> deployVerticle(
-    String verticleClass, JsonObject config) {
-
-    CompletableFuture<String> deployed = new CompletableFuture<>();
-
-    deployVerticle(verticleClass, config, deployed);
 
     return deployed;
   }

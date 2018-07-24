@@ -252,13 +252,13 @@ public class APITestSuite {
 
     vertxAssistant.start();
 
-    CompletableFuture<String> fakeStorageModuleDeployed = new CompletableFuture<>();
+    final CompletableFuture<String> fakeStorageModuleDeployed;
 
     if (!useOkapiForStorage) {
-      vertxAssistant.deployVerticle(FakeOkapi.class.getName(),
-        new JsonObject(), fakeStorageModuleDeployed);
+      fakeStorageModuleDeployed = vertxAssistant.deployVerticle(FakeOkapi.class.getName(),
+        new JsonObject());
     } else {
-      fakeStorageModuleDeployed.complete(null);
+      fakeStorageModuleDeployed = CompletableFuture.completedFuture(null);
     }
 
     CompletableFuture<String> circulationModuleDeployed =
