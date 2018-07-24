@@ -22,7 +22,7 @@
     <antlr4.version>4.7.1</antlr4.version>
     <drools.version>7.0.0.Final</drools.version>
     <rmb.version>19.2.0</rmb.version>
-    <vertx.version>3.4.2</vertx.version>
+    <vertx.version>3.5.3</vertx.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
   </properties>
