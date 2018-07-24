@@ -29,7 +29,9 @@ public class LoanRepresentation {
     write(itemSummary, "barcode", item.getBarcode());
     write(itemSummary, "contributors", item.getContributorNames());
     write(itemSummary, "callNumber", item.getCallNumber());
-    writeNamedObject(itemSummary, "status", item.getStatus());
+
+    //TODO: Check for null item status
+    writeNamedObject(itemSummary, "status", item.getStatus().getName());
 
     final JsonObject location = item.getLocation();
 

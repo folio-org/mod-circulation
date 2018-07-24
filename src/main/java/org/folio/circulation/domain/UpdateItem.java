@@ -44,8 +44,8 @@ public class UpdateItem {
         prospectiveStatus = CHECKED_OUT;
       }
 
-      if(relatedRecords.getLoan().getItem().isNotSameStatus(prospectiveStatus.getName())) {
-        return internalUpdate(relatedRecords.getLoan().getItem(), prospectiveStatus.getName())
+      if(relatedRecords.getLoan().getItem().isNotSameStatus(prospectiveStatus)) {
+        return internalUpdate(relatedRecords.getLoan().getItem(), prospectiveStatus)
           .thenApply(updatedItemResult -> updatedItemResult.map(
             relatedRecords::withItem));
       }
@@ -66,7 +66,7 @@ public class UpdateItem {
     try {
       final Item item = loanAndRelatedRecords.getLoan().getItem();
 
-      final String prospectiveStatus = itemStatusFrom(
+      final ItemStatus prospectiveStatus = itemStatusFrom(
         loanAndRelatedRecords.getLoan(), loanAndRelatedRecords.getRequestQueue());
 
       if(item.isNotSameStatus(prospectiveStatus)) {
@@ -100,8 +100,8 @@ public class UpdateItem {
 
       final Item item = requestAndRelatedRecords.getRequest().getItem();
 
-      if (item.isNotSameStatus(newStatus.getName())) {
-        return internalUpdate(item, newStatus.getName())
+      if (item.isNotSameStatus(newStatus)) {
+        return internalUpdate(item, newStatus)
           .thenApply(updatedItemResult ->
             updatedItemResult.map(requestAndRelatedRecords::withItem));
       } else {
@@ -117,7 +117,7 @@ public class UpdateItem {
 
   private CompletableFuture<HttpResult<JsonObject>> internalUpdate(
     Item item,
-    String newStatus) {
+    ItemStatus newStatus) {
 
     item.changeStatus(newStatus);
 
@@ -136,24 +136,20 @@ public class UpdateItem {
     return CompletableFuture.completedFuture(succeeded(previousResult));
   }
 
-  private String itemStatusFrom(Loan loan, RequestQueue requestQueue) {
-    ItemStatus prospectiveStatus;
-
+  private ItemStatus itemStatusFrom(Loan loan, RequestQueue requestQueue) {
     if(loan.isClosed()) {
-      prospectiveStatus = requestQueue.hasOutstandingFulfillableRequests()
+      return requestQueue.hasOutstandingFulfillableRequests()
         ? RequestFulfilmentPreference.from(
           requestQueue.getHighestPriorityFulfillableRequest())
         .toCheckedInItemStatus()
         : AVAILABLE;
     }
     else {
-      prospectiveStatus = requestQueue.hasOutstandingRequests()
+      return requestQueue.hasOutstandingRequests()
         ? RequestType.from(requestQueue.getHighestPriorityRequest())
           .toCheckedOutItemStatus()
         : CHECKED_OUT;
     }
-
-    return prospectiveStatus.getName();
   }
 
   private void logException(Exception ex) {

@@ -19,12 +19,10 @@ public class RequestType {
   }
 
   boolean canCreateRequestForItem(Item item) {
-    String status = item.getStatus();
-
     switch (value) {
       case HOLD:
       case RECALL:
-        return ItemStatus.from(status).equals(CHECKED_OUT);
+        return item.getStatus().equals(CHECKED_OUT);
 
       case PAGE:
       default:

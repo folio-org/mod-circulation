@@ -2,12 +2,11 @@ package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.representations.ItemProperties;
 
-import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOCATION_ID;
-import static org.folio.circulation.domain.representations.ItemProperties.TEMPORARY_LOCATION_ID;
-import static org.folio.circulation.domain.representations.ItemProperties.TITLE_PROPERTY;
+import java.util.Objects;
+
+import static org.folio.circulation.domain.representations.ItemProperties.*;
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
@@ -38,13 +37,11 @@ public class Item {
   }
 
   public boolean isCheckedOut() {
-    ItemStatus status = ItemStatus.from(getStatus());
-
-    return status.equals(ItemStatus.CHECKED_OUT);
+    return getStatus().equals(ItemStatus.CHECKED_OUT);
   }
 
-  boolean isNotSameStatus(String prospectiveStatus) {
-    return !StringUtils.equals(getStatus(), prospectiveStatus);
+  boolean isNotSameStatus(ItemStatus prospectiveStatus) {
+    return !Objects.equals(getStatus(), prospectiveStatus);
   }
 
   public JsonObject getItem() {
@@ -91,7 +88,11 @@ public class Item {
     return getProperty(holdingRepresentation, "callNumber");
   }
 
-  public String getStatus() {
+  ItemStatus getStatus() {
+    return ItemStatus.from(getStatusName());
+  }
+
+  private String getStatusName() {
     return getNestedStringProperty(getItem(), "status", "name");
   }
 
@@ -136,8 +137,9 @@ public class Item {
       : getItem().getString(ItemProperties.PERMANENT_LOAN_TYPE_ID);
   }
 
-  void changeStatus(String newStatus) {
-    getItem().put("status", new JsonObject().put("name", newStatus));
+  void changeStatus(ItemStatus newStatus) {
+    //TODO: Check if status is null
+    getItem().put("status", new JsonObject().put("name", newStatus.getName()));
   }
 
   public boolean isNotFound() {
