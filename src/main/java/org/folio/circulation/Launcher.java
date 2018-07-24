@@ -36,7 +36,7 @@ public class Launcher {
 
     Integer port = Integer.getInteger("port", 9801);
 
-    launcher.start(port);
+    launcher.start(port).get(10, TimeUnit.SECONDS);
   }
 
   private void stop() {
@@ -51,10 +51,7 @@ public class Launcher {
     return vertxAssistant.undeployVerticle(moduleDeploymentId);
   }
 
-  public void start(Integer port) throws
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public CompletableFuture<Void> start(Integer port) {
 
     if(port == null) {
       throw new IllegalArgumentException("port should not be null");
@@ -70,8 +67,8 @@ public class Launcher {
     CompletableFuture<String> deployed =
       vertxAssistant.deployVerticle(CirculationVerticle.class, config);
 
-    deployed.thenAccept(result -> log.info("Server Started"));
-
-    moduleDeploymentId = deployed.get(10, TimeUnit.SECONDS);
+    return deployed
+      .thenApply(result -> moduleDeploymentId = result)
+      .thenAccept(result -> log.info("Server Started"));
   }
 }

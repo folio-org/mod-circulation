@@ -257,10 +257,13 @@ public class APITestSuite {
     } else {
       fakeStorageModuleDeployed = CompletableFuture.completedFuture(null);
     }
-    
-    launcher.start(port);
 
-    fakeOkapiDeploymentId = fakeStorageModuleDeployed.get(10, TimeUnit.SECONDS);
+    final CompletableFuture<Void> circulationModuleStarted = launcher.start(port);
+
+    fakeStorageModuleDeployed.thenAccept(result -> fakeOkapiDeploymentId = result);
+
+    CompletableFuture.allOf(circulationModuleStarted, fakeStorageModuleDeployed)
+      .get(10, TimeUnit.SECONDS);
 
     createMaterialTypes();
     createLoanTypes();
