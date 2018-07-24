@@ -320,17 +320,16 @@ public class APITestSuite {
     CompletableFuture<Void> circulationModuleUndeployed =
       vertxAssistant.undeployVerticle(circulationModuleDeploymentId);
 
-    CompletableFuture<Void> fakeOkapiUndeployed = new CompletableFuture<>();
+    final CompletableFuture<Void> fakeOkapiUndeployed;
 
     if (!useOkapiForStorage) {
       log.info("Queries performed: " + FakeStorageModule.getQueries()
         .sorted()
         .collect(Collectors.joining("\n")));
 
-      vertxAssistant.undeployVerticle(fakeOkapiDeploymentId,
-        fakeOkapiUndeployed);
+      fakeOkapiUndeployed = vertxAssistant.undeployVerticle(fakeOkapiDeploymentId);
     } else {
-      fakeOkapiUndeployed.complete(null);
+      fakeOkapiUndeployed = CompletableFuture.completedFuture(null);
     }
 
     circulationModuleUndeployed.get(10, TimeUnit.SECONDS);

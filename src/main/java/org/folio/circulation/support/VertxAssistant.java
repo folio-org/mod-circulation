@@ -81,22 +81,16 @@ public class VertxAssistant {
     return deployed;
   }
 
-  public void undeployVerticle(String deploymentId,
-                               CompletableFuture<Void> undeployed) {
+  public CompletableFuture<Void> undeployVerticle(String moduleDeploymentId) {
+    CompletableFuture<Void> undeployed = new CompletableFuture<>();
 
-    vertx.undeploy(deploymentId, result -> {
+    vertx.undeploy(moduleDeploymentId, result -> {
       if (result.succeeded()) {
         undeployed.complete(null);
       } else {
         undeployed.completeExceptionally(result.cause());
       }
     });
-  }
-
-  public CompletableFuture<Void> undeployVerticle(String moduleDeploymentId) {
-    CompletableFuture<Void> undeployed = new CompletableFuture<>();
-
-    undeployVerticle(moduleDeploymentId, undeployed);
 
     return undeployed;
   }

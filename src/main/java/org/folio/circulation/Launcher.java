@@ -39,13 +39,9 @@ public class Launcher {
   }
 
   private void stop() {
-    CompletableFuture<Void> undeployed = new CompletableFuture<>();
-
     log.info("Server Stopping");
 
-    vertxAssistant.undeployVerticle(moduleDeploymentId, undeployed);
-
-    undeployed
+    vertxAssistant.undeployVerticle(moduleDeploymentId)
       .thenComposeAsync(v -> vertxAssistant.stop())
       .thenAccept(v -> log.info("Server Stopped"));
   }
