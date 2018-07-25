@@ -40,7 +40,7 @@ public class Item {
     return getStatus().equals(ItemStatus.CHECKED_OUT);
   }
 
-  boolean isNotSameStatus(ItemStatus prospectiveStatus) {
+  Boolean isNotSameStatus(ItemStatus prospectiveStatus) {
     return !Objects.equals(getStatus(), prospectiveStatus);
   }
 

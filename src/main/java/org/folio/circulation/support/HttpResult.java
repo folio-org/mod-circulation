@@ -3,6 +3,7 @@ package org.folio.circulation.support;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
@@ -141,6 +142,30 @@ public interface HttpResult<T> {
       condition.apply(value).next(result -> result
           ? whenTrue.apply(value)
           : whenFalse.apply(value)));
+  }
+
+  /**
+   * Allows branching between two paths based upon the outcome of a condition
+   *
+   * Executes the whenTrue function when condition evaluates to true
+   * Executes the whenFalse function when condition evaluates to false
+   * Executes neither if the condition evaluation fails
+   * Forwards on failure if previous result failed
+   *
+   * @param condition on which to branch upon
+   * @param whenTrue executed when condition evaluates to true
+   * @param whenFalse executed when condition evaluates to false
+   * @return Result of whenTrue or whenFalse, unless previous result failed
+   */
+  static <R> HttpResult<R> when(
+    HttpResult<Boolean> condition,
+    Supplier<HttpResult<R>> whenTrue,
+    Supplier<HttpResult<R>> whenFalse) {
+
+    return
+      condition.next(result -> result
+        ? whenTrue.get()
+        : whenFalse.get());
   }
 
   /**
