@@ -6,6 +6,7 @@ import org.folio.circulation.domain.representations.RequestProperties;
 
 import java.util.Objects;
 
+import static org.folio.circulation.domain.RequestFulfilmentPreference.*;
 import static org.folio.circulation.domain.RequestStatus.*;
 import static org.folio.circulation.domain.representations.RequestProperties.STATUS;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
@@ -39,8 +40,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   boolean isFulfillable() {
-    return StringUtils.equals(getFulfilmentPreference(),
-      RequestFulfilmentPreference.HOLD_SHELF);
+    return getFulfilmentPreference() == HOLD_SHELF;
   }
 
   boolean isOpen() {
@@ -98,8 +98,12 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return representation.getString("proxyUserId");
   }
 
-  String getFulfilmentPreference() {
+  private String getFulfilmentPreferenceName() {
     return representation.getString("fulfilmentPreference");
+  }
+
+  private RequestFulfilmentPreference getFulfilmentPreference() {
+    return RequestFulfilmentPreference.from(getFulfilmentPreferenceName());
   }
 
   public String getId() {
@@ -162,7 +166,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   ItemStatus checkedInItemStatus() {
-    return RequestFulfilmentPreference.from(this).toCheckedInItemStatus();
+    return getFulfilmentPreference().toCheckedInItemStatus();
   }
 
   ItemStatus checkedOutItemStatus() {

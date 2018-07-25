@@ -1,34 +1,48 @@
 package org.folio.circulation.domain;
 
+import java.util.Arrays;
+
+import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.AWAITING_PICKUP;
-import static org.folio.circulation.domain.ItemStatus.NONE;
 
-public class RequestFulfilmentPreference {
-  static final String HOLD_SHELF = "Hold Shelf";
-  private static final String DELIVERY = "Delivery";
+public enum RequestFulfilmentPreference {
+  NONE(""),
+  HOLD_SHELF("Hold Shelf"),
+  DELIVERY("Delivery");
 
-  public final String value;
+  public final String name;
 
-  private RequestFulfilmentPreference(String value) {
-    this.value = value;
+  RequestFulfilmentPreference(String name) {
+    this.name = name;
   }
 
-  public static RequestFulfilmentPreference from(Request request) {
-    return new RequestFulfilmentPreference(request.getFulfilmentPreference());
+  public static RequestFulfilmentPreference from(String name) {
+    return Arrays.stream(values())
+      .filter(status -> status.nameMatches(name))
+      .findFirst()
+      .orElse(NONE);
   }
 
   ItemStatus toCheckedInItemStatus() {
-    switch(value) {
-      case RequestFulfilmentPreference.HOLD_SHELF:
+    switch(this) {
+      case HOLD_SHELF:
         return AWAITING_PICKUP;
 
-      case RequestFulfilmentPreference.DELIVERY:
+      case DELIVERY:
         return AVAILABLE;
 
       default:
         //TODO: Need to add validation to stop this situation
-        return NONE;
+        return ItemStatus.NONE;
     }
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  private boolean nameMatches(String name) {
+    return equalsIgnoreCase(getName(), name);
   }
 }
