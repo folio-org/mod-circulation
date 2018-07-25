@@ -1,25 +1,35 @@
 package org.folio.circulation.domain;
 
+import java.util.Arrays;
+
+import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
-import static org.folio.circulation.domain.ItemStatus.NONE;
 
-public class RequestType {
-  private static final String RECALL = "Recall";
-  private static final String HOLD = "Hold";
-  private static final String PAGE = "Page";
+public enum RequestType {
+  NONE("", ItemStatus.NONE, null),
+  HOLD("Hold", ItemStatus.CHECKED_OUT, "holdrequested"),
+  RECALL("Recall", ItemStatus.CHECKED_OUT, "recallrequested"),
+  PAGE("Page", ItemStatus.CHECKED_OUT, null);
 
-  public final String value;
+  public final String name;
+  public final ItemStatus checkedOutStatus;
+  public final String loanAction;
 
   public static RequestType from(Request request) {
-    return new RequestType(request.getRequestType());
+    return Arrays.stream(values())
+      .filter(status -> status.nameMatches(request.getRequestType()))
+      .findFirst()
+      .orElse(NONE);
   }
 
-  private RequestType(String value) {
-    this.value = value;
+  RequestType(String name, ItemStatus checkedOutStatus, String loanAction) {
+    this.name = name;
+    this.checkedOutStatus = checkedOutStatus;
+    this.loanAction = loanAction;
   }
 
   boolean canCreateRequestForItem(Item item) {
-    switch (value) {
+    switch (this) {
       case HOLD:
       case RECALL:
         return item.getStatus().equals(CHECKED_OUT);
@@ -31,28 +41,18 @@ public class RequestType {
   }
 
   ItemStatus toCheckedOutItemStatus() {
-    switch(value) {
-      case RequestType.HOLD:
-      case RequestType.RECALL:
-      case RequestType.PAGE:
-        return CHECKED_OUT;
-
-      default:
-        //TODO: Need to add validation to stop this situation
-        return NONE;
-    }
+    return checkedOutStatus;
   }
 
   String toLoanAction() {
-    switch (this.value) {
-      case HOLD:
-        return "holdrequested";
-      case RECALL:
-        return "recallrequested";
+    return loanAction;
+  }
 
-      case PAGE:
-      default:
-        return null;
-    }
+  public String getName() {
+    return name;
+  }
+
+  private boolean nameMatches(String name) {
+    return equalsIgnoreCase(getName(), name);
   }
 }
