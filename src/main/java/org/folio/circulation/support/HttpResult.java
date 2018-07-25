@@ -205,7 +205,7 @@ public interface HttpResult<T> {
     HttpResult<Boolean> condition,
     HttpFailure failure) {
 
-    return nextWhen((v) -> condition,
+    return nextWhen(v -> condition,
       value -> failed(failure),
       HttpResult::succeeded);
   }

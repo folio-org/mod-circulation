@@ -14,18 +14,18 @@ public enum RequestStatus {
   CLOSED_FILLED("Closed - Filled"),
   CLOSED_CANCELLED("Closed - Cancelled");
 
-  private final String name;
+  private final String value;
 
   public static String invalidStatusErrorMessage() {
     //TODO: Generalise this to join all states
     return String.format("Request status must be \"%s\", \"%s\" or \"%s\"",
-      OPEN_NOT_YET_FILLED.getName(), OPEN_AWAITING_PICKUP.getName(),
-      CLOSED_FILLED.getName());
+      OPEN_NOT_YET_FILLED.getValue(), OPEN_AWAITING_PICKUP.getValue(),
+      CLOSED_FILLED.getValue());
   }
 
-  public static RequestStatus from(String name) {
+  public static RequestStatus from(String value) {
     return Arrays.stream(values())
-      .filter(status -> status.nameMatches(name))
+      .filter(status -> status.valueMatches(value))
       .findFirst()
       .orElse(NONE);
   }
@@ -36,8 +36,8 @@ public enum RequestStatus {
       : OPEN_NOT_YET_FILLED;
   }
 
-  RequestStatus(String name) {
-    this.name = name;
+  RequestStatus(String value) {
+    this.value = value;
   }
 
   public boolean isValid() {
@@ -45,14 +45,14 @@ public enum RequestStatus {
   }
 
   public void writeTo(JsonObject request) {
-    request.put(RequestProperties.STATUS, name);
+    request.put(RequestProperties.STATUS, value);
   }
 
-  private boolean nameMatches(String name) {
-    return equalsIgnoreCase(getName(), name);
+  private boolean valueMatches(String value) {
+    return equalsIgnoreCase(getValue(), value);
   }
 
-  public String getName() {
-    return name;
+  public String getValue() {
+    return value;
   }
 }

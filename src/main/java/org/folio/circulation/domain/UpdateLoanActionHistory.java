@@ -35,7 +35,7 @@ public class UpdateLoanActionHistory {
     String action = requestAndRelatedRecords.getRequest().actionOnCreation();
 
     String itemStatus = requestAndRelatedRecords.getRequest().getItem()
-      .getStatus().getName();
+      .getStatus().getValue();
 
     //Do not change any loans if no new status
     if(StringUtils.isEmpty(action)) {

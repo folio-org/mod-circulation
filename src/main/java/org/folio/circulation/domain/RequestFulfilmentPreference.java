@@ -11,15 +11,15 @@ public enum RequestFulfilmentPreference {
   HOLD_SHELF("Hold Shelf"),
   DELIVERY("Delivery");
 
-  public final String name;
+  private final String value;
 
-  RequestFulfilmentPreference(String name) {
-    this.name = name;
+  RequestFulfilmentPreference(String value) {
+    this.value = value;
   }
 
-  public static RequestFulfilmentPreference from(String name) {
+  public static RequestFulfilmentPreference from(String value) {
     return Arrays.stream(values())
-      .filter(status -> status.nameMatches(name))
+      .filter(status -> status.nameMatches(value))
       .findFirst()
       .orElse(NONE);
   }
@@ -38,11 +38,11 @@ public enum RequestFulfilmentPreference {
     }
   }
 
-  public String getName() {
-    return name;
+  public String getValue() {
+    return value;
   }
 
-  private boolean nameMatches(String name) {
-    return equalsIgnoreCase(getName(), name);
+  private boolean nameMatches(String value) {
+    return equalsIgnoreCase(getValue(), value);
   }
 }

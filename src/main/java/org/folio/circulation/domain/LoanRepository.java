@@ -198,7 +198,7 @@ public class LoanRepository {
     storageLoan.remove("itemStatus");
 
     //TODO: Check for null item status
-    storageLoan.put("itemStatus", item.getStatus().getName());
+    storageLoan.put("itemStatus", item.getStatus().getValue());
 
     return storageLoan;
   }

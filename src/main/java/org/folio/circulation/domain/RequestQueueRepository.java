@@ -42,8 +42,8 @@ public class RequestQueueRepository {
       String unencodedQuery = String.format(
         "itemId==%s and status==(\"%s\" or \"%s\") sortBy position/sort.ascending",
         itemId,
-        RequestStatus.OPEN_AWAITING_PICKUP.getName(),
-        RequestStatus.OPEN_NOT_YET_FILLED.getName());
+        RequestStatus.OPEN_AWAITING_PICKUP.getValue(),
+        RequestStatus.OPEN_NOT_YET_FILLED.getValue());
 
     final int maximumSupportedRequestQueueSize = 1000;
 

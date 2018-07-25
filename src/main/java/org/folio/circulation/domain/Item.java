@@ -139,7 +139,7 @@ public class Item {
 
   void changeStatus(ItemStatus newStatus) {
     //TODO: Check if status is null
-    getItem().put("status", new JsonObject().put("name", newStatus.getName()));
+    getItem().put("status", new JsonObject().put("name", newStatus.getValue()));
   }
 
   public boolean isNotFound() {

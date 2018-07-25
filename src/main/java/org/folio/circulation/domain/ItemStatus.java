@@ -10,24 +10,24 @@ public enum ItemStatus {
   AWAITING_PICKUP("Awaiting pickup"),
   CHECKED_OUT("Checked out");
 
-  public static ItemStatus from(String name) {
+  public static ItemStatus from(String value) {
     return Arrays.stream(values())
-      .filter(status -> status.nameMatches(name))
+      .filter(status -> status.valueMatches(value))
       .findFirst()
       .orElse(NONE);
   }
 
-  private final String name;
+  private final String value;
 
-  ItemStatus(String name) {
-    this.name = name;
+  ItemStatus(String value) {
+    this.value = value;
   }
 
-  public String getName() {
-    return name;
+  public String getValue() {
+    return value;
   }
 
-  private boolean nameMatches(String name) {
-    return equalsIgnoreCase(getName(), name);
+  private boolean valueMatches(String value) {
+    return equalsIgnoreCase(getValue(), value);
   }
 }

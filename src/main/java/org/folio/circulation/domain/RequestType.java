@@ -11,23 +11,23 @@ public enum RequestType {
   RECALL("Recall", ItemStatus.CHECKED_OUT, "recallrequested"),
   PAGE("Page", ItemStatus.CHECKED_OUT, null);
 
-  public final String name;
+  public final String value;
   public final ItemStatus checkedOutStatus;
   public final String loanAction;
 
-  public static RequestType from(String name) {
+  public static RequestType from(String value) {
     return Arrays.stream(values())
-      .filter(status -> status.nameMatches(name))
+      .filter(status -> status.nameMatches(value))
       .findFirst()
       .orElse(NONE);
   }
 
   RequestType(
-    String name,
+    String value,
     ItemStatus checkedOutStatus,
     String loanAction) {
 
-    this.name = name;
+    this.value = value;
     this.checkedOutStatus = checkedOutStatus;
     this.loanAction = loanAction;
   }
@@ -52,11 +52,11 @@ public enum RequestType {
     return loanAction;
   }
 
-  public String getName() {
-    return name;
+  public String getValue() {
+    return value;
   }
 
-  private boolean nameMatches(String name) {
-    return equalsIgnoreCase(getName(), name);
+  private boolean nameMatches(String value) {
+    return equalsIgnoreCase(getValue(), value);
   }
 }
