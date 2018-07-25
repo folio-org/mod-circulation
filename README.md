@@ -322,8 +322,6 @@ below is a table describing the most common states defined at the moment.
 |---|---|
 | Available | This item is available to be lent to a patron |
 | Checked out | This item is currently checked out to a patron |
-| Checked out - Recalled | This item is currently checked out to a patron, another patron has requested it be returned as soon as possible |
-| Checked out - Held | This item is currently checked out to a patron, another patron has requested it be held upon it’s return |
 
 ### Request Status
 
