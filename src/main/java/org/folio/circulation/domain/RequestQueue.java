@@ -5,12 +5,26 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static java.util.Comparator.naturalOrder;
+import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
+import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 
 public class RequestQueue {
   private Collection<Request> requests;
 
   RequestQueue(Collection<Request> requests) {
     this.requests = requests;
+  }
+
+  ItemStatus checkedOutItemStatus() {
+    return hasOutstandingRequests()
+      ? getHighestPriorityRequest().checkedOutItemStatus()
+      : CHECKED_OUT;
+  }
+
+  ItemStatus checkedInItemStatus() {
+    return hasOutstandingFulfillableRequests()
+      ? getHighestPriorityFulfillableRequest().checkedInItemStatus()
+      : AVAILABLE;
   }
 
   boolean hasOutstandingRequests() {

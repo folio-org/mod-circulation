@@ -152,4 +152,12 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   boolean hasChangedPosition() {
     return changedPosition;
   }
+
+  ItemStatus checkedInItemStatus() {
+    return RequestFulfilmentPreference.from(this).toCheckedInItemStatus();
+  }
+
+  ItemStatus checkedOutItemStatus() {
+    return RequestType.from(this).toCheckedOutItemStatus();
+  }
 }

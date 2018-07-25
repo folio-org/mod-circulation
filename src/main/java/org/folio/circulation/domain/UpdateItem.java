@@ -8,8 +8,6 @@ import org.folio.circulation.support.ServerErrorFailure;
 import java.util.concurrent.CompletableFuture;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
-import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.support.HttpResult.*;
 
 public class UpdateItem {
@@ -51,24 +49,11 @@ public class UpdateItem {
           requestAndRelatedRecords.getRequest().getItem(), prospectiveStatus));
   }
 
-  private ItemStatus itemStatusOnRequestCreation(
-    RequestAndRelatedRecords requestAndRelatedRecords) {
-
-    RequestType requestType = RequestType.from(requestAndRelatedRecords.getRequest());
-
-    RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
-
-    return requestQueue.hasOutstandingRequests()
-      ? RequestType.from(requestQueue.getHighestPriorityRequest())
-      .toCheckedOutItemStatus()
-      : requestType.toCheckedOutItemStatus();
-  }
-
   private CompletableFuture<HttpResult<LoanAndRelatedRecords>> updateItemStatusOnCheckOut(
     LoanAndRelatedRecords loanAndRelatedRecords,
     RequestQueue requestQueue) {
 
-    return HttpResult.of(() -> checkOutProspectiveStatusFrom(requestQueue))
+    return HttpResult.of(requestQueue::checkedOutItemStatus)
       .after(prospectiveStatus ->
         updateItemWhenNotSameStatus(loanAndRelatedRecords,
           loanAndRelatedRecords.getLoan().getItem(), prospectiveStatus));
@@ -117,30 +102,22 @@ public class UpdateItem {
     return completedFuture(succeeded(previousResult));
   }
 
-  private ItemStatus checkOutProspectiveStatusFrom(RequestQueue requestQueue) {
-    if(requestQueue != null) {
-      return requestQueue.hasOutstandingRequests()
-        ? RequestType.from(requestQueue.getHighestPriorityRequest()).toCheckedOutItemStatus()
-        : CHECKED_OUT;
-    }
-    else {
-      return CHECKED_OUT;
-    }
+  private ItemStatus itemStatusOnRequestCreation(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
+
+    return requestQueue.hasOutstandingRequests()
+      ? requestQueue.getHighestPriorityRequest().checkedOutItemStatus()
+      : requestAndRelatedRecords.getRequest().checkedOutItemStatus();
   }
 
-  private ItemStatus itemStatusOnLoanUpdate(Loan loan, RequestQueue requestQueue) {
-    if(loan.isClosed()) {
-      return requestQueue.hasOutstandingFulfillableRequests()
-        ? RequestFulfilmentPreference.from(
-          requestQueue.getHighestPriorityFulfillableRequest())
-        .toCheckedInItemStatus()
-        : AVAILABLE;
-    }
-    else {
-      return requestQueue.hasOutstandingRequests()
-        ? RequestType.from(requestQueue.getHighestPriorityRequest())
-          .toCheckedOutItemStatus()
-        : CHECKED_OUT;
-    }
+  private ItemStatus itemStatusOnLoanUpdate(
+    Loan loan,
+    RequestQueue requestQueue) {
+
+    return loan.isClosed()
+      ? requestQueue.checkedInItemStatus()
+      : requestQueue.checkedOutItemStatus();
   }
 }
