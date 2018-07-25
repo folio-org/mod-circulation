@@ -322,6 +322,7 @@ below is a table describing the most common states defined at the moment.
 |---|---|
 | Available | This item is available to be lent to a patron |
 | Checked out | This item is currently checked out to a patron |
+| Awaiting pickup | This item is awaiting pickup by a patron who has a request at the top of the queue|
 
 ### Request Status
 
