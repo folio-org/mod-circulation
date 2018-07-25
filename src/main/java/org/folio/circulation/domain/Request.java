@@ -106,8 +106,16 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return representation.getString("id");
   }
 
-  String getRequestType() {
-    return representation.getString("requestType");
+  private RequestType getRequestType() {
+    return RequestType.from(representation.getString("requestType"));
+  }
+
+  Boolean allowedForItem() {
+    return getRequestType().canCreateRequestForItem(getItem());
+  }
+
+  String actionOnCreation() {
+    return getRequestType().toLoanAction();
   }
 
   RequestStatus getStatus() {
@@ -158,6 +166,6 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   ItemStatus checkedOutItemStatus() {
-    return RequestType.from(this).toCheckedOutItemStatus();
+    return getRequestType().toCheckedOutItemStatus();
   }
 }

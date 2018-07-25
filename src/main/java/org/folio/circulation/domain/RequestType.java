@@ -15,24 +15,28 @@ public enum RequestType {
   public final ItemStatus checkedOutStatus;
   public final String loanAction;
 
-  public static RequestType from(Request request) {
+  public static RequestType from(String name) {
     return Arrays.stream(values())
-      .filter(status -> status.nameMatches(request.getRequestType()))
+      .filter(status -> status.nameMatches(name))
       .findFirst()
       .orElse(NONE);
   }
 
-  RequestType(String name, ItemStatus checkedOutStatus, String loanAction) {
+  RequestType(
+    String name,
+    ItemStatus checkedOutStatus,
+    String loanAction) {
+
     this.name = name;
     this.checkedOutStatus = checkedOutStatus;
     this.loanAction = loanAction;
   }
 
-  boolean canCreateRequestForItem(Item item) {
+  Boolean canCreateRequestForItem(Item item) {
     switch (this) {
       case HOLD:
       case RECALL:
-        return item.getStatus().equals(CHECKED_OUT);
+        return item.getStatus() == CHECKED_OUT;
 
       case PAGE:
       default:

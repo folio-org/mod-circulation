@@ -32,9 +32,8 @@ public class UpdateLoanActionHistory {
   CompletableFuture<HttpResult<RequestAndRelatedRecords>> onRequestCreation(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    RequestType requestType = RequestType.from(requestAndRelatedRecords.getRequest());
+    String action = requestAndRelatedRecords.getRequest().actionOnCreation();
 
-    String action = requestType.toLoanAction();
     String itemStatus = requestAndRelatedRecords.getRequest().getItem()
       .getStatus().getName();
 

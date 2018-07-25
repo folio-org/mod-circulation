@@ -64,9 +64,7 @@ public class CreateRequestService {
 
     Request request = requestAndRelatedRecords.getRequest();
 
-    RequestType requestType = RequestType.from(request);
-
-    if (!requestType.canCreateRequestForItem(request.getItem())) {
+    if (!request.allowedForItem()) {
       return failed(failure(
         String.format("Item is not %s", CHECKED_OUT),
         "itemId", request.getItemId()
