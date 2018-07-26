@@ -70,6 +70,11 @@ resourceTypes:
           schema: !include renew-by-barcode-request.json
           example: !include examples/renew-by-barcode-request.json
       responses:
+        200:
+          body:
+            application/json:
+              schema: loan.json
+              example: !include examples/loan.json
         201:
           body:
             application/json:
@@ -94,6 +99,11 @@ resourceTypes:
           schema: !include renew-by-id-request.json
           example: !include examples/renew-by-id-request.json
       responses:
+        200:
+          body:
+            application/json:
+              schema: loan.json
+              example: !include examples/loan.json
         201:
           body:
             application/json:
