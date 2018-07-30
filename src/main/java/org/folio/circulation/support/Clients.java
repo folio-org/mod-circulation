@@ -25,10 +25,6 @@ public class Clients {
     return new Clients(context.createHttpClient(httpClient), context);
   }
 
-  public static Clients create(WebContext context) {
-    return new Clients(context.createHttpClient(), context);
-  }
-
   private Clients(OkapiHttpClient client, WebContext context) {
     try {
       requestsStorageClient = createRequestsStorageClient(client, context);

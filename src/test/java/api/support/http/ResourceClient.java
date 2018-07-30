@@ -1,7 +1,7 @@
 package api.support.http;
 
-import io.vertx.core.json.JsonObject;
 import api.support.builders.Builder;
+import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
@@ -202,6 +202,80 @@ public class ResourceClient {
     return new IndividualResource(response);
   }
 
+  public Response attemptCreateAtSpecificLocation(Builder builder)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
+
+    JsonObject representation = builder.create();
+    String id = representation.getString("id");
+
+    final URL location = urlMaker.combine(String.format("/%s", id));
+
+    client.put(location, representation, ResponseHandler.any(createCompleted));
+
+    return createCompleted.get(5, TimeUnit.SECONDS);
+  }
+
+  public IndividualResource createAtSpecificLocation(Builder builder)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
+
+    JsonObject representation = builder.create();
+    String id = representation.getString("id");
+
+    final URL location = urlMaker.combine(String.format("/%s", id));
+
+    client.put(location, representation, ResponseHandler.any(createCompleted));
+
+    Response createResponse = createCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(
+      String.format("Failed to create %s %s: %s", resourceName, id, createResponse.getBody()),
+      createResponse.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
+
+    System.out.println(String.format("Created resource %s: %s", resourceName,
+      createResponse.getJson().encodePrettily()));
+
+    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
+
+    client.get(location, ResponseHandler.any(getCompleted));
+
+    Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(
+      String.format("Failed to get %s %s: %s", resourceName, id, getResponse.getBody()),
+      getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+
+    return new IndividualResource(getResponse);
+  }
+
+  public Response attemptReplace(UUID id, Builder builder)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
+
+    String path = "";
+    if (id != null) {
+      path = String.format("/%s", id);
+    }
+
+    client.put(urlMaker.combine(path), builder.create(),
+      ResponseHandler.any(putCompleted));
+
+    return putCompleted.get(5, TimeUnit.SECONDS);
+  }
+
   public void replace(UUID id, Builder builder)
     throws MalformedURLException,
     InterruptedException,
@@ -280,6 +354,20 @@ public class ResourceClient {
     return new IndividualResource(response);
   }
 
+  public Response attemptGet(IndividualResource resource)
+    throws MalformedURLException,
+      InterruptedException,
+      ExecutionException,
+      TimeoutException {
+
+    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
+
+    client.get(urlMaker.combine(String.format("/%s", resource.getId())),
+      ResponseHandler.any(getCompleted));
+
+    return getCompleted.get(5, TimeUnit.SECONDS);
+  }
+
   public void delete(UUID id)
     throws MalformedURLException,
     InterruptedException,
@@ -295,7 +383,16 @@ public class ResourceClient {
 
     assertThat(String.format(
       "Failed to delete %s %s: %s", resourceName, id, response.getBody()),
-      response.getStatusCode(), is(204));
+      response.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
+  }
+
+  public void delete(IndividualResource resource)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    delete(resource.getId());
   }
 
   public void deleteAll()

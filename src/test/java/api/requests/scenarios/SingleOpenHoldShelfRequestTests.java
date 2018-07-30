@@ -42,6 +42,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     Response request = requestsClient.getById(requestByJessica.getId());
 
     assertThat(request.getJson().getString("status"), is(OPEN_AWAITING_PICKUP));
+    assertThat(request.getJson().getInteger("position"), is(1));
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 

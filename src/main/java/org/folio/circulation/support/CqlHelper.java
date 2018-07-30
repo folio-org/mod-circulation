@@ -31,8 +31,7 @@ public class CqlHelper {
         return null;
       }
 
-      String query = String.format("id==(%s)",
-        filteredIds.stream().collect(Collectors.joining(" or ")));
+      String query = String.format("id==(%s)", String.join(" or ", filteredIds));
 
       return encodeQuery(query).orElse(null);
     }

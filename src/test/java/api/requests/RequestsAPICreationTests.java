@@ -1,15 +1,14 @@
 package api.requests;
 
-import io.vertx.core.json.JsonObject;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
 import api.support.APITests;
 import api.support.builders.ItemBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
+import io.vertx.core.json.JsonObject;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
@@ -18,16 +17,14 @@ import org.junit.runner.RunWith;
 
 import java.net.MalformedURLException;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.folio.HttpStatus.*;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
-import static api.support.http.InterfaceUrls.requestsUrl;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
+import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
 import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.Is.is;
@@ -122,28 +119,108 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void cannotCreateRequestForUnknownItem()
+  public void canCreateARequestAtSpecificLocation()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
     MalformedURLException {
 
     UUID id = UUID.randomUUID();
+
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+
+    loansFixture.checkOut(item, usersFixture.jessica());
+
+    IndividualResource requester = usersFixture.steve();
+
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    Response response = requestsClient.attemptCreateAtSpecificLocation(new RequestBuilder()
+      .withId(id)
+      .open()
+      .recall()
+      .forItem(item)
+      .by(requester)
+      .withRequestDate(requestDate)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(new LocalDate(2017, 7, 30))
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
+
+    assertThat(response.getStatusCode(), is(204));
+
+    IndividualResource request = requestsClient.get(id);
+
+    JsonObject representation = request.getJson();
+
+    assertThat(representation.getString("id"), is(id.toString()));
+    assertThat(representation.getString("requestType"), is("Recall"));
+    assertThat(representation.getString("requestDate"), isEquivalentTo(requestDate));
+    assertThat(representation.getString("itemId"), is(item.getId().toString()));
+    assertThat(representation.getString("requesterId"), is(requester.getId().toString()));
+    assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
+    assertThat(representation.getString("requestExpirationDate"), is("2017-07-30"));
+    assertThat(representation.getString("holdShelfExpirationDate"), is("2017-08-31"));
+    assertThat(representation.getString("status"), is("Open - Not yet filled"));
+
+    assertThat("has information taken from item",
+      representation.containsKey("item"), is(true));
+
+    assertThat("title is taken from item",
+      representation.getJsonObject("item").getString("title"),
+      is("The Long Way to a Small, Angry Planet"));
+
+    assertThat("barcode is taken from item",
+      representation.getJsonObject("item").getString("barcode"),
+      is("036000291452"));
+
+    assertThat("has information taken from requesting user",
+      representation.containsKey("requester"), is(true));
+
+    assertThat("last name is taken from requesting user",
+      representation.getJsonObject("requester").getString("lastName"),
+      is("Jones"));
+
+    assertThat("first name is taken from requesting user",
+      representation.getJsonObject("requester").getString("firstName"),
+      is("Steven"));
+
+    assertThat("middle name is not taken from requesting user",
+      representation.getJsonObject("requester").containsKey("middleName"),
+      is(false));
+
+    assertThat("barcode is taken from requesting user",
+      representation.getJsonObject("requester").getString("barcode"),
+      is("5694596854"));
+
+    assertThat("does not have information taken from proxying user",
+      representation.containsKey("proxy"), is(false));
+
+    assertThat("should have change metadata",
+      representation.containsKey("metadata"), is(true));
+
+    JsonObject changeMetadata = representation.getJsonObject("metadata");
+
+    assertThat("change metadata should have created date",
+      changeMetadata.containsKey("createdDate"), is(true));
+
+    assertThat("change metadata should have updated date",
+      changeMetadata.containsKey("updatedDate"), is(true));
+  }
+
+  @Test
+  public void cannotCreateRequestForUnknownItem()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
     UUID itemId = UUID.randomUUID();
 
-    JsonObject requestRequest = new RequestBuilder()
+    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .recall()
-      .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserBuilder()).getId())
-      .create();
+      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
 
-    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
-
-    client.post(requestsUrl(), requestRequest,
-      ResponseHandler.json(postCompleted));
-
-    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
     assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
   }
 
@@ -154,24 +231,15 @@ public class RequestsAPICreationTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    UUID id = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
       ItemBuilder::available)
       .getId();
 
-    JsonObject requestRequest = new RequestBuilder()
+    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .recall()
-      .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserBuilder()).getId())
-      .create();
+      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
 
-    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
-
-    client.post(requestsUrl(), requestRequest,
-      ResponseHandler.json(postCompleted));
-
-    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
     assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
   }
 
@@ -182,73 +250,16 @@ public class RequestsAPICreationTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    UUID id = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
       ItemBuilder::available)
       .getId();
 
-    JsonObject requestRequest = new RequestBuilder()
+    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .hold()
-      .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserBuilder()).getId())
-      .create();
+      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
 
-    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
-
-    client.post(requestsUrl(), requestRequest,
-      ResponseHandler.json(postCompleted));
-
-    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
     assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
-  }
-
-  //TODO: Remove this once sample data is updated, temporary to aid change of item status case
-  @Test()
-  public void canCreateARequestEvenWithDifferentCaseCheckedOutStatus()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
-
-    UUID id = UUID.randomUUID();
-
-    IndividualResource itemResponse = itemsFixture.basedUponSmallAngryPlanet();
-
-    UUID itemId = itemResponse.getId();
-
-    loansFixture.checkOutItem(itemId);
-
-    JsonObject itemWithChangedStatus = itemResponse.copyJson()
-      .put("status", new JsonObject().put("name", "Checked Out"));
-
-    itemsClient.replace(itemId, itemWithChangedStatus);
-
-    UUID requesterId = usersClient.create(new UserBuilder()
-      .withName("Jones", "Steven")
-      .withBarcode("564376549214"))
-      .getId();
-
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-
-    JsonObject requestRequest = new RequestBuilder()
-      .recall()
-      .withId(id)
-      .withRequestDate(requestDate)
-      .withItemId(itemId)
-      .withRequesterId(requesterId)
-      .fulfilToHoldShelf()
-      .withRequestExpiration(new LocalDate(2017, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
-      .create();
-
-    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
-
-    client.post(requestsUrl(), requestRequest,
-      ResponseHandler.json(postCompleted));
-
-    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
-    assertThat(postResponse, hasStatus(HTTP_CREATED));
   }
 
   @Test
@@ -263,20 +274,47 @@ public class RequestsAPICreationTests extends APITests {
       ItemBuilder::available)
       .getId();
 
-    JsonObject requestRequest = new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .page()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserBuilder()).getId())
-      .create();
+      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
+  }
 
-    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+  //TODO: Remove this once sample data is updated, temporary to aid change of item status case
+  @Test()
+  public void canCreateARequestEvenWithDifferentCaseCheckedOutStatus()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
 
-    client.post(requestsUrl(), requestRequest,
-      ResponseHandler.json(postCompleted));
+    UUID id = UUID.randomUUID();
 
-    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
-    assertThat(postResponse, hasStatus(HTTP_CREATED));
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+    final IndividualResource rebecca = usersFixture.rebecca();
+
+    UUID itemId = smallAngryPlanet.getId();
+
+    loansFixture.checkOut(smallAngryPlanet, rebecca);
+
+    JsonObject itemWithChangedStatus = smallAngryPlanet.copyJson()
+      .put("status", new JsonObject().put("name", "Checked Out"));
+
+    itemsClient.replace(itemId, itemWithChangedStatus);
+
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    requestsFixture.place(new RequestBuilder()
+      .recall()
+      .withId(id)
+      .withRequestDate(requestDate)
+      .forItem(smallAngryPlanet)
+      .by(steve)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(new LocalDate(2017, 7, 30))
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
   }
 
   @Test
@@ -303,23 +341,14 @@ public class RequestsAPICreationTests extends APITests {
       .withBarcode("564376549214"))
       .getId();
 
-    JsonObject requestRequest = new RequestBuilder()
+    final IndividualResource request = requestsFixture.place(new RequestBuilder()
       .recall()
       .toHoldShelf()
       .withItemId(itemId)
       .withRequesterId(requesterId)
-      .withStatus(status)
-      .create();
+      .withStatus(status));
 
-    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
-
-    client.post(requestsUrl(), requestRequest,
-      ResponseHandler.json(postCompleted));
-
-    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
-    assertThat(postResponse, hasStatus(HTTP_CREATED));
-
-    JsonObject representation = postResponse.getJson();
+    JsonObject representation = request.getJson();
 
     assertThat(representation.getString("status"), is(status));
   }
@@ -336,38 +365,62 @@ public class RequestsAPICreationTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
-      itemBuilder -> itemBuilder
-        .withBarcode("036000291452"))
-      .getId();
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
-    loansFixture.checkOutItem(itemId);
+    final IndividualResource jessica = usersFixture.jessica();
+    final IndividualResource steve = usersFixture.steve();
 
-    UUID requesterId = usersClient.create(new UserBuilder()
-      .withName("Jones", "Steven")
-      .withBarcode("564376549214"))
-      .getId();
+    loansFixture.checkOut(smallAngryPlanet, jessica);
 
-    JsonObject requestRequest = new RequestBuilder()
-      .recall()
-      .toHoldShelf()
-      .withItemId(itemId)
-      .withRequesterId(requesterId)
-      .withStatus(status)
-      .create();
+    Response response = requestsClient.attemptCreate(
+      new RequestBuilder()
+        .recall()
+        .toHoldShelf()
+        .forItem(smallAngryPlanet)
+        .by(steve)
+        .withStatus(status));
 
-    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+    assertThat(String.format("Should not create request: %s", response.getBody()),
+      response, hasStatus(HTTP_BAD_REQUEST));
 
-    client.post(requestsUrl(), requestRequest,
-      ResponseHandler.any(postCompleted));
+    assertThat(response.getBody(),
+      is("Request status must be \"Open - Not yet filled\", " +
+        "\"Open - Awaiting pickup\" or \"Closed - Filled\""));
+  }
 
-    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
+  //TODO: Replace with validation error message
+  @Test
+  @Parameters({
+    "Non-existent status",
+    ""
+  })
+  public void cannotCreateARequestAtASpecificLocationWithInvalidStatus(String status)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
 
-    assertThat(String.format("Should not create request: %s", postResponse.getBody()),
-      postResponse, hasStatus(HTTP_BAD_REQUEST));
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
-    assertThat(postResponse.getBody(),
-      is("Request status must be \"Open - Not yet filled\", \"Open - Awaiting pickup\" or \"Closed - Filled\""));
+    final IndividualResource jessica = usersFixture.jessica();
+    final IndividualResource steve = usersFixture.steve();
+
+    loansFixture.checkOut(smallAngryPlanet, jessica);
+
+    Response response = requestsClient.attemptCreateAtSpecificLocation(
+      new RequestBuilder()
+        .recall()
+        .toHoldShelf()
+        .forItem(smallAngryPlanet)
+        .by(steve)
+        .withStatus(status));
+
+    assertThat(String.format("Should not create request: %s", response.getBody()),
+      response, hasStatus(HTTP_BAD_REQUEST));
+
+    assertThat(response.getBody(),
+      is("Request status must be \"Open - Not yet filled\", " +
+        "\"Open - Awaiting pickup\" or \"Closed - Filled\""));
   }
 
   @Test
@@ -377,19 +430,21 @@ public class RequestsAPICreationTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
-      ItemBuilder::available)
-      .getId();
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+      ItemBuilder::available);
 
-    loansFixture.checkOutItem(itemId);
+    final IndividualResource charlotte = usersFixture.charlotte();
+    final IndividualResource james = usersFixture.james();
+
+    loansFixture.checkOut(smallAngryPlanet, james);
 
     UUID deliveryAddressTypeId = UUID.randomUUID();
 
-    IndividualResource createdRequest = requestsClient.create(new RequestBuilder()
+    IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
       .recall()
-      .withItemId(itemId)
+      .forItem(smallAngryPlanet)
       .deliverToAddress(deliveryAddressTypeId)
-      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
+      .by(charlotte));
 
     JsonObject representation = createdRequest.getJson();
 
@@ -407,35 +462,20 @@ public class RequestsAPICreationTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
-      itemBuilder -> itemBuilder
-        .withBarcode("036000291452"))
-      .getId();
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource rebecca = usersFixture.rebecca();
+    final IndividualResource steve = usersFixture.steve();
 
-    loansFixture.checkOutItem(itemId);
+    loansFixture.checkOut(smallAngryPlanet, rebecca);
 
-    UUID requesterId = usersClient.create(new UserBuilder()
-      .withName("Jones", "Steven")
-      .withBarcode("564376549214"))
-      .getId();
-
-    JsonObject requestRequest = new RequestBuilder()
+    IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
       .recall()
       .toHoldShelf()
-      .withItemId(itemId)
-      .withRequesterId(requesterId)
-      .withNoStatus()
-      .create();
+      .forItem(smallAngryPlanet)
+      .by(steve)
+      .withNoStatus());
 
-    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
-
-    client.post(requestsUrl(), requestRequest,
-      ResponseHandler.json(postCompleted));
-
-    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
-    assertThat(postResponse, hasStatus(HTTP_CREATED));
-
-    JsonObject representation = postResponse.getJson();
+    JsonObject representation = createdRequest.getJson();
 
     assertThat(representation.getString("status"), is(OPEN_NOT_YET_FILLED));
   }
@@ -447,37 +487,22 @@ public class RequestsAPICreationTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    UUID id = UUID.randomUUID();
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    loansFixture.checkOut(smallAngryPlanet, jessica);
 
-    loansFixture.checkOutItem(itemId);
-
-    UUID requesterId = UUID.randomUUID();
+    UUID nonExistentRequester = UUID.randomUUID();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
-    JsonObject requestRequest = new RequestBuilder()
+    IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
       .recall()
-      .withId(id)
       .withRequestDate(requestDate)
-      .withItemId(itemId)
-      .withRequesterId(requesterId)
-      .fulfilToHoldShelf()
-      .withRequestExpiration(new LocalDate(2017, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
-      .create();
+      .forItem(smallAngryPlanet)
+      .withRequesterId(nonExistentRequester));
 
-    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
-
-    client.post(requestsUrl(), requestRequest,
-      ResponseHandler.json(postCompleted));
-
-    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(postResponse, hasStatus(HTTP_CREATED));
-
-    JsonObject representation = postResponse.getJson();
+    JsonObject representation = createdRequest.getJson();
 
     assertThat("has no information for missing requesting user",
       representation.containsKey("requester"), is(false));
@@ -490,37 +515,22 @@ public class RequestsAPICreationTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    UUID id = UUID.randomUUID();
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    loansFixture.checkOut(smallAngryPlanet, steve);
 
-    loansFixture.checkOutItem(itemId);
-
-    UUID requesterId = UUID.randomUUID();
+    UUID nonExistentRequesterId = UUID.randomUUID();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
-    JsonObject requestRequest = new RequestBuilder()
+    IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
       .recall()
-      .withId(id)
       .withRequestDate(requestDate)
-      .withItemId(itemId)
-      .withRequesterId(requesterId)
-      .fulfilToHoldShelf()
-      .withRequestExpiration(new LocalDate(2017, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
-      .create();
+      .forItem(smallAngryPlanet)
+      .withRequesterId(nonExistentRequesterId));
 
-    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
-
-    client.post(requestsUrl(), requestRequest,
-      ResponseHandler.json(postCompleted));
-
-    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(postResponse, hasStatus(HTTP_CREATED));
-
-    JsonObject representation = postResponse.getJson();
+    JsonObject representation = createdRequest.getJson();
 
     assertThat("has information taken from item",
       representation.containsKey("item"), is(true));
@@ -544,40 +554,23 @@ public class RequestsAPICreationTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    UUID id = UUID.randomUUID();
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    final IndividualResource steve = usersFixture.steve(
+      b -> b.withName("Jones", "Steven", "Anthony"));
 
-    UUID requesterId = usersClient.create(new UserBuilder()
-      .withName("Jones", "Steven", "Anthony")
-      .withBarcode("564376549214"))
-      .getId();
-
-    loansFixture.checkOutItem(itemId);
+    loansFixture.checkOut(smallAngryPlanet, jessica);
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
-    JsonObject requestRequest = new RequestBuilder()
+    IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
       .recall()
-      .withId(id)
       .withRequestDate(requestDate)
-      .withItemId(itemId)
-      .withRequesterId(requesterId)
-      .fulfilToHoldShelf()
-      .withRequestExpiration(new LocalDate(2017, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
-      .create();
+      .forItem(smallAngryPlanet)
+      .by(steve));
 
-    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
-
-    client.post(requestsUrl(), requestRequest,
-      ResponseHandler.json(postCompleted));
-
-    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(postResponse, hasStatus(HTTP_CREATED));
-
-    JsonObject representation = postResponse.getJson();
+    JsonObject representation = createdRequest.getJson();
 
     assertThat("has information taken from requesting user",
       representation.containsKey("requester"), is(true));
@@ -596,7 +589,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat("barcode is taken from requesting user",
       representation.getJsonObject("requester").getString("barcode"),
-      is("564376549214"));
+      is("5694596854"));
   }
 
   @Test
@@ -606,40 +599,23 @@ public class RequestsAPICreationTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    UUID id = UUID.randomUUID();
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource james = usersFixture.james();
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    final IndividualResource steveWithNoBarcode = usersFixture.steve(
+      UserBuilder::withNoBarcode);
 
-    loansFixture.checkOutItem(itemId);
-
-    UUID requesterId = usersClient.create(new UserBuilder()
-      .withName("Jones", "Steven")
-      .withNoBarcode())
-      .getId();
+    loansFixture.checkOut(smallAngryPlanet, james);
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
-    JsonObject requestRequest = new RequestBuilder()
+    IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
       .recall()
-      .withId(id)
       .withRequestDate(requestDate)
-      .withItemId(itemId)
-      .withRequesterId(requesterId)
-      .fulfilToHoldShelf()
-      .withRequestExpiration(new LocalDate(2017, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
-      .create();
+      .forItem(smallAngryPlanet)
+      .by(steveWithNoBarcode));
 
-    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
-
-    client.post(requestsUrl(), requestRequest,
-      ResponseHandler.json(postCompleted));
-
-    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(postResponse, hasStatus(HTTP_CREATED));
-
-    JsonObject representation = postResponse.getJson();
+    JsonObject representation = createdRequest.getJson();
 
     assertThat("has information taken from requesting user",
       representation.containsKey("requester"), is(true));
@@ -664,33 +640,23 @@ public class RequestsAPICreationTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    UUID id = UUID.randomUUID();
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+      ItemBuilder::withNoBarcode);
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
-      ItemBuilder::withNoBarcode)
-      .getId();
+    final IndividualResource rebecca = usersFixture.rebecca();
+    final IndividualResource charlotte = usersFixture.charlotte();
 
-    loansFixture.checkOutItem(itemId);
+    loansFixture.checkOut(smallAngryPlanet, rebecca);
 
-    JsonObject requestRequest = new RequestBuilder()
+    IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
       .recall()
-      .withId(id)
-      .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserBuilder()).getId())
-      .create();
+      .forItem(smallAngryPlanet)
+      .by(charlotte));
 
-    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+    JsonObject representation = createdRequest.getJson();
 
-    client.post(requestsUrl(), requestRequest,
-      ResponseHandler.json(postCompleted));
-
-    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(postResponse, hasStatus(HTTP_CREATED));
-
-    JsonObject representation = postResponse.getJson();
-
-    assertThat(representation.getString("itemId"), is(itemId.toString()));
+    assertThat(representation.getString("itemId"),
+      is(smallAngryPlanet.getId().toString()));
 
     assertThat("has information taken from item",
       representation.containsKey("item"), is(true));
@@ -700,8 +666,7 @@ public class RequestsAPICreationTests extends APITests {
       is("The Long Way to a Small, Angry Planet"));
 
     assertThat("barcode is not taken from item when none present",
-      representation.getJsonObject("item").containsKey("barcode"),
-      is(false));
+      representation.getJsonObject("item").containsKey("barcode"), is(false));
   }
 
   @Test
@@ -711,50 +676,36 @@ public class RequestsAPICreationTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    UUID id = UUID.randomUUID();
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource rebecca = usersFixture.rebecca();
+    final IndividualResource steve = usersFixture.steve();
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    UUID itemId = smallAngryPlanet.getId();
 
-    loansFixture.checkOutItem(itemId);
-
-    UUID requesterId = usersClient.create(new UserBuilder()
-      .withName("Jones", "Steven")
-      .withBarcode("564376549214"))
-      .getId();
+    loansFixture.checkOut(smallAngryPlanet, rebecca);
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
-    JsonObject requestRequest = new RequestBuilder()
+    JsonObject request = new RequestBuilder()
       .recall()
-      .withId(id)
       .withRequestDate(requestDate)
       .withItemId(itemId)
-      .withRequesterId(requesterId)
-      .fulfilToHoldShelf()
-      .withRequestExpiration(new LocalDate(2017, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
+      .by(steve)
       .create();
 
-    requestRequest.put("item", new JsonObject()
+    request.put("item", new JsonObject()
       .put("title", "incorrect title information")
       .put("barcode", "753856498321"));
 
-    requestRequest.put("requester", new JsonObject()
+    request.put("requester", new JsonObject()
       .put("lastName", "incorrect")
       .put("firstName", "information")
       .put("middleName", "only")
       .put("barcode", "453956079534"));
 
-    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+    final IndividualResource createResponse = requestsClient.create(request);
 
-    client.post(requestsUrl(), requestRequest,
-      ResponseHandler.json(postCompleted));
-
-    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(postResponse, hasStatus(HTTP_CREATED));
-
-    JsonObject representation = postResponse.getJson();
+    JsonObject representation = createResponse.getJson();
 
     assertThat("has information taken from item",
       representation.containsKey("item"), is(true));
@@ -780,6 +731,6 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat("barcode is taken from requesting user",
       representation.getJsonObject("requester").getString("barcode"),
-      is("564376549214"));
+      is("5694596854"));
   }
 }

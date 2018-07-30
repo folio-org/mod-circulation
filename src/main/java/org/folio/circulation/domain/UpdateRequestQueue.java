@@ -2,42 +2,58 @@ package org.folio.circulation.domain;
 
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.ServerErrorFailure;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
-public class UpdateRequestQueue {
-  private final Clients clients;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.HttpResult.succeeded;
 
-  public UpdateRequestQueue(Clients clients) {
-    this.clients = clients;
+public class UpdateRequestQueue {
+  private final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
+  private final RequestQueueRepository requestQueueRepository;
+  private final RequestRepository requestRepository;
+
+  public UpdateRequestQueue(
+    RequestQueueRepository requestQueueRepository,
+    RequestRepository requestRepository) {
+
+    this.requestQueueRepository = requestQueueRepository;
+    this.requestRepository = requestRepository;
+  }
+
+  public static UpdateRequestQueue using(Clients clients) {
+    return new UpdateRequestQueue(
+      RequestQueueRepository.using(clients),
+      RequestRepository.using(clients));
   }
 
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> onCheckIn(
     LoanAndRelatedRecords relatedRecords) {
 
-    CompletableFuture<HttpResult<LoanAndRelatedRecords>> requestUpdated = new CompletableFuture<>();
+    final RequestQueue requestQueue = relatedRecords.getRequestQueue();
 
-    if (relatedRecords.getRequestQueue().hasOutstandingFulfillableRequests()) {
-      Request firstRequest = relatedRecords.getRequestQueue().getHighestPriorityFulfillableRequest();
+    return onCheckIn(requestQueue)
+      .thenApply(result -> result.map(relatedRecords::withRequestQueue));
+  }
+
+  private CompletableFuture<HttpResult<RequestQueue>> onCheckIn(
+    RequestQueue requestQueue) {
+
+    if (requestQueue.hasOutstandingFulfillableRequests()) {
+      Request firstRequest = requestQueue.getHighestPriorityFulfillableRequest();
 
       firstRequest.changeStatus(RequestStatus.OPEN_AWAITING_PICKUP);
 
-      clients.requestsStorage().put(firstRequest.getId(), firstRequest.asJson(),
-        updateRequestResponse -> {
-          if (updateRequestResponse.getStatusCode() == 204) {
-            requestUpdated.complete(HttpResult.succeeded(relatedRecords));
-          } else {
-            requestUpdated.complete(HttpResult.failed(new ServerErrorFailure(
-              String.format("Failed to update request: %s: %s",
-                updateRequestResponse.getStatusCode(), updateRequestResponse.getBody()))));
-          }
-        });
-    } else {
-      requestUpdated.complete(HttpResult.succeeded(relatedRecords));
-    }
+      return requestRepository.update(firstRequest)
+        .thenApply(result -> result.map(v -> requestQueue));
 
-    return requestUpdated;
+    } else {
+      return completedFuture(succeeded(requestQueue));
+    }
   }
 
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> onCheckOut(
@@ -48,27 +64,45 @@ public class UpdateRequestQueue {
   }
 
   private CompletableFuture<HttpResult<RequestQueue>> onCheckOut(RequestQueue requestQueue) {
-    CompletableFuture<HttpResult<RequestQueue>> requestUpdated = new CompletableFuture<>();
-
     if (requestQueue.hasOutstandingFulfillableRequests()) {
       Request firstRequest = requestQueue.getHighestPriorityFulfillableRequest();
 
+      log.info("Closing request '{}'", firstRequest.getId());
       firstRequest.changeStatus(RequestStatus.CLOSED_FILLED);
 
-      clients.requestsStorage().put(firstRequest.getId(), firstRequest.asJson(),
-        updateRequestResponse -> {
-          if (updateRequestResponse.getStatusCode() == 204) {
-            requestUpdated.complete(HttpResult.succeeded(requestQueue));
-          } else {
-            requestUpdated.complete(HttpResult.failed(new ServerErrorFailure(
-              String.format("Failed to update request: %s: %s",
-                updateRequestResponse.getStatusCode(), updateRequestResponse.getBody()))));
-          }
-      });
-    } else {
-      requestUpdated.complete(HttpResult.succeeded(requestQueue));
-    }
+      log.info("Removing request '{}' from queue", firstRequest.getId());
+      requestQueue.remove(firstRequest);
 
-    return requestUpdated;
+      return requestRepository.update(firstRequest)
+        .thenComposeAsync(r -> r.after(v ->
+          requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)));
+
+    } else {
+      return completedFuture(succeeded(requestQueue));
+    }
+  }
+
+  CompletableFuture<HttpResult<RequestAndRelatedRecords>> onCancellation(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    if(requestAndRelatedRecords.getRequest().isCancelled()) {
+      return requestQueueRepository.updateRequestsWithChangedPositions(
+        requestAndRelatedRecords.getRequestQueue())
+        .thenApply(r -> r.map(requestAndRelatedRecords::withRequestQueue));
+    }
+    else {
+      return completedFuture(succeeded(requestAndRelatedRecords));
+    }
+  }
+
+  public CompletableFuture<HttpResult<Request>> onDeletion(Request request) {
+    return requestQueueRepository.get(request.getItemId())
+      .thenApply(r -> r.map(requestQueue -> {
+        requestQueue.remove(request);
+        return requestQueue;
+      }))
+      .thenComposeAsync(r -> r.after(
+        requestQueueRepository::updateRequestsWithChangedPositions))
+      .thenApply(r -> r.map(requestQueue -> request));
   }
 }

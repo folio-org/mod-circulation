@@ -1,7 +1,7 @@
 package api.support.builders;
 
-import io.vertx.core.json.JsonObject;
 import api.APITestSuite;
+import io.vertx.core.json.JsonObject;
 import org.joda.time.DateTime;
 
 import java.util.UUID;
@@ -29,7 +29,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
     String middleName,
     String barcode,
     UUID patronGroupId,
-    boolean active,
+    Boolean active,
     DateTime expirationDate) {
 
     this.id = UUID.randomUUID();
@@ -164,19 +164,19 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.expirationDate);
   }
 
-  public UserBuilder inactive() {
-    return new UserBuilder(
-      this.username,
-      this.lastName,
-      this.firstName,
-      this.middleName,
-      this.barcode,
-      this.patronGroupId,
-      false,
-      this.expirationDate);
+  public UserBuilder active() {
+    return withActive(true);
   }
 
-  public UserBuilder active() {
+  public UserBuilder inactive() {
+    return withActive(false);
+  }
+
+  public UserBuilder neitherActiveOrInactive() {
+    return withActive(null);
+  }
+
+  private UserBuilder withActive(Boolean active) {
     return new UserBuilder(
       this.username,
       this.lastName,
@@ -184,7 +184,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.middleName,
       this.barcode,
       this.patronGroupId,
-      true, this.expirationDate);
+      active,
+      this.expirationDate);
   }
 
   public UserBuilder expires(DateTime newExpirationDate) {

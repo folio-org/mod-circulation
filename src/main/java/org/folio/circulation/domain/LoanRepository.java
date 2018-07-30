@@ -1,24 +1,19 @@
 package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.validation.UserNotFoundValidator;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.lang.invoke.MethodHandles;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
-import static org.folio.circulation.support.MultipleRecordsWrapper.fromBody;
+import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 public class LoanRepository {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
   private final CollectionResourceClient loansStorageClient;
   private final ItemRepository itemRepository;
   private final UserRepository userRepository;
@@ -31,9 +26,7 @@ public class LoanRepository {
 
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> createLoan(
     LoanAndRelatedRecords loanAndRelatedRecords) {
-
-    CompletableFuture<HttpResult<LoanAndRelatedRecords>> onCreated = new CompletableFuture<>();
-
+    
     JsonObject storageLoan = mapToStorageRepresentation(
       loanAndRelatedRecords.getLoan(), loanAndRelatedRecords.getLoan().getItem());
 
@@ -41,17 +34,15 @@ public class LoanRepository {
       storageLoan.put("loanPolicyId", loanAndRelatedRecords.getLoanPolicy().getId());
     }
 
-    loansStorageClient.post(storageLoan, response -> {
+    return loansStorageClient.post(storageLoan).thenApply(response -> {
       if (response.getStatusCode() == 201) {
-        onCreated.complete(succeeded(
+        return succeeded(
           loanAndRelatedRecords.withLoan(Loan.from(response.getJson(),
-            loanAndRelatedRecords.getLoan().getItem()))));
+            loanAndRelatedRecords.getLoan().getItem())));
       } else {
-        onCreated.complete(failed(new ForwardOnFailure(response)));
+        return failed(new ForwardOnFailure(response));
       }
     });
-
-    return onCreated;
   }
 
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> updateLoan(
@@ -82,6 +73,9 @@ public class LoanRepository {
   }
 
   public CompletableFuture<HttpResult<Loan>> findOpenLoanByBarcode(FindByBarcodeQuery query) {
+    final UserNotFoundValidator userNotFoundValidator = new UserNotFoundValidator(
+      userId -> failure("user is not found", "userId", userId));
+
     return itemRepository.fetchByBarcode(query.getItemBarcode())
       .thenComposeAsync(itemResult -> itemResult.after(item -> {
         if(item.isNotFound()) {
@@ -105,10 +99,15 @@ public class LoanRepository {
       }))
       //TODO: Replace with fetch user by barcode to improve error message
       .thenComposeAsync(this::fetchUser)
+      .thenApply(userNotFoundValidator::refuseWhenUserNotFound)
       .thenApply(r -> r.next(loan -> refuseWhenDifferentUser(loan, query)));
   }
 
   public CompletableFuture<HttpResult<Loan>> findOpenLoanById(FindByIdQuery query) {
+
+    final UserNotFoundValidator userNotFoundValidator = new UserNotFoundValidator(
+      userId -> failure("user is not found", "userId", userId));
+
     return itemRepository.fetchById(query.getItemId())
       .thenComposeAsync(itemResult -> itemResult.after(item -> {
         if(item.isNotFound()) {
@@ -131,6 +130,7 @@ public class LoanRepository {
           }));
       }))
       .thenComposeAsync(this::fetchUser)
+      .thenApply(userNotFoundValidator::refuseWhenUserNotFound)
       .thenApply(r -> r.next(loan -> refuseWhenDifferentUser(loan, query)));
   }
 
@@ -154,7 +154,9 @@ public class LoanRepository {
   }
 
   private CompletableFuture<HttpResult<Loan>> fetchLoan(String id) {
-    return fetchLoan(id, null, null);
+    return new SingleRecordFetcher<>(
+      loansStorageClient, "loan", Loan::from)
+      .fetch(id);
   }
 
   private CompletableFuture<HttpResult<Loan>> fetchLoan(
@@ -162,85 +164,30 @@ public class LoanRepository {
     Item item,
     User user) {
 
-    final Function<Response, HttpResult<Loan>> mapResponse = response -> {
-      if(response != null && response.getStatusCode() == 200) {
-        return succeeded(Loan.from(response.getJson(), item, user));
-      }
-      else {
-        return failed(new ForwardOnFailure(response));
-      }
-    };
-
-    return loansStorageClient.get(id)
-      .thenApply(mapResponse);
+    return new SingleRecordFetcher<>(
+      loansStorageClient, "loan", representation -> Loan.from(representation, item, user, null))
+      .fetch(id);
   }
 
   private CompletableFuture<HttpResult<Loan>> fetchItem(HttpResult<Loan> result) {
-    return result.after(loan ->
-      itemRepository.fetchFor(loan)
-      .thenApply(itemResult -> itemResult.map(
-        item -> Loan.from(loan.asJson(), item))));
+    return result.combineAfter(itemRepository::fetchFor, Loan::withItem);
   }
 
+  //TODO: Check if user not found should result in failure?
   private CompletableFuture<HttpResult<Loan>> fetchUser(HttpResult<Loan> result) {
-    return result.after(loan ->
-      userRepository.getUser(loan)
-        .thenApply(userResult -> userResult.map(
-          user -> Loan.from(loan.asJson(), loan.getItem(), user))));
-  }
-
-  private CompletableFuture<HttpResult<MultipleRecords<Loan>>> fetchItems(
-    HttpResult<MultipleRecords<Loan>> result) {
-
-    return result.after(
-      loans -> itemRepository.fetchFor(loans.getRecords().stream()
-      .map(Loan::getItemId)
-      .collect(Collectors.toList()))
-      .thenApply(r -> r.map(items ->
-        new MultipleRecords<>(loans.getRecords().stream().map(
-          loan -> Loan.from(loan.asJson(),
-            items.findRecordByItemId(loan.getItemId()))).collect(Collectors.toList()),
-        loans.getTotalRecords()))));
+    return result.combineAfter(userRepository::getUser,
+      (loan, user) -> Loan.from(loan.asJson(), loan.getItem(), user, null));
   }
 
   public CompletableFuture<HttpResult<MultipleRecords<Loan>>> findBy(String query) {
     //TODO: Should fetch users for all loans
     return loansStorageClient.getMany(query)
       .thenApply(this::mapResponseToLoans)
-      .thenComposeAsync(this::fetchItems);
+      .thenComposeAsync(loans -> itemRepository.fetchItemsFor(loans, Loan::withItem));
   }
 
   private HttpResult<MultipleRecords<Loan>> mapResponseToLoans(Response response) {
-    if(response != null) {
-      log.info("Response received, status code: {} body: {}",
-        response.getStatusCode(), response.getBody());
-
-      if (response.getStatusCode() != 200) {
-        return failed(new ServerErrorFailure(
-          String.format("Failed to fetch loans from storage (%s:%s)",
-            response.getStatusCode(), response.getBody())));
-      }
-
-      final MultipleRecordsWrapper wrappedLoans = fromBody(response.getBody(), "loans");
-
-      if (wrappedLoans.isEmpty()) {
-        return succeeded(MultipleRecords.empty());
-      }
-
-      final MultipleRecords<Loan> mapped = new MultipleRecords<>(
-        wrappedLoans.getRecords()
-          .stream()
-          .map(Loan::from)
-          .collect(Collectors.toList()),
-        wrappedLoans.getTotalRecords());
-
-      return succeeded(mapped);
-    }
-    else {
-      log.warn("Did not receive response to request");
-      return failed(new ServerErrorFailure(
-        "Did not receive response to request for multiple loans"));
-    }
+    return MultipleRecords.from(response, Loan::from, "loans");
   }
 
   private static JsonObject mapToStorageRepresentation(Loan loan, Item item) {
@@ -249,7 +196,9 @@ public class LoanRepository {
     storageLoan.remove("metadata");
     storageLoan.remove("item");
     storageLoan.remove("itemStatus");
-    storageLoan.put("itemStatus", item.getStatus());
+
+    //TODO: Check for null item status
+    storageLoan.put("itemStatus", item.getStatus().getValue());
 
     return storageLoan;
   }

@@ -7,54 +7,57 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
-public class SingleRecordFetcher {
+import static java.util.function.Function.identity;
+import static org.folio.circulation.support.HttpResult.failed;
+
+public class SingleRecordFetcher<T> {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final CollectionResourceClient client;
   private final String recordType;
-  private final Supplier<HttpResult<JsonObject>> resultOnFailure;
+  private final SingleRecordMapper<T> mapper;
 
-  public SingleRecordFetcher(CollectionResourceClient client, String recordType) {
-    this(client, recordType, () -> HttpResult.succeeded(null));
+  public SingleRecordFetcher(
+    CollectionResourceClient client,
+    String recordType,
+    SingleRecordMapper<T> mapper) {
+
+    this.client = client;
+    this.recordType = recordType;
+    this.mapper = mapper;
   }
 
   public SingleRecordFetcher(
     CollectionResourceClient client,
     String recordType,
-    Supplier<HttpResult<JsonObject>> resultOnFailure) {
-    this.client = client;
-    this.recordType = recordType;
-    this.resultOnFailure = resultOnFailure;
+    Function<JsonObject, T> mapper) {
+
+    this(client, recordType, new SingleRecordMapper<>(mapper));
   }
 
-  public CompletableFuture<HttpResult<JsonObject>> fetchSingleRecord(String id) {
+  public static SingleRecordFetcher<JsonObject> json(
+    CollectionResourceClient client,
+    String recordType,
+    Function<Response, HttpResult<JsonObject>> resultOnFailure) {
 
+    return new SingleRecordFetcher<>(client, recordType,
+      new SingleRecordMapper<>(identity(), resultOnFailure));
+  }
+
+  static SingleRecordFetcher<JsonObject> jsonOrNull(
+    CollectionResourceClient client,
+    String recordType) {
+
+    return json(client, recordType, r -> HttpResult.succeeded(null));
+  }
+
+  public CompletableFuture<HttpResult<T>> fetch(String id) {
     log.info("Fetching {} with ID: {}", recordType, id);
 
     return client.get(id)
-      .thenApply(r -> mapToResult(r, this.resultOnFailure))
-      .exceptionally(e -> HttpResult.failed(new ServerErrorFailure(e)));
-  }
-
-  private HttpResult<JsonObject> mapToResult(
-    Response response,
-    Supplier<HttpResult<JsonObject>> resultOnFailure) {
-
-    if(response != null) {
-      log.info("Response received, status code: {} body: {}",
-        response.getStatusCode(), response.getBody());
-
-      if (response.getStatusCode() == 200) {
-        return HttpResult.succeeded(response.getJson());
-      } else {
-        return resultOnFailure.get();
-      }
-    }
-    else {
-      log.warn("Did not receive response to request");
-      return HttpResult.failed(new ServerErrorFailure("Did not receive response to request"));
-    }
+      .thenApply(mapper::mapFrom)
+      .exceptionally(e -> failed(new ServerErrorFailure(e)));
   }
 }

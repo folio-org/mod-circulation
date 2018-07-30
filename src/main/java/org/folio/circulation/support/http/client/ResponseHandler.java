@@ -29,12 +29,6 @@ public class ResponseHandler {
     return strictContentType(completed, "application/json");
   }
 
-  public static Handler<HttpClientResponse> text(
-    CompletableFuture<Response> completed) {
-
-    return strictContentType(completed, "text/plain");
-  }
-
   private static Handler<HttpClientResponse> strictContentType(
     CompletableFuture<Response> completed,
     String expectedContentType) {
@@ -72,5 +66,4 @@ public class ResponseHandler {
       }
     });
   }
-
 }

@@ -2,20 +2,37 @@ package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.DateTime;
+import org.folio.circulation.domain.representations.RequestProperties;
 
-import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
+import java.util.Objects;
+
+import static org.folio.circulation.domain.RequestFulfilmentPreference.*;
+import static org.folio.circulation.domain.RequestStatus.*;
 import static org.folio.circulation.domain.representations.RequestProperties.STATUS;
-import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private final JsonObject representation;
+  private final Item item;
+  private final User requester;
+  private final User proxy;
+  private boolean changedPosition = false;
 
-  private Item item;
+  public Request(
+    JsonObject representation,
+    Item item,
+    User requester,
+    User proxy) {
 
-  public Request(JsonObject representation) {
     this.representation = representation;
+    this.item = item;
+    this.requester = requester;
+    this.proxy = proxy;
+  }
+
+  public static Request from(JsonObject representation) {
+    return new Request(representation, null, null, null);
   }
 
   public JsonObject asJson() {
@@ -23,23 +40,35 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   boolean isFulfillable() {
-    return StringUtils.equals(getFulfilmentPreference(),
-      RequestFulfilmentPreference.HOLD_SHELF);
+    return getFulfilmentPreference() == HOLD_SHELF;
   }
 
   boolean isOpen() {
-    String status = representation.getString(STATUS);
+    RequestStatus status = getStatus();
 
-    return StringUtils.equals(status, RequestStatus.OPEN_AWAITING_PICKUP)
-      || StringUtils.equals(status, RequestStatus.OPEN_NOT_YET_FILLED);
+    return status == OPEN_AWAITING_PICKUP
+      || status == OPEN_NOT_YET_FILLED;
+  }
+
+  boolean isCancelled() {
+    return getStatus() == CLOSED_CANCELLED;
+  }
+
+  private boolean isFulfilled() {
+    return getStatus() == CLOSED_FILLED;
+  }
+
+  public boolean isClosed() {
+    //Alternatively, check status contains "Closed"
+    return isCancelled() || isFulfilled();
+  }
+
+  boolean isAwaitingPickup() {
+    return getStatus() == OPEN_AWAITING_PICKUP;
   }
 
   boolean isFor(User user) {
     return StringUtils.equals(getUserId(), user.getId());
-  }
-
-  boolean isAwaitingPickup() {
-    return StringUtils.equals(getStatus(), OPEN_AWAITING_PICKUP);
   }
 
   @Override
@@ -47,6 +76,18 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return representation.getString("itemId");
   }
 
+  public Request withItem(Item newItem) {
+    return new Request(representation, newItem, requester, proxy);
+  }
+
+  public Request withRequester(User newRequester) {
+    return new Request(representation, item, newRequester, proxy);
+  }
+
+  public Request withProxy(User newProxy) {
+    return new Request(representation, item, requester, newProxy);
+  }
+  
   @Override
   public String getUserId() {
     return representation.getString("requesterId");
@@ -57,48 +98,78 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return representation.getString("proxyUserId");
   }
 
-  String getFulfilmentPreference() {
+  private String getFulfilmentPreferenceName() {
     return representation.getString("fulfilmentPreference");
   }
 
-  String getId() {
+  private RequestFulfilmentPreference getFulfilmentPreference() {
+    return RequestFulfilmentPreference.from(getFulfilmentPreferenceName());
+  }
+
+  public String getId() {
     return representation.getString("id");
   }
 
-  String getRequestType() {
-    return representation.getString("requestType");
+  private RequestType getRequestType() {
+    return RequestType.from(representation.getString("requestType"));
   }
 
-  String getStatus() {
-    return representation.getString(STATUS);
+  Boolean allowedForItem() {
+    return getRequestType().canCreateRequestForItem(getItem());
   }
 
-  void changeStatus(String status) {
-    representation.put(STATUS, status);
+  String actionOnCreation() {
+    return getRequestType().toLoanAction();
+  }
+
+  RequestStatus getStatus() {
+    return RequestStatus.from(representation.getString(STATUS));
+  }
+
+  void changeStatus(RequestStatus status) {
+    //TODO: Check for null status
+    status.writeTo(representation);
   }
 
   public Item getItem() {
     return item;
   }
 
-  void setItem(Item item) {
-    this.item = item;
+  public User getRequester() {
+    return requester;
   }
-  
-  public String getCancellationReasonId() {
-    return getProperty(representation, "cancellationReasonId");
+
+  public User getProxy() {
+    return proxy;
   }
-  
-  public String getCancelledByUserId() {
-    return getProperty(representation, "cancelledByUserId");
+
+  Request changePosition(Integer newPosition) {
+    if(!Objects.equals(getPosition(), newPosition)) {
+      write(representation, RequestProperties.POSITION, newPosition);
+      changedPosition = true;
+    }
+
+    return this;
   }
-  
-  public DateTime getCancelledDate() {
-    return getDateTimeProperty(representation, "cancelledDate");
+
+  void removePosition() {
+    representation.remove(RequestProperties.POSITION);
+    changedPosition = true;
   }
-  
-  public String getCancellationAdditionalInformation() {
-    return getProperty(representation, "cancellationAdditionalInformation");
+
+  public Integer getPosition() {
+    return getIntegerProperty(representation, RequestProperties.POSITION, null);
   }
-  
+
+  boolean hasChangedPosition() {
+    return changedPosition;
+  }
+
+  ItemStatus checkedInItemStatus() {
+    return getFulfilmentPreference().toCheckedInItemStatus();
+  }
+
+  ItemStatus checkedOutItemStatus() {
+    return getRequestType().toCheckedOutItemStatus();
+  }
 }

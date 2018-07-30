@@ -23,29 +23,36 @@ public class CollectionResourceClient {
   private final OkapiHttpClient client;
   private final URL collectionRoot;
 
-  public CollectionResourceClient(OkapiHttpClient client,
-                                  URL collectionRoot) {
+  public CollectionResourceClient(
+    OkapiHttpClient client,
+    URL collectionRoot) {
 
     this.client = client;
     this.collectionRoot = collectionRoot;
   }
 
-  public void post(
-    JsonObject resourceRepresentation,
-    Consumer<Response> responseHandler) {
+  public CompletableFuture<Response> post(
+    JsonObject resourceRepresentation) {
+
+    CompletableFuture<Response> future = new CompletableFuture<>();
 
     client.post(collectionRoot,
       resourceRepresentation,
-      responseConversationHandler(responseHandler));
+      responseConversationHandler(future::complete));
+
+    return future;
   }
 
-  public void put(
-    JsonObject resourceRepresentation,
-    Consumer<Response> responseHandler) {
+  public CompletableFuture<Response> put(
+    JsonObject resourceRepresentation) {
+
+    final CompletableFuture<Response> future = new CompletableFuture<>();
 
     client.put(collectionRoot,
-        resourceRepresentation,
-        responseConversationHandler(responseHandler));
+      resourceRepresentation,
+      responseConversationHandler(future::complete));
+
+    return future;
   }
 
   public CompletableFuture<Response> put(
@@ -61,19 +68,13 @@ public class CollectionResourceClient {
     return future;
   }
 
-  public void put(
-    String id,
-    JsonObject resourceRepresentation,
-    Consumer<Response> responseHandler) {
+  public CompletableFuture<Response> get() {
+    final CompletableFuture<Response> future = new CompletableFuture<>();
 
-    client.put(individualRecordUrl(id),
-      resourceRepresentation,
-      responseConversationHandler(responseHandler));
-  }
-
-  public void get(Consumer<Response> responseHandler) {
     client.get(collectionRoot,
-      responseConversationHandler(responseHandler));
+      responseConversationHandler(future::complete));
+
+    return future;
   }
 
   public CompletableFuture<Response> get(String id) {
@@ -85,28 +86,31 @@ public class CollectionResourceClient {
     return future;
   }
 
-  public void delete(String id, Consumer<Response> responseHandler) {
+  public CompletableFuture<Response> delete(String id) {
+    final CompletableFuture<Response> future = new CompletableFuture<>();
+
     client.delete(individualRecordUrl(id),
-      responseConversationHandler(responseHandler));
+      responseConversationHandler(future::complete));
+
+    return future;
   }
 
-  public void delete(Consumer<Response> responseHandler) {
-    client.delete(collectionRoot,
-      responseConversationHandler(responseHandler));
-  }
+  public CompletableFuture<Response> delete() {
+    final CompletableFuture<Response> future = new CompletableFuture<>();
 
-  public void getMany(String urlEncodedQuery, Consumer<Response> responseHandler) {
-      String url = isProvided(urlEncodedQuery)
-        ? String.format("%s?%s", collectionRoot, urlEncodedQuery)
-        : collectionRoot.toString();
+    client.delete(collectionRoot, responseConversationHandler(future::complete));
 
-      client.get(url, responseConversationHandler(responseHandler));
+    return future;
   }
 
   public CompletableFuture<Response> getMany(String urlEncodedQuery) {
     final CompletableFuture<Response> future = new CompletableFuture<>();
 
-    getMany(urlEncodedQuery, future::complete);
+    String url = isProvided(urlEncodedQuery)
+      ? String.format("%s?%s", collectionRoot, urlEncodedQuery)
+      : collectionRoot.toString();
+
+    client.get(url, responseConversationHandler(future::complete));
 
     return future;
   }
@@ -118,19 +122,12 @@ public class CollectionResourceClient {
 
     final CompletableFuture<Response> future = new CompletableFuture<>();
 
-    getMany(urlEncodedCqlQuery, pageLimit, pageOffset, future::complete);
+    String url = collectionRoot + createQueryString(
+      urlEncodedCqlQuery, pageLimit, pageOffset);
+
+    client.get(url, responseConversationHandler(future::complete));
 
     return future;
-  }
-
-  public void getMany(
-    String urlEncodedCqlQuery,
-    Integer pageLimit,
-    Integer pageOffset,
-    Consumer<Response> responseHandler) {
-
-    String url = collectionRoot + createQueryString(urlEncodedCqlQuery, pageLimit, pageOffset);
-    client.get(url, responseConversationHandler(responseHandler));
   }
 
   private static boolean isProvided(String query) {
@@ -151,7 +148,11 @@ public class CollectionResourceClient {
    * @param pageOffset  the value for the offset parameter, may be null for none
    * @return the query string, may be empty
    */
-  static String createQueryString(String urlEncodedCqlQuery, Integer pageLimit, Integer pageOffset) {
+  static String createQueryString(
+    String urlEncodedCqlQuery,
+    Integer pageLimit,
+    Integer pageOffset) {
+
     String query = "";
 
     if (isProvided(urlEncodedCqlQuery)) {

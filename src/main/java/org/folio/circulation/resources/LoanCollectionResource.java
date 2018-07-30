@@ -10,12 +10,7 @@ import org.folio.circulation.domain.validation.AwaitingPickupValidator;
 import org.folio.circulation.domain.validation.ItemNotFoundValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.support.*;
-import org.folio.circulation.support.http.server.ForwardResponse;
-import org.folio.circulation.support.http.server.SuccessResponse;
 import org.folio.circulation.support.http.server.WebContext;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
@@ -36,17 +31,17 @@ public class LoanCollectionResource extends CollectionResource {
     final Clients clients = Clients.create(context, client);
 
     final ItemRepository itemRepository = new ItemRepository(clients, true, true);
-    final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
+    final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final UserRepository userRepository = new UserRepository(clients);
 
-    final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
+    final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
 
-    final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
-      clients, () -> failure(
-        "proxyUserId is not valid", "proxyUserId", loan.getProxyUserId()));
+    final ProxyRelationshipValidator proxyRelationshipValidator =
+      new ProxyRelationshipValidator(clients,
+        () -> failure("proxyUserId is not valid", "proxyUserId", loan.getProxyUserId()));
 
     final AwaitingPickupValidator awaitingPickupValidator = new AwaitingPickupValidator(
       message -> failure(message, "userId", loan.getUserId()));
@@ -60,13 +55,13 @@ public class LoanCollectionResource extends CollectionResource {
 
     completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(loan)))
       .thenApply(this::refuseWhenNotOpenOrClosed)
-      .thenCombineAsync(itemRepository.fetchFor(loan), this::addInventoryRecords)
+      .thenCombineAsync(itemRepository.fetchFor(loan), this::addItem)
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
       .thenApply(this::refuseWhenHoldingDoesNotExist)
       .thenApply(alreadyCheckedOutValidator::refuseWhenItemIsAlreadyCheckedOut)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
-      .thenCombineAsync(requestQueueFetcher.get(loan.getItemId()), this::addRequestQueue)
-      .thenCombineAsync(userRepository.getUser(loan.getUserId()), this::addUser)
+      .thenCombineAsync(requestQueueRepository.get(loan.getItemId()), this::addRequestQueue)
+      .thenCombineAsync(userRepository.getUserFailOnNotFound(loan.getUserId()), this::addUser)
       .thenApply(awaitingPickupValidator::refuseWhenUserIsNotAwaitingPickup)
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
@@ -88,10 +83,10 @@ public class LoanCollectionResource extends CollectionResource {
     final Loan loan = Loan.from(incomingRepresentation);
 
     final Clients clients = Clients.create(context, client);
-    final RequestQueueFetcher requestQueueFetcher = new RequestQueueFetcher(clients);
+    final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final ItemRepository itemRepository = new ItemRepository(clients, false, false);
 
-    final UpdateRequestQueue requestQueueUpdate = new UpdateRequestQueue(clients);
+    final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
 
@@ -104,10 +99,10 @@ public class LoanCollectionResource extends CollectionResource {
 
     completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(loan)))
       .thenApply(this::refuseWhenNotOpenOrClosed)
-      .thenCombineAsync(itemRepository.fetchFor(loan), this::addInventoryRecords)
+      .thenCombineAsync(itemRepository.fetchFor(loan), this::addItem)
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
-      .thenCombineAsync(requestQueueFetcher.get(loan.getItemId()), this::addRequestQueue)
+      .thenCombineAsync(requestQueueRepository.get(loan.getItemId()), this::addRequestQueue)
       .thenComposeAsync(result -> result.after(requestQueueUpdate::onCheckIn))
       .thenComposeAsync(result -> result.after(updateItem::onLoanUpdate))
       .thenComposeAsync(result -> result.after(loanRepository::updateLoan))
@@ -136,14 +131,9 @@ public class LoanCollectionResource extends CollectionResource {
 
     String id = routingContext.request().getParam("id");
 
-    clients.loansStorage().delete(id, response -> {
-      if(response.getStatusCode() == 204) {
-        SuccessResponse.noContent(routingContext.response());
-      }
-      else {
-        ForwardResponse.forward(routingContext.response(), response);
-      }
-    });
+    clients.loansStorage().delete(id)
+      .thenApply(NoContentHttpResult::from)
+      .thenAccept(r -> r.writeTo(routingContext.response()));
   }
 
   void getMany(RoutingContext routingContext) {
@@ -154,42 +144,26 @@ public class LoanCollectionResource extends CollectionResource {
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
     loanRepository.findBy(routingContext.request().query())
-      .thenAccept(result -> {
-        if(result.failed()) {
-          result.cause().writeTo(routingContext.response());
-        }
-
-        final MultipleRecords<Loan> loans = result.value();
-
-        final List<JsonObject> mappedLoans = loans.getRecords().stream()
-          .map(loanRepresentation::extendedLoan)
-          .collect(Collectors.toList());
-
-        new OkJsonHttpResult(
-          new MultipleRecordsWrapper(mappedLoans, "loans", loans.getTotalRecords())
-            .toJson()).writeTo(routingContext.response());
-      });
+      .thenApply(r -> r.map(loans ->
+        loans.asJson(loanRepresentation::extendedLoan, "loans")))
+      .thenApply(OkJsonHttpResult::from)
+      .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
   void empty(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context, client);
 
-    clients.loansStorage().delete(response -> {
-      if(response.getStatusCode() == 204) {
-        SuccessResponse.noContent(routingContext.response());
-      }
-      else {
-        ForwardResponse.forward(routingContext.response(), response);
-      }
-    });
+    clients.loansStorage().delete()
+      .thenApply(NoContentHttpResult::from)
+      .thenAccept(r -> r.writeTo(routingContext.response()));
   }
 
-  private HttpResult<LoanAndRelatedRecords> addInventoryRecords(
+  private HttpResult<LoanAndRelatedRecords> addItem(
     HttpResult<LoanAndRelatedRecords> loanResult,
-    HttpResult<Item> inventoryRecordsResult) {
+    HttpResult<Item> item) {
 
-    return HttpResult.combine(loanResult, inventoryRecordsResult,
+    return HttpResult.combine(loanResult, item,
       LoanAndRelatedRecords::withItem);
   }
 

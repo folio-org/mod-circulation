@@ -5,13 +5,12 @@ import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.ISODateTimeFormat;
 
 import java.util.UUID;
 
-public class RequestBuilder implements Builder {
+import static org.folio.circulation.support.JsonPropertyFetcher.*;
 
+public class RequestBuilder extends JsonBuilder implements Builder {
   public static final String OPEN_NOT_YET_FILLED = "Open - Not yet filled";
   public static final String OPEN_AWAITING_PICKUP = "Open - Awaiting pickup";
   public static final String CLOSED_FILLED = "Closed - Filled";
@@ -34,6 +33,7 @@ public class RequestBuilder implements Builder {
   private final UUID cancelledByUserId;
   private final String cancellationAdditionalInformation;
   private final DateTime cancelledDate;
+  private final Integer position;
 
   public RequestBuilder() {
     this(UUID.randomUUID(),
@@ -42,6 +42,7 @@ public class RequestBuilder implements Builder {
       UUID.randomUUID(),
       UUID.randomUUID(),
       "Hold Shelf",
+      null,
       null,
       null,
       null,
@@ -72,7 +73,8 @@ public class RequestBuilder implements Builder {
     UUID cancellationReasonId,
     UUID cancelledByUserId,
     String cancellationAdditionalInformation,
-    DateTime cancelledDate) {
+    DateTime cancelledDate,
+    Integer position) {
 
     this.id = id;
     this.requestType = requestType;
@@ -91,78 +93,72 @@ public class RequestBuilder implements Builder {
     this.cancelledByUserId = cancelledByUserId;
     this.cancellationAdditionalInformation = cancellationAdditionalInformation;
     this.cancelledDate = cancelledDate;
+    this.position = position;
+  }
+
+  public static RequestBuilder from(IndividualResource response) {
+    JsonObject representation = response.getJson();
+
+    return new RequestBuilder(
+      UUID.fromString(representation.getString("id")),
+      getProperty(representation, "requestType"),
+      getDateTimeProperty(representation, "requestDate"),
+      getUUIDProperty(representation, "itemId"),
+      getUUIDProperty(representation, "requesterId"),
+      getProperty(representation, "fulfilmentPreference"),
+      getUUIDProperty(representation, "deliveryAddressTypeId"),
+      getLocalDateProperty(representation, "requestExpirationDate"),
+      getLocalDateProperty(representation, "holdShelfExpirationDate"),
+      null, //TODO, re-populate these from the representation (possibly shouldn't given use)
+      null, //TODO, re-populate these from the representation (possibly shouldn't given use)
+      getProperty(representation, "status"),
+      getUUIDProperty(representation, "proxyUserId"),
+      getUUIDProperty(representation, "cancellationReasonId"),
+      getUUIDProperty(representation, "cancelledByUserId"),
+      getProperty(representation, "cancellationAdditionalInformation"),
+      getDateTimeProperty(representation, "cancelledDate"),
+      getIntegerProperty(representation, "position", null));
   }
 
   @Override
   public JsonObject create() {
     JsonObject request = new JsonObject();
 
-    if(this.id != null) {
-      request.put("id", this.id.toString());
-    }
-
-    request.put("requestType", this.requestType);
-    request.put("requestDate", formatDateTime(this.requestDate));
-    request.put("itemId", this.itemId.toString());
-    request.put("requesterId", this.requesterId.toString());
-    request.put("fulfilmentPreference", this.fulfilmentPreference);
-
-    if(status != null) {
-      request.put("status", this.status);
-    }
-
-    if(deliveryAddressTypeId != null) {
-      request.put("deliveryAddressTypeId", this.deliveryAddressTypeId.toString());
-    }
-
-    if(requestExpirationDate != null) {
-      request.put("requestExpirationDate",
-        formatDateOnly(this.requestExpirationDate));
-    }
-
-    if(holdShelfExpirationDate != null) {
-      request.put("holdShelfExpirationDate",
-        formatDateOnly(this.holdShelfExpirationDate));
-    }
+    put(request, "id", this.id);
+    put(request, "requestType", this.requestType);
+    put(request, "requestDate", this.requestDate);
+    put(request, "itemId", this.itemId);
+    put(request, "requesterId", this.requesterId);
+    put(request, "fulfilmentPreference", this.fulfilmentPreference);
+    put(request, "position", this.position);
+    put(request, "status", this.status);
+    put(request, "deliveryAddressTypeId", this.deliveryAddressTypeId);
+    put(request, "requestExpirationDate", this.requestExpirationDate);
+    put(request, "holdShelfExpirationDate", this.holdShelfExpirationDate);
+    put(request, "proxyUserId", proxyUserId);
+    put(request, "cancellationReasonId", cancellationReasonId);
+    put(request, "cancelledByUserId", cancelledByUserId);
+    put(request, "cancellationAdditionalInformation", cancellationAdditionalInformation);
+    put(request, "cancelledDate", cancelledDate);
 
     if(itemSummary != null) {
-      request.put("item", new JsonObject()
-        .put("title", itemSummary.title)
-        .put("barcode", itemSummary.barcode));
+      final JsonObject itemRepresentation = new JsonObject();
+
+      put(itemRepresentation, "title", itemSummary.title);
+      put(itemRepresentation, "barcode", itemSummary.barcode);
+
+      put(request, "item", itemRepresentation);
     }
 
     if(requesterSummary != null) {
-      JsonObject requester = new JsonObject()
-        .put("lastName", requesterSummary.lastName)
-        .put("firstName", requesterSummary.firstName);
+      JsonObject requester = new JsonObject();
 
-      if(requesterSummary.middleName != null) {
-        requester.put("middleName", requesterSummary.middleName);
-      }
+      put(requester, "lastName", requesterSummary.lastName);
+      put(requester, "firstName", requesterSummary.firstName);
+      put(requester, "middleName", requesterSummary.middleName);
+      put(requester, "barcode", requesterSummary.barcode);
 
-      requester.put("barcode", requesterSummary.barcode);
-
-      request.put("requester", requester);
-    }
-
-    if(proxyUserId != null){
-      request.put("proxyUserId", proxyUserId.toString());
-    }
-    
-    if(cancellationReasonId != null) {
-      request.put("cancellationReasonId", cancellationReasonId.toString());
-    }
-    
-    if(cancelledByUserId != null) {
-      request.put("cancelledByUserId", cancelledByUserId.toString());
-    }
-    
-    if(cancellationAdditionalInformation != null) {
-      request.put("cancellationAdditionalInformation", cancellationAdditionalInformation);
-    }
-    
-    if(cancelledDate != null) {
-      request.put("cancelledDate", formatDateTime(cancelledDate));
+      put(request, "requester", requester);
     }
 
     return request;
@@ -186,28 +182,8 @@ public class RequestBuilder implements Builder {
       this.cancellationReasonId,
       this.cancelledByUserId,
       this.cancellationAdditionalInformation,
-      this.cancelledDate);
-  }
-
-  public RequestBuilder withNoId() {
-    return new RequestBuilder(
-      null,
-      this.requestType,
-      this.requestDate,
-      this.itemId,
-      this.requesterId,
-      this.fulfilmentPreference,
-      this.deliveryAddressTypeId,
-      this.requestExpirationDate,
-      this.holdShelfExpirationDate,
-      this.itemSummary,
-      this.requesterSummary,
-      this.status,
-      this.proxyUserId,
-      this.cancellationReasonId,
-      this.cancelledByUserId,
-      this.cancellationAdditionalInformation,
-      this.cancelledDate);
+      this.cancelledDate,
+      this.position);
   }
 
   public RequestBuilder withRequestDate(DateTime requestDate) {
@@ -228,7 +204,8 @@ public class RequestBuilder implements Builder {
       this.cancellationReasonId,
       this.cancelledByUserId,
       this.cancellationAdditionalInformation,
-      this.cancelledDate);
+      this.cancelledDate,
+      this.position);
   }
 
   public RequestBuilder withRequestType(String requestType) {
@@ -249,7 +226,8 @@ public class RequestBuilder implements Builder {
       this.cancellationReasonId,
       this.cancelledByUserId,
       this.cancellationAdditionalInformation,
-      this.cancelledDate);
+      this.cancelledDate,
+      this.position);
   }
 
   public RequestBuilder hold() {
@@ -282,7 +260,8 @@ public class RequestBuilder implements Builder {
       this.cancellationReasonId,
       this.cancelledByUserId,
       this.cancellationAdditionalInformation,
-      this.cancelledDate);
+      this.cancelledDate,
+      this.position);
   }
 
   public RequestBuilder forItem(IndividualResource item) {
@@ -307,7 +286,8 @@ public class RequestBuilder implements Builder {
       this.cancellationReasonId,
       this.cancelledByUserId,
       this.cancellationAdditionalInformation,
-      this.cancelledDate);
+      this.cancelledDate,
+      this.position);
   }
 
   public RequestBuilder by(IndividualResource requester) {
@@ -341,7 +321,8 @@ public class RequestBuilder implements Builder {
       this.cancellationReasonId,
       this.cancelledByUserId,
       this.cancellationAdditionalInformation,
-      this.cancelledDate);
+      this.cancelledDate,
+      this.position);
   }
 
   public RequestBuilder fulfilToHoldShelf() {
@@ -367,7 +348,8 @@ public class RequestBuilder implements Builder {
       this.cancellationReasonId,
       this.cancelledByUserId,
       this.cancellationAdditionalInformation,
-      this.cancelledDate);
+      this.cancelledDate,
+      this.position);
   }
 
   public RequestBuilder withHoldShelfExpiration(LocalDate holdShelfExpiration) {
@@ -388,7 +370,8 @@ public class RequestBuilder implements Builder {
       this.cancellationReasonId,
       this.cancelledByUserId,
       this.cancellationAdditionalInformation,
-      this.cancelledDate);
+      this.cancelledDate,
+      this.position);
   }
 
   public RequestBuilder withDeliveryAddressType(UUID deliverAddressType) {
@@ -409,7 +392,8 @@ public class RequestBuilder implements Builder {
       this.cancellationReasonId,
       this.cancelledByUserId,
       this.cancellationAdditionalInformation,
-      this.cancelledDate);
+      this.cancelledDate,
+      this.position);
   }
 
   public RequestBuilder withStatus(String status) {
@@ -430,7 +414,8 @@ public class RequestBuilder implements Builder {
       this.cancellationReasonId,
       this.cancelledByUserId,
       this.cancellationAdditionalInformation,
-      this.cancelledDate);
+      this.cancelledDate,
+      this.position);
   }
 
   public RequestBuilder open() {
@@ -467,7 +452,8 @@ public class RequestBuilder implements Builder {
       this.cancellationReasonId,
       this.cancelledByUserId,
       this.cancellationAdditionalInformation,
-      this.cancelledDate);
+      this.cancelledDate,
+      this.position);
   }
   
   public RequestBuilder withCancellationReasonId(UUID cancellationReasonId) {
@@ -488,7 +474,8 @@ public class RequestBuilder implements Builder {
       cancellationReasonId,
       this.cancelledByUserId,
       this.cancellationAdditionalInformation,
-      this.cancelledDate);
+      this.cancelledDate,
+      this.position);
   }
   
   public RequestBuilder withCancelledByUserId(UUID cancelledByUserId) {
@@ -509,10 +496,13 @@ public class RequestBuilder implements Builder {
       this.cancellationReasonId,
       cancelledByUserId,
       this.cancellationAdditionalInformation,
-      this.cancelledDate);
+      this.cancelledDate,
+      this.position);
   }
   
-  public RequestBuilder withCancellationAdditionalInformation(String cancellationAdditionalInformation) {
+  public RequestBuilder withCancellationAdditionalInformation(
+    String cancellationAdditionalInformation) {
+
     return new RequestBuilder(
       this.id,
       this.requestType,
@@ -530,7 +520,8 @@ public class RequestBuilder implements Builder {
       this.cancellationReasonId,
       this.cancelledByUserId,
       cancellationAdditionalInformation,
-      this.cancelledDate);
+      this.cancelledDate,
+      this.position);
   }
   
   public RequestBuilder withCancelledDate(DateTime cancelledDate) {
@@ -551,19 +542,34 @@ public class RequestBuilder implements Builder {
       this.cancellationReasonId,
       this.cancelledByUserId,
       this.cancellationAdditionalInformation,
-      cancelledDate);
+      cancelledDate,
+      this.position);
   }  
 
   public RequestBuilder proxiedBy(IndividualResource proxy) {
     return withUserProxyId(proxy.getId());
   }
 
-  private String formatDateTime(DateTime requestDate) {
-    return requestDate.toString(ISODateTimeFormat.dateTime());
-  }
-
-  private String formatDateOnly(LocalDate date) {
-    return date.toString(DateTimeFormat.forPattern("yyyy-MM-dd"));
+  public RequestBuilder withPosition(Integer newPosition) {
+    return new RequestBuilder(
+      this.id,
+      this.requestType,
+      this.requestDate,
+      this.itemId,
+      this.requesterId,
+      this.fulfilmentPreference,
+      this.deliveryAddressTypeId,
+      this.requestExpirationDate,
+      this.holdShelfExpirationDate,
+      this.itemSummary,
+      this.requesterSummary,
+      this.status,
+      this.proxyUserId,
+      this.cancellationReasonId,
+      this.cancelledByUserId,
+      this.cancellationAdditionalInformation,
+      this.cancelledDate,
+      newPosition);
   }
 
   private class ItemSummary {

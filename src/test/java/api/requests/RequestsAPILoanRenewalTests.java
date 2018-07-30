@@ -39,7 +39,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     Response changedItem = itemsClient.getById(itemId);
 
     assertThat(changedItem.getJson().getJsonObject("status").getString("name"),
-      is("Checked out - Held"));
+      is("Checked out"));
   }
 
   @Test
@@ -66,7 +66,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     Response changedItem = itemsClient.getById(itemId);
 
     assertThat(changedItem.getJson().getJsonObject("status").getString("name"),
-      is("Checked out - Recalled"));
+      is("Checked out"));
   }
 
   @Test

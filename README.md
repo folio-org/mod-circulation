@@ -70,6 +70,16 @@ run `./scripts/lint-raml-cop.sh` to validate the RAML and JSON.Schema descriptio
 
 ## Design Notes
 
+### Known Limitations
+
+#### Requests Created out of Request Date Order
+
+Requests are assigned a position based upon when they were created. 
+This means the requests could be in a different position in the queue than what
+the request date suggests. We could re-order to queue based upon request date 
+each time it is changed, however this would impede the future requirement 
+for the ability to reorder the queue manually.  
+
 ### Check Out By Barcode
 
 In additional to the typical loan creation API, it is possible to check out an item to a loanee (optionally via a proxy), using barcodes.
@@ -312,8 +322,7 @@ below is a table describing the most common states defined at the moment.
 |---|---|
 | Available | This item is available to be lent to a patron |
 | Checked out | This item is currently checked out to a patron |
-| Checked out - Recalled | This item is currently checked out to a patron, another patron has requested it be returned as soon as possible |
-| Checked out - Held | This item is currently checked out to a patron, another patron has requested it be held upon it’s return |
+| Awaiting pickup | This item is awaiting pickup by a patron who has a request at the top of the queue|
 
 ### Request Status
 

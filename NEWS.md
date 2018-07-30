@@ -1,3 +1,13 @@
+## 11.0.0 Unreleased
+
+* No longer sets item status to variants of `Checked out` (CIRC-126) 
+* Introduce request `position` property (CIRC-83)
+* Introduce endpoint for fetching request queue for an item (CIRC-83)
+* Request queue positions are allocated upon creation, closure, cancellation or deletion (CIRC-83)
+* Fixes incorrect response code in description of renewal API in `circulation` interface (CIRC-130)
+* Provides `circulation` interface 3.5 (CIRC-83)
+* Requires `request-storage` interface 2.2 (CIRC-83)
+
 ## 10.7.0 2018-07-10
 
 * Provide different error messages when item not found in different circumstances (CIRC-123)

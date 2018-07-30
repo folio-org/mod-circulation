@@ -13,7 +13,7 @@ import api.support.http.ResourceClient;
 import api.support.http.URLHelper;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.CirculationVerticle;
+import org.folio.circulation.Launcher;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.VertxAssistant;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
 import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
@@ -59,7 +58,7 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
   LoanRulesEngineAPITests.class,
   RequestsAPICreationTests.class,
   RequestsAPICreateMultipleRequestsTests.class,
-  RequestsAPIModificationTests.class,
+  ClosedRequestTests.class,
   RequestsAPIDeletionTests.class,
   RequestsAPIRetrievalTests.class,
   RequestsAPIUpdatingTests.class,
@@ -76,6 +75,8 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
   MultipleHoldShelfRequestsTests.class,
   MultipleOutOfOrderRequestsTests.class,
   MultipleMixedFulfilmentRequestsTests.class,
+  RequestsForDifferentItemsTests.class,
+  RequestQueueTests.class,
 })
 public class APITestSuite {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -86,7 +87,10 @@ public class APITestSuite {
   private static final String REQUEST_ID = createFakeRequestId();
 
   private static VertxAssistant vertxAssistant;
+  private static Launcher launcher;
   private static int port;
+  private static boolean initialised;
+
   private static String circulationModuleDeploymentId;
   private static String fakeOkapiDeploymentId;
   private static Boolean useOkapiForStorage;
@@ -98,7 +102,6 @@ public class APITestSuite {
   private static UUID booksInstanceTypeId;
   private static UUID regularGroupId;
   private static UUID alternateGroupId;
-  private static boolean initialised;
   private static UUID userId1;
   private static JsonObject userRecord1;
   private static JsonObject userRecord2;
@@ -118,7 +121,6 @@ public class APITestSuite {
 
   private static UUID courseReservesCancellationReasonId;
   private static UUID patronRequestCancellationReasonId;
-  private static UUID noLongerAvailableCancellationReasonId;
 
   public static int circulationModulePort() {
     return port;
@@ -228,10 +230,6 @@ public class APITestSuite {
   public static UUID patronRequestCancellationReasonId() {
     return patronRequestCancellationReasonId;
   }
-  
-  private static UUID noLongerAvailableCancellationReasonId() {
-    return noLongerAvailableCancellationReasonId;
-  }
 
   @BeforeClass
   public static void before()
@@ -246,31 +244,26 @@ public class APITestSuite {
     useOkapiForInitialRequests = Boolean.parseBoolean(
       System.getProperty("use.okapi.initial.requests", "false"));
 
-    vertxAssistant = new VertxAssistant();
-
     port = 9605;
-
-    HashMap<String, Object> config = new HashMap<>();
-
-    config.put("port", port);
+    vertxAssistant = new VertxAssistant();
+    launcher = new Launcher(vertxAssistant);
 
     vertxAssistant.start();
 
-    CompletableFuture<String> fakeStorageModuleDeployed = new CompletableFuture<>();
+    final CompletableFuture<String> fakeStorageModuleDeployed;
 
     if (!useOkapiForStorage) {
-      vertxAssistant.deployVerticle(FakeOkapi.class.getName(),
-        new HashMap<>(), fakeStorageModuleDeployed);
+      fakeStorageModuleDeployed = vertxAssistant.deployVerticle(FakeOkapi.class);
     } else {
-      fakeStorageModuleDeployed.complete(null);
+      fakeStorageModuleDeployed = CompletableFuture.completedFuture(null);
     }
 
-    CompletableFuture<String> circulationModuleDeployed =
-      vertxAssistant.deployVerticle(CirculationVerticle.class.getName(),
-        config);
+    final CompletableFuture<Void> circulationModuleStarted = launcher.start(port);
 
-    fakeOkapiDeploymentId = fakeStorageModuleDeployed.get(10, TimeUnit.SECONDS);
-    circulationModuleDeploymentId = circulationModuleDeployed.get(10, TimeUnit.SECONDS);
+    fakeStorageModuleDeployed.thenAccept(result -> fakeOkapiDeploymentId = result);
+
+    CompletableFuture.allOf(circulationModuleStarted, fakeStorageModuleDeployed)
+      .get(10, TimeUnit.SECONDS);
 
     createMaterialTypes();
     createLoanTypes();
@@ -315,28 +308,24 @@ public class APITestSuite {
     deleteLoanPolicies();
     deleteCancellationReasons();
 
-    CompletableFuture<Void> circulationModuleUndeployed =
-      vertxAssistant.undeployVerticle(circulationModuleDeploymentId);
+    CompletableFuture<Void> circulationModuleUndeployed = launcher.undeploy();
 
-    CompletableFuture<Void> fakeOkapiUndeployed = new CompletableFuture<>();
+    final CompletableFuture<Void> fakeOkapiUndeployed;
 
     if (!useOkapiForStorage) {
       log.info("Queries performed: " + FakeStorageModule.getQueries()
         .sorted()
         .collect(Collectors.joining("\n")));
 
-      vertxAssistant.undeployVerticle(fakeOkapiDeploymentId,
-        fakeOkapiUndeployed);
+      fakeOkapiUndeployed = vertxAssistant.undeployVerticle(fakeOkapiDeploymentId);
     } else {
-      fakeOkapiUndeployed.complete(null);
+      fakeOkapiUndeployed = CompletableFuture.completedFuture(null);
     }
 
     circulationModuleUndeployed.get(10, TimeUnit.SECONDS);
     fakeOkapiUndeployed.get(10, TimeUnit.SECONDS);
 
-    CompletableFuture<Void> stopped = new CompletableFuture<>();
-
-    vertxAssistant.stop(stopped);
+    CompletableFuture<Void> stopped = vertxAssistant.stop();
 
     stopped.get(5, TimeUnit.SECONDS);
   }
@@ -712,10 +701,10 @@ public class APITestSuite {
   }
   
   private static void createCancellationReasons() 
-      throws MalformedURLException,
-      InterruptedException,
-      ExecutionException,
-      TimeoutException {
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
     
     courseReservesCancellationReasonId = createReferenceRecord(
         ResourceClient.forCancellationReasons(createClient()),
@@ -730,25 +719,19 @@ public class APITestSuite {
             .put("name", "Patron Request")
             .put("description", "Item cancelled at Patron request")
     );
-    
-    noLongerAvailableCancellationReasonId = createReferenceRecord(
-        ResourceClient.forCancellationReasons(createClient()),
-        new JsonObject()
-            .put("name", "No Longer Available")
-            .put("description", "Item No longer Available")
-    );
   }
   
   private static void deleteCancellationReasons() 
-      throws MalformedURLException,
-      InterruptedException,
-      ExecutionException,
-      TimeoutException {
-    ResourceClient cancellationReasonClient = 
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    ResourceClient cancellationReasonClient =
         ResourceClient.forCancellationReasons(createClient());
+
     cancellationReasonClient.delete(courseReservesCancellationReasonId);
     cancellationReasonClient.delete(patronRequestCancellationReasonId);
-    cancellationReasonClient.delete(noLongerAvailableCancellationReasonId);
   }
 
   private static UUID findFirstByName(List<JsonObject> existingRecords, String name) {

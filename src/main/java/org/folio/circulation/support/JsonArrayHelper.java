@@ -48,19 +48,6 @@ public class JsonArrayHelper {
     return mapToList(within.getJsonArray(arrayPropertyName), mapper);
   }
 
-  public static <T> Stream<T> toStream(
-    JsonObject within,
-    String arrayPropertyName,
-    Function<JsonObject, T> mapper) {
-
-    if(within == null || !within.containsKey(arrayPropertyName)) {
-      return Stream.empty();
-    }
-
-    return toStream(within.getJsonArray(arrayPropertyName))
-      .map(mapper);
-  }
-
   public static Stream<JsonObject> toStream(
     JsonObject within,
     String arrayPropertyName) {

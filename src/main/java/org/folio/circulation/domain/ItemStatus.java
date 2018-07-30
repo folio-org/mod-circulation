@@ -1,11 +1,33 @@
 package org.folio.circulation.domain;
 
-public class ItemStatus {
-  private ItemStatus() { }
+import java.util.Arrays;
 
-  static final String AVAILABLE = "Available";
-  static final String AWAITING_PICKUP = "Awaiting pickup";
-  public static final String CHECKED_OUT = "Checked out";
-  public static final String CHECKED_OUT_HELD = "Checked out - Held";
-  public static final String CHECKED_OUT_RECALLED = "Checked out - Recalled";
+import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
+
+public enum ItemStatus {
+  NONE(""),
+  AVAILABLE("Available"),
+  AWAITING_PICKUP("Awaiting pickup"),
+  CHECKED_OUT("Checked out");
+
+  public static ItemStatus from(String value) {
+    return Arrays.stream(values())
+      .filter(status -> status.valueMatches(value))
+      .findFirst()
+      .orElse(NONE);
+  }
+
+  private final String value;
+
+  ItemStatus(String value) {
+    this.value = value;
+  }
+
+  public String getValue() {
+    return value;
+  }
+
+  private boolean valueMatches(String value) {
+    return equalsIgnoreCase(getValue(), value);
+  }
 }

@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <artifactId>mod-circulation</artifactId>
   <groupId>org.folio</groupId>
-  <version>10.7.1-SNAPSHOT</version>
+  <version>11.0.0-SNAPSHOT</version>
   <licenses>
     <license>
       <name>Apache License 2.0</name>
@@ -21,8 +21,8 @@
   <properties>
     <antlr4.version>4.7.1</antlr4.version>
     <drools.version>7.0.0.Final</drools.version>
-    <rmb.version>19.0.0</rmb.version>
-    <vertx.version>3.4.2</vertx.version>
+    <rmb.version>19.2.0</rmb.version>
+    <vertx.version>3.5.3</vertx.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
   </properties>
@@ -37,11 +37,6 @@
       <groupId>io.vertx</groupId>
       <artifactId>vertx-web</artifactId>
       <version>${vertx.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.folio</groupId>
-      <artifactId>util</artifactId>
-      <version>${rmb.version}</version>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -104,6 +99,12 @@
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.12</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.folio</groupId>
+      <artifactId>util</artifactId>
+      <version>${rmb.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>

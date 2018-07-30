@@ -1,18 +1,16 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.ServerErrorFailure;
 
-import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
-import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
-import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.HttpResult.*;
 
 public class UpdateItem {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final CollectionResourceClient itemsStorageClient;
 
@@ -23,139 +21,103 @@ public class UpdateItem {
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> onCheckOut(
     LoanAndRelatedRecords relatedRecords) {
 
-    try {
-      RequestQueue requestQueue = relatedRecords.getRequestQueue();
+    RequestQueue requestQueue = relatedRecords.getRequestQueue();
 
-      //Hack for creating returned loan - should distinguish further up the chain
-      if(relatedRecords.getLoan().isClosed()) {
-        return skip(relatedRecords);
-      }
-
-      final String prospectiveStatus;
-
-      if(requestQueue != null) {
-        prospectiveStatus = requestQueue.hasOutstandingRequests()
-          ? RequestType.from(requestQueue.getHighestPriorityRequest()).toCheckedOutItemStatus()
-          : CHECKED_OUT;
-      }
-      else {
-        prospectiveStatus = CHECKED_OUT;
-      }
-
-      if(relatedRecords.getLoan().getItem().isNotSameStatus(prospectiveStatus)) {
-        return internalUpdate(relatedRecords.getLoan().getItem(), prospectiveStatus)
-          .thenApply(updatedItemResult -> updatedItemResult.map(
-            relatedRecords::withItem));
-      }
-      else {
-        return skip(relatedRecords);
-      }
-    }
-    catch (Exception ex) {
-      logException(ex);
-      return CompletableFuture.completedFuture(
-        HttpResult.failed(new ServerErrorFailure(ex)));
-    }
+    //Hack for creating returned loan - should distinguish further up the chain
+    return succeeded(relatedRecords).afterWhen(
+      records -> loanIsClosed(relatedRecords),
+      UpdateItem::skip,
+      records -> updateItemStatusOnCheckOut(relatedRecords, requestQueue));
   }
 
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> onLoanUpdate(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
-    try {
-      final Item item = loanAndRelatedRecords.getLoan().getItem();
-
-      final String prospectiveStatus = itemStatusFrom(
-        loanAndRelatedRecords.getLoan(), loanAndRelatedRecords.getRequestQueue());
-
-      if(item.isNotSameStatus(prospectiveStatus)) {
-        return internalUpdate(item, prospectiveStatus)
-          .thenApply(updatedItemResult ->
-            updatedItemResult.map(loanAndRelatedRecords::withItem));
-      }
-      else {
-        return skip(loanAndRelatedRecords);
-      }
-    }
-    catch (Exception ex) {
-      logException(ex);
-      return CompletableFuture.completedFuture(
-        HttpResult.failed(new ServerErrorFailure(ex)));
-    }
+    return HttpResult.of(() -> itemStatusOnLoanUpdate(
+        loanAndRelatedRecords.getLoan(), loanAndRelatedRecords.getRequestQueue()))
+      .after(prospectiveStatus ->
+        updateItemWhenNotSameStatus(loanAndRelatedRecords,
+          loanAndRelatedRecords.getLoan().getItem(), prospectiveStatus));
   }
 
-  public CompletableFuture<HttpResult<RequestAndRelatedRecords>> onRequestCreation(
+  CompletableFuture<HttpResult<RequestAndRelatedRecords>> onRequestCreation(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    try {
-      RequestType requestType = RequestType.from(requestAndRelatedRecords.getRequest());
-
-      RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
-
-      String newStatus = requestQueue.hasOutstandingRequests()
-        ? RequestType.from(requestQueue.getHighestPriorityRequest()).toCheckedOutItemStatus()
-        : requestType.toCheckedOutItemStatus();
-
-      if (requestAndRelatedRecords.getInventoryRecords().isNotSameStatus(newStatus)) {
-        return internalUpdate(requestAndRelatedRecords.getInventoryRecords(), newStatus)
-          .thenApply(updatedItemResult ->
-            updatedItemResult.map(requestAndRelatedRecords::withItem));
-      } else {
-        return skip(requestAndRelatedRecords);
-      }
-    }
-    catch (Exception ex) {
-      logException(ex);
-      return CompletableFuture.completedFuture(
-        HttpResult.failed(new ServerErrorFailure(ex)));
-    }
+    return HttpResult.of(() -> itemStatusOnRequestCreation(requestAndRelatedRecords))
+      .after(prospectiveStatus ->
+        updateItemWhenNotSameStatus(requestAndRelatedRecords,
+          requestAndRelatedRecords.getRequest().getItem(), prospectiveStatus));
   }
 
-  private CompletableFuture<HttpResult<JsonObject>> internalUpdate(
+  private CompletableFuture<HttpResult<LoanAndRelatedRecords>> updateItemStatusOnCheckOut(
+    LoanAndRelatedRecords loanAndRelatedRecords,
+    RequestQueue requestQueue) {
+
+    return HttpResult.of(requestQueue::checkedOutItemStatus)
+      .after(prospectiveStatus ->
+        updateItemWhenNotSameStatus(loanAndRelatedRecords,
+          loanAndRelatedRecords.getLoan().getItem(), prospectiveStatus));
+  }
+
+  private <T> CompletableFuture<HttpResult<T>> updateItemWhenNotSameStatus(
+    T relatedRecords,
     Item item,
-    String newStatus) {
+    ItemStatus prospectiveStatus) {
 
-    CompletableFuture<HttpResult<JsonObject>> itemUpdated = new CompletableFuture<>();
-
-    item.changeStatus(newStatus);
-
-    this.itemsStorageClient.put(item.getItemId(),
-      item.getItem(), putItemResponse -> {
-        if(putItemResponse.getStatusCode() == 204) {
-          itemUpdated.complete(HttpResult.succeeded(item.getItem()));
-        }
-        else {
-          itemUpdated.complete(HttpResult.failed(
-            new ServerErrorFailure("Failed to update item")));
-        }
-      });
-
-    return itemUpdated;
+    return updateItemWhenNotSameStatus(prospectiveStatus, item)
+      .thenApply(result -> result.map(v -> relatedRecords));
   }
 
-  private <T> CompletableFuture<HttpResult<T>> skip(T previousResult) {
-    return CompletableFuture.completedFuture(HttpResult.succeeded(previousResult));
-  }
+  private CompletableFuture<HttpResult<Item>> updateItemWhenNotSameStatus(
+    ItemStatus prospectiveStatus,
+    Item item) {
 
-  private String itemStatusFrom(Loan loan, RequestQueue requestQueue) {
-    String prospectiveStatus;
+    if(item.isNotSameStatus(prospectiveStatus)) {
+      item.changeStatus(prospectiveStatus);
 
-    if(loan.isClosed()) {
-      prospectiveStatus = requestQueue.hasOutstandingFulfillableRequests()
-        ? RequestFulfilmentPreference.from(
-          requestQueue.getHighestPriorityFulfillableRequest())
-        .toCheckedInItemStatus()
-        : AVAILABLE;
+      return this.itemsStorageClient.put(item.getItemId(),
+        item.getItem()).thenApply(putItemResponse -> {
+          if(putItemResponse.getStatusCode() == 204) {
+            return succeeded(item);
+          }
+          else {
+            return failed(new ServerErrorFailure(
+              String.format("Failed to update item status '%s'",
+                putItemResponse.getBody())));
+          }
+        });
     }
     else {
-      prospectiveStatus = requestQueue.hasOutstandingRequests()
-        ? RequestType.from(requestQueue.getHighestPriorityRequest()).toCheckedOutItemStatus()
-        : CHECKED_OUT;
+      return completedFuture(succeeded(item));
     }
-
-    return prospectiveStatus;
   }
 
-  private void logException(Exception ex) {
-    log.error("Exception occurred whilst updating item", ex);
+  private CompletableFuture<HttpResult<Boolean>> loanIsClosed(
+    LoanAndRelatedRecords relatedRecords) {
+
+    return completedFuture(of(() -> relatedRecords.getLoan().isClosed()));
+  }
+
+  private static <T> CompletableFuture<HttpResult<T>> skip(T previousResult) {
+    return completedFuture(succeeded(previousResult));
+  }
+
+  private ItemStatus itemStatusOnRequestCreation(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
+
+    return requestQueue.hasOutstandingRequests()
+      ? requestQueue.getHighestPriorityRequest().checkedOutItemStatus()
+      : requestAndRelatedRecords.getRequest().checkedOutItemStatus();
+  }
+
+  private ItemStatus itemStatusOnLoanUpdate(
+    Loan loan,
+    RequestQueue requestQueue) {
+
+    return loan.isClosed()
+      ? requestQueue.checkedInItemStatus()
+      : requestQueue.checkedOutItemStatus();
   }
 }

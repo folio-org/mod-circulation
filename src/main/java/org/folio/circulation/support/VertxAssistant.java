@@ -7,12 +7,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 public class VertxAssistant {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private Vertx vertx;
 
@@ -29,71 +28,68 @@ public class VertxAssistant {
     vertx.exceptionHandler(ex -> log.error("Unhandled exception caught by vertx", ex));
   }
 
-  public void stop(CompletableFuture<Void> stopped) {
+  public CompletableFuture<Void> stop() {
+    final CompletableFuture<Void> future = new CompletableFuture<>();
 
     if (vertx != null) {
       vertx.close(result -> {
         if (result.succeeded()) {
-          stopped.complete(null);
+          future.complete(null);
         } else {
-          stopped.completeExceptionally(result.cause());
+          future.completeExceptionally(result.cause());
         }
       });
 
-      stopped.thenAccept(result -> this.vertx = null);
+      future.thenAccept(result -> this.vertx = null);
     }
+
+    return future;
   }
 
-  public void deployVerticle(String verticleClass,
-                            Map<String, Object> config,
-                            CompletableFuture<String> deployed) {
+  public <T> CompletableFuture<String> deployVerticle(Class<T> verticleClass) {
+    return deployVerticle(verticleClass, new JsonObject());
+  }
+
+  public <T> CompletableFuture<String> deployVerticle(
+    Class<T> verticleClass,
+    JsonObject config) {
+
+    String verticleClass1 = verticleClass.getName();
+
+    CompletableFuture<String> deployed = new CompletableFuture<>();
 
     long startTime = System.currentTimeMillis();
 
     DeploymentOptions options = new DeploymentOptions();
 
-    options.setConfig(new JsonObject(config));
+    options.setConfig(config);
     options.setWorker(true);
 
-    vertx.deployVerticle(verticleClass, options, result -> {
+    vertx.deployVerticle(verticleClass1, options, result -> {
       if (result.succeeded()) {
         long elapsedTime = System.currentTimeMillis() - startTime;
 
-        log.info("{} deployed in {} milliseconds", verticleClass, elapsedTime);
+        log.info("{} deployed in {} milliseconds", verticleClass1, elapsedTime);
 
         deployed.complete(result.result());
       } else {
         deployed.completeExceptionally(result.cause());
       }
     });
-  }
-
-  public CompletableFuture<String> deployVerticle(String verticleClass,
-                             Map<String, Object> config) {
-
-    CompletableFuture<String> deployed = new CompletableFuture<>();
-
-    deployVerticle(verticleClass, config, deployed);
 
     return deployed;
   }
 
-  public void undeployVerticle(String deploymentId,
-                               CompletableFuture<Void> undeployed) {
+  public CompletableFuture<Void> undeployVerticle(String moduleDeploymentId) {
+    CompletableFuture<Void> undeployed = new CompletableFuture<>();
 
-    vertx.undeploy(deploymentId, result -> {
+    vertx.undeploy(moduleDeploymentId, result -> {
       if (result.succeeded()) {
         undeployed.complete(null);
       } else {
         undeployed.completeExceptionally(result.cause());
       }
     });
-  }
-
-  public CompletableFuture<Void> undeployVerticle(String moduleDeploymentId) {
-    CompletableFuture<Void> undeployed = new CompletableFuture<>();
-
-    undeployVerticle(moduleDeploymentId, undeployed);
 
     return undeployed;
   }

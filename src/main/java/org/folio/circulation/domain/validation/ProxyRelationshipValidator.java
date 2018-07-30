@@ -1,21 +1,19 @@
 package org.folio.circulation.domain.validation;
 
+import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.ProxyRelationship;
 import org.folio.circulation.domain.UserRelatedRecord;
 import org.folio.circulation.support.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.UnsupportedEncodingException;
-import java.lang.invoke.MethodHandles;
 import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
-public class ProxyRelationshipValidator {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.HttpResult.succeeded;
 
+public class ProxyRelationshipValidator {
   private final CollectionResourceClient proxyRelationshipsClient;
   private Supplier<ValidationErrorFailure> invalidRelationshipErrorSupplier;
 
@@ -30,74 +28,35 @@ public class ProxyRelationshipValidator {
   public <T extends UserRelatedRecord> CompletableFuture<HttpResult<T>> refuseWhenInvalid(
     T userRelatedRecord) {
 
-    //TODO: Improve mapping back null result to records
-    return refuseWhenInvalid(
-      userRelatedRecord.getProxyUserId(),
-      userRelatedRecord.getUserId())
-      .thenApply(result -> result.map(v -> userRelatedRecord));
-  }
-
-  private CompletableFuture<HttpResult<Void>> refuseWhenInvalid(
-    String proxyUserId,
-    String userId) {
-
     //No need to validate as not proxied activity
-    if (proxyUserId == null) {
-      return CompletableFuture.completedFuture(HttpResult.succeeded(null));
+    if (userRelatedRecord.getProxyUserId() == null) {
+      return completedFuture(succeeded(userRelatedRecord));
     }
 
-    String proxyRelationshipQuery = proxyRelationshipQuery(proxyUserId, userId);
-
-    if(proxyRelationshipQuery == null) {
-      return CompletableFuture.completedFuture(HttpResult.failed(
-        new ServerErrorFailure("Unable to fetch proxy relationships")));
-    }
-
-    CompletableFuture<HttpResult<Void>> future = new CompletableFuture<>();
-
-    proxyRelationshipsClient.getMany(proxyRelationshipQuery, 1000, 0)
-      .thenAccept(proxyValidResponse -> {
-        if (proxyValidResponse != null) {
-          if (proxyValidResponse.getStatusCode() != 200) {
-            future.complete(HttpResult.failed(new ForwardOnFailure(proxyValidResponse)));
-            return;
-          }
-
-          final MultipleRecordsWrapper proxyRelationships = MultipleRecordsWrapper.fromBody(
-            proxyValidResponse.getBody(), "proxiesFor");
-
-          final boolean activeRelationship = proxyRelationships.getRecords()
-            .stream()
-            .map(ProxyRelationship::new)
-            .anyMatch(ProxyRelationship::isActive);
-
-          future.complete(
-            activeRelationship
-              ? HttpResult.succeeded(null)
-              : HttpResult.failed(invalidRelationshipErrorSupplier.get()));
-        }
-        else {
-          future.complete(HttpResult.failed(
-            new ServerErrorFailure("No response when requesting proxies")));
-        }
-    });
-
-    return future;
+    return succeeded(userRelatedRecord).failAfter(
+      v -> doesNotHaveActiveProxyRelationship(userRelatedRecord),
+        v -> invalidRelationshipErrorSupplier.get());
   }
 
-  private String proxyRelationshipQuery(String proxyUserId, String sponsorUserId) {
-    //Cannot check whether relationship is not active or expired in CQL, due to
-    //having to look in two different parts of the representation for the properties
-    //and CQL implementation does not currently support > comparison on optional properties
+  private CompletableFuture<HttpResult<Boolean>> doesNotHaveActiveProxyRelationship(
+    UserRelatedRecord record) {
+
+    return proxyRelationshipQuery(record.getProxyUserId(), record.getUserId())
+      .after(query -> proxyRelationshipsClient.getMany(query, 1000, 0)
+        .thenApply(r -> MultipleRecords.from(r, ProxyRelationship::new, "proxiesFor")
+        .map(MultipleRecords::getRecords)
+        .map(relationships -> relationships.stream()
+          .noneMatch(ProxyRelationship::isActive))));
+  }
+
+  private HttpResult<String> proxyRelationshipQuery(
+    String proxyUserId,
+    String sponsorUserId) {
 
     String validateProxyQuery = String.format("proxyUserId==%s and userId==%s",
       proxyUserId, sponsorUserId);
 
-    try {
-      return URLEncoder.encode(validateProxyQuery, String.valueOf(StandardCharsets.UTF_8));
-    } catch (UnsupportedEncodingException e) {
-      log.error("Failed to encode query for proxies");
-      return null;
-    }
+    return HttpResult.of(() ->
+      URLEncoder.encode(validateProxyQuery, String.valueOf(UTF_8)));
   }
 }

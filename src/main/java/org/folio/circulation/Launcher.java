@@ -1,83 +1,74 @@
 package org.folio.circulation;
 
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import org.folio.circulation.support.VertxAssistant;
 
 import java.lang.invoke.MethodHandles;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static io.vertx.core.logging.LoggerFactory.getLogger;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 public class Launcher {
-  private static String moduleDeploymentId;
-  private static VertxAssistant vertxAssistant = new VertxAssistant();
+  private final VertxAssistant vertxAssistant;
+  private final Logger log;
+  private String moduleDeploymentId;
+
+  public Launcher(VertxAssistant vertxAssistant) {
+    Logging.initialiseFormat();
+
+    this.vertxAssistant = vertxAssistant;
+    this.log = getLogger(MethodHandles.lookup().lookupClass());
+  }
 
   public static void main(String[] args) throws
     InterruptedException,
     ExecutionException,
     TimeoutException {
 
-    Logging.initialiseFormat();
+    final Launcher launcher = new Launcher(new VertxAssistant());
 
-    Runtime.getRuntime().addShutdownHook(new Thread(Launcher::stop));
-
-    HashMap<String, Object> config = new HashMap<>();
+    Runtime.getRuntime().addShutdownHook(new Thread(launcher::stop));
 
     Integer port = Integer.getInteger("port", 9801);
 
-    putNonNullConfig("port", port, config);
-
-    start(config);
+    launcher.start(port).get(10, TimeUnit.SECONDS);
   }
 
-  public static void start(Map<String, Object> config) throws
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  private void stop() {
+    log.info("Server Stopping");
+
+    undeploy()
+      .thenComposeAsync(v -> vertxAssistant.stop())
+      .thenAccept(v -> log.info("Server Stopped"));
+  }
+
+  public CompletableFuture<Void> undeploy() {
+    return vertxAssistant.undeployVerticle(moduleDeploymentId);
+  }
+
+  public CompletableFuture<Void> start(Integer port) {
+
+    if(port == null) {
+      throw new IllegalArgumentException("port should not be null");
+    }
 
     vertxAssistant.start();
 
-    final Logger log = getLogger(MethodHandles.lookup().lookupClass());
-
     log.info("Server Starting");
 
-    CompletableFuture<String> deployed = new CompletableFuture<>();
+    JsonObject config = new JsonObject();
+    write(config, "port", port);
 
-    vertxAssistant.deployVerticle(CirculationVerticle.class.getName(),
-      config, deployed);
+    CompletableFuture<String> deployed =
+      vertxAssistant.deployVerticle(CirculationVerticle.class, config);
 
-    deployed.thenAccept(result -> log.info("Server Started"));
-
-    moduleDeploymentId = deployed.get(10, TimeUnit.SECONDS);
-  }
-
-  public static void stop() {
-    CompletableFuture<Void> undeployed = new CompletableFuture<>();
-    CompletableFuture<Void> stopped = new CompletableFuture<>();
-    CompletableFuture<Void> all = CompletableFuture.allOf(undeployed, stopped);
-
-    final Logger log = getLogger(MethodHandles.lookup().lookupClass());
-
-    log.info("Server Stopping");
-
-    vertxAssistant.undeployVerticle(moduleDeploymentId, undeployed);
-
-    undeployed.thenAccept(result -> vertxAssistant.stop(stopped));
-
-    all.join();
-    log.info("Server Stopped");
-  }
-
-  private static void putNonNullConfig(String key,
-                                       Object value,
-                                       Map<String, Object> config) {
-    if(value != null) {
-      config.put(key, value);
-    }
+    return deployed
+      .thenApply(result -> moduleDeploymentId = result)
+      .thenAccept(result -> log.info("Server Started"));
   }
 }

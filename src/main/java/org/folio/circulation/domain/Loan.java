@@ -16,11 +16,40 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   private final JsonObject representation;
-  private Item item;
-  private User user;
+  private final Item item;
+  private final User user;
+  private final User proxy;
 
   public Loan(JsonObject representation) {
+    this(representation, null, null, null);
+  }
+
+  public Loan(
+    JsonObject representation,
+    Item item,
+    User user,
+    User proxy) {
+
     this.representation = representation;
+    this.item = item;
+    this.user = user;
+    this.proxy = proxy;
+
+    //TODO: Refuse if ID does not match property in representation,
+    // and possibly convert isFound to unknown item class
+    if(item != null && item.isFound()) {
+      representation.put("itemId", item.getItemId());
+    }
+
+    //TODO: Refuse if ID does not match property in representation
+    if(user != null) {
+      representation.put("userId", user.getId());
+    }
+
+    //TODO: Refuse if ID does not match property in representation
+    if(proxy != null) {
+      representation.put("proxyUserId", proxy.getId());
+    }
   }
 
   public static Loan from(JsonObject representation) {
@@ -28,17 +57,17 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public static Loan from(JsonObject representation, Item item) {
-    return from(representation, item, null);
+    return from(representation, item, null, null);
   }
 
-  public static Loan from(JsonObject representation, Item item, User user) {
+  public static Loan from(
+    JsonObject representation,
+    Item item,
+    User user,
+    User proxy) {
+
     defaultStatusAndAction(representation);
-    final Loan loan = new Loan(representation);
-
-    loan.setItem(item);
-    loan.setUser(user);
-
-    return loan;
+    return new Loan(representation, item, user, proxy);
   }
 
   JsonObject asJson() {
@@ -51,10 +80,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   private void changeAction(String action) {
     representation.put(LoanProperties.ACTION, action);
-  }
-
-  public void changeProxyUser(String userId) {
-    representation.put("proxyUserId", userId);
   }
 
   public HttpResult<Void> isValidStatus() {
@@ -109,25 +134,24 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return item;
   }
 
-  private void setItem(Item newItem) {
-    //TODO: Refuse if ID does not match property in representation,
-    // and possibly convert isFound to unknown item class
-    if(newItem != null && newItem.isFound()) {
-      representation.put("itemId", newItem.getItemId());
-    }
-    this.item = newItem;
+  public Loan withItem(Item item) {
+    return new Loan(representation, item, user, proxy);
   }
 
   public User getUser() {
     return user;
   }
 
-  private void setUser(User newUser) {
-    //TODO: Refuse if ID does not match property in representation
-    if(newUser != null) {
-      representation.put("userId", newUser.getId());
-    }
-    this.user = newUser;
+  Loan withUser(User newUser) {
+    return new Loan(representation, item, newUser, proxy);
+  }
+
+  public User getProxy() {
+    return proxy;
+  }
+
+  Loan withProxy(User newProxy) {
+    return new Loan(representation, item, user, newProxy);
   }
 
   private void changeLoanPolicy(String newLoanPolicyId) {

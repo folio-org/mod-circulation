@@ -2,12 +2,11 @@ package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.representations.ItemProperties;
 
-import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOCATION_ID;
-import static org.folio.circulation.domain.representations.ItemProperties.TEMPORARY_LOCATION_ID;
-import static org.folio.circulation.domain.representations.ItemProperties.TITLE_PROPERTY;
+import java.util.Objects;
+
+import static org.folio.circulation.domain.representations.ItemProperties.*;
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
@@ -33,16 +32,16 @@ public class Item {
     this.materialTypeRepresentation = materialTypeRepresentation;
   }
 
-  public boolean isCheckedOut() {
-    String status = getStatus();
-
-    return status.equals(ItemStatus.CHECKED_OUT)
-      || status.equals(ItemStatus.CHECKED_OUT_HELD)
-      || status.equals(ItemStatus.CHECKED_OUT_RECALLED);
+  public static Item from(JsonObject representation) {
+    return new Item(representation, null, null, null, null);
   }
 
-  boolean isNotSameStatus(String prospectiveStatus) {
-    return !StringUtils.equals(getStatus(), prospectiveStatus);
+  public boolean isCheckedOut() {
+    return getStatus().equals(ItemStatus.CHECKED_OUT);
+  }
+
+  Boolean isNotSameStatus(ItemStatus prospectiveStatus) {
+    return !Objects.equals(getStatus(), prospectiveStatus);
   }
 
   public JsonObject getItem() {
@@ -89,7 +88,11 @@ public class Item {
     return getProperty(holdingRepresentation, "callNumber");
   }
 
-  public String getStatus() {
+  ItemStatus getStatus() {
+    return ItemStatus.from(getStatusName());
+  }
+
+  private String getStatusName() {
     return getNestedStringProperty(getItem(), "status", "name");
   }
 
@@ -134,8 +137,9 @@ public class Item {
       : getItem().getString(ItemProperties.PERMANENT_LOAN_TYPE_ID);
   }
 
-  void changeStatus(String newStatus) {
-    getItem().put("status", new JsonObject().put("name", newStatus));
+  void changeStatus(ItemStatus newStatus) {
+    //TODO: Check if status is null
+    getItem().put("status", new JsonObject().put("name", newStatus.getValue()));
   }
 
   public boolean isNotFound() {
@@ -149,7 +153,10 @@ public class Item {
 
   Item updateItem(JsonObject updatedItem) {
     return new Item(updatedItem,
-      holdingRepresentation, instanceRepresentation, getLocation(), getMaterialType());
+      holdingRepresentation,
+      instanceRepresentation,
+      getLocation(),
+      getMaterialType());
   }
 
   public boolean doesNotHaveHolding() {
@@ -157,12 +164,38 @@ public class Item {
   }
 
   public Item withLocation(JsonObject newLocation) {
-    return new Item(this.itemRepresentation, this.holdingRepresentation, this.instanceRepresentation,
-      newLocation, this.materialTypeRepresentation);
+    return new Item(
+      this.itemRepresentation,
+      this.holdingRepresentation,
+      this.instanceRepresentation,
+      newLocation,
+      this.materialTypeRepresentation);
   }
 
   public Item withMaterialType(JsonObject newMaterialType) {
-    return new Item(this.itemRepresentation, this.holdingRepresentation, this.instanceRepresentation,
-      this.locationRepresentation, newMaterialType);
+    return new Item(
+      this.itemRepresentation,
+      this.holdingRepresentation,
+      this.instanceRepresentation,
+      this.locationRepresentation,
+      newMaterialType);
+  }
+
+  public Item withHoldingsRecord(JsonObject newHoldingsRecordRepresentation) {
+    return new Item(
+      this.itemRepresentation,
+      newHoldingsRecordRepresentation,
+      this.instanceRepresentation,
+      this.locationRepresentation,
+      this.materialTypeRepresentation);
+  }
+
+  public Item withInstance(JsonObject newInstanceRepresentation) {
+    return new Item(
+      this.itemRepresentation,
+      this.holdingRepresentation,
+      newInstanceRepresentation,
+      this.locationRepresentation,
+      this.materialTypeRepresentation);
   }
 }

@@ -1,23 +1,25 @@
 package org.folio.circulation.support;
 
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.ItemRelatedRecord;
-import org.folio.circulation.domain.LocationRepository;
-import org.folio.circulation.domain.MaterialTypeRepository;
+import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.domain.*;
 import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.function.Function.identity;
+import static org.folio.circulation.support.HttpResult.failed;
+import static org.folio.circulation.support.HttpResult.succeeded;
 
 public class ItemRepository {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -62,55 +64,186 @@ public class ItemRepository {
   }
 
   public CompletableFuture<HttpResult<Item>> fetchFor(ItemRelatedRecord record) {
-    return fetchItem(record.getItemId())
-      .thenComposeAsync(this::fetchHolding)
-      .thenComposeAsync(this::fetchInstance)
-      .thenApply(r -> r.map(InventoryRecordsBuilder::create))
-      .thenComposeAsync(this::fetchLocation)
-      .thenComposeAsync(this::fetchMaterialType);
+    return fetchById(record.getItemId());
   }
 
-  private CompletableFuture<HttpResult<Item>> fetchLocation(
-    HttpResult<Item> result) {
-
-    if(fetchLocation) {
-      return result.after(locationRepository::getLocation);
-    }
-    else {
-      return completedFuture(result);
-    }
+  private CompletableFuture<HttpResult<Item>> fetchLocation(HttpResult<Item> result) {
+    return fetchLocation
+      ? result.combineAfter(locationRepository::getLocation, Item::withLocation)
+      : completedFuture(result);
   }
 
-  private CompletableFuture<HttpResult<Item>> fetchMaterialType(
-    HttpResult<Item> result) {
-
-    if(fetchMaterialType) {
-      return result.after(materialTypeRepository::getMaterialType);
-    }
-    else {
-      return completedFuture(result);
-    }
+  private CompletableFuture<HttpResult<Item>> fetchMaterialType(HttpResult<Item> result) {
+    return fetchMaterialType
+      ? result.combineAfter(materialTypeRepository::getFor, Item::withMaterialType)
+      : completedFuture(result);
   }
 
   public CompletableFuture<HttpResult<Item>> fetchByBarcode(String barcode) {
     return fetchItemByBarcode(barcode)
-      .thenComposeAsync(this::fetchHolding)
-      .thenComposeAsync(this::fetchInstance)
-      .thenApply(r -> r.map(InventoryRecordsBuilder::create))
-      .thenComposeAsync(this::fetchLocation)
-      .thenComposeAsync(this::fetchMaterialType);
+      .thenComposeAsync(this::fetchItemRelatedRecords);
   }
 
   public CompletableFuture<HttpResult<Item>> fetchById(String itemId) {
     return fetchItem(itemId)
-      .thenComposeAsync(this::fetchHolding)
-      .thenComposeAsync(this::fetchInstance)
-      .thenApply(r -> r.map(InventoryRecordsBuilder::create))
-      .thenComposeAsync(this::fetchLocation)
-      .thenComposeAsync(this::fetchMaterialType);
+      .thenComposeAsync(this::fetchItemRelatedRecords);
   }
 
-  public CompletableFuture<HttpResult<MultipleInventoryRecords>> fetchFor(
+  private CompletableFuture<HttpResult<Collection<Item>>> fetchLocations(
+    HttpResult<Collection<Item>> result) {
+
+    if(fetchLocation) {
+      return result.after(items ->
+        locationRepository.getLocations(items)
+          .thenApply(r -> r.map(locations -> items.stream()
+              .map(item -> item.withLocation(locations
+                .getOrDefault(item.getLocationId(), null)))
+              .collect(Collectors.toList()))));
+    }
+    else {
+      return completedFuture(result);
+    }
+  }
+
+  private CompletableFuture<HttpResult<Collection<Item>>> fetchMaterialTypes(
+    HttpResult<Collection<Item>> result) {
+
+    if(fetchMaterialType) {
+      return result.after(items ->
+        materialTypeRepository.getMaterialTypes(items)
+          .thenApply(r -> r.map(materialTypes -> items.stream()
+              .map(item -> item.withMaterialType(materialTypes
+                .getOrDefault(item.getMaterialTypeId(), null)))
+              .collect(Collectors.toList()))));
+    }
+    else {
+      return completedFuture(result);
+    }
+  }
+
+  private CompletableFuture<HttpResult<Collection<Item>>> fetchInstances(
+    HttpResult<Collection<Item>> result) {
+
+    return result.after(items -> {
+      List<String> instanceIds = items.stream()
+        .map(Item::getInstanceId)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
+
+      String instancesQuery = CqlHelper.multipleRecordsCqlQuery(instanceIds);
+
+      return instancesClient.getMany(instancesQuery, instanceIds.size(), 0)
+        .thenApply(instancesResponse ->
+          MultipleRecords.from(instancesResponse, identity(), "instances"))
+        .thenApply(r -> r.map(instances -> items.stream()
+          .map(item -> item.withInstance(
+            findById(item.getInstanceId(), instances.getRecords()).orElse(null)))
+          .collect(Collectors.toList())));
+    });
+  }
+
+  private CompletableFuture<HttpResult<Collection<Item>>> fetchHoldingRecords(
+    HttpResult<Collection<Item>> result) {
+
+    return result.after(items -> {
+      List<String> holdingsIds = items.stream()
+        .map(Item::getHoldingsRecordId)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
+
+      String holdingsQuery = CqlHelper.multipleRecordsCqlQuery(holdingsIds);
+
+      return holdingsClient.getMany(holdingsQuery, holdingsIds.size(), 0)
+        .thenApply(holdingsResponse ->
+          MultipleRecords.from(holdingsResponse, identity(), "holdingsRecords"))
+        .thenApply(r -> r.map(holdings -> items.stream()
+          .map(item -> item.withHoldingsRecord(
+            findById(item.getHoldingsRecordId(), holdings.getRecords()).orElse(null)))
+          .collect(Collectors.toList())));
+    });
+  }
+
+  private static Optional<JsonObject> findById(
+    String id,
+    Collection<JsonObject> collection) {
+
+    return collection.stream()
+      .filter(item -> item.getString("id").equals(id))
+      .findFirst();
+  }
+
+  private CompletableFuture<HttpResult<Collection<Item>>> fetchItems(
+    Collection<String> itemIds) {
+
+    String itemsQuery = CqlHelper.multipleRecordsCqlQuery(itemIds);
+
+    return itemsClient.getMany(itemsQuery, itemIds.size(), 0)
+      .thenApply(r -> MultipleRecords.from(r, Item::from, "items"))
+      .thenApply(r -> r.map(MultipleRecords::getRecords));
+  }
+
+  private CompletableFuture<HttpResult<Item>> fetchItem(String itemId) {
+    return SingleRecordFetcher.jsonOrNull(itemsClient, "item")
+      .fetch(itemId)
+      .thenApply(r -> r.map(Item::from));
+  }
+
+  private CompletableFuture<HttpResult<Item>> fetchItemByBarcode(String barcode) {
+    log.info("Fetching item with barcode: {}", barcode);
+
+    return itemsClient.getMany(String.format("barcode==%s", barcode), 1, 0)
+      .thenApply(this::mapMultipleToResult)
+      .thenApply(r -> r.map(Item::from))
+      .exceptionally(e -> failed(new ServerErrorFailure(e)));
+  }
+
+  private HttpResult<JsonObject> mapMultipleToResult(Response response) {
+    return MultipleRecords.from(response, identity(), "items")
+      .map(items -> items.getRecords().stream().findFirst().orElse(null));
+  }
+
+  private CompletableFuture<HttpResult<Item>> fetchHoldingsRecord(
+    HttpResult<Item> result) {
+
+    return result.after(item -> {
+      if(item == null || item.isNotFound()) {
+        log.info("Item was not found, aborting fetching holding or instance");
+        return completedFuture(succeeded(item));
+      }
+      else {
+        return SingleRecordFetcher.jsonOrNull(holdingsClient, "holding")
+          .fetch(item.getHoldingsRecordId())
+          .thenApply(r -> r.map(item::withHoldingsRecord));
+      }
+    });
+  }
+
+  private CompletableFuture<HttpResult<Item>> fetchInstance(HttpResult<Item> result) {
+    return result.after(item -> {
+      if(item == null || item.isNotFound() || item.getInstanceId() == null) {
+        log.info("Holding was not found, aborting fetching instance");
+        return completedFuture(succeeded(item));
+      }
+      else {
+        return SingleRecordFetcher.jsonOrNull(instancesClient, "instance")
+          .fetch(item.getInstanceId())
+          .thenApply(r -> r.map(item::withInstance));
+      }
+    });
+  }
+
+  //TODO: Try to remove includeItemMap without introducing unchecked exception
+  public <T extends ItemRelatedRecord> CompletableFuture<HttpResult<MultipleRecords<T>>> fetchItemsFor(
+    HttpResult<MultipleRecords<T>> result,
+    BiFunction<T, Item, T> includeItemMap) {
+
+    return result.combineAfter(r -> fetchFor(getItemIds(r)),
+      (records, items) -> new MultipleRecords<>(
+        matchItemToRecord(records, items, includeItemMap),
+        records.getTotalRecords()));
+  }
+
+  private CompletableFuture<HttpResult<Collection<Item>>> fetchFor(
     Collection<String> itemIds) {
 
     return fetchItems(itemIds)
@@ -120,286 +253,31 @@ public class ItemRepository {
       .thenComposeAsync(this::fetchMaterialTypes);
   }
 
-  private CompletableFuture<HttpResult<MultipleInventoryRecords>> fetchLocations(
-    HttpResult<MultipleInventoryRecords> result) {
-
-    if(fetchLocation) {
-      return result.after(records ->
-        locationRepository.getLocations(result.value().getRecords())
-          .thenApply(locationResult -> {
-            if (locationResult.failed()) {
-              return HttpResult.failed(locationResult.cause());
-            }
-
-            return HttpResult.succeeded(new MultipleInventoryRecords(
-              records.getItems(),
-              records.getHoldings(),
-              records.getInstances(),
-              records.getRecords().stream()
-                .map(r -> r.withLocation(locationResult.value()
-                  .getOrDefault(r.getLocationId(), null)))
-                .collect(Collectors.toList())));
-        }));
-    }
-    else {
-      return completedFuture(result);
-    }
+  private <T extends ItemRelatedRecord> List<String> getItemIds(MultipleRecords<T> records) {
+    return records.getRecords().stream()
+      .map(ItemRelatedRecord::getItemId)
+      .collect(Collectors.toList());
   }
 
-  private CompletableFuture<HttpResult<MultipleInventoryRecords>> fetchMaterialTypes(
-    HttpResult<MultipleInventoryRecords> result) {
+  private <T extends ItemRelatedRecord> Collection<T> matchItemToRecord(
+    MultipleRecords<T> records,
+    Collection<Item> items,
+    BiFunction<T, Item, T> includeItemMap) {
 
-    if(fetchMaterialType) {
-      return result.after(records ->
-        materialTypeRepository.getMaterialTypes(records.getRecords())
-          .thenApply(materialTypeResult -> {
-            if (materialTypeResult.failed()) {
-              return HttpResult.failed(materialTypeResult.cause());
-            }
-
-            return HttpResult.succeeded(new MultipleInventoryRecords(
-              records.getItems(),
-              records.getHoldings(),
-              records.getInstances(),
-              records.getRecords().stream()
-                .map(r -> r.withMaterialType(materialTypeResult.value()
-                  .getOrDefault(r.getMaterialTypeId(), null)))
-                .collect(Collectors.toList())));
-        }));
-    }
-    else {
-      return completedFuture(result);
-    }
+    return records.getRecords().stream()
+      .map(r -> includeItemMap.apply(r,
+        items.stream()
+          .filter(item -> StringUtils.equals(item.getItemId(), r.getItemId()))
+          .findFirst().orElse(Item.from(null))))
+      .collect(Collectors.toList());
   }
 
-  private CompletableFuture<HttpResult<MultipleInventoryRecords>> fetchInstances(
-    HttpResult<MultipleInventoryRecords> result) {
+  private CompletableFuture<HttpResult<Item>> fetchItemRelatedRecords(
+    HttpResult<Item> item) {
 
-    return result.after(records -> {
-      List<String> instanceIds = records.getRecords().stream()
-        .map(Item::getInstanceId)
-        .filter(Objects::nonNull)
-        .collect(Collectors.toList());
-
-      String instancesQuery = CqlHelper.multipleRecordsCqlQuery(instanceIds);
-
-      return instancesClient.getMany(instancesQuery, instanceIds.size(), 0).thenApply(instancesResponse -> {
-        if (instancesResponse.getStatusCode() != 200) {
-          return HttpResult.failed(new ServerErrorFailure(
-            String.format("Instances request (%s) failed %s: %s",
-              instancesQuery, instancesResponse.getStatusCode(),
-              instancesResponse.getBody())));
-        }
-
-        final List<JsonObject> instances = JsonArrayHelper.toList(
-          instancesResponse.getJson().getJsonArray("instances"));
-
-        return HttpResult.succeeded(MultipleInventoryRecords.from(
-          records.getItems(), records.getHoldings(), instances));
-      });
-    });
-  }
-
-  private CompletableFuture<HttpResult<MultipleInventoryRecords>> fetchHoldingRecords(
-    HttpResult<MultipleInventoryRecords> result) {
-
-    return result.after(records -> {
-      List<String> holdingsIds = records.getRecords().stream()
-        .map(Item::getHoldingsRecordId)
-        .filter(Objects::nonNull)
-        .collect(Collectors.toList());
-
-      String holdingsQuery = CqlHelper.multipleRecordsCqlQuery(holdingsIds);
-
-      return holdingsClient.getMany(holdingsQuery, holdingsIds.size(), 0).thenApply(holdingsResponse -> {
-        if(holdingsResponse.getStatusCode() != 200) {
-          return HttpResult.failed(
-            new ServerErrorFailure(String.format("Holdings request (%s) failed %s: %s",
-              holdingsQuery, holdingsResponse.getStatusCode(),
-              holdingsResponse.getBody())));
-        }
-
-        final List<JsonObject> holdings = JsonArrayHelper.toList(
-          holdingsResponse.getJson().getJsonArray("holdingsRecords"));
-
-        return HttpResult.succeeded(MultipleInventoryRecords.from(
-          records.getItems(), holdings, new ArrayList<>()));
-      });
-    });
-  }
-
-  private CompletableFuture<HttpResult<MultipleInventoryRecords>> fetchItems(
-    Collection<String> itemIds) {
-
-    String itemsQuery = CqlHelper.multipleRecordsCqlQuery(itemIds);
-
-    return itemsClient.getMany(itemsQuery, itemIds.size(), 0).thenApply(response -> {
-      if(response.getStatusCode() != 200) {
-        return HttpResult.failed(
-          new ServerErrorFailure(String.format("Items request (%s) failed %s: %s",
-            itemsQuery, response.getStatusCode(), response.getBody())));
-      }
-
-      final List<JsonObject> items = JsonArrayHelper.toList(
-        response.getJson().getJsonArray("items"));
-
-      return HttpResult.succeeded(MultipleInventoryRecords.from(items,
-        new ArrayList<>(), new ArrayList<>()));
-    });
-  }
-
-  private JsonObject getRecordFromResponse(Response response) {
-    if(response != null) {
-      log.info("Response received, status code: {} body: {}",
-        response.getStatusCode(), response.getBody());
-
-      if (response.getStatusCode() == 200) {
-        return response.getJson();
-      } else {
-        return null;
-      }
-    }
-    else {
-      //TODO: needs more context in log message
-      log.warn("Did not receive response to request");
-      return null;
-    }
-  }
-
-  private CompletableFuture<HttpResult<InventoryRecordsBuilder>> fetchItem(String itemId) {
-    return new SingleRecordFetcher(itemsClient, "item")
-      .fetchSingleRecord(itemId)
-      .thenApply(r -> r.map(InventoryRecordsBuilder::new));
-  }
-
-  private CompletableFuture<HttpResult<InventoryRecordsBuilder>> fetchItemByBarcode(String barcode) {
-    log.info("Fetching item with barcode: {}", barcode);
-
-    return itemsClient.getMany(String.format("barcode==%s", barcode), 1, 0)
-      .thenApply(this::mapMultipleToResult)
-      .thenApply(r -> r.map(InventoryRecordsBuilder::new))
-      .exceptionally(e -> HttpResult.failed(new ServerErrorFailure(e)));
-  }
-
-  private HttpResult<JsonObject> mapMultipleToResult(Response response) {
-    if(response != null) {
-      log.info("Response received, status code: {} body: {}",
-        response.getStatusCode(), response.getBody());
-
-      if (response.getStatusCode() == 200) {
-        //TODO: Check for multiple total records
-        final MultipleRecordsWrapper wrappedItems =
-          MultipleRecordsWrapper.fromBody(response.getBody(), "items");
-
-        return HttpResult.succeeded(wrappedItems.getRecords().stream()
-          .findFirst()
-          .orElse(null));
-
-      } else {
-        return HttpResult.succeeded(null);
-      }
-    }
-    else {
-      //TODO: Replace with failure result
-      log.warn("Did not receive response to request");
-      return HttpResult.succeeded(null);
-    }
-  }
-
-  private CompletableFuture<HttpResult<InventoryRecordsBuilder>> fetchHolding(
-    HttpResult<InventoryRecordsBuilder> result) {
-
-    return result.after(builder -> {
-      if(builder == null || builder.item == null) {
-        log.info("Item was not found, aborting fetching holding or instance");
-        return completedFuture(HttpResult.succeeded(builder));
-      }
-      else {
-        final String holdingsRecordId = builder.getItem().getString("holdingsRecordId");
-
-        log.info("Fetching holding with ID: {}", holdingsRecordId);
-
-        return holdingsClient.get(holdingsRecordId)
-          .thenApply(response -> HttpResult.succeeded(
-            builder.withHoldingsRecord(getRecordFromResponse(response))))
-          .exceptionally(e -> HttpResult.failed(new ServerErrorFailure(e)));
-      }
-    });
-  }
-
-  private CompletableFuture<HttpResult<InventoryRecordsBuilder>> fetchInstance(
-    HttpResult<InventoryRecordsBuilder> holdingResult) {
-
-    return holdingResult.after(builder -> {
-      final JsonObject holding = builder.getHoldingsRecord();
-
-      if(holding == null) {
-        log.info("Holding was not found, aborting fetching instance");
-
-        return completedFuture(HttpResult.succeeded(builder));
-      }
-      else {
-        final String instanceId = holding.getString("instanceId");
-
-        log.info("Fetching instance with ID: {}", instanceId);
-
-        return instancesClient.get(instanceId)
-          .thenApply(response -> HttpResult.succeeded(
-            builder.withInstance(getRecordFromResponse(response))))
-          .exceptionally(e -> HttpResult.failed(new ServerErrorFailure(e)));
-      }
-    });
-  }
-
-  private class InventoryRecordsBuilder {
-    private final JsonObject item;
-    private final JsonObject holdingsRecord;
-    private final JsonObject instance;
-
-    InventoryRecordsBuilder(JsonObject item) {
-      this(item, null, null);
-    }
-
-    private InventoryRecordsBuilder(
-      JsonObject item,
-      JsonObject holdingsRecord,
-      JsonObject instance) {
-
-      this.item = item;
-      this.holdingsRecord = holdingsRecord;
-      this.instance = instance;
-    }
-
-    public Item create() {
-      return new Item(item, holdingsRecord, instance, null, null);
-    }
-
-    InventoryRecordsBuilder withHoldingsRecord(JsonObject newHoldingsRecord) {
-      return new InventoryRecordsBuilder(
-        this.item,
-        newHoldingsRecord,
-        this.instance
-      );
-    }
-
-    InventoryRecordsBuilder withInstance(JsonObject newInstance) {
-      return new InventoryRecordsBuilder(
-        this.item,
-        this.holdingsRecord,
-        newInstance
-      );
-    }
-
-    public JsonObject getItem() {
-      return item;
-    }
-
-    JsonObject getHoldingsRecord() {
-      return holdingsRecord;
-    }
-
-    public JsonObject getInstance() {
-      return instance;
-    }
+    return fetchHoldingsRecord(item)
+      .thenComposeAsync(this::fetchInstance)
+      .thenComposeAsync(this::fetchLocation)
+      .thenComposeAsync(this::fetchMaterialType);
   }
 }

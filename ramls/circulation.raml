@@ -28,6 +28,7 @@ traits:
 
 resourceTypes:
   - collection: !include raml-util/rtypes/collection.raml
+  - collection-get: !include raml-util/rtypes/collection-get.raml
   - collection-item: !include raml-util/rtypes/item-collection.raml
 
 /circulation:
@@ -69,6 +70,11 @@ resourceTypes:
           schema: !include renew-by-barcode-request.json
           example: !include examples/renew-by-barcode-request.json
       responses:
+        200:
+          body:
+            application/json:
+              schema: loan.json
+              example: !include examples/loan.json
         201:
           body:
             application/json:
@@ -93,6 +99,11 @@ resourceTypes:
           schema: !include renew-by-id-request.json
           example: !include examples/renew-by-id-request.json
       responses:
+        200:
+          body:
+            application/json:
+              schema: loan.json
+              example: !include examples/loan.json
         201:
           body:
             application/json:
@@ -318,3 +329,10 @@ resourceTypes:
         responses:
           501:
             description: "Not implemented yet"
+    /queue:
+      /{itemId}:
+        type:
+          collection-get:
+            exampleCollection: !include examples/request-queue.json
+            schemaCollection: requests
+        get:

@@ -1,24 +1,15 @@
 package api.requests;
 
-import io.vertx.core.json.JsonObject;
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
-import api.support.builders.UserBuilder;
-import api.support.http.InterfaceUrls;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
+import org.folio.circulation.support.http.client.IndividualResource;
 import org.junit.Test;
 
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.hamcrest.core.Is.is;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class RequestsAPICreateMultipleRequestsTests extends APITests {
@@ -28,58 +19,30 @@ public class RequestsAPICreateMultipleRequestsTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
-      itemBuilder -> itemBuilder
-        .withBarcode("036000291452"))
-      .getId();
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
-    loansFixture.checkOutItem(itemId);
+    loansFixture.checkOut(smallAngryPlanet, usersFixture.steve());
 
-    UUID firstRequesterId = usersClient.create(new UserBuilder()
-      .withName("Jones", "Steven")
-      .withBarcode("564376549214"))
-      .getId();
-
-    UUID secondRequesterId = usersClient.create(new UserBuilder()
-      .withName("Williamson", "Casey")
-      .withBarcode("340695406504"))
-      .getId();
-
-    UUID thirdRequesterId = usersClient.create(new UserBuilder()
-      .withName("Stevenson", "Kelly")
-      .withBarcode("670544032419"))
-      .getId();
-
-    requestsClient.create(new RequestBuilder()
+    final IndividualResource firstRequest = requestsClient.create(new RequestBuilder()
       .hold()
-      .withItemId(itemId)
-      .withRequesterId(firstRequesterId)
-      .create());
+      .forItem(smallAngryPlanet)
+      .by(usersFixture.jessica()));
 
-    requestsClient.create(new RequestBuilder()
+    final IndividualResource secondRequest = requestsClient.create(new RequestBuilder()
       .hold()
-      .withItemId(itemId)
-      .withRequesterId(secondRequesterId)
-      .create());
+      .forItem(smallAngryPlanet)
+      .by(usersFixture.rebecca()));
 
-    JsonObject requestRequest = new RequestBuilder()
+    final IndividualResource thirdRequest = requestsClient.create(new RequestBuilder()
       .hold()
-      .withItemId(itemId)
-      .withRequesterId(thirdRequesterId)
-      .create();
+      .forItem(smallAngryPlanet)
+      .by(usersFixture.charlotte()));
 
-    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
-
-    client.post(InterfaceUrls.requestsUrl(), requestRequest,
-      ResponseHandler.json(postCompleted));
-
-    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(String.format("Failed to create request: %s", postResponse.getBody()),
-      postResponse.getStatusCode(), is(HttpURLConnection.HTTP_CREATED));
+    assertThat(firstRequest.getJson().getInteger("position"), is(1));
+    assertThat(secondRequest.getJson().getInteger("position"), is(2));
+    assertThat(thirdRequest.getJson().getInteger("position"), is(3));
   }
 
   @Test
@@ -87,57 +50,71 @@ public class RequestsAPICreateMultipleRequestsTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException,
-    UnsupportedEncodingException {
+    MalformedURLException {
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
-      itemBuilder -> itemBuilder
-        .withBarcode("036000291452"))
-      .getId();
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
-    loansFixture.checkOutItem(itemId);
+    loansFixture.checkOut(smallAngryPlanet, usersFixture.rebecca());
 
-    UUID firstRequesterId = usersClient.create(new UserBuilder()
-      .withName("Jones", "Steven")
-      .withBarcode("564376549214"))
-      .getId();
-
-    UUID secondRequesterId = usersClient.create(new UserBuilder()
-      .withName("Williamson", "Casey")
-      .withBarcode("340695406504"))
-      .getId();
-
-    UUID thirdRequesterId = usersClient.create(new UserBuilder()
-      .withName("Stevenson", "Kelly")
-      .withBarcode("670544032419"))
-      .getId();
-
-    requestsClient.create(new RequestBuilder()
+    final IndividualResource firstRequest = requestsClient.create(new RequestBuilder()
       .hold()
-      .withItemId(itemId)
-      .withRequesterId(firstRequesterId)
-      .create());
+      .forItem(smallAngryPlanet)
+      .by(usersFixture.james()));
 
-    requestsClient.create(new RequestBuilder()
+    final IndividualResource secondRequest = requestsClient.create(new RequestBuilder()
       .page()
-      .withItemId(itemId)
-      .withRequesterId(secondRequesterId)
-      .create());
+      .forItem(smallAngryPlanet)
+      .by(usersFixture.charlotte()));
 
-    JsonObject requestRequest = new RequestBuilder()
+    final IndividualResource thirdRequest = requestsClient.create(new RequestBuilder()
       .recall()
-      .withItemId(itemId)
-      .withRequesterId(thirdRequesterId)
-      .create();
+      .forItem(smallAngryPlanet)
+      .by(usersFixture.steve()));
 
-    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+    assertThat(firstRequest.getJson().getInteger("position"), is(1));
+    assertThat(secondRequest.getJson().getInteger("position"), is(2));
+    assertThat(thirdRequest.getJson().getInteger("position"), is(3));
+  }
 
-    client.post(InterfaceUrls.requestsUrl(), requestRequest,
-      ResponseHandler.json(postCompleted));
+  @Test
+  public void canCreateMultipleRequestsAtSpecificLocation()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
 
-    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
-    assertThat(String.format("Failed to create request: %s", postResponse.getBody()),
-      postResponse.getStatusCode(), is(HttpURLConnection.HTTP_CREATED));
+    loansFixture.checkOut(smallAngryPlanet, usersFixture.steve());
+
+    final IndividualResource firstRequest = requestsClient.createAtSpecificLocation(
+      new RequestBuilder()
+        .open()
+        .hold()
+        .forItem(smallAngryPlanet)
+        .by(usersFixture.jessica()));
+
+    final IndividualResource secondRequest = requestsClient.createAtSpecificLocation(
+      new RequestBuilder()
+        .open()
+        .hold()
+        .forItem(smallAngryPlanet)
+        .by(usersFixture.rebecca()));
+
+    final IndividualResource thirdRequest = requestsClient.createAtSpecificLocation(
+      new RequestBuilder()
+        .open()
+        .hold()
+        .forItem(smallAngryPlanet)
+        .by(usersFixture.charlotte()));
+
+    assertThat("First request should have position",
+      firstRequest.getJson().getInteger("position"), is(1));
+
+    assertThat("Second request should have position",
+      secondRequest.getJson().getInteger("position"), is(2));
+
+    assertThat("Third request should have position",
+      thirdRequest.getJson().getInteger("position"), is(3));
   }
 }

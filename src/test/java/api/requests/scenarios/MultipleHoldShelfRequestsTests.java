@@ -62,11 +62,13 @@ public class MultipleHoldShelfRequestsTests extends APITests {
 
   @Test
   @Parameters({
-    "Hold|Checked out - Held",
-    "Recall|Checked out - Recalled",
+    "Hold|Checked out",
+    "Recall|Checked out",
     "Page|Checked out"
   })
-  public void statusOfOldestRequestChangesToFulfilledWhenItemCheckedOutToRequester(String requestType, String itemStatus)
+  public void statusOfOldestRequestChangesToFulfilledWhenItemCheckedOutToRequester(
+    String requestType,
+    String itemStatus)
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,

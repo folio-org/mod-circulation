@@ -2,93 +2,52 @@ package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
 
-public class RequestAndRelatedRecords implements UserRelatedRecord {
+public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedRecord {
   private final Request request;
   private final RequestQueue requestQueue;
-  private final User requestingUser;
-  private final User proxyUser;
 
   private RequestAndRelatedRecords(
     Request request,
-    RequestQueue requestQueue,
-    User requestingUser,
-    User proxyUser) {
+    RequestQueue requestQueue) {
 
     this.request = request;
     this.requestQueue = requestQueue;
-    this.requestingUser = requestingUser;
-    this.proxyUser = proxyUser;
   }
 
   public RequestAndRelatedRecords(Request request) {
-    this(request, null, null, null);
+    this(request, null);
   }
 
   RequestAndRelatedRecords withItem(JsonObject updatedItem) {
-    return withInventoryRecords(getInventoryRecords().updateItem(updatedItem));
+    return withItem(request.getItem().updateItem(updatedItem));
   }
 
   public RequestAndRelatedRecords withRequest(Request newRequest) {
-    newRequest.setItem(request.getItem());
-
-    return new RequestAndRelatedRecords(newRequest,
-      this.requestQueue,
-      this.requestingUser,
-      this.proxyUser);
+    return new RequestAndRelatedRecords(newRequest.withItem(request.getItem()),
+      this.requestQueue
+    );
   }
 
   public RequestAndRelatedRecords withRequestQueue(RequestQueue newRequestQueue) {
     return new RequestAndRelatedRecords(
       this.request,
-      newRequestQueue,
-      this.requestingUser,
-      this.proxyUser);
+      newRequestQueue
+    );
   }
 
-  public RequestAndRelatedRecords withInventoryRecords(Item newItem) {
-    this.request.setItem(newItem);
-
+  public RequestAndRelatedRecords withItem(Item newItem) {
     return new RequestAndRelatedRecords(
-      this.request,
-      this.requestQueue,
-      this.requestingUser,
-      this.proxyUser);
-  }
-
-  public RequestAndRelatedRecords withRequestingUser(User newUser) {
-    return new RequestAndRelatedRecords(
-      this.request,
-      this.requestQueue,
-      newUser,
-      this.proxyUser);
-  }
-
-  public RequestAndRelatedRecords withProxyUser(User newProxyUser) {
-    return new RequestAndRelatedRecords(
-      this.request,
-      this.requestQueue,
-      this.requestingUser,
-      newProxyUser);
+      this.request.withItem(newItem),
+      this.requestQueue
+    );
   }
 
   public Request getRequest() {
     return request;
   }
 
-  public Item getInventoryRecords() {
-    return request.getItem();
-  }
-
   RequestQueue getRequestQueue() {
     return requestQueue;
-  }
-
-  public User getRequestingUser() {
-    return requestingUser;
-  }
-
-  public User getProxyUser() {
-    return proxyUser;
   }
 
   @Override
@@ -99,5 +58,10 @@ public class RequestAndRelatedRecords implements UserRelatedRecord {
   @Override
   public String getProxyUserId() {
     return request.getProxyUserId();
+  }
+
+  @Override
+  public String getItemId() {
+    return request.getItemId();
   }
 }

@@ -1,16 +1,13 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.*;
-import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
 
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 
 import static org.folio.circulation.support.HttpResult.failed;
+import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 public class UserRepository {
@@ -20,18 +17,36 @@ public class UserRepository {
     usersStorageClient = clients.usersStorage();
   }
 
-  CompletableFuture<HttpResult<User>> getUser(UserRelatedRecord userRelatedRecord) {
+  public CompletableFuture<HttpResult<User>> getUser(UserRelatedRecord userRelatedRecord) {
     return getUser(userRelatedRecord.getUserId());
   }
 
-  public CompletableFuture<HttpResult<User>> getUser(String userId) {
-    return getUser(userId, true);
+  public CompletableFuture<HttpResult<User>> getProxyUser(UserRelatedRecord userRelatedRecord) {
+    return getUser(userRelatedRecord.getProxyUserId());
+  }
+
+  CompletableFuture<HttpResult<User>> getUser(String userId) {
+    return FetchSingleRecord.<User>forRecord("user")
+      .using(usersStorageClient)
+      .mapTo(User::new)
+      .whenNotFound(succeeded(null))
+      .fetch(userId);
+  }
+
+  //TODO: Replace this with validator
+  public CompletableFuture<HttpResult<User>> getUserFailOnNotFound(String userId) {
+    return FetchSingleRecord.<User>forRecord("user")
+      .using(usersStorageClient)
+      .mapTo(User::new)
+      .whenNotFound(failed(new ValidationErrorFailure(
+        new ValidationError("user is not found", "userId", userId))))
+      .fetch(userId);
   }
 
   public CompletableFuture<HttpResult<User>> getProxyUserByBarcode(String barcode) {
     //Not proxying, so no need to get proxy user
     if(StringUtils.isBlank(barcode)) {
-      return CompletableFuture.completedFuture(HttpResult.succeeded(null));
+      return CompletableFuture.completedFuture(succeeded(null));
     }
     else {
       return getUserByBarcode(barcode, "proxyUserBarcode");
@@ -46,57 +61,11 @@ public class UserRepository {
     String barcode,
     String propertyName) {
 
-    final Function<Response, HttpResult<User>> mapResponse = response -> {
-      if(response.getStatusCode() == 404) {
-        return failed(new ServerErrorFailure("Unable to locate User"));
-      }
-      else if(response.getStatusCode() != 200) {
-        return failed(new ForwardOnFailure(response));
-      }
-      else {
-        //TODO: Check for multiple total records
-        final MultipleRecordsWrapper wrappedUsers =
-          MultipleRecordsWrapper.fromBody(response.getBody(), "users");
-
-        final Optional<JsonObject> firstUser = wrappedUsers.getRecords().stream().findFirst();
-
-        return firstUser.map(User::new).map(HttpResult::succeeded).orElseGet(
-          () -> failed(failure(
-          "Could not find user with matching barcode", propertyName, barcode)));
-      }
-    };
-
     return usersStorageClient.getMany(String.format("barcode==%s", barcode), 1, 0)
-      .thenApply(mapResponse)
-      .exceptionally(e -> failed(new ServerErrorFailure(e)));
-  }
-
-  //TODO: Need a better way of choosing behaviour for not found
-  public CompletableFuture<HttpResult<User>> getUser(
-    String userId,
-    boolean failOnNotFound) {
-
-    final Function<Response, HttpResult<User>> mapResponse = response -> {
-      if(response.getStatusCode() == 404) {
-        if(failOnNotFound) {
-          return failed(new ValidationErrorFailure(
-            new ValidationError("user is not found", "userId", userId)));
-        }
-        else {
-          return HttpResult.succeeded(null);
-        }
-      }
-      else if(response.getStatusCode() != 200) {
-        return failed(new ForwardOnFailure(response));
-      }
-      else {
-        //Got user record, we're good to continue
-        return HttpResult.succeeded(new User(response.getJson()));
-      }
-    };
-
-    return this.usersStorageClient.get(userId)
-      .thenApply(mapResponse)
-      .exceptionally(e -> failed(new ServerErrorFailure(e)));
+      .thenApply(response -> MultipleRecords.from(response, User::new, "users")
+        .map(MultipleRecords::getRecords)
+        .map(users -> users.stream().findFirst())
+        .next(user -> user.map(HttpResult::succeeded).orElseGet(() -> failed(failure(
+          "Could not find user with matching barcode", propertyName, barcode)))));
   }
 }

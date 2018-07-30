@@ -9,7 +9,7 @@ import java.nio.charset.StandardCharsets;
 import org.folio.rest.testing.UtilityClassTester;
 import org.junit.Test;
 
-public class StringUtilTest {
+public class StringUtilTests {
   @Test
   public void isUtilityClass() {
     UtilityClassTester.assertUtilityClass(StringUtil.class);
