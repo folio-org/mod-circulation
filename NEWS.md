@@ -1,4 +1,4 @@
-## 11.0.0 Unreleased
+## 11.0.0 2018-08-02
 
 * No longer sets item status to variants of `Checked out` (CIRC-126) 
 * Introduce request `position` property (CIRC-83)
