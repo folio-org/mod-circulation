@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package api.requests.scenarios;
 
 import api.support.APITests;
@@ -30,7 +25,7 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class ClosedRequestTests extends APITests {
-  
+
   @Test
   public void canCancelARequest()
     throws InterruptedException,

@@ -87,7 +87,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   public Request withProxy(User newProxy) {
     return new Request(representation, item, requester, newProxy);
   }
-  
+
   @Override
   public String getUserId() {
     return representation.getString("requesterId");
