@@ -30,7 +30,7 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class ClosedRequestTests extends APITests {
-  
+
   @Test
   public void canCancelARequest()
     throws InterruptedException,

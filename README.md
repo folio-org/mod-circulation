@@ -74,11 +74,11 @@ Follow the [guide](https://dev.folio.org/guides/raml-cop/) to use raml-cop to as
 
 #### Requests Created out of Request Date Order
 
-Requests are assigned a position based upon when they were created. 
+Requests are assigned a position based upon when they were created.
 This means the requests could be in a different position in the queue than what
-the request date suggests. We could re-order to queue based upon request date 
-each time it is changed, however this would impede the future requirement 
-for the ability to reorder the queue manually.  
+the request date suggests. We could re-order to queue based upon request date
+each time it is changed, however this would impede the future requirement
+for the ability to reorder the queue manually.
 
 ### Check Out By Barcode
 

@@ -26,7 +26,7 @@ public class LoanRepository {
 
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> createLoan(
     LoanAndRelatedRecords loanAndRelatedRecords) {
-    
+
     JsonObject storageLoan = mapToStorageRepresentation(
       loanAndRelatedRecords.getLoan(), loanAndRelatedRecords.getLoan().getItem());
 
