@@ -24,7 +24,7 @@ FOLIO compatible circulation capabilities, including loan items from the invento
 
 ### Optional
 
-- Python 3 (for un-registering module during managed demo and tests via Okapi)
+- Python 3 (for un-registering module during managed demo and tests via Okapi, and the lint-raml tools)
 
 ## Preparation
 
@@ -66,7 +66,7 @@ In order to change the specific versions of these dependencies, edit the test-vi
 
 ### Checking the RAML and JSON.Schema definitions
 
-run `./scripts/lint-raml-cop.sh` to validate the RAML and JSON.Schema descriptions of the API
+Follow the [guide](https://dev.folio.org/guides/raml-cop/) to use raml-cop to assess RAML, schema, and examples.
 
 ## Design Notes
 
