@@ -298,7 +298,11 @@
             "circulation.requests.collection.get"
           ],
           "modulePermissions": [
-            "circulation-storage.requests.collection.get"
+            "circulation-storage.requests.collection.get",
+            "inventory-storage.items.collection.get",
+            "inventory-storage.holdings.collection.get",
+            "inventory-storage.instances.collection.get",
+            "inventory-storage.locations.collection.get"
           ]
         },
         {
