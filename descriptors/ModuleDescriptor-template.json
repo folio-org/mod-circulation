@@ -298,7 +298,11 @@
             "circulation.requests.collection.get"
           ],
           "modulePermissions": [
-            "circulation-storage.requests.collection.get"
+            "circulation-storage.requests.collection.get",
+            "inventory-storage.items.collection.get",
+            "inventory-storage.holdings.collection.get",
+            "inventory-storage.instances.collection.get",
+            "inventory-storage.locations.collection.get"
           ]
         },
         {
@@ -322,6 +326,7 @@
             "inventory-storage.holdings.item.get",
             "inventory-storage.instances.collection.get",
             "inventory-storage.instances.item.get",
+            "inventory-storage.locations.collection.get",
             "proxiesfor.collection.get"
           ]
         },
@@ -350,6 +355,7 @@
             "inventory-storage.items.collection.get",
             "inventory-storage.holdings.collection.get",
             "inventory-storage.instances.collection.get",
+            "inventory-storage.locations.collection.get",
             "users.item.get",
             "users.collection.get"
           ]
@@ -376,6 +382,7 @@
             "inventory-storage.holdings.item.get",
             "inventory-storage.instances.collection.get",
             "inventory-storage.instances.item.get",
+            "inventory-storage.locations.collection.get",
             "proxiesfor.collection.get"
           ]
         },
@@ -404,6 +411,7 @@
             "inventory-storage.items.collection.get",
             "inventory-storage.holdings.collection.get",
             "inventory-storage.instances.collection.get",
+            "inventory-storage.locations.collection.get",
             "users.item.get",
             "users.collection.get"
           ]
