@@ -429,7 +429,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
   public RequestBuilder fulfilled() {
     return withStatus(CLOSED_FILLED);
   }
-  
+
   public RequestBuilder cancelled() {
     return withStatus(CLOSED_CANCELLED);
   }
@@ -455,7 +455,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.cancelledDate,
       this.position);
   }
-  
+
   public RequestBuilder withCancellationReasonId(UUID cancellationReasonId) {
     return new RequestBuilder(
       this.id,
@@ -477,7 +477,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.cancelledDate,
       this.position);
   }
-  
+
   public RequestBuilder withCancelledByUserId(UUID cancelledByUserId) {
     return new RequestBuilder(
       this.id,
@@ -499,7 +499,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.cancelledDate,
       this.position);
   }
-  
+
   public RequestBuilder withCancellationAdditionalInformation(
     String cancellationAdditionalInformation) {
 
@@ -523,7 +523,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.cancelledDate,
       this.position);
   }
-  
+
   public RequestBuilder withCancelledDate(DateTime cancelledDate) {
     return new RequestBuilder(
       this.id,
@@ -544,7 +544,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.cancellationAdditionalInformation,
       cancelledDate,
       this.position);
-  }  
+  }
 
   public RequestBuilder proxiedBy(IndividualResource proxy) {
     return withUserProxyId(proxy.getId());

@@ -222,11 +222,11 @@ public class APITestSuite {
   public static UUID canCirculateFixedLoanPolicyId() {
     return canCirculateFixedLoanPolicyId;
   }
-  
+
   public static UUID courseReservesCancellationReasonId() {
     return courseReservesCancellationReasonId;
   }
-  
+
   public static UUID patronRequestCancellationReasonId() {
     return patronRequestCancellationReasonId;
   }
@@ -699,20 +699,20 @@ public class APITestSuite {
 
     return createReferenceRecord(client, referenceRecord);
   }
-  
-  private static void createCancellationReasons() 
+
+  private static void createCancellationReasons()
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
     TimeoutException {
-    
+
     courseReservesCancellationReasonId = createReferenceRecord(
         ResourceClient.forCancellationReasons(createClient()),
         new JsonObject()
             .put("name", "Course Reserves")
             .put("description", "Item Needed for Course Reserves")
     );
-    
+
     patronRequestCancellationReasonId = createReferenceRecord(
         ResourceClient.forCancellationReasons(createClient()),
         new JsonObject()
@@ -720,8 +720,8 @@ public class APITestSuite {
             .put("description", "Item cancelled at Patron request")
     );
   }
-  
-  private static void deleteCancellationReasons() 
+
+  private static void deleteCancellationReasons()
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,

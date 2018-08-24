@@ -173,7 +173,7 @@ public class FakeOkapi extends AbstractVerticle {
         "libraryId")
       .create()
       .register(router);
-    
+
     new FakeStorageModuleBuilder()
         .withRecordName("cancellationReason")
         .withCollectionPropertyName("cancellationReasons")

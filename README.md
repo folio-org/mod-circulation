@@ -24,7 +24,7 @@ FOLIO compatible circulation capabilities, including loan items from the invento
 
 ### Optional
 
-- Python 3 (for un-registering module during managed demo and tests via Okapi)
+- Python 3 (for un-registering module during managed demo and tests via Okapi, and the lint-raml tools)
 
 ## Preparation
 
@@ -66,7 +66,7 @@ In order to change the specific versions of these dependencies, edit the test-vi
 
 ### Checking the RAML and JSON.Schema definitions
 
-run `./scripts/lint-raml-cop.sh` to validate the RAML and JSON.Schema descriptions of the API
+Follow the [guide](https://dev.folio.org/guides/raml-cop/) to use raml-cop to assess RAML, schema, and examples.
 
 ## Design Notes
 
@@ -74,11 +74,11 @@ run `./scripts/lint-raml-cop.sh` to validate the RAML and JSON.Schema descriptio
 
 #### Requests Created out of Request Date Order
 
-Requests are assigned a position based upon when they were created. 
+Requests are assigned a position based upon when they were created.
 This means the requests could be in a different position in the queue than what
-the request date suggests. We could re-order to queue based upon request date 
-each time it is changed, however this would impede the future requirement 
-for the ability to reorder the queue manually.  
+the request date suggests. We could re-order to queue based upon request date
+each time it is changed, however this would impede the future requirement
+for the ability to reorder the queue manually.
 
 ### Check Out By Barcode
 

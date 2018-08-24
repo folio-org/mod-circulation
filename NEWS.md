@@ -4,7 +4,7 @@
 
 ## 11.0.0 2018-08-02
 
-* No longer sets item status to variants of `Checked out` (CIRC-126) 
+* No longer sets item status to variants of `Checked out` (CIRC-126)
 * Introduce request `position` property (CIRC-83)
 * Introduce endpoint for fetching request queue for an item (CIRC-83)
 * Request queue positions are allocated upon creation, closure, cancellation or deletion (CIRC-83)
