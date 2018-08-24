@@ -1,3 +1,7 @@
+## 11.0.1 Unreleased
+
+* Fix module permissions for request collection endpoint (CIRC-134)
+
 ## 11.0.0 2018-08-02
 
 * No longer sets item status to variants of `Checked out` (CIRC-126) 
