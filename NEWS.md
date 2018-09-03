@@ -1,4 +1,4 @@
-## 11.0.1 Unreleased
+## 11.0.1 2018-09-03
 
 * Fix module permissions for request collection endpoint (CIRC-134)
 
