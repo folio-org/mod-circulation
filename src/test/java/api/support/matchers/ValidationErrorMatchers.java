@@ -1,17 +1,23 @@
 package api.support.matchers;
 
-import io.vertx.core.json.JsonObject;
+import static org.folio.circulation.support.JsonArrayHelper.mapToList;
+import static org.folio.circulation.support.JsonArrayHelper.toStream;
+import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasProperty;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
 import org.folio.circulation.support.http.server.ValidationError;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
 import org.hamcrest.core.IsCollectionContaining;
 
-import java.util.List;
-
-import static org.folio.circulation.support.JsonArrayHelper.mapToList;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasProperty;
+import io.vertx.core.json.JsonObject;
 
 public class ValidationErrorMatchers {
   public static TypeSafeDiagnosingMatcher<JsonObject> hasErrorWith(Matcher<ValidationError> matcher) {
@@ -25,7 +31,7 @@ public class ValidationErrorMatchers {
       @Override
       protected boolean matchesSafely(JsonObject representation, Description description) {
         final Matcher<Iterable<? super ValidationError>> iterableMatcher = IsCollectionContaining.hasItem(matcher);
-        final List<ValidationError> errors = mapToList(representation, "errors", ValidationError::fromJson);
+        final List<ValidationError> errors = mapToList(representation, "errors", ValidationErrorMatchers::fromJson);
 
         iterableMatcher.describeMismatch(errors, description);
 
@@ -46,11 +52,10 @@ public class ValidationErrorMatchers {
       protected boolean matchesSafely(ValidationError error, Description description) {
         final boolean hasParameter = error.hasParameter(key, value);
 
-        if(!hasParameter) {
-          if(!error.hasParameter(key)) {
+        if (!hasParameter) {
+          if (!error.hasParameter(key)) {
             description.appendText("does not have parameter ").appendValue(key);
-          }
-          else {
+          } else {
             description.appendText("parameter has value ").appendValue(error.getParameter(key));
           }
         }
@@ -76,5 +81,20 @@ public class ValidationErrorMatchers {
         return matcher.matches(error);
       }
     };
+  }
+
+  private static ValidationError fromJson(JsonObject representation) {
+    final Map<String, String> parameters = toStream(representation, "parameters")
+      .filter(Objects::nonNull)
+      .filter(p -> p.containsKey("key"))
+      .filter(p -> p.containsKey("value"))
+      .filter(p -> p.getString("key") != null)
+      .filter(p -> p.getString("value") != null)
+      .collect(Collectors.toMap(
+        p -> p.getString("key"),
+        p -> p.getString("value")));
+
+    return new ValidationError(
+      getProperty(representation, "message"), parameters);
   }
 }

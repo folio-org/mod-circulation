@@ -1,15 +1,16 @@
 package api.support.builders;
 
-import io.vertx.core.json.JsonObject;
-import api.APITestSuite;
+import java.util.Objects;
+import java.util.Random;
+import java.util.UUID;
+
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 
-import java.util.Objects;
-import java.util.Random;
-import java.util.UUID;
+import api.APITestSuite;
+import io.vertx.core.json.JsonObject;
 
 public class LoanBuilder extends JsonBuilder implements Builder {
   private final static String OPEN_LOAN_STATUS = "Open";
@@ -102,6 +103,10 @@ public class LoanBuilder extends JsonBuilder implements Builder {
     return new LoanBuilder(this.id, this.itemId, userId,
       this.loanDate, this.dueDate, this.status, this.returnDate,
       this.systemReturnDate, this.action, this.proxyUserId);
+  }
+
+  public LoanBuilder withNoUserId() {
+    return withUserId(null);
   }
 
   public LoanBuilder withStatus(String status) {

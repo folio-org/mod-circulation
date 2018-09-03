@@ -1,6 +1,7 @@
 # 12.0.0 Unreleased
 
 * Only requires `userId` for open loans (CIRC-136)
+  * Although it is not possible to create already closed loans
 * Provides `circulation` 4.0 interface (CIRC-136)
 * Requires `loan-storage` interface 5.0 (CIRC-136)
 

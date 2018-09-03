@@ -1,22 +1,17 @@
 package api.loans;
 
-import api.APITestSuite;
-import api.support.APITests;
-import api.support.builders.ItemBuilder;
-import api.support.builders.LoanBuilder;
-import api.support.builders.UserBuilder;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.JsonArrayHelper;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
-import org.hamcrest.Matchers;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.Period;
-import org.joda.time.format.ISODateTimeFormat;
-import org.junit.Test;
+import static api.support.fixtures.UserExamples.basedUponJessicaPontefract;
+import static api.support.fixtures.UserExamples.basedUponStevenJones;
+import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
+import static api.support.http.InterfaceUrls.loansUrl;
+import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
+import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
@@ -29,16 +24,24 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static api.support.fixtures.UserExamples.basedUponJessicaPontefract;
-import static api.support.fixtures.UserExamples.basedUponStevenJones;
-import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
-import static api.support.http.InterfaceUrls.loansUrl;
-import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static api.support.matchers.ValidationErrorMatchers.*;
-import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import org.folio.circulation.support.JsonArrayHelper;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
+import org.hamcrest.Matchers;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.Period;
+import org.joda.time.format.ISODateTimeFormat;
+import org.junit.Test;
+
+import api.APITestSuite;
+import api.support.APITests;
+import api.support.builders.ItemBuilder;
+import api.support.builders.LoanBuilder;
+import api.support.builders.UserBuilder;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 public class LoanAPITests extends APITests {
   @Test
@@ -232,7 +235,35 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void cannotCreateALoanForUnknownRequestingUser()
+  public void cannotCreateClosedLoanWithoutUserId()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+
+    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
+
+    client.post(loansUrl(), new LoanBuilder()
+        .withItemId(itemId)
+        .closed()
+        .withNoUserId()
+        .create(),
+      ResponseHandler.any(createCompleted));
+
+    Response response = createCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Should not create loan: %s", response.getBody()),
+      response.getStatusCode(), is(UNPROCESSABLE_ENTITY));
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("user is not found"),
+      hasParameter("userId", null))));
+  }
+
+  @Test
+  public void cannotCreateOpenLoanForUnknownRequestingUser()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
