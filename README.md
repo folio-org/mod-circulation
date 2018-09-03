@@ -82,8 +82,9 @@ for the ability to reorder the queue manually.
 
 #### Creating an already closed loan
 
-It is not possible to create a loan that is already closed
-due to checks that are performed during this request.
+It is not possible to create a loan that is already closed via POST
+due to checks that are performed during this request. 
+However it can be done when creating a loan in a specific location via PUT 
 
 ### Check Out By Barcode
 

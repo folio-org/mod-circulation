@@ -263,6 +263,38 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
+  public void canCreateClosedLoanInSpecificLocationWithoutUserId()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID loanId = UUID.randomUUID();
+
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+
+    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
+
+    client.put(loansUrl(String.format("/%s", loanId)), new LoanBuilder()
+        .withId(loanId)
+        .withItemId(itemId)
+        .closed()
+        .withNoUserId()
+        .create(),
+      ResponseHandler.any(createCompleted));
+
+    Response response = createCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(response.getStatusCode(), is(204));
+
+    final IndividualResource item = itemsClient.get(itemId);
+
+    assertThat("Item status should be available",
+      item.getJson().getJsonObject("status").getString("name"),
+      is("Available"));
+  }
+
+  @Test
   public void cannotCreateOpenLoanForUnknownRequestingUser()
     throws InterruptedException,
     ExecutionException,

@@ -1,10 +1,7 @@
 package api.support.fakes;
 
-import api.APITestSuite;
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Future;
-import io.vertx.core.http.HttpServer;
-import io.vertx.ext.web.Router;
+import java.lang.invoke.MethodHandles;
+
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.folio.circulation.support.http.client.BufferHelper;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
@@ -13,7 +10,11 @@ import org.folio.circulation.support.http.server.ServerErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.invoke.MethodHandles;
+import api.APITestSuite;
+import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Future;
+import io.vertx.core.http.HttpServer;
+import io.vertx.ext.web.Router;
 
 public class FakeOkapi extends AbstractVerticle {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -88,7 +89,7 @@ public class FakeOkapi extends AbstractVerticle {
     new FakeStorageModuleBuilder()
       .withRecordName("loan")
       .withRootPath("/loan-storage/loans")
-      .withRequiredProperties("userId", "itemId", "loanDate", "action")
+      .withRequiredProperties("itemId", "loanDate", "action")
       .withChangeMetadata()
       .create().register(router);
 
