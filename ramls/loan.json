@@ -9,7 +9,7 @@
       "type": "string"
     },
     "userId": {
-      "description": "ID of the user (representing the patron) the item was lent to",
+      "description": "ID of the patron the item was lent to. Required for open loans, not required for closed loans (for anonymization).",
       "type": "string"
     },
     "proxyUserId": {
@@ -138,7 +138,6 @@
     }
   },
   "required": [
-    "userId",
     "itemId",
     "loanDate",
     "action"
