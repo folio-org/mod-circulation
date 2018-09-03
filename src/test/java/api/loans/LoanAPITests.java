@@ -154,6 +154,116 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
+  public void canCreateALoanAtASpecificLocation()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+
+    UUID userId = usersClient.create(new UserBuilder()).getId();
+
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
+    IndividualResource response = loansClient.createAtSpecificLocation(new LoanBuilder()
+      .withId(id)
+      .open()
+      .withUserId(userId)
+      .withItemId(itemId)
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate));
+
+    JsonObject loan = response.getJson();
+
+    assertThat("id does not match",
+      loan.getString("id"), is(id.toString()));
+
+    assertThat("user id does not match",
+      loan.getString("userId"), is(userId.toString()));
+
+    assertThat("item id does not match",
+      loan.getString("itemId"), is(itemId.toString()));
+
+    assertThat("loan date does not match",
+      loan.getString("loanDate"), is("2017-02-27T10:23:43.000Z"));
+
+    assertThat("status is not open",
+      loan.getJsonObject("status").getString("name"), is("Open"));
+
+    assertThat("action is not checkedout",
+      loan.getString("action"), is("checkedout"));
+
+    //TODO: Loan Policy should be stored - maybe only works for renewal, possible bug?
+//    assertThat("last loan policy should be stored",
+//      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateRollingLoanPolicyId().toString()));
+
+    assertThat("title is taken from instance",
+      loan.getJsonObject("item").getString("title"),
+      is("The Long Way to a Small, Angry Planet"));
+
+    assertThat("barcode is taken from item",
+      loan.getJsonObject("item").getString("barcode"),
+      is("036000291452"));
+
+    assertThat("call number is 123456", loan.getJsonObject("item")
+      .getString("callNumber"), is("123456"));
+
+    assertThat(loan.getJsonObject("item").encode() + " contains 'materialType'",
+      loan.getJsonObject("item").containsKey("materialType"), is(true));
+
+    assertThat("materialType is book", loan.getJsonObject("item")
+      .getJsonObject("materialType").getString("name"), is("Book"));
+
+    assertThat("item has contributors",
+      loan.getJsonObject("item").containsKey("contributors"), is(true));
+
+    JsonArray contributors = loan.getJsonObject("item").getJsonArray("contributors");
+
+    assertThat("item has a single contributor",
+      contributors.size(), is(1));
+
+    assertThat("Becky Chambers is a contributor",
+      contributors.getJsonObject(0).getString("name"), is("Chambers, Becky"));
+
+    assertThat("has item status",
+      loan.getJsonObject("item").containsKey("status"), is(true));
+
+    assertThat("status is taken from item",
+      loan.getJsonObject("item").getJsonObject("status").getString("name"),
+      is("Checked out"));
+
+    assertThat("Should not have snapshot of item status, as current status is included",
+      loan.containsKey("itemStatus"), is(false));
+
+    assertThat("should have change metadata",
+      loan.containsKey("metadata"), is(true));
+
+    JsonObject changeMetadata = loan.getJsonObject("metadata");
+
+    assertThat("change metadata should have created date",
+      changeMetadata.containsKey("createdDate"), is(true));
+
+    assertThat("change metadata should have updated date",
+      changeMetadata.containsKey("updatedDate"), is(true));
+
+    assertThat("due date does not match",
+      loan.getString("dueDate"), isEquivalentTo(dueDate));
+
+    JsonObject item = itemsClient.getById(itemId).getJson();
+
+    assertThat("item status is not checked out",
+      item.getJsonObject("status").getString("name"), is("Checked out"));
+
+    assertThat("item status snapshot in storage is not checked out",
+      loansStorageClient.getById(id).getJson().getString("itemStatus"),
+      is("Checked out"));
+  }
+
+  @Test
   public void cannotCreateALoanForUnknownItem()
     throws InterruptedException,
     ExecutionException,
