@@ -1,16 +1,22 @@
 package org.folio.circulation.support;
 
-import io.vertx.core.http.HttpServerResponse;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.support.http.server.ValidationError;
-
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.support.http.server.ValidationError;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+
 public class ValidationErrorFailure implements HttpFailure {
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
   private final Collection<ValidationError> errors = new ArrayList<>();
 
   public static <T> HttpResult<T> failedResult(
@@ -52,7 +58,11 @@ public class ValidationErrorFailure implements HttpFailure {
 
   @Override
   public void writeTo(HttpServerResponse response) {
-    new JsonHttpResult(422, asJson(), null).writeTo(response);
+    final JsonObject jsonErrors = asJson();
+
+    log.info("Writing validation error: '{}'", jsonErrors);
+
+    new JsonHttpResult(422, jsonErrors, null).writeTo(response);
   }
 
   private JsonObject asJson() {

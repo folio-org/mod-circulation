@@ -1,6 +1,17 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonObject;
+import static org.folio.circulation.domain.representations.LoanProperties.DUE_DATE;
+import static org.folio.circulation.domain.representations.LoanProperties.STATUS;
+import static org.folio.circulation.domain.representations.LoanProperties.USER_ID;
+import static org.folio.circulation.support.HttpResult.failed;
+import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
+
+import java.util.Objects;
+
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.HttpResult;
@@ -8,11 +19,7 @@ import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.joda.time.DateTime;
 
-import static org.folio.circulation.domain.representations.LoanProperties.DUE_DATE;
-import static org.folio.circulation.domain.representations.LoanProperties.STATUS;
-import static org.folio.circulation.support.HttpResult.failed;
-import static org.folio.circulation.support.JsonPropertyFetcher.*;
-import static org.folio.circulation.support.JsonPropertyWriter.write;
+import io.vertx.core.json.JsonObject;
 
 public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   private final JsonObject representation;
@@ -96,6 +103,16 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
       default:
         return failed(ValidationErrorFailure.failure(
           "Loan status must be \"Open\" or \"Closed\"", STATUS, getStatus()));
+    }
+  }
+
+  public HttpResult<Void> openLoanHasUserId() {
+    if(Objects.equals(getStatus(), "Open") && getUserId() == null) {
+      return failed(ValidationErrorFailure.failure(
+        "Open loan must have a user ID", USER_ID, getUserId()));
+    }
+    else {
+      return HttpResult.succeeded(null);
     }
   }
 

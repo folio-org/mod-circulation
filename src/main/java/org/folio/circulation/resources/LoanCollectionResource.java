@@ -1,20 +1,36 @@
 package org.folio.circulation.resources;
 
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.RoutingContext;
-import org.folio.circulation.domain.*;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
+import static org.folio.circulation.support.ValidationErrorFailure.failure;
+
+import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.LoanRepository;
+import org.folio.circulation.domain.LoanRepresentation;
+import org.folio.circulation.domain.RequestQueue;
+import org.folio.circulation.domain.RequestQueueRepository;
+import org.folio.circulation.domain.UpdateItem;
+import org.folio.circulation.domain.UpdateRequestQueue;
+import org.folio.circulation.domain.User;
+import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
 import org.folio.circulation.domain.validation.AwaitingPickupValidator;
 import org.folio.circulation.domain.validation.ItemNotFoundValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
-import org.folio.circulation.support.*;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.CreatedJsonHttpResult;
+import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.NoContentHttpResult;
+import org.folio.circulation.support.OkJsonHttpResult;
 import org.folio.circulation.support.http.server.WebContext;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.RoutingContext;
 
 public class LoanCollectionResource extends CollectionResource {
   public LoanCollectionResource(HttpClient client) {
@@ -55,6 +71,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(loan)))
       .thenApply(this::refuseWhenNotOpenOrClosed)
+      .thenApply(this::refuseWhenOpenAndNoUserId)
       .thenCombineAsync(itemRepository.fetchFor(loan), this::addItem)
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
       .thenApply(this::refuseWhenHoldingDoesNotExist)
@@ -99,6 +116,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(loan)))
       .thenApply(this::refuseWhenNotOpenOrClosed)
+      .thenApply(this::refuseWhenOpenAndNoUserId)
       .thenCombineAsync(itemRepository.fetchFor(loan), this::addItem)
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
@@ -205,6 +223,16 @@ public class LoanCollectionResource extends CollectionResource {
       .next(Loan::isValidStatus)
       .next(v -> loanAndRelatedRecords);
   }
+
+  private HttpResult<LoanAndRelatedRecords> refuseWhenOpenAndNoUserId(
+    HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
+
+    return loanAndRelatedRecords
+      .map(LoanAndRelatedRecords::getLoan)
+      .next(Loan::openLoanHasUserId)
+      .next(v -> loanAndRelatedRecords);
+  }
+
 
   private ItemNotFoundValidator createItemNotFoundValidator(Loan loan) {
     return new ItemNotFoundValidator(
