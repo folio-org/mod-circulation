@@ -1443,6 +1443,36 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
+  public void canGetMultipleLoansWithoutUserId()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID smallAngryPlanetId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    UUID nodId = itemsFixture.basedUponNod().getId();
+
+    loansClient.createAtSpecificLocation(new LoanBuilder()
+      .withItemId(smallAngryPlanetId)
+      .closed()
+      .withNoUserId());
+
+    loansClient.createAtSpecificLocation(new LoanBuilder()
+      .withItemId(nodId)
+      .closed()
+      .withNoUserId());
+
+    final List<JsonObject> multipleLoans = loansClient.getAll();
+
+    assertThat("Should have two loans",
+      multipleLoans.size(), is(2));
+
+    //TODO: Replace with collection matcher
+    assertThat(multipleLoans.get(0).containsKey("userId"), is(false));
+    assertThat(multipleLoans.get(1).containsKey("userId"), is(false));
+  }
+
+  @Test
   public void canDeleteALoan()
     throws InterruptedException,
     MalformedURLException,
