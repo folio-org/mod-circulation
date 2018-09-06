@@ -1,22 +1,17 @@
 package api.loans;
 
-import api.APITestSuite;
-import api.support.APITests;
-import api.support.builders.ItemBuilder;
-import api.support.builders.LoanBuilder;
-import api.support.builders.UserBuilder;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.JsonArrayHelper;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
-import org.hamcrest.Matchers;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.Period;
-import org.joda.time.format.ISODateTimeFormat;
-import org.junit.Test;
+import static api.support.fixtures.UserExamples.basedUponJessicaPontefract;
+import static api.support.fixtures.UserExamples.basedUponStevenJones;
+import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
+import static api.support.http.InterfaceUrls.loansUrl;
+import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
+import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
@@ -29,16 +24,24 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static api.support.fixtures.UserExamples.basedUponJessicaPontefract;
-import static api.support.fixtures.UserExamples.basedUponStevenJones;
-import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
-import static api.support.http.InterfaceUrls.loansUrl;
-import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static api.support.matchers.ValidationErrorMatchers.*;
-import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import org.folio.circulation.support.JsonArrayHelper;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
+import org.hamcrest.Matchers;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.Period;
+import org.joda.time.format.ISODateTimeFormat;
+import org.junit.Test;
+
+import api.APITestSuite;
+import api.support.APITests;
+import api.support.builders.ItemBuilder;
+import api.support.builders.LoanBuilder;
+import api.support.builders.UserBuilder;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 public class LoanAPITests extends APITests {
   @Test
@@ -87,6 +90,116 @@ public class LoanAPITests extends APITests {
 
     assertThat("last loan policy should be stored",
       loan.getString("loanPolicyId"), is(APITestSuite.canCirculateRollingLoanPolicyId().toString()));
+
+    assertThat("title is taken from instance",
+      loan.getJsonObject("item").getString("title"),
+      is("The Long Way to a Small, Angry Planet"));
+
+    assertThat("barcode is taken from item",
+      loan.getJsonObject("item").getString("barcode"),
+      is("036000291452"));
+
+    assertThat("call number is 123456", loan.getJsonObject("item")
+      .getString("callNumber"), is("123456"));
+
+    assertThat(loan.getJsonObject("item").encode() + " contains 'materialType'",
+      loan.getJsonObject("item").containsKey("materialType"), is(true));
+
+    assertThat("materialType is book", loan.getJsonObject("item")
+      .getJsonObject("materialType").getString("name"), is("Book"));
+
+    assertThat("item has contributors",
+      loan.getJsonObject("item").containsKey("contributors"), is(true));
+
+    JsonArray contributors = loan.getJsonObject("item").getJsonArray("contributors");
+
+    assertThat("item has a single contributor",
+      contributors.size(), is(1));
+
+    assertThat("Becky Chambers is a contributor",
+      contributors.getJsonObject(0).getString("name"), is("Chambers, Becky"));
+
+    assertThat("has item status",
+      loan.getJsonObject("item").containsKey("status"), is(true));
+
+    assertThat("status is taken from item",
+      loan.getJsonObject("item").getJsonObject("status").getString("name"),
+      is("Checked out"));
+
+    assertThat("Should not have snapshot of item status, as current status is included",
+      loan.containsKey("itemStatus"), is(false));
+
+    assertThat("should have change metadata",
+      loan.containsKey("metadata"), is(true));
+
+    JsonObject changeMetadata = loan.getJsonObject("metadata");
+
+    assertThat("change metadata should have created date",
+      changeMetadata.containsKey("createdDate"), is(true));
+
+    assertThat("change metadata should have updated date",
+      changeMetadata.containsKey("updatedDate"), is(true));
+
+    assertThat("due date does not match",
+      loan.getString("dueDate"), isEquivalentTo(dueDate));
+
+    JsonObject item = itemsClient.getById(itemId).getJson();
+
+    assertThat("item status is not checked out",
+      item.getJsonObject("status").getString("name"), is("Checked out"));
+
+    assertThat("item status snapshot in storage is not checked out",
+      loansStorageClient.getById(id).getJson().getString("itemStatus"),
+      is("Checked out"));
+  }
+
+  @Test
+  public void canCreateALoanAtASpecificLocation()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+
+    UUID userId = usersClient.create(new UserBuilder()).getId();
+
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
+    IndividualResource response = loansClient.createAtSpecificLocation(new LoanBuilder()
+      .withId(id)
+      .open()
+      .withUserId(userId)
+      .withItemId(itemId)
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate));
+
+    JsonObject loan = response.getJson();
+
+    assertThat("id does not match",
+      loan.getString("id"), is(id.toString()));
+
+    assertThat("user id does not match",
+      loan.getString("userId"), is(userId.toString()));
+
+    assertThat("item id does not match",
+      loan.getString("itemId"), is(itemId.toString()));
+
+    assertThat("loan date does not match",
+      loan.getString("loanDate"), is("2017-02-27T10:23:43.000Z"));
+
+    assertThat("status is not open",
+      loan.getJsonObject("status").getString("name"), is("Open"));
+
+    assertThat("action is not checkedout",
+      loan.getString("action"), is("checkedout"));
+
+    //TODO: Loan Policy should be stored - maybe only works for renewal, possible bug?
+//    assertThat("last loan policy should be stored",
+//      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateRollingLoanPolicyId().toString()));
 
     assertThat("title is taken from instance",
       loan.getJsonObject("item").getString("title"),
@@ -232,13 +345,73 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void cannotCreateALoanForUnknownRequestingUser()
+  public void cannotCreateClosedLoanWithoutUserId()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
     MalformedURLException {
 
-    UUID id = UUID.randomUUID();
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+
+    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
+
+    client.post(loansUrl(), new LoanBuilder()
+        .withItemId(itemId)
+        .closed()
+        .withNoUserId()
+        .create(),
+      ResponseHandler.any(createCompleted));
+
+    Response response = createCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Should not create loan: %s", response.getBody()),
+      response.getStatusCode(), is(UNPROCESSABLE_ENTITY));
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("user is not found"),
+      hasParameter("userId", null))));
+  }
+
+  @Test
+  public void canCreateClosedLoanInSpecificLocationWithoutUserId()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID loanId = UUID.randomUUID();
+
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+
+    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
+
+    client.put(loansUrl(String.format("/%s", loanId)), new LoanBuilder()
+        .withId(loanId)
+        .withItemId(itemId)
+        .closed()
+        .withNoUserId()
+        .create(),
+      ResponseHandler.any(createCompleted));
+
+    Response response = createCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(response.getStatusCode(), is(204));
+
+    final IndividualResource item = itemsClient.get(itemId);
+
+    assertThat("Item status should be available",
+      item.getJson().getJsonObject("status").getString("name"),
+      is("Available"));
+  }
+
+  @Test
+  public void cannotCreateOpenLoanForUnknownRequestingUser()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID loanId = UUID.randomUUID();
 
     final UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
     final UUID unknownUserId = UUID.randomUUID();
@@ -249,7 +422,7 @@ public class LoanAPITests extends APITests {
     CompletableFuture<Response> createCompleted = new CompletableFuture<>();
 
     client.post(loansUrl(), new LoanBuilder()
-        .withId(id)
+        .withId(loanId)
         .withUserId(unknownUserId)
         .withItemId(itemId)
         .withLoanDate(loanDate)
@@ -266,6 +439,78 @@ public class LoanAPITests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("user is not found"),
       hasParameter("userId", unknownUserId.toString()))));
+  }
+
+  @Test
+  public void cannotCreateOpenLoanWithoutUserId()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID loanId = UUID.randomUUID();
+
+    final UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
+    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
+
+    client.post(loansUrl(), new LoanBuilder()
+        .withId(loanId)
+        .withNoUserId()
+        .withItemId(itemId)
+        .withLoanDate(loanDate)
+        .withDueDate(dueDate)
+        .open()
+        .create(),
+      ResponseHandler.any(createCompleted));
+
+    Response response = createCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Should not create loan: %s", response.getBody()),
+      response.getStatusCode(), is(UNPROCESSABLE_ENTITY));
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Open loan must have a user ID"),
+      hasParameter("userId", null))));
+  }
+
+  @Test
+  public void cannotCreateOpenLoanAtSpecificLocationWithoutUserId()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID loanId = UUID.randomUUID();
+
+    final UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
+    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
+
+    client.put(loansUrl(String.format("/%s", loanId)), new LoanBuilder()
+        .withId(loanId)
+        .withNoUserId()
+        .withItemId(itemId)
+        .withLoanDate(loanDate)
+        .withDueDate(dueDate)
+        .open()
+        .create(),
+      ResponseHandler.any(createCompleted));
+
+    Response response = createCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Should not create loan: %s", response.getBody()),
+      response.getStatusCode(), is(UNPROCESSABLE_ENTITY));
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Open loan must have a user ID"),
+      hasParameter("userId", null))));
   }
 
   @Test
@@ -634,8 +879,11 @@ public class LoanAPITests extends APITests {
 
     DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 
+    final IndividualResource james = usersFixture.james();
+
     IndividualResource loan = loansClient.create(new LoanBuilder()
       .withLoanDate(loanDate)
+      .withUserId(james.getId())
       .withItem(itemsFixture.basedUponNod()));
 
     JsonObject returnedLoan = loan.copyJson();
@@ -659,6 +907,8 @@ public class LoanAPITests extends APITests {
     Response updatedLoanResponse = loansClient.getById(loan.getId());
 
     JsonObject updatedLoan = updatedLoanResponse.getJson();
+
+    assertThat(updatedLoan.getString("userId"), is(james.getId().toString()));
 
     assertThat(updatedLoan.getString("returnDate"),
       is("2017-03-05T14:23:41.000Z"));
@@ -764,6 +1014,71 @@ public class LoanAPITests extends APITests {
     assertThat("item status snapshot in storage is not checked out",
       loansStorageClient.getById(loan.getId()).getJson().getString("itemStatus"),
       is("Checked out"));
+  }
+
+  @Test
+  public void canUpdateAClosedLoanWithoutAUserId()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    UUID itemId = itemsFixture.basedUponNod().getId();
+
+    final IndividualResource jessica = usersFixture.jessica();
+
+    IndividualResource loan = loansClient.create(new LoanBuilder()
+      .open()
+      .withUserId(jessica.getId())
+      .withItemId(itemId));
+
+    JsonObject updatedLoanRequest = loan.copyJson();
+
+    //TODO: Replace this with builder from response
+    updatedLoanRequest.getJsonObject("status").put("name", "Closed");
+    updatedLoanRequest.remove("userId");
+
+    loansClient.replace(loan.getId(), updatedLoanRequest);
+
+    final JsonObject updatedLoan = loansClient.get(loan.getId()).getJson();
+
+    assertThat("Should be closed",
+      updatedLoan.getJsonObject("status").getString("name"), is("Closed"));
+
+    assertThat("Should not have a user ID",
+      updatedLoan.containsKey("userId"), is(false));
+  }
+
+  @Test
+  public void cannotUpdateAnOpenLoanWithoutAUserId()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    UUID itemId = itemsFixture.basedUponNod().getId();
+
+    final IndividualResource jessica = usersFixture.jessica();
+
+    IndividualResource loan = loansClient.create(new LoanBuilder()
+      .open()
+      .withUserId(jessica.getId())
+      .withItemId(itemId));
+
+    JsonObject updatedLoan = loan.copyJson();
+
+    updatedLoan.remove("userId");
+
+    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
+
+    client.put(loansUrl(String.format("/%s", loan.getId())), updatedLoan,
+      ResponseHandler.any(putCompleted));
+
+    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(putResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Open loan must have a user ID"),
+      hasParameter("userId", null))));
   }
 
   @Test
@@ -1125,6 +1440,36 @@ public class LoanAPITests extends APITests {
 
     assertThat(countOfDistinctTitles(openLoans), is(greaterThan(1)));
     assertThat(countOfDistinctTitles(closedLoans), is(greaterThan(1)));
+  }
+
+  @Test
+  public void canGetMultipleLoansWithoutUserId()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID smallAngryPlanetId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    UUID nodId = itemsFixture.basedUponNod().getId();
+
+    loansClient.createAtSpecificLocation(new LoanBuilder()
+      .withItemId(smallAngryPlanetId)
+      .closed()
+      .withNoUserId());
+
+    loansClient.createAtSpecificLocation(new LoanBuilder()
+      .withItemId(nodId)
+      .closed()
+      .withNoUserId());
+
+    final List<JsonObject> multipleLoans = loansClient.getAll();
+
+    assertThat("Should have two loans",
+      multipleLoans.size(), is(2));
+
+    //TODO: Replace with collection matcher
+    assertThat(multipleLoans.get(0).containsKey("userId"), is(false));
+    assertThat(multipleLoans.get(1).containsKey("userId"), is(false));
   }
 
   @Test

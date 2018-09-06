@@ -1,15 +1,13 @@
 package org.folio.circulation.support.http.server;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import org.apache.commons.lang3.StringUtils;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.folio.circulation.support.JsonArrayHelper.toStream;
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import org.apache.commons.lang3.StringUtils;
+
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 public class ValidationError {
   private final String message;
@@ -38,16 +36,6 @@ public class ValidationError {
     return new JsonObject()
       .put("message", message)
       .put("parameters", mappedParameters);
-  }
-
-  public static ValidationError fromJson(JsonObject representation) {
-    final Map<String, String> parameters = toStream(representation, "parameters")
-      .collect(Collectors.toMap(
-        p -> p.getString("key"),
-        p -> p.getString("value")));
-
-    return new ValidationError(
-      getProperty(representation, "message"), parameters);
   }
 
   public String getMessage() {
