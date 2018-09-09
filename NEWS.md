@@ -1,4 +1,4 @@
-# 12.0.0 Unreleased
+# 12.0.0 2018-09-09
 
 * Only requires `userId` for open loans (CIRC-136)
   * Although it is not possible to create already closed loans
