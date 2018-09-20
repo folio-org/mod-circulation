@@ -1,5 +1,6 @@
 {
   "srvcId": "${artifactId}-${version}",
+  "nodeId": "localhost",
   "descriptor": {
     "exec": "java -Dport=%p -jar ../mod-circulation/target/mod-circulation.jar"
   }
