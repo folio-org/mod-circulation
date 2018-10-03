@@ -1,3 +1,10 @@
+## 12.1.0 Unreleased
+
+* Requires version 5.3 or 6.0 of `item-storage` (CIRC-141)
+* Requires version 4.0 or 5.0 of `instance-storage` (CIRC-141)
+* Requires version 1.3 or 2.0 of `holdings-storage` (CIRC-141)
+* Provides `circulation` 4.1 interface (CIRC-141)
+
 # 12.0.0 2018-09-09
 
 * Only requires `userId` for open loans (CIRC-136)
