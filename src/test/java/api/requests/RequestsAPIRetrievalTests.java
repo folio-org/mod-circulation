@@ -3,6 +3,8 @@ package api.requests;
 import io.vertx.core.json.JsonObject;
 import api.support.APITests;
 import api.support.builders.ItemBuilder;
+import api.support.builders.LoanBuilder;
+import api.support.builders.ProxyRelationshipBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import api.support.http.InterfaceUrls;
@@ -39,7 +41,7 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanetAvailable().getId();
 
     loansFixture.checkOutItem(itemId);
 
@@ -47,6 +49,23 @@ public class RequestsAPIRetrievalTests extends APITests {
       .withName("Jones", "Steven")
       .withBarcode("564376549214"))
       .getId();
+    
+    UUID sponsorId = usersClient.create(new UserBuilder()
+        .withName("Stuart", "Rebecca")
+        .withBarcode("6059539205"))
+        .getId();
+    
+    UUID proxyRelationShipId = proxyRelationshipsClient.create(
+        new ProxyRelationshipBuilder()
+            .proxy(requesterId)
+            .sponsor(sponsorId))
+        .getId();
+    
+    UUID loanId = loansClient.create(new LoanBuilder()
+        .withItemId(itemId)
+        .open()
+        .withDueDate(DateTime.now()))
+        .getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
@@ -81,6 +100,9 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(representation.getString("requestExpirationDate"), is("2017-07-30"));
     assertThat(representation.getString("holdShelfExpirationDate"), is("2017-08-31"));
     assertThat(representation.getString("status"), is("Open - Not yet filled"));
+    assertThat(representation.containsKey("loan"), is(true));
+    assertThat(representation.containsKey("proxy"), is(true));
+   
 
     assertThat("has information taken from item",
       representation.containsKey("item"), is(true));

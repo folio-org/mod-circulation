@@ -11,28 +11,33 @@ import static org.folio.circulation.domain.RequestStatus.*;
 import static org.folio.circulation.domain.representations.RequestProperties.STATUS;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
+import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.http.server.ValidationError;
 
-public class Request implements ItemRelatedRecord, UserRelatedRecord {
+public class Request implements ItemRelatedRecord, UserRelatedRecord, FindByIdQuery {
   private final JsonObject representation;
   private final Item item;
   private final User requester;
   private final User proxy;
+  private final Loan loan;
   private boolean changedPosition = false;
 
   public Request(
     JsonObject representation,
     Item item,
     User requester,
-    User proxy) {
+    User proxy,
+    Loan loan) {
 
     this.representation = representation;
     this.item = item;
     this.requester = requester;
     this.proxy = proxy;
+    this.loan = loan;
   }
 
   public static Request from(JsonObject representation) {
-    return new Request(representation, null, null, null);
+    return new Request(representation, null, null, null, null);
   }
 
   public JsonObject asJson() {
@@ -77,15 +82,19 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Request withItem(Item newItem) {
-    return new Request(representation, newItem, requester, proxy);
+    return new Request(representation, newItem, requester, proxy, loan);
   }
 
   public Request withRequester(User newRequester) {
-    return new Request(representation, item, newRequester, proxy);
+    return new Request(representation, item, newRequester, proxy, loan);
   }
 
   public Request withProxy(User newProxy) {
-    return new Request(representation, item, requester, newProxy);
+    return new Request(representation, item, requester, newProxy, loan);
+  }
+  
+  public Request withLoan(Loan newLoan) {
+    return new Request(representation, item, requester, proxy, newLoan);
   }
 
   @Override
@@ -134,6 +143,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   public Item getItem() {
     return item;
   }
+  
+  public Loan getLoan() {
+    return loan;
+  }
 
   public User getRequester() {
     return requester;
@@ -171,5 +184,20 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   ItemStatus checkedOutItemStatus() {
     return getRequestType().toCheckedOutItemStatus();
+  }
+
+  @Override
+  public boolean userMatches(User user) {
+    return user.getId().equals(requester.getId());
+  }
+
+  @Override
+  public ValidationErrorFailure userDoesNotMatchError() {
+    ValidationError error = new ValidationError("User does not match", "userId", requester.getId());
+    return new ValidationErrorFailure(error);
+  }
+
+  public String getDeliveryAddressType() {
+    return representation.getString("deliveryAddressTypeId");
   }
 }

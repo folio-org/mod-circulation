@@ -129,6 +129,10 @@ public class Item {
       return null;
     }
   }
+  
+  public String getEnumeration() {
+    return getProperty(getItem(), "enumeration");
+  }
 
   public String determineLoanTypeForItem() {
     return getItem().containsKey(ItemProperties.TEMPORARY_LOAN_TYPE_ID)
