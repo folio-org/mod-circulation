@@ -1,6 +1,10 @@
 package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
+import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import org.folio.circulation.domain.validation.UserNotFoundValidator;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
@@ -12,11 +16,23 @@ import java.util.function.Function;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
+import static org.folio.circulation.support.HttpResult.failed;
+import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.ValidationErrorFailure.failure;
+import static org.folio.circulation.support.HttpResult.failed;
+import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.ValidationErrorFailure.failure;
+import static org.folio.circulation.support.HttpResult.failed;
+import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.ValidationErrorFailure.failure;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class LoanRepository {
   private final CollectionResourceClient loansStorageClient;
   private final ItemRepository itemRepository;
   private final UserRepository userRepository;
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   public LoanRepository(Clients clients) {
     loansStorageClient = clients.loansStorage();
@@ -189,6 +205,8 @@ public class LoanRepository {
   private HttpResult<MultipleRecords<Loan>> mapResponseToLoans(Response response) {
     return MultipleRecords.from(response, Loan::from, "loans");
   }
+  
+  
 
   private static JsonObject mapToStorageRepresentation(Loan loan, Item item) {
     JsonObject storageLoan = loan.asJson();
@@ -208,7 +226,7 @@ public class LoanRepository {
       .thenApply(r -> r.map(loans -> !loans.getRecords().isEmpty()));
   }
 
-  private CompletableFuture<HttpResult<MultipleRecords<Loan>>> findOpenLoans(Item item) {
+  public CompletableFuture<HttpResult<MultipleRecords<Loan>>> findOpenLoans(Item item) {
     return findOpenLoans(item.getItemId());
   }
 
@@ -219,5 +237,56 @@ public class LoanRepository {
     return CqlHelper.encodeQuery(openLoans).after(query ->
       loansStorageClient.getMany(query, 1, 0)
         .thenApply(this::mapResponseToLoans));
+  }
+  
+  public CompletableFuture<HttpResult<MultipleRecords<Request>>> findOpenLoansFor(
+      MultipleRecords<Request> multipleRequests) {
+    //CQL to return a list of loans
+    Collection<Request> requests = multipleRequests.getRecords();
+    List<String> clauses = new ArrayList<>();
+    for(Request request : requests) {
+      if(request.getItemId() != null) {
+        String clause = String.format("id==%s", request.getItemId());
+        clauses.add(clause);
+      }
+    }
+    if(clauses.isEmpty()) {
+      CompletableFuture<HttpResult<MultipleRecords<Request>>> dummyCF = new CompletableFuture<>();
+      dummyCF.complete(HttpResult.succeeded(multipleRequests));
+      return dummyCF;
+    }
+    final String itemClause = String.join(" OR ", clauses);
+    final String openLoansQuery = String.format("status.name==\"Open\" AND (%s)",
+        itemClause);
+    log.info(String.format("Querying open loans with query %s", openLoansQuery));
+    HttpResult<String> res = CqlHelper.encodeQuery(openLoansQuery);
+    CompletableFuture<HttpResult<MultipleRecords<Request>>> cf = new CompletableFuture<>();
+    
+    res.after(query -> loansStorageClient.getMany(query)
+        .thenApply(this::mapResponseToLoans)
+        .thenCompose(htResMultiRecLoans -> {
+          List<Request> newRequestList = new ArrayList<>();
+          MultipleRecords<Loan> multiRecLoans = htResMultiRecLoans.value();
+          Collection<Loan> loanColl = multiRecLoans.getRecords();
+          for(Request req : requests) {
+            Request newReq = null;
+            Boolean foundLoan = false;
+            for(Loan loan : loanColl) {
+              if(req.getItemId().equals(loan.getItemId())) {
+                newReq = req.withLoan(loan);
+                foundLoan = true;
+                break;
+              }
+            }
+            if(!foundLoan) {
+              newReq = req;
+            }
+            newRequestList.add(newReq);
+          }
+          cf.complete(HttpResult.succeeded(new MultipleRecords(loanColl, loanColl.size())));
+          return cf;
+    }));
+   
+    return cf;    
   }
 }

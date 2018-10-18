@@ -41,7 +41,8 @@ public class RequestRepository {
     return requestsStorageClient.getMany(query)
       .thenApply(this::mapResponseToRequests)
       .thenComposeAsync(requests ->
-        itemRepository.fetchItemsFor(requests, Request::withItem));
+        itemRepository.fetchItemsFor(requests, Request::withItem))
+      .thenComposeAsync(requests -> loanRepository.findOpenLoansFor(requests.value()));
   }
 
   //TODO: try to consolidate this further with above

@@ -41,9 +41,9 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanetAvailable().getId();
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    loansFixture.checkOutItem(itemId);
+    //loansFixture.checkOutItem(itemId);
 
     UUID requesterId = usersClient.create(new UserBuilder()
       .withName("Jones", "Steven")
@@ -61,11 +61,14 @@ public class RequestsAPIRetrievalTests extends APITests {
             .sponsor(sponsorId))
         .getId();
     
+    /*
     UUID loanId = loansClient.create(new LoanBuilder()
         .withItemId(itemId)
         .open()
         .withDueDate(DateTime.now()))
         .getId();
+    */
+    UUID loanID = loansFixture.checkOutItem(itemId).getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
