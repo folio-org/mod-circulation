@@ -43,25 +43,18 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
     
-    UUID proxyId = usersClient.create(new UserBuilder()
-      .withName("Jones", "Steven")
-      .withBarcode("564376549214"))
+    UUID proxyId = usersFixture.steve().getId();
+    UUID sponsorId = usersFixture.rebecca().getId();
+
+    proxyRelationshipsClient.create(
+      new ProxyRelationshipBuilder()
+        .proxy(proxyId)
+        .sponsor(sponsorId)
+        .active()
+        .doesNotExpire())
       .getId();
-    
-    UUID sponsorId = usersClient.create(new UserBuilder()
-        .withName("Stuart", "Rebecca")
-        .withBarcode("6059539205"))
-        .getId();
-    
-    UUID proxyRelationShipId = proxyRelationshipsClient.create(
-        new ProxyRelationshipBuilder()
-            .proxy(proxyId)
-            .sponsor(sponsorId)
-            .active()
-            .doesNotExpire())
-        .getId();
-    
-    UUID loanID = loansFixture.checkOutItem(itemId).getId();
+
+    loansFixture.checkOutItem(itemId).getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
