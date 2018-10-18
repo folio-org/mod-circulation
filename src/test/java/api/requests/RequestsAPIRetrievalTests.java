@@ -24,7 +24,6 @@ import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.ItemBuilder;
-import api.support.builders.ProxyRelationshipBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import api.support.http.InterfaceUrls;
@@ -42,17 +41,11 @@ public class RequestsAPIRetrievalTests extends APITests {
     UUID requestId = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
-    
-    UUID proxyId = usersFixture.steve().getId();
-    UUID sponsorId = usersFixture.rebecca().getId();
 
-    proxyRelationshipsClient.create(
-      new ProxyRelationshipBuilder()
-        .proxy(proxyId)
-        .sponsor(sponsorId)
-        .active()
-        .doesNotExpire())
-      .getId();
+    final IndividualResource sponsor = usersFixture.rebecca();
+    final IndividualResource proxy = usersFixture.steve();
+
+    usersFixture.nonExpiringProxyFor(sponsor, proxy);
 
     loansFixture.checkOutItem(itemId).getId();
 
@@ -63,8 +56,8 @@ public class RequestsAPIRetrievalTests extends APITests {
       .withId(requestId)
       .withRequestDate(requestDate)
       .withItemId(itemId)
-      .withRequesterId(sponsorId)
-      .withUserProxyId(proxyId)
+      .withRequesterId(sponsor.getId())
+      .withUserProxyId(proxy.getId())
       .fulfilToHoldShelf()
       .withRequestExpiration(new LocalDate(2017, 7, 30))
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
@@ -85,7 +78,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(representation.getString("requestType"), is("Recall"));
     assertThat(representation.getString("requestDate"), isEquivalentTo(requestDate));
     assertThat(representation.getString("itemId"), is(itemId.toString()));
-    assertThat(representation.getString("requesterId"), is(sponsorId.toString()));
+    assertThat(representation.getString("requesterId"), is(sponsor.getId().toString()));
     assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
     assertThat(representation.getString("requestExpirationDate"), is("2017-07-30"));
     assertThat(representation.getString("holdShelfExpirationDate"), is("2017-08-31"));
