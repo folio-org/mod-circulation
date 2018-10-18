@@ -272,6 +272,7 @@ public class LoanRepository {
           List<Request> newRequestList = new ArrayList<>();
           MultipleRecords<Loan> multiRecLoans = htResMultiRecLoans.value();
           Collection<Loan> loanColl = multiRecLoans.getRecords();
+
           for(Request req : requests) {
             Request newReq = null;
             Boolean foundLoan = false;
@@ -287,7 +288,10 @@ public class LoanRepository {
             }
             newRequestList.add(newReq);
           }
-          cf.complete(HttpResult.succeeded(new MultipleRecords(loanColl, loanColl.size())));
+
+          cf.complete(HttpResult.succeeded(
+            new MultipleRecords(newRequestList, multipleRequests.getTotalRecords())));
+
           return cf;
     }));
    
