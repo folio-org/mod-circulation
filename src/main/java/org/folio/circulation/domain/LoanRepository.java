@@ -267,29 +267,29 @@ public class LoanRepository {
     
     return queryResult.after(query -> loansStorageClient.getMany(query)
         .thenApply(this::mapResponseToLoans)
-        .thenApply(htResMultiRecLoans -> {
-          List<Request> newRequestList = new ArrayList<>();
-          MultipleRecords<Loan> multiRecLoans = htResMultiRecLoans.value();
-          Collection<Loan> loanColl = multiRecLoans.getRecords();
+        .thenApply(multipleLoansResult -> multipleLoansResult.next(
+          multipleLoans -> {
+            List<Request> newRequestList = new ArrayList<>();
+            Collection<Loan> loanColl = multipleLoans.getRecords();
 
-          for(Request req : requests) {
-            Request newReq = null;
-            Boolean foundLoan = false;
-            for(Loan loan : loanColl) {
-              if(req.getItemId().equals(loan.getItemId())) {
-                newReq = req.withLoan(loan);
-                foundLoan = true;
-                break;
+            for(Request req : requests) {
+              Request newReq = null;
+              Boolean foundLoan = false;
+              for(Loan loan : loanColl) {
+                if(req.getItemId().equals(loan.getItemId())) {
+                  newReq = req.withLoan(loan);
+                  foundLoan = true;
+                  break;
+                }
               }
+              if(!foundLoan) {
+                newReq = req;
+              }
+              newRequestList.add(newReq);
             }
-            if(!foundLoan) {
-              newReq = req;
-            }
-            newRequestList.add(newReq);
-          }
 
-          return HttpResult.succeeded(
-            new MultipleRecords<>(newRequestList, multipleRequests.getTotalRecords()));
-    }));
+            return HttpResult.succeeded(
+              new MultipleRecords<>(newRequestList, multipleRequests.getTotalRecords()));
+    })));
   }
 }
