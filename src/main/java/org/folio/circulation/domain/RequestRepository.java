@@ -128,7 +128,7 @@ public class RequestRepository {
   private CompletableFuture<HttpResult<Request>> fetchRequest(String id) {
     return new SingleRecordFetcher<>(requestsStorageClient, "request", Request::from)
       .fetch(id)
-        .thenComposeAsync(htResRequest -> fetchLoan(htResRequest));
+        .thenComposeAsync(this::fetchLoan);
   }
 
   //TODO: May need to fetch updated representation of request
@@ -204,8 +204,7 @@ public class RequestRepository {
   }
   
   private CompletableFuture<HttpResult<Request>> fetchLoan(HttpResult<Request> result) {
-    return result.combineAfter(request ->
-        loanRepository.findOpenLoanById(request), Request::withLoan);
+    return result.combineAfter(loanRepository::findOpenLoanForRequest, Request::withLoan);
   }
 
   private CompletableFuture<HttpResult<User>> getUser(String proxyUserId) {

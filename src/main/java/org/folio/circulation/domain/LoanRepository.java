@@ -88,6 +88,7 @@ public class LoanRepository {
         l -> fetchLoan(l.getId(), loan.getItem(), loan.getUser())));
   }
 
+  //TODO: Extract to separate class rather than repository
   public CompletableFuture<HttpResult<Loan>> findOpenLoanByBarcode(FindByBarcodeQuery query) {
     final UserNotFoundValidator userNotFoundValidator = new UserNotFoundValidator(
       userId -> failure("user is not found", "userId", userId));
@@ -119,6 +120,7 @@ public class LoanRepository {
       .thenApply(r -> r.next(loan -> refuseWhenDifferentUser(loan, query)));
   }
 
+  //TODO: Extract to separate class rather than repository
   public CompletableFuture<HttpResult<Loan>> findOpenLoanById(FindByIdQuery query) {
 
     final UserNotFoundValidator userNotFoundValidator = new UserNotFoundValidator(
@@ -148,6 +150,33 @@ public class LoanRepository {
       .thenComposeAsync(this::fetchUser)
       .thenApply(userNotFoundValidator::refuseWhenUserNotFound)
       .thenApply(r -> r.next(loan -> refuseWhenDifferentUser(loan, query)));
+  }
+
+  /**
+   *
+   * @param request the request to fetch the open loan for the same item for
+   * @return  success with loan if one found,
+   * success with null if the no open loan is found,
+   * failure if more than one open loan for the item found
+   */
+  CompletableFuture<HttpResult<Loan>> findOpenLoanForRequest(Request request) {
+    return findOpenLoans(request.getItemId())
+      .thenApply(loansResult -> loansResult.next(loans -> {
+        //TODO: Consider introducing an unknown loan class, instead of null
+        if (loans.getTotalRecords() == 0) {
+          return HttpResult.succeeded(null);
+        }
+        else if(loans.getTotalRecords() == 1) {
+          final Optional<Loan> firstLoan = loans.getRecords().stream().findFirst();
+
+          return firstLoan
+            .map(loan -> succeeded(Loan.from(loan.asJson(), request.getItem())))
+            .orElse(null);
+        } else {
+          return failed(new ServerErrorFailure(
+            String.format("More than one open loan for item %s", request.getItemId())));
+        }
+      }));
   }
 
   private HttpResult<Loan> refuseWhenDifferentUser(
@@ -238,9 +267,10 @@ public class LoanRepository {
       loansStorageClient.getMany(query, 1, 0)
         .thenApply(this::mapResponseToLoans));
   }
-  
+
   public CompletableFuture<HttpResult<MultipleRecords<Request>>> findOpenLoansFor(
-      MultipleRecords<Request> multipleRequests) {
+    //TODO: Need to handle multiple open loans for same item (with failure?)
+    MultipleRecords<Request> multipleRequests) {
 
     //CQL to return a list of loans
     Collection<Request> requests = multipleRequests.getRecords();
