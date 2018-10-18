@@ -1,22 +1,8 @@
 package api.requests;
 
-import io.vertx.core.json.JsonObject;
-import api.support.APITests;
-import api.support.builders.ItemBuilder;
-import api.support.builders.LoanBuilder;
-import api.support.builders.ProxyRelationshipBuilder;
-import api.support.builders.RequestBuilder;
-import api.support.builders.UserBuilder;
-import api.support.http.InterfaceUrls;
-import api.support.http.ResourceClient;
-import org.folio.circulation.support.JsonArrayHelper;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDate;
-import org.junit.Test;
+import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -27,11 +13,23 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import org.folio.circulation.support.JsonArrayHelper;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
+import org.junit.Test;
+
+import api.support.APITests;
+import api.support.builders.ItemBuilder;
+import api.support.builders.ProxyRelationshipBuilder;
+import api.support.builders.RequestBuilder;
+import api.support.builders.UserBuilder;
+import api.support.http.InterfaceUrls;
+import api.support.http.ResourceClient;
+import io.vertx.core.json.JsonObject;
 
 public class RequestsAPIRetrievalTests extends APITests {
   @Test
@@ -45,7 +43,7 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
     
-    UUID requesterId = usersClient.create(new UserBuilder()
+    UUID proxyId = usersClient.create(new UserBuilder()
       .withName("Jones", "Steven")
       .withBarcode("564376549214"))
       .getId();
@@ -57,8 +55,9 @@ public class RequestsAPIRetrievalTests extends APITests {
     
     UUID proxyRelationShipId = proxyRelationshipsClient.create(
         new ProxyRelationshipBuilder()
-            .proxy(requesterId)
+            .proxy(proxyId)
             .sponsor(sponsorId)
+            .active()
             .doesNotExpire())
         .getId();
     
@@ -71,8 +70,8 @@ public class RequestsAPIRetrievalTests extends APITests {
       .withId(requestId)
       .withRequestDate(requestDate)
       .withItemId(itemId)
-      .withRequesterId(requesterId)
-      .withUserProxyId(sponsorId)
+      .withRequesterId(sponsorId)
+      .withUserProxyId(proxyId)
       .fulfilToHoldShelf()
       .withRequestExpiration(new LocalDate(2017, 7, 30))
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
@@ -93,7 +92,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(representation.getString("requestType"), is("Recall"));
     assertThat(representation.getString("requestDate"), isEquivalentTo(requestDate));
     assertThat(representation.getString("itemId"), is(itemId.toString()));
-    assertThat(representation.getString("requesterId"), is(requesterId.toString()));
+    assertThat(representation.getString("requesterId"), is(sponsorId.toString()));
     assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
     assertThat(representation.getString("requestExpirationDate"), is("2017-07-30"));
     assertThat(representation.getString("holdShelfExpirationDate"), is("2017-08-31"));
