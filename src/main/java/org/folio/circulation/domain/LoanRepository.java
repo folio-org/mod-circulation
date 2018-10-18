@@ -1,32 +1,32 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonObject;
+import static org.folio.circulation.support.HttpResult.failed;
+import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.ValidationErrorFailure.failure;
+
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import org.folio.circulation.domain.validation.UserNotFoundValidator;
-import org.folio.circulation.support.*;
-import org.folio.circulation.support.http.client.Response;
-
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
-import static org.folio.circulation.support.HttpResult.failed;
-import static org.folio.circulation.support.HttpResult.succeeded;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-import static org.folio.circulation.support.HttpResult.failed;
-import static org.folio.circulation.support.HttpResult.succeeded;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-import static org.folio.circulation.support.HttpResult.failed;
-import static org.folio.circulation.support.HttpResult.succeeded;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-import static org.folio.circulation.support.HttpResult.failed;
-import static org.folio.circulation.support.HttpResult.succeeded;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
+import org.folio.circulation.domain.validation.UserNotFoundValidator;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.CqlHelper;
+import org.folio.circulation.support.ForwardOnFailure;
+import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.SingleRecordFetcher;
+import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.vertx.core.json.JsonObject;
 
 public class LoanRepository {
   private final CollectionResourceClient loansStorageClient;
@@ -241,24 +241,28 @@ public class LoanRepository {
   
   public CompletableFuture<HttpResult<MultipleRecords<Request>>> findOpenLoansFor(
       MultipleRecords<Request> multipleRequests) {
+
     //CQL to return a list of loans
     Collection<Request> requests = multipleRequests.getRecords();
     List<String> clauses = new ArrayList<>();
+
     for(Request request : requests) {
       if(request.getItemId() != null) {
         String clause = String.format("id==%s", request.getItemId());
         clauses.add(clause);
       }
     }
+
     if(clauses.isEmpty()) {
-      CompletableFuture<HttpResult<MultipleRecords<Request>>> dummyCF = new CompletableFuture<>();
-      dummyCF.complete(HttpResult.succeeded(multipleRequests));
-      return dummyCF;
+      return CompletableFuture.completedFuture(HttpResult.succeeded(multipleRequests));
     }
+
     final String itemClause = String.join(" OR ", clauses);
     final String openLoansQuery = String.format("status.name==\"Open\" AND (%s)",
         itemClause);
+
     log.info(String.format("Querying open loans with query %s", openLoansQuery));
+
     HttpResult<String> res = CqlHelper.encodeQuery(openLoansQuery);
     CompletableFuture<HttpResult<MultipleRecords<Request>>> cf = new CompletableFuture<>();
     
