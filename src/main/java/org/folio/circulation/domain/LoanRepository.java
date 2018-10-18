@@ -263,12 +263,11 @@ public class LoanRepository {
 
     log.info(String.format("Querying open loans with query %s", openLoansQuery));
 
-    HttpResult<String> res = CqlHelper.encodeQuery(openLoansQuery);
-    CompletableFuture<HttpResult<MultipleRecords<Request>>> cf = new CompletableFuture<>();
+    HttpResult<String> queryResult = CqlHelper.encodeQuery(openLoansQuery);
     
-    res.after(query -> loansStorageClient.getMany(query)
+    return queryResult.after(query -> loansStorageClient.getMany(query)
         .thenApply(this::mapResponseToLoans)
-        .thenCompose(htResMultiRecLoans -> {
+        .thenApply(htResMultiRecLoans -> {
           List<Request> newRequestList = new ArrayList<>();
           MultipleRecords<Loan> multiRecLoans = htResMultiRecLoans.value();
           Collection<Loan> loanColl = multiRecLoans.getRecords();
@@ -289,12 +288,8 @@ public class LoanRepository {
             newRequestList.add(newReq);
           }
 
-          cf.complete(HttpResult.succeeded(
-            new MultipleRecords(newRequestList, multipleRequests.getTotalRecords())));
-
-          return cf;
+          return HttpResult.succeeded(
+            new MultipleRecords<>(newRequestList, multipleRequests.getTotalRecords()));
     }));
-   
-    return cf;    
   }
 }
