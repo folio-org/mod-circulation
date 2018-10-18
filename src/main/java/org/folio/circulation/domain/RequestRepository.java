@@ -1,16 +1,22 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonObject;
-import java.net.URLEncoder;
-import org.folio.circulation.support.*;
-import org.folio.circulation.support.http.client.Response;
-
-import java.util.concurrent.CompletableFuture;
-import static java.util.function.Function.identity;
-
 import static org.folio.circulation.domain.Request.from;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
+
+import java.net.URLEncoder;
+import java.util.concurrent.CompletableFuture;
+
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.ForwardOnFailure;
+import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.SingleRecordFetcher;
+import org.folio.circulation.support.SingleRecordMapper;
+import org.folio.circulation.support.http.client.Response;
+
+import io.vertx.core.json.JsonObject;
 
 public class RequestRepository {
   private final CollectionResourceClient requestsStorageClient;
@@ -40,9 +46,8 @@ public class RequestRepository {
   public CompletableFuture<HttpResult<MultipleRecords<Request>>> findBy(String query) {
     return requestsStorageClient.getMany(query)
       .thenApply(this::mapResponseToRequests)
-      .thenComposeAsync(requests ->
-        itemRepository.fetchItemsFor(requests, Request::withItem))
-      .thenComposeAsync(requests -> loanRepository.findOpenLoansFor(requests.value()));
+      .thenComposeAsync(result -> itemRepository.fetchItemsFor(result, Request::withItem))
+      .thenComposeAsync(result -> result.after(loanRepository::findOpenLoansFor));
   }
 
   //TODO: try to consolidate this further with above
