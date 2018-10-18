@@ -30,6 +30,8 @@ import java.util.concurrent.TimeoutException;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class RequestsAPIRetrievalTests extends APITests {
   @Test
@@ -39,12 +41,10 @@ public class RequestsAPIRetrievalTests extends APITests {
     ExecutionException,
     TimeoutException {
 
-    UUID id = UUID.randomUUID();
+    UUID requestId = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
-
-    //loansFixture.checkOutItem(itemId);
-
+    
     UUID requesterId = usersClient.create(new UserBuilder()
       .withName("Jones", "Steven")
       .withBarcode("564376549214"))
@@ -58,33 +58,28 @@ public class RequestsAPIRetrievalTests extends APITests {
     UUID proxyRelationShipId = proxyRelationshipsClient.create(
         new ProxyRelationshipBuilder()
             .proxy(requesterId)
-            .sponsor(sponsorId))
+            .sponsor(sponsorId)
+            .doesNotExpire())
         .getId();
     
-    /*
-    UUID loanId = loansClient.create(new LoanBuilder()
-        .withItemId(itemId)
-        .open()
-        .withDueDate(DateTime.now()))
-        .getId();
-    */
     UUID loanID = loansFixture.checkOutItem(itemId).getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
     requestsClient.create(new RequestBuilder()
       .recall()
-      .withId(id)
+      .withId(requestId)
       .withRequestDate(requestDate)
       .withItemId(itemId)
       .withRequesterId(requesterId)
+      .withUserProxyId(sponsorId)
       .fulfilToHoldShelf()
       .withRequestExpiration(new LocalDate(2017, 7, 30))
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
-    client.get(InterfaceUrls.requestsUrl(String.format("/%s", id)),
+    client.get(InterfaceUrls.requestsUrl(String.format("/%s", requestId)),
       ResponseHandler.any(getCompleted));
 
     Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
@@ -94,7 +89,7 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     JsonObject representation = getResponse.getJson();
 
-    assertThat(representation.getString("id"), is(id.toString()));
+    assertThat(representation.getString("id"), is(requestId.toString()));
     assertThat(representation.getString("requestType"), is("Recall"));
     assertThat(representation.getString("requestDate"), isEquivalentTo(requestDate));
     assertThat(representation.getString("itemId"), is(itemId.toString()));
