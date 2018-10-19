@@ -107,11 +107,11 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     assertThat("last name is taken from requesting user",
       representation.getJsonObject("requester").getString("lastName"),
-      is("Jones"));
+      is("Stuart"));
 
     assertThat("first name is taken from requesting user",
       representation.getJsonObject("requester").getString("firstName"),
-      is("Steven"));
+      is("Rebecca"));
 
     assertThat("middle name is not taken from requesting user",
       representation.getJsonObject("requester").containsKey("middleName"),
@@ -119,7 +119,7 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     assertThat("barcode is taken from requesting user",
       representation.getJsonObject("requester").getString("barcode"),
-      is("564376549214"));
+      is("6059539205"));
   }
 
   @Test
