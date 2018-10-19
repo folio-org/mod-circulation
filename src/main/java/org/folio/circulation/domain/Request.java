@@ -95,12 +95,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord, FindByIdQu
   }
 
   public Request withProxy(User newProxy) {
-    log.info(String.format("Request %s added proxy %s", representation.getString("id"), newProxy.getId()));
     return new Request(representation, item, requester, newProxy, loan);
   }
   
   public Request withLoan(Loan newLoan) {
-    log.info(String.format("Request %s added loan %s", representation.getString("id"), newLoan.getId()));
     return new Request(representation, item, requester, proxy, newLoan);
   }
 
