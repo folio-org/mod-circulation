@@ -11,6 +11,7 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.util.Objects;
+import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.representations.LoanProperties;
@@ -26,6 +27,9 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   private final Item item;
   private final User user;
   private final User proxy;
+
+	private UUID servicePointOfCheckout;
+	private UUID servicePointOfCheckin;
 
   public Loan(JsonObject representation) {
     this(representation, null, null, null);
@@ -59,7 +63,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     }
   }
 
-  public static Loan from(JsonObject representation) {
+	public static Loan from(JsonObject representation) {
     return from(representation, null);
   }
 
@@ -207,4 +211,20 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
       }
     }
   }
+
+	public void setServicePointOfCheckout(UUID servicePointOfCheckout) {
+		this.servicePointOfCheckout = servicePointOfCheckout;
+	}
+
+	public UUID getServicePointOfCheckout() {
+		return servicePointOfCheckout;
+	}
+
+	public void setServicePointOfCheckin(UUID servicePointCheckin) {
+		this.servicePointOfCheckin = servicePointCheckin;
+	}
+
+	public UUID getServicePointOfCheckin() {
+		return servicePointOfCheckin;
+	}
 }
