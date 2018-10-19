@@ -262,6 +262,7 @@ public class LoanRepository {
   private CompletableFuture<HttpResult<MultipleRecords<Loan>>> findOpenLoans(String itemId) {
     final String openLoans = String.format(
       "itemId==%s and status.name==\"%s\"", itemId, "Open");
+    log.info(String.format("Querying open loan with query %s", openLoans));
 
     return CqlHelper.encodeQuery(openLoans).after(query ->
       loansStorageClient.getMany(query, 1, 0)

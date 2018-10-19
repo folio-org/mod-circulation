@@ -186,4 +186,17 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.permanentLoanTypeId,
       loanTypeId);
   }
+  
+  public ItemBuilder withId(UUID id) {
+    return new ItemBuilder(
+      id,
+      this.holdingId,
+      this.barcode,
+      this.status,
+      this.permanentLocationId,
+      this.temporaryLocationId,
+      this.materialTypeId,
+      this.permanentLoanTypeId,
+      this.temporaryLoanTypeId);
+  }
 }

@@ -2,13 +2,18 @@ package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import java.lang.invoke.MethodHandles;
 
 
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RequestRepresentation {
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  
   public JsonObject extendedRepresentation(Request request) {
     final JsonObject requestRepresentation = request.asJson();
 
@@ -73,6 +78,8 @@ public class RequestRepresentation {
     User proxy) {
 
     if(proxy == null) {
+      log.info(String.format("Unable to add proxy properties to request %s, proxy object is null", 
+          requestWithAdditionalInformation.getString("id")));
       return;
     }
 
@@ -81,6 +88,8 @@ public class RequestRepresentation {
 
   private static void addAdditionalItemProperties(JsonObject request, Item item) {
     if(item == null || item.isNotFound()) {
+      log.info(String.format("Unable to add item properties to request %s, item is null",
+          request.getString("id")));
       return;
     }
 
@@ -124,6 +133,10 @@ public class RequestRepresentation {
   
   private static void addAdditionalLoanProperties(JsonObject request, Loan loan) {
     if(loan == null || loan.isClosed()) {
+      String reason = null;
+      if(loan == null) { reason = "null"; } else { reason = "closed"; }
+      log.info(String.format("Unable to add loan properties to request %s, loan is %s",
+          request.getString("id"), reason));
       return;
     }
     JsonObject loanSummary = request.containsKey("loan")
@@ -133,7 +146,11 @@ public class RequestRepresentation {
     if(loan.getDueDate() != null) {
       String dueDate = loan.getDueDate().toString(ISODateTimeFormat.dateTime());
       loanSummary.put("dueDate", dueDate);
+      log.info(String.format("Adding loan properties to request %s", 
+          request.getString("id")));
     }
+    
+    request.put("loan", loanSummary);
   }
 }
 

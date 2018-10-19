@@ -122,13 +122,14 @@ public class RequestRepository {
       .thenComposeAsync(result -> result.combineAfter(itemRepository::fetchFor,
         Request::withItem))
       .thenComposeAsync(this::fetchRequester)
-      .thenComposeAsync(this::fetchProxy);
+      .thenComposeAsync(this::fetchProxy)
+      .thenComposeAsync(this::fetchLoan);
   }
 
   private CompletableFuture<HttpResult<Request>> fetchRequest(String id) {
     return new SingleRecordFetcher<>(requestsStorageClient, "request", Request::from)
-      .fetch(id)
-        .thenComposeAsync(this::fetchLoan);
+      .fetch(id);
+        //.thenComposeAsync(this::fetchLoan);
   }
 
   //TODO: May need to fetch updated representation of request

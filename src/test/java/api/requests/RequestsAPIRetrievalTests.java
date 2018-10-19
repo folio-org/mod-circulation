@@ -38,16 +38,20 @@ public class RequestsAPIRetrievalTests extends APITests {
     ExecutionException,
     TimeoutException {
 
-    UUID requestId = UUID.randomUUID();
+    //UUID requestId = UUID.randomUUID();
+    UUID requestId = UUID.fromString("d9960d24-8862-4178-be2c-c1a574188a92"); //to track in logs
+    UUID loanId = UUID.fromString("61d74730-5cdb-4675-ab88-1828ee1ad248");
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    UUID itemId = UUID.fromString("60c50f1b-7d6c-4b59-863a-a4da213d9530");
+    
+    itemsFixture.basedUponSmallAngryPlanet(itemBuilder -> itemBuilder.withId(itemId));
 
     final IndividualResource sponsor = usersFixture.rebecca();
     final IndividualResource proxy = usersFixture.steve();
 
     usersFixture.nonExpiringProxyFor(sponsor, proxy);
 
-    loansFixture.checkOutItem(itemId).getId();
+    loansFixture.checkOutItem(itemId, loanId);
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 

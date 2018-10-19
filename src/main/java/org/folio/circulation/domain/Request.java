@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
+import java.lang.invoke.MethodHandles;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.representations.RequestProperties;
 
@@ -13,6 +14,8 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProper
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Request implements ItemRelatedRecord, UserRelatedRecord, FindByIdQuery {
   private final JsonObject representation;
@@ -21,6 +24,8 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord, FindByIdQu
   private final User proxy;
   private final Loan loan;
   private boolean changedPosition = false;
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
 
   public Request(
     JsonObject representation,
@@ -90,10 +95,12 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord, FindByIdQu
   }
 
   public Request withProxy(User newProxy) {
+    log.info(String.format("Request %s added proxy %s", representation.getString("id"), newProxy.getId()));
     return new Request(representation, item, requester, newProxy, loan);
   }
   
   public Request withLoan(Loan newLoan) {
+    log.info(String.format("Request %s added loan %s", representation.getString("id"), newLoan.getId()));
     return new Request(representation, item, requester, proxy, newLoan);
   }
 
