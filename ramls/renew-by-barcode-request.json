@@ -10,6 +10,10 @@
     "userBarcode": {
       "description": "Barcode of the user (representing the patron) the item has been loaned to",
       "type": "string"
+    },
+    "servicePointOfCheckout": {
+      "description": "ID of the Service Point of last checkout",
+      "type": "string"
     }
   },
   "additionalProperties": false,
