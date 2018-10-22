@@ -1,14 +1,18 @@
 package api.support.builders;
 
-import io.vertx.core.json.JsonObject;
+import java.util.UUID;
+
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
+
+import io.vertx.core.json.JsonObject;
 
 public class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Builder {
   private final String itemBarcode;
   private final String userBarcode;
   private final String proxyBarcode;
   private final DateTime loanDate;
+	private final String servicePointOfCheckout = UUID.randomUUID().toString();
 
   public CheckOutByBarcodeRequestBuilder() {
     this(null, null, null, null);
@@ -34,6 +38,7 @@ public class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Buil
     put(request, "userBarcode", this.userBarcode);
     put(request, "proxyUserBarcode", this.proxyBarcode);
     put(request, "loanDate", this.loanDate);
+		put(request, "servicePointOfCheckout", this.servicePointOfCheckout);
 
     return request;
   }

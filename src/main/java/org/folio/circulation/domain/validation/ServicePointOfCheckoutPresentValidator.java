@@ -19,7 +19,7 @@ public class ServicePointOfCheckoutPresentValidator {
 
 	public HttpResult<LoanAndRelatedRecords> refuseServicePointOfCheckoutIsNotPresent(
     HttpResult<LoanAndRelatedRecords> result) {
-		
+
     return result.failWhen(
 				records -> succeeded(records.getLoan().getServicePointOfCheckout() == null
 						|| "".equals(records.getLoan().getServicePointOfCheckout())),

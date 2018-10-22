@@ -67,7 +67,9 @@ public class CheckOutByBarcodeResource extends Resource {
     final String itemBarcode = request.getString(CheckOutByBarcodeRequest.ITEM_BARCODE);
     final String userBarcode = request.getString(CheckOutByBarcodeRequest.USER_BARCODE);
     final String proxyUserBarcode = request.getString(CheckOutByBarcodeRequest.PROXY_USER_BARCODE);
-    final String servicePointId = request.getString(CheckOutByBarcodeRequest.SERVICEPOINTID);
+    final String servicePointOfCheckout = request.getString(CheckOutByBarcodeRequest.SERVICEPOINTOFCHECKOUT);
+
+		loan.put(CheckOutByBarcodeRequest.SERVICEPOINTOFCHECKOUT, servicePointOfCheckout);
 
     final Clients clients = Clients.create(context, client);
 
@@ -85,7 +87,7 @@ public class CheckOutByBarcodeResource extends Resource {
     
     final ServicePointOfCheckoutPresentValidator servicePointOfCheckoutPresentValidator = new ServicePointOfCheckoutPresentValidator(
     		message -> failure(message,
-            CheckOutByBarcodeRequest.SERVICEPOINTID, servicePointId));
+            CheckOutByBarcodeRequest.SERVICEPOINTOFCHECKOUT, servicePointOfCheckout));
 
     final AwaitingPickupValidator awaitingPickupValidator = new AwaitingPickupValidator(
       message -> failure(message,
