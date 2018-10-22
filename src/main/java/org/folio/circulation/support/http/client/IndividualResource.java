@@ -1,8 +1,8 @@
 package org.folio.circulation.support.http.client;
 
-import io.vertx.core.json.JsonObject;
-
 import java.util.UUID;
+
+import io.vertx.core.json.JsonObject;
 
 public class IndividualResource {
 

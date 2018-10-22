@@ -45,8 +45,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     this.user = user;
     this.proxy = proxy;
 
-		this.servicePointOfCheckout = representation.getString(servicePointOfCheckout);
-		this.servicePointOfCheckin = representation.getString(servicePointOfCheckin);
+		this.servicePointOfCheckout = getProperty(representation, "servicePointOfCheckout");
+		this.servicePointOfCheckin = getProperty(representation, "servicePointOfCheckin");
 
     //TODO: Refuse if ID does not match property in representation,
     // and possibly convert isFound to unknown item class
