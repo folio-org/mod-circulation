@@ -11,7 +11,6 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.util.Objects;
-import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.representations.LoanProperties;
@@ -28,8 +27,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   private final User user;
   private final User proxy;
 
-	private UUID servicePointOfCheckout;
-	private UUID servicePointOfCheckin;
+	private String servicePointOfCheckout;
+	private String servicePointOfCheckin;
 
   public Loan(JsonObject representation) {
     this(representation, null, null, null);
@@ -46,6 +45,9 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     this.user = user;
     this.proxy = proxy;
 
+		this.servicePointOfCheckout = representation.getString(servicePointOfCheckout);
+		this.servicePointOfCheckin = representation.getString(servicePointOfCheckin);
+
     //TODO: Refuse if ID does not match property in representation,
     // and possibly convert isFound to unknown item class
     if(item != null && item.isFound()) {
@@ -61,6 +63,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     if(proxy != null) {
       representation.put("proxyUserId", proxy.getId());
     }
+
   }
 
 	public static Loan from(JsonObject representation) {
@@ -212,19 +215,19 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     }
   }
 
-	public void setServicePointOfCheckout(UUID servicePointOfCheckout) {
+	public void setServicePointOfCheckout(String servicePointOfCheckout) {
 		this.servicePointOfCheckout = servicePointOfCheckout;
 	}
 
-	public UUID getServicePointOfCheckout() {
+	public String getServicePointOfCheckout() {
 		return servicePointOfCheckout;
 	}
 
-	public void setServicePointOfCheckin(UUID servicePointCheckin) {
-		this.servicePointOfCheckin = servicePointCheckin;
+	public void setServicePointOfCheckin(String servicePointCheckin) {
+		this.servicePointOfCheckin = servicePointCheckin.toString();
 	}
 
-	public UUID getServicePointOfCheckin() {
+	public String getServicePointOfCheckin() {
 		return servicePointOfCheckin;
 	}
 }

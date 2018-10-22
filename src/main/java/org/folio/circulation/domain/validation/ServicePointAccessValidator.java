@@ -20,8 +20,9 @@ public class ServicePointAccessValidator {
 	public HttpResult<LoanAndRelatedRecords> refuseWhenUserCannotAccessServicePoint(
     HttpResult<LoanAndRelatedRecords> result) {
 
+		// TODO check user permissions
     return result.failWhen(
-				records -> succeeded(records.getLoan().getServicePointOfCheckout() == null),
+				records -> succeeded(false),
 				r -> ServicePointAccessFunction.apply("User must have access to the Service Point of Last Action."));
   }
 }

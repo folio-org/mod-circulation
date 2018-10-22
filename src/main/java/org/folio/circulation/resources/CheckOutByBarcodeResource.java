@@ -109,11 +109,8 @@ public class CheckOutByBarcodeResource extends Resource {
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
     
-    Loan l = Loan.from(loan);
-    
-		completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(l)))
+		completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(Loan.from(loan))))
 			.thenApply(servicePointOfCheckoutPresentValidator::refuseServicePointOfCheckoutIsNotPresent)
-
       .thenCombineAsync(userRepository.getUserByBarcode(userBarcode), this::addUser)
       .thenCombineAsync(userRepository.getProxyUserByBarcode(proxyUserBarcode), this::addProxyUser)
       .thenApply(inactiveUserValidator::refuseWhenUserIsInactive)
