@@ -27,8 +27,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   private final User user;
   private final User proxy;
 
-	private String servicePointOfCheckout;
-	private String servicePointOfCheckin;
+	private String checkoutServicePointId;
+	private String checkinServicePointId;
 
   public Loan(JsonObject representation) {
     this(representation, null, null, null);
@@ -45,8 +45,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     this.user = user;
     this.proxy = proxy;
 
-		this.servicePointOfCheckout = getProperty(representation, "servicePointOfCheckout");
-		this.servicePointOfCheckin = getProperty(representation, "servicePointOfCheckin");
+		this.checkoutServicePointId = getProperty(representation, "checkoutServicePointId");
+		this.checkinServicePointId = getProperty(representation, "checkinServicePointId");
 
     //TODO: Refuse if ID does not match property in representation,
     // and possibly convert isFound to unknown item class
@@ -215,19 +215,19 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     }
   }
 
-	public void setServicePointOfCheckout(String servicePointOfCheckout) {
-		this.servicePointOfCheckout = servicePointOfCheckout;
+	public void setCheckoutServicePointId(String servicePointOfCheckout) {
+		this.checkoutServicePointId = servicePointOfCheckout;
 	}
 
-	public String getServicePointOfCheckout() {
-		return servicePointOfCheckout;
+	public String getCheckoutServicePointId() {
+		return checkoutServicePointId;
 	}
 
-	public void setServicePointOfCheckin(String servicePointCheckin) {
-		this.servicePointOfCheckin = servicePointCheckin.toString();
+	public void setCheckinServicePointId(String servicePointCheckin) {
+		this.checkinServicePointId = servicePointCheckin.toString();
 	}
 
-	public String getServicePointOfCheckin() {
-		return servicePointOfCheckin;
+	public String getCheckinServicePointId() {
+		return checkinServicePointId;
 	}
 }

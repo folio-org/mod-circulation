@@ -21,8 +21,8 @@ public class ServicePointOfCheckoutPresentValidator {
     HttpResult<LoanAndRelatedRecords> result) {
 
     return result.failWhen(
-				records -> succeeded(records.getLoan().getServicePointOfCheckout() == null
-						|| "".equals(records.getLoan().getServicePointOfCheckout())),
+				records -> succeeded(records.getLoan().getCheckoutServicePointId() == null
+						|| "".equals(records.getLoan().getCheckoutServicePointId())),
 				r -> servicePointOfCheckoutPresentFuntion.apply("A Service Point must be specified."));
   }
 }

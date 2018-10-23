@@ -12,7 +12,7 @@ public class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Buil
   private final String userBarcode;
   private final String proxyBarcode;
   private final DateTime loanDate;
-	private final String servicePointOfCheckout = UUID.randomUUID().toString();
+	private final String checkoutServicePointId = UUID.randomUUID().toString();
 
   public CheckOutByBarcodeRequestBuilder() {
     this(null, null, null, null);
@@ -38,7 +38,7 @@ public class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Buil
     put(request, "userBarcode", this.userBarcode);
     put(request, "proxyUserBarcode", this.proxyBarcode);
     put(request, "loanDate", this.loanDate);
-		put(request, "servicePointOfCheckout", this.servicePointOfCheckout);
+		put(request, "checkoutServicePointId", this.checkoutServicePointId);
 
     return request;
   }

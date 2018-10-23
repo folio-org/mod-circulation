@@ -26,7 +26,8 @@ public class LoanBuilder extends JsonBuilder implements Builder {
   private final DateTime dueDate;
   private final UUID proxyUserId;
   private final DateTime systemReturnDate;
-	private final String servicePoint = UUID.randomUUID().toString();
+	private final String checkoutServicePointId = UUID.randomUUID().toString();
+	private final String checkinServicePointId = UUID.randomUUID().toString();
 
 
   public LoanBuilder() {
@@ -75,7 +76,8 @@ public class LoanBuilder extends JsonBuilder implements Builder {
     put(loanRequest, "proxyUserId", proxyUserId);
     put(loanRequest, "action", action);
     put(loanRequest, "dueDate", dueDate);
-		put(loanRequest, "servicePointOfCheckout", servicePoint);
+		put(loanRequest, "checkoutOutServicePointId", checkoutServicePointId);
+		put(loanRequest, "checkinServicePointId", checkinServicePointId);
 
     if(Objects.equals(status, CLOSED_LOAN_STATUS)) {
       put(loanRequest, "returnDate", returnDate);
