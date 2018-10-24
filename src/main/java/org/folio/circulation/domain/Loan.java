@@ -1,5 +1,6 @@
 package org.folio.circulation.domain;
 
+import static org.folio.circulation.domain.representations.LoanProperties.CHECKIN_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.DUE_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.STATUS;
 import static org.folio.circulation.domain.representations.LoanProperties.USER_ID;
@@ -122,6 +123,15 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
       return HttpResult.succeeded(null);
     }
   }
+
+	public HttpResult<Void> closedLoanHasCheckInServicePointId() {
+		if (Objects.equals(getStatus(), "Closed") && getCheckinServicePointId() == null) {
+			return failed(ValidationErrorFailure.failure("Closed loan must have a Checkin Service Point",
+					CHECKIN_SERVICE_POINT_ID, getCheckinServicePointId()));
+		} else {
+			return HttpResult.succeeded(null);
+		}
+	}
 
   boolean isClosed() {
     return StringUtils.equals(getStatus(), "Closed");

@@ -115,7 +115,8 @@ public class LoanCollectionResource extends CollectionResource {
     final ItemNotFoundValidator itemNotFoundValidator = createItemNotFoundValidator(loan);
 
     completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(loan)))
-      .thenApply(this::refuseWhenNotOpenOrClosed)
+    	.thenApply(this::refuseWhenClosedAndNoCheckInServicePointId)  
+    	.thenApply(this::refuseWhenNotOpenOrClosed)
       .thenApply(this::refuseWhenOpenAndNoUserId)
       .thenCombineAsync(itemRepository.fetchFor(loan), this::addItem)
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
@@ -215,6 +216,14 @@ public class LoanCollectionResource extends CollectionResource {
     });
   }
 
+	private HttpResult<LoanAndRelatedRecords> refuseWhenClosedAndNoCheckInServicePointId(
+      HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
+		return loanAndRelatedRecords
+        .map(LoanAndRelatedRecords::getLoan)
+				.next(Loan::closedLoanHasCheckInServicePointId)
+        .next(v -> loanAndRelatedRecords);
+    }
+  
   private HttpResult<LoanAndRelatedRecords> refuseWhenNotOpenOrClosed(
     HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
