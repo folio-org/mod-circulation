@@ -422,7 +422,7 @@
   "requires": [
     {
       "id": "loan-storage",
-      "version": "5.0"
+      "version": "5.2"
     },
     {
       "id": "loan-rules-storage",
