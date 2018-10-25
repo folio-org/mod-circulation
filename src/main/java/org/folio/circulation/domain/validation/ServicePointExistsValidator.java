@@ -8,10 +8,10 @@ import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ValidationErrorFailure;
 
-public class ServicePointAccessValidator {
+public class ServicePointExistsValidator {
 	private final Function<String, ValidationErrorFailure> ServicePointAccessFunction;
 
-  public ServicePointAccessValidator(
+  public ServicePointExistsValidator(
 			Function<String, ValidationErrorFailure> servicePointAccessOutErrorFunction) {
 
 		this.ServicePointAccessFunction = servicePointAccessOutErrorFunction;
@@ -20,9 +20,10 @@ public class ServicePointAccessValidator {
 	public HttpResult<LoanAndRelatedRecords> refuseWhenUserCannotAccessServicePoint(
     HttpResult<LoanAndRelatedRecords> result) {
 
-		// TODO check user permissions (CIRC-150)
+		// TODO check if service point exists (CIRC-150)
     return result.failWhen(
 				records -> succeeded(false),
-				r -> ServicePointAccessFunction.apply("User must have access to the Service Point of Last Action."));
+				r -> ServicePointAccessFunction
+						.apply("So service point found by with the id:" + r.getLoan().getCheckoutServicePointId()));
   }
 }
