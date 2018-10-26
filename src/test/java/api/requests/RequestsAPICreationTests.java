@@ -41,6 +41,7 @@ public class RequestsAPICreationTests extends APITests {
     MalformedURLException {
 
     UUID id = UUID.randomUUID();
+    UUID pickupServicePointId = UUID.randomUUID(); //TODO: Make this from a fixture after we start to actually dereference SPs
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -59,7 +60,9 @@ public class RequestsAPICreationTests extends APITests {
       .withRequestDate(requestDate)
       .fulfilToHoldShelf()
       .withRequestExpiration(new LocalDate(2017, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
+      .withPickupServicePointId(pickupServicePointId));
+   
 
     JsonObject representation = request.getJson();
 
@@ -72,6 +75,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(representation.getString("requestExpirationDate"), is("2017-07-30"));
     assertThat(representation.getString("holdShelfExpirationDate"), is("2017-08-31"));
     assertThat(representation.getString("status"), is("Open - Not yet filled"));
+    assertThat(representation.getString("pickupServicePointId"), is(pickupServicePointId.toString()));
 
     assertThat("has information taken from item",
       representation.containsKey("item"), is(true));
