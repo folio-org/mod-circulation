@@ -1,5 +1,6 @@
 ## 12.1.0 Unreleased
 
+* Requires version 2.0 or 3.0 of `locations` (CIRC-143)
 * Requires version 5.3 or 6.0 of `item-storage` (CIRC-141)
 * Requires version 4.0 or 5.0 of `instance-storage` (CIRC-141)
 * Requires version 1.3 or 2.0 of `holdings-storage` (CIRC-141)
