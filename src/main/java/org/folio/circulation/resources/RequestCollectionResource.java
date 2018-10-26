@@ -104,18 +104,6 @@ public class RequestCollectionResource extends CollectionResource {
     final RequestRepresentation requestRepresentation = new RequestRepresentation();
 
     String id = routingContext.request().getParam("id");
-
-    /*
-    requestRepository.getRequestCount(id).thenApply(res -> {
-      Integer requestCount = res.value();
-      requestRepository.getById(id)
-      .thenApply(r -> r.map(requestRepresentation::extendedRepresentation))
-      .thenApply(r -> { return HttpResult.succeeded(r.value().put("requestCount", requestCount));})
-      .thenApply(OkJsonHttpResult::from)
-      .thenAccept(result -> result.writeTo(routingContext.response()));
-      return res; 
-    });
-    */
         
     requestRepository.getById(id)
       .thenApply(r -> r.map(requestRepresentation::extendedRepresentation))

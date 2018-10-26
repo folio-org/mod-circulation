@@ -129,7 +129,6 @@ public class RequestRepository {
   private CompletableFuture<HttpResult<Request>> fetchRequest(String id) {
     return new SingleRecordFetcher<>(requestsStorageClient, "request", Request::from)
       .fetch(id);
-        //.thenComposeAsync(this::fetchLoan);
   }
 
   //TODO: May need to fetch updated representation of request

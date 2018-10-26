@@ -38,13 +38,16 @@ public class RequestsAPIRetrievalTests extends APITests {
     ExecutionException,
     TimeoutException {
 
-    //UUID requestId = UUID.randomUUID();
     UUID requestId = UUID.fromString("d9960d24-8862-4178-be2c-c1a574188a92"); //to track in logs
     UUID loanId = UUID.fromString("61d74730-5cdb-4675-ab88-1828ee1ad248");
+    UUID pickupLocationServicePointId = UUID.randomUUID();
 
     UUID itemId = UUID.fromString("60c50f1b-7d6c-4b59-863a-a4da213d9530");
+    String enumeration = "DUMMY_ENUMERATION";
     
-    itemsFixture.basedUponSmallAngryPlanet(itemBuilder -> itemBuilder.withId(itemId));
+    itemsFixture.basedUponSmallAngryPlanet(itemBuilder -> itemBuilder
+        .withId(itemId)
+        .withEnumeration(enumeration));
 
     final IndividualResource sponsor = usersFixture.rebecca();
     final IndividualResource proxy = usersFixture.steve();
@@ -90,7 +93,6 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(representation.containsKey("loan"), is(true));
     assertThat(representation.containsKey("proxy"), is(true));
    
-
     assertThat("has information taken from item",
       representation.containsKey("item"), is(true));
 
@@ -101,6 +103,9 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat("barcode is taken from item",
       representation.getJsonObject("item").getString("barcode"),
       is("036000291452"));
+    
+    assertThat(representation.getJsonObject("item").getString("enumeration"),
+        is(enumeration));
 
     assertThat("has information taken from requesting user",
       representation.containsKey("requester"), is(true));
