@@ -29,6 +29,8 @@ import api.support.builders.UserBuilder;
 import api.support.http.InterfaceUrls;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class RequestsAPIRetrievalTests extends APITests {
   @Test
@@ -40,7 +42,8 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     UUID requestId = UUID.fromString("d9960d24-8862-4178-be2c-c1a574188a92"); //to track in logs
     UUID loanId = UUID.fromString("61d74730-5cdb-4675-ab88-1828ee1ad248");
-    UUID pickupLocationServicePointId = UUID.randomUUID();
+    UUID pickupServicePointId = UUID.randomUUID();
+    String itemStatus = "DUMMY_STATUS";
 
     UUID itemId = UUID.fromString("60c50f1b-7d6c-4b59-863a-a4da213d9530");
     String enumeration = "DUMMY_ENUMERATION";
@@ -67,7 +70,8 @@ public class RequestsAPIRetrievalTests extends APITests {
       .withUserProxyId(proxy.getId())
       .fulfilToHoldShelf()
       .withRequestExpiration(new LocalDate(2017, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
+      .withPickupServicePointId(pickupServicePointId));
 
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
@@ -89,6 +93,8 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
     assertThat(representation.getString("requestExpirationDate"), is("2017-07-30"));
     assertThat(representation.getString("holdShelfExpirationDate"), is("2017-08-31"));
+    assertThat(representation.getString("pickupServicePointId"),
+        is(pickupServicePointId.toString()));
     assertThat(representation.getString("status"), is("Open - Not yet filled"));
     assertThat(representation.containsKey("loan"), is(true));
     assertThat(representation.containsKey("proxy"), is(true));
@@ -106,6 +112,9 @@ public class RequestsAPIRetrievalTests extends APITests {
     
     assertThat(representation.getJsonObject("item").getString("enumeration"),
         is(enumeration));
+    
+    assertThat(representation.getJsonObject("item").getString("status"),
+        is(ItemBuilder.CHECKED_OUT));
 
     assertThat("has information taken from requesting user",
       representation.containsKey("requester"), is(true));
