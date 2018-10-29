@@ -1,22 +1,38 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.domain.validation.UserNotFoundValidator;
-import org.folio.circulation.support.*;
-import org.folio.circulation.support.http.client.Response;
+import static org.folio.circulation.support.HttpResult.failed;
+import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
+import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
-import static org.folio.circulation.support.HttpResult.failed;
-import static org.folio.circulation.support.HttpResult.succeeded;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
+import org.folio.circulation.domain.validation.UserNotFoundValidator;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.CqlHelper;
+import org.folio.circulation.support.ForwardOnFailure;
+import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.SingleRecordFetcher;
+import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.http.client.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.vertx.core.json.JsonObject;
 
 public class LoanRepository {
   private final CollectionResourceClient loansStorageClient;
   private final ItemRepository itemRepository;
   private final UserRepository userRepository;
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   public LoanRepository(Clients clients) {
     loansStorageClient = clients.loansStorage();
@@ -72,6 +88,7 @@ public class LoanRepository {
         l -> fetchLoan(l.getId(), loan.getItem(), loan.getUser())));
   }
 
+  //TODO: Extract to separate class rather than repository
   public CompletableFuture<HttpResult<Loan>> findOpenLoanByBarcode(FindByBarcodeQuery query) {
     final UserNotFoundValidator userNotFoundValidator = new UserNotFoundValidator(
       userId -> failure("user is not found", "userId", userId));
@@ -103,6 +120,7 @@ public class LoanRepository {
       .thenApply(r -> r.next(loan -> refuseWhenDifferentUser(loan, query)));
   }
 
+  //TODO: Extract to separate class rather than repository
   public CompletableFuture<HttpResult<Loan>> findOpenLoanById(FindByIdQuery query) {
 
     final UserNotFoundValidator userNotFoundValidator = new UserNotFoundValidator(
@@ -132,6 +150,33 @@ public class LoanRepository {
       .thenComposeAsync(this::fetchUser)
       .thenApply(userNotFoundValidator::refuseWhenUserNotFound)
       .thenApply(r -> r.next(loan -> refuseWhenDifferentUser(loan, query)));
+  }
+
+  /**
+   *
+   * @param request the request to fetch the open loan for the same item for
+   * @return  success with loan if one found,
+   * success with null if the no open loan is found,
+   * failure if more than one open loan for the item found
+   */
+  CompletableFuture<HttpResult<Loan>> findOpenLoanForRequest(Request request) {
+    return findOpenLoans(request.getItemId())
+      .thenApply(loansResult -> loansResult.next(loans -> {
+        //TODO: Consider introducing an unknown loan class, instead of null
+        if (loans.getTotalRecords() == 0) {
+          return HttpResult.succeeded(null);
+        }
+        else if(loans.getTotalRecords() == 1) {
+          final Optional<Loan> firstLoan = loans.getRecords().stream().findFirst();
+
+          return firstLoan
+            .map(loan -> succeeded(Loan.from(loan.asJson(), request.getItem())))
+            .orElse(null);
+        } else {
+          return failed(new ServerErrorFailure(
+            String.format("More than one open loan for item %s", request.getItemId())));
+        }
+      }));
   }
 
   private HttpResult<Loan> refuseWhenDifferentUser(
@@ -189,6 +234,8 @@ public class LoanRepository {
   private HttpResult<MultipleRecords<Loan>> mapResponseToLoans(Response response) {
     return MultipleRecords.from(response, Loan::from, "loans");
   }
+  
+  
 
   private static JsonObject mapToStorageRepresentation(Loan loan, Item item) {
     JsonObject storageLoan = loan.asJson();
@@ -208,16 +255,72 @@ public class LoanRepository {
       .thenApply(r -> r.map(loans -> !loans.getRecords().isEmpty()));
   }
 
-  private CompletableFuture<HttpResult<MultipleRecords<Loan>>> findOpenLoans(Item item) {
+  public CompletableFuture<HttpResult<MultipleRecords<Loan>>> findOpenLoans(Item item) {
     return findOpenLoans(item.getItemId());
   }
 
   private CompletableFuture<HttpResult<MultipleRecords<Loan>>> findOpenLoans(String itemId) {
     final String openLoans = String.format(
       "itemId==%s and status.name==\"%s\"", itemId, "Open");
+    log.info(String.format("Querying open loan with query %s", openLoans));
 
     return CqlHelper.encodeQuery(openLoans).after(query ->
       loansStorageClient.getMany(query, 1, 0)
         .thenApply(this::mapResponseToLoans));
+  }
+
+  public CompletableFuture<HttpResult<MultipleRecords<Request>>> findOpenLoansFor(
+    //TODO: Need to handle multiple open loans for same item (with failure?)
+    MultipleRecords<Request> multipleRequests) {
+
+    //CQL to return a list of loans
+    Collection<Request> requests = multipleRequests.getRecords();
+    List<String> clauses = new ArrayList<>();
+
+    for(Request request : requests) {
+      if(request.getItemId() != null) {
+        String clause = String.format("id==%s", request.getItemId());
+        clauses.add(clause);
+      }
+    }
+
+    if(clauses.isEmpty()) {
+      return CompletableFuture.completedFuture(HttpResult.succeeded(multipleRequests));
+    }
+
+    final String itemClause = String.join(" OR ", clauses);
+    final String openLoansQuery = String.format("status.name==\"Open\" AND (%s)",
+        itemClause);
+
+    log.info(String.format("Querying open loans with query %s", openLoansQuery));
+
+    HttpResult<String> queryResult = CqlHelper.encodeQuery(openLoansQuery);
+    
+    return queryResult.after(query -> loansStorageClient.getMany(query)
+        .thenApply(this::mapResponseToLoans)
+        .thenApply(multipleLoansResult -> multipleLoansResult.next(
+          multipleLoans -> {
+            List<Request> newRequestList = new ArrayList<>();
+            Collection<Loan> loanColl = multipleLoans.getRecords();
+
+            for(Request req : requests) {
+              Request newReq = null;
+              Boolean foundLoan = false;
+              for(Loan loan : loanColl) {
+                if(req.getItemId().equals(loan.getItemId())) {
+                  newReq = req.withLoan(loan);
+                  foundLoan = true;
+                  break;
+                }
+              }
+              if(!foundLoan) {
+                newReq = req;
+              }
+              newRequestList.add(newReq);
+            }
+
+            return HttpResult.succeeded(
+              new MultipleRecords<>(newRequestList, multipleRequests.getTotalRecords()));
+    })));
   }
 }

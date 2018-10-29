@@ -40,7 +40,7 @@ public abstract class APITests {
     log.error("Request to circulation module failed:", exception));
 
   private final boolean initialiseLoanRules;
-  private final ResourceClient proxyRelationshipsClient = ResourceClient.forProxyRelationships(client);
+  protected final ResourceClient proxyRelationshipsClient = ResourceClient.forProxyRelationships(client);
   protected final ResourceClient usersClient = ResourceClient.forUsers(client);
   protected final ResourceClient itemsClient = ResourceClient.forItems(client);
   protected final ResourceClient requestsClient = ResourceClient.forRequests(client);

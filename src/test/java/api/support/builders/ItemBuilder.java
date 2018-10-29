@@ -19,10 +19,11 @@ public class ItemBuilder extends JsonBuilder implements Builder {
   private final UUID temporaryLocationId;
   private final UUID permanentLoanTypeId;
   private final UUID temporaryLoanTypeId;
+  private String enumeration;
 
   public ItemBuilder() {
     this(UUID.randomUUID(), null, "565578437802", AVAILABLE,
-      null, null, null, null, null);
+      null, null, null, null, null, null);
   }
 
   private ItemBuilder(
@@ -34,7 +35,8 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     UUID temporaryLocationId,
     UUID materialTypeId,
     UUID permanentLoanTypeId,
-    UUID temporaryLoanTypeId) {
+    UUID temporaryLoanTypeId,
+    String enumeration) {
 
     this.id = id;
     this.holdingId = holdingId;
@@ -45,6 +47,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     this.permanentLocationId = permanentLocationId;
     this.temporaryLoanTypeId = temporaryLoanTypeId;
     this.permanentLoanTypeId = permanentLoanTypeId;
+    this.enumeration = enumeration;
   }
 
   public JsonObject create() {
@@ -59,6 +62,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     put(itemRequest, "permanentLocationId", permanentLocationId);
     put(itemRequest, "temporaryLocationId", temporaryLocationId);
     put(itemRequest, "status", status, new JsonObject().put("name", status));
+    put(itemRequest, "enumeration", enumeration);
 
     return itemRequest;
   }
@@ -81,7 +85,8 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.temporaryLocationId,
       this.materialTypeId,
       this.permanentLoanTypeId,
-      this.temporaryLoanTypeId);
+      this.temporaryLoanTypeId,
+      this.enumeration);
   }
 
   public ItemBuilder withBarcode(String barcode) {
@@ -94,7 +99,8 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.temporaryLocationId,
       this.materialTypeId,
       this.permanentLoanTypeId,
-      this.temporaryLoanTypeId);
+      this.temporaryLoanTypeId,
+      this.enumeration);
   }
 
   public ItemBuilder withNoBarcode() {
@@ -111,7 +117,8 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.temporaryLocationId,
       this.materialTypeId,
       this.permanentLoanTypeId,
-      this.temporaryLoanTypeId);
+      this.temporaryLoanTypeId,
+      this.enumeration);
   }
 
   public ItemBuilder withNoPermanentLocation() {
@@ -128,7 +135,8 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       locationId,
       this.materialTypeId,
       this.permanentLoanTypeId,
-      this.temporaryLoanTypeId);
+      this.temporaryLoanTypeId,
+      this.enumeration);
   }
 
   public ItemBuilder withNoTemporaryLocation() {
@@ -145,7 +153,8 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.temporaryLocationId,
       this.materialTypeId,
       this.permanentLoanTypeId,
-      this.temporaryLoanTypeId);
+      this.temporaryLoanTypeId,
+      this.enumeration);
   }
 
   public ItemBuilder withMaterialType(UUID materialTypeId) {
@@ -158,7 +167,8 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.temporaryLocationId,
       materialTypeId,
       this.permanentLoanTypeId,
-      this.temporaryLoanTypeId);
+      this.temporaryLoanTypeId,
+      this.enumeration);
   }
 
   public ItemBuilder withPermanentLoanType(UUID loanTypeId) {
@@ -171,7 +181,8 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.temporaryLocationId,
       this.materialTypeId,
       loanTypeId,
-      this.temporaryLoanTypeId);
+      this.temporaryLoanTypeId,
+      this.enumeration);
   }
 
   public ItemBuilder withTemporaryLoanType(UUID loanTypeId) {
@@ -184,6 +195,35 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.temporaryLocationId,
       this.materialTypeId,
       this.permanentLoanTypeId,
-      loanTypeId);
+      loanTypeId,
+      this.enumeration);
+  }
+  
+  public ItemBuilder withId(UUID id) {
+    return new ItemBuilder(
+      id,
+      this.holdingId,
+      this.barcode,
+      this.status,
+      this.permanentLocationId,
+      this.temporaryLocationId,
+      this.materialTypeId,
+      this.permanentLoanTypeId,
+      this.temporaryLoanTypeId,
+      this.enumeration);
+  }
+  
+  public ItemBuilder withEnumeration(String enumeration) {
+    return new ItemBuilder(
+      id,
+      this.holdingId,
+      this.barcode,
+      this.status,
+      this.permanentLocationId,
+      this.temporaryLocationId,
+      this.materialTypeId,
+      this.permanentLoanTypeId,
+      this.temporaryLoanTypeId,
+      enumeration);
   }
 }

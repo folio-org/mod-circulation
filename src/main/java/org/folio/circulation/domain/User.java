@@ -1,5 +1,6 @@
 package org.folio.circulation.domain;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
@@ -69,6 +70,20 @@ public class User {
 
   public String getMiddleName() {
     return getNestedStringProperty(representation, PERSONAL_PROPERTY_NAME, "middleName");
+  }
+  
+  public JsonObject getAddressByType(String type) {
+    JsonObject personal =representation.getJsonObject(PERSONAL_PROPERTY_NAME);
+    if(personal == null) { return null; }
+    JsonArray addresses = personal.getJsonArray("addresses");
+    if(addresses == null) { return null; }
+    for(Object ob : addresses) {
+      JsonObject address = (JsonObject)ob;
+      if(address.getString("type").equals(type)) {
+        return address;
+      }
+    }
+    return null;
   }
 
   public JsonObject createUserSummary() {
