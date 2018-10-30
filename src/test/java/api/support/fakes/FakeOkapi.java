@@ -171,7 +171,8 @@ public class FakeOkapi extends AbstractVerticle {
         "code",
         "institutionId",
         "campusId",
-        "libraryId")
+        "libraryId",
+        "primaryServicePoint")
       .create()
       .register(router);
 
