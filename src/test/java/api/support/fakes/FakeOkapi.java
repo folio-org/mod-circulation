@@ -183,6 +183,15 @@ public class FakeOkapi extends AbstractVerticle {
         .withChangeMetadata()
         .create()
         .register(router);
+    
+    new FakeStorageModuleBuilder()
+        .withRecordName("servicePoint")
+        .withCollectionPropertyName("servicepoints")
+        .withRootPath("/service-points")
+        .withRequiredProperties("name", "code", "discoveryDisplayName")
+        .withChangeMetadata()
+        .create()
+        .register(router);
 
     server.requestHandler(router::accept)
       .listen(PORT_TO_USE, result -> {

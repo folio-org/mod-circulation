@@ -42,7 +42,7 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     UUID requestId = UUID.fromString("d9960d24-8862-4178-be2c-c1a574188a92"); //to track in logs
     UUID loanId = UUID.fromString("61d74730-5cdb-4675-ab88-1828ee1ad248");
-    UUID pickupServicePointId = UUID.randomUUID();
+    
     String itemStatus = "DUMMY_STATUS";
 
     UUID itemId = UUID.fromString("60c50f1b-7d6c-4b59-863a-a4da213d9530");
@@ -54,6 +54,8 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     final IndividualResource sponsor = usersFixture.rebecca();
     final IndividualResource proxy = usersFixture.steve();
+    final IndividualResource cd1 = servicePointsFixture.cd1();
+    UUID pickupServicePointId = cd1.getId();
 
     usersFixture.nonExpiringProxyFor(sponsor, proxy);
 
