@@ -4,6 +4,7 @@ import static org.folio.circulation.support.HttpResult.succeeded;
 
 import java.util.function.Function;
 
+import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ValidationErrorFailure;
@@ -21,8 +22,7 @@ public class ServicePointOfCheckoutPresentValidator {
     HttpResult<LoanAndRelatedRecords> result) {
 
     return result.failWhen(
-				records -> succeeded(records.getLoan().getCheckoutServicePointId() == null
-						|| "".equals(records.getLoan().getCheckoutServicePointId())),
+        records -> succeeded(StringUtils.isEmpty(records.getLoan().getCheckoutServicePointId())),
 				r -> servicePointOfCheckoutPresentFuntion.apply("A Service Point must be specified."));
   }
 }
