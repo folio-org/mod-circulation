@@ -24,6 +24,6 @@ public class ServicePointExistsValidator {
     return result.failWhen(
 				records -> succeeded(false),
 				r -> servicePointAccessFunction
-						.apply("So service point found by with the id:" + r.getLoan().getCheckoutServicePointId()));
+            .apply("User cannot access Service Point:" + r.getLoan().getCheckoutServicePointId()));
   }
 }
