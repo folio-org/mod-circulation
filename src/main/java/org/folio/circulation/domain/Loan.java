@@ -125,7 +125,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
 	public HttpResult<Void> closedLoanHasCheckInServicePointId() {
-		if (Objects.equals(getStatus(), "Closed") && getCheckinServicePointId() == null) {
+    if (isClosed() && getCheckinServicePointId() == null) {
 			return failed(ValidationErrorFailure.failure("Closed loan must have a Checkin Service Point",
 					CHECKIN_SERVICE_POINT_ID, getCheckinServicePointId()));
 		} else {
