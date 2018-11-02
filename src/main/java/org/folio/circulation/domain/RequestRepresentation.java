@@ -165,9 +165,13 @@ public class RequestRepresentation {
         ? request.getJsonObject("pickupServicePoint")
         : new JsonObject();
     spSummary.put("name", servicePoint.getName());
-    spSummary.put("id", servicePoint.getId());
     spSummary.put("code", servicePoint.getCode());
     spSummary.put("discoveryDisplayName", servicePoint.getDiscoveryDisplayName());
+    spSummary.put("description", servicePoint.getDescription());
+    spSummary.put("shelvingLagTime", servicePoint.getShelvingLagTime());
+    spSummary.put("pickupLocation", servicePoint.getPickupLocation());
+    //change the pickupServicePoint value to be a name, not an id
+    
     
     request.put("pickupServicePoint", spSummary);
   }

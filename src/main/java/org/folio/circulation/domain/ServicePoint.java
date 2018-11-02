@@ -8,6 +8,8 @@ package org.folio.circulation.domain;
 import io.vertx.core.json.JsonObject;
 
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
 
 /**
  *
@@ -38,5 +40,17 @@ public class ServicePoint {
   
   public String getDiscoveryDisplayName() {
     return getProperty(representation, "discoveryDisplayName");
+  }
+  
+  public String getDescription() {
+    return getProperty(representation, "description");
+  }
+  
+  public Integer getShelvingLagTime() {
+    return getIntegerProperty(representation, "shelvingLagTime", null);
+  }
+  
+  public Boolean getPickupLocation() {
+    return getBooleanProperty(representation, "pickupLocation");
   }
 }

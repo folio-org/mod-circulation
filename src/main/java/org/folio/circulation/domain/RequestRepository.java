@@ -213,13 +213,16 @@ public class RequestRepository {
   }
   
   private CompletableFuture<HttpResult<Request>> fetchPickupServicePoint(HttpResult<Request> result) {
-    return result.combineAfter(request -> 
-    { return servicePointRepository.getServicePointById(request.getPickupServicePointId()); },
+    return result.combineAfter(request -> getServicePoint(request.getPickupServicePointId()),
         Request::withPickupServicePoint);
   }
 
   private CompletableFuture<HttpResult<User>> getUser(String proxyUserId) {
     return userRepository.getUser(proxyUserId);
+  }
+  
+  private CompletableFuture<HttpResult<ServicePoint>> getServicePoint(String servicePointId) {
+    return servicePointRepository.getServicePointById(servicePointId);
   }
   
 }

@@ -99,6 +99,13 @@
               "readonly": true
             }
           }
+        },
+        "contributorNames": {
+          "description": "A list of contributor names",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "additionalProperties": false
@@ -183,6 +190,34 @@
       "description": "The ID of the Service Point where this request can be picked up",
       "type": "string",
       "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+    },
+    "pickupServicePoint": {
+      "properties": {
+        "name": {
+          "description": "Unique name for the service point",
+          "type": "string"
+        },
+        "code": {
+          "description": "Unique code for the service point",
+          "type": "string"
+        },
+        "discoveryDisplayName": {
+          "description": "Human-readable name for the service point",
+          "type": "string"
+        },
+        "description": {
+          "description": "Description of the service point",
+          "type": "string"
+        },
+        "shelvingLagTime": {
+          "description": "Shelving lag time",
+          "type": "integer"
+        },
+        "pickupLocation": {
+          "description": "Is this service point a pickup location?",
+          "type": "boolean"
+        }
+      }
     },
     "metadata": {
       "description": "Metadata about creation and changes to requests, provided by the server (client should not provide)",
