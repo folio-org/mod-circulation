@@ -169,9 +169,7 @@ public class RequestRepresentation {
     spSummary.put("discoveryDisplayName", servicePoint.getDiscoveryDisplayName());
     spSummary.put("description", servicePoint.getDescription());
     spSummary.put("shelvingLagTime", servicePoint.getShelvingLagTime());
-    spSummary.put("pickupLocation", servicePoint.getPickupLocation());
-    //change the pickupServicePoint value to be a name, not an id
-    
+    spSummary.put("pickupLocation", servicePoint.getPickupLocation());    
     
     request.put("pickupServicePoint", spSummary);
   }
