@@ -234,7 +234,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 	}
 
 	public void setCheckinServicePointId(String servicePointCheckin) {
-		this.checkinServicePointId = servicePointCheckin.toString();
+		this.checkinServicePointId = servicePointCheckin;
 	}
 
 	public String getCheckinServicePointId() {
