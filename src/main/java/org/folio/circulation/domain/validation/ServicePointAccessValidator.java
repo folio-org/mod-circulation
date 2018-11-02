@@ -9,12 +9,12 @@ import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ValidationErrorFailure;
 
 public class ServicePointAccessValidator {
-	private final Function<String, ValidationErrorFailure> ServicePointAccessFunction;
+  private final Function<String, ValidationErrorFailure> servicePointAccessFunction;
 
   public ServicePointAccessValidator(
 			Function<String, ValidationErrorFailure> servicePointAccessOutErrorFunction) {
 
-		this.ServicePointAccessFunction = servicePointAccessOutErrorFunction;
+    this.servicePointAccessFunction = servicePointAccessOutErrorFunction;
   }
 
 	public HttpResult<LoanAndRelatedRecords> refuseWhenUserCannotAccessServicePoint(
@@ -23,6 +23,6 @@ public class ServicePointAccessValidator {
 		// TODO check user permissions (CIRC-150)
     return result.failWhen(
 				records -> succeeded(false),
-				r -> ServicePointAccessFunction.apply("User must have access to the Service Point of Last Action."));
+        r -> servicePointAccessFunction.apply("User must have access to the Service Point of Last Action."));
   }
 }

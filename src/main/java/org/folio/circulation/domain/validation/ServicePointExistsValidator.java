@@ -9,12 +9,12 @@ import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ValidationErrorFailure;
 
 public class ServicePointExistsValidator {
-	private final Function<String, ValidationErrorFailure> ServicePointAccessFunction;
+	private final Function<String, ValidationErrorFailure> servicePointAccessFunction;
 
   public ServicePointExistsValidator(
 			Function<String, ValidationErrorFailure> servicePointAccessOutErrorFunction) {
 
-		this.ServicePointAccessFunction = servicePointAccessOutErrorFunction;
+		this.servicePointAccessFunction = servicePointAccessOutErrorFunction;
   }
 
 	public HttpResult<LoanAndRelatedRecords> refuseWhenUserCannotAccessServicePoint(
@@ -23,7 +23,7 @@ public class ServicePointExistsValidator {
 		// TODO check if service point exists (CIRC-150)
     return result.failWhen(
 				records -> succeeded(false),
-				r -> ServicePointAccessFunction
+				r -> servicePointAccessFunction
 						.apply("So service point found by with the id:" + r.getLoan().getCheckoutServicePointId()));
   }
 }
