@@ -18,7 +18,7 @@ public class ServicePointOfCheckoutPresentValidator {
     this.servicePointOfCheckoutPresentFuntion = servicePointOfCheckoutPresentErrorFunction;
   }
 
-	public HttpResult<LoanAndRelatedRecords> refuseServicePointOfCheckoutIsNotPresent(
+	public HttpResult<LoanAndRelatedRecords> refuseCheckOutWhenServicePointIsNotPresent(
     HttpResult<LoanAndRelatedRecords> result) {
 
     return result.failWhen(
