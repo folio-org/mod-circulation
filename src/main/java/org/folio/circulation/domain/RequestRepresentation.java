@@ -157,9 +157,10 @@ public class RequestRepresentation {
   private static void addAdditionalServicePointProperties(JsonObject request, ServicePoint servicePoint) {
     if(servicePoint == null) {
       log.info(String.format("Unable to add servicepoint properties to request %s,"
-          + " servicepoint is null"), request.getString("id"));
+          + " servicepoint is null", request.getString("id")));
       return;
     }
+
     JsonObject spSummary = request.containsKey("pickupServicePoint")
         ? request.getJsonObject("pickupServicePoint")
         : new JsonObject();
