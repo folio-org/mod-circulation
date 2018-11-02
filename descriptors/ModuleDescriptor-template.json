@@ -463,6 +463,10 @@
     {
       "id": "fixed-due-date-schedules-storage",
       "version": "2.0"
+    },
+    {
+      "id": "service-points",
+      "version": "3.0"
     }
   ],
   "permissionSets": [
