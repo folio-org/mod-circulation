@@ -26,27 +26,16 @@ public class LoanBuilder extends JsonBuilder implements Builder {
   private final DateTime dueDate;
   private final UUID proxyUserId;
   private final DateTime systemReturnDate;
-	private final String checkoutServicePointId = UUID.randomUUID().toString();
-	private final String checkinServicePointId = UUID.randomUUID().toString();
-
+  private final String checkoutServicePointId = UUID.randomUUID().toString();
+  private final String checkinServicePointId = UUID.randomUUID().toString();
 
   public LoanBuilder() {
-    this(UUID.randomUUID(), UUID.randomUUID(), APITestSuite.userId(),
-      new DateTime(2017, 3, 6, 16, 4, 43), null, "Open", null, null,
-      "checkedout", null);
+    this(UUID.randomUUID(), UUID.randomUUID(), APITestSuite.userId(), new DateTime(2017, 3, 6, 16, 4, 43), null, "Open",
+        null, null, "checkedout", null);
   }
 
-  private LoanBuilder(
-    UUID id,
-    UUID itemId,
-    UUID userId,
-    DateTime loanDate,
-    DateTime dueDate,
-    String status,
-    DateTime returnDate,
-    DateTime systemReturnDate,
-    String action,
-    UUID proxyUserId) {
+  private LoanBuilder(UUID id, UUID itemId, UUID userId, DateTime loanDate, DateTime dueDate, String status,
+      DateTime returnDate, DateTime systemReturnDate, String action, UUID proxyUserId) {
 
     this.id = id;
     this.itemId = itemId;
@@ -63,7 +52,7 @@ public class LoanBuilder extends JsonBuilder implements Builder {
   public JsonObject create() {
     JsonObject loanRequest = new JsonObject();
 
-    if(id != null) {
+    if (id != null) {
       put(loanRequest, "id", id);
     }
 
@@ -76,10 +65,10 @@ public class LoanBuilder extends JsonBuilder implements Builder {
     put(loanRequest, "proxyUserId", proxyUserId);
     put(loanRequest, "action", action);
     put(loanRequest, "dueDate", dueDate);
-		put(loanRequest, "checkoutOutServicePointId", checkoutServicePointId);
-		put(loanRequest, "checkinServicePointId", checkinServicePointId);
+    put(loanRequest, "checkoutServicePointId", checkoutServicePointId);
+    put(loanRequest, "checkinServicePointId", checkinServicePointId);
 
-    if(Objects.equals(status, CLOSED_LOAN_STATUS)) {
+    if (Objects.equals(status, CLOSED_LOAN_STATUS)) {
       put(loanRequest, "returnDate", returnDate);
       put(loanRequest, "systemReturnDate", systemReturnDate);
     }
@@ -98,15 +87,13 @@ public class LoanBuilder extends JsonBuilder implements Builder {
   }
 
   public LoanBuilder withLoanDate(DateTime loanDate) {
-    return new LoanBuilder(this.id, this.itemId, this.userId,
-      loanDate, this.dueDate, this.status, this.returnDate,
-      this.systemReturnDate, this.action,this.proxyUserId);
+    return new LoanBuilder(this.id, this.itemId, this.userId, loanDate, this.dueDate, this.status, this.returnDate,
+        this.systemReturnDate, this.action, this.proxyUserId);
   }
 
   public LoanBuilder withUserId(UUID userId) {
-    return new LoanBuilder(this.id, this.itemId, userId,
-      this.loanDate, this.dueDate, this.status, this.returnDate,
-      this.systemReturnDate, this.action, this.proxyUserId);
+    return new LoanBuilder(this.id, this.itemId, userId, this.loanDate, this.dueDate, this.status, this.returnDate,
+        this.systemReturnDate, this.action, this.proxyUserId);
   }
 
   public LoanBuilder withNoUserId() {
@@ -114,24 +101,21 @@ public class LoanBuilder extends JsonBuilder implements Builder {
   }
 
   public LoanBuilder withStatus(String status) {
-    DateTime defaultedReturnDate = this.returnDate != null
-      ? this.returnDate
-      : this.loanDate.plusDays(1).plusHours(4);
+    DateTime defaultedReturnDate = this.returnDate != null ? this.returnDate : this.loanDate.plusDays(1).plusHours(4);
 
     String action = null;
 
-    switch(status) {
-      case OPEN_LOAN_STATUS:
-        action = "checkedout";
-        break;
-      case CLOSED_LOAN_STATUS:
-        action = "checkedin";
-        break;
+    switch (status) {
+    case OPEN_LOAN_STATUS:
+      action = "checkedout";
+      break;
+    case CLOSED_LOAN_STATUS:
+      action = "checkedin";
+      break;
     }
 
-    return new LoanBuilder(this.id, this.itemId, this.userId,
-      this.loanDate, this.dueDate, status, defaultedReturnDate,
-      this.systemReturnDate, action, this.proxyUserId);
+    return new LoanBuilder(this.id, this.itemId, this.userId, this.loanDate, this.dueDate, status, defaultedReturnDate,
+        this.systemReturnDate, action, this.proxyUserId);
   }
 
   public LoanBuilder open() {
@@ -143,70 +127,53 @@ public class LoanBuilder extends JsonBuilder implements Builder {
   }
 
   public LoanBuilder withNoStatus() {
-    return new LoanBuilder(
-      this.id,
-      this.itemId,
-      this.userId,
-      this.loanDate,
-      this.dueDate,
-      null,
-      this.returnDate,
-      this.systemReturnDate,
-      null,
-      this.proxyUserId);
+    return new LoanBuilder(this.id, this.itemId, this.userId, this.loanDate, this.dueDate, null, this.returnDate,
+        this.systemReturnDate, null, this.proxyUserId);
   }
 
   public LoanBuilder withId(UUID id) {
-    return new LoanBuilder(id, this.itemId, this.userId,
-      this.loanDate, this.dueDate, this.status, this.returnDate,
-      this.systemReturnDate, this.action, this.proxyUserId);
+    return new LoanBuilder(id, this.itemId, this.userId, this.loanDate, this.dueDate, this.status, this.returnDate,
+        this.systemReturnDate, this.action, this.proxyUserId);
   }
 
   public LoanBuilder withItemId(UUID itemId) {
-    return new LoanBuilder(this.id, itemId, this.userId,
-      this.loanDate, this.dueDate, this.status, this.returnDate,
-      this.systemReturnDate, this.action, this.proxyUserId);
+    return new LoanBuilder(this.id, itemId, this.userId, this.loanDate, this.dueDate, this.status, this.returnDate,
+        this.systemReturnDate, this.action, this.proxyUserId);
   }
 
   public LoanBuilder withReturnDate(DateTime returnDate) {
-    return new LoanBuilder(this.id, this.itemId, this.userId,
-      this.loanDate, this.dueDate, this.status, returnDate,
-      this.systemReturnDate, this.action, this.proxyUserId);
+    return new LoanBuilder(this.id, this.itemId, this.userId, this.loanDate, this.dueDate, this.status, returnDate,
+        this.systemReturnDate, this.action, this.proxyUserId);
   }
 
   public LoanBuilder withSystemReturnDate(DateTime systemReturnDate) {
-    return new LoanBuilder(this.id, this.itemId, this.userId,
-      this.loanDate, this.dueDate, this.status, this.returnDate,
-      systemReturnDate, this.action, this.proxyUserId);
+    return new LoanBuilder(this.id, this.itemId, this.userId, this.loanDate, this.dueDate, this.status, this.returnDate,
+        systemReturnDate, this.action, this.proxyUserId);
   }
 
   public LoanBuilder withItem(IndividualResource item) {
-    return new LoanBuilder(this.id, item.getId(), this.userId,
-      this.loanDate, this.dueDate, this.status, this.returnDate,
-      this.systemReturnDate, this.action, this.proxyUserId);
+    return new LoanBuilder(this.id, item.getId(), this.userId, this.loanDate, this.dueDate, this.status,
+        this.returnDate, this.systemReturnDate, this.action, this.proxyUserId);
   }
 
   public LoanBuilder withDueDate(DateTime dueDate) {
-    return new LoanBuilder(this.id, this.itemId, this.userId,
-      this.loanDate, dueDate, this.status, this.returnDate,
-      this.systemReturnDate, this.action, this.proxyUserId);
+    return new LoanBuilder(this.id, this.itemId, this.userId, this.loanDate, dueDate, this.status, this.returnDate,
+        this.systemReturnDate, this.action, this.proxyUserId);
   }
 
-	public LoanBuilder withServicePoint(String servicePointID) {
-		return new LoanBuilder(this.id, this.itemId, this.userId, this.loanDate, dueDate, this.status, this.returnDate,
-				this.systemReturnDate, this.action, this.proxyUserId);
-	}
+  public LoanBuilder withServicePoint(String servicePointID) {
+    return new LoanBuilder(this.id, this.itemId, this.userId, this.loanDate, dueDate, this.status, this.returnDate,
+        this.systemReturnDate, this.action, this.proxyUserId);
+  }
 
   public LoanBuilder withProxyUserId(UUID proxyUserId) {
-    return new LoanBuilder(this.id, this.itemId, this.userId,
-      this.loanDate, dueDate, this.status, this.returnDate,
-      this.systemReturnDate, this.action, proxyUserId);
+    return new LoanBuilder(this.id, this.itemId, this.userId, this.loanDate, dueDate, this.status, this.returnDate,
+        this.systemReturnDate, this.action, proxyUserId);
   }
 
   public LoanBuilder dueIn(Period period) {
-    if(this.loanDate == null) {
-      throw new IllegalStateException(
-        "Cannot use period to specify due when no loan date specified");
+    if (this.loanDate == null) {
+      throw new IllegalStateException("Cannot use period to specify due when no loan date specified");
     }
 
     DateTime calculatedDueDate = this.loanDate.plus(period);
