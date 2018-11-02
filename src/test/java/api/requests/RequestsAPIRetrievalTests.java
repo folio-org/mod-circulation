@@ -100,7 +100,11 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(representation.getString("status"), is("Open - Not yet filled"));
     assertThat(representation.containsKey("loan"), is(true));
     assertThat(representation.containsKey("proxy"), is(true));
-   
+    assertThat(representation.containsKey("pickupServicePoint"), is(true));
+    assertThat(representation.getJsonObject("pickupServicePoint").getString("name"),
+        is(cd1.getJson().getString("name")));
+    assertThat(representation.getJsonObject("pickupServicePoint").getString("code"),
+        is(cd1.getJson().getString("code")));
     assertThat("has information taken from item",
       representation.containsKey("item"), is(true));
 
