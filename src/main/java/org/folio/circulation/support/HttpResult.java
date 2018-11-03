@@ -1,11 +1,11 @@
 package org.folio.circulation.support;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
-
-import static java.util.concurrent.CompletableFuture.completedFuture;
 
 public interface HttpResult<T> {
 
@@ -245,12 +245,26 @@ public interface HttpResult<T> {
     return action.apply(value());
   }
 
+  /**
+   * Map the value of a result to a new value
+   *
+   * Responds with a new result with the outcome of applying the map to the current value
+   * unless current result is failed or the mapping fails e.g. throws an exception
+   *
+   * @param map function to apply to value of result
+   * @return success when result succeeded and map is applied successfully, failure otherwise
+   */
   default <U> HttpResult<U> map(Function<T, U> map) {
     if(failed()) {
       return failed(cause());
     }
     else {
-      return HttpResult.succeeded(map.apply(value()));
+      try {
+        return succeeded(map.apply(value()));
+      }
+      catch (Exception e) {
+        return failed(new ServerErrorFailure(e));
+      }
     }
   }
 
