@@ -271,13 +271,12 @@ public interface HttpResult<T> {
     if(failed()) {
       return failed(cause());
     }
-    else {
-      try {
-        return succeeded(map.apply(value()));
-      }
-      catch (Exception e) {
-        return failed(new ServerErrorFailure(e));
-      }
+    
+    try {
+      return succeeded(map.apply(value()));
+    }
+    catch (Exception e) {
+      return failed(new ServerErrorFailure(e));
     }
   }
 
