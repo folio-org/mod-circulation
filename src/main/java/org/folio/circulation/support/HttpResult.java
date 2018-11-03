@@ -268,16 +268,7 @@ public interface HttpResult<T> {
    * @return success when result succeeded and map is applied successfully, failure otherwise
    */
   default <U> HttpResult<U> map(Function<T, U> map) {
-    if(failed()) {
-      return failed(cause());
-    }
-    
-    try {
-      return succeeded(map.apply(value()));
-    }
-    catch (Exception e) {
-      return failed(new ServerErrorFailure(e));
-    }
+    return next(value -> succeeded(map.apply(value)));
   }
 
   default T orElse(T other) {
