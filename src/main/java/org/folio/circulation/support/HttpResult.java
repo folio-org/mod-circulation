@@ -234,7 +234,11 @@ public interface HttpResult<T> {
       return completedFuture(failed(cause()));
     }
 
-    return action.apply(value());
+    try {
+      return action.apply(value());
+    } catch (Exception e) {
+      return completedFuture(failed(new ServerErrorFailure(e)));
+    }
   }
 
   /**
