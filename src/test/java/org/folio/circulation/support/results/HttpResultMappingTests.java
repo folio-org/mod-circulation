@@ -1,5 +1,6 @@
 package org.folio.circulation.support.results;
 
+import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
@@ -22,25 +23,24 @@ public class HttpResultMappingTests {
 
   @Test
   public void shouldFailWhenAlreadyFailed() {
-    final HttpResult<Integer> mappedResult = failedResult()
+    final HttpResult<Integer> result = failedResult()
       .map(value -> value + 10);
 
-    assertThat(mappedResult.failed(), is(true));
-    assertThat(mappedResult.cause(), instanceOf(ServerErrorFailure.class));
+    assertThat(result.failed(), is(true));
+    assertThat(result.cause(), instanceOf(ServerErrorFailure.class));
   }
 
   @Test
   public void shouldFailWhenExceptionThrownDuringMapping() {
-    final HttpResult<Integer> mappedResult = succeeded(10)
+    final HttpResult<Integer> result = succeeded(10)
       .map(value -> { throw exampleException(); });
 
-    assertThat(mappedResult.failed(), is(true));
-    assertThat(mappedResult.cause(), instanceOf(ServerErrorFailure.class));
+    assertThat(result.failed(), is(true));
+    assertThat(result.cause(), instanceOf(ServerErrorFailure.class));
   }
 
   private WritableHttpResult<Integer> failedResult() {
-    return HttpResult.failed(new ServerErrorFailure(
-      exampleException()));
+    return failed(new ServerErrorFailure(exampleException()));
   }
 
   private RuntimeException exampleException() {

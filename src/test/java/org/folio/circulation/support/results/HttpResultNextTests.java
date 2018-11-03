@@ -14,29 +14,29 @@ import org.junit.Test;
 public class HttpResultNextTests {
   @Test
   public void shouldSucceedWhenNextStepIsSuccessful() {
-    final HttpResult<Integer> nextResult = succeeded(10)
+    final HttpResult<Integer> result = succeeded(10)
       .next(value -> succeeded(value + 10));
 
-    assertThat(nextResult.succeeded(), is(true));
-    assertThat(nextResult.value(), is(20));
+    assertThat(result.succeeded(), is(true));
+    assertThat(result.value(), is(20));
   }
 
   @Test
   public void shouldFailWhenAlreadyFailed() {
-    final HttpResult<Integer> nextResult = failedResult()
+    final HttpResult<Integer> result = failedResult()
       .next(value -> succeeded(value + 10));
 
-    assertThat(nextResult.failed(), is(true));
-    assertThat(nextResult.cause(), instanceOf(ServerErrorFailure.class));
+    assertThat(result.failed(), is(true));
+    assertThat(result.cause(), instanceOf(ServerErrorFailure.class));
   }
 
   @Test
   public void shouldFailWhenExceptionThrownDuringNextStep() {
-    final HttpResult<Integer> nextResult = succeeded(10)
+    final HttpResult<Integer> result = succeeded(10)
       .next(value -> { throw exampleException(); });
 
-    assertThat(nextResult.failed(), is(true));
-    assertThat(nextResult.cause(), instanceOf(ServerErrorFailure.class));
+    assertThat(result.failed(), is(true));
+    assertThat(result.cause(), instanceOf(ServerErrorFailure.class));
   }
 
   private WritableHttpResult<Integer> failedResult() {
