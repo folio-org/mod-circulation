@@ -139,9 +139,9 @@ public interface HttpResult<T> {
     Function<T, HttpResult<T>> whenFalse) {
 
     return next(value ->
-      condition.apply(value).next(result -> result
-          ? whenTrue.apply(value)
-          : whenFalse.apply(value)));
+      when(condition.apply(value),
+        () -> whenTrue.apply(value),
+        () -> whenFalse.apply(value)));
   }
 
   /**
@@ -162,10 +162,9 @@ public interface HttpResult<T> {
     Supplier<HttpResult<R>> whenTrue,
     Supplier<HttpResult<R>> whenFalse) {
 
-    return
-      condition.next(result -> result
-        ? whenTrue.get()
-        : whenFalse.get());
+    return condition.next(result -> result
+      ? whenTrue.get()
+      : whenFalse.get());
   }
 
   /**
