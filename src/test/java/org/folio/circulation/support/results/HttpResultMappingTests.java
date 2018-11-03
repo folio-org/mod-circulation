@@ -25,7 +25,7 @@ public class HttpResultMappingTests {
     final HttpResult<Integer> mappedResult = failedResult()
       .map(value -> value + 10);
 
-    assertThat(mappedResult.succeeded(), is(false));
+    assertThat(mappedResult.failed(), is(true));
     assertThat(mappedResult.cause(), instanceOf(ServerErrorFailure.class));
   }
 

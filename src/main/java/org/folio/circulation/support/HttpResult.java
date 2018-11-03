@@ -237,12 +237,25 @@ public interface HttpResult<T> {
     return action.apply(value());
   }
 
+  /**
+   * Apply the next action to the value of the result
+   *
+   * Responds with the result of applying the next action to the current value
+   * unless current result is failed or the application of action fails e.g. throws an exception
+   *
+   * @param action action to take after this result
+   * @return success when result succeeded and action is applied successfully, failure otherwise
+   */
   default <R> HttpResult<R> next(Function<T, HttpResult<R>> action) {
     if(failed()) {
       return failed(cause());
     }
 
-    return action.apply(value());
+    try {
+      return action.apply(value());
+    } catch (Exception e) {
+      return failed(new ServerErrorFailure(e));
+    }
   }
 
   /**
