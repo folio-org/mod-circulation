@@ -1,12 +1,14 @@
-package org.folio.circulation.support;
-
-import org.junit.Test;
+package org.folio.circulation.support.results;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-public class HttpResultTests {
+import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.ServerErrorFailure;
+import org.junit.Test;
+
+public class HttpResultInitialisationTests {
   @Test
   public void shouldSucceedWhenInitialValue() {
     final HttpResult<Integer> result = HttpResult.of(() -> 10);
