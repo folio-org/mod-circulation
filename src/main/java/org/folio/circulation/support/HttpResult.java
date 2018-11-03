@@ -62,8 +62,8 @@ public interface HttpResult<T> {
    * or successful result with the values combined
    */
   default <U, V> CompletableFuture<HttpResult<V>> combineAfter(
-    Function<T, CompletableFuture<HttpResult<U>>> nextAction, BiFunction<
-    T, U, V> combiner) {
+    Function<T, CompletableFuture<HttpResult<U>>> nextAction,
+    BiFunction<T, U, V> combiner) {
 
     return this.after(nextAction)
       .thenApply(actionResult -> actionResult.map(r ->
