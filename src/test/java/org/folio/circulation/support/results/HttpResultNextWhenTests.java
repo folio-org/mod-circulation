@@ -5,6 +5,7 @@ import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.results.ResultExamples.alreadyFailed;
 import static org.folio.circulation.support.results.ResultExamples.conditionFailed;
 import static org.folio.circulation.support.results.ResultExamples.shouldNotExecute;
+import static org.folio.circulation.support.results.ResultExamples.somethingWentWrong;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
@@ -52,5 +53,25 @@ public class HttpResultNextWhenTests {
         value -> succeeded(value + 10));
 
     assertThat(result, isErrorFailureContaining("Condition failed"));
+  }
+
+  @Test
+  public void shouldFailWhenTrueActionFailed() {
+    final HttpResult<Integer> result = succeeded(10)
+      .nextWhen(value -> succeeded(true),
+        value -> {throw somethingWentWrong(); },
+        value -> shouldNotExecute());
+
+    assertThat(result, isErrorFailureContaining("Something went wrong"));
+  }
+
+  @Test
+  public void shouldFailWhenFalseActionFailed() {
+    final HttpResult<Integer> result = succeeded(10)
+      .nextWhen(value -> succeeded(false),
+        value -> shouldNotExecute(),
+        value -> {throw somethingWentWrong(); });
+
+    assertThat(result, isErrorFailureContaining("Something went wrong"));
   }
 }
