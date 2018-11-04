@@ -1,14 +1,14 @@
 package org.folio.circulation.support.results;
 
 import static api.support.matchers.FailureMatcher.isErrorFailureContaining;
-import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.results.ResultExamples.alreadyFailed;
+import static org.folio.circulation.support.results.ResultExamples.conditionFailed;
+import static org.folio.circulation.support.results.ResultExamples.shouldNotExecute;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.ServerErrorFailure;
-import org.folio.circulation.support.WritableHttpResult;
 import org.junit.Test;
 
 public class HttpResultNextWhenTests {
@@ -17,7 +17,7 @@ public class HttpResultNextWhenTests {
     final HttpResult<Integer> result = succeeded(10)
       .nextWhen(value -> succeeded(true),
         value -> succeeded(value + 10),
-        value -> { throw exampleException("Should not execute"); });
+        value -> shouldNotExecute());
 
     assertThat(result.succeeded(), is(true));
     assertThat(result.value(), is(20));
@@ -27,7 +27,7 @@ public class HttpResultNextWhenTests {
   public void shouldApplyWhenFalseActionWhenConditionIsFalse() {
     final HttpResult<Integer> result = succeeded(10)
       .nextWhen(value -> succeeded(false),
-        value -> { throw exampleException("Should not execute"); },
+        value -> shouldNotExecute(),
         value -> succeeded(value + 10));
 
     assertThat(result.succeeded(), is(true));
@@ -38,8 +38,8 @@ public class HttpResultNextWhenTests {
   public void shouldFailWhenAlreadyFailed() {
     final HttpResult<Integer> result = alreadyFailed()
       .nextWhen(value -> succeeded(true),
-        value -> succeeded(value + 10),
-        value -> succeeded(value + 10));
+        value -> shouldNotExecute(),
+        value -> shouldNotExecute());
 
     assertThat(result, isErrorFailureContaining("Already failed"));
   }
@@ -47,22 +47,10 @@ public class HttpResultNextWhenTests {
   @Test
   public void shouldFailWhenConditionFailed() {
     final HttpResult<Integer> result = succeeded(10)
-      .nextWhen(value -> failed(exampleFailure("Condition failed")),
+      .nextWhen(value -> conditionFailed(),
         value -> succeeded(value + 10),
         value -> succeeded(value + 10));
 
     assertThat(result, isErrorFailureContaining("Condition failed"));
-  }
-
-  private WritableHttpResult<Integer> alreadyFailed() {
-    return failed(exampleFailure("Already failed"));
-  }
-
-  private ServerErrorFailure exampleFailure(String message) {
-    return new ServerErrorFailure(exampleException(message));
-  }
-
-  private RuntimeException exampleException(String message) {
-    return new RuntimeException(message);
   }
 }

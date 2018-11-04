@@ -1,6 +1,7 @@
 package org.folio.circulation.support.results;
 
 import static api.support.matchers.FailureMatcher.isErrorFailureContaining;
+import static org.folio.circulation.support.results.ResultExamples.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
@@ -19,7 +20,7 @@ public class HttpResultInitialisationTests {
   @Test
   public void shouldFailWhenExceptionThrownForInitialValue() {
     final HttpResult<String> result = HttpResult.of(() -> {
-      throw new RuntimeException("Initialisation failed");
+      throw exampleException("Initialisation failed");
     });
 
     assertThat(result, isErrorFailureContaining("Initialisation failed"));
