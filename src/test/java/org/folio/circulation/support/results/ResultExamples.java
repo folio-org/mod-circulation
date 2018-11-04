@@ -23,7 +23,7 @@ class ResultExamples {
     return new RuntimeException(message);
   }
 
-  private static ServerErrorFailure exampleFailure(String message) {
+  static ServerErrorFailure exampleFailure(String message) {
     return new ServerErrorFailure(exampleException(message));
   }
 

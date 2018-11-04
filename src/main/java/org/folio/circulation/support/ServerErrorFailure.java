@@ -1,8 +1,9 @@
 package org.folio.circulation.support;
 
-import io.vertx.core.http.HttpServerResponse;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.folio.circulation.support.http.server.ServerErrorResponse;
+
+import io.vertx.core.http.HttpServerResponse;
 
 public class ServerErrorFailure implements HttpFailure {
   public final String reason;
