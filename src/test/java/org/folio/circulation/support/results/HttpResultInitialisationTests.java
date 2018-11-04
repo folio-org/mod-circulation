@@ -1,11 +1,10 @@
 package org.folio.circulation.support.results;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
+import static api.support.matchers.FailureMatcher.isErrorFailureContaining;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.ServerErrorFailure;
 import org.junit.Test;
 
 public class HttpResultInitialisationTests {
@@ -20,10 +19,9 @@ public class HttpResultInitialisationTests {
   @Test
   public void shouldFailWhenExceptionThrownForInitialValue() {
     final HttpResult<String> result = HttpResult.of(() -> {
-      throw new RuntimeException("Something went wrong");
+      throw new RuntimeException("Initialisation failed");
     });
 
-    assertThat(result.failed(), is(true));
-    assertThat(result.cause(), instanceOf(ServerErrorFailure.class));
+    assertThat(result, isErrorFailureContaining("Initialisation failed"));
   }
 }

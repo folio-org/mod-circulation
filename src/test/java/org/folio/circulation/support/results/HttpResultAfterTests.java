@@ -1,9 +1,9 @@
 package org.folio.circulation.support.results;
 
+import static api.support.matchers.FailureMatcher.isErrorFailureContaining;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
-import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
@@ -37,8 +37,7 @@ public class HttpResultAfterTests {
       .after(value -> completedFuture(succeeded(value + 10)))
       .get();
 
-    assertThat(result.failed(), is(true));
-    assertThat(result.cause(), instanceOf(ServerErrorFailure.class));
+    assertThat(result, isErrorFailureContaining("Something went wrong"));
   }
 
   @Test
@@ -50,8 +49,7 @@ public class HttpResultAfterTests {
       .<Integer>after(value -> { throw exampleException(); })
       .get();
 
-    assertThat(result.failed(), is(true));
-    assertThat(result.cause(), instanceOf(ServerErrorFailure.class));
+    assertThat(result, isErrorFailureContaining("Something went wrong"));
   }
 
   private WritableHttpResult<Integer> failedResult() {

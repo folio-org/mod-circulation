@@ -1,8 +1,8 @@
 package org.folio.circulation.support.results;
 
+import static api.support.matchers.FailureMatcher.isErrorFailureContaining;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
-import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
@@ -26,8 +26,7 @@ public class HttpResultMappingTests {
     final HttpResult<Integer> result = failedResult()
       .map(value -> value + 10);
 
-    assertThat(result.failed(), is(true));
-    assertThat(result.cause(), instanceOf(ServerErrorFailure.class));
+    assertThat(result, isErrorFailureContaining("Something went wrong"));
   }
 
   @Test
@@ -35,8 +34,7 @@ public class HttpResultMappingTests {
     final HttpResult<Integer> result = succeeded(10)
       .map(value -> { throw exampleException(); });
 
-    assertThat(result.failed(), is(true));
-    assertThat(result.cause(), instanceOf(ServerErrorFailure.class));
+    assertThat(result, isErrorFailureContaining("Something went wrong"));
   }
 
   private WritableHttpResult<Integer> failedResult() {
