@@ -25,6 +25,19 @@ public interface HttpResult<T> {
   }
 
   /**
+   * Creates a completed future with successful result with the supplied value
+   * unless an exception is thrown
+   *
+   * @param supplier of the result value
+   * @return completed future with successful result or failed result with error
+   */
+  static <T> CompletableFuture<HttpResult<T>> ofAsync(
+    ThrowingSupplier<T, Exception> supplier) {
+
+    return completedFuture(of(supplier));
+  }
+
+  /**
    * Combines two results together, if both succeed.
    * Otherwise, returns either failure, first result takes precedence
    *
@@ -173,27 +186,6 @@ public interface HttpResult<T> {
 
     return nextWhen(condition,
       value -> failed(failure.apply(value)),
-      HttpResult::succeeded);
-  }
-
-  /**
-   * Fail a result when a condition evaluates to true
-   *
-   * Responds with the result of the failure function when condition evaluates to true
-   * Responds with success of the prior result when condition evaluates to false
-   * Executes neither if the condition evaluation fails
-   * Forwards on failure if previous result failed
-   *
-   * @param condition on which to decide upon
-   * @param failure executed to create failure reason when condition evaluates to true
-   * @return success when condition is false, failure otherwise
-   */
-  default HttpResult<T> failWhen(
-    HttpResult<Boolean> condition,
-    HttpFailure failure) {
-
-    return nextWhen(v -> condition,
-      value -> failed(failure),
       HttpResult::succeeded);
   }
 
