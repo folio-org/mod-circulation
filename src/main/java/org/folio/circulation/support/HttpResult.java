@@ -39,16 +39,9 @@ public interface HttpResult<T> {
     HttpResult<U> secondResult,
     BiFunction<T, U, V> combiner) {
 
-    if(firstResult.failed()) {
-      return failed(firstResult.cause());
-    }
-    else if(secondResult.failed()) {
-      return failed(secondResult.cause());
-    }
-    else {
-      return succeeded(combiner.apply(firstResult.value(),
-        secondResult.value()));
-    }
+    return firstResult.next(firstValue ->
+      secondResult.map(secondValue ->
+        combiner.apply(firstValue, secondValue)));
   }
 
   /**
@@ -65,9 +58,8 @@ public interface HttpResult<T> {
     Function<T, CompletableFuture<HttpResult<U>>> nextAction,
     BiFunction<T, U, V> combiner) {
 
-    return this.after(nextAction)
-      .thenApply(actionResult -> actionResult.map(r ->
-        combiner.apply(value(), r)));
+    return after(nextAction)
+      .thenApply(actionResult -> combine(this, actionResult, combiner));
   }
 
   /**
@@ -78,25 +70,21 @@ public interface HttpResult<T> {
    * Executes neither if the condition evaluation fails
    * Forwards on failure if previous result failed
    *
-   * @param condition on which to branch upon
+   * @param conditionFunction on which to branch upon
    * @param whenTrue executed when condition evaluates to true
    * @param whenFalse executed when condition evaluates to false
    * @return Result of whenTrue or whenFalse, unless previous result failed
    */
   default CompletableFuture<HttpResult<T>> afterWhen(
-    Function<T, CompletableFuture<HttpResult<Boolean>>> condition,
+    Function<T, CompletableFuture<HttpResult<Boolean>>> conditionFunction,
     Function<T, CompletableFuture<HttpResult<T>>> whenTrue,
     Function<T, CompletableFuture<HttpResult<T>>> whenFalse) {
 
     return after(value ->
-      condition.apply(value)
-        .thenCompose(r -> r.after(conditionResult -> {
-          if (conditionResult) {
-            return whenTrue.apply(value);
-          } else {
-            return whenFalse.apply(value);
-          }
-        })));
+      conditionFunction.apply(value)
+        .thenComposeAsync(r -> r.after(condition -> condition
+          ? whenTrue.apply(value)
+          : whenFalse.apply(value))));
   }
 
   /**
