@@ -964,7 +964,7 @@ public class LoanAPITests extends APITests {
 
     Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat(putResponse.getJson(), hasErrorWith(hasMessage("Closed loan must have a Checkin Service Point")));
+    assertThat(putResponse.getJson(), hasErrorWith(hasMessage("A Closed loan must have a Checkin Service Point")));
 
   }
 
