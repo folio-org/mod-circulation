@@ -1,20 +1,8 @@
 package api.requests;
 
-import io.vertx.core.json.JsonObject;
-import api.support.APITests;
-import api.support.builders.ItemBuilder;
-import api.support.builders.RequestBuilder;
-import api.support.builders.UserBuilder;
-import api.support.http.InterfaceUrls;
-import api.support.http.ResourceClient;
-import org.folio.circulation.support.JsonArrayHelper;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDate;
-import org.junit.Test;
+import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -25,7 +13,22 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import org.folio.circulation.support.JsonArrayHelper;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
+import org.junit.Test;
+
+import api.support.APITests;
+import api.support.builders.ItemBuilder;
+import api.support.builders.RequestBuilder;
+import api.support.builders.UserBuilder;
+import api.support.http.InterfaceUrls;
+import api.support.http.ResourceClient;
+import io.vertx.core.json.JsonObject;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -37,32 +40,42 @@ public class RequestsAPIRetrievalTests extends APITests {
     ExecutionException,
     TimeoutException {
 
-    UUID id = UUID.randomUUID();
+    UUID requestId = UUID.fromString("d9960d24-8862-4178-be2c-c1a574188a92"); //to track in logs
+    UUID loanId = UUID.fromString("61d74730-5cdb-4675-ab88-1828ee1ad248");
+    UUID pickupServicePointId = UUID.randomUUID();
+    String itemStatus = "DUMMY_STATUS";
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    UUID itemId = UUID.fromString("60c50f1b-7d6c-4b59-863a-a4da213d9530");
+    String enumeration = "DUMMY_ENUMERATION";
+    
+    itemsFixture.basedUponSmallAngryPlanet(itemBuilder -> itemBuilder
+        .withId(itemId)
+        .withEnumeration(enumeration));
 
-    loansFixture.checkOutItem(itemId);
+    final IndividualResource sponsor = usersFixture.rebecca();
+    final IndividualResource proxy = usersFixture.steve();
 
-    UUID requesterId = usersClient.create(new UserBuilder()
-      .withName("Jones", "Steven")
-      .withBarcode("564376549214"))
-      .getId();
+    usersFixture.nonExpiringProxyFor(sponsor, proxy);
+
+    loansFixture.checkOutItem(itemId, loanId);
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
     requestsClient.create(new RequestBuilder()
       .recall()
-      .withId(id)
+      .withId(requestId)
       .withRequestDate(requestDate)
       .withItemId(itemId)
-      .withRequesterId(requesterId)
+      .withRequesterId(sponsor.getId())
+      .withUserProxyId(proxy.getId())
       .fulfilToHoldShelf()
       .withRequestExpiration(new LocalDate(2017, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
+      .withPickupServicePointId(pickupServicePointId));
 
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
-    client.get(InterfaceUrls.requestsUrl(String.format("/%s", id)),
+    client.get(InterfaceUrls.requestsUrl(String.format("/%s", requestId)),
       ResponseHandler.any(getCompleted));
 
     Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
@@ -72,16 +85,20 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     JsonObject representation = getResponse.getJson();
 
-    assertThat(representation.getString("id"), is(id.toString()));
+    assertThat(representation.getString("id"), is(requestId.toString()));
     assertThat(representation.getString("requestType"), is("Recall"));
     assertThat(representation.getString("requestDate"), isEquivalentTo(requestDate));
     assertThat(representation.getString("itemId"), is(itemId.toString()));
-    assertThat(representation.getString("requesterId"), is(requesterId.toString()));
+    assertThat(representation.getString("requesterId"), is(sponsor.getId().toString()));
     assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
     assertThat(representation.getString("requestExpirationDate"), is("2017-07-30"));
     assertThat(representation.getString("holdShelfExpirationDate"), is("2017-08-31"));
+    assertThat(representation.getString("pickupServicePointId"),
+        is(pickupServicePointId.toString()));
     assertThat(representation.getString("status"), is("Open - Not yet filled"));
-
+    assertThat(representation.containsKey("loan"), is(true));
+    assertThat(representation.containsKey("proxy"), is(true));
+   
     assertThat("has information taken from item",
       representation.containsKey("item"), is(true));
 
@@ -92,17 +109,23 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat("barcode is taken from item",
       representation.getJsonObject("item").getString("barcode"),
       is("036000291452"));
+    
+    assertThat(representation.getJsonObject("item").getString("enumeration"),
+        is(enumeration));
+    
+    assertThat(representation.getJsonObject("item").getString("status"),
+        is(ItemBuilder.CHECKED_OUT));
 
     assertThat("has information taken from requesting user",
       representation.containsKey("requester"), is(true));
 
     assertThat("last name is taken from requesting user",
       representation.getJsonObject("requester").getString("lastName"),
-      is("Jones"));
+      is("Stuart"));
 
     assertThat("first name is taken from requesting user",
       representation.getJsonObject("requester").getString("firstName"),
-      is("Steven"));
+      is("Rebecca"));
 
     assertThat("middle name is not taken from requesting user",
       representation.getJsonObject("requester").containsKey("middleName"),
@@ -110,7 +133,7 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     assertThat("barcode is taken from requesting user",
       representation.getJsonObject("requester").getString("barcode"),
-      is("564376549214"));
+      is("6059539205"));
   }
 
   @Test

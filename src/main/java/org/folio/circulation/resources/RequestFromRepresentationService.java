@@ -17,14 +17,17 @@ class RequestFromRepresentationService {
   private final ItemRepository itemRepository;
   private final RequestQueueRepository requestQueueRepository;
   private final UserRepository userRepository;
+  private final LoanRepository loanRepository;
   private final ProxyRelationshipValidator proxyRelationshipValidator;
 
   RequestFromRepresentationService(
     ItemRepository itemRepository,
     RequestQueueRepository requestQueueRepository,
     UserRepository userRepository,
+    LoanRepository loanRepository,
     ProxyRelationshipValidator proxyRelationshipValidator) {
 
+    this.loanRepository = loanRepository;
     this.itemRepository = itemRepository;
     this.requestQueueRepository = requestQueueRepository;
     this.userRepository = userRepository;
@@ -38,6 +41,7 @@ class RequestFromRepresentationService {
       .thenApply(r -> r.next(this::validateStatus))
       .thenApply(r -> r.map(this::removeRelatedRecordInformation))
       .thenApply(r -> r.map(Request::from))
+      //.thenComposeAsync(r -> r.combineAfter(loanRepository::findOpenLoanById, Request::withLoan))
       .thenComposeAsync(r -> r.combineAfter(itemRepository::fetchFor, Request::withItem))
       .thenComposeAsync(r -> r.combineAfter(userRepository::getUser, Request::withRequester))
       .thenComposeAsync(r -> r.combineAfter(userRepository::getProxyUser, Request::withProxy))

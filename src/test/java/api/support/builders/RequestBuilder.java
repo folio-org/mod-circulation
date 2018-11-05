@@ -34,6 +34,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
   private final String cancellationAdditionalInformation;
   private final DateTime cancelledDate;
   private final Integer position;
+  private final UUID pickupServicePointId;
 
   public RequestBuilder() {
     this(UUID.randomUUID(),
@@ -42,6 +43,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       UUID.randomUUID(),
       UUID.randomUUID(),
       "Hold Shelf",
+      null,
       null,
       null,
       null,
@@ -74,7 +76,8 @@ public class RequestBuilder extends JsonBuilder implements Builder {
     UUID cancelledByUserId,
     String cancellationAdditionalInformation,
     DateTime cancelledDate,
-    Integer position) {
+    Integer position,
+    UUID pickupServicePointId) {
 
     this.id = id;
     this.requestType = requestType;
@@ -94,6 +97,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
     this.cancellationAdditionalInformation = cancellationAdditionalInformation;
     this.cancelledDate = cancelledDate;
     this.position = position;
+    this.pickupServicePointId = pickupServicePointId;
   }
 
   public static RequestBuilder from(IndividualResource response) {
@@ -117,7 +121,8 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       getUUIDProperty(representation, "cancelledByUserId"),
       getProperty(representation, "cancellationAdditionalInformation"),
       getDateTimeProperty(representation, "cancelledDate"),
-      getIntegerProperty(representation, "position", null));
+      getIntegerProperty(representation, "position", null),
+      getUUIDProperty(representation, "pickupServicePointId"));
   }
 
   @Override
@@ -140,6 +145,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
     put(request, "cancelledByUserId", cancelledByUserId);
     put(request, "cancellationAdditionalInformation", cancellationAdditionalInformation);
     put(request, "cancelledDate", cancelledDate);
+    put(request, "pickupServicePointId", this.pickupServicePointId);
 
     if(itemSummary != null) {
       final JsonObject itemRepresentation = new JsonObject();
@@ -183,7 +189,8 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.cancelledByUserId,
       this.cancellationAdditionalInformation,
       this.cancelledDate,
-      this.position);
+      this.position,
+      this.pickupServicePointId);
   }
 
   public RequestBuilder withRequestDate(DateTime requestDate) {
@@ -205,7 +212,8 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.cancelledByUserId,
       this.cancellationAdditionalInformation,
       this.cancelledDate,
-      this.position);
+      this.position,
+      this.pickupServicePointId);
   }
 
   public RequestBuilder withRequestType(String requestType) {
@@ -227,7 +235,8 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.cancelledByUserId,
       this.cancellationAdditionalInformation,
       this.cancelledDate,
-      this.position);
+      this.position,
+      this.pickupServicePointId);
   }
 
   public RequestBuilder hold() {
@@ -261,7 +270,8 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.cancelledByUserId,
       this.cancellationAdditionalInformation,
       this.cancelledDate,
-      this.position);
+      this.position,
+      this.pickupServicePointId);
   }
 
   public RequestBuilder forItem(IndividualResource item) {
@@ -287,7 +297,8 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.cancelledByUserId,
       this.cancellationAdditionalInformation,
       this.cancelledDate,
-      this.position);
+      this.position,
+      this.pickupServicePointId);
   }
 
   public RequestBuilder by(IndividualResource requester) {
@@ -322,7 +333,8 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.cancelledByUserId,
       this.cancellationAdditionalInformation,
       this.cancelledDate,
-      this.position);
+      this.position,
+      this.pickupServicePointId);
   }
 
   public RequestBuilder fulfilToHoldShelf() {
@@ -349,7 +361,8 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.cancelledByUserId,
       this.cancellationAdditionalInformation,
       this.cancelledDate,
-      this.position);
+      this.position,
+      this.pickupServicePointId);
   }
 
   public RequestBuilder withHoldShelfExpiration(LocalDate holdShelfExpiration) {
@@ -371,7 +384,8 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.cancelledByUserId,
       this.cancellationAdditionalInformation,
       this.cancelledDate,
-      this.position);
+      this.position,
+      this.pickupServicePointId);
   }
 
   public RequestBuilder withDeliveryAddressType(UUID deliverAddressType) {
@@ -393,7 +407,8 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.cancelledByUserId,
       this.cancellationAdditionalInformation,
       this.cancelledDate,
-      this.position);
+      this.position,
+      this.pickupServicePointId);
   }
 
   public RequestBuilder withStatus(String status) {
@@ -415,7 +430,8 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.cancelledByUserId,
       this.cancellationAdditionalInformation,
       this.cancelledDate,
-      this.position);
+      this.position,
+      this.pickupServicePointId);
   }
 
   public RequestBuilder open() {
@@ -453,7 +469,8 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.cancelledByUserId,
       this.cancellationAdditionalInformation,
       this.cancelledDate,
-      this.position);
+      this.position,
+      this.pickupServicePointId);
   }
 
   public RequestBuilder withCancellationReasonId(UUID cancellationReasonId) {
@@ -475,7 +492,8 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.cancelledByUserId,
       this.cancellationAdditionalInformation,
       this.cancelledDate,
-      this.position);
+      this.position,
+      this.pickupServicePointId);
   }
 
   public RequestBuilder withCancelledByUserId(UUID cancelledByUserId) {
@@ -497,7 +515,8 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       cancelledByUserId,
       this.cancellationAdditionalInformation,
       this.cancelledDate,
-      this.position);
+      this.position,
+      this.pickupServicePointId);
   }
 
   public RequestBuilder withCancellationAdditionalInformation(
@@ -521,7 +540,8 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.cancelledByUserId,
       cancellationAdditionalInformation,
       this.cancelledDate,
-      this.position);
+      this.position,
+      this.pickupServicePointId);
   }
 
   public RequestBuilder withCancelledDate(DateTime cancelledDate) {
@@ -543,7 +563,8 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.cancelledByUserId,
       this.cancellationAdditionalInformation,
       cancelledDate,
-      this.position);
+      this.position,
+      this.pickupServicePointId);
   }
 
   public RequestBuilder proxiedBy(IndividualResource proxy) {
@@ -569,7 +590,31 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.cancelledByUserId,
       this.cancellationAdditionalInformation,
       this.cancelledDate,
-      newPosition);
+      newPosition,
+      this.pickupServicePointId);
+  }
+  
+  public RequestBuilder withPickupServicePointId(UUID newPickupServicePointId) {
+    return new RequestBuilder(
+      this.id,
+      this.requestType,
+      this.requestDate,
+      this.itemId,
+      this.requesterId,
+      this.fulfilmentPreference,
+      this.deliveryAddressTypeId,
+      this.requestExpirationDate,
+      this.holdShelfExpirationDate,
+      this.itemSummary,
+      this.requesterSummary,
+      this.status,
+      this.proxyUserId,
+      this.cancellationReasonId,
+      this.cancelledByUserId,
+      this.cancellationAdditionalInformation,
+      this.cancelledDate,
+      this.position,
+      newPickupServicePointId);
   }
 
   private class ItemSummary {

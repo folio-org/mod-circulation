@@ -64,15 +64,25 @@ public class LoansFixture {
       .withDueDate(loanDate.plusWeeks(3)));
   }
 
-  public IndividualResource checkOutItem(UUID itemId)
+  public IndividualResource checkOutItem(UUID itemId, UUID loanId)
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
     TimeoutException {
 
     return loansClient.create(new LoanBuilder()
+      .withId(loanId)
       .open()
       .withItemId(itemId));
+  }
+  
+  public IndividualResource checkOutItem(UUID itemId)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+    
+    return checkOutItem(itemId, UUID.randomUUID());
   }
 
   public void renewLoan(UUID loanId)

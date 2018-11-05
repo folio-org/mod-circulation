@@ -29,6 +29,7 @@ public class RequestCollectionResource extends CollectionResource {
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final RequestRepository requestRepository = RequestRepository.using(clients);
     final UserRepository userRepository = new UserRepository(clients);
+    final LoanRepository loanRepository = new LoanRepository(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateLoanActionHistory updateLoanActionHistory = new UpdateLoanActionHistory(clients);
 
@@ -41,8 +42,8 @@ public class RequestCollectionResource extends CollectionResource {
     final RequestRepresentation requestRepresentation = new RequestRepresentation();
 
     final RequestFromRepresentationService requestFromRepresentationService
-      = new RequestFromRepresentationService(itemRepository,
-      requestQueueRepository, userRepository, proxyRelationshipValidator);
+      = new RequestFromRepresentationService(itemRepository, requestQueueRepository, 
+          userRepository, loanRepository, proxyRelationshipValidator);
 
     requestFromRepresentationService.getRequestFrom(representation)
       .thenComposeAsync(r -> r.after(createRequestService::createRequest))
@@ -62,6 +63,7 @@ public class RequestCollectionResource extends CollectionResource {
     final ItemRepository itemRepository = new ItemRepository(clients, false, false);
     final UserRepository userRepository = new UserRepository(clients);
     final RequestRepository requestRepository = RequestRepository.using(clients);
+    final LoanRepository loanRepository = new LoanRepository(clients);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final UpdateRequestQueue updateRequestQueue = UpdateRequestQueue.using(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
@@ -84,7 +86,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final RequestFromRepresentationService requestFromRepresentationService
       = new RequestFromRepresentationService(itemRepository,
-        requestQueueRepository, userRepository, proxyRelationshipValidator);
+        requestQueueRepository, userRepository, loanRepository, proxyRelationshipValidator);
 
     requestFromRepresentationService.getRequestFrom(representation)
       .thenComposeAsync(r -> r.afterWhen(requestRepository::exists,
@@ -102,7 +104,7 @@ public class RequestCollectionResource extends CollectionResource {
     final RequestRepresentation requestRepresentation = new RequestRepresentation();
 
     String id = routingContext.request().getParam("id");
-
+        
     requestRepository.getById(id)
       .thenApply(r -> r.map(requestRepresentation::extendedRepresentation))
       .thenApply(OkJsonHttpResult::from)
