@@ -111,7 +111,8 @@ public class LoansFixture {
     //TODO: Should also have a return date
     JsonObject closedLoan = getResponse.getJson().copy()
       .put("status", new JsonObject().put("name", "Closed"))
-      .put("action", "checkedin");
+      .put("action", "checkedin")
+      .put("checkinServicePointId", UUID.randomUUID().toString());
 
     loansClient.replace(loanId, closedLoan);
   }

@@ -43,21 +43,21 @@ public class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Buil
 
   public CheckOutByBarcodeRequestBuilder forItem(IndividualResource item) {
     return new CheckOutByBarcodeRequestBuilder(getBarcode(item), this.userBarcode, this.proxyBarcode, this.loanDate,
-        null);
+        this.checkoutServicePointId);
   }
 
   public CheckOutByBarcodeRequestBuilder to(IndividualResource loanee) {
     return new CheckOutByBarcodeRequestBuilder(this.itemBarcode, getBarcode(loanee), this.proxyBarcode, this.loanDate,
-        null);
+        this.checkoutServicePointId);
   }
 
   public CheckOutByBarcodeRequestBuilder on(DateTime loanDate) {
-    return new CheckOutByBarcodeRequestBuilder(this.itemBarcode, this.userBarcode, this.proxyBarcode, loanDate, null);
+    return new CheckOutByBarcodeRequestBuilder(this.itemBarcode, this.userBarcode, this.proxyBarcode, loanDate, this.checkoutServicePointId);
   }
 
   public CheckOutByBarcodeRequestBuilder proxiedBy(IndividualResource proxy) {
     return new CheckOutByBarcodeRequestBuilder(this.itemBarcode, this.userBarcode, getBarcode(proxy), this.loanDate,
-        null);
+        this.checkoutServicePointId);
   }
 
   public CheckOutByBarcodeRequestBuilder at(String checkoutServicePointId) {
