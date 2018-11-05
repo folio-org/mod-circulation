@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
@@ -11,10 +6,6 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
 
-/**
- *
- * @author kurt
- */
 public class ServicePoint {
   private final JsonObject representation;
   

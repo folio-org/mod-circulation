@@ -55,7 +55,9 @@ public class RequestsAPIRetrievalTests extends APITests {
     final IndividualResource sponsor = usersFixture.rebecca();
     final IndividualResource proxy = usersFixture.steve();
     final IndividualResource cd1 = servicePointsFixture.cd1();
+    final IndividualResource cd2 = servicePointsFixture.cd2();
     UUID pickupServicePointId = cd1.getId();
+    UUID pickupServicePointId2 = cd2.getId();
 
     usersFixture.nonExpiringProxyFor(sponsor, proxy);
 
@@ -162,22 +164,30 @@ public class RequestsAPIRetrievalTests extends APITests {
     TimeoutException {
 
     UUID requesterId = usersClient.create(new UserBuilder()).getId();
+    final IndividualResource cd1 = servicePointsFixture.cd1();
+    final IndividualResource cd2 = servicePointsFixture.cd2();
+    UUID pickupServicePointId = cd1.getId();
+    UUID pickupServicePointId2 = cd2.getId();
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut).getId())
-      .withRequesterId(requesterId));
+      .withRequesterId(requesterId)
+      .withPickupServicePointId(pickupServicePointId));
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponNod(ItemBuilder::checkOut).getId())
-      .withRequesterId(requesterId));
+      .withRequesterId(requesterId)
+      .withPickupServicePointId(pickupServicePointId2));
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponInterestingTimes(ItemBuilder::checkOut).getId())
-      .withRequesterId(requesterId));
+      .withRequesterId(requesterId)
+      .withPickupServicePointId(pickupServicePointId));
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
-      .withRequesterId(requesterId));
+      .withRequesterId(requesterId)
+      .withPickupServicePointId(pickupServicePointId2));
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponNod(ItemBuilder::checkOut).getId())
@@ -185,11 +195,13 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponUprooted(ItemBuilder::checkOut).getId())
-      .withRequesterId(requesterId));
+      .withRequesterId(requesterId)
+      .withPickupServicePointId(pickupServicePointId));
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
-      .withRequesterId(requesterId));
+      .withRequesterId(requesterId)
+      .withPickupServicePointId(pickupServicePointId2));
 
     CompletableFuture<Response> getFirstPageCompleted = new CompletableFuture<>();
 
@@ -427,6 +439,10 @@ public class RequestsAPIRetrievalTests extends APITests {
     hasProperty("item", request, "request");
     hasProperty("requester", request, "request");
     hasProperty("status", request, "request");
+    hasProperty("pickupServicePointId", request, "request");
+    hasProperty("pickupServicePoint", request, "request");
+    hasProperty("name", request.getJsonObject("pickupServicePoint"),
+        "pickupServicePoint");
   }
 
   private void hasProperty(String property, JsonObject resource, String type) {

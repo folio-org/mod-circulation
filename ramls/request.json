@@ -192,6 +192,7 @@
       "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
     },
     "pickupServicePoint": {
+      "description": "The full object of the Service Point record from pickupServicePointId",
       "properties": {
         "name": {
           "description": "Unique name for the service point",
