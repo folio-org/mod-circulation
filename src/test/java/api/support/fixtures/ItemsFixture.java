@@ -48,6 +48,17 @@ public class ItemsFixture {
       InstanceExamples.basedUponSmallAngryPlanet(),
       ItemExamples.basedUponSmallAngryPlanet());
   }
+  
+   public IndividualResource basedUponSmallAngryPlanetAvailable()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return create(
+      InstanceExamples.basedUponSmallAngryPlanet(),
+      ItemExamples.basedUponSmallAngryPlanetAvailable());
+  }
 
   public IndividualResource basedUponSmallAngryPlanet(
     Function<ItemBuilder, ItemBuilder> additionalItemProperties)
