@@ -147,7 +147,8 @@ public class LoansFixture {
 
     return checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
       .forItem(item)
-      .to(to));
+      .to(to)
+      .at(UUID.randomUUID()));
   }
 
   public IndividualResource checkOutByBarcode(
@@ -158,7 +159,8 @@ public class LoansFixture {
     return checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
       .forItem(item)
       .to(to)
-      .at(loanDate));
+      .on(loanDate)
+      .at(UUID.randomUUID()));
   }
 
   public IndividualResource checkOutByBarcode(CheckOutByBarcodeRequestBuilder builder) {
@@ -176,7 +178,8 @@ public class LoansFixture {
 
     return attemptCheckOutByBarcode(new CheckOutByBarcodeRequestBuilder()
       .forItem(item)
-      .to(to));
+      .to(to)
+      .at(UUID.randomUUID()));
   }
 
   public Response attemptCheckOutByBarcode(CheckOutByBarcodeRequestBuilder builder) {

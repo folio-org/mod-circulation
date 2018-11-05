@@ -1,10 +1,28 @@
 package api.loans;
 
-import api.APITestSuite;
-import api.support.APITests;
-import api.support.builders.*;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
+import static api.support.builders.ItemBuilder.AWAITING_PICKUP;
+import static api.support.builders.ItemBuilder.CHECKED_OUT;
+import static api.support.builders.RequestBuilder.CLOSED_FILLED;
+import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
+import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
+import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
+import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
+import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static java.net.HttpURLConnection.HTTP_OK;
+import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
+
+import java.net.MalformedURLException;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -16,24 +34,16 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.Seconds;
 import org.junit.Test;
 
-import java.net.MalformedURLException;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import static api.support.builders.ItemBuilder.AWAITING_PICKUP;
-import static api.support.builders.ItemBuilder.CHECKED_OUT;
-import static api.support.builders.RequestBuilder.CLOSED_FILLED;
-import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
-import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
-import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
-import static api.support.matchers.ValidationErrorMatchers.*;
-import static java.net.HttpURLConnection.HTTP_OK;
-import static org.hamcrest.CoreMatchers.*;
-import static org.hamcrest.MatcherAssert.assertThat;
+import api.APITestSuite;
+import api.support.APITests;
+import api.support.builders.CheckOutByBarcodeRequestBuilder;
+import api.support.builders.FixedDueDateSchedule;
+import api.support.builders.FixedDueDateSchedulesBuilder;
+import api.support.builders.LoanBuilder;
+import api.support.builders.LoanPolicyBuilder;
+import api.support.builders.UserBuilder;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 public class CheckOutByBarcodeTests extends APITests {
   @Test
@@ -52,7 +62,8 @@ public class CheckOutByBarcodeTests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
       .forItem(smallAngryPlanet)
       .to(steve)
-      .at(loanDate));
+      .on(loanDate)
+      .at(UUID.randomUUID()));
 
     final JsonObject loan = response.getJson();
 
@@ -150,7 +161,8 @@ public class CheckOutByBarcodeTests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
-        .at(loanDate));
+        .on(loanDate)
+        .at(UUID.randomUUID()));
 
     final JsonObject loan = response.getJson();
 
@@ -203,7 +215,8 @@ public class CheckOutByBarcodeTests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
-        .at(loanDate));
+        .on(loanDate)
+        .at(UUID.randomUUID()));
 
     final JsonObject loan = response.getJson();
 
@@ -258,7 +271,8 @@ public class CheckOutByBarcodeTests extends APITests {
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
-        .to(steve));
+        .to(steve)
+        .at(UUID.randomUUID()));
 
     final JsonObject loan = response.getJson();
 
@@ -320,7 +334,8 @@ public class CheckOutByBarcodeTests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(james)
-        .proxiedBy(steve));
+        .proxiedBy(steve)
+        .at(UUID.randomUUID()));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Cannot check out via inactive proxying user"),
@@ -342,7 +357,8 @@ public class CheckOutByBarcodeTests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(jessica)
-        .proxiedBy(james));
+        .proxiedBy(james)
+        .at(UUID.randomUUID()));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Cannot check out item via proxy when relationship is invalid"),
@@ -493,7 +509,8 @@ public class CheckOutByBarcodeTests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
       .forItem(smallAngryPlanet)
       .to(jessica)
-      .proxiedBy(james));
+      .proxiedBy(james)
+      .at(UUID.randomUUID()));
 
     JsonObject loan = response.getJson();
 
@@ -524,10 +541,33 @@ public class CheckOutByBarcodeTests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
-        .at(loanDate));
+        .on(loanDate)
+        .at(UUID.randomUUID()));
 
     assertThat(response.getBody(), is(String.format(
       "Loan policy %s could not be found, please check loan rules", nonExistentloanPolicyId)));
+  }
+  
+  @Test
+  public void cannotCheckOutWhenServicePointOfCheckoutNotPresent()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource james = usersFixture.james();
+    IndividualResource jessica = usersFixture.jessica();
+    
+    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
+
+    final Response response = loansFixture.attemptCheckOutByBarcode(422,
+        new CheckOutByBarcodeRequestBuilder()
+          .forItem(smallAngryPlanet)
+          .to(james)
+          .on(loanDate));
+
+    assertThat(response.getStatusCode(), is(422));
   }
 
   private Matcher<ValidationError> hasUserBarcodeParameter(IndividualResource user) {
