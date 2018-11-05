@@ -191,7 +191,8 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponNod(ItemBuilder::checkOut).getId())
-      .withRequesterId(requesterId));
+      .withRequesterId(requesterId)
+      .withPickupServicePointId(pickupServicePointId));
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponUprooted(ItemBuilder::checkOut).getId())
@@ -238,6 +239,8 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     firstPageRequests.forEach(this::requestHasExpectedProperties);
     secondPageRequests.forEach(this::requestHasExpectedProperties);
+    firstPageRequests.forEach(this::requestHasServicePointProperties);
+    secondPageRequests.forEach(this::requestHasServicePointProperties);
   }
 
   @Test
@@ -439,6 +442,9 @@ public class RequestsAPIRetrievalTests extends APITests {
     hasProperty("item", request, "request");
     hasProperty("requester", request, "request");
     hasProperty("status", request, "request");
+  }
+  
+  private void requestHasServicePointProperties(JsonObject request) {
     hasProperty("pickupServicePointId", request, "request");
     hasProperty("pickupServicePoint", request, "request");
     hasProperty("name", request.getJsonObject("pickupServicePoint"),

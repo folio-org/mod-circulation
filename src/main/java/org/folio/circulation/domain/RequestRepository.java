@@ -51,7 +51,8 @@ public class RequestRepository {
     return requestsStorageClient.getMany(query)
       .thenApply(this::mapResponseToRequests)
       .thenComposeAsync(result -> itemRepository.fetchItemsFor(result, Request::withItem))
-      .thenComposeAsync(result -> result.after(loanRepository::findOpenLoansFor));
+      .thenComposeAsync(result -> result.after(loanRepository::findOpenLoansFor))
+      .thenComposeAsync(result -> result.after(servicePointRepository::findServicePointsForRequests));
   }
 
   //TODO: try to consolidate this further with above
@@ -62,7 +63,9 @@ public class RequestRepository {
     return requestsStorageClient.getMany(query, pageLimit, 0)
       .thenApply(this::mapResponseToRequests)
       .thenComposeAsync(requests ->
-        itemRepository.fetchItemsFor(requests, Request::withItem));
+        itemRepository.fetchItemsFor(requests, Request::withItem))
+          .thenComposeAsync(result -> result.after(loanRepository::findOpenLoansFor))
+          .thenComposeAsync(result -> result.after(servicePointRepository::findServicePointsForRequests));
   }
 
   private HttpResult<MultipleRecords<Request>> mapResponseToRequests(Response response) {

@@ -44,4 +44,8 @@ public class ServicePoint {
   public Boolean getPickupLocation() {
     return getBooleanProperty(representation, "pickupLocation");
   }
+  
+  public static ServicePoint from(JsonObject representation) {
+    return new ServicePoint(representation);
+  }
 }
