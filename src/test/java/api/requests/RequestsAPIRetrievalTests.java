@@ -156,13 +156,14 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(getResponse.getStatusCode(), is(HttpURLConnection.HTTP_NOT_FOUND));
   }
 
+  
   @Test
-  public void canPageAllRequests()
+  public void canGetMultipleRequests()
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
     TimeoutException {
-
+    
     UUID requesterId = usersClient.create(new UserBuilder()).getId();
     final IndividualResource cd1 = servicePointsFixture.cd1();
     final IndividualResource cd2 = servicePointsFixture.cd2();
@@ -203,6 +204,60 @@ public class RequestsAPIRetrievalTests extends APITests {
       .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
       .withRequesterId(requesterId)
       .withPickupServicePointId(pickupServicePointId2));
+    
+    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
+
+    client.get(InterfaceUrls.requestsUrl(), ResponseHandler.any(getCompleted));
+
+    Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
+    
+    assertThat(String.format("Failed to get first page of requests: %s",
+      getResponse.getBody()),
+      getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+    
+    List<JsonObject> requestList = getRequests(getResponse.getJson());
+    
+    requestList.forEach(this::requestHasExpectedProperties);
+    requestList.forEach(this::requestHasServicePointProperties);
+  
+  }
+  
+  @Test
+  public void canPageAllRequests()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    UUID requesterId = usersClient.create(new UserBuilder()).getId();
+    
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut).getId())
+      .withRequesterId(requesterId));
+
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponNod(ItemBuilder::checkOut).getId())
+      .withRequesterId(requesterId));
+
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponInterestingTimes(ItemBuilder::checkOut).getId())
+      .withRequesterId(requesterId));
+
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
+      .withRequesterId(requesterId));
+
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponNod(ItemBuilder::checkOut).getId())
+      .withRequesterId(requesterId));
+
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponUprooted(ItemBuilder::checkOut).getId())
+      .withRequesterId(requesterId));
+
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
+      .withRequesterId(requesterId));
 
     CompletableFuture<Response> getFirstPageCompleted = new CompletableFuture<>();
 
@@ -239,8 +294,6 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     firstPageRequests.forEach(this::requestHasExpectedProperties);
     secondPageRequests.forEach(this::requestHasExpectedProperties);
-    firstPageRequests.forEach(this::requestHasServicePointProperties);
-    secondPageRequests.forEach(this::requestHasServicePointProperties);
   }
 
   @Test

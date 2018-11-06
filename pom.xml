@@ -295,7 +295,8 @@
           <includes>
             <include>api/APITestSuite.class</include>
             <include>org/folio/circulation/**/*</include>
-          </includes>
+		  </includes>
+		  <useSystemClassLoader>false</useSystemClassLoader>
         </configuration>
       </plugin>
       <plugin>
