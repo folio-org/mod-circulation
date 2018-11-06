@@ -58,6 +58,11 @@ public class RequestsAPIRetrievalTests extends APITests {
     final IndividualResource cd2 = servicePointsFixture.cd2();
     UUID pickupServicePointId = cd1.getId();
     UUID pickupServicePointId2 = cd2.getId();
+    
+    assertThat(cd1.getJson().getString("code"), is("cd1"));
+    assertThat(cd2.getJson().getString("code"), is("cd2"));
+    assertThat(cd1.getJson().getBoolean("pickupLocation"), is(Boolean.TRUE));
+     assertThat(cd2.getJson().getBoolean("pickupLocation"), is(Boolean.TRUE));
 
     usersFixture.nonExpiringProxyFor(sponsor, proxy);
 
@@ -107,6 +112,10 @@ public class RequestsAPIRetrievalTests extends APITests {
         is(cd1.getJson().getString("name")));
     assertThat(representation.getJsonObject("pickupServicePoint").getString("code"),
         is(cd1.getJson().getString("code")));
+    assertThat(representation.getJsonObject("pickupServicePoint").getString("discoveryDisplayName"),
+        is(cd1.getJson().getString("discoveryDisplayName")));
+    assertThat(representation.getJsonObject("pickupServicePoint").getBoolean("pickupLocation"),
+        is(cd1.getJson().getBoolean("pickupLocation")));
     assertThat("has information taken from item",
       representation.containsKey("item"), is(true));
 
@@ -211,7 +220,7 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
     
-    assertThat(String.format("Failed to get first page of requests: %s",
+    assertThat(String.format("Failed to get list of requests: %s",
       getResponse.getBody()),
       getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
     
