@@ -10,7 +10,7 @@ public class ServicePointExamples {
   }
   
   public static ServicePointBuilder basedUponCircDesk2() {
-    return new ServicePointBuilder("Circ Desk 1", "cd1",
+    return new ServicePointBuilder("Circ Desk 2", "cd2",
         "Circulation Desk -- Back Entrance").withPickupLocation(Boolean.TRUE);
   }
   

@@ -62,7 +62,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(cd1.getJson().getString("code"), is("cd1"));
     assertThat(cd2.getJson().getString("code"), is("cd2"));
     assertThat(cd1.getJson().getBoolean("pickupLocation"), is(Boolean.TRUE));
-     assertThat(cd2.getJson().getBoolean("pickupLocation"), is(Boolean.TRUE));
+    assertThat(cd2.getJson().getBoolean("pickupLocation"), is(Boolean.TRUE));
 
     usersFixture.nonExpiringProxyFor(sponsor, proxy);
 
