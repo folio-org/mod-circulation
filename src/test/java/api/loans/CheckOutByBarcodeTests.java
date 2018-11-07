@@ -58,12 +58,14 @@ public class CheckOutByBarcodeTests extends APITests {
 
     final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
 
+    final UUID checkoutServicePointId = UUID.randomUUID();
+
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
       .forItem(smallAngryPlanet)
       .to(steve)
       .on(loanDate)
-      .at(UUID.randomUUID()));
+      .at(checkoutServicePointId));
 
     final JsonObject loan = response.getJson();
 
@@ -89,6 +91,9 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat("due date should be 3 weeks after loan date, based upon loan policy",
       loan.getString("dueDate"), isEquivalentTo(loanDate.plusWeeks(3)));
+
+    assertThat("Checkout Service should be stored", loan.getString("checkoutServicePointId"),
+        is(checkoutServicePointId.toString()));
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 

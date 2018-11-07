@@ -887,12 +887,14 @@ public class LoanAPITests extends APITests {
       .withUserId(james.getId())
       .withItem(itemsFixture.basedUponNod()));
 
+    final String checkinServicePointId = UUID.randomUUID().toString();
+    
     JsonObject returnedLoan = loan.copyJson();
 
     returnedLoan
       .put("status", new JsonObject().put("name", "Closed"))
       .put("action", "checkedin")
-      .put("checkinServicePointId", UUID.randomUUID().toString())
+      .put("checkinServicePointId", checkinServicePointId)
       .put("returnDate", new DateTime(2017, 3, 5, 14, 23, 41, DateTimeZone.UTC)
         .toString(ISODateTimeFormat.dateTime()));
 
@@ -940,6 +942,10 @@ public class LoanAPITests extends APITests {
     assertThat("item status snapshot in storage is not Available",
       loansStorageClient.getById(loan.getId()).getJson().getString("itemStatus"),
       is("Available"));
+
+    assertThat("Checkin Service Point Id should be stored.",
+        loansStorageClient.getById(loan.getId()).getJson().getString("checkinServicePointId"),
+        is(checkinServicePointId));
   }
 
   @Test

@@ -28,46 +28,42 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   private final User user;
   private final User proxy;
 
-	private String checkoutServicePointId;
-	private String checkinServicePointId;
+  private String checkoutServicePointId;
+  private String checkinServicePointId;
 
   public Loan(JsonObject representation) {
     this(representation, null, null, null);
   }
 
-  public Loan(
-    JsonObject representation,
-    Item item,
-    User user,
-    User proxy) {
+  public Loan(JsonObject representation, Item item, User user, User proxy) {
 
     this.representation = representation;
     this.item = item;
     this.user = user;
     this.proxy = proxy;
 
-		this.checkoutServicePointId = getProperty(representation, "checkoutServicePointId");
-		this.checkinServicePointId = getProperty(representation, "checkinServicePointId");
+    this.checkoutServicePointId = getProperty(representation, LoanProperties.CHECKOUT_SERVICE_POINT_ID);
+    this.checkinServicePointId = getProperty(representation, LoanProperties.CHECKIN_SERVICE_POINT_ID);
 
-    //TODO: Refuse if ID does not match property in representation,
+    // TODO: Refuse if ID does not match property in representation,
     // and possibly convert isFound to unknown item class
-    if(item != null && item.isFound()) {
+    if (item != null && item.isFound()) {
       representation.put("itemId", item.getItemId());
     }
 
-    //TODO: Refuse if ID does not match property in representation
-    if(user != null) {
+    // TODO: Refuse if ID does not match property in representation
+    if (user != null) {
       representation.put("userId", user.getId());
     }
 
-    //TODO: Refuse if ID does not match property in representation
-    if(proxy != null) {
+    // TODO: Refuse if ID does not match property in representation
+    if (proxy != null) {
       representation.put("proxyUserId", proxy.getId());
     }
 
   }
 
-	public static Loan from(JsonObject representation) {
+  public static Loan from(JsonObject representation) {
     return from(representation, null);
   }
 
@@ -75,11 +71,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return from(representation, item, null, null);
   }
 
-  public static Loan from(
-    JsonObject representation,
-    Item item,
-    User user,
-    User proxy) {
+  public static Loan from(JsonObject representation, Item item, User user, User proxy) {
 
     defaultStatusAndAction(representation);
     return new Loan(representation, item, user, proxy);
@@ -98,40 +90,36 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public HttpResult<Void> isValidStatus() {
-    if(!representation.containsKey(STATUS)) {
-      return failed(new ServerErrorFailure(
-        "Loan does not have a status"));
+    if (!representation.containsKey(STATUS)) {
+      return failed(new ServerErrorFailure("Loan does not have a status"));
     }
 
-    switch(getStatus()) {
-      case "Open":
-      case "Closed":
-        return HttpResult.succeeded(null);
+    switch (getStatus()) {
+    case "Open":
+    case "Closed":
+      return HttpResult.succeeded(null);
 
-      default:
-        return failed(ValidationErrorFailure.failure(
-          "Loan status must be \"Open\" or \"Closed\"", STATUS, getStatus()));
+    default:
+      return failed(ValidationErrorFailure.failure("Loan status must be \"Open\" or \"Closed\"", STATUS, getStatus()));
     }
   }
 
   public HttpResult<Void> openLoanHasUserId() {
-    if(Objects.equals(getStatus(), "Open") && getUserId() == null) {
-      return failed(ValidationErrorFailure.failure(
-        "Open loan must have a user ID", USER_ID, getUserId()));
-    }
-    else {
+    if (Objects.equals(getStatus(), "Open") && getUserId() == null) {
+      return failed(ValidationErrorFailure.failure("Open loan must have a user ID", USER_ID, getUserId()));
+    } else {
       return HttpResult.succeeded(null);
     }
   }
 
-	public HttpResult<Void> closedLoanHasCheckInServicePointId() {
+  public HttpResult<Void> closedLoanHasCheckInServicePointId() {
     if (isClosed() && getCheckinServicePointId() == null) {
       return failed(ValidationErrorFailure.failure("A Closed loan must have a Checkin Service Point",
-					CHECKIN_SERVICE_POINT_ID, getCheckinServicePointId()));
-		} else {
-			return HttpResult.succeeded(null);
-		}
-	}
+          CHECKIN_SERVICE_POINT_ID, getCheckinServicePointId()));
+    } else {
+      return HttpResult.succeeded(null);
+    }
+  }
 
   boolean isClosed() {
     return StringUtils.equals(getStatus(), "Closed");
@@ -189,7 +177,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   private void changeLoanPolicy(String newLoanPolicyId) {
-    if(newLoanPolicyId != null) {
+    if (newLoanPolicyId != null) {
       representation.put("loanPolicyId", newLoanPolicyId);
     }
   }
@@ -216,28 +204,28 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   private static void defaultStatusAndAction(JsonObject loan) {
-    if(!loan.containsKey(LoanProperties.STATUS)) {
+    if (!loan.containsKey(LoanProperties.STATUS)) {
       loan.put(LoanProperties.STATUS, new JsonObject().put("name", "Open"));
 
-      if(!loan.containsKey(LoanProperties.ACTION)) {
+      if (!loan.containsKey(LoanProperties.ACTION)) {
         loan.put(LoanProperties.ACTION, "checkedout");
       }
     }
   }
 
-	public void setCheckoutServicePointId(String servicePointOfCheckout) {
-		this.checkoutServicePointId = servicePointOfCheckout;
-	}
+  public void setCheckoutServicePointId(String servicePointOfCheckout) {
+    this.checkoutServicePointId = servicePointOfCheckout;
+  }
 
-	public String getCheckoutServicePointId() {
-		return checkoutServicePointId;
-	}
+  public String getCheckoutServicePointId() {
+    return checkoutServicePointId;
+  }
 
-	public void setCheckinServicePointId(String servicePointCheckin) {
-		this.checkinServicePointId = servicePointCheckin;
-	}
+  public void setCheckinServicePointId(String servicePointCheckin) {
+    this.checkinServicePointId = servicePointCheckin;
+  }
 
-	public String getCheckinServicePointId() {
-		return checkinServicePointId;
-	}
+  public String getCheckinServicePointId() {
+    return checkinServicePointId;
+  }
 }
