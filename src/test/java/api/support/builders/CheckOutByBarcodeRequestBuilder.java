@@ -12,20 +12,24 @@ public class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Buil
   private final String userBarcode;
   private final String proxyBarcode;
   private final DateTime loanDate;
-  private final String checkoutServicePointId;
+  private final String servicePointId;
 
   public CheckOutByBarcodeRequestBuilder() {
     this(null, null, null, null, null);
   }
 
-  private CheckOutByBarcodeRequestBuilder(String itemBarcode, String userBarcode, String proxyBarcode,
-      DateTime loanDate, String checkoutServicePointId) {
+  private CheckOutByBarcodeRequestBuilder(
+    String itemBarcode,
+    String userBarcode,
+    String proxyBarcode,
+    DateTime loanDate,
+    String servicePointId) {
 
     this.itemBarcode = itemBarcode;
     this.userBarcode = userBarcode;
     this.proxyBarcode = proxyBarcode;
     this.loanDate = loanDate;
-    this.checkoutServicePointId = checkoutServicePointId;
+    this.servicePointId = servicePointId;
   }
 
   @Override
@@ -36,28 +40,28 @@ public class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Buil
     put(request, "userBarcode", this.userBarcode);
     put(request, "proxyUserBarcode", this.proxyBarcode);
     put(request, "loanDate", this.loanDate);
-    put(request, "checkoutServicePointId", this.checkoutServicePointId);
+    put(request, "servicePointId", this.servicePointId);
 
     return request;
   }
 
   public CheckOutByBarcodeRequestBuilder forItem(IndividualResource item) {
     return new CheckOutByBarcodeRequestBuilder(getBarcode(item), this.userBarcode, this.proxyBarcode, this.loanDate,
-        this.checkoutServicePointId);
+        this.servicePointId);
   }
 
   public CheckOutByBarcodeRequestBuilder to(IndividualResource loanee) {
     return new CheckOutByBarcodeRequestBuilder(this.itemBarcode, getBarcode(loanee), this.proxyBarcode, this.loanDate,
-        this.checkoutServicePointId);
+        this.servicePointId);
   }
 
   public CheckOutByBarcodeRequestBuilder on(DateTime loanDate) {
-    return new CheckOutByBarcodeRequestBuilder(this.itemBarcode, this.userBarcode, this.proxyBarcode, loanDate, this.checkoutServicePointId);
+    return new CheckOutByBarcodeRequestBuilder(this.itemBarcode, this.userBarcode, this.proxyBarcode, loanDate, this.servicePointId);
   }
 
   public CheckOutByBarcodeRequestBuilder proxiedBy(IndividualResource proxy) {
     return new CheckOutByBarcodeRequestBuilder(this.itemBarcode, this.userBarcode, getBarcode(proxy), this.loanDate,
-        this.checkoutServicePointId);
+        this.servicePointId);
   }
 
   public CheckOutByBarcodeRequestBuilder at(String checkoutServicePointId) {

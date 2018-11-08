@@ -6,5 +6,5 @@ public class CheckOutByBarcodeRequest {
   public static final String ITEM_BARCODE = "itemBarcode";
   public static final String USER_BARCODE = "userBarcode";
   public static final String PROXY_USER_BARCODE = "proxyUserBarcode";
-  public static final String CHECK_OUT_SERVICEPOINT_ID = "checkoutServicePointId";
+  public static final String SERVICE_POINT_ID = "servicePointId";
 }
