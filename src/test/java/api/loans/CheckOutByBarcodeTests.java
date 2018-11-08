@@ -564,7 +564,6 @@ public class CheckOutByBarcodeTests extends APITests {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
-    IndividualResource jessica = usersFixture.jessica();
     
     final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
 
@@ -575,6 +574,10 @@ public class CheckOutByBarcodeTests extends APITests {
           .on(loanDate));
 
     assertThat(response.getStatusCode(), is(422));
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("A Service Point must be specified."),
+      hasServicePointParameter(null))));
   }
 
   private Matcher<ValidationError> hasUserBarcodeParameter(IndividualResource user) {
@@ -587,5 +590,9 @@ public class CheckOutByBarcodeTests extends APITests {
 
   private Matcher<ValidationError> hasProxyUserBarcodeParameter(IndividualResource proxyUser) {
     return hasParameter("proxyUserBarcode", proxyUser.getJson().getString("barcode"));
+  }
+
+  private Matcher<ValidationError> hasServicePointParameter(String servicePoint) {
+    return hasParameter("checkoutServicePointId", servicePoint);
   }
 }
