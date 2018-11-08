@@ -256,5 +256,4 @@ public class LoansFixture {
     return from(post(request, renewByIdUrl(),
       422, "renewal-by-id-request"));
   }
-
 }

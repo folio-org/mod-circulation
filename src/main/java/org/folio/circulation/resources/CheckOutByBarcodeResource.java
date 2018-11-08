@@ -69,7 +69,7 @@ public class CheckOutByBarcodeResource extends Resource {
     final String proxyUserBarcode = request.getString(CheckOutByBarcodeRequest.PROXY_USER_BARCODE);
     final String checkoutServicePointId = request.getString(CheckOutByBarcodeRequest.CHECK_OUT_SERVICEPOINT_ID);
 
-		loan.put(CheckOutByBarcodeRequest.CHECK_OUT_SERVICEPOINT_ID, checkoutServicePointId);
+    loan.put(CheckOutByBarcodeRequest.CHECK_OUT_SERVICEPOINT_ID, checkoutServicePointId);
 
     final Clients clients = Clients.create(context, client);
 
@@ -85,9 +85,9 @@ public class CheckOutByBarcodeResource extends Resource {
         CheckOutByBarcodeRequest.PROXY_USER_BARCODE,
         proxyUserBarcode));
     
-    final ServicePointOfCheckoutPresentValidator servicePointOfCheckoutPresentValidator = new ServicePointOfCheckoutPresentValidator(
-    		message -> failure(message,
-            CheckOutByBarcodeRequest.CHECK_OUT_SERVICEPOINT_ID, checkoutServicePointId));
+    final ServicePointOfCheckoutPresentValidator servicePointOfCheckoutPresentValidator
+      = new ServicePointOfCheckoutPresentValidator(message -> failure(message,
+        CheckOutByBarcodeRequest.CHECK_OUT_SERVICEPOINT_ID, checkoutServicePointId));
 
     final AwaitingPickupValidator awaitingPickupValidator = new AwaitingPickupValidator(
       message -> failure(message,
@@ -111,8 +111,8 @@ public class CheckOutByBarcodeResource extends Resource {
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
     
-		completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(Loan.from(loan))))
-			.thenApply(servicePointOfCheckoutPresentValidator::refuseCheckOutWhenServicePointIsNotPresent)
+    completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(Loan.from(loan))))
+      .thenApply(servicePointOfCheckoutPresentValidator::refuseCheckOutWhenServicePointIsNotPresent)
       .thenCombineAsync(userRepository.getUserByBarcode(userBarcode), this::addUser)
       .thenCombineAsync(userRepository.getProxyUserByBarcode(proxyUserBarcode), this::addProxyUser)
       .thenApply(inactiveUserValidator::refuseWhenUserIsInactive)
@@ -151,6 +151,7 @@ public class CheckOutByBarcodeResource extends Resource {
 
   private void copyOrDefaultLoanDate(JsonObject request, JsonObject loan) {
     final String loanDateProperty = "loanDate";
+
     if(request.containsKey(loanDateProperty)) {
       loan.put(loanDateProperty, request.getString(loanDateProperty));
     } else {
