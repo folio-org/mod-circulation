@@ -10,6 +10,7 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProper
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 import java.util.Objects;
 
@@ -17,7 +18,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ServerErrorFailure;
-import org.folio.circulation.support.ValidationErrorFailure;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
@@ -100,13 +100,13 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
       return HttpResult.succeeded(null);
 
     default:
-      return failed(ValidationErrorFailure.failure("Loan status must be \"Open\" or \"Closed\"", STATUS, getStatus()));
+      return failed(failure("Loan status must be \"Open\" or \"Closed\"", STATUS, getStatus()));
     }
   }
 
   public HttpResult<Void> openLoanHasUserId() {
     if (Objects.equals(getStatus(), "Open") && getUserId() == null) {
-      return failed(ValidationErrorFailure.failure("Open loan must have a user ID", USER_ID, getUserId()));
+      return failed(failure("Open loan must have a user ID", USER_ID, getUserId()));
     } else {
       return HttpResult.succeeded(null);
     }
@@ -114,7 +114,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public HttpResult<Void> closedLoanHasCheckInServicePointId() {
     if (isClosed() && getCheckinServicePointId() == null) {
-      return failed(ValidationErrorFailure.failure("A Closed loan must have a Checkin Service Point",
+      return failed(failure("A Closed loan must have a Checkin Service Point",
           CHECKIN_SERVICE_POINT_ID, getCheckinServicePointId()));
     } else {
       return HttpResult.succeeded(null);
@@ -221,11 +221,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return checkoutServicePointId;
   }
 
-  public void setCheckinServicePointId(String servicePointCheckin) {
-    this.checkinServicePointId = servicePointCheckin;
-  }
-
-  public String getCheckinServicePointId() {
+  private String getCheckinServicePointId() {
     return checkinServicePointId;
   }
 }
