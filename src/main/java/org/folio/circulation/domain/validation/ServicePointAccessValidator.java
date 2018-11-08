@@ -12,17 +12,17 @@ public class ServicePointAccessValidator {
   private final Function<String, ValidationErrorFailure> servicePointAccessFunction;
 
   public ServicePointAccessValidator(
-			Function<String, ValidationErrorFailure> servicePointAccessOutErrorFunction) {
+    Function<String, ValidationErrorFailure> servicePointAccessOutErrorFunction) {
 
     this.servicePointAccessFunction = servicePointAccessOutErrorFunction;
   }
 
-	public HttpResult<LoanAndRelatedRecords> refuseWhenUserCannotAccessServicePoint(
+  public HttpResult<LoanAndRelatedRecords> refuseWhenUserCannotAccessServicePoint(
     HttpResult<LoanAndRelatedRecords> result) {
 
-		// TODO check user permissions (CIRC-150)
+    // TODO check user permissions (CIRC-150)
     return result.failWhen(
-				records -> succeeded(false),
-        r -> servicePointAccessFunction.apply("User must have access to the Service Point of Last Action."));
+      records -> succeeded(false),
+      r -> servicePointAccessFunction.apply("User must have access to the Service Point of Last Action."));
   }
 }
