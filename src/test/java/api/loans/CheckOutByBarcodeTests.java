@@ -7,6 +7,7 @@ import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
+import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
@@ -72,10 +73,10 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat(loan.getString("id"), is(notNullValue()));
 
     assertThat("user ID should match barcode",
-      loan.getString("userId"), is(steve.getId().toString()));
+      loan.getString("userId"), is(steve.getId()));
 
     assertThat("item ID should match barcode",
-      loan.getString("itemId"), is(smallAngryPlanet.getId().toString()));
+      loan.getString("itemId"), is(smallAngryPlanet.getId()));
 
     assertThat("status should be open",
       loan.getJsonObject("status").getString("name"), is("Open"));
@@ -87,13 +88,13 @@ public class CheckOutByBarcodeTests extends APITests {
       loan.getString("loanDate"), isEquivalentTo(loanDate));
 
     assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateRollingLoanPolicyId().toString()));
+      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateRollingLoanPolicyId()));
 
     assertThat("due date should be 3 weeks after loan date, based upon loan policy",
       loan.getString("dueDate"), isEquivalentTo(loanDate.plusWeeks(3)));
 
-    assertThat("Checkout Service should be stored", loan.getString("checkoutServicePointId"),
-        is(checkoutServicePointId.toString()));
+    assertThat("Checkout service point should be stored",
+      loan.getString("checkoutServicePointId"), is(checkoutServicePointId));
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
@@ -175,7 +176,7 @@ public class CheckOutByBarcodeTests extends APITests {
       loan.getString("loanDate"), isEquivalentTo(loanDate));
 
     assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateFixedLoanPolicyId().toString()));
+      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateFixedLoanPolicyId()));
 
     assertThat("due date should be based upon fixed due date schedule",
       loan.getString("dueDate"),
@@ -229,7 +230,7 @@ public class CheckOutByBarcodeTests extends APITests {
       loan.getString("loanDate"), isEquivalentTo(loanDate));
 
     assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
+      loan.getString("loanPolicyId"), is(dueDateLimitedPolicyId));
 
     assertThat("due date should be limited by schedule",
       loan.getString("dueDate"),
@@ -520,10 +521,10 @@ public class CheckOutByBarcodeTests extends APITests {
     JsonObject loan = response.getJson();
 
     assertThat("user id does not match",
-      loan.getString("userId"), is(jessica.getId().toString()));
+      loan.getString("userId"), is(jessica.getId()));
 
     assertThat("proxy user id does not match",
-      loan.getString("proxyUserId"), is(james.getId().toString()));
+      loan.getString("proxyUserId"), is(james.getId()));
   }
 
   @Test
@@ -550,7 +551,8 @@ public class CheckOutByBarcodeTests extends APITests {
         .at(UUID.randomUUID()));
 
     assertThat(response.getBody(), is(String.format(
-      "Loan policy %s could not be found, please check loan rules", nonExistentloanPolicyId)));
+      "Loan policy %s could not be found, please check loan rules",
+      nonExistentloanPolicyId)));
   }
   
   @Test
