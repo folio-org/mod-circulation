@@ -1,10 +1,14 @@
 ## 12.1.0 Unreleased
 
+* Introduce request `pickupServicePointId` (CIRC-147)
+* Include `contributorNames`, `enumeration`, `callNumber` and `status` of the `item` for requests (CIRC-140)
+* Include `deliveryAddress` and `patronGroup` of the `user` for requests (CIRC-140)
+* Include `dueDate` of the `current loan` for requests (CIRC-140)
 * Requires version 2.0 or 3.0 of `locations` (CIRC-143)
 * Requires version 5.3 or 6.0 of `item-storage` (CIRC-141)
 * Requires version 4.0 or 5.0 of `instance-storage` (CIRC-141)
 * Requires version 1.3 or 2.0 of `holdings-storage` (CIRC-141)
-* Provides `circulation` 4.1 interface (CIRC-141)
+* Provides `circulation` 4.2 interface (CIRC-141, CIRC-140)
 
 # 12.0.0 2018-09-09
 
