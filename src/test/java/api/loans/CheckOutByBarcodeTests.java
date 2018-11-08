@@ -576,7 +576,7 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat(response.getStatusCode(), is(422));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("A Service Point must be specified."),
+      hasMessage("Check out must be performed at a service point"),
       hasServicePointParameter(null))));
   }
 

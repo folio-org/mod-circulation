@@ -10,7 +10,7 @@ import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ValidationErrorFailure;
 
 public class ServicePointOfCheckoutPresentValidator {
-	private final Function<String, ValidationErrorFailure> servicePointOfCheckoutPresentFuntion;
+  private final Function<String, ValidationErrorFailure> servicePointOfCheckoutPresentFuntion;
 
   public ServicePointOfCheckoutPresentValidator(
       Function<String, ValidationErrorFailure> servicePointOfCheckoutPresentErrorFunction) {
@@ -18,11 +18,11 @@ public class ServicePointOfCheckoutPresentValidator {
     this.servicePointOfCheckoutPresentFuntion = servicePointOfCheckoutPresentErrorFunction;
   }
 
-	public HttpResult<LoanAndRelatedRecords> refuseCheckOutWhenServicePointIsNotPresent(
+  public HttpResult<LoanAndRelatedRecords> refuseCheckOutWhenServicePointIsNotPresent(
     HttpResult<LoanAndRelatedRecords> result) {
 
     return result.failWhen(
         records -> succeeded(StringUtils.isEmpty(records.getLoan().getCheckoutServicePointId())),
-				r -> servicePointOfCheckoutPresentFuntion.apply("A Service Point must be specified."));
+      r -> servicePointOfCheckoutPresentFuntion.apply("Check out must be performed at a service point"));
   }
 }
