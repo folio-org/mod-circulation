@@ -1,4 +1,4 @@
-## 12.1.0 Unreleased
+## 12.1.0 2018-11-08
 
 * Introduce request `pickupServicePointId` (CIRC-147)
 * Include `contributorNames`, `enumeration`, `callNumber` and `status` of the `item` for requests (CIRC-140)
