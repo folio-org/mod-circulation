@@ -19,6 +19,7 @@ import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
+import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
 import org.folio.circulation.domain.validation.AwaitingPickupValidator;
 import org.folio.circulation.domain.validation.ExistingOpenLoanValidator;
@@ -67,9 +68,9 @@ public class CheckOutByBarcodeResource extends Resource {
     final String itemBarcode = request.getString(CheckOutByBarcodeRequest.ITEM_BARCODE);
     final String userBarcode = request.getString(CheckOutByBarcodeRequest.USER_BARCODE);
     final String proxyUserBarcode = request.getString(CheckOutByBarcodeRequest.PROXY_USER_BARCODE);
-    final String checkoutServicePointId = request.getString(CheckOutByBarcodeRequest.CHECK_OUT_SERVICEPOINT_ID);
+    final String checkoutServicePointId = request.getString(CheckOutByBarcodeRequest.SERVICE_POINT_ID);
 
-    loan.put(CheckOutByBarcodeRequest.CHECK_OUT_SERVICEPOINT_ID, checkoutServicePointId);
+    loan.put(LoanProperties.CHECKOUT_SERVICE_POINT_ID, checkoutServicePointId);
 
     final Clients clients = Clients.create(context, client);
 
@@ -87,7 +88,7 @@ public class CheckOutByBarcodeResource extends Resource {
     
     final ServicePointOfCheckoutPresentValidator servicePointOfCheckoutPresentValidator
       = new ServicePointOfCheckoutPresentValidator(message -> failure(message,
-        CheckOutByBarcodeRequest.CHECK_OUT_SERVICEPOINT_ID, checkoutServicePointId));
+        CheckOutByBarcodeRequest.SERVICE_POINT_ID, checkoutServicePointId));
 
     final AwaitingPickupValidator awaitingPickupValidator = new AwaitingPickupValidator(
       message -> failure(message,

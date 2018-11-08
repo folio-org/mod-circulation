@@ -20,7 +20,7 @@
       "type": "string",
       "format": "date-time"
     },
-    "checkoutServicePointId": {
+    "servicePointId": {
       "description": "Service point where the item has been checked out",
       "type": "string",
       "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
@@ -29,6 +29,6 @@
   "required": [
     "itemBarcode",
     "userBarcode",
-    "checkoutServicePointId"
+    "servicePointId"
   ]
 }
