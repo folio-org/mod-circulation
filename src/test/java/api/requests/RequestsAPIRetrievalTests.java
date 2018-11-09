@@ -29,10 +29,9 @@ import api.support.builders.UserBuilder;
 import api.support.http.InterfaceUrls;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class RequestsAPIRetrievalTests extends APITests {
+
   @Test
   public void canGetARequestById()
     throws MalformedURLException,
@@ -42,8 +41,6 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     UUID requestId = UUID.fromString("d9960d24-8862-4178-be2c-c1a574188a92"); //to track in logs
     UUID loanId = UUID.fromString("61d74730-5cdb-4675-ab88-1828ee1ad248");
-    UUID pickupServicePointId = UUID.randomUUID();
-    String itemStatus = "DUMMY_STATUS";
 
     UUID itemId = UUID.fromString("60c50f1b-7d6c-4b59-863a-a4da213d9530");
     String enumeration = "DUMMY_ENUMERATION";
@@ -54,6 +51,11 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     final IndividualResource sponsor = usersFixture.rebecca();
     final IndividualResource proxy = usersFixture.steve();
+
+    final IndividualResource cd1 = servicePointsFixture.cd1();
+    servicePointsToDelete.add(cd1.getId());
+
+    UUID pickupServicePointId = cd1.getId();
 
     usersFixture.nonExpiringProxyFor(sponsor, proxy);
 
@@ -98,7 +100,15 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(representation.getString("status"), is("Open - Not yet filled"));
     assertThat(representation.containsKey("loan"), is(true));
     assertThat(representation.containsKey("proxy"), is(true));
-   
+    assertThat(representation.containsKey("pickupServicePoint"), is(true));
+    assertThat(representation.getJsonObject("pickupServicePoint").getString("name"),
+        is(cd1.getJson().getString("name")));
+    assertThat(representation.getJsonObject("pickupServicePoint").getString("code"),
+        is(cd1.getJson().getString("code")));
+    assertThat(representation.getJsonObject("pickupServicePoint").getString("discoveryDisplayName"),
+        is(cd1.getJson().getString("discoveryDisplayName")));
+    assertThat(representation.getJsonObject("pickupServicePoint").getBoolean("pickupLocation"),
+        is(cd1.getJson().getBoolean("pickupLocation")));
     assertThat("has information taken from item",
       representation.containsKey("item"), is(true));
 
@@ -148,6 +158,75 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(getResponse.getStatusCode(), is(HttpURLConnection.HTTP_NOT_FOUND));
   }
 
+  
+  @Test
+  public void canGetMultipleRequests()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+    
+    UUID requesterId = usersClient.create(new UserBuilder()).getId();
+    final IndividualResource cd1 = servicePointsFixture.cd1();
+    final IndividualResource cd2 = servicePointsFixture.cd2();
+    UUID pickupServicePointId = cd1.getId();
+    UUID pickupServicePointId2 = cd2.getId();
+
+    servicePointsToDelete.add(cd1.getId());
+    servicePointsToDelete.add(cd2.getId());
+
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut).getId())
+      .withRequesterId(requesterId)
+      .withPickupServicePointId(pickupServicePointId));
+
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponNod(ItemBuilder::checkOut).getId())
+      .withRequesterId(requesterId)
+      .withPickupServicePointId(pickupServicePointId2));
+
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponInterestingTimes(ItemBuilder::checkOut).getId())
+      .withRequesterId(requesterId)
+      .withPickupServicePointId(pickupServicePointId));
+
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
+      .withRequesterId(requesterId)
+      .withPickupServicePointId(pickupServicePointId2));
+
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponNod(ItemBuilder::checkOut).getId())
+      .withRequesterId(requesterId)
+      .withPickupServicePointId(pickupServicePointId));
+
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponUprooted(ItemBuilder::checkOut).getId())
+      .withRequesterId(requesterId)
+      .withPickupServicePointId(pickupServicePointId));
+
+    requestsClient.create(new RequestBuilder()
+      .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
+      .withRequesterId(requesterId)
+      .withPickupServicePointId(pickupServicePointId2));
+    
+    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
+
+    client.get(InterfaceUrls.requestsUrl(), ResponseHandler.any(getCompleted));
+
+    Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
+    
+    assertThat(String.format("Failed to get list of requests: %s",
+      getResponse.getBody()),
+      getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+    
+    List<JsonObject> requestList = getRequests(getResponse.getJson());
+    
+    requestList.forEach(this::requestHasExpectedProperties);
+    requestList.forEach(this::requestHasServicePointProperties);
+  
+  }
+  
   @Test
   public void canPageAllRequests()
     throws MalformedURLException,
@@ -156,7 +235,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     TimeoutException {
 
     UUID requesterId = usersClient.create(new UserBuilder()).getId();
-
+    
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut).getId())
       .withRequesterId(requesterId));
@@ -421,6 +500,13 @@ public class RequestsAPIRetrievalTests extends APITests {
     hasProperty("item", request, "request");
     hasProperty("requester", request, "request");
     hasProperty("status", request, "request");
+  }
+  
+  private void requestHasServicePointProperties(JsonObject request) {
+    hasProperty("pickupServicePointId", request, "request");
+    hasProperty("pickupServicePoint", request, "request");
+    hasProperty("name", request.getJsonObject("pickupServicePoint"),
+        "pickupServicePoint");
   }
 
   private void hasProperty(String property, JsonObject resource, String type) {

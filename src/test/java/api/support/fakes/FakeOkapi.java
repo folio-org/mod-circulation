@@ -67,9 +67,10 @@ public class FakeOkapi extends AbstractVerticle {
       .create().register(router);
 
     new FakeStorageModuleBuilder()
-      .withRecordName("item")
-      .withRootPath("/item-storage/items")
-      .withRequiredProperties("holdingsRecordId", "materialTypeId", "permanentLoanTypeId")
+      .withRecordName("instance")
+      .withRootPath("/instance-storage/instances")
+      .withCollectionPropertyName("instances")
+      .withRequiredProperties("source", "title", "instanceTypeId")
       .create().register(router);
 
     new FakeStorageModuleBuilder()
@@ -80,10 +81,9 @@ public class FakeOkapi extends AbstractVerticle {
       .create().register(router);
 
     new FakeStorageModuleBuilder()
-      .withRecordName("instance")
-      .withRootPath("/instance-storage/instances")
-      .withCollectionPropertyName("instances")
-      .withRequiredProperties("source", "title", "instanceTypeId")
+      .withRecordName("item")
+      .withRootPath("/item-storage/items")
+      .withRequiredProperties("holdingsRecordId", "materialTypeId", "permanentLoanTypeId")
       .create().register(router);
 
     new FakeStorageModuleBuilder()
@@ -171,7 +171,8 @@ public class FakeOkapi extends AbstractVerticle {
         "code",
         "institutionId",
         "campusId",
-        "libraryId")
+        "libraryId",
+        "primaryServicePoint")
       .create()
       .register(router);
 
@@ -180,6 +181,16 @@ public class FakeOkapi extends AbstractVerticle {
         .withCollectionPropertyName("cancellationReasons")
         .withRootPath("/cancellation-reason-storage/cancellation-reasons")
         .withRequiredProperties("name", "description")
+        .withChangeMetadata()
+        .create()
+        .register(router);
+    
+    new FakeStorageModuleBuilder()
+        .withRecordName("servicePoint")
+        .withCollectionPropertyName("servicepoints")
+        .withRootPath("/service-points")
+        .withRequiredProperties("name", "code", "discoveryDisplayName")
+        .withUniqueProperties("name")
         .withChangeMetadata()
         .create()
         .register(router);

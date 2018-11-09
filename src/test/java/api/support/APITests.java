@@ -1,22 +1,7 @@
 package api.support;
 
-import api.APITestSuite;
-import api.support.fixtures.ItemsFixture;
-import api.support.fixtures.LoansFixture;
-import api.support.fixtures.RequestsFixture;
-import api.support.fixtures.UsersFixture;
-import api.support.http.InterfaceUrls;
-import api.support.http.ResourceClient;
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
@@ -28,8 +13,25 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import org.folio.circulation.support.http.client.OkapiHttpClient;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import api.APITestSuite;
+import api.support.fixtures.ItemsFixture;
+import api.support.fixtures.LoansFixture;
+import api.support.fixtures.RequestsFixture;
+import api.support.fixtures.ServicePointsFixture;
+import api.support.fixtures.UsersFixture;
+import api.support.http.InterfaceUrls;
+import api.support.http.ResourceClient;
+import io.vertx.core.json.JsonObject;
 
 public abstract class APITests {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -50,14 +52,17 @@ public abstract class APITests {
   protected final ResourceClient loansStorageClient = ResourceClient.forLoansStorage(client);
   protected final ResourceClient loanPolicyClient = ResourceClient.forLoanPolicies(client);
   protected final ResourceClient fixedDueDateScheduleClient = ResourceClient.forFixedDueDateSchedules(client);
+  protected final ResourceClient servicePointsClient = ResourceClient.forServicePoints(client);
 
   protected final ItemsFixture itemsFixture = new ItemsFixture(client);
   protected final LoansFixture loansFixture = new LoansFixture(loansClient, client);
   protected final RequestsFixture requestsFixture = new RequestsFixture(requestsClient);
   protected final UsersFixture usersFixture = new UsersFixture(usersClient, proxyRelationshipsClient);
+  protected final ServicePointsFixture servicePointsFixture = new ServicePointsFixture(servicePointsClient);
 
   protected final Set<UUID> schedulesToDelete = new HashSet<>();
   protected final Set<UUID> policiesToDelete = new HashSet<>();
+  protected final Set<UUID> servicePointsToDelete = new HashSet<>();
 
   protected APITests() {
     this(true);
@@ -123,6 +128,10 @@ public abstract class APITests {
     MalformedURLException,
     TimeoutException,
     ExecutionException {
+
+    for (UUID servicePointId : servicePointsToDelete) {
+      servicePointsClient.delete(servicePointId);
+    }
 
     for (UUID policyId : policiesToDelete) {
       loanPolicyClient.delete(policyId);
