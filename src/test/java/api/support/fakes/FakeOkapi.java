@@ -190,6 +190,7 @@ public class FakeOkapi extends AbstractVerticle {
         .withCollectionPropertyName("servicepoints")
         .withRootPath("/service-points")
         .withRequiredProperties("name", "code", "discoveryDisplayName")
+        .withUniqueProperties("name")
         .withChangeMetadata()
         .create()
         .register(router);

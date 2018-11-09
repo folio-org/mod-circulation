@@ -53,6 +53,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     final IndividualResource proxy = usersFixture.steve();
 
     final IndividualResource cd1 = servicePointsFixture.cd1();
+    servicePointsToDelete.add(cd1.getId());
 
     UUID pickupServicePointId = cd1.getId();
 
@@ -170,6 +171,9 @@ public class RequestsAPIRetrievalTests extends APITests {
     final IndividualResource cd2 = servicePointsFixture.cd2();
     UUID pickupServicePointId = cd1.getId();
     UUID pickupServicePointId2 = cd2.getId();
+
+    servicePointsToDelete.add(cd1.getId());
+    servicePointsToDelete.add(cd2.getId());
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut).getId())
