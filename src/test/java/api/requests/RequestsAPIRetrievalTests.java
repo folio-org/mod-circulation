@@ -29,10 +29,9 @@ import api.support.builders.UserBuilder;
 import api.support.http.InterfaceUrls;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class RequestsAPIRetrievalTests extends APITests {
+
   @Test
   public void canGetARequestById()
     throws MalformedURLException,
@@ -42,8 +41,6 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     UUID requestId = UUID.fromString("d9960d24-8862-4178-be2c-c1a574188a92"); //to track in logs
     UUID loanId = UUID.fromString("61d74730-5cdb-4675-ab88-1828ee1ad248");
-    
-    String itemStatus = "DUMMY_STATUS";
 
     UUID itemId = UUID.fromString("60c50f1b-7d6c-4b59-863a-a4da213d9530");
     String enumeration = "DUMMY_ENUMERATION";
@@ -54,15 +51,10 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     final IndividualResource sponsor = usersFixture.rebecca();
     final IndividualResource proxy = usersFixture.steve();
+
     final IndividualResource cd1 = servicePointsFixture.cd1();
-    final IndividualResource cd2 = servicePointsFixture.cd2();
+
     UUID pickupServicePointId = cd1.getId();
-    UUID pickupServicePointId2 = cd2.getId();
-    
-    assertThat(cd1.getJson().getString("code"), is("cd1"));
-    assertThat(cd2.getJson().getString("code"), is("cd2"));
-    assertThat(cd1.getJson().getBoolean("pickupLocation"), is(Boolean.TRUE));
-    assertThat(cd2.getJson().getBoolean("pickupLocation"), is(Boolean.TRUE));
 
     usersFixture.nonExpiringProxyFor(sponsor, proxy);
 
