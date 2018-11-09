@@ -24,6 +24,7 @@ public class RequestRepository {
   private final UserRepository userRepository;
   private final LoanRepository loanRepository;
   private final ServicePointRepository servicePointRepository;
+  private final PatronGroupRepository patronGroupRepository;
   
 
   private RequestRepository(
@@ -31,20 +32,22 @@ public class RequestRepository {
     ItemRepository itemRepository,
     UserRepository userRepository,
     LoanRepository loanRepository,
-    ServicePointRepository servicePointRepository) {
+    ServicePointRepository servicePointRepository,
+    PatronGroupRepository patronGroupRepository) {
 
     this.requestsStorageClient = requestsStorageClient;
     this.itemRepository = itemRepository;
     this.userRepository = userRepository;
     this.loanRepository = loanRepository;
     this.servicePointRepository = servicePointRepository; 
+    this.patronGroupRepository = patronGroupRepository;
   }
 
   public static RequestRepository using(Clients clients) {
     return new RequestRepository(clients.requestsStorage(),
       new ItemRepository(clients, true, false),
       new UserRepository(clients), new LoanRepository(clients),
-      new ServicePointRepository(clients));
+      new ServicePointRepository(clients), new PatronGroupRepository(clients));
   }
 
   public CompletableFuture<HttpResult<MultipleRecords<Request>>> findBy(String query) {
@@ -52,7 +55,8 @@ public class RequestRepository {
       .thenApply(this::mapResponseToRequests)
       .thenComposeAsync(result -> itemRepository.fetchItemsFor(result, Request::withItem))
       .thenComposeAsync(result -> result.after(loanRepository::findOpenLoansFor))
-      .thenComposeAsync(result -> result.after(servicePointRepository::findServicePointsForRequests));
+      .thenComposeAsync(result -> result.after(servicePointRepository::findServicePointsForRequests))
+      .thenComposeAsync(result -> result.after(patronGroupRepository::findPatronGroupsForRequestsUsers));
   }
 
   //TODO: try to consolidate this further with above
@@ -129,7 +133,8 @@ public class RequestRepository {
       .thenComposeAsync(this::fetchRequester)
       .thenComposeAsync(this::fetchProxy)
       .thenComposeAsync(this::fetchLoan)
-      .thenComposeAsync(this::fetchPickupServicePoint);
+      .thenComposeAsync(this::fetchPickupServicePoint)
+      .thenComposeAsync(PatronGroupRepository::findPatronGroupsForSingleRequestUsers);
   }
 
   private CompletableFuture<HttpResult<Request>> fetchRequest(String id) {
@@ -217,13 +222,17 @@ public class RequestRepository {
     return result.combineAfter(request -> getServicePoint(request.getPickupServicePointId()),
         Request::withPickupServicePoint);
   }
-
+  
   private CompletableFuture<HttpResult<User>> getUser(String proxyUserId) {
     return userRepository.getUser(proxyUserId);
   }
   
   private CompletableFuture<HttpResult<ServicePoint>> getServicePoint(String servicePointId) {
     return servicePointRepository.getServicePointById(servicePointId);
+  }
+  
+  private CompletableFuture<HttpResult<PatronGroup>> getPatronGroup(String patronGroupId) {
+    return patronGroupRepository.getPatronGroupById(patronGroupId);
   }
   
 }

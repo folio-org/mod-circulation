@@ -21,6 +21,7 @@ public class Clients {
   private final LoanRulesClient loanRulesClient;
   private final CollectionResourceClient loanRulesStorageClient;
   private final CollectionResourceClient servicePointsStorageClient;
+  private final CollectionResourceClient patronGroupsStorageClient;
 
   public static Clients create(WebContext context, HttpClient httpClient) {
     return new Clients(context.createHttpClient(httpClient), context);
@@ -42,6 +43,7 @@ public class Clients {
       loanPoliciesStorageClient = createLoanPoliciesStorageClient(client, context);
       fixedDueDateSchedulesStorageClient = createFixedDueDateSchedulesStorageClient(client, context);
       servicePointsStorageClient = createServicePointsStorageClient(client, context);
+      patronGroupsStorageClient = createPatronGroupsStorageClient(client, context);
     }
     catch(MalformedURLException e) {
       throw new InvalidOkapiLocationException(context.getOkapiLocation(), e);
@@ -91,6 +93,11 @@ public class Clients {
   public CollectionResourceClient servicePointsStorage() {
     return servicePointsStorageClient;
   }
+  
+  public CollectionResourceClient patronGroupsStorage() {
+    return patronGroupsStorageClient;
+  }
+
 
   public CollectionResourceClient userProxies() {
     return proxiesForClient;
@@ -220,6 +227,14 @@ public class Clients {
       throws MalformedURLException {
     return getCollectionResourceClient(client, context, "/service-points");
   }
+  
+  private CollectionResourceClient createPatronGroupsStorageClient(
+      OkapiHttpClient client,
+      WebContext context)
+      throws MalformedURLException {
+    return getCollectionResourceClient(client, context, "/groups");
+  }
+  
 
   
 }

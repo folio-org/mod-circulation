@@ -11,11 +11,23 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 public class User {
   private static final String PERSONAL_PROPERTY_NAME = "personal";
+  private final PatronGroup requesterPatronGroup;
+  private final PatronGroup proxyPatronGroup;
 
   private final JsonObject representation;
 
-  public User(JsonObject representation) {
+  public User(JsonObject representation, PatronGroup requesterPatronGroup, PatronGroup proxyPatronGroup) {
     this.representation = representation;
+    this.requesterPatronGroup = requesterPatronGroup;
+    this.proxyPatronGroup = proxyPatronGroup;
+  }
+  
+  public User withRequesterPatronGroup(PatronGroup newRequesterPatronGroup) {
+    return new User(representation, newRequesterPatronGroup, this.proxyPatronGroup);
+  }
+  
+  public User withProxyPatronGroup(PatronGroup newProxyPatronGroup) {
+    return new User(representation, this.requesterPatronGroup, newProxyPatronGroup);
   }
 
   public boolean canDetermineStatus() {
