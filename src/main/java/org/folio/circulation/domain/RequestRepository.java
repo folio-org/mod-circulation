@@ -23,31 +23,36 @@ public class RequestRepository {
   private final ItemRepository itemRepository;
   private final UserRepository userRepository;
   private final LoanRepository loanRepository;
+  private final ServicePointRepository servicePointRepository;
   
 
   private RequestRepository(
     CollectionResourceClient requestsStorageClient,
     ItemRepository itemRepository,
     UserRepository userRepository,
-    LoanRepository loanRepository) {
+    LoanRepository loanRepository,
+    ServicePointRepository servicePointRepository) {
 
     this.requestsStorageClient = requestsStorageClient;
     this.itemRepository = itemRepository;
     this.userRepository = userRepository;
     this.loanRepository = loanRepository;
+    this.servicePointRepository = servicePointRepository; 
   }
 
   public static RequestRepository using(Clients clients) {
     return new RequestRepository(clients.requestsStorage(),
       new ItemRepository(clients, true, false),
-      new UserRepository(clients), new LoanRepository(clients));
+      new UserRepository(clients), new LoanRepository(clients),
+      new ServicePointRepository(clients));
   }
 
   public CompletableFuture<HttpResult<MultipleRecords<Request>>> findBy(String query) {
     return requestsStorageClient.getMany(query)
       .thenApply(this::mapResponseToRequests)
       .thenComposeAsync(result -> itemRepository.fetchItemsFor(result, Request::withItem))
-      .thenComposeAsync(result -> result.after(loanRepository::findOpenLoansFor));
+      .thenComposeAsync(result -> result.after(loanRepository::findOpenLoansFor))
+      .thenComposeAsync(result -> result.after(servicePointRepository::findServicePointsForRequests));
   }
 
   //TODO: try to consolidate this further with above
@@ -123,7 +128,8 @@ public class RequestRepository {
         Request::withItem))
       .thenComposeAsync(this::fetchRequester)
       .thenComposeAsync(this::fetchProxy)
-      .thenComposeAsync(this::fetchLoan);
+      .thenComposeAsync(this::fetchLoan)
+      .thenComposeAsync(this::fetchPickupServicePoint);
   }
 
   private CompletableFuture<HttpResult<Request>> fetchRequest(String id) {
@@ -206,9 +212,18 @@ public class RequestRepository {
   private CompletableFuture<HttpResult<Request>> fetchLoan(HttpResult<Request> result) {
     return result.combineAfter(loanRepository::findOpenLoanForRequest, Request::withLoan);
   }
+  
+  private CompletableFuture<HttpResult<Request>> fetchPickupServicePoint(HttpResult<Request> result) {
+    return result.combineAfter(request -> getServicePoint(request.getPickupServicePointId()),
+        Request::withPickupServicePoint);
+  }
 
   private CompletableFuture<HttpResult<User>> getUser(String proxyUserId) {
     return userRepository.getUser(proxyUserId);
+  }
+  
+  private CompletableFuture<HttpResult<ServicePoint>> getServicePoint(String servicePointId) {
+    return servicePointRepository.getServicePointById(servicePointId);
   }
   
 }

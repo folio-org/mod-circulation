@@ -33,6 +33,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Period;
 import org.joda.time.format.ISODateTimeFormat;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import api.APITestSuite;
@@ -302,6 +303,7 @@ public class LoanAPITests extends APITests {
       hasParameter("itemId", unknownItemId.toString()))));
   }
 
+  @Ignore("mod-inventory-storage disallows this scenario, change to be isolated test")
   @Test
   public void cannotCreateALoanForUnknownHolding()
     throws InterruptedException,

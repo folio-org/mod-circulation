@@ -1,15 +1,9 @@
 package api.requests;
 
-import api.support.APITests;
-import api.support.builders.HoldingBuilder;
-import api.support.builders.RequestBuilder;
-import api.support.builders.UserBuilder;
-import api.support.fixtures.InstanceExamples;
-import api.support.fixtures.ItemExamples;
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
-import org.junit.Test;
+import static api.APITestSuite.thirdFloorLocationId;
+import static api.support.JsonCollectionAssistant.getRecordById;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
 import java.util.List;
@@ -17,10 +11,18 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import static api.APITestSuite.thirdFloorLocationId;
-import static api.support.JsonCollectionAssistant.getRecordById;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
+import org.junit.Ignore;
+import org.junit.Test;
+
+import api.support.APITests;
+import api.support.builders.HoldingBuilder;
+import api.support.builders.RequestBuilder;
+import api.support.builders.UserBuilder;
+import api.support.fixtures.InstanceExamples;
+import api.support.fixtures.ItemExamples;
+import io.vertx.core.json.JsonObject;
 
 public class RequestsAPITitleTests extends APITests {
 
@@ -78,6 +80,7 @@ public class RequestsAPITitleTests extends APITests {
       is("The Long Way to a Small, Angry Planet"));
   }
 
+  @Ignore("mod-inventory-storage disallows this scenario, change to be isolated test")
   @Test
   public void noTitleWhenCreatingRequestForNotFoundHolding()
     throws InterruptedException,
@@ -126,6 +129,7 @@ public class RequestsAPITitleTests extends APITests {
       fetchedRequest.getJsonObject("item").containsKey("title"), is(false));
   }
 
+  @Ignore("mod-inventory-storage disallows this scenario, change to be isolated test")
   @Test
   public void noTitleWhenCreatingRequestAndInstanceNotFound()
     throws InterruptedException,
@@ -228,6 +232,7 @@ public class RequestsAPITitleTests extends APITests {
       is("A new instance title"));
   }
 
+  @Ignore("mod-inventory-storage disallows this scenario, change to be isolated test")
   @Test
   public void noTitleWhenRequestUpdatedAndInstanceNotFound()
     throws InterruptedException,
@@ -275,6 +280,7 @@ public class RequestsAPITitleTests extends APITests {
       fetchedRequest.getJsonObject("item").containsKey("title"), is(false));
   }
 
+  @Ignore("mod-inventory-storage disallows this scenario, change to be isolated test")
   @Test
   public void noTitleWhenRequestUpdatedAndHoldingNotFound()
     throws InterruptedException,
@@ -396,6 +402,7 @@ public class RequestsAPITitleTests extends APITests {
       is("Temeraire"));
   }
 
+  @Ignore("mod-inventory-storage disallows this scenario, change to be isolated test")
   @Test
   public void titlesForMultipleRequestsAreUnaffectedByDeletionOfHoldingOrInstance()
     throws InterruptedException,
