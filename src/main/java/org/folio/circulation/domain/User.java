@@ -16,6 +16,10 @@ public class User {
 
   private final JsonObject representation;
 
+  public User(JsonObject representation) {
+    this(representation, null, null);    
+  }
+  
   public User(JsonObject representation, PatronGroup requesterPatronGroup, PatronGroup proxyPatronGroup) {
     this.representation = representation;
     this.requesterPatronGroup = requesterPatronGroup;

@@ -134,7 +134,7 @@ public class RequestRepository {
       .thenComposeAsync(this::fetchProxy)
       .thenComposeAsync(this::fetchLoan)
       .thenComposeAsync(this::fetchPickupServicePoint)
-      .thenComposeAsync(PatronGroupRepository::findPatronGroupsForSingleRequestUsers);
+      .thenComposeAsync(this::fetchPatronGroups);
   }
 
   private CompletableFuture<HttpResult<Request>> fetchRequest(String id) {
@@ -221,6 +221,10 @@ public class RequestRepository {
   private CompletableFuture<HttpResult<Request>> fetchPickupServicePoint(HttpResult<Request> result) {
     return result.combineAfter(request -> getServicePoint(request.getPickupServicePointId()),
         Request::withPickupServicePoint);
+  }
+  
+  private CompletableFuture<HttpResult<Request>> fetchPatronGroups(HttpResult<Request> result) {
+    return patronGroupRepository.findPatronGroupsForSingleRequestUsers(result);
   }
   
   private CompletableFuture<HttpResult<User>> getUser(String proxyUserId) {
