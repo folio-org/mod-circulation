@@ -4,6 +4,7 @@ import static api.support.matchers.FailureMatcher.isErrorFailureContaining;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.results.ResultExamples.alreadyFailed;
+import static org.folio.circulation.support.results.ResultExamples.shouldNotExecute;
 import static org.folio.circulation.support.results.ResultExamples.somethingWentWrong;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -33,7 +34,7 @@ public class HttpResultAfterTests {
     InterruptedException {
     
     final HttpResult<Integer> result = alreadyFailed()
-      .after(value -> completedFuture(succeeded(value + 10)))
+      .<Integer>after(value -> { throw shouldNotExecute(); })
       .get();
 
     assertThat(result, isErrorFailureContaining("Already failed"));
