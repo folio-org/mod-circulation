@@ -20,7 +20,7 @@ public interface HttpResult<T> {
     try {
       return succeeded(supplier.get());
     } catch (Exception e) {
-      return failed(new ServerErrorFailure(e));
+      return failed(e);
     }
   }
 
@@ -206,6 +206,10 @@ public interface HttpResult<T> {
     return new FailedHttpResult<>(cause);
   }
 
+  static <T> HttpResult<T> failed(Throwable e) {
+    return failed(new ServerErrorFailure(e));
+  }
+
   default <R> CompletableFuture<HttpResult<R>> after(
     Function<T, CompletableFuture<HttpResult<R>>> action) {
 
@@ -214,7 +218,8 @@ public interface HttpResult<T> {
     }
 
     try {
-      return action.apply(value());
+      return action.apply(value())
+        .exceptionally(HttpResult::failed);
     } catch (Exception e) {
       return completedFuture(failed(new ServerErrorFailure(e)));
     }
@@ -237,7 +242,7 @@ public interface HttpResult<T> {
     try {
       return action.apply(value());
     } catch (Exception e) {
-      return failed(new ServerErrorFailure(e));
+      return failed(e);
     }
   }
 

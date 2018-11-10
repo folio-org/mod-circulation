@@ -2,6 +2,7 @@ package org.folio.circulation.support.results;
 
 import static api.support.matchers.FailureMatcher.isErrorFailureContaining;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.concurrent.CompletableFuture.supplyAsync;
 import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.results.ResultExamples.alreadyFailed;
 import static org.folio.circulation.support.results.ResultExamples.shouldNotExecute;
@@ -47,6 +48,18 @@ public class HttpResultAfterTests {
 
     final HttpResult<Integer> result = succeeded(10)
       .<Integer>after(value -> { throw somethingWentWrong(); })
+      .get();
+
+    assertThat(result, isErrorFailureContaining("Something went wrong"));
+  }
+
+  @Test
+  public void shouldFailWhenFutureFailsAsynchronously()
+    throws ExecutionException,
+    InterruptedException {
+
+    final HttpResult<Integer> result = succeeded(10)
+      .<Integer>after(value -> supplyAsync(() -> { throw somethingWentWrong(); }))
       .get();
 
     assertThat(result, isErrorFailureContaining("Something went wrong"));
