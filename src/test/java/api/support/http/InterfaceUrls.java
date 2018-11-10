@@ -130,4 +130,8 @@ public class InterfaceUrls {
   public static URL servicePointsStorageUrl(String subPath) {
     return APITestSuite.viaOkapiModuleUrl("/service-points" + subPath);
   }
+  
+  public static URL patronGroupsStorageUrl(String subPath) {
+    return APITestSuite.viaOkapiModuleUrl("/groups" + subPath);
+  }
 }

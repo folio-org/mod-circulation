@@ -369,7 +369,7 @@ public class APITestSuite {
     InterruptedException,
     ExecutionException,
     TimeoutException {
-    ResourceClient groupsClient = ResourceClient.forGroups(createClient());
+    ResourceClient groupsClient = ResourceClient.forPatronGroups(createClient());
 
     groupsClient.deleteAllIndividually();
 
@@ -390,7 +390,7 @@ public class APITestSuite {
     ExecutionException,
     TimeoutException {
 
-    ResourceClient groupsClient = ResourceClient.forGroups(createClient());
+    ResourceClient groupsClient = ResourceClient.forPatronGroups(createClient());
     groupsClient.delete(regularGroupId);
     groupsClient.delete(alternateGroupId);
   }

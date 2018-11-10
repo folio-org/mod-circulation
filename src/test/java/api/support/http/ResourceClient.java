@@ -22,9 +22,7 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class ResourceClient {
-
   
-
   private final OkapiHttpClient client;
   private final UrlMaker urlMaker;
   private final String resourceName;
@@ -79,11 +77,12 @@ public class ResourceClient {
     return new ResourceClient(client, InterfaceUrls::proxyRelationshipsUrl,
       "proxiesFor");
   }
-
+/*
   public static ResourceClient forGroups(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::groupsUrl,
       "groups", "usergroups");
   }
+*/
 
   public static ResourceClient forLoansStorage(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::loansStorageUrl,
@@ -138,6 +137,11 @@ public class ResourceClient {
   public static ResourceClient forServicePoints(OkapiHttpClient client) {
    return new ResourceClient(client, InterfaceUrls::servicePointsStorageUrl,
        "service points", "servicepoints");
+  }
+  
+  public static ResourceClient forPatronGroups(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::patronGroupsStorageUrl,
+      "patron groups", "usergroups");
   }
 
   private ResourceClient(

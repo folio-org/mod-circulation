@@ -106,6 +106,7 @@ public class FakeOkapi extends AbstractVerticle {
       .withRequiredProperties("name", "loanable", "renewable")
       .create().register(router);
 
+    /*
     new FakeStorageModuleBuilder()
       .withRecordName("user group")
       .withRootPath("/groups")
@@ -113,6 +114,7 @@ public class FakeOkapi extends AbstractVerticle {
       .withRequiredProperties("group", "desc")
       .disallowCollectionDelete()
       .create().register(router);
+    */
 
     new FakeStorageModuleBuilder()
       .withRecordName("user")
@@ -189,6 +191,15 @@ public class FakeOkapi extends AbstractVerticle {
         .withCollectionPropertyName("servicepoints")
         .withRootPath("/service-points")
         .withRequiredProperties("name", "code", "discoveryDisplayName")
+        .withChangeMetadata()
+        .create()
+        .register(router);
+    
+    new FakeStorageModuleBuilder()
+        .withRecordName("userGroup")
+        .withCollectionPropertyName("usergroups")
+        .withRootPath("/groups")
+        .withRequiredProperties("group")
         .withChangeMetadata()
         .create()
         .register(router);

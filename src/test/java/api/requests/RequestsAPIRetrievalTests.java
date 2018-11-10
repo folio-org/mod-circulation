@@ -48,12 +48,19 @@ public class RequestsAPIRetrievalTests extends APITests {
     UUID itemId = UUID.fromString("60c50f1b-7d6c-4b59-863a-a4da213d9530");
     String enumeration = "DUMMY_ENUMERATION";
     
+    UUID facultyGroupId = patronGroupsFixture.faculty().getId();
+    UUID staffGroupId = patronGroupsFixture.staff().getId();
+    
     itemsFixture.basedUponSmallAngryPlanet(itemBuilder -> itemBuilder
         .withId(itemId)
         .withEnumeration(enumeration));
 
-    final IndividualResource sponsor = usersFixture.rebecca();
-    final IndividualResource proxy = usersFixture.steve();
+    UserBuilder userBuilder = new UserBuilder().withPatronGroupId(facultyGroupId);
+    
+    final IndividualResource sponsor = usersFixture.rebecca(
+        builder -> { return builder.withPatronGroupId(facultyGroupId); });
+    final IndividualResource proxy = usersFixture.steve(builder -> 
+    { return builder.withPatronGroupId(staffGroupId); });
     final IndividualResource cd1 = servicePointsFixture.cd1();
     final IndividualResource cd2 = servicePointsFixture.cd2();
     UUID pickupServicePointId = cd1.getId();

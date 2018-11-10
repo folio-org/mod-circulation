@@ -71,7 +71,8 @@ public class ServicePointRepository {
                 }
               }
               if(!foundSP) {
-                log.info(String.format("No service point (out of %s) found for request %s (pickupServicePointId %s)", spCollection.size(), request.getId(), request.getPickupServicePointId()));
+                log.info(String.format("No service point (out of %s) found for request %s (pickupServicePointId %s)",
+                    spCollection.size(), request.getId(), request.getPickupServicePointId()));
                 newRequest = request;
               }
               newRequestList.add(newRequest);

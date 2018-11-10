@@ -120,6 +120,17 @@ public class UsersFixture {
 
     return usersClient.create(UserExamples.basedUponRebeccaStuart());
   }
+  
+  public IndividualResource rebecca(Function<UserBuilder, UserBuilder> additionalProperties)
+    throws
+    InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+    UserBuilder builder = additionalProperties.apply(UserExamples.basedUponRebeccaStuart());
+
+    return usersClient.create(builder);
+  }
 
   public IndividualResource steve()
     throws
