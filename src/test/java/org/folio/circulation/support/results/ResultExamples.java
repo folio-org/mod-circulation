@@ -15,8 +15,12 @@ class ResultExamples {
     return failed(exampleFailure("Condition failed"));
   }
 
-  static HttpResult<Integer> shouldNotExecute() {
-    throw exampleException("Should not execute");
+  static <T> WritableHttpResult<T> actionFailed() {
+    return failed(exampleFailure("Action failed"));
+  }
+
+  static HttpResult<Integer> throwOnExecution() {
+    throw shouldNotExecute();
   }
 
   static RuntimeException exampleException(String message) {
@@ -25,6 +29,10 @@ class ResultExamples {
 
   static ServerErrorFailure exampleFailure(String message) {
     return new ServerErrorFailure(exampleException(message));
+  }
+
+  static RuntimeException shouldNotExecute() {
+    return exampleException("Should not execute");
   }
 
   static RuntimeException somethingWentWrong() {

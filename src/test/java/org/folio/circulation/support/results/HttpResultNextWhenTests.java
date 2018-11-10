@@ -4,7 +4,7 @@ import static api.support.matchers.FailureMatcher.isErrorFailureContaining;
 import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.results.ResultExamples.alreadyFailed;
 import static org.folio.circulation.support.results.ResultExamples.conditionFailed;
-import static org.folio.circulation.support.results.ResultExamples.shouldNotExecute;
+import static org.folio.circulation.support.results.ResultExamples.throwOnExecution;
 import static org.folio.circulation.support.results.ResultExamples.somethingWentWrong;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -18,7 +18,7 @@ public class HttpResultNextWhenTests {
     final HttpResult<Integer> result = succeeded(10)
       .nextWhen(value -> succeeded(true),
         value -> succeeded(value + 10),
-        value -> shouldNotExecute());
+        value -> throwOnExecution());
 
     assertThat(result.succeeded(), is(true));
     assertThat(result.value(), is(20));
@@ -28,7 +28,7 @@ public class HttpResultNextWhenTests {
   public void shouldApplyWhenFalseActionWhenConditionIsFalse() {
     final HttpResult<Integer> result = succeeded(10)
       .nextWhen(value -> succeeded(false),
-        value -> shouldNotExecute(),
+        value -> throwOnExecution(),
         value -> succeeded(value + 10));
 
     assertThat(result.succeeded(), is(true));
@@ -39,8 +39,8 @@ public class HttpResultNextWhenTests {
   public void shouldFailWhenAlreadyFailed() {
     final HttpResult<Integer> result = alreadyFailed()
       .nextWhen(value -> succeeded(true),
-        value -> shouldNotExecute(),
-        value -> shouldNotExecute());
+        value -> throwOnExecution(),
+        value -> throwOnExecution());
 
     assertThat(result, isErrorFailureContaining("Already failed"));
   }
@@ -60,7 +60,7 @@ public class HttpResultNextWhenTests {
     final HttpResult<Integer> result = succeeded(10)
       .nextWhen(value -> succeeded(true),
         value -> {throw somethingWentWrong(); },
-        value -> shouldNotExecute());
+        value -> throwOnExecution());
 
     assertThat(result, isErrorFailureContaining("Something went wrong"));
   }
@@ -69,7 +69,7 @@ public class HttpResultNextWhenTests {
   public void shouldFailWhenFalseActionFailed() {
     final HttpResult<Integer> result = succeeded(10)
       .nextWhen(value -> succeeded(false),
-        value -> shouldNotExecute(),
+        value -> throwOnExecution(),
         value -> {throw somethingWentWrong(); });
 
     assertThat(result, isErrorFailureContaining("Something went wrong"));
