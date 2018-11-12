@@ -191,7 +191,8 @@ abstract class RenewalAPITests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
-        .at(loanDate));
+        .on(loanDate)
+        .at(UUID.randomUUID()));
 
     final IndividualResource response = renew(smallAngryPlanet, steve);
 
@@ -303,7 +304,8 @@ abstract class RenewalAPITests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
-        .at(loanDate));
+        .on(loanDate)
+        .at(UUID.randomUUID()));
 
     final IndividualResource response = renew(smallAngryPlanet, steve);
 
@@ -357,7 +359,8 @@ abstract class RenewalAPITests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
-        .at(loanDate));
+        .on(loanDate)
+        .at(UUID.randomUUID()));
 
     final IndividualResource response = renew(smallAngryPlanet, steve);
 
@@ -414,7 +417,8 @@ abstract class RenewalAPITests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
-        .at(loanDate));
+        .on(loanDate)
+        .at(UUID.randomUUID()));
 
     final IndividualResource response = renew(smallAngryPlanet, steve);
 

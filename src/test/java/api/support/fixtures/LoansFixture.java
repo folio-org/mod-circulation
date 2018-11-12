@@ -1,16 +1,14 @@
 package api.support.fixtures;
 
-import api.support.builders.CheckOutByBarcodeRequestBuilder;
-import api.support.builders.LoanBuilder;
-import api.support.builders.RenewByBarcodeRequestBuilder;
-import api.support.builders.RenewByIdRequestBuilder;
-import api.support.http.ResourceClient;
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
-import org.joda.time.DateTime;
+import static api.support.RestAssuredClient.from;
+import static api.support.RestAssuredClient.post;
+import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
+import static api.support.http.InterfaceUrls.checkOutByBarcodeUrl;
+import static api.support.http.InterfaceUrls.loansUrl;
+import static api.support.http.InterfaceUrls.renewByBarcodeUrl;
+import static api.support.http.InterfaceUrls.renewByIdUrl;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
 import java.util.UUID;
@@ -19,12 +17,18 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static api.support.RestAssuredClient.from;
-import static api.support.RestAssuredClient.post;
-import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
-import static api.support.http.InterfaceUrls.*;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.OkapiHttpClient;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
+import org.joda.time.DateTime;
+
+import api.support.builders.CheckOutByBarcodeRequestBuilder;
+import api.support.builders.LoanBuilder;
+import api.support.builders.RenewByBarcodeRequestBuilder;
+import api.support.builders.RenewByIdRequestBuilder;
+import api.support.http.ResourceClient;
+import io.vertx.core.json.JsonObject;
 
 public class LoansFixture {
   private final ResourceClient loansClient;
@@ -117,7 +121,8 @@ public class LoansFixture {
     //TODO: Should also have a return date
     JsonObject closedLoan = getResponse.getJson().copy()
       .put("status", new JsonObject().put("name", "Closed"))
-      .put("action", "checkedin");
+      .put("action", "checkedin")
+      .put("checkinServicePointId", UUID.randomUUID().toString());
 
     loansClient.replace(loanId, closedLoan);
   }
@@ -153,7 +158,8 @@ public class LoansFixture {
 
     return checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
       .forItem(item)
-      .to(to));
+      .to(to)
+      .at(UUID.randomUUID()));
   }
 
   public IndividualResource checkOutByBarcode(
@@ -164,7 +170,8 @@ public class LoansFixture {
     return checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
       .forItem(item)
       .to(to)
-      .at(loanDate));
+      .on(loanDate)
+      .at(UUID.randomUUID()));
   }
 
   public IndividualResource checkOutByBarcode(CheckOutByBarcodeRequestBuilder builder) {
@@ -182,7 +189,8 @@ public class LoansFixture {
 
     return attemptCheckOutByBarcode(new CheckOutByBarcodeRequestBuilder()
       .forItem(item)
-      .to(to));
+      .to(to)
+      .at(UUID.randomUUID()));
   }
 
   public Response attemptCheckOutByBarcode(CheckOutByBarcodeRequestBuilder builder) {
@@ -248,5 +256,4 @@ public class LoansFixture {
     return from(post(request, renewByIdUrl(),
       422, "renewal-by-id-request"));
   }
-
 }

@@ -23,6 +23,8 @@
   },
   "loanDate": "2017-03-01T23:11:00.000Z",
   "dueDate": "2017-04-01T23:11:00.000Z",
+  "checkoutServicePointId": "e9af4ba4-6801-4722-bf45-d7a49d54564d",
+  "checkinServicePointId": "e9af4ba4-6801-4722-bf45-d7a49d54564d",
   "status": {
     "name": "Open"
   },

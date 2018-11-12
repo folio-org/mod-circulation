@@ -108,8 +108,7 @@ public class LoanCollectionResource extends CollectionResource {
     final LoanRepository loanRepository = new LoanRepository(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
-      clients, () -> failure(
-        "proxyUserId is not valid", "proxyUserId",
+      clients, () -> failure("proxyUserId is not valid", "proxyUserId",
         loan.getProxyUserId()));
 
     final ItemNotFoundValidator itemNotFoundValidator = createItemNotFoundValidator(loan);
@@ -117,6 +116,7 @@ public class LoanCollectionResource extends CollectionResource {
     completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(loan)))
       .thenApply(this::refuseWhenNotOpenOrClosed)
       .thenApply(this::refuseWhenOpenAndNoUserId)
+      .thenApply(this::refuseWhenClosedAndNoCheckInServicePointId)
       .thenCombineAsync(itemRepository.fetchFor(loan), this::addItem)
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
@@ -215,6 +215,15 @@ public class LoanCollectionResource extends CollectionResource {
     });
   }
 
+	private HttpResult<LoanAndRelatedRecords> refuseWhenClosedAndNoCheckInServicePointId(
+      HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
+
+    return loanAndRelatedRecords
+        .map(LoanAndRelatedRecords::getLoan)
+        .next(Loan::closedLoanHasCheckInServicePointId)
+        .next(v -> loanAndRelatedRecords);
+    }
+  
   private HttpResult<LoanAndRelatedRecords> refuseWhenNotOpenOrClosed(
     HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
