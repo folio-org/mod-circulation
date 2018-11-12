@@ -1,4 +1,4 @@
-#%RAML 0.8
+#%RAML 1.0
 title: Circulation
 version: v5.0
 protocols: [ HTTP, HTTPS ]
@@ -8,28 +8,24 @@ documentation:
   - title: Circulation Business Logic API
     content: <b>API for loans and requests</b>
 
-schemas:
-  - loan.json: !include loan.json
-  - loans: !include loans.json
-  - request.json: !include request.json
-  - requests: !include requests.json
-  - raml-util/schemas/error.schema: !include raml-util/schemas/error.schema
-  - raml-util/schemas/metadata.schema: !include raml-util/schemas/metadata.schema
-  - errors: !include raml-util/schemas/errors.schema
-  - error.schema: !include raml-util/schemas/error.schema
-  - parameters.schema: !include raml-util/schemas/parameters.schema
+types:
+  loan: !include loan.json
+  loans: !include loans.json
+  request: !include request.json
+  requests: !include requests.json
+  error: !include raml-util/schemas/error.schema
+  errors: !include raml-util/schemas/errors.schema
 
 traits:
-  - secured: !include raml-util/traits/auth.raml
-  - language: !include raml-util/traits/language.raml
-  - pageable: !include raml-util/traits/pageable.raml
-  - searchable: !include raml-util/traits/searchable.raml
-  - validate: !include raml-util/traits/validation.raml
+  language: !include raml-util/traits/language.raml
+  pageable: !include raml-util/traits/pageable.raml
+  searchable: !include raml-util/traits/searchable.raml
+  validate: !include raml-util/traits/validation.raml
 
 resourceTypes:
-  - collection: !include raml-util/rtypes/collection.raml
-  - collection-get: !include raml-util/rtypes/collection-get.raml
-  - collection-item: !include raml-util/rtypes/item-collection.raml
+  collection: !include raml-util/rtypes/collection.raml
+  collection-get: !include raml-util/rtypes/collection-get.raml
+  collection-item: !include raml-util/rtypes/item-collection.raml
 
 /circulation:
   /check-out-by-barcode:
@@ -37,19 +33,18 @@ resourceTypes:
     post:
       description: Creates a loan by checking out an item to a loanee
       is: [
-        secured,
         language,
         validate
       ]
       body:
         application/json:
-          schema: !include check-out-by-barcode-request.json
+          type: !include check-out-by-barcode-request.json
           example: !include examples/check-out-by-barcode-request.json
       responses:
         201:
           body:
             application/json:
-              schema: loan.json
+              type: loan
               example: !include examples/loan.json
         500:
           description: "Internal server error"
@@ -61,24 +56,23 @@ resourceTypes:
     post:
       description: Updates the due date of an existing loan
       is: [
-        secured,
         language,
         validate
       ]
       body:
         application/json:
-          schema: !include renew-by-barcode-request.json
+          type: !include renew-by-barcode-request.json
           example: !include examples/renew-by-barcode-request.json
       responses:
         200:
           body:
             application/json:
-              schema: loan.json
+              type: loan
               example: !include examples/loan.json
         201:
           body:
             application/json:
-              schema: loan.json
+              type: loan
               example: !include examples/loan.json
         500:
           description: "Internal server error"
@@ -90,24 +84,23 @@ resourceTypes:
     post:
       description: Updates the due date of an existing loan
       is: [
-        secured,
         language,
         validate
       ]
       body:
         application/json:
-          schema: !include renew-by-id-request.json
+          type: !include renew-by-id-request.json
           example: !include examples/renew-by-id-request.json
       responses:
         200:
           body:
             application/json:
-              schema: loan.json
+              type: loan
               example: !include examples/loan.json
         201:
           body:
             application/json:
-              schema: loan.json
+              type: loan
               example: !include examples/loan.json
         500:
           description: "Internal server error"
@@ -121,7 +114,7 @@ resourceTypes:
         exampleCollection: !include examples/loans.json
         exampleItem: !include examples/loan.json
         schemaCollection: loans
-        schemaItem: loan.json
+        schemaItem: loan
     get:
       is: [
         pageable,
@@ -145,7 +138,7 @@ resourceTypes:
       type:
         collection-item:
           exampleItem: !include examples/loan.json
-          schema: loan.json
+          schema: loan
       get:
         responses:
           501:
@@ -162,12 +155,11 @@ resourceTypes:
     displayName: Loan rules
     get:
       description: Get the loan rules
-      is: [secured]
       responses:
         200:
           body:
             application/json:
-              schema: !include schema/loan-rules.json
+              type: !include schema/loan-rules.json
               example: !include examples/loan-rules.json
         500:
           description: "Internal server error"
@@ -176,10 +168,9 @@ resourceTypes:
               example: "Internal server error"
     put:
       description: Set the loan rules using a text file
-      is: [secured]
       body:
         application/json:
-          schema: !include schema/loan-rules-text.json
+          type: !include schema/loan-rules-text.json
           example: !include examples/loan-rules-text.json
       responses:
         204:
@@ -188,7 +179,7 @@ resourceTypes:
           description: "Validation error in the text file."
           body:
             application/json:
-              schema: !include schema/loan-rules-error.json
+              type: !include schema/loan-rules-error.json
               example: !include examples/loan-rules-error.json
         500:
           description: "Internal server error"
@@ -199,7 +190,6 @@ resourceTypes:
       displayName: Apply loan rules
       get:
         description: Get the loan policy when applying loan rules
-        is: [secured]
         queryParameters:
           item_type_id:
             description: "Item type id"
@@ -221,7 +211,7 @@ resourceTypes:
           200:
             body:
               application/json:
-                schema: !include schema/loan-policy-id.json
+                type: !include schema/loan-policy-id.json
                 example: !include examples/loan-policy-id.json
           400:
             description: "Invalid query parameters"
@@ -232,7 +222,7 @@ resourceTypes:
             description: "Invalid id error."
             body:
               application/json:
-                schema: raml-util/schemas/error.schema
+                type: error
                 example: !include examples/loan-rules-id-error.json
           500:
             description: "Internal server error"
@@ -243,7 +233,6 @@ resourceTypes:
       displayName: Apply loan rules and return all matches
       get:
         description: Get loan rule and loan policy for each match when applying loan rules
-        is: [secured]
         queryParameters:
           item_type_id:
             description: "Item type id"
@@ -268,13 +257,13 @@ resourceTypes:
           200:
             body:
               application/json:
-                schema: !include schema/loan-rule-matches.json
+                type: !include schema/loan-rule-matches.json
                 example: !include examples/loan-rule-matches.json
           422:
             description: "Invalid id error."
             body:
               application/json:
-                schema: raml-util/schemas/error.schema
+                type: error
                 example: !include examples/loan-rules-id-error.json
           500:
             description: "Internal server error"
@@ -288,7 +277,7 @@ resourceTypes:
         exampleCollection: !include examples/requests.json
         exampleItem: !include examples/request.json
         schemaCollection: requests
-        schemaItem: request.json
+        schemaItem: request
     get:
       is: [pageable,
         searchable: {description: "by using CQL",
@@ -316,7 +305,7 @@ resourceTypes:
       type:
         collection-item:
           exampleItem: !include examples/request.json
-          schema: request.json
+          schema: request
       get:
         responses:
           501:
