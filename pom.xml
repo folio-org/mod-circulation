@@ -22,7 +22,7 @@
     <antlr4.version>4.7.1</antlr4.version>
     <drools.version>7.0.0.Final</drools.version>
     <rmb.version>23.1.0</rmb.version>
-    <vertx.version>3.5.3</vertx.version>
+    <vertx.version>3.5.4</vertx.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
   </properties>
@@ -177,6 +177,7 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-report-plugin</artifactId>
         <version>2.20</version>
+        
       </plugin>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -296,6 +297,11 @@
             <include>api/APITestSuite.class</include>
             <include>org/folio/circulation/**/*</include>
           </includes>
+          <!-- TODO: update to version 3.0.0 and remove useSystemClassLoader
+               https://issues.folio.org/browse/FOLIO-1609
+               https://issues.apache.org/jira/browse/SUREFIRE-1588
+          -->
+          <useSystemClassLoader>false</useSystemClassLoader>
         </configuration>
       </plugin>
       <plugin>

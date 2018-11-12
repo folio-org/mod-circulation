@@ -126,4 +126,8 @@ public class InterfaceUrls {
   public static URL cancellationReasonsStorageUrl() {
     return cancellationReasonsStorageUrl("");
   }
+  
+  public static URL servicePointsStorageUrl(String subPath) {
+    return APITestSuite.viaOkapiModuleUrl("/service-points" + subPath);
+  }
 }

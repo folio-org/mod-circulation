@@ -25,6 +25,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord, FindByIdQu
   private final Loan loan;
   private boolean changedPosition = false;
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private final ServicePoint pickupServicePoint;
 
 
   public Request(
@@ -32,17 +33,19 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord, FindByIdQu
     Item item,
     User requester,
     User proxy,
-    Loan loan) {
+    Loan loan,
+    ServicePoint pickupServicePoint) {
 
     this.representation = representation;
     this.item = item;
     this.requester = requester;
     this.proxy = proxy;
     this.loan = loan;
+    this.pickupServicePoint = pickupServicePoint;
   }
 
   public static Request from(JsonObject representation) {
-    return new Request(representation, null, null, null, null);
+    return new Request(representation, null, null, null, null, null);
   }
 
   public JsonObject asJson() {
@@ -87,20 +90,29 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord, FindByIdQu
   }
 
   public Request withItem(Item newItem) {
-    return new Request(representation, newItem, requester, proxy, loan);
+    return new Request(representation, newItem, requester, proxy, loan,
+        pickupServicePoint);
   }
 
   public Request withRequester(User newRequester) {
-    return new Request(representation, item, newRequester, proxy, loan);
+    return new Request(representation, item, newRequester, proxy, loan,
+        pickupServicePoint);
   }
 
   public Request withProxy(User newProxy) {
-    return new Request(representation, item, requester, newProxy, loan);
+    return new Request(representation, item, requester, newProxy, loan,
+        pickupServicePoint);
   }
   
   public Request withLoan(Loan newLoan) {
-    return new Request(representation, item, requester, proxy, newLoan);
+    return new Request(representation, item, requester, proxy, newLoan,
+        pickupServicePoint);
   }
+  
+  public Request withPickupServicePoint(ServicePoint newPickupServicePoint) {
+    return new Request(representation, item, requester, proxy, loan,
+        newPickupServicePoint);
+  } 
 
   @Override
   public String getUserId() {
@@ -159,6 +171,14 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord, FindByIdQu
 
   public User getProxy() {
     return proxy;
+  }
+  
+  public String getPickupServicePointId() {
+    return representation.getString("pickupServicePointId");
+  }
+  
+  public ServicePoint getPickupServicePoint() {
+    return pickupServicePoint;
   }
 
   Request changePosition(Integer newPosition) {

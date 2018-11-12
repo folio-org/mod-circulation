@@ -20,6 +20,7 @@ public class RequestRepresentation {
     addAdditionalItemProperties(requestRepresentation, request.getItem());
     addAdditionalLoanProperties(requestRepresentation, request.getLoan());
     addStoredProxyProperties(requestRepresentation, request.getProxy());
+    addAdditionalServicePointProperties(requestRepresentation, request.getPickupServicePoint());
 
     return requestRepresentation;
   }
@@ -151,6 +152,26 @@ public class RequestRepresentation {
     }
     
     request.put("loan", loanSummary);
+  }
+  
+  private static void addAdditionalServicePointProperties(JsonObject request, ServicePoint servicePoint) {
+    if(servicePoint == null) {
+      log.info(String.format("Unable to add servicepoint properties to request %s,"
+          + " servicepoint is null", request.getString("id")));
+      return;
+    }
+
+    JsonObject spSummary = request.containsKey("pickupServicePoint")
+        ? request.getJsonObject("pickupServicePoint")
+        : new JsonObject();
+    spSummary.put("name", servicePoint.getName());
+    spSummary.put("code", servicePoint.getCode());
+    spSummary.put("discoveryDisplayName", servicePoint.getDiscoveryDisplayName());
+    spSummary.put("description", servicePoint.getDescription());
+    spSummary.put("shelvingLagTime", servicePoint.getShelvingLagTime());
+    spSummary.put("pickupLocation", servicePoint.getPickupLocation());    
+    
+    request.put("pickupServicePoint", spSummary);
   }
 }
 

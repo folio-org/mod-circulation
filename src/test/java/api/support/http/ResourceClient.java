@@ -23,6 +23,8 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class ResourceClient {
 
+  
+
   private final OkapiHttpClient client;
   private final UrlMaker urlMaker;
   private final String resourceName;
@@ -131,6 +133,11 @@ public class ResourceClient {
   public static ResourceClient forCancellationReasons(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::cancellationReasonsStorageUrl,
         "cancellationReasons");
+  }
+  
+  public static ResourceClient forServicePoints(OkapiHttpClient client) {
+   return new ResourceClient(client, InterfaceUrls::servicePointsStorageUrl,
+       "service points", "servicepoints");
   }
 
   private ResourceClient(
