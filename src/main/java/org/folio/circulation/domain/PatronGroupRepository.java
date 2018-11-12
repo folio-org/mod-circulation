@@ -88,12 +88,12 @@ public class PatronGroupRepository {
             Request newRequest = request;
             for(PatronGroup patronGroup : pgCollection ) {              
               if(requesterId.equals(patronGroup.getId())) {
-                User newRequester = newRequest.getRequester().withRequesterPatronGroup(patronGroup);
+                User newRequester = newRequest.getRequester().withPatronGroup(patronGroup);
                 newRequest = newRequest.withRequester(newRequester);
                 foundPG = true;
               }
               if(proxyId.equals(patronGroup.getId())) {
-                User newProxy = newRequest.getProxy().withProxyPatronGroup(patronGroup);
+                User newProxy = newRequest.getProxy().withPatronGroup(patronGroup);
                 newRequest = newRequest.withProxy(newProxy);
                 foundPG = true;
               }

@@ -11,28 +11,23 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 public class User {
   private static final String PERSONAL_PROPERTY_NAME = "personal";
-  private final PatronGroup requesterPatronGroup;
-  private final PatronGroup proxyPatronGroup;
+  private final PatronGroup patronGroup;
 
   private final JsonObject representation;
 
   public User(JsonObject representation) {
-    this(representation, null, null);    
+    this(representation, null);    
   }
   
-  public User(JsonObject representation, PatronGroup requesterPatronGroup, PatronGroup proxyPatronGroup) {
+  public User(JsonObject representation, PatronGroup patronGroup) {
     this.representation = representation;
-    this.requesterPatronGroup = requesterPatronGroup;
-    this.proxyPatronGroup = proxyPatronGroup;
+    this.patronGroup = patronGroup;
   }
   
-  public User withRequesterPatronGroup(PatronGroup newRequesterPatronGroup) {
-    return new User(representation, newRequesterPatronGroup, this.proxyPatronGroup);
+  public User withPatronGroup(PatronGroup newPatronGroup) {
+    return new User(representation, newPatronGroup);
   }
   
-  public User withProxyPatronGroup(PatronGroup newProxyPatronGroup) {
-    return new User(representation, this.requesterPatronGroup, newProxyPatronGroup);
-  }
 
   public boolean canDetermineStatus() {
     return !representation.containsKey("active");
@@ -110,7 +105,15 @@ public class User {
     write(userSummary, "firstName", getFirstName());
     write(userSummary, "middleName", getMiddleName());
     write(userSummary, "barcode", getBarcode());
-
+    
+    if(patronGroup != null) {
+      JsonObject patronGroupSummary = new JsonObject();
+      write(patronGroupSummary, "id", patronGroup.getId());
+      write(patronGroupSummary, "group", patronGroup.getGroup());
+      write(patronGroupSummary, "desc", patronGroup.getDesc());
+      userSummary.put("patronGroup", patronGroupSummary);
+    }
+    
     return userSummary;
   }
 
