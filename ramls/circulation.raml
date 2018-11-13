@@ -107,6 +107,34 @@ resourceTypes:
           body:
             text/plain:
               example: "Internal server error"
+  /check-in-by-barcode:
+    displayName: Checkin an existing loan using barcode for item and loanee
+    post:
+      description: Updates the status of an existing loan
+      is: [
+        language,
+        validate
+      ]
+      body:
+        application/json:
+          type: !include check-in-by-barcode-request.json
+          example: !include examples/check-in-by-barcode-request.json
+      responses:
+        200:
+          body:
+            application/json:
+              type: loan
+              example: !include examples/loan.json
+        201:
+          body:
+            application/json:
+              type: loan
+              example: !include examples/loan.json
+        500:
+          description: "Internal server error"
+          body:
+            text/plain:
+              example: "Internal server error"
   /loans:
     displayName: Loans
     type:
