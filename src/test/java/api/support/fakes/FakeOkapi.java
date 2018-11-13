@@ -136,6 +136,7 @@ public class FakeOkapi extends AbstractVerticle {
       .withRootPath("/request-storage/requests")
       .withRequiredProperties("itemId", "requesterId", "requestType",
         "requestDate", "fulfilmentPreference")
+      .withDisallowedProperties("pickupServicePoint", "loan")
       .withChangeMetadata()
       .create().register(router);
 
