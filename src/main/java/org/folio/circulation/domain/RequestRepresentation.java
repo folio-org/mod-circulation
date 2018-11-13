@@ -70,7 +70,7 @@ public class RequestRepresentation {
     
     String patronGroup = requester.getPatronGroup();
     if(patronGroup != null) {
-      requesterSummary.put("patronGroup", patronGroup);
+      requesterSummary.put("patronGroupId", patronGroup);
     }
   }
 
@@ -78,13 +78,21 @@ public class RequestRepresentation {
     JsonObject requestWithAdditionalInformation,
     User proxy) {
 
+    
     if(proxy == null) {
       log.info(String.format("Unable to add proxy properties to request %s, proxy object is null", 
           requestWithAdditionalInformation.getString("id")));
       return;
-    }
+    }   
 
-    requestWithAdditionalInformation.put("proxy", proxy.createUserSummary());
+    JsonObject proxySummary =  proxy.createUserSummary();
+    
+    String patronGroup = proxy.getPatronGroup();
+    if(patronGroup != null) {
+      proxySummary.put("patronGroupId", patronGroup);
+    }
+    
+    requestWithAdditionalInformation.put("proxy", proxySummary);
   }
 
   private static void addAdditionalItemProperties(JsonObject request, Item item) {

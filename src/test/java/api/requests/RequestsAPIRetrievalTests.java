@@ -59,8 +59,8 @@ public class RequestsAPIRetrievalTests extends APITests {
     
     final IndividualResource sponsor = usersFixture.rebecca(
         builder -> { return builder.withPatronGroupId(facultyGroupId); });
-    final IndividualResource proxy = usersFixture.steve(builder -> 
-    { return builder.withPatronGroupId(staffGroupId); });
+    final IndividualResource proxy = usersFixture.steve(
+        builder -> { return builder.withPatronGroupId(staffGroupId); });
     final IndividualResource cd1 = servicePointsFixture.cd1();
     final IndividualResource cd2 = servicePointsFixture.cd2();
     UUID pickupServicePointId = cd1.getId();
