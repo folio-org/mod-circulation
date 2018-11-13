@@ -50,6 +50,7 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
+    //TODO: Should include pickup service point
     IndividualResource createdRequest = requestsClient.create(
       new RequestBuilder()
       .recall()
@@ -66,7 +67,8 @@ public class RequestsAPIUpdatingTests extends APITests {
       .withBarcode("679231693475"))
       .getId();
 
-    JsonObject updatedRequest = createdRequest.copyJson();
+    JsonObject updatedRequest = requestsClient.getById(createdRequest.getId())
+      .getJson();
 
     updatedRequest
       .put("requestType", "Hold")
@@ -161,7 +163,8 @@ public class RequestsAPIUpdatingTests extends APITests {
         .withRequestExpiration(new LocalDate(2017, 7, 30))
         .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
-    JsonObject updatedRequest = createdRequest.copyJson();
+    JsonObject updatedRequest = requestsClient.getById(createdRequest.getId())
+      .getJson();
 
     itemsClient.delete(itemId);
 
@@ -229,7 +232,8 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     usersClient.delete(requester);
 
-    JsonObject updatedRequest = createdRequest.copyJson();
+    JsonObject updatedRequest = requestsClient.getById(createdRequest.getId())
+      .getJson();
 
     updatedRequest
       .put("requestType", "Hold");
@@ -297,7 +301,8 @@ public class RequestsAPIUpdatingTests extends APITests {
       .withNoBarcode())
       .getId();
 
-    JsonObject updatedRequest = createdRequest.copyJson();
+    JsonObject updatedRequest = requestsClient.getById(createdRequest.getId())
+      .getJson();
 
     updatedRequest
       .put("requestType", "Hold")
@@ -379,7 +384,8 @@ public class RequestsAPIUpdatingTests extends APITests {
       .withName("Campbell", "Fiona", "Stella")
       .withBarcode("679231693475")).getId();
 
-    JsonObject updatedRequest = createdRequest.copyJson();
+    JsonObject updatedRequest = requestsClient.getById(createdRequest.getId())
+      .getJson();
 
     updatedRequest
       .put("requestType", "Hold")
@@ -477,7 +483,8 @@ public class RequestsAPIUpdatingTests extends APITests {
     UUID updatedItemId = itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::withNoBarcode)
       .getId();
 
-    JsonObject updatedRequest = createdRequest.copyJson();
+    JsonObject updatedRequest = requestsClient.getById(createdRequest.getId())
+      .getJson();
 
     updatedRequest
       .put("itemId", updatedItemId.toString());
