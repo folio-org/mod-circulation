@@ -119,6 +119,8 @@ public class RequestsAPIRetrievalTests extends APITests {
         is(staffGroupId.toString()));
     assertThat(representation.containsKey("requester"), is(true));
     assertThat(representation.getJsonObject("requester").containsKey("patronGroup"), is (true));
+    assertThat(representation.getJsonObject("requester").getJsonObject("patronGroup").getString("id"),
+        is(facultyGroupId.toString()));
     assertThat(representation.containsKey("pickupServicePoint"), is(true));
     assertThat(representation.getJsonObject("pickupServicePoint").getString("name"),
         is(cd1.getJson().getString("name")));
@@ -185,11 +187,20 @@ public class RequestsAPIRetrievalTests extends APITests {
     ExecutionException,
     TimeoutException {
     
-    UUID requesterId = usersClient.create(new UserBuilder()).getId();
+    //UUID requesterId = usersClient.create(new UserBuilder()).getId();
     final IndividualResource cd1 = servicePointsFixture.cd1();
     final IndividualResource cd2 = servicePointsFixture.cd2();
     UUID pickupServicePointId = cd1.getId();
     UUID pickupServicePointId2 = cd2.getId();
+    
+    UUID facultyGroupId = patronGroupsFixture.faculty().getId();
+    UUID staffGroupId = patronGroupsFixture.staff().getId();
+    final IndividualResource sponsor = usersFixture.rebecca(
+        builder -> { return builder.withPatronGroupId(facultyGroupId); });
+    final IndividualResource proxy = usersFixture.steve(builder -> 
+    { return builder.withPatronGroupId(staffGroupId); });
+    UUID proxyId = proxy.getId();
+    UUID requesterId = sponsor.getId();
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut).getId())
