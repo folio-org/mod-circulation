@@ -33,7 +33,48 @@ public class PatronGroupRepository {
   }
   
   public CompletableFuture<HttpResult<Request>> findPatronGroupsForSingleRequestUsers(HttpResult<Request> result) {
-    return result.after(request -> {return CompletableFuture.completedFuture(result);});
+    List<String> clauses = new ArrayList<>();
+    return result.after( request -> {
+      if(request.getProxy() != null) {
+        clauses.add(String.format("( id==%s )", request.getProxy().getPatronGroup()));
+      }
+      if(request.getRequester() != null) {
+        clauses.add(String.format("( id==%s )", request.getRequester().getPatronGroup()));
+      }
+      if(clauses.isEmpty()) {
+        return CompletableFuture.completedFuture(result);
+      }
+      final String pgQuery = String.join(" OR ", clauses);
+      log.info(String.format("Querying patron groups with query %s", pgQuery));
+      
+      HttpResult<String> queryResult = CqlHelper.encodeQuery(pgQuery);
+    
+    return queryResult.after(query -> patronGroupsStorageClient.getMany(query)
+      .thenApply(this::mapResponseToPatronGroups)
+      .thenApply(multiplePatronGroupsResult -> multiplePatronGroupsResult.next(
+        multiplePatronGroups -> {
+          Request newRequest = request;
+          Collection<PatronGroup> pgCollection = multiplePatronGroups.getRecords();
+          String requesterPGId = request.getRequester() != null ?
+                request.getRequester().getPatronGroup() :
+                "";
+          String proxyPGId = request.getProxy() != null ?
+                request.getProxy().getPatronGroup() :
+                "";
+          for(PatronGroup patronGroup : pgCollection) {
+            if(requesterPGId != null && requesterPGId.equals(patronGroup.getId())) {
+              User newRequester = newRequest.getRequester().withPatronGroup(patronGroup);
+              newRequest = newRequest.withRequester(newRequester);
+            }
+            if(proxyPGId != null && proxyPGId.equals(patronGroup.getId())) {
+              User newProxy = newRequest.getProxy().withPatronGroup(patronGroup);
+              newRequest = newRequest.withProxy(newProxy);
+            }
+          }
+          return HttpResult.succeeded(newRequest);
+        })));
+    });
+    //return result.after(request -> {return CompletableFuture.completedFuture(result);});
     
   }
   
@@ -67,7 +108,7 @@ public class PatronGroupRepository {
     }
     
     final String pgQuery = String.join(" OR ", clauses);
-    log.info(String.format("Querying service points with query %s", pgQuery));
+    log.info(String.format("Querying patron groups with query %s", pgQuery));
     
     HttpResult<String> queryResult = CqlHelper.encodeQuery(pgQuery);
     
@@ -79,20 +120,20 @@ public class PatronGroupRepository {
           Collection<PatronGroup> pgCollection = multiplePatronGroups.getRecords();
           for(Request request : requests) {
             Boolean foundPG = false;
-            String requesterId = request.getRequester() != null ?
-                request.getRequester().getId() :
+            String requesterPatronGroupId = request.getRequester() != null ?
+                request.getRequester().getPatronGroup() :
                 "";
-            String proxyId = request.getProxy() != null ?
-                request.getProxy().getId() :
+            String proxyPatronGroupId = request.getProxy() != null ?
+                request.getProxy().getPatronGroup() :
                 "";
             Request newRequest = request;
             for(PatronGroup patronGroup : pgCollection ) {              
-              if(requesterId.equals(patronGroup.getId())) {
+              if(requesterPatronGroupId.equals(patronGroup.getId())) {
                 User newRequester = newRequest.getRequester().withPatronGroup(patronGroup);
                 newRequest = newRequest.withRequester(newRequester);
                 foundPG = true;
               }
-              if(proxyId.equals(patronGroup.getId())) {
+              if(proxyPatronGroupId.equals(patronGroup.getId())) {
                 User newProxy = newRequest.getProxy().withPatronGroup(patronGroup);
                 newRequest = newRequest.withProxy(newProxy);
                 foundPG = true;

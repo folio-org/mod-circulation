@@ -114,6 +114,11 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(representation.getString("status"), is("Open - Not yet filled"));
     assertThat(representation.containsKey("loan"), is(true));
     assertThat(representation.containsKey("proxy"), is(true));
+    assertThat(representation.getJsonObject("proxy").containsKey("patronGroup"), is (true));
+    assertThat(representation.getJsonObject("proxy").getJsonObject("patronGroup").getString("id"),
+        is(staffGroupId.toString()));
+    assertThat(representation.containsKey("requester"), is(true));
+    assertThat(representation.getJsonObject("requester").containsKey("patronGroup"), is (true));
     assertThat(representation.containsKey("pickupServicePoint"), is(true));
     assertThat(representation.getJsonObject("pickupServicePoint").getString("name"),
         is(cd1.getJson().getString("name")));
