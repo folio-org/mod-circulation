@@ -396,7 +396,7 @@ public class FakeStorageModule extends AbstractVerticle {
   }
 
   private void checkDisallowedProperties(RoutingContext routingContext) {
-    if(uniqueProperties.isEmpty()) {
+    if(disallowedProperties.isEmpty()) {
       routingContext.next();
       return;
     }
