@@ -1,18 +1,8 @@
 package api.requests;
 
-import io.vertx.core.json.JsonObject;
-import api.support.APITests;
-import api.support.builders.ItemBuilder;
-import api.support.builders.RequestBuilder;
-import api.support.builders.UserBuilder;
-import api.support.http.InterfaceUrls;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDate;
-import org.junit.Test;
+import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -22,9 +12,20 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
+import org.junit.Test;
+
+import api.support.APITests;
+import api.support.builders.ItemBuilder;
+import api.support.builders.RequestBuilder;
+import api.support.builders.UserBuilder;
+import api.support.http.InterfaceUrls;
+import io.vertx.core.json.JsonObject;
 
 public class RequestsAPIUpdatingTests extends APITests {
   @Test

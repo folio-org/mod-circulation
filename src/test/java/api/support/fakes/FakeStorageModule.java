@@ -1,5 +1,29 @@
 package api.support.fakes;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.support.CreatedJsonHttpResult;
+import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.http.server.ClientErrorResponse;
+import org.folio.circulation.support.http.server.SuccessResponse;
+import org.folio.circulation.support.http.server.ValidationError;
+import org.folio.circulation.support.http.server.WebContext;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.format.ISODateTimeFormat;
+
 import api.APITestSuite;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.buffer.Buffer;
@@ -10,18 +34,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
-import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.support.CreatedJsonHttpResult;
-import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.ValidationErrorFailure;
-import org.folio.circulation.support.http.server.*;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.format.ISODateTimeFormat;
-
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class FakeStorageModule extends AbstractVerticle {
   private static final Set<String> queries = Collections.synchronizedSet(new HashSet<>());
@@ -33,6 +45,7 @@ public class FakeStorageModule extends AbstractVerticle {
   private final Map<String, Map<String, JsonObject>> storedResourcesByTenant;
   private final String recordTypeName;
   private final Collection<String> uniqueProperties;
+  private final Collection<String> disallowedProperties;
   private final Boolean includeChangeMetadata;
   private final String changeMetadataPropertyName = "metadata";
 
@@ -48,6 +61,7 @@ public class FakeStorageModule extends AbstractVerticle {
     boolean hasCollectionDelete,
     String recordTypeName,
     Collection<String> uniqueProperties,
+    Collection<String> disallowedProperties,
     Boolean includeChangeMetadata) {
 
     this.rootPath = rootPath;
@@ -56,6 +70,7 @@ public class FakeStorageModule extends AbstractVerticle {
     this.hasCollectionDelete = hasCollectionDelete;
     this.recordTypeName = recordTypeName;
     this.uniqueProperties = uniqueProperties;
+    this.disallowedProperties = disallowedProperties;
     this.includeChangeMetadata = includeChangeMetadata;
 
     storedResourcesByTenant = new HashMap<>();
@@ -73,12 +88,14 @@ public class FakeStorageModule extends AbstractVerticle {
 
     router.post(rootPath).handler(this::checkRequiredProperties);
     router.post(rootPath).handler(this::checkUniqueProperties);
+    router.post(rootPath).handler(this::checkDisallowedProperties);
     router.post(rootPath).handler(this::create);
 
     router.get(rootPath).handler(this::getMany);
     router.delete(rootPath).handler(this::empty);
 
     router.put(rootPath + "/:id").handler(this::checkRequiredProperties);
+    router.put(rootPath + "/:id").handler(this::checkDisallowedProperties);
     router.put(rootPath + "/:id").handler(this::replace);
 
     router.get(rootPath + "/:id").handler(this::get);
@@ -330,7 +347,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
     ArrayList<ValidationError> errors = new ArrayList<>();
 
-    requiredProperties.stream().forEach(requiredProperty -> {
+    requiredProperties.forEach(requiredProperty -> {
       if(!body.getMap().containsKey(requiredProperty)) {
         errors.add(new ValidationError("Required property missing", requiredProperty, ""));
       }
@@ -355,7 +372,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
     ArrayList<ValidationError> errors = new ArrayList<>();
 
-    uniqueProperties.stream().forEach(uniqueProperty -> {
+    uniqueProperties.forEach(uniqueProperty -> {
       String proposedValue = body.getString(uniqueProperty);
 
       Map<String, JsonObject> records = getResourcesForTenant(new WebContext(routingContext));
@@ -367,6 +384,32 @@ public class FakeStorageModule extends AbstractVerticle {
         errors.add(new ValidationError(
           String.format("%s with this %s already exists", recordTypeName, uniqueProperty),
           uniqueProperty, proposedValue));
+
+        HttpResult.failed(ValidationErrorFailure.failure(errors))
+          .writeTo(routingContext.response());
+      }
+    });
+
+    if(errors.isEmpty()) {
+      routingContext.next();
+    }
+  }
+
+  private void checkDisallowedProperties(RoutingContext routingContext) {
+    if(uniqueProperties.isEmpty()) {
+      routingContext.next();
+      return;
+    }
+
+    JsonObject body = getJsonFromBody(routingContext);
+
+    ArrayList<ValidationError> errors = new ArrayList<>();
+
+    disallowedProperties.forEach(disallowedProperty -> {
+      if(body.containsKey(disallowedProperty)) {
+        errors.add(new ValidationError(
+          String.format("Unrecognised field \"%s\"", disallowedProperty),
+          disallowedProperty, null));
 
         HttpResult.failed(ValidationErrorFailure.failure(errors))
           .writeTo(routingContext.response());
