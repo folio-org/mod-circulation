@@ -20,6 +20,7 @@ public class RequestRepresentation {
     addAdditionalItemProperties(requestRepresentation, request.getItem());
     addAdditionalLoanProperties(requestRepresentation, request.getLoan());
     addStoredProxyProperties(requestRepresentation, request.getProxy());
+    addStoredRequesterProperties(requestRepresentation, request.getRequester(), request);
     addAdditionalServicePointProperties(requestRepresentation, request.getPickupServicePoint());
 
     return requestRepresentation;
@@ -68,9 +69,9 @@ public class RequestRepresentation {
       }
     }
     
-    String patronGroup = requester.getPatronGroup();
-    if(patronGroup != null) {
-      requesterSummary.put("patronGroupId", patronGroup);
+    String patronGroupId = requester.getPatronGroup();
+    if(patronGroupId != null) {
+      requesterSummary.put("patronGroupId", patronGroupId);
     }
   }
 
@@ -87,9 +88,9 @@ public class RequestRepresentation {
 
     JsonObject proxySummary =  proxy.createUserSummary();
     
-    String patronGroup = proxy.getPatronGroup();
-    if(patronGroup != null) {
-      proxySummary.put("patronGroupId", patronGroup);
+    String patronGroupId = proxy.getPatronGroup();
+    if(patronGroupId != null) {
+      proxySummary.put("patronGroupId", patronGroupId);
     }
     
     requestWithAdditionalInformation.put("proxy", proxySummary);
