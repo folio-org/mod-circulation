@@ -1,16 +1,17 @@
 package org.folio.circulation.resources;
 
-import io.vertx.core.json.JsonObject;
+import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
+import static org.folio.circulation.support.ValidationErrorFailure.failure;
+
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.FindByBarcodeQuery;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ValidationErrorFailure;
 
-import static org.folio.circulation.support.HttpResult.succeeded;
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
+import io.vertx.core.json.JsonObject;
 
 public class CheckInByBarcodeRequest implements FindByBarcodeQuery {
   private static final String USER_BARCODE = "userBarcode";
@@ -28,13 +29,13 @@ public class CheckInByBarcodeRequest implements FindByBarcodeQuery {
     final String itemBarcode = getProperty(json, ITEM_BARCODE);
 
     if(StringUtils.isBlank(itemBarcode)) {
-      return failedResult("Renewal request must have an item barcode", ITEM_BARCODE, null);
+      return failedResult("Checkin request must have an item barcode", ITEM_BARCODE, null);
     }
 
     final String userBarcode = getProperty(json, USER_BARCODE);
 
     if(StringUtils.isBlank(userBarcode)) {
-      return failedResult("Renewal request must have a user barcode", USER_BARCODE, null);
+      return failedResult("Checkin request must have a user barcode", USER_BARCODE, null);
     }
 
     return succeeded(new CheckInByBarcodeRequest(itemBarcode, userBarcode));
