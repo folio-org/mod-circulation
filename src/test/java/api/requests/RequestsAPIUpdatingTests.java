@@ -50,6 +50,9 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
+    final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
+    servicePointsToDelete.add(exampleServicePoint.getId());
+
     //TODO: Should include pickup service point
     IndividualResource createdRequest = requestsClient.create(
       new RequestBuilder()
@@ -59,6 +62,7 @@ public class RequestsAPIUpdatingTests extends APITests {
       .withItemId(itemId)
       .withRequesterId(originalRequesterId)
       .fulfilToHoldShelf()
+      .withPickupServicePointId(exampleServicePoint.getId())
       .withRequestExpiration(new LocalDate(2017, 7, 30))
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 

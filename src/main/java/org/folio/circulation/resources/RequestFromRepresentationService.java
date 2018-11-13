@@ -76,6 +76,7 @@ class RequestFromRepresentationService {
     request.remove("requester");
     request.remove("proxy");
     request.remove("loan");
+    request.remove("pickupServicePoint");
 
     return request;
   }
