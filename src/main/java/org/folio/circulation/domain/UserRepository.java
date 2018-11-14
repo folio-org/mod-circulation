@@ -113,12 +113,10 @@ public class UserRepository {
             newRequest.getProxyUserId() : "";
             for(User user : userCollection) {
               if(requesterId.equals(user.getId())) {
-                newRequest = newRequest.withRequester(user);
-                log.info(String.format("Assigning new requester object %s to request %s", user.getId(), request.getId()));
+                newRequest = newRequest.withRequester(user);               
               }
               if(proxyId.equals(user.getId())) {
-                newRequest = newRequest.withProxy(user);
-                log.info(String.format("Assigning new proxy object %s to request %s", user.getId(), request.getId()));
+                newRequest = newRequest.withProxy(user);               
               }
             }            
             newRequestList.add(newRequest);

@@ -133,19 +133,16 @@ public class PatronGroupRepository {
             Boolean foundRequesterPG = false;
             for(PatronGroup patronGroup : pgCollection ) {              
               if(requesterPatronGroupId.equals(patronGroup.getId())) {
-                User newRequester = newRequest.getRequester().withPatronGroup(patronGroup);
-                log.info(String.format("Assigned patrongroup %s to requester user %s", patronGroup.getId(), newRequester.getId()));
+                User newRequester = newRequest.getRequester().withPatronGroup(patronGroup);                
                 newRequest = newRequest.withRequester(newRequester);
                 foundRequesterPG = true;
               }
               if(proxyPatronGroupId.equals(patronGroup.getId())) {
-                User newProxy = newRequest.getProxy().withPatronGroup(patronGroup);
-                log.info(String.format("Assigned patrongroup %s to proxy user %s", patronGroup.getId(), newProxy.getId()));
+                User newProxy = newRequest.getProxy().withPatronGroup(patronGroup);                
                 newRequest = newRequest.withProxy(newProxy);
                 foundProxyPG = true;
               }
-              if(foundRequesterPG && foundProxyPG) {
-                log.info("Found patron group objects for requester and proxy");
+              if(foundRequesterPG && foundProxyPG) {                
                 break;
               }
             }
