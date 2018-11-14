@@ -1,11 +1,11 @@
 package org.folio.circulation.support;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
-
-import static java.util.concurrent.CompletableFuture.completedFuture;
 
 public interface HttpResult<T> {
 
@@ -20,8 +20,21 @@ public interface HttpResult<T> {
     try {
       return succeeded(supplier.get());
     } catch (Exception e) {
-      return failed(new ServerErrorFailure(e));
+      return failed(e);
     }
+  }
+
+  /**
+   * Creates a completed future with successful result with the supplied value
+   * unless an exception is thrown
+   *
+   * @param supplier of the result value
+   * @return completed future with successful result or failed result with error
+   */
+  static <T> CompletableFuture<HttpResult<T>> ofAsync(
+    ThrowingSupplier<T, Exception> supplier) {
+
+    return completedFuture(of(supplier));
   }
 
   /**
@@ -39,16 +52,9 @@ public interface HttpResult<T> {
     HttpResult<U> secondResult,
     BiFunction<T, U, V> combiner) {
 
-    if(firstResult.failed()) {
-      return failed(firstResult.cause());
-    }
-    else if(secondResult.failed()) {
-      return failed(secondResult.cause());
-    }
-    else {
-      return succeeded(combiner.apply(firstResult.value(),
-        secondResult.value()));
-    }
+    return firstResult.next(firstValue ->
+      secondResult.map(secondValue ->
+        combiner.apply(firstValue, secondValue)));
   }
 
   /**
@@ -62,12 +68,11 @@ public interface HttpResult<T> {
    * or successful result with the values combined
    */
   default <U, V> CompletableFuture<HttpResult<V>> combineAfter(
-    Function<T, CompletableFuture<HttpResult<U>>> nextAction, BiFunction<
-    T, U, V> combiner) {
+    Function<T, CompletableFuture<HttpResult<U>>> nextAction,
+    BiFunction<T, U, V> combiner) {
 
-    return this.after(nextAction)
-      .thenApply(actionResult -> actionResult.map(r ->
-        combiner.apply(value(), r)));
+    return after(nextAction)
+      .thenApply(actionResult -> combine(this, actionResult, combiner));
   }
 
   /**
@@ -78,25 +83,21 @@ public interface HttpResult<T> {
    * Executes neither if the condition evaluation fails
    * Forwards on failure if previous result failed
    *
-   * @param condition on which to branch upon
+   * @param conditionFunction on which to branch upon
    * @param whenTrue executed when condition evaluates to true
    * @param whenFalse executed when condition evaluates to false
    * @return Result of whenTrue or whenFalse, unless previous result failed
    */
   default CompletableFuture<HttpResult<T>> afterWhen(
-    Function<T, CompletableFuture<HttpResult<Boolean>>> condition,
+    Function<T, CompletableFuture<HttpResult<Boolean>>> conditionFunction,
     Function<T, CompletableFuture<HttpResult<T>>> whenTrue,
     Function<T, CompletableFuture<HttpResult<T>>> whenFalse) {
 
     return after(value ->
-      condition.apply(value)
-        .thenCompose(r -> r.after(conditionResult -> {
-          if (conditionResult) {
-            return whenTrue.apply(value);
-          } else {
-            return whenFalse.apply(value);
-          }
-        })));
+      conditionFunction.apply(value)
+        .thenComposeAsync(r -> r.after(condition -> condition
+          ? whenTrue.apply(value)
+          : whenFalse.apply(value))));
   }
 
   /**
@@ -139,9 +140,9 @@ public interface HttpResult<T> {
     Function<T, HttpResult<T>> whenFalse) {
 
     return next(value ->
-      condition.apply(value).next(result -> result
-          ? whenTrue.apply(value)
-          : whenFalse.apply(value)));
+      when(condition.apply(value),
+        () -> whenTrue.apply(value),
+        () -> whenFalse.apply(value)));
   }
 
   /**
@@ -162,10 +163,9 @@ public interface HttpResult<T> {
     Supplier<HttpResult<R>> whenTrue,
     Supplier<HttpResult<R>> whenFalse) {
 
-    return
-      condition.next(result -> result
-        ? whenTrue.get()
-        : whenFalse.get());
+    return condition.next(result -> result
+      ? whenTrue.get()
+      : whenFalse.get());
   }
 
   /**
@@ -189,27 +189,6 @@ public interface HttpResult<T> {
       HttpResult::succeeded);
   }
 
-  /**
-   * Fail a result when a condition evaluates to true
-   *
-   * Responds with the result of the failure function when condition evaluates to true
-   * Responds with success of the prior result when condition evaluates to false
-   * Executes neither if the condition evaluation fails
-   * Forwards on failure if previous result failed
-   *
-   * @param condition on which to decide upon
-   * @param failure executed to create failure reason when condition evaluates to true
-   * @return success when condition is false, failure otherwise
-   */
-  default HttpResult<T> failWhen(
-    HttpResult<Boolean> condition,
-    HttpFailure failure) {
-
-    return nextWhen(v -> condition,
-      value -> failed(failure),
-      HttpResult::succeeded);
-  }
-
   boolean failed();
 
   T value();
@@ -227,6 +206,10 @@ public interface HttpResult<T> {
     return new FailedHttpResult<>(cause);
   }
 
+  static <T> HttpResult<T> failed(Throwable e) {
+    return failed(new ServerErrorFailure(e));
+  }
+
   default <R> CompletableFuture<HttpResult<R>> after(
     Function<T, CompletableFuture<HttpResult<R>>> action) {
 
@@ -234,24 +217,46 @@ public interface HttpResult<T> {
       return completedFuture(failed(cause()));
     }
 
-    return action.apply(value());
+    try {
+      return action.apply(value())
+        .exceptionally(HttpResult::failed);
+    } catch (Exception e) {
+      return completedFuture(failed(new ServerErrorFailure(e)));
+    }
   }
 
+  /**
+   * Apply the next action to the value of the result
+   *
+   * Responds with the result of applying the next action to the current value
+   * unless current result is failed or the application of action fails e.g. throws an exception
+   *
+   * @param action action to take after this result
+   * @return success when result succeeded and action is applied successfully, failure otherwise
+   */
   default <R> HttpResult<R> next(Function<T, HttpResult<R>> action) {
     if(failed()) {
       return failed(cause());
     }
 
-    return action.apply(value());
+    try {
+      return action.apply(value());
+    } catch (Exception e) {
+      return failed(e);
+    }
   }
 
+  /**
+   * Map the value of a result to a new value
+   *
+   * Responds with a new result with the outcome of applying the map to the current value
+   * unless current result is failed or the mapping fails e.g. throws an exception
+   *
+   * @param map function to apply to value of result
+   * @return success when result succeeded and map is applied successfully, failure otherwise
+   */
   default <U> HttpResult<U> map(Function<T, U> map) {
-    if(failed()) {
-      return failed(cause());
-    }
-    else {
-      return HttpResult.succeeded(map.apply(value()));
-    }
+    return next(value -> succeeded(map.apply(value)));
   }
 
   default T orElse(T other) {

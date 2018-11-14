@@ -1,30 +1,6 @@
 package api;
 
-import api.loans.*;
-import api.requests.*;
-import api.requests.scenarios.*;
-import api.support.builders.FixedDueDateSchedule;
-import api.support.builders.FixedDueDateSchedulesBuilder;
-import api.support.builders.LoanPolicyBuilder;
-import api.support.builders.UserBuilder;
-import api.support.fakes.FakeOkapi;
-import api.support.fakes.FakeStorageModule;
-import api.support.http.ResourceClient;
-import api.support.http.URLHelper;
-import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.Launcher;
-import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.VertxAssistant;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
@@ -39,7 +15,60 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static org.folio.circulation.support.JsonPropertyWriter.write;
+import org.folio.circulation.Launcher;
+import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.VertxAssistant;
+import org.folio.circulation.support.http.client.OkapiHttpClient;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import api.loans.CheckOutByBarcodeTests;
+import api.loans.LoanAPILocationTests;
+import api.loans.LoanAPIPolicyTests;
+import api.loans.LoanAPIProxyTests;
+import api.loans.LoanAPIRelatedRecordsTests;
+import api.loans.LoanAPITests;
+import api.loans.LoanAPITitleTests;
+import api.loans.RenewByBarcodeTests;
+import api.loans.RenewByIdTests;
+import api.requests.RequestsAPICreateMultipleRequestsTests;
+import api.requests.RequestsAPICreationTests;
+import api.requests.RequestsAPIDeletionTests;
+import api.requests.RequestsAPILoanHistoryTests;
+import api.requests.RequestsAPILoanRenewalTests;
+import api.requests.RequestsAPILocationTests;
+import api.requests.RequestsAPIProxyTests;
+import api.requests.RequestsAPIRelatedRecordsTests;
+import api.requests.RequestsAPIRetrievalTests;
+import api.requests.RequestsAPIStatusChangeTests;
+import api.requests.RequestsAPITitleTests;
+import api.requests.RequestsAPIUpdatingTests;
+import api.requests.scenarios.ClosedRequestTests;
+import api.requests.scenarios.MultipleHoldShelfRequestsTests;
+import api.requests.scenarios.MultipleMixedFulfilmentRequestsTests;
+import api.requests.scenarios.MultipleOutOfOrderRequestsTests;
+import api.requests.scenarios.RequestQueueTests;
+import api.requests.scenarios.RequestsForDifferentItemsTests;
+import api.requests.scenarios.SingleClosedRequestTests;
+import api.requests.scenarios.SingleOpenDeliveryRequestTests;
+import api.requests.scenarios.SingleOpenHoldShelfRequestTests;
+import api.support.builders.FixedDueDateSchedule;
+import api.support.builders.FixedDueDateSchedulesBuilder;
+import api.support.builders.LoanPolicyBuilder;
+import api.support.builders.UserBuilder;
+import api.support.fakes.FakeOkapi;
+import api.support.fakes.FakeStorageModule;
+import api.support.http.ResourceClient;
+import api.support.http.URLHelper;
+import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 
 @RunWith(Suite.class)
@@ -498,13 +527,19 @@ public class APITestSuite {
 
     ResourceClient locationsClient = ResourceClient.forLocations(client);
 
+
+    final UUID fakeServicePointId = UUID.randomUUID();
+
     thirdFloorLocationId = createReferenceRecord(locationsClient,
       new JsonObject()
         .put("name", "3rd Floor")
         .put("code", "NU/JC/DL/3F")
         .put("institutionId", nottinghamUniversityInstitution.toString())
         .put("campusId", jubileeCampus.toString())
-        .put("libraryId", djanoglyLibrary.toString()));
+        .put("libraryId", djanoglyLibrary.toString())
+        //TODO: Replace with created service point
+        .put("primaryServicePoint", fakeServicePointId.toString())
+        .put("servicePointIds", new JsonArray().add(fakeServicePointId.toString())));
 
     secondFloorEconomicsLocationId = createReferenceRecord(locationsClient,
       new JsonObject()
@@ -512,7 +547,10 @@ public class APITestSuite {
         .put("code", "NU/JC/DL/2FE")
         .put("institutionId", nottinghamUniversityInstitution.toString())
         .put("campusId", jubileeCampus.toString())
-        .put("libraryId", djanoglyLibrary.toString()));
+        .put("libraryId", djanoglyLibrary.toString())
+        //TODO: Replace with created service point
+        .put("primaryServicePoint", fakeServicePointId.toString())
+        .put("servicePointIds", new JsonArray().add(fakeServicePointId.toString())));
 
     mezzanineDisplayCaseLocationId = createReferenceRecord(locationsClient,
       new JsonObject()
@@ -520,7 +558,10 @@ public class APITestSuite {
         .put("code", "NU/JC/BL/DM")
         .put("institutionId", nottinghamUniversityInstitution.toString())
         .put("campusId", jubileeCampus.toString())
-        .put("libraryId", businessLibrary.toString()));
+        .put("libraryId", businessLibrary.toString())
+        //TODO: Replace with created service point
+        .put("primaryServicePoint", fakeServicePointId.toString())
+        .put("servicePointIds", new JsonArray().add(fakeServicePointId.toString())));
   }
 
   private static void deleteLocations()

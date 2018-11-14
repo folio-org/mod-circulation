@@ -1,25 +1,47 @@
 package org.folio.circulation.resources;
 
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
-import org.folio.circulation.domain.*;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
+import static org.folio.circulation.support.ValidationErrorFailure.failure;
+
+import java.util.UUID;
+
+import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.LoanRepository;
+import org.folio.circulation.domain.LoanRepresentation;
+import org.folio.circulation.domain.RequestQueueRepository;
+import org.folio.circulation.domain.UpdateItem;
+import org.folio.circulation.domain.UpdateRequestQueue;
+import org.folio.circulation.domain.User;
+import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
-import org.folio.circulation.domain.validation.*;
-import org.folio.circulation.support.*;
+import org.folio.circulation.domain.representations.LoanProperties;
+import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
+import org.folio.circulation.domain.validation.AwaitingPickupValidator;
+import org.folio.circulation.domain.validation.ExistingOpenLoanValidator;
+import org.folio.circulation.domain.validation.InactiveUserValidator;
+import org.folio.circulation.domain.validation.ItemNotFoundValidator;
+import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
+import org.folio.circulation.domain.validation.ServicePointOfCheckoutPresentValidator;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.CreatedJsonHttpResult;
+import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.RouteRegistration;
+import org.folio.circulation.support.WritableHttpResult;
 import org.folio.circulation.support.http.server.WebContext;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.ISODateTimeFormat;
 
-import java.util.UUID;
-
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.*;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
 
 public class CheckOutByBarcodeResource extends Resource {
   public CheckOutByBarcodeResource(HttpClient client) {
@@ -43,9 +65,12 @@ public class CheckOutByBarcodeResource extends Resource {
 
     copyOrDefaultLoanDate(request, loan);
 
-    final String itemBarcode = request.getString("itemBarcode");
-    final String userBarcode = request.getString("userBarcode");
-    final String proxyUserBarcode = request.getString("proxyUserBarcode");
+    final String itemBarcode = request.getString(CheckOutByBarcodeRequest.ITEM_BARCODE);
+    final String userBarcode = request.getString(CheckOutByBarcodeRequest.USER_BARCODE);
+    final String proxyUserBarcode = request.getString(CheckOutByBarcodeRequest.PROXY_USER_BARCODE);
+    final String checkoutServicePointId = request.getString(CheckOutByBarcodeRequest.SERVICE_POINT_ID);
+
+    loan.put(LoanProperties.CHECKOUT_SERVICE_POINT_ID, checkoutServicePointId);
 
     final Clients clients = Clients.create(context, client);
 
@@ -56,10 +81,14 @@ public class CheckOutByBarcodeResource extends Resource {
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
-      clients, () -> failure(
-      "Cannot check out item via proxy when relationship is invalid",
-      CheckOutByBarcodeRequest.PROXY_USER_BARCODE,
-      proxyUserBarcode));
+        clients, () -> failure(
+        "Cannot check out item via proxy when relationship is invalid",
+        CheckOutByBarcodeRequest.PROXY_USER_BARCODE,
+        proxyUserBarcode));
+    
+    final ServicePointOfCheckoutPresentValidator servicePointOfCheckoutPresentValidator
+      = new ServicePointOfCheckoutPresentValidator(message -> failure(message,
+        CheckOutByBarcodeRequest.SERVICE_POINT_ID, checkoutServicePointId));
 
     final AwaitingPickupValidator awaitingPickupValidator = new AwaitingPickupValidator(
       message -> failure(message,
@@ -82,8 +111,9 @@ public class CheckOutByBarcodeResource extends Resource {
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
-
+    
     completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(Loan.from(loan))))
+      .thenApply(servicePointOfCheckoutPresentValidator::refuseCheckOutWhenServicePointIsNotPresent)
       .thenCombineAsync(userRepository.getUserByBarcode(userBarcode), this::addUser)
       .thenCombineAsync(userRepository.getProxyUserByBarcode(proxyUserBarcode), this::addProxyUser)
       .thenApply(inactiveUserValidator::refuseWhenUserIsInactive)
@@ -122,6 +152,7 @@ public class CheckOutByBarcodeResource extends Resource {
 
   private void copyOrDefaultLoanDate(JsonObject request, JsonObject loan) {
     final String loanDateProperty = "loanDate";
+
     if(request.containsKey(loanDateProperty)) {
       loan.put(loanDateProperty, request.getString(loanDateProperty));
     } else {

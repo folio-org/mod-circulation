@@ -1,15 +1,15 @@
 package org.folio.circulation.domain;
 
-import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.HttpResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.HttpResult.succeeded;
 
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.HttpResult.succeeded;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.HttpResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class UpdateRequestQueue {
   private final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());

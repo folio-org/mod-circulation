@@ -33,6 +33,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Period;
 import org.joda.time.format.ISODateTimeFormat;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import api.APITestSuite;
@@ -302,6 +303,7 @@ public class LoanAPITests extends APITests {
       hasParameter("itemId", unknownItemId.toString()))));
   }
 
+  @Ignore("mod-inventory-storage disallows this scenario, change to be isolated test")
   @Test
   public void cannotCreateALoanForUnknownHolding()
     throws InterruptedException,
@@ -388,6 +390,7 @@ public class LoanAPITests extends APITests {
     client.put(loansUrl(String.format("/%s", loanId)), new LoanBuilder()
         .withId(loanId)
         .withItemId(itemId)
+        .withCheckinServicePoint(UUID.randomUUID())
         .closed()
         .withNoUserId()
         .create(),
@@ -886,11 +889,14 @@ public class LoanAPITests extends APITests {
       .withUserId(james.getId())
       .withItem(itemsFixture.basedUponNod()));
 
+    final String checkinServicePointId = UUID.randomUUID().toString();
+    
     JsonObject returnedLoan = loan.copyJson();
 
     returnedLoan
       .put("status", new JsonObject().put("name", "Closed"))
       .put("action", "checkedin")
+      .put("checkinServicePointId", checkinServicePointId)
       .put("returnDate", new DateTime(2017, 3, 5, 14, 23, 41, DateTimeZone.UTC)
         .toString(ISODateTimeFormat.dateTime()));
 
@@ -938,6 +944,36 @@ public class LoanAPITests extends APITests {
     assertThat("item status snapshot in storage is not Available",
       loansStorageClient.getById(loan.getId()).getJson().getString("itemStatus"),
       is("Available"));
+
+    assertThat("Checkin Service Point Id should be stored.",
+        loansStorageClient.getById(loan.getId()).getJson().getString("checkinServicePointId"),
+        is(checkinServicePointId));
+  }
+
+  @Test
+  public void cannotCloseALoanWithoutAServicePoint()
+      throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+
+    DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, DateTimeZone.UTC);
+
+    final IndividualResource james = usersFixture.james();
+
+    IndividualResource loan = loansClient.create(
+        new LoanBuilder().withLoanDate(loanDate).withUserId(james.getId()).withItem(itemsFixture.basedUponNod()));
+
+    JsonObject returnedLoan = loan.copyJson();
+
+    returnedLoan.put("status", new JsonObject().put("name", "Closed")).put("action", "checkedin").put("returnDate",
+        new DateTime(2017, 3, 5, 14, 23, 41, DateTimeZone.UTC).toString(ISODateTimeFormat.dateTime()));
+
+    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
+
+    client.put(loansUrl(String.format("/%s", loan.getId())), returnedLoan, ResponseHandler.any(putCompleted));
+
+    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(putResponse.getJson(), hasErrorWith(hasMessage("A Closed loan must have a Checkin Service Point")));
+
   }
 
   @Test
@@ -1030,7 +1066,8 @@ public class LoanAPITests extends APITests {
     IndividualResource loan = loansClient.create(new LoanBuilder()
       .open()
       .withUserId(jessica.getId())
-      .withItemId(itemId));
+      .withItemId(itemId)
+      .withCheckinServicePoint(UUID.randomUUID()));
 
     JsonObject updatedLoanRequest = loan.copyJson();
 
@@ -1454,12 +1491,14 @@ public class LoanAPITests extends APITests {
 
     loansClient.createAtSpecificLocation(new LoanBuilder()
       .withItemId(smallAngryPlanetId)
+      .withCheckinServicePoint(UUID.randomUUID())
       .closed()
       .withNoUserId());
 
     loansClient.createAtSpecificLocation(new LoanBuilder()
       .withItemId(nodId)
       .closed()
+      .withCheckinServicePoint(UUID.randomUUID())
       .withNoUserId());
 
     final List<JsonObject> multipleLoans = loansClient.getAll();

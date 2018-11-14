@@ -1,10 +1,10 @@
 package api.support.fakes;
 
-import api.APITestSuite;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+
+import api.APITestSuite;
 
 public class FakeStorageModuleBuilder {
   private final String rootPath;
@@ -12,13 +12,22 @@ public class FakeStorageModuleBuilder {
   private final String tenantId;
   private final Collection<String> requiredProperties;
   private final Collection<String> uniqueProperties;
+  private final Collection<String> disallowedProperties;
   private final Boolean hasCollectionDelete;
   private final String recordName;
   private final Boolean includeChangeMetadata;
 
-  public FakeStorageModuleBuilder() {
-    this(null, null, APITestSuite.TENANT_ID, new ArrayList<>(), true, "",
-      new ArrayList<>(), false);
+  FakeStorageModuleBuilder() {
+    this(
+      null,
+      null,
+      APITestSuite.TENANT_ID,
+      new ArrayList<>(),
+      new ArrayList<>(),
+      true,
+      "",
+      new ArrayList<>(),
+      false);
   }
 
   private FakeStorageModuleBuilder(
@@ -26,6 +35,7 @@ public class FakeStorageModuleBuilder {
     String collectionPropertyName,
     String tenantId,
     Collection<String> requiredProperties,
+    Collection<String> disallowedProperties,
     Boolean hasCollectionDelete,
     String recordName,
     Collection<String> uniqueProperties,
@@ -35,6 +45,7 @@ public class FakeStorageModuleBuilder {
     this.collectionPropertyName = collectionPropertyName;
     this.tenantId = tenantId;
     this.requiredProperties = requiredProperties;
+    this.disallowedProperties = disallowedProperties;
     this.hasCollectionDelete = hasCollectionDelete;
     this.recordName = recordName;
     this.uniqueProperties = uniqueProperties;
@@ -44,10 +55,10 @@ public class FakeStorageModuleBuilder {
   public FakeStorageModule create() {
     return new FakeStorageModule(rootPath, collectionPropertyName, tenantId,
       requiredProperties, hasCollectionDelete, recordName, uniqueProperties,
-      includeChangeMetadata);
+      disallowedProperties, includeChangeMetadata);
   }
 
-  public FakeStorageModuleBuilder withRootPath(String rootPath) {
+  FakeStorageModuleBuilder withRootPath(String rootPath) {
 
     String newCollectionPropertyName = collectionPropertyName == null
       ? rootPath.substring(rootPath.lastIndexOf("/") + 1)
@@ -58,86 +69,118 @@ public class FakeStorageModuleBuilder {
       newCollectionPropertyName,
       this.tenantId,
       this.requiredProperties,
+      this.disallowedProperties,
       this.hasCollectionDelete,
       this.recordName,
       this.uniqueProperties,
       this.includeChangeMetadata);
   }
 
-  public FakeStorageModuleBuilder withCollectionPropertyName(String collectionPropertyName) {
+  FakeStorageModuleBuilder withCollectionPropertyName(
+    String collectionPropertyName) {
+
     return new FakeStorageModuleBuilder(
       this.rootPath,
       collectionPropertyName,
       this.tenantId,
       this.requiredProperties,
+      this.disallowedProperties,
       this.hasCollectionDelete,
       this.recordName,
       this.uniqueProperties,
       this.includeChangeMetadata);
   }
 
-  public FakeStorageModuleBuilder withRecordName(String recordName) {
+  FakeStorageModuleBuilder withRecordName(String recordName) {
     return new FakeStorageModuleBuilder(
       this.rootPath,
       this.collectionPropertyName,
       this.tenantId,
       this.requiredProperties,
+      this.disallowedProperties,
       this.hasCollectionDelete,
       recordName,
       this.uniqueProperties,
       this.includeChangeMetadata);
   }
 
-  public FakeStorageModuleBuilder withRequiredProperties(Collection<String> requiredProperties) {
+  private FakeStorageModuleBuilder withRequiredProperties(
+    Collection<String> requiredProperties) {
+
     return new FakeStorageModuleBuilder(
       this.rootPath,
       this.collectionPropertyName,
       this.tenantId,
       requiredProperties,
+      this.disallowedProperties,
       this.hasCollectionDelete,
       this.recordName,
       this.uniqueProperties,
       this.includeChangeMetadata);
     }
 
-  public FakeStorageModuleBuilder withRequiredProperties(String... requiredProperties) {
+  FakeStorageModuleBuilder withRequiredProperties(String... requiredProperties) {
     return withRequiredProperties(Arrays.asList(requiredProperties));
   }
 
-  public FakeStorageModuleBuilder withUniqueProperties(Collection<String> uniqueProperties) {
+  private FakeStorageModuleBuilder withUniqueProperties(
+    Collection<String> uniqueProperties) {
+
     return new FakeStorageModuleBuilder(
       this.rootPath,
       this.collectionPropertyName,
       this.tenantId,
       this.requiredProperties,
+      this.disallowedProperties,
       this.hasCollectionDelete,
       this.recordName,
       uniqueProperties,
       this.includeChangeMetadata);
   }
 
-  public FakeStorageModuleBuilder withUniqueProperties(String... uniqueProperties) {
+  FakeStorageModuleBuilder withUniqueProperties(String... uniqueProperties) {
     return withUniqueProperties(Arrays.asList(uniqueProperties));
   }
 
-  public FakeStorageModuleBuilder disallowCollectionDelete() {
+  private FakeStorageModuleBuilder withDisallowedProperties(
+    Collection<String> disallowedProperties) {
+
     return new FakeStorageModuleBuilder(
       this.rootPath,
       this.collectionPropertyName,
       this.tenantId,
       this.requiredProperties,
+      disallowedProperties,
+      this.hasCollectionDelete,
+      this.recordName,
+      this.uniqueProperties,
+      this.includeChangeMetadata);
+  }
+
+  FakeStorageModuleBuilder withDisallowedProperties(String... disallowedProperties) {
+    return withDisallowedProperties(Arrays.asList(disallowedProperties));
+  }
+
+  FakeStorageModuleBuilder disallowCollectionDelete() {
+    return new FakeStorageModuleBuilder(
+      this.rootPath,
+      this.collectionPropertyName,
+      this.tenantId,
+      this.requiredProperties,
+      this.disallowedProperties,
       false,
       this.recordName,
       this.uniqueProperties,
       this.includeChangeMetadata);
   }
 
-  public FakeStorageModuleBuilder withChangeMetadata() {
+  FakeStorageModuleBuilder withChangeMetadata() {
     return new FakeStorageModuleBuilder(
       this.rootPath,
       this.collectionPropertyName,
       this.tenantId,
       this.requiredProperties,
+      this.disallowedProperties,
       this.hasCollectionDelete,
       this.recordName,
       this.uniqueProperties,

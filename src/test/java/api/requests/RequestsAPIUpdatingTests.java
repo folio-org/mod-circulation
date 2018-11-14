@@ -1,18 +1,8 @@
 package api.requests;
 
-import io.vertx.core.json.JsonObject;
-import api.support.APITests;
-import api.support.builders.ItemBuilder;
-import api.support.builders.RequestBuilder;
-import api.support.builders.UserBuilder;
-import api.support.http.InterfaceUrls;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDate;
-import org.junit.Test;
+import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -22,9 +12,20 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
+import org.junit.Test;
+
+import api.support.APITests;
+import api.support.builders.ItemBuilder;
+import api.support.builders.RequestBuilder;
+import api.support.builders.UserBuilder;
+import api.support.http.InterfaceUrls;
+import io.vertx.core.json.JsonObject;
 
 public class RequestsAPIUpdatingTests extends APITests {
   @Test
@@ -49,6 +50,10 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
+    final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
+    servicePointsToDelete.add(exampleServicePoint.getId());
+
+    //TODO: Should include pickup service point
     IndividualResource createdRequest = requestsClient.create(
       new RequestBuilder()
       .recall()
@@ -57,6 +62,7 @@ public class RequestsAPIUpdatingTests extends APITests {
       .withItemId(itemId)
       .withRequesterId(originalRequesterId)
       .fulfilToHoldShelf()
+      .withPickupServicePointId(exampleServicePoint.getId())
       .withRequestExpiration(new LocalDate(2017, 7, 30))
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
@@ -65,7 +71,8 @@ public class RequestsAPIUpdatingTests extends APITests {
       .withBarcode("679231693475"))
       .getId();
 
-    JsonObject updatedRequest = createdRequest.copyJson();
+    JsonObject updatedRequest = requestsClient.getById(createdRequest.getId())
+      .getJson();
 
     updatedRequest
       .put("requestType", "Hold")
@@ -160,7 +167,8 @@ public class RequestsAPIUpdatingTests extends APITests {
         .withRequestExpiration(new LocalDate(2017, 7, 30))
         .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
-    JsonObject updatedRequest = createdRequest.copyJson();
+    JsonObject updatedRequest = requestsClient.getById(createdRequest.getId())
+      .getJson();
 
     itemsClient.delete(itemId);
 
@@ -228,7 +236,8 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     usersClient.delete(requester);
 
-    JsonObject updatedRequest = createdRequest.copyJson();
+    JsonObject updatedRequest = requestsClient.getById(createdRequest.getId())
+      .getJson();
 
     updatedRequest
       .put("requestType", "Hold");
@@ -296,7 +305,8 @@ public class RequestsAPIUpdatingTests extends APITests {
       .withNoBarcode())
       .getId();
 
-    JsonObject updatedRequest = createdRequest.copyJson();
+    JsonObject updatedRequest = requestsClient.getById(createdRequest.getId())
+      .getJson();
 
     updatedRequest
       .put("requestType", "Hold")
@@ -378,7 +388,8 @@ public class RequestsAPIUpdatingTests extends APITests {
       .withName("Campbell", "Fiona", "Stella")
       .withBarcode("679231693475")).getId();
 
-    JsonObject updatedRequest = createdRequest.copyJson();
+    JsonObject updatedRequest = requestsClient.getById(createdRequest.getId())
+      .getJson();
 
     updatedRequest
       .put("requestType", "Hold")
@@ -476,7 +487,8 @@ public class RequestsAPIUpdatingTests extends APITests {
     UUID updatedItemId = itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::withNoBarcode)
       .getId();
 
-    JsonObject updatedRequest = createdRequest.copyJson();
+    JsonObject updatedRequest = requestsClient.getById(createdRequest.getId())
+      .getJson();
 
     updatedRequest
       .put("itemId", updatedItemId.toString());

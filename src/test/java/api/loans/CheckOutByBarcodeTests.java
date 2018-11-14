@@ -1,10 +1,29 @@
 package api.loans;
 
-import api.APITestSuite;
-import api.support.APITests;
-import api.support.builders.*;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
+import static api.support.builders.ItemBuilder.AWAITING_PICKUP;
+import static api.support.builders.ItemBuilder.CHECKED_OUT;
+import static api.support.builders.RequestBuilder.CLOSED_FILLED;
+import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
+import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
+import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
+import static api.support.matchers.UUIDMatcher.is;
+import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
+import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static java.net.HttpURLConnection.HTTP_OK;
+import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
+
+import java.net.MalformedURLException;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -16,24 +35,16 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.Seconds;
 import org.junit.Test;
 
-import java.net.MalformedURLException;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import static api.support.builders.ItemBuilder.AWAITING_PICKUP;
-import static api.support.builders.ItemBuilder.CHECKED_OUT;
-import static api.support.builders.RequestBuilder.CLOSED_FILLED;
-import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
-import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
-import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
-import static api.support.matchers.ValidationErrorMatchers.*;
-import static java.net.HttpURLConnection.HTTP_OK;
-import static org.hamcrest.CoreMatchers.*;
-import static org.hamcrest.MatcherAssert.assertThat;
+import api.APITestSuite;
+import api.support.APITests;
+import api.support.builders.CheckOutByBarcodeRequestBuilder;
+import api.support.builders.FixedDueDateSchedule;
+import api.support.builders.FixedDueDateSchedulesBuilder;
+import api.support.builders.LoanBuilder;
+import api.support.builders.LoanPolicyBuilder;
+import api.support.builders.UserBuilder;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 public class CheckOutByBarcodeTests extends APITests {
   @Test
@@ -48,21 +59,24 @@ public class CheckOutByBarcodeTests extends APITests {
 
     final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
 
+    final UUID checkoutServicePointId = UUID.randomUUID();
+
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
       .forItem(smallAngryPlanet)
       .to(steve)
-      .at(loanDate));
+      .on(loanDate)
+      .at(checkoutServicePointId));
 
     final JsonObject loan = response.getJson();
 
     assertThat(loan.getString("id"), is(notNullValue()));
 
     assertThat("user ID should match barcode",
-      loan.getString("userId"), is(steve.getId().toString()));
+      loan.getString("userId"), is(steve.getId()));
 
     assertThat("item ID should match barcode",
-      loan.getString("itemId"), is(smallAngryPlanet.getId().toString()));
+      loan.getString("itemId"), is(smallAngryPlanet.getId()));
 
     assertThat("status should be open",
       loan.getJsonObject("status").getString("name"), is("Open"));
@@ -74,10 +88,13 @@ public class CheckOutByBarcodeTests extends APITests {
       loan.getString("loanDate"), isEquivalentTo(loanDate));
 
     assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateRollingLoanPolicyId().toString()));
+      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateRollingLoanPolicyId()));
 
     assertThat("due date should be 3 weeks after loan date, based upon loan policy",
       loan.getString("dueDate"), isEquivalentTo(loanDate.plusWeeks(3)));
+
+    assertThat("Checkout service point should be stored",
+      loan.getString("checkoutServicePointId"), is(checkoutServicePointId));
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
@@ -150,7 +167,8 @@ public class CheckOutByBarcodeTests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
-        .at(loanDate));
+        .on(loanDate)
+        .at(UUID.randomUUID()));
 
     final JsonObject loan = response.getJson();
 
@@ -158,7 +176,7 @@ public class CheckOutByBarcodeTests extends APITests {
       loan.getString("loanDate"), isEquivalentTo(loanDate));
 
     assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateFixedLoanPolicyId().toString()));
+      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateFixedLoanPolicyId()));
 
     assertThat("due date should be based upon fixed due date schedule",
       loan.getString("dueDate"),
@@ -203,7 +221,8 @@ public class CheckOutByBarcodeTests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
-        .at(loanDate));
+        .on(loanDate)
+        .at(UUID.randomUUID()));
 
     final JsonObject loan = response.getJson();
 
@@ -211,7 +230,7 @@ public class CheckOutByBarcodeTests extends APITests {
       loan.getString("loanDate"), isEquivalentTo(loanDate));
 
     assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
+      loan.getString("loanPolicyId"), is(dueDateLimitedPolicyId));
 
     assertThat("due date should be limited by schedule",
       loan.getString("dueDate"),
@@ -258,7 +277,8 @@ public class CheckOutByBarcodeTests extends APITests {
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
-        .to(steve));
+        .to(steve)
+        .at(UUID.randomUUID()));
 
     final JsonObject loan = response.getJson();
 
@@ -320,7 +340,8 @@ public class CheckOutByBarcodeTests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(james)
-        .proxiedBy(steve));
+        .proxiedBy(steve)
+        .at(UUID.randomUUID()));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Cannot check out via inactive proxying user"),
@@ -342,7 +363,8 @@ public class CheckOutByBarcodeTests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(jessica)
-        .proxiedBy(james));
+        .proxiedBy(james)
+        .at(UUID.randomUUID()));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Cannot check out item via proxy when relationship is invalid"),
@@ -493,15 +515,16 @@ public class CheckOutByBarcodeTests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
       .forItem(smallAngryPlanet)
       .to(jessica)
-      .proxiedBy(james));
+      .proxiedBy(james)
+      .at(UUID.randomUUID()));
 
     JsonObject loan = response.getJson();
 
     assertThat("user id does not match",
-      loan.getString("userId"), is(jessica.getId().toString()));
+      loan.getString("userId"), is(jessica.getId()));
 
     assertThat("proxy user id does not match",
-      loan.getString("proxyUserId"), is(james.getId().toString()));
+      loan.getString("proxyUserId"), is(james.getId()));
   }
 
   @Test
@@ -524,10 +547,37 @@ public class CheckOutByBarcodeTests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
-        .at(loanDate));
+        .on(loanDate)
+        .at(UUID.randomUUID()));
 
     assertThat(response.getBody(), is(String.format(
-      "Loan policy %s could not be found, please check loan rules", nonExistentloanPolicyId)));
+      "Loan policy %s could not be found, please check loan rules",
+      nonExistentloanPolicyId)));
+  }
+  
+  @Test
+  public void cannotCheckOutWhenServicePointOfCheckoutNotPresent()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource james = usersFixture.james();
+    
+    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
+
+    final Response response = loansFixture.attemptCheckOutByBarcode(422,
+        new CheckOutByBarcodeRequestBuilder()
+          .forItem(smallAngryPlanet)
+          .to(james)
+          .on(loanDate));
+
+    assertThat(response.getStatusCode(), is(422));
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Check out must be performed at a service point"),
+      hasServicePointParameter(null))));
   }
 
   private Matcher<ValidationError> hasUserBarcodeParameter(IndividualResource user) {
@@ -540,5 +590,9 @@ public class CheckOutByBarcodeTests extends APITests {
 
   private Matcher<ValidationError> hasProxyUserBarcodeParameter(IndividualResource proxyUser) {
     return hasParameter("proxyUserBarcode", proxyUser.getJson().getString("barcode"));
+  }
+
+  private Matcher<ValidationError> hasServicePointParameter(String servicePoint) {
+    return hasParameter("checkoutServicePointId", servicePoint);
   }
 }

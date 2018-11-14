@@ -131,6 +131,14 @@
       "description": "Count of how many times a loan has been renewed (incremented by the client)",
       "type": "integer"
     },
+    "checkoutServicePointId": {
+      "description": "ID of the Service Point where the last checkout occured",
+      "type": "string"
+    },
+    "checkinServicePointId": {
+      "description": "ID of the Service Point where the last checkin occured",
+      "type": "string"
+    },
     "metadata": {
       "description": "Metadata about creation and changes to loan, provided by the server (client should not provide)",
       "type": "object",
