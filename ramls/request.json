@@ -140,6 +140,28 @@
           "description": "barcode of the patron (read only, defined by the server)",
           "type": "string",
           "readonly": true
+        },
+        "patronGroupId": {
+          "description": "UUID for the patrongroup that this user belongs to",
+          "type": "string"
+        },
+        "patronGroup": {
+          "description": "record for the user's patrongroup",
+          "type": "object",
+          "properties": {
+            "id": {
+              "description": "ID of the patrongroup",
+              "type": "string"
+            },
+            "group": {
+              "description": "The unique name of the patrongroup",
+              "type": "string"
+            },
+            "desc": {
+              "description": "A description of the patrongroup",
+              "type": "string"
+            }
+          }
         }
       },
       "additionalProperties": false
@@ -168,6 +190,28 @@
           "description": "barcode of the proxy patron (read only, defined by the server)",
           "type": "string",
           "readonly": true
+        },
+        "patronGroupId": {
+          "description": "UUID for the patrongroup that this user belongs to",
+          "type": "string"
+        },
+        "patronGroup": {
+          "description": "record for the user's patrongroup",
+          "type": "object",
+          "properties": {
+            "id": {
+              "description": "ID of the patrongroup",
+              "type": "string"
+            },
+            "group": {
+              "description": "The unique name of the patrongroup",
+              "type": "string"
+            },
+            "desc": {
+              "description": "A description of the patrongroup",
+              "type": "string"
+            }
+          }
         }
       },
       "additionalProperties": false
