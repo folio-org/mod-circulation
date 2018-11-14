@@ -129,4 +129,8 @@ public class User {
       return getUsername();
     }
   }
+  
+  public static User from(JsonObject representation) {
+    return new User(representation);
+  }
 }

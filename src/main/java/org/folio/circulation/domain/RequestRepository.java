@@ -56,6 +56,7 @@ public class RequestRepository {
       .thenComposeAsync(result -> itemRepository.fetchItemsFor(result, Request::withItem))
       .thenComposeAsync(result -> result.after(loanRepository::findOpenLoansFor))
       .thenComposeAsync(result -> result.after(servicePointRepository::findServicePointsForRequests))
+      .thenComposeAsync(result -> result.after(userRepository::findUsersForRequests))
       .thenComposeAsync(result -> result.after(patronGroupRepository::findPatronGroupsForRequestsUsers));
   }
 

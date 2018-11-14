@@ -54,8 +54,6 @@ public class RequestsAPIRetrievalTests extends APITests {
     itemsFixture.basedUponSmallAngryPlanet(itemBuilder -> itemBuilder
         .withId(itemId)
         .withEnumeration(enumeration));
-
-    UserBuilder userBuilder = new UserBuilder().withPatronGroupId(facultyGroupId);
     
     final IndividualResource sponsor = usersFixture.rebecca(
         builder -> { return builder.withPatronGroupId(facultyGroupId); });
@@ -115,10 +113,14 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(representation.containsKey("loan"), is(true));
     assertThat(representation.containsKey("proxy"), is(true));
     assertThat(representation.getJsonObject("proxy").containsKey("patronGroup"), is (true));
+    assertThat(representation.getJsonObject("proxy").getString("patronGroupId"),
+        is(staffGroupId.toString()));
     assertThat(representation.getJsonObject("proxy").getJsonObject("patronGroup").getString("id"),
         is(staffGroupId.toString()));
     assertThat(representation.containsKey("requester"), is(true));
     assertThat(representation.getJsonObject("requester").containsKey("patronGroup"), is (true));
+    assertThat(representation.getJsonObject("requester").getString("patronGroupId"),
+        is(facultyGroupId.toString()));
     assertThat(representation.getJsonObject("requester").getJsonObject("patronGroup").getString("id"),
         is(facultyGroupId.toString()));
     assertThat(representation.containsKey("pickupServicePoint"), is(true));
@@ -201,40 +203,49 @@ public class RequestsAPIRetrievalTests extends APITests {
     { return builder.withPatronGroupId(staffGroupId); });
     UUID proxyId = proxy.getId();
     UUID requesterId = sponsor.getId();
+    
+    usersFixture.nonExpiringProxyFor(sponsor, proxy);
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut).getId())
       .withRequesterId(requesterId)
+      .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId));
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponNod(ItemBuilder::checkOut).getId())
       .withRequesterId(requesterId)
+      .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId2));
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponInterestingTimes(ItemBuilder::checkOut).getId())
       .withRequesterId(requesterId)
+      .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId));
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
       .withRequesterId(requesterId)
+      .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId2));
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponNod(ItemBuilder::checkOut).getId())
       .withRequesterId(requesterId)
+      .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId));
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponUprooted(ItemBuilder::checkOut).getId())
       .withRequesterId(requesterId)
+      .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId));
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
       .withRequesterId(requesterId)
+      .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId2));
     
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
@@ -251,6 +262,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     
     requestList.forEach(this::requestHasExpectedProperties);
     requestList.forEach(this::requestHasServicePointProperties);
+    requestList.forEach(this::requestHasPatronGroupProperties);
   
   }
   
@@ -534,6 +546,19 @@ public class RequestsAPIRetrievalTests extends APITests {
     hasProperty("pickupServicePoint", request, "request");
     hasProperty("name", request.getJsonObject("pickupServicePoint"),
         "pickupServicePoint");
+  }
+  
+  private void requestHasPatronGroupProperties(JsonObject request) {
+    hasProperty("proxy", request, "proxy");
+    hasProperty("patronGroup", request.getJsonObject("proxy"), "patronGroup");
+    hasProperty("id", request.getJsonObject("proxy").getJsonObject("patronGroup"), "id");
+    hasProperty("group", request.getJsonObject("proxy").getJsonObject("patronGroup"), "group");
+    hasProperty("desc", request.getJsonObject("proxy").getJsonObject("patronGroup"), "desc");
+    hasProperty("requester", request, "requester");
+    hasProperty("patronGroup", request.getJsonObject("requester"), "patronGroup");
+    hasProperty("id", request.getJsonObject("requester").getJsonObject("patronGroup"), "id");
+    hasProperty("group", request.getJsonObject("requester").getJsonObject("patronGroup"), "desc");
+    hasProperty("desc", request.getJsonObject("requester").getJsonObject("patronGroup"), "group");
   }
 
   private void hasProperty(String property, JsonObject resource, String type) {

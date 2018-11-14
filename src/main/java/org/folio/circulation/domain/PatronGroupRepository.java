@@ -96,14 +96,16 @@ public class PatronGroupRepository {
       if(requester != null) {
         userClauses.add(String.format("( id==%s )", requester.getPatronGroup()));
       }
-      
+            
       if(proxy != null || requester != null) {
         String patronGroupClause = String.join(" OR ", userClauses);
         clauses.add(patronGroupClause);
+      } else {
+        log.info(String.format("No proxy or requester found for request %s", request.getId()));
       }
     }
     if(clauses.isEmpty()) {
-      log.info("No service points to query");
+      log.info("No patron groups to query (multiple requests)");
       return CompletableFuture.completedFuture(HttpResult.succeeded(multipleRequests));
     }
     
@@ -118,8 +120,8 @@ public class PatronGroupRepository {
         multiplePatronGroups -> {
           List<Request> newRequestList = new ArrayList<>();
           Collection<PatronGroup> pgCollection = multiplePatronGroups.getRecords();
-          for(Request request : requests) {
-            Boolean foundPG = false;
+          log.info(String.format("Traversing %s patron group records", pgCollection.size()));
+          for(Request request : requests) {            
             String requesterPatronGroupId = request.getRequester() != null ?
                 request.getRequester().getPatronGroup() :
                 "";
@@ -127,18 +129,23 @@ public class PatronGroupRepository {
                 request.getProxy().getPatronGroup() :
                 "";
             Request newRequest = request;
+            Boolean foundProxyPG = false;
+            Boolean foundRequesterPG = false;
             for(PatronGroup patronGroup : pgCollection ) {              
               if(requesterPatronGroupId.equals(patronGroup.getId())) {
                 User newRequester = newRequest.getRequester().withPatronGroup(patronGroup);
+                log.info(String.format("Assigned patrongroup %s to requester user %s", patronGroup.getId(), newRequester.getId()));
                 newRequest = newRequest.withRequester(newRequester);
-                foundPG = true;
+                foundRequesterPG = true;
               }
               if(proxyPatronGroupId.equals(patronGroup.getId())) {
                 User newProxy = newRequest.getProxy().withPatronGroup(patronGroup);
+                log.info(String.format("Assigned patrongroup %s to proxy user %s", patronGroup.getId(), newProxy.getId()));
                 newRequest = newRequest.withProxy(newProxy);
-                foundPG = true;
+                foundProxyPG = true;
               }
-              if(foundPG) {
+              if(foundRequesterPG && foundProxyPG) {
+                log.info("Found patron group objects for requester and proxy");
                 break;
               }
             }
