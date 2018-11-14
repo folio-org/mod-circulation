@@ -79,7 +79,7 @@ public class User {
     if(addresses == null) { return null; }
     for(Object ob : addresses) {
       JsonObject address = (JsonObject)ob;
-      if(address.getString("type").equals(type)) {
+      if(address != null && address.getString("type").equals(type)) {
         return address;
       }
     }
