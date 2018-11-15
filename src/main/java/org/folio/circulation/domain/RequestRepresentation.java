@@ -19,7 +19,6 @@ public class RequestRepresentation {
 
     addAdditionalItemProperties(requestRepresentation, request.getItem());
     addAdditionalLoanProperties(requestRepresentation, request.getLoan());
-    addStoredProxyProperties(requestRepresentation, request.getProxy());
     addAdditionalServicePointProperties(requestRepresentation, request.getPickupServicePoint());
     addDeliveryAddress(requestRepresentation, request, request.getRequester());
 
