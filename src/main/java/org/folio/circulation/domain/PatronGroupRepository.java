@@ -138,18 +138,17 @@ class PatronGroupRepository {
 
     final Map<String, PatronGroup> groupMap = patronGroups.toMap(PatronGroup::getId);
 
-    Request newRequst = request;
+    return HttpResult.of(() -> request
+      .withRequester(addGroupToUser(request.getRequester(), groupMap))
+      .withProxy(addGroupToUser(request.getProxy(), groupMap)));
+  }
 
-    if(request.getRequester() != null) {
-      newRequst = newRequst.withRequester(request.getRequester().withPatronGroup(
-        groupMap.getOrDefault(request.getRequester().getPatronGroupId(), null)));
+  private User addGroupToUser(User user, Map<String, PatronGroup> groupMap) {
+    if(user == null) {
+      return user;
     }
 
-    if(request.getProxy() != null) {
-      newRequst = newRequst.withProxy(request.getProxy().withPatronGroup(
-        groupMap.getOrDefault(request.getProxy().getPatronGroupId(), null)));
-    }
-
-    return HttpResult.succeeded(newRequst);
+    return user.withPatronGroup(
+      groupMap.getOrDefault(user.getPatronGroupId(), null));
   }
 }
