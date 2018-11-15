@@ -1,13 +1,14 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import org.apache.commons.lang3.StringUtils;
-import org.joda.time.DateTime;
-
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
+
+import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
+
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 public class User {
   private static final String PERSONAL_PROPERTY_NAME = "personal";
@@ -67,7 +68,7 @@ public class User {
     return getProperty(representation, "username");
   }
 
-  public String getPatronGroup() {
+  public String getPatronGroupId() {
     return getProperty(representation, "patronGroup");
   }
 

@@ -149,7 +149,7 @@ public class LoanPolicyRepository {
 
     String materialTypeId = item.getMaterialTypeId();
 
-    String patronGroupId = user.getPatronGroup();
+    String patronGroupId = user.getPatronGroupId();
 
     CompletableFuture<Response> loanRulesResponse = new CompletableFuture<>();
 

@@ -6,7 +6,7 @@ import java.lang.invoke.MethodHandles;
 
 
 import static org.folio.circulation.support.JsonPropertyWriter.write;
-import org.joda.time.format.DateTimeFormatter;
+
 import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,7 +69,7 @@ public class RequestRepresentation {
       }
     }
     
-    String patronGroupId = requester.getPatronGroup();
+    String patronGroupId = requester.getPatronGroupId();
     if(patronGroupId != null) {
       requesterSummary.put("patronGroupId", patronGroupId);
     }
@@ -88,7 +88,7 @@ public class RequestRepresentation {
 
     JsonObject proxySummary =  proxy.createUserSummary();
     
-    String patronGroupId = proxy.getPatronGroup();
+    String patronGroupId = proxy.getPatronGroupId();
     if(patronGroupId != null) {
       proxySummary.put("patronGroupId", patronGroupId);
     }

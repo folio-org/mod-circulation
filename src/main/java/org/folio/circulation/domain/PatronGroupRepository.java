@@ -4,6 +4,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
@@ -34,27 +35,7 @@ class PatronGroupRepository {
       return patronGroupsStorageClient.getMany(query)
         .thenApply(this::mapResponseToPatronGroups)
         .thenApply(multiplePatronGroupsResult -> multiplePatronGroupsResult.next(
-          multiplePatronGroups -> {
-            Request newRequest = request;
-            Collection<PatronGroup> pgCollection = multiplePatronGroups.getRecords();
-            String requesterPGId = request.getRequester() != null ?
-              request.getRequester().getPatronGroup() :
-              "";
-            String proxyPGId = request.getProxy() != null ?
-              request.getProxy().getPatronGroup() :
-              "";
-            for(PatronGroup patronGroup : pgCollection) {
-              if(requesterPGId != null && requesterPGId.equals(patronGroup.getId())) {
-                User newRequester = newRequest.getRequester().withPatronGroup(patronGroup);
-                newRequest = newRequest.withRequester(newRequester);
-              }
-              if(proxyPGId != null && proxyPGId.equals(patronGroup.getId())) {
-                User newProxy = newRequest.getProxy().withPatronGroup(patronGroup);
-                newRequest = newRequest.withProxy(newProxy);
-              }
-            }
-            return HttpResult.succeeded(newRequest);
-          }));
+          patronGroups -> matchGroupsToUsers(request, patronGroups)));
     });
   }
 
@@ -70,11 +51,11 @@ class PatronGroupRepository {
       List<String> userClauses = new ArrayList<>();
       
       if(proxy != null) {
-        userClauses.add(String.format("( id==%s )", proxy.getPatronGroup()));
+        userClauses.add(String.format("( id==%s )", proxy.getPatronGroupId()));
       }
       
       if(requester != null) {
-        userClauses.add(String.format("( id==%s )", requester.getPatronGroup()));
+        userClauses.add(String.format("( id==%s )", requester.getPatronGroupId()));
       }
             
       if(proxy != null || requester != null) {
@@ -103,10 +84,10 @@ class PatronGroupRepository {
           log.info("Traversing {} patron group records", pgCollection.size());
           for(Request request : requests) {            
             String requesterPatronGroupId = request.getRequester() != null ?
-                request.getRequester().getPatronGroup() :
+                request.getRequester().getPatronGroupId() :
                 "";
             String proxyPatronGroupId = request.getProxy() != null ?
-                request.getProxy().getPatronGroup() :
+                request.getProxy().getPatronGroupId() :
                 "";
             Request newRequest = request;
             Boolean foundProxyPG = false;
@@ -141,14 +122,34 @@ class PatronGroupRepository {
     final ArrayList<String> groupsToFetch = new ArrayList<>();
 
     if(request.getRequester() != null) {
-      groupsToFetch.add(request.getRequester().getPatronGroup());
+      groupsToFetch.add(request.getRequester().getPatronGroupId());
     }
 
     if(request.getProxy() != null) {
-      groupsToFetch.add(request.getProxy().getPatronGroup());
+      groupsToFetch.add(request.getProxy().getPatronGroupId());
     }
-    
+
     return groupsToFetch;
   }
 
+  private HttpResult<Request> matchGroupsToUsers(
+    Request request,
+    MultipleRecords<PatronGroup> patronGroups) {
+
+    final Map<String, PatronGroup> groupMap = patronGroups.toMap(PatronGroup::getId);
+
+    Request newRequst = request;
+
+    if(request.getRequester() != null) {
+      newRequst = newRequst.withRequester(request.getRequester().withPatronGroup(
+        groupMap.getOrDefault(request.getRequester().getPatronGroupId(), null)));
+    }
+
+    if(request.getProxy() != null) {
+      newRequst = newRequst.withProxy(request.getProxy().withPatronGroup(
+        groupMap.getOrDefault(request.getProxy().getPatronGroupId(), null)));
+    }
+
+    return HttpResult.succeeded(newRequst);
+  }
 }
