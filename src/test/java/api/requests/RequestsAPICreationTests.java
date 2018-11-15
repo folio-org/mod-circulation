@@ -1,5 +1,6 @@
 package api.requests;
 
+import static api.APITestSuite.workAddressTypeId;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -436,13 +437,11 @@ public class RequestsAPICreationTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    UUID workAddressTypeId = UUID.randomUUID();
-
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       ItemBuilder::available);
 
     final IndividualResource charlotte = usersFixture.charlotte(
-      builder -> builder.withAddress(workAddressTypeId));
+      builder -> builder.withAddress(workAddressTypeId()));
 
     final IndividualResource james = usersFixture.james();
 
@@ -451,7 +450,7 @@ public class RequestsAPICreationTests extends APITests {
     IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
       .recall()
       .forItem(smallAngryPlanet)
-      .deliverToAddress(workAddressTypeId)
+      .deliverToAddress(workAddressTypeId())
       .by(charlotte));
 
     JsonObject representation = createdRequest.getJson();
@@ -459,14 +458,14 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(representation.getString("id"), is(not(emptyString())));
     assertThat(representation.getString("requestType"), is("Recall"));
     assertThat(representation.getString("fulfilmentPreference"), is("Delivery"));
-    assertThat(representation.getString("deliveryAddressTypeId"), is(workAddressTypeId));
+    assertThat(representation.getString("deliveryAddressTypeId"), is(workAddressTypeId()));
 
     assertThat("Request should have a delivery address",
       representation.containsKey("deliveryAddress"), is(true));
 
     final JsonObject deliveryAddress = representation.getJsonObject("deliveryAddress");
 
-    assertThat(deliveryAddress.getString("addressTypeId"), is(workAddressTypeId));
+    assertThat(deliveryAddress.getString("addressTypeId"), is(workAddressTypeId()));
   }
 
   @Test

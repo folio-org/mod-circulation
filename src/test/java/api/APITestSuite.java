@@ -131,6 +131,7 @@ public class APITestSuite {
   private static UUID booksInstanceTypeId;
   private static UUID regularGroupId;
   private static UUID alternateGroupId;
+  private static UUID workAddressTypeId;
   private static UUID userId1;
   private static JsonObject userRecord1;
   private static JsonObject userRecord2;
@@ -244,6 +245,10 @@ public class APITestSuite {
     return alternateGroupId;
   }
 
+  public static UUID workAddressTypeId() {
+    return workAddressTypeId;
+  }
+
   public static UUID canCirculateRollingLoanPolicyId() {
     return canCirculateRollingLoanPolicyId;
   }
@@ -299,6 +304,7 @@ public class APITestSuite {
     createLocations();
     createContributorNameTypes();
     createInstanceTypes();
+    createAddressTypes();
     createGroups();
     createUsers();
     createLoanPolicies();
@@ -328,6 +334,7 @@ public class APITestSuite {
 
     ResourceClient.forUsers(client).deleteAllIndividually();
     deleteGroups();
+    deleteAddressTypes();
 
     deleteMaterialTypes();
     deleteLoanTypes();
@@ -422,6 +429,31 @@ public class APITestSuite {
     ResourceClient groupsClient = ResourceClient.forGroups(createClient());
     groupsClient.delete(regularGroupId);
     groupsClient.delete(alternateGroupId);
+  }
+
+  public static void createAddressTypes()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+    ResourceClient addressTypesClient = ResourceClient.forAddressTypes(createClient());
+
+    addressTypesClient.deleteAllIndividually();
+
+    workAddressTypeId = addressTypesClient.create(new JsonObject()
+      .put("addressType", "Work")
+      .put("desc", "Work address type"))
+      .getId();
+  }
+
+  private static void deleteAddressTypes()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    ResourceClient groupsClient = ResourceClient.forAddressTypes(createClient());
+    groupsClient.delete(workAddressTypeId);
   }
 
   private static void createMaterialTypes()
