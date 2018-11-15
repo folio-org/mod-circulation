@@ -53,7 +53,7 @@ public class CheckInByBarcodeRequest implements FindByBarcodeQuery {
 
   @Override
   public ValidationErrorFailure userDoesNotMatchError() {
-    return failure("Cannot renew item checked out to different user",
+    return failure("Cannot checkin item checked out to different user",
       USER_BARCODE, getUserBarcode());
   }
 

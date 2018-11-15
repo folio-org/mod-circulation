@@ -3,6 +3,7 @@ package org.folio.circulation.resources;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.LoanCheckinService;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.representations.LoanResponse;
@@ -37,13 +38,12 @@ public abstract class CheckInResource extends Resource {
     final Clients clients = Clients.create(context, client);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
-    // final LoanRenewalService loanRenewalService =
-    // LoanRenewalService.using(clients);
+    final LoanCheckinService loanCheckinService = LoanCheckinService.using(clients);
 
     //TODO: Validation check for same user should be in the domain service
 
     findLoan(routingContext.getBodyAsJson(), loanRepository)
-        // .thenComposeAsync(r -> r.after(loanRenewalService::renew))
+      .thenComposeAsync(r -> r.after(loanCheckinService::checkin))
       .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(LoanResponse::from)

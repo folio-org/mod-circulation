@@ -9,7 +9,7 @@ import org.folio.circulation.support.HttpResult;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
 
-public class CheckInByBarcodeResource extends RenewalResource {
+public class CheckInByBarcodeResource extends CheckInResource {
   public CheckInByBarcodeResource(HttpClient client) {
     super(client, "/circulation/check-in-by-barcode");
   }
@@ -19,7 +19,7 @@ public class CheckInByBarcodeResource extends RenewalResource {
     JsonObject request,
     LoanRepository loanRepository) {
 
-    return RenewByBarcodeRequest.from(request)
+    return CheckInByBarcodeRequest.from(request)
       .after(loanRepository::findOpenLoanByBarcode);
   }
 

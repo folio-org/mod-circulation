@@ -191,6 +191,12 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return this;
   }
 
+  public Loan checkin(String basedUponLoanPolicyId) {
+    changeAction("checkin");
+    changeLoanPolicy(basedUponLoanPolicyId);
+    return this;
+  }
+
   private void incrementRenewalCount() {
     write(representation, "renewalCount", getRenewalCount() + 1);
   }
