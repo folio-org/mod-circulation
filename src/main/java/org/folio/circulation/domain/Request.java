@@ -113,12 +113,12 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord, FindByIdQu
         pickupServicePoint);
   }
   
-  public Request withLoan(Loan newLoan) {
+  Request withLoan(Loan newLoan) {
     return new Request(representation, item, requester, proxy, newLoan,
         pickupServicePoint);
   }
   
-  public Request withPickupServicePoint(ServicePoint newPickupServicePoint) {
+  Request withPickupServicePoint(ServicePoint newPickupServicePoint) {
     return new Request(representation, item, requester, proxy, loan,
         newPickupServicePoint);
   } 
@@ -182,11 +182,11 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord, FindByIdQu
     return proxy;
   }
   
-  public String getPickupServicePointId() {
+  String getPickupServicePointId() {
     return representation.getString("pickupServicePointId");
   }
   
-  public ServicePoint getPickupServicePoint() {
+  ServicePoint getPickupServicePoint() {
     return pickupServicePoint;
   }
 
@@ -231,7 +231,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord, FindByIdQu
     return new ValidationErrorFailure(error);
   }
 
-  public String getDeliveryAddressType() {
+  String getDeliveryAddressType() {
     return representation.getString("deliveryAddressTypeId");
   }
 }
