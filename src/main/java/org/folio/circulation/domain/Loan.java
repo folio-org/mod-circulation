@@ -89,6 +89,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     representation.put(LoanProperties.ACTION, action);
   }
 
+  private void changeStatus(String status) {
+    representation.put(LoanProperties.STATUS, new JsonObject().put("name", status));
+  }
+
   public HttpResult<Void> isValidStatus() {
     if (!representation.containsKey(STATUS)) {
       return failed(new ServerErrorFailure("Loan does not have a status"));
@@ -194,6 +198,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   public Loan checkin(String basedUponLoanPolicyId) {
     changeAction("checkin");
     changeLoanPolicy(basedUponLoanPolicyId);
+    changeStatus("closed");
+    this.getItem().changeStatus(ItemStatus.AVAILABLE);
     return this;
   }
 
