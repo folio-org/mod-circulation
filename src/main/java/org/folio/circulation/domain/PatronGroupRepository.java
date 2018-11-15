@@ -101,7 +101,7 @@ public class PatronGroupRepository {
         String patronGroupClause = String.join(" OR ", userClauses);
         clauses.add(patronGroupClause);
       } else {
-        log.info(String.format("No proxy or requester found for request %s", request.getId()));
+        log.info("No proxy or requester found for request {}", request.getId());
       }
     }
     if(clauses.isEmpty()) {
@@ -120,7 +120,7 @@ public class PatronGroupRepository {
         multiplePatronGroups -> {
           List<Request> newRequestList = new ArrayList<>();
           Collection<PatronGroup> pgCollection = multiplePatronGroups.getRecords();
-          log.info(String.format("Traversing %s patron group records", pgCollection.size()));
+          log.info("Traversing {} patron group records", pgCollection.size());
           for(Request request : requests) {            
             String requesterPatronGroupId = request.getRequester() != null ?
                 request.getRequester().getPatronGroup() :
