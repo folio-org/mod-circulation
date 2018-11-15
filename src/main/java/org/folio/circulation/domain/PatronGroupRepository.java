@@ -89,9 +89,7 @@ class PatronGroupRepository {
     MultipleRecords<PatronGroup> patronGroups) {
 
     return HttpResult.of(() ->
-      new MultipleRecords<>(requests.getRecords().stream()
-        .map(request -> matchGroupsToUsers(request, patronGroups))
-        .collect(Collectors.toList()), requests.getTotalRecords()));
+      requests.mapRecords(request -> matchGroupsToUsers(request, patronGroups)));
   }
 
   private User addGroupToUser(User user, Map<String, PatronGroup> groupMap) {
