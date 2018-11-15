@@ -97,7 +97,7 @@ public class UserRepository {
       return CompletableFuture.completedFuture(HttpResult.succeeded(multipleRequests));
     }
     final String usersQuery = String.join(" OR ", clauses);
-    log.info(String.format("Querying users with query %s", usersQuery));
+    log.info("Querying users with query {}", usersQuery);
     HttpResult<String> queryResult = CqlHelper.encodeQuery(usersQuery);
     return queryResult.after(query -> usersStorageClient.getMany(query)
       .thenApply(this::mapResponseToUsers)

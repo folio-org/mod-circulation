@@ -236,8 +236,4 @@ public class RequestRepository {
     return servicePointRepository.getServicePointById(servicePointId);
   }
   
-  private CompletableFuture<HttpResult<PatronGroup>> getPatronGroup(String patronGroupId) {
-    return patronGroupRepository.getPatronGroupById(patronGroupId);
-  }
-  
 }

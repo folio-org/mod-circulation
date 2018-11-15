@@ -73,9 +73,7 @@ public class PatronGroupRepository {
           }
           return HttpResult.succeeded(newRequest);
         })));
-    });
-    //return result.after(request -> {return CompletableFuture.completedFuture(result);});
-    
+    });    
   }
   
   public CompletableFuture<HttpResult<MultipleRecords<Request>>> 
@@ -110,7 +108,7 @@ public class PatronGroupRepository {
     }
     
     final String pgQuery = String.join(" OR ", clauses);
-    log.info(String.format("Querying patron groups with query %s", pgQuery));
+    log.info("Querying patron groups with query {}", pgQuery);
     
     HttpResult<String> queryResult = CqlHelper.encodeQuery(pgQuery);
     
