@@ -26,47 +26,44 @@ class PatronGroupRepository {
   CompletableFuture<HttpResult<Request>> findPatronGroupsForSingleRequestUsers(
     HttpResult<Request> result) {
 
-    List<String> clauses = new ArrayList<>();
-    return result.after( request -> {
-      if(request.getProxy() != null) {
-        clauses.add(String.format("( id==%s )", request.getProxy().getPatronGroup()));
-      }
+    return result.after(request -> {
+      final ArrayList<String> groupsToFetch = new ArrayList<>();
+
       if(request.getRequester() != null) {
-        clauses.add(String.format("( id==%s )", request.getRequester().getPatronGroup()));
+        groupsToFetch.add(request.getRequester().getPatronGroup());
       }
-      if(clauses.isEmpty()) {
-        return CompletableFuture.completedFuture(result);
+
+      if(request.getProxy() != null) {
+        groupsToFetch.add(request.getProxy().getPatronGroup());
       }
-      final String pgQuery = String.join(" OR ", clauses);
-      log.info(String.format("Querying patron groups with query %s", pgQuery));
-      
-      HttpResult<String> queryResult = CqlHelper.encodeQuery(pgQuery);
-    
-    return queryResult.after(query -> patronGroupsStorageClient.getMany(query)
-      .thenApply(this::mapResponseToPatronGroups)
-      .thenApply(multiplePatronGroupsResult -> multiplePatronGroupsResult.next(
-        multiplePatronGroups -> {
-          Request newRequest = request;
-          Collection<PatronGroup> pgCollection = multiplePatronGroups.getRecords();
-          String requesterPGId = request.getRequester() != null ?
-                request.getRequester().getPatronGroup() :
-                "";
-          String proxyPGId = request.getProxy() != null ?
-                request.getProxy().getPatronGroup() :
-                "";
-          for(PatronGroup patronGroup : pgCollection) {
-            if(requesterPGId != null && requesterPGId.equals(patronGroup.getId())) {
-              User newRequester = newRequest.getRequester().withPatronGroup(patronGroup);
-              newRequest = newRequest.withRequester(newRequester);
+
+      final String query = CqlHelper.multipleRecordsCqlQuery(groupsToFetch);
+
+      return patronGroupsStorageClient.getMany(query)
+        .thenApply(this::mapResponseToPatronGroups)
+        .thenApply(multiplePatronGroupsResult -> multiplePatronGroupsResult.next(
+          multiplePatronGroups -> {
+            Request newRequest = request;
+            Collection<PatronGroup> pgCollection = multiplePatronGroups.getRecords();
+            String requesterPGId = request.getRequester() != null ?
+              request.getRequester().getPatronGroup() :
+              "";
+            String proxyPGId = request.getProxy() != null ?
+              request.getProxy().getPatronGroup() :
+              "";
+            for(PatronGroup patronGroup : pgCollection) {
+              if(requesterPGId != null && requesterPGId.equals(patronGroup.getId())) {
+                User newRequester = newRequest.getRequester().withPatronGroup(patronGroup);
+                newRequest = newRequest.withRequester(newRequester);
+              }
+              if(proxyPGId != null && proxyPGId.equals(patronGroup.getId())) {
+                User newProxy = newRequest.getProxy().withPatronGroup(patronGroup);
+                newRequest = newRequest.withProxy(newProxy);
+              }
             }
-            if(proxyPGId != null && proxyPGId.equals(patronGroup.getId())) {
-              User newProxy = newRequest.getProxy().withPatronGroup(patronGroup);
-              newRequest = newRequest.withProxy(newProxy);
-            }
-          }
-          return HttpResult.succeeded(newRequest);
-        })));
-    });    
+            return HttpResult.succeeded(newRequest);
+          }));
+    });
   }
   
   CompletableFuture<HttpResult<MultipleRecords<Request>>> findPatronGroupsForRequestsUsers(
