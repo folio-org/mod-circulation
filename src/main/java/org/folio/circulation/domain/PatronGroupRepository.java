@@ -1,6 +1,5 @@
 package org.folio.circulation.domain;
 
-import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -13,13 +12,9 @@ import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlHelper;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.http.client.Response;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 class PatronGroupRepository {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
   private final CollectionResourceClient patronGroupsStorageClient;
 
   PatronGroupRepository(Clients clients) {
@@ -37,7 +32,7 @@ class PatronGroupRepository {
       return patronGroupsStorageClient.getMany(query)
         .thenApply(this::mapResponseToPatronGroups)
         .thenApply(multiplePatronGroupsResult -> multiplePatronGroupsResult.next(
-          patronGroups -> matchGroupsToUsers(request, patronGroups)));
+          patronGroups -> HttpResult.of(() -> matchGroupsToUsers(request, patronGroups))));
     });
   }
 
@@ -78,15 +73,15 @@ class PatronGroupRepository {
     return groupsToFetch;
   }
 
-  private HttpResult<Request> matchGroupsToUsers(
+  private Request matchGroupsToUsers(
     Request request,
     MultipleRecords<PatronGroup> patronGroups) {
 
     final Map<String, PatronGroup> groupMap = patronGroups.toMap(PatronGroup::getId);
 
-    return HttpResult.of(() -> request
+    return request
       .withRequester(addGroupToUser(request.getRequester(), groupMap))
-      .withProxy(addGroupToUser(request.getProxy(), groupMap)));
+      .withProxy(addGroupToUser(request.getProxy(), groupMap));
   }
 
   private HttpResult<MultipleRecords<Request>> matchGroupsToUsers(
@@ -96,10 +91,9 @@ class PatronGroupRepository {
     return HttpResult.of(() ->
       new MultipleRecords<>(requests.getRecords().stream()
         .map(request -> matchGroupsToUsers(request, patronGroups))
-        .map(result -> result.orElse(null))
         .collect(Collectors.toList()), requests.getTotalRecords()));
   }
-  
+
   private User addGroupToUser(User user, Map<String, PatronGroup> groupMap) {
     if(user == null) {
       return user;
