@@ -99,29 +99,24 @@ public class UserRepository {
     return usersStorageClient.getMany(query)
       .thenApply(this::mapResponseToUsers)
       .thenApply(multipleUsersResult -> multipleUsersResult.next(
-        multipleUsers -> {
-          List<Request> newRequestList = new ArrayList<>();
-          Collection<User> userCollection = multipleUsers.getRecords();
-          for(Request request : requests) {
-            Request newRequest = request;
-            String requesterId = newRequest.getUserId() != null ?
-            newRequest.getUserId() : "";
-            String proxyId = newRequest.getProxyUserId() != null ?
-            newRequest.getProxyUserId() : "";
-            for(User user : userCollection) {
-              if(requesterId.equals(user.getId())) {
-                newRequest = newRequest.withRequester(user);               
-              }
-              if(proxyId.equals(user.getId())) {
-                newRequest = newRequest.withProxy(user);               
-              }
-            }            
-            newRequestList.add(newRequest);
+        multipleUsers -> HttpResult.of(() -> multipleRequests.mapRecords(
+          request -> {
+          Request newRequest = request;
+          String requesterId = newRequest.getUserId() != null ?
+          newRequest.getUserId() : "";
+          String proxyId = newRequest.getProxyUserId() != null ?
+          newRequest.getProxyUserId() : "";
+          for(User user : multipleUsers.getRecords()) {
+            if(requesterId.equals(user.getId())) {
+              newRequest = newRequest.withRequester(user);
+            }
+            if(proxyId.equals(user.getId())) {
+              newRequest = newRequest.withProxy(user);
+            }
           }
 
-          return succeeded(new MultipleRecords<>(newRequestList,
-            multipleRequests.getTotalRecords()));
-        }));
+          return newRequest;
+        }))));
   }
 
   private ArrayList<String> getUsersFromRequest(Request request) {
