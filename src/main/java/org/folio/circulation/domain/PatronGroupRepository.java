@@ -27,15 +27,7 @@ class PatronGroupRepository {
     HttpResult<Request> result) {
 
     return result.after(request -> {
-      final ArrayList<String> groupsToFetch = new ArrayList<>();
-
-      if(request.getRequester() != null) {
-        groupsToFetch.add(request.getRequester().getPatronGroup());
-      }
-
-      if(request.getProxy() != null) {
-        groupsToFetch.add(request.getProxy().getPatronGroup());
-      }
+      final ArrayList<String> groupsToFetch = getGroupsFromUsers(request);
 
       final String query = CqlHelper.multipleRecordsCqlQuery(groupsToFetch);
 
@@ -65,7 +57,7 @@ class PatronGroupRepository {
           }));
     });
   }
-  
+
   CompletableFuture<HttpResult<MultipleRecords<Request>>> findPatronGroupsForRequestsUsers(
     MultipleRecords<Request> multipleRequests) {
 
@@ -144,4 +136,19 @@ class PatronGroupRepository {
   private HttpResult<MultipleRecords<PatronGroup>> mapResponseToPatronGroups(Response response) {
     return MultipleRecords.from(response, PatronGroup::from, "usergroups");
   }
+
+  private ArrayList<String> getGroupsFromUsers(Request request) {
+    final ArrayList<String> groupsToFetch = new ArrayList<>();
+
+    if(request.getRequester() != null) {
+      groupsToFetch.add(request.getRequester().getPatronGroup());
+    }
+
+    if(request.getProxy() != null) {
+      groupsToFetch.add(request.getProxy().getPatronGroup());
+    }
+    
+    return groupsToFetch;
+  }
+
 }
