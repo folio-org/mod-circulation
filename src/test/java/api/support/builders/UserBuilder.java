@@ -1,10 +1,14 @@
 package api.support.builders;
 
-import api.APITestSuite;
-import io.vertx.core.json.JsonObject;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.UUID;
+
 import org.joda.time.DateTime;
 
-import java.util.UUID;
+import api.APITestSuite;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 public class UserBuilder extends JsonBuilder implements Builder {
   private final UUID id;
@@ -16,10 +20,11 @@ public class UserBuilder extends JsonBuilder implements Builder {
   private final UUID patronGroupId;
   private final Boolean active;
   private final DateTime expirationDate;
+  private final Collection<Address> addresses;
 
   public UserBuilder() {
     this("sjones", "Jones", "Steven", null, "785493025613",
-      APITestSuite.regularGroupId(), true, null);
+      APITestSuite.regularGroupId(), true, null, new ArrayList<>());
   }
 
   private UserBuilder(
@@ -30,7 +35,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
     String barcode,
     UUID patronGroupId,
     Boolean active,
-    DateTime expirationDate) {
+    DateTime expirationDate,
+    Collection<Address> addresses) {
 
     this.id = UUID.randomUUID();
     this.username = username;
@@ -43,6 +49,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
     this.patronGroupId = patronGroupId;
     this.active = active;
     this.expirationDate = expirationDate;
+
+    this.addresses = addresses;
   }
 
   public JsonObject create() {
@@ -74,6 +82,20 @@ public class UserBuilder extends JsonBuilder implements Builder {
         personalInformation.put("middleName", this.middleName);
       }
 
+      if(this.addresses != null && !this.addresses.isEmpty()) {
+        JsonArray mappedAddresses = new JsonArray();
+
+        this.addresses.forEach(address -> {
+          final JsonObject mappedAddress = new JsonObject();
+
+          put(mappedAddress, "addressTypeId", address.type);
+
+          mappedAddresses.add(mappedAddress);
+        });
+
+        personalInformation.put("addresses", mappedAddresses);
+      }
+
       request.put("personal", personalInformation);
     }
 
@@ -89,7 +111,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.barcode,
       this.patronGroupId,
       this.active,
-      this.expirationDate);
+      this.expirationDate, this.addresses);
   }
 
   public UserBuilder withName(String lastName, String firstName, String middleName) {
@@ -101,7 +123,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.barcode,
       this.patronGroupId,
       this.active,
-      this.expirationDate);
+      this.expirationDate, this.addresses);
   }
 
   public UserBuilder withNoPersonalDetails() {
@@ -113,7 +135,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.barcode,
       this.patronGroupId,
       this.active,
-      this.expirationDate);
+      this.expirationDate, this.addresses);
   }
 
   public UserBuilder withBarcode(String barcode) {
@@ -125,7 +147,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       barcode,
       this.patronGroupId,
       this.active,
-      this.expirationDate);
+      this.expirationDate, this.addresses);
   }
 
   public UserBuilder withNoBarcode() {
@@ -137,7 +159,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       null,
       this.patronGroupId,
       this.active,
-      this.expirationDate);
+      this.expirationDate, this.addresses);
   }
 
   public UserBuilder withUsername(String username) {
@@ -149,7 +171,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.barcode,
       this.patronGroupId,
       this.active,
-      this.expirationDate);
+      this.expirationDate, this.addresses);
   }
 
   public UserBuilder withPatronGroupId(UUID patronGroupId) {
@@ -161,7 +183,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.barcode,
       patronGroupId,
       this.active,
-      this.expirationDate);
+      this.expirationDate, this.addresses);
   }
 
   public UserBuilder active() {
@@ -185,7 +207,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.barcode,
       this.patronGroupId,
       active,
-      this.expirationDate);
+      this.expirationDate, this.addresses);
   }
 
   public UserBuilder expires(DateTime newExpirationDate) {
@@ -197,7 +219,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.barcode,
       this.patronGroupId,
       this.active,
-      newExpirationDate);
+      newExpirationDate, this.addresses);
   }
 
   public UserBuilder noExpiration() {
@@ -209,6 +231,37 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.barcode,
       this.patronGroupId,
       this.active,
-      null);
+      null, this.addresses);
+  }
+
+  public UserBuilder withAddress(UUID addressTypeId) {
+
+    final ArrayList<Address> newAddresses = new ArrayList<>(
+      new ArrayList<>(addresses));
+
+    newAddresses.add(new Address(addressTypeId));
+
+    return new UserBuilder(
+      this.username,
+      this.lastName,
+      this.firstName,
+      this.middleName,
+      this.barcode,
+      this.patronGroupId,
+      this.active,
+      this.expirationDate,
+      newAddresses);
+  }
+
+  public class Address {
+    private UUID type;
+
+    public Address(UUID type) {
+      this.type = type;
+    }
+
+    public UUID getType() {
+      return type;
+    }
   }
 }

@@ -1,12 +1,21 @@
 package api.requests;
 
-import api.support.APITests;
-import api.support.builders.ItemBuilder;
-import api.support.builders.RequestBuilder;
-import api.support.builders.UserBuilder;
-import io.vertx.core.json.JsonObject;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
+import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
+import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
+import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static api.support.matchers.UUIDMatcher.is;
+import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
+import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
+import static org.hamcrest.Matchers.emptyString;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+
+import java.net.MalformedURLException;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
@@ -15,20 +24,13 @@ import org.joda.time.LocalDate;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.net.MalformedURLException;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
-import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
-import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
-import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
-import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
-import static org.hamcrest.Matchers.emptyString;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import api.support.APITests;
+import api.support.builders.ItemBuilder;
+import api.support.builders.RequestBuilder;
+import api.support.builders.UserBuilder;
+import io.vertx.core.json.JsonObject;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 
 @RunWith(JUnitParamsRunner.class)
 public class RequestsAPICreationTests extends APITests {
@@ -434,20 +436,22 @@ public class RequestsAPICreationTests extends APITests {
     TimeoutException,
     ExecutionException {
 
+    UUID workAddressTypeId = UUID.randomUUID();
+
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       ItemBuilder::available);
 
-    final IndividualResource charlotte = usersFixture.charlotte();
+    final IndividualResource charlotte = usersFixture.charlotte(
+      builder -> builder.withAddress(workAddressTypeId));
+
     final IndividualResource james = usersFixture.james();
 
     loansFixture.checkOut(smallAngryPlanet, james);
 
-    UUID deliveryAddressTypeId = UUID.randomUUID();
-
     IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
       .recall()
       .forItem(smallAngryPlanet)
-      .deliverToAddress(deliveryAddressTypeId)
+      .deliverToAddress(workAddressTypeId)
       .by(charlotte));
 
     JsonObject representation = createdRequest.getJson();
@@ -455,8 +459,14 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(representation.getString("id"), is(not(emptyString())));
     assertThat(representation.getString("requestType"), is("Recall"));
     assertThat(representation.getString("fulfilmentPreference"), is("Delivery"));
-    assertThat(representation.getString("deliveryAddressTypeId"),
-      is(deliveryAddressTypeId.toString()));
+    assertThat(representation.getString("deliveryAddressTypeId"), is(workAddressTypeId));
+
+    assertThat("Request should have a delivery address",
+      representation.containsKey("deliveryAddress"), is(true));
+
+    final JsonObject deliveryAddress = representation.getJsonObject("deliveryAddress");
+
+    assertThat(deliveryAddress.getString("addressTypeId"), is(workAddressTypeId));
   }
 
   @Test
