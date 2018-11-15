@@ -171,7 +171,15 @@ public class RequestRepository {
     return requestsStorageClient.post(representation)
       .thenApply(response -> {
         if (response.getStatusCode() == 201) {
-          return succeeded(requestAndRelatedRecords.withRequest(from(response.getJson())));
+          //Retain all of the previously fetched related records
+          return succeeded(requestAndRelatedRecords.withRequest(
+            from(response.getJson())
+              .withItem(request.getItem())
+              .withRequester(request.getRequester())
+              .withProxy(request.getProxy())
+              .withLoan(request.getLoan())
+              .withPickupServicePoint(request.getPickupServicePoint())
+          ));
         } else {
           return failed(new ForwardOnFailure(response));
         }

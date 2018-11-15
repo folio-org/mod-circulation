@@ -1,15 +1,15 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
+
 import java.lang.invoke.MethodHandles;
 
-
-import static org.folio.circulation.support.JsonPropertyWriter.write;
-import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 public class RequestRepresentation {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -21,6 +21,7 @@ public class RequestRepresentation {
     addAdditionalLoanProperties(requestRepresentation, request.getLoan());
     addStoredProxyProperties(requestRepresentation, request.getProxy());
     addAdditionalServicePointProperties(requestRepresentation, request.getPickupServicePoint());
+    addDeliveryAddress(requestRepresentation, request, request.getRequester());
 
     return requestRepresentation;
   }
@@ -29,7 +30,7 @@ public class RequestRepresentation {
     final JsonObject representation = request.asJson();
 
     addStoredItemProperties(representation, request.getItem());
-    addStoredRequesterProperties(representation, request.getRequester(), request);
+    addStoredRequesterProperties(representation, request.getRequester());
     addStoredProxyProperties(representation, request.getProxy());
 
     return representation;
@@ -50,7 +51,7 @@ public class RequestRepresentation {
 
   private static void addStoredRequesterProperties(
     JsonObject requestWithAdditionalInformation,
-    User requester, Request request) {
+    User requester) {
 
     if(requester == null) {
       return;
@@ -59,15 +60,7 @@ public class RequestRepresentation {
     JsonObject requesterSummary = requester.createUserSummary();
 
     requestWithAdditionalInformation.put("requester", requesterSummary);
-    
-    String addressType = request.getDeliveryAddressType();
-    if(addressType != null) {
-      JsonObject deliveryAddress = requester.getAddressByType(addressType);
-      if(deliveryAddress != null) {
-        requestWithAdditionalInformation.put("deliveryAddress", deliveryAddress);
-      }
-    }
-    
+
     String patronGroup = requester.getPatronGroup();
     if(patronGroup != null) {
       requesterSummary.put("patronGroup", patronGroup);
@@ -131,7 +124,33 @@ public class RequestRepresentation {
       itemSummary.put("callNumber", callNumber);
     }
   }
-  
+
+  private static void addDeliveryAddress(
+    JsonObject requestWithAdditionalInformation,
+    Request request,
+    User requester) {
+
+    if (requester == null) {
+      return;
+    }
+
+    if (request == null) {
+      return;
+    }
+
+    if (requestWithAdditionalInformation == null) {
+      return;
+    }
+
+    String addressType = request.getDeliveryAddressType();
+    if(addressType != null) {
+      JsonObject deliveryAddress = requester.getAddressByType(addressType);
+      if(deliveryAddress != null) {
+        requestWithAdditionalInformation.put("deliveryAddress", deliveryAddress);
+      }
+    }
+  }
+
   private static void addAdditionalLoanProperties(JsonObject request, Loan loan) {
     if(loan == null || loan.isClosed()) {
       String reason = null;
