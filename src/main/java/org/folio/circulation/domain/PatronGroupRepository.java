@@ -8,31 +8,24 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlHelper;
-import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-public class PatronGroupRepository {
-  private final CollectionResourceClient patronGroupsStorageClient;
-  private final String PATRON_GROUP_TYPE = "patrongroup";
+class PatronGroupRepository {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-  
-  public PatronGroupRepository(Clients clients) {
+
+  private final CollectionResourceClient patronGroupsStorageClient;
+
+  PatronGroupRepository(Clients clients) {
     patronGroupsStorageClient = clients.patronGroupsStorage();
   }
-  
-  public CompletableFuture<HttpResult<PatronGroup>> getPatronGroupById(String id) {
-    return FetchSingleRecord.<PatronGroup>forRecord(PATRON_GROUP_TYPE)
-        .using(patronGroupsStorageClient)
-        .mapTo(PatronGroup::new)
-        .whenNotFound(HttpResult.succeeded(null))
-        .fetch(id);
-  }
-  
-  public CompletableFuture<HttpResult<Request>> findPatronGroupsForSingleRequestUsers(HttpResult<Request> result) {
+
+  CompletableFuture<HttpResult<Request>> findPatronGroupsForSingleRequestUsers(
+    HttpResult<Request> result) {
+
     List<String> clauses = new ArrayList<>();
     return result.after( request -> {
       if(request.getProxy() != null) {
@@ -76,9 +69,9 @@ public class PatronGroupRepository {
     });    
   }
   
-  public CompletableFuture<HttpResult<MultipleRecords<Request>>> 
-    findPatronGroupsForRequestsUsers(MultipleRecords<Request> multipleRequests) {
-      
+  CompletableFuture<HttpResult<MultipleRecords<Request>>> findPatronGroupsForRequestsUsers(
+    MultipleRecords<Request> multipleRequests) {
+
     Collection<Request> requests = multipleRequests.getRecords();
     List<String> clauses = new ArrayList<>();
     
