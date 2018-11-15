@@ -1,19 +1,25 @@
 package org.folio.circulation.domain;
 
+import static org.folio.circulation.support.HttpResult.failed;
+import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.ValidationErrorFailure.failure;
+
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.support.*;
-import org.folio.circulation.support.http.server.ValidationError;
-
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
-import static org.folio.circulation.support.HttpResult.failed;
-import static org.folio.circulation.support.HttpResult.succeeded;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
+import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.CqlHelper;
+import org.folio.circulation.support.FetchSingleRecord;
+import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,29 +83,20 @@ public class UserRepository {
           "Could not find user with matching barcode", propertyName, barcode)))));
   }
   
-  public CompletableFuture<HttpResult<MultipleRecords<Request>>> 
-    findUsersForRequests(MultipleRecords<Request> multipleRequests) {
+  CompletableFuture<HttpResult<MultipleRecords<Request>>> findUsersForRequests(
+    MultipleRecords<Request> multipleRequests) {
+
     Collection<Request> requests = multipleRequests.getRecords();
-    List<String> clauses = new ArrayList<>();
-    
-    for(Request request : requests) {
-      String requesterId = request.getUserId();
-      String proxyId = request.getProxyUserId();
-      if(requesterId != null) {
-        clauses.add(String.format("( id==%s )", requesterId));
-      }
-      if(proxyId != null) {
-        clauses.add(String.format("( id==%s )", proxyId));
-      }
-    }
-    if(clauses.isEmpty()) {
-      log.info("No users to query");
-      return CompletableFuture.completedFuture(HttpResult.succeeded(multipleRequests));
-    }
-    final String usersQuery = String.join(" OR ", clauses);
-    log.info("Querying users with query {}", usersQuery);
-    HttpResult<String> queryResult = CqlHelper.encodeQuery(usersQuery);
-    return queryResult.after(query -> usersStorageClient.getMany(query)
+
+    final List<String> usersToFetch = requests.stream()
+      .map(this::getUsersFromRequest)
+      .flatMap(Collection::stream)
+      .distinct()
+      .collect(Collectors.toList());
+
+    final String query = CqlHelper.multipleRecordsCqlQuery(usersToFetch);
+
+    return usersStorageClient.getMany(query)
       .thenApply(this::mapResponseToUsers)
       .thenApply(multipleUsersResult -> multipleUsersResult.next(
         multipleUsers -> {
@@ -121,10 +118,26 @@ public class UserRepository {
             }            
             newRequestList.add(newRequest);
           }
-          return HttpResult.succeeded(new MultipleRecords<>(newRequestList, multipleRequests.getTotalRecords()));
-        })));
+
+          return succeeded(new MultipleRecords<>(newRequestList,
+            multipleRequests.getTotalRecords()));
+        }));
   }
-  
+
+  private ArrayList<String> getUsersFromRequest(Request request) {
+    final ArrayList<String> usersToFetch = new ArrayList<>();
+
+    if(request.getUserId() != null) {
+      usersToFetch.add(request.getUserId());
+    }
+
+    if(request.getProxyUserId() != null) {
+      usersToFetch.add(request.getProxyUserId());
+    }
+
+    return usersToFetch;
+  }
+
   private HttpResult<MultipleRecords<User>> mapResponseToUsers(Response response) {
     return MultipleRecords.from(response, User::from, "users");
   }
