@@ -65,8 +65,6 @@ public class RequestsAPIUpdatingTests extends APITests {
       .withPickupServicePointId(exampleServicePoint.getId())
       .withRequestExpiration(new LocalDate(2017, 7, 30))
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
-    
-    
 
     UUID updatedRequester = usersClient.create(new UserBuilder()
       .withName("Campbell", "Fiona")
