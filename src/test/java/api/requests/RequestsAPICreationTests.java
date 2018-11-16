@@ -26,6 +26,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import api.support.APITests;
+import api.support.builders.Address;
 import api.support.builders.ItemBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
@@ -441,7 +442,7 @@ public class RequestsAPICreationTests extends APITests {
       ItemBuilder::available);
 
     final IndividualResource charlotte = usersFixture.charlotte(
-      builder -> builder.withAddress(workAddressTypeId()));
+      builder -> builder.withAddress(new Address(workAddressTypeId())));
 
     final IndividualResource james = usersFixture.james();
 
