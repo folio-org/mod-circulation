@@ -36,7 +36,6 @@ import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
 public class RequestsAPIRetrievalTests extends APITests {
-
   @Test
   public void canGetARequestById()
     throws MalformedURLException,
@@ -51,8 +50,11 @@ public class RequestsAPIRetrievalTests extends APITests {
     String enumeration = "DUMMY_ENUMERATION";
     
     UUID facultyGroupId = patronGroupsFixture.faculty().getId();
+    groupsToDelete.add(facultyGroupId);
+
     UUID staffGroupId = patronGroupsFixture.staff().getId();
-    
+    groupsToDelete.add(staffGroupId);
+
     itemsFixture.basedUponSmallAngryPlanet(itemBuilder -> itemBuilder
         .withId(itemId)
         .withEnumeration(enumeration));
@@ -237,19 +239,24 @@ public class RequestsAPIRetrievalTests extends APITests {
     InterruptedException,
     ExecutionException,
     TimeoutException {
-    
-    //UUID requesterId = usersClient.create(new UserBuilder()).getId();
+
     final IndividualResource cd1 = servicePointsFixture.cd1();
     final IndividualResource cd2 = servicePointsFixture.cd2();
     UUID pickupServicePointId = cd1.getId();
     UUID pickupServicePointId2 = cd2.getId();
     
     UUID facultyGroupId = patronGroupsFixture.faculty().getId();
+    groupsToDelete.add(facultyGroupId);
+
     UUID staffGroupId = patronGroupsFixture.staff().getId();
+    groupsToDelete.add(staffGroupId);
+
     final IndividualResource sponsor = usersFixture.rebecca(
-        builder -> { return builder.withPatronGroupId(facultyGroupId); });
-    final IndividualResource proxy = usersFixture.steve(builder -> 
-    { return builder.withPatronGroupId(staffGroupId); });
+        builder -> builder.withPatronGroupId(facultyGroupId));
+
+    final IndividualResource proxy = usersFixture.steve(builder ->
+      builder.withPatronGroupId(staffGroupId));
+
     UUID proxyId = proxy.getId();
     UUID requesterId = sponsor.getId();
     

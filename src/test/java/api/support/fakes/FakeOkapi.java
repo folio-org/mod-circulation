@@ -111,6 +111,7 @@ public class FakeOkapi extends AbstractVerticle {
       .withRootPath("/groups")
       .withCollectionPropertyName("usergroups")
       .withRequiredProperties("group", "desc")
+      .withUniqueProperties("group")
       .withChangeMetadata()
       .disallowCollectionDelete()
       .create().register(router);

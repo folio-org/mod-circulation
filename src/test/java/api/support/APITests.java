@@ -67,6 +67,7 @@ public abstract class APITests {
   protected final Set<UUID> schedulesToDelete = new HashSet<>();
   protected final Set<UUID> policiesToDelete = new HashSet<>();
   protected final Set<UUID> servicePointsToDelete = new HashSet<>();
+  protected final Set<UUID> groupsToDelete = new HashSet<>();
 
   protected APITests() {
     this(true);
@@ -139,6 +140,8 @@ public abstract class APITests {
       servicePointsClient.delete(servicePointId);
     }
 
+    servicePointsToDelete.clear();
+
     for (UUID policyId : policiesToDelete) {
       loanPolicyClient.delete(policyId);
     }
@@ -150,6 +153,12 @@ public abstract class APITests {
     }
 
     schedulesToDelete.clear();
+
+    for (UUID patronGroupId : groupsToDelete) {
+      patronGroupsClient.delete(patronGroupId);
+    }
+
+    groupsToDelete.clear();
   }
 
   //Needs to be done each time as some tests manipulate the rules
