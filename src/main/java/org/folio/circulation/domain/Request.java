@@ -1,21 +1,22 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonObject;
-import java.lang.invoke.MethodHandles;
-import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.domain.representations.RequestProperties;
-
-import java.util.Objects;
-
-import static org.folio.circulation.domain.RequestFulfilmentPreference.*;
-import static org.folio.circulation.domain.RequestStatus.*;
+import static org.folio.circulation.domain.RequestFulfilmentPreference.HOLD_SHELF;
+import static org.folio.circulation.domain.RequestStatus.CLOSED_CANCELLED;
+import static org.folio.circulation.domain.RequestStatus.CLOSED_FILLED;
+import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
+import static org.folio.circulation.domain.RequestStatus.OPEN_NOT_YET_FILLED;
 import static org.folio.circulation.domain.representations.RequestProperties.STATUS;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
+
+import java.util.Objects;
+
+import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.domain.representations.RequestProperties;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import io.vertx.core.json.JsonObject;
 
 public class Request implements ItemRelatedRecord, UserRelatedRecord, FindByIdQuery {
   private final JsonObject representation;
@@ -23,10 +24,9 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord, FindByIdQu
   private final User requester;
   private final User proxy;
   private final Loan loan;
-  private boolean changedPosition = false;
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private final ServicePoint pickupServicePoint;
-
+  
+  private boolean changedPosition = false;
 
   public Request(
     JsonObject representation,
@@ -46,6 +46,15 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord, FindByIdQu
 
   public static Request from(JsonObject representation) {
     return new Request(representation, null, null, null, null, null);
+  }
+
+  Request withJsonRepresentation(JsonObject representation) {
+    return new Request(representation,
+      getItem(),
+      getRequester(),
+      getProxy(),
+      getLoan(),
+      getPickupServicePoint());
   }
 
   public JsonObject asJson() {
@@ -104,12 +113,12 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord, FindByIdQu
         pickupServicePoint);
   }
   
-  public Request withLoan(Loan newLoan) {
+  Request withLoan(Loan newLoan) {
     return new Request(representation, item, requester, proxy, newLoan,
         pickupServicePoint);
   }
   
-  public Request withPickupServicePoint(ServicePoint newPickupServicePoint) {
+  Request withPickupServicePoint(ServicePoint newPickupServicePoint) {
     return new Request(representation, item, requester, proxy, loan,
         newPickupServicePoint);
   } 
@@ -173,11 +182,11 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord, FindByIdQu
     return proxy;
   }
   
-  public String getPickupServicePointId() {
+  String getPickupServicePointId() {
     return representation.getString("pickupServicePointId");
   }
   
-  public ServicePoint getPickupServicePoint() {
+  ServicePoint getPickupServicePoint() {
     return pickupServicePoint;
   }
 
@@ -222,7 +231,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord, FindByIdQu
     return new ValidationErrorFailure(error);
   }
 
-  public String getDeliveryAddressType() {
+  String getDeliveryAddressType() {
     return representation.getString("deliveryAddressTypeId");
   }
 }

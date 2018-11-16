@@ -1,12 +1,7 @@
 package api.support.http;
 
-import api.support.builders.Builder;
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.JsonArrayHelper;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -18,8 +13,14 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import org.folio.circulation.support.JsonArrayHelper;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.OkapiHttpClient;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
+
+import api.support.builders.Builder;
+import io.vertx.core.json.JsonObject;
 
 public class ResourceClient {
 
@@ -83,6 +84,11 @@ public class ResourceClient {
   public static ResourceClient forGroups(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::groupsUrl,
       "groups", "usergroups");
+  }
+
+  public static ResourceClient forAddressTypes(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::addressTypesUrl,
+      "address types", "addressTypes");
   }
 
   public static ResourceClient forLoansStorage(OkapiHttpClient client) {

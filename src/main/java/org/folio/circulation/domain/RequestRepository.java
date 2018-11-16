@@ -1,6 +1,5 @@
 package org.folio.circulation.domain;
 
-import static org.folio.circulation.domain.Request.from;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
 
@@ -171,7 +170,10 @@ public class RequestRepository {
     return requestsStorageClient.post(representation)
       .thenApply(response -> {
         if (response.getStatusCode() == 201) {
-          return succeeded(requestAndRelatedRecords.withRequest(from(response.getJson())));
+          //Retain all of the previously fetched related records
+          return succeeded(requestAndRelatedRecords.withRequest(
+            request.withJsonRepresentation(response.getJson())
+          ));
         } else {
           return failed(new ForwardOnFailure(response));
         }
