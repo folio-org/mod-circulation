@@ -1,8 +1,12 @@
 package api.support.fixtures;
 
+import static api.support.fixtures.UserExamples.basedUponJamesRodwell;
+import static api.support.fixtures.UserExamples.basedUponJessicaPontefract;
+import static api.support.fixtures.UserExamples.basedUponRebeccaStuart;
+import static api.support.fixtures.UserExamples.basedUponStevenJones;
+import static java.util.function.Function.identity;
+
 import java.net.MalformedURLException;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -16,16 +20,15 @@ import api.support.builders.UserBuilder;
 import api.support.http.ResourceClient;
 
 public class UsersFixture {
-  private final ResourceClient usersClient;
   private final ResourceClient proxyRelationshipClient;
-  private final Set<UUID> userIdsToDelete = new HashSet<>();
+  private final RecordCreator userRecordCreator;
 
   public UsersFixture(
     ResourceClient usersClient,
     ResourceClient proxyRelationshipClient) {
 
-    this.usersClient = usersClient;
     this.proxyRelationshipClient = proxyRelationshipClient;
+    userRecordCreator = new RecordCreator(usersClient);
   }
 
   public void cleanUp()
@@ -34,11 +37,7 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    for (UUID userId : userIdsToDelete) {
-      usersClient.delete(userId);
-    }
-
-    userIdsToDelete.clear();
+    userRecordCreator.cleanUp();
   }
 
   public void expiredProxyFor(
@@ -63,7 +62,7 @@ public class UsersFixture {
     proxyFor(sponsor.getId(), proxy.getId(), DateTime.now().plusYears(1));
   }
 
-  public void proxyFor(
+  private void proxyFor(
     UUID sponsorUserId,
     UUID proxyUserId,
     DateTime expirationDate)
@@ -115,48 +114,45 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return createUser(UserExamples.basedUponJessicaPontefract());
+    return userRecordCreator.createRecord(basedUponJessicaPontefract());
   }
 
   public IndividualResource james()
-    throws
-    InterruptedException,
+    throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
 
-    return createUser(UserExamples.basedUponJamesRodwell());
+    return userRecordCreator.createRecord(basedUponJamesRodwell());
   }
 
   public IndividualResource rebecca()
-    throws
-    InterruptedException,
+    throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
 
-    return createUser(UserExamples.basedUponRebeccaStuart());
+    return userRecordCreator.createRecord(basedUponRebeccaStuart());
   }
   
-  public IndividualResource rebecca(Function<UserBuilder, UserBuilder> additionalProperties)
-    throws
-    InterruptedException,
+  public IndividualResource rebecca(
+    Function<UserBuilder, UserBuilder> additionalProperties)
+    throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
-    UserBuilder builder = additionalProperties.apply(UserExamples.basedUponRebeccaStuart());
 
-    return createUser(builder);
+    return userRecordCreator.createRecord(
+      additionalProperties.apply(basedUponRebeccaStuart()));
   }
 
   public IndividualResource steve()
-    throws
-    InterruptedException,
+    throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
 
-    return steve(b -> b);
+    return steve(identity());
   }
 
   public IndividualResource steve(
@@ -168,13 +164,9 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    final UserBuilder builder = additionalUserProperties.apply(
-      UserExamples.basedUponStevenJones());
-
-    return createUser(builder);
+    return userRecordCreator.createRecord(
+      additionalUserProperties.apply(basedUponStevenJones()));
   }
-
-
 
   public IndividualResource charlotte()
     throws
@@ -183,7 +175,7 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return charlotte(Function.identity());
+    return charlotte(identity());
   }
 
   public IndividualResource charlotte(
@@ -193,20 +185,7 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return createUser(additionalConfiguration.apply(
+    return userRecordCreator.createRecord(additionalConfiguration.apply(
       UserExamples.basedUponCharlotteBroadwell()));
-  }
-
-  private IndividualResource createUser(UserBuilder builder)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    final IndividualResource createdRecord = usersClient.create(builder);
-
-    userIdsToDelete.add(createdRecord.getId());
-
-    return createdRecord;
   }
 }
