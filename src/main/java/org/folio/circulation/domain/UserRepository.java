@@ -4,10 +4,10 @@ import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
-import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -20,12 +20,9 @@ import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class UserRepository {
   private final CollectionResourceClient usersStorageClient;
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   public UserRepository(Clients clients) {
     usersStorageClient = clients.usersStorage();
@@ -99,24 +96,9 @@ public class UserRepository {
     return usersStorageClient.getMany(query)
       .thenApply(this::mapResponseToUsers)
       .thenApply(multipleUsersResult -> multipleUsersResult.next(
-        multipleUsers -> HttpResult.of(() -> multipleRequests.mapRecords(
-          request -> {
-          Request newRequest = request;
-          String requesterId = newRequest.getUserId() != null ?
-          newRequest.getUserId() : "";
-          String proxyId = newRequest.getProxyUserId() != null ?
-          newRequest.getProxyUserId() : "";
-          for(User user : multipleUsers.getRecords()) {
-            if(requesterId.equals(user.getId())) {
-              newRequest = newRequest.withRequester(user);
-            }
-            if(proxyId.equals(user.getId())) {
-              newRequest = newRequest.withProxy(user);
-            }
-          }
-
-          return newRequest;
-        }))));
+        multipleUsers -> HttpResult.of(() ->
+          multipleRequests.mapRecords(request ->
+            matchUsersToRequests(request, multipleUsers)))));
   }
 
   private ArrayList<String> getUsersFromRequest(Request request) {
@@ -132,6 +114,18 @@ public class UserRepository {
 
     return usersToFetch;
   }
+
+  private Request matchUsersToRequests(
+    Request request,
+    MultipleRecords<User> users) {
+
+    final Map<String, User> userMap = users.toMap(User::getId);
+
+    return request
+      .withRequester(userMap.getOrDefault(request.getUserId(), null))
+      .withProxy(userMap.getOrDefault(request.getProxyUserId(), null));
+  }
+
 
   private HttpResult<MultipleRecords<User>> mapResponseToUsers(Response response) {
     return MultipleRecords.from(response, User::from, "users");
