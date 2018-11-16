@@ -1,10 +1,11 @@
 package org.folio.circulation.support;
 
-import io.vertx.core.json.JsonObject;
+import java.util.UUID;
+
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
-import java.util.UUID;
+import io.vertx.core.json.JsonObject;
 
 public class JsonPropertyFetcher {
   private JsonPropertyFetcher() {
@@ -120,5 +121,24 @@ public class JsonPropertyFetcher {
     else {
       return defaultValue;
     }
+  }
+
+  public static void copyProperty(
+    JsonObject from,
+    JsonObject to,
+    String propertyName) {
+
+    if(from == null) {
+      return;
+    }
+
+    if(to == null) {
+      return;
+    }
+
+    if(from.containsKey(propertyName)) {
+      to.put(propertyName, from.getValue(propertyName));
+    }
+
   }
 }

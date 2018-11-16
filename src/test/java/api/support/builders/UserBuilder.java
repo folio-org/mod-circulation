@@ -89,6 +89,12 @@ public class UserBuilder extends JsonBuilder implements Builder {
           final JsonObject mappedAddress = new JsonObject();
 
           put(mappedAddress, "addressTypeId", address.getType());
+          put(mappedAddress, "addressLine1", address.getAddressLineOne());
+          put(mappedAddress, "addressLine2", address.getAddressLineTwo());
+          put(mappedAddress, "city", address.getCity());
+          put(mappedAddress, "region", address.getRegion());
+          put(mappedAddress, "postalCode", address.getPostalCode());
+          put(mappedAddress, "countryId", address.getCountryId());
 
           mappedAddresses.add(mappedAddress);
         });

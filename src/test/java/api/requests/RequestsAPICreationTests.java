@@ -13,6 +13,7 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -66,7 +67,6 @@ public class RequestsAPICreationTests extends APITests {
       .withRequestExpiration(new LocalDate(2017, 7, 30))
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId));
-   
 
     JsonObject representation = request.getJson();
 
@@ -442,7 +442,14 @@ public class RequestsAPICreationTests extends APITests {
       ItemBuilder::available);
 
     final IndividualResource charlotte = usersFixture.charlotte(
-      builder -> builder.withAddress(new Address(workAddressTypeId())));
+      builder -> builder.withAddress(
+        new Address(workAddressTypeId(),
+          "Fake first address line",
+          "Fake second address line",
+          "Fake city",
+          "Fake region",
+          "Fake postal code",
+          "Fake country code")));
 
     final IndividualResource james = usersFixture.james();
 
@@ -467,6 +474,12 @@ public class RequestsAPICreationTests extends APITests {
     final JsonObject deliveryAddress = representation.getJsonObject("deliveryAddress");
 
     assertThat(deliveryAddress.getString("addressTypeId"), is(workAddressTypeId()));
+    assertThat(deliveryAddress.getString("addressLine1"), is("Fake first address line"));
+    assertThat(deliveryAddress.getString("addressLine2"), is("Fake second address line"));
+    assertThat(deliveryAddress.getString("city"), is("Fake city"));
+    assertThat(deliveryAddress.getString("region"), is("Fake region"));
+    assertThat(deliveryAddress.getString("postalCode"), is("Fake postal code"));
+    assertThat(deliveryAddress.getString("countryId"), is("Fake country code"));
   }
 
   @Test

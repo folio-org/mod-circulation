@@ -1,5 +1,6 @@
 package org.folio.circulation.domain;
 
+import static org.folio.circulation.support.JsonPropertyFetcher.copyProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.lang.invoke.MethodHandles;
@@ -143,9 +144,19 @@ public class RequestRepresentation {
 
     String addressType = request.getDeliveryAddressType();
     if(addressType != null) {
-      JsonObject deliveryAddress = requester.getAddressByType(addressType);
-      if(deliveryAddress != null) {
-        requestWithAdditionalInformation.put("deliveryAddress", deliveryAddress);
+      JsonObject address = requester.getAddressByType(addressType);
+      if(address != null) {
+        JsonObject mappedAddress = new JsonObject();
+
+        copyProperty(address, mappedAddress, "addressTypeId");
+        copyProperty(address, mappedAddress, "addressLine1");
+        copyProperty(address, mappedAddress, "addressLine2");
+        copyProperty(address, mappedAddress, "city");
+        copyProperty(address, mappedAddress, "region");
+        copyProperty(address, mappedAddress, "postalCode");
+        copyProperty(address, mappedAddress, "countryId");
+
+        requestWithAdditionalInformation.put("deliveryAddress", mappedAddress);
       }
     }
   }
