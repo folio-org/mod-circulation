@@ -14,16 +14,17 @@ import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ServicePointRepository {
-  private final CollectionResourceClient servicePointsStorageClient;
-  private final String SERVICE_POINT_TYPE = "servicepoint";
+class ServicePointRepository {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-  
-  public ServicePointRepository(Clients clients) {
+  private static final String SERVICE_POINT_TYPE = "servicepoint";
+
+  private final CollectionResourceClient servicePointsStorageClient;
+
+  ServicePointRepository(Clients clients) {
     servicePointsStorageClient = clients.servicePointsStorage();
   }
   
-  public CompletableFuture<HttpResult<ServicePoint>> getServicePointById(String id) {
+  CompletableFuture<HttpResult<ServicePoint>> getServicePointById(String id) {
     return FetchSingleRecord.<ServicePoint>forRecord(SERVICE_POINT_TYPE)
         .using(servicePointsStorageClient)
         .mapTo(ServicePoint::new)
@@ -31,8 +32,8 @@ public class ServicePointRepository {
         .fetch(id);
   }
   
-  public CompletableFuture<HttpResult<MultipleRecords<Request>>> findServicePointsForRequests(
-      MultipleRecords<Request> multipleRequests) {
+  CompletableFuture<HttpResult<MultipleRecords<Request>>> findServicePointsForRequests(
+    MultipleRecords<Request> multipleRequests) {
     Collection<Request> requests = multipleRequests.getRecords();
     List<String> clauses = new ArrayList<>();
     
@@ -61,7 +62,7 @@ public class ServicePointRepository {
             Collection<ServicePoint> spCollection = multipleServicePoints.getRecords();
             for(Request request : requests) {
               Request newRequest = null;
-              Boolean foundSP = false; //Have we found a matching service point for the request?
+              boolean foundSP = false; //Have we found a matching service point for the request?
               for(ServicePoint servicePoint : spCollection) { 
                 if(request.getPickupServicePointId() != null &&
                     request.getPickupServicePointId().equals(servicePoint.getId())) {                
