@@ -24,7 +24,6 @@ import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -319,7 +318,6 @@ public class RequestsAPIRetrievalTests extends APITests {
   }
 
   @Test
-  @Ignore("Need to fetch users for multiple requests when ")
   public void canGetARequestToBeFulfilledByDeliveryToAnAddressFromCollectionEndpoint()
     throws InterruptedException,
     MalformedURLException,
