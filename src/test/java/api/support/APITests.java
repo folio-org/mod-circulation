@@ -101,11 +101,12 @@ public abstract class APITests {
     loansClient.deleteAll();
 
     itemsClient.deleteAll();
-    servicePointsClient.deleteAll();
     holdingsClient.deleteAll();
     instancesClient.deleteAll();
 
     usersClient.deleteAllIndividually();
+
+    servicePointsClient.deleteAllIndividually();
 
     APITestSuite.createUsers();
 
