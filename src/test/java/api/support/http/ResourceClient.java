@@ -18,6 +18,7 @@ import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
+import org.hamcrest.CoreMatchers;
 
 import api.support.builders.Builder;
 import io.vertx.core.json.JsonObject;
@@ -394,7 +395,9 @@ public class ResourceClient {
 
     assertThat(String.format(
       "Failed to delete %s %s: %s", resourceName, id, response.getBody()),
-      response.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
+      response.getStatusCode(), CoreMatchers.anyOf(
+        is(HttpURLConnection.HTTP_NO_CONTENT),
+        is(HttpURLConnection.HTTP_NOT_FOUND)));
   }
 
   public void delete(IndividualResource resource)
