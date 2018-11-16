@@ -142,23 +142,23 @@
           "readonly": true
         },
         "patronGroupId": {
-          "description": "UUID for the patrongroup that this user belongs to",
+          "description": "UUID for the patron group that this user belongs to",
           "type": "string"
         },
         "patronGroup": {
-          "description": "record for the user's patrongroup",
+          "description": "record for the user's patron group",
           "type": "object",
           "properties": {
             "id": {
-              "description": "ID of the patrongroup",
+              "description": "ID of the patron group",
               "type": "string"
             },
             "group": {
-              "description": "The unique name of the patrongroup",
+              "description": "The unique name of the patron group",
               "type": "string"
             },
             "desc": {
-              "description": "A description of the patrongroup",
+              "description": "A description of the patron group",
               "type": "string"
             }
           }
