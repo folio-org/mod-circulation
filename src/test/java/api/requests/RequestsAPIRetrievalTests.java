@@ -60,9 +60,10 @@ public class RequestsAPIRetrievalTests extends APITests {
         .withEnumeration(enumeration));
     
     final IndividualResource sponsor = usersFixture.rebecca(
-        builder -> { return builder.withPatronGroupId(facultyGroupId); });
+        builder -> builder.withPatronGroupId(facultyGroupId));
+
     final IndividualResource proxy = usersFixture.steve(
-        builder -> { return builder.withPatronGroupId(staffGroupId); });
+        builder -> builder.withPatronGroupId(staffGroupId));
 
     final IndividualResource cd1 = servicePointsFixture.cd1();
     servicePointsToDelete.add(cd1.getId());

@@ -1,6 +1,8 @@
 package api.support.fixtures;
 
 import java.net.MalformedURLException;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -16,6 +18,7 @@ import api.support.http.ResourceClient;
 public class UsersFixture {
   private final ResourceClient usersClient;
   private final ResourceClient proxyRelationshipClient;
+  private final Set<UUID> userIdsToDelete = new HashSet<>();
 
   public UsersFixture(
     ResourceClient usersClient,
@@ -23,6 +26,19 @@ public class UsersFixture {
 
     this.usersClient = usersClient;
     this.proxyRelationshipClient = proxyRelationshipClient;
+  }
+
+  public void cleanUp()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    for (UUID userId : userIdsToDelete) {
+      usersClient.delete(userId);
+    }
+
+    userIdsToDelete.clear();
   }
 
   public void expiredProxyFor(
@@ -99,7 +115,7 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return usersClient.create(UserExamples.basedUponJessicaPontefract());
+    return createUser(UserExamples.basedUponJessicaPontefract());
   }
 
   public IndividualResource james()
@@ -109,7 +125,7 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return usersClient.create(UserExamples.basedUponJamesRodwell());
+    return createUser(UserExamples.basedUponJamesRodwell());
   }
 
   public IndividualResource rebecca()
@@ -119,7 +135,7 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return usersClient.create(UserExamples.basedUponRebeccaStuart());
+    return createUser(UserExamples.basedUponRebeccaStuart());
   }
   
   public IndividualResource rebecca(Function<UserBuilder, UserBuilder> additionalProperties)
@@ -130,7 +146,7 @@ public class UsersFixture {
     ExecutionException {
     UserBuilder builder = additionalProperties.apply(UserExamples.basedUponRebeccaStuart());
 
-    return usersClient.create(builder);
+    return createUser(builder);
   }
 
   public IndividualResource steve()
@@ -155,7 +171,7 @@ public class UsersFixture {
     final UserBuilder builder = additionalUserProperties.apply(
       UserExamples.basedUponStevenJones());
 
-    return usersClient.create(builder);
+    return createUser(builder);
   }
 
 
@@ -177,8 +193,20 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return usersClient.create(additionalConfiguration.apply(
+    return createUser(additionalConfiguration.apply(
       UserExamples.basedUponCharlotteBroadwell()));
   }
 
+  private IndividualResource createUser(UserBuilder builder)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final IndividualResource createdRecord = usersClient.create(builder);
+
+    userIdsToDelete.add(createdRecord.getId());
+
+    return createdRecord;
+  }
 }

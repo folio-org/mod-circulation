@@ -154,6 +154,8 @@ public abstract class APITests {
 
     schedulesToDelete.clear();
 
+    usersFixture.cleanUp();
+
     for (UUID patronGroupId : groupsToDelete) {
       patronGroupsClient.delete(patronGroupId);
     }
