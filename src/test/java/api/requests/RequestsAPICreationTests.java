@@ -1,12 +1,23 @@
 package api.requests;
 
-import api.support.APITests;
-import api.support.builders.ItemBuilder;
-import api.support.builders.RequestBuilder;
-import api.support.builders.UserBuilder;
-import io.vertx.core.json.JsonObject;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
+import static api.APITestSuite.workAddressTypeId;
+import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
+import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
+import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static api.support.matchers.UUIDMatcher.is;
+import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
+import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
+import static org.hamcrest.Matchers.emptyString;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+
+import java.net.MalformedURLException;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
@@ -15,20 +26,14 @@ import org.joda.time.LocalDate;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.net.MalformedURLException;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
-import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
-import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
-import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
-import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
-import static org.hamcrest.Matchers.emptyString;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import api.support.APITests;
+import api.support.builders.Address;
+import api.support.builders.ItemBuilder;
+import api.support.builders.RequestBuilder;
+import api.support.builders.UserBuilder;
+import io.vertx.core.json.JsonObject;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 
 @RunWith(JUnitParamsRunner.class)
 public class RequestsAPICreationTests extends APITests {
@@ -62,7 +67,6 @@ public class RequestsAPICreationTests extends APITests {
       .withRequestExpiration(new LocalDate(2017, 7, 30))
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId));
-   
 
     JsonObject representation = request.getJson();
 
@@ -437,17 +441,24 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       ItemBuilder::available);
 
-    final IndividualResource charlotte = usersFixture.charlotte();
+    final IndividualResource charlotte = usersFixture.charlotte(
+      builder -> builder.withAddress(
+        new Address(workAddressTypeId(),
+          "Fake first address line",
+          "Fake second address line",
+          "Fake city",
+          "Fake region",
+          "Fake postal code",
+          "Fake country code")));
+
     final IndividualResource james = usersFixture.james();
 
     loansFixture.checkOut(smallAngryPlanet, james);
 
-    UUID deliveryAddressTypeId = UUID.randomUUID();
-
     IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
       .recall()
       .forItem(smallAngryPlanet)
-      .deliverToAddress(deliveryAddressTypeId)
+      .deliverToAddress(workAddressTypeId())
       .by(charlotte));
 
     JsonObject representation = createdRequest.getJson();
@@ -455,8 +466,20 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(representation.getString("id"), is(not(emptyString())));
     assertThat(representation.getString("requestType"), is("Recall"));
     assertThat(representation.getString("fulfilmentPreference"), is("Delivery"));
-    assertThat(representation.getString("deliveryAddressTypeId"),
-      is(deliveryAddressTypeId.toString()));
+    assertThat(representation.getString("deliveryAddressTypeId"), is(workAddressTypeId()));
+
+    assertThat("Request should have a delivery address",
+      representation.containsKey("deliveryAddress"), is(true));
+
+    final JsonObject deliveryAddress = representation.getJsonObject("deliveryAddress");
+
+    assertThat(deliveryAddress.getString("addressTypeId"), is(workAddressTypeId()));
+    assertThat(deliveryAddress.getString("addressLine1"), is("Fake first address line"));
+    assertThat(deliveryAddress.getString("addressLine2"), is("Fake second address line"));
+    assertThat(deliveryAddress.getString("city"), is("Fake city"));
+    assertThat(deliveryAddress.getString("region"), is("Fake region"));
+    assertThat(deliveryAddress.getString("postalCode"), is("Fake postal code"));
+    assertThat(deliveryAddress.getString("countryId"), is("Fake country code"));
   }
 
   @Test

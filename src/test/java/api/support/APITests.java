@@ -1,25 +1,6 @@
 package api.support;
 
 
-import api.APITestSuite;
-import api.support.fixtures.ItemsFixture;
-import api.support.fixtures.LoansFixture;
-import api.support.fixtures.PatronGroupsFixture;
-import api.support.fixtures.RequestsFixture;
-import api.support.fixtures.ServicePointsFixture;
-import api.support.fixtures.UsersFixture;
-import api.support.http.InterfaceUrls;
-import api.support.http.ResourceClient;
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -46,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import api.APITestSuite;
 import api.support.fixtures.ItemsFixture;
 import api.support.fixtures.LoansFixture;
+import api.support.fixtures.PatronGroupsFixture;
 import api.support.fixtures.RequestsFixture;
 import api.support.fixtures.ServicePointsFixture;
 import api.support.fixtures.UsersFixture;
@@ -120,7 +102,6 @@ public abstract class APITests {
 
     itemsClient.deleteAll();
     servicePointsClient.deleteAll();
-    patronGroupsClient.deleteAll();
     holdingsClient.deleteAll();
     instancesClient.deleteAll();
 

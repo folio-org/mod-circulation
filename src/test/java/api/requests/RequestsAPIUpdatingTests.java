@@ -65,6 +65,8 @@ public class RequestsAPIUpdatingTests extends APITests {
       .withPickupServicePointId(exampleServicePoint.getId())
       .withRequestExpiration(new LocalDate(2017, 7, 30))
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
+    
+    
 
     UUID updatedRequester = usersClient.create(new UserBuilder()
       .withName("Campbell", "Fiona")
@@ -107,6 +109,119 @@ public class RequestsAPIUpdatingTests extends APITests {
     assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
     assertThat(representation.getString("requestExpirationDate"), is("2017-07-30"));
     assertThat(representation.getString("holdShelfExpirationDate"), is("2017-08-31"));
+
+    assertThat("has information taken from item",
+      representation.containsKey("item"), is(true));
+
+    assertThat("title is taken from item",
+      representation.getJsonObject("item").getString("title"),
+      is("Temeraire"));
+
+    assertThat("barcode is taken from item",
+      representation.getJsonObject("item").getString("barcode"),
+      is("07295629642"));
+
+    assertThat("has information taken from requesting user",
+      representation.containsKey("requester"), is(true));
+
+    assertThat("last name is taken from requesting user",
+      representation.getJsonObject("requester").getString("lastName"),
+      is("Campbell"));
+
+    assertThat("first name is taken from requesting user",
+      representation.getJsonObject("requester").getString("firstName"),
+      is("Fiona"));
+
+    assertThat("middle name is not taken from requesting user",
+      representation.getJsonObject("requester").containsKey("middleName"),
+      is(false));
+
+    assertThat("barcode is taken from requesting user",
+      representation.getJsonObject("requester").getString("barcode"),
+      is("679231693475"));
+  }
+  
+  @Test
+  public void canReplaceAnExistingRequestWithDeliveryAddress() 
+      throws InterruptedException,
+      MalformedURLException,
+      TimeoutException,
+      ExecutionException {
+    
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = itemsFixture.basedUponTemeraire(
+      itemRequestBuilder -> itemRequestBuilder.withBarcode("07295629642"))
+      .getId();
+
+    loansFixture.checkOutItem(itemId);
+
+    UUID originalRequesterId = usersClient.create(new UserBuilder()
+      .withName("Norton", "Jessica")
+      .withBarcode("764523186496"))
+      .getId();
+    
+    UUID deliveryAddressTypeId = null; //UUID.randomUUID();
+
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
+    servicePointsToDelete.add(exampleServicePoint.getId());
+
+    //TODO: Should include pickup service point
+    IndividualResource createdRequest = requestsClient.create(
+      new RequestBuilder()
+      .recall()
+      .withId(id)
+      .withRequestDate(requestDate)
+      .withItemId(itemId)
+      .withRequesterId(originalRequesterId)
+      .fulfilToHoldShelf()
+      .withPickupServicePointId(exampleServicePoint.getId())
+      .withRequestExpiration(new LocalDate(2017, 7, 30))
+      .deliverToAddress(deliveryAddressTypeId)); 
+    
+
+    UUID updatedRequester = usersClient.create(new UserBuilder()
+      .withName("Campbell", "Fiona")
+      .withBarcode("679231693475"))
+      .getId();
+
+    JsonObject updatedRequest = requestsClient.getById(createdRequest.getId())
+      .getJson();
+
+    updatedRequest
+      .put("requestType", "Hold")
+      .put("requesterId", updatedRequester.toString());
+
+    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
+
+    client.put(InterfaceUrls.requestsUrl(String.format("/%s", id)),
+      updatedRequest, ResponseHandler.any(putCompleted));
+
+    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(putResponse.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
+
+    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
+
+    client.get(InterfaceUrls.requestsUrl(String.format("/%s", id)),
+      ResponseHandler.any(getCompleted));
+
+    Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Failed to get request: %s", getResponse.getBody()),
+      getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+
+    JsonObject representation = getResponse.getJson();
+
+    assertThat(representation.getString("id"), is(id.toString()));
+    assertThat(representation.getString("requestType"), is("Hold"));
+    assertThat(representation.getString("requestDate"), isEquivalentTo(requestDate));
+    assertThat(representation.getString("itemId"), is(itemId.toString()));
+    assertThat(representation.getString("requesterId"), is(updatedRequester.toString()));
+    assertThat(representation.getString("fulfilmentPreference"), is("Delivery"));
+    assertThat(representation.getString("requestExpirationDate"), is("2017-07-30"));
 
     assertThat("has information taken from item",
       representation.containsKey("item"), is(true));

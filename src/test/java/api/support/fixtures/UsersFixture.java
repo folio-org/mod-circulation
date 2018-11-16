@@ -1,16 +1,17 @@
 package api.support.fixtures;
 
-import api.support.builders.UserBuilder;
-import api.support.builders.ProxyRelationshipBuilder;
-import api.support.http.ResourceClient;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.joda.time.DateTime;
-
 import java.net.MalformedURLException;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
+
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.joda.time.DateTime;
+
+import api.support.builders.ProxyRelationshipBuilder;
+import api.support.builders.UserBuilder;
+import api.support.http.ResourceClient;
 
 public class UsersFixture {
   private final ResourceClient usersClient;
@@ -166,6 +167,18 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return usersClient.create(UserExamples.basedUponCharlotteBroadwell());
+    return charlotte(Function.identity());
   }
+
+  public IndividualResource charlotte(
+    Function<UserBuilder, UserBuilder> additionalConfiguration)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return usersClient.create(additionalConfiguration.apply(
+      UserExamples.basedUponCharlotteBroadwell()));
+  }
+
 }

@@ -1,9 +1,9 @@
 package api.support.http;
 
-import api.APITestSuite;
-
 import java.net.URL;
 import java.util.UUID;
+
+import api.APITestSuite;
 
 public class InterfaceUrls {
   static URL materialTypesStorageUrl(String subPath) {
@@ -76,6 +76,10 @@ public class InterfaceUrls {
 
   static URL groupsUrl(String subPath) {
     return APITestSuite.viaOkapiModuleUrl("/groups" + subPath);
+  }
+
+  static URL addressTypesUrl(String subPath) {
+    return APITestSuite.viaOkapiModuleUrl("/addresstypes" + subPath);
   }
 
   public static URL requestsUrl() {
