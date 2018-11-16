@@ -49,7 +49,7 @@ public class ServicePointRepository {
     }
     
     final String spQuery = String.join(" OR ", clauses);
-    log.info(String.format("Querying service points with query %s", spQuery));
+    log.info("Querying service points with query {}", spQuery);
     
     HttpResult<String> queryResult = CqlHelper.encodeQuery(spQuery);
     
@@ -71,8 +71,8 @@ public class ServicePointRepository {
                 }
               }
               if(!foundSP) {
-                log.info(String.format("No service point (out of %s) found for request %s (pickupServicePointId %s)",
-                    spCollection.size(), request.getId(), request.getPickupServicePointId()));
+                log.info("No service point (out of {}) found for request {} (pickupServicePointId {})",
+                    spCollection.size(), request.getId(), request.getPickupServicePointId());
                 newRequest = request;
               }
               newRequestList.add(newRequest);

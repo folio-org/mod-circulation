@@ -255,21 +255,21 @@ public class LoanRepository {
       .thenApply(r -> r.map(loans -> !loans.getRecords().isEmpty()));
   }
 
-  public CompletableFuture<HttpResult<MultipleRecords<Loan>>> findOpenLoans(Item item) {
+  private CompletableFuture<HttpResult<MultipleRecords<Loan>>> findOpenLoans(Item item) {
     return findOpenLoans(item.getItemId());
   }
 
   private CompletableFuture<HttpResult<MultipleRecords<Loan>>> findOpenLoans(String itemId) {
     final String openLoans = String.format(
       "itemId==%s and status.name==\"%s\"", itemId, "Open");
-    log.info(String.format("Querying open loan with query %s", openLoans));
+    log.info("Querying open loan with query {}", openLoans);
 
     return CqlHelper.encodeQuery(openLoans).after(query ->
       loansStorageClient.getMany(query, 1, 0)
         .thenApply(this::mapResponseToLoans));
   }
 
-  public CompletableFuture<HttpResult<MultipleRecords<Request>>> findOpenLoansFor(
+  CompletableFuture<HttpResult<MultipleRecords<Request>>> findOpenLoansFor(
     //TODO: Need to handle multiple open loans for same item (with failure?)
     MultipleRecords<Request> multipleRequests) {
 
@@ -292,7 +292,7 @@ public class LoanRepository {
     final String openLoansQuery = String.format("status.name==\"Open\" AND (%s)",
         itemClause);
 
-    log.info(String.format("Querying open loans with query %s", openLoansQuery));
+    log.info("Querying open loans with query {}", openLoansQuery);
 
     HttpResult<String> queryResult = CqlHelper.encodeQuery(openLoansQuery);
     
