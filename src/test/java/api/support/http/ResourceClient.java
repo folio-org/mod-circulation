@@ -78,12 +78,11 @@ public class ResourceClient {
     return new ResourceClient(client, InterfaceUrls::proxyRelationshipsUrl,
       "proxiesFor");
   }
-/*
-  public static ResourceClient forGroups(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::groupsUrl,
-      "groups", "usergroups");
+
+  public static ResourceClient forPatronGroups(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::patronGroupsStorageUrl,
+      "patron groups", "usergroups");
   }
-*/
 
   public static ResourceClient forAddressTypes(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::addressTypesUrl,
@@ -143,11 +142,6 @@ public class ResourceClient {
   public static ResourceClient forServicePoints(OkapiHttpClient client) {
    return new ResourceClient(client, InterfaceUrls::servicePointsStorageUrl,
        "service points", "servicepoints");
-  }
-  
-  public static ResourceClient forPatronGroups(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::patronGroupsStorageUrl,
-      "patron groups", "usergroups");
   }
 
   private ResourceClient(
