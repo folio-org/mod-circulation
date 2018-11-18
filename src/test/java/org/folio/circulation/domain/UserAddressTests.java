@@ -58,6 +58,20 @@ public class UserAddressTests {
   }
 
   @Test
+  public void firstAddressFoundWhenMultipleAddressesOfSameType() {
+    final User user = new User(new UserBuilder()
+      .withAddress(SiriusBlack())
+      .withAddress(RamkinResidence())
+      .create());
+
+    JsonObject foundAddress = user.getAddressByType(HOME_ADDRESS_TYPE.toString());
+
+    assertThat("Should find address", foundAddress, notNullValue());
+    assertThat(foundAddress.getString("addressTypeId"), is(HOME_ADDRESS_TYPE));
+    assertThat(foundAddress.getString("addressLine1"), is("12 Grimmauld Place"));
+  }
+
+  @Test
   public void noAddressFoundWhenOnlyOtherTypeAddresses() {
     final User user = new User(new UserBuilder()
       .withAddress(RamkinResidence())
