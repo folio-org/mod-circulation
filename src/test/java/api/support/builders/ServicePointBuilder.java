@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package api.support.builders;
 
 import io.vertx.core.json.JsonObject;
@@ -11,10 +6,6 @@ import org.folio.circulation.support.http.client.IndividualResource;
 
 import static org.folio.circulation.support.JsonPropertyFetcher.*;
 
-/**
- *
- * @author kurt
- */
 public class ServicePointBuilder extends JsonBuilder implements Builder {
   private final UUID id;
   private final String name;

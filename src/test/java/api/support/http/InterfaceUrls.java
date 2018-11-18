@@ -74,7 +74,7 @@ public class InterfaceUrls {
     return APITestSuite.viaOkapiModuleUrl("/proxiesfor" + subPath);
   }
 
-  static URL groupsUrl(String subPath) {
+  static URL patronGroupsStorageUrl(String subPath) {
     return APITestSuite.viaOkapiModuleUrl("/groups" + subPath);
   }
 
@@ -127,10 +127,6 @@ public class InterfaceUrls {
         "/cancellation-reason-storage/cancellation-reasons" + subPath);
   }
 
-  public static URL cancellationReasonsStorageUrl() {
-    return cancellationReasonsStorageUrl("");
-  }
-  
   public static URL servicePointsStorageUrl(String subPath) {
     return APITestSuite.viaOkapiModuleUrl("/service-points" + subPath);
   }

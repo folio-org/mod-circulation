@@ -1,14 +1,16 @@
 package org.folio.circulation.domain.policy;
 
-import io.vertx.core.json.JsonObject;
+import static org.folio.circulation.support.HttpResult.failed;
+
+import java.util.function.Function;
+import java.util.function.IntFunction;
+import java.util.function.Supplier;
+
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.joda.time.DateTime;
 
-import java.util.function.Function;
-import java.util.function.Supplier;
-
-import static org.folio.circulation.support.HttpResult.failed;
+import io.vertx.core.json.JsonObject;
 
 public class Period {
   private final Integer duration;
@@ -48,7 +50,7 @@ public class Period {
     DateTime from,
     Supplier<ValidationErrorFailure> onUnrecognisedPeriod,
     Function<String, ValidationErrorFailure> onUnrecognisedInterval,
-    Function<Integer, ValidationErrorFailure> onUnrecognisedDuration) {
+    IntFunction<ValidationErrorFailure> onUnrecognisedDuration) {
 
     if(interval == null) {
       return failed(onUnrecognisedPeriod.get());

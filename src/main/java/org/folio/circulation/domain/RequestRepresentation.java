@@ -20,6 +20,8 @@ public class RequestRepresentation {
 
     addAdditionalItemProperties(requestRepresentation, request.getItem());
     addAdditionalLoanProperties(requestRepresentation, request.getLoan());
+    addAdditionalRequesterProperties(requestRepresentation, request.getRequester());
+    addAdditionalProxyProperties(requestRepresentation, request.getProxy());
     addAdditionalServicePointProperties(requestRepresentation, request.getPickupServicePoint());
     addDeliveryAddress(requestRepresentation, request, request.getRequester());
 
@@ -60,10 +62,23 @@ public class RequestRepresentation {
     JsonObject requesterSummary = requester.createUserSummary();
 
     requestWithAdditionalInformation.put("requester", requesterSummary);
+  }
 
-    String patronGroup = requester.getPatronGroup();
-    if(patronGroup != null) {
-      requesterSummary.put("patronGroup", patronGroup);
+  private static void addAdditionalRequesterProperties(
+    JsonObject requestWithAdditionalInformation,
+    User requester) {
+
+    if(requester == null) {
+      return;
+    }
+
+    JsonObject requesterSummary = requester.createUserSummary();
+
+    requestWithAdditionalInformation.put("requester", requesterSummary);
+
+    String patronGroupId = requester.getPatronGroupId();
+    if(patronGroupId != null) {
+      requesterSummary.put("patronGroupId", patronGroupId);
     }
   }
 
@@ -72,18 +87,38 @@ public class RequestRepresentation {
     User proxy) {
 
     if(proxy == null) {
-      log.info(String.format("Unable to add proxy properties to request %s, proxy object is null", 
-          requestWithAdditionalInformation.getString("id")));
+      log.info("Unable to add proxy properties to request {}, proxy object is null",
+          requestWithAdditionalInformation.getString("id"));
       return;
     }
 
     requestWithAdditionalInformation.put("proxy", proxy.createUserSummary());
   }
 
+  private static void addAdditionalProxyProperties(
+    JsonObject requestWithAdditionalInformation,
+    User proxy) {
+
+    if(proxy == null) {
+      log.info("Unable to add proxy properties to request {}, proxy object is null",
+        requestWithAdditionalInformation.getString("id"));
+      return;
+    }
+
+    JsonObject proxySummary =  proxy.createUserSummary();
+
+    String patronGroupId = proxy.getPatronGroupId();
+    if(patronGroupId != null) {
+      proxySummary.put("patronGroupId", patronGroupId);
+    }
+
+    requestWithAdditionalInformation.put("proxy", proxySummary);
+  }
+
   private static void addAdditionalItemProperties(JsonObject request, Item item) {
     if(item == null || item.isNotFound()) {
-      log.info(String.format("Unable to add item properties to request %s, item is null",
-          request.getString("id")));
+      log.info("Unable to add item properties to request {}, item is null",
+          request.getString("id"));
       return;
     }
 
@@ -165,8 +200,8 @@ public class RequestRepresentation {
     if(loan == null || loan.isClosed()) {
       String reason = null;
       if(loan == null) { reason = "null"; } else { reason = "closed"; }
-      log.info(String.format("Unable to add loan properties to request %s, loan is %s",
-          request.getString("id"), reason));
+      log.info("Unable to add loan properties to request {}, loan is {}",
+          request.getString("id"), reason);
       return;
     }
     JsonObject loanSummary = request.containsKey("loan")
@@ -176,8 +211,7 @@ public class RequestRepresentation {
     if(loan.getDueDate() != null) {
       String dueDate = loan.getDueDate().toString(ISODateTimeFormat.dateTime());
       loanSummary.put("dueDate", dueDate);
-      log.info(String.format("Adding loan properties to request %s", 
-          request.getString("id")));
+      log.info("Adding loan properties to request {}", request.getString("id"));
     }
     
     request.put("loan", loanSummary);
@@ -185,8 +219,8 @@ public class RequestRepresentation {
   
   private static void addAdditionalServicePointProperties(JsonObject request, ServicePoint servicePoint) {
     if(servicePoint == null) {
-      log.info(String.format("Unable to add servicepoint properties to request %s,"
-          + " servicepoint is null", request.getString("id")));
+      log.info("Unable to add servicepoint properties to request {},"
+          + " servicepoint is null", request.getString("id"));
       return;
     }
 

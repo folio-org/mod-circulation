@@ -333,6 +333,7 @@ public class APITestSuite {
     ResourceClient.forInstances(client).deleteAll();
 
     ResourceClient.forUsers(client).deleteAllIndividually();
+
     deleteGroups();
     deleteAddressTypes();
 
@@ -405,7 +406,7 @@ public class APITestSuite {
     InterruptedException,
     ExecutionException,
     TimeoutException {
-    ResourceClient groupsClient = ResourceClient.forGroups(createClient());
+    ResourceClient groupsClient = ResourceClient.forPatronGroups(createClient());
 
     groupsClient.deleteAllIndividually();
 
@@ -426,7 +427,7 @@ public class APITestSuite {
     ExecutionException,
     TimeoutException {
 
-    ResourceClient groupsClient = ResourceClient.forGroups(createClient());
+    ResourceClient groupsClient = ResourceClient.forPatronGroups(createClient());
     groupsClient.delete(regularGroupId);
     groupsClient.delete(alternateGroupId);
   }

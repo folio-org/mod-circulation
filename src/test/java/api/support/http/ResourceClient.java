@@ -18,14 +18,13 @@ import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
+import org.hamcrest.CoreMatchers;
 
 import api.support.builders.Builder;
 import io.vertx.core.json.JsonObject;
 
 public class ResourceClient {
-
   
-
   private final OkapiHttpClient client;
   private final UrlMaker urlMaker;
   private final String resourceName;
@@ -81,9 +80,9 @@ public class ResourceClient {
       "proxiesFor");
   }
 
-  public static ResourceClient forGroups(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::groupsUrl,
-      "groups", "usergroups");
+  public static ResourceClient forPatronGroups(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::patronGroupsStorageUrl,
+      "patron groups", "usergroups");
   }
 
   public static ResourceClient forAddressTypes(OkapiHttpClient client) {
@@ -396,7 +395,9 @@ public class ResourceClient {
 
     assertThat(String.format(
       "Failed to delete %s %s: %s", resourceName, id, response.getBody()),
-      response.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
+      response.getStatusCode(), CoreMatchers.anyOf(
+        is(HttpURLConnection.HTTP_NO_CONTENT),
+        is(HttpURLConnection.HTTP_NOT_FOUND)));
   }
 
   public void delete(IndividualResource resource)

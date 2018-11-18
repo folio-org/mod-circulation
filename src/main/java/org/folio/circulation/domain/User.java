@@ -12,12 +12,23 @@ import io.vertx.core.json.JsonObject;
 
 public class User {
   private static final String PERSONAL_PROPERTY_NAME = "personal";
+  private final PatronGroup patronGroup;
 
   private final JsonObject representation;
 
   public User(JsonObject representation) {
-    this.representation = representation;
+    this(representation, null);    
   }
+  
+  public User(JsonObject representation, PatronGroup patronGroup) {
+    this.representation = representation;
+    this.patronGroup = patronGroup;
+  }
+  
+  public User withPatronGroup(PatronGroup newPatronGroup) {
+    return new User(representation, newPatronGroup);
+  }
+  
 
   public boolean canDetermineStatus() {
     return !representation.containsKey("active");
@@ -57,7 +68,7 @@ public class User {
     return getProperty(representation, "username");
   }
 
-  public String getPatronGroup() {
+  public String getPatronGroupId() {
     return getProperty(representation, "patronGroup");
   }
 
@@ -95,7 +106,15 @@ public class User {
     write(userSummary, "firstName", getFirstName());
     write(userSummary, "middleName", getMiddleName());
     write(userSummary, "barcode", getBarcode());
-
+    
+    if(patronGroup != null) {
+      JsonObject patronGroupSummary = new JsonObject();
+      write(patronGroupSummary, "id", patronGroup.getId());
+      write(patronGroupSummary, "group", patronGroup.getGroup());
+      write(patronGroupSummary, "desc", patronGroup.getDesc());
+      userSummary.put("patronGroup", patronGroupSummary);
+    }
+    
     return userSummary;
   }
 
@@ -110,5 +129,9 @@ public class User {
       //Fallback to user name if insufficient personal details
       return getUsername();
     }
+  }
+  
+  public static User from(JsonObject representation) {
+    return new User(representation);
   }
 }
