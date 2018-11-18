@@ -251,12 +251,19 @@ public class UserBuilder extends JsonBuilder implements Builder {
   }
 
   public UserBuilder withAddress(Address address) {
-
     final ArrayList<Address> newAddresses = new ArrayList<>(
       new ArrayList<>(addresses));
 
     newAddresses.add(address);
 
+    return withAddresses(newAddresses);
+  }
+
+  public UserBuilder withNoAddresses() {
+    return withAddresses(new ArrayList<>());
+  }
+
+  private UserBuilder withAddresses(ArrayList<Address> newAddresses) {
     return new UserBuilder(
       this.username,
       this.lastName,
