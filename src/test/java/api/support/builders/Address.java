@@ -33,27 +33,27 @@ public class Address {
     return type;
   }
 
-  public String getAddressLineOne() {
+  String getAddressLineOne() {
     return addressLineOne;
   }
 
-  public String getAddressLineTwo() {
+  String getAddressLineTwo() {
     return addressLineTwo;
   }
 
-  public String getCity() {
+  String getCity() {
     return city;
   }
 
-  public String getRegion() {
+  String getRegion() {
     return region;
   }
 
-  public String getPostalCode() {
+  String getPostalCode() {
     return postalCode;
   }
 
-  public String getCountryId() {
+  String getCountryId() {
     return countryId;
   }
 }
