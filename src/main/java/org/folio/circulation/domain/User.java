@@ -4,6 +4,8 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringP
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
+import java.util.Objects;
+
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 
@@ -84,17 +86,24 @@ public class User {
     return getNestedStringProperty(representation, PERSONAL_PROPERTY_NAME, "middleName");
   }
   
-  public JsonObject getAddressByType(String type) {
-    JsonObject personal =representation.getJsonObject(PERSONAL_PROPERTY_NAME);
+  JsonObject getAddressByType(String type) {
+    JsonObject personal = representation.getJsonObject(PERSONAL_PROPERTY_NAME);
+
     if(personal == null) { return null; }
+
     JsonArray addresses = personal.getJsonArray("addresses");
+
     if(addresses == null) { return null; }
+
     for(Object ob : addresses) {
       JsonObject address = (JsonObject)ob;
-      if(address != null && address.getString("addressTypeId").equals(type)) {
+      if (address != null
+        && Objects.equals(address.getString("addressTypeId"), (type))) {
+
         return address;
       }
     }
+
     return null;
   }
 

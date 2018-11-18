@@ -13,6 +13,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import org.junit.Test;
 
+import api.support.builders.Address;
 import api.support.builders.UserBuilder;
 import io.vertx.core.json.JsonObject;
 
@@ -60,6 +61,18 @@ public class UserAddressTests {
   public void noAddressFoundWhenOnlyOtherTypeAddresses() {
     final User user = new User(new UserBuilder()
       .withAddress(RamkinResidence())
+      .create());
+
+    JsonObject foundAddress = user.getAddressByType(WORK_ADDRESS_TYPE.toString());
+
+    assertThat("Should not find an address", foundAddress, nullValue());
+  }
+
+  @Test
+  public void noAddressFoundWhenOnlyAddressHasNoType() {
+    //TODO: Replace with address builder
+    final User user = new User(new UserBuilder()
+      .withAddress(new Address(null, "Fake address", null, null, null, null, null))
       .create());
 
     JsonObject foundAddress = user.getAddressByType(WORK_ADDRESS_TYPE.toString());
