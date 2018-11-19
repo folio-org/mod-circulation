@@ -48,8 +48,6 @@ public class UpdateItem {
 
     return this.itemsStorageClient.put(item.getItemId(), item.getItem()).thenApply(putItemResponse -> {
       if (putItemResponse.getStatusCode() == 204) {
-        // TODO: put response into loan
-        // loan.setSomethingAboutTheItem
         return succeeded(loan);
       } else {
         return failed(

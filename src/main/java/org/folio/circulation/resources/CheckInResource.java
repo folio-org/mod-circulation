@@ -35,6 +35,7 @@ public abstract class CheckInResource extends Resource {
   }
 
   private void checkin(RoutingContext routingContext) {
+
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
     final LoanRepository loanRepository = new LoanRepository(clients);
@@ -46,6 +47,7 @@ public abstract class CheckInResource extends Resource {
     //TODO: Validation check for same user should be in the domain service
 
     findLoan(routingContext.getBodyAsJson(), loanRepository)
+
       .thenComposeAsync(r -> r.after(loanCheckinService::checkin))
       .thenComposeAsync(r -> r.after(updateItem::setLoansItemStatusAvaliable))
       .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
