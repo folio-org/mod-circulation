@@ -7,6 +7,7 @@ import org.folio.circulation.domain.*;
 import org.folio.circulation.domain.representations.RequestProperties;
 import org.folio.circulation.domain.validation.ClosedRequestValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
+import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.server.WebContext;
 
@@ -27,11 +28,13 @@ public class RequestCollectionResource extends CollectionResource {
 
     final ItemRepository itemRepository = new ItemRepository(clients, true, false);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
+    final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
     final RequestRepository requestRepository = RequestRepository.using(clients);
     final UserRepository userRepository = new UserRepository(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateLoanActionHistory updateLoanActionHistory = new UpdateLoanActionHistory(clients);
+    final ServicePointPickupLocationValidator servicePointPickupLocationValidator = new ServicePointPickupLocationValidator();
 
     final ProxyRelationshipValidator proxyRelationshipValidator =
       createProxyRelationshipValidator(representation, clients);
@@ -47,6 +50,8 @@ public class RequestCollectionResource extends CollectionResource {
 
     requestFromRepresentationService.getRequestFrom(representation)
       .thenComposeAsync(r -> r.after(createRequestService::createRequest))
+      .thenComposeAsync(r -> { 
+        return servicePointPickupLocationValidator.checkServicePointPickupLocation(r); })
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
       .thenApply(r -> r.map(requestRepresentation::extendedRepresentation))
       .thenApply(CreatedJsonHttpResult::from)

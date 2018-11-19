@@ -23,6 +23,8 @@ public class ServicePointRepository {
     servicePointsStorageClient = clients.servicePointsStorage();
   }
   
+
+  
   public CompletableFuture<HttpResult<ServicePoint>> getServicePointById(String id) {
     return FetchSingleRecord.<ServicePoint>forRecord(SERVICE_POINT_TYPE)
         .using(servicePointsStorageClient)
