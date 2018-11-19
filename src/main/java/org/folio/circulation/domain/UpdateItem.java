@@ -1,14 +1,16 @@
 package org.folio.circulation.domain;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.HttpResult.failed;
+import static org.folio.circulation.support.HttpResult.of;
+import static org.folio.circulation.support.HttpResult.succeeded;
+
+import java.util.concurrent.CompletableFuture;
+
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ServerErrorFailure;
-
-import java.util.concurrent.CompletableFuture;
-
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.HttpResult.*;
 
 public class UpdateItem {
 
@@ -38,6 +40,22 @@ public class UpdateItem {
       .after(prospectiveStatus ->
         updateItemWhenNotSameStatus(loanAndRelatedRecords,
           loanAndRelatedRecords.getLoan().getItem(), prospectiveStatus));
+  }
+
+  public CompletableFuture<HttpResult<Loan>> setLoansItemStatusAvaliable(Loan loan) {
+    Item item = loan.getItem();
+    item.changeStatus(ItemStatus.AVAILABLE);
+
+    return this.itemsStorageClient.put(item.getItemId(), item.getItem()).thenApply(putItemResponse -> {
+      if (putItemResponse.getStatusCode() == 204) {
+        // TODO: put response into loan
+        // loan.setSomethingAboutTheItem
+        return succeeded(loan);
+      } else {
+        return failed(
+            new ServerErrorFailure(String.format("Failed to update item status '%s'", putItemResponse.getBody())));
+      }
+    });
   }
 
   CompletableFuture<HttpResult<RequestAndRelatedRecords>> onRequestCreation(

@@ -198,8 +198,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   public Loan checkin(String basedUponLoanPolicyId) {
     changeAction("checkin");
     changeLoanPolicy(basedUponLoanPolicyId);
-    changeStatus("closed");
-    this.getItem().changeStatus(ItemStatus.AVAILABLE);
+    changeStatus("Closed");
     return this;
   }
 
