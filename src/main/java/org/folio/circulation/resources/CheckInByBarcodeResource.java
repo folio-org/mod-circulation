@@ -23,5 +23,4 @@ public class CheckInByBarcodeResource extends CheckInResource {
     return CheckInByBarcodeRequest.from(request)
       .after(loanRepository::findOpenLoanByBarcode);
   }
-
 }

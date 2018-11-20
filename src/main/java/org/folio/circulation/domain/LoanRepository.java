@@ -99,8 +99,7 @@ public class LoanRepository {
     return itemRepository.fetchByBarcode(query.getItemBarcode())
       .thenComposeAsync(getOnlyLoan(query))
       .thenComposeAsync(this::fetchUser)
-      .thenApply(userNotFoundValidator::refuseWhenUserNotFound)
-      .thenApply(r -> r.next(loan -> refuseWhenDifferentUser(loan, query)));
+      .thenApply(userNotFoundValidator::refuseWhenUserNotFound);
   }
 
   //TODO: Extract to separate class rather than repository
@@ -311,33 +310,26 @@ public class LoanRepository {
     FindByBarcodeQuery query) {
 
     return itemResult -> failWhenNoItemFoundForBarcode(itemResult, query)
-      .after(item ->
-        findOpenLoans(item)
-          .thenApply(result -> failWhenMoreThanOneOpenLoan(result, query))
-          .thenApply(loanResult -> getFirstLoan(loanResult, item)));
+      .after(this::findOpenLoans)
+      .thenApply(result -> failWhenMoreThanOneOpenLoan(result, query))
+      .thenApply(loanResult -> loanResult.map(this::getFirstLoan))
+      .thenApply(loanResult -> loanResult.combine(itemResult, Loan::withItem));
+  }
+
+  private Loan getFirstLoan(MultipleRecords<Loan> loans) {
+    return loans.getRecords().stream()
+      .findFirst()
+      .orElse(null);
   }
 
   private HttpResult<Item> failWhenNoItemFoundForBarcode(
     HttpResult<Item> itemResult,
     FindByBarcodeQuery query) {
 
-    return itemResult
-      .failWhen(item -> of(item::isNotFound),
+    return itemResult.failWhen(item -> of(item::isNotFound),
         item -> ValidationErrorFailure.failure(
         String.format("No item with barcode %s exists", query.getItemBarcode()),
         "itemBarcode", query.getItemBarcode()) );
-  }
-
-  private HttpResult<Loan> getFirstLoan(
-    HttpResult<MultipleRecords<Loan>> loansResult,
-    Item item) {
-
-    return loansResult.next(loans ->
-      of(() -> loans.getRecords().stream()
-        .findFirst()
-        .map(loan -> loan.withItem(item))
-        .orElse(null))
-    );
   }
 
   private HttpResult<MultipleRecords<Loan>> failWhenMoreThanOneOpenLoan(
