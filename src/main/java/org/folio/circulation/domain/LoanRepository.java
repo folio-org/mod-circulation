@@ -296,7 +296,7 @@ public class LoanRepository {
 
     HttpResult<String> queryResult = CqlHelper.encodeQuery(openLoansQuery);
     
-    return queryResult.after(query -> loansStorageClient.getMany(query)
+    return queryResult.after(query -> loansStorageClient.getMany(query, requests.size(), 0)
         .thenApply(this::mapResponseToLoans)
         .thenApply(multipleLoansResult -> multipleLoansResult.next(
           multipleLoans -> {
