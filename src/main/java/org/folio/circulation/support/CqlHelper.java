@@ -4,6 +4,7 @@ import java.lang.invoke.MethodHandles;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -21,6 +22,7 @@ public class CqlHelper {
     }
     else {
       final Collection<String> filteredIds = recordIds.stream()
+        .filter(Objects::nonNull)
         .map(String::toString)
         .filter(StringUtils::isNotBlank)
         .distinct()
