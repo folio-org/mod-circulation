@@ -54,7 +54,7 @@ class ServicePointRepository {
     
     HttpResult<String> queryResult = CqlHelper.encodeQuery(spQuery);
     
-    return queryResult.after(query -> servicePointsStorageClient.getMany(query)
+    return queryResult.after(query -> servicePointsStorageClient.getMany(query, requests.size(), 0)
         .thenApply(this::mapResponseToServicePoints)
         .thenApply(multipleServicePointsResult -> multipleServicePointsResult.next(
           multipleServicePoints -> {
