@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import static org.folio.circulation.support.HttpResult.failed;
+import static org.folio.circulation.support.HttpResult.of;
 import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
@@ -308,7 +309,7 @@ public class LoanRepository {
 
   private Function<HttpResult<Item>, CompletionStage<HttpResult<Loan>>> getOnlyLoan(
     FindByBarcodeQuery query) {
-    
+
     return itemResult -> itemResult.after(item -> {
       if(item.isNotFound()) {
         return CompletableFuture.completedFuture(ValidationErrorFailure.failedResult(
@@ -317,17 +318,33 @@ public class LoanRepository {
       }
 
       return findOpenLoans(item)
-        .thenApply(loanResult -> loanResult.next(loans -> {
-          final Optional<Loan> first = loans.getRecords().stream()
-            .findFirst();
-
-          if (loans.getTotalRecords() == 1 && first.isPresent()) {
-            return succeeded(Loan.from(first.get().asJson(), item));
-          } else {
-            return failed(new ServerErrorFailure(
-              String.format("More than one open loan for item %s", query.getItemBarcode())));
-          }
-        }));
+        .thenApply(result -> failWhenMoreThanOneOpenLoan(result, query))
+        .thenApply(loanResult -> getFirstLoan(loanResult, item));
     });
+  }
+
+  private HttpResult<Loan> getFirstLoan(
+    HttpResult<MultipleRecords<Loan>> loansResult,
+    Item item) {
+
+    return loansResult.next(loans ->
+      of(() -> loans.getRecords().stream()
+        .findFirst()
+        .map(loan -> loan.withItem(item))
+        .orElse(null))
+    );
+  }
+
+  private HttpResult<MultipleRecords<Loan>> failWhenMoreThanOneOpenLoan(
+    HttpResult<MultipleRecords<Loan>> result,
+    FindByBarcodeQuery query) {
+
+    return result.failWhen(loans -> {
+      final Optional<Loan> first = loans.getRecords().stream()
+        .findFirst();
+
+      return of(() -> loans.getTotalRecords() != 1 || !first.isPresent());
+    }, loans -> new ServerErrorFailure(
+      String.format("More than one open loan for item %s", query.getItemBarcode())));
   }
 }
