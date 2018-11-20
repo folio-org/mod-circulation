@@ -1,10 +1,13 @@
 package org.folio.circulation.support;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
+import java.util.UUID;
+
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.ISODateTimeFormat;
+
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 public class JsonPropertyWriter {
   private JsonPropertyWriter() { }
@@ -52,6 +55,12 @@ public class JsonPropertyWriter {
   public static void write(JsonObject to, String propertyName, DateTime value) {
     if(value != null) {
       write(to, propertyName, value.toString(ISODateTimeFormat.dateTime()));
+    }
+  }
+
+  public static void write(JsonObject to, String propertyName, UUID value) {
+    if(value != null) {
+      write(to, propertyName, value.toString());
     }
   }
 

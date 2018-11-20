@@ -3,10 +3,12 @@ package api.support.fixtures;
 import static api.support.RestAssuredClient.from;
 import static api.support.RestAssuredClient.post;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
+import static api.support.http.InterfaceUrls.checkInByBarcodeUrl;
 import static api.support.http.InterfaceUrls.checkOutByBarcodeUrl;
 import static api.support.http.InterfaceUrls.loansUrl;
 import static api.support.http.InterfaceUrls.renewByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByIdUrl;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -116,13 +118,24 @@ public class LoansFixture {
     ExecutionException,
     TimeoutException {
 
+    checkInLoan(loanId, DateTime.now(), UUID.randomUUID());
+  }
+
+  public void checkInLoan(UUID loanId, DateTime now, UUID servicePoint)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
     Response getResponse = loansClient.getById(loanId);
 
     //TODO: Should also have a return date
-    JsonObject closedLoan = getResponse.getJson().copy()
-      .put("status", new JsonObject().put("name", "Closed"))
-      .put("action", "checkedin")
-      .put("checkinServicePointId", UUID.randomUUID().toString());
+    JsonObject closedLoan = getResponse.getJson().copy();
+
+    write(closedLoan, "status", new JsonObject().put("name", "Closed"));
+    write(closedLoan, "action", "checkedin");
+    write(closedLoan, "returnDate", now);
+    write(closedLoan, "checkinServicePointId", servicePoint);
 
     loansClient.replace(loanId, closedLoan);
   }
@@ -175,7 +188,6 @@ public class LoansFixture {
   }
 
   public IndividualResource checkOutByBarcode(CheckOutByBarcodeRequestBuilder builder) {
-
     JsonObject request = builder.create();
 
     return new IndividualResource(
@@ -255,5 +267,29 @@ public class LoansFixture {
 
     return from(post(request, renewByIdUrl(),
       422, "renewal-by-id-request"));
+  }
+
+  public IndividualResource checkInByBarcode(
+    IndividualResource item,
+    DateTime checkInDate,
+    UUID servicePointId) {
+
+    return checkInByBarcode(
+      item.getJson().getString("barcode"), checkInDate, servicePointId);
+  }
+
+  private IndividualResource checkInByBarcode(
+    String itemBarcode, DateTime checkInDate,
+    UUID servicePointId) {
+
+    final JsonObject checkInRequest = new JsonObject();
+
+    write(checkInRequest, "itemBarcode", itemBarcode);
+    write(checkInRequest, "checkInDate", checkInDate);
+    write(checkInRequest, "servicePointId", servicePointId);
+
+    return new IndividualResource(
+      from(post(checkInRequest, checkInByBarcodeUrl(), 200,
+        "check-in-by-barcode-request")));
   }
 }
