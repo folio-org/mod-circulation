@@ -310,17 +310,22 @@ public class LoanRepository {
   private Function<HttpResult<Item>, CompletionStage<HttpResult<Loan>>> getOnlyLoan(
     FindByBarcodeQuery query) {
 
-    return itemResult -> itemResult.after(item -> {
-      if(item.isNotFound()) {
-        return CompletableFuture.completedFuture(ValidationErrorFailure.failedResult(
-          String.format("No item with barcode %s exists", query.getItemBarcode()),
-          "itemBarcode", query.getItemBarcode()));
-      }
+    return itemResult -> failWhenNoItemFoundForBarcode(itemResult, query)
+      .after(item ->
+        findOpenLoans(item)
+          .thenApply(result -> failWhenMoreThanOneOpenLoan(result, query))
+          .thenApply(loanResult -> getFirstLoan(loanResult, item)));
+  }
 
-      return findOpenLoans(item)
-        .thenApply(result -> failWhenMoreThanOneOpenLoan(result, query))
-        .thenApply(loanResult -> getFirstLoan(loanResult, item));
-    });
+  private HttpResult<Item> failWhenNoItemFoundForBarcode(
+    HttpResult<Item> itemResult,
+    FindByBarcodeQuery query) {
+
+    return itemResult
+      .failWhen(item -> of(item::isNotFound),
+        item -> ValidationErrorFailure.failure(
+        String.format("No item with barcode %s exists", query.getItemBarcode()),
+        "itemBarcode", query.getItemBarcode()) );
   }
 
   private HttpResult<Loan> getFirstLoan(
