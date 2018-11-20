@@ -92,7 +92,7 @@ public class LoanPolicy {
     }
   }
   
-  public HttpResult<Loan> checkin(Loan loan, DateTime systemDate) {
+  public HttpResult<Loan> checkin(Loan loan) {
     return HttpResult.succeeded(loan.checkin(getId()));
   }
 

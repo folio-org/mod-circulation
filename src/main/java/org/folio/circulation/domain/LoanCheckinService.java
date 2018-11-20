@@ -5,7 +5,6 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpResult;
-import org.joda.time.DateTime;
 
 public class LoanCheckinService {
   private final LoanPolicyRepository loanPolicyRepository;
@@ -20,6 +19,6 @@ public class LoanCheckinService {
 
   public CompletableFuture<HttpResult<Loan>> checkin(Loan loan) {
     return loanPolicyRepository.lookupLoanPolicy(loan)
-        .thenApply(r -> r.next(policy -> policy.checkin(loan, DateTime.now())));
+        .thenApply(r -> r.next(policy -> policy.checkin(loan)));
   }
 }

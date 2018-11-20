@@ -4,6 +4,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanRepository;
+import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.support.HttpResult;
 
 import io.vertx.core.http.HttpClient;

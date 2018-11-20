@@ -1,5 +1,4 @@
 package org.folio.circulation.resources;
-
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
@@ -37,6 +36,7 @@ public abstract class CheckInResource extends Resource {
   private void checkin(RoutingContext routingContext) {
 
     final WebContext context = new WebContext(routingContext);
+
     final Clients clients = Clients.create(context, client);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
@@ -44,10 +44,9 @@ public abstract class CheckInResource extends Resource {
 
     final UpdateItem updateItem = new UpdateItem(clients);
 
-    //TODO: Validation check for same user should be in the domain service
+    // TODO: Validation check for same user should be in the domain service
 
     findLoan(routingContext.getBodyAsJson(), loanRepository)
-
       .thenComposeAsync(r -> r.after(loanCheckinService::checkin))
       .thenComposeAsync(r -> r.after(updateItem::setLoansItemStatusAvaliable))
       .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
@@ -59,4 +58,5 @@ public abstract class CheckInResource extends Resource {
   protected abstract CompletableFuture<HttpResult<Loan>> findLoan(
     JsonObject request,
     LoanRepository loanRepository);
+
 }

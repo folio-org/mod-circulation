@@ -1,4 +1,4 @@
-package org.folio.circulation.resources;
+package org.folio.circulation.domain.representations;
 
 import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
@@ -16,29 +16,38 @@ import io.vertx.core.json.JsonObject;
 public class CheckInByBarcodeRequest implements FindByBarcodeQuery {
   private static final String USER_BARCODE = "userBarcode";
   private static final String ITEM_BARCODE = "itemBarcode";
+  private static final String SERVICE_POINT_ID = "servicePointId";
 
   private final String itemBarcode;
   private final String userBarcode;
+  private final String servicePointId;
 
-  private CheckInByBarcodeRequest(String itemBarcode, String userBarcode) {
+  private CheckInByBarcodeRequest(String itemBarcode, String userBarcode, String servicePointId) {
     this.itemBarcode = itemBarcode;
     this.userBarcode = userBarcode;
+    this.servicePointId = servicePointId;
   }
 
   public static HttpResult<CheckInByBarcodeRequest> from(JsonObject json) {
     final String itemBarcode = getProperty(json, ITEM_BARCODE);
 
-    if(StringUtils.isBlank(itemBarcode)) {
+    if (StringUtils.isBlank(itemBarcode)) {
       return failedResult("Checkin request must have an item barcode", ITEM_BARCODE, null);
     }
 
     final String userBarcode = getProperty(json, USER_BARCODE);
 
-    if(StringUtils.isBlank(userBarcode)) {
+    if (StringUtils.isBlank(userBarcode)) {
       return failedResult("Checkin request must have a user barcode", USER_BARCODE, null);
     }
 
-    return succeeded(new CheckInByBarcodeRequest(itemBarcode, userBarcode));
+    final String servicePointId = getProperty(json, SERVICE_POINT_ID);
+
+    if (StringUtils.isBlank(servicePointId)) {
+      return failedResult("Checkin request must have a service point id", SERVICE_POINT_ID, null);
+    }
+
+    return succeeded(new CheckInByBarcodeRequest(itemBarcode, userBarcode, servicePointId));
   }
 
   @Override
@@ -49,6 +58,10 @@ public class CheckInByBarcodeRequest implements FindByBarcodeQuery {
   @Override
   public String getUserBarcode() {
     return userBarcode;
+  }
+
+  public String getServicePointId() {
+    return servicePointId;
   }
 
   @Override

@@ -215,14 +215,14 @@ public class LoanCollectionResource extends CollectionResource {
     });
   }
 
-	private HttpResult<LoanAndRelatedRecords> refuseWhenClosedAndNoCheckInServicePointId(
-      HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
+  private HttpResult<LoanAndRelatedRecords> refuseWhenClosedAndNoCheckInServicePointId(
+    HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
     return loanAndRelatedRecords
-        .map(LoanAndRelatedRecords::getLoan)
-        .next(Loan::closedLoanHasCheckInServicePointId)
-        .next(v -> loanAndRelatedRecords);
-    }
+      .map(LoanAndRelatedRecords::getLoan)
+      .next(Loan::closedLoanHasCheckInServicePointId)
+      .next(v -> loanAndRelatedRecords);
+  }
   
   private HttpResult<LoanAndRelatedRecords> refuseWhenNotOpenOrClosed(
     HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
