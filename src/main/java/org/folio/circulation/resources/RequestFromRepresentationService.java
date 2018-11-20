@@ -1,17 +1,23 @@
 package org.folio.circulation.resources;
 
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.domain.*;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.HttpResult.failed;
+import static org.folio.circulation.support.HttpResult.succeeded;
+
+import java.util.concurrent.CompletableFuture;
+
+import org.folio.circulation.domain.LoanRepository;
+import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.RequestAndRelatedRecords;
+import org.folio.circulation.domain.RequestQueueRepository;
+import org.folio.circulation.domain.RequestStatus;
+import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ItemRepository;
 
-import java.util.concurrent.CompletableFuture;
-
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.HttpResult.failed;
-import static org.folio.circulation.support.HttpResult.succeeded;
+import io.vertx.core.json.JsonObject;
 
 class RequestFromRepresentationService {
   private final ItemRepository itemRepository;
@@ -69,6 +75,8 @@ class RequestFromRepresentationService {
     request.remove("item");
     request.remove("requester");
     request.remove("proxy");
+    request.remove("loan");
+    request.remove("pickupServicePoint");
 
     return request;
   }

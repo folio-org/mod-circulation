@@ -1,5 +1,6 @@
 package api.support;
 
+
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -26,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import api.APITestSuite;
 import api.support.fixtures.ItemsFixture;
 import api.support.fixtures.LoansFixture;
+import api.support.fixtures.PatronGroupsFixture;
 import api.support.fixtures.RequestsFixture;
 import api.support.fixtures.ServicePointsFixture;
 import api.support.fixtures.UsersFixture;
@@ -53,16 +55,19 @@ public abstract class APITests {
   protected final ResourceClient loanPolicyClient = ResourceClient.forLoanPolicies(client);
   protected final ResourceClient fixedDueDateScheduleClient = ResourceClient.forFixedDueDateSchedules(client);
   protected final ResourceClient servicePointsClient = ResourceClient.forServicePoints(client);
+  protected final ResourceClient patronGroupsClient = ResourceClient.forPatronGroups(client);
 
   protected final ItemsFixture itemsFixture = new ItemsFixture(client);
   protected final LoansFixture loansFixture = new LoansFixture(loansClient, client);
   protected final RequestsFixture requestsFixture = new RequestsFixture(requestsClient);
   protected final UsersFixture usersFixture = new UsersFixture(usersClient, proxyRelationshipsClient);
   protected final ServicePointsFixture servicePointsFixture = new ServicePointsFixture(servicePointsClient);
+  protected final PatronGroupsFixture patronGroupsFixture = new PatronGroupsFixture(patronGroupsClient);
 
   protected final Set<UUID> schedulesToDelete = new HashSet<>();
   protected final Set<UUID> policiesToDelete = new HashSet<>();
   protected final Set<UUID> servicePointsToDelete = new HashSet<>();
+  protected final Set<UUID> groupsToDelete = new HashSet<>();
 
   protected APITests() {
     this(true);
@@ -102,6 +107,8 @@ public abstract class APITests {
 
     usersClient.deleteAllIndividually();
 
+    servicePointsClient.deleteAllIndividually();
+
     APITestSuite.createUsers();
 
     if(initialiseLoanRules) {
@@ -133,6 +140,8 @@ public abstract class APITests {
       servicePointsClient.delete(servicePointId);
     }
 
+    servicePointsToDelete.clear();
+
     for (UUID policyId : policiesToDelete) {
       loanPolicyClient.delete(policyId);
     }
@@ -144,6 +153,14 @@ public abstract class APITests {
     }
 
     schedulesToDelete.clear();
+
+    usersFixture.cleanUp();
+
+    for (UUID patronGroupId : groupsToDelete) {
+      patronGroupsClient.delete(patronGroupId);
+    }
+
+    groupsToDelete.clear();
   }
 
   //Needs to be done each time as some tests manipulate the rules

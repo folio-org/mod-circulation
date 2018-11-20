@@ -1,15 +1,16 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
+import static org.folio.circulation.support.JsonPropertyFetcher.copyProperty;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
+
 import java.lang.invoke.MethodHandles;
 
-
-import static org.folio.circulation.support.JsonPropertyWriter.write;
-import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 public class RequestRepresentation {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -19,8 +20,10 @@ public class RequestRepresentation {
 
     addAdditionalItemProperties(requestRepresentation, request.getItem());
     addAdditionalLoanProperties(requestRepresentation, request.getLoan());
-    addStoredProxyProperties(requestRepresentation, request.getProxy());
+    addAdditionalRequesterProperties(requestRepresentation, request.getRequester());
+    addAdditionalProxyProperties(requestRepresentation, request.getProxy());
     addAdditionalServicePointProperties(requestRepresentation, request.getPickupServicePoint());
+    addDeliveryAddress(requestRepresentation, request, request.getRequester());
 
     return requestRepresentation;
   }
@@ -29,7 +32,7 @@ public class RequestRepresentation {
     final JsonObject representation = request.asJson();
 
     addStoredItemProperties(representation, request.getItem());
-    addStoredRequesterProperties(representation, request.getRequester(), request);
+    addStoredRequesterProperties(representation, request.getRequester());
     addStoredProxyProperties(representation, request.getProxy());
 
     return representation;
@@ -50,7 +53,7 @@ public class RequestRepresentation {
 
   private static void addStoredRequesterProperties(
     JsonObject requestWithAdditionalInformation,
-    User requester, Request request) {
+    User requester) {
 
     if(requester == null) {
       return;
@@ -59,18 +62,23 @@ public class RequestRepresentation {
     JsonObject requesterSummary = requester.createUserSummary();
 
     requestWithAdditionalInformation.put("requester", requesterSummary);
-    
-    String addressType = request.getDeliveryAddressType();
-    if(addressType != null) {
-      JsonObject deliveryAddress = requester.getAddressByType(addressType);
-      if(deliveryAddress != null) {
-        requestWithAdditionalInformation.put("deliveryAddress", deliveryAddress);
-      }
+  }
+
+  private static void addAdditionalRequesterProperties(
+    JsonObject requestWithAdditionalInformation,
+    User requester) {
+
+    if(requester == null) {
+      return;
     }
-    
-    String patronGroup = requester.getPatronGroup();
-    if(patronGroup != null) {
-      requesterSummary.put("patronGroup", patronGroup);
+
+    JsonObject requesterSummary = requester.createUserSummary();
+
+    requestWithAdditionalInformation.put("requester", requesterSummary);
+
+    String patronGroupId = requester.getPatronGroupId();
+    if(patronGroupId != null) {
+      requesterSummary.put("patronGroupId", patronGroupId);
     }
   }
 
@@ -79,18 +87,38 @@ public class RequestRepresentation {
     User proxy) {
 
     if(proxy == null) {
-      log.info(String.format("Unable to add proxy properties to request %s, proxy object is null", 
-          requestWithAdditionalInformation.getString("id")));
+      log.info("Unable to add proxy properties to request {}, proxy object is null",
+          requestWithAdditionalInformation.getString("id"));
       return;
     }
 
     requestWithAdditionalInformation.put("proxy", proxy.createUserSummary());
   }
 
+  private static void addAdditionalProxyProperties(
+    JsonObject requestWithAdditionalInformation,
+    User proxy) {
+
+    if(proxy == null) {
+      log.info("Unable to add proxy properties to request {}, proxy object is null",
+        requestWithAdditionalInformation.getString("id"));
+      return;
+    }
+
+    JsonObject proxySummary =  proxy.createUserSummary();
+
+    String patronGroupId = proxy.getPatronGroupId();
+    if(patronGroupId != null) {
+      proxySummary.put("patronGroupId", patronGroupId);
+    }
+
+    requestWithAdditionalInformation.put("proxy", proxySummary);
+  }
+
   private static void addAdditionalItemProperties(JsonObject request, Item item) {
     if(item == null || item.isNotFound()) {
-      log.info(String.format("Unable to add item properties to request %s, item is null",
-          request.getString("id")));
+      log.info("Unable to add item properties to request {}, item is null",
+          request.getString("id"));
       return;
     }
 
@@ -131,13 +159,49 @@ public class RequestRepresentation {
       itemSummary.put("callNumber", callNumber);
     }
   }
-  
+
+  private static void addDeliveryAddress(
+    JsonObject requestWithAdditionalInformation,
+    Request request,
+    User requester) {
+
+    if (requester == null) {
+      return;
+    }
+
+    if (request == null) {
+      return;
+    }
+
+    if (requestWithAdditionalInformation == null) {
+      return;
+    }
+
+    String addressType = request.getDeliveryAddressType();
+    if(addressType != null) {
+      JsonObject address = requester.getAddressByType(addressType);
+      if(address != null) {
+        JsonObject mappedAddress = new JsonObject();
+
+        copyProperty(address, mappedAddress, "addressTypeId");
+        copyProperty(address, mappedAddress, "addressLine1");
+        copyProperty(address, mappedAddress, "addressLine2");
+        copyProperty(address, mappedAddress, "city");
+        copyProperty(address, mappedAddress, "region");
+        copyProperty(address, mappedAddress, "postalCode");
+        copyProperty(address, mappedAddress, "countryId");
+
+        requestWithAdditionalInformation.put("deliveryAddress", mappedAddress);
+      }
+    }
+  }
+
   private static void addAdditionalLoanProperties(JsonObject request, Loan loan) {
     if(loan == null || loan.isClosed()) {
       String reason = null;
       if(loan == null) { reason = "null"; } else { reason = "closed"; }
-      log.info(String.format("Unable to add loan properties to request %s, loan is %s",
-          request.getString("id"), reason));
+      log.info("Unable to add loan properties to request {}, loan is {}",
+          request.getString("id"), reason);
       return;
     }
     JsonObject loanSummary = request.containsKey("loan")
@@ -147,8 +211,7 @@ public class RequestRepresentation {
     if(loan.getDueDate() != null) {
       String dueDate = loan.getDueDate().toString(ISODateTimeFormat.dateTime());
       loanSummary.put("dueDate", dueDate);
-      log.info(String.format("Adding loan properties to request %s", 
-          request.getString("id")));
+      log.info("Adding loan properties to request {}", request.getString("id"));
     }
     
     request.put("loan", loanSummary);
@@ -156,8 +219,8 @@ public class RequestRepresentation {
   
   private static void addAdditionalServicePointProperties(JsonObject request, ServicePoint servicePoint) {
     if(servicePoint == null) {
-      log.info(String.format("Unable to add servicepoint properties to request %s,"
-          + " servicepoint is null", request.getString("id")));
+      log.info("Unable to add servicepoint properties to request {},"
+          + " servicepoint is null", request.getString("id"));
       return;
     }
 

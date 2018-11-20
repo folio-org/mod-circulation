@@ -64,8 +64,14 @@ echo "Register circulation module"
 echo "Run API tests"
 echo "Run tests via Okapi"
 #Potentially move to use integration test phase
-mvn -Dokapi.address="${okapi_proxy_address}" -Duse.okapi.initial.requests="true" \
--Duse.okapi.storage.requests="true" clean test | tee -a test-via-okapi.log
+
+# Add in parameter like
+# -Dtest=api.requests.RequestsAPIRetrievalTests#canGetARequestById \
+# to run a smaller set of tests
+mvn -Dokapi.address="${okapi_proxy_address}" \
+-Duse.okapi.initial.requests="true"  \
+-Duse.okapi.storage.requests="true" clean test \
+| tee -a test-via-okapi.log
 
 test_results=$?
 

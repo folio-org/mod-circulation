@@ -1,18 +1,8 @@
 package api.requests;
 
-import io.vertx.core.json.JsonObject;
-import api.support.APITests;
-import api.support.builders.ItemBuilder;
-import api.support.builders.RequestBuilder;
-import api.support.builders.UserBuilder;
-import api.support.http.InterfaceUrls;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDate;
-import org.junit.Test;
+import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -22,9 +12,20 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
+import org.junit.Test;
+
+import api.support.APITests;
+import api.support.builders.ItemBuilder;
+import api.support.builders.RequestBuilder;
+import api.support.builders.UserBuilder;
+import api.support.http.InterfaceUrls;
+import io.vertx.core.json.JsonObject;
 
 public class RequestsAPIUpdatingTests extends APITests {
   @Test
@@ -49,6 +50,10 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
+    final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
+    servicePointsToDelete.add(exampleServicePoint.getId());
+
+    //TODO: Should include pickup service point
     IndividualResource createdRequest = requestsClient.create(
       new RequestBuilder()
       .recall()
@@ -57,6 +62,7 @@ public class RequestsAPIUpdatingTests extends APITests {
       .withItemId(itemId)
       .withRequesterId(originalRequesterId)
       .fulfilToHoldShelf()
+      .withPickupServicePointId(exampleServicePoint.getId())
       .withRequestExpiration(new LocalDate(2017, 7, 30))
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
@@ -65,7 +71,8 @@ public class RequestsAPIUpdatingTests extends APITests {
       .withBarcode("679231693475"))
       .getId();
 
-    JsonObject updatedRequest = createdRequest.copyJson();
+    JsonObject updatedRequest = requestsClient.getById(createdRequest.getId())
+      .getJson();
 
     updatedRequest
       .put("requestType", "Hold")
@@ -131,6 +138,119 @@ public class RequestsAPIUpdatingTests extends APITests {
       representation.getJsonObject("requester").getString("barcode"),
       is("679231693475"));
   }
+  
+  @Test
+  public void canReplaceAnExistingRequestWithDeliveryAddress() 
+      throws InterruptedException,
+      MalformedURLException,
+      TimeoutException,
+      ExecutionException {
+    
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = itemsFixture.basedUponTemeraire(
+      itemRequestBuilder -> itemRequestBuilder.withBarcode("07295629642"))
+      .getId();
+
+    loansFixture.checkOutItem(itemId);
+
+    UUID originalRequesterId = usersClient.create(new UserBuilder()
+      .withName("Norton", "Jessica")
+      .withBarcode("764523186496"))
+      .getId();
+    
+    UUID deliveryAddressTypeId = null; //UUID.randomUUID();
+
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
+    servicePointsToDelete.add(exampleServicePoint.getId());
+
+    //TODO: Should include pickup service point
+    IndividualResource createdRequest = requestsClient.create(
+      new RequestBuilder()
+      .recall()
+      .withId(id)
+      .withRequestDate(requestDate)
+      .withItemId(itemId)
+      .withRequesterId(originalRequesterId)
+      .fulfilToHoldShelf()
+      .withPickupServicePointId(exampleServicePoint.getId())
+      .withRequestExpiration(new LocalDate(2017, 7, 30))
+      .deliverToAddress(deliveryAddressTypeId)); 
+    
+
+    UUID updatedRequester = usersClient.create(new UserBuilder()
+      .withName("Campbell", "Fiona")
+      .withBarcode("679231693475"))
+      .getId();
+
+    JsonObject updatedRequest = requestsClient.getById(createdRequest.getId())
+      .getJson();
+
+    updatedRequest
+      .put("requestType", "Hold")
+      .put("requesterId", updatedRequester.toString());
+
+    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
+
+    client.put(InterfaceUrls.requestsUrl(String.format("/%s", id)),
+      updatedRequest, ResponseHandler.any(putCompleted));
+
+    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(putResponse.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
+
+    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
+
+    client.get(InterfaceUrls.requestsUrl(String.format("/%s", id)),
+      ResponseHandler.any(getCompleted));
+
+    Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(String.format("Failed to get request: %s", getResponse.getBody()),
+      getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+
+    JsonObject representation = getResponse.getJson();
+
+    assertThat(representation.getString("id"), is(id.toString()));
+    assertThat(representation.getString("requestType"), is("Hold"));
+    assertThat(representation.getString("requestDate"), isEquivalentTo(requestDate));
+    assertThat(representation.getString("itemId"), is(itemId.toString()));
+    assertThat(representation.getString("requesterId"), is(updatedRequester.toString()));
+    assertThat(representation.getString("fulfilmentPreference"), is("Delivery"));
+    assertThat(representation.getString("requestExpirationDate"), is("2017-07-30"));
+
+    assertThat("has information taken from item",
+      representation.containsKey("item"), is(true));
+
+    assertThat("title is taken from item",
+      representation.getJsonObject("item").getString("title"),
+      is("Temeraire"));
+
+    assertThat("barcode is taken from item",
+      representation.getJsonObject("item").getString("barcode"),
+      is("07295629642"));
+
+    assertThat("has information taken from requesting user",
+      representation.containsKey("requester"), is(true));
+
+    assertThat("last name is taken from requesting user",
+      representation.getJsonObject("requester").getString("lastName"),
+      is("Campbell"));
+
+    assertThat("first name is taken from requesting user",
+      representation.getJsonObject("requester").getString("firstName"),
+      is("Fiona"));
+
+    assertThat("middle name is not taken from requesting user",
+      representation.getJsonObject("requester").containsKey("middleName"),
+      is(false));
+
+    assertThat("barcode is taken from requesting user",
+      representation.getJsonObject("requester").getString("barcode"),
+      is("679231693475"));
+  }
 
   @Test
   public void replacingAnExistingRequestRemovesItemInformationWhenItemDoesNotExist()
@@ -160,7 +280,8 @@ public class RequestsAPIUpdatingTests extends APITests {
         .withRequestExpiration(new LocalDate(2017, 7, 30))
         .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
-    JsonObject updatedRequest = createdRequest.copyJson();
+    JsonObject updatedRequest = requestsClient.getById(createdRequest.getId())
+      .getJson();
 
     itemsClient.delete(itemId);
 
@@ -228,7 +349,8 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     usersClient.delete(requester);
 
-    JsonObject updatedRequest = createdRequest.copyJson();
+    JsonObject updatedRequest = requestsClient.getById(createdRequest.getId())
+      .getJson();
 
     updatedRequest
       .put("requestType", "Hold");
@@ -296,7 +418,8 @@ public class RequestsAPIUpdatingTests extends APITests {
       .withNoBarcode())
       .getId();
 
-    JsonObject updatedRequest = createdRequest.copyJson();
+    JsonObject updatedRequest = requestsClient.getById(createdRequest.getId())
+      .getJson();
 
     updatedRequest
       .put("requestType", "Hold")
@@ -378,7 +501,8 @@ public class RequestsAPIUpdatingTests extends APITests {
       .withName("Campbell", "Fiona", "Stella")
       .withBarcode("679231693475")).getId();
 
-    JsonObject updatedRequest = createdRequest.copyJson();
+    JsonObject updatedRequest = requestsClient.getById(createdRequest.getId())
+      .getJson();
 
     updatedRequest
       .put("requestType", "Hold")
@@ -476,7 +600,8 @@ public class RequestsAPIUpdatingTests extends APITests {
     UUID updatedItemId = itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::withNoBarcode)
       .getId();
 
-    JsonObject updatedRequest = createdRequest.copyJson();
+    JsonObject updatedRequest = requestsClient.getById(createdRequest.getId())
+      .getJson();
 
     updatedRequest
       .put("itemId", updatedItemId.toString());

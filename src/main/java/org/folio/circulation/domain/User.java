@@ -1,22 +1,36 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import org.apache.commons.lang3.StringUtils;
-import org.joda.time.DateTime;
-
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
+import java.util.Objects;
+
+import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
+
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+
 public class User {
   private static final String PERSONAL_PROPERTY_NAME = "personal";
+  private final PatronGroup patronGroup;
 
   private final JsonObject representation;
 
   public User(JsonObject representation) {
-    this.representation = representation;
+    this(representation, null);    
   }
+  
+  public User(JsonObject representation, PatronGroup patronGroup) {
+    this.representation = representation;
+    this.patronGroup = patronGroup;
+  }
+  
+  public User withPatronGroup(PatronGroup newPatronGroup) {
+    return new User(representation, newPatronGroup);
+  }
+  
 
   public boolean canDetermineStatus() {
     return !representation.containsKey("active");
@@ -56,7 +70,7 @@ public class User {
     return getProperty(representation, "username");
   }
 
-  public String getPatronGroup() {
+  public String getPatronGroupId() {
     return getProperty(representation, "patronGroup");
   }
 
@@ -72,17 +86,24 @@ public class User {
     return getNestedStringProperty(representation, PERSONAL_PROPERTY_NAME, "middleName");
   }
   
-  public JsonObject getAddressByType(String type) {
-    JsonObject personal =representation.getJsonObject(PERSONAL_PROPERTY_NAME);
+  JsonObject getAddressByType(String type) {
+    JsonObject personal = representation.getJsonObject(PERSONAL_PROPERTY_NAME);
+
     if(personal == null) { return null; }
+
     JsonArray addresses = personal.getJsonArray("addresses");
+
     if(addresses == null) { return null; }
+
     for(Object ob : addresses) {
       JsonObject address = (JsonObject)ob;
-      if(address.getString("type").equals(type)) {
+      if (address != null
+        && Objects.equals(address.getString("addressTypeId"), (type))) {
+
         return address;
       }
     }
+
     return null;
   }
 
@@ -94,7 +115,15 @@ public class User {
     write(userSummary, "firstName", getFirstName());
     write(userSummary, "middleName", getMiddleName());
     write(userSummary, "barcode", getBarcode());
-
+    
+    if(patronGroup != null) {
+      JsonObject patronGroupSummary = new JsonObject();
+      write(patronGroupSummary, "id", patronGroup.getId());
+      write(patronGroupSummary, "group", patronGroup.getGroup());
+      write(patronGroupSummary, "desc", patronGroup.getDesc());
+      userSummary.put("patronGroup", patronGroupSummary);
+    }
+    
     return userSummary;
   }
 
@@ -109,5 +138,9 @@ public class User {
       //Fallback to user name if insufficient personal details
       return getUsername();
     }
+  }
+  
+  public static User from(JsonObject representation) {
+    return new User(representation);
   }
 }
