@@ -226,7 +226,7 @@ public class LoanRepository {
 
   public CompletableFuture<HttpResult<MultipleRecords<Loan>>> findBy(String query) {
     //TODO: Should fetch users for all loans
-    return loansStorageClient.getMany(query)
+    return loansStorageClient.getManyWithRawQueryStringParameters(query)
       .thenApply(this::mapResponseToLoans)
       .thenComposeAsync(loans -> itemRepository.fetchItemsFor(loans, Loan::withItem));
   }

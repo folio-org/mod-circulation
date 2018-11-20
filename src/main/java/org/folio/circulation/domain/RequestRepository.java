@@ -49,7 +49,7 @@ public class RequestRepository {
   }
 
   public CompletableFuture<HttpResult<MultipleRecords<Request>>> findBy(String query) {
-    return requestsStorageClient.getMany(query)
+    return requestsStorageClient.getManyWithRawQueryStringParameters(query)
       .thenApply(this::mapResponseToRequests)
       .thenComposeAsync(result -> itemRepository.fetchItemsFor(result, Request::withItem))
       .thenComposeAsync(result -> result.after(loanRepository::findOpenLoansFor))
