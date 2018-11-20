@@ -255,8 +255,8 @@ public class RequestsAPIRetrievalTests extends APITests {
     final IndividualResource sponsor = usersFixture.rebecca(
         builder -> builder.withPatronGroupId(facultyGroupId));
 
-    final IndividualResource proxy = usersFixture.steve(builder ->
-      builder.withPatronGroupId(staffGroupId));
+    final IndividualResource proxy = usersFixture.steve(
+      builder -> builder.withPatronGroupId(staffGroupId));
 
     UUID proxyId = proxy.getId();
     UUID requesterId = sponsor.getId();
@@ -640,6 +640,8 @@ public class RequestsAPIRetrievalTests extends APITests {
   }
 
   private List<JsonObject> getRequests(JsonObject page) {
+    System.out.println("Found requests");
+    System.out.println(page.getJsonArray("requests").encodePrettily());
     return JsonArrayHelper.toList(page.getJsonArray("requests"));
   }
 
@@ -664,11 +666,16 @@ public class RequestsAPIRetrievalTests extends APITests {
   
   private void requestHasPatronGroupProperties(JsonObject request) {
     hasProperty("proxy", request, "proxy");
+
+    hasProperty("patronGroupId", request.getJsonObject("proxy"), "proxy");
     hasProperty("patronGroup", request.getJsonObject("proxy"), "patronGroup");
     hasProperty("id", request.getJsonObject("proxy").getJsonObject("patronGroup"), "id");
     hasProperty("group", request.getJsonObject("proxy").getJsonObject("patronGroup"), "group");
     hasProperty("desc", request.getJsonObject("proxy").getJsonObject("patronGroup"), "desc");
+
     hasProperty("requester", request, "requester");
+
+    hasProperty("patronGroupId", request.getJsonObject("requester"), "requester");
     hasProperty("patronGroup", request.getJsonObject("requester"), "patronGroup");
     hasProperty("id", request.getJsonObject("requester").getJsonObject("patronGroup"), "id");
     hasProperty("group", request.getJsonObject("requester").getJsonObject("patronGroup"), "desc");

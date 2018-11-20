@@ -1,6 +1,7 @@
 package api.support.fakes;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -91,7 +92,9 @@ public class FakeStorageModule extends AbstractVerticle {
     router.post(rootPath).handler(this::checkDisallowedProperties);
     router.post(rootPath).handler(this::create);
 
+    router.get(rootPath).handler(this::checkForUnexpectedQueryParameters);
     router.get(rootPath).handler(this::getMany);
+
     router.delete(rootPath).handler(this::empty);
 
     router.put(rootPath + "/:id").handler(this::checkRequiredProperties);
@@ -419,5 +422,44 @@ public class FakeStorageModule extends AbstractVerticle {
     if(errors.isEmpty()) {
       routingContext.next();
     }
+  }
+
+  private void checkForUnexpectedQueryParameters(RoutingContext routingContext) {
+    //Check for only expected query string parameters
+    // as incorrectly formed query parameters will respond with all records
+    // e.g. ?id=foo will be ignored
+    final String rawQuery = routingContext.request().query();
+    System.out.println("Query: " + rawQuery);
+
+    if (rawQuery == null) {
+      routingContext.next();
+      return;
+    }
+
+    System.out.println("Split query parameters");
+
+    final List<String> unexpectedParameters = Arrays.stream(rawQuery.split("&"))
+      .filter(queryParameter -> {
+        boolean isValidParameter = queryParameter.contains("query") ||
+          queryParameter.contains("offset") ||
+          queryParameter.contains("limit");
+
+        return !isValidParameter;
+      })
+      .collect(Collectors.toList());
+
+    if(unexpectedParameters.isEmpty()) {
+      routingContext.next();
+      return;
+    }
+
+    System.out.println("Unexpected query parameters");
+
+    unexpectedParameters
+      .forEach(queryParameter -> System.out.println(String.format("\"%s\"", queryParameter)));
+
+    ClientErrorResponse.badRequest(routingContext.response(),
+      String.format("Unexpected query string parameters: %s",
+        String.join(",", unexpectedParameters)));
   }
 }
