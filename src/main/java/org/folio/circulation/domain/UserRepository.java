@@ -93,7 +93,7 @@ public class UserRepository {
 
     final String query = CqlHelper.multipleRecordsCqlQuery(usersToFetch);
 
-    return usersStorageClient.getMany(query)
+    return usersStorageClient.getMany(query, requests.size(), 0)
       .thenApply(this::mapResponseToUsers)
       .thenApply(multipleUsersResult -> multipleUsersResult.next(
         multipleUsers -> HttpResult.of(() ->

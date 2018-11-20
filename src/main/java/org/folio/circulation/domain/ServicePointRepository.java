@@ -4,7 +4,10 @@ import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlHelper;
@@ -34,27 +37,24 @@ class ServicePointRepository {
   
   CompletableFuture<HttpResult<MultipleRecords<Request>>> findServicePointsForRequests(
     MultipleRecords<Request> multipleRequests) {
+
     Collection<Request> requests = multipleRequests.getRecords();
-    List<String> clauses = new ArrayList<>();
-    
-    for(Request request : requests) {
-      if(request.getPickupServicePointId() != null) {
-        String clause = String.format("id==%s", request.getPickupServicePointId());
-        clauses.add(clause);
-      }
-    }
-    
-    if(clauses.isEmpty()) {
+
+    final List<String> servicePointsToFetch = requests.stream()
+      .filter(Objects::nonNull)
+      .map(Request::getPickupServicePointId)
+      .filter(Objects::nonNull)
+      .distinct()
+      .collect(Collectors.toList());
+
+    if(servicePointsToFetch.isEmpty()) {
       log.info("No service points to query");
       return CompletableFuture.completedFuture(HttpResult.succeeded(multipleRequests));
     }
     
-    final String spQuery = String.join(" OR ", clauses);
-    log.info("Querying service points with query {}", spQuery);
-    
-    HttpResult<String> queryResult = CqlHelper.encodeQuery(spQuery);
-    
-    return queryResult.after(query -> servicePointsStorageClient.getMany(query)
+    String query = CqlHelper.multipleRecordsCqlQuery(servicePointsToFetch);
+
+    return servicePointsStorageClient.getMany(query, requests.size(), 0)
         .thenApply(this::mapResponseToServicePoints)
         .thenApply(multipleServicePointsResult -> multipleServicePointsResult.next(
           multipleServicePoints -> {
@@ -78,9 +78,10 @@ class ServicePointRepository {
               }
               newRequestList.add(newRequest);
             }
+
             return HttpResult.succeeded(
               new MultipleRecords<>(newRequestList, multipleRequests.getTotalRecords()));
-          })));    
+          }));
   }
   
   private HttpResult<MultipleRecords<ServicePoint>> mapResponseToServicePoints(Response response) {

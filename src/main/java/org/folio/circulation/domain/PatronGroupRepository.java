@@ -29,7 +29,7 @@ class PatronGroupRepository {
 
       final String query = CqlHelper.multipleRecordsCqlQuery(groupsToFetch);
 
-      return patronGroupsStorageClient.getMany(query)
+      return patronGroupsStorageClient.getMany(query, groupsToFetch.size(), 0)
         .thenApply(this::mapResponseToPatronGroups)
         .thenApply(multiplePatronGroupsResult -> multiplePatronGroupsResult.next(
           patronGroups -> HttpResult.of(() -> matchGroupsToUsers(request, patronGroups))));
@@ -49,7 +49,7 @@ class PatronGroupRepository {
 
     final String query = CqlHelper.multipleRecordsCqlQuery(groupsToFetch);
 
-    return patronGroupsStorageClient.getMany(query)
+    return patronGroupsStorageClient.getMany(query, groupsToFetch.size(), 0)
       .thenApply(this::mapResponseToPatronGroups)
       .thenApply(multiplePatronGroupsResult -> multiplePatronGroupsResult.next(
         patronGroups -> matchGroupsToUsers(multipleRequests, patronGroups)));

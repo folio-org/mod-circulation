@@ -1,19 +1,24 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonObject;
-import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.support.*;
-import org.folio.circulation.support.http.client.Response;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.HttpResult.failed;
+import static org.folio.circulation.support.HttpResult.succeeded;
 
 import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.HttpResult.failed;
-import static org.folio.circulation.support.HttpResult.succeeded;
+import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.JsonArrayHelper;
+import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.http.client.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.vertx.core.json.JsonObject;
 
 public class UpdateLoanActionHistory {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -44,11 +49,13 @@ public class UpdateLoanActionHistory {
 
     String itemId = requestAndRelatedRecords.getRequest().getItemId();
 
+    //TODO: Replace this with CQL Helper and explicit query parameter
     String queryTemplate = "query=itemId=%s+and+status.name=Open";
     String query = String.format(queryTemplate, itemId);
 
-    return this.loansStorageClient.getMany(query).thenComposeAsync(
-      getLoansResponse -> updateLatestLoan(requestAndRelatedRecords, action,
+    return this.loansStorageClient.getManyWithRawQueryStringParameters(query)
+      .thenComposeAsync(
+        getLoansResponse -> updateLatestLoan(requestAndRelatedRecords, action,
         itemStatus, itemId, getLoansResponse));
   }
 
