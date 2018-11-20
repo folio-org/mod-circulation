@@ -18,25 +18,30 @@ import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ItemRepository;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.ServicePointRepository;
 
 class RequestFromRepresentationService {
   private final ItemRepository itemRepository;
   private final RequestQueueRepository requestQueueRepository;
   private final UserRepository userRepository;
   private final LoanRepository loanRepository;
+  private final ServicePointRepository servicePointRepository;
   private final ProxyRelationshipValidator proxyRelationshipValidator;
+  
 
   RequestFromRepresentationService(
     ItemRepository itemRepository,
     RequestQueueRepository requestQueueRepository,
     UserRepository userRepository,
     LoanRepository loanRepository,
+    ServicePointRepository servicePointRepository,
     ProxyRelationshipValidator proxyRelationshipValidator) {
 
     this.loanRepository = loanRepository;
     this.itemRepository = itemRepository;
     this.requestQueueRepository = requestQueueRepository;
     this.userRepository = userRepository;
+    this.servicePointRepository = servicePointRepository;
     this.proxyRelationshipValidator = proxyRelationshipValidator;
   }
 
@@ -51,6 +56,7 @@ class RequestFromRepresentationService {
       .thenComposeAsync(r -> r.combineAfter(itemRepository::fetchFor, Request::withItem))
       .thenComposeAsync(r -> r.combineAfter(userRepository::getUser, Request::withRequester))
       .thenComposeAsync(r -> r.combineAfter(userRepository::getProxyUser, Request::withProxy))
+      .thenComposeAsync(r -> r.combineAfter(servicePointRepository::getServicePointForRequest, Request::withPickupServicePoint))
       .thenApply(r -> r.map(RequestAndRelatedRecords::new))
       .thenComposeAsync(r -> r.combineAfter(requestQueueRepository::get,
         RequestAndRelatedRecords::withRequestQueue))

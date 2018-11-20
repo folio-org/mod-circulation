@@ -33,6 +33,10 @@ public class ServicePointRepository {
         .fetch(id);
   }
   
+  public CompletableFuture<HttpResult<ServicePoint>> getServicePointForRequest(Request request) {
+    return getServicePointById(request.getPickupServicePointId());
+  } 
+  
   public CompletableFuture<HttpResult<MultipleRecords<Request>>> findServicePointsForRequests(
       MultipleRecords<Request> multipleRequests) {
     Collection<Request> requests = multipleRequests.getRecords();
