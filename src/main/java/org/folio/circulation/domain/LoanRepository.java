@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
 import org.folio.circulation.domain.validation.UserNotFoundValidator;
@@ -93,28 +94,9 @@ public class LoanRepository {
     final UserNotFoundValidator userNotFoundValidator = new UserNotFoundValidator(
       userId -> failure("user is not found", "userId", userId));
 
+    //TODO: Replace fetch user with fetch user by barcode to improve error message
     return itemRepository.fetchByBarcode(query.getItemBarcode())
-      .thenComposeAsync(itemResult -> itemResult.after(item -> {
-        if(item.isNotFound()) {
-          return CompletableFuture.completedFuture(ValidationErrorFailure.failedResult(
-            String.format("No item with barcode %s exists", query.getItemBarcode()),
-            "itemBarcode", query.getItemBarcode()));
-        }
-
-        return findOpenLoans(item)
-          .thenApply(loanResult -> loanResult.next(loans -> {
-            final Optional<Loan> first = loans.getRecords().stream()
-              .findFirst();
-
-            if (loans.getTotalRecords() == 1 && first.isPresent()) {
-              return succeeded(Loan.from(first.get().asJson(), item));
-            } else {
-              return failed(new ServerErrorFailure(
-                String.format("More than one open loan for item %s", query.getItemBarcode())));
-            }
-          }));
-      }))
-      //TODO: Replace with fetch user by barcode to improve error message
+      .thenComposeAsync(getOnlyLoan(query))
       .thenComposeAsync(this::fetchUser)
       .thenApply(userNotFoundValidator::refuseWhenUserNotFound)
       .thenApply(r -> r.next(loan -> refuseWhenDifferentUser(loan, query)));
@@ -322,5 +304,30 @@ public class LoanRepository {
             return HttpResult.succeeded(
               new MultipleRecords<>(newRequestList, multipleRequests.getTotalRecords()));
     })));
+  }
+
+  private Function<HttpResult<Item>, CompletionStage<HttpResult<Loan>>> getOnlyLoan(
+    FindByBarcodeQuery query) {
+    
+    return itemResult -> itemResult.after(item -> {
+      if(item.isNotFound()) {
+        return CompletableFuture.completedFuture(ValidationErrorFailure.failedResult(
+          String.format("No item with barcode %s exists", query.getItemBarcode()),
+          "itemBarcode", query.getItemBarcode()));
+      }
+
+      return findOpenLoans(item)
+        .thenApply(loanResult -> loanResult.next(loans -> {
+          final Optional<Loan> first = loans.getRecords().stream()
+            .findFirst();
+
+          if (loans.getTotalRecords() == 1 && first.isPresent()) {
+            return succeeded(Loan.from(first.get().asJson(), item));
+          } else {
+            return failed(new ServerErrorFailure(
+              String.format("More than one open loan for item %s", query.getItemBarcode())));
+          }
+        }));
+    });
   }
 }
