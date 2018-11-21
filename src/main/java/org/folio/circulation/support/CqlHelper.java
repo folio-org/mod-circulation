@@ -45,4 +45,47 @@ public class CqlHelper {
     return HttpResult.of(() -> URLEncoder.encode(cqlQuery,
       String.valueOf(StandardCharsets.UTF_8)));
   }
+
+  /**
+   *
+   * Creates a CQL query for matching a property to one of multiple values
+   * intended to return multiple records. Typically used when fetching related
+   * records e.g. fetching all groups for users, or items for loans
+   *
+   * @param prefixQueryFragment fragment of CQL to include at the beginning
+   *                            e.g. status.name=="Open" AND
+   * @param indexName Name of the index (property) to match values to
+   * @param valuesToSearchFor Values to search for, query should match any
+   *                          against the index
+   * @return null if there are no values to search for, otherwise a CQL
+   * query that includes a fragment if provided and a clause for matching any
+   * of the values
+   */
+  public static HttpResult<String> multipleRecordsCqlQuery(
+    String prefixQueryFragment,
+    String indexName,
+    Collection<String> valuesToSearchFor) {
+
+    final Collection<String> filteredValues = valuesToSearchFor.stream()
+      .filter(Objects::nonNull)
+      .map(String::toString)
+      .filter(StringUtils::isNotBlank)
+      .distinct()
+      .collect(Collectors.toList());
+
+    if(filteredValues.isEmpty()) {
+      return HttpResult.of(() -> null);
+    }
+
+    String valueQuery = String.format("%s==(%s)",
+      indexName, String.join(" or ", filteredValues));
+
+    if(StringUtils.isBlank(prefixQueryFragment)) {
+      return encodeQuery(valueQuery);
+    }
+    else {
+      return encodeQuery(
+        String.format("%s %s", prefixQueryFragment, valueQuery));
+    }
+  }
 }
