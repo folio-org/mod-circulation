@@ -17,13 +17,13 @@ import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class ServicePointRepository {
+public class ServicePointRepository {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private static final String SERVICE_POINT_TYPE = "servicepoint";
 
   private final CollectionResourceClient servicePointsStorageClient;
 
-  ServicePointRepository(Clients clients) {
+  public ServicePointRepository(Clients clients) {
     servicePointsStorageClient = clients.servicePointsStorage();
   }
   
