@@ -1,6 +1,9 @@
 package api.loans;
 
+import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.UUIDMatcher.is;
+import static org.folio.HttpStatus.HTTP_INTERNAL_SERVER_ERROR;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -10,6 +13,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
@@ -74,5 +78,35 @@ public class CheckInByBarcodeTests extends APITests {
 
     assertThat("Checkin Service Point Id should be stored.",
       storedLoan.getString("checkinServicePointId"), is(checkinServicePointId));
+  }
+
+  @Test
+  public void cannotCheckInAnItemTwice()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, DateTimeZone.UTC);
+
+    final IndividualResource james = usersFixture.james();
+    final IndividualResource nod = itemsFixture.basedUponNod();
+
+    final UUID checkinServicePointId = UUID.randomUUID();
+
+    loansFixture.checkOut(nod, james, loanDate);
+
+    loansFixture.checkInByBarcode(nod,
+      new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC),
+      checkinServicePointId);
+
+    final Response checkInAttemptResponse = loansFixture.attemptCheckInByBarcode(
+      nod, new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC),
+      checkinServicePointId);
+
+    assertThat(checkInAttemptResponse, hasStatus(HTTP_INTERNAL_SERVER_ERROR));
+
+    assertThat(checkInAttemptResponse.getBody(),
+      containsString("More than one open loan for item"));
   }
 }

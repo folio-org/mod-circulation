@@ -233,6 +233,22 @@ public class LoansFixture {
       422, "renewal-by-id-request"));
   }
 
+  public Response attemptCheckInByBarcode(
+    IndividualResource item,
+    DateTime checkInDate,
+    UUID servicePointId) {
+
+    final JsonObject checkInRequest = new JsonObject();
+
+    write(checkInRequest, "itemBarcode",
+      item.getJson().getString("barcode"));
+    write(checkInRequest, "checkInDate", checkInDate);
+    write(checkInRequest, "servicePointId", servicePointId);
+
+    return from(post(checkInRequest, checkInByBarcodeUrl(),
+      "check-in-by-barcode-request"));
+  }
+
   public IndividualResource checkInByBarcode(IndividualResource item) {
     return checkInByBarcode(
       item.getJson().getString("barcode"), DateTime.now(DateTimeZone.UTC),

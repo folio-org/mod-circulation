@@ -1,5 +1,14 @@
 package api.support;
 
+import static io.restassured.RestAssured.given;
+import static org.folio.circulation.support.http.OkapiHeader.OKAPI_URL;
+import static org.folio.circulation.support.http.OkapiHeader.TENANT;
+
+import java.net.URL;
+
+import org.folio.circulation.support.http.OkapiHeader;
+import org.folio.circulation.support.http.client.Response;
+
 import api.APITestSuite;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
@@ -7,14 +16,6 @@ import io.restassured.config.HttpClientConfig;
 import io.restassured.specification.RequestSpecification;
 import io.vertx.core.http.CaseInsensitiveHeaders;
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.http.OkapiHeader;
-import org.folio.circulation.support.http.client.Response;
-
-import java.net.URL;
-
-import static io.restassured.RestAssured.given;
-import static org.folio.circulation.support.http.OkapiHeader.OKAPI_URL;
-import static org.folio.circulation.support.http.OkapiHeader.TENANT;
 
 //TODO: Make methods non-static
 public class RestAssuredClient {
@@ -65,6 +66,22 @@ public class RestAssuredClient {
       .then()
       .log().all()
       .statusCode(expectedStatusCode)
+      .extract().response();
+  }
+
+  public static io.restassured.response.Response post(
+    JsonObject representation,
+    URL url,
+    String requestId) {
+
+    return given()
+      .log().all()
+      .spec(defaultHeaders(requestId))
+      .spec(timeoutConfig())
+      .body(representation.encodePrettily())
+      .when().post(url)
+      .then()
+      .log().all()
       .extract().response();
   }
 
