@@ -35,19 +35,13 @@ public class CheckInByBarcodeRequest implements FindByBarcodeQuery {
       return failedResult("Checkin request must have an item barcode", ITEM_BARCODE, null);
     }
 
-    final String userBarcode = getProperty(json, USER_BARCODE);
-
-    if (StringUtils.isBlank(userBarcode)) {
-      return failedResult("Checkin request must have a user barcode", USER_BARCODE, null);
-    }
-
     final String servicePointId = getProperty(json, SERVICE_POINT_ID);
 
     if (StringUtils.isBlank(servicePointId)) {
       return failedResult("Checkin request must have a service point id", SERVICE_POINT_ID, null);
     }
 
-    return succeeded(new CheckInByBarcodeRequest(itemBarcode, userBarcode, servicePointId));
+    return succeeded(new CheckInByBarcodeRequest(itemBarcode, null, servicePointId));
   }
 
   @Override

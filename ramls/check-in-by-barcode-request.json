@@ -1,20 +1,15 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "type": "object",
-  "title": "Request to checkin an existing loan, found by barcodes of item and loanee",
+  "title": "Request to check in an item at a service point (including when a loan is returned)",
   "properties": {
     "itemBarcode": {
       "description": "Barcode of the item to be checked in",
-      "type": "string"
-    },
-    "userBarcode": {
-      "description": "Barcode of the user (representing the patron) the item has been loaned to",
       "type": "string"
     }
   },
   "additionalProperties": false,
   "required": [
-    "itemBarcode",
-    "userBarcode"
+    "itemBarcode"
   ]
 }
