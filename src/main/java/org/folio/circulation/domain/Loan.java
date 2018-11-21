@@ -201,7 +201,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan checkin(DateTime returnDate) {
-    changeAction("checkin");
+    changeAction("checkedin");
     changeStatus("Closed");
     changeReturnDate(returnDate);
     return this;
