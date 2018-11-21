@@ -30,17 +30,23 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   private String checkoutServicePointId;
   private String checkinServicePointId;
+  
+  private ServicePoint checkoutServicePoint;
+  private ServicePoint checkinServicePoint;
 
   public Loan(JsonObject representation) {
-    this(representation, null, null, null);
+    this(representation, null, null, null, null, null);
   }
 
-  public Loan(JsonObject representation, Item item, User user, User proxy) {
+  public Loan(JsonObject representation, Item item, User user, User proxy, 
+      ServicePoint checkinServicePoint, ServicePoint checkoutServicePoint) {
 
     this.representation = representation;
     this.item = item;
     this.user = user;
     this.proxy = proxy;
+    this.checkinServicePoint = checkinServicePoint;
+    this.checkoutServicePoint = checkoutServicePoint;
 
     this.checkoutServicePointId = getProperty(representation, LoanProperties.CHECKOUT_SERVICE_POINT_ID);
     this.checkinServicePointId = getProperty(representation, LoanProperties.CHECKIN_SERVICE_POINT_ID);
@@ -74,7 +80,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   public static Loan from(JsonObject representation, Item item, User user, User proxy) {
 
     defaultStatusAndAction(representation);
-    return new Loan(representation, item, user, proxy);
+    return new Loan(representation, item, user, proxy, null, null);
   }
 
   JsonObject asJson() {
@@ -157,7 +163,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan withItem(Item item) {
-    return new Loan(representation, item, user, proxy);
+    return new Loan(representation, item, user, proxy, checkinServicePoint,
+        checkoutServicePoint);
   }
 
   public User getUser() {
@@ -165,7 +172,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   Loan withUser(User newUser) {
-    return new Loan(representation, item, newUser, proxy);
+    return new Loan(representation, item, newUser, proxy, checkinServicePoint,
+        checkoutServicePoint);
   }
 
   public User getProxy() {
@@ -173,13 +181,32 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   Loan withProxy(User newProxy) {
-    return new Loan(representation, item, user, newProxy);
+    return new Loan(representation, item, user, newProxy, checkinServicePoint,
+      checkoutServicePoint);
+  }
+  
+  public Loan withCheckinServicePoint(ServicePoint newCheckinServicePoint) {
+    return new Loan(representation, item, user, proxy, newCheckinServicePoint,
+      checkoutServicePoint);
+  }
+  
+  public Loan withCheckoutServicePoint(ServicePoint newCheckoutServicePoint) {
+    return new Loan(representation, item, user, proxy, checkinServicePoint,
+      newCheckoutServicePoint);
   }
 
   private void changeLoanPolicy(String newLoanPolicyId) {
     if (newLoanPolicyId != null) {
       representation.put("loanPolicyId", newLoanPolicyId);
     }
+  }
+  
+  public ServicePoint getCheckinServicePoint() {
+    return this.checkinServicePoint;
+  }
+  
+  public ServicePoint getCheckoutServicePoint() {
+    return this.checkoutServicePoint;
   }
 
   public Loan renew(DateTime dueDate, String basedUponLoanPolicyId) {
