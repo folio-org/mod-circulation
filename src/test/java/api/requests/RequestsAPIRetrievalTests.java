@@ -360,14 +360,13 @@ public class RequestsAPIRetrievalTests extends APITests {
   }
 
   @Test
-  public void canGetARequestToBeFulfilledByDeliveryToAnAddressFromCollectionEndpoint()
+  public void fulfilledByDeliveryIncludesAddressWhenFindingMultipleRequests()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
 
-    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
-      ItemBuilder::available);
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
     final IndividualResource charlotte = usersFixture.charlotte(
       builder -> builder.withAddress(
@@ -412,6 +411,39 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(deliveryAddress.getString("region"), is("Fake region"));
     assertThat(deliveryAddress.getString("postalCode"), is("Fake postal code"));
     assertThat(deliveryAddress.getString("countryId"), is("Fake country code"));
+  }
+
+  @Test
+  public void closedLoanForItemIsNotIncludedWhenFindingMultipleRequests()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+
+    final IndividualResource charlotte = usersFixture.charlotte();
+
+    final IndividualResource james = usersFixture.james();
+
+    final IndividualResource loan = loansFixture.checkOut(smallAngryPlanet, james);
+
+    requestsFixture.place(new RequestBuilder()
+      .recall()
+      .forItem(smallAngryPlanet)
+      .deliverToAddress(workAddressTypeId())
+      .by(charlotte));
+
+    loansFixture.checkIn(loan);
+
+    final List<JsonObject> allRequests = requestsClient.getAll();
+
+    assertThat(allRequests.size(), is(1));
+
+    JsonObject representation = allRequests.get(0);
+
+    assertThat("Request should not have a current loan for the item",
+      representation.containsKey("deliveryAddress"), is(false));
   }
 
   @Test
