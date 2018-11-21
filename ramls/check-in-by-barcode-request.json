@@ -6,10 +6,22 @@
     "itemBarcode": {
       "description": "Barcode of the item to be checked in",
       "type": "string"
+    },
+    "servicePointId": {
+      "description": "Service point where the item is being processed",
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+    },
+    "checkInDate": {
+      "description": "When the item was checked in",
+      "type": "string",
+      "format": "date-time"
     }
   },
   "additionalProperties": false,
   "required": [
-    "itemBarcode"
+    "itemBarcode",
+    "checkInDate",
+    "servicePointId"
   ]
 }
