@@ -28,6 +28,8 @@ public class ServicePointPickupLocationValidator {
       if(request.getPickupServicePoint().isPickupLocation()) {
         return CompletableFuture.completedFuture(requestResult);
       } else {            
+        log.info("Request {} has {} as a pickup location which is an invalid service point", 
+            request.getId(), request.getPickupServicePointId());
         return CompletableFuture.completedFuture(HttpResult.failed(ValidationErrorFailure.failure(
             "Service Point is not a Pickup Location", "pickupLocation", "false")));
       }

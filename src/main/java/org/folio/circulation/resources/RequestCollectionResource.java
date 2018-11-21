@@ -48,12 +48,10 @@ public class RequestCollectionResource extends CollectionResource {
     final RequestFromRepresentationService requestFromRepresentationService
       = new RequestFromRepresentationService(itemRepository, requestQueueRepository, 
           userRepository, loanRepository, servicePointRepository,
-          proxyRelationshipValidator);
+          proxyRelationshipValidator, servicePointPickupLocationValidator);
 
     requestFromRepresentationService.getRequestFrom(representation)
       .thenComposeAsync(r -> r.after(createRequestService::createRequest))
-      .thenComposeAsync(r -> { 
-        return servicePointPickupLocationValidator.checkServicePointPickupLocation(r); })
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
       .thenApply(r -> r.map(requestRepresentation::extendedRepresentation))
       .thenApply(CreatedJsonHttpResult::from)
@@ -97,12 +95,9 @@ public class RequestCollectionResource extends CollectionResource {
     final RequestFromRepresentationService requestFromRepresentationService
       = new RequestFromRepresentationService(itemRepository,
         requestQueueRepository, userRepository, loanRepository, servicePointRepository,
-          proxyRelationshipValidator);
+          proxyRelationshipValidator, servicePointPickupLocationValidator);
 
-    requestFromRepresentationService.getRequestFrom(representation)
-      .thenComposeAsync(r -> {
-        return servicePointPickupLocationValidator.checkServicePointPickupLocation(r);
-      })
+    requestFromRepresentationService.getRequestFrom(representation)      
       .thenComposeAsync(r -> r.afterWhen(requestRepository::exists,
         updateRequestService::replaceRequest,
         createRequestService::createRequest))

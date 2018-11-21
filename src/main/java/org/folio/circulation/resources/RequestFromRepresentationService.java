@@ -19,6 +19,7 @@ import org.folio.circulation.support.ItemRepository;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.ServicePointRepository;
+import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
 
 class RequestFromRepresentationService {
   private final ItemRepository itemRepository;
@@ -27,6 +28,7 @@ class RequestFromRepresentationService {
   private final LoanRepository loanRepository;
   private final ServicePointRepository servicePointRepository;
   private final ProxyRelationshipValidator proxyRelationshipValidator;
+  private final ServicePointPickupLocationValidator servicePointPickupLocationValidator;
   
 
   RequestFromRepresentationService(
@@ -35,7 +37,8 @@ class RequestFromRepresentationService {
     UserRepository userRepository,
     LoanRepository loanRepository,
     ServicePointRepository servicePointRepository,
-    ProxyRelationshipValidator proxyRelationshipValidator) {
+    ProxyRelationshipValidator proxyRelationshipValidator,
+    ServicePointPickupLocationValidator servicePointPickupLocationValidator) {
 
     this.loanRepository = loanRepository;
     this.itemRepository = itemRepository;
@@ -43,6 +46,7 @@ class RequestFromRepresentationService {
     this.userRepository = userRepository;
     this.servicePointRepository = servicePointRepository;
     this.proxyRelationshipValidator = proxyRelationshipValidator;
+    this.servicePointPickupLocationValidator = servicePointPickupLocationValidator;
   }
 
   CompletableFuture<HttpResult<RequestAndRelatedRecords>> getRequestFrom(
@@ -60,7 +64,9 @@ class RequestFromRepresentationService {
       .thenApply(r -> r.map(RequestAndRelatedRecords::new))
       .thenComposeAsync(r -> r.combineAfter(requestQueueRepository::get,
         RequestAndRelatedRecords::withRequestQueue))
-      .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid));
+      .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
+      .thenComposeAsync(r -> { 
+        return servicePointPickupLocationValidator.checkServicePointPickupLocation(r); });
   }
 
   private HttpResult<JsonObject> validateStatus(JsonObject representation) {
