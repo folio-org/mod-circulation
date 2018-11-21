@@ -17,26 +17,7 @@ public class CqlHelper {
   private CqlHelper() { }
 
   public static String multipleRecordsCqlQuery(Collection<String> recordIds) {
-    if(recordIds.isEmpty()) {
-      return null;
-    }
-    else {
-      final Collection<String> filteredIds = recordIds.stream()
-        .filter(Objects::nonNull)
-        .map(String::toString)
-        .filter(StringUtils::isNotBlank)
-        .distinct()
-        .collect(Collectors.toList());
-
-      if(filteredIds.isEmpty()) {
-        return null;
-      }
-
-      String query = String.format("id==(%s)", String.join(" or ", filteredIds));
-
-      //TODO: Check if would be preferable to fail request with error?
-      return encodeQuery(query).orElse(null);
-    }
+    return multipleRecordsCqlQuery(null, "id", recordIds).orElse(null);
   }
 
   public static HttpResult<String> encodeQuery(String cqlQuery) {
