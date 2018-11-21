@@ -14,6 +14,7 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 import java.util.Objects;
+import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.representations.LoanProperties;
@@ -92,6 +93,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   private void changeAction(String action) {
     representation.put(LoanProperties.ACTION, action);
+  }
+
+  private void changeCheckInServicePointId(UUID servicePointId) {
+    write(representation, "checkinServicePointId", servicePointId);
   }
 
   private void changeStatus(String status) {
@@ -200,10 +205,12 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return this;
   }
 
-  public Loan checkin(DateTime returnDate) {
+  public Loan checkin(DateTime returnDate, UUID servicePointId) {
     changeAction("checkedin");
     changeStatus("Closed");
     changeReturnDate(returnDate);
+    changeCheckInServicePointId(servicePointId);
+
     return this;
   }
 
