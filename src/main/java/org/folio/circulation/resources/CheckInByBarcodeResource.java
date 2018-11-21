@@ -7,6 +7,7 @@ import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.domain.representations.LoanResponse;
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.WebContext;
 
@@ -40,9 +41,13 @@ public class CheckInByBarcodeResource extends Resource {
 
     // TODO: Validation check for same user should be in the domain service
 
-    CheckInByBarcodeRequest.from(routingContext.getBodyAsJson())
+    final HttpResult<CheckInByBarcodeRequest> checkInRequestResult
+      = CheckInByBarcodeRequest.from(routingContext.getBodyAsJson());
+
+    checkInRequestResult
       .after(loanRepository::findOpenLoanByBarcode)
-      .thenApply(r -> r.next(loanCheckinService::checkin))
+      .thenApply(loanResult -> loanResult.combineToResult(checkInRequestResult,
+        loanCheckinService::checkin))
       .thenComposeAsync(r -> r.after(updateItem::setLoansItemStatusAvaliable))
       .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
