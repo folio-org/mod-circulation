@@ -12,14 +12,12 @@ import java.util.concurrent.TimeoutException;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import api.support.APITests;
 import io.vertx.core.json.JsonObject;
 
 public class CheckInByBarcodeTests extends APITests {
-  @Ignore("Not included in main execution until basic request passing")
   @Test
   public void canCloseAnOpenLoanByCheckingInTheItem()
     throws InterruptedException,
