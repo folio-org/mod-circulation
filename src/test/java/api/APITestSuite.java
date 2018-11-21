@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import api.loans.CheckInByBarcodeTests;
+import api.loans.CheckInByReplacingLoanTests;
 import api.loans.CheckOutByBarcodeTests;
 import api.loans.LoanAPILocationTests;
 import api.loans.LoanAPIPolicyTests;
@@ -79,6 +80,7 @@ import io.vertx.core.json.JsonObject;
   RenewByBarcodeTests.class,
   RenewByIdTests.class,
   CheckInByBarcodeTests.class,
+  CheckInByReplacingLoanTests.class,
   LoanAPITests.class,
   LoanAPILocationTests.class,
   LoanAPITitleTests.class,
