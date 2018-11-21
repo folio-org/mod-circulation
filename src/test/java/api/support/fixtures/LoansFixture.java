@@ -24,6 +24,7 @@ import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanBuilder;
@@ -267,6 +268,12 @@ public class LoansFixture {
 
     return from(post(request, renewByIdUrl(),
       422, "renewal-by-id-request"));
+  }
+
+  public IndividualResource checkInByBarcode(IndividualResource item) {
+    return checkInByBarcode(
+      item.getJson().getString("barcode"), DateTime.now(DateTimeZone.UTC),
+      UUID.randomUUID());
   }
 
   public IndividualResource checkInByBarcode(

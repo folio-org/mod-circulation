@@ -1,19 +1,5 @@
 package api.requests.scenarios;
 
-import api.support.APITests;
-import api.support.builders.RequestBuilder;
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDate;
-import org.junit.Test;
-
-import java.net.MalformedURLException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
 import static api.APITestSuite.courseReservesCancellationReasonId;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
@@ -23,6 +9,21 @@ import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
+
+import java.net.MalformedURLException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
+import org.junit.Test;
+
+import api.support.APITests;
+import api.support.builders.RequestBuilder;
+import io.vertx.core.json.JsonObject;
 
 public class ClosedRequestTests extends APITests {
 
@@ -105,7 +106,7 @@ public class ClosedRequestTests extends APITests {
     final IndividualResource jessica = usersFixture.jessica();
     final IndividualResource steve = usersFixture.steve();
 
-    final IndividualResource loan = loansFixture.checkOut(smallAngryPlanet, jessica);
+    loansFixture.checkOut(smallAngryPlanet, jessica);
 
     DateTime requestDate = new DateTime(2018, 6, 22, 10, 22, 54, DateTimeZone.UTC);
 
@@ -113,7 +114,7 @@ public class ClosedRequestTests extends APITests {
       requestsFixture.placeHoldShelfRequest(smallAngryPlanet,
         steve, requestDate);
 
-    loansFixture.checkIn(loan);
+    loansFixture.checkInByBarcode(smallAngryPlanet);
 
     loansFixture.checkOut(smallAngryPlanet, steve,
       new DateTime(2018, 7, 5, 14, 48, 23, DateTimeZone.UTC));
