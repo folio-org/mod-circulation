@@ -256,12 +256,10 @@ public class LoansFixture {
 
   public Response attemptCheckInByBarcode(
     CheckInByBarcodeRequestBuilder builder) {
-    JsonObject request = builder.create();
 
-    return from(post(request, checkInByBarcodeUrl(),
+    return from(post(builder.create(), checkInByBarcodeUrl(),
         "check-in-by-barcode-request"));
   }
-
 
   public Response attemptCheckInByBarcode(
     IndividualResource item,
@@ -279,10 +277,19 @@ public class LoansFixture {
       "check-in-by-barcode-request"));
   }
 
+  public IndividualResource checkInByBarcode(
+    CheckInByBarcodeRequestBuilder builder) {
+
+    return new IndividualResource(
+      from(post(builder.create(), checkInByBarcodeUrl(), 200,
+        "check-in-by-barcode-request")));
+  }
+
   public IndividualResource checkInByBarcode(IndividualResource item) {
-    return checkInByBarcode(
-      item.getJson().getString("barcode"), DateTime.now(DateTimeZone.UTC),
-      UUID.randomUUID());
+    return checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(item)
+      .on(DateTime.now(DateTimeZone.UTC))
+      .at(UUID.randomUUID()));
   }
 
   public IndividualResource checkInByBarcode(
@@ -290,22 +297,9 @@ public class LoansFixture {
     DateTime checkInDate,
     UUID servicePointId) {
 
-    return checkInByBarcode(
-      item.getJson().getString("barcode"), checkInDate, servicePointId);
-  }
-
-  private IndividualResource checkInByBarcode(
-    String itemBarcode, DateTime checkInDate,
-    UUID servicePointId) {
-
-    final JsonObject checkInRequest = new JsonObject();
-
-    write(checkInRequest, "itemBarcode", itemBarcode);
-    write(checkInRequest, "checkInDate", checkInDate);
-    write(checkInRequest, "servicePointId", servicePointId);
-
-    return new IndividualResource(
-      from(post(checkInRequest, checkInByBarcodeUrl(), 200,
-        "check-in-by-barcode-request")));
+    return checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(item)
+      .on(checkInDate)
+      .at(servicePointId));
   }
 }
