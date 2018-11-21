@@ -283,7 +283,8 @@ public class CheckOutByBarcodeTests extends APITests {
     final JsonObject loan = response.getJson();
 
     assertThat("loan date should be as supplied",
-      loan.getString("loanDate"), withinSecondsAfter(Seconds.seconds(10), requestDate));
+      loan.getString("loanDate"),
+      withinSecondsAfter(Seconds.seconds(10), requestDate));
   }
 
   @Test

@@ -1,6 +1,7 @@
 package api.loans;
 
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
+import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
@@ -19,6 +20,7 @@ import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.Seconds;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -42,6 +44,8 @@ public class CheckInByBarcodeTests extends APITests {
 
     final IndividualResource loan = loansFixture.checkOut(nod, james, loanDate);
 
+    DateTime expectedSystemReturnDate = DateTime.now(DateTimeZone.UTC);
+
     final IndividualResource updatedLoan = loansFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
@@ -54,6 +58,10 @@ public class CheckInByBarcodeTests extends APITests {
 
     assertThat("Should have return date",
       loanRepresentation.getString("returnDate"), is("2018-03-05T14:23:41.000Z"));
+
+    assertThat("Should have system return date similar to now",
+      loanRepresentation.getString("systemReturnDate"),
+      is(withinSecondsAfter(Seconds.seconds(10), expectedSystemReturnDate)));
 
     assertThat("status is not closed",
       loanRepresentation.getJsonObject("status").getString("name"), is("Closed"));
