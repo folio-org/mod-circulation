@@ -22,6 +22,7 @@ import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanBuilder;
@@ -73,7 +74,8 @@ public class LoansFixture {
     return loansClient.create(new LoanBuilder()
       .withId(loanId)
       .open()
-      .withItemId(itemId));
+      .withItemId(itemId)
+      .withDueDate(new DateTime(2018, 12, 3, 11, 22, 43, DateTimeZone.UTC)));
   }
   
   public IndividualResource checkOutItem(UUID itemId)

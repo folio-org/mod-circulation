@@ -5,6 +5,7 @@ import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
 import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -111,19 +112,21 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(representation.getString("pickupServicePointId"),
         is(pickupServicePointId.toString()));
     assertThat(representation.getString("status"), is("Open - Not yet filled"));
-    assertThat(representation.containsKey("loan"), is(true));
+
     assertThat(representation.containsKey("proxy"), is(true));
     assertThat(representation.getJsonObject("proxy").containsKey("patronGroup"), is (true));
     assertThat(representation.getJsonObject("proxy").getString("patronGroupId"),
         is(staffGroupId.toString()));
     assertThat(representation.getJsonObject("proxy").getJsonObject("patronGroup").getString("id"),
         is(staffGroupId.toString()));
+
     assertThat(representation.containsKey("requester"), is(true));
     assertThat(representation.getJsonObject("requester").containsKey("patronGroup"), is (true));
     assertThat(representation.getJsonObject("requester").getString("patronGroupId"),
         is(facultyGroupId.toString()));
     assertThat(representation.getJsonObject("requester").getJsonObject("patronGroup").getString("id"),
         is(facultyGroupId.toString()));
+
     assertThat(representation.containsKey("pickupServicePoint"), is(true));
     assertThat(representation.getJsonObject("pickupServicePoint").getString("name"),
         is(cd1.getJson().getString("name")));
@@ -133,6 +136,7 @@ public class RequestsAPIRetrievalTests extends APITests {
         is(cd1.getJson().getString("discoveryDisplayName")));
     assertThat(representation.getJsonObject("pickupServicePoint").getBoolean("pickupLocation"),
         is(cd1.getJson().getBoolean("pickupLocation")));
+
     assertThat("has information taken from item",
       representation.containsKey("item"), is(true));
 
@@ -168,6 +172,20 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat("barcode is taken from requesting user",
       representation.getJsonObject("requester").getString("barcode"),
       is("6059539205"));
+
+    assertThat("barcode is taken from requesting user",
+      representation.getJsonObject("requester").getString("barcode"),
+      is("6059539205"));
+
+    assertThat("current loan is present",
+      representation.containsKey("loan"), is(true));
+
+    assertThat("current loan has a due date",
+      representation.getJsonObject("loan").containsKey("dueDate"), is(true));
+
+    //TODO: Improve this by checking actual date
+    assertThat("current loan has non-null due date",
+      representation.getJsonObject("loan").getString("dueDate"), notNullValue());
   }
 
   @Test
