@@ -1,14 +1,10 @@
 package api.requests;
 
-import io.vertx.core.json.JsonObject;
-import api.support.APITests;
-import api.support.builders.RequestBuilder;
-import api.support.builders.UserBuilder;
-import api.support.http.InterfaceUrls;
-import org.folio.circulation.support.JsonArrayHelper;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
-import org.junit.Test;
+import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
+import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
+import static java.net.HttpURLConnection.HTTP_OK;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
@@ -19,9 +15,16 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static java.net.HttpURLConnection.*;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import org.folio.circulation.support.JsonArrayHelper;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
+import org.junit.Test;
+
+import api.support.APITests;
+import api.support.builders.RequestBuilder;
+import api.support.builders.UserBuilder;
+import api.support.http.InterfaceUrls;
+import io.vertx.core.json.JsonObject;
 
 public class RequestsAPIDeletionTests extends APITests {
 
@@ -138,7 +141,8 @@ public class RequestsAPIDeletionTests extends APITests {
 
     Response getAllResponse = getAllCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat(getAllResponse.getStatusCode(), is(HTTP_OK));
+    assertThat(String.format("Get all requests failed: \"%s\"", getAllResponse.getBody()),
+      getAllResponse.getStatusCode(), is(HTTP_OK));
 
     JsonObject allRequests = getAllResponse.getJson();
 

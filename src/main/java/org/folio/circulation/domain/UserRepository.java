@@ -1,25 +1,28 @@
 package org.folio.circulation.domain;
 
-import java.lang.invoke.MethodHandles;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.support.*;
-import org.folio.circulation.support.http.server.ValidationError;
-
-import java.util.concurrent.CompletableFuture;
-
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.CqlHelper;
+import org.folio.circulation.support.FetchSingleRecord;
+import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.client.Response;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.folio.circulation.support.http.server.ValidationError;
 
 public class UserRepository {
   private final CollectionResourceClient usersStorageClient;
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   public UserRepository(Clients clients) {
     usersStorageClient = clients.usersStorage();
@@ -77,54 +80,53 @@ public class UserRepository {
           "Could not find user with matching barcode", propertyName, barcode)))));
   }
   
-  public CompletableFuture<HttpResult<MultipleRecords<Request>>> 
-    findUsersForRequests(MultipleRecords<Request> multipleRequests) {
+  CompletableFuture<HttpResult<MultipleRecords<Request>>> findUsersForRequests(
+    MultipleRecords<Request> multipleRequests) {
+
     Collection<Request> requests = multipleRequests.getRecords();
-    List<String> clauses = new ArrayList<>();
-    
-    for(Request request : requests) {
-      String requesterId = request.getUserId();
-      String proxyId = request.getProxyUserId();
-      if(requesterId != null) {
-        clauses.add(String.format("( id==%s )", requesterId));
-      }
-      if(proxyId != null) {
-        clauses.add(String.format("( id==%s )", proxyId));
-      }
-    }
-    if(clauses.isEmpty()) {
-      log.info("No users to query");
-      return CompletableFuture.completedFuture(HttpResult.succeeded(multipleRequests));
-    }
-    final String usersQuery = String.join(" OR ", clauses);
-    log.info(String.format("Querying users with query %s", usersQuery));
-    HttpResult<String> queryResult = CqlHelper.encodeQuery(usersQuery);
-    return queryResult.after(query -> usersStorageClient.getMany(query)
+
+    final List<String> usersToFetch = requests.stream()
+      .map(this::getUsersFromRequest)
+      .flatMap(Collection::stream)
+      .distinct()
+      .collect(Collectors.toList());
+
+    final String query = CqlHelper.multipleRecordsCqlQuery(usersToFetch);
+
+    return usersStorageClient.getMany(query, requests.size(), 0)
       .thenApply(this::mapResponseToUsers)
       .thenApply(multipleUsersResult -> multipleUsersResult.next(
-        multipleUsers -> {
-          List<Request> newRequestList = new ArrayList<>();
-          Collection<User> userCollection = multipleUsers.getRecords();
-          for(Request request : requests) {
-            Request newRequest = request;
-            String requesterId = newRequest.getUserId() != null ?
-            newRequest.getUserId() : "";
-            String proxyId = newRequest.getProxyUserId() != null ?
-            newRequest.getProxyUserId() : "";
-            for(User user : userCollection) {
-              if(requesterId.equals(user.getId())) {
-                newRequest = newRequest.withRequester(user);               
-              }
-              if(proxyId.equals(user.getId())) {
-                newRequest = newRequest.withProxy(user);               
-              }
-            }            
-            newRequestList.add(newRequest);
-          }
-          return HttpResult.succeeded(new MultipleRecords<>(newRequestList, multipleRequests.getTotalRecords()));
-        })));
+        multipleUsers -> HttpResult.of(() ->
+          multipleRequests.mapRecords(request ->
+            matchUsersToRequests(request, multipleUsers)))));
   }
-  
+
+  private ArrayList<String> getUsersFromRequest(Request request) {
+    final ArrayList<String> usersToFetch = new ArrayList<>();
+
+    if(request.getUserId() != null) {
+      usersToFetch.add(request.getUserId());
+    }
+
+    if(request.getProxyUserId() != null) {
+      usersToFetch.add(request.getProxyUserId());
+    }
+
+    return usersToFetch;
+  }
+
+  private Request matchUsersToRequests(
+    Request request,
+    MultipleRecords<User> users) {
+
+    final Map<String, User> userMap = users.toMap(User::getId);
+
+    return request
+      .withRequester(userMap.getOrDefault(request.getUserId(), null))
+      .withProxy(userMap.getOrDefault(request.getProxyUserId(), null));
+  }
+
+
   private HttpResult<MultipleRecords<User>> mapResponseToUsers(Response response) {
     return MultipleRecords.from(response, User::from, "users");
   }

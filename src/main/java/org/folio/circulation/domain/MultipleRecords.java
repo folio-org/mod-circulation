@@ -1,12 +1,9 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.ServerErrorFailure;
-import org.folio.circulation.support.http.client.Response;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static java.util.function.Function.identity;
+import static org.folio.circulation.support.HttpResult.failed;
+import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -15,10 +12,14 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static java.util.function.Function.identity;
-import static org.folio.circulation.support.HttpResult.failed;
-import static org.folio.circulation.support.HttpResult.succeeded;
-import static org.folio.circulation.support.JsonArrayHelper.mapToList;
+import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.http.client.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 public class MultipleRecords<T> {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -68,6 +69,20 @@ public class MultipleRecords<T> {
   Map<String, T> toMap(Function<T, String> keyMapper) {
     return getRecords().stream().collect(
       Collectors.toMap(keyMapper, identity()));
+  }
+
+  /**
+   * Maps the records within a multiple records collection
+   * using the providing mapping function
+   * @param mapper function to map each record to new record
+   * @param <R> Type of record to map to
+   * @return new multiple records collection with mapped records
+   * and same total record count
+   */
+  public <R> MultipleRecords<R> mapRecords(Function<T, R> mapper) {
+    return new MultipleRecords<>(
+      getRecords().stream().map(mapper).collect(Collectors.toList()),
+        getTotalRecords());
   }
 
   public JsonObject asJson(

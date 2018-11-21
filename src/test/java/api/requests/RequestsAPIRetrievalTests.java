@@ -1,6 +1,11 @@
 package api.requests;
 
+import static api.APITestSuite.workAddressTypeId;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static api.support.matchers.UUIDMatcher.is;
+import static org.hamcrest.Matchers.emptyString;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -23,6 +28,7 @@ import org.joda.time.LocalDate;
 import org.junit.Test;
 
 import api.support.APITests;
+import api.support.builders.Address;
 import api.support.builders.ItemBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
@@ -31,7 +37,6 @@ import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
 public class RequestsAPIRetrievalTests extends APITests {
-
   @Test
   public void canGetARequestById()
     throws MalformedURLException,
@@ -46,16 +51,20 @@ public class RequestsAPIRetrievalTests extends APITests {
     String enumeration = "DUMMY_ENUMERATION";
     
     UUID facultyGroupId = patronGroupsFixture.faculty().getId();
+    groupsToDelete.add(facultyGroupId);
+
     UUID staffGroupId = patronGroupsFixture.staff().getId();
-    
+    groupsToDelete.add(staffGroupId);
+
     itemsFixture.basedUponSmallAngryPlanet(itemBuilder -> itemBuilder
         .withId(itemId)
         .withEnumeration(enumeration));
     
     final IndividualResource sponsor = usersFixture.rebecca(
-        builder -> { return builder.withPatronGroupId(facultyGroupId); });
+        builder -> builder.withPatronGroupId(facultyGroupId));
+
     final IndividualResource proxy = usersFixture.steve(
-        builder -> { return builder.withPatronGroupId(staffGroupId); });
+        builder -> builder.withPatronGroupId(staffGroupId));
 
     final IndividualResource cd1 = servicePointsFixture.cd1();
     servicePointsToDelete.add(cd1.getId());
@@ -103,19 +112,21 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(representation.getString("pickupServicePointId"),
         is(pickupServicePointId.toString()));
     assertThat(representation.getString("status"), is("Open - Not yet filled"));
-    assertThat(representation.containsKey("loan"), is(true));
+
     assertThat(representation.containsKey("proxy"), is(true));
     assertThat(representation.getJsonObject("proxy").containsKey("patronGroup"), is (true));
     assertThat(representation.getJsonObject("proxy").getString("patronGroupId"),
         is(staffGroupId.toString()));
     assertThat(representation.getJsonObject("proxy").getJsonObject("patronGroup").getString("id"),
         is(staffGroupId.toString()));
+
     assertThat(representation.containsKey("requester"), is(true));
     assertThat(representation.getJsonObject("requester").containsKey("patronGroup"), is (true));
     assertThat(representation.getJsonObject("requester").getString("patronGroupId"),
         is(facultyGroupId.toString()));
     assertThat(representation.getJsonObject("requester").getJsonObject("patronGroup").getString("id"),
         is(facultyGroupId.toString()));
+
     assertThat(representation.containsKey("pickupServicePoint"), is(true));
     assertThat(representation.getJsonObject("pickupServicePoint").getString("name"),
         is(cd1.getJson().getString("name")));
@@ -125,6 +136,7 @@ public class RequestsAPIRetrievalTests extends APITests {
         is(cd1.getJson().getString("discoveryDisplayName")));
     assertThat(representation.getJsonObject("pickupServicePoint").getBoolean("pickupLocation"),
         is(cd1.getJson().getBoolean("pickupLocation")));
+
     assertThat("has information taken from item",
       representation.containsKey("item"), is(true));
 
@@ -160,6 +172,71 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat("barcode is taken from requesting user",
       representation.getJsonObject("requester").getString("barcode"),
       is("6059539205"));
+
+    assertThat("barcode is taken from requesting user",
+      representation.getJsonObject("requester").getString("barcode"),
+      is("6059539205"));
+
+    assertThat("current loan is present",
+      representation.containsKey("loan"), is(true));
+
+    assertThat("current loan has a due date",
+      representation.getJsonObject("loan").containsKey("dueDate"), is(true));
+
+    //TODO: Improve this by checking actual date
+    assertThat("current loan has non-null due date",
+      representation.getJsonObject("loan").getString("dueDate"), notNullValue());
+  }
+
+  @Test
+  public void canGetARequestToBeFulfilledByDeliveryToAnAddressById()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+      ItemBuilder::available);
+
+    final IndividualResource charlotte = usersFixture.charlotte(
+      builder -> builder.withAddress(
+        new Address(workAddressTypeId(),
+          "Fake first address line",
+          "Fake second address line",
+          "Fake city",
+          "Fake region",
+          "Fake postal code",
+          "Fake country code")));
+
+    final IndividualResource james = usersFixture.james();
+
+    loansFixture.checkOut(smallAngryPlanet, james);
+
+    IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
+      .recall()
+      .forItem(smallAngryPlanet)
+      .deliverToAddress(workAddressTypeId())
+      .by(charlotte));
+
+    JsonObject representation = requestsClient.getById(createdRequest.getId()).getJson();
+
+    assertThat(representation.getString("id"), is(not(emptyString())));
+    assertThat(representation.getString("requestType"), is("Recall"));
+    assertThat(representation.getString("fulfilmentPreference"), is("Delivery"));
+    assertThat(representation.getString("deliveryAddressTypeId"), is(workAddressTypeId()));
+
+    assertThat("Request should have a delivery address",
+      representation.containsKey("deliveryAddress"), is(true));
+
+    final JsonObject deliveryAddress = representation.getJsonObject("deliveryAddress");
+
+    assertThat(deliveryAddress.getString("addressTypeId"), is(workAddressTypeId()));
+    assertThat(deliveryAddress.getString("addressLine1"), is("Fake first address line"));
+    assertThat(deliveryAddress.getString("addressLine2"), is("Fake second address line"));
+    assertThat(deliveryAddress.getString("city"), is("Fake city"));
+    assertThat(deliveryAddress.getString("region"), is("Fake region"));
+    assertThat(deliveryAddress.getString("postalCode"), is("Fake postal code"));
+    assertThat(deliveryAddress.getString("countryId"), is("Fake country code"));
   }
 
   @Test
@@ -181,19 +258,27 @@ public class RequestsAPIRetrievalTests extends APITests {
     InterruptedException,
     ExecutionException,
     TimeoutException {
-    
-    //UUID requesterId = usersClient.create(new UserBuilder()).getId();
+
     final IndividualResource cd1 = servicePointsFixture.cd1();
     final IndividualResource cd2 = servicePointsFixture.cd2();
     UUID pickupServicePointId = cd1.getId();
     UUID pickupServicePointId2 = cd2.getId();
     
     UUID facultyGroupId = patronGroupsFixture.faculty().getId();
+    groupsToDelete.add(facultyGroupId);
+
     UUID staffGroupId = patronGroupsFixture.staff().getId();
+    groupsToDelete.add(staffGroupId);
+
+    final IndividualResource jessica = usersFixture.jessica();
+    final IndividualResource charlotte = usersFixture.charlotte();
+
     final IndividualResource sponsor = usersFixture.rebecca(
-        builder -> { return builder.withPatronGroupId(facultyGroupId); });
-    final IndividualResource proxy = usersFixture.steve(builder -> 
-    { return builder.withPatronGroupId(staffGroupId); });
+        builder -> builder.withPatronGroupId(facultyGroupId));
+
+    final IndividualResource proxy = usersFixture.steve(
+      builder -> builder.withPatronGroupId(staffGroupId));
+
     UUID proxyId = proxy.getId();
     UUID requesterId = sponsor.getId();
     
@@ -202,44 +287,56 @@ public class RequestsAPIRetrievalTests extends APITests {
     servicePointsToDelete.add(cd1.getId());
     servicePointsToDelete.add(cd2.getId());
 
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource nod = itemsFixture.basedUponNod();
+    final IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
+    final IndividualResource temeraire = itemsFixture.basedUponTemeraire();
+    final IndividualResource uprooted = itemsFixture.basedUponUprooted();
+
+    loansFixture.checkOut(smallAngryPlanet, jessica);
+    loansFixture.checkOut(nod, charlotte);
+    loansFixture.checkOut(interestingTimes, charlotte);
+    loansFixture.checkOut(temeraire, jessica);
+    loansFixture.checkOut(uprooted, jessica);
+
     requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut).getId())
+      .withItemId(smallAngryPlanet.getId())
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId));
 
     requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponNod(ItemBuilder::checkOut).getId())
+      .withItemId(nod.getId())
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId2));
 
     requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponInterestingTimes(ItemBuilder::checkOut).getId())
+      .withItemId(interestingTimes.getId())
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId));
 
     requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
+      .withItemId(temeraire.getId())
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId2));
 
     requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponNod(ItemBuilder::checkOut).getId())
+      .withItemId(nod.getId())
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId));
 
     requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponUprooted(ItemBuilder::checkOut).getId())
+      .withItemId(uprooted.getId())
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId));
 
     requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
+      .withItemId(temeraire.getId())
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId2));
@@ -257,11 +354,98 @@ public class RequestsAPIRetrievalTests extends APITests {
     List<JsonObject> requestList = getRequests(getResponse.getJson());
     
     requestList.forEach(this::requestHasExpectedProperties);
+    requestList.forEach(this::requestHasExpectedLoanProperties);
     requestList.forEach(this::requestHasServicePointProperties);
     requestList.forEach(this::requestHasPatronGroupProperties);
-  
   }
-  
+
+  @Test
+  public void fulfilledByDeliveryIncludesAddressWhenFindingMultipleRequests()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+
+    final IndividualResource charlotte = usersFixture.charlotte(
+      builder -> builder.withAddress(
+        new Address(workAddressTypeId(),
+          "Fake first address line",
+          "Fake second address line",
+          "Fake city",
+          "Fake region",
+          "Fake postal code",
+          "Fake country code")));
+
+    final IndividualResource james = usersFixture.james();
+
+    loansFixture.checkOut(smallAngryPlanet, james);
+
+    requestsFixture.place(new RequestBuilder()
+      .recall()
+      .forItem(smallAngryPlanet)
+      .deliverToAddress(workAddressTypeId())
+      .by(charlotte));
+
+    final List<JsonObject> allRequests = requestsClient.getAll();
+
+    assertThat(allRequests.size(), is(1));
+
+    JsonObject representation = allRequests.get(0);
+
+    assertThat(representation.getString("id"), is(not(emptyString())));
+    assertThat(representation.getString("requestType"), is("Recall"));
+    assertThat(representation.getString("fulfilmentPreference"), is("Delivery"));
+    assertThat(representation.getString("deliveryAddressTypeId"), is(workAddressTypeId()));
+
+    assertThat("Request should have a delivery address",
+      representation.containsKey("deliveryAddress"), is(true));
+
+    final JsonObject deliveryAddress = representation.getJsonObject("deliveryAddress");
+
+    assertThat(deliveryAddress.getString("addressTypeId"), is(workAddressTypeId()));
+    assertThat(deliveryAddress.getString("addressLine1"), is("Fake first address line"));
+    assertThat(deliveryAddress.getString("addressLine2"), is("Fake second address line"));
+    assertThat(deliveryAddress.getString("city"), is("Fake city"));
+    assertThat(deliveryAddress.getString("region"), is("Fake region"));
+    assertThat(deliveryAddress.getString("postalCode"), is("Fake postal code"));
+    assertThat(deliveryAddress.getString("countryId"), is("Fake country code"));
+  }
+
+  @Test
+  public void closedLoanForItemIsNotIncludedWhenFindingMultipleRequests()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+
+    final IndividualResource charlotte = usersFixture.charlotte();
+
+    final IndividualResource james = usersFixture.james();
+
+    final IndividualResource loan = loansFixture.checkOut(smallAngryPlanet, james);
+
+    requestsFixture.place(new RequestBuilder()
+      .recall()
+      .forItem(smallAngryPlanet)
+      .deliverToAddress(workAddressTypeId())
+      .by(charlotte));
+
+    loansFixture.checkIn(loan);
+
+    final List<JsonObject> allRequests = requestsClient.getAll();
+
+    assertThat(allRequests.size(), is(1));
+
+    JsonObject representation = allRequests.get(0);
+
+    assertThat("Request should not have a current loan for the item",
+      representation.containsKey("deliveryAddress"), is(false));
+  }
+
   @Test
   public void canPageAllRequests()
     throws MalformedURLException,
@@ -522,6 +706,8 @@ public class RequestsAPIRetrievalTests extends APITests {
   }
 
   private List<JsonObject> getRequests(JsonObject page) {
+    System.out.println("Found requests");
+    System.out.println(page.getJsonArray("requests").encodePrettily());
     return JsonArrayHelper.toList(page.getJsonArray("requests"));
   }
 
@@ -536,6 +722,10 @@ public class RequestsAPIRetrievalTests extends APITests {
     hasProperty("requester", request, "request");
     hasProperty("status", request, "request");
   }
+
+  private void requestHasExpectedLoanProperties(JsonObject request) {
+    hasProperty("dueDate", request.getJsonObject("loan"), "loan");
+  }
   
   private void requestHasServicePointProperties(JsonObject request) {
     hasProperty("pickupServicePointId", request, "request");
@@ -546,11 +736,16 @@ public class RequestsAPIRetrievalTests extends APITests {
   
   private void requestHasPatronGroupProperties(JsonObject request) {
     hasProperty("proxy", request, "proxy");
+
+    hasProperty("patronGroupId", request.getJsonObject("proxy"), "proxy");
     hasProperty("patronGroup", request.getJsonObject("proxy"), "patronGroup");
     hasProperty("id", request.getJsonObject("proxy").getJsonObject("patronGroup"), "id");
     hasProperty("group", request.getJsonObject("proxy").getJsonObject("patronGroup"), "group");
     hasProperty("desc", request.getJsonObject("proxy").getJsonObject("patronGroup"), "desc");
+
     hasProperty("requester", request, "requester");
+
+    hasProperty("patronGroupId", request.getJsonObject("requester"), "requester");
     hasProperty("patronGroup", request.getJsonObject("requester"), "patronGroup");
     hasProperty("id", request.getJsonObject("requester").getJsonObject("patronGroup"), "id");
     hasProperty("group", request.getJsonObject("requester").getJsonObject("patronGroup"), "desc");
@@ -558,6 +753,10 @@ public class RequestsAPIRetrievalTests extends APITests {
   }
 
   private void hasProperty(String property, JsonObject resource, String type) {
+    assertThat(String.format("%s should have %s: %s: is missing outer property",
+      type, property, resource),
+      resource, notNullValue());
+
     assertThat(String.format("%s should have %s: %s",
       type, property, resource),
       resource.containsKey(property), is(true));

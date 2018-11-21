@@ -142,23 +142,23 @@
           "readonly": true
         },
         "patronGroupId": {
-          "description": "UUID for the patrongroup that this user belongs to",
+          "description": "UUID for the patron group that this user belongs to",
           "type": "string"
         },
         "patronGroup": {
-          "description": "record for the user's patrongroup",
+          "description": "record for the user's patron group",
           "type": "object",
           "properties": {
             "id": {
-              "description": "ID of the patrongroup",
+              "description": "ID of the patron group",
               "type": "string"
             },
             "group": {
-              "description": "The unique name of the patrongroup",
+              "description": "The unique name of the patron group",
               "type": "string"
             },
             "desc": {
-              "description": "A description of the patrongroup",
+              "description": "A description of the patron group",
               "type": "string"
             }
           }
@@ -225,6 +225,41 @@
       "description": "Deliver to the address of this type, for the requesting patron",
       "type": "string",
       "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+    },
+    "deliveryAddress": {
+      "description": "Address the item is to be delivered to (derived from requester information)",
+      "type": "object",
+      "properties": {
+        "addressLine1": {
+          "description": "Address line 1",
+          "type": "string"
+        },
+        "addressLine2": {
+          "description": "Address line 2",
+          "type": "string"
+        },
+        "city": {
+          "description": "City name",
+          "type": "string"
+        },
+        "region": {
+          "description": "Region",
+          "type": "string"
+        },
+        "postalCode": {
+          "description": "Postal code",
+          "type": "string"
+        },
+        "countryId": {
+          "description": "Country code",
+          "type": "string"
+        },
+        "addressTypeId": {
+          "description": "Type of address (refers to address types)",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
     },
     "requestExpirationDate": {
       "description": "Date when the request expires",

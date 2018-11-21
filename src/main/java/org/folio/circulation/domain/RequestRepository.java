@@ -1,10 +1,8 @@
 package org.folio.circulation.domain;
 
-import static org.folio.circulation.domain.Request.from;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
 
-import java.net.URLEncoder;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.support.Clients;
@@ -51,7 +49,7 @@ public class RequestRepository {
   }
 
   public CompletableFuture<HttpResult<MultipleRecords<Request>>> findBy(String query) {
-    return requestsStorageClient.getMany(query)
+    return requestsStorageClient.getManyWithRawQueryStringParameters(query)
       .thenApply(this::mapResponseToRequests)
       .thenComposeAsync(result -> itemRepository.fetchItemsFor(result, Request::withItem))
       .thenComposeAsync(result -> result.after(loanRepository::findOpenLoansFor))
@@ -97,36 +95,6 @@ public class RequestRepository {
       .fetch(id);
   }
 
-  public CompletableFuture<HttpResult<Integer>> getRequestCount(String itemId) {
-    if(itemId == null) {
-      CompletableFuture c = new CompletableFuture<HttpResult<Integer>>();
-      HttpResult<Integer> h = HttpResult.succeeded(0);
-      c.complete(h);
-      return c;
-    }
-    String requestsQuery = URLEncoder.encode(String.format(
-        "itemId==%s AND status=Open", itemId));
-   
-    return requestsStorageClient.getMany(requestsQuery)
-        .thenApply(response -> {
-          try {
-            if(response.getStatusCode() != 200) {
-              return HttpResult.failed(new ForwardOnFailure(response));
-            } else {
-              JsonObject responseJson = response.getJson();
-              Integer totalResults = responseJson.getInteger("totalRecords");
-              if(totalResults != null) {
-                return HttpResult.succeeded(totalResults);
-              } else {
-                return HttpResult.failed(new ForwardOnFailure(response));
-              }
-            }
-          } catch(Exception e) {
-            return HttpResult.failed(new ForwardOnFailure(response));
-          }
-        });
-  }
-  
   public CompletableFuture<HttpResult<Request>> getById(String id) {
     return fetchRequest(id)
       .thenComposeAsync(result -> result.combineAfter(itemRepository::fetchFor,
@@ -177,7 +145,10 @@ public class RequestRepository {
     return requestsStorageClient.post(representation)
       .thenApply(response -> {
         if (response.getStatusCode() == 201) {
-          return succeeded(requestAndRelatedRecords.withRequest(from(response.getJson())));
+          //Retain all of the previously fetched related records
+          return succeeded(requestAndRelatedRecords.withRequest(
+            request.withJsonRepresentation(response.getJson())
+          ));
         } else {
           return failed(new ForwardOnFailure(response));
         }
@@ -234,10 +205,6 @@ public class RequestRepository {
   
   private CompletableFuture<HttpResult<ServicePoint>> getServicePoint(String servicePointId) {
     return servicePointRepository.getServicePointById(servicePointId);
-  }
-  
-  private CompletableFuture<HttpResult<PatronGroup>> getPatronGroup(String patronGroupId) {
-    return patronGroupRepository.getPatronGroupById(patronGroupId);
   }
   
 }

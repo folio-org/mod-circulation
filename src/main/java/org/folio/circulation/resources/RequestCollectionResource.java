@@ -1,18 +1,34 @@
 package org.folio.circulation.resources;
 
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.RoutingContext;
-import org.folio.circulation.domain.*;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.ValidationErrorFailure.failure;
+
+import org.folio.circulation.domain.CreateRequestService;
+import org.folio.circulation.domain.LoanRepository;
+import org.folio.circulation.domain.RequestAndRelatedRecords;
+import org.folio.circulation.domain.RequestQueueRepository;
+import org.folio.circulation.domain.RequestRepository;
+import org.folio.circulation.domain.RequestRepresentation;
+import org.folio.circulation.domain.UpdateItem;
+import org.folio.circulation.domain.UpdateLoanActionHistory;
+import org.folio.circulation.domain.UpdateRequestQueue;
+import org.folio.circulation.domain.UpdateRequestService;
+import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.representations.RequestProperties;
 import org.folio.circulation.domain.validation.ClosedRequestValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
 import org.folio.circulation.support.*;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.CreatedJsonHttpResult;
+import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.NoContentHttpResult;
+import org.folio.circulation.support.OkJsonHttpResult;
 import org.folio.circulation.support.http.server.WebContext;
 
-import static org.folio.circulation.support.JsonPropertyWriter.write;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.RoutingContext;
 
 public class RequestCollectionResource extends CollectionResource {
   public RequestCollectionResource(HttpClient client) {
@@ -113,7 +129,7 @@ public class RequestCollectionResource extends CollectionResource {
     final RequestRepresentation requestRepresentation = new RequestRepresentation();
 
     String id = routingContext.request().getParam("id");
-        
+
     requestRepository.getById(id)
       .thenApply(r -> r.map(requestRepresentation::extendedRepresentation))
       .thenApply(OkJsonHttpResult::from)

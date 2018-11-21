@@ -1,9 +1,9 @@
 package api.support.http;
 
-import api.APITestSuite;
-
 import java.net.URL;
 import java.util.UUID;
+
+import api.APITestSuite;
 
 public class InterfaceUrls {
   static URL materialTypesStorageUrl(String subPath) {
@@ -74,8 +74,12 @@ public class InterfaceUrls {
     return APITestSuite.viaOkapiModuleUrl("/proxiesfor" + subPath);
   }
 
-  static URL groupsUrl(String subPath) {
+  static URL patronGroupsStorageUrl(String subPath) {
     return APITestSuite.viaOkapiModuleUrl("/groups" + subPath);
+  }
+
+  static URL addressTypesUrl(String subPath) {
+    return APITestSuite.viaOkapiModuleUrl("/addresstypes" + subPath);
   }
 
   public static URL requestsUrl() {
@@ -123,15 +127,7 @@ public class InterfaceUrls {
         "/cancellation-reason-storage/cancellation-reasons" + subPath);
   }
 
-  public static URL cancellationReasonsStorageUrl() {
-    return cancellationReasonsStorageUrl("");
-  }
-  
   public static URL servicePointsStorageUrl(String subPath) {
     return APITestSuite.viaOkapiModuleUrl("/service-points" + subPath);
-  }
-  
-  public static URL patronGroupsStorageUrl(String subPath) {
-    return APITestSuite.viaOkapiModuleUrl("/groups" + subPath);
   }
 }

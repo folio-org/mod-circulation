@@ -1,12 +1,7 @@
 package api.support.http;
 
-import api.support.builders.Builder;
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.JsonArrayHelper;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -18,8 +13,15 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import org.folio.circulation.support.JsonArrayHelper;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.OkapiHttpClient;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
+import org.hamcrest.CoreMatchers;
+
+import api.support.builders.Builder;
+import io.vertx.core.json.JsonObject;
 
 public class ResourceClient {
   
@@ -77,12 +79,16 @@ public class ResourceClient {
     return new ResourceClient(client, InterfaceUrls::proxyRelationshipsUrl,
       "proxiesFor");
   }
-/*
-  public static ResourceClient forGroups(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::groupsUrl,
-      "groups", "usergroups");
+
+  public static ResourceClient forPatronGroups(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::patronGroupsStorageUrl,
+      "patron groups", "usergroups");
   }
-*/
+
+  public static ResourceClient forAddressTypes(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::addressTypesUrl,
+      "address types", "addressTypes");
+  }
 
   public static ResourceClient forLoansStorage(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::loansStorageUrl,
@@ -137,11 +143,6 @@ public class ResourceClient {
   public static ResourceClient forServicePoints(OkapiHttpClient client) {
    return new ResourceClient(client, InterfaceUrls::servicePointsStorageUrl,
        "service points", "servicepoints");
-  }
-  
-  public static ResourceClient forPatronGroups(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::patronGroupsStorageUrl,
-      "patron groups", "usergroups");
   }
 
   private ResourceClient(
@@ -394,7 +395,9 @@ public class ResourceClient {
 
     assertThat(String.format(
       "Failed to delete %s %s: %s", resourceName, id, response.getBody()),
-      response.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
+      response.getStatusCode(), CoreMatchers.anyOf(
+        is(HttpURLConnection.HTTP_NO_CONTENT),
+        is(HttpURLConnection.HTTP_NOT_FOUND)));
   }
 
   public void delete(IndividualResource resource)

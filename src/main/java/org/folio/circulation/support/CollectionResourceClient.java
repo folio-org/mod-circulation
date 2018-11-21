@@ -1,9 +1,10 @@
 package org.folio.circulation.support;
 
-import io.vertx.core.Handler;
-import io.vertx.core.http.HttpClientResponse;
+import java.lang.invoke.MethodHandles;
+import java.net.URL;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
-import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.http.entity.ContentType;
@@ -12,10 +13,9 @@ import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.invoke.MethodHandles;
-import java.net.URL;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
+import io.vertx.core.Handler;
+import io.vertx.core.http.HttpClientResponse;
+import io.vertx.core.json.JsonObject;
 
 public class CollectionResourceClient {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -103,11 +103,22 @@ public class CollectionResourceClient {
     return future;
   }
 
-  public CompletableFuture<Response> getMany(String urlEncodedQuery) {
+  /**
+   * Make a get request for multiple records using raw query string parameters
+   * Should only be used when passing on entire query string from a client request
+   * Is deprecated, and will be removed when all use replaced by explicit parsing
+   * of request parameters
+   *
+   * @param rawQueryString raw query string to append to the URL
+   * @return response from the server
+   */
+  public CompletableFuture<Response> getManyWithRawQueryStringParameters(
+    String rawQueryString) {
+
     final CompletableFuture<Response> future = new CompletableFuture<>();
 
-    String url = isProvided(urlEncodedQuery)
-      ? String.format("%s?%s", collectionRoot, urlEncodedQuery)
+    String url = isProvided(rawQueryString)
+      ? String.format("%s?%s", collectionRoot, rawQueryString)
       : collectionRoot.toString();
 
     client.get(url, responseConversationHandler(future::complete));
