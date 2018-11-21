@@ -3,8 +3,11 @@ package org.folio.circulation.domain.representations;
 import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getUUIDProperty;
 import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
+
+import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.FindByBarcodeQuery;
@@ -23,13 +26,13 @@ public class CheckInByBarcodeRequest implements FindByBarcodeQuery {
 
   private final String itemBarcode;
   private final String userBarcode;
-  private final String servicePointId;
-  private DateTime checkInDate;
+  private final UUID servicePointId;
+  private final DateTime checkInDate;
 
   private CheckInByBarcodeRequest(
     String itemBarcode,
     String userBarcode,
-    String servicePointId,
+    UUID servicePointId,
     DateTime checkInDate) {
 
     this.itemBarcode = itemBarcode;
@@ -45,9 +48,9 @@ public class CheckInByBarcodeRequest implements FindByBarcodeQuery {
       return failedResult("Checkin request must have an item barcode", ITEM_BARCODE, null);
     }
 
-    final String servicePointId = getProperty(json, SERVICE_POINT_ID);
+    final UUID servicePointId = getUUIDProperty(json, SERVICE_POINT_ID);
 
-    if (StringUtils.isBlank(servicePointId)) {
+    if (servicePointId == null) {
       return failedResult("Checkin request must have a service point id", SERVICE_POINT_ID, null);
     }
 
@@ -66,7 +69,7 @@ public class CheckInByBarcodeRequest implements FindByBarcodeQuery {
     return userBarcode;
   }
 
-  public String getServicePointId() {
+  public UUID getServicePointId() {
     return servicePointId;
   }
 
