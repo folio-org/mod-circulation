@@ -2,6 +2,7 @@ package org.folio.circulation.domain;
 
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKIN_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.DUE_DATE;
+import static org.folio.circulation.domain.representations.LoanProperties.RETURN_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.STATUS;
 import static org.folio.circulation.domain.representations.LoanProperties.USER_ID;
 import static org.folio.circulation.support.HttpResult.failed;
@@ -83,6 +84,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public void changeDueDate(DateTime dueDate) {
     write(representation, DUE_DATE, dueDate);
+  }
+
+  private void changeReturnDate(DateTime returnDate) {
+    write(representation, RETURN_DATE, returnDate);
   }
 
   private void changeAction(String action) {
@@ -195,9 +200,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return this;
   }
 
-  public Loan checkin() {
+  public Loan checkin(DateTime returnDate) {
     changeAction("checkin");
     changeStatus("Closed");
+    changeReturnDate(returnDate);
     return this;
   }
 

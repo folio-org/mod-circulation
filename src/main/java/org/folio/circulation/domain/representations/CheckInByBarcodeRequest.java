@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.representations;
 
 import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
@@ -10,22 +11,31 @@ import org.folio.circulation.domain.FindByBarcodeQuery;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ValidationErrorFailure;
+import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
 public class CheckInByBarcodeRequest implements FindByBarcodeQuery {
   private static final String USER_BARCODE = "userBarcode";
   private static final String ITEM_BARCODE = "itemBarcode";
+  private static final String CHECK_IN_DATE = "checkInDate";
   private static final String SERVICE_POINT_ID = "servicePointId";
 
   private final String itemBarcode;
   private final String userBarcode;
   private final String servicePointId;
+  private DateTime checkInDate;
 
-  private CheckInByBarcodeRequest(String itemBarcode, String userBarcode, String servicePointId) {
+  private CheckInByBarcodeRequest(
+    String itemBarcode,
+    String userBarcode,
+    String servicePointId,
+    DateTime checkInDate) {
+
     this.itemBarcode = itemBarcode;
     this.userBarcode = userBarcode;
     this.servicePointId = servicePointId;
+    this.checkInDate = checkInDate;
   }
 
   public static HttpResult<CheckInByBarcodeRequest> from(JsonObject json) {
@@ -41,7 +51,9 @@ public class CheckInByBarcodeRequest implements FindByBarcodeQuery {
       return failedResult("Checkin request must have a service point id", SERVICE_POINT_ID, null);
     }
 
-    return succeeded(new CheckInByBarcodeRequest(itemBarcode, null, servicePointId));
+    final DateTime checkInDate = getDateTimeProperty(json, CHECK_IN_DATE);
+
+    return succeeded(new CheckInByBarcodeRequest(itemBarcode, null, servicePointId, checkInDate));
   }
 
   @Override
@@ -67,5 +79,9 @@ public class CheckInByBarcodeRequest implements FindByBarcodeQuery {
   @Override
   public boolean userMatches(User user) {
     return StringUtils.equals(user.getBarcode(), getUserBarcode());
+  }
+
+  public DateTime getCheckInDate() {
+    return checkInDate;
   }
 }
