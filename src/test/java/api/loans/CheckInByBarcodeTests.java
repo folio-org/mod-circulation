@@ -2,7 +2,10 @@ package api.loans;
 
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.UUIDMatcher.is;
+import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
+import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static org.folio.HttpStatus.HTTP_INTERNAL_SERVER_ERROR;
+import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -19,6 +22,7 @@ import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
 import api.support.APITests;
+import api.support.builders.CheckInByBarcodeRequestBuilder;
 import io.vertx.core.json.JsonObject;
 
 public class CheckInByBarcodeTests extends APITests {
@@ -78,6 +82,31 @@ public class CheckInByBarcodeTests extends APITests {
 
     assertThat("Checkin Service Point Id should be stored.",
       storedLoan.getString("checkinServicePointId"), is(checkinServicePointId));
+  }
+
+  @Test
+  public void cannotCheckInWithoutAServicePoint()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, DateTimeZone.UTC);
+
+    final IndividualResource james = usersFixture.james();
+    final IndividualResource nod = itemsFixture.basedUponNod();
+
+    loansFixture.checkOut(nod, james, loanDate);
+
+    final Response response = loansFixture.attemptCheckInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(nod)
+        .on(DateTime.now()));
+
+    assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
+
+    assertThat(response.getJson(), hasErrorWith(hasMessage(
+        "Checkin request must have a service point id")));
   }
 
   @Test

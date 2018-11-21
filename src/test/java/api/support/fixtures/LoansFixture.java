@@ -26,6 +26,7 @@ import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
+import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.builders.RenewByBarcodeRequestBuilder;
@@ -37,12 +38,18 @@ public class LoansFixture {
   private final ResourceClient loansClient;
   private final OkapiHttpClient client;
 
-  public LoansFixture(ResourceClient loansClient, OkapiHttpClient client) {
+  public LoansFixture(
+    ResourceClient loansClient,
+    OkapiHttpClient client) {
+
     this.loansClient = loansClient;
     this.client = client;
   }
 
-  public IndividualResource checkOut(IndividualResource item, IndividualResource to)
+  public IndividualResource checkOut(
+    IndividualResource item,
+    IndividualResource to)
+
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
@@ -151,7 +158,9 @@ public class LoansFixture {
       .at(UUID.randomUUID()));
   }
 
-  public IndividualResource checkOutByBarcode(CheckOutByBarcodeRequestBuilder builder) {
+  public IndividualResource checkOutByBarcode(
+    CheckOutByBarcodeRequestBuilder builder) {
+
     JsonObject request = builder.create();
 
     return new IndividualResource(
@@ -169,12 +178,15 @@ public class LoansFixture {
       .at(UUID.randomUUID()));
   }
 
-  public Response attemptCheckOutByBarcode(CheckOutByBarcodeRequestBuilder builder) {
+  public Response attemptCheckOutByBarcode(
+    CheckOutByBarcodeRequestBuilder builder) {
+
     return attemptCheckOutByBarcode(422, builder);
   }
 
   public Response attemptCheckOutByBarcode(
-    int expectedStatusCode, CheckOutByBarcodeRequestBuilder builder) {
+    int expectedStatusCode,
+    CheckOutByBarcodeRequestBuilder builder) {
 
     JsonObject request = builder.create();
 
@@ -182,7 +194,10 @@ public class LoansFixture {
       expectedStatusCode, "check-out-by-barcode-request"));
   }
 
-  public IndividualResource renewLoan(IndividualResource item, IndividualResource user) {
+  public IndividualResource renewLoan(
+    IndividualResource item,
+    IndividualResource user) {
+
     JsonObject request = new RenewByBarcodeRequestBuilder()
       .forItem(item)
       .forUser(user)
@@ -192,7 +207,10 @@ public class LoansFixture {
       "renewal-by-barcode-request")));
   }
 
-  public IndividualResource renewLoanById(IndividualResource item, IndividualResource user) {
+  public IndividualResource renewLoanById(
+    IndividualResource item,
+    IndividualResource user) {
+
     JsonObject request = new RenewByIdRequestBuilder()
       .forItem(item)
       .forUser(user)
@@ -202,7 +220,10 @@ public class LoansFixture {
       "renewal-by-id-request")));
   }
 
-  public Response attemptRenewal(IndividualResource item, IndividualResource user) {
+  public Response attemptRenewal(
+    IndividualResource item,
+    IndividualResource user) {
+
     return attemptRenewal(422, item, user);
   }
 
@@ -232,6 +253,15 @@ public class LoansFixture {
     return from(post(request, renewByIdUrl(),
       422, "renewal-by-id-request"));
   }
+
+  public Response attemptCheckInByBarcode(
+    CheckInByBarcodeRequestBuilder builder) {
+    JsonObject request = builder.create();
+
+    return from(post(request, checkInByBarcodeUrl(),
+        "check-in-by-barcode-request"));
+  }
+
 
   public Response attemptCheckInByBarcode(
     IndividualResource item,
