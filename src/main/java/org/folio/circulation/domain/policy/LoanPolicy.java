@@ -91,10 +91,6 @@ public class LoanPolicy {
       return failed(new ServerErrorFailure(e));
     }
   }
-  
-  public HttpResult<Loan> checkin(Loan loan) {
-    return HttpResult.succeeded(loan.checkin(getId()));
-  }
 
   private ValidationError errorForPolicy(String reason) {
     HashMap<String, String> parameters = new HashMap<>();

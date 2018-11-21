@@ -34,7 +34,7 @@ public class CheckInByBarcodeResource extends Resource {
     final Clients clients = Clients.create(context, client);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
-    final LoanCheckinService loanCheckinService = LoanCheckinService.using(clients);
+    final LoanCheckinService loanCheckinService = new LoanCheckinService();
 
     final UpdateItem updateItem = new UpdateItem(clients);
 
@@ -42,7 +42,7 @@ public class CheckInByBarcodeResource extends Resource {
 
     CheckInByBarcodeRequest.from(routingContext.getBodyAsJson())
       .after(loanRepository::findOpenLoanByBarcode)
-      .thenComposeAsync(r -> r.after(loanCheckinService::checkin))
+      .thenApply(r -> r.next(loanCheckinService::checkin))
       .thenComposeAsync(r -> r.after(updateItem::setLoansItemStatusAvaliable))
       .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))

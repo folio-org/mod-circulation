@@ -195,9 +195,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return this;
   }
 
-  public Loan checkin(String basedUponLoanPolicyId) {
+  public Loan checkin() {
     changeAction("checkin");
-    changeLoanPolicy(basedUponLoanPolicyId);
     changeStatus("Closed");
     return this;
   }
