@@ -135,6 +135,31 @@ public class CheckInByBarcodeTests extends APITests {
   }
 
   @Test
+  public void cannotCheckInWithoutACheckInDate()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, DateTimeZone.UTC);
+
+    final IndividualResource james = usersFixture.james();
+    final IndividualResource nod = itemsFixture.basedUponNod();
+
+    loansFixture.checkOut(nod, james, loanDate);
+
+    final Response response = loansFixture.attemptCheckInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(nod)
+        .at(UUID.randomUUID()));
+
+    assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
+
+    assertThat(response.getJson(), hasErrorWith(hasMessage(
+      "Checkin request must have an check in date")));
+  }
+
+  @Test
   public void cannotCheckInAnItemTwice()
     throws InterruptedException,
     MalformedURLException,

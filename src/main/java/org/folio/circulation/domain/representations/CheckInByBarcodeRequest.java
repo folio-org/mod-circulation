@@ -45,18 +45,28 @@ public class CheckInByBarcodeRequest implements FindByBarcodeQuery {
     final String itemBarcode = getProperty(json, ITEM_BARCODE);
 
     if (StringUtils.isBlank(itemBarcode)) {
-      return failedResult("Checkin request must have an item barcode", ITEM_BARCODE, null);
+      return failedResult("Checkin request must have an item barcode",
+        ITEM_BARCODE, null);
     }
 
     final UUID servicePointId = getUUIDProperty(json, SERVICE_POINT_ID);
 
     if (servicePointId == null) {
-      return failedResult("Checkin request must have a service point id", SERVICE_POINT_ID, null);
+      return failedResult("Checkin request must have a service point id",
+        SERVICE_POINT_ID, null);
     }
 
     final DateTime checkInDate = getDateTimeProperty(json, CHECK_IN_DATE);
 
-    return succeeded(new CheckInByBarcodeRequest(itemBarcode, null, servicePointId, checkInDate));
+    if(checkInDate == null) {
+      return failedResult("Checkin request must have an check in date",
+        CHECK_IN_DATE, null);
+    }
+
+    //TODO: Remove unused user barcode field
+    // (needed for FindByBarcodeQuery interface)
+    return succeeded(new CheckInByBarcodeRequest(itemBarcode, null,
+      servicePointId, checkInDate));
   }
 
   @Override
