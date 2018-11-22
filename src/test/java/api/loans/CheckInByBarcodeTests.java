@@ -47,13 +47,13 @@ public class CheckInByBarcodeTests extends APITests {
 
     DateTime expectedSystemReturnDate = DateTime.now(DateTimeZone.UTC);
 
-    final CheckInByBarcodeResponse updatedLoan = loansFixture.checkInByBarcode(
+    final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .on(new DateTime(2018, 3, 5, 14 ,23, 41, DateTimeZone.UTC))
         .at(checkinServicePointId));
 
-    JsonObject loanRepresentation = updatedLoan.getJson();
+    JsonObject loanRepresentation = checkInResponse.getLoan();
 
     assertThat(loanRepresentation.getString("userId"), is(james.getId().toString()));
 
