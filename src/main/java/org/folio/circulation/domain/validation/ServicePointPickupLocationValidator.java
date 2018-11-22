@@ -18,15 +18,30 @@ public class ServicePointPickupLocationValidator {
       HttpResult<RequestAndRelatedRecords> requestResult) {
 
     Request request = null;
+
     if(requestResult.value() != null) {
       request = requestResult.value().getRequest();
     }
+
     if(request == null) {
       log.info("No request present in RequestAndRelatedRecords object");
       return requestResult;
     }
+
+    if(request.getPickupServicePointId() == null) {
+      log.info("No pickup service point specified for request");
+      return requestResult;
+    }
+
+    if(request.getPickupServicePointId() != null && request.getPickupServicePoint() == null) {
+      return failed(ValidationErrorFailure.failure(
+        "Pickup service point does not exist", "pickupServicePointId",
+        request.getPickupServicePointId()));
+    }
+
     if(request.getPickupServicePoint() != null) {
       log.info("Request {} has non-null pickup location", request.getId());
+
       if(request.getPickupServicePoint().isPickupLocation()) {
         return requestResult;
       } else {            
@@ -37,10 +52,10 @@ public class ServicePointPickupLocationValidator {
             "Service point is not a pickup location", "pickupServicePointId",
             request.getPickupServicePointId()));
       }
-    } else {
+    }
+    else {
       log.info("Request {} has null pickup location", request.getId());
       return requestResult;
     }
-    
   }
 }

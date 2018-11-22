@@ -49,7 +49,8 @@ public class RequestsAPICreationTests extends APITests {
     MalformedURLException {
 
     UUID id = UUID.randomUUID();
-    UUID pickupServicePointId = UUID.randomUUID(); //TODO: Make this from a fixture after we start to actually dereference SPs
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    servicePointsToDelete.add(pickupServicePointId);
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -764,13 +765,15 @@ public class RequestsAPICreationTests extends APITests {
       is("5694596854"));
   }
   
-  @Test public void cannotCreateARequestWithANonPickupLocationServicePoint()
+  @Test
+  public void cannotCreateARequestWithANonPickupLocationServicePoint()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
     MalformedURLException {
     
     UUID pickupServicePointId = servicePointsFixture.cd3().getId();
+    servicePointsToDelete.add(pickupServicePointId);
     
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -795,6 +798,41 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Service point is not a pickup location"),
+      hasParameter("pickupServicePointId", pickupServicePointId.toString()))));
+  }
+
+  @Test
+  public void cannotCreateARequestWithUnknownPickupLocationServicePoint()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID pickupServicePointId = UUID.randomUUID();
+
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+
+    loansFixture.checkOut(item, usersFixture.jessica());
+
+    IndividualResource requester = usersFixture.steve();
+
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
+      .open()
+      .recall()
+      .forItem(item)
+      .by(requester)
+      .withRequestDate(requestDate)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(new LocalDate(2017, 7, 30))
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
+      .withPickupServicePointId(pickupServicePointId));
+
+    assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
+
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Pickup service point does not exist"),
       hasParameter("pickupServicePointId", pickupServicePointId.toString()))));
   }
 }
