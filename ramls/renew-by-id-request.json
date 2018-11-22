@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "type": "object",
-  "title": "Request to renew an existing loan, found by the IDs of item and loanee",
+  "description": "Request to renew an existing loan, found by the IDs of item and loanee",
   "properties": {
     "itemId": {
       "description": "ID of the item to be renewed",

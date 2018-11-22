@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "type": "object",
-  "title": "Request to check in an item at a service point (including when a loan is returned)",
+  "description": "Request to check in an item at a service point (including when a loan is returned)",
   "properties": {
     "itemBarcode": {
       "description": "Barcode of the item to be checked in",

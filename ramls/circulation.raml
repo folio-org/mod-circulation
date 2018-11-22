@@ -13,6 +13,7 @@ types:
   loans: !include loans.json
   request: !include request.json
   requests: !include requests.json
+  check-in-by-barcode-response: !include check-in-by-barcode-response.json
   error: !include raml-util/schemas/error.schema
   errors: !include raml-util/schemas/errors.schema
 
@@ -123,8 +124,8 @@ resourceTypes:
         200:
           body:
             application/json:
-              type: loan
-              example: !include examples/loan.json
+              type: check-in-by-barcode-response
+              example: !include examples/check-in-by-barcode-response.json
         500:
           description: "Internal server error"
           body:
