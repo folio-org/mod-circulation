@@ -1,6 +1,8 @@
 package api.requests;
 
+import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -25,10 +27,7 @@ import api.support.builders.ItemBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import api.support.http.InterfaceUrls;
-import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import io.vertx.core.json.JsonObject;
-import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class RequestsAPIUpdatingTests extends APITests {
   @Test
@@ -659,38 +658,30 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     loansFixture.checkOutItem(itemId);
 
-    UUID originalRequesterId = usersClient.create(new UserBuilder()
-      .withName("Norton", "Jessica")
-      .withBarcode("764523186496"))
-      .getId();
+    UUID requesterId = usersFixture.jessica().getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
     final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
     servicePointsToDelete.add(exampleServicePoint.getId());
 
-    //TODO: Should include pickup service point
     IndividualResource createdRequest = requestsClient.create(
       new RequestBuilder()
       .recall()
       .withId(id)
       .withRequestDate(requestDate)
       .withItemId(itemId)
-      .withRequesterId(originalRequesterId)
+      .withRequesterId(requesterId)
       .fulfilToHoldShelf()
       .withPickupServicePointId(exampleServicePoint.getId())
       .withRequestExpiration(new LocalDate(2017, 7, 30))
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
-    UUID updatedRequester = usersClient.create(new UserBuilder()
-      .withName("Campbell", "Fiona")
-      .withBarcode("679231693475"))
-      .getId();
-
     JsonObject updatedRequest = requestsClient.getById(createdRequest.getId())
       .getJson();
-    
-    UUID badServicePointId = servicePointsFixture.cd3().getId();
+
+     UUID badServicePointId = servicePointsFixture.cd3().getId();
+     servicePointsToDelete.add(badServicePointId);
 
     updatedRequest
       .put("pickupServicePointId", badServicePointId.toString());
@@ -704,5 +695,4 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     assertThat(putResponse, hasStatus(HTTP_VALIDATION_ERROR));
   }
-
 }
