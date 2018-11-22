@@ -26,6 +26,7 @@ import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
+import api.support.CheckInByBarcodeResponse;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanBuilder;
@@ -277,22 +278,22 @@ public class LoansFixture {
       "check-in-by-barcode-request"));
   }
 
-  public IndividualResource checkInByBarcode(
+  public CheckInByBarcodeResponse checkInByBarcode(
     CheckInByBarcodeRequestBuilder builder) {
 
-    return new IndividualResource(
+    return new CheckInByBarcodeResponse(
       from(post(builder.create(), checkInByBarcodeUrl(), 200,
         "check-in-by-barcode-request")));
   }
 
-  public IndividualResource checkInByBarcode(IndividualResource item) {
+  public CheckInByBarcodeResponse checkInByBarcode(IndividualResource item) {
     return checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(item)
       .on(DateTime.now(DateTimeZone.UTC))
       .at(UUID.randomUUID()));
   }
 
-  public IndividualResource checkInByBarcode(
+  public CheckInByBarcodeResponse checkInByBarcode(
     IndividualResource item,
     DateTime checkInDate,
     UUID servicePointId) {

@@ -24,6 +24,7 @@ import org.joda.time.Seconds;
 import org.junit.Test;
 
 import api.support.APITests;
+import api.support.CheckInByBarcodeResponse;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import io.vertx.core.json.JsonObject;
 
@@ -46,7 +47,7 @@ public class CheckInByBarcodeTests extends APITests {
 
     DateTime expectedSystemReturnDate = DateTime.now(DateTimeZone.UTC);
 
-    final IndividualResource updatedLoan = loansFixture.checkInByBarcode(
+    final CheckInByBarcodeResponse updatedLoan = loansFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .on(new DateTime(2018, 3, 5, 14 ,23, 41, DateTimeZone.UTC))
