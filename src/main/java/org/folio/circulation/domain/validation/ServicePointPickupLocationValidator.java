@@ -18,47 +18,52 @@ public class ServicePointPickupLocationValidator {
   public HttpResult<RequestAndRelatedRecords> checkServicePointPickupLocation(
       HttpResult<RequestAndRelatedRecords> requestAndRelatedRecordsResult) {
 
-    return requestAndRelatedRecordsResult.next(requestAndRelatedRecords -> {
-      Request request = null;
+    return requestAndRelatedRecordsResult.next(
+      this::refuseInvalidPickupServicePoint);
+  }
 
-      if(requestAndRelatedRecords != null) {
-        request = requestAndRelatedRecords.getRequest();
-      }
+  private HttpResult<RequestAndRelatedRecords> refuseInvalidPickupServicePoint(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
 
-      if(request == null) {
-        log.info("No request present in RequestAndRelatedRecords object");
+    Request request = null;
+
+    if(requestAndRelatedRecords != null) {
+      request = requestAndRelatedRecords.getRequest();
+    }
+
+    if(request == null) {
+      log.info("No request present in RequestAndRelatedRecords object");
+      return succeeded(requestAndRelatedRecords);
+    }
+
+    if(request.getPickupServicePointId() == null) {
+      log.info("No pickup service point specified for request");
+      return succeeded(requestAndRelatedRecords);
+    }
+
+    if(request.getPickupServicePointId() != null && request.getPickupServicePoint() == null) {
+      return failed(ValidationErrorFailure.failure(
+        "Pickup service point does not exist", "pickupServicePointId",
+        request.getPickupServicePointId()));
+    }
+
+    if(request.getPickupServicePoint() != null) {
+      log.info("Request {} has non-null pickup location", request.getId());
+
+      if(request.getPickupServicePoint().isPickupLocation()) {
         return succeeded(requestAndRelatedRecords);
-      }
+      } else {
+        log.info("Request {} has {} as a pickup location which is an invalid service point",
+            request.getId(), request.getPickupServicePointId());
 
-      if(request.getPickupServicePointId() == null) {
-        log.info("No pickup service point specified for request");
-        return succeeded(requestAndRelatedRecords);
-      }
-
-      if(request.getPickupServicePointId() != null && request.getPickupServicePoint() == null) {
         return failed(ValidationErrorFailure.failure(
-          "Pickup service point does not exist", "pickupServicePointId",
-          request.getPickupServicePointId()));
+            "Service point is not a pickup location", "pickupServicePointId",
+            request.getPickupServicePointId()));
       }
-
-      if(request.getPickupServicePoint() != null) {
-        log.info("Request {} has non-null pickup location", request.getId());
-
-        if(request.getPickupServicePoint().isPickupLocation()) {
-          return succeeded(requestAndRelatedRecords);
-        } else {
-          log.info("Request {} has {} as a pickup location which is an invalid service point",
-              request.getId(), request.getPickupServicePointId());
-
-          return failed(ValidationErrorFailure.failure(
-              "Service point is not a pickup location", "pickupServicePointId",
-              request.getPickupServicePointId()));
-        }
-      }
-      else {
-        log.info("Request {} has null pickup location", request.getId());
-        return succeeded(requestAndRelatedRecords);
-      }
-    });
+    }
+    else {
+      log.info("Request {} has null pickup location", request.getId());
+      return succeeded(requestAndRelatedRecords);
+    }
   }
 }
