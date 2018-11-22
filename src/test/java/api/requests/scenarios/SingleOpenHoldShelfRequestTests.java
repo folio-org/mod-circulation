@@ -37,7 +37,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
 
-    IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOut(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
@@ -65,7 +65,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
 
-    IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOut(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
@@ -95,7 +95,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOut(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
@@ -130,14 +130,14 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
 
-    IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOut(smallAngryPlanet, james);
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
       new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
-    final IndividualResource loanToJessica = loansFixture.checkOut(smallAngryPlanet, jessica);
+    loansFixture.checkOut(smallAngryPlanet, jessica);
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
@@ -158,14 +158,14 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource steve = usersFixture.steve();
 
-    IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOut(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
-    final IndividualResource loanToJessica = loansFixture.checkOut(smallAngryPlanet, jessica);
+    loansFixture.checkOut(smallAngryPlanet, jessica);
 
     Response request = requestsClient.getById(requestByJessica.getId());
 

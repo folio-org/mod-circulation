@@ -278,7 +278,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource steve = usersFixture.steve();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOut(smallAngryPlanet, james);
 
     IndividualResource deliveryRequestByRebecca = requestsFixture.placeDeliveryRequest(
       smallAngryPlanet, rebecca, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
