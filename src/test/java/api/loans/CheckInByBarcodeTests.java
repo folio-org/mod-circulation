@@ -8,6 +8,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static org.folio.HttpStatus.HTTP_INTERNAL_SERVER_ERROR;
 import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -54,6 +55,9 @@ public class CheckInByBarcodeTests extends APITests {
         .at(checkinServicePointId));
 
     JsonObject loanRepresentation = checkInResponse.getLoan();
+
+    assertThat("Closed loan should be present",
+      loanRepresentation, notNullValue());
 
     assertThat(loanRepresentation.getString("userId"), is(james.getId().toString()));
 

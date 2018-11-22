@@ -12,7 +12,7 @@ import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
-import org.folio.circulation.domain.representations.LoanResponse;
+import org.folio.circulation.domain.representations.CheckInByBarcodeResponse;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.RouteRegistration;
@@ -67,7 +67,7 @@ public class CheckInByBarcodeResource extends Resource {
       .thenComposeAsync(result -> result.after(loanRepository::updateLoan))
       .thenApply(result -> result.map(LoanAndRelatedRecords::getLoan))
       .thenApply(result -> result.map(loanRepresentation::extendedLoan))
-      .thenApply(LoanResponse::from)
+      .thenApply(CheckInByBarcodeResponse::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 

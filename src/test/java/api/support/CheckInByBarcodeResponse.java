@@ -1,5 +1,7 @@
 package api.support;
 
+import static org.folio.circulation.support.JsonPropertyFetcher.getObjectProperty;
+
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 
@@ -11,6 +13,6 @@ public class CheckInByBarcodeResponse extends IndividualResource {
   }
 
   public JsonObject getLoan() {
-    return getJson();
+    return getObjectProperty(getJson(), "loan");
   }
 }
