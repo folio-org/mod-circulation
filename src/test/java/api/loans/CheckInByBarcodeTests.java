@@ -88,6 +88,9 @@ public class CheckInByBarcodeTests extends APITests {
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
+    assertThat("stored loan status is not closed",
+      storedLoan.getJsonObject("status").getString("name"), is("Closed"));
+
     assertThat("item status snapshot in storage is not Available",
       storedLoan.getString("itemStatus"), is("Available"));
 
