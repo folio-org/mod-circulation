@@ -103,6 +103,20 @@ public class CheckInByBarcodeTests extends APITests {
   }
 
   @Test
+  public void cannotCheckInItemThatCannotBeFoundByBarcode() {
+    final Response response = loansFixture.attemptCheckInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .withItemBarcode("543593485458")
+        .on(DateTime.now())
+        .at(UUID.randomUUID()));
+
+    assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
+
+    assertThat(response.getJson(), hasErrorWith(hasMessage(
+      "No item with barcode 543593485458 exists")));
+  }
+
+  @Test
   public void cannotCheckInWithoutAServicePoint()
     throws InterruptedException,
     MalformedURLException,

@@ -38,8 +38,12 @@ public class CheckInByBarcodeRequestBuilder extends JsonBuilder implements Build
   }
 
   public CheckInByBarcodeRequestBuilder forItem(IndividualResource item) {
+    return withItemBarcode(getBarcode(item));
+  }
+
+  public CheckInByBarcodeRequestBuilder withItemBarcode(String itemBarcode) {
     return new CheckInByBarcodeRequestBuilder(
-      getBarcode(item),
+      itemBarcode,
       this.checkInDate,
       this.servicePointId);
   }
