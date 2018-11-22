@@ -118,7 +118,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord, FindByIdQu
         pickupServicePoint);
   }
   
-  Request withPickupServicePoint(ServicePoint newPickupServicePoint) {
+  public Request withPickupServicePoint(ServicePoint newPickupServicePoint) {
     return new Request(representation, item, requester, proxy, loan,
         newPickupServicePoint);
   } 
@@ -182,11 +182,11 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord, FindByIdQu
     return proxy;
   }
   
-  String getPickupServicePointId() {
+  public String getPickupServicePointId() {
     return representation.getString("pickupServicePointId");
   }
   
-  ServicePoint getPickupServicePoint() {
+  public ServicePoint getPickupServicePoint() {
     return pickupServicePoint;
   }
 

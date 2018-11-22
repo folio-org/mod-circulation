@@ -1,6 +1,12 @@
 package api.requests;
 
+import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
+import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
+import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -639,5 +645,118 @@ public class RequestsAPIUpdatingTests extends APITests {
     assertThat("barcode is not taken from item",
       representation.getJsonObject("item").containsKey("barcode"),
       is(false));
+  }
+  
+  @Test
+  public void cannotReplaceAnExistingRequestWithInvalidPickupLocation()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = itemsFixture.basedUponTemeraire(
+      itemRequestBuilder -> itemRequestBuilder.withBarcode("07295629642"))
+      .getId();
+
+    loansFixture.checkOutItem(itemId);
+
+    UUID requesterId = usersFixture.jessica().getId();
+
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
+    servicePointsToDelete.add(exampleServicePoint.getId());
+
+    IndividualResource createdRequest = requestsClient.create(
+      new RequestBuilder()
+      .recall()
+      .withId(id)
+      .withRequestDate(requestDate)
+      .withItemId(itemId)
+      .withRequesterId(requesterId)
+      .fulfilToHoldShelf()
+      .withPickupServicePointId(exampleServicePoint.getId())
+      .withRequestExpiration(new LocalDate(2017, 7, 30))
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
+
+    JsonObject updatedRequest = requestsClient.getById(createdRequest.getId())
+      .getJson();
+
+     UUID badServicePointId = servicePointsFixture.cd3().getId();
+     servicePointsToDelete.add(badServicePointId);
+
+    updatedRequest
+      .put("pickupServicePointId", badServicePointId.toString());
+
+    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
+
+    client.put(InterfaceUrls.requestsUrl(String.format("/%s", id)),
+      updatedRequest, ResponseHandler.any(putCompleted));
+
+    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(putResponse, hasStatus(HTTP_VALIDATION_ERROR));
+
+   assertThat(putResponse.getJson(), hasErrorWith(allOf(
+     hasMessage("Service point is not a pickup location"),
+     hasParameter("pickupServicePointId", badServicePointId.toString()))));
+  }
+
+  @Test
+  public void cannotReplaceAnExistingRequestWithUnknownPickupLocation()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = itemsFixture.basedUponTemeraire(
+      itemRequestBuilder -> itemRequestBuilder.withBarcode("07295629642"))
+      .getId();
+
+    loansFixture.checkOutItem(itemId);
+
+    UUID requesterId = usersFixture.jessica().getId();
+
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
+    servicePointsToDelete.add(exampleServicePoint.getId());
+
+    IndividualResource createdRequest = requestsClient.create(
+      new RequestBuilder()
+        .recall()
+        .withId(id)
+        .withRequestDate(requestDate)
+        .withItemId(itemId)
+        .withRequesterId(requesterId)
+        .fulfilToHoldShelf()
+        .withPickupServicePointId(exampleServicePoint.getId())
+        .withRequestExpiration(new LocalDate(2017, 7, 30))
+        .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
+
+    JsonObject updatedRequest = requestsClient.getById(createdRequest.getId())
+      .getJson();
+
+    UUID badServicePointId = UUID.randomUUID();
+
+    updatedRequest
+      .put("pickupServicePointId", badServicePointId.toString());
+
+    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
+
+    client.put(InterfaceUrls.requestsUrl(String.format("/%s", id)),
+      updatedRequest, ResponseHandler.any(putCompleted));
+
+    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(putResponse, hasStatus(HTTP_VALIDATION_ERROR));
+
+    assertThat(putResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Pickup service point does not exist"),
+      hasParameter("pickupServicePointId", badServicePointId.toString()))));
   }
 }

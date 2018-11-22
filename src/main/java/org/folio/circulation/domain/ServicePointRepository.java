@@ -17,17 +17,19 @@ import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class ServicePointRepository {
+public class ServicePointRepository {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private static final String SERVICE_POINT_TYPE = "servicepoint";
 
   private final CollectionResourceClient servicePointsStorageClient;
 
-  ServicePointRepository(Clients clients) {
+  public ServicePointRepository(Clients clients) {
     servicePointsStorageClient = clients.servicePointsStorage();
   }
   
-  CompletableFuture<HttpResult<ServicePoint>> getServicePointById(String id) {
+  
+  public CompletableFuture<HttpResult<ServicePoint>> getServicePointById(String id) {
+
     return FetchSingleRecord.<ServicePoint>forRecord(SERVICE_POINT_TYPE)
         .using(servicePointsStorageClient)
         .mapTo(ServicePoint::new)
@@ -35,9 +37,12 @@ class ServicePointRepository {
         .fetch(id);
   }
   
-  CompletableFuture<HttpResult<MultipleRecords<Request>>> findServicePointsForRequests(
-    MultipleRecords<Request> multipleRequests) {
-
+  public CompletableFuture<HttpResult<ServicePoint>> getServicePointForRequest(Request request) {
+    return getServicePointById(request.getPickupServicePointId());
+  } 
+  
+  public CompletableFuture<HttpResult<MultipleRecords<Request>>> findServicePointsForRequests(
+      MultipleRecords<Request> multipleRequests) {
     Collection<Request> requests = multipleRequests.getRecords();
 
     final List<String> servicePointsToFetch = requests.stream()

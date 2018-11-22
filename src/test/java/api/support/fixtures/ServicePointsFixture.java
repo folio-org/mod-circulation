@@ -29,4 +29,11 @@ public class ServicePointsFixture {
     return servicePointsClient.create(ServicePointExamples.basedUponCircDesk2());
   } 
   
+  public IndividualResource cd3() 
+      throws InterruptedException, 
+      MalformedURLException, 
+      TimeoutException, 
+      ExecutionException {
+    return servicePointsClient.create(ServicePointExamples.basedUponCircDesk3());
+  } 
 }

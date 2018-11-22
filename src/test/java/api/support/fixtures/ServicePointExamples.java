@@ -14,4 +14,9 @@ public class ServicePointExamples {
         "Circulation Desk -- Back Entrance").withPickupLocation(Boolean.TRUE);
   }
   
+  public static ServicePointBuilder basedUponCircDesk3() {
+    return new ServicePointBuilder("Circ Desk 3", "cd3",
+        "Circulation Desk -- Dumpster").withPickupLocation(Boolean.FALSE);
+  }
+  
 }
