@@ -1,5 +1,8 @@
 package org.folio.circulation.domain.validation;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.HttpResult.failed;
+
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.domain.Request;
@@ -21,21 +24,23 @@ public class ServicePointPickupLocationValidator {
     }
     if(request == null) {
       log.info("No request present in RequestAndRelatedRecords object");
-      return CompletableFuture.completedFuture(requestResult);
+      return completedFuture(requestResult);
     }
     if(request.getPickupServicePoint() != null) {
       log.info("Request {} has non-null pickup location", request.getId());
       if(request.getPickupServicePoint().isPickupLocation()) {
-        return CompletableFuture.completedFuture(requestResult);
+        return completedFuture(requestResult);
       } else {            
         log.info("Request {} has {} as a pickup location which is an invalid service point", 
             request.getId(), request.getPickupServicePointId());
-        return CompletableFuture.completedFuture(HttpResult.failed(ValidationErrorFailure.failure(
-            "Service Point is not a Pickup Location", "pickupLocation", "false")));
+
+        return completedFuture(failed(ValidationErrorFailure.failure(
+            "Service point is not a pickup location", "pickupServicePointId",
+            request.getPickupServicePointId())));
       }
     } else {
       log.info("Request {} has null pickup location", request.getId());
-      return CompletableFuture.completedFuture(requestResult);
+      return completedFuture(requestResult);
     }
     
   }

@@ -2,7 +2,11 @@ package api.requests;
 
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
+import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
+import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -694,5 +698,9 @@ public class RequestsAPIUpdatingTests extends APITests {
     Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
 
     assertThat(putResponse, hasStatus(HTTP_VALIDATION_ERROR));
+
+   assertThat(putResponse.getJson(), hasErrorWith(allOf(
+     hasMessage("Service point is not a pickup location"),
+     hasParameter("pickupServicePointId", badServicePointId.toString()))));
   }
 }

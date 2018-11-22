@@ -5,15 +5,18 @@ import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
+import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
+import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
 import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
+import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -789,6 +792,9 @@ public class RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(pickupServicePointId));
     
     assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
-    
+
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Service point is not a pickup location"),
+      hasParameter("pickupServicePointId", pickupServicePointId.toString()))));
   }
 }
