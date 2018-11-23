@@ -225,8 +225,6 @@
             "inventory-storage.material-types.item.get",
             "circulation-storage.loan-policies.item.get",
             "circulation-storage.fixed-due-date-schedules.item.get"
-
-
           ]
         },
         {
@@ -298,11 +296,24 @@
             "circulation.requests.collection.get"
           ],
           "modulePermissions": [
+            "circulation-storage.requests.item.get",
             "circulation-storage.requests.collection.get",
+            "circulation-storage.loans.collection.get",
+            "circulation-storage.loans.item.get",
             "inventory-storage.items.collection.get",
+            "inventory-storage.items.item.get",
             "inventory-storage.holdings.collection.get",
+            "inventory-storage.holdings.item.get",
             "inventory-storage.instances.collection.get",
-            "inventory-storage.locations.collection.get"
+            "inventory-storage.instances.item.get",
+            "inventory-storage.locations.collection.get",
+            "inventory-storage.locations.item.get",
+            "inventory-storage.service-points.collection.get",
+            "inventory-storage.service-points.item.get",
+            "users.item.get",
+            "users.collection.get",
+            "usergroups.collection.get",
+            "usergroups.item.get"
           ]
         },
         {
@@ -315,18 +326,25 @@
           ],
           "modulePermissions": [
             "circulation-storage.requests.item.post",
-            "circulation-storage.requests.collection.get",
-            "inventory-storage.items.item.get",
-            "inventory-storage.items.collection.get",
             "inventory-storage.items.item.put",
-            "users.item.get",
+            "circulation-storage.requests.collection.get",
+            "circulation-storage.requests.item.get",
             "circulation-storage.loans.item.put",
             "circulation-storage.loans.collection.get",
+            "inventory-storage.items.item.get",
+            "inventory-storage.items.collection.get",
             "inventory-storage.holdings.collection.get",
             "inventory-storage.holdings.item.get",
             "inventory-storage.instances.collection.get",
             "inventory-storage.instances.item.get",
             "inventory-storage.locations.collection.get",
+            "inventory-storage.locations.item.get",
+            "inventory-storage.service-points.collection.get",
+            "inventory-storage.service-points.item.get",
+            "users.item.get",
+            "users.collection.get",
+            "usergroups.collection.get",
+            "usergroups.item.get",
             "proxiesfor.collection.get"
           ]
         },
@@ -352,12 +370,23 @@
           ],
           "modulePermissions": [
             "circulation-storage.requests.item.get",
+            "circulation-storage.requests.collection.get",
+            "circulation-storage.loans.collection.get",
+            "circulation-storage.loans.item.get",
             "inventory-storage.items.collection.get",
+            "inventory-storage.items.item.get",
             "inventory-storage.holdings.collection.get",
+            "inventory-storage.holdings.item.get",
             "inventory-storage.instances.collection.get",
+            "inventory-storage.instances.item.get",
             "inventory-storage.locations.collection.get",
+            "inventory-storage.locations.item.get",
+            "inventory-storage.service-points.collection.get",
+            "inventory-storage.service-points.item.get",
             "users.item.get",
-            "users.collection.get"
+            "users.collection.get",
+            "usergroups.collection.get",
+            "usergroups.item.get"
           ]
         },
         {
@@ -371,18 +400,25 @@
           "modulePermissions": [
             "circulation-storage.requests.item.put",
             "circulation-storage.requests.item.post",
-            "circulation-storage.requests.collection.get",
-            "inventory-storage.items.item.get",
-            "inventory-storage.items.collection.get",
             "inventory-storage.items.item.put",
-            "users.item.get",
+            "circulation-storage.requests.collection.get",
+            "circulation-storage.requests.item.get",
             "circulation-storage.loans.item.put",
             "circulation-storage.loans.collection.get",
+            "inventory-storage.items.item.get",
+            "inventory-storage.items.collection.get",
             "inventory-storage.holdings.collection.get",
             "inventory-storage.holdings.item.get",
             "inventory-storage.instances.collection.get",
             "inventory-storage.instances.item.get",
             "inventory-storage.locations.collection.get",
+            "inventory-storage.locations.item.get",
+            "inventory-storage.service-points.collection.get",
+            "inventory-storage.service-points.item.get",
+            "users.item.get",
+            "users.collection.get",
+            "usergroups.collection.get",
+            "usergroups.item.get",
             "proxiesfor.collection.get"
           ]
         },
@@ -408,12 +444,23 @@
           ],
           "modulePermissions": [
             "circulation-storage.requests.item.get",
+            "circulation-storage.requests.collection.get",
+            "circulation-storage.loans.collection.get",
+            "circulation-storage.loans.item.get",
             "inventory-storage.items.collection.get",
+            "inventory-storage.items.item.get",
             "inventory-storage.holdings.collection.get",
+            "inventory-storage.holdings.item.get",
             "inventory-storage.instances.collection.get",
+            "inventory-storage.instances.item.get",
             "inventory-storage.locations.collection.get",
+            "inventory-storage.locations.item.get",
+            "inventory-storage.service-points.collection.get",
+            "inventory-storage.service-points.item.get",
             "users.item.get",
-            "users.collection.get"
+            "users.collection.get",
+            "usergroups.collection.get",
+            "usergroups.item.get"
           ]
         }
       ]
