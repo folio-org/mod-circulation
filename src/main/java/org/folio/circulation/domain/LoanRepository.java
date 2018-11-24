@@ -239,7 +239,7 @@ public class LoanRepository {
       .thenApply(r -> r.map(loans -> !loans.getRecords().isEmpty()));
   }
 
-  private CompletableFuture<HttpResult<MultipleRecords<Loan>>> findOpenLoans(Item item) {
+  public CompletableFuture<HttpResult<MultipleRecords<Loan>>> findOpenLoans(Item item) {
     return findOpenLoans(item.getItemId());
   }
 
