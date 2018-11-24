@@ -4,7 +4,7 @@ import java.util.function.BiFunction;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.domain.LoanCheckinService;
+import org.folio.circulation.domain.LoanCheckInService;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.RequestQueue;
@@ -45,7 +45,7 @@ public class CheckInByBarcodeResource extends Resource {
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
-    final LoanCheckinService loanCheckinService = new LoanCheckinService();
+    final LoanCheckInService loanCheckInService = new LoanCheckInService();
 
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
@@ -58,7 +58,7 @@ public class CheckInByBarcodeResource extends Resource {
     checkInRequestResult
       .after(loanRepository::findOpenLoanByBarcode)
       .thenApply(loanResult -> loanResult.combineToResult(checkInRequestResult,
-        loanCheckinService::checkin))
+        loanCheckInService::checkIn))
       .thenComposeAsync(loanResult -> loanResult.combineAfter(
         loan -> requestQueueRepository.get(loan.getItemId()), mapToRelatedRecords()))
       .thenComposeAsync(result -> result.after(requestQueueUpdate::onCheckIn))
