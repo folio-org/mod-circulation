@@ -98,6 +98,10 @@ public class InterfaceUrls {
     return APITestSuite.circulationModuleUrl("/circulation/check-out-by-barcode");
   }
 
+  public static URL checkInByBarcodeUrl() {
+    return APITestSuite.circulationModuleUrl("/circulation/check-in-by-barcode");
+  }
+
   public static URL renewByBarcodeUrl() {
     return APITestSuite.circulationModuleUrl("/circulation/renew-by-barcode");
   }

@@ -426,7 +426,7 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     final IndividualResource james = usersFixture.james();
 
-    final IndividualResource loan = loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOut(smallAngryPlanet, james);
 
     requestsFixture.place(new RequestBuilder()
       .recall()
@@ -434,7 +434,7 @@ public class RequestsAPIRetrievalTests extends APITests {
       .deliverToAddress(workAddressTypeId())
       .by(charlotte));
 
-    loansFixture.checkIn(loan);
+    loansFixture.checkInByBarcode(smallAngryPlanet);
 
     final List<JsonObject> allRequests = requestsClient.getAll();
 

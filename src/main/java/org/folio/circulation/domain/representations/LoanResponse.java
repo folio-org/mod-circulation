@@ -1,9 +1,10 @@
 package org.folio.circulation.domain.representations;
 
-import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.OkJsonHttpResult;
 import org.folio.circulation.support.WritableHttpResult;
+
+import io.vertx.core.json.JsonObject;
 
 public class LoanResponse {
   private LoanResponse() {}

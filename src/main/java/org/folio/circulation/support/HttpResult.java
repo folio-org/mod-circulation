@@ -41,19 +41,56 @@ public interface HttpResult<T> {
    * Combines two results together, if both succeed.
    * Otherwise, returns either failure, first result takes precedence
    *
+   * Deprecated, please use member method version
+   *
    * @param firstResult the  first result
    * @param secondResult the  second result
    * @param combiner function to combine the values together
    * @return either failure from the first result, failure from the second
    * or successful result with the values combined
    */
+  //TODO: Replace with member method below
   static <T, U, V> HttpResult<V> combine(
     HttpResult<T> firstResult,
     HttpResult<U> secondResult,
     BiFunction<T, U, V> combiner) {
 
-    return firstResult.next(firstValue ->
-      secondResult.map(secondValue ->
+    return firstResult.combine(secondResult, combiner);
+  }
+
+  /**
+   * Combines this and another result together, if both succeed.
+   * Otherwise, returns either failure, this result takes precedence
+   *
+   * @param otherResult the other result
+   * @param combiner function to combine the values together
+   * @return either failure from this result, failure from the other
+   * or successful result with the values combined
+   */
+  default <U, V> HttpResult<V> combine(
+    HttpResult<U> otherResult,
+    BiFunction<T, U, V> combiner) {
+
+    return next(firstValue ->
+      otherResult.map(secondValue ->
+        combiner.apply(firstValue, secondValue)));
+  }
+
+  /**
+   * Combines this and another result together, if both succeed.
+   * Otherwise, returns either failure, this result takes precedence
+   *
+   * @param otherResult the other result
+   * @param combiner function to combine the values together
+   * @return either failure from this result, failure from the other
+   * or result of the combination
+   */
+  default <U, V> HttpResult<V> combineToResult(
+    HttpResult<U> otherResult,
+    BiFunction<T, U, HttpResult<V>> combiner) {
+
+    return next(firstValue ->
+      otherResult.next(secondValue ->
         combiner.apply(firstValue, secondValue)));
   }
 
@@ -72,7 +109,7 @@ public interface HttpResult<T> {
     BiFunction<T, U, V> combiner) {
 
     return after(nextAction)
-      .thenApply(actionResult -> combine(this, actionResult, combiner));
+      .thenApply(actionResult -> combine(actionResult, combiner));
   }
 
   /**

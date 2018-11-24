@@ -1,13 +1,8 @@
 package api.requests.scenarios;
 
-import api.support.APITests;
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.junit.Test;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -17,9 +12,15 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.junit.Test;
+
+import api.support.APITests;
+import io.vertx.core.json.JsonObject;
 
 //TODO: Maybe move these tests to scenarios which better describe the situation
 public class RequestQueueTests extends APITests {
@@ -93,7 +94,7 @@ public class RequestQueueTests extends APITests {
     IndividualResource charlotte = usersFixture.charlotte();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    final IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOut(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
@@ -107,7 +108,7 @@ public class RequestQueueTests extends APITests {
     IndividualResource requestByRebecca = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, rebecca, new DateTime(2018, 2, 4, 7, 4, 53, DateTimeZone.UTC));
 
-    loansFixture.checkIn(loanToJames);
+    loansFixture.checkInByBarcode(smallAngryPlanet);
 
     loansFixture.checkOut(smallAngryPlanet, jessica);
 

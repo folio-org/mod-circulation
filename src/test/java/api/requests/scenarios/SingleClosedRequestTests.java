@@ -1,22 +1,23 @@
 package api.requests.scenarios;
 
-import api.support.APITests;
-import api.support.builders.RequestBuilder;
+import static api.support.builders.ItemBuilder.CHECKED_OUT;
+import static api.support.builders.RequestBuilder.CLOSED_FILLED;
+import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+
+import java.net.MalformedURLException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
-import java.net.MalformedURLException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
-import static api.support.builders.ItemBuilder.CHECKED_OUT;
-import static api.support.builders.RequestBuilder.CLOSED_FILLED;
-import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import api.support.APITests;
+import api.support.builders.RequestBuilder;
 
 public class SingleClosedRequestTests extends APITests {
   @Test
@@ -40,7 +41,7 @@ public class SingleClosedRequestTests extends APITests {
       .withItemId(smallAngryPlanet.getId())
       .withRequesterId(jessica.getId()));
 
-    loansFixture.checkIn(loanToJames);
+    loansFixture.checkInByBarcode(smallAngryPlanet);
 
     loansFixture.checkOut(smallAngryPlanet, jessica);
 
@@ -75,7 +76,7 @@ public class SingleClosedRequestTests extends APITests {
       .withItemId(smallAngryPlanet.getId())
       .withRequesterId(jessica.getId()));
 
-    loansFixture.checkIn(loanToJames);
+    loansFixture.checkInByBarcode(smallAngryPlanet);
 
     loansFixture.checkOut(smallAngryPlanet, steve);
 

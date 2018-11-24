@@ -2,7 +2,9 @@ package org.folio.circulation.domain;
 
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKIN_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.DUE_DATE;
+import static org.folio.circulation.domain.representations.LoanProperties.RETURN_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.STATUS;
+import static org.folio.circulation.domain.representations.LoanProperties.SYSTEM_RETURN_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.USER_ID;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
@@ -13,12 +15,14 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 import java.util.Objects;
+import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 import io.vertx.core.json.JsonObject;
 
@@ -85,8 +89,24 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     write(representation, DUE_DATE, dueDate);
   }
 
+  private void changeReturnDate(DateTime returnDate) {
+    write(representation, RETURN_DATE, returnDate);
+  }
+
+  private void changeSystemReturnDate(DateTime systemReturnDate) {
+    write(representation, SYSTEM_RETURN_DATE, systemReturnDate);
+  }
+
   private void changeAction(String action) {
     representation.put(LoanProperties.ACTION, action);
+  }
+
+  private void changeCheckInServicePointId(UUID servicePointId) {
+    write(representation, "checkinServicePointId", servicePointId);
+  }
+
+  private void changeStatus(String status) {
+    representation.put(LoanProperties.STATUS, new JsonObject().put("name", status));
   }
 
   public HttpResult<Void> isValidStatus() {
@@ -187,6 +207,16 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     changeLoanPolicy(basedUponLoanPolicyId);
     changeDueDate(dueDate);
     incrementRenewalCount();
+
+    return this;
+  }
+
+  Loan checkin(DateTime returnDate, UUID servicePointId) {
+    changeAction("checkedin");
+    changeStatus("Closed");
+    changeReturnDate(returnDate);
+    changeSystemReturnDate(DateTime.now(DateTimeZone.UTC));
+    changeCheckInServicePointId(servicePointId);
 
     return this;
   }

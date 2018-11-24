@@ -8,6 +8,8 @@ public class LoanProperties {
   public static final String STATUS = "status";
   public static final String ACTION = "action";
   public static final String DUE_DATE = "dueDate";
+  public static final String RETURN_DATE = "returnDate";
+  public static final String SYSTEM_RETURN_DATE = "systemReturnDate";
   public static final String CHECKIN_SERVICE_POINT_ID = "checkinServicePointId";
   public static final String CHECKOUT_SERVICE_POINT_ID = "checkoutServicePointId";
 }

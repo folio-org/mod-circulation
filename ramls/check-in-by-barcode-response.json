@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "description": "Success response for checking in an item at a service point",
+  "properties": {
+    "loan": {
+      "description": "Loan affected by the check in (may be none, if a receiving check in)",
+      "$ref": "loan.json"
+    }
+  },
+  "additionalProperties": false
+}
