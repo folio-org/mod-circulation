@@ -84,7 +84,8 @@ public class LoansFixture {
     return loansClient.create(new LoanBuilder()
       .withId(loanId)
       .open()
-      .withItemId(itemId));
+      .withItemId(itemId)
+      .withDueDate(new DateTime(2018, 12, 3, 11, 22, 43, DateTimeZone.UTC)));
   }
   
   public IndividualResource checkOutItem(UUID itemId)

@@ -5,6 +5,7 @@ import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
 import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -111,19 +112,21 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(representation.getString("pickupServicePointId"),
         is(pickupServicePointId.toString()));
     assertThat(representation.getString("status"), is("Open - Not yet filled"));
-    assertThat(representation.containsKey("loan"), is(true));
+
     assertThat(representation.containsKey("proxy"), is(true));
     assertThat(representation.getJsonObject("proxy").containsKey("patronGroup"), is (true));
     assertThat(representation.getJsonObject("proxy").getString("patronGroupId"),
         is(staffGroupId.toString()));
     assertThat(representation.getJsonObject("proxy").getJsonObject("patronGroup").getString("id"),
         is(staffGroupId.toString()));
+
     assertThat(representation.containsKey("requester"), is(true));
     assertThat(representation.getJsonObject("requester").containsKey("patronGroup"), is (true));
     assertThat(representation.getJsonObject("requester").getString("patronGroupId"),
         is(facultyGroupId.toString()));
     assertThat(representation.getJsonObject("requester").getJsonObject("patronGroup").getString("id"),
         is(facultyGroupId.toString()));
+
     assertThat(representation.containsKey("pickupServicePoint"), is(true));
     assertThat(representation.getJsonObject("pickupServicePoint").getString("name"),
         is(cd1.getJson().getString("name")));
@@ -133,6 +136,7 @@ public class RequestsAPIRetrievalTests extends APITests {
         is(cd1.getJson().getString("discoveryDisplayName")));
     assertThat(representation.getJsonObject("pickupServicePoint").getBoolean("pickupLocation"),
         is(cd1.getJson().getBoolean("pickupLocation")));
+
     assertThat("has information taken from item",
       representation.containsKey("item"), is(true));
 
@@ -168,6 +172,20 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat("barcode is taken from requesting user",
       representation.getJsonObject("requester").getString("barcode"),
       is("6059539205"));
+
+    assertThat("barcode is taken from requesting user",
+      representation.getJsonObject("requester").getString("barcode"),
+      is("6059539205"));
+
+    assertThat("current loan is present",
+      representation.containsKey("loan"), is(true));
+
+    assertThat("current loan has a due date",
+      representation.getJsonObject("loan").containsKey("dueDate"), is(true));
+
+    //TODO: Improve this by checking actual date
+    assertThat("current loan has non-null due date",
+      representation.getJsonObject("loan").getString("dueDate"), notNullValue());
   }
 
   @Test
@@ -252,6 +270,9 @@ public class RequestsAPIRetrievalTests extends APITests {
     UUID staffGroupId = patronGroupsFixture.staff().getId();
     groupsToDelete.add(staffGroupId);
 
+    final IndividualResource jessica = usersFixture.jessica();
+    final IndividualResource charlotte = usersFixture.charlotte();
+
     final IndividualResource sponsor = usersFixture.rebecca(
         builder -> builder.withPatronGroupId(facultyGroupId));
 
@@ -266,44 +287,56 @@ public class RequestsAPIRetrievalTests extends APITests {
     servicePointsToDelete.add(cd1.getId());
     servicePointsToDelete.add(cd2.getId());
 
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource nod = itemsFixture.basedUponNod();
+    final IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
+    final IndividualResource temeraire = itemsFixture.basedUponTemeraire();
+    final IndividualResource uprooted = itemsFixture.basedUponUprooted();
+
+    loansFixture.checkOut(smallAngryPlanet, jessica);
+    loansFixture.checkOut(nod, charlotte);
+    loansFixture.checkOut(interestingTimes, charlotte);
+    loansFixture.checkOut(temeraire, jessica);
+    loansFixture.checkOut(uprooted, jessica);
+
     requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut).getId())
+      .withItemId(smallAngryPlanet.getId())
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId));
 
     requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponNod(ItemBuilder::checkOut).getId())
+      .withItemId(nod.getId())
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId2));
 
     requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponInterestingTimes(ItemBuilder::checkOut).getId())
+      .withItemId(interestingTimes.getId())
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId));
 
     requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
+      .withItemId(temeraire.getId())
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId2));
 
     requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponNod(ItemBuilder::checkOut).getId())
+      .withItemId(nod.getId())
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId));
 
     requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponUprooted(ItemBuilder::checkOut).getId())
+      .withItemId(uprooted.getId())
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId));
 
     requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
+      .withItemId(temeraire.getId())
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId2));
@@ -321,19 +354,19 @@ public class RequestsAPIRetrievalTests extends APITests {
     List<JsonObject> requestList = getRequests(getResponse.getJson());
     
     requestList.forEach(this::requestHasExpectedProperties);
+    requestList.forEach(this::requestHasExpectedLoanProperties);
     requestList.forEach(this::requestHasServicePointProperties);
     requestList.forEach(this::requestHasPatronGroupProperties);
   }
 
   @Test
-  public void canGetARequestToBeFulfilledByDeliveryToAnAddressFromCollectionEndpoint()
+  public void fulfilledByDeliveryIncludesAddressWhenFindingMultipleRequests()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
 
-    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
-      ItemBuilder::available);
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
     final IndividualResource charlotte = usersFixture.charlotte(
       builder -> builder.withAddress(
@@ -378,6 +411,39 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(deliveryAddress.getString("region"), is("Fake region"));
     assertThat(deliveryAddress.getString("postalCode"), is("Fake postal code"));
     assertThat(deliveryAddress.getString("countryId"), is("Fake country code"));
+  }
+
+  @Test
+  public void closedLoanForItemIsNotIncludedWhenFindingMultipleRequests()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+
+    final IndividualResource charlotte = usersFixture.charlotte();
+
+    final IndividualResource james = usersFixture.james();
+
+    loansFixture.checkOut(smallAngryPlanet, james);
+
+    requestsFixture.place(new RequestBuilder()
+      .recall()
+      .forItem(smallAngryPlanet)
+      .deliverToAddress(workAddressTypeId())
+      .by(charlotte));
+
+    loansFixture.checkInByBarcode(smallAngryPlanet);
+
+    final List<JsonObject> allRequests = requestsClient.getAll();
+
+    assertThat(allRequests.size(), is(1));
+
+    JsonObject representation = allRequests.get(0);
+
+    assertThat("Request should not have a current loan for the item",
+      representation.containsKey("deliveryAddress"), is(false));
   }
 
   @Test
@@ -656,6 +722,10 @@ public class RequestsAPIRetrievalTests extends APITests {
     hasProperty("requester", request, "request");
     hasProperty("status", request, "request");
   }
+
+  private void requestHasExpectedLoanProperties(JsonObject request) {
+    hasProperty("dueDate", request.getJsonObject("loan"), "loan");
+  }
   
   private void requestHasServicePointProperties(JsonObject request) {
     hasProperty("pickupServicePointId", request, "request");
@@ -683,6 +753,10 @@ public class RequestsAPIRetrievalTests extends APITests {
   }
 
   private void hasProperty(String property, JsonObject resource, String type) {
+    assertThat(String.format("%s should have %s: %s: is missing outer property",
+      type, property, resource),
+      resource, notNullValue());
+
     assertThat(String.format("%s should have %s: %s",
       type, property, resource),
       resource.containsKey(property), is(true));

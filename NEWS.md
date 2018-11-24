@@ -1,8 +1,20 @@
+## 13.0.0 2018-11-23
+
+* Stores the service point where checking out or in occurred (CIRC-104)
+* Uses RAML 1.0 for API documentation (CIRC-157)
+* Include extended `patronGroup` properties for requesting `user` for (CIRC-156) 
+* Validate pickup service point for a request (CIRC-152)
+* Bug fixes for fetching related records (CIRC-153, CIRC-161, CIRC-164, CIRC-165)
+* Provides `circulation` 5.0 interface (CIRC-104)
+* Requires `loan-storage` 5.2 interface (CIRC-104)
+* Requires `request-storage` 2.3 interface (CIRC-147)
+* Requires `service-points` 3.0 interface (CIRC-152)
+
 ## 12.1.0 2018-11-08
 
 * Introduce request `pickupServicePointId` (CIRC-147)
 * Include `contributorNames`, `enumeration`, `callNumber` and `status` of the `item` for requests (CIRC-140)
-* Include `deliveryAddress` and `patronGroup` of the `user` for requests (CIRC-140)
+* Include `deliveryAddress` and `patronGroupId` of the `user` for requests (CIRC-140)
 * Include `dueDate` of the `current loan` for requests (CIRC-140)
 * Requires version 2.0 or 3.0 of `locations` (CIRC-143)
 * Requires version 5.3 or 6.0 of `item-storage` (CIRC-141)

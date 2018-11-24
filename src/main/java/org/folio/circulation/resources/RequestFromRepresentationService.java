@@ -11,8 +11,10 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.RequestStatus;
+import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
+import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
 import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ItemRepository;
@@ -24,20 +26,27 @@ class RequestFromRepresentationService {
   private final RequestQueueRepository requestQueueRepository;
   private final UserRepository userRepository;
   private final LoanRepository loanRepository;
+  private final ServicePointRepository servicePointRepository;
   private final ProxyRelationshipValidator proxyRelationshipValidator;
+  private final ServicePointPickupLocationValidator servicePointPickupLocationValidator;
+  
 
   RequestFromRepresentationService(
     ItemRepository itemRepository,
     RequestQueueRepository requestQueueRepository,
     UserRepository userRepository,
     LoanRepository loanRepository,
-    ProxyRelationshipValidator proxyRelationshipValidator) {
+    ServicePointRepository servicePointRepository,
+    ProxyRelationshipValidator proxyRelationshipValidator,
+    ServicePointPickupLocationValidator servicePointPickupLocationValidator) {
 
     this.loanRepository = loanRepository;
     this.itemRepository = itemRepository;
     this.requestQueueRepository = requestQueueRepository;
     this.userRepository = userRepository;
+    this.servicePointRepository = servicePointRepository;
     this.proxyRelationshipValidator = proxyRelationshipValidator;
+    this.servicePointPickupLocationValidator = servicePointPickupLocationValidator;
   }
 
   CompletableFuture<HttpResult<RequestAndRelatedRecords>> getRequestFrom(
@@ -51,10 +60,12 @@ class RequestFromRepresentationService {
       .thenComposeAsync(r -> r.combineAfter(itemRepository::fetchFor, Request::withItem))
       .thenComposeAsync(r -> r.combineAfter(userRepository::getUser, Request::withRequester))
       .thenComposeAsync(r -> r.combineAfter(userRepository::getProxyUser, Request::withProxy))
+      .thenComposeAsync(r -> r.combineAfter(servicePointRepository::getServicePointForRequest, Request::withPickupServicePoint))
       .thenApply(r -> r.map(RequestAndRelatedRecords::new))
       .thenComposeAsync(r -> r.combineAfter(requestQueueRepository::get,
         RequestAndRelatedRecords::withRequestQueue))
-      .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid));
+      .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
+      .thenApply(servicePointPickupLocationValidator::checkServicePointPickupLocation);
   }
 
   private HttpResult<JsonObject> validateStatus(JsonObject representation) {
