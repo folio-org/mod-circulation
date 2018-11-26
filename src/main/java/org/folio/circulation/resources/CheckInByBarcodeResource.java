@@ -2,10 +2,12 @@ package org.folio.circulation.resources;
 
 import static org.folio.circulation.support.HttpResult.of;
 
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.folio.circulation.domain.FindByBarcodeQuery;
 import org.folio.circulation.domain.Item;
@@ -23,7 +25,9 @@ import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.domain.representations.CheckInByBarcodeResponse;
 import org.folio.circulation.domain.validation.MoreThanOneLoanValidator;
+import org.folio.circulation.domain.validation.NoLoanValidator;
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.RouteRegistration;
@@ -107,14 +111,22 @@ public class CheckInByBarcodeResource extends Resource {
     FindByBarcodeQuery query,
     LoanRepository loanRepository) {
 
+    //Use same error for no loans and more than one loan to maintain compatibility
+    final Supplier<HttpFailure> incorrectLoansFailure = () -> new ServerErrorFailure(
+      String.format("More than one open loan for item %s", query.getItemBarcode()));
+
     final MoreThanOneLoanValidator moreThanOneLoanValidator
-      = new MoreThanOneLoanValidator(() -> new ServerErrorFailure(
-      String.format("More than one open loan for item %s", query.getItemBarcode())));
+      = new MoreThanOneLoanValidator(incorrectLoansFailure);
+
+    final NoLoanValidator noLoanValidator
+      = new NoLoanValidator(incorrectLoansFailure);
 
     return itemResult -> failWhenNoItemFoundForBarcode(itemResult, query)
       .after(loanRepository::findOpenLoans)
       .thenApply(moreThanOneLoanValidator::failWhenMoreThanOneLoan)
       .thenApply(loanResult -> loanResult.map(this::getFirstLoan))
+      .thenApply(noLoanValidator::failWhenNoLoan)
+      .thenApply(loanResult -> loanResult.map(loan -> loan.orElse(null)))
       .thenApply(loanResult -> loanResult.combine(itemResult, Loan::withItem));
   }
 
@@ -135,9 +147,7 @@ public class CheckInByBarcodeResource extends Resource {
     return result.combineAfter(userRepository::getUser, Loan::withUser);
   }
 
-  private Loan getFirstLoan(MultipleRecords<Loan> loans) {
-    return loans.getRecords().stream()
-      .findFirst()
-      .orElse(null);
+  private Optional<Loan> getFirstLoan(MultipleRecords<Loan> loans) {
+    return loans.getRecords().stream().findFirst();
   }
 }

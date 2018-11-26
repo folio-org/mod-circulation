@@ -47,7 +47,7 @@ public class MoreThanOneLoanValidatorTests {
   }
 
   @Test
-  public void failWhenNoLoans() {
+  public void allowWhenNoLoans() {
     final MoreThanOneLoanValidator validator = new MoreThanOneLoanValidator(
       () -> new ServerErrorFailure("More than one loan"));
 
@@ -57,7 +57,7 @@ public class MoreThanOneLoanValidatorTests {
     final HttpResult<MultipleRecords<Loan>> result =
       validator.failWhenMoreThanOneLoan(noLoans);
 
-    assertThat(result, isErrorFailureContaining("More than one loan"));
+    assertThat(result.succeeded(), is(true));
   }
 
   private Loan generateLoan() {

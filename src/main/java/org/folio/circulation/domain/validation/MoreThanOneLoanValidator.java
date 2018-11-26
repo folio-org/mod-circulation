@@ -2,7 +2,6 @@ package org.folio.circulation.domain.validation;
 
 import static org.folio.circulation.support.HttpResult.of;
 
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -26,11 +25,6 @@ public class MoreThanOneLoanValidator {
   }
 
   private static Function<MultipleRecords<Loan>, HttpResult<Boolean>> moreThanOneLoan() {
-    return loans -> {
-      final Optional<Loan> first = loans.getRecords().stream()
-        .findFirst();
-
-      return of(() -> loans.getTotalRecords() != 1 || !first.isPresent());
-    };
+    return loans -> of(() -> loans.getTotalRecords() > 1);
   }
 }
