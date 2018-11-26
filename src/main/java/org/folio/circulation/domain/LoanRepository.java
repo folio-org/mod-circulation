@@ -2,6 +2,7 @@ package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.validation.CommonFailures.moreThanOneOpenLoanFailure;
+import static org.folio.circulation.domain.validation.CommonFailures.noItemFoundFailure;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.of;
 import static org.folio.circulation.support.HttpResult.succeeded;
@@ -19,6 +20,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.validation.UserNotFoundValidator;
+import org.folio.circulation.storage.ItemByBarcodeInStorageFinder;
+import org.folio.circulation.storage.ItemByIdInStorageFinder;
 import org.folio.circulation.storage.SingleOpenLoanForItemInStorageFinder;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
@@ -105,22 +108,13 @@ public class LoanRepository {
       = new SingleOpenLoanForItemInStorageFinder(this, userRepository,
         moreThanOneOpenLoanFailure(itemId));
 
-    return itemRepository.fetchById(itemId)
-      .thenApply(itemResult -> failWhenNoItemFoundForItem(itemResult,
-        () -> failure(
-          String.format("No item with ID %s exists", itemId),
-          "itemId", itemId)))
+    final ItemByIdInStorageFinder itemFinder = new ItemByIdInStorageFinder(
+      itemRepository, noItemFoundFailure(itemId));
+
+    return itemFinder.findItemById(itemId)
       .thenComposeAsync(itemResult ->
         itemResult.after(singleOpenLoanFinder::findSingleOpenLoan))
       .thenApply(userNotFoundValidator::refuseWhenUserNotFound);
-  }
-
-  private static HttpResult<Item> failWhenNoItemFoundForItem(
-    HttpResult<Item> itemResult,
-    Supplier<HttpFailure> itemNotFoundFailureSupplier) {
-
-    return itemResult.failWhen(item -> of(item::isNotFound),
-      item -> itemNotFoundFailureSupplier.get());
   }
 
   /**
