@@ -3,7 +3,6 @@ package org.folio.circulation.resources;
 import static org.folio.circulation.domain.validation.CommonFailures.moreThanOneOpenLoanFailure;
 import static org.folio.circulation.domain.validation.CommonFailures.noItemFoundFailure;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 
 import org.folio.circulation.domain.Loan;
@@ -59,14 +58,24 @@ public class CheckInByBarcodeResource extends Resource {
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
 
-    // TODO: Validation check for same user should be in the domain service
-
     final HttpResult<CheckInByBarcodeRequest> checkInRequestResult
       = CheckInByBarcodeRequest.from(routingContext.getBodyAsJson());
 
+    final String itemBarcode = checkInRequestResult
+      .map(CheckInByBarcodeRequest::getItemBarcode)
+      .orElse("unknown barcode");
+
+    final ItemByBarcodeInStorageFinder itemFinder = new ItemByBarcodeInStorageFinder(
+      itemRepository, noItemFoundFailure(itemBarcode));
+
+    final SingleOpenLoanForItemInStorageFinder singleOpenLoanFinder
+      = new SingleOpenLoanForItemInStorageFinder(loanRepository, userRepository,
+        moreThanOneOpenLoanFailure(itemBarcode));
+
     checkInRequestResult
-      .after(checkInRequest -> findOpenLoanByBarcode(
-        itemRepository, loanRepository, userRepository, checkInRequest.getItemBarcode()))
+      .after(checkInRequest -> itemFinder.findItemByBarcode(itemBarcode)
+      .thenComposeAsync(itemResult ->
+          itemResult.after(singleOpenLoanFinder::findSingleOpenLoan)))
       .thenApply(loanResult -> loanResult.combineToResult(checkInRequestResult,
         loanCheckInService::checkIn))
       .thenComposeAsync(loanResult -> loanResult.combineAfter(
@@ -84,25 +93,7 @@ public class CheckInByBarcodeResource extends Resource {
   }
 
   private BiFunction<Loan, RequestQueue, LoanAndRelatedRecords> mapToRelatedRecords() {
-    return (loan, requestQueue) -> new LoanAndRelatedRecords(loan).withRequestQueue(requestQueue);
+    return (loan, requestQueue) -> new LoanAndRelatedRecords(loan)
+      .withRequestQueue(requestQueue);
   }
-
-  private CompletableFuture<HttpResult<Loan>> findOpenLoanByBarcode(
-    ItemRepository itemRepository,
-    LoanRepository loanRepository,
-    UserRepository userRepository,
-    String itemBarcode) {
-
-    final ItemByBarcodeInStorageFinder itemFinder = new ItemByBarcodeInStorageFinder(
-      itemRepository, noItemFoundFailure(itemBarcode));
-
-    final SingleOpenLoanForItemInStorageFinder singleOpenLoanFinder
-      = new SingleOpenLoanForItemInStorageFinder(loanRepository, userRepository,
-        moreThanOneOpenLoanFailure(itemBarcode));
-
-    return itemFinder.findItemByBarcode(itemBarcode)
-      .thenComposeAsync(itemResult ->
-        itemResult.after(singleOpenLoanFinder::findSingleOpenLoan));
-  }
-
 }
