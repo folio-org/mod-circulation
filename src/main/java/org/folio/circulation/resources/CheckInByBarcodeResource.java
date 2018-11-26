@@ -1,7 +1,6 @@
 package org.folio.circulation.resources;
 
 import static org.folio.circulation.domain.validation.CommonFailures.moreThanOneOpenLoanFailure;
-import static org.folio.circulation.support.HttpResult.of;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 import java.util.Optional;
@@ -28,12 +27,12 @@ import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.domain.representations.CheckInByBarcodeResponse;
 import org.folio.circulation.domain.validation.MoreThanOneLoanValidator;
 import org.folio.circulation.domain.validation.NoLoanValidator;
+import org.folio.circulation.storage.ItemByBarcodeInStorageFinder;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.RouteRegistration;
-import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;
@@ -103,21 +102,13 @@ public class CheckInByBarcodeResource extends Resource {
     LoanRepository loanRepository,
     UserRepository userRepository) {
 
-    return findItemByBarcode(query.getItemBarcode(), () -> failure(
+    final ItemByBarcodeInStorageFinder itemFinder = new ItemByBarcodeInStorageFinder();
+
+    return itemFinder.findItemByBarcode(query.getItemBarcode(), () -> failure(
       String.format("No item with barcode %s exists", query.getItemBarcode()),
       "itemBarcode", query.getItemBarcode()), itemRepository)
       .thenComposeAsync(getOnlyLoan(loanRepository, userRepository,
         moreThanOneOpenLoanFailure(query.getItemBarcode())));
-  }
-
-  private CompletableFuture<HttpResult<Item>> findItemByBarcode(
-    String itemBarcode,
-    Supplier<ValidationErrorFailure> itemNotFoundFailureSupplier,
-    ItemRepository itemRepository) {
-
-    return itemRepository.fetchByBarcode(itemBarcode)
-      .thenApply(itemResult -> failWhenNoItemFoundForBarcode(itemResult,
-        itemNotFoundFailureSupplier));
   }
 
   private Function<HttpResult<Item>, CompletionStage<HttpResult<Loan>>> getOnlyLoan(
@@ -139,14 +130,6 @@ public class CheckInByBarcodeResource extends Resource {
       .thenApply(loanResult -> loanResult.map(loan -> loan.orElse(null)))
       .thenApply(loanResult -> loanResult.combine(itemResult, Loan::withItem))
       .thenComposeAsync(loanResult -> this.fetchUser(loanResult, userRepository));
-  }
-
-  private HttpResult<Item> failWhenNoItemFoundForBarcode(
-    HttpResult<Item> itemResult,
-    Supplier<ValidationErrorFailure> itemNotFoundFailureSupplier) {
-
-    return itemResult.failWhen(item -> of(item::isNotFound),
-      item -> itemNotFoundFailureSupplier.get());
   }
 
   private CompletableFuture<HttpResult<Loan>> fetchUser(
