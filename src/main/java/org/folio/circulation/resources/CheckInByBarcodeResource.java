@@ -2,6 +2,7 @@ package org.folio.circulation.resources;
 
 import static org.folio.circulation.domain.validation.CommonFailures.moreThanOneOpenLoanFailure;
 import static org.folio.circulation.support.HttpResult.of;
+import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -102,17 +103,21 @@ public class CheckInByBarcodeResource extends Resource {
     LoanRepository loanRepository,
     UserRepository userRepository) {
 
-    return findItemByBarcode(itemRepository, query)
+    return findItemByBarcode(query.getItemBarcode(), () -> failure(
+      String.format("No item with barcode %s exists", query.getItemBarcode()),
+      "itemBarcode", query.getItemBarcode()), itemRepository)
       .thenComposeAsync(getOnlyLoan(loanRepository, userRepository,
         moreThanOneOpenLoanFailure(query.getItemBarcode())));
   }
 
   private CompletableFuture<HttpResult<Item>> findItemByBarcode(
-    ItemRepository itemRepository,
-    FindByBarcodeQuery query) {
+    String itemBarcode,
+    Supplier<ValidationErrorFailure> itemNotFoundFailureSupplier,
+    ItemRepository itemRepository) {
 
-    return itemRepository.fetchByBarcode(query.getItemBarcode())
-      .thenApply(itemResult -> failWhenNoItemFoundForBarcode(itemResult, query));
+    return itemRepository.fetchByBarcode(itemBarcode)
+      .thenApply(itemResult -> failWhenNoItemFoundForBarcode(itemResult,
+        itemNotFoundFailureSupplier));
   }
 
   private Function<HttpResult<Item>, CompletionStage<HttpResult<Loan>>> getOnlyLoan(
@@ -138,12 +143,10 @@ public class CheckInByBarcodeResource extends Resource {
 
   private HttpResult<Item> failWhenNoItemFoundForBarcode(
     HttpResult<Item> itemResult,
-    FindByBarcodeQuery query) {
+    Supplier<ValidationErrorFailure> itemNotFoundFailureSupplier) {
 
     return itemResult.failWhen(item -> of(item::isNotFound),
-      item ->  ValidationErrorFailure.failure(
-        String.format("No item with barcode %s exists", query.getItemBarcode()),
-        "itemBarcode", query.getItemBarcode()) );
+      item -> itemNotFoundFailureSupplier.get());
   }
 
   private CompletableFuture<HttpResult<Loan>> fetchUser(
