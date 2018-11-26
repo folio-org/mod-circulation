@@ -1,5 +1,7 @@
 package org.folio.circulation.resources;
 
+import static org.folio.circulation.domain.validation.CommonFailures.moreThanOneOpenLoanFailure;
+import static org.folio.circulation.domain.validation.CommonFailures.noItemFoundFailure;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
@@ -10,6 +12,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.UserRepository;
+import org.folio.circulation.domain.validation.UserNotFoundValidator;
+import org.folio.circulation.storage.ItemByBarcodeInStorageFinder;
+import org.folio.circulation.storage.SingleOpenLoanForItemInStorageFinder;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ItemRepository;
 
@@ -31,8 +36,26 @@ public class RenewByBarcodeResource extends RenewalResource {
     final HttpResult<RenewByBarcodeRequest> requestResult
       = RenewByBarcodeRequest.from(request);
 
+    final String itemBarcode = requestResult
+      .map(RenewByBarcodeRequest::getItemBarcode)
+      .orElse("unknown barcode");
+
+    final ItemByBarcodeInStorageFinder itemFinder = new ItemByBarcodeInStorageFinder(
+      itemRepository, noItemFoundFailure(itemBarcode));
+
+    final SingleOpenLoanForItemInStorageFinder singleOpenLoanFinder
+      = new SingleOpenLoanForItemInStorageFinder(loanRepository, userRepository,
+      moreThanOneOpenLoanFailure(itemBarcode));
+
+    //TODO: Possibly move this to single open loan finder?
+    final UserNotFoundValidator userNotFoundValidator = new UserNotFoundValidator(
+      userId -> failure("user is not found", "userId", userId));
+
     return requestResult
-      .after(query -> loanRepository.findOpenLoanByBarcode(query.getItemBarcode()))
+      .after(checkInRequest -> itemFinder.findItemByBarcode(itemBarcode))
+      .thenComposeAsync(itemResult ->
+        itemResult.after(singleOpenLoanFinder::findSingleOpenLoan))
+      .thenApply(userNotFoundValidator::refuseWhenUserNotFound)
       .thenApply(loanResult -> loanResult.combineToResult(requestResult,
         this::refuseWhenUserDoesNotMatch));
   }
