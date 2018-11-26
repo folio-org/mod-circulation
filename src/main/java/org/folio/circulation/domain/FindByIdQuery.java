@@ -1,6 +1,6 @@
 package org.folio.circulation.domain;
 
-public interface FindByIdQuery extends UserRelatedQuery {
+public interface FindByIdQuery {
   String getItemId();
   String getUserId();
 }

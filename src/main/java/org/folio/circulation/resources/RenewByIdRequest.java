@@ -3,9 +3,7 @@ package org.folio.circulation.resources;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.FindByIdQuery;
-import org.folio.circulation.domain.User;
 import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.ValidationErrorFailure;
 
 import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
@@ -13,7 +11,7 @@ import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 public class RenewByIdRequest implements FindByIdQuery {
-  private static final String USER_ID = "userId";
+  static final String USER_ID = "userId";
   private static final String ITEM_ID = "itemId";
 
   private final String itemId;
@@ -50,14 +48,4 @@ public class RenewByIdRequest implements FindByIdQuery {
     return userId;
   }
 
-  @Override
-  public ValidationErrorFailure userDoesNotMatchError() {
-    return failure("Cannot renew item checked out to different user",
-      USER_ID, getUserId());
-  }
-
-  @Override
-  public boolean userMatches(User user) {
-    return StringUtils.equals(user.getId(), getUserId());
-  }
 }

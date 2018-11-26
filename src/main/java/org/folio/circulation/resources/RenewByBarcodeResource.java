@@ -2,9 +2,11 @@ package org.folio.circulation.resources;
 
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.support.HttpResult;
@@ -22,7 +24,8 @@ public class RenewByBarcodeResource extends RenewalResource {
     JsonObject request,
     LoanRepository loanRepository) {
 
-    final HttpResult<RenewByBarcodeRequest> requestResult = RenewByBarcodeRequest.from(request);
+    final HttpResult<RenewByBarcodeRequest> requestResult
+      = RenewByBarcodeRequest.from(request);
 
     return requestResult
       .after(loanRepository::findOpenLoanByBarcode)
@@ -33,13 +36,17 @@ public class RenewByBarcodeResource extends RenewalResource {
   private HttpResult<Loan> refuseWhenUserDoesNotMatch(
     Loan loan,
     RenewByBarcodeRequest barcodeRequest) {
-    
-    if(barcodeRequest.userMatches(loan.getUser())) {
+
+    if(userMatches(loan, barcodeRequest.getUserBarcode())) {
       return succeeded(loan);
     }
     else {
-      return failed(barcodeRequest.userDoesNotMatchError());
+      return failed(failure("Cannot renew item checked out to different user",
+        RenewByBarcodeRequest.USER_BARCODE, barcodeRequest.getUserBarcode()));
     }
   }
 
+  private boolean userMatches(Loan loan, String expectedUserBarcode) {
+    return StringUtils.equals(loan.getUser().getBarcode(), expectedUserBarcode);
+  }
 }

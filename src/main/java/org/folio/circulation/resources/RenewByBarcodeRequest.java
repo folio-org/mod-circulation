@@ -1,19 +1,18 @@
 package org.folio.circulation.resources;
 
-import io.vertx.core.json.JsonObject;
-import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.domain.FindByBarcodeQuery;
-import org.folio.circulation.domain.User;
-import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.ValidationErrorFailure;
-
 import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
+import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.domain.FindByBarcodeQuery;
+import org.folio.circulation.support.HttpResult;
+
+import io.vertx.core.json.JsonObject;
+
 public class RenewByBarcodeRequest implements FindByBarcodeQuery {
-  private static final String USER_BARCODE = "userBarcode";
+  static final String USER_BARCODE = "userBarcode";
   private static final String ITEM_BARCODE = "itemBarcode";
 
   private final String itemBarcode;
@@ -50,14 +49,4 @@ public class RenewByBarcodeRequest implements FindByBarcodeQuery {
     return userBarcode;
   }
 
-  @Override
-  public ValidationErrorFailure userDoesNotMatchError() {
-    return failure("Cannot renew item checked out to different user",
-      USER_BARCODE, getUserBarcode());
-  }
-
-  @Override
-  public boolean userMatches(User user) {
-    return StringUtils.equals(user.getBarcode(), getUserBarcode());
-  }
 }

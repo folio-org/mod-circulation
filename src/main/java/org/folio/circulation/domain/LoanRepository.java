@@ -137,8 +137,7 @@ public class LoanRepository {
           }));
       }))
       .thenComposeAsync(this::fetchUser)
-      .thenApply(userNotFoundValidator::refuseWhenUserNotFound)
-      .thenApply(r -> r.next(loan -> refuseWhenDifferentUser(loan, query)));
+      .thenApply(userNotFoundValidator::refuseWhenUserNotFound);
   }
 
   /**
@@ -166,18 +165,6 @@ public class LoanRepository {
             String.format("More than one open loan for item %s", request.getItemId())));
         }
       }));
-  }
-
-  private HttpResult<Loan> refuseWhenDifferentUser(
-    Loan loan,
-    UserRelatedQuery query) {
-
-    if(query.userMatches(loan.getUser())) {
-      return succeeded(loan);
-    }
-    else {
-      return failed(query.userDoesNotMatchError());
-    }
   }
 
   public CompletableFuture<HttpResult<Loan>> getById(String id) {
