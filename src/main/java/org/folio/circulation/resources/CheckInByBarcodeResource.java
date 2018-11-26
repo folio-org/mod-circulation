@@ -1,7 +1,7 @@
 package org.folio.circulation.resources;
 
 import static org.folio.circulation.domain.validation.CommonFailures.moreThanOneOpenLoanFailure;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
+import static org.folio.circulation.domain.validation.CommonFailures.noItemFoundFailure;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -25,6 +25,7 @@ import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.domain.representations.CheckInByBarcodeResponse;
+import org.folio.circulation.domain.validation.CommonFailures;
 import org.folio.circulation.domain.validation.MoreThanOneLoanValidator;
 import org.folio.circulation.domain.validation.NoLoanValidator;
 import org.folio.circulation.storage.ItemByBarcodeInStorageFinder;
@@ -103,9 +104,7 @@ public class CheckInByBarcodeResource extends Resource {
     UserRepository userRepository) {
 
     final ItemByBarcodeInStorageFinder itemFinder = new ItemByBarcodeInStorageFinder(
-      itemRepository, () -> failure(
-      String.format("No item with barcode %s exists", query.getItemBarcode()),
-      "itemBarcode", query.getItemBarcode()));
+      itemRepository, noItemFoundFailure(query.getItemBarcode()));
 
     return itemFinder.findItemByBarcode(query.getItemBarcode())
       .thenComposeAsync(getOnlyLoan(loanRepository, userRepository,
