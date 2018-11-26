@@ -103,8 +103,7 @@ public class CheckInByBarcodeResource extends Resource {
     UserRepository userRepository) {
 
     return findItemByBarcode(itemRepository, query)
-      .thenComposeAsync(getOnlyLoan(query, loanRepository))
-      .thenComposeAsync(loanResult -> this.fetchUser(loanResult, userRepository));
+      .thenComposeAsync(getOnlyLoan(query, loanRepository, userRepository));
   }
 
   private CompletableFuture<HttpResult<Item>> findItemByBarcode(
@@ -117,7 +116,8 @@ public class CheckInByBarcodeResource extends Resource {
 
   private Function<HttpResult<Item>, CompletionStage<HttpResult<Loan>>> getOnlyLoan(
     FindByBarcodeQuery query,
-    LoanRepository loanRepository) {
+    LoanRepository loanRepository,
+    UserRepository userRepository) {
 
     //Use same error for no loans and more than one loan to maintain compatibility
     final Supplier<HttpFailure> incorrectLoansFailure
@@ -134,7 +134,8 @@ public class CheckInByBarcodeResource extends Resource {
       .thenApply(loanResult -> loanResult.map(this::getFirstLoan))
       .thenApply(noLoanValidator::failWhenNoLoan)
       .thenApply(loanResult -> loanResult.map(loan -> loan.orElse(null)))
-      .thenApply(loanResult -> loanResult.combine(itemResult, Loan::withItem));
+      .thenApply(loanResult -> loanResult.combine(itemResult, Loan::withItem))
+      .thenComposeAsync(loanResult -> this.fetchUser(loanResult, userRepository));
   }
 
   private HttpResult<Item> failWhenNoItemFoundForBarcode(
