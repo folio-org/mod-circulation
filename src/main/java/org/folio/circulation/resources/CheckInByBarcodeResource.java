@@ -2,7 +2,6 @@ package org.folio.circulation.resources;
 
 import static org.folio.circulation.support.HttpResult.of;
 
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiFunction;
@@ -23,11 +22,11 @@ import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.domain.representations.CheckInByBarcodeResponse;
+import org.folio.circulation.domain.validation.MoreThanOneOpenLoanValidator;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.RouteRegistration;
-import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.WebContext;
 
@@ -107,9 +106,12 @@ public class CheckInByBarcodeResource extends Resource {
     FindByBarcodeQuery query,
     LoanRepository loanRepository) {
 
+    final MoreThanOneOpenLoanValidator moreThanOneOpenLoanValidator
+      = new MoreThanOneOpenLoanValidator();
+
     return itemResult -> failWhenNoItemFoundForBarcode(itemResult, query)
       .after(loanRepository::findOpenLoans)
-      .thenApply(result -> failWhenMoreThanOneOpenLoan(result, query))
+      .thenApply(result -> moreThanOneOpenLoanValidator.failWhenMoreThanOneOpenLoan(result, query))
       .thenApply(loanResult -> loanResult.map(this::getFirstLoan))
       .thenApply(loanResult -> loanResult.combine(itemResult, Loan::withItem));
   }
@@ -122,24 +124,6 @@ public class CheckInByBarcodeResource extends Resource {
       item -> ValidationErrorFailure.failure(
         String.format("No item with barcode %s exists", query.getItemBarcode()),
         "itemBarcode", query.getItemBarcode()) );
-  }
-
-  private HttpResult<MultipleRecords<Loan>> failWhenMoreThanOneOpenLoan(
-    HttpResult<MultipleRecords<Loan>> result,
-    FindByBarcodeQuery query) {
-
-    return result.failWhen(moreThanOneOpenLoan(),
-      loans -> new ServerErrorFailure(
-        String.format("More than one open loan for item %s", query.getItemBarcode())));
-  }
-
-  private Function<MultipleRecords<Loan>, HttpResult<Boolean>> moreThanOneOpenLoan() {
-    return loans -> {
-      final Optional<Loan> first = loans.getRecords().stream()
-        .findFirst();
-
-      return of(() -> loans.getTotalRecords() != 1 || !first.isPresent());
-    };
   }
 
   private CompletableFuture<HttpResult<Loan>> fetchUser(
