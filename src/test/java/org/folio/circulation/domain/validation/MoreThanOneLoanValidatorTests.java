@@ -5,7 +5,8 @@ import static org.folio.circulation.support.HttpResult.of;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
@@ -21,12 +22,11 @@ public class MoreThanOneLoanValidatorTests {
     final MoreThanOneLoanValidator validator = new MoreThanOneLoanValidator(
       () -> new ServerErrorFailure("More than one loan"));
 
-    final ArrayList<Loan> loans = new ArrayList<>();
-    loans.add(Loan.from(new LoanBuilder().create()));
+    final HttpResult<MultipleRecords<Loan>> multipleLoans
+      = multipleLoansResult(generateLoan());
 
     final HttpResult<MultipleRecords<Loan>> result =
-      validator.failWhenMoreThanOneLoan(
-        of(() -> new MultipleRecords<>(loans, loans.size())));
+      validator.failWhenMoreThanOneLoan(multipleLoans);
 
     assertThat(result.succeeded(), is(true));
   }
@@ -36,13 +36,12 @@ public class MoreThanOneLoanValidatorTests {
     final MoreThanOneLoanValidator validator = new MoreThanOneLoanValidator(
       () -> new ServerErrorFailure("More than one loan"));
 
-    final ArrayList<Loan> loans = new ArrayList<>();
-    loans.add(Loan.from(new LoanBuilder().create()));
-    loans.add(Loan.from(new LoanBuilder().create()));
+    final HttpResult<MultipleRecords<Loan>> multipleLoans
+      = multipleLoansResult(generateLoan(), generateLoan());
 
     final HttpResult<MultipleRecords<Loan>> result =
       validator.failWhenMoreThanOneLoan(
-        of(() -> new MultipleRecords<>(loans, loans.size())));
+        multipleLoans);
 
     assertThat(result, isErrorFailureContaining("More than one loan"));
   }
@@ -52,12 +51,22 @@ public class MoreThanOneLoanValidatorTests {
     final MoreThanOneLoanValidator validator = new MoreThanOneLoanValidator(
       () -> new ServerErrorFailure("More than one loan"));
 
-    final ArrayList<Loan> loans = new ArrayList<>();
+    final HttpResult<MultipleRecords<Loan>> noLoans
+      = multipleLoansResult();
 
     final HttpResult<MultipleRecords<Loan>> result =
-      validator.failWhenMoreThanOneLoan(
-        of(() -> new MultipleRecords<>(loans, loans.size())));
+      validator.failWhenMoreThanOneLoan(noLoans);
 
     assertThat(result, isErrorFailureContaining("More than one loan"));
+  }
+
+  private Loan generateLoan() {
+    return Loan.from(new LoanBuilder().create());
+  }
+
+  private HttpResult<MultipleRecords<Loan>> multipleLoansResult(Loan... loans) {
+    final List<Loan> loansList = Arrays.asList(loans);
+
+    return of(() -> new MultipleRecords<>(loansList, loansList.size()));
   }
 }
