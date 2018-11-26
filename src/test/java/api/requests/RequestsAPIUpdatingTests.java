@@ -162,9 +162,17 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     loansFixture.checkOutItem(itemId);
 
-    UUID originalRequesterId = usersClient.create(new UserBuilder()
-      .withName("Norton", "Jessica")
-      .withBarcode("764523186496"))
+    UUID requesterId = usersClient.create(new UserBuilder()
+      .withName("Campbell", "Fiona")
+      .withBarcode("679231693475")
+      .withAddress(
+        new Address(workAddressTypeId(),
+          "Fake first address line",
+          "Fake second address line",
+          "Fake city",
+          "Fake region",
+          "Fake postal code",
+          "Fake country code")))
       .getId();
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
@@ -178,31 +186,16 @@ public class RequestsAPIUpdatingTests extends APITests {
       .withId(id)
       .withRequestDate(requestDate)
       .withItemId(itemId)
-      .withRequesterId(originalRequesterId)
-      .fulfilToHoldShelf()
+      .withRequesterId(requesterId)
       .withPickupServicePointId(exampleServicePoint.getId())
       .withRequestExpiration(new LocalDate(2017, 7, 30))
       .deliverToAddress(workAddressTypeId()));
-
-    UUID updatedRequester = usersClient.create(new UserBuilder()
-      .withName("Campbell", "Fiona")
-      .withBarcode("679231693475")
-      .withAddress(
-        new Address(workAddressTypeId(),
-          "Fake first address line",
-          "Fake second address line",
-          "Fake city",
-          "Fake region",
-          "Fake postal code",
-          "Fake country code")))
-      .getId();
 
     JsonObject updatedRequest = requestsClient.getById(createdRequest.getId())
       .getJson();
 
     updatedRequest
-      .put("requestType", "Hold")
-      .put("requesterId", updatedRequester.toString());
+      .put("requestType", "Hold");
 
     CompletableFuture<Response> putCompleted = new CompletableFuture<>();
 
@@ -229,7 +222,6 @@ public class RequestsAPIUpdatingTests extends APITests {
     assertThat(representation.getString("requestType"), is("Hold"));
     assertThat(representation.getString("requestDate"), isEquivalentTo(requestDate));
     assertThat(representation.getString("itemId"), is(itemId.toString()));
-    assertThat(representation.getString("requesterId"), is(updatedRequester.toString()));
     assertThat(representation.getString("fulfilmentPreference"), is("Delivery"));
     assertThat(representation.getString("requestExpirationDate"), is("2017-07-30"));
 
