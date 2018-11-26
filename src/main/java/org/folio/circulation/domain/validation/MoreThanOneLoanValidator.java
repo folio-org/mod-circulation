@@ -11,21 +11,21 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.HttpResult;
 
-public class MoreThanOneOpenLoanValidator {
+public class MoreThanOneLoanValidator {
   private final Supplier<HttpFailure> failureSupplier;
 
-  public MoreThanOneOpenLoanValidator(Supplier<HttpFailure> failureSupplier) {
+  public MoreThanOneLoanValidator(Supplier<HttpFailure> failureSupplier) {
     this.failureSupplier = failureSupplier;
   }
 
-  public HttpResult<MultipleRecords<Loan>> failWhenMoreThanOneOpenLoan(
+  public HttpResult<MultipleRecords<Loan>> failWhenMoreThanOneLoan(
     HttpResult<MultipleRecords<Loan>> result) {
 
-    return result.failWhen(moreThanOneOpenLoan(),
+    return result.failWhen(moreThanOneLoan(),
       loans -> failureSupplier.get());
   }
 
-  private static Function<MultipleRecords<Loan>, HttpResult<Boolean>> moreThanOneOpenLoan() {
+  private static Function<MultipleRecords<Loan>, HttpResult<Boolean>> moreThanOneLoan() {
     return loans -> {
       final Optional<Loan> first = loans.getRecords().stream()
         .findFirst();

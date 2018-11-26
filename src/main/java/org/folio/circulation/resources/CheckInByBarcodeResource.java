@@ -22,7 +22,7 @@ import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.domain.representations.CheckInByBarcodeResponse;
-import org.folio.circulation.domain.validation.MoreThanOneOpenLoanValidator;
+import org.folio.circulation.domain.validation.MoreThanOneLoanValidator;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ItemRepository;
@@ -107,13 +107,13 @@ public class CheckInByBarcodeResource extends Resource {
     FindByBarcodeQuery query,
     LoanRepository loanRepository) {
 
-    final MoreThanOneOpenLoanValidator moreThanOneOpenLoanValidator
-      = new MoreThanOneOpenLoanValidator(() -> new ServerErrorFailure(
+    final MoreThanOneLoanValidator moreThanOneLoanValidator
+      = new MoreThanOneLoanValidator(() -> new ServerErrorFailure(
       String.format("More than one open loan for item %s", query.getItemBarcode())));
 
     return itemResult -> failWhenNoItemFoundForBarcode(itemResult, query)
       .after(loanRepository::findOpenLoans)
-      .thenApply(moreThanOneOpenLoanValidator::failWhenMoreThanOneOpenLoan)
+      .thenApply(moreThanOneLoanValidator::failWhenMoreThanOneLoan)
       .thenApply(loanResult -> loanResult.map(this::getFirstLoan))
       .thenApply(loanResult -> loanResult.combine(itemResult, Loan::withItem));
   }
