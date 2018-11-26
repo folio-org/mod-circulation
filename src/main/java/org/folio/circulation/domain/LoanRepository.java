@@ -1,8 +1,6 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.validation.CommonFailures.moreThanOneOpenLoanFailure;
-import static org.folio.circulation.domain.validation.CommonFailures.noItemFoundFailure;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.of;
 import static org.folio.circulation.support.HttpResult.succeeded;
@@ -16,18 +14,12 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.domain.validation.UserNotFoundValidator;
-import org.folio.circulation.storage.ItemByBarcodeInStorageFinder;
-import org.folio.circulation.storage.ItemByIdInStorageFinder;
-import org.folio.circulation.storage.SingleOpenLoanForItemInStorageFinder;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlHelper;
 import org.folio.circulation.support.ForwardOnFailure;
-import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.ServerErrorFailure;
@@ -96,25 +88,6 @@ public class LoanRepository {
       .thenComposeAsync(r -> r.after(
         //Fetch updated loan without having to get the item and the user again
         l -> fetchLoan(l.getId(), loan.getItem(), loan.getUser())));
-  }
-
-  //TODO: Extract to separate class rather than repository
-  public CompletableFuture<HttpResult<Loan>> findOpenLoanById(String itemId) {
-
-    final UserNotFoundValidator userNotFoundValidator = new UserNotFoundValidator(
-      userId -> failure("user is not found", "userId", userId));
-
-    final SingleOpenLoanForItemInStorageFinder singleOpenLoanFinder
-      = new SingleOpenLoanForItemInStorageFinder(this, userRepository,
-        moreThanOneOpenLoanFailure(itemId));
-
-    final ItemByIdInStorageFinder itemFinder = new ItemByIdInStorageFinder(
-      itemRepository, noItemFoundFailure(itemId));
-
-    return itemFinder.findItemById(itemId)
-      .thenComposeAsync(itemResult ->
-        itemResult.after(singleOpenLoanFinder::findSingleOpenLoan))
-      .thenApply(userNotFoundValidator::refuseWhenUserNotFound);
   }
 
   /**

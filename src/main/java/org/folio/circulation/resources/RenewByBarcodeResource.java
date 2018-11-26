@@ -1,7 +1,7 @@
 package org.folio.circulation.resources;
 
 import static org.folio.circulation.domain.validation.CommonFailures.moreThanOneOpenLoanFailure;
-import static org.folio.circulation.domain.validation.CommonFailures.noItemFoundFailure;
+import static org.folio.circulation.domain.validation.CommonFailures.noItemFoundForBarcodeFailure;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
@@ -41,7 +41,7 @@ public class RenewByBarcodeResource extends RenewalResource {
       .orElse("unknown barcode");
 
     final ItemByBarcodeInStorageFinder itemFinder = new ItemByBarcodeInStorageFinder(
-      itemRepository, noItemFoundFailure(itemBarcode));
+      itemRepository, noItemFoundForBarcodeFailure(itemBarcode));
 
     final SingleOpenLoanForItemInStorageFinder singleOpenLoanFinder
       = new SingleOpenLoanForItemInStorageFinder(loanRepository, userRepository,

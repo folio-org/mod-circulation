@@ -1,7 +1,7 @@
 package org.folio.circulation.resources;
 
 import static org.folio.circulation.domain.validation.CommonFailures.moreThanOneOpenLoanFailure;
-import static org.folio.circulation.domain.validation.CommonFailures.noItemFoundFailure;
+import static org.folio.circulation.domain.validation.CommonFailures.noItemFoundForBarcodeFailure;
 
 import java.util.function.BiFunction;
 
@@ -66,7 +66,7 @@ public class CheckInByBarcodeResource extends Resource {
       .orElse("unknown barcode");
 
     final ItemByBarcodeInStorageFinder itemFinder = new ItemByBarcodeInStorageFinder(
-      itemRepository, noItemFoundFailure(itemBarcode));
+      itemRepository, noItemFoundForBarcodeFailure(itemBarcode));
 
     final SingleOpenLoanForItemInStorageFinder singleOpenLoanFinder
       = new SingleOpenLoanForItemInStorageFinder(loanRepository, userRepository,

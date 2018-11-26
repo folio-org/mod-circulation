@@ -15,9 +15,15 @@ public class CommonFailures {
       String.format("More than one open loan for item %s", itemBarcode));
   }
 
-  public static Supplier<HttpFailure> noItemFoundFailure(String itemBarcode) {
+  public static Supplier<HttpFailure> noItemFoundForBarcodeFailure(String itemBarcode) {
     return () -> failure(
       String.format("No item with barcode %s exists", itemBarcode),
       "itemBarcode", itemBarcode);
+  }
+
+  public static Supplier<HttpFailure> noItemFoundForIdFailure(String itemId) {
+    return () -> failure(
+      String.format("No item with ID %s exists", itemId),
+      "itemId", itemId);
   }
 }
