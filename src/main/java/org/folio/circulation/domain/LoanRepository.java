@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.validation.CommonFailures.moreThanOneOpenLoanFailure;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.of;
 import static org.folio.circulation.support.HttpResult.succeeded;
@@ -14,18 +15,20 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.validation.UserNotFoundValidator;
+import org.folio.circulation.storage.SingleOpenLoanForItemInStorageFinder;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlHelper;
 import org.folio.circulation.support.ForwardOnFailure;
+import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.SingleRecordFetcher;
-import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -98,29 +101,26 @@ public class LoanRepository {
     final UserNotFoundValidator userNotFoundValidator = new UserNotFoundValidator(
       userId -> failure("user is not found", "userId", userId));
 
+    final SingleOpenLoanForItemInStorageFinder singleOpenLoanFinder
+      = new SingleOpenLoanForItemInStorageFinder(this, userRepository,
+        moreThanOneOpenLoanFailure(itemId));
+
     return itemRepository.fetchById(itemId)
-      .thenComposeAsync(itemResult -> itemResult.after(item -> {
-        if(item.isNotFound()) {
-          return completedFuture(ValidationErrorFailure.failedResult(
-            String.format("No item with ID %s exists", itemId),
-            "itemId", itemId));
-        }
-
-        return findOpenLoans(item)
-          .thenApply(loanResult -> loanResult.next(loans -> {
-            final Optional<Loan> first = loans.getRecords().stream()
-              .findFirst();
-
-            if (loans.getTotalRecords() == 1 && first.isPresent()) {
-              return succeeded(Loan.from(first.get().asJson(), item));
-            } else {
-              return failed(new ServerErrorFailure(
-                String.format("More than one open loan for item %s", itemId)));
-            }
-          }));
-      }))
-      .thenComposeAsync(this::fetchUser)
+      .thenApply(itemResult -> failWhenNoItemFoundForItem(itemResult,
+        () -> failure(
+          String.format("No item with ID %s exists", itemId),
+          "itemId", itemId)))
+      .thenComposeAsync(itemResult ->
+        itemResult.after(singleOpenLoanFinder::findSingleOpenLoan))
       .thenApply(userNotFoundValidator::refuseWhenUserNotFound);
+  }
+
+  private static HttpResult<Item> failWhenNoItemFoundForItem(
+    HttpResult<Item> itemResult,
+    Supplier<HttpFailure> itemNotFoundFailureSupplier) {
+
+    return itemResult.failWhen(item -> of(item::isNotFound),
+      item -> itemNotFoundFailureSupplier.get());
   }
 
   /**
