@@ -1,5 +1,6 @@
 package org.folio.circulation.resources;
 
+import static org.folio.circulation.domain.validation.CommonFailures.moreThanOneOpenLoanFailure;
 import static org.folio.circulation.support.HttpResult.of;
 
 import java.util.Optional;
@@ -31,7 +32,6 @@ import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.RouteRegistration;
-import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.WebContext;
 
@@ -112,8 +112,8 @@ public class CheckInByBarcodeResource extends Resource {
     LoanRepository loanRepository) {
 
     //Use same error for no loans and more than one loan to maintain compatibility
-    final Supplier<HttpFailure> incorrectLoansFailure = () -> new ServerErrorFailure(
-      String.format("More than one open loan for item %s", query.getItemBarcode()));
+    final Supplier<HttpFailure> incorrectLoansFailure
+      = moreThanOneOpenLoanFailure(query.getItemBarcode());
 
     final MoreThanOneLoanValidator moreThanOneLoanValidator
       = new MoreThanOneLoanValidator(incorrectLoansFailure);

@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.validation.CommonFailures.moreThanOneOpenLoanFailure;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.of;
 import static org.folio.circulation.support.HttpResult.succeeded;
@@ -15,13 +16,17 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import org.folio.circulation.domain.validation.MoreThanOneLoanValidator;
+import org.folio.circulation.domain.validation.NoLoanValidator;
 import org.folio.circulation.domain.validation.UserNotFoundValidator;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlHelper;
 import org.folio.circulation.support.ForwardOnFailure;
+import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.ServerErrorFailure;
@@ -304,17 +309,27 @@ public class LoanRepository {
   private Function<HttpResult<Item>, CompletionStage<HttpResult<Loan>>> getOnlyLoan(
     FindByBarcodeQuery query) {
 
+    //Use same error for no loans and more than one loan to maintain compatibility
+    final Supplier<HttpFailure> incorrectLoansFailure
+      = moreThanOneOpenLoanFailure(query.getItemBarcode());
+
+    final MoreThanOneLoanValidator moreThanOneLoanValidator
+      = new MoreThanOneLoanValidator(incorrectLoansFailure);
+
+    final NoLoanValidator noLoanValidator
+      = new NoLoanValidator(incorrectLoansFailure);
+
     return itemResult -> failWhenNoItemFoundForBarcode(itemResult, query)
       .after(this::findOpenLoans)
-      .thenApply(result -> failWhenMoreThanOneOpenLoan(result, query))
+      .thenApply(moreThanOneLoanValidator::failWhenMoreThanOneLoan)
       .thenApply(loanResult -> loanResult.map(this::getFirstLoan))
+      .thenApply(noLoanValidator::failWhenNoLoan)
+      .thenApply(loanResult -> loanResult.map(loan -> loan.orElse(null)))
       .thenApply(loanResult -> loanResult.combine(itemResult, Loan::withItem));
   }
 
-  private Loan getFirstLoan(MultipleRecords<Loan> loans) {
-    return loans.getRecords().stream()
-      .findFirst()
-      .orElse(null);
+  private Optional<Loan> getFirstLoan(MultipleRecords<Loan> loans) {
+    return loans.getRecords().stream().findFirst();
   }
 
   private HttpResult<Item> failWhenNoItemFoundForBarcode(
@@ -325,18 +340,5 @@ public class LoanRepository {
         item -> ValidationErrorFailure.failure(
         String.format("No item with barcode %s exists", query.getItemBarcode()),
         "itemBarcode", query.getItemBarcode()) );
-  }
-
-  private HttpResult<MultipleRecords<Loan>> failWhenMoreThanOneOpenLoan(
-    HttpResult<MultipleRecords<Loan>> result,
-    FindByBarcodeQuery query) {
-
-    return result.failWhen(loans -> {
-      final Optional<Loan> first = loans.getRecords().stream()
-        .findFirst();
-
-      return of(() -> loans.getTotalRecords() != 1 || !first.isPresent());
-    }, loans -> new ServerErrorFailure(
-      String.format("More than one open loan for item %s", query.getItemBarcode())));
   }
 }
