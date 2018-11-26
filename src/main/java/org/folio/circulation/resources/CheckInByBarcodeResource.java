@@ -102,9 +102,17 @@ public class CheckInByBarcodeResource extends Resource {
     LoanRepository loanRepository,
     UserRepository userRepository) {
 
-    return itemRepository.fetchByBarcode(query.getItemBarcode())
+    return findItemByBarcode(itemRepository, query)
       .thenComposeAsync(getOnlyLoan(query, loanRepository))
       .thenComposeAsync(loanResult -> this.fetchUser(loanResult, userRepository));
+  }
+
+  private CompletableFuture<HttpResult<Item>> findItemByBarcode(
+    ItemRepository itemRepository,
+    FindByBarcodeQuery query) {
+
+    return itemRepository.fetchByBarcode(query.getItemBarcode())
+      .thenApply(itemResult -> failWhenNoItemFoundForBarcode(itemResult, query));
   }
 
   private Function<HttpResult<Item>, CompletionStage<HttpResult<Loan>>> getOnlyLoan(
@@ -121,8 +129,7 @@ public class CheckInByBarcodeResource extends Resource {
     final NoLoanValidator noLoanValidator
       = new NoLoanValidator(incorrectLoansFailure);
 
-    return itemResult -> failWhenNoItemFoundForBarcode(itemResult, query)
-      .after(loanRepository::findOpenLoans)
+    return itemResult -> itemResult.after(loanRepository::findOpenLoans)
       .thenApply(moreThanOneLoanValidator::failWhenMoreThanOneLoan)
       .thenApply(loanResult -> loanResult.map(this::getFirstLoan))
       .thenApply(noLoanValidator::failWhenNoLoan)
