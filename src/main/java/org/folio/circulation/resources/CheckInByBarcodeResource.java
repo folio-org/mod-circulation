@@ -128,13 +128,18 @@ public class CheckInByBarcodeResource extends Resource {
     HttpResult<MultipleRecords<Loan>> result,
     FindByBarcodeQuery query) {
 
-    return result.failWhen(loans -> {
+    return result.failWhen(moreThanOneOpenLoan(),
+      loans -> new ServerErrorFailure(
+        String.format("More than one open loan for item %s", query.getItemBarcode())));
+  }
+
+  private Function<MultipleRecords<Loan>, HttpResult<Boolean>> moreThanOneOpenLoan() {
+    return loans -> {
       final Optional<Loan> first = loans.getRecords().stream()
         .findFirst();
 
       return of(() -> loans.getTotalRecords() != 1 || !first.isPresent());
-    }, loans -> new ServerErrorFailure(
-      String.format("More than one open loan for item %s", query.getItemBarcode())));
+    };
   }
 
   private CompletableFuture<HttpResult<Loan>> fetchUser(
