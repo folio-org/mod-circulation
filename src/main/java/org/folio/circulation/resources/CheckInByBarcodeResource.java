@@ -10,7 +10,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import org.folio.circulation.domain.FindByBarcodeQuery;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
@@ -25,7 +24,6 @@ import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.domain.representations.CheckInByBarcodeResponse;
-import org.folio.circulation.domain.validation.CommonFailures;
 import org.folio.circulation.domain.validation.MoreThanOneLoanValidator;
 import org.folio.circulation.domain.validation.NoLoanValidator;
 import org.folio.circulation.storage.ItemByBarcodeInStorageFinder;
@@ -75,8 +73,8 @@ public class CheckInByBarcodeResource extends Resource {
       = CheckInByBarcodeRequest.from(routingContext.getBodyAsJson());
 
     checkInRequestResult
-      .after(checkInRequest -> findOpenLoanByBarcode(checkInRequest,
-        itemRepository, loanRepository, userRepository))
+      .after(checkInRequest -> findOpenLoanByBarcode(
+        itemRepository, loanRepository, userRepository, checkInRequest.getItemBarcode()))
       .thenApply(loanResult -> loanResult.combineToResult(checkInRequestResult,
         loanCheckInService::checkIn))
       .thenComposeAsync(loanResult -> loanResult.combineAfter(
@@ -98,17 +96,17 @@ public class CheckInByBarcodeResource extends Resource {
   }
 
   private CompletableFuture<HttpResult<Loan>> findOpenLoanByBarcode(
-    FindByBarcodeQuery query,
     ItemRepository itemRepository,
     LoanRepository loanRepository,
-    UserRepository userRepository) {
+    UserRepository userRepository,
+    String itemBarcode) {
 
     final ItemByBarcodeInStorageFinder itemFinder = new ItemByBarcodeInStorageFinder(
-      itemRepository, noItemFoundFailure(query.getItemBarcode()));
+      itemRepository, noItemFoundFailure(itemBarcode));
 
-    return itemFinder.findItemByBarcode(query.getItemBarcode())
+    return itemFinder.findItemByBarcode(itemBarcode)
       .thenComposeAsync(getOnlyLoan(loanRepository, userRepository,
-        moreThanOneOpenLoanFailure(query.getItemBarcode())));
+        moreThanOneOpenLoanFailure(itemBarcode)));
   }
 
   private Function<HttpResult<Item>, CompletionStage<HttpResult<Loan>>> getOnlyLoan(
