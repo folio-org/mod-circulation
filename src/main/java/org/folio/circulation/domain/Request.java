@@ -16,7 +16,7 @@ import org.folio.circulation.domain.representations.RequestProperties;
 
 import io.vertx.core.json.JsonObject;
 
-public class Request implements ItemRelatedRecord, UserRelatedRecord, FindByIdQuery {
+public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private final JsonObject representation;
   private final Item item;
   private final User requester;

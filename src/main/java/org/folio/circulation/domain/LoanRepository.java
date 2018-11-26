@@ -99,28 +99,28 @@ public class LoanRepository {
   }
 
   //TODO: Extract to separate class rather than repository
-  public CompletableFuture<HttpResult<Loan>> findOpenLoanByBarcode(FindByBarcodeQuery query) {
+  public CompletableFuture<HttpResult<Loan>> findOpenLoanByBarcode(String itemBarcode) {
     final UserNotFoundValidator userNotFoundValidator = new UserNotFoundValidator(
       userId -> failure("user is not found", "userId", userId));
 
-    return itemRepository.fetchByBarcode(query.getItemBarcode())
-      .thenComposeAsync(getOnlyLoan(query))
+    return itemRepository.fetchByBarcode(itemBarcode)
+      .thenComposeAsync(getOnlyLoan(itemBarcode))
       .thenComposeAsync(this::fetchUser)
       .thenApply(userNotFoundValidator::refuseWhenUserNotFound);
   }
 
   //TODO: Extract to separate class rather than repository
-  public CompletableFuture<HttpResult<Loan>> findOpenLoanById(FindByIdQuery query) {
+  public CompletableFuture<HttpResult<Loan>> findOpenLoanById(String itemId) {
 
     final UserNotFoundValidator userNotFoundValidator = new UserNotFoundValidator(
       userId -> failure("user is not found", "userId", userId));
 
-    return itemRepository.fetchById(query.getItemId())
+    return itemRepository.fetchById(itemId)
       .thenComposeAsync(itemResult -> itemResult.after(item -> {
         if(item.isNotFound()) {
           return completedFuture(ValidationErrorFailure.failedResult(
-            String.format("No item with ID %s exists", query.getItemId()),
-            "itemId", query.getItemId()));
+            String.format("No item with ID %s exists", itemId),
+            "itemId", itemId));
         }
 
         return findOpenLoans(item)
@@ -132,7 +132,7 @@ public class LoanRepository {
               return succeeded(Loan.from(first.get().asJson(), item));
             } else {
               return failed(new ServerErrorFailure(
-                String.format("More than one open loan for item %s", query.getItemId())));
+                String.format("More than one open loan for item %s", itemId)));
             }
           }));
       }))
@@ -294,11 +294,11 @@ public class LoanRepository {
   }
 
   private Function<HttpResult<Item>, CompletionStage<HttpResult<Loan>>> getOnlyLoan(
-    FindByBarcodeQuery query) {
+    String itemBarcode) {
 
     //Use same error for no loans and more than one loan to maintain compatibility
     final Supplier<HttpFailure> incorrectLoansFailure
-      = moreThanOneOpenLoanFailure(query.getItemBarcode());
+      = moreThanOneOpenLoanFailure(itemBarcode);
 
     final MoreThanOneLoanValidator moreThanOneLoanValidator
       = new MoreThanOneLoanValidator(incorrectLoansFailure);
@@ -306,7 +306,7 @@ public class LoanRepository {
     final NoLoanValidator noLoanValidator
       = new NoLoanValidator(incorrectLoansFailure);
 
-    return itemResult -> failWhenNoItemFoundForBarcode(itemResult, query)
+    return itemResult -> failWhenNoItemFoundForBarcode(itemResult, itemBarcode)
       .after(this::findOpenLoans)
       .thenApply(moreThanOneLoanValidator::failWhenMoreThanOneLoan)
       .thenApply(loanResult -> loanResult.map(this::getFirstLoan))
@@ -320,12 +320,11 @@ public class LoanRepository {
   }
 
   private HttpResult<Item> failWhenNoItemFoundForBarcode(
-    HttpResult<Item> itemResult,
-    FindByBarcodeQuery query) {
+    HttpResult<Item> itemResult, String itemBarcode) {
 
     return itemResult.failWhen(item -> of(item::isNotFound),
         item -> ValidationErrorFailure.failure(
-        String.format("No item with barcode %s exists", query.getItemBarcode()),
-        "itemBarcode", query.getItemBarcode()) );
+        String.format("No item with barcode %s exists", itemBarcode),
+        "itemBarcode", itemBarcode));
   }
 }

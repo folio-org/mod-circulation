@@ -3,15 +3,13 @@ package org.folio.circulation.resources;
 import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.domain.FindByBarcodeQuery;
 import org.folio.circulation.support.HttpResult;
 
 import io.vertx.core.json.JsonObject;
 
-public class RenewByBarcodeRequest implements FindByBarcodeQuery {
+public class RenewByBarcodeRequest {
   static final String USER_BARCODE = "userBarcode";
   private static final String ITEM_BARCODE = "itemBarcode";
 
@@ -39,14 +37,11 @@ public class RenewByBarcodeRequest implements FindByBarcodeQuery {
     return succeeded(new RenewByBarcodeRequest(itemBarcode, userBarcode));
   }
 
-  @Override
   public String getItemBarcode() {
     return itemBarcode;
   }
 
-  @Override
   public String getUserBarcode() {
     return userBarcode;
   }
-
 }

@@ -1,16 +1,15 @@
 package org.folio.circulation.resources;
 
-import io.vertx.core.json.JsonObject;
-import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.domain.FindByIdQuery;
-import org.folio.circulation.support.HttpResult;
-
 import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
-public class RenewByIdRequest implements FindByIdQuery {
+import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.support.HttpResult;
+
+import io.vertx.core.json.JsonObject;
+
+public class RenewByIdRequest {
   static final String USER_ID = "userId";
   private static final String ITEM_ID = "itemId";
 
@@ -38,12 +37,10 @@ public class RenewByIdRequest implements FindByIdQuery {
     return succeeded(new RenewByIdRequest(itemBarcode, userBarcode));
   }
 
-  @Override
   public String getItemId() {
     return itemId;
   }
 
-  @Override
   public String getUserId() {
     return userId;
   }

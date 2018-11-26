@@ -28,7 +28,7 @@ public class RenewByBarcodeResource extends RenewalResource {
       = RenewByBarcodeRequest.from(request);
 
     return requestResult
-      .after(loanRepository::findOpenLoanByBarcode)
+      .after(query -> loanRepository.findOpenLoanByBarcode(query.getItemBarcode()))
       .thenApply(loanResult -> loanResult.combineToResult(requestResult,
         this::refuseWhenUserDoesNotMatch));
   }

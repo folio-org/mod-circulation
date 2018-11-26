@@ -28,7 +28,7 @@ public class RenewByIdResource extends RenewalResource {
       = RenewByIdRequest.from(request);
 
     return requestResult
-      .after(loanRepository::findOpenLoanById)
+      .after(query -> loanRepository.findOpenLoanById(query.getItemId()))
       .thenApply(loanResult -> loanResult.combineToResult(requestResult,
         this::refuseWhenUserDoesNotMatch));
   }
