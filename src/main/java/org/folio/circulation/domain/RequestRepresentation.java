@@ -35,6 +35,8 @@ public class RequestRepresentation {
     addStoredRequesterProperties(representation, request.getRequester());
     addStoredProxyProperties(representation, request.getProxy());
 
+    removeDeliveryAddress(representation);
+
     return representation;
   }
 
@@ -194,6 +196,13 @@ public class RequestRepresentation {
         requestWithAdditionalInformation.put("deliveryAddress", mappedAddress);
       }
     }
+  }
+
+  private static void removeDeliveryAddress(JsonObject requestRepresentation) {
+    if (requestRepresentation == null) {
+      return;
+    }
+    requestRepresentation.remove("deliveryAddress");
   }
 
   private static void addAdditionalLoanProperties(JsonObject request, Loan loan) {
