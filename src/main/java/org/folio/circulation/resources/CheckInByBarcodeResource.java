@@ -3,20 +3,14 @@ package org.folio.circulation.resources;
 import static org.folio.circulation.domain.validation.CommonFailures.moreThanOneOpenLoanFailure;
 import static org.folio.circulation.domain.validation.CommonFailures.noItemFoundFailure;
 
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
-import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanCheckInService;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.LoanRepresentation;
-import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.UpdateItem;
@@ -24,11 +18,9 @@ import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.domain.representations.CheckInByBarcodeResponse;
-import org.folio.circulation.domain.validation.MoreThanOneLoanValidator;
-import org.folio.circulation.domain.validation.NoLoanValidator;
 import org.folio.circulation.storage.ItemByBarcodeInStorageFinder;
+import org.folio.circulation.storage.SingleOpenLoanForItemInStorageFinder;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.RouteRegistration;
@@ -104,40 +96,13 @@ public class CheckInByBarcodeResource extends Resource {
     final ItemByBarcodeInStorageFinder itemFinder = new ItemByBarcodeInStorageFinder(
       itemRepository, noItemFoundFailure(itemBarcode));
 
+    final SingleOpenLoanForItemInStorageFinder singleOpenLoanFinder
+      = new SingleOpenLoanForItemInStorageFinder(loanRepository, userRepository,
+        moreThanOneOpenLoanFailure(itemBarcode));
+
     return itemFinder.findItemByBarcode(itemBarcode)
-      .thenComposeAsync(getOnlyLoan(loanRepository, userRepository,
-        moreThanOneOpenLoanFailure(itemBarcode)));
+      .thenComposeAsync(itemResult ->
+        itemResult.after(singleOpenLoanFinder::findSingleOpenLoan));
   }
 
-  private Function<HttpResult<Item>, CompletionStage<HttpResult<Loan>>> getOnlyLoan(
-    LoanRepository loanRepository,
-    UserRepository userRepository,
-    Supplier<HttpFailure> incorrectLoansFailure) {
-
-    //Use same error for no loans and more than one loan to maintain compatibility
-    final MoreThanOneLoanValidator moreThanOneLoanValidator
-      = new MoreThanOneLoanValidator(incorrectLoansFailure);
-
-    final NoLoanValidator noLoanValidator
-      = new NoLoanValidator(incorrectLoansFailure);
-
-    return itemResult -> itemResult.after(loanRepository::findOpenLoans)
-      .thenApply(moreThanOneLoanValidator::failWhenMoreThanOneLoan)
-      .thenApply(loanResult -> loanResult.map(this::getFirstLoan))
-      .thenApply(noLoanValidator::failWhenNoLoan)
-      .thenApply(loanResult -> loanResult.map(loan -> loan.orElse(null)))
-      .thenApply(loanResult -> loanResult.combine(itemResult, Loan::withItem))
-      .thenComposeAsync(loanResult -> this.fetchUser(loanResult, userRepository));
-  }
-
-  private CompletableFuture<HttpResult<Loan>> fetchUser(
-    HttpResult<Loan> result,
-    UserRepository userRepository) {
-
-    return result.combineAfter(userRepository::getUser, Loan::withUser);
-  }
-
-  private Optional<Loan> getFirstLoan(MultipleRecords<Loan> loans) {
-    return loans.getRecords().stream().findFirst();
-  }
 }
