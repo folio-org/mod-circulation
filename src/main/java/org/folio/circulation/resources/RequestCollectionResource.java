@@ -18,7 +18,6 @@ import org.folio.circulation.domain.representations.RequestProperties;
 import org.folio.circulation.domain.validation.ClosedRequestValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
-import org.folio.circulation.support.*;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CreatedJsonHttpResult;
 import org.folio.circulation.support.ItemRepository;
