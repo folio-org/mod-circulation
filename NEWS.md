@@ -1,3 +1,7 @@
+## 13.1.0 Unreleased
+
+* Requires `holdings-storage` interface `1.3 2.0 3.0` (CIRC-169)
+
 ## 13.0.0 2018-11-23
 
 * Stores the service point where checking out or in occurred (CIRC-104)
