@@ -9,7 +9,9 @@ import java.util.concurrent.CompletableFuture;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanRepository;
+import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.ItemRepository;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
@@ -22,7 +24,9 @@ public class RenewByIdResource extends RenewalResource {
   @Override
   protected CompletableFuture<HttpResult<Loan>> findLoan(
     JsonObject request,
-    LoanRepository loanRepository) {
+    LoanRepository loanRepository,
+    ItemRepository itemRepository,
+    UserRepository userRepository) {
 
     final HttpResult<RenewByIdRequest> requestResult
       = RenewByIdRequest.from(request);
