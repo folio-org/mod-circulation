@@ -4,21 +4,25 @@ import static org.folio.circulation.support.HttpResult.of;
 
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
-import org.folio.circulation.domain.FindByBarcodeQuery;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.ServerErrorFailure;
 
 public class MoreThanOneOpenLoanValidator {
+  private final Supplier<HttpFailure> failureSupplier;
+
+  public MoreThanOneOpenLoanValidator(Supplier<HttpFailure> failureSupplier) {
+    this.failureSupplier = failureSupplier;
+  }
+
   public HttpResult<MultipleRecords<Loan>> failWhenMoreThanOneOpenLoan(
-    HttpResult<MultipleRecords<Loan>> result,
-    FindByBarcodeQuery query) {
+    HttpResult<MultipleRecords<Loan>> result) {
 
     return result.failWhen(moreThanOneOpenLoan(),
-      loans -> new ServerErrorFailure(
-        String.format("More than one open loan for item %s", query.getItemBarcode())));
+      loans -> failureSupplier.get());
   }
 
   private static Function<MultipleRecords<Loan>, HttpResult<Boolean>> moreThanOneOpenLoan() {

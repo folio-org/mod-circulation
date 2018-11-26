@@ -27,6 +27,7 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.RouteRegistration;
+import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.WebContext;
 
@@ -107,11 +108,12 @@ public class CheckInByBarcodeResource extends Resource {
     LoanRepository loanRepository) {
 
     final MoreThanOneOpenLoanValidator moreThanOneOpenLoanValidator
-      = new MoreThanOneOpenLoanValidator();
+      = new MoreThanOneOpenLoanValidator(() -> new ServerErrorFailure(
+      String.format("More than one open loan for item %s", query.getItemBarcode())));
 
     return itemResult -> failWhenNoItemFoundForBarcode(itemResult, query)
       .after(loanRepository::findOpenLoans)
-      .thenApply(result -> moreThanOneOpenLoanValidator.failWhenMoreThanOneOpenLoan(result, query))
+      .thenApply(moreThanOneOpenLoanValidator::failWhenMoreThanOneOpenLoan)
       .thenApply(loanResult -> loanResult.map(this::getFirstLoan))
       .thenApply(loanResult -> loanResult.combine(itemResult, Loan::withItem));
   }
