@@ -103,7 +103,8 @@ public class CheckInByBarcodeResource extends Resource {
     UserRepository userRepository) {
 
     return findItemByBarcode(itemRepository, query)
-      .thenComposeAsync(getOnlyLoan(query, loanRepository, userRepository));
+      .thenComposeAsync(getOnlyLoan(loanRepository, userRepository,
+        moreThanOneOpenLoanFailure(query.getItemBarcode())));
   }
 
   private CompletableFuture<HttpResult<Item>> findItemByBarcode(
@@ -115,14 +116,11 @@ public class CheckInByBarcodeResource extends Resource {
   }
 
   private Function<HttpResult<Item>, CompletionStage<HttpResult<Loan>>> getOnlyLoan(
-    FindByBarcodeQuery query,
     LoanRepository loanRepository,
-    UserRepository userRepository) {
+    UserRepository userRepository,
+    Supplier<HttpFailure> incorrectLoansFailure) {
 
     //Use same error for no loans and more than one loan to maintain compatibility
-    final Supplier<HttpFailure> incorrectLoansFailure
-      = moreThanOneOpenLoanFailure(query.getItemBarcode());
-
     final MoreThanOneLoanValidator moreThanOneLoanValidator
       = new MoreThanOneLoanValidator(incorrectLoansFailure);
 
@@ -143,7 +141,7 @@ public class CheckInByBarcodeResource extends Resource {
     FindByBarcodeQuery query) {
 
     return itemResult.failWhen(item -> of(item::isNotFound),
-      item -> ValidationErrorFailure.failure(
+      item ->  ValidationErrorFailure.failure(
         String.format("No item with barcode %s exists", query.getItemBarcode()),
         "itemBarcode", query.getItemBarcode()) );
   }
