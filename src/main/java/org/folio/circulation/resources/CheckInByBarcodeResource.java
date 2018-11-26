@@ -102,11 +102,12 @@ public class CheckInByBarcodeResource extends Resource {
     LoanRepository loanRepository,
     UserRepository userRepository) {
 
-    final ItemByBarcodeInStorageFinder itemFinder = new ItemByBarcodeInStorageFinder();
-
-    return itemFinder.findItemByBarcode(query.getItemBarcode(), () -> failure(
+    final ItemByBarcodeInStorageFinder itemFinder = new ItemByBarcodeInStorageFinder(
+      itemRepository, () -> failure(
       String.format("No item with barcode %s exists", query.getItemBarcode()),
-      "itemBarcode", query.getItemBarcode()), itemRepository)
+      "itemBarcode", query.getItemBarcode()));
+
+    return itemFinder.findItemByBarcode(query.getItemBarcode())
       .thenComposeAsync(getOnlyLoan(loanRepository, userRepository,
         moreThanOneOpenLoanFailure(query.getItemBarcode())));
   }

@@ -6,16 +6,23 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ItemRepository;
-import org.folio.circulation.support.ValidationErrorFailure;
 
 public class ItemByBarcodeInStorageFinder {
-  public CompletableFuture<HttpResult<Item>> findItemByBarcode(
-    String itemBarcode,
-    Supplier<ValidationErrorFailure> itemNotFoundFailureSupplier,
-    ItemRepository itemRepository) {
+  private final ItemRepository itemRepository;
+  private final Supplier<HttpFailure> itemNotFoundFailureSupplier;
 
+  public ItemByBarcodeInStorageFinder(
+    ItemRepository itemRepository,
+    Supplier<HttpFailure> itemNotFoundFailureSupplier) {
+
+    this.itemRepository = itemRepository;
+    this.itemNotFoundFailureSupplier = itemNotFoundFailureSupplier;
+  }
+
+  public CompletableFuture<HttpResult<Item>> findItemByBarcode(String itemBarcode) {
     return itemRepository.fetchByBarcode(itemBarcode)
       .thenApply(itemResult -> failWhenNoItemFoundForBarcode(itemResult,
         itemNotFoundFailureSupplier));
@@ -23,7 +30,7 @@ public class ItemByBarcodeInStorageFinder {
 
   private static HttpResult<Item> failWhenNoItemFoundForBarcode(
     HttpResult<Item> itemResult,
-    Supplier<ValidationErrorFailure> itemNotFoundFailureSupplier) {
+    Supplier<HttpFailure> itemNotFoundFailureSupplier) {
 
     return itemResult.failWhen(item -> of(item::isNotFound),
       item -> itemNotFoundFailureSupplier.get());
