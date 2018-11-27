@@ -78,10 +78,11 @@ public class CheckInByBarcodeResource extends Resource {
       .combineAfter(processRecords -> itemFinder.findItemByBarcode(
         processRecords.getCheckInRequestBarcode()), CheckInProcessRecords::withItem)
       .thenComposeAsync(processRecordsResult ->
-          processRecordsResult.map(CheckInProcessRecords::getItem)
-            .after(singleOpenLoanFinder::findSingleOpenLoan))
-      .thenApply(loanResult -> loanResult.combineToResult(checkInRequestResult,
-        loanCheckInService::checkIn))
+          processRecordsResult.combineAfter(
+            processRecords -> singleOpenLoanFinder.findSingleOpenLoan(processRecords.getItem()),
+            CheckInProcessRecords::withLoan))
+      .thenApply(processRecordsResult -> processRecordsResult.next(records ->
+        loanCheckInService.checkIn(records.getLoan(), records.getCheckInRequest())))
       .thenComposeAsync(loanResult -> loanResult.combineAfter(
         loan -> requestQueueRepository.get(loan.getItemId()), mapToRelatedRecords()))
       .thenComposeAsync(result -> result.after(requestQueueUpdate::onCheckIn))
