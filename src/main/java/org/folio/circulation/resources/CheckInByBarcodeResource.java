@@ -70,15 +70,13 @@ public class CheckInByBarcodeResource extends Resource {
         moreThanOneOpenLoanFailure(itemBarcode), true);
 
     final CheckInProcessAdapter processAdapter = new CheckInProcessAdapter(
-      itemFinder);
+      itemFinder, singleOpenLoanFinder);
 
     checkInRequestResult
       .map(CheckInProcessRecords::new)
       .combineAfter(processAdapter::findItem, CheckInProcessRecords::withItem)
-      .thenComposeAsync(processRecordsResult ->
-          processRecordsResult.combineAfter(
-            processRecords -> singleOpenLoanFinder.findSingleOpenLoan(processRecords.getItem()),
-            CheckInProcessRecords::withLoan))
+      .thenComposeAsync(findItemResult -> findItemResult.combineAfter(
+        processAdapter::findSingleOpenLoan, CheckInProcessRecords::withLoan))
       .thenComposeAsync(processRecordsResult -> processRecordsResult.combineAfter(records ->
           completedFuture(loanCheckInService.checkIn(records.getLoan(), records.getCheckInRequest())),
         CheckInProcessRecords::withLoan))
@@ -102,4 +100,5 @@ public class CheckInByBarcodeResource extends Resource {
       .thenApply(CheckInByBarcodeResponse::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
+
 }
