@@ -87,7 +87,7 @@ public class CheckInByBarcodeResource extends Resource {
         records -> requestQueueUpdate.onCheckIn(records.getRequestQueue()),
         CheckInProcessRecords::withRequestQueue))
       .thenComposeAsync(processRecordsResult -> processRecordsResult.combineAfter(
-        records -> updateItem.onLoanUpdate(records.getLoan(), records.getRequestQueue()),
+        records -> updateItem.onCheckIn(records.getItem(), records.getRequestQueue()),
         CheckInProcessRecords::withItem))
       // Loan must be updated after item
       // due to snapshot of item status stored with the loan

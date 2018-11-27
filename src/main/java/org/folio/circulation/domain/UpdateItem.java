@@ -20,6 +20,15 @@ public class UpdateItem {
     itemsStorageClient = clients.itemsStorage();
   }
 
+  public CompletableFuture<HttpResult<Item>> onCheckIn(
+    Item item,
+    RequestQueue requestQueue) {
+
+    return of(() -> itemStatusOnCheckIn(requestQueue))
+      .after(prospectiveStatus ->
+        updateItemWhenNotSameStatus(prospectiveStatus, item));
+  }
+
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> onCheckOut(
     LoanAndRelatedRecords relatedRecords) {
 
@@ -44,16 +53,15 @@ public class UpdateItem {
     Loan loan,
     RequestQueue requestQueue) {
 
-    return HttpResult.of(() -> itemStatusOnLoanUpdate(
-      loan, requestQueue))
+    return of(() -> itemStatusOnLoanUpdate(loan, requestQueue))
       .after(prospectiveStatus -> updateItemWhenNotSameStatus(prospectiveStatus,
-          loan.getItem()));
+        loan.getItem()));
   }
 
   CompletableFuture<HttpResult<RequestAndRelatedRecords>> onRequestCreation(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    return HttpResult.of(() -> itemStatusOnRequestCreation(requestAndRelatedRecords))
+    return of(() -> itemStatusOnRequestCreation(requestAndRelatedRecords))
       .after(prospectiveStatus -> updateItemWhenNotSameStatus(prospectiveStatus,
           requestAndRelatedRecords.getRequest().getItem()))
       .thenApply(itemResult -> itemResult.map(requestAndRelatedRecords::withItem));
@@ -63,7 +71,7 @@ public class UpdateItem {
     LoanAndRelatedRecords loanAndRelatedRecords,
     RequestQueue requestQueue) {
 
-    return HttpResult.of(requestQueue::checkedOutItemStatus)
+    return of(requestQueue::checkedOutItemStatus)
       .after(prospectiveStatus -> updateItemWhenNotSameStatus(prospectiveStatus,
           loanAndRelatedRecords.getLoan().getItem()))
       .thenApply(itemResult -> itemResult.map(loanAndRelatedRecords::withItem));
@@ -118,7 +126,11 @@ public class UpdateItem {
     RequestQueue requestQueue) {
 
     return loan.isClosed()
-      ? requestQueue.checkedInItemStatus()
+      ? itemStatusOnCheckIn(requestQueue)
       : requestQueue.checkedOutItemStatus();
+  }
+
+  private ItemStatus itemStatusOnCheckIn(RequestQueue requestQueue) {
+    return requestQueue.checkedInItemStatus();
   }
 }

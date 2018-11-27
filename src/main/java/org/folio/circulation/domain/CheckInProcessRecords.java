@@ -1,5 +1,7 @@
 package org.folio.circulation.domain;
 
+import java.util.Optional;
+
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 
 /**
@@ -35,10 +37,18 @@ public class CheckInProcessRecords {
   }
 
   public CheckInProcessRecords withItem(Item item) {
+
+    //When the item is updated, also update the item for the loan,
+    //as they should be the same
+    final Loan updatedLoan = Optional.ofNullable(loan)
+      .map(l -> l.withItem(item))
+      .orElse(null);
+
     return new CheckInProcessRecords(
       this.checkInRequest,
       item,
-      this.loan, this.requestQueue);
+      updatedLoan,
+      this.requestQueue);
   }
 
   public CheckInProcessRecords withLoan(Loan loan) {
