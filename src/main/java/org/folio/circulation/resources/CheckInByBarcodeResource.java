@@ -5,6 +5,7 @@ import static org.folio.circulation.domain.validation.CommonFailures.noItemFound
 
 import java.util.function.BiFunction;
 
+import org.folio.circulation.domain.CheckInProcessRecords;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanCheckInService;
@@ -73,7 +74,9 @@ public class CheckInByBarcodeResource extends Resource {
         moreThanOneOpenLoanFailure(itemBarcode));
 
     checkInRequestResult
-      .after(checkInRequest -> itemFinder.findItemByBarcode(itemBarcode)
+      .map(CheckInProcessRecords::new)
+      .after(processRecords -> itemFinder.findItemByBarcode(
+        processRecords.getCheckInRequestBarcode())
       .thenComposeAsync(itemResult ->
           itemResult.after(singleOpenLoanFinder::findSingleOpenLoan)))
       .thenApply(loanResult -> loanResult.combineToResult(checkInRequestResult,
