@@ -35,11 +35,19 @@ public class UpdateItem {
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> onLoanUpdate(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
-    return HttpResult.of(() -> itemStatusOnLoanUpdate(
-        loanAndRelatedRecords.getLoan(), loanAndRelatedRecords.getRequestQueue()))
-      .after(prospectiveStatus -> updateItemWhenNotSameStatus(prospectiveStatus,
-          loanAndRelatedRecords.getLoan().getItem()))
+    return onLoanUpdate(loanAndRelatedRecords.getLoan(),
+      loanAndRelatedRecords.getRequestQueue())
       .thenApply(itemResult -> itemResult.map(loanAndRelatedRecords::withItem));
+  }
+
+  public CompletableFuture<HttpResult<Item>> onLoanUpdate(
+    Loan loan,
+    RequestQueue requestQueue) {
+
+    return HttpResult.of(() -> itemStatusOnLoanUpdate(
+      loan, requestQueue))
+      .after(prospectiveStatus -> updateItemWhenNotSameStatus(prospectiveStatus,
+          loan.getItem()));
   }
 
   CompletableFuture<HttpResult<RequestAndRelatedRecords>> onRequestCreation(

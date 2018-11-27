@@ -89,11 +89,13 @@ public class CheckInByBarcodeResource extends Resource {
       .thenComposeAsync(processRecordsResult -> processRecordsResult.combineAfter(
         records -> requestQueueUpdate.onCheckIn(records.getRequestQueue()),
         CheckInProcessRecords::withRequestQueue))
-      .thenApply(mapProcessToRelatedRecords())
-      .thenComposeAsync(result -> result.after(updateItem::onLoanUpdate))
+      .thenComposeAsync(processRecordsResult -> processRecordsResult.combineAfter(
+        records -> updateItem.onLoanUpdate(records.getLoan(), records.getRequestQueue()),
+        CheckInProcessRecords::withItem))
       // Loan must be updated after item
       // due to snapshot of item status stored with the loan
       // as this is how the loan action history is populated
+      .thenApply(mapProcessToRelatedRecords())
       .thenComposeAsync(result -> result.after(loanRepository::updateLoan))
       .thenApply(result -> result.map(LoanAndRelatedRecords::getLoan))
       .thenApply(result -> result.map(loanRepresentation::extendedLoan))
