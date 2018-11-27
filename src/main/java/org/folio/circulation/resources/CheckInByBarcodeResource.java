@@ -1,6 +1,5 @@
 package org.folio.circulation.resources;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.validation.CommonFailures.moreThanOneOpenLoanFailure;
 import static org.folio.circulation.domain.validation.CommonFailures.noItemFoundForBarcodeFailure;
 
@@ -70,16 +69,15 @@ public class CheckInByBarcodeResource extends Resource {
         moreThanOneOpenLoanFailure(itemBarcode), true);
 
     final CheckInProcessAdapter processAdapter = new CheckInProcessAdapter(
-      itemFinder, singleOpenLoanFinder);
+      itemFinder, singleOpenLoanFinder, loanCheckInService);
 
     checkInRequestResult
       .map(CheckInProcessRecords::new)
       .combineAfter(processAdapter::findItem, CheckInProcessRecords::withItem)
       .thenComposeAsync(findItemResult -> findItemResult.combineAfter(
         processAdapter::findSingleOpenLoan, CheckInProcessRecords::withLoan))
-      .thenComposeAsync(processRecordsResult -> processRecordsResult.combineAfter(records ->
-          completedFuture(loanCheckInService.checkIn(records.getLoan(), records.getCheckInRequest())),
-        CheckInProcessRecords::withLoan))
+      .thenComposeAsync(findLoanResult -> findLoanResult.combineAfter(
+        processAdapter::checkInLoan, CheckInProcessRecords::withLoan))
       .thenComposeAsync(processRecordsResult -> processRecordsResult.combineAfter(
         processRecords -> requestQueueRepository.get(processRecords.getItem().getItemId()),
         CheckInProcessRecords::withRequestQueue))
