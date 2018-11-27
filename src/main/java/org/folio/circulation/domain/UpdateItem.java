@@ -37,18 +37,18 @@ public class UpdateItem {
 
     return HttpResult.of(() -> itemStatusOnLoanUpdate(
         loanAndRelatedRecords.getLoan(), loanAndRelatedRecords.getRequestQueue()))
-      .after(prospectiveStatus ->
-        updateItemWhenNotSameStatus(loanAndRelatedRecords,
-          loanAndRelatedRecords.getLoan().getItem(), prospectiveStatus));
+      .after(prospectiveStatus -> updateItemWhenNotSameStatus(prospectiveStatus,
+          loanAndRelatedRecords.getLoan().getItem()))
+      .thenApply(itemResult -> itemResult.map(loanAndRelatedRecords::withItem));
   }
 
   CompletableFuture<HttpResult<RequestAndRelatedRecords>> onRequestCreation(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     return HttpResult.of(() -> itemStatusOnRequestCreation(requestAndRelatedRecords))
-      .after(prospectiveStatus ->
-        updateItemWhenNotSameStatus(requestAndRelatedRecords,
-          requestAndRelatedRecords.getRequest().getItem(), prospectiveStatus));
+      .after(prospectiveStatus -> updateItemWhenNotSameStatus(prospectiveStatus,
+          requestAndRelatedRecords.getRequest().getItem()))
+      .thenApply(itemResult -> itemResult.map(requestAndRelatedRecords::withItem));
   }
 
   private CompletableFuture<HttpResult<LoanAndRelatedRecords>> updateItemStatusOnCheckOut(
@@ -56,18 +56,9 @@ public class UpdateItem {
     RequestQueue requestQueue) {
 
     return HttpResult.of(requestQueue::checkedOutItemStatus)
-      .after(prospectiveStatus ->
-        updateItemWhenNotSameStatus(loanAndRelatedRecords,
-          loanAndRelatedRecords.getLoan().getItem(), prospectiveStatus));
-  }
-
-  private <T> CompletableFuture<HttpResult<T>> updateItemWhenNotSameStatus(
-    T relatedRecords,
-    Item item,
-    ItemStatus prospectiveStatus) {
-
-    return updateItemWhenNotSameStatus(prospectiveStatus, item)
-      .thenApply(result -> result.map(v -> relatedRecords));
+      .after(prospectiveStatus -> updateItemWhenNotSameStatus(prospectiveStatus,
+          loanAndRelatedRecords.getLoan().getItem()))
+      .thenApply(itemResult -> itemResult.map(loanAndRelatedRecords::withItem));
   }
 
   private CompletableFuture<HttpResult<Item>> updateItemWhenNotSameStatus(
