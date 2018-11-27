@@ -31,6 +31,8 @@ import org.folio.circulation.support.http.server.WebContext;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
+import org.folio.circulation.domain.ServicePointRepository;
+import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 public class LoanCollectionResource extends CollectionResource {
   public LoanCollectionResource(HttpClient client) {
@@ -49,6 +51,7 @@ public class LoanCollectionResource extends CollectionResource {
     final ItemRepository itemRepository = new ItemRepository(clients, true, true);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final UserRepository userRepository = new UserRepository(clients);
+    final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
 
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
     final UpdateItem updateItem = new UpdateItem(clients);

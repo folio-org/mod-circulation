@@ -248,7 +248,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return checkoutServicePointId;
   }
 
-  private String getCheckinServicePointId() {
+  public String getCheckinServicePointId() {
     return checkinServicePointId;
   }
 }

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -40,6 +41,41 @@ public class ServicePointRepository {
   public CompletableFuture<HttpResult<ServicePoint>> getServicePointForRequest(Request request) {
     return getServicePointById(request.getPickupServicePointId());
   } 
+  
+  public CompletableFuture<HttpResult<Loan>> findServicePointsForLoan(Loan loan) {
+    return findCheckinServicePointForLoan(loan)
+        .thenComposeAsync(loanResult -> {
+          return findCheckoutServicePointForLoan(loanResult.value());
+        });
+  }
+  
+  public CompletableFuture<HttpResult<Loan>> findCheckinServicePointForLoan(Loan loan) {
+    String checkinServicePointId = loan.getCheckinServicePointId();
+    if(checkinServicePointId == null) {
+      return CompletableFuture.completedFuture(HttpResult.succeeded(loan));
+    }
+    return getServicePointById(checkinServicePointId)
+        .thenApply(servicePointResult -> {
+          return servicePointResult.map(servicePoint -> {
+            Loan newLoan = loan.withCheckinServicePoint(servicePoint);
+            return newLoan;
+          });
+        });
+  }
+  
+   public CompletableFuture<HttpResult<Loan>> findCheckoutServicePointForLoan(Loan loan) {
+    String checkoutServicePointId = loan.getCheckoutServicePointId();
+    if(checkoutServicePointId == null) {
+      return CompletableFuture.completedFuture(HttpResult.succeeded(loan));
+    }
+    return getServicePointById(checkoutServicePointId)
+        .thenApply(servicePointResult -> {
+          return servicePointResult.map(servicePoint -> {
+            Loan newLoan = loan.withCheckoutServicePoint(servicePoint);
+            return newLoan;
+          });
+        });
+  }
   
   public CompletableFuture<HttpResult<MultipleRecords<Request>>> findServicePointsForRequests(
       MultipleRecords<Request> multipleRequests) {
