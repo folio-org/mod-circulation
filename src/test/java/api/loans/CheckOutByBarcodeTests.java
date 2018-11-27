@@ -283,7 +283,8 @@ public class CheckOutByBarcodeTests extends APITests {
     final JsonObject loan = response.getJson();
 
     assertThat("loan date should be as supplied",
-      loan.getString("loanDate"), withinSecondsAfter(Seconds.seconds(10), requestDate));
+      loan.getString("loanDate"),
+      withinSecondsAfter(Seconds.seconds(10), requestDate));
   }
 
   @Test
@@ -445,12 +446,12 @@ public class CheckOutByBarcodeTests extends APITests {
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOut(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
-    loansFixture.checkIn(loanToJames);
+    loansFixture.checkInByBarcode(smallAngryPlanet);
 
     Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, rebecca);
 
@@ -480,12 +481,12 @@ public class CheckOutByBarcodeTests extends APITests {
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
 
-    IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOut(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
-    loansFixture.checkIn(loanToJames);
+    loansFixture.checkInByBarcode(smallAngryPlanet);
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 

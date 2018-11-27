@@ -1,7 +1,10 @@
 package org.folio.circulation.domain.validation;
 
+import static org.folio.circulation.support.HttpResult.failed;
+import static org.folio.circulation.support.HttpResult.succeeded;
+
 import java.lang.invoke.MethodHandles;
-import java.util.concurrent.CompletableFuture;
+
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.support.HttpResult;
@@ -12,31 +15,55 @@ import org.slf4j.LoggerFactory;
 public class ServicePointPickupLocationValidator {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   
-  public CompletableFuture<HttpResult<RequestAndRelatedRecords>> checkServicePointPickupLocation(
-      HttpResult<RequestAndRelatedRecords> requestResult) {
-    
+  public HttpResult<RequestAndRelatedRecords> checkServicePointPickupLocation(
+      HttpResult<RequestAndRelatedRecords> requestAndRelatedRecordsResult) {
+
+    return requestAndRelatedRecordsResult.next(
+      this::refuseInvalidPickupServicePoint);
+  }
+
+  private HttpResult<RequestAndRelatedRecords> refuseInvalidPickupServicePoint(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+
     Request request = null;
-    if(requestResult.value() != null) {
-      request = requestResult.value().getRequest();
+
+    if(requestAndRelatedRecords != null) {
+      request = requestAndRelatedRecords.getRequest();
     }
+
     if(request == null) {
       log.info("No request present in RequestAndRelatedRecords object");
-      return CompletableFuture.completedFuture(requestResult);
+      return succeeded(requestAndRelatedRecords);
     }
+
+    if(request.getPickupServicePointId() == null) {
+      log.info("No pickup service point specified for request");
+      return succeeded(requestAndRelatedRecords);
+    }
+
+    if(request.getPickupServicePointId() != null && request.getPickupServicePoint() == null) {
+      return failed(ValidationErrorFailure.failure(
+        "Pickup service point does not exist", "pickupServicePointId",
+        request.getPickupServicePointId()));
+    }
+
     if(request.getPickupServicePoint() != null) {
       log.info("Request {} has non-null pickup location", request.getId());
+
       if(request.getPickupServicePoint().isPickupLocation()) {
-        return CompletableFuture.completedFuture(requestResult);
-      } else {            
-        log.info("Request {} has {} as a pickup location which is an invalid service point", 
+        return succeeded(requestAndRelatedRecords);
+      } else {
+        log.info("Request {} has {} as a pickup location which is an invalid service point",
             request.getId(), request.getPickupServicePointId());
-        return CompletableFuture.completedFuture(HttpResult.failed(ValidationErrorFailure.failure(
-            "Service Point is not a Pickup Location", "pickupLocation", "false")));
+
+        return failed(ValidationErrorFailure.failure(
+            "Service point is not a pickup location", "pickupServicePointId",
+            request.getPickupServicePointId()));
       }
-    } else {
-      log.info("Request {} has null pickup location", request.getId());
-      return CompletableFuture.completedFuture(requestResult);
     }
-    
+    else {
+      log.info("Request {} has null pickup location", request.getId());
+      return succeeded(requestAndRelatedRecords);
+    }
   }
 }

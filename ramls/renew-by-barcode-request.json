@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "type": "object",
-  "title": "Request to renew an existing loan, found by barcodes of item and loanee",
+  "description": "Request to renew an existing loan, found by barcodes of item and loanee",
   "properties": {
     "itemBarcode": {
       "description": "Barcode of the item to be renewed",

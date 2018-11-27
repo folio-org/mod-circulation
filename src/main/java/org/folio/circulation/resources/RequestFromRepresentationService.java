@@ -11,15 +11,15 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.RequestStatus;
+import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
+import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
 import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ItemRepository;
 
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.domain.ServicePointRepository;
-import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
 
 class RequestFromRepresentationService {
   private final ItemRepository itemRepository;
@@ -65,8 +65,7 @@ class RequestFromRepresentationService {
       .thenComposeAsync(r -> r.combineAfter(requestQueueRepository::get,
         RequestAndRelatedRecords::withRequestQueue))
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
-      .thenComposeAsync(r -> { 
-        return servicePointPickupLocationValidator.checkServicePointPickupLocation(r); });
+      .thenApply(servicePointPickupLocationValidator::checkServicePointPickupLocation);
   }
 
   private HttpResult<JsonObject> validateStatus(JsonObject representation) {
@@ -89,6 +88,7 @@ class RequestFromRepresentationService {
     request.remove("proxy");
     request.remove("loan");
     request.remove("pickupServicePoint");
+    request.remove("deliveryAddress");
 
     return request;
   }

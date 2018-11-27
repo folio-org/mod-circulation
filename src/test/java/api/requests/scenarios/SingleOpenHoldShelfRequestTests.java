@@ -1,24 +1,29 @@
 package api.requests.scenarios;
 
-import api.support.APITests;
+import static api.support.builders.ItemBuilder.AVAILABLE;
+import static api.support.builders.ItemBuilder.AWAITING_PICKUP;
+import static api.support.builders.ItemBuilder.CHECKED_OUT;
+import static api.support.builders.RequestBuilder.CLOSED_FILLED;
+import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
+import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
+import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
+import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+
+import java.net.MalformedURLException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
-import java.net.MalformedURLException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
-import static api.support.builders.ItemBuilder.*;
-import static api.support.builders.RequestBuilder.CLOSED_FILLED;
-import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
-import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
-import static api.support.matchers.ValidationErrorMatchers.*;
-import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import api.support.APITests;
 
 public class SingleOpenHoldShelfRequestTests extends APITests {
   @Test
@@ -32,12 +37,12 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
 
-    IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOut(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
-    loansFixture.checkIn(loanToJames);
+    loansFixture.checkInByBarcode(smallAngryPlanet);
 
     Response request = requestsClient.getById(requestByJessica.getId());
 
@@ -60,12 +65,12 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
 
-    IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOut(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
-    loansFixture.checkIn(loanToJames);
+    loansFixture.checkInByBarcode(smallAngryPlanet);
 
     loansFixture.checkOut(smallAngryPlanet, jessica);
 
@@ -90,12 +95,12 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOut(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
-    loansFixture.checkIn(loanToJames);
+    loansFixture.checkInByBarcode(smallAngryPlanet);
 
     Response response = loansFixture.attemptCheckOut(smallAngryPlanet, rebecca);
 
@@ -125,16 +130,16 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
 
-    IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOut(smallAngryPlanet, james);
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
       new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
-    loansFixture.checkIn(loanToJames);
+    loansFixture.checkInByBarcode(smallAngryPlanet);
 
-    final IndividualResource loanToJessica = loansFixture.checkOut(smallAngryPlanet, jessica);
+    loansFixture.checkOut(smallAngryPlanet, jessica);
 
-    loansFixture.checkIn(loanToJessica);
+    loansFixture.checkInByBarcode(smallAngryPlanet);
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
@@ -153,20 +158,20 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource steve = usersFixture.steve();
 
-    IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOut(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
-    loansFixture.checkIn(loanToJames);
+    loansFixture.checkInByBarcode(smallAngryPlanet);
 
-    final IndividualResource loanToJessica = loansFixture.checkOut(smallAngryPlanet, jessica);
+    loansFixture.checkOut(smallAngryPlanet, jessica);
 
     Response request = requestsClient.getById(requestByJessica.getId());
 
     assertThat(request.getJson().getString("status"), is(CLOSED_FILLED));
 
-    loansFixture.checkIn(loanToJessica);
+    loansFixture.checkInByBarcode(smallAngryPlanet);
 
     loansFixture.checkOut(smallAngryPlanet, steve);
 

@@ -1,14 +1,16 @@
 package org.folio.circulation.domain;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.HttpResult.failed;
+import static org.folio.circulation.support.HttpResult.of;
+import static org.folio.circulation.support.HttpResult.succeeded;
+
+import java.util.concurrent.CompletableFuture;
+
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ServerErrorFailure;
-
-import java.util.concurrent.CompletableFuture;
-
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.HttpResult.*;
 
 public class UpdateItem {
 

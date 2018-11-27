@@ -1,24 +1,29 @@
 package api.requests.scenarios;
 
-import api.support.APITests;
+import static api.support.builders.ItemBuilder.AWAITING_PICKUP;
+import static api.support.builders.ItemBuilder.CHECKED_OUT;
+import static api.support.builders.RequestBuilder.CLOSED_FILLED;
+import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
+import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
+import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
+import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
+import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+
+import java.net.MalformedURLException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
-import java.net.MalformedURLException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
-import static api.support.builders.ItemBuilder.AWAITING_PICKUP;
-import static api.support.builders.ItemBuilder.CHECKED_OUT;
-import static api.support.builders.RequestBuilder.*;
-import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
-import static api.support.matchers.ValidationErrorMatchers.*;
-import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import api.support.APITests;
 
 public class MultipleMixedFulfilmentRequestsTests extends APITests {
   @Test
@@ -34,7 +39,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource steve = usersFixture.steve();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOut(smallAngryPlanet, james);
 
     IndividualResource deliveryRequestByRebecca = requestsFixture.placeDeliveryRequest(
       smallAngryPlanet, rebecca, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
@@ -45,7 +50,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, steve, new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC));
 
-    loansFixture.checkIn(loanToJames);
+    loansFixture.checkInByBarcode(smallAngryPlanet);
 
     deliveryRequestByRebecca = requestsClient.get(deliveryRequestByRebecca);
 
@@ -77,7 +82,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource steve = usersFixture.steve();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOut(smallAngryPlanet, james);
 
     IndividualResource deliveryRequestByRebecca = requestsFixture.placeDeliveryRequest(
       smallAngryPlanet, rebecca, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
@@ -88,7 +93,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, steve, new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC));
 
-    loansFixture.checkIn(loanToJames);
+    loansFixture.checkInByBarcode(smallAngryPlanet);
 
     loansFixture.checkOut(smallAngryPlanet, jessica);
 
@@ -123,7 +128,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource steve = usersFixture.steve();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOut(smallAngryPlanet, james);
 
     IndividualResource deliveryRequestByRebecca = requestsFixture.placeDeliveryRequest(
       smallAngryPlanet, rebecca, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
@@ -134,11 +139,11 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, steve, new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC));
 
-    loansFixture.checkIn(loanToJames);
+    loansFixture.checkInByBarcode(smallAngryPlanet);
 
-    IndividualResource loanToJessica = loansFixture.checkOut(smallAngryPlanet, jessica);
+    loansFixture.checkOut(smallAngryPlanet, jessica);
 
-    loansFixture.checkIn(loanToJessica);
+    loansFixture.checkInByBarcode(smallAngryPlanet);
 
     deliveryRequestByRebecca = requestsClient.get(deliveryRequestByRebecca);
 
@@ -170,7 +175,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource steve = usersFixture.steve();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOut(smallAngryPlanet, james);
 
     IndividualResource requestByRebecca = requestsFixture.placeDeliveryRequest(
       smallAngryPlanet, rebecca, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
@@ -181,7 +186,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, steve, new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC));
 
-    loansFixture.checkIn(loanToJames);
+    loansFixture.checkInByBarcode(smallAngryPlanet);
 
     Response response = loansFixture.attemptCheckOut(smallAngryPlanet, rebecca);
 
@@ -222,7 +227,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource rebecca = usersFixture.rebecca();
     IndividualResource charlotte = usersFixture.charlotte();
 
-    IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOut(smallAngryPlanet, james);
 
     IndividualResource requestByRebecca = requestsFixture.placeDeliveryRequest(
       smallAngryPlanet, rebecca, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
@@ -233,7 +238,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, steve, new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC));
 
-    loansFixture.checkIn(loanToJames);
+    loansFixture.checkInByBarcode(smallAngryPlanet);
 
     Response response = loansFixture.attemptCheckOut(smallAngryPlanet, charlotte);
 
@@ -273,7 +278,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource steve = usersFixture.steve();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOut(smallAngryPlanet, james);
 
     IndividualResource deliveryRequestByRebecca = requestsFixture.placeDeliveryRequest(
       smallAngryPlanet, rebecca, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
@@ -284,7 +289,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, steve, new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC));
 
-    loansFixture.checkIn(loanToJames);
+    loansFixture.checkInByBarcode(smallAngryPlanet);
 
     Response response = loansFixture.attemptCheckOut(smallAngryPlanet, steve);
 

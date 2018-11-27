@@ -3,10 +3,12 @@ package api.support.fixtures;
 import static api.support.RestAssuredClient.from;
 import static api.support.RestAssuredClient.post;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
+import static api.support.http.InterfaceUrls.checkInByBarcodeUrl;
 import static api.support.http.InterfaceUrls.checkOutByBarcodeUrl;
 import static api.support.http.InterfaceUrls.loansUrl;
 import static api.support.http.InterfaceUrls.renewByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByIdUrl;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -24,6 +26,8 @@ import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
+import api.support.CheckInByBarcodeResponse;
+import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.builders.RenewByBarcodeRequestBuilder;
@@ -35,12 +39,18 @@ public class LoansFixture {
   private final ResourceClient loansClient;
   private final OkapiHttpClient client;
 
-  public LoansFixture(ResourceClient loansClient, OkapiHttpClient client) {
+  public LoansFixture(
+    ResourceClient loansClient,
+    OkapiHttpClient client) {
+
     this.loansClient = loansClient;
     this.client = client;
   }
 
-  public IndividualResource checkOut(IndividualResource item, IndividualResource to)
+  public IndividualResource checkOut(
+    IndividualResource item,
+    IndividualResource to)
+
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
@@ -103,32 +113,6 @@ public class LoansFixture {
     loansClient.replace(loanId, renewedLoan);
   }
 
-  public void checkIn(IndividualResource loan)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    checkInLoan(loan.getId());
-  }
-
-  public void checkInLoan(UUID loanId)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    Response getResponse = loansClient.getById(loanId);
-
-    //TODO: Should also have a return date
-    JsonObject closedLoan = getResponse.getJson().copy()
-      .put("status", new JsonObject().put("name", "Closed"))
-      .put("action", "checkedin")
-      .put("checkinServicePointId", UUID.randomUUID().toString());
-
-    loansClient.replace(loanId, closedLoan);
-  }
-
   public Response attemptCheckOut(
     IndividualResource item,
     IndividualResource to)
@@ -176,7 +160,8 @@ public class LoansFixture {
       .at(UUID.randomUUID()));
   }
 
-  public IndividualResource checkOutByBarcode(CheckOutByBarcodeRequestBuilder builder) {
+  public IndividualResource checkOutByBarcode(
+    CheckOutByBarcodeRequestBuilder builder) {
 
     JsonObject request = builder.create();
 
@@ -195,12 +180,15 @@ public class LoansFixture {
       .at(UUID.randomUUID()));
   }
 
-  public Response attemptCheckOutByBarcode(CheckOutByBarcodeRequestBuilder builder) {
+  public Response attemptCheckOutByBarcode(
+    CheckOutByBarcodeRequestBuilder builder) {
+
     return attemptCheckOutByBarcode(422, builder);
   }
 
   public Response attemptCheckOutByBarcode(
-    int expectedStatusCode, CheckOutByBarcodeRequestBuilder builder) {
+    int expectedStatusCode,
+    CheckOutByBarcodeRequestBuilder builder) {
 
     JsonObject request = builder.create();
 
@@ -208,7 +196,10 @@ public class LoansFixture {
       expectedStatusCode, "check-out-by-barcode-request"));
   }
 
-  public IndividualResource renewLoan(IndividualResource item, IndividualResource user) {
+  public IndividualResource renewLoan(
+    IndividualResource item,
+    IndividualResource user) {
+
     JsonObject request = new RenewByBarcodeRequestBuilder()
       .forItem(item)
       .forUser(user)
@@ -218,7 +209,10 @@ public class LoansFixture {
       "renewal-by-barcode-request")));
   }
 
-  public IndividualResource renewLoanById(IndividualResource item, IndividualResource user) {
+  public IndividualResource renewLoanById(
+    IndividualResource item,
+    IndividualResource user) {
+
     JsonObject request = new RenewByIdRequestBuilder()
       .forItem(item)
       .forUser(user)
@@ -228,7 +222,10 @@ public class LoansFixture {
       "renewal-by-id-request")));
   }
 
-  public Response attemptRenewal(IndividualResource item, IndividualResource user) {
+  public Response attemptRenewal(
+    IndividualResource item,
+    IndividualResource user) {
+
     return attemptRenewal(422, item, user);
   }
 
@@ -257,5 +254,54 @@ public class LoansFixture {
 
     return from(post(request, renewByIdUrl(),
       422, "renewal-by-id-request"));
+  }
+
+  public Response attemptCheckInByBarcode(
+    CheckInByBarcodeRequestBuilder builder) {
+
+    return from(post(builder.create(), checkInByBarcodeUrl(),
+        "check-in-by-barcode-request"));
+  }
+
+  public Response attemptCheckInByBarcode(
+    IndividualResource item,
+    DateTime checkInDate,
+    UUID servicePointId) {
+
+    final JsonObject checkInRequest = new JsonObject();
+
+    write(checkInRequest, "itemBarcode",
+      item.getJson().getString("barcode"));
+    write(checkInRequest, "checkInDate", checkInDate);
+    write(checkInRequest, "servicePointId", servicePointId);
+
+    return from(post(checkInRequest, checkInByBarcodeUrl(),
+      "check-in-by-barcode-request"));
+  }
+
+  public CheckInByBarcodeResponse checkInByBarcode(
+    CheckInByBarcodeRequestBuilder builder) {
+
+    return new CheckInByBarcodeResponse(
+      from(post(builder.create(), checkInByBarcodeUrl(), 200,
+        "check-in-by-barcode-request")));
+  }
+
+  public CheckInByBarcodeResponse checkInByBarcode(IndividualResource item) {
+    return checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(item)
+      .on(DateTime.now(DateTimeZone.UTC))
+      .at(UUID.randomUUID()));
+  }
+
+  public CheckInByBarcodeResponse checkInByBarcode(
+    IndividualResource item,
+    DateTime checkInDate,
+    UUID servicePointId) {
+
+    return checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(item)
+      .on(checkInDate)
+      .at(servicePointId));
   }
 }

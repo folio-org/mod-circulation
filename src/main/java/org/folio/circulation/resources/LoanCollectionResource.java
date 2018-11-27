@@ -126,6 +126,9 @@ public class LoanCollectionResource extends CollectionResource {
       .thenCombineAsync(requestQueueRepository.get(loan.getItemId()), this::addRequestQueue)
       .thenComposeAsync(result -> result.after(requestQueueUpdate::onCheckIn))
       .thenComposeAsync(result -> result.after(updateItem::onLoanUpdate))
+      // Loan must be updated after item
+      // due to snapshot of item status stored with the loan
+      // as this is how the loan action history is populated
       .thenComposeAsync(result -> result.after(loanRepository::updateLoan))
       .thenApply(NoContentHttpResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
@@ -218,14 +221,14 @@ public class LoanCollectionResource extends CollectionResource {
     });
   }
 
-	private HttpResult<LoanAndRelatedRecords> refuseWhenClosedAndNoCheckInServicePointId(
-      HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
+  private HttpResult<LoanAndRelatedRecords> refuseWhenClosedAndNoCheckInServicePointId(
+    HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
     return loanAndRelatedRecords
-        .map(LoanAndRelatedRecords::getLoan)
-        .next(Loan::closedLoanHasCheckInServicePointId)
-        .next(v -> loanAndRelatedRecords);
-    }
+      .map(LoanAndRelatedRecords::getLoan)
+      .next(Loan::closedLoanHasCheckInServicePointId)
+      .next(v -> loanAndRelatedRecords);
+  }
   
   private HttpResult<LoanAndRelatedRecords> refuseWhenNotOpenOrClosed(
     HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
