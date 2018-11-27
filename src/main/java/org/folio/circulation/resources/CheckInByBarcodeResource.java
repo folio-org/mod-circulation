@@ -4,10 +4,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.validation.CommonFailures.moreThanOneOpenLoanFailure;
 import static org.folio.circulation.domain.validation.CommonFailures.noItemFoundForBarcodeFailure;
 
-import java.util.function.Function;
-
 import org.folio.circulation.domain.CheckInProcessRecords;
-import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanCheckInService;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.LoanRepresentation;
@@ -98,16 +95,9 @@ public class CheckInByBarcodeResource extends Resource {
       .thenComposeAsync(processRecordsResult -> processRecordsResult.combineAfter(
         records -> loanRepository.updateLoan(records.getLoan()),
         CheckInProcessRecords::withLoan))
-      .thenApply(mapProcessToRelatedRecords())
-      .thenApply(result -> result.map(LoanAndRelatedRecords::getLoan))
+      .thenApply(result -> result.map(CheckInProcessRecords::getLoan))
       .thenApply(result -> result.map(loanRepresentation::extendedLoan))
       .thenApply(CheckInByBarcodeResponse::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
-  }
-
-  private Function<HttpResult<CheckInProcessRecords>, HttpResult<LoanAndRelatedRecords>> mapProcessToRelatedRecords() {
-    return processRecordsResult -> processRecordsResult.map(records ->
-      new LoanAndRelatedRecords(records.getLoan())
-        .withRequestQueue(records.getRequestQueue()));
   }
 }
