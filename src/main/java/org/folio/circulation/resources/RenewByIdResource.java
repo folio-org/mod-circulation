@@ -45,7 +45,7 @@ public class RenewByIdResource extends RenewalResource {
 
     final SingleOpenLoanForItemInStorageFinder singleOpenLoanFinder
       = new SingleOpenLoanForItemInStorageFinder(loanRepository, userRepository,
-        moreThanOneOpenLoanFailure(itemId));
+        moreThanOneOpenLoanFailure(itemId), false);
 
     final ItemByIdInStorageFinder itemFinder = new ItemByIdInStorageFinder(
       itemRepository, noItemFoundForIdFailure(itemId));

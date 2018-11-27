@@ -7,8 +7,8 @@ import org.folio.circulation.support.HttpResult;
 
 public class LoanCheckInService {
   public HttpResult<Loan> checkIn(Loan loan, CheckInByBarcodeRequest request) {
-    return of(() -> loan.checkIn(
-      request.getCheckInDate(),
-      request.getServicePointId()));
+    return of(() -> loan == null
+        ? null
+        : loan.checkIn(request.getCheckInDate(), request.getServicePointId()));
   }
 }

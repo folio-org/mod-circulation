@@ -14,6 +14,10 @@ public class LoanRepresentation {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   public JsonObject extendedLoan(Loan loan) {
+    if(loan == null) {
+      return null;
+    }
+
     JsonObject extendedRepresentation = extendedLoan(loan.asJson(), loan.getItem());
     
     if(loan.getCheckinServicePoint() != null) {

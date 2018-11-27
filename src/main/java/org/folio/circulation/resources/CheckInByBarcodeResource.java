@@ -67,7 +67,7 @@ public class CheckInByBarcodeResource extends Resource {
 
     final SingleOpenLoanForItemInStorageFinder singleOpenLoanFinder
       = new SingleOpenLoanForItemInStorageFinder(loanRepository, userRepository,
-        moreThanOneOpenLoanFailure(itemBarcode));
+        moreThanOneOpenLoanFailure(itemBarcode), true);
 
     checkInRequestResult
       .map(CheckInProcessRecords::new)

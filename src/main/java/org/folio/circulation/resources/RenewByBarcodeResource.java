@@ -45,7 +45,7 @@ public class RenewByBarcodeResource extends RenewalResource {
 
     final SingleOpenLoanForItemInStorageFinder singleOpenLoanFinder
       = new SingleOpenLoanForItemInStorageFinder(loanRepository, userRepository,
-      moreThanOneOpenLoanFailure(itemBarcode));
+      moreThanOneOpenLoanFailure(itemBarcode), false);
 
     //TODO: Possibly move this to single open loan finder?
     final UserNotFoundValidator userNotFoundValidator = new UserNotFoundValidator(

@@ -5,9 +5,7 @@ import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
-import static org.folio.HttpStatus.HTTP_INTERNAL_SERVER_ERROR;
 import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -192,7 +190,25 @@ public class CheckInByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckInAnItemTwice()
+  public void canCheckInAnItemWithoutAnOpenLoan()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final IndividualResource nod = itemsFixture.basedUponNod();
+
+    final UUID checkInServicePointId = UUID.randomUUID();
+
+    final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+      nod, new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC),
+      checkInServicePointId);
+
+    assertThat(checkInResponse.getJson().containsKey("loan"), is(false));
+  }
+
+  @Test
+  public void canCheckInAnItemTwice()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -211,13 +227,10 @@ public class CheckInByBarcodeTests extends APITests {
       new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC),
       checkinServicePointId);
 
-    final Response checkInAttemptResponse = loansFixture.attemptCheckInByBarcode(
+    final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
       nod, new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC),
       checkinServicePointId);
 
-    assertThat(checkInAttemptResponse, hasStatus(HTTP_INTERNAL_SERVER_ERROR));
-
-    assertThat(checkInAttemptResponse.getBody(),
-      containsString("More than one open loan for item"));
+    assertThat(checkInResponse.getJson().containsKey("loan"), is(false));
   }
 }

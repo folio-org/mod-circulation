@@ -1,5 +1,7 @@
 package org.folio.circulation.domain.representations;
 
+import static org.folio.circulation.support.JsonPropertyWriter.write;
+
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.OkJsonHttpResult;
 import org.folio.circulation.support.WritableHttpResult;
@@ -16,8 +18,11 @@ public class CheckInByBarcodeResponse {
       return HttpResult.failed(loanResult.cause());
     }
     else {
-      return new OkJsonHttpResult(new JsonObject()
-        .put("loan", loanResult.value()));
+      final JsonObject checkInResponseBody = new JsonObject();
+
+      write(checkInResponseBody, "loan", loanResult.value());
+
+      return new OkJsonHttpResult(checkInResponseBody);
     }
   }
 }
