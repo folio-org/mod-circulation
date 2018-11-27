@@ -8,6 +8,7 @@ import org.folio.circulation.domain.CheckInProcessRecords;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanCheckInService;
+import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.UpdateItem;
@@ -23,13 +24,15 @@ class CheckInProcessAdapter {
   private final RequestQueueRepository requestQueueRepository;
   private final UpdateItem updateItem;
   private final UpdateRequestQueue requestQueueUpdate;
+  private final LoanRepository loanRepository;
 
   CheckInProcessAdapter(
     ItemByBarcodeInStorageFinder itemFinder,
     SingleOpenLoanForItemInStorageFinder singleOpenLoanFinder,
     LoanCheckInService loanCheckInService,
     RequestQueueRepository requestQueueRepository,
-    UpdateItem updateItem, UpdateRequestQueue requestQueueUpdate) {
+    UpdateItem updateItem, UpdateRequestQueue requestQueueUpdate,
+    LoanRepository loanRepository) {
 
     this.itemFinder = itemFinder;
     this.singleOpenLoanFinder = singleOpenLoanFinder;
@@ -37,6 +40,7 @@ class CheckInProcessAdapter {
     this.requestQueueRepository = requestQueueRepository;
     this.updateItem = updateItem;
     this.requestQueueUpdate = requestQueueUpdate;
+    this.loanRepository = loanRepository;
   }
 
   CompletableFuture<HttpResult<Item>> findItem(CheckInProcessRecords records) {
@@ -68,5 +72,12 @@ class CheckInProcessAdapter {
     CheckInProcessRecords records) {
 
     return requestQueueUpdate.onCheckIn(records.getRequestQueue());
+  }
+
+  CompletableFuture<HttpResult<Loan>> updateLoan(CheckInProcessRecords records) {
+    // Loan must be updated after item
+    // due to snapshot of item status stored with the loan
+    // as this is how the loan action history is populated
+    return loanRepository.updateLoan(records.getLoan());
   }
 }

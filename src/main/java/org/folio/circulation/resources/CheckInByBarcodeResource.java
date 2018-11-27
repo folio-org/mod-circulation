@@ -70,7 +70,7 @@ public class CheckInByBarcodeResource extends Resource {
 
     final CheckInProcessAdapter processAdapter = new CheckInProcessAdapter(
       itemFinder, singleOpenLoanFinder, loanCheckInService,
-      requestQueueRepository, updateItem, requestQueueUpdate);
+      requestQueueRepository, updateItem, requestQueueUpdate, loanRepository);
 
     checkInRequestResult
       .map(CheckInProcessRecords::new)
@@ -85,12 +85,8 @@ public class CheckInByBarcodeResource extends Resource {
         processAdapter::updateRequestQueue, CheckInProcessRecords::withRequestQueue))
       .thenComposeAsync(updateRequestQueueResult -> updateRequestQueueResult.combineAfter(
         processAdapter::updateItem, CheckInProcessRecords::withItem))
-      // Loan must be updated after item
-      // due to snapshot of item status stored with the loan
-      // as this is how the loan action history is populated
-      .thenComposeAsync(processRecordsResult -> processRecordsResult.combineAfter(
-        records -> loanRepository.updateLoan(records.getLoan()),
-        CheckInProcessRecords::withLoan))
+      .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
+        processAdapter::updateLoan, CheckInProcessRecords::withLoan))
       .thenApply(result -> result.map(CheckInProcessRecords::getLoan))
       .thenApply(result -> result.map(loanRepresentation::extendedLoan))
       .thenApply(CheckInByBarcodeResponse::from)
