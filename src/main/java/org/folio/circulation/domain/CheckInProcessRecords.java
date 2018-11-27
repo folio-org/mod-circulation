@@ -15,47 +15,28 @@ import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 public class CheckInProcessRecords {
   private final CheckInByBarcodeRequest checkInRequest;
   private final Item item;
-  private final Loan loan;
-  private final RequestQueue requestQueue;
+
+  public CheckInProcessRecords(CheckInByBarcodeRequest checkInRequest) {
+    this(checkInRequest, null);
+  }
 
   private CheckInProcessRecords(
     CheckInByBarcodeRequest checkInRequest,
-    Item item,
-    Loan loan,
-    RequestQueue requestQueue) {
+    Item item) {
 
     this.checkInRequest = checkInRequest;
     this.item = item;
-    this.loan = loan;
-    this.requestQueue = requestQueue;
   }
 
-  public CheckInProcessRecords(CheckInByBarcodeRequest checkInRequest) {
-    this(checkInRequest, null, null, null);
+  public CheckInProcessRecords withItem(Item item) {
+    return new CheckInProcessRecords(this.checkInRequest, item);
+  }
+
+  public String getCheckInRequestBarcode() {
+    return checkInRequest.getItemBarcode();
   }
 
   public Item getItem() {
     return item;
-  }
-
-  public Loan getLoan() {
-    return loan;
-  }
-
-  public RequestQueue getRequestQueue() {
-    return requestQueue;
-  }
-
-  private CheckInByBarcodeRequest getCheckInRequest() {
-    return checkInRequest;
-  }
-
-  public CheckInProcessRecords withLoan(Loan loan) {
-    return new CheckInProcessRecords(this.checkInRequest,
-      this.item, loan, this.requestQueue);
-  }
-
-  public String getCheckInRequestBarcode() {
-    return getCheckInRequest().getItemBarcode();
   }
 }
