@@ -184,7 +184,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return user;
   }
 
-  Loan withUser(User newUser) {
+  public Loan withUser(User newUser) {
     return new Loan(representation, item, newUser, proxy);
   }
 
@@ -211,7 +211,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return this;
   }
 
-  Loan checkin(DateTime returnDate, UUID servicePointId) {
+  Loan checkIn(DateTime returnDate, UUID servicePointId) {
     changeAction("checkedin");
     changeStatus("Closed");
     changeReturnDate(returnDate);

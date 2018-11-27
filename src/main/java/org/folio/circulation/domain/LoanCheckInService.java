@@ -5,9 +5,10 @@ import static org.folio.circulation.support.HttpResult.of;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.support.HttpResult;
 
-public class LoanCheckinService {
-  public HttpResult<Loan> checkin(Loan loan, CheckInByBarcodeRequest request) {
-    return of(() -> loan.checkin(request.getCheckInDate(),
+public class LoanCheckInService {
+  public HttpResult<Loan> checkIn(Loan loan, CheckInByBarcodeRequest request) {
+    return of(() -> loan.checkIn(
+      request.getCheckInDate(),
       request.getServicePointId()));
   }
 }

@@ -42,20 +42,6 @@ public class UpdateItem {
           loanAndRelatedRecords.getLoan().getItem(), prospectiveStatus));
   }
 
-  public CompletableFuture<HttpResult<Loan>> setLoansItemStatusAvaliable(Loan loan) {
-    Item item = loan.getItem();
-    item.changeStatus(ItemStatus.AVAILABLE);
-
-    return this.itemsStorageClient.put(item.getItemId(), item.getItem()).thenApply(putItemResponse -> {
-      if (putItemResponse.getStatusCode() == 204) {
-        return succeeded(loan);
-      } else {
-        return failed(
-            new ServerErrorFailure(String.format("Failed to update item status '%s'", putItemResponse.getBody())));
-      }
-    });
-  }
-
   CompletableFuture<HttpResult<RequestAndRelatedRecords>> onRequestCreation(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
