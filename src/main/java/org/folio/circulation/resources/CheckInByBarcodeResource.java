@@ -1,17 +1,14 @@
 package org.folio.circulation.resources;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.validation.CommonFailures.moreThanOneOpenLoanFailure;
 import static org.folio.circulation.domain.validation.CommonFailures.noItemFoundForBarcodeFailure;
 
-import java.util.function.BiFunction;
-
 import org.folio.circulation.domain.CheckInProcessRecords;
-import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanCheckInService;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.LoanRepresentation;
-import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateRequestQueue;
@@ -81,10 +78,15 @@ public class CheckInByBarcodeResource extends Resource {
           processRecordsResult.combineAfter(
             processRecords -> singleOpenLoanFinder.findSingleOpenLoan(processRecords.getItem()),
             CheckInProcessRecords::withLoan))
-      .thenApply(processRecordsResult -> processRecordsResult.next(records ->
-        loanCheckInService.checkIn(records.getLoan(), records.getCheckInRequest())))
-      .thenComposeAsync(loanResult -> loanResult.combineAfter(
-        loan -> requestQueueRepository.get(loan.getItemId()), mapToRelatedRecords()))
+      .thenComposeAsync(processRecordsResult -> processRecordsResult.combineAfter(records ->
+          completedFuture(loanCheckInService.checkIn(records.getLoan(), records.getCheckInRequest())),
+        CheckInProcessRecords::withLoan))
+      .thenComposeAsync(processRecordsResult -> processRecordsResult.combineAfter(
+        processRecords -> requestQueueRepository.get(processRecords.getItem().getItemId()),
+        CheckInProcessRecords::withRequestQueue))
+      .thenApply(processRecordsResult -> processRecordsResult.map(records ->
+        new LoanAndRelatedRecords(records.getLoan())
+        .withRequestQueue(records.getRequestQueue())))
       .thenComposeAsync(result -> result.after(requestQueueUpdate::onCheckIn))
       .thenComposeAsync(result -> result.after(updateItem::onLoanUpdate))
       // Loan must be updated after item
@@ -95,10 +97,5 @@ public class CheckInByBarcodeResource extends Resource {
       .thenApply(result -> result.map(loanRepresentation::extendedLoan))
       .thenApply(CheckInByBarcodeResponse::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
-  }
-
-  private BiFunction<Loan, RequestQueue, LoanAndRelatedRecords> mapToRelatedRecords() {
-    return (loan, requestQueue) -> new LoanAndRelatedRecords(loan)
-      .withRequestQueue(requestQueue);
   }
 }

@@ -16,32 +16,44 @@ public class CheckInProcessRecords {
   private final CheckInByBarcodeRequest checkInRequest;
   private final Item item;
   private final Loan loan;
+  private final RequestQueue requestQueue;
 
   public CheckInProcessRecords(CheckInByBarcodeRequest checkInRequest) {
-    this(checkInRequest, null, null);
+    this(checkInRequest, null, null, null);
   }
 
   private CheckInProcessRecords(
     CheckInByBarcodeRequest checkInRequest,
-    Item item, Loan loan) {
+    Item item,
+    Loan loan,
+    RequestQueue requestQueue) {
 
     this.checkInRequest = checkInRequest;
     this.item = item;
     this.loan = loan;
+    this.requestQueue = requestQueue;
   }
 
   public CheckInProcessRecords withItem(Item item) {
     return new CheckInProcessRecords(
       this.checkInRequest,
       item,
-      this.loan);
+      this.loan, this.requestQueue);
   }
 
   public CheckInProcessRecords withLoan(Loan loan) {
     return new CheckInProcessRecords(
       this.checkInRequest,
       this.item,
-      loan);
+      loan, this.requestQueue);
+  }
+
+  public CheckInProcessRecords withRequestQueue(RequestQueue requestQueue) {
+    return new CheckInProcessRecords(
+      this.checkInRequest,
+      this.item,
+      this.loan,
+      requestQueue);
   }
 
   public String getCheckInRequestBarcode() {
@@ -58,5 +70,9 @@ public class CheckInProcessRecords {
 
   public CheckInByBarcodeRequest getCheckInRequest() {
     return checkInRequest;
+  }
+
+  public RequestQueue getRequestQueue() {
+    return requestQueue;
   }
 }
