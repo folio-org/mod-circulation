@@ -1,6 +1,7 @@
 ## 13.1.0 Unreleased
 
-* Requires `instance-storage` interface version `4.0 5.0 6.0` (CIRC-168)
+* Requires `instance-storage` interface `4.0 5.0 6.0` (CIRC-168)
+* Requires `holdings-storage` interface `1.3 2.0 3.0` (CIRC-169)
 
 ## 13.0.0 2018-11-23
 
