@@ -6,7 +6,6 @@ import static org.folio.circulation.domain.validation.CommonFailures.noItemFound
 import org.folio.circulation.domain.CheckInProcessRecords;
 import org.folio.circulation.domain.LoanCheckInService;
 import org.folio.circulation.domain.LoanRepository;
-import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateRequestQueue;
@@ -48,7 +47,6 @@ public class CheckInByBarcodeResource extends Resource {
     final UserRepository userRepository = new UserRepository(clients);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
 
-    final LoanRepresentation loanRepresentation = new LoanRepresentation();
     final LoanCheckInService loanCheckInService = new LoanCheckInService();
 
     final UpdateItem updateItem = new UpdateItem(clients);
@@ -87,10 +85,7 @@ public class CheckInByBarcodeResource extends Resource {
         processAdapter::updateItem, CheckInProcessRecords::withItem))
       .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
         processAdapter::updateLoan, CheckInProcessRecords::withLoan))
-      .thenApply(result -> result.map(CheckInProcessRecords::getLoan))
-      .thenApply(result -> result.map(loanRepresentation::extendedLoan))
       .thenApply(CheckInByBarcodeResponse::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
-
 }
