@@ -1,3 +1,7 @@
+## 13.1.0 Unreleased
+
+* Requires `instance-storage` interface version `4.0 5.0 6.0` (CIRC-168)
+
 ## 13.0.0 2018-11-23
 
 * Stores the service point where checking out or in occurred (CIRC-104)
