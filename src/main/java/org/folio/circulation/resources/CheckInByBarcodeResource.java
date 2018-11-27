@@ -4,6 +4,8 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.validation.CommonFailures.moreThanOneOpenLoanFailure;
 import static org.folio.circulation.domain.validation.CommonFailures.noItemFoundForBarcodeFailure;
 
+import java.util.function.Function;
+
 import org.folio.circulation.domain.CheckInProcessRecords;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanCheckInService;
@@ -84,10 +86,10 @@ public class CheckInByBarcodeResource extends Resource {
       .thenComposeAsync(processRecordsResult -> processRecordsResult.combineAfter(
         processRecords -> requestQueueRepository.get(processRecords.getItem().getItemId()),
         CheckInProcessRecords::withRequestQueue))
-      .thenApply(processRecordsResult -> processRecordsResult.map(records ->
-        new LoanAndRelatedRecords(records.getLoan())
-        .withRequestQueue(records.getRequestQueue())))
-      .thenComposeAsync(result -> result.after(requestQueueUpdate::onCheckIn))
+      .thenComposeAsync(processRecordsResult -> processRecordsResult.combineAfter(
+        records -> requestQueueUpdate.onCheckIn(records.getRequestQueue()),
+        CheckInProcessRecords::withRequestQueue))
+      .thenApply(mapProcessToRelatedRecords())
       .thenComposeAsync(result -> result.after(updateItem::onLoanUpdate))
       // Loan must be updated after item
       // due to snapshot of item status stored with the loan
@@ -97,5 +99,11 @@ public class CheckInByBarcodeResource extends Resource {
       .thenApply(result -> result.map(loanRepresentation::extendedLoan))
       .thenApply(CheckInByBarcodeResponse::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
+  }
+
+  private Function<HttpResult<CheckInProcessRecords>, HttpResult<LoanAndRelatedRecords>> mapProcessToRelatedRecords() {
+    return processRecordsResult -> processRecordsResult.map(records ->
+      new LoanAndRelatedRecords(records.getLoan())
+        .withRequestQueue(records.getRequestQueue()));
   }
 }
