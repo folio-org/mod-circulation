@@ -63,6 +63,7 @@ import api.requests.scenarios.SingleOpenHoldShelfRequestTests;
 import api.support.builders.FixedDueDateSchedule;
 import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.LoanPolicyBuilder;
+import api.support.builders.LocationBuilder;
 import api.support.builders.ServicePointBuilder;
 import api.support.builders.UserBuilder;
 import api.support.fakes.FakeOkapi;
@@ -70,7 +71,6 @@ import api.support.fakes.FakeStorageModule;
 import api.support.http.ResourceClient;
 import api.support.http.URLHelper;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 
@@ -269,6 +269,26 @@ public class APITestSuite {
 
   public static UUID patronRequestCancellationReasonId() {
     return patronRequestCancellationReasonId;
+  }
+
+  public static UUID nottinghamUniversityInstitution() {
+    return nottinghamUniversityInstitution;
+  }
+
+  public static UUID jubileeCampus() {
+    return jubileeCampus;
+  }
+
+  public static UUID djanoglyLibrary() {
+    return djanoglyLibrary;
+  }
+
+  public static UUID businessLibrary() {
+    return businessLibrary;
+  }
+
+  public static UUID fakeServicePoint() {
+    return fakeServicePointId;
   }
 
   @BeforeClass
@@ -593,37 +613,34 @@ public class APITestSuite {
     ResourceClient locationsClient = ResourceClient.forLocations(client);
 
     thirdFloorLocationId = createReferenceRecord(locationsClient,
-      new JsonObject()
-        .put("name", "3rd Floor")
-        .put("code", "NU/JC/DL/3F")
-        .put("institutionId", nottinghamUniversityInstitution.toString())
-        .put("campusId", jubileeCampus.toString())
-        .put("libraryId", djanoglyLibrary.toString())
-        //TODO: Replace with created service point
-        .put("primaryServicePoint", fakeServicePointId.toString())
-        .put("servicePointIds", new JsonArray().add(fakeServicePointId.toString())));
+      new LocationBuilder()
+        .withName("3rd Floor")
+        .withCode("NU/JC/DL/3F")
+        .forInstitution(nottinghamUniversityInstitution())
+        .forCampus(jubileeCampus())
+        .forLibrary(djanoglyLibrary())
+        .withPrimaryServicePoint(fakeServicePoint())
+        .create());
 
     secondFloorEconomicsLocationId = createReferenceRecord(locationsClient,
-      new JsonObject()
-        .put("name", "2nd Floor - Economics")
-        .put("code", "NU/JC/DL/2FE")
-        .put("institutionId", nottinghamUniversityInstitution.toString())
-        .put("campusId", jubileeCampus.toString())
-        .put("libraryId", djanoglyLibrary.toString())
-        //TODO: Replace with created service point
-        .put("primaryServicePoint", fakeServicePointId.toString())
-        .put("servicePointIds", new JsonArray().add(fakeServicePointId.toString())));
+      new LocationBuilder()
+        .withName("2nd Floor - Economics")
+        .withCode("NU/JC/DL/2FE")
+        .forInstitution(nottinghamUniversityInstitution())
+        .forCampus(jubileeCampus())
+        .forLibrary(djanoglyLibrary())
+        .withPrimaryServicePoint(fakeServicePoint())
+        .create());
 
     mezzanineDisplayCaseLocationId = createReferenceRecord(locationsClient,
-      new JsonObject()
-        .put("name", "Display Case, Mezzanine")
-        .put("code", "NU/JC/BL/DM")
-        .put("institutionId", nottinghamUniversityInstitution.toString())
-        .put("campusId", jubileeCampus.toString())
-        .put("libraryId", businessLibrary.toString())
-        //TODO: Replace with created service point
-        .put("primaryServicePoint", fakeServicePointId.toString())
-        .put("servicePointIds", new JsonArray().add(fakeServicePointId.toString())));
+      new LocationBuilder()
+        .withName("Display Case, Mezzanine")
+        .withCode("NU/JC/BL/DM")
+        .forInstitution(nottinghamUniversityInstitution())
+        .forCampus(jubileeCampus())
+        .forLibrary(businessLibrary())
+        .withPrimaryServicePoint(fakeServicePoint())
+        .create());
   }
 
   private static void deleteLocations()
