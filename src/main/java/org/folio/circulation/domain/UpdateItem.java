@@ -84,21 +84,25 @@ public class UpdateItem {
     if(item.isNotSameStatus(prospectiveStatus)) {
       item.changeStatus(prospectiveStatus);
 
-      return this.itemsStorageClient.put(item.getItemId(),
-        item.getItem()).thenApply(putItemResponse -> {
-          if(putItemResponse.getStatusCode() == 204) {
-            return succeeded(item);
-          }
-          else {
-            return failed(new ServerErrorFailure(
-              String.format("Failed to update item status '%s'",
-                putItemResponse.getBody())));
-          }
-        });
+      return updateItem(item);
     }
     else {
       return completedFuture(succeeded(item));
     }
+  }
+
+  private CompletableFuture<HttpResult<Item>> updateItem(Item item) {
+    return itemsStorageClient.put(item.getItemId(), item.getItem())
+      .thenApply(putItemResponse -> {
+        if(putItemResponse.getStatusCode() == 204) {
+          return succeeded(item);
+        }
+        else {
+          return failed(new ServerErrorFailure(
+            String.format("Failed to update item status '%s'",
+              putItemResponse.getBody())));
+        }
+      });
   }
 
   private CompletableFuture<HttpResult<Boolean>> loanIsClosed(
