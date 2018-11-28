@@ -1,15 +1,19 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.domain.representations.ItemProperties;
-
-import java.util.Objects;
-
-import static org.folio.circulation.domain.representations.ItemProperties.*;
+import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOCATION_ID;
+import static org.folio.circulation.domain.representations.ItemProperties.TEMPORARY_LOCATION_ID;
+import static org.folio.circulation.domain.representations.ItemProperties.TITLE_PROPERTY;
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
+
+import java.util.Objects;
+
+import org.folio.circulation.domain.representations.ItemProperties;
+
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 public class Item {
   private final JsonObject itemRepresentation;
@@ -17,6 +21,8 @@ public class Item {
   private final JsonObject instanceRepresentation;
   private JsonObject locationRepresentation;
   private JsonObject materialTypeRepresentation;
+
+  private boolean changed = false;
 
   public Item(
     JsonObject itemRepresentation,
@@ -42,6 +48,10 @@ public class Item {
 
   Boolean isNotSameStatus(ItemStatus prospectiveStatus) {
     return !Objects.equals(getStatus(), prospectiveStatus);
+  }
+
+  public boolean hasChanged() {
+    return changed;
   }
 
   public JsonObject getItem() {
@@ -141,9 +151,14 @@ public class Item {
       : getItem().getString(ItemProperties.PERMANENT_LOAN_TYPE_ID);
   }
 
-  void changeStatus(ItemStatus newStatus) {
+  Item changeStatus(ItemStatus newStatus) {
     //TODO: Check if status is null
-    getItem().put("status", new JsonObject().put("name", newStatus.getValue()));
+    write(itemRepresentation, "status",
+      new JsonObject().put("name", newStatus.getValue()));
+
+    changed = true;
+
+    return this;
   }
 
   public boolean isNotFound() {

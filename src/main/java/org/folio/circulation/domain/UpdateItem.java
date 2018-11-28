@@ -24,9 +24,19 @@ public class UpdateItem {
     Item item,
     RequestQueue requestQueue) {
 
-    return of(() -> itemStatusOnCheckIn(requestQueue))
-      .after(prospectiveStatus ->
-        updateItemWhenNotSameStatus(prospectiveStatus, item));
+    return of(() -> changeItemOnCheckIn(item, requestQueue))
+      .after(updatedItem -> {
+        if(updatedItem.hasChanged()) {
+          return storeItem(updatedItem);
+        }
+        else {
+          return completedFuture(succeeded(item));
+        }
+      });
+  }
+
+  private Item changeItemOnCheckIn(Item item, RequestQueue requestQueue) {
+    return item.changeStatus(requestQueue.checkedInItemStatus());
   }
 
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> onCheckOut(
@@ -84,14 +94,14 @@ public class UpdateItem {
     if(item.isNotSameStatus(prospectiveStatus)) {
       item.changeStatus(prospectiveStatus);
 
-      return updateItem(item);
+      return storeItem(item);
     }
     else {
       return completedFuture(succeeded(item));
     }
   }
 
-  private CompletableFuture<HttpResult<Item>> updateItem(Item item) {
+  private CompletableFuture<HttpResult<Item>> storeItem(Item item) {
     return itemsStorageClient.put(item.getItemId(), item.getItem())
       .thenApply(putItemResponse -> {
         if(putItemResponse.getStatusCode() == 204) {
