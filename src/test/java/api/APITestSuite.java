@@ -63,6 +63,7 @@ import api.requests.scenarios.SingleOpenHoldShelfRequestTests;
 import api.support.builders.FixedDueDateSchedule;
 import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.LoanPolicyBuilder;
+import api.support.builders.ServicePointBuilder;
 import api.support.builders.UserBuilder;
 import api.support.fakes.FakeOkapi;
 import api.support.fakes.FakeStorageModule;
@@ -155,6 +156,7 @@ public class APITestSuite {
 
   private static UUID courseReservesCancellationReasonId;
   private static UUID patronRequestCancellationReasonId;
+  private static UUID fakeServicePointId;
 
   public static int circulationModulePort() {
     return port;
@@ -305,6 +307,7 @@ public class APITestSuite {
 
     createMaterialTypes();
     createLoanTypes();
+    createServicePoints();
     createLocations();
     createContributorNameTypes();
     createInstanceTypes();
@@ -344,6 +347,7 @@ public class APITestSuite {
     deleteMaterialTypes();
     deleteLoanTypes();
     deleteLocations();
+    deleteServicePoints();
     deleteContributorTypes();
     deleteInstanceTypes();
     deleteLoanPolicies();
@@ -530,6 +534,30 @@ public class APITestSuite {
     loanTypesClient.delete(readingRoomLoanTypeId);
   }
 
+  private static void createServicePoints()
+    throws InterruptedException,
+      MalformedURLException,
+      TimeoutException,
+      ExecutionException {
+
+    ResourceClient servicePointsClient = ResourceClient.forServicePoints(createClient());
+
+    fakeServicePointId = servicePointsClient.create(
+      new ServicePointBuilder("Fake service point", "FAKE", "Fake service point"))
+      .getId();
+  }
+
+  private static void deleteServicePoints()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    ResourceClient servicePointsClient = ResourceClient.forServicePoints(createClient());
+
+    servicePointsClient.delete(fakeServicePointId);
+  }
+
   private static void createLocations()
     throws MalformedURLException,
     InterruptedException,
@@ -563,8 +591,6 @@ public class APITestSuite {
         .put("campusId", jubileeCampus.toString()));
 
     ResourceClient locationsClient = ResourceClient.forLocations(client);
-
-    final UUID fakeServicePointId = UUID.randomUUID();
 
     thirdFloorLocationId = createReferenceRecord(locationsClient,
       new JsonObject()
