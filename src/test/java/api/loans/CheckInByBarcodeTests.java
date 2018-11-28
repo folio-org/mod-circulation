@@ -88,6 +88,17 @@ public class CheckInByBarcodeTests extends APITests {
     assertThat("Should not have snapshot of item status, as current status is included",
       loanRepresentation.containsKey("itemStatus"), is(false));
 
+    assertThat("Response should include an item",
+      checkInResponse.getJson().containsKey("item"), is(true));
+
+    final JsonObject itemFromResponse = checkInResponse.getItem();
+
+    assertThat("title is included for item",
+      itemFromResponse.getString("title"), is("Nod"));
+
+    assertThat("barcode is included for item",
+      itemFromResponse.getString("barcode"), is("565578437802"));
+
     JsonObject updatedNod = itemsClient.getById(nod.getId()).getJson();
 
     assertThat("item status is not available",
@@ -216,7 +227,19 @@ public class CheckInByBarcodeTests extends APITests {
       nod, new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC),
       checkInServicePointId);
 
-    assertThat(checkInResponse.getJson().containsKey("loan"), is(false));
+    assertThat("Response should not include a loan",
+      checkInResponse.getJson().containsKey("loan"), is(false));
+
+    assertThat("Response should include an item",
+      checkInResponse.getJson().containsKey("item"), is(true));
+
+    final JsonObject itemFromResponse = checkInResponse.getItem();
+
+    assertThat("title is included for item",
+      itemFromResponse.getString("title"), is("Nod"));
+
+    assertThat("barcode is included for item",
+      itemFromResponse.getString("barcode"), is("565578437802"));
   }
 
   @Test
@@ -248,6 +271,18 @@ public class CheckInByBarcodeTests extends APITests {
       nod, new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC),
       checkInServicePointId);
 
-    assertThat(checkInResponse.getJson().containsKey("loan"), is(false));
+    assertThat("Response should not include a loan",
+      checkInResponse.getJson().containsKey("loan"), is(false));
+
+    assertThat("Response should include an item",
+      checkInResponse.getJson().containsKey("item"), is(true));
+
+    final JsonObject itemFromResponse = checkInResponse.getItem();
+
+    assertThat("title is included for item",
+      itemFromResponse.getString("title"), is("Nod"));
+
+    assertThat("barcode is included for item",
+      itemFromResponse.getString("barcode"), is("565578437802"));
   }
 }

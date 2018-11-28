@@ -59,7 +59,7 @@ public class Item {
     }
   }
 
-  JsonArray getContributorNames() {
+  public JsonArray getContributorNames() {
     if(instanceRepresentation == null) {
       return new JsonArray();
     }
@@ -84,11 +84,11 @@ public class Item {
     return getProperty(holdingRepresentation, "instanceId");
   }
 
-  String getCallNumber() {
+  public String getCallNumber() {
     return getProperty(holdingRepresentation, "callNumber");
   }
 
-  ItemStatus getStatus() {
+  public ItemStatus getStatus() {
     return ItemStatus.from(getStatusName());
   }
 
@@ -100,7 +100,7 @@ public class Item {
     return locationRepresentation;
   }
 
-  JsonObject getMaterialType() {
+  public JsonObject getMaterialType() {
     return materialTypeRepresentation;
   }
 

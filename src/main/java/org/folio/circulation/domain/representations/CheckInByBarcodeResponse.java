@@ -30,11 +30,15 @@ public class CheckInByBarcodeResponse {
     CheckInProcessRecords records) {
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
+    final ItemSummaryRepresentation itemRepresentation = new ItemSummaryRepresentation();
 
     final JsonObject checkInResponseBody = new JsonObject();
 
     write(checkInResponseBody, "loan",
       loanRepresentation.extendedLoan(records.getLoan()));
+
+    write(checkInResponseBody, "item",
+      itemRepresentation.createItemSummary(records.getItem()));
 
     return new OkJsonHttpResult(checkInResponseBody);
   }
