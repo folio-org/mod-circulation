@@ -564,7 +564,6 @@ public class APITestSuite {
 
     ResourceClient locationsClient = ResourceClient.forLocations(client);
 
-
     final UUID fakeServicePointId = UUID.randomUUID();
 
     thirdFloorLocationId = createReferenceRecord(locationsClient,

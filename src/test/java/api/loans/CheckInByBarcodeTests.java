@@ -131,7 +131,8 @@ public class CheckInByBarcodeTests extends APITests {
     final Response response = loansFixture.attemptCheckInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
-        .on(DateTime.now()));
+        .on(DateTime.now())
+        .atNoServicePoint());
 
     assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
 
@@ -155,6 +156,7 @@ public class CheckInByBarcodeTests extends APITests {
 
     final Response response = loansFixture.attemptCheckInByBarcode(
       new CheckInByBarcodeRequestBuilder()
+        .noItem()
         .on(DateTime.now())
         .at(UUID.randomUUID()));
 
@@ -181,6 +183,7 @@ public class CheckInByBarcodeTests extends APITests {
     final Response response = loansFixture.attemptCheckInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
+        .onNoOccasion()
         .at(UUID.randomUUID()));
 
     assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
