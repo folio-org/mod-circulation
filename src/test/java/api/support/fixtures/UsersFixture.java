@@ -114,7 +114,7 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return userRecordCreator.createRecord(basedUponJessicaPontefract());
+    return userRecordCreator.create(basedUponJessicaPontefract());
   }
 
   public IndividualResource james()
@@ -123,7 +123,7 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return userRecordCreator.createRecord(basedUponJamesRodwell());
+    return userRecordCreator.create(basedUponJamesRodwell());
   }
 
   public IndividualResource rebecca()
@@ -132,7 +132,7 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return userRecordCreator.createRecord(basedUponRebeccaStuart());
+    return userRecordCreator.create(basedUponRebeccaStuart());
   }
   
   public IndividualResource rebecca(
@@ -142,7 +142,7 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return userRecordCreator.createRecord(
+    return userRecordCreator.create(
       additionalProperties.apply(basedUponRebeccaStuart()));
   }
 
@@ -164,7 +164,7 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return userRecordCreator.createRecord(
+    return userRecordCreator.create(
       additionalUserProperties.apply(basedUponStevenJones()));
   }
 
@@ -185,7 +185,7 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return userRecordCreator.createRecord(additionalConfiguration.apply(
+    return userRecordCreator.create(additionalConfiguration.apply(
       UserExamples.basedUponCharlotteBroadwell()));
   }
 }

@@ -67,7 +67,6 @@ public class RequestsAPIRetrievalTests extends APITests {
         builder -> builder.withPatronGroupId(staffGroupId));
 
     final IndividualResource cd1 = servicePointsFixture.cd1();
-    servicePointsToDelete.add(cd1.getId());
 
     UUID pickupServicePointId = cd1.getId();
 
@@ -283,9 +282,6 @@ public class RequestsAPIRetrievalTests extends APITests {
     UUID requesterId = sponsor.getId();
     
     usersFixture.nonExpiringProxyFor(sponsor, proxy);
-
-    servicePointsToDelete.add(cd1.getId());
-    servicePointsToDelete.add(cd2.getId());
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource nod = itemsFixture.basedUponNod();

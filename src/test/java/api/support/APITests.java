@@ -66,7 +66,6 @@ public abstract class APITests {
 
   protected final Set<UUID> schedulesToDelete = new HashSet<>();
   protected final Set<UUID> policiesToDelete = new HashSet<>();
-  protected final Set<UUID> servicePointsToDelete = new HashSet<>();
   protected final Set<UUID> groupsToDelete = new HashSet<>();
 
   protected APITests() {
@@ -136,11 +135,7 @@ public abstract class APITests {
     TimeoutException,
     ExecutionException {
 
-    for (UUID servicePointId : servicePointsToDelete) {
-      servicePointsClient.delete(servicePointId);
-    }
-
-    servicePointsToDelete.clear();
+    servicePointsFixture.cleanUp();
 
     for (UUID policyId : policiesToDelete) {
       loanPolicyClient.delete(policyId);
