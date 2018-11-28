@@ -1,7 +1,11 @@
-## 13.1.0 Unreleased
+## 13.1.0 2018-11-28
 
-* Requires `instance-storage` interface `4.0 5.0 6.0` (CIRC-168)
-* Requires `holdings-storage` interface `1.3 2.0 3.0` (CIRC-169)
+* Initial check in by barcode API for checking in an item at a service point (CIRC-154)
+* Removes additional delivery address properties before storage (CIRC-171)
+* Provides `circulation` interface version 5.1 (CIRC-154) 
+* Requires `item-storage` interface version `5.3`, `6.0` or `7.0` (CIRC-170)
+* Requires `instance-storage` interface version `4.0`, `5.0`, or  `6.0` (CIRC-168)
+* Requires `holdings-storage` interface version `1.3`, `2.0` or `3.0` (CIRC-169)
 
 ## 13.0.0 2018-11-23
 
