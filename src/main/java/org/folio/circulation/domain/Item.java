@@ -9,7 +9,9 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.util.Objects;
+import java.util.UUID;
 
+import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.representations.ItemProperties;
 
 import io.vertx.core.json.JsonArray;
@@ -110,6 +112,13 @@ public class Item {
     return locationRepresentation;
   }
 
+  boolean matchesPrimaryServicePoint(UUID servicePointId) {
+    final String primaryServicePoint = getLocation()
+      .getString("primaryServicePoint");
+
+    return StringUtils.equals(primaryServicePoint, servicePointId.toString());
+  }
+
   public JsonObject getMaterialType() {
     return materialTypeRepresentation;
   }
@@ -139,7 +148,7 @@ public class Item {
       return null;
     }
   }
-  
+
   public String getEnumeration() {
     return getProperty(getItem(), "enumeration");
   }

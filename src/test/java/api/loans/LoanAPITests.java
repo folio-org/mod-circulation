@@ -1454,7 +1454,7 @@ public class LoanAPITests extends APITests {
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
 
     UUID checkinServicePointId = servicePointsFixture.cd1().getId();
-    UUID checkoutServicePointId = servicePointsFixture.cd2().getId();;
+    UUID checkoutServicePointId = servicePointsFixture.cd2().getId();
 
     loansClient.create(new LoanBuilder()
       .withId(loanId)

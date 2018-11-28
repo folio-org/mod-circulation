@@ -42,7 +42,11 @@ public class LoanRepresentation {
     return loan;
   }
   
-  private static void addAdditionalServicePointProperties(JsonObject loanRepresentation, ServicePoint servicePoint, String fieldName) {
+  private static void addAdditionalServicePointProperties(
+    JsonObject loanRepresentation,
+    ServicePoint servicePoint,
+    String fieldName) {
+
     if(servicePoint == null) {
       log.info("Unable to add servicepoint properties to loan {},"
           + " servicepoint is null", loanRepresentation.getString("id"));

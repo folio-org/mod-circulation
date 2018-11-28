@@ -65,7 +65,8 @@ class CheckInProcessAdapter {
   }
 
   CompletableFuture<HttpResult<Item>> updateItem(CheckInProcessRecords records) {
-    return updateItem.onCheckIn(records.getItem(), records.getRequestQueue());
+    return updateItem.onCheckIn(records.getItem(), records.getRequestQueue(),
+      records.getCheckInServicePointId());
   }
 
   CompletableFuture<HttpResult<RequestQueue>> updateRequestQueue(

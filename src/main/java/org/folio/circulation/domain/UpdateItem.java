@@ -1,10 +1,13 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
+import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.of;
 import static org.folio.circulation.support.HttpResult.succeeded;
 
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.support.Clients;
@@ -22,9 +25,10 @@ public class UpdateItem {
 
   public CompletableFuture<HttpResult<Item>> onCheckIn(
     Item item,
-    RequestQueue requestQueue) {
+    RequestQueue requestQueue,
+    UUID checkInServicePointId) {
 
-    return of(() -> changeItemOnCheckIn(item, requestQueue))
+    return of(() -> changeItemOnCheckIn(item, requestQueue, checkInServicePointId))
       .after(updatedItem -> {
         if(updatedItem.hasChanged()) {
           return storeItem(updatedItem);
@@ -35,8 +39,22 @@ public class UpdateItem {
       });
   }
 
-  private Item changeItemOnCheckIn(Item item, RequestQueue requestQueue) {
-    return item.changeStatus(requestQueue.checkedInItemStatus());
+  private Item changeItemOnCheckIn(
+    Item item,
+    RequestQueue requestQueue,
+    UUID checkInServicePointId) {
+
+    if (requestQueue.hasOutstandingFulfillableRequests()) {
+      return item.changeStatus(requestQueue.getHighestPriorityFulfillableRequest()
+        .checkedInItemStatus());
+    } else {
+      if(item.matchesPrimaryServicePoint(checkInServicePointId)) {
+        return item.changeStatus(AVAILABLE);
+      }
+      else {
+        return item.changeStatus(IN_TRANSIT);
+      }
+    }
   }
 
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> onCheckOut(

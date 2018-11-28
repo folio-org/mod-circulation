@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 
@@ -70,6 +71,10 @@ public class CheckInProcessRecords {
     return checkInRequest.getItemBarcode();
   }
 
+  public UUID getCheckInServicePointId() {
+    return checkInRequest.getServicePointId();
+  }
+
   public Item getItem() {
     return item;
   }
@@ -85,4 +90,5 @@ public class CheckInProcessRecords {
   public RequestQueue getRequestQueue() {
     return requestQueue;
   }
+
 }
