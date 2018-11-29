@@ -75,7 +75,7 @@ public class UpdateItem {
       .thenApply(itemResult -> itemResult.map(loanAndRelatedRecords::withItem));
   }
 
-  public CompletableFuture<HttpResult<Item>> onLoanUpdate(
+  private CompletableFuture<HttpResult<Item>> onLoanUpdate(
     Loan loan,
     RequestQueue requestQueue) {
 
