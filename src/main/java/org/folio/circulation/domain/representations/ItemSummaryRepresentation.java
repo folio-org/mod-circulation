@@ -31,6 +31,9 @@ public class ItemSummaryRepresentation {
     //TODO: Check for null item status
     writeNamedObject(itemSummary, "status", item.getStatus().getValue());
 
+    write(itemSummary, "inTransitDestinationServicePointId",
+      item.getInTransitDestinationServicePointId());
+
     final JsonObject location = item.getLocation();
 
     if(location != null && location.containsKey("name")) {

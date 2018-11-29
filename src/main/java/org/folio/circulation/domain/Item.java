@@ -2,6 +2,7 @@ package org.folio.circulation.domain;
 
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
+import static org.folio.circulation.domain.representations.ItemProperties.IN_TRANSIT_DESTINATION_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.TEMPORARY_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.TITLE_PROPERTY;
@@ -154,8 +155,12 @@ public class Item {
     }
   }
 
-  public String getEnumeration() {
+  String getEnumeration() {
     return getProperty(getItem(), "enumeration");
+  }
+
+  public String getInTransitDestinationServicePointId() {
+    return getProperty(itemRepresentation, IN_TRANSIT_DESTINATION_SERVICE_POINT_ID);
   }
 
   public String determineLoanTypeForItem() {
@@ -185,7 +190,7 @@ public class Item {
   }
 
   private Item changeDestination(UUID destinationServicePointId) {
-    write(itemRepresentation, "inTransitDestinationServicePointId",
+    write(itemRepresentation, IN_TRANSIT_DESTINATION_SERVICE_POINT_ID,
       destinationServicePointId);
 
     return this;

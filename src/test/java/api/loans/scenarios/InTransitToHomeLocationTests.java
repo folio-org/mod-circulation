@@ -60,18 +60,18 @@ public class InTransitToHomeLocationTests extends APITests {
     assertThat("item status is not in transit",
       itemRepresentation.getJsonObject("status").getString("name"), is("In transit"));
 
-//    assertThat("in transit item should have a destination",
-//      itemRepresentation.getString("inTransitDestinationServicePointId"),
-//      is(primaryServicePoint.getId()));
+    assertThat("in transit item should have a destination",
+      itemRepresentation.getString("inTransitDestinationServicePointId"),
+      is(primaryServicePoint.getId()));
 
     JsonObject loanRepresentation = checkInResponse.getLoan();
 
     assertThat("closed loan should be present in response",
       loanRepresentation, notNullValue());
 
-//    assertThat("in transit item (in loan) should have a destination",
-//      loanRepresentation.getJsonObject("item").getString("inTransitDestinationServicePointId"),
-//      is(primaryServicePoint.getId()));
+    assertThat("in transit item (in loan) should have a destination",
+      loanRepresentation.getJsonObject("item").getString("inTransitDestinationServicePointId"),
+      is(primaryServicePoint.getId()));
 
     JsonObject updatedNod = itemsClient.getById(nod.getId()).getJson();
 
