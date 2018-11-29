@@ -39,6 +39,7 @@ import api.loans.LoanAPITests;
 import api.loans.LoanAPITitleTests;
 import api.loans.RenewByBarcodeTests;
 import api.loans.RenewByIdTests;
+import api.loans.scenarios.InTransitToHomeLocationTests;
 import api.requests.RequestsAPICreateMultipleRequestsTests;
 import api.requests.RequestsAPICreationTests;
 import api.requests.RequestsAPIDeletionTests;
@@ -90,6 +91,7 @@ import io.vertx.core.json.JsonObject;
   LoanRulesAPITests.class,
   LoanAPIProxyTests.class,
   LoanRulesEngineAPITests.class,
+  InTransitToHomeLocationTests.class,
   RequestsAPICreationTests.class,
   RequestsAPICreateMultipleRequestsTests.class,
   ClosedRequestTests.class,
