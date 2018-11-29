@@ -10,6 +10,7 @@ import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getUUIDProperty;
+import static org.folio.circulation.support.JsonPropertyWriter.remove;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.util.Objects;
@@ -181,7 +182,8 @@ public class Item {
   }
 
   Item available() {
-    return changeStatus(AVAILABLE);
+    return changeStatus(AVAILABLE)
+      .removeDestination();
   }
 
   Item inTransitToHome() {
@@ -192,6 +194,12 @@ public class Item {
   private Item changeDestination(UUID destinationServicePointId) {
     write(itemRepresentation, IN_TRANSIT_DESTINATION_SERVICE_POINT_ID,
       destinationServicePointId);
+
+    return this;
+  }
+
+  private Item removeDestination() {
+    remove(itemRepresentation, IN_TRANSIT_DESTINATION_SERVICE_POINT_ID);
 
     return this;
   }
