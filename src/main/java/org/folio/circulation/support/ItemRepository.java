@@ -29,6 +29,7 @@ public class ItemRepository {
   private final CollectionResourceClient instancesClient;
   private final LocationRepository locationRepository;
   private final MaterialTypeRepository materialTypeRepository;
+  private final ServicePointRepository servicePointRepository;
   private final boolean fetchLocation;
   private final boolean fetchMaterialType;
 
@@ -42,6 +43,7 @@ public class ItemRepository {
       clients.instancesStorage(),
       new LocationRepository(clients),
       new MaterialTypeRepository(clients),
+      new ServicePointRepository(clients),
       fetchLocation, fetchMaterialType);
   }
 
@@ -51,6 +53,7 @@ public class ItemRepository {
     CollectionResourceClient instancesClient,
     LocationRepository locationRepository,
     MaterialTypeRepository materialTypeRepository,
+    ServicePointRepository servicePointRepository,
     boolean fetchLocation,
     boolean fetchMaterialType) {
 
@@ -59,6 +62,7 @@ public class ItemRepository {
     this.instancesClient = instancesClient;
     this.locationRepository = locationRepository;
     this.materialTypeRepository = materialTypeRepository;
+    this.servicePointRepository = servicePointRepository;
     this.fetchLocation = fetchLocation;
     this.fetchMaterialType = fetchMaterialType;
   }
@@ -70,6 +74,10 @@ public class ItemRepository {
   private CompletableFuture<HttpResult<Item>> fetchLocation(HttpResult<Item> result) {
     return fetchLocation
       ? result.combineAfter(locationRepository::getLocation, Item::withLocation)
+          .thenComposeAsync(itemResult ->
+          itemResult.combineAfter(item ->
+              servicePointRepository.getServicePointById(
+                item.getPrimaryServicePointId()), Item::withPrimaryServicePoint))
       : completedFuture(result);
   }
 
