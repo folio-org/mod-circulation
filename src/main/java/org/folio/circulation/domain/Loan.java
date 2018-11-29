@@ -191,7 +191,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return user;
   }
 
-  Loan withUser(User newUser) {
+  public Loan withUser(User newUser) {
     return new Loan(representation, item, newUser, proxy, checkinServicePoint,
         checkoutServicePoint);
   }

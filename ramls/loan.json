@@ -139,6 +139,58 @@
       "description": "ID of the Service Point where the last checkin occured",
       "type": "string"
     },
+    "checkoutServicePoint": {
+      "description": "The Service Point where the last checkout occurred",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The unique name of the service point"
+        },
+        "code": {
+          "description": "The short code for the service point",
+          "type": "string"
+        },
+        "discoveryDisplayName":{
+          "description": "The human readable name",
+          "type": "string"
+        },
+        "shelvingLagTime": {
+          "description": "The time to shelving",
+          "type": "integer"
+        },
+        "pickupLocation": {
+          "description": "Is this a pickup location",
+          "type": "boolean"
+        }
+      }
+    },
+    "checkinServicePoint": {
+      "description": "The Service Point where the last checkout occurred",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The unique name of the service point"
+        },
+        "code": {
+          "description": "The short code for the service point",
+          "type": "string"
+        },
+        "discoveryDisplayName":{
+          "description": "The human readable name",
+          "type": "string"
+        },
+        "shelvingLagTime": {
+          "description": "The time to shelving",
+          "type": "integer"
+        },
+        "pickupLocation": {
+          "description": "Is this a pickup location",
+          "type": "boolean"
+        }
+      }
+    },
     "metadata": {
       "description": "Metadata about creation and changes to loan, provided by the server (client should not provide)",
       "type": "object",

@@ -21,6 +21,15 @@ import java.util.concurrent.TimeoutException;
 import static api.support.http.InterfaceUrls.loansUrl;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static api.support.http.InterfaceUrls.loansUrl;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static api.support.http.InterfaceUrls.loansUrl;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static api.support.http.InterfaceUrls.loansUrl;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class LoanAPIProxyTests extends APITests {
   @Test

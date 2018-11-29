@@ -29,6 +29,21 @@ import static api.APITestSuite.readingRoomLoanTypeId;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static api.APITestSuite.canCirculateLoanTypeId;
+import static api.APITestSuite.readingRoomLoanTypeId;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNot.not;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static api.APITestSuite.canCirculateLoanTypeId;
+import static api.APITestSuite.readingRoomLoanTypeId;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNot.not;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static api.APITestSuite.canCirculateLoanTypeId;
+import static api.APITestSuite.readingRoomLoanTypeId;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNot.not;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 
 /**

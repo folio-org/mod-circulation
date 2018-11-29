@@ -13,6 +13,12 @@ import org.folio.circulation.support.ServerErrorFailure;
 import org.junit.Test;
 
 import api.support.builders.LoanBuilder;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 
 public class NoLoanValidatorTests {
   @Test

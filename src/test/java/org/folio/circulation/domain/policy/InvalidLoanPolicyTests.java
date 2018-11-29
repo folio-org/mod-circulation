@@ -11,6 +11,9 @@ import org.junit.Test;
 
 import static api.support.matchers.FailureMatcher.hasValidationFailure;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertThat;
 
 public class InvalidLoanPolicyTests {
   @Test

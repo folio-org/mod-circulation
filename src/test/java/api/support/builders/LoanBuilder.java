@@ -26,16 +26,18 @@ public class LoanBuilder extends JsonBuilder implements Builder {
   private final DateTime dueDate;
   private final UUID proxyUserId;
   private final DateTime systemReturnDate;
-  private final String checkoutServicePointId;
-  private final String checkinServicePointId;
+  private final UUID checkoutServicePointId;
+  private final UUID checkinServicePointId;
 
   public LoanBuilder() {
     this(UUID.randomUUID(), UUID.randomUUID(), APITestSuite.userId(), new DateTime(2017, 3, 6, 16, 4, 43), null, "Open",
         null, null, "checkedout", null, null, null);
   }
 
-  private LoanBuilder(UUID id, UUID itemId, UUID userId, DateTime loanDate, DateTime dueDate, String status,
-      DateTime returnDate, DateTime systemReturnDate, String action, UUID proxyUserId, String checkoutServicePointId, String checkinServicePointId) {
+  private LoanBuilder(UUID id, UUID itemId, UUID userId, DateTime loanDate,
+      DateTime dueDate, String status, DateTime returnDate, DateTime systemReturnDate,
+      String action, UUID proxyUserId, UUID checkoutServicePointId,
+      UUID checkinServicePointId) {
 
     this.id = id;
     this.itemId = itemId;
@@ -164,26 +166,22 @@ public class LoanBuilder extends JsonBuilder implements Builder {
         this.systemReturnDate, this.action, this.proxyUserId, this.checkoutServicePointId, this.checkinServicePointId);
   }
 
-  public LoanBuilder withCheckoutServicePoint(String checkoutServicePointID) {
+  public LoanBuilder withCheckoutServicePointId(UUID checkoutServicePointID) {
     return new LoanBuilder(this.id, this.itemId, this.userId, this.loanDate, dueDate, this.status, this.returnDate,
         this.systemReturnDate, this.action, this.proxyUserId, checkoutServicePointID, this.checkinServicePointId);
   }
-  
-  public LoanBuilder withCheckinServicePoint(String checkinServicePointID) {
-    return new LoanBuilder(this.id, this.itemId, this.userId, this.loanDate, dueDate, this.status, this.returnDate,
-        this.systemReturnDate, this.action, this.proxyUserId, this.checkoutServicePointId, checkinServicePointID);
-  }
 
-  public LoanBuilder withCheckinServicePoint(UUID checkinServicePointID) {
+  public LoanBuilder withCheckinServicePointId(UUID checkinServicePointID) {
     return new LoanBuilder(this.id, this.itemId, this.userId, this.loanDate, dueDate, this.status, this.returnDate,
         this.systemReturnDate, this.action, this.proxyUserId, this.checkoutServicePointId,
-        checkinServicePointID.toString());
+        checkinServicePointID);
   }
 
   public LoanBuilder withProxyUserId(UUID proxyUserId) {
     return new LoanBuilder(this.id, this.itemId, this.userId, this.loanDate, dueDate, this.status, this.returnDate,
         this.systemReturnDate, this.action, proxyUserId, this.checkoutServicePointId, this.checkinServicePointId);
   }
+  
 
   public LoanBuilder dueIn(Period period) {
     if (this.loanDate == null) {
@@ -194,4 +192,6 @@ public class LoanBuilder extends JsonBuilder implements Builder {
 
     return withDueDate(calculatedDueDate);
   }
+
+ 
 }

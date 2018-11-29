@@ -22,6 +22,21 @@ import static api.APITestSuite.thirdFloorLocationId;
 import static api.support.JsonCollectionAssistant.getRecordById;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static api.APITestSuite.mezzanineDisplayCaseLocationId;
+import static api.APITestSuite.secondFloorEconomicsLocationId;
+import static api.APITestSuite.thirdFloorLocationId;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static api.APITestSuite.mezzanineDisplayCaseLocationId;
+import static api.APITestSuite.secondFloorEconomicsLocationId;
+import static api.APITestSuite.thirdFloorLocationId;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static api.APITestSuite.mezzanineDisplayCaseLocationId;
+import static api.APITestSuite.secondFloorEconomicsLocationId;
+import static api.APITestSuite.thirdFloorLocationId;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class LoanAPILocationTests extends APITests {
   @Test

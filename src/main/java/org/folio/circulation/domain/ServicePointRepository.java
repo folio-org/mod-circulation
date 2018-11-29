@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
@@ -31,6 +32,7 @@ public class ServicePointRepository {
   
   public CompletableFuture<HttpResult<ServicePoint>> getServicePointById(String id) {
 
+    log.info("Attempting to fetch service point with id {}", id);
     return FetchSingleRecord.<ServicePoint>forRecord(SERVICE_POINT_TYPE)
         .using(servicePointsStorageClient)
         .mapTo(ServicePoint::new)
@@ -42,39 +44,105 @@ public class ServicePointRepository {
     return getServicePointById(request.getPickupServicePointId());
   } 
   
-  public CompletableFuture<HttpResult<Loan>> findServicePointsForLoan(Loan loan) {
-    return findCheckinServicePointForLoan(loan)
-        .thenComposeAsync(loanResult -> {
-          return findCheckoutServicePointForLoan(loanResult.value());
-        });
+  public CompletableFuture<HttpResult<Loan>> findServicePointsForLoan(HttpResult<Loan> loanResult) {
+    //return CompletableFuture.completedFuture(loanResult);
+    
+    return findCheckinServicePointForLoan(loanResult)
+        .thenComposeAsync(this::findCheckoutServicePointForLoan);   
   }
   
-  public CompletableFuture<HttpResult<Loan>> findCheckinServicePointForLoan(Loan loan) {
-    String checkinServicePointId = loan.getCheckinServicePointId();
-    if(checkinServicePointId == null) {
-      return CompletableFuture.completedFuture(HttpResult.succeeded(loan));
-    }
-    return getServicePointById(checkinServicePointId)
-        .thenApply(servicePointResult -> {
-          return servicePointResult.map(servicePoint -> {
-            Loan newLoan = loan.withCheckinServicePoint(servicePoint);
-            return newLoan;
+  public CompletableFuture<HttpResult<Loan>> findCheckinServicePointForLoan(HttpResult<Loan> loanResult) {
+    return loanResult.after(loan -> {
+      String checkinServicePointId = loan.getCheckinServicePointId();
+      if(checkinServicePointId == null) {
+        return CompletableFuture.completedFuture(loanResult);
+      }
+      return getServicePointById(checkinServicePointId)
+          .thenApply(servicePointResult -> {
+            return servicePointResult.map(servicePoint -> {
+              if(servicePoint == null) {
+                log.info("No checkin servicepoint found for loan {}", loan.getId());
+              } else {
+                log.info("Checkin servicepoint with name {} found for loan {}", 
+                    servicePoint.getName(), loan.getId());
+              }
+              Loan newLoan = loan.withCheckinServicePoint(servicePoint);
+              return newLoan;
+            });
           });
-        });
+    });
   }
   
-   public CompletableFuture<HttpResult<Loan>> findCheckoutServicePointForLoan(Loan loan) {
-    String checkoutServicePointId = loan.getCheckoutServicePointId();
-    if(checkoutServicePointId == null) {
-      return CompletableFuture.completedFuture(HttpResult.succeeded(loan));
-    }
-    return getServicePointById(checkoutServicePointId)
-        .thenApply(servicePointResult -> {
-          return servicePointResult.map(servicePoint -> {
-            Loan newLoan = loan.withCheckoutServicePoint(servicePoint);
-            return newLoan;
+   public CompletableFuture<HttpResult<Loan>> findCheckoutServicePointForLoan(HttpResult<Loan> loanResult) {
+    return loanResult.after(loan -> {
+      String checkoutServicePointId = loan.getCheckoutServicePointId();
+      if(checkoutServicePointId == null) {
+        return CompletableFuture.completedFuture(loanResult);
+      }
+      return getServicePointById(checkoutServicePointId)
+          .thenApply(servicePointResult -> {
+            return servicePointResult.map(servicePoint -> {
+              if(servicePoint == null) {
+                log.info("No checkout servicepoint found for loan {}", loan.getId());
+              } else {
+                log.info("Checkout servicepoint with name {} found for loan {}", 
+                    servicePoint.getName(), loan.getId());
+              }
+              Loan newLoan = loan.withCheckoutServicePoint(servicePoint);
+              return newLoan;
+            });
           });
-        });
+      });
+  }
+   
+  public CompletableFuture<HttpResult<MultipleRecords<Loan>>> findServicePointsForLoans(
+      MultipleRecords<Loan> multipleLoans) {
+    Collection<Loan> loans = multipleLoans.getRecords();
+    
+    final List<String> servicePointsToFetch = 
+        Stream.concat((loans.stream()
+          .filter(Objects::nonNull)
+          .map(Loan::getCheckinServicePointId)
+          .filter(Objects::nonNull)
+         ),
+         (loans.stream()
+          .filter(Objects::nonNull)
+          .map(Loan::getCheckoutServicePointId)
+          .filter(Objects::nonNull)
+         )
+       )
+      .distinct()
+      .collect(Collectors.toList());
+    
+    if(servicePointsToFetch.isEmpty()) {
+      log.info("No service points to query for loans");
+      return CompletableFuture.completedFuture(HttpResult.succeeded(multipleLoans));
+    }
+    
+    String query = CqlHelper.multipleRecordsCqlQuery(servicePointsToFetch);
+    
+    return servicePointsStorageClient.getMany(query, loans.size(), 0)
+        .thenApply(this::mapResponseToServicePoints)
+        .thenApply(multipleServicePointsResult -> multipleServicePointsResult.next(
+          multipleServicePoints -> {
+            List<Loan> newLoanList = new ArrayList<>();
+            Collection<ServicePoint> spCollection = multipleServicePoints.getRecords();
+            for(Loan loan : loans) {
+              Loan newLoan = loan;
+              for(ServicePoint servicePoint : spCollection) {
+                if(loan.getCheckinServicePointId() != null &&
+                    loan.getCheckinServicePointId().equals(servicePoint.getId())) {
+                  newLoan = newLoan.withCheckinServicePoint(servicePoint);
+                }
+                if(loan.getCheckoutServicePointId() != null &&
+                    loan.getCheckoutServicePointId().equals(servicePoint.getId())) {
+                  newLoan = newLoan.withCheckoutServicePoint(servicePoint);
+                }
+              }
+              newLoanList.add(newLoan);
+            }
+            return HttpResult.succeeded(new MultipleRecords<>(newLoanList, multipleLoans.getTotalRecords()));
+          }));    
   }
   
   public CompletableFuture<HttpResult<MultipleRecords<Request>>> findServicePointsForRequests(
