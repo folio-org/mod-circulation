@@ -57,7 +57,7 @@ public class Item {
     return !Objects.equals(getStatus(), prospectiveStatus);
   }
 
-  public boolean hasChanged() {
+  boolean hasChanged() {
     return changed;
   }
 
