@@ -11,7 +11,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
-import org.hamcrest.core.Is;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
@@ -23,7 +22,7 @@ import io.vertx.core.json.JsonObject;
 
 public class InTransitToHomeLocationTests extends APITests {
   @Test
-  public void isPlacedInTransitWhenCheckedInToReturnItemAtNonPrimaryServicePointForHomeLocation()
+  public void isPlacedInTransitWhenCheckedInToReturnItemAtServicePointNotServingHomeLocation()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -56,10 +55,10 @@ public class InTransitToHomeLocationTests extends APITests {
       itemRepresentation, notNullValue());
 
     assertThat("title is included for item",
-      itemRepresentation.getString("title"), Is.is("Nod"));
+      itemRepresentation.getString("title"), is("Nod"));
 
     assertThat("barcode is included for item",
-      itemRepresentation.getString("barcode"), Is.is("565578437802"));
+      itemRepresentation.getString("barcode"), is("565578437802"));
 
     assertThat("item status is not in transit",
       itemRepresentation.getJsonObject("status").getString("name"), is("In transit"));
@@ -67,6 +66,18 @@ public class InTransitToHomeLocationTests extends APITests {
     assertThat("in transit item should have a destination",
       itemRepresentation.getString("inTransitDestinationServicePointId"),
       is(primaryServicePoint.getId()));
+
+    assertThat("in transit item should have a extended destination properties",
+      itemRepresentation.containsKey("inTransitDestinationServicePoint"), is(true));
+
+    final JsonObject destinationServicePoint =
+      itemRepresentation.getJsonObject("inTransitDestinationServicePoint");
+
+    assertThat("extended destination properties should include id",
+      destinationServicePoint.getString("id"), is(primaryServicePoint.getId()));
+
+    assertThat("extended destination properties should include name",
+      destinationServicePoint.getString("name"), is("Circ Desk 1"));
 
     JsonObject loanRepresentation = checkInResponse.getLoan();
 
@@ -137,10 +148,10 @@ public class InTransitToHomeLocationTests extends APITests {
       itemRepresentation, notNullValue());
 
     assertThat("title is included for item",
-      itemRepresentation.getString("title"), Is.is("Nod"));
+      itemRepresentation.getString("title"), is("Nod"));
 
     assertThat("barcode is included for item",
-      itemRepresentation.getString("barcode"), Is.is("565578437802"));
+      itemRepresentation.getString("barcode"), is("565578437802"));
 
     assertThat("item status is not available",
       itemRepresentation.getJsonObject("status").getString("name"), is("Available"));
@@ -215,10 +226,10 @@ public class InTransitToHomeLocationTests extends APITests {
       itemRepresentation, notNullValue());
 
     assertThat("title is included for item",
-      itemRepresentation.getString("title"), Is.is("Nod"));
+      itemRepresentation.getString("title"), is("Nod"));
 
     assertThat("barcode is included for item",
-      itemRepresentation.getString("barcode"), Is.is("565578437802"));
+      itemRepresentation.getString("barcode"), is("565578437802"));
 
     assertThat("item status is not available",
       itemRepresentation.getJsonObject("status").getString("name"), is("Available"));
@@ -284,10 +295,10 @@ public class InTransitToHomeLocationTests extends APITests {
       itemRepresentation, notNullValue());
 
     assertThat("title is included for item",
-      itemRepresentation.getString("title"), Is.is("Nod"));
+      itemRepresentation.getString("title"), is("Nod"));
 
     assertThat("barcode is included for item",
-      itemRepresentation.getString("barcode"), Is.is("565578437802"));
+      itemRepresentation.getString("barcode"), is("565578437802"));
 
     assertThat("item status is not available",
       itemRepresentation.getJsonObject("status").getString("name"), is("Available"));
@@ -359,10 +370,10 @@ public class InTransitToHomeLocationTests extends APITests {
       itemRepresentation, notNullValue());
 
     assertThat("title is included for item",
-      itemRepresentation.getString("title"), Is.is("Nod"));
+      itemRepresentation.getString("title"), is("Nod"));
 
     assertThat("barcode is included for item",
-      itemRepresentation.getString("barcode"), Is.is("565578437802"));
+      itemRepresentation.getString("barcode"), is("565578437802"));
 
     assertThat("item status is not available",
       itemRepresentation.getJsonObject("status").getString("name"), is("Available"));
@@ -441,10 +452,10 @@ public class InTransitToHomeLocationTests extends APITests {
       itemRepresentation, notNullValue());
 
     assertThat("title is included for item",
-      itemRepresentation.getString("title"), Is.is("Nod"));
+      itemRepresentation.getString("title"), is("Nod"));
 
     assertThat("barcode is included for item",
-      itemRepresentation.getString("barcode"), Is.is("565578437802"));
+      itemRepresentation.getString("barcode"), is("565578437802"));
 
     assertThat("item status is not in transit",
       itemRepresentation.getJsonObject("status").getString("name"), is("In transit"));
@@ -452,6 +463,18 @@ public class InTransitToHomeLocationTests extends APITests {
     assertThat("in transit item should have a destination",
       itemRepresentation.getString("inTransitDestinationServicePointId"),
       is(primaryServicePoint.getId()));
+
+    assertThat("in transit item should have a extended destination properties",
+      itemRepresentation.containsKey("inTransitDestinationServicePoint"), is(true));
+
+    final JsonObject destinationServicePoint =
+      itemRepresentation.getJsonObject("inTransitDestinationServicePoint");
+
+    assertThat("extended destination properties should include id",
+      destinationServicePoint.getString("id"), is(primaryServicePoint.getId()));
+
+    assertThat("extended destination properties should include name",
+      destinationServicePoint.getString("name"), is("Circ Desk 1"));
 
     JsonObject loanRepresentation = checkInResponse.getLoan();
 
@@ -517,10 +540,10 @@ public class InTransitToHomeLocationTests extends APITests {
       itemRepresentation, notNullValue());
 
     assertThat("title is included for item",
-      itemRepresentation.getString("title"), Is.is("Nod"));
+      itemRepresentation.getString("title"), is("Nod"));
 
     assertThat("barcode is included for item",
-      itemRepresentation.getString("barcode"), Is.is("565578437802"));
+      itemRepresentation.getString("barcode"), is("565578437802"));
 
     assertThat("item status is not awaiting pickup",
       itemRepresentation.getJsonObject("status").getString("name"), is("Awaiting pickup"));

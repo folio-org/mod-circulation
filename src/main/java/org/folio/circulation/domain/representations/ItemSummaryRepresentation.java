@@ -6,6 +6,7 @@ import static org.folio.circulation.support.JsonPropertyWriter.writeNamedObject;
 import java.lang.invoke.MethodHandles;
 
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.ServicePoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +34,22 @@ public class ItemSummaryRepresentation {
 
     write(itemSummary, "inTransitDestinationServicePointId",
       item.getInTransitDestinationServicePointId());
+
+    final ServicePoint inTransitDestinationServicePoint
+      = item.getInTransitDestinationServicePoint();
+
+    if(inTransitDestinationServicePoint != null) {
+      final JsonObject destinationServicePointSummary = new JsonObject();
+
+      write(destinationServicePointSummary, "id",
+        inTransitDestinationServicePoint.getId());
+
+      write(destinationServicePointSummary, "name",
+        inTransitDestinationServicePoint.getName());
+
+      write(itemSummary, "inTransitDestinationServicePoint",
+        destinationServicePointSummary);
+    }
 
     final JsonObject location = item.getLocation();
 
