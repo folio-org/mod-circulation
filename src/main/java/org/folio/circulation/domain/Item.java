@@ -1,17 +1,19 @@
 package org.folio.circulation.domain;
 
+import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
+import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
 import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.TEMPORARY_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.TITLE_PROPERTY;
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getUUIDProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.util.Objects;
 import java.util.UUID;
 
-import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.representations.ItemProperties;
 
 import io.vertx.core.json.JsonArray;
@@ -113,10 +115,13 @@ public class Item {
   }
 
   boolean matchesPrimaryServicePoint(UUID servicePointId) {
-    final String primaryServicePoint = getLocation()
-      .getString("primaryServicePoint");
+    final UUID primaryServicePointId = getPrimaryServicePointId();
 
-    return StringUtils.equals(primaryServicePoint, servicePointId.toString());
+    return Objects.equals(primaryServicePointId, servicePointId);
+  }
+
+  private UUID getPrimaryServicePointId() {
+    return getUUIDProperty(getLocation(), "primaryServicePoint");
   }
 
   public JsonObject getMaterialType() {
@@ -166,6 +171,22 @@ public class Item {
       new JsonObject().put("name", newStatus.getValue()));
 
     changed = true;
+
+    return this;
+  }
+
+  Item available() {
+    return changeStatus(AVAILABLE);
+  }
+
+  Item inTransitToHome() {
+    return changeStatus(IN_TRANSIT)
+      .changeDestination(getPrimaryServicePointId());
+  }
+
+  private Item changeDestination(UUID destinationServicePointId) {
+    write(itemRepresentation, "inTransitDestinationServicePointId",
+      destinationServicePointId);
 
     return this;
   }

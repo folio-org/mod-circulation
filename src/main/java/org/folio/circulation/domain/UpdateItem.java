@@ -1,8 +1,6 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
-import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.of;
 import static org.folio.circulation.support.HttpResult.succeeded;
@@ -49,10 +47,10 @@ public class UpdateItem {
         .checkedInItemStatus());
     } else {
       if(item.matchesPrimaryServicePoint(checkInServicePointId)) {
-        return item.changeStatus(AVAILABLE);
+        return item.available();
       }
       else {
-        return item.changeStatus(IN_TRANSIT);
+        return item.inTransitToHome();
       }
     }
   }

@@ -46,11 +46,6 @@ public class InTransitToHomeLocationTests extends APITests {
         .forItem(nod)
         .at(otherServicePoint.getId()));
 
-    JsonObject loanRepresentation = checkInResponse.getLoan();
-
-    assertThat("closed loan should be present in response",
-      loanRepresentation, notNullValue());
-
     JsonObject itemRepresentation = checkInResponse.getItem();
 
     assertThat("item should be present in response",
@@ -65,14 +60,27 @@ public class InTransitToHomeLocationTests extends APITests {
     assertThat("item status is not in transit",
       itemRepresentation.getJsonObject("status").getString("name"), is("In transit"));
 
+//    assertThat("in transit item should have a destination",
+//      itemRepresentation.getString("inTransitDestinationServicePointId"),
+//      is(primaryServicePoint.getId()));
+
+    JsonObject loanRepresentation = checkInResponse.getLoan();
+
+    assertThat("closed loan should be present in response",
+      loanRepresentation, notNullValue());
+
+//    assertThat("in transit item (in loan) should have a destination",
+//      loanRepresentation.getJsonObject("item").getString("inTransitDestinationServicePointId"),
+//      is(primaryServicePoint.getId()));
+
     JsonObject updatedNod = itemsClient.getById(nod.getId()).getJson();
 
     assertThat("stored item status is not in transit",
       updatedNod.getJsonObject("status").getString("name"), is("In transit"));
 
-//    assertThat("in transit item should have a destination",
-//      updatedNod.getString("inTransitDestinationServicePointId"),
-//      is(primaryServicePoint.getId()));
+    assertThat("in transit item in storage should have a destination",
+      updatedNod.getString("inTransitDestinationServicePointId"),
+      is(primaryServicePoint.getId()));
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
