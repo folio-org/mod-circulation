@@ -118,6 +118,16 @@ public class Item {
   }
 
   boolean homeLocationIsServedBy(UUID servicePointId) {
+    //Defensive check just in case primary isn't part of serving set
+    return matchesPrimaryServicePoint(servicePointId) ||
+      matchesAnyServingServicePoint(servicePointId);
+  }
+
+  private boolean matchesPrimaryServicePoint(UUID servicePointId) {
+    return matchingId(getPrimaryServicePointId(), servicePointId);
+  }
+
+  private boolean matchesAnyServingServicePoint(UUID servicePointId) {
     return toStream(locationRepresentation, "servicePointIds")
       .map(UUID::fromString)
       .anyMatch(servingServicePointId ->
