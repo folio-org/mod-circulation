@@ -12,6 +12,8 @@ import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.hamcrest.core.Is;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -475,6 +477,86 @@ public class InTransitToHomeLocationTests extends APITests {
 
     assertThat("Checkin Service Point Id should be stored",
       storedLoan.getString("checkinServicePointId"), is(firstOtherServicePoint.getId()));
+  }
+
+  @Test
+  public void isNotPlacedInTransitWhenItemHasOpenFulfillableRequest()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final IndividualResource primaryServicePoint = servicePointsFixture.cd1();
+
+    final IndividualResource homeLocation =
+      locationsFixture.basedUponExampleLocation(builder -> builder
+        .servedBy(primaryServicePoint.getId())
+        .withPrimaryServicePoint(primaryServicePoint.getId()));
+
+    final IndividualResource james = usersFixture.james();
+    IndividualResource jessica = usersFixture.jessica();
+
+    final IndividualResource nod = itemsFixture.basedUponNod(builder ->
+      builder.withTemporaryLocation(homeLocation.getId()));
+
+    final IndividualResource otherServicePoint = servicePointsFixture.cd2();
+
+    final IndividualResource loan = loansFixture.checkOut(nod, james);
+
+    requestsFixture.placeHoldShelfRequest(
+      nod, jessica, DateTime.now(DateTimeZone.UTC));
+
+    final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(nod)
+        .at(otherServicePoint.getId()));
+
+    JsonObject itemRepresentation = checkInResponse.getItem();
+
+    assertThat("item should be present in response",
+      itemRepresentation, notNullValue());
+
+    assertThat("title is included for item",
+      itemRepresentation.getString("title"), Is.is("Nod"));
+
+    assertThat("barcode is included for item",
+      itemRepresentation.getString("barcode"), Is.is("565578437802"));
+
+    assertThat("item status is not awaiting pickup",
+      itemRepresentation.getJsonObject("status").getString("name"), is("Awaiting pickup"));
+
+    assertThat("in transit item should not have a destination",
+      itemRepresentation.containsKey("inTransitDestinationServicePointId"),
+      is(false));
+
+    JsonObject loanRepresentation = checkInResponse.getLoan();
+
+    assertThat("closed loan should be present in response",
+      loanRepresentation, notNullValue());
+
+    assertThat("in transit item (in loan) should not have a destination",
+      loanRepresentation.getJsonObject("item").containsKey("inTransitDestinationServicePointId"),
+      is(false));
+
+    JsonObject updatedNod = itemsClient.getById(nod.getId()).getJson();
+
+    assertThat("stored item status is not awaiting pickup",
+      updatedNod.getJsonObject("status").getString("name"), is("Awaiting pickup"));
+
+    assertThat("in transit item in storage should not have a destination",
+      updatedNod.containsKey("inTransitDestinationServicePointId"),
+      is(false));
+
+    final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
+
+    assertThat("stored loan status is not closed",
+      storedLoan.getJsonObject("status").getString("name"), is("Closed"));
+
+    assertThat("item status snapshot in storage is not awaiting pickup",
+      storedLoan.getString("itemStatus"), is("Awaiting pickup"));
+
+    assertThat("Checkin Service Point Id should be stored",
+      storedLoan.getString("checkinServicePointId"), is(otherServicePoint.getId()));
   }
 }
 
