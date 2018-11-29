@@ -1,8 +1,5 @@
 package org.folio.circulation.support;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -11,6 +8,10 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+
+//TODO: Rename to JsonObjectArrayHelper or consolidate with string version
 public class JsonArrayHelper {
   private JsonArrayHelper() { }
 

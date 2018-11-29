@@ -30,8 +30,9 @@ public class InTransitToHomeLocationTests extends APITests {
     final IndividualResource primaryServicePoint = servicePointsFixture.cd1();
 
     final IndividualResource homeLocation =
-      locationsFixture.basedUponExampleLocation(builder ->
-        builder.withPrimaryServicePoint(primaryServicePoint.getId()));
+      locationsFixture.basedUponExampleLocation(builder -> builder
+        .servedBy(primaryServicePoint.getId())
+        .withPrimaryServicePoint(primaryServicePoint.getId()));
 
     final IndividualResource james = usersFixture.james();
 
@@ -105,8 +106,9 @@ public class InTransitToHomeLocationTests extends APITests {
     final IndividualResource primaryServicePoint = servicePointsFixture.cd1();
 
     final IndividualResource homeLocation =
-      locationsFixture.basedUponExampleLocation(builder ->
-        builder.withPrimaryServicePoint(primaryServicePoint.getId()));
+      locationsFixture.basedUponExampleLocation(builder -> builder
+        .servedBy(primaryServicePoint.getId())
+        .withPrimaryServicePoint(primaryServicePoint.getId()));
 
     final IndividualResource james = usersFixture.james();
 
@@ -126,6 +128,84 @@ public class InTransitToHomeLocationTests extends APITests {
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .at(primaryServicePoint.getId()));
+
+    JsonObject itemRepresentation = checkInResponse.getItem();
+
+    assertThat("item should be present in response",
+      itemRepresentation, notNullValue());
+
+    assertThat("title is included for item",
+      itemRepresentation.getString("title"), Is.is("Nod"));
+
+    assertThat("barcode is included for item",
+      itemRepresentation.getString("barcode"), Is.is("565578437802"));
+
+    assertThat("item status is not available",
+      itemRepresentation.getJsonObject("status").getString("name"), is("Available"));
+
+    assertThat("available item should not have a destination",
+      itemRepresentation.containsKey("inTransitDestinationServicePointId"),
+      is(false));
+
+    JsonObject loanRepresentation = checkInResponse.getLoan();
+
+    assertThat("closed loan should not be present in response",
+      loanRepresentation, nullValue());
+
+    JsonObject updatedNod = itemsClient.getById(nod.getId()).getJson();
+
+    assertThat("stored item status is not available",
+      updatedNod.getJsonObject("status").getString("name"), is("Available"));
+
+    assertThat("available item in storage should not have a destination",
+      updatedNod.containsKey("inTransitDestinationServicePointId"), is(false));
+
+    final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
+
+    assertThat("stored loan status is not closed",
+      storedLoan.getJsonObject("status").getString("name"), is("Closed"));
+
+    assertThat("item status snapshot in storage should not change",
+      storedLoan.getString("itemStatus"), is("In transit"));
+
+    assertThat("Checkin Service Point Id should not change",
+      storedLoan.getString("checkinServicePointId"), is(otherServicePoint.getId()));
+  }
+
+  @Test
+  public void isAvailableWhenCheckedInToNonPrimaryServicePointForHomeLocation()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final IndividualResource primaryServicePoint = servicePointsFixture.cd1();
+    final IndividualResource otherServingServicePoint = servicePointsFixture.cd2();
+
+    final IndividualResource homeLocation =
+      locationsFixture.basedUponExampleLocation(builder -> builder
+        .servedBy(primaryServicePoint.getId())
+        .servedBy(otherServingServicePoint.getId())
+        .withPrimaryServicePoint(primaryServicePoint.getId()));
+
+    final IndividualResource james = usersFixture.james();
+
+    final IndividualResource nod = itemsFixture.basedUponNod(builder ->
+      builder.withTemporaryLocation(homeLocation.getId()));
+
+    final IndividualResource otherServicePoint = servicePointsFixture.cd3();
+
+    final IndividualResource loan = loansFixture.checkOut(nod, james);
+
+    loansFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(nod)
+        .at(otherServicePoint.getId()));
+
+    final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(nod)
+        .at(otherServingServicePoint.getId()));
 
     JsonObject itemRepresentation = checkInResponse.getItem();
 

@@ -46,7 +46,7 @@ public class UpdateItem {
       return item.changeStatus(requestQueue.getHighestPriorityFulfillableRequest()
         .checkedInItemStatus());
     } else {
-      if(item.matchesPrimaryServicePoint(checkInServicePointId)) {
+      if(item.homeLocationIsServedBy(checkInServicePointId)) {
         return item.available();
       }
       else {

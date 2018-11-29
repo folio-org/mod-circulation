@@ -12,6 +12,7 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getUUIDProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.remove;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.JsonStringArrayHelper.toStream;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -116,10 +117,15 @@ public class Item {
     return locationRepresentation;
   }
 
-  boolean matchesPrimaryServicePoint(UUID servicePointId) {
-    final UUID primaryServicePointId = getPrimaryServicePointId();
+  boolean homeLocationIsServedBy(UUID servicePointId) {
+    return toStream(locationRepresentation, "servicePointIds")
+      .map(UUID::fromString)
+      .anyMatch(servingServicePointId ->
+        matchingId(servicePointId, servingServicePointId));
+  }
 
-    return Objects.equals(primaryServicePointId, servicePointId);
+  private boolean matchingId(UUID first, UUID second) {
+    return Objects.equals(second, first);
   }
 
   private UUID getPrimaryServicePointId() {

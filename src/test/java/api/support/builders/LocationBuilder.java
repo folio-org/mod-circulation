@@ -127,10 +127,10 @@ public class LocationBuilder extends JsonBuilder implements Builder {
       this.libraryId,
       primaryServicePointId,
       this.servingServicePointIds)
-      .addServingServicePoint(primaryServicePointId);
+      .servedBy(primaryServicePointId);
   }
 
-  private LocationBuilder addServingServicePoint(UUID servicePointId) {
+  public LocationBuilder servedBy(UUID servicePointId) {
     final HashSet<UUID> updatedServingServicePoints
       = new HashSet<>(servingServicePointIds);
 
