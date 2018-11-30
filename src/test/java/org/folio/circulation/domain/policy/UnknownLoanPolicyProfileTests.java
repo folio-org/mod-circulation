@@ -1,15 +1,16 @@
 package org.folio.circulation.domain.policy;
 
-import api.support.builders.LoanBuilder;
-import api.support.builders.LoanPolicyBuilder;
+import static api.support.matchers.FailureMatcher.hasValidationFailure;
+import static org.junit.Assert.assertThat;
+
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
-import static api.support.matchers.FailureMatcher.hasValidationFailure;
-import static org.junit.Assert.assertThat;
+import api.support.builders.LoanBuilder;
+import api.support.builders.LoanPolicyBuilder;
 
 public class UnknownLoanPolicyProfileTests {
   @Test

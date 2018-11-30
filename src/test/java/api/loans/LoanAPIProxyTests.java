@@ -1,14 +1,8 @@
 package api.loans;
 
-import io.vertx.core.json.JsonObject;
-import api.support.APITests;
-import api.support.builders.LoanBuilder;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.junit.Test;
+import static api.support.http.InterfaceUrls.loansUrl;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -18,9 +12,16 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static api.support.http.InterfaceUrls.loansUrl;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.junit.Test;
+
+import api.support.APITests;
+import api.support.builders.LoanBuilder;
+import io.vertx.core.json.JsonObject;
 
 public class LoanAPIProxyTests extends APITests {
   @Test

@@ -1,19 +1,30 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.JsonPropertyWriter.writeNamedObject;
 
 import java.lang.invoke.MethodHandles;
 
-import static org.folio.circulation.support.JsonPropertyWriter.write;
-import static org.folio.circulation.support.JsonPropertyWriter.writeNamedObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.vertx.core.json.JsonObject;
 
 public class LoanRepresentation {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   public JsonObject extendedLoan(Loan loan) {
-    return extendedLoan(loan.asJson(), loan.getItem());
+    JsonObject extendedRepresentation = extendedLoan(loan.asJson(), loan.getItem());
+    
+    if(loan.getCheckinServicePoint() != null) {
+      addAdditionalServicePointProperties(extendedRepresentation, loan.getCheckinServicePoint(), "checkinServicePoint");
+    }
+    
+    if(loan.getCheckoutServicePoint() != null) {
+      addAdditionalServicePointProperties(extendedRepresentation, loan.getCheckoutServicePoint(), "checkoutServicePoint");
+    }
+    
+    return extendedRepresentation;
   }
 
   private JsonObject createItemSummary(Item item) {
@@ -69,5 +80,25 @@ public class LoanRepresentation {
     }
 
     return loan;
+  }
+  
+  private static void addAdditionalServicePointProperties(JsonObject loanRepresentation, ServicePoint servicePoint, String fieldName) {
+    if(servicePoint == null) {
+      log.info("Unable to add servicepoint properties to loan {},"
+          + " servicepoint is null", loanRepresentation.getString("id"));
+      return;
+    }
+
+    JsonObject spSummary = loanRepresentation.containsKey(fieldName)
+        ? loanRepresentation.getJsonObject(fieldName)
+        : new JsonObject();
+    spSummary.put("name", servicePoint.getName());
+    spSummary.put("code", servicePoint.getCode());
+    spSummary.put("discoveryDisplayName", servicePoint.getDiscoveryDisplayName());
+    spSummary.put("description", servicePoint.getDescription());
+    spSummary.put("shelvingLagTime", servicePoint.getShelvingLagTime());
+    spSummary.put("pickupLocation", servicePoint.getPickupLocation());    
+    
+    loanRepresentation.put(fieldName, spSummary);
   }
 }

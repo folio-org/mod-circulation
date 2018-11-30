@@ -41,6 +41,7 @@ import api.support.APITests;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.builders.UserBuilder;
+import api.support.http.InterfaceUrls;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -390,7 +391,7 @@ public class LoanAPITests extends APITests {
     client.put(loansUrl(String.format("/%s", loanId)), new LoanBuilder()
         .withId(loanId)
         .withItemId(itemId)
-        .withCheckinServicePoint(UUID.randomUUID())
+        .withCheckinServicePointId(UUID.randomUUID())
         .closed()
         .withNoUserId()
         .create(),
@@ -964,7 +965,7 @@ public class LoanAPITests extends APITests {
       .open()
       .withUserId(jessica.getId())
       .withItemId(itemId)
-      .withCheckinServicePoint(UUID.randomUUID()));
+      .withCheckinServicePointId(UUID.randomUUID()));
 
     JsonObject updatedLoanRequest = loan.copyJson();
 
@@ -1388,14 +1389,14 @@ public class LoanAPITests extends APITests {
 
     loansClient.createAtSpecificLocation(new LoanBuilder()
       .withItemId(smallAngryPlanetId)
-      .withCheckinServicePoint(UUID.randomUUID())
+      .withCheckinServicePointId(UUID.randomUUID())
       .closed()
       .withNoUserId());
 
     loansClient.createAtSpecificLocation(new LoanBuilder()
       .withItemId(nodId)
       .closed()
-      .withCheckinServicePoint(UUID.randomUUID())
+      .withCheckinServicePointId(UUID.randomUUID())
       .withNoUserId());
 
     final List<JsonObject> multipleLoans = loansClient.getAll();
@@ -1436,6 +1437,112 @@ public class LoanAPITests extends APITests {
     Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
 
     assertThat(getResponse.getStatusCode(), is(HttpURLConnection.HTTP_NOT_FOUND));
+  }
+  
+  @Test
+  public void canCreateALoanWithServicePoints()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+    
+    UUID loanId = UUID.randomUUID();
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    UUID userId = usersClient.create(new UserBuilder()).getId();
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+    UUID checkinServicePointId = servicePointsFixture.cd1().getId();
+    UUID checkoutServicePointId = servicePointsFixture.cd2().getId();
+    servicePointsToDelete.add(checkinServicePointId);
+    servicePointsToDelete.add(checkoutServicePointId);
+
+    loansClient.create(new LoanBuilder()
+      .withId(loanId)
+      .open()
+      .withUserId(userId)
+      .withItemId(itemId)
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate)
+      .withCheckinServicePointId(checkinServicePointId)
+      .withCheckoutServicePointId(checkoutServicePointId));
+
+    JsonObject loanJson = loansClient.getById(loanId).getJson();
+    
+    assertThat("loan has checkin service point id", loanJson.containsKey("checkinServicePointId"), is(true));
+    assertThat("loan has checkout service point id", loanJson.containsKey("checkoutServicePointId"), is(true));
+    assertThat("loan has checkin service point", loanJson.containsKey("checkinServicePoint"), is(true));
+    assertThat("loan has checkout service point", loanJson.containsKey("checkoutServicePoint"), is(true));
+  }
+
+  @Test
+  public void canCreateMultipleLoansWithServicePoints()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+    
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+    UUID checkinServicePointId = servicePointsFixture.cd1().getId();
+    UUID checkoutServicePointId = servicePointsFixture.cd2().getId();
+    servicePointsToDelete.add(checkinServicePointId);
+    servicePointsToDelete.add(checkoutServicePointId);
+    UUID userId = usersClient.create(new UserBuilder()).getId();
+    
+    UUID loan1Id = UUID.randomUUID();
+    UUID item1Id = itemsFixture.basedUponDunkirk().getId();
+    
+    UUID loan2Id = UUID.randomUUID();
+    UUID item2Id = itemsFixture.basedUponSmallAngryPlanet().getId();
+    
+    UUID loan3Id = UUID.randomUUID();
+    UUID item3Id = itemsFixture.basedUponUprooted().getId();
+    
+    loansClient.create(new LoanBuilder()
+      .withId(loan1Id)
+      .open()
+      .withUserId(userId)
+      .withItemId(item1Id)
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate)
+      .withCheckinServicePointId(checkinServicePointId)
+      .withCheckoutServicePointId(checkoutServicePointId));
+    
+    loansClient.create(new LoanBuilder()
+      .withId(loan2Id)
+      .open()
+      .withUserId(userId)
+      .withItemId(item2Id)
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate)
+      .withCheckinServicePointId(checkinServicePointId)
+      .withCheckoutServicePointId(checkoutServicePointId));
+    
+    loansClient.create(new LoanBuilder()
+      .withId(loan3Id)
+      .open()
+      .withUserId(userId)
+      .withItemId(item3Id)
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate)
+      .withCheckinServicePointId(checkinServicePointId)
+      .withCheckoutServicePointId(checkoutServicePointId));
+    
+    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
+
+    client.get(InterfaceUrls.loansUrl(), ResponseHandler.any(getCompleted));
+    
+    Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
+    
+    assertThat(String.format("Failed to get list of requests: %s",
+      getResponse.getBody()),
+      getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));    
+    
+    List<JsonObject> loanList = getLoans(getResponse.getJson());
+    
+    loanList.forEach(this::loanHasCheckinServicePointProperties);
+    loanList.forEach(this::loanHasCheckoutServicePointProperties);
+    
   }
 
   private void loanHasExpectedProperties(JsonObject loan) {
@@ -1480,6 +1587,24 @@ public class LoanAPITests extends APITests {
     assertThat(String.format("%s should have an %s: %s",
       type, property, resource),
       resource.containsKey(property), is(true));
+  }
+  
+  private void loanHasCheckinServicePointProperties(JsonObject loanJson) {
+    hasProperty("checkinServicePointId", loanJson, "loan");
+    hasProperty("checkinServicePoint", loanJson, "loan");
+    hasProperty("name", loanJson.getJsonObject("checkinServicePoint"),
+        "checkinServicePoint");
+    hasProperty("code", loanJson.getJsonObject("checkinServicePoint"),
+        "checkinServicePoint");
+  }
+  
+  private void loanHasCheckoutServicePointProperties(JsonObject loanJson) {
+    hasProperty("checkoutServicePointId", loanJson, "loan");
+    hasProperty("checkoutServicePoint", loanJson, "loan");
+    hasProperty("name", loanJson.getJsonObject("checkoutServicePoint"),
+        "checkoutServicePoint");
+    hasProperty("code", loanJson.getJsonObject("checkinServicePoint"),
+        "checkoutServicePoint");
   }
 
   private Integer countOfDistinctTitles(List<JsonObject> loans) {
