@@ -22,15 +22,6 @@ import api.support.builders.LoanBuilder;
 import api.support.fixtures.InstanceExamples;
 import api.support.fixtures.ItemExamples;
 import io.vertx.core.json.JsonObject;
-import static api.APITestSuite.thirdFloorLocationId;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
-import static api.APITestSuite.thirdFloorLocationId;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
-import static api.APITestSuite.thirdFloorLocationId;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class LoanAPITitleTests extends APITests {
 

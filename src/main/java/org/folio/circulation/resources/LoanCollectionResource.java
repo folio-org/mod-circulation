@@ -11,6 +11,7 @@ import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestQueueRepository;
+import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.User;
@@ -31,38 +32,6 @@ import org.folio.circulation.support.http.server.WebContext;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
-import org.folio.circulation.domain.ServicePointRepository;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 public class LoanCollectionResource extends CollectionResource {
   public LoanCollectionResource(HttpClient client) {
@@ -138,7 +107,6 @@ public class LoanCollectionResource extends CollectionResource {
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
-   
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> failure("proxyUserId is not valid", "proxyUserId",
@@ -201,12 +169,9 @@ public class LoanCollectionResource extends CollectionResource {
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
     loanRepository.findBy(routingContext.request().query())
-      .thenCompose(multiLoanRecordsResult -> {
-        return multiLoanRecordsResult.after( multipleLoans -> {
-        return servicePointRepository.findServicePointsForLoans(multipleLoans);
-            }
-         );
-            })
+      .thenCompose(multiLoanRecordsResult ->
+        multiLoanRecordsResult.after(multipleLoans ->
+          servicePointRepository.findServicePointsForLoans(multipleLoans)))
       .thenApply(multipleLoanRecordsResult -> multipleLoanRecordsResult.map(loans ->
         loans.asJson(loanRepresentation::extendedLoan, "loans")))
       .thenApply(OkJsonHttpResult::from)

@@ -35,9 +35,9 @@ public class LoanBuilder extends JsonBuilder implements Builder {
   }
 
   private LoanBuilder(UUID id, UUID itemId, UUID userId, DateTime loanDate,
-      DateTime dueDate, String status, DateTime returnDate, DateTime systemReturnDate,
-      String action, UUID proxyUserId, UUID checkoutServicePointId,
-      UUID checkinServicePointId) {
+    DateTime dueDate, String status, DateTime returnDate, DateTime systemReturnDate,
+    String action, UUID proxyUserId, UUID checkoutServicePointId,
+    UUID checkinServicePointId) {
 
     this.id = id;
     this.itemId = itemId;
@@ -181,7 +181,6 @@ public class LoanBuilder extends JsonBuilder implements Builder {
     return new LoanBuilder(this.id, this.itemId, this.userId, this.loanDate, dueDate, this.status, this.returnDate,
         this.systemReturnDate, this.action, proxyUserId, this.checkoutServicePointId, this.checkinServicePointId);
   }
-  
 
   public LoanBuilder dueIn(Period period) {
     if (this.loanDate == null) {
@@ -192,6 +191,4 @@ public class LoanBuilder extends JsonBuilder implements Builder {
 
     return withDueDate(calculatedDueDate);
   }
-
- 
 }

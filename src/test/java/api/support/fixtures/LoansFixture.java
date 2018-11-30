@@ -34,21 +34,6 @@ import api.support.builders.RenewByBarcodeRequestBuilder;
 import api.support.builders.RenewByIdRequestBuilder;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
-import static api.support.RestAssuredClient.post;
-import static api.support.http.InterfaceUrls.loansUrl;
-import static org.folio.circulation.support.JsonPropertyWriter.write;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
-import static api.support.RestAssuredClient.post;
-import static api.support.http.InterfaceUrls.loansUrl;
-import static org.folio.circulation.support.JsonPropertyWriter.write;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
-import static api.support.RestAssuredClient.post;
-import static api.support.http.InterfaceUrls.loansUrl;
-import static org.folio.circulation.support.JsonPropertyWriter.write;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class LoansFixture {
   private final ResourceClient loansClient;

@@ -1,9 +1,11 @@
 package org.folio.circulation.domain.policy;
 
-import api.support.builders.*;
-import io.vertx.core.json.JsonObject;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
+import static api.support.matchers.FailureMatcher.hasValidationFailure;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+
+import java.util.UUID;
+
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
 import org.joda.time.DateTime;
@@ -11,17 +13,13 @@ import org.joda.time.DateTimeZone;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.UUID;
-
-import static api.support.matchers.FailureMatcher.hasValidationFailure;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import api.support.builders.FixedDueDateSchedule;
+import api.support.builders.FixedDueDateSchedulesBuilder;
+import api.support.builders.LoanBuilder;
+import api.support.builders.LoanPolicyBuilder;
+import io.vertx.core.json.JsonObject;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 
 @RunWith(JUnitParamsRunner.class)
 public class RollingLoanPolicyCheckOutDueDateCalculationTests {

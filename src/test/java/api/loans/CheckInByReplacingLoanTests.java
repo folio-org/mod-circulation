@@ -25,15 +25,6 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.builders.LoanBuilder;
 import io.vertx.core.json.JsonObject;
-import static api.support.http.InterfaceUrls.loansUrl;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
-import static api.support.http.InterfaceUrls.loansUrl;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
-import static api.support.http.InterfaceUrls.loansUrl;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class CheckInByReplacingLoanTests extends APITests {
   @Test

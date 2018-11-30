@@ -1,11 +1,19 @@
 package api.loans;
 
-import io.vertx.core.json.JsonObject;
-import api.APITestSuite;
-import api.support.APITests;
-import api.support.builders.LoanBuilder;
-import api.support.http.InterfaceUrls;
-import api.support.http.ResourceClient;
+import static api.APITestSuite.canCirculateLoanTypeId;
+import static api.APITestSuite.readingRoomLoanTypeId;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNot.not;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+
+import java.lang.invoke.MethodHandles;
+import java.net.MalformedURLException;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
@@ -16,40 +24,13 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.invoke.MethodHandles;
-import java.net.MalformedURLException;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import api.APITestSuite;
+import api.support.APITests;
+import api.support.builders.LoanBuilder;
+import api.support.http.InterfaceUrls;
+import api.support.http.ResourceClient;
+import io.vertx.core.json.JsonObject;
 
-import static api.APITestSuite.canCirculateLoanTypeId;
-import static api.APITestSuite.readingRoomLoanTypeId;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsNot.not;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
-import static api.APITestSuite.canCirculateLoanTypeId;
-import static api.APITestSuite.readingRoomLoanTypeId;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsNot.not;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
-import static api.APITestSuite.canCirculateLoanTypeId;
-import static api.APITestSuite.readingRoomLoanTypeId;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsNot.not;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
-import static api.APITestSuite.canCirculateLoanTypeId;
-import static api.APITestSuite.readingRoomLoanTypeId;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsNot.not;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
-
-
-/**
- *
- * @author kurt
- */
 public class LoanAPIPolicyTests extends APITests {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
