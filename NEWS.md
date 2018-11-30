@@ -1,3 +1,13 @@
+## 14.0.0 2018-11-30
+
+* Provides support for basic in transit to home process during check in (CIRC-146)
+* Includes extended check in and check out point properties in loans (CIRC-150)
+* Includes extended destination service point properties in items when checking in (CIRC-146)
+* Using PUT to a loan for check in is no longer supported (CIRC-146)
+* Provides `circulation` interface version 5.2 (CIRC-146, CIRC-150)
+* Requires only `item-storage` interface version `6.1` or `7.0` (CIRC-146)
+* Requires only `location` interface version `3.0` (CIRC-146) 
+
 ## 13.1.0 2018-11-28
 
 * Initial check in by barcode API for checking in an item at a service point (CIRC-154)
