@@ -81,7 +81,6 @@ public class LoanCollectionResource extends CollectionResource {
     final ItemRepository itemRepository = new ItemRepository(clients, true, true);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final UserRepository userRepository = new UserRepository(clients);
-    final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
 
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
     final UpdateItem updateItem = new UpdateItem(clients);

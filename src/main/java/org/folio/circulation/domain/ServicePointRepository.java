@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -44,9 +43,7 @@ public class ServicePointRepository {
     return getServicePointById(request.getPickupServicePointId());
   } 
   
-  public CompletableFuture<HttpResult<Loan>> findServicePointsForLoan(HttpResult<Loan> loanResult) {
-    //return CompletableFuture.completedFuture(loanResult);
-    
+  public CompletableFuture<HttpResult<Loan>> findServicePointsForLoan(HttpResult<Loan> loanResult) {    
     return findCheckinServicePointForLoan(loanResult)
         .thenComposeAsync(this::findCheckoutServicePointForLoan);   
   }
@@ -66,8 +63,7 @@ public class ServicePointRepository {
                 log.info("Checkin servicepoint with name {} found for loan {}", 
                     servicePoint.getName(), loan.getId());
               }
-              Loan newLoan = loan.withCheckinServicePoint(servicePoint);
-              return newLoan;
+              return loan.withCheckinServicePoint(servicePoint);
             });
           });
     });
@@ -88,8 +84,7 @@ public class ServicePointRepository {
                 log.info("Checkout servicepoint with name {} found for loan {}", 
                     servicePoint.getName(), loan.getId());
               }
-              Loan newLoan = loan.withCheckoutServicePoint(servicePoint);
-              return newLoan;
+              return loan.withCheckoutServicePoint(servicePoint);
             });
           });
       });
