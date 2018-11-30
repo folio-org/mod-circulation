@@ -1473,7 +1473,7 @@ public class LoanAPITests extends APITests {
     assertThat("loan has checkin service point", loanJson.containsKey("checkinServicePoint"), is(true));
     assertThat("loan has checkout service point", loanJson.containsKey("checkoutServicePoint"), is(true));
   }
-  
+
   @Test
   public void canCreateMultipleLoans()
     throws InterruptedException,

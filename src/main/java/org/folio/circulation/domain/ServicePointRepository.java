@@ -1,5 +1,8 @@
 package org.folio.circulation.domain;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.HttpResult.succeeded;
+
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,13 +32,12 @@ public class ServicePointRepository {
   }
   
   
-  public CompletableFuture<HttpResult<ServicePoint>> getServicePointById(String id) {
-
+  CompletableFuture<HttpResult<ServicePoint>> getServicePointById(String id) {
     log.info("Attempting to fetch service point with id {}", id);
     return FetchSingleRecord.<ServicePoint>forRecord(SERVICE_POINT_TYPE)
         .using(servicePointsStorageClient)
         .mapTo(ServicePoint::new)
-        .whenNotFound(HttpResult.succeeded(null))
+        .whenNotFound(succeeded(null))
         .fetch(id);
   }
   
@@ -52,7 +54,7 @@ public class ServicePointRepository {
     return loanResult.after(loan -> {
       String checkinServicePointId = loan.getCheckinServicePointId();
       if(checkinServicePointId == null) {
-        return CompletableFuture.completedFuture(loanResult);
+        return completedFuture(loanResult);
       }
       return getServicePointById(checkinServicePointId)
           .thenApply(servicePointResult -> {
@@ -73,7 +75,7 @@ public class ServicePointRepository {
     return loanResult.after(loan -> {
       String checkoutServicePointId = loan.getCheckoutServicePointId();
       if(checkoutServicePointId == null) {
-        return CompletableFuture.completedFuture(loanResult);
+        return completedFuture(loanResult);
       }
       return getServicePointById(checkoutServicePointId)
           .thenApply(servicePointResult -> {
@@ -111,7 +113,7 @@ public class ServicePointRepository {
     
     if(servicePointsToFetch.isEmpty()) {
       log.info("No service points to query for loans");
-      return CompletableFuture.completedFuture(HttpResult.succeeded(multipleLoans));
+      return completedFuture(succeeded(multipleLoans));
     }
     
     String query = CqlHelper.multipleRecordsCqlQuery(servicePointsToFetch);
@@ -136,12 +138,12 @@ public class ServicePointRepository {
               }
               newLoanList.add(newLoan);
             }
-            return HttpResult.succeeded(new MultipleRecords<>(newLoanList, multipleLoans.getTotalRecords()));
+            return succeeded(new MultipleRecords<>(newLoanList, multipleLoans.getTotalRecords()));
           }));    
   }
   
-  public CompletableFuture<HttpResult<MultipleRecords<Request>>> findServicePointsForRequests(
-      MultipleRecords<Request> multipleRequests) {
+  CompletableFuture<HttpResult<MultipleRecords<Request>>> findServicePointsForRequests(
+    MultipleRecords<Request> multipleRequests) {
     Collection<Request> requests = multipleRequests.getRecords();
 
     final List<String> servicePointsToFetch = requests.stream()
@@ -153,7 +155,7 @@ public class ServicePointRepository {
 
     if(servicePointsToFetch.isEmpty()) {
       log.info("No service points to query");
-      return CompletableFuture.completedFuture(HttpResult.succeeded(multipleRequests));
+      return completedFuture(succeeded(multipleRequests));
     }
     
     String query = CqlHelper.multipleRecordsCqlQuery(servicePointsToFetch);
@@ -183,7 +185,7 @@ public class ServicePointRepository {
               newRequestList.add(newRequest);
             }
 
-            return HttpResult.succeeded(
+            return succeeded(
               new MultipleRecords<>(newRequestList, multipleRequests.getTotalRecords()));
           }));
   }
