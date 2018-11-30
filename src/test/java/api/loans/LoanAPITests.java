@@ -1455,8 +1455,8 @@ public class LoanAPITests extends APITests {
     UUID checkoutServicePointId = servicePointsFixture.cd2().getId();
     servicePointsToDelete.add(checkinServicePointId);
     servicePointsToDelete.add(checkoutServicePointId);
-    
-    IndividualResource response = loansClient.create(new LoanBuilder()
+
+    loansClient.create(new LoanBuilder()
       .withId(loanId)
       .open()
       .withUserId(userId)
@@ -1474,6 +1474,7 @@ public class LoanAPITests extends APITests {
     assertThat("loan has checkout service point", loanJson.containsKey("checkoutServicePoint"), is(true));
   }
   
+  @Test
   public void canCreateMultipleLoans()
     throws InterruptedException,
     ExecutionException,
