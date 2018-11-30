@@ -4,7 +4,6 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.of;
 import static org.folio.circulation.support.HttpResult.succeeded;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -71,6 +70,10 @@ public class LoanRepository {
   }
 
   public CompletableFuture<HttpResult<Loan>> updateLoan(Loan loan) {
+    if(loan == null) {
+      return completedFuture(of(() -> null));
+    }
+
     JsonObject storageLoan = mapToStorageRepresentation(loan, loan.getItem());
 
     final Function<Response, HttpResult<Loan>> mapResponse = response -> {

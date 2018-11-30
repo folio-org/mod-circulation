@@ -1449,12 +1449,12 @@ public class LoanAPITests extends APITests {
     UUID loanId = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
     UUID userId = usersClient.create(new UserBuilder()).getId();
+
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
     UUID checkinServicePointId = servicePointsFixture.cd1().getId();
     UUID checkoutServicePointId = servicePointsFixture.cd2().getId();
-    servicePointsToDelete.add(checkinServicePointId);
-    servicePointsToDelete.add(checkoutServicePointId);
 
     loansClient.create(new LoanBuilder()
       .withId(loanId)
@@ -1483,10 +1483,10 @@ public class LoanAPITests extends APITests {
     
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
     UUID checkinServicePointId = servicePointsFixture.cd1().getId();
     UUID checkoutServicePointId = servicePointsFixture.cd2().getId();
-    servicePointsToDelete.add(checkinServicePointId);
-    servicePointsToDelete.add(checkoutServicePointId);
+
     UUID userId = usersClient.create(new UserBuilder()).getId();
     
     UUID loan1Id = UUID.randomUUID();

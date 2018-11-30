@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 import io.vertx.core.json.JsonObject;
 
@@ -13,7 +14,7 @@ public class CheckInByBarcodeRequestBuilder extends JsonBuilder implements Build
   private final String servicePointId;
 
   public CheckInByBarcodeRequestBuilder() {
-    this(null, null, null);
+    this(null, DateTime.now(DateTimeZone.UTC), null);
   }
 
   private CheckInByBarcodeRequestBuilder(
@@ -48,6 +49,10 @@ public class CheckInByBarcodeRequestBuilder extends JsonBuilder implements Build
       this.servicePointId);
   }
 
+  public CheckInByBarcodeRequestBuilder noItem() {
+    return withItemBarcode(null);
+  }
+
   public CheckInByBarcodeRequestBuilder to() {
     return new CheckInByBarcodeRequestBuilder(
       this.itemBarcode,
@@ -62,6 +67,10 @@ public class CheckInByBarcodeRequestBuilder extends JsonBuilder implements Build
       this.servicePointId);
   }
 
+  public CheckInByBarcodeRequestBuilder onNoOccasion() {
+    return on(null);
+  }
+
   public CheckInByBarcodeRequestBuilder at(String servicePointId) {
     return new CheckInByBarcodeRequestBuilder(
       this.itemBarcode,
@@ -74,6 +83,10 @@ public class CheckInByBarcodeRequestBuilder extends JsonBuilder implements Build
       this.itemBarcode,
       this.checkInDate,
       servicePointId.toString());
+  }
+
+  public CheckInByBarcodeRequestBuilder atNoServicePoint() {
+    return at((String)null);
   }
 
   private String getBarcode(IndividualResource record) {

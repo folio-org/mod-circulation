@@ -4,7 +4,7 @@
   "provides": [
     {
       "id": "circulation",
-      "version": "5.1",
+      "version": "5.2",
       "handlers": [
         {
           "methods": [
@@ -30,6 +30,8 @@
             "inventory-storage.holdings.item.get",
             "inventory-storage.instances.collection.get",
             "inventory-storage.instances.item.get",
+            "inventory-storage.service-points.collection.get",
+            "inventory-storage.service-points.item.get",
             "users.item.get",
             "proxiesfor.collection.get",
             "inventory-storage.material-types.item.get",
@@ -65,6 +67,8 @@
             "inventory-storage.instances.item.get",
             "inventory-storage.material-types.item.get",
             "inventory-storage.material-types.collection.get",
+            "inventory-storage.service-points.collection.get",
+            "inventory-storage.service-points.item.get",
             "users.item.get",
             "users.collection.get",
             "proxiesfor.collection.get",
@@ -99,6 +103,8 @@
             "inventory-storage.instances.item.get",
             "inventory-storage.material-types.item.get",
             "inventory-storage.material-types.collection.get",
+            "inventory-storage.service-points.collection.get",
+            "inventory-storage.service-points.item.get",
             "users.item.get",
             "users.collection.get",
             "proxiesfor.collection.get",
@@ -133,6 +139,8 @@
             "inventory-storage.instances.item.get",
             "inventory-storage.material-types.item.get",
             "inventory-storage.material-types.collection.get",
+            "inventory-storage.service-points.collection.get",
+            "inventory-storage.service-points.item.get",
             "users.item.get",
             "users.collection.get",
             "proxiesfor.collection.get",
@@ -161,6 +169,8 @@
             "inventory-storage.instances.item.get",
             "inventory-storage.material-types.collection.get",
             "inventory-storage.material-types.item.get",
+            "inventory-storage.service-points.collection.get",
+            "inventory-storage.service-points.item.get",
             "users.collection.get",
             "users.item.get"
           ]
@@ -189,6 +199,10 @@
             "inventory-storage.holdings.item.get",
             "inventory-storage.instances.collection.get",
             "inventory-storage.instances.item.get",
+            "inventory-storage.material-types.collection.get",
+            "inventory-storage.material-types.item.get",
+            "inventory-storage.service-points.collection.get",
+            "inventory-storage.service-points.item.get",
             "users.item.get",
             "proxiesfor.collection.get",
             "inventory-storage.material-types.item.get",
@@ -227,7 +241,10 @@
             "inventory-storage.holdings.item.get",
             "inventory-storage.instances.collection.get",
             "inventory-storage.instances.item.get",
-            "inventory-storage.material-types.item.get"
+            "inventory-storage.material-types.collection.get",
+            "inventory-storage.material-types.item.get",
+            "inventory-storage.service-points.collection.get",
+            "inventory-storage.service-points.item.get"
           ]
         },
         {
@@ -253,6 +270,8 @@
             "inventory-storage.holdings.item.get",
             "inventory-storage.instances.collection.get",
             "inventory-storage.instances.item.get",
+            "inventory-storage.service-points.collection.get",
+            "inventory-storage.service-points.item.get",
             "proxiesfor.collection.get",
             "users.item.get",
             "proxiesfor.collection.get",
@@ -511,7 +530,7 @@
     },
     {
       "id": "item-storage",
-      "version": "5.3 6.0 7.0"
+      "version": "6.1 7.0"
     },
     {
       "id": "instance-storage",
@@ -531,7 +550,7 @@
     },
     {
       "id": "locations",
-      "version": "2.0 3.0"
+      "version": "3.0"
     },
     {
       "id": "material-types",

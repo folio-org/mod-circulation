@@ -53,7 +53,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     this.checkoutServicePoint = checkoutServicePoint;
 
     this.checkoutServicePointId = getProperty(representation, LoanProperties.CHECKOUT_SERVICE_POINT_ID);
-    this.checkinServicePointId = getProperty(representation, LoanProperties.CHECKIN_SERVICE_POINT_ID);
+    this.checkinServicePointId = getProperty(representation, CHECKIN_SERVICE_POINT_ID);
 
     // TODO: Refuse if ID does not match property in representation,
     // and possibly convert isFound to unknown item class
@@ -112,7 +112,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   private void changeStatus(String status) {
-    representation.put(LoanProperties.STATUS, new JsonObject().put("name", status));
+    representation.put(STATUS, new JsonObject().put("name", status));
   }
 
   public HttpResult<Void> isValidStatus() {
@@ -139,9 +139,9 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public HttpResult<Void> closedLoanHasCheckInServicePointId() {
-    if (isClosed() && getCheckinServicePointId() == null) {
+    if (isClosed() && getCheckInServicePointId() == null) {
       return failed(failure("A Closed loan must have a Checkin Service Point",
-          CHECKIN_SERVICE_POINT_ID, getCheckinServicePointId()));
+          CHECKIN_SERVICE_POINT_ID, getCheckInServicePointId()));
     } else {
       return HttpResult.succeeded(null);
     }
@@ -261,8 +261,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   private static void defaultStatusAndAction(JsonObject loan) {
-    if (!loan.containsKey(LoanProperties.STATUS)) {
-      loan.put(LoanProperties.STATUS, new JsonObject().put("name", "Open"));
+    if (!loan.containsKey(STATUS)) {
+      loan.put(STATUS, new JsonObject().put("name", "Open"));
 
       if (!loan.containsKey(LoanProperties.ACTION)) {
         loan.put(LoanProperties.ACTION, "checkedout");
@@ -270,15 +270,11 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     }
   }
 
-  public void setCheckoutServicePointId(String servicePointOfCheckout) {
-    this.checkoutServicePointId = servicePointOfCheckout;
-  }
-
   public String getCheckoutServicePointId() {
     return checkoutServicePointId;
   }
 
-  public String getCheckinServicePointId() {
+  public String getCheckInServicePointId() {
     return checkinServicePointId;
   }
 }

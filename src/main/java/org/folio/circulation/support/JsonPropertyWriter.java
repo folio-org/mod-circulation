@@ -27,7 +27,7 @@ public class JsonPropertyWriter {
     String propertyName,
     JsonArray value) {
 
-    if(value !=null && !value.isEmpty()) {
+    if(value != null && !value.isEmpty()) {
       to.put(propertyName, value);
     }
   }
@@ -72,5 +72,16 @@ public class JsonPropertyWriter {
     if(StringUtils.isNotBlank(value)) {
       to.put(propertyName, new JsonObject().put("name", value));
     }
+  }
+
+  public static void remove(
+    JsonObject from,
+    String propertyName) {
+
+    if(from == null) {
+      return;
+    }
+
+    from.remove(propertyName);
   }
 }

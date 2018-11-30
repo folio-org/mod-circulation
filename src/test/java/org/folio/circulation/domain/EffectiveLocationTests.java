@@ -1,15 +1,16 @@
 package org.folio.circulation.domain;
 
-import api.support.builders.HoldingBuilder;
-import api.support.builders.InstanceBuilder;
-import api.support.builders.ItemBuilder;
-import org.junit.Test;
-
-import java.util.UUID;
-
 import static api.support.matchers.UUIDMatcher.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
+
+import java.util.UUID;
+
+import org.junit.Test;
+
+import api.support.builders.HoldingBuilder;
+import api.support.builders.InstanceBuilder;
+import api.support.builders.ItemBuilder;
 
 //Scenario comments based upon numbering from https://wiki.folio.org/display/RA/Effective+Location+Logic
 public class EffectiveLocationTests {
@@ -28,7 +29,7 @@ public class EffectiveLocationTests {
         .withNoTemporaryLocation()
         .create(),
       new InstanceBuilder("").create(),
-      null, null);
+      null, null, null);
 
     assertThat(item.getLocationId(), is(popularReadingLocationId));
   }
@@ -49,7 +50,7 @@ public class EffectiveLocationTests {
         .withTemporaryLocation(secondFloorEconomicsLocationId)
         .create(),
       new InstanceBuilder("").create(),
-      null, null);
+      null, null, null);
 
     assertThat(item.getLocationId(), is(secondFloorEconomicsLocationId));
   }
@@ -71,7 +72,7 @@ public class EffectiveLocationTests {
         .withTemporaryLocation(popularReadingLocationId)
         .create(),
       new InstanceBuilder("").create(),
-      null, null);
+      null, null, null);
 
     assertThat(item.getLocationId(), is(secondFloorEconomicsLocationId));
   }
@@ -93,7 +94,7 @@ public class EffectiveLocationTests {
         .withTemporaryLocation(popularReadingLocationId)
         .create(),
       new InstanceBuilder("").create(),
-      null, null);
+      null, null, null);
 
     assertThat(item.getLocationId(), is(thirdFloorDisplayCaseLocationId));
   }
@@ -114,7 +115,7 @@ public class EffectiveLocationTests {
         .withNoTemporaryLocation()
         .create(),
       new InstanceBuilder("").create(),
-      null, null);
+      null, null, null);
 
     assertThat(item.getLocationId(), is(firstFloorComputerScienceLocationId));
   }
@@ -134,7 +135,7 @@ public class EffectiveLocationTests {
         .withNoTemporaryLocation()
         .create(),
       new InstanceBuilder("").create(),
-      null, null);
+      null, null, null);
 
     assertThat(item.getLocationId(), is(popularReadingLocationId));
   }
@@ -155,7 +156,7 @@ public class EffectiveLocationTests {
         .withTemporaryLocation(popularReadingLocationId)
         .create(),
       new InstanceBuilder("").create(),
-      null, null);
+      null, null, null);
 
     assertThat(item.getLocationId(), is(secondFloorEconomicsLocationId));
   }
@@ -177,7 +178,7 @@ public class EffectiveLocationTests {
         .withNoTemporaryLocation()
         .create(),
       new InstanceBuilder("").create(),
-      null, null);
+      null, null, null);
 
     assertThat(item.getLocationId(), is(popularReadingLocationId));
   }
@@ -196,7 +197,7 @@ public class EffectiveLocationTests {
         .withTemporaryLocation(popularReadingLocationId)
         .create(),
       new InstanceBuilder("").create(),
-      null, null);
+      null, null, null);
 
     assertThat(item.getLocationId(), is(secondFloorEconomicsLocationId));
   }
@@ -215,7 +216,7 @@ public class EffectiveLocationTests {
         .withNoTemporaryLocation()
         .create(),
       new InstanceBuilder("").create(),
-      null, null);
+      null, null, null);
 
     assertThat(item.getLocationId(), is(thirdFloorDisplayCaseLocationId));
   }
@@ -234,7 +235,7 @@ public class EffectiveLocationTests {
         .withNoTemporaryLocation()
         .create(),
       new InstanceBuilder("").create(),
-      null, null);
+      null, null, null);
 
     assertThat(item.getLocationId(), is(secondFloorEconomicsLocationId));
   }
@@ -253,7 +254,7 @@ public class EffectiveLocationTests {
         .withNoTemporaryLocation()
         .create(),
       new InstanceBuilder("").create(),
-      null, null);
+      null, null, null);
 
     assertThat(item.getLocationId(), is(secondFloorEconomicsLocationId));
   }
@@ -272,7 +273,7 @@ public class EffectiveLocationTests {
         .withTemporaryLocation(secondFloorEconomicsLocationId)
         .create(),
       new InstanceBuilder("").create(),
-      null, null);
+      null, null, null);
 
     assertThat(item.getLocationId(), is(secondFloorEconomicsLocationId));
   }
@@ -292,7 +293,7 @@ public class EffectiveLocationTests {
         .withTemporaryLocation(thirdFloorDisplayCaseLocationId)
         .create(),
       new InstanceBuilder("").create(),
-      null, null);
+      null, null, null);
 
     assertThat(item.getLocationId(), is(secondFloorEconomicsLocationId));
   }
@@ -312,7 +313,7 @@ public class EffectiveLocationTests {
         .withTemporaryLocation(secondFloorEconomicsLocationId)
         .create(),
       new InstanceBuilder("").create(),
-      null, null);
+      null, null, null);
 
     assertThat(item.getLocationId(), is(thirdFloorDisplayCaseLocationId));
   }
@@ -329,7 +330,7 @@ public class EffectiveLocationTests {
         .withNoTemporaryLocation()
         .create(),
       new InstanceBuilder("").create(),
-      null, null);
+      null, null, null);
 
     assertThat(item.getLocationId(), nullValue());
   }
@@ -345,7 +346,7 @@ public class EffectiveLocationTests {
         .withNoTemporaryLocation()
         .create(),
       new InstanceBuilder("").create(),
-      null, null);
+      null, null, null);
 
     assertThat(item.getLocationId(), is(secondFloorEconomicsLocationId));
   }
@@ -361,7 +362,7 @@ public class EffectiveLocationTests {
         .create(),
       null,
       new InstanceBuilder("").create(),
-      null, null);
+      null, null, null);
 
     assertThat(item.getLocationId(), is(secondFloorEconomicsLocationId));
   }
@@ -372,7 +373,7 @@ public class EffectiveLocationTests {
       null,
       null,
       new InstanceBuilder("").create(),
-      null, null);
+      null, null, null);
 
     assertThat(item.getLocationId(), nullValue());
   }

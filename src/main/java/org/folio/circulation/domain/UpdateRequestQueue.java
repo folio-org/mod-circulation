@@ -40,7 +40,7 @@ public class UpdateRequestQueue {
       .thenApply(result -> result.map(relatedRecords::withRequestQueue));
   }
 
-  private CompletableFuture<HttpResult<RequestQueue>> onCheckIn(
+  public CompletableFuture<HttpResult<RequestQueue>> onCheckIn(
     RequestQueue requestQueue) {
 
     if (requestQueue.hasOutstandingFulfillableRequests()) {

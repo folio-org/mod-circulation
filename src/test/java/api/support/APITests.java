@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import api.APITestSuite;
 import api.support.fixtures.ItemsFixture;
 import api.support.fixtures.LoansFixture;
+import api.support.fixtures.LocationsFixture;
 import api.support.fixtures.PatronGroupsFixture;
 import api.support.fixtures.RequestsFixture;
 import api.support.fixtures.ServicePointsFixture;
@@ -44,7 +45,7 @@ public abstract class APITests {
     log.error("Request to circulation module failed:", exception));
 
   private final boolean initialiseLoanRules;
-  protected final ResourceClient proxyRelationshipsClient = ResourceClient.forProxyRelationships(client);
+  private final ResourceClient proxyRelationshipsClient = ResourceClient.forProxyRelationships(client);
   protected final ResourceClient usersClient = ResourceClient.forUsers(client);
   protected final ResourceClient itemsClient = ResourceClient.forItems(client);
   protected final ResourceClient requestsClient = ResourceClient.forRequests(client);
@@ -54,19 +55,20 @@ public abstract class APITests {
   protected final ResourceClient loansStorageClient = ResourceClient.forLoansStorage(client);
   protected final ResourceClient loanPolicyClient = ResourceClient.forLoanPolicies(client);
   protected final ResourceClient fixedDueDateScheduleClient = ResourceClient.forFixedDueDateSchedules(client);
-  protected final ResourceClient servicePointsClient = ResourceClient.forServicePoints(client);
-  protected final ResourceClient patronGroupsClient = ResourceClient.forPatronGroups(client);
+  private final ResourceClient servicePointsClient = ResourceClient.forServicePoints(client);
+  private final ResourceClient locationsClient = ResourceClient.forLocations(client);
+  private final ResourceClient patronGroupsClient = ResourceClient.forPatronGroups(client);
 
   protected final ItemsFixture itemsFixture = new ItemsFixture(client);
   protected final LoansFixture loansFixture = new LoansFixture(loansClient, client);
   protected final RequestsFixture requestsFixture = new RequestsFixture(requestsClient);
   protected final UsersFixture usersFixture = new UsersFixture(usersClient, proxyRelationshipsClient);
   protected final ServicePointsFixture servicePointsFixture = new ServicePointsFixture(servicePointsClient);
+  protected final LocationsFixture locationsFixture = new LocationsFixture(locationsClient);
   protected final PatronGroupsFixture patronGroupsFixture = new PatronGroupsFixture(patronGroupsClient);
 
   protected final Set<UUID> schedulesToDelete = new HashSet<>();
   protected final Set<UUID> policiesToDelete = new HashSet<>();
-  protected final Set<UUID> servicePointsToDelete = new HashSet<>();
   protected final Set<UUID> groupsToDelete = new HashSet<>();
 
   protected APITests() {
@@ -136,11 +138,12 @@ public abstract class APITests {
     TimeoutException,
     ExecutionException {
 
-    for (UUID servicePointId : servicePointsToDelete) {
-      servicePointsClient.delete(servicePointId);
-    }
+    itemsClient.deleteAll();
+    holdingsClient.deleteAll();
+    instancesClient.deleteAll();
 
-    servicePointsToDelete.clear();
+    locationsFixture.cleanUp();
+    servicePointsFixture.cleanUp();
 
     for (UUID policyId : policiesToDelete) {
       loanPolicyClient.delete(policyId);

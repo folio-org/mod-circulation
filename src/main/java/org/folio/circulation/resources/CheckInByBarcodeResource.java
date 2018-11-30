@@ -3,14 +3,9 @@ package org.folio.circulation.resources;
 import static org.folio.circulation.domain.validation.CommonFailures.moreThanOneOpenLoanFailure;
 import static org.folio.circulation.domain.validation.CommonFailures.noItemFoundForBarcodeFailure;
 
-import java.util.function.BiFunction;
-
-import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.CheckInProcessRecords;
 import org.folio.circulation.domain.LoanCheckInService;
 import org.folio.circulation.domain.LoanRepository;
-import org.folio.circulation.domain.LoanRepresentation;
-import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateRequestQueue;
@@ -52,7 +47,6 @@ public class CheckInByBarcodeResource extends Resource {
     final UserRepository userRepository = new UserRepository(clients);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
 
-    final LoanRepresentation loanRepresentation = new LoanRepresentation();
     final LoanCheckInService loanCheckInService = new LoanCheckInService();
 
     final UpdateItem updateItem = new UpdateItem(clients);
@@ -70,30 +64,28 @@ public class CheckInByBarcodeResource extends Resource {
 
     final SingleOpenLoanForItemInStorageFinder singleOpenLoanFinder
       = new SingleOpenLoanForItemInStorageFinder(loanRepository, userRepository,
-        moreThanOneOpenLoanFailure(itemBarcode));
+        moreThanOneOpenLoanFailure(itemBarcode), true);
+
+    final CheckInProcessAdapter processAdapter = new CheckInProcessAdapter(
+      itemFinder, singleOpenLoanFinder, loanCheckInService,
+      requestQueueRepository, updateItem, requestQueueUpdate, loanRepository);
 
     checkInRequestResult
-      .after(checkInRequest -> itemFinder.findItemByBarcode(itemBarcode)
-      .thenComposeAsync(itemResult ->
-          itemResult.after(singleOpenLoanFinder::findSingleOpenLoan)))
-      .thenApply(loanResult -> loanResult.combineToResult(checkInRequestResult,
-        loanCheckInService::checkIn))
-      .thenComposeAsync(loanResult -> loanResult.combineAfter(
-        loan -> requestQueueRepository.get(loan.getItemId()), mapToRelatedRecords()))
-      .thenComposeAsync(result -> result.after(requestQueueUpdate::onCheckIn))
-      .thenComposeAsync(result -> result.after(updateItem::onLoanUpdate))
-      // Loan must be updated after item
-      // due to snapshot of item status stored with the loan
-      // as this is how the loan action history is populated
-      .thenComposeAsync(result -> result.after(loanRepository::updateLoan))
-      .thenApply(result -> result.map(LoanAndRelatedRecords::getLoan))
-      .thenApply(result -> result.map(loanRepresentation::extendedLoan))
+      .map(CheckInProcessRecords::new)
+      .combineAfter(processAdapter::findItem, CheckInProcessRecords::withItem)
+      .thenComposeAsync(findItemResult -> findItemResult.combineAfter(
+        processAdapter::findSingleOpenLoan, CheckInProcessRecords::withLoan))
+      .thenComposeAsync(findLoanResult -> findLoanResult.combineAfter(
+        processAdapter::checkInLoan, CheckInProcessRecords::withLoan))
+      .thenComposeAsync(loanCheckInResult -> loanCheckInResult.combineAfter(
+        processAdapter::getRequestQueue, CheckInProcessRecords::withRequestQueue))
+      .thenComposeAsync(findRequestQueueResult -> findRequestQueueResult.combineAfter(
+        processAdapter::updateRequestQueue, CheckInProcessRecords::withRequestQueue))
+      .thenComposeAsync(updateRequestQueueResult -> updateRequestQueueResult.combineAfter(
+        processAdapter::updateItem, CheckInProcessRecords::withItem))
+      .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
+        processAdapter::updateLoan, CheckInProcessRecords::withLoan))
       .thenApply(CheckInByBarcodeResponse::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
-  }
-
-  private BiFunction<Loan, RequestQueue, LoanAndRelatedRecords> mapToRelatedRecords() {
-    return (loan, requestQueue) -> new LoanAndRelatedRecords(loan)
-      .withRequestQueue(requestQueue);
   }
 }

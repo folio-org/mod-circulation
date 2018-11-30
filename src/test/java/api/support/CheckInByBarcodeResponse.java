@@ -15,4 +15,8 @@ public class CheckInByBarcodeResponse extends IndividualResource {
   public JsonObject getLoan() {
     return getObjectProperty(getJson(), "loan");
   }
+
+  public JsonObject getItem() {
+    return getObjectProperty(getJson(), "item");
+  }
 }

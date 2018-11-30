@@ -1,15 +1,26 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.domain.representations.ItemProperties;
-
-import java.util.Objects;
-
-import static org.folio.circulation.domain.representations.ItemProperties.*;
+import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
+import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
+import static org.folio.circulation.domain.representations.ItemProperties.IN_TRANSIT_DESTINATION_SERVICE_POINT_ID;
+import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOCATION_ID;
+import static org.folio.circulation.domain.representations.ItemProperties.TEMPORARY_LOCATION_ID;
+import static org.folio.circulation.domain.representations.ItemProperties.TITLE_PROPERTY;
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getUUIDProperty;
+import static org.folio.circulation.support.JsonPropertyWriter.remove;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.JsonStringArrayHelper.toStream;
+
+import java.util.Objects;
+import java.util.UUID;
+
+import org.folio.circulation.domain.representations.ItemProperties;
+
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 public class Item {
   private final JsonObject itemRepresentation;
@@ -17,23 +28,28 @@ public class Item {
   private final JsonObject instanceRepresentation;
   private JsonObject locationRepresentation;
   private JsonObject materialTypeRepresentation;
+  private ServicePoint primaryServicePoint;
+
+  private boolean changed = false;
 
   public Item(
     JsonObject itemRepresentation,
     JsonObject holdingRepresentation,
     JsonObject instanceRepresentation,
     JsonObject locationRepresentation,
-    JsonObject materialTypeRepresentation) {
+    JsonObject materialTypeRepresentation,
+    ServicePoint servicePoint) {
 
     this.itemRepresentation = itemRepresentation;
     this.holdingRepresentation = holdingRepresentation;
     this.instanceRepresentation = instanceRepresentation;
     this.locationRepresentation = locationRepresentation;
     this.materialTypeRepresentation = materialTypeRepresentation;
+    this.primaryServicePoint = servicePoint;
   }
 
   public static Item from(JsonObject representation) {
-    return new Item(representation, null, null, null, null);
+    return new Item(representation, null, null, null, null, null);
   }
 
   public boolean isCheckedOut() {
@@ -44,12 +60,18 @@ public class Item {
     return !Objects.equals(getStatus(), prospectiveStatus);
   }
 
+  boolean hasChanged() {
+    return changed;
+  }
+
   public JsonObject getItem() {
     return itemRepresentation;
   }
 
   public String getTitle() {
-    if(instanceRepresentation != null && instanceRepresentation.containsKey(TITLE_PROPERTY)) {
+    if(instanceRepresentation != null
+      && instanceRepresentation.containsKey(TITLE_PROPERTY)) {
+
       return getProperty(instanceRepresentation, TITLE_PROPERTY);
     } else if(getItem() != null) {
       return getProperty(getItem(), TITLE_PROPERTY);
@@ -59,7 +81,7 @@ public class Item {
     }
   }
 
-  JsonArray getContributorNames() {
+  public JsonArray getContributorNames() {
     if(instanceRepresentation == null) {
       return new JsonArray();
     }
@@ -84,11 +106,11 @@ public class Item {
     return getProperty(holdingRepresentation, "instanceId");
   }
 
-  String getCallNumber() {
+  public String getCallNumber() {
     return getProperty(holdingRepresentation, "callNumber");
   }
 
-  ItemStatus getStatus() {
+  public ItemStatus getStatus() {
     return ItemStatus.from(getStatusName());
   }
 
@@ -100,7 +122,32 @@ public class Item {
     return locationRepresentation;
   }
 
-  JsonObject getMaterialType() {
+  boolean homeLocationIsServedBy(UUID servicePointId) {
+    //Defensive check just in case primary isn't part of serving set
+    return matchesPrimaryServicePoint(servicePointId) ||
+      matchesAnyServingServicePoint(servicePointId);
+  }
+
+  private boolean matchesPrimaryServicePoint(UUID servicePointId) {
+    return matchingId(getPrimaryServicePointId(), servicePointId);
+  }
+
+  private boolean matchesAnyServingServicePoint(UUID servicePointId) {
+    return toStream(locationRepresentation, "servicePointIds")
+      .map(UUID::fromString)
+      .anyMatch(servingServicePointId ->
+        matchingId(servicePointId, servingServicePointId));
+  }
+
+  private boolean matchingId(UUID first, UUID second) {
+    return Objects.equals(second, first);
+  }
+
+  public UUID getPrimaryServicePointId() {
+    return getUUIDProperty(getLocation(), "primaryServicePoint");
+  }
+
+  public JsonObject getMaterialType() {
     return materialTypeRepresentation;
   }
 
@@ -129,9 +176,34 @@ public class Item {
       return null;
     }
   }
-  
-  public String getEnumeration() {
+
+  String getEnumeration() {
     return getProperty(getItem(), "enumeration");
+  }
+
+  public String getInTransitDestinationServicePointId() {
+    return getProperty(itemRepresentation, IN_TRANSIT_DESTINATION_SERVICE_POINT_ID);
+  }
+
+  public ServicePoint getInTransitDestinationServicePoint() {
+    if(getInTransitDestinationServicePointId() == null) {
+      return null;
+    }
+
+    //TODO: Hack as destination service point
+    // can only be primary service point for effective location at the moment
+    if(matchingId(UUID.fromString(getInTransitDestinationServicePointId()),
+      getPrimaryServicePointId())) {
+
+      return getPrimaryServicePoint();
+    }
+    else {
+      return null;
+    }
+  }
+
+  private ServicePoint getPrimaryServicePoint() {
+    return primaryServicePoint;
   }
 
   public String determineLoanTypeForItem() {
@@ -141,9 +213,37 @@ public class Item {
       : getItem().getString(ItemProperties.PERMANENT_LOAN_TYPE_ID);
   }
 
-  void changeStatus(ItemStatus newStatus) {
+  Item changeStatus(ItemStatus newStatus) {
     //TODO: Check if status is null
-    getItem().put("status", new JsonObject().put("name", newStatus.getValue()));
+    write(itemRepresentation, "status",
+      new JsonObject().put("name", newStatus.getValue()));
+
+    changed = true;
+
+    return this;
+  }
+
+  Item available() {
+    return changeStatus(AVAILABLE)
+      .removeDestination();
+  }
+
+  Item inTransitToHome() {
+    return changeStatus(IN_TRANSIT)
+      .changeDestination(getPrimaryServicePointId());
+  }
+
+  private Item changeDestination(UUID destinationServicePointId) {
+    write(itemRepresentation, IN_TRANSIT_DESTINATION_SERVICE_POINT_ID,
+      destinationServicePointId);
+
+    return this;
+  }
+
+  private Item removeDestination() {
+    remove(itemRepresentation, IN_TRANSIT_DESTINATION_SERVICE_POINT_ID);
+
+    return this;
   }
 
   public boolean isNotFound() {
@@ -160,7 +260,8 @@ public class Item {
       holdingRepresentation,
       instanceRepresentation,
       getLocation(),
-      getMaterialType());
+      getMaterialType(),
+      this.primaryServicePoint);
   }
 
   public boolean doesNotHaveHolding() {
@@ -173,7 +274,8 @@ public class Item {
       this.holdingRepresentation,
       this.instanceRepresentation,
       newLocation,
-      this.materialTypeRepresentation);
+      this.materialTypeRepresentation,
+      this.primaryServicePoint);
   }
 
   public Item withMaterialType(JsonObject newMaterialType) {
@@ -182,7 +284,8 @@ public class Item {
       this.holdingRepresentation,
       this.instanceRepresentation,
       this.locationRepresentation,
-      newMaterialType);
+      newMaterialType,
+      this.primaryServicePoint);
   }
 
   public Item withHoldingsRecord(JsonObject newHoldingsRecordRepresentation) {
@@ -191,7 +294,8 @@ public class Item {
       newHoldingsRecordRepresentation,
       this.instanceRepresentation,
       this.locationRepresentation,
-      this.materialTypeRepresentation);
+      this.materialTypeRepresentation,
+      this.primaryServicePoint);
   }
 
   public Item withInstance(JsonObject newInstanceRepresentation) {
@@ -200,6 +304,17 @@ public class Item {
       this.holdingRepresentation,
       newInstanceRepresentation,
       this.locationRepresentation,
-      this.materialTypeRepresentation);
+      this.materialTypeRepresentation,
+      this.primaryServicePoint);
+  }
+
+  public Item withPrimaryServicePoint(ServicePoint servicePoint) {
+    return new Item(
+      this.itemRepresentation,
+      this.holdingRepresentation,
+      this.instanceRepresentation,
+      this.locationRepresentation,
+      this.materialTypeRepresentation,
+      servicePoint);
   }
 }
