@@ -1475,7 +1475,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canCreateMultipleLoans()
+  public void canCreateMultipleLoansWithServicePoints()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
