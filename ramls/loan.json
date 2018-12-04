@@ -29,6 +29,10 @@
       "description": "Additional information about the item",
       "type": "object",
       "properties": {
+        "id": {
+          "description": "ID of the item",
+          "type": "string"
+        },
         "title": {
           "description": "The title of the item lent to the patron",
           "type": "string"
