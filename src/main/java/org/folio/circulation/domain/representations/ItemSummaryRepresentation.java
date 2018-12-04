@@ -22,6 +22,7 @@ public class ItemSummaryRepresentation {
 
     JsonObject itemSummary = new JsonObject();
 
+    write(itemSummary, "id", item.getItemId());
     write(itemSummary, "holdingsRecordId", item.getHoldingsRecordId());
     write(itemSummary, "instanceId", item.getInstanceId());
     write(itemSummary, "title", item.getTitle());

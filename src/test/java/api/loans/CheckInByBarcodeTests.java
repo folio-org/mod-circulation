@@ -77,6 +77,9 @@ public class CheckInByBarcodeTests extends APITests {
     assertThat("action is not checkedin",
       loanRepresentation.getString("action"), is("checkedin"));
 
+    assertThat("ID should be included for item",
+      loanRepresentation.getJsonObject("item").getString("id"), is(nod.getId()));
+
     assertThat("title is taken from item",
       loanRepresentation.getJsonObject("item").getString("title"),
       is("Nod"));
@@ -95,6 +98,9 @@ public class CheckInByBarcodeTests extends APITests {
 
     assertThat("title is included for item",
       itemFromResponse.getString("title"), is("Nod"));
+
+    assertThat("ID should be included for item",
+      itemFromResponse.getString("id"), is(nod.getId()));
 
     assertThat("barcode is included for item",
       itemFromResponse.getString("barcode"), is("565578437802"));
@@ -235,6 +241,9 @@ public class CheckInByBarcodeTests extends APITests {
 
     final JsonObject itemFromResponse = checkInResponse.getItem();
 
+    assertThat("ID should be included for item",
+      itemFromResponse.getString("id"), is(nod.getId()));
+
     assertThat("title is included for item",
       itemFromResponse.getString("title"), is("Nod"));
 
@@ -278,6 +287,9 @@ public class CheckInByBarcodeTests extends APITests {
       checkInResponse.getJson().containsKey("item"), is(true));
 
     final JsonObject itemFromResponse = checkInResponse.getItem();
+
+    assertThat("ID should be included for item",
+      itemFromResponse.getString("id"), is(nod.getId()));
 
     assertThat("title is included for item",
       itemFromResponse.getString("title"), is("Nod"));

@@ -54,6 +54,9 @@ public class InTransitToHomeLocationTests extends APITests {
     assertThat("item should be present in response",
       itemRepresentation, notNullValue());
 
+    assertThat("ID should be included for item",
+      itemRepresentation.getString("id"), is(nod.getId()));
+
     assertThat("title is included for item",
       itemRepresentation.getString("title"), is("Nod"));
 
@@ -147,6 +150,9 @@ public class InTransitToHomeLocationTests extends APITests {
     assertThat("item should be present in response",
       itemRepresentation, notNullValue());
 
+    assertThat("ID should be included for item",
+      itemRepresentation.getString("id"), is(nod.getId()));
+
     assertThat("title is included for item",
       itemRepresentation.getString("title"), is("Nod"));
 
@@ -225,6 +231,9 @@ public class InTransitToHomeLocationTests extends APITests {
     assertThat("item should be present in response",
       itemRepresentation, notNullValue());
 
+    assertThat("ID should be included for item",
+      itemRepresentation.getString("id"), is(nod.getId()));
+
     assertThat("title is included for item",
       itemRepresentation.getString("title"), is("Nod"));
 
@@ -293,6 +302,9 @@ public class InTransitToHomeLocationTests extends APITests {
 
     assertThat("item should be present in response",
       itemRepresentation, notNullValue());
+
+    assertThat("ID should be included for item",
+      itemRepresentation.getString("id"), is(nod.getId()));
 
     assertThat("title is included for item",
       itemRepresentation.getString("title"), is("Nod"));
@@ -368,6 +380,9 @@ public class InTransitToHomeLocationTests extends APITests {
 
     assertThat("item should be present in response",
       itemRepresentation, notNullValue());
+
+    assertThat("ID should be included for item",
+      itemRepresentation.getString("id"), is(nod.getId()));
 
     assertThat("title is included for item",
       itemRepresentation.getString("title"), is("Nod"));
@@ -450,6 +465,9 @@ public class InTransitToHomeLocationTests extends APITests {
 
     assertThat("item should be present in response",
       itemRepresentation, notNullValue());
+
+    assertThat("ID should be included for item",
+      itemRepresentation.getString("id"), is(nod.getId()));
 
     assertThat("title is included for item",
       itemRepresentation.getString("title"), is("Nod"));
@@ -538,6 +556,9 @@ public class InTransitToHomeLocationTests extends APITests {
 
     assertThat("item should be present in response",
       itemRepresentation, notNullValue());
+
+    assertThat("ID should be included for item",
+      itemRepresentation.getString("id"), is(nod.getId()));
 
     assertThat("title is included for item",
       itemRepresentation.getString("title"), is("Nod"));

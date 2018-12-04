@@ -5,6 +5,7 @@ import static api.support.fixtures.UserExamples.basedUponStevenJones;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.InterfaceUrls.loansUrl;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
@@ -92,6 +93,9 @@ public class LoanAPITests extends APITests {
 
     assertThat("last loan policy should be stored",
       loan.getString("loanPolicyId"), is(APITestSuite.canCirculateRollingLoanPolicyId().toString()));
+
+    assertThat("ID is taken from item",
+      loan.getJsonObject("item").getString("id"), is(itemId));
 
     assertThat("title is taken from instance",
       loan.getJsonObject("item").getString("title"),
@@ -756,6 +760,9 @@ public class LoanAPITests extends APITests {
 
     assertThat("last loan policy should be stored",
       loan.getString("loanPolicyId"), is(APITestSuite.canCirculateRollingLoanPolicyId().toString()));
+
+    assertThat("ID is taken from item",
+      loan.getJsonObject("item").getString("id"), is(itemId));
 
     assertThat("title is taken from item",
       loan.getJsonObject("item").getString("title"),
@@ -1556,6 +1563,7 @@ public class LoanAPITests extends APITests {
 
     JsonObject item = loan.getJsonObject("item");
 
+    hasProperty("id", item, "item");
     hasProperty("title", item, "item");
     hasProperty("barcode", item, "item");
     hasProperty("status", item, "item");
