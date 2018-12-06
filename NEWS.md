@@ -1,3 +1,7 @@
+## 14.1.0 2018-12-06
+
+* Include item ID in check in API response when no loan is present (CIRC-176)
+
 ## 14.0.0 2018-11-30
 
 * Provides support for basic in transit to home process during check in (CIRC-146)
