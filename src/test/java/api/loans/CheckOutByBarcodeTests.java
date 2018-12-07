@@ -4,6 +4,7 @@ import static api.support.builders.ItemBuilder.AWAITING_PICKUP;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.builders.RequestBuilder.CLOSED_FILLED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
+import static api.support.fixtures.CalendarExamples.CASE_1_SERVICE_POINT_ID;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
@@ -24,6 +25,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import api.support.fixtures.CalendarExamples;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -59,7 +61,10 @@ public class CheckOutByBarcodeTests extends APITests {
 
     final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
 
-    final UUID checkoutServicePointId = UUID.randomUUID();
+    final UUID checkoutServicePointId = UUID.fromString(CASE_1_SERVICE_POINT_ID);
+
+//    IndividualResource atSpecificLocation = calendarClient
+//      .createAtSpecificPath(CalendarExamples.getCalendarById(CASE_1_SERVICE_POINT_ID), "period", "openingPeriods", "servicePointId");
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()

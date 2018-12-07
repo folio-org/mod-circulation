@@ -1,21 +1,10 @@
 package org.folio.circulation.resources;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-
-import java.util.UUID;
-
-import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.domain.LoanRepository;
-import org.folio.circulation.domain.LoanRepresentation;
-import org.folio.circulation.domain.RequestQueueRepository;
-import org.folio.circulation.domain.UpdateItem;
-import org.folio.circulation.domain.UpdateRequestQueue;
-import org.folio.circulation.domain.User;
-import org.folio.circulation.domain.UserRepository;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
+import org.folio.circulation.domain.*;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
@@ -38,10 +27,11 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.ISODateTimeFormat;
 
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
+import java.util.UUID;
+
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
+import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 public class CheckOutByBarcodeResource extends Resource {
   public CheckOutByBarcodeResource(HttpClient client) {
@@ -79,13 +69,14 @@ public class CheckOutByBarcodeResource extends Resource {
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
+    final CalendarRepository calendarRepository = new CalendarRepository(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
         clients, () -> failure(
         "Cannot check out item via proxy when relationship is invalid",
         CheckOutByBarcodeRequest.PROXY_USER_BARCODE,
         proxyUserBarcode));
-    
+
     final ServicePointOfCheckoutPresentValidator servicePointOfCheckoutPresentValidator
       = new ServicePointOfCheckoutPresentValidator(message -> failure(message,
         CheckOutByBarcodeRequest.SERVICE_POINT_ID, checkoutServicePointId));
@@ -114,6 +105,7 @@ public class CheckOutByBarcodeResource extends Resource {
     
     completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(Loan.from(loan))))
       .thenApply(servicePointOfCheckoutPresentValidator::refuseCheckOutWhenServicePointIsNotPresent)
+      .thenCombineAsync(calendarRepository.getCalendar(checkoutServicePointId), this::addCalendar)
       .thenCombineAsync(userRepository.getUserByBarcode(userBarcode), this::addUser)
       .thenCombineAsync(userRepository.getProxyUserByBarcode(proxyUserBarcode), this::addProxyUser)
       .thenApply(inactiveUserValidator::refuseWhenUserIsInactive)
@@ -141,6 +133,9 @@ public class CheckOutByBarcodeResource extends Resource {
 
     final Loan loan = loanAndRelatedRecords.getLoan();
     final LoanPolicy loanPolicy = loanAndRelatedRecords.getLoanPolicy();
+    final Calendar calendar = loanAndRelatedRecords.getCalendar();
+
+    System.out.println(" >>>>>>>>>>>>>  "+ calendar.getRepresentation());
 
     return loanPolicy.calculateInitialDueDate(loan)
       .map(dueDate -> {
@@ -177,6 +172,14 @@ public class CheckOutByBarcodeResource extends Resource {
 
     return HttpResult.combine(loanResult, getUserResult,
       LoanAndRelatedRecords::withProxyingUser);
+  }
+
+  private HttpResult<LoanAndRelatedRecords> addCalendar(
+    HttpResult<LoanAndRelatedRecords> loanResult,
+    HttpResult<Calendar> getCalendarResult) {
+
+    return HttpResult.combine(loanResult, getCalendarResult,
+      LoanAndRelatedRecords::withCalendar);
   }
 
   private HttpResult<LoanAndRelatedRecords> addUser(

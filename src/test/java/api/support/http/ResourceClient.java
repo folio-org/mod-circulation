@@ -1,7 +1,14 @@
 package api.support.http;
 
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import api.support.builders.Builder;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import org.folio.circulation.support.JsonArrayHelper;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.OkapiHttpClient;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
+import org.hamcrest.CoreMatchers;
 
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -13,18 +20,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.folio.circulation.support.JsonArrayHelper;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
-import org.hamcrest.CoreMatchers;
-
-import api.support.builders.Builder;
-import io.vertx.core.json.JsonObject;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class ResourceClient {
-  
+
   private final OkapiHttpClient client;
   private final UrlMaker urlMaker;
   private final String resourceName;
@@ -73,6 +73,11 @@ public class ResourceClient {
   public static ResourceClient forUsers(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::usersUrl,
       "users");
+  }
+
+  public static ResourceClient forCalendar(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::calendarUrl,
+      "calendar", "calendars");
   }
 
   public static ResourceClient forProxyRelationships(OkapiHttpClient client) {
@@ -137,12 +142,12 @@ public class ResourceClient {
 
   public static ResourceClient forCancellationReasons(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::cancellationReasonsStorageUrl,
-        "cancellationReasons");
+      "cancellationReasons");
   }
-  
+
   public static ResourceClient forServicePoints(OkapiHttpClient client) {
-   return new ResourceClient(client, InterfaceUrls::servicePointsStorageUrl,
-       "service points", "servicepoints");
+    return new ResourceClient(client, InterfaceUrls::servicePointsStorageUrl,
+      "service points", "servicepoints");
   }
 
   private ResourceClient(
@@ -269,6 +274,28 @@ public class ResourceClient {
     return new IndividualResource(getResponse);
   }
 
+  public IndividualResource createAtSpecificPath(Builder builder, String path, String jsonArray, String jsonId)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
+    JsonObject representation = builder.create();
+    JsonArray array = representation.getJsonArray(jsonArray);
+    String id = array.getJsonObject(0).getString(jsonId);
+
+    final URL location = urlMaker.combine(String.format("/%s/%s", id, path));
+
+    client.get(location, ResponseHandler.json(getCompleted));
+
+    Response getResponse = getCompleted
+      .get(5, TimeUnit.SECONDS)
+      .attachBody(representation.toString());
+    return new IndividualResource(getResponse);
+  }
+
+
   public Response attemptReplace(UUID id, Builder builder)
     throws MalformedURLException,
     InterruptedException,
@@ -368,9 +395,9 @@ public class ResourceClient {
 
   public Response attemptGet(IndividualResource resource)
     throws MalformedURLException,
-      InterruptedException,
-      ExecutionException,
-      TimeoutException {
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
 
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 

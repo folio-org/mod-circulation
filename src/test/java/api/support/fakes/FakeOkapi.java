@@ -1,7 +1,10 @@
 package api.support.fakes;
 
-import java.lang.invoke.MethodHandles;
-
+import api.APITestSuite;
+import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Future;
+import io.vertx.core.http.HttpServer;
+import io.vertx.ext.web.Router;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.folio.circulation.support.http.client.BufferHelper;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
@@ -10,11 +13,9 @@ import org.folio.circulation.support.http.server.ServerErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import api.APITestSuite;
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Future;
-import io.vertx.core.http.HttpServer;
-import io.vertx.ext.web.Router;
+import java.lang.invoke.MethodHandles;
+
+import static api.support.fixtures.CalendarExamples.getCalendarById;
 
 public class FakeOkapi extends AbstractVerticle {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -150,7 +151,14 @@ public class FakeOkapi extends AbstractVerticle {
       .withChangeMetadata()
       .create().register(router);
 
+    new FakeStorageModuleBuilder()
+      .withRecordName("calendar")
+      .withRootPath("/calendar/periods/:serviceId/period")
+      .withCollectionPropertyName("calendars")
+      .create().register(router);
+
     registerLoanRulesStorage(router);
+//    registerCalendar(router);
 
     new FakeStorageModuleBuilder()
       .withRecordName("institution")
@@ -268,5 +276,21 @@ public class FakeOkapi extends AbstractVerticle {
       log.debug("/loan-rules-storage GET returns {}", loanRules);
       routingContext.response().setStatusCode(200).end(loanRules);
     });
+  }
+
+  private void registerCalendar(Router router) {
+    router.get("/calendar/periods/:id/period").handler(routingContext -> {
+      String servicePointId = routingContext.pathParam("id");
+      log.debug("GET: /calendar/periods/:id/period `servicePointId`=", servicePointId);
+      System.out.println("/calendar/periods/ GET returns {}" + routingContext.pathParam("id")); // todo <<<
+      routingContext.response()
+        .setStatusCode(200)
+        .putHeader("content-type", "application/json")
+        .end(setFakeCalendarById(servicePointId));
+    });
+  }
+
+  private String setFakeCalendarById(String servicePointId) {
+    return getCalendarById(servicePointId).toString();
   }
 }

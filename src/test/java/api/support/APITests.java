@@ -14,6 +14,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import api.support.fixtures.CalendarFixture;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
@@ -46,6 +47,7 @@ public abstract class APITests {
   private final boolean initialiseLoanRules;
   protected final ResourceClient proxyRelationshipsClient = ResourceClient.forProxyRelationships(client);
   protected final ResourceClient usersClient = ResourceClient.forUsers(client);
+  protected final ResourceClient calendarClient = ResourceClient.forCalendar(client);
   protected final ResourceClient itemsClient = ResourceClient.forItems(client);
   protected final ResourceClient requestsClient = ResourceClient.forRequests(client);
   protected final ResourceClient loansClient = ResourceClient.forLoans(client);
@@ -61,6 +63,7 @@ public abstract class APITests {
   protected final LoansFixture loansFixture = new LoansFixture(loansClient, client);
   protected final RequestsFixture requestsFixture = new RequestsFixture(requestsClient);
   protected final UsersFixture usersFixture = new UsersFixture(usersClient, proxyRelationshipsClient);
+  protected final CalendarFixture calendarFixture = new CalendarFixture(calendarClient);
   protected final ServicePointsFixture servicePointsFixture = new ServicePointsFixture(servicePointsClient);
   protected final PatronGroupsFixture patronGroupsFixture = new PatronGroupsFixture(patronGroupsClient);
 

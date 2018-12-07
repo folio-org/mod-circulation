@@ -7,19 +7,21 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   private final Loan loan;
   private final RequestQueue requestQueue;
   private final LoanPolicy loanPolicy;
+  private final Calendar calendar;
 
   private LoanAndRelatedRecords(
     Loan loan,
     RequestQueue requestQueue,
-    LoanPolicy loanPolicy) {
+    LoanPolicy loanPolicy, Calendar calendar) {
 
     this.loan = loan;
     this.requestQueue = requestQueue;
     this.loanPolicy = loanPolicy;
+    this.calendar = calendar;
   }
 
   public LoanAndRelatedRecords(Loan loan) {
-    this(loan, null, null);
+    this(loan, null, null, null);
   }
 
   LoanAndRelatedRecords withItem(JsonObject updatedItem) {
@@ -27,11 +29,15 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   }
 
   LoanAndRelatedRecords withLoan(Loan newLoan) {
-    return new LoanAndRelatedRecords(newLoan, requestQueue, loanPolicy);
+    return new LoanAndRelatedRecords(newLoan, requestQueue, loanPolicy, calendar);
   }
 
   public LoanAndRelatedRecords withRequestingUser(User newUser) {
     return withLoan(loan.withUser(newUser));
+  }
+
+  public LoanAndRelatedRecords withCalendar(Calendar calendar) {
+    return new LoanAndRelatedRecords(loan, requestQueue, loanPolicy, calendar);
   }
 
   public LoanAndRelatedRecords withProxyingUser(User newProxy) {
@@ -40,12 +46,12 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
 
   public LoanAndRelatedRecords withLoanPolicy(LoanPolicy newLoanPolicy) {
     return new LoanAndRelatedRecords(loan, requestQueue,
-      newLoanPolicy);
+      newLoanPolicy, calendar);
   }
 
   public LoanAndRelatedRecords withRequestQueue(RequestQueue newRequestQueue) {
     return new LoanAndRelatedRecords(loan, newRequestQueue,
-      loanPolicy);
+      loanPolicy, calendar);
   }
 
   public LoanAndRelatedRecords withItem(Item newItem) {
@@ -54,6 +60,10 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
 
   public Loan getLoan() {
     return loan;
+  }
+
+  public Calendar getCalendar() {
+    return calendar;
   }
 
   public RequestQueue getRequestQueue() {

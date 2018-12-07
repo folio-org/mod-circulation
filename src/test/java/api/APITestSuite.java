@@ -1,6 +1,41 @@
 package api;
 
-import static org.folio.circulation.support.JsonPropertyWriter.write;
+import api.loans.*;
+import api.requests.*;
+import api.requests.scenarios.ClosedRequestTests;
+import api.requests.scenarios.MultipleHoldShelfRequestsTests;
+import api.requests.scenarios.MultipleMixedFulfilmentRequestsTests;
+import api.requests.scenarios.MultipleOutOfOrderRequestsTests;
+import api.requests.scenarios.RequestQueueTests;
+import api.requests.scenarios.RequestsForDifferentItemsTests;
+import api.requests.scenarios.SingleClosedRequestTests;
+import api.requests.scenarios.SingleOpenDeliveryRequestTests;
+import api.requests.scenarios.SingleOpenHoldShelfRequestTests;
+import api.support.builders.CalendarBuilder;
+import api.support.builders.FixedDueDateSchedule;
+import api.support.builders.FixedDueDateSchedulesBuilder;
+import api.support.builders.LoanPolicyBuilder;
+import api.support.builders.UserBuilder;
+import api.support.fakes.FakeOkapi;
+import api.support.fakes.FakeStorageModule;
+import api.support.fixtures.CalendarExamples;
+import api.support.http.ResourceClient;
+import api.support.http.URLHelper;
+import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import org.folio.circulation.Launcher;
+import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.VertxAssistant;
+import org.folio.circulation.support.http.client.OkapiHttpClient;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
@@ -15,62 +50,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.Launcher;
-import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.VertxAssistant;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import api.loans.CheckInByBarcodeTests;
-import api.loans.CheckInByReplacingLoanTests;
-import api.loans.CheckOutByBarcodeTests;
-import api.loans.LoanAPILocationTests;
-import api.loans.LoanAPIPolicyTests;
-import api.loans.LoanAPIProxyTests;
-import api.loans.LoanAPIRelatedRecordsTests;
-import api.loans.LoanAPITests;
-import api.loans.LoanAPITitleTests;
-import api.loans.RenewByBarcodeTests;
-import api.loans.RenewByIdTests;
-import api.requests.RequestsAPICreateMultipleRequestsTests;
-import api.requests.RequestsAPICreationTests;
-import api.requests.RequestsAPIDeletionTests;
-import api.requests.RequestsAPILoanHistoryTests;
-import api.requests.RequestsAPILoanRenewalTests;
-import api.requests.RequestsAPILocationTests;
-import api.requests.RequestsAPIProxyTests;
-import api.requests.RequestsAPIRelatedRecordsTests;
-import api.requests.RequestsAPIRetrievalTests;
-import api.requests.RequestsAPIStatusChangeTests;
-import api.requests.RequestsAPITitleTests;
-import api.requests.RequestsAPIUpdatingTests;
-import api.requests.scenarios.ClosedRequestTests;
-import api.requests.scenarios.MultipleHoldShelfRequestsTests;
-import api.requests.scenarios.MultipleMixedFulfilmentRequestsTests;
-import api.requests.scenarios.MultipleOutOfOrderRequestsTests;
-import api.requests.scenarios.RequestQueueTests;
-import api.requests.scenarios.RequestsForDifferentItemsTests;
-import api.requests.scenarios.SingleClosedRequestTests;
-import api.requests.scenarios.SingleOpenDeliveryRequestTests;
-import api.requests.scenarios.SingleOpenHoldShelfRequestTests;
-import api.support.builders.FixedDueDateSchedule;
-import api.support.builders.FixedDueDateSchedulesBuilder;
-import api.support.builders.LoanPolicyBuilder;
-import api.support.builders.UserBuilder;
-import api.support.fakes.FakeOkapi;
-import api.support.fakes.FakeStorageModule;
-import api.support.http.ResourceClient;
-import api.support.http.URLHelper;
-import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
+import static api.support.fixtures.CalendarExamples.CASE_1_SERVICE_POINT_ID;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 
 @RunWith(Suite.class)
@@ -311,6 +292,7 @@ public class APITestSuite {
     createAddressTypes();
     createGroups();
     createUsers();
+    createCalendar();
     createLoanPolicies();
     createCancellationReasons();
 
@@ -403,6 +385,18 @@ public class APITestSuite {
       .create();
 
     usersClient.create(userRecord2).getId();
+  }
+
+  public static void createCalendar()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    ResourceClient calendarClient = ResourceClient.forCalendar(createClient());
+    CalendarBuilder calendarBuilder = CalendarExamples.getCalendarById(CASE_1_SERVICE_POINT_ID);
+    calendarClient
+      .createAtSpecificPath(calendarBuilder, "period", "openingPeriods", "servicePointId");
   }
 
   public static void createGroups()
@@ -737,14 +731,13 @@ public class APITestSuite {
 
     String name = record.getString("name");
 
-    if(name == null) {
+    if (name == null) {
       throw new IllegalArgumentException("Reference records must have a name");
     }
 
-    if(existsInList(existingRecords, name)) {
+    if (existsInList(existingRecords, name)) {
       return client.create(record).getId();
-    }
-    else {
+    } else {
       return findFirstByName(existingRecords, name);
     }
   }
@@ -785,17 +778,17 @@ public class APITestSuite {
     TimeoutException {
 
     courseReservesCancellationReasonId = createReferenceRecord(
-        ResourceClient.forCancellationReasons(createClient()),
-        new JsonObject()
-            .put("name", "Course Reserves")
-            .put("description", "Item Needed for Course Reserves")
+      ResourceClient.forCancellationReasons(createClient()),
+      new JsonObject()
+        .put("name", "Course Reserves")
+        .put("description", "Item Needed for Course Reserves")
     );
 
     patronRequestCancellationReasonId = createReferenceRecord(
-        ResourceClient.forCancellationReasons(createClient()),
-        new JsonObject()
-            .put("name", "Patron Request")
-            .put("description", "Item cancelled at Patron request")
+      ResourceClient.forCancellationReasons(createClient()),
+      new JsonObject()
+        .put("name", "Patron Request")
+        .put("description", "Item cancelled at Patron request")
     );
   }
 
@@ -806,7 +799,7 @@ public class APITestSuite {
     TimeoutException {
 
     ResourceClient cancellationReasonClient =
-        ResourceClient.forCancellationReasons(createClient());
+      ResourceClient.forCancellationReasons(createClient());
 
     cancellationReasonClient.delete(courseReservesCancellationReasonId);
     cancellationReasonClient.delete(patronRequestCancellationReasonId);
