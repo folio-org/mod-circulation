@@ -1,19 +1,20 @@
 package api.support.fixtures;
 
-import api.support.builders.HoldingBuilder;
-import api.support.builders.InstanceBuilder;
-import api.support.builders.ItemBuilder;
-import api.support.http.ResourceClient;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
+import static api.APITestSuite.booksInstanceTypeId;
+import static api.APITestSuite.thirdFloorLocationId;
 
 import java.net.MalformedURLException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
-import static api.APITestSuite.booksInstanceTypeId;
-import static api.APITestSuite.thirdFloorLocationId;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.OkapiHttpClient;
+
+import api.support.builders.HoldingBuilder;
+import api.support.builders.InstanceBuilder;
+import api.support.builders.ItemBuilder;
+import api.support.http.ResourceClient;
 
 public class ItemsFixture {
 
@@ -47,17 +48,6 @@ public class ItemsFixture {
     return create(
       InstanceExamples.basedUponSmallAngryPlanet(),
       ItemExamples.basedUponSmallAngryPlanet());
-  }
-  
-   public IndividualResource basedUponSmallAngryPlanetAvailable()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    return create(
-      InstanceExamples.basedUponSmallAngryPlanet(),
-      ItemExamples.basedUponSmallAngryPlanetAvailable());
   }
 
   public IndividualResource basedUponSmallAngryPlanet(

@@ -1,24 +1,39 @@
 package api.support.fixtures;
 
-import api.support.http.ResourceClient;
+import static api.support.fixtures.ServicePointExamples.basedUponCircDesk1;
+import static api.support.fixtures.ServicePointExamples.basedUponCircDesk2;
+import static api.support.fixtures.ServicePointExamples.basedUponCircDesk3;
+
 import java.net.MalformedURLException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+
 import org.folio.circulation.support.http.client.IndividualResource;
 
+import api.support.http.ResourceClient;
+
 public class ServicePointsFixture {
-  private final ResourceClient servicePointsClient;
+  private final RecordCreator servicePointRecordCreator;
   
   public ServicePointsFixture(ResourceClient client) {
-    servicePointsClient = client;
+    servicePointRecordCreator = new RecordCreator(client);
   }
-  
+
+  public void cleanUp()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    servicePointRecordCreator.cleanUp();
+  }
+
   public IndividualResource cd1() 
       throws InterruptedException, 
       MalformedURLException, 
       TimeoutException, 
       ExecutionException {
-    return servicePointsClient.create(ServicePointExamples.basedUponCircDesk1());
+    return servicePointRecordCreator.create(basedUponCircDesk1());
   }
   
   public IndividualResource cd2() 
@@ -26,7 +41,7 @@ public class ServicePointsFixture {
       MalformedURLException, 
       TimeoutException, 
       ExecutionException {
-    return servicePointsClient.create(ServicePointExamples.basedUponCircDesk2());
+    return servicePointRecordCreator.create(basedUponCircDesk2());
   } 
   
   public IndividualResource cd3() 
@@ -34,6 +49,6 @@ public class ServicePointsFixture {
       MalformedURLException, 
       TimeoutException, 
       ExecutionException {
-    return servicePointsClient.create(ServicePointExamples.basedUponCircDesk3());
+    return servicePointRecordCreator.create(basedUponCircDesk3());
   } 
 }

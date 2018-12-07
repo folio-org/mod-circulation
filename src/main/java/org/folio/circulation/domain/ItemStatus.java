@@ -1,14 +1,15 @@
 package org.folio.circulation.domain;
 
-import java.util.Arrays;
-
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
+
+import java.util.Arrays;
 
 public enum ItemStatus {
   NONE(""),
   AVAILABLE("Available"),
   AWAITING_PICKUP("Awaiting pickup"),
-  CHECKED_OUT("Checked out");
+  CHECKED_OUT("Checked out"),
+  IN_TRANSIT("In transit");
 
   public static ItemStatus from(String value) {
     return Arrays.stream(values())

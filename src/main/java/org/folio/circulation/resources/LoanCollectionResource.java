@@ -11,6 +11,7 @@ import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestQueueRepository;
+import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.User;
@@ -136,12 +137,14 @@ public class LoanCollectionResource extends CollectionResource {
     final Clients clients = Clients.create(context, client);
 
     final LoanRepository loanRepository = new LoanRepository(clients);
+    final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
     String id = routingContext.request().getParam("id");
 
     loanRepository.getById(id)
-      .thenApply(r -> r.map(loanRepresentation::extendedLoan))
+      .thenComposeAsync(servicePointRepository::findServicePointsForLoan)
+      .thenApply(loanResult -> loanResult.map(loanRepresentation::extendedLoan))
       .thenApply(OkJsonHttpResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
@@ -162,10 +165,14 @@ public class LoanCollectionResource extends CollectionResource {
     Clients clients = Clients.create(context, client);
 
     final LoanRepository loanRepository = new LoanRepository(clients);
+    final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
     loanRepository.findBy(routingContext.request().query())
-      .thenApply(r -> r.map(loans ->
+      .thenCompose(multiLoanRecordsResult ->
+        multiLoanRecordsResult.after(multipleLoans ->
+          servicePointRepository.findServicePointsForLoans(multipleLoans)))
+      .thenApply(multipleLoanRecordsResult -> multipleLoanRecordsResult.map(loans ->
         loans.asJson(loanRepresentation::extendedLoan, "loans")))
       .thenApply(OkJsonHttpResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));

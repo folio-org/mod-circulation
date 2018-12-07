@@ -1,6 +1,7 @@
 package api;
 
 import api.loans.*;
+import api.loans.scenarios.InTransitToHomeLocationTests;
 import api.requests.*;
 import api.requests.scenarios.ClosedRequestTests;
 import api.requests.scenarios.MultipleHoldShelfRequestsTests;
@@ -11,18 +12,17 @@ import api.requests.scenarios.RequestsForDifferentItemsTests;
 import api.requests.scenarios.SingleClosedRequestTests;
 import api.requests.scenarios.SingleOpenDeliveryRequestTests;
 import api.requests.scenarios.SingleOpenHoldShelfRequestTests;
-import api.support.builders.CalendarBuilder;
 import api.support.builders.FixedDueDateSchedule;
 import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.LoanPolicyBuilder;
+import api.support.builders.LocationBuilder;
+import api.support.builders.ServicePointBuilder;
 import api.support.builders.UserBuilder;
 import api.support.fakes.FakeOkapi;
 import api.support.fakes.FakeStorageModule;
-import api.support.fixtures.CalendarExamples;
 import api.support.http.ResourceClient;
 import api.support.http.URLHelper;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.Launcher;
 import org.folio.circulation.domain.policy.Period;
@@ -50,7 +50,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static api.support.fixtures.CalendarExamples.CASE_1_SERVICE_POINT_ID;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 
@@ -58,6 +57,7 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 @Suite.SuiteClasses({
   CheckOutByBarcodeTests.class,
+  CheckOutCalculateDueDateTests.class,
   RenewByBarcodeTests.class,
   RenewByIdTests.class,
   CheckInByBarcodeTests.class,
@@ -70,6 +70,7 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
   LoanRulesAPITests.class,
   LoanAPIProxyTests.class,
   LoanRulesEngineAPITests.class,
+  InTransitToHomeLocationTests.class,
   RequestsAPICreationTests.class,
   RequestsAPICreateMultipleRequestsTests.class,
   ClosedRequestTests.class,
@@ -136,6 +137,7 @@ public class APITestSuite {
 
   private static UUID courseReservesCancellationReasonId;
   private static UUID patronRequestCancellationReasonId;
+  private static UUID fakeServicePointId;
 
   public static int circulationModulePort() {
     return port;
@@ -250,6 +252,26 @@ public class APITestSuite {
     return patronRequestCancellationReasonId;
   }
 
+  public static UUID nottinghamUniversityInstitution() {
+    return nottinghamUniversityInstitution;
+  }
+
+  public static UUID jubileeCampus() {
+    return jubileeCampus;
+  }
+
+  public static UUID djanoglyLibrary() {
+    return djanoglyLibrary;
+  }
+
+  public static UUID businessLibrary() {
+    return businessLibrary;
+  }
+
+  public static UUID fakeServicePoint() {
+    return fakeServicePointId;
+  }
+
   @BeforeClass
   public static void before()
     throws InterruptedException,
@@ -284,15 +306,18 @@ public class APITestSuite {
     CompletableFuture.allOf(circulationModuleStarted, fakeStorageModuleDeployed)
       .get(10, TimeUnit.SECONDS);
 
+    //Delete everything first just in case
+    deleteAllRecords();
+
     createMaterialTypes();
     createLoanTypes();
+    createServicePoints();
     createLocations();
     createContributorNameTypes();
     createInstanceTypes();
     createAddressTypes();
     createGroups();
     createUsers();
-    createCalendar();
     createLoanPolicies();
     createCancellationReasons();
 
@@ -326,6 +351,7 @@ public class APITestSuite {
     deleteMaterialTypes();
     deleteLoanTypes();
     deleteLocations();
+    deleteServicePoints();
     deleteContributorTypes();
     deleteInstanceTypes();
     deleteLoanPolicies();
@@ -351,6 +377,40 @@ public class APITestSuite {
     CompletableFuture<Void> stopped = vertxAssistant.stop();
 
     stopped.get(5, TimeUnit.SECONDS);
+  }
+
+  public static void deleteAllRecords()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    OkapiHttpClient client = APITestSuite.createClient(exception ->
+      log.error("Requests to delete all for clean up failed:", exception));
+
+    ResourceClient.forRequests(client).deleteAll();
+    ResourceClient.forLoans(client).deleteAll();
+
+    ResourceClient.forItems(client).deleteAll();
+    ResourceClient.forHoldings(client).deleteAll();
+    ResourceClient.forInstances(client).deleteAll();
+
+    ResourceClient.forLoanPolicies(client).deleteAllIndividually();
+    ResourceClient.forFixedDueDateSchedules(client).deleteAllIndividually();
+
+    ResourceClient.forUsers(client).deleteAllIndividually();
+
+    ResourceClient.forPatronGroups(client).deleteAllIndividually();
+    ResourceClient.forAddressTypes(client).deleteAllIndividually();
+
+    ResourceClient.forMaterialTypes(client).deleteAllIndividually();
+    ResourceClient.forLoanTypes(client).deleteAllIndividually();
+    ResourceClient.forLocations(client).deleteAllIndividually();
+    ResourceClient.forServicePoints(client).deleteAllIndividually();
+    ResourceClient.forContributorNameTypes(client).deleteAllIndividually();
+    ResourceClient.forInstanceTypes(client).deleteAllIndividually();
+    ResourceClient.forLoanPolicies(client).deleteAllIndividually();
+    ResourceClient.forCancellationReasons(client).deleteAllIndividually();
   }
 
   public static URL okapiUrl() {
@@ -385,18 +445,6 @@ public class APITestSuite {
       .create();
 
     usersClient.create(userRecord2).getId();
-  }
-
-  public static void createCalendar()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    ResourceClient calendarClient = ResourceClient.forCalendar(createClient());
-    CalendarBuilder calendarBuilder = CalendarExamples.getCalendarById(CASE_1_SERVICE_POINT_ID);
-    calendarClient
-      .createAtSpecificPath(calendarBuilder, "period", "openingPeriods", "servicePointId");
   }
 
   public static void createGroups()
@@ -524,6 +572,30 @@ public class APITestSuite {
     loanTypesClient.delete(readingRoomLoanTypeId);
   }
 
+  private static void createServicePoints()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    ResourceClient servicePointsClient = ResourceClient.forServicePoints(createClient());
+
+    fakeServicePointId = servicePointsClient.create(
+      new ServicePointBuilder("Fake service point", "FAKE", "Fake service point"))
+      .getId();
+  }
+
+  private static void deleteServicePoints()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    ResourceClient servicePointsClient = ResourceClient.forServicePoints(createClient());
+
+    servicePointsClient.delete(fakeServicePointId);
+  }
+
   private static void createLocations()
     throws MalformedURLException,
     InterruptedException,
@@ -558,41 +630,35 @@ public class APITestSuite {
 
     ResourceClient locationsClient = ResourceClient.forLocations(client);
 
-
-    final UUID fakeServicePointId = UUID.randomUUID();
-
     thirdFloorLocationId = createReferenceRecord(locationsClient,
-      new JsonObject()
-        .put("name", "3rd Floor")
-        .put("code", "NU/JC/DL/3F")
-        .put("institutionId", nottinghamUniversityInstitution.toString())
-        .put("campusId", jubileeCampus.toString())
-        .put("libraryId", djanoglyLibrary.toString())
-        //TODO: Replace with created service point
-        .put("primaryServicePoint", fakeServicePointId.toString())
-        .put("servicePointIds", new JsonArray().add(fakeServicePointId.toString())));
+      new LocationBuilder()
+        .withName("3rd Floor")
+        .withCode("NU/JC/DL/3F")
+        .forInstitution(nottinghamUniversityInstitution())
+        .forCampus(jubileeCampus())
+        .forLibrary(djanoglyLibrary())
+        .withPrimaryServicePoint(fakeServicePoint())
+        .create());
 
     secondFloorEconomicsLocationId = createReferenceRecord(locationsClient,
-      new JsonObject()
-        .put("name", "2nd Floor - Economics")
-        .put("code", "NU/JC/DL/2FE")
-        .put("institutionId", nottinghamUniversityInstitution.toString())
-        .put("campusId", jubileeCampus.toString())
-        .put("libraryId", djanoglyLibrary.toString())
-        //TODO: Replace with created service point
-        .put("primaryServicePoint", fakeServicePointId.toString())
-        .put("servicePointIds", new JsonArray().add(fakeServicePointId.toString())));
+      new LocationBuilder()
+        .withName("2nd Floor - Economics")
+        .withCode("NU/JC/DL/2FE")
+        .forInstitution(nottinghamUniversityInstitution())
+        .forCampus(jubileeCampus())
+        .forLibrary(djanoglyLibrary())
+        .withPrimaryServicePoint(fakeServicePoint())
+        .create());
 
     mezzanineDisplayCaseLocationId = createReferenceRecord(locationsClient,
-      new JsonObject()
-        .put("name", "Display Case, Mezzanine")
-        .put("code", "NU/JC/BL/DM")
-        .put("institutionId", nottinghamUniversityInstitution.toString())
-        .put("campusId", jubileeCampus.toString())
-        .put("libraryId", businessLibrary.toString())
-        //TODO: Replace with created service point
-        .put("primaryServicePoint", fakeServicePointId.toString())
-        .put("servicePointIds", new JsonArray().add(fakeServicePointId.toString())));
+      new LocationBuilder()
+        .withName("Display Case, Mezzanine")
+        .withCode("NU/JC/BL/DM")
+        .forInstitution(nottinghamUniversityInstitution())
+        .forCampus(jubileeCampus())
+        .forLibrary(businessLibrary())
+        .withPrimaryServicePoint(fakeServicePoint())
+        .create());
   }
 
   private static void deleteLocations()

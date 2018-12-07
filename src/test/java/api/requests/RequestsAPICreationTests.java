@@ -50,7 +50,6 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID id = UUID.randomUUID();
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    servicePointsToDelete.add(pickupServicePointId);
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -773,7 +772,6 @@ public class RequestsAPICreationTests extends APITests {
     MalformedURLException {
     
     UUID pickupServicePointId = servicePointsFixture.cd3().getId();
-    servicePointsToDelete.add(pickupServicePointId);
     
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
 

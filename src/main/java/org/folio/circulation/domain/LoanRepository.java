@@ -4,7 +4,6 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.of;
 import static org.folio.circulation.support.HttpResult.succeeded;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -13,11 +12,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.domain.validation.UserNotFoundValidator;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlHelper;
@@ -26,7 +23,6 @@ import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.SingleRecordFetcher;
-import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,6 +70,10 @@ public class LoanRepository {
   }
 
   public CompletableFuture<HttpResult<Loan>> updateLoan(Loan loan) {
+    if(loan == null) {
+      return completedFuture(of(() -> null));
+    }
+
     JsonObject storageLoan = mapToStorageRepresentation(loan, loan.getItem());
 
     final Function<Response, HttpResult<Loan>> mapResponse = response -> {
@@ -91,49 +91,6 @@ public class LoanRepository {
       .thenComposeAsync(r -> r.after(
         //Fetch updated loan without having to get the item and the user again
         l -> fetchLoan(l.getId(), loan.getItem(), loan.getUser())));
-  }
-
-  //TODO: Extract to separate class rather than repository
-  public CompletableFuture<HttpResult<Loan>> findOpenLoanByBarcode(FindByBarcodeQuery query) {
-    final UserNotFoundValidator userNotFoundValidator = new UserNotFoundValidator(
-      userId -> failure("user is not found", "userId", userId));
-
-    return itemRepository.fetchByBarcode(query.getItemBarcode())
-      .thenComposeAsync(getOnlyLoan(query))
-      .thenComposeAsync(this::fetchUser)
-      .thenApply(userNotFoundValidator::refuseWhenUserNotFound);
-  }
-
-  //TODO: Extract to separate class rather than repository
-  public CompletableFuture<HttpResult<Loan>> findOpenLoanById(FindByIdQuery query) {
-
-    final UserNotFoundValidator userNotFoundValidator = new UserNotFoundValidator(
-      userId -> failure("user is not found", "userId", userId));
-
-    return itemRepository.fetchById(query.getItemId())
-      .thenComposeAsync(itemResult -> itemResult.after(item -> {
-        if(item.isNotFound()) {
-          return completedFuture(ValidationErrorFailure.failedResult(
-            String.format("No item with ID %s exists", query.getItemId()),
-            "itemId", query.getItemId()));
-        }
-
-        return findOpenLoans(item)
-          .thenApply(loanResult -> loanResult.next(loans -> {
-            final Optional<Loan> first = loans.getRecords().stream()
-              .findFirst();
-
-            if (loans.getTotalRecords() == 1 && first.isPresent()) {
-              return succeeded(Loan.from(first.get().asJson(), item));
-            } else {
-              return failed(new ServerErrorFailure(
-                String.format("More than one open loan for item %s", query.getItemId())));
-            }
-          }));
-      }))
-      .thenComposeAsync(this::fetchUser)
-      .thenApply(userNotFoundValidator::refuseWhenUserNotFound)
-      .thenApply(r -> r.next(loan -> refuseWhenDifferentUser(loan, query)));
   }
 
   /**
@@ -161,18 +118,6 @@ public class LoanRepository {
             String.format("More than one open loan for item %s", request.getItemId())));
         }
       }));
-  }
-
-  private HttpResult<Loan> refuseWhenDifferentUser(
-    Loan loan,
-    UserRelatedQuery query) {
-
-    if(query.userMatches(loan.getUser())) {
-      return succeeded(loan);
-    }
-    else {
-      return failed(query.userDoesNotMatchError());
-    }
   }
 
   public CompletableFuture<HttpResult<Loan>> getById(String id) {
@@ -239,7 +184,7 @@ public class LoanRepository {
       .thenApply(r -> r.map(loans -> !loans.getRecords().isEmpty()));
   }
 
-  private CompletableFuture<HttpResult<MultipleRecords<Loan>>> findOpenLoans(Item item) {
+  public CompletableFuture<HttpResult<MultipleRecords<Loan>>> findOpenLoans(Item item) {
     return findOpenLoans(item.getItemId());
   }
 
@@ -301,42 +246,4 @@ public class LoanRepository {
       .withLoan(loanMap.getOrDefault(request.getItemId(), null));
   }
 
-  private Function<HttpResult<Item>, CompletionStage<HttpResult<Loan>>> getOnlyLoan(
-    FindByBarcodeQuery query) {
-
-    return itemResult -> failWhenNoItemFoundForBarcode(itemResult, query)
-      .after(this::findOpenLoans)
-      .thenApply(result -> failWhenMoreThanOneOpenLoan(result, query))
-      .thenApply(loanResult -> loanResult.map(this::getFirstLoan))
-      .thenApply(loanResult -> loanResult.combine(itemResult, Loan::withItem));
-  }
-
-  private Loan getFirstLoan(MultipleRecords<Loan> loans) {
-    return loans.getRecords().stream()
-      .findFirst()
-      .orElse(null);
-  }
-
-  private HttpResult<Item> failWhenNoItemFoundForBarcode(
-    HttpResult<Item> itemResult,
-    FindByBarcodeQuery query) {
-
-    return itemResult.failWhen(item -> of(item::isNotFound),
-        item -> ValidationErrorFailure.failure(
-        String.format("No item with barcode %s exists", query.getItemBarcode()),
-        "itemBarcode", query.getItemBarcode()) );
-  }
-
-  private HttpResult<MultipleRecords<Loan>> failWhenMoreThanOneOpenLoan(
-    HttpResult<MultipleRecords<Loan>> result,
-    FindByBarcodeQuery query) {
-
-    return result.failWhen(loans -> {
-      final Optional<Loan> first = loans.getRecords().stream()
-        .findFirst();
-
-      return of(() -> loans.getTotalRecords() != 1 || !first.isPresent());
-    }, loans -> new ServerErrorFailure(
-      String.format("More than one open loan for item %s", query.getItemBarcode())));
-  }
 }

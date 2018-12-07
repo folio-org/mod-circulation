@@ -34,20 +34,26 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   private String checkoutServicePointId;
   private String checkinServicePointId;
+  
+  private ServicePoint checkoutServicePoint;
+  private ServicePoint checkinServicePoint;
 
   public Loan(JsonObject representation) {
-    this(representation, null, null, null);
+    this(representation, null, null, null, null, null);
   }
 
-  public Loan(JsonObject representation, Item item, User user, User proxy) {
+  public Loan(JsonObject representation, Item item, User user, User proxy, 
+      ServicePoint checkinServicePoint, ServicePoint checkoutServicePoint) {
 
     this.representation = representation;
     this.item = item;
     this.user = user;
     this.proxy = proxy;
+    this.checkinServicePoint = checkinServicePoint;
+    this.checkoutServicePoint = checkoutServicePoint;
 
     this.checkoutServicePointId = getProperty(representation, LoanProperties.CHECKOUT_SERVICE_POINT_ID);
-    this.checkinServicePointId = getProperty(representation, LoanProperties.CHECKIN_SERVICE_POINT_ID);
+    this.checkinServicePointId = getProperty(representation, CHECKIN_SERVICE_POINT_ID);
 
     // TODO: Refuse if ID does not match property in representation,
     // and possibly convert isFound to unknown item class
@@ -78,7 +84,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   public static Loan from(JsonObject representation, Item item, User user, User proxy) {
 
     defaultStatusAndAction(representation);
-    return new Loan(representation, item, user, proxy);
+    return new Loan(representation, item, user, proxy, null, null);
   }
 
   JsonObject asJson() {
@@ -106,7 +112,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   private void changeStatus(String status) {
-    representation.put(LoanProperties.STATUS, new JsonObject().put("name", status));
+    representation.put(STATUS, new JsonObject().put("name", status));
   }
 
   public HttpResult<Void> isValidStatus() {
@@ -133,9 +139,9 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public HttpResult<Void> closedLoanHasCheckInServicePointId() {
-    if (isClosed() && getCheckinServicePointId() == null) {
+    if (isClosed() && getCheckInServicePointId() == null) {
       return failed(failure("A Closed loan must have a Checkin Service Point",
-          CHECKIN_SERVICE_POINT_ID, getCheckinServicePointId()));
+          CHECKIN_SERVICE_POINT_ID, getCheckInServicePointId()));
     } else {
       return HttpResult.succeeded(null);
     }
@@ -177,15 +183,17 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan withItem(Item item) {
-    return new Loan(representation, item, user, proxy);
+    return new Loan(representation, item, user, proxy, checkinServicePoint,
+        checkoutServicePoint);
   }
 
   public User getUser() {
     return user;
   }
 
-  Loan withUser(User newUser) {
-    return new Loan(representation, item, newUser, proxy);
+  public Loan withUser(User newUser) {
+    return new Loan(representation, item, newUser, proxy, checkinServicePoint,
+        checkoutServicePoint);
   }
 
   public User getProxy() {
@@ -193,13 +201,32 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   Loan withProxy(User newProxy) {
-    return new Loan(representation, item, user, newProxy);
+    return new Loan(representation, item, user, newProxy, checkinServicePoint,
+      checkoutServicePoint);
+  }
+  
+  public Loan withCheckinServicePoint(ServicePoint newCheckinServicePoint) {
+    return new Loan(representation, item, user, proxy, newCheckinServicePoint,
+      checkoutServicePoint);
+  }
+  
+  public Loan withCheckoutServicePoint(ServicePoint newCheckoutServicePoint) {
+    return new Loan(representation, item, user, proxy, checkinServicePoint,
+      newCheckoutServicePoint);
   }
 
   private void changeLoanPolicy(String newLoanPolicyId) {
     if (newLoanPolicyId != null) {
       representation.put("loanPolicyId", newLoanPolicyId);
     }
+  }
+  
+  public ServicePoint getCheckinServicePoint() {
+    return this.checkinServicePoint;
+  }
+  
+  public ServicePoint getCheckoutServicePoint() {
+    return this.checkoutServicePoint;
   }
 
   public Loan renew(DateTime dueDate, String basedUponLoanPolicyId) {
@@ -211,7 +238,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return this;
   }
 
-  Loan checkin(DateTime returnDate, UUID servicePointId) {
+  Loan checkIn(DateTime returnDate, UUID servicePointId) {
     changeAction("checkedin");
     changeStatus("Closed");
     changeReturnDate(returnDate);
@@ -234,8 +261,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   private static void defaultStatusAndAction(JsonObject loan) {
-    if (!loan.containsKey(LoanProperties.STATUS)) {
-      loan.put(LoanProperties.STATUS, new JsonObject().put("name", "Open"));
+    if (!loan.containsKey(STATUS)) {
+      loan.put(STATUS, new JsonObject().put("name", "Open"));
 
       if (!loan.containsKey(LoanProperties.ACTION)) {
         loan.put(LoanProperties.ACTION, "checkedout");
@@ -243,15 +270,11 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     }
   }
 
-  public void setCheckoutServicePointId(String servicePointOfCheckout) {
-    this.checkoutServicePointId = servicePointOfCheckout;
-  }
-
   public String getCheckoutServicePointId() {
     return checkoutServicePointId;
   }
 
-  private String getCheckinServicePointId() {
+  public String getCheckInServicePointId() {
     return checkinServicePointId;
   }
 }

@@ -13,12 +13,10 @@ import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.representations.RequestProperties;
-import org.folio.circulation.support.ValidationErrorFailure;
-import org.folio.circulation.support.http.server.ValidationError;
 
 import io.vertx.core.json.JsonObject;
 
-public class Request implements ItemRelatedRecord, UserRelatedRecord, FindByIdQuery {
+public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private final JsonObject representation;
   private final Item item;
   private final User requester;
@@ -218,17 +216,6 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord, FindByIdQu
 
   ItemStatus checkedOutItemStatus() {
     return getRequestType().toCheckedOutItemStatus();
-  }
-
-  @Override
-  public boolean userMatches(User user) {
-    return user.getId().equals(requester.getId());
-  }
-
-  @Override
-  public ValidationErrorFailure userDoesNotMatchError() {
-    ValidationError error = new ValidationError("User does not match", "userId", requester.getId());
-    return new ValidationErrorFailure(error);
   }
 
   String getDeliveryAddressType() {

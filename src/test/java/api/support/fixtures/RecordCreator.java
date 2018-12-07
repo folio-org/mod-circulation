@@ -20,7 +20,7 @@ class RecordCreator {
     this.client = client;
   }
 
-  IndividualResource createRecord(Builder builder)
+  IndividualResource create(Builder builder)
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,

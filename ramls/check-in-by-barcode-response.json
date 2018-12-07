@@ -6,6 +6,95 @@
     "loan": {
       "description": "Loan affected by the check in (may be none, if a receiving check in)",
       "$ref": "loan.json"
+    },
+    "item": {
+      "description": "Additional information about the item",
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "ID of the item",
+          "type": "string"
+        },
+        "title": {
+          "description": "The title of the item lent to the patron",
+          "type": "string"
+        },
+        "callNumber" : {
+          "description" : "The call number from the holdings record",
+          "type": "string"
+        },
+        "materialType": {
+          "description": "The material type from the item record",
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "contributors": {
+          "description": "Contributors from the instance record",
+          "type": "array",
+          "items" : {
+            "type": "object",
+            "properties" : {
+              "name" : {
+                "type" : "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "holdingsRecordId": {
+          "description": "The ID of the holdings for the item",
+          "type": "string"
+        },
+        "instanceId": {
+          "description": "The ID of the instance for the item",
+          "type": "string"
+        },
+        "barcode": {
+          "description": "The barcode of the item",
+          "type": "string"
+        },
+        "location": {
+          "description": "The effective location of the item",
+          "type": "object",
+          "properties": {
+            "name": {
+              "description": "The name of the location",
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "status": {
+          "description": "Overall status of the item",
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "inTransitDestinationServicePointId": {
+          "description": "Service point an item is intended to be transited to (should only be present when in transit)",
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+        },
+        "inTransitDestinationServicePoint": {
+          "description": "Service point an item is intended to be transited to (should only be present when in transit)",
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false

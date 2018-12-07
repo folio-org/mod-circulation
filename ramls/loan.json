@@ -29,6 +29,10 @@
       "description": "Additional information about the item",
       "type": "object",
       "properties": {
+        "id": {
+          "description": "ID of the item",
+          "type": "string"
+        },
         "title": {
           "description": "The title of the item lent to the patron",
           "type": "string"
@@ -90,6 +94,20 @@
               "type": "string"
             }
           }
+        },
+        "inTransitDestinationServicePointId": {
+          "description": "Service point an item is intended to be transited to (should only be present when in transit)",
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+        },
+        "inTransitDestinationServicePoint": {
+          "description": "Service point an item is intended to be transited to (should only be present when in transit)",
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            }
+          }
         }
       }
     },
@@ -138,6 +156,58 @@
     "checkinServicePointId": {
       "description": "ID of the Service Point where the last checkin occured",
       "type": "string"
+    },
+    "checkoutServicePoint": {
+      "description": "The Service Point where the last checkout occurred",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The unique name of the service point"
+        },
+        "code": {
+          "description": "The short code for the service point",
+          "type": "string"
+        },
+        "discoveryDisplayName":{
+          "description": "The human readable name",
+          "type": "string"
+        },
+        "shelvingLagTime": {
+          "description": "The time to shelving",
+          "type": "integer"
+        },
+        "pickupLocation": {
+          "description": "Is this a pickup location",
+          "type": "boolean"
+        }
+      }
+    },
+    "checkinServicePoint": {
+      "description": "The Service Point where the last checkout occurred",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The unique name of the service point"
+        },
+        "code": {
+          "description": "The short code for the service point",
+          "type": "string"
+        },
+        "discoveryDisplayName":{
+          "description": "The human readable name",
+          "type": "string"
+        },
+        "shelvingLagTime": {
+          "description": "The time to shelving",
+          "type": "integer"
+        },
+        "pickupLocation": {
+          "description": "Is this a pickup location",
+          "type": "boolean"
+        }
+      }
     },
     "metadata": {
       "description": "Metadata about creation and changes to loan, provided by the server (client should not provide)",

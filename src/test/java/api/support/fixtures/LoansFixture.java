@@ -1,5 +1,6 @@
 package api.support.fixtures;
 
+import static api.APITestSuite.fakeServicePoint;
 import static api.support.RestAssuredClient.from;
 import static api.support.RestAssuredClient.post;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
@@ -291,7 +292,7 @@ public class LoansFixture {
     return checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(item)
       .on(DateTime.now(DateTimeZone.UTC))
-      .at(UUID.randomUUID()));
+      .at(fakeServicePoint()));
   }
 
   public CheckInByBarcodeResponse checkInByBarcode(

@@ -59,7 +59,6 @@ public class RequestsAPIUpdatingTests extends APITests {
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
     final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
-    servicePointsToDelete.add(exampleServicePoint.getId());
 
     //TODO: Should include pickup service point
     IndividualResource createdRequest = requestsClient.create(
@@ -178,7 +177,6 @@ public class RequestsAPIUpdatingTests extends APITests {
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
     final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
-    servicePointsToDelete.add(exampleServicePoint.getId());
 
     IndividualResource createdRequest = requestsClient.create(
       new RequestBuilder()
@@ -678,7 +676,6 @@ public class RequestsAPIUpdatingTests extends APITests {
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
     final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
-    servicePointsToDelete.add(exampleServicePoint.getId());
 
     IndividualResource createdRequest = requestsClient.create(
       new RequestBuilder()
@@ -696,7 +693,6 @@ public class RequestsAPIUpdatingTests extends APITests {
       .getJson();
 
      UUID badServicePointId = servicePointsFixture.cd3().getId();
-     servicePointsToDelete.add(badServicePointId);
 
     updatedRequest
       .put("pickupServicePointId", badServicePointId.toString());
@@ -735,7 +731,6 @@ public class RequestsAPIUpdatingTests extends APITests {
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
     final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
-    servicePointsToDelete.add(exampleServicePoint.getId());
 
     IndividualResource createdRequest = requestsClient.create(
       new RequestBuilder()

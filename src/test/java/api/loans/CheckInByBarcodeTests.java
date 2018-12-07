@@ -5,9 +5,7 @@ import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
-import static org.folio.HttpStatus.HTTP_INTERNAL_SERVER_ERROR;
 import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -40,9 +38,14 @@ public class CheckInByBarcodeTests extends APITests {
     DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 
     final IndividualResource james = usersFixture.james();
-    final IndividualResource nod = itemsFixture.basedUponNod();
 
-    final UUID checkinServicePointId = UUID.randomUUID();
+    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+
+    final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
+      builder -> builder.withPrimaryServicePoint(checkInServicePointId));
+
+    final IndividualResource nod = itemsFixture.basedUponNod(
+      builder -> builder.withTemporaryLocation(homeLocation.getId()));
 
     final IndividualResource loan = loansFixture.checkOut(nod, james, loanDate);
 
@@ -52,7 +55,7 @@ public class CheckInByBarcodeTests extends APITests {
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .on(new DateTime(2018, 3, 5, 14 ,23, 41, DateTimeZone.UTC))
-        .at(checkinServicePointId));
+        .at(checkInServicePointId));
 
     JsonObject loanRepresentation = checkInResponse.getLoan();
 
@@ -74,6 +77,9 @@ public class CheckInByBarcodeTests extends APITests {
     assertThat("action is not checkedin",
       loanRepresentation.getString("action"), is("checkedin"));
 
+    assertThat("ID should be included for item",
+      loanRepresentation.getJsonObject("item").getString("id"), is(nod.getId()));
+
     assertThat("title is taken from item",
       loanRepresentation.getJsonObject("item").getString("title"),
       is("Nod"));
@@ -84,6 +90,20 @@ public class CheckInByBarcodeTests extends APITests {
 
     assertThat("Should not have snapshot of item status, as current status is included",
       loanRepresentation.containsKey("itemStatus"), is(false));
+
+    assertThat("Response should include an item",
+      checkInResponse.getJson().containsKey("item"), is(true));
+
+    final JsonObject itemFromResponse = checkInResponse.getItem();
+
+    assertThat("title is included for item",
+      itemFromResponse.getString("title"), is("Nod"));
+
+    assertThat("ID should be included for item",
+      itemFromResponse.getString("id"), is(nod.getId()));
+
+    assertThat("barcode is included for item",
+      itemFromResponse.getString("barcode"), is("565578437802"));
 
     JsonObject updatedNod = itemsClient.getById(nod.getId()).getJson();
 
@@ -99,7 +119,7 @@ public class CheckInByBarcodeTests extends APITests {
       storedLoan.getString("itemStatus"), is("Available"));
 
     assertThat("Checkin Service Point Id should be stored.",
-      storedLoan.getString("checkinServicePointId"), is(checkinServicePointId));
+      storedLoan.getString("checkinServicePointId"), is(checkInServicePointId));
   }
 
   @Test
@@ -133,7 +153,8 @@ public class CheckInByBarcodeTests extends APITests {
     final Response response = loansFixture.attemptCheckInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
-        .on(DateTime.now()));
+        .on(DateTime.now())
+        .atNoServicePoint());
 
     assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
 
@@ -157,6 +178,7 @@ public class CheckInByBarcodeTests extends APITests {
 
     final Response response = loansFixture.attemptCheckInByBarcode(
       new CheckInByBarcodeRequestBuilder()
+        .noItem()
         .on(DateTime.now())
         .at(UUID.randomUUID()));
 
@@ -183,6 +205,7 @@ public class CheckInByBarcodeTests extends APITests {
     final Response response = loansFixture.attemptCheckInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
+        .onNoOccasion()
         .at(UUID.randomUUID()));
 
     assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
@@ -192,7 +215,44 @@ public class CheckInByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckInAnItemTwice()
+  public void canCheckInAnItemWithoutAnOpenLoan()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+
+    final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
+      builder -> builder.withPrimaryServicePoint(checkInServicePointId));
+
+    final IndividualResource nod = itemsFixture.basedUponNod(
+      builder -> builder.withTemporaryLocation(homeLocation.getId()));
+
+    final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+      nod, new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC),
+      checkInServicePointId);
+
+    assertThat("Response should not include a loan",
+      checkInResponse.getJson().containsKey("loan"), is(false));
+
+    assertThat("Response should include an item",
+      checkInResponse.getJson().containsKey("item"), is(true));
+
+    final JsonObject itemFromResponse = checkInResponse.getItem();
+
+    assertThat("ID should be included for item",
+      itemFromResponse.getString("id"), is(nod.getId()));
+
+    assertThat("title is included for item",
+      itemFromResponse.getString("title"), is("Nod"));
+
+    assertThat("barcode is included for item",
+      itemFromResponse.getString("barcode"), is("565578437802"));
+  }
+
+  @Test
+  public void canCheckInAnItemTwice()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -201,23 +261,40 @@ public class CheckInByBarcodeTests extends APITests {
     DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 
     final IndividualResource james = usersFixture.james();
-    final IndividualResource nod = itemsFixture.basedUponNod();
 
-    final UUID checkinServicePointId = UUID.randomUUID();
+    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+
+    final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
+      builder -> builder.withPrimaryServicePoint(checkInServicePointId));
+
+    final IndividualResource nod = itemsFixture.basedUponNod(
+      builder -> builder.withTemporaryLocation(homeLocation.getId()));
 
     loansFixture.checkOut(nod, james, loanDate);
 
     loansFixture.checkInByBarcode(nod,
       new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC),
-      checkinServicePointId);
+      checkInServicePointId);
 
-    final Response checkInAttemptResponse = loansFixture.attemptCheckInByBarcode(
+    final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
       nod, new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC),
-      checkinServicePointId);
+      checkInServicePointId);
 
-    assertThat(checkInAttemptResponse, hasStatus(HTTP_INTERNAL_SERVER_ERROR));
+    assertThat("Response should not include a loan",
+      checkInResponse.getJson().containsKey("loan"), is(false));
 
-    assertThat(checkInAttemptResponse.getBody(),
-      containsString("More than one open loan for item"));
+    assertThat("Response should include an item",
+      checkInResponse.getJson().containsKey("item"), is(true));
+
+    final JsonObject itemFromResponse = checkInResponse.getItem();
+
+    assertThat("ID should be included for item",
+      itemFromResponse.getString("id"), is(nod.getId()));
+
+    assertThat("title is included for item",
+      itemFromResponse.getString("title"), is("Nod"));
+
+    assertThat("barcode is included for item",
+      itemFromResponse.getString("barcode"), is("565578437802"));
   }
 }

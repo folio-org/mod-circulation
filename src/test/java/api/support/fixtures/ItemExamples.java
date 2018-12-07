@@ -10,14 +10,6 @@ public class ItemExamples {
       .withMaterialType(APITestSuite.bookMaterialTypeId())
       .withBarcode("036000291452");
   }
-  
-  public static ItemBuilder basedUponSmallAngryPlanetAvailable() {
-    return new ItemBuilder()
-      .withPermanentLoanType(APITestSuite.canCirculateLoanTypeId())
-      .withMaterialType(APITestSuite.bookMaterialTypeId())
-      .withBarcode("036000291452")
-      .available();
-  }
 
   static ItemBuilder basedUponNod() {
     return new ItemBuilder()
