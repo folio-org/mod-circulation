@@ -2,7 +2,6 @@ package org.folio.circulation.domain.validation;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.support.HttpResult;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
