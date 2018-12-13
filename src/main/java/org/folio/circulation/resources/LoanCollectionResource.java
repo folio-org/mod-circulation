@@ -32,6 +32,8 @@ import org.folio.circulation.support.http.server.WebContext;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
+import java.util.concurrent.CompletableFuture;
+import org.folio.circulation.domain.validation.ServicePointLoanLocationValidator;
 
 public class LoanCollectionResource extends CollectionResource {
   public LoanCollectionResource(HttpClient client) {
@@ -48,6 +50,7 @@ public class LoanCollectionResource extends CollectionResource {
     final Clients clients = Clients.create(context, client);
 
     final ItemRepository itemRepository = new ItemRepository(clients, true, true);
+    final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final UserRepository userRepository = new UserRepository(clients);
 
@@ -67,12 +70,19 @@ public class LoanCollectionResource extends CollectionResource {
       message -> failure(message, "itemId", loan.getItemId()));
 
     final ItemNotFoundValidator itemNotFoundValidator = createItemNotFoundValidator(loan);
+    
+    final ServicePointLoanLocationValidator spLoanLocationValidator = 
+        new ServicePointLoanLocationValidator();
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
     completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(loan)))
+      .thenCompose(larrResult -> {
+        return populateServicePointsForLoanAndRelated(servicePointRepository, larrResult);
+      })
       .thenApply(this::refuseWhenNotOpenOrClosed)
       .thenApply(this::refuseWhenOpenAndNoUserId)
+      .thenApply(spLoanLocationValidator::checkServicePointLoanLocation)
       .thenCombineAsync(itemRepository.fetchFor(loan), this::addItem)
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
       .thenApply(this::refuseWhenHoldingDoesNotExist)
@@ -102,6 +112,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     final Clients clients = Clients.create(context, client);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
+    final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
     final ItemRepository itemRepository = new ItemRepository(clients, false, false);
 
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
@@ -113,10 +124,17 @@ public class LoanCollectionResource extends CollectionResource {
         loan.getProxyUserId()));
 
     final ItemNotFoundValidator itemNotFoundValidator = createItemNotFoundValidator(loan);
+    
+    final ServicePointLoanLocationValidator spLoanLocationValidator = 
+        new ServicePointLoanLocationValidator();
 
     completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(loan)))
+      .thenCompose(larrResult -> {
+        return populateServicePointsForLoanAndRelated(servicePointRepository, larrResult);
+      })
       .thenApply(this::refuseWhenNotOpenOrClosed)
       .thenApply(this::refuseWhenOpenAndNoUserId)
+      .thenApply(spLoanLocationValidator::checkServicePointLoanLocation)
       .thenApply(this::refuseWhenClosedAndNoCheckInServicePointId)
       .thenCombineAsync(itemRepository.fetchFor(loan), this::addItem)
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
@@ -250,6 +268,22 @@ public class LoanCollectionResource extends CollectionResource {
       .map(LoanAndRelatedRecords::getLoan)
       .next(Loan::openLoanHasUserId)
       .next(v -> loanAndRelatedRecords);
+  }
+  
+  private CompletableFuture<HttpResult<LoanAndRelatedRecords>> populateServicePointsForLoanAndRelated(
+      ServicePointRepository servicePointRepository, HttpResult<LoanAndRelatedRecords> larrResult) {
+    return larrResult.after(larr -> {
+      Loan loan = larr.getLoan();
+      CompletableFuture<HttpResult<Loan>> loanResultFuture 
+          = servicePointRepository.findServicePointsForLoan(HttpResult.succeeded(loan));
+      CompletableFuture<HttpResult<LoanAndRelatedRecords>> newLarrResultFuture;
+      newLarrResultFuture = loanResultFuture.thenApply(loanResult -> {
+        return loanResult.map(newLoan -> {
+          return larr.withLoan(newLoan);
+        });
+      }); 
+      return newLarrResultFuture;
+    });
   }
 
 

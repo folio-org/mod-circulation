@@ -26,7 +26,7 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
     return withItem(loan.getItem().updateItem(updatedItem));
   }
 
-  LoanAndRelatedRecords withLoan(Loan newLoan) {
+  public LoanAndRelatedRecords withLoan(Loan newLoan) {
     return new LoanAndRelatedRecords(newLoan, requestQueue, loanPolicy);
   }
 

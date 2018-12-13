@@ -43,14 +43,14 @@ public class CheckInByReplacingLoanTests extends APITests {
       .withUserId(james.getId())
       .withItem(itemsFixture.basedUponNod()));
 
-    final String checkinServicePointId = UUID.randomUUID().toString();
+    UUID checkinServicePointId = servicePointsFixture.cd1().getId();
 
     JsonObject returnedLoan = loan.copyJson();
 
     returnedLoan
       .put("status", new JsonObject().put("name", "Closed"))
       .put("action", "checkedin")
-      .put("checkinServicePointId", checkinServicePointId)
+      .put("checkinServicePointId", checkinServicePointId.toString())
       .put("returnDate", new DateTime(2017, 3, 5, 14, 23, 41, DateTimeZone.UTC)
         .toString(ISODateTimeFormat.dateTime()));
 
@@ -101,7 +101,7 @@ public class CheckInByReplacingLoanTests extends APITests {
 
     assertThat("Checkin Service Point Id should be stored.",
       loansStorageClient.getById(loan.getId()).getJson().getString("checkinServicePointId"),
-      is(checkinServicePointId));
+      is(checkinServicePointId.toString()));
   }
 
   @Test
@@ -136,5 +136,39 @@ public class CheckInByReplacingLoanTests extends APITests {
 
     assertThat(putResponse.getJson(), hasErrorWith(hasMessage(
       "A Closed loan must have a Checkin Service Point")));
+  }
+  
+  public void cannotUpdateALoanWithABogusServicePoint()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, DateTimeZone.UTC);
+
+    final IndividualResource james = usersFixture.james();
+
+    IndividualResource loan = loansClient.create(
+      new LoanBuilder().withLoanDate(loanDate)
+        .withUserId(james.getId()).withItem(itemsFixture.basedUponNod()));
+
+    JsonObject returnedLoan = loan.copyJson();
+
+    returnedLoan
+      .put("status", new JsonObject().put("name", "Closed"))
+      .put("action", "checkedin")
+      .put("checkinServicePointId", UUID.randomUUID().toString())
+      .put("returnDate", new DateTime(2017, 3, 5, 14, 23, 41,
+        DateTimeZone.UTC).toString(ISODateTimeFormat.dateTime()));
+
+    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
+
+    client.put(loansUrl(String.format("/%s", loan.getId())), returnedLoan,
+      ResponseHandler.any(putCompleted));
+
+    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(putResponse.getJson(), hasErrorWith(hasMessage(
+      "Check In Service Point does not exist")));
   }
 }

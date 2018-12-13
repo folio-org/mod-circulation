@@ -307,6 +307,36 @@ public class LoanAPITests extends APITests {
       hasMessage(String.format("No item with ID %s could be found", unknownItemId)),
       hasParameter("itemId", unknownItemId.toString()))));
   }
+  
+  @Test
+  public void cannotCreateALoanWithInvalidServicePointId()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+
+    UUID userId = usersClient.create(new UserBuilder()).getId();
+
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
+    Response response = loansClient.attemptCreate(new LoanBuilder()
+      .withId(id)
+      .withCheckinServicePointId(UUID.randomUUID())
+      .open()
+      .withUserId(userId)
+      .withItemId(itemId)
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate));
+
+    assertThat(
+      String.format("Should not create loan: %s", response.getBody()),
+      response.getStatusCode(), is(UNPROCESSABLE_ENTITY));
+  }
 
   @Ignore("mod-inventory-storage disallows this scenario, change to be isolated test")
   @Test
@@ -387,6 +417,8 @@ public class LoanAPITests extends APITests {
     MalformedURLException {
 
     UUID loanId = UUID.randomUUID();
+    
+    UUID checkinServicePointId = servicePointsFixture.cd1().getId();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
@@ -395,7 +427,7 @@ public class LoanAPITests extends APITests {
     client.put(loansUrl(String.format("/%s", loanId)), new LoanBuilder()
         .withId(loanId)
         .withItemId(itemId)
-        .withCheckinServicePointId(UUID.randomUUID())
+        .withCheckinServicePointId(checkinServicePointId)
         .closed()
         .withNoUserId()
         .create(),
@@ -967,12 +999,14 @@ public class LoanAPITests extends APITests {
     UUID itemId = itemsFixture.basedUponNod().getId();
 
     final IndividualResource jessica = usersFixture.jessica();
+    UUID checkinServicePointId = servicePointsFixture.cd1().getId();
+
 
     IndividualResource loan = loansClient.create(new LoanBuilder()
       .open()
       .withUserId(jessica.getId())
       .withItemId(itemId)
-      .withCheckinServicePointId(UUID.randomUUID()));
+      .withCheckinServicePointId(checkinServicePointId));
 
     JsonObject updatedLoanRequest = loan.copyJson();
 
@@ -1393,17 +1427,20 @@ public class LoanAPITests extends APITests {
 
     UUID smallAngryPlanetId = itemsFixture.basedUponSmallAngryPlanet().getId();
     UUID nodId = itemsFixture.basedUponNod().getId();
+    
+    UUID checkinServicePointId = servicePointsFixture.cd1().getId();
+    UUID checkinServicePointId2 = servicePointsFixture.cd2().getId();
 
     loansClient.createAtSpecificLocation(new LoanBuilder()
       .withItemId(smallAngryPlanetId)
-      .withCheckinServicePointId(UUID.randomUUID())
+      .withCheckinServicePointId(checkinServicePointId)
       .closed()
       .withNoUserId());
 
     loansClient.createAtSpecificLocation(new LoanBuilder()
       .withItemId(nodId)
       .closed()
-      .withCheckinServicePointId(UUID.randomUUID())
+      .withCheckinServicePointId(checkinServicePointId2)
       .withNoUserId());
 
     final List<JsonObject> multipleLoans = loansClient.getAll();
