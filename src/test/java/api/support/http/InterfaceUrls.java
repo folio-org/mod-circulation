@@ -1,9 +1,9 @@
 package api.support.http;
 
+import api.APITestSuite;
+
 import java.net.URL;
 import java.util.UUID;
-
-import api.APITestSuite;
 
 public class InterfaceUrls {
   static URL materialTypesStorageUrl(String subPath) {
@@ -104,6 +104,10 @@ public class InterfaceUrls {
 
   public static URL renewByBarcodeUrl() {
     return APITestSuite.circulationModuleUrl("/circulation/renew-by-barcode");
+  }
+
+  public static URL overrideRenewalByBarcodeUrl() {
+    return APITestSuite.circulationModuleUrl("/circulation/override-renewal-by-barcode");
   }
 
   public static URL renewByIdUrl() {

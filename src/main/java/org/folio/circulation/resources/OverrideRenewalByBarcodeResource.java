@@ -1,35 +1,30 @@
 package org.folio.circulation.resources;
 
 import io.vertx.core.http.HttpClient;
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanRenewalService;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.representations.LoanResponse;
+import org.folio.circulation.storage.SingleOpenLoanByUserAndItemBarcodeFinder;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.WebContext;
 
-import java.util.concurrent.CompletableFuture;
+public class OverrideRenewalByBarcodeResource extends Resource {
 
-public abstract class RenewalResource extends Resource {
-  private final String rootPath;
-
-  RenewalResource(HttpClient client, String rootPath) {
+  public OverrideRenewalByBarcodeResource(HttpClient client) {
     super(client);
-    this.rootPath = rootPath;
   }
 
   @Override
   public void register(Router router) {
     RouteRegistration routeRegistration = new RouteRegistration(
-      rootPath, router);
+      "/circulation/override-renewal-by-barcode", router);
 
     routeRegistration.create(this::renew);
   }
@@ -44,20 +39,16 @@ public abstract class RenewalResource extends Resource {
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
     final LoanRenewalService loanRenewalService = LoanRenewalService.using(clients);
+    final SingleOpenLoanByUserAndItemBarcodeFinder loanFinder = new SingleOpenLoanByUserAndItemBarcodeFinder();
 
-    //TODO: Validation check for same user should be in the domain service
+    final HttpResult<OverrideByBarcodeRequest> request = OverrideByBarcodeRequest.from(routingContext.getBodyAsJson());
 
-    findLoan(routingContext.getBodyAsJson(), loanRepository, itemRepository, userRepository)
-      .thenComposeAsync(r -> r.after(loanRenewalService::renew))
-      .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
+    request.after(overrideRequest ->
+      loanFinder.findLoan(routingContext.getBodyAsJson(), loanRepository, itemRepository, userRepository)
+        .thenComposeAsync(r -> r.after(loan -> loanRenewalService.overrideRenewal(loan, overrideRequest.getDueDate(), overrideRequest.getComment())))
+        .thenComposeAsync(r -> r.after(loanRepository::updateLoan)))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(LoanResponse::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
-
-  protected abstract CompletableFuture<HttpResult<Loan>> findLoan(
-    JsonObject request,
-    LoanRepository loanRepository,
-    ItemRepository itemRepository,
-    UserRepository userRepository);
 }

@@ -1,18 +1,6 @@
 package org.folio.circulation.domain.policy;
 
-import static org.folio.circulation.support.HttpResult.failed;
-import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getNestedIntegerProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
-
+import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
@@ -21,7 +9,18 @@ import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 
-import io.vertx.core.json.JsonObject;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
+
+import static org.folio.circulation.support.HttpResult.failed;
+import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getNestedIntegerProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
 
 public class LoanPolicy {
   private final JsonObject representation;
@@ -90,6 +89,44 @@ public class LoanPolicy {
     catch(Exception e) {
       return failed(new ServerErrorFailure(e));
     }
+  }
+
+  public HttpResult<Loan> overrideRenewal(Loan loan, DateTime systemDate,
+                                          DateTime overrideDueDate, String comment) {
+    try {
+      HttpResult<DateTime> proposedDueDateResult =
+        determineStrategy(true, systemDate).calculateDueDate(loan);
+
+      List<ValidationError> errors = new ArrayList<>();
+
+      if (proposedDueDateResult.failed() &&
+        proposedDueDateResult.cause() instanceof ValidationErrorFailure) {
+        if (overrideDueDate == null) {
+          errors.add(errorForDueDate());
+        } else {
+          proposedDueDateResult = HttpResult.succeeded(overrideDueDate);
+        }
+      }
+      if (proposedDueDateResult.succeeded()) {
+        errorWhenEarlierOrSameDueDate(loan, proposedDueDateResult.value(), errors);
+      }
+
+      if (errors.isEmpty()) {
+        return proposedDueDateResult.map(dueDate -> loan.overrideRenewal(dueDate, getId(), comment));
+      } else {
+        return HttpResult.failed(new ValidationErrorFailure(errors));
+      }
+    } catch (Exception e) {
+      return failed(new ServerErrorFailure(e));
+    }
+  }
+
+  private ValidationError errorForDueDate() {
+    HashMap<String, String> parameters = new HashMap<>();
+    parameters.put("dueDate", null);
+
+    String reason = "New due date must be specified when due date calculation fails";
+    return new ValidationError(reason, parameters);
   }
 
   private ValidationError errorForPolicy(String reason) {

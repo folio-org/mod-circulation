@@ -1,17 +1,20 @@
 package api.support.fixtures;
 
-import static api.APITestSuite.fakeServicePoint;
-import static api.support.RestAssuredClient.from;
-import static api.support.RestAssuredClient.post;
-import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
-import static api.support.http.InterfaceUrls.checkInByBarcodeUrl;
-import static api.support.http.InterfaceUrls.checkOutByBarcodeUrl;
-import static api.support.http.InterfaceUrls.loansUrl;
-import static api.support.http.InterfaceUrls.renewByBarcodeUrl;
-import static api.support.http.InterfaceUrls.renewByIdUrl;
-import static org.folio.circulation.support.JsonPropertyWriter.write;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import api.support.CheckInByBarcodeResponse;
+import api.support.builders.CheckInByBarcodeRequestBuilder;
+import api.support.builders.CheckOutByBarcodeRequestBuilder;
+import api.support.builders.LoanBuilder;
+import api.support.builders.OverrideRenewalByBarcodeRequestBuilder;
+import api.support.builders.RenewByBarcodeRequestBuilder;
+import api.support.builders.RenewByIdRequestBuilder;
+import api.support.http.ResourceClient;
+import io.vertx.core.json.JsonObject;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.OkapiHttpClient;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 import java.net.MalformedURLException;
 import java.util.UUID;
@@ -20,21 +23,19 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-
-import api.support.CheckInByBarcodeResponse;
-import api.support.builders.CheckInByBarcodeRequestBuilder;
-import api.support.builders.CheckOutByBarcodeRequestBuilder;
-import api.support.builders.LoanBuilder;
-import api.support.builders.RenewByBarcodeRequestBuilder;
-import api.support.builders.RenewByIdRequestBuilder;
-import api.support.http.ResourceClient;
-import io.vertx.core.json.JsonObject;
+import static api.APITestSuite.fakeServicePoint;
+import static api.support.RestAssuredClient.from;
+import static api.support.RestAssuredClient.post;
+import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
+import static api.support.http.InterfaceUrls.checkInByBarcodeUrl;
+import static api.support.http.InterfaceUrls.checkOutByBarcodeUrl;
+import static api.support.http.InterfaceUrls.loansUrl;
+import static api.support.http.InterfaceUrls.overrideRenewalByBarcodeUrl;
+import static api.support.http.InterfaceUrls.renewByBarcodeUrl;
+import static api.support.http.InterfaceUrls.renewByIdUrl;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class LoansFixture {
   private final ResourceClient loansClient;
@@ -88,13 +89,13 @@ public class LoansFixture {
       .withItemId(itemId)
       .withDueDate(new DateTime(2018, 12, 3, 11, 22, 43, DateTimeZone.UTC)));
   }
-  
+
   public IndividualResource checkOutItem(UUID itemId)
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
     TimeoutException {
-    
+
     return checkOutItem(itemId, UUID.randomUUID());
   }
 
@@ -210,6 +211,22 @@ public class LoansFixture {
       "renewal-by-barcode-request")));
   }
 
+  public IndividualResource overrideRenewalByBarcode(
+    IndividualResource item,
+    IndividualResource user, String comment, String dueDate) {
+
+    JsonObject request =
+      new OverrideRenewalByBarcodeRequestBuilder()
+        .forItem(item)
+        .forUser(user)
+        .withComment(comment)
+        .withDueDate(dueDate)
+        .create();
+
+    return new IndividualResource(from(post(request, overrideRenewalByBarcodeUrl(), 200,
+      "override-renewal-by-barcode-request")));
+  }
+
   public IndividualResource renewLoanById(
     IndividualResource item,
     IndividualResource user) {
@@ -242,6 +259,30 @@ public class LoansFixture {
 
     return from(post(request, renewByBarcodeUrl(),
       expectedStatusCode, "renewal-by-barcode-request"));
+  }
+
+  public Response attemptOverride(
+    IndividualResource item,
+    IndividualResource user, String comment, String dueDate) {
+
+    return attemptOverride(422, item, user, comment, dueDate);
+  }
+
+  public Response attemptOverride(
+    int expectedStatusCode,
+    IndividualResource item,
+    IndividualResource user, String comment, String dueDate) {
+
+    JsonObject request =
+      new OverrideRenewalByBarcodeRequestBuilder()
+        .forItem(item)
+        .forUser(user)
+        .withComment(comment)
+        .withDueDate(dueDate)
+        .create();
+
+    return from(post(request, overrideRenewalByBarcodeUrl(),
+      expectedStatusCode, "override-renewal-by-barcode-request"));
   }
 
   public Response attemptRenewalById(
