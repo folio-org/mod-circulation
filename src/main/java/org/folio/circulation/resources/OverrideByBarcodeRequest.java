@@ -15,7 +15,7 @@ public class OverrideByBarcodeRequest {
 
   public static final String USER_BARCODE = "userBarcode";
   public static final String ITEM_BARCODE = "itemBarcode";
-  public static final String COMMENT = "comment";
+  public static final String COMMENT_PROPERTY = "comment";
   public static final String DUE_DATE = "dueDate";
 
   private final String itemBarcode;
@@ -57,9 +57,9 @@ public class OverrideByBarcodeRequest {
       return failedResult("Override renewal request must have a user barcode", USER_BARCODE, null);
     }
 
-    final String comment = getProperty(json, COMMENT);
+    final String comment = getProperty(json, COMMENT_PROPERTY);
     if(StringUtils.isBlank(comment)) {
-      return failedResult("Override renewal request must have a comment", COMMENT, null);
+      return failedResult("Override renewal request must have a comment", COMMENT_PROPERTY, null);
     }
     final Optional<String> dueDateProperty = Optional.ofNullable(getProperty(json, DUE_DATE));
     final DateTime dueDate = dueDateProperty.map(DateTime::parse).orElse(null);
