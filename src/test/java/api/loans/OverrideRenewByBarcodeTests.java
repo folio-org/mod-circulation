@@ -14,6 +14,7 @@ import org.folio.circulation.support.http.client.ResponseHandler;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Seconds;
 import org.junit.Test;
@@ -54,7 +55,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     final IndividualResource jessica = usersFixture.jessica();
 
     final UUID loanId = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      new DateTime(2018, 4, 21, 11, 21, 43))
+      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43))
       .getId();
 
     //TODO: Renewal based upon system date,
