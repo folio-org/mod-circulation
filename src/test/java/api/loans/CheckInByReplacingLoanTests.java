@@ -137,7 +137,8 @@ public class CheckInByReplacingLoanTests extends APITests {
     assertThat(putResponse.getJson(), hasErrorWith(hasMessage(
       "A Closed loan must have a Checkin Service Point")));
   }
-  
+
+  @Test
   public void cannotUpdateALoanWithABogusServicePoint()
     throws InterruptedException,
     MalformedURLException,
