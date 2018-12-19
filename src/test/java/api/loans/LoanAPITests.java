@@ -344,6 +344,42 @@ public class LoanAPITests extends APITests {
       hasUUIDParameter("checkinServicePointId", unknownServicePointId))));
   }
 
+  @Test
+  public void cannotCreateALoanWithUnknownCheckOutServicePointId()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+
+    UUID userId = usersClient.create(new UserBuilder()).getId();
+
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
+    final UUID unknownServicePointId = UUID.randomUUID();
+
+    Response response = loansClient.attemptCreate(new LoanBuilder()
+      .withId(id)
+      .withCheckoutServicePointId(unknownServicePointId)
+      .open()
+      .withUserId(userId)
+      .withItemId(itemId)
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate));
+
+    assertThat(
+      String.format("Should not create loan: %s", response.getBody()),
+      response.getStatusCode(), is(UNPROCESSABLE_ENTITY));
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Check Out Service Point does not exist"),
+      hasUUIDParameter("checkoutServicePointId", unknownServicePointId))));
+  }
+
   @Ignore("mod-inventory-storage disallows this scenario, change to be isolated test")
   @Test
   public void cannotCreateALoanForUnknownHolding()
