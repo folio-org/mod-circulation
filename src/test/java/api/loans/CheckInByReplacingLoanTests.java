@@ -139,7 +139,7 @@ public class CheckInByReplacingLoanTests extends APITests {
   }
 
   @Test
-  public void cannotUpdateALoanWithABogusServicePoint()
+  public void cannotUpdateALoanWithAnUnknownServicePoint()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
