@@ -8,6 +8,7 @@ import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
 import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
 import static org.hamcrest.CoreMatchers.allOf;
@@ -796,7 +797,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Service point is not a pickup location"),
-      hasParameter("pickupServicePointId", pickupServicePointId.toString()))));
+      hasUUIDParameter("pickupServicePointId", pickupServicePointId))));
   }
 
   @Test
@@ -831,6 +832,6 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Pickup service point does not exist"),
-      hasParameter("pickupServicePointId", pickupServicePointId.toString()))));
+      hasUUIDParameter("pickupServicePointId", pickupServicePointId))));
   }
 }

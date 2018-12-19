@@ -1,6 +1,5 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.policy.LoanPolicy;
 
 public class LoanAndRelatedRecords implements UserRelatedRecord {
@@ -22,11 +21,7 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
     this(loan, null, null);
   }
 
-  LoanAndRelatedRecords withItem(JsonObject updatedItem) {
-    return withItem(loan.getItem().updateItem(updatedItem));
-  }
-
-  LoanAndRelatedRecords withLoan(Loan newLoan) {
+  public LoanAndRelatedRecords withLoan(Loan newLoan) {
     return new LoanAndRelatedRecords(newLoan, requestQueue, loanPolicy);
   }
 

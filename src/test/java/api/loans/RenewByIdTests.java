@@ -1,12 +1,12 @@
 package api.loans;
 
+import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
+
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.hamcrest.Matcher;
-
-import static api.support.matchers.ValidationErrorMatchers.hasMessage;
-import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 
 public class RenewByIdTests extends RenewalAPITests {
   @Override
@@ -21,12 +21,12 @@ public class RenewByIdTests extends RenewalAPITests {
 
   @Override
   Matcher<ValidationError> hasUserRelatedParameter(IndividualResource user) {
-    return hasParameter("userId", user.getId().toString());
+    return hasUUIDParameter("userId", user.getId());
   }
 
   @Override
   Matcher<ValidationError> hasItemRelatedParameter(IndividualResource item) {
-    return hasParameter("itemId", item.getId().toString());
+    return hasUUIDParameter("itemId", item.getId());
   }
 
   @Override

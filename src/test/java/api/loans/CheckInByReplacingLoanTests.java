@@ -1,8 +1,11 @@
 package api.loans;
 
 import static api.support.http.InterfaceUrls.loansUrl;
+import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
+import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -24,6 +27,7 @@ import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.LoanBuilder;
+import api.support.matchers.UUIDMatcher;
 import io.vertx.core.json.JsonObject;
 
 public class CheckInByReplacingLoanTests extends APITests {
@@ -43,14 +47,14 @@ public class CheckInByReplacingLoanTests extends APITests {
       .withUserId(james.getId())
       .withItem(itemsFixture.basedUponNod()));
 
-    final String checkinServicePointId = UUID.randomUUID().toString();
+    UUID checkinServicePointId = servicePointsFixture.cd1().getId();
 
     JsonObject returnedLoan = loan.copyJson();
 
     returnedLoan
       .put("status", new JsonObject().put("name", "Closed"))
       .put("action", "checkedin")
-      .put("checkinServicePointId", checkinServicePointId)
+      .put("checkinServicePointId", checkinServicePointId.toString())
       .put("returnDate", new DateTime(2017, 3, 5, 14, 23, 41, DateTimeZone.UTC)
         .toString(ISODateTimeFormat.dateTime()));
 
@@ -136,5 +140,43 @@ public class CheckInByReplacingLoanTests extends APITests {
 
     assertThat(putResponse.getJson(), hasErrorWith(hasMessage(
       "A Closed loan must have a Checkin Service Point")));
+  }
+
+  @Test
+  public void cannotUpdateALoanWithAnUnknownServicePoint()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, DateTimeZone.UTC);
+
+    final IndividualResource james = usersFixture.james();
+
+    IndividualResource loan = loansClient.create(
+      new LoanBuilder().withLoanDate(loanDate)
+        .withUserId(james.getId()).withItem(itemsFixture.basedUponNod()));
+
+    JsonObject returnedLoan = loan.copyJson();
+
+    final UUID unknownServicePointId = UUID.randomUUID();
+
+    returnedLoan
+      .put("status", new JsonObject().put("name", "Closed"))
+      .put("action", "checkedin")
+      .put("checkinServicePointId", unknownServicePointId.toString())
+      .put("returnDate", new DateTime(2017, 3, 5, 14, 23, 41,
+        DateTimeZone.UTC).toString(ISODateTimeFormat.dateTime()));
+
+    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
+
+    client.put(loansUrl(String.format("/%s", loan.getId())), returnedLoan,
+      ResponseHandler.any(putCompleted));
+
+    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(putResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Check In Service Point does not exist"),
+      hasUUIDParameter("checkinServicePointId", unknownServicePointId))));
   }
 }
