@@ -309,7 +309,7 @@ public class LoanAPITests extends APITests {
   }
   
   @Test
-  public void cannotCreateALoanWithInvalidServicePointId()
+  public void cannotCreateALoanWithUnknownCheckInServicePointId()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -329,7 +329,7 @@ public class LoanAPITests extends APITests {
     Response response = loansClient.attemptCreate(new LoanBuilder()
       .withId(id)
       .withCheckinServicePointId(unknownServicePointId)
-      .open()
+      .closed()
       .withUserId(userId)
       .withItemId(itemId)
       .withLoanDate(loanDate)
@@ -338,6 +338,10 @@ public class LoanAPITests extends APITests {
     assertThat(
       String.format("Should not create loan: %s", response.getBody()),
       response.getStatusCode(), is(UNPROCESSABLE_ENTITY));
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Check In Service Point does not exist"),
+      hasUUIDParameter("checkinServicePointId", unknownServicePointId))));
   }
 
   @Ignore("mod-inventory-storage disallows this scenario, change to be isolated test")
