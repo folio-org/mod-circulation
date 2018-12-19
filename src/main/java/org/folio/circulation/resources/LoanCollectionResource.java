@@ -79,7 +79,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(loan)))
       .thenCompose(larrResult ->
-        getServicePointsForLoanAndRelated(servicePointRepository, larrResult))
+        getServicePointsForLoanAndRelated(larrResult, servicePointRepository))
       .thenApply(this::refuseWhenNotOpenOrClosed)
       .thenApply(this::refuseWhenOpenAndNoUserId)
       .thenApply(spLoanLocationValidator::checkServicePointLoanLocation)
@@ -130,7 +130,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(loan)))
       .thenCompose(larrResult ->
-        getServicePointsForLoanAndRelated(servicePointRepository, larrResult))
+        getServicePointsForLoanAndRelated(larrResult, servicePointRepository))
       .thenApply(this::refuseWhenNotOpenOrClosed)
       .thenApply(this::refuseWhenOpenAndNoUserId)
       .thenApply(spLoanLocationValidator::checkServicePointLoanLocation)
@@ -269,19 +269,19 @@ public class LoanCollectionResource extends CollectionResource {
   }
   
   private CompletableFuture<HttpResult<LoanAndRelatedRecords>> getServicePointsForLoanAndRelated(
-      ServicePointRepository servicePointRepository, HttpResult<LoanAndRelatedRecords> larrResult) {
-    return larrResult.after(larr -> {
-      Loan loan = larr.getLoan();
+    HttpResult<LoanAndRelatedRecords> larrResult,
+    ServicePointRepository servicePointRepository) {
 
-      CompletableFuture<HttpResult<Loan>> loanResultFuture 
-          = servicePointRepository.findServicePointsForLoan(HttpResult.succeeded(loan));
+    return larrResult.combineAfter(loanAndRelatedRecords ->
+        getServicePointsForLoan(loanAndRelatedRecords.getLoan(), servicePointRepository),
+      LoanAndRelatedRecords::withLoan);
+  }
 
-      CompletableFuture<HttpResult<LoanAndRelatedRecords>> newLarrResultFuture;
+  private CompletableFuture<HttpResult<Loan>> getServicePointsForLoan(
+    Loan loan,
+    ServicePointRepository servicePointRepository) {
 
-      newLarrResultFuture = loanResultFuture.thenApply(loanResult -> loanResult.map(larr::withLoan));
-
-      return newLarrResultFuture;
-    });
+    return servicePointRepository.findServicePointsForLoan(HttpResult.of(() -> loan));
   }
 
   private ItemNotFoundValidator createItemNotFoundValidator(Loan loan) {
