@@ -1,12 +1,27 @@
 package api.loans;
 
-import api.APITestSuite;
-import api.support.APITests;
-import api.support.builders.CheckOutByBarcodeRequestBuilder;
-import api.support.builders.FixedDueDateSchedule;
-import api.support.builders.FixedDueDateSchedulesBuilder;
-import api.support.builders.LoanPolicyBuilder;
-import io.vertx.core.json.JsonObject;
+import static api.support.builders.FixedDueDateSchedule.forDay;
+import static api.support.builders.FixedDueDateSchedule.wholeMonth;
+import static api.support.builders.ItemBuilder.CHECKED_OUT;
+import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
+import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
+import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
+import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
+import static java.net.HttpURLConnection.HTTP_OK;
+import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+
+import java.net.MalformedURLException;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -18,24 +33,13 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.Seconds;
 import org.junit.Test;
 
-import java.net.MalformedURLException;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import static api.support.builders.FixedDueDateSchedule.forDay;
-import static api.support.builders.FixedDueDateSchedule.wholeMonth;
-import static api.support.builders.ItemBuilder.CHECKED_OUT;
-import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
-import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
-import static api.support.matchers.ValidationErrorMatchers.*;
-import static java.net.HttpURLConnection.HTTP_OK;
-import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
+import api.APITestSuite;
+import api.support.APITests;
+import api.support.builders.CheckOutByBarcodeRequestBuilder;
+import api.support.builders.FixedDueDateSchedule;
+import api.support.builders.FixedDueDateSchedulesBuilder;
+import api.support.builders.LoanPolicyBuilder;
+import io.vertx.core.json.JsonObject;
 
 abstract class RenewalAPITests extends APITests {
   abstract Response attemptRenewal(IndividualResource user, IndividualResource item);
@@ -763,7 +767,7 @@ abstract class RenewalAPITests extends APITests {
     //Occurs when current loanee is not found, so relates to loan rather than user in request
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("user is not found"),
-      hasParameter("userId", steve.getId().toString()))));
+      hasUUIDParameter("userId", steve.getId()))));
   }
 
   @Test
@@ -809,7 +813,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   private Matcher<ValidationError> hasLoanPolicyIdParameter(UUID loanPolicyId) {
-    return hasParameter("loanPolicyId", loanPolicyId.toString());
+    return hasUUIDParameter("loanPolicyId", loanPolicyId);
   }
 
   private Matcher<ValidationError> hasLoanPolicyNameParameter(String policyName) {

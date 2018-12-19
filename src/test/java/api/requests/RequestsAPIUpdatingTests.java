@@ -6,6 +6,7 @@ import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.core.Is.is;
@@ -708,7 +709,7 @@ public class RequestsAPIUpdatingTests extends APITests {
 
    assertThat(putResponse.getJson(), hasErrorWith(allOf(
      hasMessage("Service point is not a pickup location"),
-     hasParameter("pickupServicePointId", badServicePointId.toString()))));
+     hasUUIDParameter("pickupServicePointId", badServicePointId))));
   }
 
   @Test
@@ -763,6 +764,6 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     assertThat(putResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Pickup service point does not exist"),
-      hasParameter("pickupServicePointId", badServicePointId.toString()))));
+      hasUUIDParameter("pickupServicePointId", badServicePointId))));
   }
 }

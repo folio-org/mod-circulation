@@ -8,7 +8,8 @@ import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
-import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static api.support.matchers.ValidationErrorMatchers.hasNullParameter;
+import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
@@ -29,7 +30,6 @@ import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
-import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Period;
@@ -305,7 +305,7 @@ public class LoanAPITests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage(String.format("No item with ID %s could be found", unknownItemId)),
-      hasParameter("itemId", unknownItemId.toString()))));
+      hasUUIDParameter("itemId", unknownItemId))));
   }
   
   @Test
@@ -324,9 +324,11 @@ public class LoanAPITests extends APITests {
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
 
+    final UUID unknownServicePointId = UUID.randomUUID();
+
     Response response = loansClient.attemptCreate(new LoanBuilder()
       .withId(id)
-      .withCheckinServicePointId(UUID.randomUUID())
+      .withCheckinServicePointId(unknownServicePointId)
       .open()
       .withUserId(userId)
       .withItemId(itemId)
@@ -378,7 +380,7 @@ public class LoanAPITests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Holding does not exist"),
-      hasParameter("itemId", item.getId().toString()))));
+      hasUUIDParameter("itemId", item.getId()))));
   }
 
   @Test
@@ -406,7 +408,7 @@ public class LoanAPITests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("user is not found"),
-      hasParameter("userId", null))));
+      hasNullParameter("userId"))));
   }
 
   @Test
@@ -478,7 +480,7 @@ public class LoanAPITests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("user is not found"),
-      hasParameter("userId", unknownUserId.toString()))));
+      hasUUIDParameter("userId", unknownUserId))));
   }
 
   @Test
@@ -514,7 +516,7 @@ public class LoanAPITests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Open loan must have a user ID"),
-      hasParameter("userId", null))));
+      hasNullParameter("userId"))));
   }
 
   @Test
@@ -550,7 +552,7 @@ public class LoanAPITests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Open loan must have a user ID"),
-      hasParameter("userId", null))));
+      hasNullParameter("userId"))));
   }
 
   @Test
@@ -603,7 +605,7 @@ public class LoanAPITests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Item is already checked out"),
-      hasParameter("itemId", smallAngryPlanet.getId().toString()))));
+      hasUUIDParameter("itemId", smallAngryPlanet.getId()))));
   }
 
   @Test
@@ -623,7 +625,7 @@ public class LoanAPITests extends APITests {
 
     assertThat(
       String.format("Should not be able to create loan: %s", response.getBody()),
-      response.getStatusCode(), Matchers.is(UNPROCESSABLE_ENTITY));
+      response.getStatusCode(), is(UNPROCESSABLE_ENTITY));
 
     assertThat(response.getJson(), hasErrorWith(
       hasMessage("Loan status must be \"Open\" or \"Closed\"")));
@@ -1054,7 +1056,7 @@ public class LoanAPITests extends APITests {
 
     assertThat(putResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Open loan must have a user ID"),
-      hasParameter("userId", null))));
+      hasNullParameter("userId"))));
   }
 
   @Test
