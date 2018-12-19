@@ -4,6 +4,8 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
@@ -21,6 +23,7 @@ import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
 import org.folio.circulation.domain.validation.AwaitingPickupValidator;
 import org.folio.circulation.domain.validation.ItemNotFoundValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
+import org.folio.circulation.domain.validation.ServicePointLoanLocationValidator;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CreatedJsonHttpResult;
 import org.folio.circulation.support.HttpResult;
@@ -48,6 +51,7 @@ public class LoanCollectionResource extends CollectionResource {
     final Clients clients = Clients.create(context, client);
 
     final ItemRepository itemRepository = new ItemRepository(clients, true, true);
+    final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final UserRepository userRepository = new UserRepository(clients);
 
@@ -67,12 +71,18 @@ public class LoanCollectionResource extends CollectionResource {
       message -> failure(message, "itemId", loan.getItemId()));
 
     final ItemNotFoundValidator itemNotFoundValidator = createItemNotFoundValidator(loan);
+    
+    final ServicePointLoanLocationValidator spLoanLocationValidator = 
+        new ServicePointLoanLocationValidator();
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
     completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(loan)))
+      .thenCompose(larrResult ->
+        getServicePointsForLoanAndRelated(larrResult, servicePointRepository))
       .thenApply(this::refuseWhenNotOpenOrClosed)
       .thenApply(this::refuseWhenOpenAndNoUserId)
+      .thenApply(spLoanLocationValidator::checkServicePointLoanLocation)
       .thenCombineAsync(itemRepository.fetchFor(loan), this::addItem)
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
       .thenApply(this::refuseWhenHoldingDoesNotExist)
@@ -102,6 +112,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     final Clients clients = Clients.create(context, client);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
+    final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
     final ItemRepository itemRepository = new ItemRepository(clients, false, false);
 
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
@@ -113,10 +124,16 @@ public class LoanCollectionResource extends CollectionResource {
         loan.getProxyUserId()));
 
     final ItemNotFoundValidator itemNotFoundValidator = createItemNotFoundValidator(loan);
+    
+    final ServicePointLoanLocationValidator spLoanLocationValidator = 
+        new ServicePointLoanLocationValidator();
 
     completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(loan)))
+      .thenCompose(larrResult ->
+        getServicePointsForLoanAndRelated(larrResult, servicePointRepository))
       .thenApply(this::refuseWhenNotOpenOrClosed)
       .thenApply(this::refuseWhenOpenAndNoUserId)
+      .thenApply(spLoanLocationValidator::checkServicePointLoanLocation)
       .thenApply(this::refuseWhenClosedAndNoCheckInServicePointId)
       .thenCombineAsync(itemRepository.fetchFor(loan), this::addItem)
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
@@ -170,8 +187,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     loanRepository.findBy(routingContext.request().query())
       .thenCompose(multiLoanRecordsResult ->
-        multiLoanRecordsResult.after(multipleLoans ->
-          servicePointRepository.findServicePointsForLoans(multipleLoans)))
+        multiLoanRecordsResult.after(servicePointRepository::findServicePointsForLoans))
       .thenApply(multipleLoanRecordsResult -> multipleLoanRecordsResult.map(loans ->
         loans.asJson(loanRepresentation::extendedLoan, "loans")))
       .thenApply(OkJsonHttpResult::from)
@@ -251,7 +267,22 @@ public class LoanCollectionResource extends CollectionResource {
       .next(Loan::openLoanHasUserId)
       .next(v -> loanAndRelatedRecords);
   }
+  
+  private CompletableFuture<HttpResult<LoanAndRelatedRecords>> getServicePointsForLoanAndRelated(
+    HttpResult<LoanAndRelatedRecords> larrResult,
+    ServicePointRepository servicePointRepository) {
 
+    return larrResult.combineAfter(loanAndRelatedRecords ->
+        getServicePointsForLoan(loanAndRelatedRecords.getLoan(), servicePointRepository),
+      LoanAndRelatedRecords::withLoan);
+  }
+
+  private CompletableFuture<HttpResult<Loan>> getServicePointsForLoan(
+    Loan loan,
+    ServicePointRepository servicePointRepository) {
+
+    return servicePointRepository.findServicePointsForLoan(HttpResult.of(() -> loan));
+  }
 
   private ItemNotFoundValidator createItemNotFoundValidator(Loan loan) {
     return new ItemNotFoundValidator(

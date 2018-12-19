@@ -8,7 +8,8 @@ import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
-import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static api.support.matchers.ValidationErrorMatchers.hasNullParameter;
+import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
@@ -29,7 +30,6 @@ import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
-import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Period;
@@ -305,7 +305,79 @@ public class LoanAPITests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage(String.format("No item with ID %s could be found", unknownItemId)),
-      hasParameter("itemId", unknownItemId.toString()))));
+      hasUUIDParameter("itemId", unknownItemId))));
+  }
+  
+  @Test
+  public void cannotCreateALoanWithUnknownCheckInServicePointId()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+
+    UUID userId = usersClient.create(new UserBuilder()).getId();
+
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
+    final UUID unknownServicePointId = UUID.randomUUID();
+
+    Response response = loansClient.attemptCreate(new LoanBuilder()
+      .withId(id)
+      .withCheckinServicePointId(unknownServicePointId)
+      .closed()
+      .withUserId(userId)
+      .withItemId(itemId)
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate));
+
+    assertThat(
+      String.format("Should not create loan: %s", response.getBody()),
+      response.getStatusCode(), is(UNPROCESSABLE_ENTITY));
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Check In Service Point does not exist"),
+      hasUUIDParameter("checkinServicePointId", unknownServicePointId))));
+  }
+
+  @Test
+  public void cannotCreateALoanWithUnknownCheckOutServicePointId()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+
+    UUID userId = usersClient.create(new UserBuilder()).getId();
+
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
+    final UUID unknownServicePointId = UUID.randomUUID();
+
+    Response response = loansClient.attemptCreate(new LoanBuilder()
+      .withId(id)
+      .withCheckoutServicePointId(unknownServicePointId)
+      .open()
+      .withUserId(userId)
+      .withItemId(itemId)
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate));
+
+    assertThat(
+      String.format("Should not create loan: %s", response.getBody()),
+      response.getStatusCode(), is(UNPROCESSABLE_ENTITY));
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Check Out Service Point does not exist"),
+      hasUUIDParameter("checkoutServicePointId", unknownServicePointId))));
   }
 
   @Ignore("mod-inventory-storage disallows this scenario, change to be isolated test")
@@ -348,7 +420,7 @@ public class LoanAPITests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Holding does not exist"),
-      hasParameter("itemId", item.getId().toString()))));
+      hasUUIDParameter("itemId", item.getId()))));
   }
 
   @Test
@@ -376,7 +448,7 @@ public class LoanAPITests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("user is not found"),
-      hasParameter("userId", null))));
+      hasNullParameter("userId"))));
   }
 
   @Test
@@ -387,6 +459,8 @@ public class LoanAPITests extends APITests {
     MalformedURLException {
 
     UUID loanId = UUID.randomUUID();
+    
+    UUID checkinServicePointId = servicePointsFixture.cd1().getId();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
@@ -395,7 +469,7 @@ public class LoanAPITests extends APITests {
     client.put(loansUrl(String.format("/%s", loanId)), new LoanBuilder()
         .withId(loanId)
         .withItemId(itemId)
-        .withCheckinServicePointId(UUID.randomUUID())
+        .withCheckinServicePointId(checkinServicePointId)
         .closed()
         .withNoUserId()
         .create(),
@@ -446,7 +520,7 @@ public class LoanAPITests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("user is not found"),
-      hasParameter("userId", unknownUserId.toString()))));
+      hasUUIDParameter("userId", unknownUserId))));
   }
 
   @Test
@@ -482,7 +556,7 @@ public class LoanAPITests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Open loan must have a user ID"),
-      hasParameter("userId", null))));
+      hasNullParameter("userId"))));
   }
 
   @Test
@@ -518,7 +592,7 @@ public class LoanAPITests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Open loan must have a user ID"),
-      hasParameter("userId", null))));
+      hasNullParameter("userId"))));
   }
 
   @Test
@@ -571,7 +645,7 @@ public class LoanAPITests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Item is already checked out"),
-      hasParameter("itemId", smallAngryPlanet.getId().toString()))));
+      hasUUIDParameter("itemId", smallAngryPlanet.getId()))));
   }
 
   @Test
@@ -591,7 +665,7 @@ public class LoanAPITests extends APITests {
 
     assertThat(
       String.format("Should not be able to create loan: %s", response.getBody()),
-      response.getStatusCode(), Matchers.is(UNPROCESSABLE_ENTITY));
+      response.getStatusCode(), is(UNPROCESSABLE_ENTITY));
 
     assertThat(response.getJson(), hasErrorWith(
       hasMessage("Loan status must be \"Open\" or \"Closed\"")));
@@ -967,12 +1041,14 @@ public class LoanAPITests extends APITests {
     UUID itemId = itemsFixture.basedUponNod().getId();
 
     final IndividualResource jessica = usersFixture.jessica();
+    UUID checkinServicePointId = servicePointsFixture.cd1().getId();
+
 
     IndividualResource loan = loansClient.create(new LoanBuilder()
       .open()
       .withUserId(jessica.getId())
       .withItemId(itemId)
-      .withCheckinServicePointId(UUID.randomUUID()));
+      .withCheckinServicePointId(checkinServicePointId));
 
     JsonObject updatedLoanRequest = loan.copyJson();
 
@@ -1020,7 +1096,7 @@ public class LoanAPITests extends APITests {
 
     assertThat(putResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Open loan must have a user ID"),
-      hasParameter("userId", null))));
+      hasNullParameter("userId"))));
   }
 
   @Test
@@ -1393,17 +1469,20 @@ public class LoanAPITests extends APITests {
 
     UUID smallAngryPlanetId = itemsFixture.basedUponSmallAngryPlanet().getId();
     UUID nodId = itemsFixture.basedUponNod().getId();
+    
+    UUID checkinServicePointId = servicePointsFixture.cd1().getId();
+    UUID checkinServicePointId2 = servicePointsFixture.cd2().getId();
 
     loansClient.createAtSpecificLocation(new LoanBuilder()
       .withItemId(smallAngryPlanetId)
-      .withCheckinServicePointId(UUID.randomUUID())
+      .withCheckinServicePointId(checkinServicePointId)
       .closed()
       .withNoUserId());
 
     loansClient.createAtSpecificLocation(new LoanBuilder()
       .withItemId(nodId)
       .closed()
-      .withCheckinServicePointId(UUID.randomUUID())
+      .withCheckinServicePointId(checkinServicePointId2)
       .withNoUserId());
 
     final List<JsonObject> multipleLoans = loansClient.getAll();

@@ -5,7 +5,7 @@ import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
-import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -92,7 +92,7 @@ public class ClosedRequestTests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Cannot edit a closed request"),
-      hasParameter("id", request.getId().toString()))));
+      hasUUIDParameter("id", request.getId()))));
   }
 
   @Test
@@ -128,6 +128,6 @@ public class ClosedRequestTests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Cannot edit a closed request"),
-      hasParameter("id", request.getId().toString()))));
+      hasUUIDParameter("id", request.getId()))));
   }
 }
