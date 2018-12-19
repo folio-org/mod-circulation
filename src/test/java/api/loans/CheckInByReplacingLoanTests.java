@@ -1,8 +1,11 @@
 package api.loans;
 
 import static api.support.http.InterfaceUrls.loansUrl;
+import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
+import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -24,6 +27,7 @@ import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.LoanBuilder;
+import api.support.matchers.UUIDMatcher;
 import io.vertx.core.json.JsonObject;
 
 public class CheckInByReplacingLoanTests extends APITests {
@@ -101,7 +105,7 @@ public class CheckInByReplacingLoanTests extends APITests {
 
     assertThat("Checkin Service Point Id should be stored.",
       loansStorageClient.getById(loan.getId()).getJson().getString("checkinServicePointId"),
-      is(checkinServicePointId.toString()));
+      is(checkinServicePointId));
   }
 
   @Test
@@ -155,10 +159,12 @@ public class CheckInByReplacingLoanTests extends APITests {
 
     JsonObject returnedLoan = loan.copyJson();
 
+    final UUID unknownServicePointId = UUID.randomUUID();
+
     returnedLoan
       .put("status", new JsonObject().put("name", "Closed"))
       .put("action", "checkedin")
-      .put("checkinServicePointId", UUID.randomUUID().toString())
+      .put("checkinServicePointId", unknownServicePointId.toString())
       .put("returnDate", new DateTime(2017, 3, 5, 14, 23, 41,
         DateTimeZone.UTC).toString(ISODateTimeFormat.dateTime()));
 
@@ -169,7 +175,8 @@ public class CheckInByReplacingLoanTests extends APITests {
 
     Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat(putResponse.getJson(), hasErrorWith(hasMessage(
-      "Check In Service Point does not exist")));
+    assertThat(putResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Check In Service Point does not exist"),
+      hasUUIDParameter("checkinServicePointId", unknownServicePointId))));
   }
 }
