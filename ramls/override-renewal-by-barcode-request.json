@@ -13,7 +13,8 @@
     },
     "dueDate": {
       "description": "New due date for renewed loan",
-      "type": "date-time"
+      "type": "string",
+      "format": "date-time"
     },
     "comment": {
       "description": "Comment to override action stored in loan history",
