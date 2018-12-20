@@ -37,6 +37,7 @@ import api.loans.LoanAPIProxyTests;
 import api.loans.LoanAPIRelatedRecordsTests;
 import api.loans.LoanAPITests;
 import api.loans.LoanAPITitleTests;
+import api.loans.OverrideRenewByBarcodeTests;
 import api.loans.RenewByBarcodeTests;
 import api.loans.RenewByIdTests;
 import api.loans.scenarios.InTransitToHomeLocationTests;
@@ -81,6 +82,7 @@ import io.vertx.core.json.JsonObject;
   CheckOutByBarcodeTests.class,
   RenewByBarcodeTests.class,
   RenewByIdTests.class,
+  OverrideRenewByBarcodeTests.class,
   CheckInByBarcodeTests.class,
   CheckInByReplacingLoanTests.class,
   LoanAPITests.class,
