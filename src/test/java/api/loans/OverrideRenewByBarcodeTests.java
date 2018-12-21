@@ -696,7 +696,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     LoanPolicyBuilder currentDueDateRollingPolicy = new LoanPolicyBuilder()
       .withName("Current Due Date Rolling Policy")
       .rolling(Period.months(2))
-      .renewWith(fixedDueDateSchedulesId)
+      .renewOverrideWith(fixedDueDateSchedulesId)
       .renewFromCurrentDueDate();
 
     UUID dueDateLimitedPolicyId = loanPolicyClient.create(currentDueDateRollingPolicy).getId();
@@ -773,7 +773,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     LoanPolicyBuilder currentDueDateRollingPolicy = new LoanPolicyBuilder()
       .withName("Current Due Date Rolling Policy")
       .rolling(Period.months(2))
-      .renewWith(fixedDueDateSchedulesId)
+      .renewOverrideWith(fixedDueDateSchedulesId)
       .renewFromCurrentDueDate();
 
     UUID dueDateLimitedPolicyId = loanPolicyClient.create(currentDueDateRollingPolicy).getId();

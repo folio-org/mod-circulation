@@ -333,8 +333,18 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.renewable);
   }
 
-  public LoanPolicyBuilder renewWith(UUID fixedDueDateScheduleId) {
+  public Builder renewWith(UUID fixedDueDateScheduleId) {
+    if(!Objects.equals(profile, "Fixed")) {
+      throw new IllegalArgumentException("Can only be used with fixed profile");
+    }
+    return renew(fixedDueDateScheduleId);
+  }
 
+  public LoanPolicyBuilder renewOverrideWith(UUID fixedDueDateScheduleId) {
+    return renew(fixedDueDateScheduleId);
+  }
+
+  private LoanPolicyBuilder renew(UUID fixedDueDateScheduleId) {
     return new LoanPolicyBuilder(
       this.id,
       this.name,
