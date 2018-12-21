@@ -734,7 +734,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     assertThat("last loan policy should be stored",
       renewedLoan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
 
-    assertThat("due date should be 2 months after initial due date date",
+    assertThat("due date should be 1st of January 2025",
       renewedLoan.getString("dueDate"),
       isEquivalentTo(newDueDate));
 
