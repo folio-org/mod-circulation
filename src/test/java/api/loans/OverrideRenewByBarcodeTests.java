@@ -58,11 +58,14 @@ public class OverrideRenewByBarcodeTests extends APITests {
       new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43))
       .getId();
 
+    DateTime newDueDate =
+      new DateTime(2019, DateTimeConstants.JANUARY, 1, 1, 1, 1);
+
     //TODO: Renewal based upon system date,
     // needs to be approximated, at least until we introduce a calendar and clock
     DateTime approximateRenewalDate = DateTime.now();
 
-    final JsonObject renewedLoan = loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica, OVERRIDE_COMMENT, null).getJson();
+    final JsonObject renewedLoan = loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica, OVERRIDE_COMMENT, newDueDate.toString()).getJson();
 
     assertThat(renewedLoan.getString("id"), is(loanId.toString()));
 
@@ -88,9 +91,9 @@ public class OverrideRenewByBarcodeTests extends APITests {
       renewedLoan.getString("loanPolicyId"),
       is(APITestSuite.canCirculateRollingLoanPolicyId().toString()));
 
-    assertThat("due date should be approximately 3 weeks after renewal date, based upon loan policy",
+    assertThat("due date should be 1st of Feb 2019",
       renewedLoan.getString("dueDate"),
-      withinSecondsAfter(Seconds.seconds(10), approximateRenewalDate.plusWeeks(3)));
+      isEquivalentTo(newDueDate));
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
@@ -110,6 +113,9 @@ public class OverrideRenewByBarcodeTests extends APITests {
     final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43));
 
+    DateTime newDueDate =
+      new DateTime(2019, DateTimeConstants.JANUARY, 1, 1, 1, 1);
+
     final UUID loanId = loan.getId();
 
     LoanPolicyBuilder currentDueDateRollingPolicy = new LoanPolicyBuilder()
@@ -125,7 +131,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     useLoanPolicyAsFallback(dueDateLimitedPolicyId);
 
     final JsonObject renewedLoan =
-      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica, OVERRIDE_COMMENT, null).getJson();
+      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica, OVERRIDE_COMMENT, newDueDate.toString()).getJson();
 
     assertThat(renewedLoan.getString("id"), is(loanId.toString()));
 
@@ -150,9 +156,9 @@ public class OverrideRenewByBarcodeTests extends APITests {
     assertThat("last loan policy should be stored",
       renewedLoan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
 
-    assertThat("due date should be 2 months after initial due date date",
+    assertThat("due date should be 1st of Feb 2019",
       renewedLoan.getString("dueDate"),
-      isEquivalentTo(new DateTime(2018, DateTimeConstants.JULY, 12, 11, 21, 43)));
+      isEquivalentTo(newDueDate));
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
@@ -169,6 +175,9 @@ public class OverrideRenewByBarcodeTests extends APITests {
     FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
       .withName("March Only Due Date Limit")
       .addSchedule(wholeMonth(2018, DateTimeConstants.MARCH));
+
+    DateTime newDueDate =
+      new DateTime(2019, DateTimeConstants.JANUARY, 1, 1, 1, 1);
 
     final UUID dueDateLimitScheduleId = fixedDueDateScheduleClient.create(
       dueDateLimitSchedule).getId();
@@ -202,16 +211,16 @@ public class OverrideRenewByBarcodeTests extends APITests {
         .at(UUID.randomUUID()));
 
     final IndividualResource response =
-      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, steve, OVERRIDE_COMMENT, null);
+      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, steve, OVERRIDE_COMMENT, newDueDate.toString());
 
     final JsonObject loan = response.getJson();
 
     assertThat("last loan policy should be stored",
       loan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
 
-    assertThat("due date should be limited by schedule",
+    assertThat("due date should be 1st of Feb 2019",
       loan.getString("dueDate"),
-      isEquivalentTo(new DateTime(2018, DateTimeConstants.MARCH, 31, 23, 59, 59, DateTimeZone.UTC)));
+      isEquivalentTo(newDueDate));
   }
 
   @Test
@@ -226,6 +235,9 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43));
+
+    DateTime newDueDate =
+      new DateTime(2019, DateTimeConstants.JANUARY, 1, 1, 1, 1);
 
     final UUID loanId = loan.getId();
 
@@ -243,7 +255,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     useLoanPolicyAsFallback(dueDateLimitedPolicyId);
 
     final JsonObject renewedLoan =
-      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica, OVERRIDE_COMMENT, null).getJson();
+      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica, OVERRIDE_COMMENT, newDueDate.toString()).getJson();
 
     assertThat(renewedLoan.getString("id"), is(loanId.toString()));
 
@@ -268,9 +280,9 @@ public class OverrideRenewByBarcodeTests extends APITests {
     assertThat("last loan policy should be stored",
       renewedLoan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
 
-    assertThat("due date should be 2 months after initial due date date",
+    assertThat("due date should be 1st of Feb 2019",
       renewedLoan.getString("dueDate"),
-      isEquivalentTo(new DateTime(2018, DateTimeConstants.JUNE, 12, 11, 21, 43)));
+      isEquivalentTo(newDueDate));
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
@@ -290,6 +302,9 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     final UUID dueDateLimitScheduleId = fixedDueDateScheduleClient.create(
       dueDateLimitSchedule).getId();
+
+    DateTime newDueDate =
+      new DateTime(2019, DateTimeConstants.JANUARY, 1, 1, 1, 1);
 
     //Need to remember in order to delete after test
     schedulesToDelete.add(dueDateLimitScheduleId);
@@ -320,16 +335,16 @@ public class OverrideRenewByBarcodeTests extends APITests {
         .at(UUID.randomUUID()));
 
     final IndividualResource response =
-      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, steve, OVERRIDE_COMMENT, null);
+      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, steve, OVERRIDE_COMMENT, newDueDate.toString());
 
     final JsonObject loan = response.getJson();
 
     assertThat("last loan policy should be stored",
       loan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
 
-    assertThat("due date should be limited by schedule",
+    assertThat("due date should be 1st of Feb 2019",
       loan.getString("dueDate"),
-      isEquivalentTo(new DateTime(2018, DateTimeConstants.MARCH, 31, 23, 59, 59, DateTimeZone.UTC)));
+      isEquivalentTo(newDueDate));
   }
 
   @Test
@@ -345,6 +360,9 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     final UUID dueDateLimitScheduleId = fixedDueDateScheduleClient.create(
       dueDateLimitSchedule).getId();
+
+    DateTime newDueDate =
+      new DateTime(2019, DateTimeConstants.JANUARY, 1, 1, 1, 1);
 
     //Need to remember in order to delete after test
     schedulesToDelete.add(dueDateLimitScheduleId);
@@ -376,16 +394,16 @@ public class OverrideRenewByBarcodeTests extends APITests {
         .at(UUID.randomUUID()));
 
     final IndividualResource response =
-      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, steve, OVERRIDE_COMMENT, null);
+      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, steve, OVERRIDE_COMMENT, newDueDate.toString());
 
     final JsonObject loan = response.getJson();
 
     assertThat("last loan policy should be stored",
       loan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
 
-    assertThat("due date should be limited by schedule",
+    assertThat("due date should be 1st of Feb 2019",
       loan.getString("dueDate"),
-      isEquivalentTo(new DateTime(2018, DateTimeConstants.MARCH, 31, 23, 59, 59, DateTimeZone.UTC)));
+      isEquivalentTo(newDueDate));
   }
 
   @Test
@@ -406,6 +424,9 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     final UUID fixedDueDateSchedulesId = fixedDueDateScheduleClient.create(
       fixedDueDateSchedules).getId();
+
+    DateTime newDueDate =
+      new DateTime(2019, DateTimeConstants.JANUARY, 1, 1, 1, 1);
 
     //Need to remember in order to delete after test
     schedulesToDelete.add(fixedDueDateSchedulesId);
@@ -434,7 +455,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
         .on(loanDate)
         .at(UUID.randomUUID()));
 
-    final IndividualResource response = loansFixture.overrideRenewalByBarcode(smallAngryPlanet, steve, OVERRIDE_COMMENT, null);
+    final IndividualResource response = loansFixture.overrideRenewalByBarcode(smallAngryPlanet, steve, OVERRIDE_COMMENT, newDueDate.toString());
 
     final JsonObject loan = response.getJson();
 
@@ -444,14 +465,9 @@ public class OverrideRenewByBarcodeTests extends APITests {
     assertThat("renewal count should be incremented",
       loan.getInteger("renewalCount"), is(1));
 
-    final DateTime endOfRenewalDate = renewalDate
-      .withTimeAtStartOfDay()
-      .withHourOfDay(23)
-      .withMinuteOfHour(59)
-      .withSecondOfMinute(59);
-
-    assertThat("due date should be defined by schedule",
-      loan.getString("dueDate"), isEquivalentTo(endOfRenewalDate));
+    assertThat("due date should be 1st of Feb 2019",
+      loan.getString("dueDate"),
+      isEquivalentTo(newDueDate));
   }
 
   @Test
@@ -480,14 +496,17 @@ public class OverrideRenewByBarcodeTests extends APITests {
     final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43, DateTimeZone.UTC));
 
+    DateTime newDueDate =
+      new DateTime(2019, DateTimeConstants.JANUARY, 1, 1, 1, 1);
+
     final UUID loanId = loan.getId();
 
-    loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica, OVERRIDE_COMMENT, null);
+    loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica, OVERRIDE_COMMENT, newDueDate.toString());
 
-    loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica, OVERRIDE_COMMENT, null);
+    loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica, OVERRIDE_COMMENT, newDueDate.plusDays(1).toString());
 
     final JsonObject renewedLoan =
-      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica, OVERRIDE_COMMENT, null).getJson();
+      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica, OVERRIDE_COMMENT, newDueDate.plusDays(2).toString()).getJson();
 
     assertThat(renewedLoan.getString("id"), is(loanId.toString()));
 
@@ -506,9 +525,9 @@ public class OverrideRenewByBarcodeTests extends APITests {
     assertThat("last loan policy should be stored",
       renewedLoan.getString("loanPolicyId"), is(limitedRenewalsPolicyId.toString()));
 
-    assertThat("due date should be 8 days after initial loan date date",
+    assertThat("due date should be 1st of Feb 2019",
       renewedLoan.getString("dueDate"),
-      isEquivalentTo(new DateTime(2018, DateTimeConstants.APRIL, 29, 11, 21, 43, DateTimeZone.UTC)));
+      isEquivalentTo(newDueDate.plusDays(2)));
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
@@ -529,12 +548,15 @@ public class OverrideRenewByBarcodeTests extends APITests {
       new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43))
       .getId();
 
+    DateTime newDueDate =
+      new DateTime(2019, DateTimeConstants.JANUARY, 1, 1, 1, 1);
+
     //TODO: Renewal based upon system date,
     // needs to be approximated, at least until we introduce a calendar and clock
     DateTime approximateRenewalDate = DateTime.now();
 
     final IndividualResource response =
-      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica, OVERRIDE_COMMENT, null);
+      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica, OVERRIDE_COMMENT, newDueDate.toString());
 
     final CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
@@ -571,9 +593,9 @@ public class OverrideRenewByBarcodeTests extends APITests {
       renewedLoan.getString("loanPolicyId"),
       is(APITestSuite.canCirculateRollingLoanPolicyId().toString()));
 
-    assertThat("due date should be approximately 3 weeks after renewal date, based upon loan policy",
+    assertThat("due date should be 1st of Feb 2019",
       renewedLoan.getString("dueDate"),
-      withinSecondsAfter(Seconds.seconds(10), approximateRenewalDate.plusWeeks(3)));
+      isEquivalentTo(newDueDate));
   }
 
   @Test

@@ -25,6 +25,7 @@
   "required": [
     "itemBarcode",
     "userBarcode",
+    "dueDate",
     "comment"
   ]
 }

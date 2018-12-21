@@ -91,27 +91,23 @@ public class LoanPolicy {
     }
   }
 
-  public HttpResult<Loan> overrideRenewal(Loan loan, DateTime systemDate,
+  public HttpResult<Loan> overrideRenewal(Loan loan,
                                           DateTime overrideDueDate, String comment) {
     try {
-      HttpResult<DateTime> proposedDueDateResult =
-        determineStrategy(true, systemDate).calculateDueDate(loan);
+      HttpResult<DateTime> proposedDueDateResult = null;
 
       List<ValidationError> errors = new ArrayList<>();
 
-      if (proposedDueDateResult.failed() &&
-        proposedDueDateResult.cause() instanceof ValidationErrorFailure) {
-        if (overrideDueDate == null) {
-          errors.add(errorForDueDate());
-        } else {
-          proposedDueDateResult = HttpResult.succeeded(overrideDueDate);
-        }
+      if (overrideDueDate == null) {
+        errors.add(errorForDueDate());
+      } else {
+        proposedDueDateResult = HttpResult.succeeded(overrideDueDate);
       }
-      if (proposedDueDateResult.succeeded()) {
+      if (proposedDueDateResult != null && proposedDueDateResult.succeeded()) {
         errorWhenEarlierOrSameDueDate(loan, proposedDueDateResult.value(), errors);
       }
 
-      if (errors.isEmpty()) {
+      if (proposedDueDateResult != null && errors.isEmpty()) {
         return proposedDueDateResult.map(dueDate -> loan.overrideRenewal(dueDate, getId(), comment));
       } else {
         return HttpResult.failed(new ValidationErrorFailure(errors));
