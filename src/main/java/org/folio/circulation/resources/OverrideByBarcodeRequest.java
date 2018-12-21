@@ -8,6 +8,7 @@ import org.joda.time.DateTime;
 import java.util.Optional;
 
 import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
 
@@ -61,8 +62,7 @@ public class OverrideByBarcodeRequest {
     if(StringUtils.isBlank(comment)) {
       return failedResult("Override renewal request must have a comment", COMMENT_PROPERTY, null);
     }
-    final Optional<String> dueDateProperty = Optional.ofNullable(getProperty(json, DUE_DATE));
-    final DateTime dueDate = dueDateProperty.map(DateTime::parse).orElse(null);
+    final DateTime dueDate = getDateTimeProperty(json, DUE_DATE);
 
     return succeeded(new OverrideByBarcodeRequest(itemBarcode, userBarcode, comment, dueDate));
   }
