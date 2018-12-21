@@ -16,9 +16,14 @@ public enum LoanPolicyPeriod {
   }
 
   private static final EnumSet<LoanPolicyPeriod> LONG_TERM_LOANS = EnumSet.of(MONTHS, WEEKS, DAYS);
+  private static final EnumSet<LoanPolicyPeriod> SHORT_TERM_LOANS = EnumSet.of(HOURS, MINUTES);
 
   public static boolean isLongTermLoans(LoanPolicyPeriod period) {
     return LONG_TERM_LOANS.contains(period);
+  }
+
+  public static boolean isShortTermLoans(LoanPolicyPeriod period) {
+    return SHORT_TERM_LOANS.contains(period);
   }
 
   private static Predicate<LoanPolicyPeriod> predicate(String name) {

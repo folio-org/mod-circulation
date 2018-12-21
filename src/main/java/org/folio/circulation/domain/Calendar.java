@@ -46,6 +46,18 @@ public class Calendar {
   Calendar() {
   }
 
+  /**
+   * init fields
+   */
+  private void initFields() {
+    this.id = getField(representation.getString(ID_KEY));
+    this.servicePointId = getField(representation.getString(SERVICE_POINT_ID_KEY));
+    this.name = getField(representation.getString(NAME_KEY));
+    this.startDate = getField(representation.getString(START_DATE_KEY));
+    this.endDate = getField(representation.getString(END_DATE_KEY));
+    this.openingDays = fillOpeningDayPeriod();
+  }
+
   public LoanPolicyPeriod getPeriod() {
     return period;
   }
@@ -82,17 +94,6 @@ public class Calendar {
     return openingDays;
   }
 
-  /**
-   * init fields
-   */
-  private void initFields() {
-    this.id = getField(representation.getString(ID_KEY));
-    this.servicePointId = getField(representation.getString(SERVICE_POINT_ID_KEY));
-    this.name = getField(representation.getString(NAME_KEY));
-    this.startDate = getField(representation.getString(START_DATE_KEY));
-    this.endDate = getField(representation.getString(END_DATE_KEY));
-    this.openingDays = fillOpeningDayPeriod();
-  }
 
   private List<OpeningDayPeriod> fillOpeningDayPeriod() {
     List<OpeningDayPeriod> dayPeriods = new ArrayList<>();

@@ -34,7 +34,7 @@ public class Launcher {
 
     Runtime.getRuntime().addShutdownHook(new Thread(launcher::stop));
 
-    Integer port = Integer.getInteger("port", 9142);
+    Integer port = Integer.getInteger("port", 9801);
 
     launcher.start(port).get(10, TimeUnit.SECONDS);
   }

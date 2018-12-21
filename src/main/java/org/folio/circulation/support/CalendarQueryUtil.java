@@ -7,7 +7,9 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Days;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 public class CalendarQueryUtil {
 
@@ -24,6 +26,23 @@ public class CalendarQueryUtil {
 
   public static String getField(String val) {
     return StringUtils.isBlank(val) ? StringUtils.EMPTY : val;
+  }
+
+  public static String collectPathQueryForFixedSchedules(String servicePointId, List<DateTime> fixedDueDates) {
+    DateTime nowDateTime = DateTime.now().millisOfDay().withMaximumValue().withZone(DateTimeZone.UTC);
+    String startDate = nowDateTime.toLocalDate().toString();
+    int amount = 0;
+
+    Optional<DateTime> fixedDueDateOpt = fixedDueDates.stream()
+      .filter(fixedDueDate -> fixedDueDate.isAfter(nowDateTime))
+      .findFirst();
+
+    if (fixedDueDateOpt.isPresent()) {
+      DateTime fixedDueDate = fixedDueDateOpt.get();
+      amount = Days.daysBetween(nowDateTime, fixedDueDate).getDays();
+    }
+
+    return String.format(PATH_PARAM_WITH_QUERY, servicePointId, startDate, DAY_QUERY_VAL, amount);
   }
 
   public static String collectPathQuery(String servicePointId,
@@ -102,10 +121,12 @@ public class CalendarQueryUtil {
         case HOURS:
           amount = fullHour + offsetDuration;
           break;
+
         case MINUTES:
           int newAmount = (fullHour == 0) ? DEFAULT_AMOUNT : fullHour;
           amount = newAmount + offsetDuration / FULL_HOUR;
           break;
+
         default:
           amount = duration;
       }

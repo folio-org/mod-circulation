@@ -277,34 +277,38 @@ public class FakeOkapi extends AbstractVerticle {
   }
 
   private void registerLibraryHours(Router router) {
-    router.get("/calendar/periods/:id/period").handler(routingContext -> {
-      String servicePointId = routingContext.pathParam("id");
-      switch (servicePointId) {
-        case CASE_CALENDAR_IS_UNAVAILABLE_SERVICE_POINT_ID:
-          routingContext.response()
-            .putHeader("content-type", "application/json")
-            .setStatusCode(404)
-            .end();
-          break;
-        case CASE_CLOSED_LIBRARY_SERVICE_POINT_ID:
-          routingContext.response()
-            .setStatusCode(200)
-            .putHeader("content-type", "application/json")
-            .end(findFakeLibraryHoursById(servicePointId));
-          break;
-        case CASE_CLOSED_LIBRARY_IN_THU_SERVICE_POINT_ID:
-          routingContext.response()
-            .setStatusCode(200)
-            .putHeader("content-type", "application/json")
-            .end(findFakeLibraryHoursById(servicePointId));
-          break;
-        default:
-          routingContext.response()
-            .setStatusCode(200)
-            .putHeader("content-type", "application/json")
-            .end(findFakeLibraryHoursById(servicePointId));
-      }
-    });
+    router.get("/calendar/periods/:id/period")
+      .handler(routingContext -> {
+        String servicePointId = routingContext.pathParam("id");
+        switch (servicePointId) {
+          case CASE_CALENDAR_IS_UNAVAILABLE_SERVICE_POINT_ID:
+            routingContext.response()
+              .putHeader("content-type", "application/json")
+              .setStatusCode(404)
+              .end();
+            break;
+
+          case CASE_CLOSED_LIBRARY_SERVICE_POINT_ID:
+            routingContext.response()
+              .setStatusCode(200)
+              .putHeader("content-type", "application/json")
+              .end(findFakeLibraryHoursById(servicePointId));
+            break;
+
+          case CASE_CLOSED_LIBRARY_IN_THU_SERVICE_POINT_ID:
+            routingContext.response()
+              .setStatusCode(200)
+              .putHeader("content-type", "application/json")
+              .end(findFakeLibraryHoursById(servicePointId));
+            break;
+
+          default:
+            routingContext.response()
+              .setStatusCode(200)
+              .putHeader("content-type", "application/json")
+              .end(findFakeLibraryHoursById(servicePointId));
+        }
+      });
   }
 
   private void registerCalendar(Router router) {
@@ -318,21 +322,23 @@ public class FakeOkapi extends AbstractVerticle {
               .setStatusCode(404)
               .end();
             break;
+
           case CASE_CLOSED_LIBRARY_SERVICE_POINT_ID:
             routingContext.response()
               .putHeader("content-type", "application/json")
               .setStatusCode(404)
               .end();
             break;
+
           case CASE_CLOSED_LIBRARY_IN_THU_SERVICE_POINT_ID:
             routingContext.response()
               .putHeader("content-type", "application/json")
               .setStatusCode(404)
               .end();
             break;
+
           default:
             MultiMap queries = routingContext.queryParams();
-            log.debug(String.format("GET: /calendar/periods/%s/calculateopening", servicePointId));
             routingContext.response()
               .setStatusCode(200)
               .putHeader("content-type", "application/json")
@@ -347,7 +353,8 @@ public class FakeOkapi extends AbstractVerticle {
   }
 
   private String findFakeCalendarById(String servicePointId, MultiMap queries) {
-    log.debug(String.format("GET: /calendar/periods/%s/calculateopening, queries=%s", servicePointId, queries));
+    log.debug(String.format("GET: /calendar/periods/%s/calculateopening, queries=%s",
+      servicePointId, queries));
     return getCalendarById(servicePointId).toString();
   }
 }

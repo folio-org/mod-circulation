@@ -3,23 +3,30 @@ package org.folio.circulation.domain;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.LoanPolicyPeriod;
+import org.folio.circulation.domain.policy.LoansPolicyProfile;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ServerErrorFailure;
+import org.joda.time.DateTime;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.CalendarQueryUtil.collectPathQuery;
+import static org.folio.circulation.support.CalendarQueryUtil.collectPathQueryForFixedSchedules;
+import static org.folio.circulation.support.HttpResult.failed;
 
 public class CalendarRepository {
 
   private static final String PATH_PARAM = "%s/period";
   private static final String RECORD_NAME = "openingPeriods";
+
+  private static final HttpResult<LibraryHours> LIBRARY_HOURS_HTTP_RESULT = HttpResult.succeeded(new LibraryHours());
+  private static final HttpResult<Calendar> CALENDAR_HTTP_RESULT = HttpResult.succeeded(new Calendar());
 
   private final CollectionResourceClient resourceClient;
 
@@ -29,7 +36,6 @@ public class CalendarRepository {
 
   public CompletionStage<HttpResult<LoanAndRelatedRecords>> lookupPeriod(HttpResult<LoanAndRelatedRecords> records,
                                                                          String checkoutServicePointId) {
-
     if (!Objects.isNull(records.cause())) {
       return CompletableFuture.completedFuture(records)
         .exceptionally(e -> failed(new ServerErrorFailure(e)));
@@ -53,17 +59,26 @@ public class CalendarRepository {
   private CompletableFuture<HttpResult<Calendar>> getPeriod(String servicePointId, LoanPolicy loanPolicy) {
     LoanPolicyPeriod interval = loanPolicy.getPeriodInterval();
     int duration = loanPolicy.getPeriodDuration();
+
     LoanPolicyPeriod offsetPeriodInterval = loanPolicy.getOffsetPeriodInterval();
     int offsetDuration = loanPolicy.getOffsetPeriodDuration();
-    DueDateManagement dueDateManagement = loanPolicy.getDueDateManagement();
 
-    String serviceId = collectPathQuery(servicePointId, duration, interval, dueDateManagement,
-      offsetDuration, offsetPeriodInterval);
+    DueDateManagement dueDateManagement = loanPolicy.getDueDateManagement();
+    LoansPolicyProfile loansPolicyProfile = loanPolicy.getLoansPolicyProfile();
+
+    String serviceId;
+    if (interval == LoanPolicyPeriod.INCORRECT || loansPolicyProfile == LoansPolicyProfile.FIXED) {
+      List<DateTime> fixedDueDates = loanPolicy.getFixedDueDates();
+      serviceId = collectPathQueryForFixedSchedules(servicePointId, fixedDueDates);
+    } else {
+      serviceId = collectPathQuery(servicePointId, duration, interval, dueDateManagement,
+        offsetDuration, offsetPeriodInterval);
+    }
 
     return FetchSingleRecord.<Calendar>forRecord(RECORD_NAME)
       .using(resourceClient)
       .mapTo(jsonObject -> new Calendar(jsonObject, interval, duration))
-      .whenNotFound(HttpResult.succeeded(new Calendar()))
+      .whenNotFound(CALENDAR_HTTP_RESULT)
       .fetch(serviceId);
   }
 
@@ -72,14 +87,14 @@ public class CalendarRepository {
     return FetchSingleRecord.<LibraryHours>forRecord(RECORD_NAME)
       .using(resourceClient)
       .mapTo(LibraryHours::new)
-      .whenNotFound(HttpResult.succeeded(new LibraryHours()))
+      .whenNotFound(LIBRARY_HOURS_HTTP_RESULT)
       .fetch(serviceId);
   }
 
   private HttpResult<LoanAndRelatedRecords> addLibraryHours(HttpResult<LoanAndRelatedRecords> loanResult,
                                                             HttpResult<LibraryHours> getLibraryHoursResult) {
     if (Objects.isNull(getLibraryHoursResult)) {
-      getLibraryHoursResult = HttpResult.succeeded(new LibraryHours());
+      getLibraryHoursResult = LIBRARY_HOURS_HTTP_RESULT;
     }
     return HttpResult.combine(loanResult, getLibraryHoursResult,
       LoanAndRelatedRecords::withLibraryHours);
@@ -88,7 +103,7 @@ public class CalendarRepository {
   private HttpResult<LoanAndRelatedRecords> addCalendar(HttpResult<LoanAndRelatedRecords> loanResult,
                                                         HttpResult<Calendar> getCalendarResult) {
     if (Objects.isNull(getCalendarResult)) {
-      getCalendarResult = HttpResult.succeeded(new Calendar());
+      getCalendarResult = CALENDAR_HTTP_RESULT;
     }
     return HttpResult.combine(loanResult, getCalendarResult,
       LoanAndRelatedRecords::withCalendar);

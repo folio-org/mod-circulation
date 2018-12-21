@@ -267,6 +267,10 @@ public class LoanPolicy {
     return getProfileByName(profileId);
   }
 
+  public List<DateTime> getFixedDueDates() {
+    return fixedDueDateSchedules.getDueDates();
+  }
+
   public DueDateManagement getDueDateManagement() {
     JsonObject loansPolicyObj = representation.getJsonObject("loansPolicy");
     if (Objects.isNull(loansPolicyObj)) {

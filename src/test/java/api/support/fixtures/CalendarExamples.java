@@ -34,7 +34,7 @@ public class CalendarExamples {
 
   public static final String WEDNESDAY_DATE = "2018-12-11Z";
   public static final String THURSDAY_DATE = "2018-12-12Z";
-  private static final String FRIDAY_DATE = "2018-12-13Z";
+  public static final String FRIDAY_DATE = "2018-12-13Z";
 
   private static final Map<String, OpeningDayPeriodBuilder> fakeOpeningPeriods = new HashMap<>();
 
@@ -114,10 +114,13 @@ public class CalendarExamples {
     switch (serviceId) {
       case CASE_FRI_SAT_MON_SERVICE_POINT_ID:
         return new CalendarBuilder(fakeOpeningPeriods.get(serviceId));
+
       case CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID:
         return new CalendarBuilder(fakeOpeningPeriods.get(serviceId));
+
       case CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID:
         return new CalendarBuilder(fakeOpeningPeriods.get(serviceId));
+
       case CASE_WED_THU_FRI_SERVICE_POINT_ID:
         return new CalendarBuilder(fakeOpeningPeriods.get(serviceId));
 
