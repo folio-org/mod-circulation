@@ -5,8 +5,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.HttpResult;
 import org.joda.time.DateTime;
 
-import java.util.Optional;
-
 import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
