@@ -1491,7 +1491,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
       actualDueDate.getDayOfWeek() == expectedDueDate.getDayOfWeek());
 
     DateTime thresholdDateTime = getThresholdDateTime(expectedDueDate);
-    assertThat("due date should be " + thresholdDateTime,
+    assertThat("due date should be " + thresholdDateTime + ", actual due date is " + actualDueDate,
       actualDueDate.compareTo(thresholdDateTime) == 0);
   }
 
