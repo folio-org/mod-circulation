@@ -247,7 +247,7 @@ public class CheckOutByBarcodeResource extends Resource {
       case MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS:
         OpeningDayPeriod openingDayPeriod = openingDays.get(openingDays.size() / 2);
 
-        DateTime dateTime = getShortTermDueDate(openingDayPeriod);
+        DateTime dateTime = getTermDueDate(openingDayPeriod);
         return calculateNewInitialDueDate(loanAndRelatedRecords, loan, loanPolicy, dateTime);
 
       case MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS:
@@ -272,17 +272,17 @@ public class CheckOutByBarcodeResource extends Resource {
     switch (dueDateManagement) {
       case MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY:
         OpeningDayPeriod prevDayPeriod = findOpeningDay(openingDays, POSITION_PREV_DAY);
-        DateTime prevDateTime = getLongTermDueDate(prevDayPeriod);
+        DateTime prevDateTime = getTermDueDate(prevDayPeriod);
         return calculateNewInitialDueDate(loanAndRelatedRecords, loan, loanPolicy, prevDateTime);
 
       case MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY:
         OpeningDayPeriod nextDayPeriod = findOpeningDay(openingDays, POSITION_NEXT_DAY);
-        DateTime nextDateTime = getLongTermDueDate(nextDayPeriod);
+        DateTime nextDateTime = getTermDueDate(nextDayPeriod);
         return calculateNewInitialDueDate(loanAndRelatedRecords, loan, loanPolicy, nextDateTime);
 
       case MOVE_TO_THE_END_OF_THE_CURRENT_DAY:
         OpeningDayPeriod currentDayPeriod = findOpeningDay(openingDays, POSITION_CURRENT_DAY);
-        DateTime currentDateTime = getLongTermDueDate(currentDayPeriod);
+        DateTime currentDateTime = getTermDueDate(currentDayPeriod);
         return calculateNewInitialDueDate(loanAndRelatedRecords, loan, loanPolicy, currentDateTime);
 
       default:
@@ -432,29 +432,7 @@ public class CheckOutByBarcodeResource extends Resource {
     }
   }
 
-  private DateTime getShortTermDueDate(OpeningDayPeriod openingDayPeriod) {
-    OpeningDay openingDay = openingDayPeriod.getOpeningDay();
-    boolean allDay = openingDay.getAllDay();
-    String date = openingDay.getDate();
-    LocalDate localDate = LocalDate.parse(date, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
-
-    if (allDay) {
-      return new DateTime(localDate.atTime(LocalTime.MAX).toString());
-    } else {
-      List<OpeningHour> openingHours = openingDay.getOpeningHour();
-
-      if (openingHours.isEmpty()) {
-        return new DateTime(localDate.atTime(LocalTime.MAX).toString());
-      } else {
-        OpeningHour openingHour = openingHours.get(openingHours.size() - 1);
-        String endTime = openingHour.getEndTime();
-        LocalTime endLocalTime = LocalTime.parse(endTime);
-        return new DateTime(LocalDateTime.of(localDate, endLocalTime).toString());
-      }
-    }
-  }
-
-  private DateTime getLongTermDueDate(OpeningDayPeriod openingDayPeriod) {
+  private DateTime getTermDueDate(OpeningDayPeriod openingDayPeriod) {
     OpeningDay openingDay = openingDayPeriod.getOpeningDay();
     boolean allDay = openingDay.getAllDay();
     String date = openingDay.getDate();

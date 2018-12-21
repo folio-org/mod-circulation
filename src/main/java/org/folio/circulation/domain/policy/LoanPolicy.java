@@ -20,6 +20,10 @@ import static org.folio.circulation.support.JsonPropertyFetcher.*;
 import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
 
 public class LoanPolicy {
+
+  private static final String LOANS_POLICY_KEY = "loansPolicy";
+  private static final String PERIOD_KEY = "period";
+
   private final JsonObject representation;
   private final FixedDueDateSchedules fixedDueDateSchedules;
   private final FixedDueDateSchedules alternateRenewalFixedDueDateSchedules;
@@ -165,7 +169,7 @@ public class LoanPolicy {
   }
 
   private JsonObject getLoansPolicy() {
-    return representation.getJsonObject("loansPolicy");
+    return representation.getJsonObject(LOANS_POLICY_KEY);
   }
 
   private JsonObject getRenewalsPolicy() {
@@ -195,8 +199,8 @@ public class LoanPolicy {
   }
 
   private Period getPeriod(JsonObject policy) {
-    String interval = getNestedStringProperty(policy, "period", "intervalId");
-    Integer duration = getNestedIntegerProperty(policy, "period", "duration");
+    String interval = getNestedStringProperty(policy, PERIOD_KEY, "intervalId");
+    Integer duration = getNestedIntegerProperty(policy, PERIOD_KEY, "duration");
     return Period.from(duration, interval);
   }
 
@@ -258,7 +262,7 @@ public class LoanPolicy {
   }
 
   public LoansPolicyProfile getLoansPolicyProfile() {
-    JsonObject loansPolicyObj = representation.getJsonObject("loansPolicy");
+    JsonObject loansPolicyObj = representation.getJsonObject(LOANS_POLICY_KEY);
     if (Objects.isNull(loansPolicyObj)) {
       return LoansPolicyProfile.INCORRECT;
     }
@@ -272,7 +276,7 @@ public class LoanPolicy {
   }
 
   public DueDateManagement getDueDateManagement() {
-    JsonObject loansPolicyObj = representation.getJsonObject("loansPolicy");
+    JsonObject loansPolicyObj = representation.getJsonObject(LOANS_POLICY_KEY);
     if (Objects.isNull(loansPolicyObj)) {
       return DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
     }
@@ -282,11 +286,11 @@ public class LoanPolicy {
   }
 
   public LoanPolicyPeriod getPeriodInterval() {
-    return getPeriod("period");
+    return getPeriod(PERIOD_KEY);
   }
 
   public int getPeriodDuration() {
-    return getDuration("period");
+    return getDuration(PERIOD_KEY);
   }
 
   public int getOffsetPeriodDuration() {
@@ -298,7 +302,7 @@ public class LoanPolicy {
   }
 
   private LoanPolicyPeriod getPeriod(String val) {
-    JsonObject loansPolicyObj = representation.getJsonObject("loansPolicy");
+    JsonObject loansPolicyObj = representation.getJsonObject(LOANS_POLICY_KEY);
     if (Objects.isNull(loansPolicyObj)) {
       return LoanPolicyPeriod.INCORRECT;
     }
@@ -313,7 +317,7 @@ public class LoanPolicy {
   }
 
   private int getDuration(String val) {
-    JsonObject loansPolicyObj = representation.getJsonObject("loansPolicy");
+    JsonObject loansPolicyObj = representation.getJsonObject(LOANS_POLICY_KEY);
     JsonObject period = loansPolicyObj.getJsonObject(val);
     if (Objects.isNull(period)) {
       return 0;
