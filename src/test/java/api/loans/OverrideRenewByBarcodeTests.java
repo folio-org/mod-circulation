@@ -108,7 +108,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     final IndividualResource jessica = usersFixture.jessica();
 
     final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      new DateTime(2018, 4, 21, 11, 21, 43));
+      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43));
 
     final UUID loanId = loan.getId();
 
@@ -152,7 +152,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     assertThat("due date should be 2 months after initial due date date",
       renewedLoan.getString("dueDate"),
-      isEquivalentTo(new DateTime(2018, 7, 12, 11, 21, 43)));
+      isEquivalentTo(new DateTime(2018, DateTimeConstants.JULY, 12, 11, 21, 43)));
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
@@ -168,7 +168,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
       .withName("March Only Due Date Limit")
-      .addSchedule(wholeMonth(2018, 3));
+      .addSchedule(wholeMonth(2018, DateTimeConstants.MARCH));
 
     final UUID dueDateLimitScheduleId = fixedDueDateScheduleClient.create(
       dueDateLimitSchedule).getId();
@@ -192,7 +192,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    final DateTime loanDate = new DateTime(2018, 3, 7, 11, 43, 54, DateTimeZone.UTC);
+    final DateTime loanDate = new DateTime(2018, DateTimeConstants.MARCH, 7, 11, 43, 54, DateTimeZone.UTC);
 
     loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -211,7 +211,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     assertThat("due date should be limited by schedule",
       loan.getString("dueDate"),
-      isEquivalentTo(new DateTime(2018, 3, 31, 23, 59, 59, DateTimeZone.UTC)));
+      isEquivalentTo(new DateTime(2018, DateTimeConstants.MARCH, 31, 23, 59, 59, DateTimeZone.UTC)));
   }
 
   @Test
@@ -225,7 +225,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     final IndividualResource jessica = usersFixture.jessica();
 
     final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      new DateTime(2018, 4, 21, 11, 21, 43));
+      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43));
 
     final UUID loanId = loan.getId();
 
@@ -270,7 +270,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     assertThat("due date should be 2 months after initial due date date",
       renewedLoan.getString("dueDate"),
-      isEquivalentTo(new DateTime(2018, 6, 12, 11, 21, 43)));
+      isEquivalentTo(new DateTime(2018, DateTimeConstants.JUNE, 12, 11, 21, 43)));
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
@@ -286,7 +286,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
       .withName("March Only Due Date Limit")
-      .addSchedule(wholeMonth(2018, 3));
+      .addSchedule(wholeMonth(2018, DateTimeConstants.MARCH));
 
     final UUID dueDateLimitScheduleId = fixedDueDateScheduleClient.create(
       dueDateLimitSchedule).getId();
@@ -310,7 +310,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    final DateTime loanDate = new DateTime(2018, 3, 4, 11, 43, 54, DateTimeZone.UTC);
+    final DateTime loanDate = new DateTime(2018, DateTimeConstants.MARCH, 4, 11, 43, 54, DateTimeZone.UTC);
 
     loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -329,7 +329,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     assertThat("due date should be limited by schedule",
       loan.getString("dueDate"),
-      isEquivalentTo(new DateTime(2018, 3, 31, 23, 59, 59, DateTimeZone.UTC)));
+      isEquivalentTo(new DateTime(2018, DateTimeConstants.MARCH, 31, 23, 59, 59, DateTimeZone.UTC)));
   }
 
   @Test
@@ -341,7 +341,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
       .withName("March Only Due Date Limit")
-      .addSchedule(wholeMonth(2018, 3));
+      .addSchedule(wholeMonth(2018, DateTimeConstants.MARCH));
 
     final UUID dueDateLimitScheduleId = fixedDueDateScheduleClient.create(
       dueDateLimitSchedule).getId();
@@ -366,7 +366,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    final DateTime loanDate = new DateTime(2018, 3, 4, 11, 43, 54, DateTimeZone.UTC);
+    final DateTime loanDate = new DateTime(2018, DateTimeConstants.MARCH, 4, 11, 43, 54, DateTimeZone.UTC);
 
     loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -385,7 +385,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     assertThat("due date should be limited by schedule",
       loan.getString("dueDate"),
-      isEquivalentTo(new DateTime(2018, 3, 31, 23, 59, 59, DateTimeZone.UTC)));
+      isEquivalentTo(new DateTime(2018, DateTimeConstants.MARCH, 31, 23, 59, 59, DateTimeZone.UTC)));
   }
 
   @Test
@@ -401,7 +401,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
       .withName("Kludgy Fixed Due Date Schedule")
-      .addSchedule(wholeMonth(2018, 2))
+      .addSchedule(wholeMonth(2018, DateTimeConstants.FEBRUARY))
       .addSchedule(forDay(renewalDate));
 
     final UUID fixedDueDateSchedulesId = fixedDueDateScheduleClient.create(
@@ -425,7 +425,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    final DateTime loanDate = new DateTime(2018, 2, 10, 11, 23, 12, DateTimeZone.UTC);
+    final DateTime loanDate = new DateTime(2018, DateTimeConstants.FEBRUARY, 10, 11, 23, 12, DateTimeZone.UTC);
 
     loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -478,7 +478,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     useLoanPolicyAsFallback(limitedRenewalsPolicyId);
 
     final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
+      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43, DateTimeZone.UTC));
 
     final UUID loanId = loan.getId();
 
@@ -508,7 +508,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     assertThat("due date should be 8 days after initial loan date date",
       renewedLoan.getString("dueDate"),
-      isEquivalentTo(new DateTime(2018, 4, 29, 11, 21, 43, DateTimeZone.UTC)));
+      isEquivalentTo(new DateTime(2018, DateTimeConstants.APRIL, 29, 11, 21, 43, DateTimeZone.UTC)));
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
@@ -526,7 +526,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     final IndividualResource jessica = usersFixture.jessica();
 
     final UUID loanId = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      new DateTime(2018, 4, 21, 11, 21, 43))
+      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43))
       .getId();
 
     //TODO: Renewal based upon system date,
@@ -589,7 +589,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     final UUID unknownLoanPolicyId = UUID.randomUUID();
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      new DateTime(2018, 4, 21, 11, 21, 43));
+      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43));
 
     useLoanPolicyAsFallback(unknownLoanPolicyId);
 
@@ -656,7 +656,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     final IndividualResource jessica = usersFixture.jessica();
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      new DateTime(2018, 4, 21, 11, 21, 43));
+      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43));
 
     final Response response =
       loansFixture.attemptOverride(smallAngryPlanet, james, OVERRIDE_COMMENT, null);
@@ -678,13 +678,13 @@ public class OverrideRenewByBarcodeTests extends APITests {
     final IndividualResource jessica = usersFixture.jessica();
 
     final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      new DateTime(2018, 4, 21, 11, 21, 43));
+      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43));
 
     final UUID loanId = loan.getId();
 
     FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
       .withName("Kludgy Fixed Due Date Schedule")
-      .addSchedule(wholeMonth(2018, 2))
+      .addSchedule(wholeMonth(2018, DateTimeConstants.FEBRUARY))
       .addSchedule(forDay(renewalDate));
 
     final UUID fixedDueDateSchedulesId = fixedDueDateScheduleClient.create(
@@ -707,7 +707,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     useLoanPolicyAsFallback(dueDateLimitedPolicyId);
 
     DateTime newDueDate =
-      new DateTime(2025, 1, 1, 1, 1, 1);
+      new DateTime(2025, DateTimeConstants.JANUARY, 1, 1, 1, 1);
     final JsonObject renewedLoan =
       loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica, OVERRIDE_COMMENT, newDueDate.toString()).getJson();
 
@@ -755,13 +755,13 @@ public class OverrideRenewByBarcodeTests extends APITests {
     final IndividualResource jessica = usersFixture.jessica();
 
     final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      new DateTime(2018, 4, 21, 11, 21, 43));
+      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43));
 
     final UUID loanId = loan.getId();
 
     FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
       .withName("Kludgy Fixed Due Date Schedule")
-      .addSchedule(wholeMonth(2018, 2))
+      .addSchedule(wholeMonth(2018, DateTimeConstants.FEBRUARY))
       .addSchedule(forDay(renewalDate));
 
     final UUID fixedDueDateSchedulesId = fixedDueDateScheduleClient.create(
