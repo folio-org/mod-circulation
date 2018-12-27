@@ -1,6 +1,7 @@
 package org.folio.circulation.support;
 
 import org.folio.circulation.domain.OpeningDayPeriod;
+import org.folio.circulation.domain.OpeningHour;
 import org.folio.circulation.domain.policy.LoanPolicyPeriod;
 import org.joda.time.DateTime;
 
@@ -37,6 +38,12 @@ public class PeriodUtil {
       });
 
     return isInPeriodOfDay(currentDayPeriod, offsetTime, isInOpenPeriodsOfDAy);
+  }
+
+  public static boolean isTimeInHourPeriod(OpeningHour period, LocalTime time) {
+    LocalTime startTime = LocalTime.parse(period.getStartTime());
+    LocalTime endTime = LocalTime.parse(period.getEndTime());
+    return startTime.equals(time) || (time.isAfter(startTime) && time.isBefore(endTime));
   }
 
   private static boolean isInPeriodOfDay(OpeningDayPeriod currentDayPeriod, LocalTime offsetTime, boolean isInOpenPeriodsOfDAy) {

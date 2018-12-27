@@ -30,6 +30,8 @@ import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.SplittableRandom;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -1544,6 +1546,32 @@ public class CheckOutCalculateDueDateTests extends APITests {
     }
   }
 
+  private DateTime findDateTimeInPeriod(OpeningDayPeriod currentDayPeriod, LocalTime offsetTime, String currentDate) {
+    List<OpeningHour> openingHoursList = currentDayPeriod.getOpeningDay().getOpeningHour();
+    Optional<LocalTime> startTimeOpt = openingHoursList.stream()
+      .filter(period -> isTimeInHourPeriod(period, offsetTime))
+      .map(period -> LocalTime.parse(period.getStartTime()))
+      .findAny();
+
+    if (startTimeOpt.isPresent()) {
+      LocalDate localDate = LocalDate.parse(currentDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+      return new DateTime(LocalDateTime.of(localDate, startTimeOpt.get()).toString());
+    }
+
+    LocalDate localDate = LocalDate.parse(currentDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+    LocalTime newOffsetTime = null;
+    for (int i = 0; i < openingHoursList.size() - 1; i++) {
+      LocalTime startTimeFirst = LocalTime.parse(openingHoursList.get(i).getStartTime());
+      LocalTime startTimeSecond = LocalTime.parse(openingHoursList.get(i + 1).getStartTime());
+      if (offsetTime.isAfter(startTimeFirst) && offsetTime.isBefore(startTimeSecond)) {
+        newOffsetTime = startTimeSecond;
+      }
+    }
+
+    return new DateTime(LocalDateTime.of(localDate,
+      Objects.isNull(newOffsetTime) ? offsetTime : newOffsetTime).toString());
+  }
+
 
   private DateTime getRolloverForHourlyPeriod(int duration, OpeningDayPeriod currentDayPeriod, OpeningDayPeriod nextDayPeriod, int offsetDuration) {
 
@@ -1557,8 +1585,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
       String currentDate = currentDayPeriod.getOpeningDay().getDate();
 
       if (isOffsetTimeInCurrentDayPeriod(currentDayPeriod, offsetTime)) {
-        LocalDate localDate = LocalDate.parse(currentDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
-        return new DateTime(LocalDateTime.of(localDate, offsetTime).toString());
+        return findDateTimeInPeriod(currentDayPeriod, offsetTime, currentDate);
       } else {
         OpeningDay nextOpeningDay = nextDayPeriod.getOpeningDay();
         String nextDate = nextOpeningDay.getDate();
@@ -1588,8 +1615,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
         String currentDate = currentDayPeriod.getOpeningDay().getDate();
 
         if (isOffsetTimeInCurrentDayPeriod(currentDayPeriod, offsetTime)) {
-          LocalDate localDate = LocalDate.parse(currentDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
-          return new DateTime(LocalDateTime.of(localDate, offsetTime).toString());
+          return findDateTimeInPeriod(currentDayPeriod, offsetTime, currentDate);
         } else {
           OpeningDay nextOpeningDay = nextDayPeriod.getOpeningDay();
           String nextDate = nextOpeningDay.getDate();

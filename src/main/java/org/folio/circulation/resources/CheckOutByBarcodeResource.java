@@ -36,6 +36,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -47,6 +48,7 @@ import static org.folio.circulation.support.ValidationErrorFailure.failure;
 public class CheckOutByBarcodeResource extends Resource {
 
   public static final String DATE_TIME_FORMATTER = "yyyy-MM-dd'Z'";
+  private static final LocalTime START_TIME_OF_DAY = LocalTime.of(6, 0);
   private static final int POSITION_PREV_DAY = 0;
   private static final int POSITION_CURRENT_DAY = 1;
   private static final int POSITION_NEXT_DAY = 2;
@@ -357,12 +359,35 @@ public class CheckOutByBarcodeResource extends Resource {
       String currentDate = currentDayPeriod.getOpeningDay().getDate();
 
       if (isOffsetTimeInCurrentDayPeriod(currentDayPeriod, offsetTime)) {
+        List<OpeningHour> openingHoursList = currentDayPeriod.getOpeningDay().getOpeningHour();
+        Optional<LocalTime> startTimeOpt = openingHoursList.stream()
+          .filter(period -> isTimeInHourPeriod(period, offsetTime))
+          .map(period -> LocalTime.parse(period.getStartTime()))
+          .findAny();
+
+        if (startTimeOpt.isPresent()) {
+          LocalDate localDate = LocalDate.parse(currentDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+          return new DateTime(LocalDateTime.of(localDate, startTimeOpt.get()).toString());
+        }
+
         LocalDate localDate = LocalDate.parse(currentDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
-        return new DateTime(LocalDateTime.of(localDate, offsetTime).toString());
+        LocalTime newOffsetTime = findTimeBetweenPeriods(openingHoursList, offsetTime);
+        return new DateTime(LocalDateTime.of(localDate, newOffsetTime).toString());
       } else {
         return getDayForHourlyPeriod(nextDayPeriod);
       }
     }
+  }
+
+  private LocalTime findTimeBetweenPeriods(List<OpeningHour> openingHoursList, LocalTime offsetTime) {
+    for (int i = 0; i < openingHoursList.size() - 1; i++) {
+      LocalTime startTimeFirst = LocalTime.parse(openingHoursList.get(i).getStartTime());
+      LocalTime startTimeSecond = LocalTime.parse(openingHoursList.get(i + 1).getStartTime());
+      if (offsetTime.isAfter(startTimeFirst) && offsetTime.isBefore(startTimeSecond)) {
+        return startTimeSecond;
+      }
+    }
+    return offsetTime;
   }
 
   private DateTime getDayForHourlyPeriod(OpeningDayPeriod nextDayPeriod) {
@@ -373,10 +398,35 @@ public class CheckOutByBarcodeResource extends Resource {
     if (nextOpeningDay.getAllDay()) {
       return new DateTime(localDate.atTime(LocalTime.MIN).toString());
     } else {
-      OpeningHour openingHour = nextOpeningDay.getOpeningHour().get(0);
-      LocalTime startTime = LocalTime.parse(openingHour.getStartTime());
+      List<OpeningHour> openingHoursList = nextOpeningDay.getOpeningHour();
+      if (openingHoursList.size() == 1) {
+        OpeningHour openingHour = openingHoursList.get(0);
+        LocalTime startTime = LocalTime.parse(openingHour.getStartTime());
+        return new DateTime(LocalDateTime.of(localDate, startTime).toString());
+      }
+
+      Optional<LocalTime> startTimeOpt = openingHoursList.stream()
+        .filter(period -> isTimeInHourPeriod(period, START_TIME_OF_DAY))
+        .map(period -> LocalTime.parse(period.getStartTime()))
+        .findAny();
+      if (startTimeOpt.isPresent()) {
+        LocalTime startTime = startTimeOpt.get();
+        return new DateTime(LocalDateTime.of(localDate, startTime).toString());
+      }
+
+      LocalTime startTime = openingHoursList.stream()
+        .filter(this::isLater)
+        .map(period -> LocalTime.parse(period.getStartTime()))
+        .findAny()
+        .orElse(LocalTime.parse(openingHoursList.get(openingHoursList.size() - 1).getStartTime()));
       return new DateTime(LocalDateTime.of(localDate, startTime).toString());
     }
+  }
+
+  private boolean isLater(OpeningHour period) {
+    LocalTime startTime = LocalTime.parse(period.getStartTime());
+    LocalTime endTime = LocalTime.parse(period.getEndTime());
+    return START_TIME_OF_DAY.isBefore(startTime) || START_TIME_OF_DAY.isBefore(endTime);
   }
 
   private DateTime getRolloverForMinutesPeriod(int duration, OpeningDayPeriod currentDayPeriod, OpeningDayPeriod nextDayPeriod,
