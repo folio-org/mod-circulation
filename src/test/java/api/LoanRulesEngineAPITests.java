@@ -1,37 +1,33 @@
 package api;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import api.support.http.InterfaceUrls;
-import org.folio.circulation.loanrules.*;
-import org.folio.circulation.resources.LoanRulesEngineResource;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
-import org.junit.Before;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static api.support.http.InterfaceUrls.loanRulesUrl;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.StringContains.containsString;
 
-import java.lang.invoke.MethodHandles;
 import java.net.URL;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static api.support.http.InterfaceUrls.loanRulesUrl;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.StringContains.containsString;
+import org.folio.circulation.loanrules.ItemType;
+import org.folio.circulation.loanrules.LoanPolicy;
+import org.folio.circulation.loanrules.LoanType;
+import org.folio.circulation.loanrules.PatronGroup;
+import org.folio.circulation.loanrules.ShelvingLocation;
+import org.folio.circulation.resources.LoanRulesEngineResource;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
+import org.junit.Before;
+import org.junit.Test;
 
-public class LoanRulesEngineAPITests {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+import api.support.APITests;
+import api.support.http.InterfaceUrls;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
-  OkapiHttpClient client = APITestSuite.createClient(exception ->
-    log.error("Request to circulation module failed:", exception)
-  );
-
+public class LoanRulesEngineAPITests extends APITests {
   private void setRules(String rules) {
     JsonObject json = new JsonObject();
     json.put("loanRulesAsTextFile", rules);
