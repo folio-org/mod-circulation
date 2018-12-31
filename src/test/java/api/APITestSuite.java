@@ -221,25 +221,7 @@ public class APITestSuite {
     TimeoutException,
     MalformedURLException {
 
-    useOkapiForStorage = Boolean.parseBoolean(
-      System.getProperty("use.okapi.storage.requests", "false"));
-
-    useOkapiForInitialRequests = Boolean.parseBoolean(
-      System.getProperty("use.okapi.initial.requests", "false"));
-
-    port = 9605;
-    vertxAssistant = new VertxAssistant();
-    launcher = new Launcher(vertxAssistant);
-
-    vertxAssistant.start();
-
-    final CompletableFuture<String> fakeStorageModuleDeployed;
-
-    if (!useOkapiForStorage) {
-      fakeStorageModuleDeployed = vertxAssistant.deployVerticle(FakeOkapi.class);
-    } else {
-      fakeStorageModuleDeployed = CompletableFuture.completedFuture(null);
-    }
+    final CompletableFuture<String> fakeStorageModuleDeployed = deployFakeStorageModules();
 
     final CompletableFuture<Void> circulationModuleStarted = launcher.start(port);
 
@@ -262,6 +244,29 @@ public class APITestSuite {
     createUsers();
     createLoanPolicies();
     createCancellationReasons();
+  }
+
+  private static CompletableFuture<String> deployFakeStorageModules() {
+    useOkapiForStorage = Boolean.parseBoolean(
+      System.getProperty("use.okapi.storage.requests", "false"));
+
+    useOkapiForInitialRequests = Boolean.parseBoolean(
+      System.getProperty("use.okapi.initial.requests", "false"));
+
+    port = 9605;
+    vertxAssistant = new VertxAssistant();
+    launcher = new Launcher(vertxAssistant);
+
+    vertxAssistant.start();
+
+    final CompletableFuture<String> fakeStorageModuleDeployed;
+
+    if (!useOkapiForStorage) {
+      fakeStorageModuleDeployed = vertxAssistant.deployVerticle(FakeOkapi.class);
+    } else {
+      fakeStorageModuleDeployed = CompletableFuture.completedFuture(null);
+    }
+    return fakeStorageModuleDeployed;
   }
 
   @AfterClass
