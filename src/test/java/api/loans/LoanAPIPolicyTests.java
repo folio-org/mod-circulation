@@ -6,7 +6,6 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -15,14 +14,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import api.APITestSuite;
 import api.support.APITests;
@@ -32,17 +28,11 @@ import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
 public class LoanAPIPolicyTests extends APITests {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
   static UUID pFallback;
   static UUID p1;
   static UUID p2;
   static UUID p3;
   static UUID p4;
-
-  protected static final OkapiHttpClient client = APITestSuite.createClient(exception -> {
-    log.error("Request to circulation module failed:", exception);
-  });
 
   public LoanAPIPolicyTests() {
     super(false);
@@ -148,7 +138,7 @@ public class LoanAPIPolicyTests extends APITests {
     assertThat("policy is " + policyName, policyJson.getString("name"), is(policyName));
   }
 
-  private static void createLoanPolicies()
+  private void createLoanPolicies()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
