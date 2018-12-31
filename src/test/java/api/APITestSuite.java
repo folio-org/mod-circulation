@@ -53,7 +53,6 @@ public class APITestSuite {
   private static Launcher launcher;
   private static int port;
 
-  private static String circulationModuleDeploymentId;
   private static String fakeOkapiDeploymentId;
   private static Boolean useOkapiForStorage;
   private static Boolean useOkapiForInitialRequests;
@@ -118,7 +117,7 @@ public class APITestSuite {
       okapiUrl(), TENANT_ID, TOKEN, USER_ID, REQUEST_ID, exceptionHandler);
   }
 
-  public static OkapiHttpClient createClient() {
+  private static OkapiHttpClient createClient() {
     return APITestSuite.createClient(exception ->
       log.error("Request failed:", exception));
   }
@@ -175,10 +174,6 @@ public class APITestSuite {
     return regularGroupId;
   }
 
-  public static UUID alternateGroupId() {
-    return alternateGroupId;
-  }
-
   public static UUID workAddressTypeId() {
     return workAddressTypeId;
   }
@@ -193,10 +188,6 @@ public class APITestSuite {
 
   public static UUID courseReservesCancellationReasonId() {
     return courseReservesCancellationReasonId;
-  }
-
-  public static UUID patronRequestCancellationReasonId() {
-    return patronRequestCancellationReasonId;
   }
 
   public static UUID nottinghamUniversityInstitution() {
@@ -329,7 +320,7 @@ public class APITestSuite {
       .sorted()
       .collect(Collectors.joining("\n"));
 
-    log.debug("Queries performed: {}", sortedRequests);
+    log.info("Queries performed: {}", sortedRequests);
   }
 
   private static void deleteAllRecords()
