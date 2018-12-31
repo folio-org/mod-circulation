@@ -35,6 +35,7 @@ import api.support.builders.ServicePointBuilder;
 import api.support.builders.UserBuilder;
 import api.support.fakes.FakeOkapi;
 import api.support.fakes.FakeStorageModule;
+import api.support.fixtures.MaterialTypesFixture;
 import api.support.http.ResourceClient;
 import api.support.http.URLHelper;
 import io.vertx.core.Vertx;
@@ -458,11 +459,12 @@ public class APITestSuite {
     ExecutionException,
     TimeoutException {
 
-    bookMaterialTypeId = createReferenceRecord(
-      ResourceClient.forMaterialTypes(createClient()), "Book");
+    final ResourceClient client = ResourceClient.forMaterialTypes(createClient());
 
-    videoRecordingMaterialTypeId = createReferenceRecord(
-      ResourceClient.forMaterialTypes(createClient()), "Video Recording");
+    final MaterialTypesFixture materialTypesFixture = new MaterialTypesFixture(client);
+
+    bookMaterialTypeId = materialTypesFixture.book();
+    videoRecordingMaterialTypeId = materialTypesFixture.videoRecording();
   }
 
   private static void deleteMaterialTypes()
@@ -734,7 +736,7 @@ public class APITestSuite {
     client.replace(null, json);
   }
 
-  private static UUID createReferenceRecord(
+  public static UUID createReferenceRecord(
     ResourceClient client,
     JsonObject record)
     throws MalformedURLException,
@@ -757,13 +759,14 @@ public class APITestSuite {
     }
   }
 
-  private static UUID createReferenceRecord(
+  public static UUID createReferenceRecord(
     ResourceClient client,
     String name)
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
     TimeoutException {
+
     return createReferenceRecord(client, name, null, null);
   }
 
