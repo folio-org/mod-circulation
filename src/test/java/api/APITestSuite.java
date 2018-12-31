@@ -325,9 +325,11 @@ public class APITestSuite {
   }
 
   private static void outputCQLQueryRequestsPerformedAgainstFakes() {
-    log.info("Queries performed: " + FakeStorageModule.getQueries()
+    final String sortedRequests = FakeStorageModule.getQueries()
       .sorted()
-      .collect(Collectors.joining("\n")));
+      .collect(Collectors.joining("\n"));
+
+    log.debug("Queries performed: {}", sortedRequests);
   }
 
   private static void deleteAllRecords()
