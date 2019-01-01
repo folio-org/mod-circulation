@@ -36,6 +36,7 @@ public class ItemsFixture {
 
     return create(
       InstanceExamples.basedUponDunkirk(),
+      thirdFloorHoldings(),
       ItemExamples.basedUponDunkirk());
   }
 
@@ -47,6 +48,7 @@ public class ItemsFixture {
 
     return create(
       InstanceExamples.basedUponSmallAngryPlanet(),
+      thirdFloorHoldings(),
       ItemExamples.basedUponSmallAngryPlanet());
   }
 
@@ -60,6 +62,7 @@ public class ItemsFixture {
     return applyAdditionalProperties(
       additionalItemProperties,
       InstanceExamples.basedUponSmallAngryPlanet(),
+      thirdFloorHoldings(),
       ItemExamples.basedUponSmallAngryPlanet());
   }
 
@@ -71,6 +74,7 @@ public class ItemsFixture {
 
     return create(
       InstanceExamples.basedUponNod(),
+      thirdFloorHoldings(),
       ItemExamples.basedUponNod());
   }
 
@@ -84,6 +88,7 @@ public class ItemsFixture {
     return applyAdditionalProperties(
       additionalItemProperties,
       InstanceExamples.basedUponNod(),
+      thirdFloorHoldings(),
       ItemExamples.basedUponNod());
   }
 
@@ -95,6 +100,7 @@ public class ItemsFixture {
 
     return create(
       InstanceExamples.basedUponTemeraire(),
+      thirdFloorHoldings(),
       ItemExamples.basedUponTemeraire());
   }
 
@@ -108,6 +114,7 @@ public class ItemsFixture {
     return applyAdditionalProperties(
       additionalItemProperties,
       InstanceExamples.basedUponTemeraire(),
+      thirdFloorHoldings(),
       ItemExamples.basedUponTemeraire());
   }
 
@@ -119,6 +126,7 @@ public class ItemsFixture {
 
     return create(
       InstanceExamples.basedUponUprooted(),
+      thirdFloorHoldings(),
       ItemExamples.basedUponUprooted());
   }
 
@@ -132,6 +140,7 @@ public class ItemsFixture {
     return applyAdditionalProperties(
       additionalItemProperties,
       InstanceExamples.basedUponUprooted(),
+      thirdFloorHoldings(),
       ItemExamples.basedUponUprooted());
   }
 
@@ -143,6 +152,7 @@ public class ItemsFixture {
 
     return create(
       InstanceExamples.basedUponInterestingTimes(),
+      thirdFloorHoldings(),
       ItemExamples.basedUponInterestingTimes());
   }
 
@@ -156,12 +166,14 @@ public class ItemsFixture {
     return applyAdditionalProperties(
       additionalItemProperties,
       InstanceExamples.basedUponInterestingTimes(),
+      thirdFloorHoldings(),
       ItemExamples.basedUponInterestingTimes());
   }
 
   private IndividualResource applyAdditionalProperties(
     Function<ItemBuilder, ItemBuilder> additionalItemProperties,
     InstanceBuilder instanceBuilder,
+    HoldingBuilder holdingsRecordBuilder,
     ItemBuilder itemBuilder)
     throws InterruptedException,
     MalformedURLException,
@@ -170,11 +182,13 @@ public class ItemsFixture {
 
     return create(
       instanceBuilder,
+      holdingsRecordBuilder,
       additionalItemProperties.apply(itemBuilder));
   }
 
   private IndividualResource create(
     InstanceBuilder instanceBuilder,
+    HoldingBuilder holdingsRecordBuilder,
     ItemBuilder itemBuilder)
     throws MalformedURLException,
     InterruptedException,
@@ -184,14 +198,18 @@ public class ItemsFixture {
     IndividualResource instance = instancesClient.create(
       instanceBuilder.withInstanceTypeId(booksInstanceTypeId()));
 
-    IndividualResource holding = holdingsClient.create(new HoldingBuilder()
-      .forInstance(instance.getId())
-      .withPermanentLocation(thirdFloorLocationId())
-      .withNoTemporaryLocation()
-      .withCallNumber("123456"));
+    IndividualResource holding = holdingsClient.create(
+      holdingsRecordBuilder.forInstance(instance.getId()));
 
     return itemsClient.create(
       itemBuilder.forHolding(holding.getId())
       .create());
+  }
+
+  private HoldingBuilder thirdFloorHoldings() {
+    return new HoldingBuilder()
+      .withPermanentLocation(thirdFloorLocationId())
+      .withNoTemporaryLocation()
+      .withCallNumber("123456");
   }
 }
