@@ -2,6 +2,7 @@ package api.support.fixtures;
 
 import static api.APITestSuite.booksInstanceTypeId;
 import static api.APITestSuite.thirdFloorLocationId;
+import static java.util.function.Function.identity;
 
 import java.net.MalformedURLException;
 import java.util.concurrent.ExecutionException;
@@ -60,6 +61,23 @@ public class ItemsFixture {
     ExecutionException {
 
     return applyAdditionalProperties(
+      identity(),
+      additionalItemProperties,
+      InstanceExamples.basedUponSmallAngryPlanet(),
+      thirdFloorHoldings(),
+      ItemExamples.basedUponSmallAngryPlanet());
+  }
+
+  public IndividualResource basedUponSmallAngryPlanet(
+    Function<HoldingBuilder, HoldingBuilder> additionalHoldingsRecordProperties,
+    Function<ItemBuilder, ItemBuilder> additionalItemProperties)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return applyAdditionalProperties(
+      additionalHoldingsRecordProperties,
       additionalItemProperties,
       InstanceExamples.basedUponSmallAngryPlanet(),
       thirdFloorHoldings(),
@@ -86,6 +104,7 @@ public class ItemsFixture {
     ExecutionException {
 
     return applyAdditionalProperties(
+      identity(),
       additionalItemProperties,
       InstanceExamples.basedUponNod(),
       thirdFloorHoldings(),
@@ -105,6 +124,7 @@ public class ItemsFixture {
   }
 
   public IndividualResource basedUponTemeraire(
+    Function<HoldingBuilder, HoldingBuilder> additionalHoldingsRecordProperties,
     Function<ItemBuilder, ItemBuilder> additionalItemProperties)
     throws InterruptedException,
     MalformedURLException,
@@ -112,6 +132,22 @@ public class ItemsFixture {
     ExecutionException {
 
     return applyAdditionalProperties(
+      additionalHoldingsRecordProperties,
+      additionalItemProperties,
+      InstanceExamples.basedUponTemeraire(),
+      thirdFloorHoldings(),
+      ItemExamples.basedUponTemeraire());
+  }
+
+  public IndividualResource basedUponTemeraire(
+    Function<ItemBuilder, ItemBuilder> additionalItemProperties)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return applyAdditionalProperties(
+      identity(),
       additionalItemProperties,
       InstanceExamples.basedUponTemeraire(),
       thirdFloorHoldings(),
@@ -138,6 +174,7 @@ public class ItemsFixture {
     ExecutionException {
 
     return applyAdditionalProperties(
+      identity(),
       additionalItemProperties,
       InstanceExamples.basedUponUprooted(),
       thirdFloorHoldings(),
@@ -164,6 +201,7 @@ public class ItemsFixture {
     ExecutionException {
 
     return applyAdditionalProperties(
+      identity(),
       additionalItemProperties,
       InstanceExamples.basedUponInterestingTimes(),
       thirdFloorHoldings(),
@@ -171,6 +209,7 @@ public class ItemsFixture {
   }
 
   private IndividualResource applyAdditionalProperties(
+    Function<HoldingBuilder, HoldingBuilder> additionalHoldingsRecordProperties,
     Function<ItemBuilder, ItemBuilder> additionalItemProperties,
     InstanceBuilder instanceBuilder,
     HoldingBuilder holdingsRecordBuilder,
@@ -182,7 +221,7 @@ public class ItemsFixture {
 
     return create(
       instanceBuilder,
-      holdingsRecordBuilder,
+      additionalHoldingsRecordProperties.apply(holdingsRecordBuilder),
       additionalItemProperties.apply(itemBuilder));
   }
 
