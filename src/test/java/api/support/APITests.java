@@ -28,6 +28,7 @@ import api.APITestSuite;
 import api.support.fixtures.ItemsFixture;
 import api.support.fixtures.LoansFixture;
 import api.support.fixtures.LocationsFixture;
+import api.support.fixtures.MaterialTypesFixture;
 import api.support.fixtures.PatronGroupsFixture;
 import api.support.fixtures.RequestsFixture;
 import api.support.fixtures.ServicePointsFixture;
@@ -44,11 +45,11 @@ public abstract class APITests {
 
   private final boolean initialiseLoanRules;
   private final ResourceClient proxyRelationshipsClient = ResourceClient.forProxyRelationships(client);
+  private final ResourceClient holdingsClient = ResourceClient.forHoldings(client);
   protected final ResourceClient usersClient = ResourceClient.forUsers(client);
   protected final ResourceClient itemsClient = ResourceClient.forItems(client);
   protected final ResourceClient requestsClient = ResourceClient.forRequests(client);
   protected final ResourceClient loansClient = ResourceClient.forLoans(client);
-  protected final ResourceClient holdingsClient = ResourceClient.forHoldings(client);
   protected final ResourceClient instancesClient = ResourceClient.forInstances(client);
   protected final ResourceClient loansStorageClient = ResourceClient.forLoansStorage(client);
   protected final ResourceClient loanPolicyClient = ResourceClient.forLoanPolicies(client);
@@ -57,7 +58,9 @@ public abstract class APITests {
   private final ResourceClient locationsClient = ResourceClient.forLocations(client);
   private final ResourceClient patronGroupsClient = ResourceClient.forPatronGroups(client);
 
-  protected final ItemsFixture itemsFixture = new ItemsFixture(client);
+  protected final MaterialTypesFixture materialTypesFixture = new MaterialTypesFixture(
+    ResourceClient.forMaterialTypes(client));
+  protected final ItemsFixture itemsFixture = new ItemsFixture(client, materialTypesFixture);
   protected final LoansFixture loansFixture = new LoansFixture(loansClient, client);
   protected final RequestsFixture requestsFixture = new RequestsFixture(requestsClient);
   protected final UsersFixture usersFixture = new UsersFixture(usersClient, proxyRelationshipsClient);
@@ -150,7 +153,6 @@ public abstract class APITests {
     APITestSuite.deleteGroups();
     APITestSuite.deleteAddressTypes();
 
-    APITestSuite.deleteMaterialTypes();
     APITestSuite.deleteLoanTypes();
     APITestSuite.deleteLocations();
     APITestSuite.deleteServicePoints();
@@ -170,6 +172,8 @@ public abstract class APITests {
     itemsClient.deleteAll();
     holdingsClient.deleteAll();
     instancesClient.deleteAll();
+
+    materialTypesFixture.cleanUp();
 
     locationsFixture.cleanUp();
     servicePointsFixture.cleanUp();

@@ -5,7 +5,6 @@ import static api.APITestSuite.thirdFloorLocationId;
 import static java.util.function.Function.identity;
 
 import java.net.MalformedURLException;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
@@ -20,15 +19,19 @@ import api.support.http.InventoryItemResource;
 import api.support.http.ResourceClient;
 
 public class ItemsFixture {
-
   private final ResourceClient itemsClient;
   private final ResourceClient holdingsClient;
   private final ResourceClient instancesClient;
+  private final MaterialTypesFixture materialTypesFixture;
 
-  public ItemsFixture(OkapiHttpClient client) {
+  public ItemsFixture(
+    OkapiHttpClient client,
+    MaterialTypesFixture materialTypesFixture) {
+
     itemsClient = ResourceClient.forItems(client);
     holdingsClient = ResourceClient.forHoldings(client);
     instancesClient = ResourceClient.forInstances(client);
+    this.materialTypesFixture = materialTypesFixture;
   }
 
   public InventoryItemResource basedUponDunkirk()
@@ -40,7 +43,7 @@ public class ItemsFixture {
     return create(
       InstanceExamples.basedUponDunkirk(),
       thirdFloorHoldings(),
-      ItemExamples.basedUponDunkirk(MaterialTypesFixture.videoRecordingMaterialTypeId()));
+      ItemExamples.basedUponDunkirk(materialTypesFixture.videoRecording()));
   }
 
   public InventoryItemResource basedUponSmallAngryPlanet()
@@ -77,7 +80,7 @@ public class ItemsFixture {
       additionalItemProperties,
       InstanceExamples.basedUponSmallAngryPlanet(),
       thirdFloorHoldings(),
-      ItemExamples.basedUponSmallAngryPlanet(getBookMaterialTypeId()));
+      ItemExamples.basedUponSmallAngryPlanet(materialTypesFixture.book()));
   }
 
   public InventoryItemResource basedUponNod()
@@ -101,7 +104,7 @@ public class ItemsFixture {
       additionalItemProperties,
       InstanceExamples.basedUponNod(),
       thirdFloorHoldings(),
-      ItemExamples.basedUponNod(getBookMaterialTypeId()));
+      ItemExamples.basedUponNod(materialTypesFixture.book()));
   }
 
   public InventoryItemResource basedUponTemeraire()
@@ -126,7 +129,7 @@ public class ItemsFixture {
       additionalItemProperties,
       InstanceExamples.basedUponTemeraire(),
       thirdFloorHoldings(),
-      ItemExamples.basedUponTemeraire(getBookMaterialTypeId()));
+      ItemExamples.basedUponTemeraire(materialTypesFixture.book()));
   }
 
   public InventoryItemResource basedUponTemeraire(
@@ -160,7 +163,7 @@ public class ItemsFixture {
       additionalItemProperties,
       InstanceExamples.basedUponUprooted(),
       thirdFloorHoldings(),
-      ItemExamples.basedUponUprooted(getBookMaterialTypeId()));
+      ItemExamples.basedUponUprooted(materialTypesFixture.book()));
   }
 
   public InventoryItemResource basedUponInterestingTimes()
@@ -184,7 +187,7 @@ public class ItemsFixture {
       additionalItemProperties,
       InstanceExamples.basedUponInterestingTimes(),
       thirdFloorHoldings(),
-      ItemExamples.basedUponInterestingTimes(getBookMaterialTypeId()));
+      ItemExamples.basedUponInterestingTimes(materialTypesFixture.book()));
   }
 
   private InventoryItemResource applyAdditionalProperties(
@@ -224,10 +227,6 @@ public class ItemsFixture {
         .create());
 
     return new InventoryItemResource(item, holding, instance);
-  }
-
-  private UUID getBookMaterialTypeId() {
-    return MaterialTypesFixture.bookMaterialTypeId();
   }
 
   private HoldingBuilder thirdFloorHoldings() {

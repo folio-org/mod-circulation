@@ -10,8 +10,8 @@ import java.util.concurrent.TimeoutException;
 import api.support.http.ResourceClient;
 
 public class MaterialTypesFixture {
-  private static UUID bookMaterialTypeId;
-  private static UUID videoRecordingMaterialTypeId;
+  private UUID bookMaterialTypeId;
+  private UUID videoRecordingMaterialTypeId;
 
   private final ResourceClient materialTypesClient;
 
@@ -19,15 +19,7 @@ public class MaterialTypesFixture {
     this.materialTypesClient = materialTypesClient;
   }
 
-  public static UUID bookMaterialTypeId() {
-    return bookMaterialTypeId;
-  }
-
-  public static UUID videoRecordingMaterialTypeId() {
-    return videoRecordingMaterialTypeId;
-  }
-
-  public void videoRecording()
+  public UUID videoRecording()
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
@@ -37,9 +29,11 @@ public class MaterialTypesFixture {
       videoRecordingMaterialTypeId = createReferenceRecord(materialTypesClient,
           "Video Recording");
     }
+
+    return videoRecordingMaterialTypeId;
   }
 
-  public void book()
+  public UUID book()
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
@@ -48,6 +42,8 @@ public class MaterialTypesFixture {
     if(bookMaterialTypeId == null) {
       bookMaterialTypeId = createReferenceRecord(materialTypesClient, "Book");
     }
+
+    return bookMaterialTypeId;
   }
 
   public void cleanUp()
@@ -56,10 +52,14 @@ public class MaterialTypesFixture {
     TimeoutException,
     ExecutionException {
 
-    materialTypesClient.delete(bookMaterialTypeId);
-    bookMaterialTypeId = null;
+    if(bookMaterialTypeId != null) {
+      materialTypesClient.delete(bookMaterialTypeId);
+      bookMaterialTypeId = null;
+    }
 
-    materialTypesClient.delete(videoRecordingMaterialTypeId);
-    videoRecordingMaterialTypeId = null;
+    if(videoRecordingMaterialTypeId != null) {
+      materialTypesClient.delete(videoRecordingMaterialTypeId);
+      videoRecordingMaterialTypeId = null;
+    }
   }
 }
