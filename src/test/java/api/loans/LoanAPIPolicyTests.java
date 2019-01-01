@@ -23,6 +23,7 @@ import org.junit.Test;
 import api.APITestSuite;
 import api.support.APITests;
 import api.support.builders.LoanBuilder;
+import api.support.fixtures.MaterialTypesFixture;
 import api.support.http.InterfaceUrls;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
@@ -67,10 +68,10 @@ public class LoanAPIPolicyTests extends APITests {
     String rules = String.join("\n",
       "priority: t, s, c, b, a, m, g",
       "fallback-policy: " + pFallback,
-      "m " + APITestSuite.videoRecordingMaterialTypeId() + " + g " + group1 + " : " + p1,
-      "m " + APITestSuite.bookMaterialTypeId() + " + t " + canCirculateLoanTypeId() + " : " + p2,
-      "m " + APITestSuite.bookMaterialTypeId() + " + t " + readingRoomLoanTypeId() + " : " + p3,
-      "m " + APITestSuite.bookMaterialTypeId() + " + t " + canCirculateLoanTypeId() + " + g " + group1 + " : " + p4
+      "m " + MaterialTypesFixture.videoRecordingMaterialTypeId() + " + g " + group1 + " : " + p1,
+      "m " + MaterialTypesFixture.bookMaterialTypeId() + " + t " + canCirculateLoanTypeId() + " : " + p2,
+      "m " + MaterialTypesFixture.bookMaterialTypeId() + " + t " + readingRoomLoanTypeId() + " : " + p3,
+      "m " + MaterialTypesFixture.bookMaterialTypeId() + " + t " + canCirculateLoanTypeId() + " + g " + group1 + " : " + p4
       );
     JsonObject newRulesRequest = new JsonObject().put("loanRulesAsTextFile", rules);
     CompletableFuture<Response> completed = new CompletableFuture<>();

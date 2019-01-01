@@ -57,8 +57,6 @@ public class APITestSuite {
   private static String fakeOkapiDeploymentId;
   private static Boolean useOkapiForStorage;
   private static Boolean useOkapiForInitialRequests;
-  private static UUID bookMaterialTypeId;
-  private static UUID videoRecordingMaterialTypeId;
   private static UUID canCirculateLoanTypeId;
   private static UUID readingRoomLoanTypeId;
   private static UUID booksInstanceTypeId;
@@ -121,14 +119,6 @@ public class APITestSuite {
   private static OkapiHttpClient createClient() {
     return APITestSuite.createClient(exception ->
       log.error("Request failed:", exception));
-  }
-
-  public static UUID bookMaterialTypeId() {
-    return bookMaterialTypeId;
-  }
-
-  public static UUID videoRecordingMaterialTypeId() {
-    return videoRecordingMaterialTypeId;
   }
 
   public static UUID canCirculateLoanTypeId() {
@@ -463,8 +453,8 @@ public class APITestSuite {
 
     final MaterialTypesFixture materialTypesFixture = new MaterialTypesFixture(client);
 
-    bookMaterialTypeId = materialTypesFixture.book();
-    videoRecordingMaterialTypeId = materialTypesFixture.videoRecording();
+    materialTypesFixture.book();
+    materialTypesFixture.videoRecording();
   }
 
   private static void deleteMaterialTypes()
@@ -475,8 +465,8 @@ public class APITestSuite {
 
     ResourceClient materialTypesClient = ResourceClient.forMaterialTypes(createClient());
 
-    materialTypesClient.delete(bookMaterialTypeId);
-    materialTypesClient.delete(videoRecordingMaterialTypeId);
+    materialTypesClient.delete(MaterialTypesFixture.bookMaterialTypeId);
+    materialTypesClient.delete(MaterialTypesFixture.videoRecordingMaterialTypeId);
   }
 
   private static void createContributorNameTypes()
