@@ -33,8 +33,10 @@ public class MaterialTypesFixture {
     ExecutionException,
     TimeoutException {
 
-    videoRecordingMaterialTypeId = createReferenceRecord(materialTypesClient,
-        "Video Recording");
+    if(videoRecordingMaterialTypeId == null) {
+      videoRecordingMaterialTypeId = createReferenceRecord(materialTypesClient,
+          "Video Recording");
+    }
   }
 
   public void book()
@@ -43,7 +45,9 @@ public class MaterialTypesFixture {
     ExecutionException,
     TimeoutException {
 
-    bookMaterialTypeId = createReferenceRecord(materialTypesClient, "Book");
+    if(bookMaterialTypeId == null) {
+      bookMaterialTypeId = createReferenceRecord(materialTypesClient, "Book");
+    }
   }
 
   public void cleanUp()
@@ -53,6 +57,9 @@ public class MaterialTypesFixture {
     ExecutionException {
 
     materialTypesClient.delete(bookMaterialTypeId);
+    bookMaterialTypeId = null;
+
     materialTypesClient.delete(videoRecordingMaterialTypeId);
+    videoRecordingMaterialTypeId = null;
   }
 }
