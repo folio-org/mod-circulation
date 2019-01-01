@@ -5,7 +5,6 @@ import java.util.UUID;
 import io.vertx.core.json.JsonObject;
 
 public class IndividualResource {
-
   private final Response response;
 
   public IndividualResource(Response response) {
@@ -26,5 +25,9 @@ public class IndividualResource {
 
   public String getLocation() {
     return response.getHeader("location");
+  }
+
+  public Response getResponse() {
+    return response;
   }
 }

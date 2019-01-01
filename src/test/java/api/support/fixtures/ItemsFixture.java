@@ -10,6 +10,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
 import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.InventoryItemResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 
 import api.support.builders.HoldingBuilder;
@@ -29,7 +30,7 @@ public class ItemsFixture {
     instancesClient = ResourceClient.forInstances(client);
   }
 
-  public IndividualResource basedUponDunkirk()
+  public InventoryItemResource basedUponDunkirk()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -41,7 +42,7 @@ public class ItemsFixture {
       ItemExamples.basedUponDunkirk());
   }
 
-  public IndividualResource basedUponSmallAngryPlanet()
+  public InventoryItemResource basedUponSmallAngryPlanet()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -50,7 +51,7 @@ public class ItemsFixture {
     return basedUponSmallAngryPlanet(identity());
   }
 
-  public IndividualResource basedUponSmallAngryPlanet(
+  public InventoryItemResource basedUponSmallAngryPlanet(
     Function<ItemBuilder, ItemBuilder> additionalItemProperties)
     throws InterruptedException,
     MalformedURLException,
@@ -62,7 +63,7 @@ public class ItemsFixture {
       additionalItemProperties);
   }
 
-  public IndividualResource basedUponSmallAngryPlanet(
+  public InventoryItemResource basedUponSmallAngryPlanet(
     Function<HoldingBuilder, HoldingBuilder> additionalHoldingsRecordProperties,
     Function<ItemBuilder, ItemBuilder> additionalItemProperties)
     throws InterruptedException,
@@ -78,7 +79,7 @@ public class ItemsFixture {
       ItemExamples.basedUponSmallAngryPlanet());
   }
 
-  public IndividualResource basedUponNod()
+  public InventoryItemResource basedUponNod()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -87,7 +88,7 @@ public class ItemsFixture {
     return basedUponNod(identity());
   }
 
-  public IndividualResource basedUponNod(
+  public InventoryItemResource basedUponNod(
     Function<ItemBuilder, ItemBuilder> additionalItemProperties)
     throws InterruptedException,
     MalformedURLException,
@@ -102,7 +103,7 @@ public class ItemsFixture {
       ItemExamples.basedUponNod());
   }
 
-  public IndividualResource basedUponTemeraire()
+  public InventoryItemResource basedUponTemeraire()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -111,7 +112,7 @@ public class ItemsFixture {
     return basedUponTemeraire(identity());
   }
 
-  public IndividualResource basedUponTemeraire(
+  public InventoryItemResource basedUponTemeraire(
     Function<HoldingBuilder, HoldingBuilder> additionalHoldingsRecordProperties,
     Function<ItemBuilder, ItemBuilder> additionalItemProperties)
     throws InterruptedException,
@@ -127,7 +128,7 @@ public class ItemsFixture {
       ItemExamples.basedUponTemeraire());
   }
 
-  public IndividualResource basedUponTemeraire(
+  public InventoryItemResource basedUponTemeraire(
     Function<ItemBuilder, ItemBuilder> additionalItemProperties)
     throws InterruptedException,
     MalformedURLException,
@@ -137,7 +138,7 @@ public class ItemsFixture {
     return basedUponTemeraire(identity(), additionalItemProperties);
   }
 
-  public IndividualResource basedUponUprooted()
+  public InventoryItemResource basedUponUprooted()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -146,7 +147,7 @@ public class ItemsFixture {
     return basedUponUprooted(identity());
   }
 
-  public IndividualResource basedUponUprooted(
+  public InventoryItemResource basedUponUprooted(
     Function<ItemBuilder, ItemBuilder> additionalItemProperties)
     throws InterruptedException,
     MalformedURLException,
@@ -161,7 +162,7 @@ public class ItemsFixture {
       ItemExamples.basedUponUprooted());
   }
 
-  public IndividualResource basedUponInterestingTimes()
+  public InventoryItemResource basedUponInterestingTimes()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -170,7 +171,7 @@ public class ItemsFixture {
     return basedUponInterestingTimes(identity());
   }
 
-  public IndividualResource basedUponInterestingTimes(
+  public InventoryItemResource basedUponInterestingTimes(
     Function<ItemBuilder, ItemBuilder> additionalItemProperties)
     throws InterruptedException,
     MalformedURLException,
@@ -185,7 +186,7 @@ public class ItemsFixture {
       ItemExamples.basedUponInterestingTimes());
   }
 
-  private IndividualResource applyAdditionalProperties(
+  private InventoryItemResource applyAdditionalProperties(
     Function<HoldingBuilder, HoldingBuilder> additionalHoldingsRecordProperties,
     Function<ItemBuilder, ItemBuilder> additionalItemProperties,
     InstanceBuilder instanceBuilder,
@@ -202,7 +203,7 @@ public class ItemsFixture {
       additionalItemProperties.apply(itemBuilder));
   }
 
-  private IndividualResource create(
+  private InventoryItemResource create(
     InstanceBuilder instanceBuilder,
     HoldingBuilder holdingsRecordBuilder,
     ItemBuilder itemBuilder)
@@ -217,9 +218,11 @@ public class ItemsFixture {
     IndividualResource holding = holdingsClient.create(
       holdingsRecordBuilder.forInstance(instance.getId()));
 
-    return itemsClient.create(
+    final IndividualResource item = itemsClient.create(
       itemBuilder.forHolding(holding.getId())
-      .create());
+        .create());
+
+    return new InventoryItemResource(item);
   }
 
   private HoldingBuilder thirdFloorHoldings() {
