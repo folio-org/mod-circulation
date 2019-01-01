@@ -23,15 +23,18 @@ public class ItemsFixture {
   private final ResourceClient holdingsClient;
   private final ResourceClient instancesClient;
   private final MaterialTypesFixture materialTypesFixture;
+  private final LoanTypesFixture loanTypesFixture;
 
   public ItemsFixture(
     OkapiHttpClient client,
-    MaterialTypesFixture materialTypesFixture) {
+    MaterialTypesFixture materialTypesFixture,
+    LoanTypesFixture loanTypesFixture) {
 
     itemsClient = ResourceClient.forItems(client);
     holdingsClient = ResourceClient.forHoldings(client);
     instancesClient = ResourceClient.forInstances(client);
     this.materialTypesFixture = materialTypesFixture;
+    this.loanTypesFixture = loanTypesFixture;
   }
 
   public InventoryItemResource basedUponDunkirk()
@@ -43,7 +46,8 @@ public class ItemsFixture {
     return create(
       InstanceExamples.basedUponDunkirk(),
       thirdFloorHoldings(),
-      ItemExamples.basedUponDunkirk(materialTypesFixture.videoRecording()));
+      ItemExamples.basedUponDunkirk(materialTypesFixture.videoRecording(),
+        loanTypesFixture.canCirculate()));
   }
 
   public InventoryItemResource basedUponSmallAngryPlanet()
@@ -80,7 +84,8 @@ public class ItemsFixture {
       additionalItemProperties,
       InstanceExamples.basedUponSmallAngryPlanet(),
       thirdFloorHoldings(),
-      ItemExamples.basedUponSmallAngryPlanet(materialTypesFixture.book()));
+      ItemExamples.basedUponSmallAngryPlanet(materialTypesFixture.book(),
+        loanTypesFixture.canCirculate()));
   }
 
   public InventoryItemResource basedUponNod()
@@ -104,7 +109,8 @@ public class ItemsFixture {
       additionalItemProperties,
       InstanceExamples.basedUponNod(),
       thirdFloorHoldings(),
-      ItemExamples.basedUponNod(materialTypesFixture.book()));
+      ItemExamples.basedUponNod(materialTypesFixture.book(),
+        loanTypesFixture.canCirculate()));
   }
 
   public InventoryItemResource basedUponTemeraire()
@@ -129,7 +135,8 @@ public class ItemsFixture {
       additionalItemProperties,
       InstanceExamples.basedUponTemeraire(),
       thirdFloorHoldings(),
-      ItemExamples.basedUponTemeraire(materialTypesFixture.book()));
+      ItemExamples.basedUponTemeraire(materialTypesFixture.book(),
+        loanTypesFixture.canCirculate()));
   }
 
   public InventoryItemResource basedUponTemeraire(
@@ -163,7 +170,8 @@ public class ItemsFixture {
       additionalItemProperties,
       InstanceExamples.basedUponUprooted(),
       thirdFloorHoldings(),
-      ItemExamples.basedUponUprooted(materialTypesFixture.book()));
+      ItemExamples.basedUponUprooted(materialTypesFixture.book(),
+        loanTypesFixture.canCirculate()));
   }
 
   public InventoryItemResource basedUponInterestingTimes()
@@ -187,7 +195,8 @@ public class ItemsFixture {
       additionalItemProperties,
       InstanceExamples.basedUponInterestingTimes(),
       thirdFloorHoldings(),
-      ItemExamples.basedUponInterestingTimes(materialTypesFixture.book()));
+      ItemExamples.basedUponInterestingTimes(materialTypesFixture.book(),
+        loanTypesFixture.canCirculate()));
   }
 
   private InventoryItemResource applyAdditionalProperties(

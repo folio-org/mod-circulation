@@ -1,7 +1,5 @@
 package api.loans;
 
-import static api.APITestSuite.canCirculateLoanTypeId;
-import static api.APITestSuite.readingRoomLoanTypeId;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -45,12 +43,14 @@ public class LoanAPIPolicyTests extends APITests {
     TimeoutException,
     ExecutionException {
 
+    final UUID readingRoomLoanType = loanTypesFixture.readingRoom();
+
     JsonObject itemJson1 = itemsFixture.basedUponInterestingTimes().getJson();
     JsonObject itemJson2 = itemsFixture.basedUponDunkirk().getJson();
     JsonObject itemJson3 = itemsFixture.basedUponInterestingTimes().getJson();
     JsonObject itemJson4 = itemsFixture.basedUponDunkirk().getJson();
     JsonObject itemJson5 = itemsFixture.basedUponTemeraire(
-      builder -> builder.withTemporaryLoanType(readingRoomLoanTypeId())).getJson();
+      builder -> builder.withTemporaryLoanType(readingRoomLoanType)).getJson();
 
     JsonObject user1 = APITestSuite.userRecord1();
     JsonObject user2 = APITestSuite.userRecord2();
@@ -68,9 +68,9 @@ public class LoanAPIPolicyTests extends APITests {
       "priority: t, s, c, b, a, m, g",
       "fallback-policy: " + pFallback,
       "m " + materialTypesFixture.videoRecording() + " + g " + group1 + " : " + p1,
-      "m " + materialTypesFixture.book() + " + t " + canCirculateLoanTypeId() + " : " + p2,
-      "m " + materialTypesFixture.book() + " + t " + readingRoomLoanTypeId() + " : " + p3,
-      "m " + materialTypesFixture.book() + " + t " + canCirculateLoanTypeId() + " + g " + group1 + " : " + p4
+      "m " + materialTypesFixture.book() + " + t " + loanTypesFixture.canCirculate() + " : " + p2,
+      "m " + materialTypesFixture.book() + " + t " + readingRoomLoanType + " : " + p3,
+      "m " + materialTypesFixture.book() + " + t " + loanTypesFixture.canCirculate() + " + g " + group1 + " : " + p4
       );
     JsonObject newRulesRequest = new JsonObject().put("loanRulesAsTextFile", rules);
     CompletableFuture<Response> completed = new CompletableFuture<>();

@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import api.APITestSuite;
 import api.support.fixtures.ItemsFixture;
+import api.support.fixtures.LoanTypesFixture;
 import api.support.fixtures.LoansFixture;
 import api.support.fixtures.LocationsFixture;
 import api.support.fixtures.MaterialTypesFixture;
@@ -58,9 +59,14 @@ public abstract class APITests {
   private final ResourceClient locationsClient = ResourceClient.forLocations(client);
   private final ResourceClient patronGroupsClient = ResourceClient.forPatronGroups(client);
 
+  protected final LoanTypesFixture loanTypesFixture = new LoanTypesFixture(
+    ResourceClient.forLoanTypes(client));
+
   protected final MaterialTypesFixture materialTypesFixture = new MaterialTypesFixture(
     ResourceClient.forMaterialTypes(client));
-  protected final ItemsFixture itemsFixture = new ItemsFixture(client, materialTypesFixture);
+
+  protected final ItemsFixture itemsFixture = new ItemsFixture(client,
+    materialTypesFixture, loanTypesFixture);
   protected final LoansFixture loansFixture = new LoansFixture(loansClient, client);
   protected final RequestsFixture requestsFixture = new RequestsFixture(requestsClient);
   protected final UsersFixture usersFixture = new UsersFixture(usersClient, proxyRelationshipsClient);
@@ -153,7 +159,6 @@ public abstract class APITests {
     APITestSuite.deleteGroups();
     APITestSuite.deleteAddressTypes();
 
-    APITestSuite.deleteLoanTypes();
     APITestSuite.deleteLocations();
     APITestSuite.deleteServicePoints();
     APITestSuite.deleteContributorTypes();
@@ -174,6 +179,7 @@ public abstract class APITests {
     instancesClient.deleteAll();
 
     materialTypesFixture.cleanUp();
+    loanTypesFixture.cleanUp();
 
     locationsFixture.cleanUp();
     servicePointsFixture.cleanUp();
