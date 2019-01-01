@@ -47,10 +47,7 @@ public class ItemsFixture {
     TimeoutException,
     ExecutionException {
 
-    return create(
-      InstanceExamples.basedUponSmallAngryPlanet(),
-      thirdFloorHoldings(),
-      ItemExamples.basedUponSmallAngryPlanet());
+    return basedUponSmallAngryPlanet(identity());
   }
 
   public IndividualResource basedUponSmallAngryPlanet(
@@ -60,12 +57,9 @@ public class ItemsFixture {
     TimeoutException,
     ExecutionException {
 
-    return applyAdditionalProperties(
+    return basedUponSmallAngryPlanet(
       identity(),
-      additionalItemProperties,
-      InstanceExamples.basedUponSmallAngryPlanet(),
-      thirdFloorHoldings(),
-      ItemExamples.basedUponSmallAngryPlanet());
+      additionalItemProperties);
   }
 
   public IndividualResource basedUponSmallAngryPlanet(
@@ -90,10 +84,7 @@ public class ItemsFixture {
     TimeoutException,
     ExecutionException {
 
-    return create(
-      InstanceExamples.basedUponNod(),
-      thirdFloorHoldings(),
-      ItemExamples.basedUponNod());
+    return basedUponNod(identity());
   }
 
   public IndividualResource basedUponNod(
@@ -117,10 +108,7 @@ public class ItemsFixture {
     TimeoutException,
     ExecutionException {
 
-    return create(
-      InstanceExamples.basedUponTemeraire(),
-      thirdFloorHoldings(),
-      ItemExamples.basedUponTemeraire());
+    return basedUponTemeraire(identity());
   }
 
   public IndividualResource basedUponTemeraire(
@@ -146,12 +134,7 @@ public class ItemsFixture {
     TimeoutException,
     ExecutionException {
 
-    return applyAdditionalProperties(
-      identity(),
-      additionalItemProperties,
-      InstanceExamples.basedUponTemeraire(),
-      thirdFloorHoldings(),
-      ItemExamples.basedUponTemeraire());
+    return basedUponTemeraire(identity(), additionalItemProperties);
   }
 
   public IndividualResource basedUponUprooted()
@@ -160,10 +143,7 @@ public class ItemsFixture {
     TimeoutException,
     ExecutionException {
 
-    return create(
-      InstanceExamples.basedUponUprooted(),
-      thirdFloorHoldings(),
-      ItemExamples.basedUponUprooted());
+    return basedUponUprooted(identity());
   }
 
   public IndividualResource basedUponUprooted(
@@ -187,10 +167,7 @@ public class ItemsFixture {
     TimeoutException,
     ExecutionException {
 
-    return create(
-      InstanceExamples.basedUponInterestingTimes(),
-      thirdFloorHoldings(),
-      ItemExamples.basedUponInterestingTimes());
+    return basedUponInterestingTimes(identity());
   }
 
   public IndividualResource basedUponInterestingTimes(
