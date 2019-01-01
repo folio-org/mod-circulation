@@ -84,7 +84,12 @@ public abstract class APITests {
     TimeoutException,
     MalformedURLException {
 
-    APITestSuite.before();
+    APITestSuite.deployVerticles();
+
+    //Delete everything first just in case
+    APITestSuite.deleteAllRecords();
+
+    APITestSuite.createCommonRecords();
   }
 
   @Before
@@ -119,7 +124,40 @@ public abstract class APITests {
     TimeoutException,
     MalformedURLException {
 
-    APITestSuite.after();
+    deleteCommonRecords();
+
+    APITestSuite.undeployVerticles();
+  }
+
+  private static void deleteCommonRecords()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    OkapiHttpClient cleanupClient = APITestSuite.createClient(exception ->
+      log.error("Requests to delete all for clean up failed:", exception));
+
+    ResourceClient.forRequests(cleanupClient).deleteAll();
+    ResourceClient.forLoans(cleanupClient).deleteAll();
+
+    ResourceClient.forItems(cleanupClient).deleteAll();
+    ResourceClient.forHoldings(cleanupClient).deleteAll();
+    ResourceClient.forInstances(cleanupClient).deleteAll();
+
+    ResourceClient.forUsers(cleanupClient).deleteAllIndividually();
+
+    APITestSuite.deleteGroups();
+    APITestSuite.deleteAddressTypes();
+
+    APITestSuite.deleteMaterialTypes();
+    APITestSuite.deleteLoanTypes();
+    APITestSuite.deleteLocations();
+    APITestSuite.deleteServicePoints();
+    APITestSuite.deleteContributorTypes();
+    APITestSuite.deleteInstanceTypes();
+    APITestSuite.deleteLoanPolicies();
+    APITestSuite.deleteCancellationReasons();
   }
 
   @After

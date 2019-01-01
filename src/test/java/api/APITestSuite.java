@@ -22,7 +22,6 @@ import org.folio.circulation.support.VertxAssistant;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -220,7 +219,7 @@ public class APITestSuite {
     createCommonRecords();
   }
 
-  private static void createCommonRecords()
+  public static void createCommonRecords()
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
@@ -239,7 +238,7 @@ public class APITestSuite {
     createCancellationReasons();
   }
 
-  private static void deployVerticles()
+  public static void deployVerticles()
     throws InterruptedException,
     ExecutionException,
     TimeoutException {
@@ -277,41 +276,7 @@ public class APITestSuite {
     return fakeStorageModuleDeployed;
   }
 
-  @AfterClass
-  public static void after()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
-
-    OkapiHttpClient client = APITestSuite.createClient(exception ->
-      log.error("Requests to delete all for clean up failed:", exception));
-
-    ResourceClient.forRequests(client).deleteAll();
-    ResourceClient.forLoans(client).deleteAll();
-
-    ResourceClient.forItems(client).deleteAll();
-    ResourceClient.forHoldings(client).deleteAll();
-    ResourceClient.forInstances(client).deleteAll();
-
-    ResourceClient.forUsers(client).deleteAllIndividually();
-
-    deleteGroups();
-    deleteAddressTypes();
-
-    deleteMaterialTypes();
-    deleteLoanTypes();
-    deleteLocations();
-    deleteServicePoints();
-    deleteContributorTypes();
-    deleteInstanceTypes();
-    deleteLoanPolicies();
-    deleteCancellationReasons();
-
-    undeployVerticles();
-  }
-
-  private static void undeployVerticles()
+  public static void undeployVerticles()
     throws InterruptedException,
     ExecutionException,
     TimeoutException {
@@ -344,7 +309,7 @@ public class APITestSuite {
     log.info("Queries performed: {}", sortedRequests);
   }
 
-  private static void deleteAllRecords()
+  public static void deleteAllRecords()
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
@@ -432,7 +397,7 @@ public class APITestSuite {
     ).getId();
   }
 
-  private static void deleteGroups()
+  public static void deleteGroups()
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
@@ -458,7 +423,7 @@ public class APITestSuite {
       .getId();
   }
 
-  private static void deleteAddressTypes()
+  public static void deleteAddressTypes()
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
@@ -482,7 +447,7 @@ public class APITestSuite {
     materialTypesFixture.videoRecording();
   }
 
-  private static void deleteMaterialTypes()
+  public static void deleteMaterialTypes()
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
@@ -503,7 +468,7 @@ public class APITestSuite {
       ResourceClient.forContributorNameTypes(createClient()), "Personal name");
   }
 
-  private static void deleteContributorTypes()
+  public static void deleteContributorTypes()
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
@@ -526,7 +491,7 @@ public class APITestSuite {
       ResourceClient.forLoanTypes(createClient()), "Reading Room");
   }
 
-  private static void deleteLoanTypes()
+  public static void deleteLoanTypes()
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
@@ -551,7 +516,7 @@ public class APITestSuite {
       .getId();
   }
 
-  private static void deleteServicePoints()
+  public static void deleteServicePoints()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -627,7 +592,7 @@ public class APITestSuite {
         .create());
   }
 
-  private static void deleteLocations()
+  public static void deleteLocations()
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
@@ -666,7 +631,7 @@ public class APITestSuite {
       ResourceClient.forInstanceTypes(createClient()), "Books", "BO", "tests");
   }
 
-  private static void deleteInstanceTypes()
+  public static void deleteInstanceTypes()
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
@@ -724,7 +689,7 @@ public class APITestSuite {
     log.info("Fixed loan policy {}", canCirculateFixedLoanPolicyId);
   }
 
-  private static void deleteLoanPolicies()
+  public static void deleteLoanPolicies()
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
@@ -825,7 +790,7 @@ public class APITestSuite {
     );
   }
 
-  private static void deleteCancellationReasons()
+  public static void deleteCancellationReasons()
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
