@@ -1,25 +1,25 @@
 package api.requests;
 
-import api.support.APITests;
-import api.support.builders.HoldingBuilder;
-import api.support.builders.RequestBuilder;
-import api.support.fixtures.InstanceExamples;
-import api.support.fixtures.ItemExamples;
-import io.vertx.core.json.JsonObject;
+import static api.APITestSuite.mezzanineDisplayCaseLocationId;
+import static api.APITestSuite.secondFloorEconomicsLocationId;
+import static api.APITestSuite.thirdFloorLocationId;
+import static api.support.JsonCollectionAssistant.getRecordById;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+
+import java.net.MalformedURLException;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.Test;
 
-import java.net.MalformedURLException;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
-import static api.APITestSuite.*;
-import static api.support.JsonCollectionAssistant.getRecordById;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import api.support.APITests;
+import api.support.builders.RequestBuilder;
+import api.support.http.InventoryItemResource;
+import io.vertx.core.json.JsonObject;
 
 public class RequestsAPILocationTests extends APITests {
   @Test
@@ -29,31 +29,23 @@ public class RequestsAPILocationTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    UUID instanceId = instancesClient.create(
-      InstanceExamples.basedUponSmallAngryPlanet()).getId();
-
-    UUID holdingId = holdingsClient.create(
-      new HoldingBuilder()
-        .forInstance(instanceId)
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+      holdingBuilder -> holdingBuilder
         .withPermanentLocation(thirdFloorLocationId())
-        .withTemporaryLocation(mezzanineDisplayCaseLocationId())
-        .create())
-      .getId();
-
-    IndividualResource item = itemsClient.create(
-      ItemExamples.basedUponSmallAngryPlanet()
-        .forHolding(holdingId)
+        .withTemporaryLocation(mezzanineDisplayCaseLocationId()),
+      itemBuilder -> itemBuilder
         .withNoPermanentLocation()
-        .withTemporaryLocation(secondFloorEconomicsLocationId()));
+        .withTemporaryLocation(secondFloorEconomicsLocationId())
+    );
 
-    loansFixture.checkOut(item, usersFixture.jessica());
+    loansFixture.checkOut(smallAngryPlanet, usersFixture.jessica());
 
     IndividualResource requester = usersFixture.steve();
 
     IndividualResource request = requestsFixture.place(new RequestBuilder()
       .open()
       .hold()
-      .forItem(item)
+      .forItem(smallAngryPlanet)
       .by(requester));
 
     JsonObject representation = request.getJson();
@@ -86,50 +78,35 @@ public class RequestsAPILocationTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    UUID firstInstanceId = instancesClient.create(
-      InstanceExamples.basedUponSmallAngryPlanet()).getId();
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+      holdingBuilder -> holdingBuilder
+        .withPermanentLocation(secondFloorEconomicsLocationId()),
+      itemBuilder -> itemBuilder
+        .withPermanentLocation(thirdFloorLocationId())
+    );
 
-    UUID firstHoldingId = holdingsClient.create(
-      new HoldingBuilder()
-        .forInstance(firstInstanceId)
-        .withPermanentLocation(secondFloorEconomicsLocationId())
-        .create())
-      .getId();
-
-    final IndividualResource firstItem = itemsClient.create(
-      ItemExamples.basedUponSmallAngryPlanet()
-        .forHolding(firstHoldingId)
-        .withPermanentLocation(thirdFloorLocationId()));
-
-    loansFixture.checkOut(firstItem, usersFixture.james());
+    loansFixture.checkOut(smallAngryPlanet, usersFixture.james());
 
     IndividualResource firstRequest = requestsFixture.place(new RequestBuilder()
       .open()
       .hold()
-      .forItem(firstItem)
+      .forItem(smallAngryPlanet)
       .by(usersFixture.rebecca()));
 
-    UUID secondInstanceId = instancesClient.create(
-      InstanceExamples.basedUponTemeraire()).getId();
-
-    UUID secondHoldingId = holdingsClient.create(
-      new HoldingBuilder()
-        .forInstance(secondInstanceId)
+    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire(
+      holdingBuilder -> holdingBuilder
         .withPermanentLocation(mezzanineDisplayCaseLocationId())
-        .withNoTemporaryLocation()
-        .create())
-      .getId();
+        .withNoTemporaryLocation(),
+      itemBuilder -> itemBuilder
+        .withNoPermanentLocation()
+        .withNoTemporaryLocation());
 
-    IndividualResource secondItem = itemsClient.create(
-      ItemExamples.basedUponTemeraire()
-        .forHolding(secondHoldingId));
-
-    loansFixture.checkOut(secondItem, usersFixture.jessica());
+    loansFixture.checkOut(temeraire, usersFixture.jessica());
 
     IndividualResource secondRequest = requestsFixture.place(new RequestBuilder()
       .open()
       .hold()
-      .forItem(secondItem)
+      .forItem(temeraire)
       .by(usersFixture.steve()));
 
     List<JsonObject> fetchedRequestsResponse = requestsClient.getAll();

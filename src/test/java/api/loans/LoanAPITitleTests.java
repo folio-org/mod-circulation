@@ -1,6 +1,5 @@
 package api.loans;
 
-import static api.APITestSuite.thirdFloorLocationId;
 import static api.support.JsonCollectionAssistant.getRecordById;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -16,10 +15,8 @@ import org.folio.circulation.support.http.client.Response;
 import org.junit.Test;
 
 import api.support.APITests;
-import api.support.builders.HoldingBuilder;
 import api.support.builders.LoanBuilder;
-import api.support.fixtures.InstanceExamples;
-import api.support.fixtures.ItemExamples;
+import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class LoanAPITitleTests extends APITests {
@@ -31,26 +28,13 @@ public class LoanAPITitleTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    UUID instanceId = instancesClient.create(
-      InstanceExamples.basedUponSmallAngryPlanet()).getId();
-
-    UUID holdingId = holdingsClient.create(
-      new HoldingBuilder()
-        .forInstance(instanceId)
-        .withPermanentLocation(thirdFloorLocationId())
-        .create())
-      .getId();
-
-    UUID itemId = itemsClient.create(
-      ItemExamples.basedUponSmallAngryPlanet()
-        .forHolding(holdingId))
-      .getId();
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
     UUID loanId = UUID.randomUUID();
 
     IndividualResource response = loansClient.create(new LoanBuilder()
       .withId(loanId)
-      .withItemId(itemId));
+      .withItemId(smallAngryPlanet.getId()));
 
     JsonObject createdLoan = response.getJson();
 
@@ -82,41 +66,14 @@ public class LoanAPITitleTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    UUID firstInstanceId = instancesClient.create(
-      InstanceExamples.basedUponSmallAngryPlanet()).getId();
-
-    UUID firstHoldingId = holdingsClient.create(
-      new HoldingBuilder()
-        .forInstance(firstInstanceId)
-        .withPermanentLocation(thirdFloorLocationId())
-        .create())
-      .getId();
-
-    UUID firstItemId = itemsClient.create(
-      ItemExamples.basedUponSmallAngryPlanet()
-        .forHolding(firstHoldingId))
-      .getId();
-
-    UUID secondInstanceId = instancesClient.create(
-      InstanceExamples.basedUponTemeraire()).getId();
-
-    UUID secondHoldingId = holdingsClient.create(
-      new HoldingBuilder()
-        .forInstance(secondInstanceId)
-        .withPermanentLocation(thirdFloorLocationId())
-        .create())
-      .getId();
-
-    UUID secondItemId = itemsClient.create(
-      ItemExamples.basedUponTemeraire()
-        .forHolding(secondHoldingId))
-      .getId();
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     UUID firstLoanId = loansClient.create(new LoanBuilder()
-      .withItemId(firstItemId)).getId();
+      .withItemId(smallAngryPlanet.getId())).getId();
 
     UUID secondLoanId = loansClient.create(new LoanBuilder()
-      .withItemId(secondItemId)).getId();
+      .withItemId(temeraire.getId())).getId();
 
     List<JsonObject> fetchedLoansResponse = loansClient.getAll();
 
