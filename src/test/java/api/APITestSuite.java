@@ -212,17 +212,19 @@ public class APITestSuite {
     TimeoutException,
     MalformedURLException {
 
-    final CompletableFuture<String> fakeStorageModuleDeployed = deployFakeStorageModules();
-
-    final CompletableFuture<Void> circulationModuleStarted = launcher.start(port);
-
-    fakeStorageModuleDeployed.thenAccept(result -> fakeOkapiDeploymentId = result);
-
-    CompletableFuture.allOf(circulationModuleStarted, fakeStorageModuleDeployed)
-      .get(10, TimeUnit.SECONDS);
+    deployVerticles();
 
     //Delete everything first just in case
     deleteAllRecords();
+
+    createCommonRecords();
+  }
+
+  private static void createCommonRecords()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
 
     createMaterialTypes();
     createLoanTypes();
@@ -235,6 +237,21 @@ public class APITestSuite {
     createUsers();
     createLoanPolicies();
     createCancellationReasons();
+  }
+
+  private static void deployVerticles()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    final CompletableFuture<String> fakeStorageModuleDeployed = deployFakeStorageModules();
+
+    final CompletableFuture<Void> circulationModuleStarted = launcher.start(port);
+
+    fakeStorageModuleDeployed.thenAccept(result -> fakeOkapiDeploymentId = result);
+
+    CompletableFuture.allOf(circulationModuleStarted, fakeStorageModuleDeployed)
+      .get(10, TimeUnit.SECONDS);
   }
 
   private static CompletableFuture<String> deployFakeStorageModules() {
@@ -290,6 +307,14 @@ public class APITestSuite {
     deleteInstanceTypes();
     deleteLoanPolicies();
     deleteCancellationReasons();
+
+    undeployVerticles();
+  }
+
+  private static void undeployVerticles()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException {
 
     CompletableFuture<Void> circulationModuleUndeployed = launcher.undeploy();
 

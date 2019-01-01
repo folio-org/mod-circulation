@@ -119,7 +119,6 @@ public abstract class APITests {
     TimeoutException,
     MalformedURLException {
 
-    System.out.println("Running test on own, un-initialising suite manually");
     APITestSuite.after();
   }
 
