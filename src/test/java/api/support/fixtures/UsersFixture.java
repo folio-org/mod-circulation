@@ -7,6 +7,8 @@ import static api.support.fixtures.UserExamples.basedUponStevenJones;
 import static java.util.function.Function.identity;
 
 import java.net.MalformedURLException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -15,6 +17,7 @@ import java.util.function.Function;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
 
+import api.support.builders.Builder;
 import api.support.builders.ProxyRelationshipBuilder;
 import api.support.builders.UserBuilder;
 import api.support.http.ResourceClient;
@@ -22,6 +25,7 @@ import api.support.http.ResourceClient;
 public class UsersFixture {
   private final ResourceClient proxyRelationshipClient;
   private final RecordCreator userRecordCreator;
+  private final Map<String, IndividualResource> usersIdentityMap = new HashMap<>();
 
   public UsersFixture(
     ResourceClient usersClient,
@@ -114,7 +118,7 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return userRecordCreator.create(basedUponJessicaPontefract());
+    return createIfAbsent("JESSICA", basedUponJessicaPontefract());
   }
 
   public IndividualResource james()
@@ -123,7 +127,7 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return userRecordCreator.create(basedUponJamesRodwell());
+    return createIfAbsent("JAMES", basedUponJamesRodwell());
   }
 
   public IndividualResource rebecca()
@@ -132,7 +136,7 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return userRecordCreator.create(basedUponRebeccaStuart());
+    return rebecca(identity());
   }
   
   public IndividualResource rebecca(
@@ -142,7 +146,7 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return userRecordCreator.create(
+    return createIfAbsent("REBECCA",
       additionalProperties.apply(basedUponRebeccaStuart()));
   }
 
@@ -157,20 +161,17 @@ public class UsersFixture {
 
   public IndividualResource steve(
     Function<UserBuilder, UserBuilder> additionalUserProperties)
-
-    throws
-    InterruptedException,
+    throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
 
-    return userRecordCreator.create(
+    return createIfAbsent("STEVE",
       additionalUserProperties.apply(basedUponStevenJones()));
   }
 
   public IndividualResource charlotte()
-    throws
-    InterruptedException,
+    throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
@@ -185,7 +186,22 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return userRecordCreator.create(additionalConfiguration.apply(
-      UserExamples.basedUponCharlotteBroadwell()));
+    return createIfAbsent("CHARLOTTE",
+      additionalConfiguration.apply(UserExamples.basedUponCharlotteBroadwell()));
+  }
+
+  private IndividualResource createIfAbsent(String key, Builder valueBuilder)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    if(!usersIdentityMap.containsKey(key)) {
+      final IndividualResource user = userRecordCreator.create(valueBuilder);
+
+      usersIdentityMap.put(key, user);
+    }
+
+    return usersIdentityMap.get(key);
   }
 }
