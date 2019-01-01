@@ -13,7 +13,6 @@ import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -74,52 +73,6 @@ public class LoanAPITitleTests extends APITests {
     assertThat("title is taken from instance",
       fetchedLoan.getJsonObject("item").getString("title"),
       is("The Long Way to a Small, Angry Planet"));
-  }
-
-  @Ignore("mod-inventory-storage disallows this scenario, change to be isolated test")
-  @Test
-  public void noTitleWhenInstanceNotFound()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
-
-    UUID instanceId = instancesClient.create(
-      InstanceExamples.basedUponSmallAngryPlanet()).getId();
-
-    UUID holdingId = holdingsClient.create(
-      new HoldingBuilder()
-        .forInstance(instanceId)
-        .withPermanentLocation(thirdFloorLocationId())
-        .create())
-      .getId();
-
-    UUID itemId = itemsClient.create(
-      ItemExamples.basedUponSmallAngryPlanet()
-        .forHolding(holdingId))
-      .getId();
-
-    instancesClient.delete(instanceId);
-
-    UUID loanId = UUID.randomUUID();
-
-    IndividualResource response = loansClient.create(new LoanBuilder()
-      .withId(loanId)
-      .withItemId(itemId));
-
-    JsonObject createdLoan = response.getJson();
-
-    assertThat("has no title",
-      createdLoan.getJsonObject("item").containsKey("title"), is(false));
-
-    Response fetchedLoanResponse = loansClient.getById(loanId);
-
-    assertThat(fetchedLoanResponse.getStatusCode(), is(200));
-
-    JsonObject fetchedLoan = fetchedLoanResponse.getJson();
-
-    assertThat("has no title",
-      fetchedLoan.getJsonObject("item").containsKey("title"), is(false));
   }
 
   @Test
@@ -186,69 +139,5 @@ public class LoanAPITitleTests extends APITests {
     assertThat("title is taken from instance",
       secondFetchedLoan.getJsonObject("item").getString("title"),
       is("Temeraire"));
-  }
-
-  @Ignore("mod-inventory-storage disallows this scenario, change to be isolated test")
-  @Test
-  public void noTitlesForMultipleLoansWhenHoldingOrInstanceNotFound()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    UUID firstInstanceId = instancesClient.create(
-      InstanceExamples.basedUponSmallAngryPlanet()).getId();
-
-    UUID firstHoldingId = holdingsClient.create(
-      new HoldingBuilder()
-        .forInstance(firstInstanceId)
-        .withPermanentLocation(thirdFloorLocationId())
-        .create())
-      .getId();
-
-    UUID firstItemId = itemsClient.create(
-      ItemExamples.basedUponSmallAngryPlanet()
-        .forHolding(firstHoldingId))
-      .getId();
-
-    UUID secondInstanceId = instancesClient.create(
-      InstanceExamples.basedUponTemeraire()).getId();
-
-    UUID secondHoldingId = holdingsClient.create(
-      new HoldingBuilder()
-        .forInstance(secondInstanceId)
-        .withPermanentLocation(thirdFloorLocationId())
-        .create())
-      .getId();
-
-    UUID secondItemId = itemsClient.create(
-      ItemExamples.basedUponTemeraire()
-        .forHolding(secondHoldingId))
-      .getId();
-
-    UUID firstLoanId = loansClient.create(new LoanBuilder()
-      .withItemId(firstItemId)).getId();
-
-    UUID secondLoanId = loansClient.create(new LoanBuilder()
-      .withItemId(secondItemId)).getId();
-
-    //Delete instance or holding
-    instancesClient.delete(firstInstanceId);
-
-    holdingsClient.delete(secondHoldingId);
-
-    List<JsonObject> fetchedLoansResponse = loansClient.getAll();
-
-    JsonObject firstFetchedLoan = getRecordById(
-      fetchedLoansResponse, firstLoanId).get();
-
-    JsonObject secondFetchedLoan = getRecordById(
-      fetchedLoansResponse, secondLoanId).get();
-
-    assertThat("has no title",
-      firstFetchedLoan.getJsonObject("item").containsKey("title"), is(false));
-
-    assertThat("has no title",
-      secondFetchedLoan.getJsonObject("item").containsKey("title"), is(false));
   }
 }

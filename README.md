@@ -88,6 +88,18 @@ It is not possible to create a loan that is already closed via POST
 due to checks that are performed during this request. 
 However it can be done when creating a loan in a specific location via PUT 
 
+#### API Tests
+
+As it is intended that API tests can be run against real module instances,
+some scenarios are not easily replicated without breaking this capability.
+
+For example, previously there were tests that verified that some of the APIs
+could handle missing inventory records. As mod-inventory-storage does not allow
+used holdings or instance records to be deleted, these tests were removed.
+
+These tests need to be replaced by tests that use specialised implementations 
+of the storage interfaces, separate to the fakes used for general API tests.  
+
 ### Check Out By Barcode
 
 In additional to the typical loan creation API, it is possible to check out an item to a loanee (optionally via a proxy), using barcodes.

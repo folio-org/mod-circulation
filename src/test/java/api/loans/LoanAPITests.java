@@ -34,7 +34,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Period;
 import org.joda.time.format.ISODateTimeFormat;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import api.APITestSuite;
@@ -378,49 +377,6 @@ public class LoanAPITests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Check Out Service Point does not exist"),
       hasUUIDParameter("checkoutServicePointId", unknownServicePointId))));
-  }
-
-  @Ignore("mod-inventory-storage disallows this scenario, change to be isolated test")
-  @Test
-  public void cannotCreateALoanForUnknownHolding()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
-
-    UUID id = UUID.randomUUID();
-
-    final IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
-    final UUID itemId = item.getId();
-
-    holdingsClient.delete(UUID.fromString(item.getJson().getString("holdingsRecordId")));
-
-    UUID userId = usersClient.create(new UserBuilder()).getId();
-
-    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
-
-    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
-
-    client.post(loansUrl(), new LoanBuilder()
-      .open()
-      .withId(id)
-      .withUserId(userId)
-      .withItemId(itemId)
-      .withLoanDate(loanDate)
-      .withDueDate(dueDate)
-      .create(),
-      ResponseHandler.any(createCompleted));
-
-    Response response = createCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(
-      String.format("Should not create loan: %s", response.getBody()),
-      response.getStatusCode(), is(UNPROCESSABLE_ENTITY));
-
-    assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Holding does not exist"),
-      hasUUIDParameter("itemId", item.getId()))));
   }
 
   @Test
