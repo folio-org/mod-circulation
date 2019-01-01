@@ -16,7 +16,6 @@ import org.folio.circulation.support.http.client.Response;
 import org.junit.Test;
 
 import api.support.APITests;
-import api.support.builders.LoanBuilder;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
@@ -30,13 +29,11 @@ public class LoanAPIRelatedRecordsTests extends APITests {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
-    UUID loanId = UUID.randomUUID();
+    final IndividualResource checkOutResponse = loansFixture.checkOut(
+      smallAngryPlanet, usersFixture.jessica());
 
-    IndividualResource response = loansClient.create(new LoanBuilder()
-      .withId(loanId)
-      .withItemId(smallAngryPlanet.getId()));
-
-    JsonObject createdLoan = response.getJson();
+    UUID loanId = checkOutResponse.getId();
+    JsonObject createdLoan = checkOutResponse.getJson();
 
     assertThat("has holdings record ID",
       createdLoan.getJsonObject("item").containsKey("holdingsRecordId"), is(true));
@@ -83,11 +80,11 @@ public class LoanAPIRelatedRecordsTests extends APITests {
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
 
-    UUID firstLoanId = loansClient.create(new LoanBuilder()
-      .withItemId(smallAngryPlanet.getId())).getId();
+    UUID firstLoanId = loansFixture.checkOut(smallAngryPlanet,
+      usersFixture.jessica()).getId();
 
-    UUID secondLoanId = loansClient.create(new LoanBuilder()
-      .withItemId(temeraire.getId())).getId();
+    UUID secondLoanId = loansFixture.checkOut(temeraire,
+      usersFixture.james()).getId();
 
     List<JsonObject> fetchedLoansResponse = loansClient.getAll();
 

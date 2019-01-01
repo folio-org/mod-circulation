@@ -16,7 +16,6 @@ import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
-import api.support.builders.UserBuilder;
 import api.support.fixtures.InstanceExamples;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
@@ -32,14 +31,11 @@ public class RequestsAPITitleTests extends APITests {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
-    loansFixture.checkOutItem(smallAngryPlanet.getId());
-
-    UUID requestId = UUID.randomUUID();
+    loansFixture.checkOutByBarcode(smallAngryPlanet);
 
     IndividualResource response = requestsClient.create(new RequestBuilder()
-      .withId(requestId)
-      .withRequesterId(usersClient.create(new UserBuilder().create()).getId())
-      .withItemId(smallAngryPlanet.getId()));
+      .forItem(smallAngryPlanet)
+      .by(usersFixture.james()));
 
     JsonObject createdRequest = response.getJson();
 
@@ -50,7 +46,7 @@ public class RequestsAPITitleTests extends APITests {
       createdRequest.getJsonObject("item").getString("title"),
       is("The Long Way to a Small, Angry Planet"));
 
-    Response fetchedRequestResponse = requestsClient.getById(requestId);
+    Response fetchedRequestResponse = requestsClient.getById(response.getId());
 
     assertThat(fetchedRequestResponse.getStatusCode(), is(200));
 
@@ -73,14 +69,11 @@ public class RequestsAPITitleTests extends APITests {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
-    loansFixture.checkOutItem(smallAngryPlanet.getId());
-
-    UUID requestId = UUID.randomUUID();
+    loansFixture.checkOutByBarcode(smallAngryPlanet);
 
     IndividualResource response = requestsClient.create(new RequestBuilder()
-      .withId(requestId)
-      .withRequesterId(usersClient.create(new UserBuilder().create()).getId())
-      .withItemId(smallAngryPlanet.getId()));
+      .forItem(smallAngryPlanet)
+      .by(usersFixture.steve()));
 
     JsonObject createdRequest = response.getJson();
 
@@ -89,9 +82,9 @@ public class RequestsAPITitleTests extends APITests {
         .withId(smallAngryPlanet.getInstanceId())
         .withTitle("A new instance title"));
 
-    requestsClient.replace(requestId, createdRequest);
+    requestsClient.replace(response.getId(), createdRequest);
 
-    Response fetchedRequestResponse = requestsClient.getById(requestId);
+    Response fetchedRequestResponse = requestsClient.getById(response.getId());
 
     assertThat(fetchedRequestResponse.getStatusCode(), is(200));
 
@@ -115,19 +108,19 @@ public class RequestsAPITitleTests extends APITests {
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
 
-    loansFixture.checkOutItem(smallAngryPlanet.getId());
-
-    UUID requesterId = usersClient.create(new UserBuilder().create()).getId();
+    loansFixture.checkOutByBarcode(smallAngryPlanet);
 
     UUID firstRequestId = requestsClient.create(new RequestBuilder()
-      .withRequesterId(requesterId)
-      .withItemId(smallAngryPlanet.getId())).getId();
+      .forItem(smallAngryPlanet)
+      .by(usersFixture.james()))
+      .getId();
 
-    loansFixture.checkOutItem(temeraire.getId());
+    loansFixture.checkOutByBarcode(temeraire);
 
     UUID secondRequestId = requestsClient.create(new RequestBuilder()
-      .withRequesterId(requesterId)
-      .withItemId(temeraire.getId())).getId();
+      .forItem(temeraire)
+      .by(usersFixture.james()))
+      .getId();
 
     List<JsonObject> fetchedRequestsResponse = requestsClient.getAll();
 

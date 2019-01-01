@@ -17,7 +17,6 @@ import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
-import api.support.builders.UserBuilder;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
@@ -32,14 +31,11 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
-    loansFixture.checkOutItem(smallAngryPlanet.getId());
-
-    UUID requestId = UUID.randomUUID();
+    loansFixture.checkOutByBarcode(smallAngryPlanet);
 
     IndividualResource response = requestsClient.create(new RequestBuilder()
-      .withId(requestId)
-      .withRequesterId(usersClient.create(new UserBuilder().create()).getId())
-      .withItemId(smallAngryPlanet.getId()));
+      .forItem(smallAngryPlanet)
+      .by(usersFixture.charlotte()));
 
     JsonObject createdRequest = response.getJson();
 
@@ -57,7 +53,7 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
       createdRequest.getJsonObject("item").getString("instanceId"),
       is(smallAngryPlanet.getInstanceId()));
 
-    Response fetchedRequestResponse = requestsClient.getById(requestId);
+    Response fetchedRequestResponse = requestsClient.getById(response.getId());
 
     assertThat(fetchedRequestResponse.getStatusCode(), is(200));
 
@@ -88,18 +84,20 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
 
-    loansFixture.checkOutItem(smallAngryPlanet.getId());
-    loansFixture.checkOutItem(temeraire.getId());
+    loansFixture.checkOutByBarcode(smallAngryPlanet);
+    loansFixture.checkOutByBarcode(temeraire);
 
-    UUID requesterId = usersClient.create(new UserBuilder().create()).getId();
+    final IndividualResource charlotte = usersFixture.charlotte();
 
     UUID firstRequestId = requestsClient.create(new RequestBuilder()
-      .withRequesterId(requesterId)
-      .withItemId(smallAngryPlanet.getId())).getId();
+      .forItem(smallAngryPlanet)
+      .by(charlotte))
+      .getId();
 
     UUID secondRequestId = requestsClient.create(new RequestBuilder()
-      .withRequesterId(requesterId)
-      .withItemId(temeraire.getId())).getId();
+      .forItem(temeraire)
+      .by(charlotte))
+      .getId();
 
     List<JsonObject> fetchedRequestsResponse = requestsClient.getAll();
 

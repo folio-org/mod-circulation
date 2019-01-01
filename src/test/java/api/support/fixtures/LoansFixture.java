@@ -40,13 +40,16 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 public class LoansFixture {
   private final ResourceClient loansClient;
   private final OkapiHttpClient client;
+  private final UsersFixture usersFixture;
 
   public LoansFixture(
     ResourceClient loansClient,
-    OkapiHttpClient client) {
+    OkapiHttpClient client,
+    UsersFixture usersFixture) {
 
     this.loansClient = loansClient;
     this.client = client;
+    this.usersFixture = usersFixture;
   }
 
   public IndividualResource checkOut(
@@ -138,6 +141,15 @@ public class LoansFixture {
       response.getStatusCode(), is(UNPROCESSABLE_ENTITY));
 
     return response;
+  }
+
+  public IndividualResource checkOutByBarcode(IndividualResource item)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return checkOutByBarcode(item, usersFixture.jessica());
   }
 
   public IndividualResource checkOutByBarcode(

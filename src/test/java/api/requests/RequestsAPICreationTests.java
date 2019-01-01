@@ -7,7 +7,6 @@ import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
-import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
 import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
@@ -35,6 +34,7 @@ import api.support.builders.Address;
 import api.support.builders.ItemBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
+import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
@@ -341,21 +341,18 @@ public class RequestsAPICreationTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
-      itemBuilder -> itemBuilder
-        .withBarcode("036000291452"))
-      .getId();
+    final InventoryItemResource smallAngryPlanet =
+      itemsFixture.basedUponSmallAngryPlanet(itemBuilder -> itemBuilder
+        .withBarcode("036000291452"));
 
-    loansFixture.checkOutItem(itemId);
+    UUID itemId = smallAngryPlanet.getId();
 
-    UUID requesterId = usersClient.create(new UserBuilder()
-      .withName("Jones", "Steven")
-      .withBarcode("564376549214"))
-      .getId();
+    loansFixture.checkOutByBarcode(smallAngryPlanet);
+
+    UUID requesterId = usersFixture.steve().getId();
 
     final IndividualResource request = requestsFixture.place(new RequestBuilder()
-      .recall()
-      .toHoldShelf()
+      .recall().fulfilToHoldShelf()
       .withItemId(itemId)
       .withRequesterId(requesterId)
       .withStatus(status));
@@ -386,8 +383,7 @@ public class RequestsAPICreationTests extends APITests {
 
     Response response = requestsClient.attemptCreate(
       new RequestBuilder()
-        .recall()
-        .toHoldShelf()
+        .recall().fulfilToHoldShelf()
         .forItem(smallAngryPlanet)
         .by(steve)
         .withStatus(status));
@@ -421,8 +417,7 @@ public class RequestsAPICreationTests extends APITests {
 
     Response response = requestsClient.attemptCreateAtSpecificLocation(
       new RequestBuilder()
-        .recall()
-        .toHoldShelf()
+        .recall().fulfilToHoldShelf()
         .forItem(smallAngryPlanet)
         .by(steve)
         .withStatus(status));
@@ -500,8 +495,7 @@ public class RequestsAPICreationTests extends APITests {
     loansFixture.checkOut(smallAngryPlanet, rebecca);
 
     IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
-      .recall()
-      .toHoldShelf()
+      .recall().fulfilToHoldShelf()
       .forItem(smallAngryPlanet)
       .by(steve)
       .withNoStatus());

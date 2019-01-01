@@ -1,14 +1,19 @@
 package api.support.builders;
 
-import io.vertx.core.json.JsonObject;
+import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getLocalDateProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getUUIDProperty;
+
+import java.util.UUID;
+
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 
-import java.util.UUID;
-
-import static org.folio.circulation.support.JsonPropertyFetcher.*;
+import io.vertx.core.json.JsonObject;
 
 public class RequestBuilder extends JsonBuilder implements Builder {
   public static final String OPEN_NOT_YET_FILLED = "Open - Not yet filled";
@@ -305,16 +310,22 @@ public class RequestBuilder extends JsonBuilder implements Builder {
     return withRequesterId(requester.getId());
   }
 
-  public RequestBuilder toHoldShelf() {
-    return withFulfilmentPreference("Hold Shelf");
-  }
-
   public RequestBuilder deliverToAddress(UUID addressTypeId) {
     return withFulfilmentPreference("Delivery")
       .withDeliveryAddressType(addressTypeId);
   }
 
-  public RequestBuilder withFulfilmentPreference(String fulfilmentPreference) {
+  //TODO: Remove, and combine with service point to be fulfilled to
+  public RequestBuilder fulfilToHoldShelf() {
+    return withFulfilmentPreference("Hold Shelf");
+  }
+
+  public RequestBuilder fulfilToHoldShelf(UUID newPickupServicePointId) {
+    return withFulfilmentPreference("Hold Shelf")
+      .withPickupServicePointId(newPickupServicePointId);
+  }
+
+  private RequestBuilder withFulfilmentPreference(String fulfilmentPreference) {
     return new RequestBuilder(
       this.id,
       this.requestType,
@@ -335,11 +346,6 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.cancelledDate,
       this.position,
       this.pickupServicePointId);
-  }
-
-  public RequestBuilder fulfilToHoldShelf() {
-    return withFulfilmentPreference(
-      "Hold Shelf");
   }
 
   public RequestBuilder withRequestExpiration(LocalDate requestExpiration) {

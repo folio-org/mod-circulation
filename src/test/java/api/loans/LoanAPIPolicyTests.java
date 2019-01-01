@@ -26,11 +26,11 @@ import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
 public class LoanAPIPolicyTests extends APITests {
-  static UUID pFallback;
-  static UUID p1;
-  static UUID p2;
-  static UUID p3;
-  static UUID p4;
+  private static UUID pFallback;
+  private static UUID p1;
+  private static UUID p2;
+  private static UUID p3;
+  private static UUID p4;
 
   public LoanAPIPolicyTests() {
     super(false);
@@ -52,9 +52,13 @@ public class LoanAPIPolicyTests extends APITests {
     JsonObject itemJson5 = itemsFixture.basedUponTemeraire(
       builder -> builder.withTemporaryLoanType(readingRoomLoanType)).getJson();
 
-    JsonObject user1 = APITestSuite.userRecord1();
-    JsonObject user2 = APITestSuite.userRecord2();
+    JsonObject user1 = usersFixture.jessica().getJson();
+    JsonObject user2 = usersFixture.charlotte(
+      userBuilder -> userBuilder.withPatronGroupId(APITestSuite.alternateGroupId()))
+      .getJson();
+
     UUID group1 = UUID.fromString(user1.getString("patronGroup"));
+
     UUID itemId1 = UUID.fromString(itemJson1.getString("id"));
     UUID itemId2 = UUID.fromString(itemJson2.getString("id"));
     UUID itemId3 = UUID.fromString(itemJson3.getString("id"));
@@ -72,6 +76,7 @@ public class LoanAPIPolicyTests extends APITests {
       "m " + materialTypesFixture.book() + " + t " + readingRoomLoanType + " : " + p3,
       "m " + materialTypesFixture.book() + " + t " + loanTypesFixture.canCirculate() + " + g " + group1 + " : " + p4
       );
+
     JsonObject newRulesRequest = new JsonObject().put("loanRulesAsTextFile", rules);
     CompletableFuture<Response> completed = new CompletableFuture<>();
 

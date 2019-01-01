@@ -18,7 +18,6 @@ import org.folio.circulation.support.http.client.Response;
 import org.junit.Test;
 
 import api.support.APITests;
-import api.support.builders.LoanBuilder;
 import io.vertx.core.json.JsonObject;
 
 public class LoanAPILocationTests extends APITests {
@@ -37,13 +36,11 @@ public class LoanAPILocationTests extends APITests {
         .withTemporaryLocation(secondFloorEconomicsLocationId())
     );
 
-    UUID loanId = UUID.randomUUID();
+    final IndividualResource checkOutResponse = loansFixture.checkOut(item,
+      usersFixture.jessica());
 
-    IndividualResource response = loansClient.create(new LoanBuilder()
-      .withId(loanId)
-      .withItemId(item.getId()));
-
-    JsonObject createdLoan = response.getJson();
+    UUID loanId = checkOutResponse.getId();
+    JsonObject createdLoan = checkOutResponse.getJson();
 
     assertThat("has item location",
       createdLoan.getJsonObject("item").containsKey("location"), is(true));
@@ -80,8 +77,8 @@ public class LoanAPILocationTests extends APITests {
         .withPermanentLocation(thirdFloorLocationId())
     );
 
-    UUID firstLoanId = loansClient.create(new LoanBuilder()
-      .withItemId(firstItem.getId())).getId();
+    UUID firstLoanId = loansFixture.checkOut(firstItem, usersFixture.jessica())
+      .getId();
 
     final IndividualResource secondItem = itemsFixture.basedUponTemeraire(
       holdingsRecordBuilder -> holdingsRecordBuilder
@@ -92,8 +89,8 @@ public class LoanAPILocationTests extends APITests {
         .withNoTemporaryLocation()
     );
 
-    UUID secondLoanId = loansClient.create(new LoanBuilder()
-      .withItemId(secondItem.getId())).getId();
+    UUID secondLoanId = loansFixture.checkOut(secondItem, usersFixture.james())
+      .getId();
 
     List<JsonObject> fetchedLoansResponse = loansClient.getAll();
 

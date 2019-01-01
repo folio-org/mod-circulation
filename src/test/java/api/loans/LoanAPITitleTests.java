@@ -15,7 +15,6 @@ import org.folio.circulation.support.http.client.Response;
 import org.junit.Test;
 
 import api.support.APITests;
-import api.support.builders.LoanBuilder;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
@@ -30,12 +29,11 @@ public class LoanAPITitleTests extends APITests {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
-    UUID loanId = UUID.randomUUID();
 
-    IndividualResource response = loansClient.create(new LoanBuilder()
-      .withId(loanId)
-      .withItemId(smallAngryPlanet.getId()));
+    IndividualResource response = loansFixture.checkOut(smallAngryPlanet,
+      usersFixture.steve());
 
+    UUID loanId = response.getId();
     JsonObject createdLoan = response.getJson();
 
     assertThat("has item title",
@@ -69,11 +67,12 @@ public class LoanAPITitleTests extends APITests {
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
 
-    UUID firstLoanId = loansClient.create(new LoanBuilder()
-      .withItemId(smallAngryPlanet.getId())).getId();
+    final UUID firstLoanId = loansFixture.checkOut(smallAngryPlanet,
+      usersFixture.rebecca()).getId();
 
-    UUID secondLoanId = loansClient.create(new LoanBuilder()
-      .withItemId(temeraire.getId())).getId();
+
+    UUID secondLoanId = loansFixture.checkOut(temeraire, usersFixture.steve())
+      .getId();
 
     List<JsonObject> fetchedLoansResponse = loansClient.getAll();
 

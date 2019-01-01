@@ -65,11 +65,17 @@ public abstract class APITests {
   protected final MaterialTypesFixture materialTypesFixture = new MaterialTypesFixture(
     ResourceClient.forMaterialTypes(client));
 
+
   protected final ItemsFixture itemsFixture = new ItemsFixture(client,
     materialTypesFixture, loanTypesFixture);
-  protected final LoansFixture loansFixture = new LoansFixture(loansClient, client);
+
+  protected final UsersFixture usersFixture = new UsersFixture(usersClient,
+    proxyRelationshipsClient);
+
+  protected final LoansFixture loansFixture = new LoansFixture(loansClient,
+    client, usersFixture);
+
   protected final RequestsFixture requestsFixture = new RequestsFixture(requestsClient);
-  protected final UsersFixture usersFixture = new UsersFixture(usersClient, proxyRelationshipsClient);
   protected final ServicePointsFixture servicePointsFixture = new ServicePointsFixture(servicePointsClient);
   protected final LocationsFixture locationsFixture = new LocationsFixture(locationsClient);
   protected final PatronGroupsFixture patronGroupsFixture = new PatronGroupsFixture(patronGroupsClient);
@@ -118,8 +124,6 @@ public abstract class APITests {
     usersClient.deleteAllIndividually();
 
     servicePointsClient.deleteAllIndividually();
-
-    APITestSuite.createUsers();
 
     if (initialiseLoanRules) {
       useDefaultRollingPolicyLoanRules();

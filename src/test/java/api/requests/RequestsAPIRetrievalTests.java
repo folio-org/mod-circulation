@@ -1,6 +1,7 @@
 package api.requests;
 
 import static api.APITestSuite.workAddressTypeId;
+import static api.support.builders.ItemBuilder.*;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
 import static org.hamcrest.Matchers.emptyString;
@@ -33,6 +34,7 @@ import api.support.builders.ItemBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import api.support.http.InterfaceUrls;
+import api.support.http.InventoryItemResource;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
@@ -44,10 +46,6 @@ public class RequestsAPIRetrievalTests extends APITests {
     ExecutionException,
     TimeoutException {
 
-    UUID requestId = UUID.fromString("d9960d24-8862-4178-be2c-c1a574188a92"); //to track in logs
-    UUID loanId = UUID.fromString("61d74730-5cdb-4675-ab88-1828ee1ad248");
-
-    UUID itemId = UUID.fromString("60c50f1b-7d6c-4b59-863a-a4da213d9530");
     String enumeration = "DUMMY_ENUMERATION";
     
     UUID facultyGroupId = patronGroupsFixture.faculty().getId();
@@ -56,10 +54,9 @@ public class RequestsAPIRetrievalTests extends APITests {
     UUID staffGroupId = patronGroupsFixture.staff().getId();
     groupsToDelete.add(staffGroupId);
 
-    itemsFixture.basedUponSmallAngryPlanet(itemBuilder -> itemBuilder
-        .withId(itemId)
-        .withEnumeration(enumeration));
-    
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+      itemBuilder -> itemBuilder.withEnumeration(enumeration));
+
     final IndividualResource sponsor = usersFixture.rebecca(
         builder -> builder.withPatronGroupId(facultyGroupId));
 
@@ -72,25 +69,25 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     usersFixture.nonExpiringProxyFor(sponsor, proxy);
 
-    loansFixture.checkOutItem(itemId, loanId);
+    loansFixture.checkOutByBarcode(smallAngryPlanet);
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
-    requestsClient.create(new RequestBuilder()
-      .recall()
-      .withId(requestId)
-      .withRequestDate(requestDate)
-      .withItemId(itemId)
-      .withRequesterId(sponsor.getId())
-      .withUserProxyId(proxy.getId())
-      .fulfilToHoldShelf()
-      .withRequestExpiration(new LocalDate(2017, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
-      .withPickupServicePointId(pickupServicePointId));
+    final IndividualResource createdRequest = requestsClient.create(
+      new RequestBuilder()
+        .recall()
+        .withRequestDate(requestDate)
+        .forItem(smallAngryPlanet)
+        .by(sponsor)
+        .proxiedBy(proxy)
+        .fulfilToHoldShelf()
+        .withRequestExpiration(new LocalDate(2017, 7, 30))
+        .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
+        .withPickupServicePointId(pickupServicePointId));
 
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
-    client.get(InterfaceUrls.requestsUrl(String.format("/%s", requestId)),
+    client.get(InterfaceUrls.requestsUrl(String.format("/%s", createdRequest.getId())),
       ResponseHandler.any(getCompleted));
 
     Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
@@ -100,81 +97,82 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     JsonObject representation = getResponse.getJson();
 
-    assertThat(representation.getString("id"), is(requestId.toString()));
+    assertThat(representation.getString("id"), is(createdRequest.getId()));
     assertThat(representation.getString("requestType"), is("Recall"));
     assertThat(representation.getString("requestDate"), isEquivalentTo(requestDate));
-    assertThat(representation.getString("itemId"), is(itemId.toString()));
-    assertThat(representation.getString("requesterId"), is(sponsor.getId().toString()));
+    assertThat(representation.getString("itemId"), is(smallAngryPlanet.getId()));
+    assertThat(representation.getString("requesterId"), is(sponsor.getId()));
     assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
     assertThat(representation.getString("requestExpirationDate"), is("2017-07-30"));
     assertThat(representation.getString("holdShelfExpirationDate"), is("2017-08-31"));
-    assertThat(representation.getString("pickupServicePointId"),
-        is(pickupServicePointId.toString()));
+    assertThat(representation.getString("pickupServicePointId"), is(pickupServicePointId));
     assertThat(representation.getString("status"), is("Open - Not yet filled"));
 
     assertThat(representation.containsKey("proxy"), is(true));
-    assertThat(representation.getJsonObject("proxy").containsKey("patronGroup"), is (true));
-    assertThat(representation.getJsonObject("proxy").getString("patronGroupId"),
-        is(staffGroupId.toString()));
-    assertThat(representation.getJsonObject("proxy").getJsonObject("patronGroup").getString("id"),
-        is(staffGroupId.toString()));
+    final JsonObject proxySummary = representation.getJsonObject("proxy");
 
-    assertThat(representation.containsKey("requester"), is(true));
-    assertThat(representation.getJsonObject("requester").containsKey("patronGroup"), is (true));
-    assertThat(representation.getJsonObject("requester").getString("patronGroupId"),
-        is(facultyGroupId.toString()));
-    assertThat(representation.getJsonObject("requester").getJsonObject("patronGroup").getString("id"),
-        is(facultyGroupId.toString()));
+    assertThat(proxySummary.containsKey("patronGroup"), is (true));
+    assertThat(proxySummary.getString("patronGroupId"), is(staffGroupId));
+    assertThat(proxySummary.getJsonObject("patronGroup").getString("id"),
+      is(staffGroupId));
 
     assertThat(representation.containsKey("pickupServicePoint"), is(true));
-    assertThat(representation.getJsonObject("pickupServicePoint").getString("name"),
-        is(cd1.getJson().getString("name")));
-    assertThat(representation.getJsonObject("pickupServicePoint").getString("code"),
-        is(cd1.getJson().getString("code")));
-    assertThat(representation.getJsonObject("pickupServicePoint").getString("discoveryDisplayName"),
-        is(cd1.getJson().getString("discoveryDisplayName")));
-    assertThat(representation.getJsonObject("pickupServicePoint").getBoolean("pickupLocation"),
+
+    final JsonObject pickupServicePoint = representation.getJsonObject("pickupServicePoint");
+
+    assertThat(pickupServicePoint.getString("name"), is(cd1.getJson().getString("name")));
+    assertThat(pickupServicePoint.getString("code"), is(cd1.getJson().getString("code")));
+
+    assertThat(pickupServicePoint.getString("discoveryDisplayName"),
+      is(cd1.getJson().getString("discoveryDisplayName")));
+
+    assertThat(pickupServicePoint.getBoolean("pickupLocation"),
         is(cd1.getJson().getBoolean("pickupLocation")));
 
     assertThat("has information taken from item",
       representation.containsKey("item"), is(true));
 
+    final JsonObject itemSummary = representation.getJsonObject("item");
+
     assertThat("title is taken from item",
-      representation.getJsonObject("item").getString("title"),
-      is("The Long Way to a Small, Angry Planet"));
+      itemSummary.getString("title"), is("The Long Way to a Small, Angry Planet"));
 
     assertThat("barcode is taken from item",
-      representation.getJsonObject("item").getString("barcode"),
-      is("036000291452"));
+      itemSummary.getString("barcode"), is("036000291452"));
     
-    assertThat(representation.getJsonObject("item").getString("enumeration"),
-        is(enumeration));
+    assertThat(itemSummary.getString("enumeration"), is(enumeration));
     
-    assertThat(representation.getJsonObject("item").getString("status"),
-        is(ItemBuilder.CHECKED_OUT));
+    assertThat(itemSummary.getString("status"), is(CHECKED_OUT));
 
     assertThat("has information taken from requesting user",
       representation.containsKey("requester"), is(true));
 
+    final JsonObject requesterSummary = representation.getJsonObject("requester");
+
     assertThat("last name is taken from requesting user",
-      representation.getJsonObject("requester").getString("lastName"),
+      requesterSummary.getString("lastName"),
       is("Stuart"));
 
     assertThat("first name is taken from requesting user",
-      representation.getJsonObject("requester").getString("firstName"),
+      requesterSummary.getString("firstName"),
       is("Rebecca"));
 
     assertThat("middle name is not taken from requesting user",
-      representation.getJsonObject("requester").containsKey("middleName"),
+      requesterSummary.containsKey("middleName"),
       is(false));
 
     assertThat("barcode is taken from requesting user",
-      representation.getJsonObject("requester").getString("barcode"),
+      requesterSummary.getString("barcode"),
       is("6059539205"));
 
     assertThat("barcode is taken from requesting user",
-      representation.getJsonObject("requester").getString("barcode"),
+      requesterSummary.getString("barcode"),
       is("6059539205"));
+
+    assertThat(requesterSummary.containsKey("patronGroup"), is (true));
+    assertThat(requesterSummary.getString("patronGroupId"), is(facultyGroupId));
+    assertThat(requesterSummary.getJsonObject("patronGroup").getString("id"),
+      is(facultyGroupId));
 
     assertThat("current loan is present",
       representation.containsKey("loan"), is(true));
@@ -214,8 +212,8 @@ public class RequestsAPIRetrievalTests extends APITests {
     IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
       .recall()
       .forItem(smallAngryPlanet)
-      .deliverToAddress(workAddressTypeId())
-      .by(charlotte));
+      .by(charlotte)
+      .deliverToAddress(workAddressTypeId()));
 
     JsonObject representation = requestsClient.getById(createdRequest.getId()).getJson();
 
@@ -249,7 +247,6 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     assertThat(getResponse.getStatusCode(), is(HttpURLConnection.HTTP_NOT_FOUND));
   }
-
   
   @Test
   public void canGetMultipleRequests()

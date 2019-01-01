@@ -31,7 +31,6 @@ import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.LocationBuilder;
 import api.support.builders.ServicePointBuilder;
-import api.support.builders.UserBuilder;
 import api.support.fakes.FakeOkapi;
 import api.support.fakes.FakeStorageModule;
 import api.support.http.ResourceClient;
@@ -59,9 +58,6 @@ public class APITestSuite {
   private static UUID regularGroupId;
   private static UUID alternateGroupId;
   private static UUID workAddressTypeId;
-  private static UUID userId1;
-  private static JsonObject userRecord1;
-  private static JsonObject userRecord2;
   private static UUID personalContributorTypeId;
 
   private static UUID nottinghamUniversityInstitution;
@@ -137,20 +133,12 @@ public class APITestSuite {
     return personalContributorTypeId;
   }
 
-  public static UUID userId() {
-    return userId1;
-  }
-
-  public static JsonObject userRecord1() {
-    return userRecord1;
-  }
-
-  public static JsonObject userRecord2() {
-    return userRecord2;
-  }
-
   public static UUID regularGroupId() {
     return regularGroupId;
+  }
+
+  public static UUID alternateGroupId() {
+    return alternateGroupId;
   }
 
   public static UUID workAddressTypeId() {
@@ -220,7 +208,7 @@ public class APITestSuite {
     createInstanceTypes();
     createAddressTypes();
     createGroups();
-    createUsers();
+
     createLoanPolicies();
     createCancellationReasons();
   }
@@ -342,28 +330,6 @@ public class APITestSuite {
     } catch (MalformedURLException ex) {
       throw new IllegalArgumentException("Invalid Okapi URL configured for tests");
     }
-  }
-
-  public static void createUsers()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-    ResourceClient usersClient = ResourceClient.forUsers(createClient());
-
-    userRecord1 = new UserBuilder()
-      .withUsername("bfrederi")
-      .withPatronGroupId(regularGroupId)
-      .create();
-
-    userId1 = usersClient.create(userRecord1).getId();
-
-    userRecord2 = new UserBuilder()
-      .withUsername("lko")
-      .withPatronGroupId(alternateGroupId)
-      .create();
-
-    usersClient.create(userRecord2).getId();
   }
 
   private static void createGroups()
