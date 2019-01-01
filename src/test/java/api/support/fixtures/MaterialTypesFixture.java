@@ -10,8 +10,8 @@ import java.util.concurrent.TimeoutException;
 import api.support.http.ResourceClient;
 
 public class MaterialTypesFixture {
-  public static UUID bookMaterialTypeId;
-  public static UUID videoRecordingMaterialTypeId;
+  private static UUID bookMaterialTypeId;
+  private static UUID videoRecordingMaterialTypeId;
 
   private final ResourceClient materialTypesClient;
 
@@ -34,8 +34,7 @@ public class MaterialTypesFixture {
     TimeoutException {
 
     videoRecordingMaterialTypeId = createReferenceRecord(materialTypesClient,
-      "Video Recording");
-
+        "Video Recording");
   }
 
   public void book()
@@ -45,5 +44,15 @@ public class MaterialTypesFixture {
     TimeoutException {
 
     bookMaterialTypeId = createReferenceRecord(materialTypesClient, "Book");
+  }
+
+  public void cleanUp()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    materialTypesClient.delete(bookMaterialTypeId);
+    materialTypesClient.delete(videoRecordingMaterialTypeId);
   }
 }

@@ -453,10 +453,11 @@ public class APITestSuite {
     ExecutionException,
     TimeoutException {
 
-    ResourceClient materialTypesClient = ResourceClient.forMaterialTypes(createClient());
+    ResourceClient client = ResourceClient.forMaterialTypes(createClient());
 
-    materialTypesClient.delete(MaterialTypesFixture.bookMaterialTypeId);
-    materialTypesClient.delete(MaterialTypesFixture.videoRecordingMaterialTypeId);
+    final MaterialTypesFixture materialTypesFixture = new MaterialTypesFixture(client);
+
+    materialTypesFixture.cleanUp();
   }
 
   private static void createContributorNameTypes()
