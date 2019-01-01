@@ -5,6 +5,7 @@ import static api.APITestSuite.thirdFloorLocationId;
 import static java.util.function.Function.identity;
 
 import java.net.MalformedURLException;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
@@ -39,7 +40,7 @@ public class ItemsFixture {
     return create(
       InstanceExamples.basedUponDunkirk(),
       thirdFloorHoldings(),
-      ItemExamples.basedUponDunkirk());
+      ItemExamples.basedUponDunkirk(MaterialTypesFixture.videoRecordingMaterialTypeId()));
   }
 
   public InventoryItemResource basedUponSmallAngryPlanet()
@@ -76,7 +77,7 @@ public class ItemsFixture {
       additionalItemProperties,
       InstanceExamples.basedUponSmallAngryPlanet(),
       thirdFloorHoldings(),
-      ItemExamples.basedUponSmallAngryPlanet());
+      ItemExamples.basedUponSmallAngryPlanet(getBookMaterialTypeId()));
   }
 
   public InventoryItemResource basedUponNod()
@@ -100,7 +101,7 @@ public class ItemsFixture {
       additionalItemProperties,
       InstanceExamples.basedUponNod(),
       thirdFloorHoldings(),
-      ItemExamples.basedUponNod());
+      ItemExamples.basedUponNod(getBookMaterialTypeId()));
   }
 
   public InventoryItemResource basedUponTemeraire()
@@ -125,7 +126,7 @@ public class ItemsFixture {
       additionalItemProperties,
       InstanceExamples.basedUponTemeraire(),
       thirdFloorHoldings(),
-      ItemExamples.basedUponTemeraire());
+      ItemExamples.basedUponTemeraire(getBookMaterialTypeId()));
   }
 
   public InventoryItemResource basedUponTemeraire(
@@ -159,7 +160,7 @@ public class ItemsFixture {
       additionalItemProperties,
       InstanceExamples.basedUponUprooted(),
       thirdFloorHoldings(),
-      ItemExamples.basedUponUprooted());
+      ItemExamples.basedUponUprooted(getBookMaterialTypeId()));
   }
 
   public InventoryItemResource basedUponInterestingTimes()
@@ -183,7 +184,7 @@ public class ItemsFixture {
       additionalItemProperties,
       InstanceExamples.basedUponInterestingTimes(),
       thirdFloorHoldings(),
-      ItemExamples.basedUponInterestingTimes());
+      ItemExamples.basedUponInterestingTimes(getBookMaterialTypeId()));
   }
 
   private InventoryItemResource applyAdditionalProperties(
@@ -223,6 +224,10 @@ public class ItemsFixture {
         .create());
 
     return new InventoryItemResource(item, holding, instance);
+  }
+
+  private UUID getBookMaterialTypeId() {
+    return MaterialTypesFixture.bookMaterialTypeId();
   }
 
   private HoldingBuilder thirdFloorHoldings() {
