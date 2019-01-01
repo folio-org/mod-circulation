@@ -1,7 +1,7 @@
 package api.loans;
 
-import static api.APITestSuite.thirdFloorLocationId;
 import static api.support.JsonCollectionAssistant.getRecordById;
+import static api.support.matchers.UUIDMatcher.is;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -16,10 +16,8 @@ import org.folio.circulation.support.http.client.Response;
 import org.junit.Test;
 
 import api.support.APITests;
-import api.support.builders.HoldingBuilder;
 import api.support.builders.LoanBuilder;
-import api.support.fixtures.InstanceExamples;
-import api.support.fixtures.ItemExamples;
+import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class LoanAPIRelatedRecordsTests extends APITests {
@@ -30,26 +28,13 @@ public class LoanAPIRelatedRecordsTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    UUID instanceId = instancesClient.create(
-      InstanceExamples.basedUponSmallAngryPlanet()).getId();
-
-    UUID holdingId = holdingsClient.create(
-      new HoldingBuilder()
-        .forInstance(instanceId)
-        .withPermanentLocation(thirdFloorLocationId())
-        .create())
-      .getId();
-
-    UUID itemId = itemsClient.create(
-      ItemExamples.basedUponSmallAngryPlanet()
-        .forHolding(holdingId))
-      .getId();
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
     UUID loanId = UUID.randomUUID();
 
     IndividualResource response = loansClient.create(new LoanBuilder()
       .withId(loanId)
-      .withItemId(itemId));
+      .withItemId(smallAngryPlanet.getId()));
 
     JsonObject createdLoan = response.getJson();
 
@@ -58,14 +43,14 @@ public class LoanAPIRelatedRecordsTests extends APITests {
 
     assertThat("has correct holdings record ID",
       createdLoan.getJsonObject("item").getString("holdingsRecordId"),
-      is(holdingId.toString()));
+      is(smallAngryPlanet.getHoldingsRecordId()));
 
     assertThat("has instance ID",
       createdLoan.getJsonObject("item").containsKey("instanceId"), is(true));
 
     assertThat("has correct instance ID",
       createdLoan.getJsonObject("item").getString("instanceId"),
-      is(instanceId.toString()));
+      is(smallAngryPlanet.getInstanceId()));
 
     Response fetchedLoanResponse = loansClient.getById(loanId);
 
@@ -78,14 +63,14 @@ public class LoanAPIRelatedRecordsTests extends APITests {
 
     assertThat("has correct holdings record ID",
       fetchedLoan.getJsonObject("item").getString("holdingsRecordId"),
-      is(holdingId.toString()));
+      is(smallAngryPlanet.getHoldingsRecordId()));
 
     assertThat("has instance ID",
       fetchedLoan.getJsonObject("item").containsKey("instanceId"), is(true));
 
     assertThat("has correct instance ID",
       fetchedLoan.getJsonObject("item").getString("instanceId"),
-      is(instanceId.toString()));
+      is(smallAngryPlanet.getInstanceId()));
   }
 
   @Test
@@ -95,41 +80,14 @@ public class LoanAPIRelatedRecordsTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    UUID firstInstanceId = instancesClient.create(
-      InstanceExamples.basedUponSmallAngryPlanet()).getId();
-
-    UUID firstHoldingId = holdingsClient.create(
-      new HoldingBuilder()
-        .forInstance(firstInstanceId)
-        .withPermanentLocation(thirdFloorLocationId())
-        .create())
-      .getId();
-
-    UUID firstItemId = itemsClient.create(
-      ItemExamples.basedUponSmallAngryPlanet()
-        .forHolding(firstHoldingId))
-      .getId();
-
-    UUID secondInstanceId = instancesClient.create(
-      InstanceExamples.basedUponTemeraire()).getId();
-
-    UUID secondHoldingId = holdingsClient.create(
-      new HoldingBuilder()
-        .forInstance(secondInstanceId)
-        .withPermanentLocation(thirdFloorLocationId())
-        .create())
-      .getId();
-
-    UUID secondItemId = itemsClient.create(
-      ItemExamples.basedUponTemeraire()
-        .forHolding(secondHoldingId))
-      .getId();
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     UUID firstLoanId = loansClient.create(new LoanBuilder()
-      .withItemId(firstItemId)).getId();
+      .withItemId(smallAngryPlanet.getId())).getId();
 
     UUID secondLoanId = loansClient.create(new LoanBuilder()
-      .withItemId(secondItemId)).getId();
+      .withItemId(temeraire.getId())).getId();
 
     List<JsonObject> fetchedLoansResponse = loansClient.getAll();
 
@@ -144,27 +102,27 @@ public class LoanAPIRelatedRecordsTests extends APITests {
 
     assertThat("has correct holdings record ID",
       firstFetchedLoan.getJsonObject("item").getString("holdingsRecordId"),
-      is(firstHoldingId.toString()));
+      is(smallAngryPlanet.getHoldingsRecordId()));
 
     assertThat("has instance ID",
       firstFetchedLoan.getJsonObject("item").containsKey("instanceId"), is(true));
 
     assertThat("has correct instance ID",
       firstFetchedLoan.getJsonObject("item").getString("instanceId"),
-      is(firstInstanceId.toString()));
+      is(smallAngryPlanet.getInstanceId()));
 
     assertThat("has holdings record ID",
       secondFetchedLoan.getJsonObject("item").containsKey("holdingsRecordId"), is(true));
 
     assertThat("has correct holdings record ID",
       secondFetchedLoan.getJsonObject("item").getString("holdingsRecordId"),
-      is(secondHoldingId.toString()));
+      is(temeraire.getHoldingsRecordId()));
 
     assertThat("has instance ID",
       secondFetchedLoan.getJsonObject("item").containsKey("instanceId"), is(true));
 
     assertThat("has correct instance ID",
       secondFetchedLoan.getJsonObject("item").getString("instanceId"),
-      is(secondInstanceId.toString()));
+      is(temeraire.getInstanceId()));
   }
 }

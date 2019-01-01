@@ -10,12 +10,12 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
 import org.folio.circulation.support.http.client.IndividualResource;
-import api.support.http.InventoryItemResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 
 import api.support.builders.HoldingBuilder;
 import api.support.builders.InstanceBuilder;
 import api.support.builders.ItemBuilder;
+import api.support.http.InventoryItemResource;
 import api.support.http.ResourceClient;
 
 public class ItemsFixture {
@@ -222,7 +222,7 @@ public class ItemsFixture {
       itemBuilder.forHolding(holding.getId())
         .create());
 
-    return new InventoryItemResource(item);
+    return new InventoryItemResource(item, holding, instance);
   }
 
   private HoldingBuilder thirdFloorHoldings() {
