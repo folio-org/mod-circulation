@@ -39,7 +39,7 @@ public class RequestsAPIProxyTests extends APITests {
     IndividualResource sponsor = usersFixture.jessica();
     IndividualResource proxy = usersFixture.james();
 
-    usersFixture.currentProxyFor(sponsor, proxy);
+    proxyRelationshipsFixture.currentProxyFor(sponsor, proxy);
 
     JsonObject requestRequest = new RequestBuilder()
       .forItem(smallAngryPlanet)
@@ -94,7 +94,7 @@ public class RequestsAPIProxyTests extends APITests {
     IndividualResource sponsor = usersFixture.jessica();
     IndividualResource proxy = usersFixture.james();
 
-    usersFixture.nonExpiringProxyFor(sponsor, proxy);
+    proxyRelationshipsFixture.nonExpiringProxyFor(sponsor, proxy);
 
     JsonObject requestRequest = new RequestBuilder()
       .forItem(item)
@@ -128,7 +128,7 @@ public class RequestsAPIProxyTests extends APITests {
     final IndividualResource jessica = usersFixture.jessica();
     final IndividualResource james = usersFixture.james();
 
-    usersFixture.inactiveProxyFor(jessica, james);
+    proxyRelationshipsFixture.inactiveProxyFor(jessica, james);
 
     JsonObject requestRequest = new RequestBuilder()
       .forItem(smallAngryPlanet)
@@ -162,7 +162,7 @@ public class RequestsAPIProxyTests extends APITests {
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource james = usersFixture.james();
 
-    usersFixture.expiredProxyFor(jessica, james);
+    proxyRelationshipsFixture.expiredProxyFor(jessica, james);
 
     JsonObject requestRequest = new RequestBuilder()
       .forItem(smallAngryPlanet)
@@ -195,7 +195,7 @@ public class RequestsAPIProxyTests extends APITests {
     IndividualResource charlotte = usersFixture.charlotte();
     IndividualResource james = usersFixture.james();
 
-    usersFixture.expiredProxyFor(jessica, james);
+    proxyRelationshipsFixture.expiredProxyFor(jessica, james);
 
     JsonObject requestRequest = new RequestBuilder()
       .forItem(smallAngryPlanet)
@@ -233,7 +233,7 @@ public class RequestsAPIProxyTests extends APITests {
         .forItem(temeraire)
         .by(sponsor));
 
-    usersFixture.currentProxyFor(sponsor, proxy);
+    proxyRelationshipsFixture.currentProxyFor(sponsor, proxy);
 
     JsonObject updatedRequest = createdRequest.copyJson();
 
@@ -292,7 +292,7 @@ public class RequestsAPIProxyTests extends APITests {
         .forItem(temeraire)
         .by(sponsor));
 
-    usersFixture.expiredProxyFor(sponsor, proxy);
+    proxyRelationshipsFixture.expiredProxyFor(sponsor, proxy);
 
     JsonObject updatedRequest = createdRequest.copyJson();
 
@@ -329,7 +329,7 @@ public class RequestsAPIProxyTests extends APITests {
         .forItem(temeraire)
         .by(otherUser));
 
-    usersFixture.currentProxyFor(unexpectedSponsor, proxy);
+    proxyRelationshipsFixture.currentProxyFor(unexpectedSponsor, proxy);
 
     JsonObject updatedRequest = createdRequest.copyJson();
 

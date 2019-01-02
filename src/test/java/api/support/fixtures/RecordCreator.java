@@ -13,6 +13,7 @@ import org.folio.circulation.support.http.client.IndividualResource;
 
 import api.support.builders.Builder;
 import api.support.http.ResourceClient;
+import io.vertx.core.json.JsonObject;
 
 class RecordCreator {
   private final ResourceClient client;
@@ -30,8 +31,16 @@ class RecordCreator {
     MalformedURLException,
     TimeoutException,
     ExecutionException {
+    return create(builder.create());
+  }
 
-    final IndividualResource createdRecord = client.create(builder);
+  private IndividualResource create(JsonObject record)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final IndividualResource createdRecord = client.create(record);
 
     createdRecordIds.add(createdRecord.getId());
 
@@ -51,18 +60,22 @@ class RecordCreator {
     createdRecordIds.clear();
   }
 
-  IndividualResource createIfAbsent(String key, Builder valueBuilder)
+  IndividualResource createIfAbsent(String key, JsonObject record)
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
 
-    if(!identityMap.containsKey(key)) {
-      final IndividualResource user = create(valueBuilder);
+    if(needsCreating(key)) {
+      final IndividualResource user = create(record);
 
       identityMap.put(key, user);
     }
 
     return identityMap.get(key);
+  }
+
+  private boolean needsCreating(String key) {
+    return !identityMap.containsKey(key);
   }
 }

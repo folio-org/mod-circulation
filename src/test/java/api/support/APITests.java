@@ -31,6 +31,7 @@ import api.support.fixtures.LoansFixture;
 import api.support.fixtures.LocationsFixture;
 import api.support.fixtures.MaterialTypesFixture;
 import api.support.fixtures.PatronGroupsFixture;
+import api.support.fixtures.ProxyRelationshipsFixture;
 import api.support.fixtures.RequestsFixture;
 import api.support.fixtures.ServicePointsFixture;
 import api.support.fixtures.UsersFixture;
@@ -69,8 +70,13 @@ public abstract class APITests {
   protected final ItemsFixture itemsFixture = new ItemsFixture(client,
     materialTypesFixture, loanTypesFixture);
 
-  protected final UsersFixture usersFixture = new UsersFixture(usersClient,
-    proxyRelationshipsClient);
+  protected final PatronGroupsFixture patronGroupsFixture = new PatronGroupsFixture(patronGroupsClient);
+
+  protected final ProxyRelationshipsFixture proxyRelationshipsFixture
+    = new ProxyRelationshipsFixture(proxyRelationshipsClient);
+
+  protected final UsersFixture usersFixture = new UsersFixture(usersClient
+  );
 
   protected final LoansFixture loansFixture = new LoansFixture(loansClient,
     client, usersFixture);
@@ -78,7 +84,6 @@ public abstract class APITests {
   protected final RequestsFixture requestsFixture = new RequestsFixture(requestsClient);
   protected final ServicePointsFixture servicePointsFixture = new ServicePointsFixture(servicePointsClient);
   protected final LocationsFixture locationsFixture = new LocationsFixture(locationsClient);
-  protected final PatronGroupsFixture patronGroupsFixture = new PatronGroupsFixture(patronGroupsClient);
 
   protected final Set<UUID> schedulesToDelete = new HashSet<>();
   protected final Set<UUID> policiesToDelete = new HashSet<>();

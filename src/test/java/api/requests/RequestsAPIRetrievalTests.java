@@ -67,7 +67,7 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     UUID pickupServicePointId = cd1.getId();
 
-    usersFixture.nonExpiringProxyFor(sponsor, proxy);
+    proxyRelationshipsFixture.nonExpiringProxyFor(sponsor, proxy);
 
     loansFixture.checkOutByBarcode(smallAngryPlanet);
 
@@ -278,7 +278,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     UUID proxyId = proxy.getId();
     UUID requesterId = sponsor.getId();
     
-    usersFixture.nonExpiringProxyFor(sponsor, proxy);
+    proxyRelationshipsFixture.nonExpiringProxyFor(sponsor, proxy);
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource nod = itemsFixture.basedUponNod();
@@ -590,8 +590,8 @@ public class RequestsAPIRetrievalTests extends APITests {
     final IndividualResource firstProxy = usersFixture.charlotte();
     final IndividualResource secondProxy = usersFixture.james();
 
-    usersFixture.currentProxyFor(sponsor, firstProxy);
-    usersFixture.currentProxyFor(sponsor, secondProxy);
+    proxyRelationshipsFixture.currentProxyFor(sponsor, firstProxy);
+    proxyRelationshipsFixture.currentProxyFor(sponsor, secondProxy);
 
     requestsClient.create(new RequestBuilder()
       .forItem(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut))
