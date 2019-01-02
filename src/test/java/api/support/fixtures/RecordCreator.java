@@ -70,7 +70,16 @@ class RecordCreator {
     createdRecordIds.clear();
   }
 
-  IndividualResource createIfAbsent(JsonObject record)
+  IndividualResource createIfAbsent(Builder recordBuilder)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return createIfAbsent(recordBuilder.create());
+  }
+
+  private IndividualResource createIfAbsent(JsonObject record)
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,

@@ -41,7 +41,7 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return userRecordCreator.createIfAbsent(basedUponJessicaPontefract().create());
+    return userRecordCreator.createIfAbsent(basedUponJessicaPontefract());
   }
 
   public IndividualResource james()
@@ -50,7 +50,7 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return userRecordCreator.createIfAbsent(basedUponJamesRodwell().create());
+    return userRecordCreator.createIfAbsent(basedUponJamesRodwell());
   }
 
   public IndividualResource rebecca()
@@ -70,7 +70,7 @@ public class UsersFixture {
     ExecutionException {
 
     return userRecordCreator.createIfAbsent(
-      additionalProperties.apply(basedUponRebeccaStuart()).create());
+      additionalProperties.apply(basedUponRebeccaStuart()));
   }
 
   public IndividualResource steve()
@@ -90,7 +90,7 @@ public class UsersFixture {
     ExecutionException {
 
     return userRecordCreator.createIfAbsent(
-      additionalUserProperties.apply(basedUponStevenJones()).create());
+      additionalUserProperties.apply(basedUponStevenJones()));
   }
 
   public IndividualResource charlotte()
@@ -110,6 +110,6 @@ public class UsersFixture {
     ExecutionException {
 
     return userRecordCreator.createIfAbsent(additionalConfiguration.apply(
-      basedUponCharlotteBroadwell()).create());
+      basedUponCharlotteBroadwell()));
   }
 }
