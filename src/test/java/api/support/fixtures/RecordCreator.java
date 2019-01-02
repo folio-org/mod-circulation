@@ -16,15 +16,12 @@ import api.support.builders.Builder;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
+//TODO May need to support checking if record exists in store already?
 class RecordCreator {
   private final ResourceClient client;
   private final Map<String, IndividualResource> identityMap;
   private final Set<UUID> createdRecordIds;
   private final Function<JsonObject, String> identityMapKey;
-
-  RecordCreator(ResourceClient client) {
-    this(client, null);
-  }
 
   RecordCreator(
     ResourceClient client,
@@ -34,14 +31,6 @@ class RecordCreator {
     this.identityMap = new HashMap<>();
     this.createdRecordIds = new HashSet<>();
     this.identityMapKey = identityMapKey;
-  }
-
-  IndividualResource create(Builder builder)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-    return create(builder.create());
   }
 
   private IndividualResource create(JsonObject record)
