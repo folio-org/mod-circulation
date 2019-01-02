@@ -1,8 +1,5 @@
 package api.loans;
 
-import static api.APITestSuite.mezzanineDisplayCaseLocationId;
-import static api.APITestSuite.secondFloorEconomicsLocationId;
-import static api.APITestSuite.thirdFloorLocationId;
 import static api.support.JsonCollectionAssistant.getRecordById;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -28,12 +25,15 @@ public class LoanAPILocationTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
+    final IndividualResource thirdFloor = locationsFixture.thirdFloor();
+    final IndividualResource secondFloorEconomics = locationsFixture.secondFloorEconomics();
+
     final IndividualResource item = itemsFixture.basedUponSmallAngryPlanet(
       holdingsRecordBuilder -> holdingsRecordBuilder
-        .withPermanentLocation(thirdFloorLocationId()),
+        .withPermanentLocation(thirdFloor),
       itemBuilder -> itemBuilder
         .withNoPermanentLocation()
-        .withTemporaryLocation(secondFloorEconomicsLocationId())
+        .withTemporaryLocation(secondFloorEconomics)
     );
 
     final IndividualResource checkOutResponse = loansFixture.checkOut(item,
@@ -70,19 +70,23 @@ public class LoanAPILocationTests extends APITests {
     TimeoutException,
     ExecutionException {
 
+    final IndividualResource thirdFloor = locationsFixture.thirdFloor();
+    final IndividualResource secondFloorEconomics = locationsFixture.secondFloorEconomics();
+
     final IndividualResource firstItem = itemsFixture.basedUponSmallAngryPlanet(
       holdingsRecordBuilder -> holdingsRecordBuilder
-        .withPermanentLocation(secondFloorEconomicsLocationId()),
+        .withPermanentLocation(secondFloorEconomics),
       itemBuilder -> itemBuilder
-        .withPermanentLocation(thirdFloorLocationId())
-    );
+        .withPermanentLocation(thirdFloor));
 
     UUID firstLoanId = loansFixture.checkOut(firstItem, usersFixture.jessica())
       .getId();
 
+    final IndividualResource mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
+
     final IndividualResource secondItem = itemsFixture.basedUponTemeraire(
       holdingsRecordBuilder -> holdingsRecordBuilder
-        .withPermanentLocation(mezzanineDisplayCaseLocationId())
+        .withPermanentLocation(mezzanineDisplayCase)
         .withNoTemporaryLocation(),
       itemBuilder -> itemBuilder
         .withNoPermanentLocation()

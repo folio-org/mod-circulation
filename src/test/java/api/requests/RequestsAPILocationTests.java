@@ -1,8 +1,5 @@
 package api.requests;
 
-import static api.APITestSuite.mezzanineDisplayCaseLocationId;
-import static api.APITestSuite.secondFloorEconomicsLocationId;
-import static api.APITestSuite.thirdFloorLocationId;
 import static api.support.JsonCollectionAssistant.getRecordById;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -29,13 +26,17 @@ public class RequestsAPILocationTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
+    final IndividualResource thirdFloor = locationsFixture.thirdFloor();
+    final IndividualResource secondFloorEconomics = locationsFixture.secondFloorEconomics();
+    final IndividualResource mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
+
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       holdingBuilder -> holdingBuilder
-        .withPermanentLocation(thirdFloorLocationId())
-        .withTemporaryLocation(mezzanineDisplayCaseLocationId()),
+        .withPermanentLocation(thirdFloor)
+        .withTemporaryLocation(mezzanineDisplayCase),
       itemBuilder -> itemBuilder
         .withNoPermanentLocation()
-        .withTemporaryLocation(secondFloorEconomicsLocationId())
+        .withTemporaryLocation(secondFloorEconomics)
     );
 
     loansFixture.checkOut(smallAngryPlanet, usersFixture.jessica());
@@ -78,12 +79,15 @@ public class RequestsAPILocationTests extends APITests {
     TimeoutException,
     ExecutionException {
 
+    final IndividualResource thirdFloor = locationsFixture.thirdFloor();
+    final IndividualResource secondFloorEconomics = locationsFixture.secondFloorEconomics();
+    final IndividualResource mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
+
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       holdingBuilder -> holdingBuilder
-        .withPermanentLocation(secondFloorEconomicsLocationId()),
+        .withPermanentLocation(secondFloorEconomics),
       itemBuilder -> itemBuilder
-        .withPermanentLocation(thirdFloorLocationId())
-    );
+        .withPermanentLocation(thirdFloor));
 
     loansFixture.checkOut(smallAngryPlanet, usersFixture.james());
 
@@ -95,7 +99,7 @@ public class RequestsAPILocationTests extends APITests {
 
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire(
       holdingBuilder -> holdingBuilder
-        .withPermanentLocation(mezzanineDisplayCaseLocationId())
+        .withPermanentLocation(mezzanineDisplayCase)
         .withNoTemporaryLocation(),
       itemBuilder -> itemBuilder
         .withNoPermanentLocation()

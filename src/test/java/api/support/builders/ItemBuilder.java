@@ -1,8 +1,10 @@
 package api.support.builders;
 
-import io.vertx.core.json.JsonObject;
-
 import java.util.UUID;
+
+import org.folio.circulation.support.http.client.IndividualResource;
+
+import io.vertx.core.json.JsonObject;
 
 public class ItemBuilder extends JsonBuilder implements Builder {
 
@@ -107,6 +109,10 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     return withBarcode(null);
   }
 
+  public ItemBuilder withPermanentLocation(IndividualResource location) {
+    return withPermanentLocation(location.getId());
+  }
+
   public ItemBuilder withPermanentLocation(UUID locationId) {
     return new ItemBuilder(
       this.id,
@@ -122,7 +128,11 @@ public class ItemBuilder extends JsonBuilder implements Builder {
   }
 
   public ItemBuilder withNoPermanentLocation() {
-    return withPermanentLocation(null);
+    return withPermanentLocation((UUID)null);
+  }
+
+  public ItemBuilder withTemporaryLocation(IndividualResource location) {
+    return withTemporaryLocation(location.getId());
   }
 
   public ItemBuilder withTemporaryLocation(UUID locationId) {
@@ -140,7 +150,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
   }
 
   public ItemBuilder withNoTemporaryLocation() {
-    return withTemporaryLocation(null);
+    return withTemporaryLocation((UUID)null);
   }
 
   public ItemBuilder forHolding(UUID holdingId) {

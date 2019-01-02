@@ -1,7 +1,6 @@
 package api.support.fixtures;
 
 import static api.APITestSuite.booksInstanceTypeId;
-import static api.APITestSuite.thirdFloorLocationId;
 import static java.util.function.Function.identity;
 
 import java.net.MalformedURLException;
@@ -24,17 +23,20 @@ public class ItemsFixture {
   private final ResourceClient instancesClient;
   private final MaterialTypesFixture materialTypesFixture;
   private final LoanTypesFixture loanTypesFixture;
+  private final LocationsFixture locationsFixture;
 
   public ItemsFixture(
     OkapiHttpClient client,
     MaterialTypesFixture materialTypesFixture,
-    LoanTypesFixture loanTypesFixture) {
+    LoanTypesFixture loanTypesFixture,
+    LocationsFixture locationsFixture) {
 
     itemsClient = ResourceClient.forItems(client);
     holdingsClient = ResourceClient.forHoldings(client);
     instancesClient = ResourceClient.forInstances(client);
     this.materialTypesFixture = materialTypesFixture;
     this.loanTypesFixture = loanTypesFixture;
+    this.locationsFixture = locationsFixture;
   }
 
   public InventoryItemResource basedUponDunkirk()
@@ -238,9 +240,14 @@ public class ItemsFixture {
     return new InventoryItemResource(item, holding, instance);
   }
 
-  private HoldingBuilder thirdFloorHoldings() {
+  private HoldingBuilder thirdFloorHoldings()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
     return new HoldingBuilder()
-      .withPermanentLocation(thirdFloorLocationId())
+      .withPermanentLocation(locationsFixture.thirdFloor())
       .withNoTemporaryLocation()
       .withCallNumber("123456");
   }

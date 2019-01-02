@@ -61,9 +61,6 @@ public class APITestSuite {
   public static UUID jubileeCampus;
   public static UUID djanoglyLibrary;
   public static UUID businessLibrary;
-  public static UUID thirdFloorLocationId;
-  public static UUID mezzanineDisplayCaseLocationId;
-  public static UUID secondFloorEconomicsLocationId;
 
   private static UUID canCirculateRollingLoanPolicyId;
   private static UUID canCirculateFixedLoanPolicyId;
@@ -107,18 +104,6 @@ public class APITestSuite {
   public static OkapiHttpClient createClient() {
     return APITestSuite.createClient(exception ->
       log.error("Request failed:", exception));
-  }
-
-  public static UUID thirdFloorLocationId() {
-    return thirdFloorLocationId;
-  }
-
-  public static UUID mezzanineDisplayCaseLocationId() {
-    return mezzanineDisplayCaseLocationId;
-  }
-
-  public static UUID secondFloorEconomicsLocationId() {
-    return secondFloorEconomicsLocationId;
   }
 
   public static UUID booksInstanceTypeId() {

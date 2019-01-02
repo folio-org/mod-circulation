@@ -7,10 +7,7 @@ import static api.APITestSuite.createCommonRecords;
 import static api.APITestSuite.createReferenceRecord;
 import static api.APITestSuite.djanoglyLibrary;
 import static api.APITestSuite.jubileeCampus;
-import static api.APITestSuite.mezzanineDisplayCaseLocationId;
 import static api.APITestSuite.nottinghamUniversityInstitution;
-import static api.APITestSuite.secondFloorEconomicsLocationId;
-import static api.APITestSuite.thirdFloorLocationId;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -91,7 +88,7 @@ public abstract class APITests {
     ResourceClient.forMaterialTypes(client));
 
   protected final ItemsFixture itemsFixture = new ItemsFixture(client,
-    materialTypesFixture, loanTypesFixture);
+    materialTypesFixture, loanTypesFixture, locationsFixture);
 
   protected final PatronGroupsFixture patronGroupsFixture = new PatronGroupsFixture(patronGroupsClient);
 
@@ -181,7 +178,7 @@ public abstract class APITests {
     materialTypesFixture.cleanUp();
     loanTypesFixture.cleanUp();
 
-    locationsFixture.cleanUp();
+    deleteLocations();
     servicePointsFixture.cleanUp();
 
     for (UUID policyId : policiesToDelete) {
@@ -307,13 +304,11 @@ public abstract class APITests {
         .put("name", "Business Library")
         .put("campusId", jubileeCampus.toString()));
 
-    thirdFloorLocationId = locationsFixture.thirdFloor().getId();
+    locationsFixture.thirdFloor().getId();
 
-    secondFloorEconomicsLocationId = locationsFixture.secondFloorEconomics()
-      .getId();
+    locationsFixture.secondFloorEconomics();
 
-    mezzanineDisplayCaseLocationId = locationsFixture.mezzanineDisplayCase()
-      .getId();
+    locationsFixture.mezzanineDisplayCase();
   }
 
   private void deleteLocations()
