@@ -1,6 +1,17 @@
 package api.support;
 
 
+import static api.APITestSuite.businessLibrary;
+import static api.APITestSuite.createClient;
+import static api.APITestSuite.createCommonRecords;
+import static api.APITestSuite.createReferenceRecord;
+import static api.APITestSuite.djanoglyLibrary;
+import static api.APITestSuite.fakeServicePoint;
+import static api.APITestSuite.jubileeCampus;
+import static api.APITestSuite.mezzanineDisplayCaseLocationId;
+import static api.APITestSuite.nottinghamUniversityInstitution;
+import static api.APITestSuite.secondFloorEconomicsLocationId;
+import static api.APITestSuite.thirdFloorLocationId;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -25,6 +36,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import api.APITestSuite;
+import api.support.builders.ServicePointBuilder;
+import api.support.examples.LocationExamples;
 import api.support.fixtures.ItemsFixture;
 import api.support.fixtures.LoanTypesFixture;
 import api.support.fixtures.LoansFixture;
@@ -42,23 +55,37 @@ import io.vertx.core.json.JsonObject;
 public abstract class APITests {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  protected final OkapiHttpClient client = APITestSuite.createClient(exception ->
+  //Temporarily static to ease moving code from test suite
+  protected final OkapiHttpClient client = createClient(exception ->
     log.error("Request to circulation module failed:", exception));
 
   private final boolean initialiseLoanRules;
-  private final ResourceClient proxyRelationshipsClient = ResourceClient.forProxyRelationships(client);
-  private final ResourceClient holdingsClient = ResourceClient.forHoldings(client);
-  protected final ResourceClient usersClient = ResourceClient.forUsers(client);
-  protected final ResourceClient itemsClient = ResourceClient.forItems(client);
-  protected final ResourceClient requestsClient = ResourceClient.forRequests(client);
-  protected final ResourceClient loansClient = ResourceClient.forLoans(client);
-  protected final ResourceClient instancesClient = ResourceClient.forInstances(client);
-  protected final ResourceClient loansStorageClient = ResourceClient.forLoansStorage(client);
-  protected final ResourceClient loanPolicyClient = ResourceClient.forLoanPolicies(client);
-  protected final ResourceClient fixedDueDateScheduleClient = ResourceClient.forFixedDueDateSchedules(client);
+
+
   private final ResourceClient servicePointsClient = ResourceClient.forServicePoints(client);
   private final ResourceClient locationsClient = ResourceClient.forLocations(client);
+
   private final ResourceClient patronGroupsClient = ResourceClient.forPatronGroups(client);
+  protected final ResourceClient usersClient = ResourceClient.forUsers(client);
+  private final ResourceClient proxyRelationshipsClient = ResourceClient.forProxyRelationships(client);
+
+  protected final ResourceClient instancesClient = ResourceClient.forInstances(client);
+  private final ResourceClient holdingsClient = ResourceClient.forHoldings(client);
+  protected final ResourceClient itemsClient = ResourceClient.forItems(client);
+
+  protected final ResourceClient loansClient = ResourceClient.forLoans(client);
+  protected final ResourceClient loansStorageClient = ResourceClient.forLoansStorage(client);
+
+  protected final ResourceClient requestsClient = ResourceClient.forRequests(client);
+
+  protected final ResourceClient fixedDueDateScheduleClient = ResourceClient.forFixedDueDateSchedules(client);
+  protected final ResourceClient loanPolicyClient = ResourceClient.forLoanPolicies(client);
+
+  protected final ServicePointsFixture servicePointsFixture
+    = new ServicePointsFixture(servicePointsClient);
+
+  protected final LocationsFixture locationsFixture = new LocationsFixture(
+    locationsClient);
 
   protected final LoanTypesFixture loanTypesFixture = new LoanTypesFixture(
     ResourceClient.forLoanTypes(client));
@@ -80,8 +107,6 @@ public abstract class APITests {
     client, usersFixture);
 
   protected final RequestsFixture requestsFixture = new RequestsFixture(requestsClient);
-  protected final ServicePointsFixture servicePointsFixture = new ServicePointsFixture(servicePointsClient);
-  protected final LocationsFixture locationsFixture = new LocationsFixture(locationsClient);
 
   protected final Set<UUID> schedulesToDelete = new HashSet<>();
   protected final Set<UUID> policiesToDelete = new HashSet<>();
@@ -107,7 +132,10 @@ public abstract class APITests {
     //Delete everything first just in case
     APITestSuite.deleteAllRecords();
 
-    APITestSuite.createCommonRecords();
+    createServicePoints();
+    createLocations();
+
+    createCommonRecords();
   }
 
   @Before
@@ -125,9 +153,7 @@ public abstract class APITests {
     instancesClient.deleteAll();
 
     usersClient.deleteAllIndividually();
-
-    servicePointsClient.deleteAllIndividually();
-
+    
     if (initialiseLoanRules) {
       useDefaultRollingPolicyLoanRules();
     }
@@ -142,6 +168,9 @@ public abstract class APITests {
 
     deleteCommonRecords();
 
+    deleteLocations();
+    deleteServicePoints();
+
     APITestSuite.undeployVerticles();
   }
 
@@ -151,7 +180,7 @@ public abstract class APITests {
     ExecutionException,
     TimeoutException {
 
-    OkapiHttpClient cleanupClient = APITestSuite.createClient(exception ->
+    OkapiHttpClient cleanupClient = createClient(exception ->
       log.error("Requests to delete all for clean up failed:", exception));
 
     ResourceClient.forRequests(cleanupClient).deleteAll();
@@ -166,8 +195,6 @@ public abstract class APITests {
     APITestSuite.deleteGroups();
     APITestSuite.deleteAddressTypes();
 
-    APITestSuite.deleteLocations();
-    APITestSuite.deleteServicePoints();
     APITestSuite.deleteContributorTypes();
     APITestSuite.deleteInstanceTypes();
     APITestSuite.deleteLoanPolicies();
@@ -280,5 +307,102 @@ public abstract class APITests {
     assertThat(String.format(
       "Failed to apply loan rules: %s", response.getBody()),
       response.getStatusCode(), is(200));
+  }
+
+  private static void createServicePoints()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    ResourceClient servicePointsClient = ResourceClient.forServicePoints(createClient());
+
+    APITestSuite.fakeServicePointId = servicePointsClient.create(
+      new ServicePointBuilder("Fake service point", "FAKE", "Fake service point"))
+      .getId();
+  }
+
+  private static void deleteServicePoints()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    ResourceClient servicePointsClient = ResourceClient.forServicePoints(createClient());
+
+    servicePointsClient.delete(APITestSuite.fakeServicePointId);
+  }
+
+  private static void createLocations()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    final OkapiHttpClient client = createClient();
+
+    ResourceClient institutionsClient = ResourceClient.forInstitutions(client);
+
+    nottinghamUniversityInstitution = createReferenceRecord(
+      institutionsClient, "Nottingham University");
+
+    ResourceClient campusesClient = ResourceClient.forCampuses(client);
+
+    jubileeCampus = createReferenceRecord(campusesClient,
+      new JsonObject()
+        .put("name", "Jubilee Campus")
+        .put("institutionId", nottinghamUniversityInstitution.toString()));
+
+    ResourceClient librariesClient = ResourceClient.forLibraries(client);
+
+    djanoglyLibrary = createReferenceRecord(librariesClient,
+      new JsonObject()
+        .put("name", "Djanogly Learning Resource Centre")
+        .put("campusId", jubileeCampus.toString()));
+
+    businessLibrary = createReferenceRecord(librariesClient,
+      new JsonObject()
+        .put("name", "Business Library")
+        .put("campusId", jubileeCampus.toString()));
+
+    ResourceClient locationsClient = ResourceClient.forLocations(client);
+
+    thirdFloorLocationId = createReferenceRecord(locationsClient,
+      LocationExamples.thirdFloor(fakeServicePoint()).create());
+
+    secondFloorEconomicsLocationId = createReferenceRecord(locationsClient,
+      LocationExamples.secondFloorEconomics(fakeServicePoint()).create());
+
+    mezzanineDisplayCaseLocationId = createReferenceRecord(locationsClient,
+      LocationExamples.mezzanineDisplayCase(fakeServicePoint()).create());
+  }
+
+  private static void deleteLocations()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    final OkapiHttpClient client = createClient();
+
+    ResourceClient locationsClient = ResourceClient.forLocations(client);
+
+    //Use the same ID as old locations for continuity
+    locationsClient.delete(thirdFloorLocationId);
+    locationsClient.delete(mezzanineDisplayCaseLocationId);
+    locationsClient.delete(secondFloorEconomicsLocationId);
+
+    ResourceClient librariesClient = ResourceClient.forLibraries(client);
+
+    librariesClient.delete(djanoglyLibrary);
+    librariesClient.delete(businessLibrary);
+
+    ResourceClient campusesClient = ResourceClient.forCampuses(client);
+
+    campusesClient.delete(jubileeCampus);
+
+    ResourceClient institutionsClient = ResourceClient.forInstitutions(client);
+
+    institutionsClient.delete(nottinghamUniversityInstitution);
   }
 }

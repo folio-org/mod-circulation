@@ -80,7 +80,7 @@ public class LoansFixture {
       .withDueDate(loanDate.plusWeeks(3)));
   }
 
-  public IndividualResource checkOutItem(UUID itemId, UUID loanId)
+  private IndividualResource checkOutItem(UUID itemId, UUID loanId)
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
@@ -100,22 +100,6 @@ public class LoansFixture {
     TimeoutException {
 
     return checkOutItem(itemId, UUID.randomUUID());
-  }
-
-  public void renewLoan(UUID loanId)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    Response getResponse = loansClient.getById(loanId);
-
-    //TODO: Should also change the due date
-    JsonObject renewedLoan = getResponse.getJson().copy()
-      .put("action", "renewed")
-      .put("renewalCount", 1);
-
-    loansClient.replace(loanId, renewedLoan);
   }
 
   public Response attemptCheckOut(

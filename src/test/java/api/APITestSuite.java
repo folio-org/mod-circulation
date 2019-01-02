@@ -60,13 +60,14 @@ public class APITestSuite {
   private static UUID workAddressTypeId;
   private static UUID personalContributorTypeId;
 
-  private static UUID nottinghamUniversityInstitution;
-  private static UUID jubileeCampus;
-  private static UUID djanoglyLibrary;
-  private static UUID businessLibrary;
-  private static UUID thirdFloorLocationId;
-  private static UUID mezzanineDisplayCaseLocationId;
-  private static UUID secondFloorEconomicsLocationId;
+  public static UUID nottinghamUniversityInstitution;
+  public static UUID jubileeCampus;
+  public static UUID djanoglyLibrary;
+  public static UUID businessLibrary;
+  public static UUID thirdFloorLocationId;
+  public static UUID mezzanineDisplayCaseLocationId;
+  public static UUID secondFloorEconomicsLocationId;
+  public static UUID fakeServicePointId;
 
   private static UUID canCirculateRollingLoanPolicyId;
   private static UUID canCirculateFixedLoanPolicyId;
@@ -74,7 +75,6 @@ public class APITestSuite {
 
   private static UUID courseReservesCancellationReasonId;
   private static UUID patronRequestCancellationReasonId;
-  private static UUID fakeServicePointId;
 
   public static int circulationModulePort() {
     return port;
@@ -108,7 +108,7 @@ public class APITestSuite {
       okapiUrl(), TENANT_ID, TOKEN, USER_ID, REQUEST_ID, exceptionHandler);
   }
 
-  private static OkapiHttpClient createClient() {
+  public static OkapiHttpClient createClient() {
     return APITestSuite.createClient(exception ->
       log.error("Request failed:", exception));
   }
@@ -201,9 +201,6 @@ public class APITestSuite {
     InterruptedException,
     ExecutionException,
     TimeoutException {
-
-    createServicePoints();
-    createLocations();
 
     createContributorNameTypes();
     createInstanceTypes();
@@ -409,103 +406,6 @@ public class APITestSuite {
     contributorTypesClient.delete(personalContributorTypeId);
   }
 
-  private static void createServicePoints()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    ResourceClient servicePointsClient = ResourceClient.forServicePoints(createClient());
-
-    fakeServicePointId = servicePointsClient.create(
-      new ServicePointBuilder("Fake service point", "FAKE", "Fake service point"))
-      .getId();
-  }
-
-  public static void deleteServicePoints()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    ResourceClient servicePointsClient = ResourceClient.forServicePoints(createClient());
-
-    servicePointsClient.delete(fakeServicePointId);
-  }
-
-  private static void createLocations()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    final OkapiHttpClient client = createClient();
-
-    ResourceClient institutionsClient = ResourceClient.forInstitutions(client);
-
-    nottinghamUniversityInstitution = createReferenceRecord(institutionsClient,
-      "Nottingham University");
-
-    ResourceClient campusesClient = ResourceClient.forCampuses(client);
-
-    jubileeCampus = createReferenceRecord(campusesClient,
-      new JsonObject()
-        .put("name", "Jubilee Campus")
-        .put("institutionId", nottinghamUniversityInstitution.toString()));
-
-    ResourceClient librariesClient = ResourceClient.forLibraries(client);
-
-    djanoglyLibrary = createReferenceRecord(librariesClient,
-      new JsonObject()
-        .put("name", "Djanogly Learning Resource Centre")
-        .put("campusId", jubileeCampus.toString()));
-
-    businessLibrary = createReferenceRecord(librariesClient,
-      new JsonObject()
-        .put("name", "Business Library")
-        .put("campusId", jubileeCampus.toString()));
-
-    ResourceClient locationsClient = ResourceClient.forLocations(client);
-
-    thirdFloorLocationId = createReferenceRecord(locationsClient,
-      LocationExamples.thirdFloor(fakeServicePoint()).create());
-
-    secondFloorEconomicsLocationId = createReferenceRecord(locationsClient,
-      LocationExamples.secondFloorEconomics(fakeServicePoint()).create());
-
-    mezzanineDisplayCaseLocationId = createReferenceRecord(locationsClient,
-      LocationExamples.mezzanineDisplayCase(fakeServicePoint()).create());
-  }
-
-  public static void deleteLocations()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    final OkapiHttpClient client = createClient();
-
-    ResourceClient locationsClient = ResourceClient.forLocations(client);
-
-    //Use the same ID as old locations for continuity
-    locationsClient.delete(thirdFloorLocationId);
-    locationsClient.delete(mezzanineDisplayCaseLocationId);
-    locationsClient.delete(secondFloorEconomicsLocationId);
-
-    ResourceClient librariesClient = ResourceClient.forLibraries(client);
-
-    librariesClient.delete(djanoglyLibrary);
-    librariesClient.delete(businessLibrary);
-
-    ResourceClient campusesClient = ResourceClient.forCampuses(client);
-
-    campusesClient.delete(jubileeCampus);
-
-    ResourceClient institutionsClient = ResourceClient.forInstitutions(client);
-
-    institutionsClient.delete(nottinghamUniversityInstitution);
-  }
-
   private static void createInstanceTypes()
     throws MalformedURLException,
     InterruptedException,
@@ -635,7 +535,7 @@ public class APITestSuite {
     return createReferenceRecord(client, name, null, null);
   }
 
-  private static UUID createReferenceRecord(
+  public static UUID createReferenceRecord(
     ResourceClient client,
     String name,
     String code,
