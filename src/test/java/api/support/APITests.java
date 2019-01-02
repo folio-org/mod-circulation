@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import api.APITestSuite;
 import api.support.fixtures.AddressTypesFixture;
+import api.support.fixtures.CancellationReasonsFixture;
 import api.support.fixtures.ItemsFixture;
 import api.support.fixtures.LoanTypesFixture;
 import api.support.fixtures.LoansFixture;
@@ -119,7 +120,11 @@ public abstract class APITests {
   protected final LoansFixture loansFixture = new LoansFixture(loansClient,
     client, usersFixture, servicePointsFixture);
 
-  protected final RequestsFixture requestsFixture = new RequestsFixture(requestsClient);
+  protected final CancellationReasonsFixture cancellationReasonsFixture
+    = new CancellationReasonsFixture(ResourceClient.forCancellationReasons(client));
+
+  protected final RequestsFixture requestsFixture = new RequestsFixture(
+    requestsClient, cancellationReasonsFixture);
 
   protected final Set<UUID> schedulesToDelete = new HashSet<>();
   protected final Set<UUID> policiesToDelete = new HashSet<>();
@@ -221,6 +226,8 @@ public abstract class APITests {
 
     addressTypesFixture.cleanUp();
     patronGroupsFixture.cleanUp();
+
+    cancellationReasonsFixture.cleanUp();
   }
 
   //Needs to be done each time as some tests manipulate the rules
@@ -312,6 +319,5 @@ public abstract class APITests {
     ResourceClient.forUsers(cleanupClient).deleteAllIndividually();
 
     APITestSuite.deleteLoanPolicies();
-    APITestSuite.deleteCancellationReasons();
   }
 }

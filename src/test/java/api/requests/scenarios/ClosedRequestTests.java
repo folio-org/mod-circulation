@@ -1,6 +1,5 @@
 package api.requests.scenarios;
 
-import static api.APITestSuite.courseReservesCancellationReasonId;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
@@ -47,10 +46,13 @@ public class ClosedRequestTests extends APITests {
 
     DateTime cancelDate = new DateTime(2018, 1, 14, 8, 30, 45, DateTimeZone.UTC);
 
+    final IndividualResource courseReservesCancellationReason
+      = cancellationReasonsFixture.courseReserves();
+
     requestsClient.replace(request.getId(),
       RequestBuilder.from(request)
         .cancelled()
-        .withCancellationReasonId(courseReservesCancellationReasonId())
+        .withCancellationReasonId(courseReservesCancellationReason.getId())
         .withCancelledByUserId(requester.getId())
         .withCancelledDate(cancelDate));
 
