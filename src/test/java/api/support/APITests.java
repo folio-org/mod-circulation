@@ -1,8 +1,6 @@
 package api.support;
 
-
 import static api.APITestSuite.createClient;
-import static api.APITestSuite.createCommonRecords;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -30,6 +28,7 @@ import api.APITestSuite;
 import api.support.fixtures.AddressTypesFixture;
 import api.support.fixtures.CancellationReasonsFixture;
 import api.support.fixtures.ItemsFixture;
+import api.support.fixtures.LoanPoliciesFixture;
 import api.support.fixtures.LoanTypesFixture;
 import api.support.fixtures.LoansFixture;
 import api.support.fixtures.LocationsFixture;
@@ -98,8 +97,11 @@ public abstract class APITests {
   protected final LoanTypesFixture loanTypesFixture = new LoanTypesFixture(
     ResourceClient.forLoanTypes(client));
 
-  protected final MaterialTypesFixture materialTypesFixture = new MaterialTypesFixture(
-    ResourceClient.forMaterialTypes(client));
+  protected final MaterialTypesFixture materialTypesFixture
+    = new MaterialTypesFixture(ResourceClient.forMaterialTypes(client));
+
+  protected final LoanPoliciesFixture loanPoliciesFixture
+    = new LoanPoliciesFixture(loanPolicyClient, fixedDueDateScheduleClient);
 
   protected final ItemsFixture itemsFixture = new ItemsFixture(client,
     materialTypesFixture, loanTypesFixture, locationsFixture,
@@ -148,8 +150,6 @@ public abstract class APITests {
 
     //Delete everything first just in case
     APITestSuite.deleteAllRecords();
-
-    createCommonRecords();
   }
 
   @Before
@@ -210,6 +210,8 @@ public abstract class APITests {
     locationsFixture.cleanUp();
     servicePointsFixture.cleanUp();
 
+    loanPoliciesFixture.cleanUp();
+
     for (UUID policyId : policiesToDelete) {
       loanPolicyClient.delete(policyId);
     }
@@ -234,19 +236,21 @@ public abstract class APITests {
   private void useDefaultRollingPolicyLoanRules()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException {
+    TimeoutException,
+    MalformedURLException {
 
     log.info("Using rolling loan policy as fallback policy");
-    useLoanPolicyAsFallback(APITestSuite.canCirculateRollingLoanPolicyId());
+    useLoanPolicyAsFallback(loanPoliciesFixture.canCirculateRolling().getId());
   }
 
   protected void useExampleFixedPolicyLoanRules()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException {
+    TimeoutException,
+    MalformedURLException {
 
     log.info("Using fixed loan policy as fallback policy");
-    useLoanPolicyAsFallback(APITestSuite.canCirculateFixedLoanPolicyId());
+    useLoanPolicyAsFallback(loanPoliciesFixture.canCirculateFixed().getId());
   }
 
   protected void useLoanPolicyAsFallback(UUID loanPolicyId)
@@ -317,7 +321,5 @@ public abstract class APITests {
     ResourceClient.forInstances(cleanupClient).deleteAll();
 
     ResourceClient.forUsers(cleanupClient).deleteAllIndividually();
-
-    APITestSuite.deleteLoanPolicies();
   }
 }

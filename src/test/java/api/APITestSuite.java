@@ -17,7 +17,6 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.Launcher;
-import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.VertxAssistant;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.joda.time.DateTime;
@@ -25,9 +24,6 @@ import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import api.support.builders.FixedDueDateSchedule;
-import api.support.builders.FixedDueDateSchedulesBuilder;
-import api.support.builders.LoanPolicyBuilder;
 import api.support.fakes.FakeOkapi;
 import api.support.fakes.FakeStorageModule;
 import api.support.http.ResourceClient;
@@ -51,10 +47,6 @@ public class APITestSuite {
   private static String fakeOkapiDeploymentId;
   private static Boolean useOkapiForStorage;
   private static Boolean useOkapiForInitialRequests;
-
-  private static UUID canCirculateRollingLoanPolicyId;
-  private static UUID canCirculateFixedLoanPolicyId;
-  private static UUID exampleFixedDueDateSchedulesId;
 
   public static int circulationModulePort() {
     return port;
@@ -91,27 +83,6 @@ public class APITestSuite {
   public static OkapiHttpClient createClient() {
     return APITestSuite.createClient(exception ->
       log.error("Request failed:", exception));
-  }
-
-  public static UUID canCirculateRollingLoanPolicyId() {
-    return canCirculateRollingLoanPolicyId;
-  }
-
-  public static UUID canCirculateFixedLoanPolicyId() {
-    return canCirculateFixedLoanPolicyId;
-  }
-
-  public static UUID exampleFixedDueDateSchedulesId() {
-    return exampleFixedDueDateSchedulesId;
-  }
-
-  public static void createCommonRecords()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    createLoanPolicies();
   }
 
   public static void deployVerticles()
@@ -231,69 +202,6 @@ public class APITestSuite {
     } catch (MalformedURLException ex) {
       throw new IllegalArgumentException("Invalid Okapi URL configured for tests");
     }
-  }
-
-  private static void createLoanPolicies()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    final OkapiHttpClient client = createClient();
-
-    ResourceClient loanPoliciesClient = ResourceClient.forLoanPolicies(client);
-
-    LoanPolicyBuilder canCirculateRollingLoanPolicy = new LoanPolicyBuilder()
-      .withName("Can Circulate Rolling")
-      .withDescription("Can circulate item")
-      .rolling(Period.weeks(3))
-      .unlimitedRenewals()
-      .renewFromSystemDate();
-
-    canCirculateRollingLoanPolicyId = loanPoliciesClient.create(
-      canCirculateRollingLoanPolicy).getId();
-
-    ResourceClient fixedDueDateSchedulesClient = ResourceClient.forFixedDueDateSchedules(client);
-
-    FixedDueDateSchedulesBuilder fixedDueDateSchedule =
-      new FixedDueDateSchedulesBuilder()
-        .withName("Example Fixed Due Date Schedule")
-        .withDescription("Example Fixed Due Date Schedule")
-        .addSchedule(new FixedDueDateSchedule(
-          new DateTime(2019, 1, 1, 0, 0, 0, DateTimeZone.UTC),
-          new DateTime(2019, 12, 31, 23, 59, 59, DateTimeZone.UTC),
-          END_OF_2019_DUE_DATE
-        ));
-
-    exampleFixedDueDateSchedulesId = fixedDueDateSchedulesClient.create(
-      fixedDueDateSchedule).getId();
-
-    LoanPolicyBuilder canCirculateFixedLoanPolicy = new LoanPolicyBuilder()
-      .withName("Can Circulate Fixed")
-      .withDescription("Can circulate item")
-      .fixed(exampleFixedDueDateSchedulesId);
-
-    canCirculateFixedLoanPolicyId = loanPoliciesClient.create(
-      canCirculateFixedLoanPolicy).getId();
-
-    log.info("Rolling loan policy {}", canCirculateRollingLoanPolicyId);
-    log.info("Fixed loan policy {}", canCirculateFixedLoanPolicyId);
-  }
-
-  public static void deleteLoanPolicies()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    ResourceClient loanPoliciesClient = ResourceClient.forLoanPolicies(createClient());
-
-    loanPoliciesClient.delete(canCirculateRollingLoanPolicyId());
-    loanPoliciesClient.delete(canCirculateFixedLoanPolicyId());
-
-    ResourceClient fixedDueDateSchedulesClient = ResourceClient.forFixedDueDateSchedules(createClient());
-
-    fixedDueDateSchedulesClient.delete(exampleFixedDueDateSchedulesId);
   }
 
   static void setLoanRules(String rules)

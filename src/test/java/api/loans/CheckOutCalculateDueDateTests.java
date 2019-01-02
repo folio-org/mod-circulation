@@ -1,7 +1,6 @@
 package api.loans;
 
 import static api.APITestSuite.END_OF_2019_DUE_DATE;
-import static api.APITestSuite.exampleFixedDueDateSchedulesId;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID;
@@ -116,7 +115,9 @@ public class CheckOutCalculateDueDateTests extends APITests {
     final IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.randomUUID();
 
-    String fixedDueDateScheduleId = exampleFixedDueDateSchedulesId().toString();
+    String fixedDueDateScheduleId = loanPoliciesFixture
+      .createExampleFixedDueDateSchedule().getId().toString();
+
     String loanPolicyId = createLoanPolicy(
       createLoanPolicyEntryFixed("Keep the current due date: FIXED",
         fixedDueDateScheduleId,
@@ -127,6 +128,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
+        .on(new DateTime(2019, 1, 11, 14, 43, 54, DateTimeZone.UTC))
         .at(checkoutServicePointId));
 
     final JsonObject loan = response.getJson();
@@ -154,7 +156,9 @@ public class CheckOutCalculateDueDateTests extends APITests {
     final IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.fromString(CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID);
 
-    String fixedDueDateScheduleId = exampleFixedDueDateSchedulesId().toString();
+    String fixedDueDateScheduleId = loanPoliciesFixture
+      .createExampleFixedDueDateSchedule().toString();
+
     String loanPolicyId = createLoanPolicy(
       createLoanPolicyEntryFixed("MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY: FIXED",
         fixedDueDateScheduleId,
@@ -195,7 +199,9 @@ public class CheckOutCalculateDueDateTests extends APITests {
     final IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.fromString(CASE_WED_THU_FRI_SERVICE_POINT_ID);
 
-    String fixedDueDateScheduleId = exampleFixedDueDateSchedulesId().toString();
+    String fixedDueDateScheduleId = loanPoliciesFixture
+      .createExampleFixedDueDateSchedule().toString();
+
     String loanPolicyId = createLoanPolicy(
       createLoanPolicyEntryFixed("MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY: FIXED",
         fixedDueDateScheduleId,
@@ -236,7 +242,9 @@ public class CheckOutCalculateDueDateTests extends APITests {
     final IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.fromString(CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID);
 
-    String fixedDueDateScheduleId = exampleFixedDueDateSchedulesId().toString();
+    String fixedDueDateScheduleId = loanPoliciesFixture
+      .createExampleFixedDueDateSchedule().toString();
+
     String loanPolicyId = createLoanPolicy(
       createLoanPolicyEntryFixed("MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY: FIXED",
         fixedDueDateScheduleId,
@@ -277,7 +285,9 @@ public class CheckOutCalculateDueDateTests extends APITests {
     final IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.fromString(CASE_WED_THU_FRI_SERVICE_POINT_ID);
 
-    String fixedDueDateScheduleId = exampleFixedDueDateSchedulesId().toString();
+    String fixedDueDateScheduleId = loanPoliciesFixture
+      .createExampleFixedDueDateSchedule().toString();
+
     String loanPolicyId = createLoanPolicy(
       createLoanPolicyEntryFixed("MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY: FIXED",
         fixedDueDateScheduleId,
@@ -318,7 +328,9 @@ public class CheckOutCalculateDueDateTests extends APITests {
     final IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.fromString(CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID);
 
-    String fixedDueDateScheduleId = exampleFixedDueDateSchedulesId().toString();
+    String fixedDueDateScheduleId = loanPoliciesFixture
+      .createExampleFixedDueDateSchedule().toString();
+
     String loanPolicyId = createLoanPolicy(
       createLoanPolicyEntryFixed("MOVE_TO_THE_END_OF_THE_CURRENT_DAY: FIXED",
         fixedDueDateScheduleId,
@@ -359,7 +371,9 @@ public class CheckOutCalculateDueDateTests extends APITests {
     final IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.fromString(CASE_WED_THU_FRI_SERVICE_POINT_ID);
 
-    String fixedDueDateScheduleId = exampleFixedDueDateSchedulesId().toString();
+    String fixedDueDateScheduleId = loanPoliciesFixture
+      .createExampleFixedDueDateSchedule().toString();
+
     String loanPolicyId = createLoanPolicy(
       createLoanPolicyEntryFixed("MOVE_TO_THE_END_OF_THE_CURRENT_DAY: FIXED",
         fixedDueDateScheduleId,

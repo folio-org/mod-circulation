@@ -21,7 +21,6 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.builders.LoanBuilder;
 import api.support.http.InterfaceUrls;
-import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
 public class LoanAPIPolicyTests extends APITests {
@@ -140,8 +139,11 @@ public class LoanAPIPolicyTests extends APITests {
       .withStatus(status));
 
     JsonObject loanJson = loanResponse.getJson();
-    ResourceClient policyResourceClient = ResourceClient.forLoanPolicies(client);
-    JsonObject policyJson = policyResourceClient.getById(UUID.fromString(loanJson.getString("loanPolicyId"))).getJson();
+
+    JsonObject policyJson = loanPolicyClient.getById(
+      UUID.fromString(loanJson.getString("loanPolicyId")))
+      .getJson();
+
     assertThat("policy is " + policyName, policyJson.getString("name"), is(policyName));
   }
 
@@ -150,8 +152,6 @@ public class LoanAPIPolicyTests extends APITests {
     MalformedURLException,
     TimeoutException,
     ExecutionException {
-
-    ResourceClient policyResourceClient = ResourceClient.forLoanPolicies(client);
 
     JsonObject p1Json = new JsonObject()
        .put("name", "Policy 1")
@@ -165,7 +165,7 @@ public class LoanAPIPolicyTests extends APITests {
          .put("renewFromId", "CURRENT_DUE_DATE")
          .put("differentPeriod", false));
 
-    p1 = policyResourceClient.create(p1Json).getId();
+    p1 = loanPolicyClient.create(p1Json).getId();
 
     JsonObject p2Json = new JsonObject()
        .put("name", "Policy 2")
@@ -179,7 +179,7 @@ public class LoanAPIPolicyTests extends APITests {
          .put("renewFromId", "CURRENT_DUE_DATE")
          .put("differentPeriod", false));
 
-    p2 = policyResourceClient.create(p2Json).getId();
+    p2 = loanPolicyClient.create(p2Json).getId();
 
     JsonObject p3Json = new JsonObject()
       .put("name", "Policy 3")
@@ -193,7 +193,7 @@ public class LoanAPIPolicyTests extends APITests {
         .put("renewFromId", "CURRENT_DUE_DATE")
         .put("differentPeriod", false));
 
-    p3 = policyResourceClient.create(p3Json).getId();
+    p3 = loanPolicyClient.create(p3Json).getId();
 
     JsonObject p4Json = new JsonObject()
        .put("name", "Policy 4")
@@ -207,7 +207,7 @@ public class LoanAPIPolicyTests extends APITests {
          .put("renewFromId", "CURRENT_DUE_DATE")
          .put("differentPeriod", false));
 
-    p4 = policyResourceClient.create(p4Json).getId();
+    p4 = loanPolicyClient.create(p4Json).getId();
 
     JsonObject pFallbackJson = new JsonObject()
        .put("name", "Fallback")
@@ -221,6 +221,6 @@ public class LoanAPIPolicyTests extends APITests {
          .put("renewFromId", "CURRENT_DUE_DATE")
          .put("differentPeriod", false));
 
-    pFallback = policyResourceClient.create(pFallbackJson).getId();
+    pFallback = loanPolicyClient.create(pFallbackJson).getId();
   }
 }
