@@ -231,7 +231,7 @@ public class RequestsAPICreationTests extends APITests {
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .recall()
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
+      .withRequesterId(usersFixture.charlotte().getId()));
 
     assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
   }
@@ -250,7 +250,7 @@ public class RequestsAPICreationTests extends APITests {
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .recall()
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
+      .withRequesterId(usersFixture.charlotte().getId()));
 
     assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
   }
@@ -269,7 +269,7 @@ public class RequestsAPICreationTests extends APITests {
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .hold()
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
+      .withRequesterId(usersFixture.charlotte().getId()));
 
     assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
   }
@@ -290,7 +290,7 @@ public class RequestsAPICreationTests extends APITests {
       .page()
       .withId(id)
       .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
+      .withRequesterId(usersFixture.charlotte().getId()));
   }
 
   //TODO: Remove this once sample data is updated, temporary to aid change of item status case

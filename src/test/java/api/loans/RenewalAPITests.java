@@ -759,7 +759,7 @@ abstract class RenewalAPITests extends APITests {
 
     loansFixture.checkOut(smallAngryPlanet, steve);
 
-    usersClient.delete(steve.getId());
+    usersFixture.remove(steve);
 
     Response response = attemptRenewal(smallAngryPlanet, steve);
 

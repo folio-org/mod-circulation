@@ -18,7 +18,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
-import api.APITestSuite;
 import api.support.APITests;
 import api.support.builders.LoanBuilder;
 import api.support.http.InterfaceUrls;
@@ -52,9 +51,12 @@ public class LoanAPIPolicyTests extends APITests {
     JsonObject itemJson5 = itemsFixture.basedUponTemeraire(
       builder -> builder.withTemporaryLoanType(readingRoomLoanType)).getJson();
 
+    final IndividualResource alternative = patronGroupsFixture.alternative();
+
     JsonObject user1 = usersFixture.jessica().getJson();
+
     JsonObject user2 = usersFixture.charlotte(
-      userBuilder -> userBuilder.withPatronGroupId(APITestSuite.alternateGroupId()))
+      userBuilder -> userBuilder.inGroupFor(alternative))
       .getJson();
 
     UUID group1 = UUID.fromString(user1.getString("patronGroup"));

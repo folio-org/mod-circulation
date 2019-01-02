@@ -1,78 +1,64 @@
 package api.support.fixtures;
 
-import api.support.builders.PatronGroupBuilder;
-import api.support.http.ResourceClient;
 import java.net.MalformedURLException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Function;
+
+import org.folio.circulation.support.JsonPropertyFetcher;
 import org.folio.circulation.support.http.client.IndividualResource;
 
+import api.support.http.ResourceClient;
 
 public class PatronGroupsFixture {
-  private final ResourceClient patronGroupsClient;
-  
-  public PatronGroupsFixture(ResourceClient client) {
-    patronGroupsClient = client;
+  private final RecordCreator patronGroupRecordCreator;
+
+  public PatronGroupsFixture(ResourceClient patronGroupsClient) {
+    patronGroupRecordCreator = new RecordCreator(patronGroupsClient,
+      group -> JsonPropertyFetcher.getProperty(group, "group"));
   }
-  
-  public IndividualResource regular() 
+
+  public void cleanUp()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    patronGroupRecordCreator.cleanUp();
+  }
+
+  public IndividualResource regular()
       throws InterruptedException,
       MalformedURLException,
       TimeoutException,
       ExecutionException {
-    return patronGroupsClient.create(PatronGroupExamples.basedUponRegularUsers());
+
+    return patronGroupRecordCreator.createIfAbsent(PatronGroupExamples.regular());
   }
-  
-  public IndividualResource regular(Function<PatronGroupBuilder,
-      PatronGroupBuilder> additionalProperties) 
+
+  public IndividualResource alternative()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return patronGroupRecordCreator.createIfAbsent(PatronGroupExamples.alternative());
+  }
+
+  public IndividualResource staff()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return patronGroupRecordCreator.createIfAbsent(PatronGroupExamples.staff());
+  }
+
+  public IndividualResource faculty()
       throws InterruptedException,
       MalformedURLException,
       TimeoutException,
       ExecutionException {
-    
-    final PatronGroupBuilder builder = additionalProperties.apply(
-        PatronGroupExamples.basedUponRegularUsers());
-    return patronGroupsClient.create(builder);
-  }
-  
-    public IndividualResource staff() 
-      throws InterruptedException,
-      MalformedURLException,
-      TimeoutException,
-      ExecutionException {
-    return patronGroupsClient.create(PatronGroupExamples.basedUponStaff());
-  }
-    
-  public IndividualResource staff(Function<PatronGroupBuilder,
-      PatronGroupBuilder> additionalProperties) 
-      throws InterruptedException,
-      MalformedURLException,
-      TimeoutException,
-      ExecutionException {
-    
-    final PatronGroupBuilder builder = additionalProperties.apply(
-        PatronGroupExamples.basedUponStaff());
-    return patronGroupsClient.create(builder);
-  }
-    
-    public IndividualResource faculty() 
-      throws InterruptedException,
-      MalformedURLException,
-      TimeoutException,
-      ExecutionException {
-    return patronGroupsClient.create(PatronGroupExamples.basedUponFaculty());
-  }
-    
-  public IndividualResource faculty(Function<PatronGroupBuilder,
-      PatronGroupBuilder> additionalProperties) 
-      throws InterruptedException,
-      MalformedURLException,
-      TimeoutException,
-      ExecutionException {
-    
-    final PatronGroupBuilder builder = additionalProperties.apply(
-        PatronGroupExamples.basedUponFaculty());
-    return patronGroupsClient.create(builder);
+
+    return patronGroupRecordCreator.createIfAbsent(PatronGroupExamples.faculty());
   }
 }

@@ -20,10 +20,16 @@ import api.support.http.ResourceClient;
 
 public class UsersFixture {
   private final RecordCreator userRecordCreator;
+  private final PatronGroupsFixture patronGroupsFixture;
 
-  public UsersFixture(ResourceClient usersClient) {
+  public UsersFixture(
+    ResourceClient usersClient,
+    PatronGroupsFixture patronGroupsFixture) {
+
     this.userRecordCreator = new RecordCreator(usersClient,
       user -> getProperty(user, "username"));
+
+    this.patronGroupsFixture = patronGroupsFixture;
   }
 
   public void cleanUp()
@@ -41,7 +47,8 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return userRecordCreator.createIfAbsent(basedUponJessicaPontefract());
+    return userRecordCreator.createIfAbsent(basedUponJessicaPontefract()
+        .inGroupFor(patronGroupsFixture.regular()));
   }
 
   public IndividualResource james()
@@ -50,7 +57,8 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return userRecordCreator.createIfAbsent(basedUponJamesRodwell());
+    return userRecordCreator.createIfAbsent(basedUponJamesRodwell()
+      .inGroupFor(patronGroupsFixture.regular()));
   }
 
   public IndividualResource rebecca()
@@ -70,7 +78,8 @@ public class UsersFixture {
     ExecutionException {
 
     return userRecordCreator.createIfAbsent(
-      additionalProperties.apply(basedUponRebeccaStuart()));
+      additionalProperties.apply(basedUponRebeccaStuart()
+        .inGroupFor(patronGroupsFixture.regular())));
   }
 
   public IndividualResource steve()
@@ -90,7 +99,8 @@ public class UsersFixture {
     ExecutionException {
 
     return userRecordCreator.createIfAbsent(
-      additionalUserProperties.apply(basedUponStevenJones()));
+      additionalUserProperties.apply(basedUponStevenJones()
+        .inGroupFor(patronGroupsFixture.regular())));
   }
 
   public IndividualResource charlotte()
@@ -109,7 +119,17 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return userRecordCreator.createIfAbsent(additionalConfiguration.apply(
-      basedUponCharlotteBroadwell()));
+    return userRecordCreator.createIfAbsent(
+      additionalConfiguration.apply(basedUponCharlotteBroadwell()
+        .inGroupFor(patronGroupsFixture.regular())));
+  }
+
+  public void remove(IndividualResource user)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    userRecordCreator.delete(user);
   }
 }

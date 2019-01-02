@@ -295,10 +295,11 @@ public class CheckOutByBarcodeTests extends APITests {
     TimeoutException,
     ExecutionException {
 
+    //TODO: Review this to see if can simplify by not creating user at all?
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    usersClient.delete(steve.getId());
+    usersFixture.remove(steve);
 
     final Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, steve);
 

@@ -4,6 +4,8 @@ import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -95,5 +97,28 @@ class RecordCreator {
 
   private boolean needsCreating(String key) {
     return !identityMap.containsKey(key);
+  }
+
+  public void delete(IndividualResource record)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    client.delete(record.getId());
+    createdRecordIds.remove(record.getId());
+    removeFromIdentityMap(record);
+  }
+
+  private void removeFromIdentityMap(IndividualResource record) {
+
+    //TODO: Find a better way of removing from the identity map
+    final Optional<String> possibleRecordKey = identityMap.values()
+      .stream()
+      .filter(r -> Objects.equals(r.getId(), record.getId()))
+      .map(r -> identityMapKey.apply(r.getJson()))
+      .findFirst();
+
+    possibleRecordKey.ifPresent(identityMap::remove);
   }
 }

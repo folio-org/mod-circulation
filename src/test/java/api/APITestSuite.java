@@ -52,8 +52,6 @@ public class APITestSuite {
   private static Boolean useOkapiForStorage;
   private static Boolean useOkapiForInitialRequests;
   private static UUID booksInstanceTypeId;
-  private static UUID regularGroupId;
-  private static UUID alternateGroupId;
   private static UUID workAddressTypeId;
   private static UUID personalContributorTypeId;
 
@@ -109,14 +107,6 @@ public class APITestSuite {
     return personalContributorTypeId;
   }
 
-  public static UUID regularGroupId() {
-    return regularGroupId;
-  }
-
-  public static UUID alternateGroupId() {
-    return alternateGroupId;
-  }
-
   public static UUID workAddressTypeId() {
     return workAddressTypeId;
   }
@@ -147,7 +137,6 @@ public class APITestSuite {
     createInstanceTypes();
 
     createAddressTypes();
-    createGroups();
 
     createLoanPolicies();
     createCancellationReasons();
@@ -270,37 +259,6 @@ public class APITestSuite {
     } catch (MalformedURLException ex) {
       throw new IllegalArgumentException("Invalid Okapi URL configured for tests");
     }
-  }
-
-  private static void createGroups()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-    ResourceClient groupsClient = ResourceClient.forPatronGroups(createClient());
-
-    groupsClient.deleteAllIndividually();
-
-    regularGroupId = groupsClient.create(new JsonObject()
-      .put("group", "Regular Group")
-      .put("desc", "Regular group")
-    ).getId();
-
-    alternateGroupId = groupsClient.create(new JsonObject()
-      .put("group", "Alternative Group")
-      .put("desc", "Regular group")
-    ).getId();
-  }
-
-  public static void deleteGroups()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    ResourceClient groupsClient = ResourceClient.forPatronGroups(createClient());
-    groupsClient.delete(regularGroupId);
-    groupsClient.delete(alternateGroupId);
   }
 
   private static void createAddressTypes()

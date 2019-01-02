@@ -53,9 +53,9 @@ public abstract class APITests {
 
   private final ResourceClient servicePointsClient = ResourceClient.forServicePoints(client);
 
-  ResourceClient institutionsClient = ResourceClient.forInstitutions(client);
-  ResourceClient campusesClient = ResourceClient.forCampuses(client);
-  ResourceClient librariesClient = ResourceClient.forLibraries(client);
+  private ResourceClient institutionsClient = ResourceClient.forInstitutions(client);
+  private ResourceClient campusesClient = ResourceClient.forCampuses(client);
+  private ResourceClient librariesClient = ResourceClient.forLibraries(client);
   private final ResourceClient locationsClient = ResourceClient.forLocations(client);
 
   private final ResourceClient patronGroupsClient = ResourceClient.forPatronGroups(client);
@@ -90,12 +90,14 @@ public abstract class APITests {
   protected final ItemsFixture itemsFixture = new ItemsFixture(client,
     materialTypesFixture, loanTypesFixture, locationsFixture);
 
-  protected final PatronGroupsFixture patronGroupsFixture = new PatronGroupsFixture(patronGroupsClient);
+  protected final PatronGroupsFixture patronGroupsFixture
+    = new PatronGroupsFixture(patronGroupsClient);
 
   protected final ProxyRelationshipsFixture proxyRelationshipsFixture
     = new ProxyRelationshipsFixture(proxyRelationshipsClient);
 
-  protected final UsersFixture usersFixture = new UsersFixture(usersClient);
+  protected final UsersFixture usersFixture = new UsersFixture(usersClient,
+    patronGroupsFixture);
 
   protected final LoansFixture loansFixture = new LoansFixture(loansClient,
     client, usersFixture, servicePointsFixture);
@@ -193,6 +195,8 @@ public abstract class APITests {
 
     usersFixture.cleanUp();
 
+    patronGroupsFixture.cleanUp();
+
     for (UUID patronGroupId : groupsToDelete) {
       patronGroupsClient.delete(patronGroupId);
     }
@@ -288,7 +292,6 @@ public abstract class APITests {
 
     ResourceClient.forUsers(cleanupClient).deleteAllIndividually();
 
-    APITestSuite.deleteGroups();
     APITestSuite.deleteAddressTypes();
 
     APITestSuite.deleteContributorTypes();

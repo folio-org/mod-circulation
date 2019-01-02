@@ -2,17 +2,20 @@ package api.support.fixtures;
 
 import api.support.builders.PatronGroupBuilder;
 
-public class PatronGroupExamples {
-  
-  public static PatronGroupBuilder basedUponRegularUsers() {
-    return new PatronGroupBuilder("regular_users", "Regular Users");
+class PatronGroupExamples {
+  static PatronGroupBuilder regular() {
+    return new PatronGroupBuilder("Regular Group", "Regular group");
+  }
+
+  static PatronGroupBuilder alternative() {
+    return new PatronGroupBuilder("Alternative Group", "Alternative group");
   }
   
-  public static PatronGroupBuilder basedUponStaff() {
-    return new PatronGroupBuilder("staff", "Staff Users");    
+  static PatronGroupBuilder staff() {
+    return new PatronGroupBuilder("staff", "Staff users");
   }
   
-  public static PatronGroupBuilder basedUponFaculty() {
-    return new PatronGroupBuilder("faculty", "Faculty Users");    
+  static PatronGroupBuilder faculty() {
+    return new PatronGroupBuilder("faculty", "Faculty users");
   }  
 }

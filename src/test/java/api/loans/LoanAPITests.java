@@ -58,7 +58,7 @@ public class LoanAPITests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID userId = usersClient.create(new UserBuilder()).getId();
+    UUID userId = usersFixture.charlotte().getId();
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
@@ -170,7 +170,7 @@ public class LoanAPITests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID userId = usersClient.create(new UserBuilder()).getId();
+    UUID userId = usersFixture.charlotte().getId();
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
@@ -278,7 +278,7 @@ public class LoanAPITests extends APITests {
 
     UUID id = UUID.randomUUID();
 
-    UUID userId = usersClient.create(new UserBuilder()).getId();
+    UUID userId = usersFixture.charlotte().getId();
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
@@ -319,7 +319,7 @@ public class LoanAPITests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID userId = usersClient.create(new UserBuilder()).getId();
+    UUID userId = usersFixture.charlotte().getId();
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
@@ -355,7 +355,7 @@ public class LoanAPITests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID userId = usersClient.create(new UserBuilder()).getId();
+    UUID userId = usersFixture.charlotte().getId();
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
@@ -561,7 +561,7 @@ public class LoanAPITests extends APITests {
 
     UUID id = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
-    UUID userId = usersClient.create(new UserBuilder()).getId();
+    UUID userId = usersFixture.charlotte().getId();
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
@@ -639,7 +639,7 @@ public class LoanAPITests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID userId = usersClient.create(new UserBuilder()).getId();
+    UUID userId = usersFixture.charlotte().getId();
 
     IndividualResource response = loansClient.create(new LoanBuilder()
       .withId(id)
@@ -692,7 +692,7 @@ public class LoanAPITests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID userId = usersClient.create(new UserBuilder()).getId();
+    UUID userId = usersFixture.charlotte().getId();
 
     IndividualResource response = loansClient.create(new LoanBuilder()
       .withId(id)
@@ -749,7 +749,7 @@ public class LoanAPITests extends APITests {
         .withBarcode("036000291452"))
       .getId();
 
-    UUID userId = usersClient.create(new UserBuilder()).getId();
+    UUID userId = usersFixture.charlotte().getId();
 
     DateTime dueDate = new DateTime(2016, 11, 15, 8, 26, 53, DateTimeZone.UTC);
 
@@ -878,7 +878,7 @@ public class LoanAPITests extends APITests {
       ItemBuilder::withNoBarcode)
       .getId();
 
-    UUID userId = usersClient.create(new UserBuilder()).getId();
+    UUID userId = usersFixture.charlotte().getId();
 
     loansClient.create(new LoanBuilder()
       .withId(id)
@@ -1182,8 +1182,8 @@ public class LoanAPITests extends APITests {
     ExecutionException,
     TimeoutException {
 
-    UUID firstUserId = usersClient.create(basedUponStevenJones()).getId();
-    UUID secondUserId = usersClient.create(basedUponJessicaPontefract()).getId();
+    UUID firstUserId = usersFixture.steve().getId();
+    UUID secondUserId = usersFixture.jessica().getId();
 
     String queryTemplate = loansUrl() + "?query=userId=%s";
 
@@ -1306,7 +1306,7 @@ public class LoanAPITests extends APITests {
     TimeoutException,
     UnsupportedEncodingException {
 
-    UUID userId = usersClient.create(new UserBuilder()).getId();
+    UUID userId = usersFixture.charlotte().getId();
 
     String queryTemplate = "userId=\"%s\" and status.name=\"%s\"";
 
@@ -1467,7 +1467,7 @@ public class LoanAPITests extends APITests {
     
     UUID loanId = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
-    UUID userId = usersClient.create(new UserBuilder()).getId();
+    UUID userId = usersFixture.charlotte().getId();
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
@@ -1506,7 +1506,7 @@ public class LoanAPITests extends APITests {
     UUID checkinServicePointId = servicePointsFixture.cd1().getId();
     UUID checkoutServicePointId = servicePointsFixture.cd2().getId();
 
-    UUID userId = usersClient.create(new UserBuilder()).getId();
+    UUID userId = usersFixture.charlotte().getId();
     
     UUID loan1Id = UUID.randomUUID();
     UUID item1Id = itemsFixture.basedUponDunkirk().getId();

@@ -1,7 +1,7 @@
 package api.requests;
 
 import static api.APITestSuite.workAddressTypeId;
-import static api.support.builders.ItemBuilder.*;
+import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
 import static org.hamcrest.Matchers.emptyString;
@@ -32,7 +32,6 @@ import api.support.APITests;
 import api.support.builders.Address;
 import api.support.builders.ItemBuilder;
 import api.support.builders.RequestBuilder;
-import api.support.builders.UserBuilder;
 import api.support.http.InterfaceUrls;
 import api.support.http.InventoryItemResource;
 import api.support.http.ResourceClient;
@@ -446,7 +445,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     ExecutionException,
     TimeoutException {
 
-    UUID requesterId = usersClient.create(new UserBuilder()).getId();
+    UUID requesterId = usersFixture.charlotte().getId();
     
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut).getId())
@@ -520,13 +519,8 @@ public class RequestsAPIRetrievalTests extends APITests {
     ExecutionException,
     TimeoutException {
 
-    UUID firstRequester = usersClient.create(new UserBuilder()
-      .withName("Jones", "Steven"))
-      .getId();
-
-    UUID secondRequester = usersClient.create(new UserBuilder()
-      .withName("Norton", "Jessica"))
-      .getId();
+    UUID firstRequester = usersFixture.steve().getId();
+    UUID secondRequester = usersFixture.jessica().getId();
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut).getId())
@@ -559,7 +553,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     CompletableFuture<Response> getRequestsCompleted = new CompletableFuture<>();
 
     client.get(InterfaceUrls.requestsUrl()
-        + String.format("?query=requester.lastName=%s", "Norton"),
+        + String.format("?query=requester.lastName=%s", "Pontefract"),
       ResponseHandler.any(getRequestsCompleted));
 
     Response getRequestsResponse = getRequestsCompleted.get(5, TimeUnit.SECONDS);
@@ -647,7 +641,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     ExecutionException,
     TimeoutException {
 
-    UUID requesterId = usersClient.create(new UserBuilder()).getId();
+    UUID requesterId = usersFixture.charlotte().getId();
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut).getId())

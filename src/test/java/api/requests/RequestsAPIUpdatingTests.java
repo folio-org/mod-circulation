@@ -29,7 +29,6 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.builders.Address;
 import api.support.builders.RequestBuilder;
-import api.support.builders.UserBuilder;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
@@ -230,8 +229,7 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     loansFixture.checkOutByBarcode(nod);
 
-    IndividualResource requester = usersClient.create(new UserBuilder()
-      .withName("To", "Delete"));
+    IndividualResource requester = usersFixture.steve();
 
     IndividualResource createdRequest = requestsClient.create(
       new RequestBuilder()
@@ -239,7 +237,7 @@ public class RequestsAPIUpdatingTests extends APITests {
         .forItem(nod)
         .by(requester));
 
-    usersClient.delete(requester);
+    usersFixture.remove(requester);
 
     requestsClient.replace(createdRequest.getId(), RequestBuilder.from(createdRequest));
 
