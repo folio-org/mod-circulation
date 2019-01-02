@@ -1,30 +1,5 @@
 package api.loans;
 
-import api.APITestSuite;
-import api.support.APITests;
-import api.support.builders.CheckOutByBarcodeRequestBuilder;
-import api.support.builders.FixedDueDateSchedule;
-import api.support.builders.FixedDueDateSchedulesBuilder;
-import api.support.builders.LoanPolicyBuilder;
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
-import org.folio.circulation.support.http.server.ValidationError;
-import org.hamcrest.Matcher;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.Seconds;
-import org.junit.Test;
-
-import java.net.MalformedURLException;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
 import static api.support.builders.FixedDueDateSchedule.forDay;
 import static api.support.builders.FixedDueDateSchedule.wholeMonth;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
@@ -40,6 +15,32 @@ import static java.net.HttpURLConnection.HTTP_OK;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+
+import java.net.MalformedURLException;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
+import org.folio.circulation.support.http.server.ValidationError;
+import org.hamcrest.Matcher;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.Seconds;
+import org.junit.Test;
+
+import api.APITestSuite;
+import api.support.APITests;
+import api.support.builders.CheckOutByBarcodeRequestBuilder;
+import api.support.builders.FixedDueDateSchedule;
+import api.support.builders.FixedDueDateSchedulesBuilder;
+import api.support.builders.LoanPolicyBuilder;
+import io.vertx.core.json.JsonObject;
 
 abstract class RenewalAPITests extends APITests {
   abstract Response attemptRenewal(IndividualResource user, IndividualResource item);
@@ -118,10 +119,8 @@ abstract class RenewalAPITests extends APITests {
       .rolling(Period.months(2))
       .renewFromCurrentDueDate();
 
-    UUID dueDateLimitedPolicyId = loanPolicyClient.create(currentDueDateRollingPolicy).getId();
-
-    //Need to remember in order to delete after test
-    policiesToDelete.add(dueDateLimitedPolicyId);
+    UUID dueDateLimitedPolicyId = loanPoliciesFixture
+      .create(currentDueDateRollingPolicy).getId();
 
     useLoanPolicyAsFallback(dueDateLimitedPolicyId);
 
@@ -179,10 +178,8 @@ abstract class RenewalAPITests extends APITests {
       .limitedBySchedule(dueDateLimitScheduleId)
       .renewFromCurrentDueDate();
 
-    UUID dueDateLimitedPolicyId = loanPolicyClient.create(dueDateLimitedPolicy).getId();
-
-    //Need to remember in order to delete after test
-    policiesToDelete.add(dueDateLimitedPolicyId);
+    UUID dueDateLimitedPolicyId = loanPoliciesFixture
+      .create(dueDateLimitedPolicy).getId();
 
     useLoanPolicyAsFallback(dueDateLimitedPolicyId);
 
@@ -231,10 +228,8 @@ abstract class RenewalAPITests extends APITests {
       .renewFromCurrentDueDate()
       .renewWith(Period.months(1));
 
-    UUID dueDateLimitedPolicyId = loanPolicyClient.create(currentDueDateRollingPolicy).getId();
-
-    //Need to remember in order to delete after test
-    policiesToDelete.add(dueDateLimitedPolicyId);
+    UUID dueDateLimitedPolicyId = loanPoliciesFixture
+      .create(currentDueDateRollingPolicy).getId();
 
     useLoanPolicyAsFallback(dueDateLimitedPolicyId);
 
@@ -292,10 +287,8 @@ abstract class RenewalAPITests extends APITests {
       .renewFromCurrentDueDate()
       .renewWith(Period.days(8), dueDateLimitScheduleId);
 
-    UUID dueDateLimitedPolicyId = loanPolicyClient.create(dueDateLimitedPolicy).getId();
-
-    //Need to remember in order to delete after test
-    policiesToDelete.add(dueDateLimitedPolicyId);
+    UUID dueDateLimitedPolicyId = loanPoliciesFixture
+      .create(dueDateLimitedPolicy).getId();
 
     useLoanPolicyAsFallback(dueDateLimitedPolicyId);
 
@@ -347,10 +340,8 @@ abstract class RenewalAPITests extends APITests {
       .renewFromCurrentDueDate()
       .renewWith(Period.days(8));
 
-    UUID dueDateLimitedPolicyId = loanPolicyClient.create(dueDateLimitedPolicy).getId();
-
-    //Need to remember in order to delete after test
-    policiesToDelete.add(dueDateLimitedPolicyId);
+    UUID dueDateLimitedPolicyId = loanPoliciesFixture
+      .create(dueDateLimitedPolicy).getId();
 
     useLoanPolicyAsFallback(dueDateLimitedPolicyId);
 
@@ -405,10 +396,8 @@ abstract class RenewalAPITests extends APITests {
       .fixed(fixedDueDateSchedulesId)
       .renewFromSystemDate();
 
-    UUID fixedDueDatePolicyId = loanPolicyClient.create(dueDateLimitedPolicy).getId();
-
-    //Need to remember in order to delete after test
-    policiesToDelete.add(fixedDueDatePolicyId);
+    UUID fixedDueDatePolicyId = loanPoliciesFixture.create(dueDateLimitedPolicy)
+      .getId();
 
     useLoanPolicyAsFallback(fixedDueDatePolicyId);
 
@@ -460,10 +449,8 @@ abstract class RenewalAPITests extends APITests {
       .renewFromCurrentDueDate()
       .limitedRenewals(3);
 
-    UUID limitedRenewalsPolicyId = loanPolicyClient.create(limitedRenewalsPolicy).getId();
-
-    //Need to remember in order to delete after test
-    policiesToDelete.add(limitedRenewalsPolicyId);
+    UUID limitedRenewalsPolicyId = loanPoliciesFixture
+      .create(limitedRenewalsPolicy).getId();
 
     useLoanPolicyAsFallback(limitedRenewalsPolicyId);
 
@@ -597,10 +584,8 @@ abstract class RenewalAPITests extends APITests {
       .renewFromCurrentDueDate()
       .limitedRenewals(3);
 
-    UUID limitedRenewalsPolicyId = loanPolicyClient.create(limitedRenewalsPolicy).getId();
-
-    //Need to remember in order to delete after test
-    policiesToDelete.add(limitedRenewalsPolicyId);
+    UUID limitedRenewalsPolicyId = loanPoliciesFixture
+      .create(limitedRenewalsPolicy).getId();
 
     useLoanPolicyAsFallback(limitedRenewalsPolicyId);
 
@@ -646,10 +631,8 @@ abstract class RenewalAPITests extends APITests {
       .fixed(yesterdayAndTodayOnlySchedulesId)
       .limitedRenewals(1);
 
-    UUID limitedRenewalsPolicyId = loanPolicyClient.create(limitedRenewalsPolicy).getId();
-
-    //Need to remember in order to delete after test
-    policiesToDelete.add(limitedRenewalsPolicyId);
+    UUID limitedRenewalsPolicyId = loanPoliciesFixture
+      .create(limitedRenewalsPolicy).getId();
 
     useLoanPolicyAsFallback(limitedRenewalsPolicyId);
 
@@ -686,10 +669,8 @@ abstract class RenewalAPITests extends APITests {
       .rolling(Period.days(2))
       .notRenewable();
 
-    UUID notRenewablePolicyId = loanPolicyClient.create(limitedRenewalsPolicy).getId();
-
-    //Need to remember in order to delete after test
-    policiesToDelete.add(notRenewablePolicyId);
+    UUID notRenewablePolicyId = loanPoliciesFixture
+      .create(limitedRenewalsPolicy).getId();
 
     useLoanPolicyAsFallback(notRenewablePolicyId);
 
@@ -730,10 +711,8 @@ abstract class RenewalAPITests extends APITests {
       .fixed(todayOnlySchedulesId)
       .notRenewable();
 
-    UUID notRenewablePolicyId = loanPolicyClient.create(limitedRenewalsPolicy).getId();
-
-    //Need to remember in order to delete after test
-    policiesToDelete.add(notRenewablePolicyId);
+    UUID notRenewablePolicyId = loanPoliciesFixture
+      .create(limitedRenewalsPolicy).getId();
 
     useLoanPolicyAsFallback(notRenewablePolicyId);
 

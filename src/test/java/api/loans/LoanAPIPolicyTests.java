@@ -34,6 +34,7 @@ public class LoanAPIPolicyTests extends APITests {
     super(false);
   }
 
+  //TODO: Split into multiple tests
   @Test
   public void canRetrieveLoanPolicyId()
     throws InterruptedException,
@@ -130,6 +131,7 @@ public class LoanAPIPolicyTests extends APITests {
     InterruptedException,
     ExecutionException,
     TimeoutException {
+
     IndividualResource loanResponse = loansClient.create(new LoanBuilder()
       .withId(id)
       .withUserId(userId)
@@ -144,7 +146,7 @@ public class LoanAPIPolicyTests extends APITests {
       UUID.fromString(loanJson.getString("loanPolicyId")))
       .getJson();
 
-    assertThat("policy is " + policyName, policyJson.getString("name"), is(policyName));
+    assertThat(policyJson.getString("name"), is(policyName));
   }
 
   private void createLoanPolicies()
@@ -165,7 +167,7 @@ public class LoanAPIPolicyTests extends APITests {
          .put("renewFromId", "CURRENT_DUE_DATE")
          .put("differentPeriod", false));
 
-    p1 = loanPolicyClient.create(p1Json).getId();
+    p1 = loanPoliciesFixture.create(p1Json).getId();
 
     JsonObject p2Json = new JsonObject()
        .put("name", "Policy 2")
@@ -179,7 +181,7 @@ public class LoanAPIPolicyTests extends APITests {
          .put("renewFromId", "CURRENT_DUE_DATE")
          .put("differentPeriod", false));
 
-    p2 = loanPolicyClient.create(p2Json).getId();
+    p2 = loanPoliciesFixture.create(p2Json).getId();
 
     JsonObject p3Json = new JsonObject()
       .put("name", "Policy 3")
@@ -193,7 +195,7 @@ public class LoanAPIPolicyTests extends APITests {
         .put("renewFromId", "CURRENT_DUE_DATE")
         .put("differentPeriod", false));
 
-    p3 = loanPolicyClient.create(p3Json).getId();
+    p3 = loanPoliciesFixture.create(p3Json).getId();
 
     JsonObject p4Json = new JsonObject()
        .put("name", "Policy 4")
@@ -207,7 +209,7 @@ public class LoanAPIPolicyTests extends APITests {
          .put("renewFromId", "CURRENT_DUE_DATE")
          .put("differentPeriod", false));
 
-    p4 = loanPolicyClient.create(p4Json).getId();
+    p4 = loanPoliciesFixture.create(p4Json).getId();
 
     JsonObject pFallbackJson = new JsonObject()
        .put("name", "Fallback")
@@ -221,6 +223,6 @@ public class LoanAPIPolicyTests extends APITests {
          .put("renewFromId", "CURRENT_DUE_DATE")
          .put("differentPeriod", false));
 
-    pFallback = loanPolicyClient.create(pFallbackJson).getId();
+    pFallback = loanPoliciesFixture.create(pFallbackJson).getId();
   }
 }

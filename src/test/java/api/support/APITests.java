@@ -129,7 +129,6 @@ public abstract class APITests {
     requestsClient, cancellationReasonsFixture);
 
   protected final Set<UUID> schedulesToDelete = new HashSet<>();
-  protected final Set<UUID> policiesToDelete = new HashSet<>();
 
   protected APITests() {
     this(true);
@@ -211,12 +210,6 @@ public abstract class APITests {
     servicePointsFixture.cleanUp();
 
     loanPoliciesFixture.cleanUp();
-
-    for (UUID policyId : policiesToDelete) {
-      loanPolicyClient.delete(policyId);
-    }
-
-    policiesToDelete.clear();
 
     for (UUID scheduleId : schedulesToDelete) {
       fixedDueDateScheduleClient.delete(scheduleId);

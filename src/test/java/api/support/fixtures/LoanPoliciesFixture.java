@@ -15,6 +15,7 @@ import api.support.builders.FixedDueDateSchedule;
 import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.http.ResourceClient;
+import io.vertx.core.json.JsonObject;
 
 public class LoanPoliciesFixture {
   private final RecordCreator loanPolicyRecordCreator;
@@ -66,9 +67,25 @@ public class LoanPoliciesFixture {
     TimeoutException,
     ExecutionException {
 
-    final IndividualResource record = fixedDueDateScheduleRecordCreator.createIfAbsent(builder);
+    return fixedDueDateScheduleRecordCreator.createIfAbsent(builder);
+  }
 
-    return record;
+  public IndividualResource create(LoanPolicyBuilder builder)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return loanPolicyRecordCreator.createIfAbsent(builder);
+  }
+
+  public IndividualResource create(JsonObject policy)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return loanPolicyRecordCreator.createIfAbsent(policy);
   }
 
   public IndividualResource canCirculateRolling()

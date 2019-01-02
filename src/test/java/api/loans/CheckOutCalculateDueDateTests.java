@@ -1833,9 +1833,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
   private String createLoanPolicy(JsonObject loanPolicyEntry)
     throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
-    IndividualResource resource = loanPolicyClient.create(loanPolicyEntry);
-
-    policiesToDelete.add(resource.getId());
+    IndividualResource resource = loanPoliciesFixture.create(loanPolicyEntry);
 
     useLoanPolicyAsFallback(resource.getId());
 

@@ -52,7 +52,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     useLoanPolicyAsFallback(unknownLoanPolicyId);
 
-    final Response response = loansFixture.attemptRenewal(500, smallAngryPlanet, jessica);
+    final Response response = loansFixture.attemptRenewal(500, smallAngryPlanet,
+      jessica);
 
     assertThat(response.getBody(), is(String.format(
       "Loan policy %s could not be found, please check loan rules", unknownLoanPolicyId)));
@@ -72,8 +73,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     usersClient.delete(steve.getId());
 
-    final Response response =
-      loansFixture.attemptOverride(smallAngryPlanet, steve, OVERRIDE_COMMENT, null);
+    final Response response = loansFixture.attemptOverride(smallAngryPlanet,
+      steve, OVERRIDE_COMMENT, null);
 
     //Occurs when current loanee is not found, so relates to loan rather than user in request
     assertThat(response.getJson(), hasErrorWith(allOf(
@@ -95,8 +96,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     itemsClient.delete(smallAngryPlanet.getId());
 
-    final Response response =
-      loansFixture.attemptOverride(smallAngryPlanet, steve, OVERRIDE_COMMENT, null);
+    final Response response = loansFixture.attemptOverride(smallAngryPlanet,
+      steve, OVERRIDE_COMMENT, null);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasItemNotFoundMessage(smallAngryPlanet),
@@ -117,8 +118,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43));
 
-    final Response response =
-      loansFixture.attemptOverride(smallAngryPlanet, james, OVERRIDE_COMMENT, null);
+    final Response response = loansFixture.attemptOverride(smallAngryPlanet,
+      james, OVERRIDE_COMMENT, null);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Cannot renew item checked out to different user"),
@@ -135,8 +136,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    final Response response =
-      loansFixture.attemptOverride(smallAngryPlanet, jessica, StringUtils.EMPTY, null);
+    final Response response = loansFixture.attemptOverride(smallAngryPlanet,
+      jessica, StringUtils.EMPTY, null);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Override renewal request must have a comment"),
@@ -163,17 +164,15 @@ public class OverrideRenewByBarcodeTests extends APITests {
       .rolling(Period.days(2))
       .notRenewable();
 
-    UUID nonRenewablePolicyId = loanPolicyClient.create(nonRenewablePolicy).getId();
-
-    //Need to remember in order to delete after test
-    policiesToDelete.add(nonRenewablePolicyId);
+    UUID nonRenewablePolicyId = loanPoliciesFixture.create(nonRenewablePolicy)
+      .getId();
 
     useLoanPolicyAsFallback(nonRenewablePolicyId);
 
     loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
 
-    Response response =
-      loansFixture.attemptOverride(smallAngryPlanet, jessica, OVERRIDE_COMMENT, null);
+    Response response = loansFixture.attemptOverride(smallAngryPlanet, jessica,
+      OVERRIDE_COMMENT, null);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("New due date must be specified when due date calculation fails"))));
@@ -199,10 +198,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
       .rolling(Period.days(2))
       .notRenewable();
 
-    UUID nonRenewablePolicyId = loanPolicyClient.create(nonRenewablePolicy).getId();
-
-    //Need to remember in order to delete after test
-    policiesToDelete.add(nonRenewablePolicyId);
+    UUID nonRenewablePolicyId = loanPoliciesFixture.create(nonRenewablePolicy)
+      .getId();
 
     useLoanPolicyAsFallback(nonRenewablePolicyId);
 
@@ -269,17 +266,15 @@ public class OverrideRenewByBarcodeTests extends APITests {
       .fixed(fixedDueDateSchedulesId)
       .renewFromCurrentDueDate();
 
-    UUID dueDateLimitedPolicyId = loanPolicyClient.create(currentDueDateRollingPolicy).getId();
-
-    //Need to remember in order to delete after test
-    policiesToDelete.add(dueDateLimitedPolicyId);
+    UUID dueDateLimitedPolicyId = loanPoliciesFixture.create(currentDueDateRollingPolicy)
+      .getId();
 
     useLoanPolicyAsFallback(dueDateLimitedPolicyId);
 
     loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
 
-    Response response =
-      loansFixture.attemptOverride(smallAngryPlanet, jessica, OVERRIDE_COMMENT, null);
+    Response response = loansFixture.attemptOverride(smallAngryPlanet, jessica,
+      OVERRIDE_COMMENT, null);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("New due date must be specified when due date calculation fails"))));
@@ -317,10 +312,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
       .fixed(fixedDueDateSchedulesId)
       .renewFromCurrentDueDate();
 
-    UUID dueDateLimitedPolicyId = loanPolicyClient.create(currentDueDateRollingPolicy).getId();
-
-    //Need to remember in order to delete after test
-    policiesToDelete.add(dueDateLimitedPolicyId);
+    UUID dueDateLimitedPolicyId = loanPoliciesFixture.create(currentDueDateRollingPolicy).getId();
 
     useLoanPolicyAsFallback(dueDateLimitedPolicyId);
 
@@ -328,7 +320,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     DateTime newDueDate = DateTime.now().plusWeeks(1);
     final JsonObject renewedLoan =
-      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica, OVERRIDE_COMMENT, newDueDate.toString()).getJson();
+      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica,
+        OVERRIDE_COMMENT, newDueDate.toString()).getJson();
 
     assertThat(renewedLoan.getString("id"), is(loanId.toString()));
 
@@ -375,7 +368,9 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     DateTime loanDueDate =
       new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
-    final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
+
+    final IndividualResource loan = loansFixture.checkOutByBarcode(
+      smallAngryPlanet, jessica, loanDueDate);
 
     final UUID loanId = loan.getId();
 
@@ -396,17 +391,16 @@ public class OverrideRenewByBarcodeTests extends APITests {
       .limitedBySchedule(fixedDueDateSchedulesId)
       .renewFromCurrentDueDate();
 
-    UUID dueDateLimitedPolicyId = loanPolicyClient.create(currentDueDateRollingPolicy).getId();
-
-    //Need to remember in order to delete after test
-    policiesToDelete.add(dueDateLimitedPolicyId);
+    UUID dueDateLimitedPolicyId = loanPoliciesFixture.create(currentDueDateRollingPolicy)
+      .getId();
 
     useLoanPolicyAsFallback(dueDateLimitedPolicyId);
 
     loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
 
     final JsonObject renewedLoan =
-      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica, OVERRIDE_COMMENT, null)
+      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica,
+        OVERRIDE_COMMENT, null)
         .getJson();
 
     assertThat(renewedLoan.getString("id"), is(loanId.toString()));
@@ -450,10 +444,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
       .rolling(Period.weeks(1))
       .limitedRenewals(1);
 
-    UUID limitedRenewalsPolicyId = loanPolicyClient.create(limitedRenewalsPolicy).getId();
-
-    //Need to remember in order to delete after test
-    policiesToDelete.add(limitedRenewalsPolicyId);
+    UUID limitedRenewalsPolicyId = loanPoliciesFixture.create(limitedRenewalsPolicy)
+      .getId();
 
     useLoanPolicyAsFallback(limitedRenewalsPolicyId);
 
@@ -511,15 +503,13 @@ public class OverrideRenewByBarcodeTests extends APITests {
       .rolling(Period.months(2))
       .renewFromCurrentDueDate();
 
-    UUID rollingPolicyId = loanPolicyClient.create(currentDueDateRollingPolicy).getId();
-
-    //Need to remember in order to delete after test
-    policiesToDelete.add(rollingPolicyId);
+    UUID rollingPolicyId = loanPoliciesFixture.create(currentDueDateRollingPolicy)
+      .getId();
 
     useLoanPolicyAsFallback(rollingPolicyId);
 
-    final Response response =
-      loansFixture.attemptOverride(smallAngryPlanet, jessica, OVERRIDE_COMMENT, null);
+    final Response response = loansFixture.attemptOverride(smallAngryPlanet,
+      jessica, OVERRIDE_COMMENT, null);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Override renewal does not match any of expected cases: " +
