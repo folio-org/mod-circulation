@@ -25,4 +25,8 @@ public class InventoryItemResource extends IndividualResource {
   public UUID getInstanceId() {
     return instance.getId();
   }
+
+  public IndividualResource getInstance() {
+    return instance;
+  }
 }

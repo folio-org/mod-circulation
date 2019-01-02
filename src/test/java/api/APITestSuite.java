@@ -51,7 +51,6 @@ public class APITestSuite {
   private static String fakeOkapiDeploymentId;
   private static Boolean useOkapiForStorage;
   private static Boolean useOkapiForInitialRequests;
-  private static UUID booksInstanceTypeId;
   private static UUID workAddressTypeId;
   private static UUID personalContributorTypeId;
 
@@ -99,10 +98,6 @@ public class APITestSuite {
       log.error("Request failed:", exception));
   }
 
-  public static UUID booksInstanceTypeId() {
-    return booksInstanceTypeId;
-  }
-
   public static UUID personalContributorNameTypeId() {
     return personalContributorTypeId;
   }
@@ -134,7 +129,6 @@ public class APITestSuite {
     TimeoutException {
 
     createContributorNameTypes();
-    createInstanceTypes();
 
     createAddressTypes();
 
@@ -303,27 +297,6 @@ public class APITestSuite {
 
     ResourceClient contributorTypesClient = ResourceClient.forContributorNameTypes(createClient());
     contributorTypesClient.delete(personalContributorTypeId);
-  }
-
-  private static void createInstanceTypes()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    booksInstanceTypeId = createReferenceRecord(
-      ResourceClient.forInstanceTypes(createClient()), "Books", "BO", "tests");
-  }
-
-  public static void deleteInstanceTypes()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    ResourceClient instanceTypesClient = ResourceClient.forInstanceTypes(createClient());
-
-    instanceTypesClient.delete(booksInstanceTypeId());
   }
 
   private static void createLoanPolicies()
@@ -503,4 +476,5 @@ public class APITestSuite {
   private static String createFakeRequestId() {
     return String.format("%s/fake-context", new Random().nextInt(999999));
   }
+
 }

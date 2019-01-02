@@ -16,7 +16,6 @@ import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
-import api.support.fixtures.InstanceExamples;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
@@ -77,10 +76,10 @@ public class RequestsAPITitleTests extends APITests {
 
     JsonObject createdRequest = response.getJson();
 
+    //TODO: Replace with builder loaded from existing JSON
     instancesClient.replace(smallAngryPlanet.getInstanceId(),
-      InstanceExamples.basedUponSmallAngryPlanet()
-        .withId(smallAngryPlanet.getInstanceId())
-        .withTitle("A new instance title"));
+      smallAngryPlanet.getInstance().copyJson()
+        .put("title", "A new instance title"));
 
     requestsClient.replace(response.getId(), createdRequest);
 

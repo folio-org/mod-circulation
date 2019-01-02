@@ -50,7 +50,6 @@ public abstract class APITests {
 
   private final boolean initialiseLoanRules;
 
-
   private final ResourceClient servicePointsClient = ResourceClient.forServicePoints(client);
 
   private ResourceClient institutionsClient = ResourceClient.forInstitutions(client);
@@ -60,7 +59,8 @@ public abstract class APITests {
 
   private final ResourceClient patronGroupsClient = ResourceClient.forPatronGroups(client);
   protected final ResourceClient usersClient = ResourceClient.forUsers(client);
-  private final ResourceClient proxyRelationshipsClient = ResourceClient.forProxyRelationships(client);
+  private final ResourceClient proxyRelationshipsClient
+    = ResourceClient.forProxyRelationships(client);
 
   protected final ResourceClient instancesClient = ResourceClient.forInstances(client);
   private final ResourceClient holdingsClient = ResourceClient.forHoldings(client);
@@ -71,8 +71,12 @@ public abstract class APITests {
 
   protected final ResourceClient requestsClient = ResourceClient.forRequests(client);
 
-  protected final ResourceClient fixedDueDateScheduleClient = ResourceClient.forFixedDueDateSchedules(client);
+  protected final ResourceClient fixedDueDateScheduleClient
+    = ResourceClient.forFixedDueDateSchedules(client);
+
   protected final ResourceClient loanPolicyClient = ResourceClient.forLoanPolicies(client);
+
+  private final ResourceClient instanceTypesClient = ResourceClient.forInstanceTypes(client);
 
   protected final ServicePointsFixture servicePointsFixture
     = new ServicePointsFixture(servicePointsClient);
@@ -88,7 +92,7 @@ public abstract class APITests {
     ResourceClient.forMaterialTypes(client));
 
   protected final ItemsFixture itemsFixture = new ItemsFixture(client,
-    materialTypesFixture, loanTypesFixture, locationsFixture);
+    materialTypesFixture, loanTypesFixture, locationsFixture, instanceTypesClient);
 
   protected final PatronGroupsFixture patronGroupsFixture
     = new PatronGroupsFixture(patronGroupsClient);
@@ -144,6 +148,10 @@ public abstract class APITests {
     holdingsClient.deleteAll();
     instancesClient.deleteAll();
 
+    //TODO: Only cleans up reference records, move items, holdings records
+    // and instances into here too
+    itemsFixture.cleanUp();
+
     usersClient.deleteAllIndividually();
 
     if (initialiseLoanRules) {
@@ -173,6 +181,10 @@ public abstract class APITests {
     itemsClient.deleteAll();
     holdingsClient.deleteAll();
     instancesClient.deleteAll();
+
+    //TODO: Only cleans up reference records, move items, holdings records
+    // and instances into here too
+    itemsFixture.cleanUp();
 
     materialTypesFixture.cleanUp();
     loanTypesFixture.cleanUp();
@@ -288,7 +300,6 @@ public abstract class APITests {
     APITestSuite.deleteAddressTypes();
 
     APITestSuite.deleteContributorTypes();
-    APITestSuite.deleteInstanceTypes();
     APITestSuite.deleteLoanPolicies();
     APITestSuite.deleteCancellationReasons();
   }

@@ -1,36 +1,39 @@
 package api.support.fixtures;
 
-import api.APITestSuite;
+import java.util.UUID;
+
 import api.support.builders.InstanceBuilder;
 
 public class InstanceExamples {
-  public static InstanceBuilder basedUponSmallAngryPlanet() {
-    return new InstanceBuilder("The Long Way to a Small, Angry Planet", APITestSuite.booksInstanceTypeId())
+  public static InstanceBuilder basedUponSmallAngryPlanet(
+    UUID booksInstanceTypeId) {
+
+    return new InstanceBuilder("The Long Way to a Small, Angry Planet", booksInstanceTypeId)
       .withContributor("Chambers, Becky");
   }
 
-  public static InstanceBuilder basedUponNod() {
-    return new InstanceBuilder("Nod", APITestSuite.booksInstanceTypeId())
+  public static InstanceBuilder basedUponNod(UUID booksInstanceTypeId) {
+    return new InstanceBuilder("Nod", booksInstanceTypeId)
       .withContributor("Barnes, Adrian");
   }
 
-  public static InstanceBuilder basedUponUprooted() {
-    return new InstanceBuilder("Uprooted", APITestSuite.booksInstanceTypeId())
+  static InstanceBuilder basedUponUprooted(UUID booksInstanceTypeId) {
+    return new InstanceBuilder("Uprooted", booksInstanceTypeId)
       .withContributor("Novik, Naomi");
   }
 
-  public static InstanceBuilder basedUponTemeraire() {
-    return new InstanceBuilder("Temeraire", APITestSuite.booksInstanceTypeId())
+  public static InstanceBuilder basedUponTemeraire(UUID booksInstanceTypeId) {
+    return new InstanceBuilder("Temeraire", booksInstanceTypeId)
       .withContributor("Novik, Naomi");
   }
 
-  public static InstanceBuilder basedUponInterestingTimes() {
-    return new InstanceBuilder("Interesting Times", APITestSuite.booksInstanceTypeId())
+  static InstanceBuilder basedUponInterestingTimes(UUID booksInstanceTypeId) {
+    return new InstanceBuilder("Interesting Times", booksInstanceTypeId)
       .withContributor("Pratchett, Terry");
   }
 
-  public static InstanceBuilder basedUponDunkirk() {
-    return new InstanceBuilder("Dunkirk", APITestSuite.booksInstanceTypeId())
+  static InstanceBuilder basedUponDunkirk(UUID booksInstanceTypeId) {
+    return new InstanceBuilder("Dunkirk", booksInstanceTypeId)
       .withContributor("Nolan, Christopher");
   }
 }
