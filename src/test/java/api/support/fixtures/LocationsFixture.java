@@ -4,6 +4,7 @@ import static api.APITestSuite.djanoglyLibrary;
 import static api.APITestSuite.fakeServicePoint;
 import static api.APITestSuite.jubileeCampus;
 import static api.APITestSuite.nottinghamUniversityInstitution;
+import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 import java.net.MalformedURLException;
 import java.util.concurrent.ExecutionException;
@@ -19,7 +20,8 @@ public class LocationsFixture {
   private final RecordCreator locationRecordCreator;
 
   public LocationsFixture(ResourceClient client) {
-    locationRecordCreator = new RecordCreator(client);
+    locationRecordCreator = new RecordCreator(client,
+      location -> getProperty(location, "code"));
   }
 
   public void cleanUp()
@@ -38,7 +40,7 @@ public class LocationsFixture {
       TimeoutException, 
       ExecutionException {
 
-    return locationRecordCreator.create(
+    return locationRecordCreator.createIfAbsent(
       additionalLocationProperties.apply(exampleLocation()));
   }
 
