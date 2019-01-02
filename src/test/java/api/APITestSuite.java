@@ -29,8 +29,8 @@ import org.slf4j.LoggerFactory;
 import api.support.builders.FixedDueDateSchedule;
 import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.LoanPolicyBuilder;
-import api.support.builders.LocationBuilder;
 import api.support.builders.ServicePointBuilder;
+import api.support.examples.LocationExamples;
 import api.support.fakes.FakeOkapi;
 import api.support.fakes.FakeStorageModule;
 import api.support.http.ResourceClient;
@@ -169,7 +169,7 @@ public class APITestSuite {
     return djanoglyLibrary;
   }
 
-  private static UUID businessLibrary() {
+  public static UUID businessLibrary() {
     return businessLibrary;
   }
 
@@ -468,34 +468,13 @@ public class APITestSuite {
     ResourceClient locationsClient = ResourceClient.forLocations(client);
 
     thirdFloorLocationId = createReferenceRecord(locationsClient,
-      new LocationBuilder()
-        .withName("3rd Floor")
-        .withCode("NU/JC/DL/3F")
-        .forInstitution(nottinghamUniversityInstitution())
-        .forCampus(jubileeCampus())
-        .forLibrary(djanoglyLibrary())
-        .withPrimaryServicePoint(fakeServicePoint())
-        .create());
+      LocationExamples.thirdFloor(fakeServicePoint()).create());
 
     secondFloorEconomicsLocationId = createReferenceRecord(locationsClient,
-      new LocationBuilder()
-        .withName("2nd Floor - Economics")
-        .withCode("NU/JC/DL/2FE")
-        .forInstitution(nottinghamUniversityInstitution())
-        .forCampus(jubileeCampus())
-        .forLibrary(djanoglyLibrary())
-        .withPrimaryServicePoint(fakeServicePoint())
-        .create());
+      LocationExamples.secondFloorEconomics(fakeServicePoint()).create());
 
     mezzanineDisplayCaseLocationId = createReferenceRecord(locationsClient,
-      new LocationBuilder()
-        .withName("Display Case, Mezzanine")
-        .withCode("NU/JC/BL/DM")
-        .forInstitution(nottinghamUniversityInstitution())
-        .forCampus(jubileeCampus())
-        .forLibrary(businessLibrary())
-        .withPrimaryServicePoint(fakeServicePoint())
-        .create());
+      LocationExamples.mezzanineDisplayCase(fakeServicePoint()).create());
   }
 
   public static void deleteLocations()

@@ -66,7 +66,6 @@ public abstract class APITests {
   protected final MaterialTypesFixture materialTypesFixture = new MaterialTypesFixture(
     ResourceClient.forMaterialTypes(client));
 
-
   protected final ItemsFixture itemsFixture = new ItemsFixture(client,
     materialTypesFixture, loanTypesFixture);
 
@@ -75,8 +74,7 @@ public abstract class APITests {
   protected final ProxyRelationshipsFixture proxyRelationshipsFixture
     = new ProxyRelationshipsFixture(proxyRelationshipsClient);
 
-  protected final UsersFixture usersFixture = new UsersFixture(usersClient
-  );
+  protected final UsersFixture usersFixture = new UsersFixture(usersClient);
 
   protected final LoansFixture loansFixture = new LoansFixture(loansClient,
     client, usersFixture);
