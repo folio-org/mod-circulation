@@ -1,6 +1,5 @@
 package api.requests;
 
-import static api.APITestSuite.workAddressTypeId;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
@@ -130,9 +129,11 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     loansFixture.checkOutByBarcode(temeraire);
 
+    final IndividualResource workAddressType = addressTypesFixture.work();
+
     final IndividualResource charlotte = usersFixture.charlotte(userBuilder -> userBuilder
       .withAddress(
-        new Address(workAddressTypeId(),
+        new Address(workAddressType.getId(),
           "Fake first address line",
           "Fake second address line",
           "Fake city",
@@ -154,7 +155,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     requestsClient.replace(createdRequest.getId(),
       RequestBuilder.from(createdRequest)
         .hold()
-        .deliverToAddress(workAddressTypeId()));
+        .deliverToAddress(workAddressType.getId()));
 
     Response getResponse = requestsClient.getById(createdRequest.getId());
 
@@ -173,7 +174,7 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     final JsonObject deliveryAddress = representation.getJsonObject("deliveryAddress");
 
-    assertThat(deliveryAddress.getString("addressTypeId"), is(workAddressTypeId().toString()));
+    assertThat(deliveryAddress.getString("addressTypeId"), is(workAddressType.getId()));
     assertThat(deliveryAddress.getString("addressLine1"), is("Fake first address line"));
     assertThat(deliveryAddress.getString("addressLine2"), is("Fake second address line"));
     assertThat(deliveryAddress.getString("city"), is("Fake city"));

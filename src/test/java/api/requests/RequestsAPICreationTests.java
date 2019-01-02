@@ -1,6 +1,5 @@
 package api.requests;
 
-import static api.APITestSuite.workAddressTypeId;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -440,9 +439,11 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       ItemBuilder::available);
 
+    final IndividualResource work = addressTypesFixture.work();
+
     final IndividualResource charlotte = usersFixture.charlotte(
       builder -> builder.withAddress(
-        new Address(workAddressTypeId(),
+        new Address(work.getId(),
           "Fake first address line",
           "Fake second address line",
           "Fake city",
@@ -457,7 +458,7 @@ public class RequestsAPICreationTests extends APITests {
     IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
       .recall()
       .forItem(smallAngryPlanet)
-      .deliverToAddress(workAddressTypeId())
+      .deliverToAddress(work.getId())
       .by(charlotte));
 
     JsonObject representation = createdRequest.getJson();
@@ -465,14 +466,14 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(representation.getString("id"), is(not(emptyString())));
     assertThat(representation.getString("requestType"), is("Recall"));
     assertThat(representation.getString("fulfilmentPreference"), is("Delivery"));
-    assertThat(representation.getString("deliveryAddressTypeId"), is(workAddressTypeId()));
+    assertThat(representation.getString("deliveryAddressTypeId"), is(work.getId()));
 
     assertThat("Request should have a delivery address",
       representation.containsKey("deliveryAddress"), is(true));
 
     final JsonObject deliveryAddress = representation.getJsonObject("deliveryAddress");
 
-    assertThat(deliveryAddress.getString("addressTypeId"), is(workAddressTypeId()));
+    assertThat(deliveryAddress.getString("addressTypeId"), is(work.getId()));
     assertThat(deliveryAddress.getString("addressLine1"), is("Fake first address line"));
     assertThat(deliveryAddress.getString("addressLine2"), is("Fake second address line"));
     assertThat(deliveryAddress.getString("city"), is("Fake city"));

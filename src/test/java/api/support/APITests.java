@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import api.APITestSuite;
+import api.support.fixtures.AddressTypesFixture;
 import api.support.fixtures.ItemsFixture;
 import api.support.fixtures.LoanTypesFixture;
 import api.support.fixtures.LoansFixture;
@@ -52,12 +53,14 @@ public abstract class APITests {
 
   private final ResourceClient servicePointsClient = ResourceClient.forServicePoints(client);
 
-  private ResourceClient institutionsClient = ResourceClient.forInstitutions(client);
-  private ResourceClient campusesClient = ResourceClient.forCampuses(client);
-  private ResourceClient librariesClient = ResourceClient.forLibraries(client);
+  private final ResourceClient institutionsClient = ResourceClient.forInstitutions(client);
+  private final ResourceClient campusesClient = ResourceClient.forCampuses(client);
+  private final ResourceClient librariesClient = ResourceClient.forLibraries(client);
   private final ResourceClient locationsClient = ResourceClient.forLocations(client);
 
-  private final ResourceClient patronGroupsClient = ResourceClient.forPatronGroups(client);
+  private final ResourceClient patronGroupsClient
+    = ResourceClient.forPatronGroups(client);
+
   protected final ResourceClient usersClient = ResourceClient.forUsers(client);
   private final ResourceClient proxyRelationshipsClient
     = ResourceClient.forProxyRelationships(client);
@@ -67,16 +70,20 @@ public abstract class APITests {
   protected final ResourceClient itemsClient = ResourceClient.forItems(client);
 
   protected final ResourceClient loansClient = ResourceClient.forLoans(client);
-  protected final ResourceClient loansStorageClient = ResourceClient.forLoansStorage(client);
+  protected final ResourceClient loansStorageClient
+    = ResourceClient.forLoansStorage(client);
 
   protected final ResourceClient requestsClient = ResourceClient.forRequests(client);
 
   protected final ResourceClient fixedDueDateScheduleClient
     = ResourceClient.forFixedDueDateSchedules(client);
 
-  protected final ResourceClient loanPolicyClient = ResourceClient.forLoanPolicies(client);
+  protected final ResourceClient loanPolicyClient
+    = ResourceClient.forLoanPolicies(client);
 
-  private final ResourceClient instanceTypesClient = ResourceClient.forInstanceTypes(client);
+  private final ResourceClient instanceTypesClient
+    = ResourceClient.forInstanceTypes(client);
+
   private final ResourceClient contributorNameTypesClient
     = ResourceClient.forContributorNameTypes(client);
 
@@ -96,6 +103,9 @@ public abstract class APITests {
   protected final ItemsFixture itemsFixture = new ItemsFixture(client,
     materialTypesFixture, loanTypesFixture, locationsFixture,
     instanceTypesClient, contributorNameTypesClient);
+
+  protected final AddressTypesFixture addressTypesFixture
+    = new AddressTypesFixture(ResourceClient.forAddressTypes(client));
 
   protected final PatronGroupsFixture patronGroupsFixture
     = new PatronGroupsFixture(patronGroupsClient);
@@ -209,6 +219,7 @@ public abstract class APITests {
 
     usersFixture.cleanUp();
 
+    addressTypesFixture.cleanUp();
     patronGroupsFixture.cleanUp();
   }
 
@@ -299,8 +310,6 @@ public abstract class APITests {
     ResourceClient.forInstances(cleanupClient).deleteAll();
 
     ResourceClient.forUsers(cleanupClient).deleteAllIndividually();
-
-    APITestSuite.deleteAddressTypes();
 
     APITestSuite.deleteLoanPolicies();
     APITestSuite.deleteCancellationReasons();
