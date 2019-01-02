@@ -1,10 +1,10 @@
 package api.support.builders;
 
+import java.util.UUID;
+
+import api.APITestSuite;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import api.APITestSuite;
-
-import java.util.UUID;
 
 public class InstanceBuilder extends JsonBuilder implements Builder {
   private final UUID id;
@@ -12,12 +12,12 @@ public class InstanceBuilder extends JsonBuilder implements Builder {
   private final UUID instanceTypeId;
   private final JsonArray contributors;
 
-  public InstanceBuilder(String title) {
-    this(UUID.randomUUID(), title);
+  public InstanceBuilder(String title, UUID instanceTypeId) {
+    this(UUID.randomUUID(), title, instanceTypeId);
   }
 
-  private InstanceBuilder(UUID id, String title) {
-    this(id, title, new JsonArray(), APITestSuite.booksInstanceTypeId());
+  private InstanceBuilder(UUID id, String title, UUID instanceTypeId) {
+    this(id, title, new JsonArray(), instanceTypeId);
   }
 
   private InstanceBuilder(
