@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 
@@ -19,11 +20,20 @@ class RecordCreator {
   private final ResourceClient client;
   private final Map<String, IndividualResource> identityMap;
   private final Set<UUID> createdRecordIds;
+  private final Function<JsonObject, String> identityMapKey;
 
   RecordCreator(ResourceClient client) {
+    this(client, null);
+  }
+
+  RecordCreator(
+    ResourceClient client,
+    Function<JsonObject, String> identityMapKey) {
+
     this.client = client;
     this.identityMap = new HashMap<>();
     this.createdRecordIds = new HashSet<>();
+    this.identityMapKey = identityMapKey;
   }
 
   IndividualResource create(Builder builder)
@@ -60,7 +70,16 @@ class RecordCreator {
     createdRecordIds.clear();
   }
 
-  IndividualResource createIfAbsent(String key, JsonObject record)
+  IndividualResource createIfAbsent(JsonObject record)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return createIfAbsent(identityMapKey.apply(record), record);
+  }
+
+  private IndividualResource createIfAbsent(String key, JsonObject record)
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,

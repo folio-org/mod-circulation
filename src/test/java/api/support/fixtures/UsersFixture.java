@@ -1,10 +1,12 @@
 package api.support.fixtures;
 
+import static api.support.fixtures.UserExamples.basedUponCharlotteBroadwell;
 import static api.support.fixtures.UserExamples.basedUponJamesRodwell;
 import static api.support.fixtures.UserExamples.basedUponJessicaPontefract;
 import static api.support.fixtures.UserExamples.basedUponRebeccaStuart;
 import static api.support.fixtures.UserExamples.basedUponStevenJones;
 import static java.util.function.Function.identity;
+import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 import java.net.MalformedURLException;
 import java.util.concurrent.ExecutionException;
@@ -20,7 +22,8 @@ public class UsersFixture {
   private final RecordCreator userRecordCreator;
 
   public UsersFixture(ResourceClient usersClient) {
-    this.userRecordCreator = new RecordCreator(usersClient);
+    this.userRecordCreator = new RecordCreator(usersClient,
+      user -> getProperty(user, "username"));
   }
 
   public void cleanUp()
@@ -38,8 +41,7 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return userRecordCreator.createIfAbsent("JESSICA",
-      basedUponJessicaPontefract().create());
+    return userRecordCreator.createIfAbsent(basedUponJessicaPontefract().create());
   }
 
   public IndividualResource james()
@@ -48,7 +50,7 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return userRecordCreator.createIfAbsent("JAMES", basedUponJamesRodwell().create());
+    return userRecordCreator.createIfAbsent(basedUponJamesRodwell().create());
   }
 
   public IndividualResource rebecca()
@@ -67,7 +69,7 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return userRecordCreator.createIfAbsent("REBECCA",
+    return userRecordCreator.createIfAbsent(
       additionalProperties.apply(basedUponRebeccaStuart()).create());
   }
 
@@ -87,7 +89,7 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return userRecordCreator.createIfAbsent("STEVE",
+    return userRecordCreator.createIfAbsent(
       additionalUserProperties.apply(basedUponStevenJones()).create());
   }
 
@@ -107,8 +109,7 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return userRecordCreator.createIfAbsent("CHARLOTTE",
-      additionalConfiguration.apply(UserExamples.basedUponCharlotteBroadwell()).create());
+    return userRecordCreator.createIfAbsent(additionalConfiguration.apply(
+      basedUponCharlotteBroadwell()).create());
   }
-
 }
