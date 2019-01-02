@@ -46,10 +46,11 @@ public class PeriodUtil {
     return startTime.equals(time) || (time.isAfter(startTime) && time.isBefore(endTime));
   }
 
+
   private static boolean isInPeriodOfDay(OpeningDayPeriod currentDayPeriod, LocalTime offsetTime, boolean isInOpenPeriodsOfDAy) {
 
-    if (isInOpenPeriodsOfDAy) {
-      return true;
+    if (isInOpenPeriodsOfDAy && currentDayPeriod.getOpeningDay().getOpeningHour().size() == 1) {
+      return false;
     }
 
     List<String> collect = currentDayPeriod.getOpeningDay().getOpeningHour().stream()

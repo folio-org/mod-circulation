@@ -1448,7 +1448,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
       checkDateTime(expectedDueDate, loan);
     } else {
       DateTime actualDueDate = DateTime.parse(loan.getString("dueDate"));
-      assertThat("due date should be " + expectedDueDate,
+      assertThat("due date should be " + expectedDueDate + ", actual due date is " + actualDueDate,
         actualDueDate.compareTo(expectedDueDate) == 0);
     }
   }

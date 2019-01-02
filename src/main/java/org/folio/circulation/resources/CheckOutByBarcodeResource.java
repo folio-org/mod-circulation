@@ -172,7 +172,7 @@ public class CheckOutByBarcodeResource extends Resource {
         return calculateDefaultInitialDueDate(loanAndRelatedRecords, loan, loanPolicy);
       }
 
-      DateTime endDate = new DateTime(openingPeriods.get(0).getEndDate());
+      DateTime endDate = new DateTime(openingPeriods.get(0).getEndDate()).withZone(DateTimeZone.UTC);
       return calculateNewInitialDueDate(loanAndRelatedRecords, loan, loanPolicy, endDate);
     }
 
@@ -489,15 +489,15 @@ public class CheckOutByBarcodeResource extends Resource {
 
     LocalDate localDate = LocalDate.parse(date, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
     if (allDay) {
-      return new DateTime(localDate.atTime(LocalTime.MAX).toString());
+      return new DateTime(localDate.atTime(LocalTime.MAX).toString()).withZone(DateTimeZone.UTC);
     } else {
       List<OpeningHour> openingHours = openingDay.getOpeningHour();
       if (openingHours.isEmpty()) {
-        return new DateTime(localDate.atTime(LocalTime.MAX).toString());
+        return new DateTime(localDate.atTime(LocalTime.MAX).toString()).withZone(DateTimeZone.UTC);
       } else {
         OpeningHour openingHour = openingHours.get(openingHours.size() - 1);
         LocalTime localTime = LocalTime.parse(openingHour.getEndTime());
-        return new DateTime(LocalDateTime.of(localDate, localTime).toString());
+        return new DateTime(LocalDateTime.of(localDate, localTime).toString()).withZone(DateTimeZone.UTC);
       }
     }
   }

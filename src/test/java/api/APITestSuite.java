@@ -744,8 +744,8 @@ public class APITestSuite {
         .withName("Example Fixed Due Date Schedule")
         .withDescription("Example Fixed Due Date Schedule")
         .addSchedule(new FixedDueDateSchedule(
-          new DateTime(2018, 1, 1, 0, 0, 0, DateTimeZone.UTC),
-          new DateTime(2018, 12, 31, 23, 59, 59, DateTimeZone.UTC),
+          new DateTime(2019, 1, 1, 0, 0, 0, DateTimeZone.UTC),
+          new DateTime(2019, 12, 31, 23, 59, 59, DateTimeZone.UTC),
           FIXED_DUE_DATE
         ));
 
