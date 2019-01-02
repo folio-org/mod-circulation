@@ -106,7 +106,6 @@ public abstract class APITests {
 
   protected final Set<UUID> schedulesToDelete = new HashSet<>();
   protected final Set<UUID> policiesToDelete = new HashSet<>();
-  protected final Set<UUID> groupsToDelete = new HashSet<>();
 
   protected APITests() {
     this(true);
@@ -196,12 +195,6 @@ public abstract class APITests {
     usersFixture.cleanUp();
 
     patronGroupsFixture.cleanUp();
-
-    for (UUID patronGroupId : groupsToDelete) {
-      patronGroupsClient.delete(patronGroupId);
-    }
-
-    groupsToDelete.clear();
   }
 
   //Needs to be done each time as some tests manipulate the rules

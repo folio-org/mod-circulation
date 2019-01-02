@@ -48,10 +48,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     String enumeration = "DUMMY_ENUMERATION";
     
     UUID facultyGroupId = patronGroupsFixture.faculty().getId();
-    groupsToDelete.add(facultyGroupId);
-
     UUID staffGroupId = patronGroupsFixture.staff().getId();
-    groupsToDelete.add(staffGroupId);
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       itemBuilder -> itemBuilder.withEnumeration(enumeration));
@@ -260,10 +257,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     UUID pickupServicePointId2 = cd2.getId();
     
     UUID facultyGroupId = patronGroupsFixture.faculty().getId();
-    groupsToDelete.add(facultyGroupId);
-
     UUID staffGroupId = patronGroupsFixture.staff().getId();
-    groupsToDelete.add(staffGroupId);
 
     final IndividualResource jessica = usersFixture.jessica();
     final IndividualResource charlotte = usersFixture.charlotte();
