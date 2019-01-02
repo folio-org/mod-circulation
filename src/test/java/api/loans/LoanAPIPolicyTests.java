@@ -79,17 +79,7 @@ public class LoanAPIPolicyTests extends APITests {
       "m " + materialTypesFixture.book() + " + t " + loanTypesFixture.canCirculate() + " + g " + group1 + " : " + p4
       );
 
-    JsonObject newRulesRequest = new JsonObject().put("loanRulesAsTextFile", rules);
-    CompletableFuture<Response> completed = new CompletableFuture<>();
-
-    client.put(InterfaceUrls.loanRulesUrl(), newRulesRequest,
-      ResponseHandler.any(completed));
-
-    Response response = completed.get(5, TimeUnit.SECONDS);
-
-    assertThat(String.format(
-      "Failed to set loan rules: %s", response.getBody()),
-      response.getStatusCode(), is(204));
+    loanRulesFixture.updateLoanRules(rules);
 
     //Get the loan rules
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();

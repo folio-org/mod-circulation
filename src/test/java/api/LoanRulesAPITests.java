@@ -26,14 +26,14 @@ public class LoanRulesAPITests extends APITests {
   public void canPutAndGet() throws Exception {
     String rule = "priority: t, s, c, b, a, m, g\nfallback-policy: no-circulation\n";
 
-    Response response = put(rule);
-    assertThat(response.getStatusCode(), is(204));
+    loanRulesFixture.updateLoanRules(rule);
+
     assertThat(getText(), is(rule));
 
     rule = "priority: t, s, c, b, a, m, g\nfallback-policy: loan-forever\n";
 
-    response = put(rule);
-    assertThat(response.getStatusCode(), is(204));
+    loanRulesFixture.updateLoanRules(rule);
+
     assertThat(getText(), is(rule));
   }
 
@@ -47,9 +47,14 @@ public class LoanRulesAPITests extends APITests {
 
   @Test
   public void canReportValidationError() throws Exception {
-    Response response = put("\t");
+    JsonObject rules = new JsonObject();
+    rules.put("loanRulesAsTextFile", "\t");
+    Response response = putExpectingFailure(rules);
+
     assertThat(response.getStatusCode(), is(422));
+
     JsonObject json = new JsonObject(response.getBody());
+
     assertThat(json.getString("message"), containsStringIgnoringCase("tab"));
     assertThat(json.getInteger("line"), is(1));
     assertThat(json.getInteger("column"), is(2));
@@ -70,13 +75,7 @@ public class LoanRulesAPITests extends APITests {
     return text;
   }
 
-  private Response put(String rulesAsText) throws Exception {
-    JsonObject rules = new JsonObject();
-    rules.put("loanRulesAsTextFile", rulesAsText);
-    return put(rules);
-  }
-
-  private Response put(JsonObject rules) throws Exception {
+  private Response putExpectingFailure(JsonObject rules) throws Exception {
     CompletableFuture<Response> completed = new CompletableFuture<>();
     client.put(InterfaceUrls.loanRulesUrl(), rules, ResponseHandler.any(completed));
     return completed.get(5, TimeUnit.SECONDS);

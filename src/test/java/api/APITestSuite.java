@@ -204,17 +204,6 @@ public class APITestSuite {
     }
   }
 
-  static void setLoanRules(String rules)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    ResourceClient client = ResourceClient.forLoanRules(createClient());
-    JsonObject json = new JsonObject().put("loanRulesAsTextFile", rules);
-    client.replace(null, json);
-  }
-
   public static UUID createReferenceRecord(
     ResourceClient client,
     JsonObject record)

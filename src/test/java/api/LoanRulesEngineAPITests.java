@@ -5,6 +5,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.StringContains.containsString;
 
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -23,18 +24,14 @@ import org.junit.Before;
 import org.junit.Test;
 
 import api.support.APITests;
-import api.support.http.InterfaceUrls;
+import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class LoanRulesEngineAPITests extends APITests {
   private void setRules(String rules) {
-    JsonObject json = new JsonObject();
-    json.put("loanRulesAsTextFile", rules);
-    CompletableFuture<Response> completed = new CompletableFuture<>();
-    client.put(InterfaceUrls.loanRulesUrl(), json, ResponseHandler.any(completed));
     try {
-      completed.get(5, TimeUnit.SECONDS);
+      loanRulesFixture.updateLoanRules(rules);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -64,20 +61,20 @@ public class LoanRulesEngineAPITests extends APITests {
   }
 
   //Test data to work with our defined values
-  ItemType m1 = new ItemType("96d4bdf1-5fc2-40ef-9ace-6d7e3e48ec4d");
-  ItemType m2 = new ItemType("b6375fcb-caaf-4b94-944d-b1a6bb589425");
-  LoanType t1 = new LoanType("2e6f51b9-d00a-4f1d-9960-49b1977acfca");
-  LoanType t2 = new LoanType("220e2dad-e3c7-42f3-bb46-515ba29ba65f");
-  PatronGroup g1 = new PatronGroup("0122feae-bd0e-4405-88de-525d93ba7cfd");
-  PatronGroup g2 = new PatronGroup("87d14197-6de3-4ba5-9201-6c4129504adf");
-  ShelvingLocation s1 = new ShelvingLocation("cdc0b09d-dd56-4377-ae10-a20b50121dc4");
-  ShelvingLocation s2 = new ShelvingLocation("fe91de23-6bf5-4179-a90e-3e87769af86e");
-  LoanPolicy p6 = new LoanPolicy("6a475259-8a97-4992-a415-76440f5f7c23");
-  LoanPolicy p7 = new LoanPolicy("7b586360-8ba8-4aa3-b526-875510608d34");
-  LoanPolicy p1 = new LoanPolicy("f6f88da8-2aaf-48c7-944e-0de3f4cc2368");
-  LoanPolicy p2 = new LoanPolicy("c42e3a01-eb61-4edd-8cb0-8c7ecc0b4ca2");
-  LoanPolicy p3 = new LoanPolicy("f0c8d755-0e56-4d38-9a45-9cd9248b1ae8");
-  LoanPolicy p4 = new LoanPolicy("0122feae-bd0e-4405-88de-525d93ba7cfd");
+  private ItemType m1 = new ItemType("96d4bdf1-5fc2-40ef-9ace-6d7e3e48ec4d");
+  private ItemType m2 = new ItemType("b6375fcb-caaf-4b94-944d-b1a6bb589425");
+  private LoanType t1 = new LoanType("2e6f51b9-d00a-4f1d-9960-49b1977acfca");
+  private LoanType t2 = new LoanType("220e2dad-e3c7-42f3-bb46-515ba29ba65f");
+  private PatronGroup g1 = new PatronGroup("0122feae-bd0e-4405-88de-525d93ba7cfd");
+  private PatronGroup g2 = new PatronGroup("87d14197-6de3-4ba5-9201-6c4129504adf");
+  private ShelvingLocation s1 = new ShelvingLocation("cdc0b09d-dd56-4377-ae10-a20b50121dc4");
+  private ShelvingLocation s2 = new ShelvingLocation("fe91de23-6bf5-4179-a90e-3e87769af86e");
+  private LoanPolicy p6 = new LoanPolicy("6a475259-8a97-4992-a415-76440f5f7c23");
+  private LoanPolicy p7 = new LoanPolicy("7b586360-8ba8-4aa3-b526-875510608d34");
+  private LoanPolicy p1 = new LoanPolicy("f6f88da8-2aaf-48c7-944e-0de3f4cc2368");
+  private LoanPolicy p2 = new LoanPolicy("c42e3a01-eb61-4edd-8cb0-8c7ecc0b4ca2");
+  private LoanPolicy p3 = new LoanPolicy("f0c8d755-0e56-4d38-9a45-9cd9248b1ae8");
+  private LoanPolicy p4 = new LoanPolicy("0122feae-bd0e-4405-88de-525d93ba7cfd");
 
   private String rulesFallback =  "priority: t, s, c, b, a, m, g\nfallback-policy: " + p6;
   private String rulesFallback2 = "priority: t, s, c, b, a, m, g\nfallback-policy: " + p7;
@@ -247,13 +244,26 @@ public class LoanRulesEngineAPITests extends APITests {
     setRules(rulesFallback);
     assertThat(apply(m1, t1, g1, s1), is(p6));
 
-    // change loan rules in the storage backend without
-    // invalidating the cache
-    APITestSuite.setLoanRules(rulesFallback2);
+    updateLoanRulesInStorageWithoutInvalidatingCache(rulesFallback2);
+
     assertThat(apply(m1, t1, g1, s1), is(p6));
 
     // reduce cache time to trigger reload from storage backend
     LoanRulesEngineResource.setCacheTime(0, 0);
+
     assertThat(apply(m1, t1, g1, s1), is(p7));
+  }
+
+  private void updateLoanRulesInStorageWithoutInvalidatingCache(String rules)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    ResourceClient loanRulesClient = ResourceClient.forLoanRules(client);
+
+    JsonObject json = new JsonObject().put("loanRulesAsTextFile", rules);
+
+    loanRulesClient.replace(null, json);
   }
 }

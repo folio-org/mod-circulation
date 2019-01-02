@@ -27,6 +27,7 @@ import api.support.fixtures.AddressTypesFixture;
 import api.support.fixtures.CancellationReasonsFixture;
 import api.support.fixtures.ItemsFixture;
 import api.support.fixtures.LoanPoliciesFixture;
+import api.support.fixtures.LoanRulesFixture;
 import api.support.fixtures.LoanTypesFixture;
 import api.support.fixtures.LoansFixture;
 import api.support.fixtures.LocationsFixture;
@@ -38,7 +39,6 @@ import api.support.fixtures.ServicePointsFixture;
 import api.support.fixtures.UsersFixture;
 import api.support.http.InterfaceUrls;
 import api.support.http.ResourceClient;
-import io.vertx.core.json.JsonObject;
 
 public abstract class APITests {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -73,7 +73,7 @@ public abstract class APITests {
 
   protected final ResourceClient requestsClient = ResourceClient.forRequests(client);
 
-  protected final ResourceClient fixedDueDateScheduleClient
+  private final ResourceClient fixedDueDateScheduleClient
     = ResourceClient.forFixedDueDateSchedules(client);
 
   protected final ResourceClient loanPolicyClient
@@ -100,6 +100,9 @@ public abstract class APITests {
 
   protected final LoanPoliciesFixture loanPoliciesFixture
     = new LoanPoliciesFixture(loanPolicyClient, fixedDueDateScheduleClient);
+
+  protected final LoanRulesFixture loanRulesFixture
+    = new LoanRulesFixture(client);
 
   protected final ItemsFixture itemsFixture = new ItemsFixture(client,
     materialTypesFixture, loanTypesFixture, locationsFixture,
@@ -179,7 +182,7 @@ public abstract class APITests {
     TimeoutException,
     MalformedURLException {
 
-    deleteCommonRecords();
+    deleteOftenCreatedRecords();
 
     APITestSuite.undeployVerticles();
   }
@@ -239,33 +242,11 @@ public abstract class APITests {
   protected void useLoanPolicyAsFallback(UUID loanPolicyId)
     throws InterruptedException,
     ExecutionException,
-    TimeoutException {
+    TimeoutException,
+    MalformedURLException {
 
-    updateLoanRules(loanPolicyId);
+    loanRulesFixture.updateLoanRules(loanPolicyId);
     warmUpApplyEndpoint();
-  }
-
-  private void updateLoanRules(UUID loanPolicyId)
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    String rule = String.format("priority: t, s, c, b, a, m, g%nfallback-policy: %s%n",
-      loanPolicyId);
-
-    JsonObject loanRulesRequest = new JsonObject()
-      .put("loanRulesAsTextFile", rule);
-
-    CompletableFuture<Response> completed = new CompletableFuture<>();
-
-    client.put(InterfaceUrls.loanRulesUrl(), loanRulesRequest,
-      ResponseHandler.any(completed));
-
-    Response response = completed.get(5, TimeUnit.SECONDS);
-
-    assertThat(String.format(
-      "Failed to set loan rules: %s", response.getBody()),
-      response.getStatusCode(), is(204));
   }
 
   protected void warmUpApplyEndpoint()
@@ -287,7 +268,7 @@ public abstract class APITests {
       response.getStatusCode(), is(200));
   }
 
-  private static void deleteCommonRecords()
+  private static void deleteOftenCreatedRecords()
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
