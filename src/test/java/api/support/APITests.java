@@ -35,7 +35,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import api.APITestSuite;
-import api.support.builders.ServicePointBuilder;
 import api.support.fixtures.ItemsFixture;
 import api.support.fixtures.LoanTypesFixture;
 import api.support.fixtures.LoansFixture;
@@ -130,8 +129,6 @@ public abstract class APITests {
     //Delete everything first just in case
     APITestSuite.deleteAllRecords();
 
-    createServicePoints();
-
     createCommonRecords();
   }
 
@@ -151,6 +148,7 @@ public abstract class APITests {
 
     usersClient.deleteAllIndividually();
 
+    createServicePoints();
     createLocations();
 
     if (initialiseLoanRules) {
@@ -166,8 +164,6 @@ public abstract class APITests {
     MalformedURLException {
 
     deleteCommonRecords();
-
-    deleteServicePoints();
 
     APITestSuite.undeployVerticles();
   }
@@ -280,28 +276,13 @@ public abstract class APITests {
       response.getStatusCode(), is(200));
   }
 
-  private static void createServicePoints()
+  private void createServicePoints()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
 
-    ResourceClient servicePointsClient = ResourceClient.forServicePoints(createClient());
-
-    APITestSuite.fakeServicePointId = servicePointsClient.create(
-      new ServicePointBuilder("Fake service point", "FAKE", "Fake service point"))
-      .getId();
-  }
-
-  private static void deleteServicePoints()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    ResourceClient servicePointsClient = ResourceClient.forServicePoints(createClient());
-
-    servicePointsClient.delete(APITestSuite.fakeServicePointId);
+    APITestSuite.fakeServicePointId = servicePointsFixture.fake().getId();
   }
 
   private void createLocations()
