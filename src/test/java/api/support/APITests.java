@@ -6,7 +6,6 @@ import static api.APITestSuite.createClient;
 import static api.APITestSuite.createCommonRecords;
 import static api.APITestSuite.createReferenceRecord;
 import static api.APITestSuite.djanoglyLibrary;
-import static api.APITestSuite.fakeServicePoint;
 import static api.APITestSuite.jubileeCampus;
 import static api.APITestSuite.mezzanineDisplayCaseLocationId;
 import static api.APITestSuite.nottinghamUniversityInstitution;
@@ -37,7 +36,6 @@ import org.slf4j.LoggerFactory;
 
 import api.APITestSuite;
 import api.support.builders.ServicePointBuilder;
-import api.support.examples.LocationExamples;
 import api.support.fixtures.ItemsFixture;
 import api.support.fixtures.LoanTypesFixture;
 import api.support.fixtures.LoansFixture;
@@ -133,7 +131,6 @@ public abstract class APITests {
     APITestSuite.deleteAllRecords();
 
     createServicePoints();
-    createLocations();
 
     createCommonRecords();
   }
@@ -153,7 +150,9 @@ public abstract class APITests {
     instancesClient.deleteAll();
 
     usersClient.deleteAllIndividually();
-    
+
+    createLocations();
+
     if (initialiseLoanRules) {
       useDefaultRollingPolicyLoanRules();
     }
@@ -168,37 +167,9 @@ public abstract class APITests {
 
     deleteCommonRecords();
 
-    deleteLocations();
     deleteServicePoints();
 
     APITestSuite.undeployVerticles();
-  }
-
-  private static void deleteCommonRecords()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    OkapiHttpClient cleanupClient = createClient(exception ->
-      log.error("Requests to delete all for clean up failed:", exception));
-
-    ResourceClient.forRequests(cleanupClient).deleteAll();
-    ResourceClient.forLoans(cleanupClient).deleteAll();
-
-    ResourceClient.forItems(cleanupClient).deleteAll();
-    ResourceClient.forHoldings(cleanupClient).deleteAll();
-    ResourceClient.forInstances(cleanupClient).deleteAll();
-
-    ResourceClient.forUsers(cleanupClient).deleteAllIndividually();
-
-    APITestSuite.deleteGroups();
-    APITestSuite.deleteAddressTypes();
-
-    APITestSuite.deleteContributorTypes();
-    APITestSuite.deleteInstanceTypes();
-    APITestSuite.deleteLoanPolicies();
-    APITestSuite.deleteCancellationReasons();
   }
 
   @After
@@ -333,7 +304,7 @@ public abstract class APITests {
     servicePointsClient.delete(APITestSuite.fakeServicePointId);
   }
 
-  private static void createLocations()
+  private void createLocations()
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
@@ -365,32 +336,24 @@ public abstract class APITests {
         .put("name", "Business Library")
         .put("campusId", jubileeCampus.toString()));
 
-    ResourceClient locationsClient = ResourceClient.forLocations(client);
+    thirdFloorLocationId = locationsFixture.thirdFloor().getId();
 
-    thirdFloorLocationId = createReferenceRecord(locationsClient,
-      LocationExamples.thirdFloor(fakeServicePoint()).create());
+    secondFloorEconomicsLocationId = locationsFixture.secondFloorEconomics()
+      .getId();
 
-    secondFloorEconomicsLocationId = createReferenceRecord(locationsClient,
-      LocationExamples.secondFloorEconomics(fakeServicePoint()).create());
-
-    mezzanineDisplayCaseLocationId = createReferenceRecord(locationsClient,
-      LocationExamples.mezzanineDisplayCase(fakeServicePoint()).create());
+    mezzanineDisplayCaseLocationId = locationsFixture.mezzanineDisplayCase()
+      .getId();
   }
 
-  private static void deleteLocations()
+  private void deleteLocations()
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
     TimeoutException {
 
+    locationsFixture.cleanUp();
+
     final OkapiHttpClient client = createClient();
-
-    ResourceClient locationsClient = ResourceClient.forLocations(client);
-
-    //Use the same ID as old locations for continuity
-    locationsClient.delete(thirdFloorLocationId);
-    locationsClient.delete(mezzanineDisplayCaseLocationId);
-    locationsClient.delete(secondFloorEconomicsLocationId);
 
     ResourceClient librariesClient = ResourceClient.forLibraries(client);
 
@@ -404,5 +367,32 @@ public abstract class APITests {
     ResourceClient institutionsClient = ResourceClient.forInstitutions(client);
 
     institutionsClient.delete(nottinghamUniversityInstitution);
+  }
+
+  private static void deleteCommonRecords()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    OkapiHttpClient cleanupClient = createClient(exception ->
+      log.error("Requests to delete all for clean up failed:", exception));
+
+    ResourceClient.forRequests(cleanupClient).deleteAll();
+    ResourceClient.forLoans(cleanupClient).deleteAll();
+
+    ResourceClient.forItems(cleanupClient).deleteAll();
+    ResourceClient.forHoldings(cleanupClient).deleteAll();
+    ResourceClient.forInstances(cleanupClient).deleteAll();
+
+    ResourceClient.forUsers(cleanupClient).deleteAllIndividually();
+
+    APITestSuite.deleteGroups();
+    APITestSuite.deleteAddressTypes();
+
+    APITestSuite.deleteContributorTypes();
+    APITestSuite.deleteInstanceTypes();
+    APITestSuite.deleteLoanPolicies();
+    APITestSuite.deleteCancellationReasons();
   }
 }

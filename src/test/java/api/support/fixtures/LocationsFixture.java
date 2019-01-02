@@ -12,6 +12,7 @@ import java.util.function.Function;
 import org.folio.circulation.support.http.client.IndividualResource;
 
 import api.support.builders.LocationBuilder;
+import api.support.examples.LocationExamples;
 import api.support.http.ResourceClient;
 
 public class LocationsFixture {
@@ -40,5 +41,35 @@ public class LocationsFixture {
 
     return locationRecordCreator.createIfAbsent(
       additionalLocationProperties.apply(exampleLocation(fakeServicePoint())));
+  }
+
+  public IndividualResource thirdFloor()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return locationRecordCreator.createIfAbsent(
+      LocationExamples.thirdFloor(fakeServicePoint()));
+  }
+
+  public IndividualResource secondFloorEconomics()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return locationRecordCreator.createIfAbsent(
+      LocationExamples.secondFloorEconomics(fakeServicePoint()));
+  }
+
+  public IndividualResource mezzanineDisplayCase()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return locationRecordCreator.createIfAbsent(
+      LocationExamples.mezzanineDisplayCase(fakeServicePoint()));
   }
 }
