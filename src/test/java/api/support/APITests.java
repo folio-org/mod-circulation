@@ -1,13 +1,8 @@
 package api.support;
 
 
-import static api.APITestSuite.businessLibrary;
 import static api.APITestSuite.createClient;
 import static api.APITestSuite.createCommonRecords;
-import static api.APITestSuite.createReferenceRecord;
-import static api.APITestSuite.djanoglyLibrary;
-import static api.APITestSuite.jubileeCampus;
-import static api.APITestSuite.nottinghamUniversityInstitution;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -57,6 +52,10 @@ public abstract class APITests {
 
 
   private final ResourceClient servicePointsClient = ResourceClient.forServicePoints(client);
+
+  ResourceClient institutionsClient = ResourceClient.forInstitutions(client);
+  ResourceClient campusesClient = ResourceClient.forCampuses(client);
+  ResourceClient librariesClient = ResourceClient.forLibraries(client);
   private final ResourceClient locationsClient = ResourceClient.forLocations(client);
 
   private final ResourceClient patronGroupsClient = ResourceClient.forPatronGroups(client);
@@ -79,7 +78,8 @@ public abstract class APITests {
     = new ServicePointsFixture(servicePointsClient);
 
   protected final LocationsFixture locationsFixture = new LocationsFixture(
-    locationsClient, servicePointsFixture);
+    locationsClient, institutionsClient, campusesClient, librariesClient,
+    servicePointsFixture);
 
   protected final LoanTypesFixture loanTypesFixture = new LoanTypesFixture(
     ResourceClient.forLoanTypes(client));
@@ -145,8 +145,6 @@ public abstract class APITests {
 
     usersClient.deleteAllIndividually();
 
-    createLocations();
-
     if (initialiseLoanRules) {
       useDefaultRollingPolicyLoanRules();
     }
@@ -178,7 +176,7 @@ public abstract class APITests {
     materialTypesFixture.cleanUp();
     loanTypesFixture.cleanUp();
 
-    deleteLocations();
+    locationsFixture.cleanUp();
     servicePointsFixture.cleanUp();
 
     for (UUID policyId : policiesToDelete) {
@@ -270,69 +268,6 @@ public abstract class APITests {
     assertThat(String.format(
       "Failed to apply loan rules: %s", response.getBody()),
       response.getStatusCode(), is(200));
-  }
-
-  private void createLocations()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    final OkapiHttpClient client = createClient();
-
-    ResourceClient institutionsClient = ResourceClient.forInstitutions(client);
-
-    nottinghamUniversityInstitution = createReferenceRecord(
-      institutionsClient, "Nottingham University");
-
-    ResourceClient campusesClient = ResourceClient.forCampuses(client);
-
-    jubileeCampus = createReferenceRecord(campusesClient,
-      new JsonObject()
-        .put("name", "Jubilee Campus")
-        .put("institutionId", nottinghamUniversityInstitution.toString()));
-
-    ResourceClient librariesClient = ResourceClient.forLibraries(client);
-
-    djanoglyLibrary = createReferenceRecord(librariesClient,
-      new JsonObject()
-        .put("name", "Djanogly Learning Resource Centre")
-        .put("campusId", jubileeCampus.toString()));
-
-    businessLibrary = createReferenceRecord(librariesClient,
-      new JsonObject()
-        .put("name", "Business Library")
-        .put("campusId", jubileeCampus.toString()));
-
-    locationsFixture.thirdFloor().getId();
-
-    locationsFixture.secondFloorEconomics();
-
-    locationsFixture.mezzanineDisplayCase();
-  }
-
-  private void deleteLocations()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    locationsFixture.cleanUp();
-
-    final OkapiHttpClient client = createClient();
-
-    ResourceClient librariesClient = ResourceClient.forLibraries(client);
-
-    librariesClient.delete(djanoglyLibrary);
-    librariesClient.delete(businessLibrary);
-
-    ResourceClient campusesClient = ResourceClient.forCampuses(client);
-
-    campusesClient.delete(jubileeCampus);
-
-    ResourceClient institutionsClient = ResourceClient.forInstitutions(client);
-
-    institutionsClient.delete(nottinghamUniversityInstitution);
   }
 
   private static void deleteCommonRecords()

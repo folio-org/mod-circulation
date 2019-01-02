@@ -1,55 +1,68 @@
 package api.support.examples;
 
-import static api.APITestSuite.businessLibrary;
-import static api.APITestSuite.djanoglyLibrary;
-import static api.APITestSuite.jubileeCampus;
-import static api.APITestSuite.nottinghamUniversityInstitution;
-
 import java.util.UUID;
 
-import api.APITestSuite;
 import api.support.builders.LocationBuilder;
 
 public class LocationExamples {
-  private LocationExamples() { }
 
-  public static LocationBuilder mezzanineDisplayCase(UUID primaryServicePointId) {
+  private final UUID djanoglyLibraryId;
+  private final UUID nottinghamUniversityId;
+  private final UUID jubileeCampusId;
+  private final UUID businessLibraryId;
+  private final UUID primaryServicePointId;
+
+  public LocationExamples(
+    UUID nottinghamUniversityId,
+    UUID jubileeCampusId,
+    UUID businessLibraryId,
+    UUID djanoglyLibraryId,
+    UUID primaryServicePointId) {
+
+    this.nottinghamUniversityId = nottinghamUniversityId;
+    this.jubileeCampusId = jubileeCampusId;
+    this.businessLibraryId = businessLibraryId;
+    this.djanoglyLibraryId = djanoglyLibraryId;
+    this.primaryServicePointId = primaryServicePointId;
+  }
+
+  public LocationBuilder mezzanineDisplayCase() {
     return new LocationBuilder()
       .withName("Display Case, Mezzanine")
       .withCode("NU/JC/BL/DM")
-      .forInstitution(nottinghamUniversityInstitution())
-      .forCampus(jubileeCampus())
-      .forLibrary(businessLibrary())
+      .forInstitution(nottinghamUniversityId)
+      .forCampus(jubileeCampusId)
+      .forLibrary(businessLibraryId)
       .withPrimaryServicePoint(primaryServicePointId);
   }
 
-  public static LocationBuilder secondFloorEconomics(UUID primaryServicePointId) {
+  public LocationBuilder secondFloorEconomics() {
     return new LocationBuilder()
       .withName("2nd Floor - Economics")
       .withCode("NU/JC/DL/2FE")
-      .forInstitution(nottinghamUniversityInstitution())
-      .forCampus(jubileeCampus())
-      .forLibrary(APITestSuite.djanoglyLibrary())
+      .forInstitution(nottinghamUniversityId)
+      .forCampus(jubileeCampusId)
+      .forLibrary(djanoglyLibraryId)
       .withPrimaryServicePoint(primaryServicePointId);
   }
 
-  public static LocationBuilder thirdFloor(UUID primaryServicePointId) {
+  public LocationBuilder thirdFloor() {
     return new LocationBuilder()
       .withName("3rd Floor")
       .withCode("NU/JC/DL/3F")
-      .forInstitution(nottinghamUniversityInstitution())
-      .forCampus(jubileeCampus())
-      .forLibrary(APITestSuite.djanoglyLibrary())
+      .forInstitution(nottinghamUniversityId)
+      .forCampus(jubileeCampusId)
+      .forLibrary(djanoglyLibraryId)
       .withPrimaryServicePoint(primaryServicePointId);
   }
 
-  public static LocationBuilder exampleLocation(UUID primaryServicePointId) {
+  public LocationBuilder example() {
     return new LocationBuilder()
       .withName("Example location")
       .withCode("NU/JC/DL/EX")
-      .forInstitution(nottinghamUniversityInstitution())
-      .forCampus(jubileeCampus())
-      .forLibrary(djanoglyLibrary())
+      .forInstitution(nottinghamUniversityId)
+      .forCampus(jubileeCampusId)
+      .forLibrary(djanoglyLibraryId)
       .withPrimaryServicePoint(primaryServicePointId);
   }
 }

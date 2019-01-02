@@ -57,11 +57,6 @@ public class APITestSuite {
   private static UUID workAddressTypeId;
   private static UUID personalContributorTypeId;
 
-  public static UUID nottinghamUniversityInstitution;
-  public static UUID jubileeCampus;
-  public static UUID djanoglyLibrary;
-  public static UUID businessLibrary;
-
   private static UUID canCirculateRollingLoanPolicyId;
   private static UUID canCirculateFixedLoanPolicyId;
   private static UUID exampleFixedDueDateSchedulesId;
@@ -136,22 +131,6 @@ public class APITestSuite {
 
   public static UUID courseReservesCancellationReasonId() {
     return courseReservesCancellationReasonId;
-  }
-
-  public static UUID nottinghamUniversityInstitution() {
-    return nottinghamUniversityInstitution;
-  }
-
-  public static UUID jubileeCampus() {
-    return jubileeCampus;
-  }
-
-  public static UUID djanoglyLibrary() {
-    return djanoglyLibrary;
-  }
-
-  public static UUID businessLibrary() {
-    return businessLibrary;
   }
 
   public static UUID exampleFixedDueDateSchedulesId() {

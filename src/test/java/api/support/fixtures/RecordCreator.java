@@ -68,7 +68,7 @@ class RecordCreator {
     return createIfAbsent(recordBuilder.create());
   }
 
-  private IndividualResource createIfAbsent(JsonObject record)
+  IndividualResource createIfAbsent(JsonObject record)
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
