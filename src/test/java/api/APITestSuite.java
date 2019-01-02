@@ -204,8 +204,10 @@ public class APITestSuite {
 
     createServicePoints();
     createLocations();
+
     createContributorNameTypes();
     createInstanceTypes();
+
     createAddressTypes();
     createGroups();
 

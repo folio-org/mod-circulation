@@ -1,7 +1,9 @@
 package api.support.fixtures;
 
 import java.net.MalformedURLException;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -14,10 +16,13 @@ import api.support.http.ResourceClient;
 
 class RecordCreator {
   private final ResourceClient client;
-  private final Set<UUID> recordIdsToDelete = new HashSet<>();
+  private final Map<String, IndividualResource> identityMap;
+  private final Set<UUID> createdRecordIds;
 
   RecordCreator(ResourceClient client) {
     this.client = client;
+    this.identityMap = new HashMap<>();
+    this.createdRecordIds = new HashSet<>();
   }
 
   IndividualResource create(Builder builder)
@@ -28,7 +33,7 @@ class RecordCreator {
 
     final IndividualResource createdRecord = client.create(builder);
 
-    recordIdsToDelete.add(createdRecord.getId());
+    createdRecordIds.add(createdRecord.getId());
 
     return createdRecord;
   }
@@ -39,10 +44,25 @@ class RecordCreator {
     ExecutionException,
     TimeoutException {
 
-    for (UUID userId : recordIdsToDelete) {
+    for (UUID userId : createdRecordIds) {
       client.delete(userId);
     }
 
-    recordIdsToDelete.clear();
+    createdRecordIds.clear();
+  }
+
+  IndividualResource createIfAbsent(String key, Builder valueBuilder)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    if(!identityMap.containsKey(key)) {
+      final IndividualResource user = create(valueBuilder);
+
+      identityMap.put(key, user);
+    }
+
+    return identityMap.get(key);
   }
 }
