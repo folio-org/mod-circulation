@@ -3,6 +3,7 @@ package api.support.fixtures;
 import static api.support.fixtures.ServicePointExamples.basedUponCircDesk1;
 import static api.support.fixtures.ServicePointExamples.basedUponCircDesk2;
 import static api.support.fixtures.ServicePointExamples.basedUponCircDesk3;
+import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 import java.net.MalformedURLException;
 import java.util.concurrent.ExecutionException;
@@ -16,7 +17,8 @@ public class ServicePointsFixture {
   private final RecordCreator servicePointRecordCreator;
   
   public ServicePointsFixture(ResourceClient client) {
-    servicePointRecordCreator = new RecordCreator(client);
+    servicePointRecordCreator = new RecordCreator(client,
+      servicePoint -> getProperty(servicePoint, "code"));
   }
 
   public void cleanUp()
@@ -33,7 +35,8 @@ public class ServicePointsFixture {
       MalformedURLException, 
       TimeoutException, 
       ExecutionException {
-    return servicePointRecordCreator.create(basedUponCircDesk1());
+
+    return servicePointRecordCreator.createIfAbsent(basedUponCircDesk1());
   }
   
   public IndividualResource cd2() 
@@ -41,7 +44,8 @@ public class ServicePointsFixture {
       MalformedURLException, 
       TimeoutException, 
       ExecutionException {
-    return servicePointRecordCreator.create(basedUponCircDesk2());
+
+    return servicePointRecordCreator.createIfAbsent(basedUponCircDesk2());
   } 
   
   public IndividualResource cd3() 
@@ -49,6 +53,7 @@ public class ServicePointsFixture {
       MalformedURLException, 
       TimeoutException, 
       ExecutionException {
-    return servicePointRecordCreator.create(basedUponCircDesk3());
+
+    return servicePointRecordCreator.createIfAbsent(basedUponCircDesk3());
   } 
 }

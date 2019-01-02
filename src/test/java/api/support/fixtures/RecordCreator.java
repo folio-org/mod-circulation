@@ -94,6 +94,7 @@ class RecordCreator {
     TimeoutException,
     ExecutionException {
 
+    //Cannot use computeIfAbsent as create(record) can throw checked exceptions
     if(needsCreating(key)) {
       final IndividualResource user = create(record);
 
