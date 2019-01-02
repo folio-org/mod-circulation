@@ -28,13 +28,15 @@ public class ItemsFixture {
   private final LoanTypesFixture loanTypesFixture;
   private final LocationsFixture locationsFixture;
   private final RecordCreator instanceTypeRecordCreator;
+  private final RecordCreator contributorNameTypeRecordCreator;
 
   public ItemsFixture(
     OkapiHttpClient client,
     MaterialTypesFixture materialTypesFixture,
     LoanTypesFixture loanTypesFixture,
     LocationsFixture locationsFixture,
-    ResourceClient instanceTypesClient) {
+    ResourceClient instanceTypesClient,
+    ResourceClient contributorNameTypesClient) {
 
     itemsClient = ResourceClient.forItems(client);
     holdingsClient = ResourceClient.forHoldings(client);
@@ -45,6 +47,9 @@ public class ItemsFixture {
 
     instanceTypeRecordCreator = new RecordCreator(instanceTypesClient,
       instanceType -> getProperty(instanceType, "name"));
+
+    contributorNameTypeRecordCreator = new RecordCreator(
+      contributorNameTypesClient, nameType -> getProperty(nameType, "name"));
   }
 
   public void cleanUp()
@@ -55,6 +60,7 @@ public class ItemsFixture {
 
     //TODO: Also clean up created instances, holdings record and items
     instanceTypeRecordCreator.cleanUp();
+    contributorNameTypeRecordCreator.cleanUp();
   }
 
   public InventoryItemResource basedUponDunkirk()
@@ -64,7 +70,8 @@ public class ItemsFixture {
     ExecutionException {
 
     return create(
-      InstanceExamples.basedUponDunkirk(booksInstanceTypeId()),
+      InstanceExamples.basedUponDunkirk(booksInstanceTypeId(),
+        getPersonalContributorNameTypeId()),
       thirdFloorHoldings(),
       ItemExamples.basedUponDunkirk(materialTypesFixture.videoRecording(),
         loanTypesFixture.canCirculate()));
@@ -102,7 +109,8 @@ public class ItemsFixture {
     return applyAdditionalProperties(
       additionalHoldingsRecordProperties,
       additionalItemProperties,
-      InstanceExamples.basedUponSmallAngryPlanet(booksInstanceTypeId()),
+      InstanceExamples.basedUponSmallAngryPlanet(booksInstanceTypeId(),
+        getPersonalContributorNameTypeId()),
       thirdFloorHoldings(),
       ItemExamples.basedUponSmallAngryPlanet(materialTypesFixture.book(),
         loanTypesFixture.canCirculate()));
@@ -127,7 +135,8 @@ public class ItemsFixture {
     return applyAdditionalProperties(
       identity(),
       additionalItemProperties,
-      InstanceExamples.basedUponNod(booksInstanceTypeId()),
+      InstanceExamples.basedUponNod(booksInstanceTypeId(),
+        getPersonalContributorNameTypeId()),
       thirdFloorHoldings(),
       ItemExamples.basedUponNod(materialTypesFixture.book(),
         loanTypesFixture.canCirculate()));
@@ -153,7 +162,8 @@ public class ItemsFixture {
     return applyAdditionalProperties(
       additionalHoldingsRecordProperties,
       additionalItemProperties,
-      InstanceExamples.basedUponTemeraire(booksInstanceTypeId()),
+      InstanceExamples.basedUponTemeraire(booksInstanceTypeId(),
+        getPersonalContributorNameTypeId()),
       thirdFloorHoldings(),
       ItemExamples.basedUponTemeraire(materialTypesFixture.book(),
         loanTypesFixture.canCirculate()));
@@ -188,7 +198,8 @@ public class ItemsFixture {
     return applyAdditionalProperties(
       identity(),
       additionalItemProperties,
-      InstanceExamples.basedUponUprooted(booksInstanceTypeId()),
+      InstanceExamples.basedUponUprooted(booksInstanceTypeId(),
+        getPersonalContributorNameTypeId()),
       thirdFloorHoldings(),
       ItemExamples.basedUponUprooted(materialTypesFixture.book(),
         loanTypesFixture.canCirculate()));
@@ -213,7 +224,8 @@ public class ItemsFixture {
     return applyAdditionalProperties(
       identity(),
       additionalItemProperties,
-      InstanceExamples.basedUponInterestingTimes(booksInstanceTypeId()),
+      InstanceExamples.basedUponInterestingTimes(booksInstanceTypeId(),
+        getPersonalContributorNameTypeId()),
       thirdFloorHoldings(),
       ItemExamples.basedUponInterestingTimes(materialTypesFixture.book(),
         loanTypesFixture.canCirculate()));
@@ -283,5 +295,18 @@ public class ItemsFixture {
     write(booksInstanceType, "source", "tests");
 
     return instanceTypeRecordCreator.createIfAbsent(booksInstanceType).getId();
+  }
+
+  private UUID getPersonalContributorNameTypeId()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final JsonObject personalName = new JsonObject();
+
+    write(personalName, "name", "Personal name");
+
+    return contributorNameTypeRecordCreator.createIfAbsent(personalName).getId();
   }
 }

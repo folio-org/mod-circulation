@@ -77,6 +77,8 @@ public abstract class APITests {
   protected final ResourceClient loanPolicyClient = ResourceClient.forLoanPolicies(client);
 
   private final ResourceClient instanceTypesClient = ResourceClient.forInstanceTypes(client);
+  private final ResourceClient contributorNameTypesClient
+    = ResourceClient.forContributorNameTypes(client);
 
   protected final ServicePointsFixture servicePointsFixture
     = new ServicePointsFixture(servicePointsClient);
@@ -92,7 +94,8 @@ public abstract class APITests {
     ResourceClient.forMaterialTypes(client));
 
   protected final ItemsFixture itemsFixture = new ItemsFixture(client,
-    materialTypesFixture, loanTypesFixture, locationsFixture, instanceTypesClient);
+    materialTypesFixture, loanTypesFixture, locationsFixture,
+    instanceTypesClient, contributorNameTypesClient);
 
   protected final PatronGroupsFixture patronGroupsFixture
     = new PatronGroupsFixture(patronGroupsClient);
@@ -299,7 +302,6 @@ public abstract class APITests {
 
     APITestSuite.deleteAddressTypes();
 
-    APITestSuite.deleteContributorTypes();
     APITestSuite.deleteLoanPolicies();
     APITestSuite.deleteCancellationReasons();
   }
