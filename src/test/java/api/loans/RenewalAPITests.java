@@ -166,11 +166,8 @@ abstract class RenewalAPITests extends APITests {
       .withName("March Only Due Date Limit")
       .addSchedule(wholeMonth(2018, 3));
 
-    final UUID dueDateLimitScheduleId = fixedDueDateScheduleClient.create(
+    final UUID dueDateLimitScheduleId = loanPoliciesFixture.createSchedule(
       dueDateLimitSchedule).getId();
-
-    //Need to remember in order to delete after test
-    schedulesToDelete.add(dueDateLimitScheduleId);
 
     LoanPolicyBuilder dueDateLimitedPolicy = new LoanPolicyBuilder()
       .withName("Due Date Limited Rolling Policy")
@@ -275,11 +272,8 @@ abstract class RenewalAPITests extends APITests {
       .withName("March Only Due Date Limit")
       .addSchedule(wholeMonth(2018, 3));
 
-    final UUID dueDateLimitScheduleId = fixedDueDateScheduleClient.create(
+    final UUID dueDateLimitScheduleId = loanPoliciesFixture.createSchedule(
       dueDateLimitSchedule).getId();
-
-    //Need to remember in order to delete after test
-    schedulesToDelete.add(dueDateLimitScheduleId);
 
     LoanPolicyBuilder dueDateLimitedPolicy = new LoanPolicyBuilder()
       .withName("Due Date Limited Rolling Policy")
@@ -327,11 +321,8 @@ abstract class RenewalAPITests extends APITests {
       .withName("March Only Due Date Limit")
       .addSchedule(wholeMonth(2018, 3));
 
-    final UUID dueDateLimitScheduleId = fixedDueDateScheduleClient.create(
+    final UUID dueDateLimitScheduleId = loanPoliciesFixture.createSchedule(
       dueDateLimitSchedule).getId();
-
-    //Need to remember in order to delete after test
-    schedulesToDelete.add(dueDateLimitScheduleId);
 
     LoanPolicyBuilder dueDateLimitedPolicy = new LoanPolicyBuilder()
       .withName("Due Date Limited Rolling Policy")
@@ -385,11 +376,8 @@ abstract class RenewalAPITests extends APITests {
       .addSchedule(wholeMonth(2018, 2))
       .addSchedule(forDay(renewalDate));
 
-    final UUID fixedDueDateSchedulesId = fixedDueDateScheduleClient.create(
+    final UUID fixedDueDateSchedulesId = loanPoliciesFixture.createSchedule(
       fixedDueDateSchedules).getId();
-
-    //Need to remember in order to delete after test
-    schedulesToDelete.add(fixedDueDateSchedulesId);
 
     LoanPolicyBuilder dueDateLimitedPolicy = new LoanPolicyBuilder()
       .withName("Fixed Due Date Policy")
@@ -620,11 +608,8 @@ abstract class RenewalAPITests extends APITests {
       .addSchedule(FixedDueDateSchedule.yesterdayOnly())
       .addSchedule(FixedDueDateSchedule.todayOnly());
 
-    final UUID yesterdayAndTodayOnlySchedulesId = fixedDueDateScheduleClient.create(
-      yesterdayAndTodayOnlySchedules).getId();
-
-    //Need to remember in order to delete after test
-    schedulesToDelete.add(yesterdayAndTodayOnlySchedulesId);
+    final UUID yesterdayAndTodayOnlySchedulesId
+      = loanPoliciesFixture.createSchedule(yesterdayAndTodayOnlySchedules).getId();
 
     LoanPolicyBuilder limitedRenewalsPolicy = new LoanPolicyBuilder()
       .withName("Limited Renewals And Limited Due Date Policy")
@@ -700,11 +685,8 @@ abstract class RenewalAPITests extends APITests {
       .withName("Today Only Due Date Limit")
       .addSchedule(FixedDueDateSchedule.todayOnly());
 
-    final UUID todayOnlySchedulesId = fixedDueDateScheduleClient.create(
+    final UUID todayOnlySchedulesId = loanPoliciesFixture.createSchedule(
       todayOnlySchedules).getId();
-
-    //Need to remember in order to delete after test
-    schedulesToDelete.add(todayOnlySchedulesId);
 
     LoanPolicyBuilder limitedRenewalsPolicy = new LoanPolicyBuilder()
       .withName("Non Renewable Policy")

@@ -255,11 +255,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
       .withName("Fixed Due Date Schedule")
       .addSchedule(wholeMonth(2018, DateTimeConstants.FEBRUARY));
 
-    final UUID fixedDueDateSchedulesId = fixedDueDateScheduleClient.create(
+    final UUID fixedDueDateSchedulesId = loanPoliciesFixture.createSchedule(
       fixedDueDateSchedules).getId();
-
-    //Need to remember in order to delete after test
-    schedulesToDelete.add(fixedDueDateSchedulesId);
 
     LoanPolicyBuilder currentDueDateRollingPolicy = new LoanPolicyBuilder()
       .withName("Current Due Date Rolling Policy")
@@ -301,11 +298,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
       .withName("Fixed Due Date Schedule")
       .addSchedule(wholeMonth(2018, DateTimeConstants.FEBRUARY));
 
-    final UUID fixedDueDateSchedulesId = fixedDueDateScheduleClient.create(
+    final UUID fixedDueDateSchedulesId = loanPoliciesFixture.createSchedule(
       fixedDueDateSchedules).getId();
-
-    //Need to remember in order to delete after test
-    schedulesToDelete.add(fixedDueDateSchedulesId);
 
     LoanPolicyBuilder currentDueDateRollingPolicy = new LoanPolicyBuilder()
       .withName("Current Due Date Rolling Policy")
@@ -379,11 +373,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
       .addSchedule(wholeMonth(2018, DateTimeConstants.FEBRUARY))
       .addSchedule(forDay(renewalDate));
 
-    final UUID fixedDueDateSchedulesId = fixedDueDateScheduleClient.create(
+    final UUID fixedDueDateSchedulesId = loanPoliciesFixture.createSchedule(
       fixedDueDateSchedules).getId();
-
-    //Need to remember in order to delete after test
-    schedulesToDelete.add(fixedDueDateSchedulesId);
 
     LoanPolicyBuilder currentDueDateRollingPolicy = new LoanPolicyBuilder()
       .withName("Current Due Date Rolling Policy")

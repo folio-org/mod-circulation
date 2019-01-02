@@ -6,8 +6,6 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -128,8 +126,6 @@ public abstract class APITests {
   protected final RequestsFixture requestsFixture = new RequestsFixture(
     requestsClient, cancellationReasonsFixture);
 
-  protected final Set<UUID> schedulesToDelete = new HashSet<>();
-
   protected APITests() {
     this(true);
   }
@@ -210,12 +206,6 @@ public abstract class APITests {
     servicePointsFixture.cleanUp();
 
     loanPoliciesFixture.cleanUp();
-
-    for (UUID scheduleId : schedulesToDelete) {
-      fixedDueDateScheduleClient.delete(scheduleId);
-    }
-
-    schedulesToDelete.clear();
 
     usersFixture.cleanUp();
 
