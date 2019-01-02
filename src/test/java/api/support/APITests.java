@@ -82,7 +82,7 @@ public abstract class APITests {
     = new ServicePointsFixture(servicePointsClient);
 
   protected final LocationsFixture locationsFixture = new LocationsFixture(
-    locationsClient);
+    locationsClient, servicePointsFixture);
 
   protected final LoanTypesFixture loanTypesFixture = new LoanTypesFixture(
     ResourceClient.forLoanTypes(client));
@@ -101,7 +101,7 @@ public abstract class APITests {
   protected final UsersFixture usersFixture = new UsersFixture(usersClient);
 
   protected final LoansFixture loansFixture = new LoansFixture(loansClient,
-    client, usersFixture);
+    client, usersFixture, servicePointsFixture);
 
   protected final RequestsFixture requestsFixture = new RequestsFixture(requestsClient);
 
@@ -148,7 +148,6 @@ public abstract class APITests {
 
     usersClient.deleteAllIndividually();
 
-    createServicePoints();
     createLocations();
 
     if (initialiseLoanRules) {
@@ -274,15 +273,6 @@ public abstract class APITests {
     assertThat(String.format(
       "Failed to apply loan rules: %s", response.getBody()),
       response.getStatusCode(), is(200));
-  }
-
-  private void createServicePoints()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    APITestSuite.fakeServicePointId = servicePointsFixture.fake().getId();
   }
 
   private void createLocations()

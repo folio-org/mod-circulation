@@ -1,6 +1,5 @@
 package api.support.fixtures;
 
-import static api.APITestSuite.fakeServicePoint;
 import static api.support.examples.LocationExamples.exampleLocation;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
@@ -17,10 +16,16 @@ import api.support.http.ResourceClient;
 
 public class LocationsFixture {
   private final RecordCreator locationRecordCreator;
+  private final ServicePointsFixture servicePointsFixture;
 
-  public LocationsFixture(ResourceClient client) {
-    locationRecordCreator = new RecordCreator(client,
+  public LocationsFixture(
+    ResourceClient client,
+    ServicePointsFixture servicePointsFixture) {
+
+    this.locationRecordCreator = new RecordCreator(client,
       location -> getProperty(location, "code"));
+
+    this.servicePointsFixture = servicePointsFixture;
   }
 
   public void cleanUp()
@@ -40,7 +45,8 @@ public class LocationsFixture {
       ExecutionException {
 
     return locationRecordCreator.createIfAbsent(
-      additionalLocationProperties.apply(exampleLocation(fakeServicePoint())));
+      additionalLocationProperties.apply(exampleLocation(
+        servicePointsFixture.fake().getId())));
   }
 
   public IndividualResource thirdFloor()
@@ -50,7 +56,8 @@ public class LocationsFixture {
     ExecutionException {
 
     return locationRecordCreator.createIfAbsent(
-      LocationExamples.thirdFloor(fakeServicePoint()));
+      LocationExamples.thirdFloor(
+        servicePointsFixture.fake().getId()));
   }
 
   public IndividualResource secondFloorEconomics()
@@ -60,7 +67,8 @@ public class LocationsFixture {
     ExecutionException {
 
     return locationRecordCreator.createIfAbsent(
-      LocationExamples.secondFloorEconomics(fakeServicePoint()));
+      LocationExamples.secondFloorEconomics(
+        servicePointsFixture.fake().getId()));
   }
 
   public IndividualResource mezzanineDisplayCase()
@@ -70,6 +78,8 @@ public class LocationsFixture {
     ExecutionException {
 
     return locationRecordCreator.createIfAbsent(
-      LocationExamples.mezzanineDisplayCase(fakeServicePoint()));
+      LocationExamples.mezzanineDisplayCase(
+        servicePointsFixture.fake().getId()));
   }
+
 }

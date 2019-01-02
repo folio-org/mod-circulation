@@ -71,6 +71,14 @@ public class CheckInByBarcodeRequestBuilder extends JsonBuilder implements Build
     return on(null);
   }
 
+  public CheckInByBarcodeRequestBuilder at(IndividualResource servicePoint) {
+    return at(servicePoint.getId());
+  }
+
+  public CheckInByBarcodeRequestBuilder at(UUID servicePointId) {
+    return at(servicePointId.toString());
+  }
+
   public CheckInByBarcodeRequestBuilder at(String servicePointId) {
     return new CheckInByBarcodeRequestBuilder(
       this.itemBarcode,
@@ -78,12 +86,6 @@ public class CheckInByBarcodeRequestBuilder extends JsonBuilder implements Build
       servicePointId);
   }
 
-  public CheckInByBarcodeRequestBuilder at(UUID servicePointId) {
-    return new CheckInByBarcodeRequestBuilder(
-      this.itemBarcode,
-      this.checkInDate,
-      servicePointId.toString());
-  }
 
   public CheckInByBarcodeRequestBuilder atNoServicePoint() {
     return at((String)null);
