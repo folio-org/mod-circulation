@@ -1,9 +1,7 @@
 package api.support.fixtures;
 
-import static api.APITestSuite.djanoglyLibrary;
 import static api.APITestSuite.fakeServicePoint;
-import static api.APITestSuite.jubileeCampus;
-import static api.APITestSuite.nottinghamUniversityInstitution;
+import static api.support.examples.LocationExamples.exampleLocation;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 import java.net.MalformedURLException;
@@ -41,16 +39,6 @@ public class LocationsFixture {
       ExecutionException {
 
     return locationRecordCreator.createIfAbsent(
-      additionalLocationProperties.apply(exampleLocation()));
-  }
-
-  private LocationBuilder exampleLocation() {
-    return new LocationBuilder()
-      .withName("Example location")
-      .withCode("NU/JC/DL/EX")
-      .forInstitution(nottinghamUniversityInstitution())
-      .forCampus(jubileeCampus())
-      .forLibrary(djanoglyLibrary())
-      .withPrimaryServicePoint(fakeServicePoint());
+      additionalLocationProperties.apply(exampleLocation(fakeServicePoint())));
   }
 }

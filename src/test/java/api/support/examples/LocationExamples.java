@@ -1,6 +1,7 @@
 package api.support.examples;
 
 import static api.APITestSuite.businessLibrary;
+import static api.APITestSuite.djanoglyLibrary;
 import static api.APITestSuite.jubileeCampus;
 import static api.APITestSuite.nottinghamUniversityInstitution;
 
@@ -39,6 +40,16 @@ public class LocationExamples {
       .forInstitution(nottinghamUniversityInstitution())
       .forCampus(jubileeCampus())
       .forLibrary(APITestSuite.djanoglyLibrary())
+      .withPrimaryServicePoint(primaryServicePointId);
+  }
+
+  public static LocationBuilder exampleLocation(UUID primaryServicePointId) {
+    return new LocationBuilder()
+      .withName("Example location")
+      .withCode("NU/JC/DL/EX")
+      .forInstitution(nottinghamUniversityInstitution())
+      .forCampus(jubileeCampus())
+      .forLibrary(djanoglyLibrary())
       .withPrimaryServicePoint(primaryServicePointId);
   }
 }
