@@ -9,6 +9,7 @@ import static org.hamcrest.Matchers.hasProperty;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.support.http.server.ValidationError;
@@ -38,6 +39,14 @@ public class ValidationErrorMatchers {
         return iterableMatcher.matches(errors);
       }
     };
+  }
+
+  public static TypeSafeDiagnosingMatcher<ValidationError> hasNullParameter(String key) {
+    return hasParameter(key, null);
+  }
+
+  public static TypeSafeDiagnosingMatcher<ValidationError> hasUUIDParameter(String key, UUID value) {
+    return hasParameter(key, value.toString());
   }
 
   public static TypeSafeDiagnosingMatcher<ValidationError> hasParameter(String key, String value) {

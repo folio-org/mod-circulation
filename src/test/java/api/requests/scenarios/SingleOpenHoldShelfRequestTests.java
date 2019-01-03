@@ -8,7 +8,7 @@ import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
-import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -108,7 +108,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
       hasMessage("The Long Way to a Small, Angry Planet (Barcode: 036000291452) " +
         "cannot be checked out to user Stuart, Rebecca " +
         "because it is awaiting pickup by another patron"),
-      hasParameter("userId", rebecca.getId().toString()))));
+      hasUUIDParameter("userId", rebecca.getId()))));
 
     Response request = requestsClient.getById(requestByJessica.getId());
 
