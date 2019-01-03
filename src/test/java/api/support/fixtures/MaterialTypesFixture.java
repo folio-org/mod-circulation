@@ -1,6 +1,7 @@
 package api.support.fixtures;
 
-import static api.APITestSuite.createReferenceRecord;
+import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.net.MalformedURLException;
 import java.util.UUID;
@@ -8,15 +9,14 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import api.support.http.ResourceClient;
+import io.vertx.core.json.JsonObject;
 
 public class MaterialTypesFixture {
-  private UUID bookMaterialTypeId;
-  private UUID videoRecordingMaterialTypeId;
-
-  private final ResourceClient materialTypesClient;
+  private final RecordCreator materialTypeRecordCreator;
 
   public MaterialTypesFixture(ResourceClient materialTypesClient) {
-    this.materialTypesClient = materialTypesClient;
+    materialTypeRecordCreator = new RecordCreator(materialTypesClient,
+      materialType -> getProperty(materialType, "name"));
   }
 
   public UUID videoRecording()
@@ -25,12 +25,9 @@ public class MaterialTypesFixture {
     ExecutionException,
     TimeoutException {
 
-    if(videoRecordingMaterialTypeId == null) {
-      videoRecordingMaterialTypeId = createReferenceRecord(materialTypesClient,
-          "Video Recording");
-    }
+    final JsonObject videoRecording = materialType("Video Recording");
 
-    return videoRecordingMaterialTypeId;
+    return materialTypeRecordCreator.createIfAbsent(videoRecording).getId();
   }
 
   public UUID book()
@@ -39,11 +36,17 @@ public class MaterialTypesFixture {
     ExecutionException,
     TimeoutException {
 
-    if(bookMaterialTypeId == null) {
-      bookMaterialTypeId = createReferenceRecord(materialTypesClient, "Book");
-    }
+    final JsonObject book = materialType("Book");
 
-    return bookMaterialTypeId;
+    return materialTypeRecordCreator.createIfAbsent(book).getId();
+  }
+
+  private JsonObject materialType(String name) {
+    final JsonObject book = new JsonObject();
+
+    write(book, "name", name);
+
+    return book;
   }
 
   public void cleanUp()
@@ -52,14 +55,6 @@ public class MaterialTypesFixture {
     TimeoutException,
     ExecutionException {
 
-    if(bookMaterialTypeId != null) {
-      materialTypesClient.delete(bookMaterialTypeId);
-      bookMaterialTypeId = null;
-    }
-
-    if(videoRecordingMaterialTypeId != null) {
-      materialTypesClient.delete(videoRecordingMaterialTypeId);
-      videoRecordingMaterialTypeId = null;
-    }
+    materialTypeRecordCreator.cleanUp();
   }
 }
