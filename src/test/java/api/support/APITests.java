@@ -193,6 +193,9 @@ public abstract class APITests {
     TimeoutException,
     ExecutionException {
 
+    requestsClient.deleteAll();
+    loansClient.deleteAll();
+
     itemsClient.deleteAll();
     holdingsClient.deleteAll();
     instancesClient.deleteAll();
