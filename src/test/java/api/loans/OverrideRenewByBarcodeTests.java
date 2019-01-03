@@ -1,24 +1,5 @@
 package api.loans;
 
-import api.support.APITests;
-import api.support.builders.FixedDueDateSchedulesBuilder;
-import api.support.builders.LoanPolicyBuilder;
-import io.vertx.core.json.JsonObject;
-import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.server.ValidationError;
-import org.hamcrest.Matcher;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeConstants;
-import org.junit.Test;
-
-import java.net.MalformedURLException;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
 import static api.support.builders.FixedDueDateSchedule.forDay;
 import static api.support.builders.FixedDueDateSchedule.wholeMonth;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
@@ -31,8 +12,27 @@ import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class OverrideRenewByBarcodeTests extends APITests {
+import java.net.MalformedURLException;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
+import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.server.ValidationError;
+import org.hamcrest.Matcher;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeConstants;
+import org.junit.Test;
+
+import api.support.APITests;
+import api.support.builders.FixedDueDateSchedulesBuilder;
+import api.support.builders.LoanPolicyBuilder;
+import io.vertx.core.json.JsonObject;
+
+public class OverrideRenewByBarcodeTests extends APITests {
   private static final String OVERRIDE_COMMENT = "Comment to override";
 
   @Test
@@ -154,23 +154,20 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     DateTime loanDueDate =
       new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
-    final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
 
-    FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
-      .withName("Fixed Due Date Schedule")
-      .addSchedule(wholeMonth(2018, DateTimeConstants.FEBRUARY));
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
 
     LoanPolicyBuilder nonRenewablePolicy = new LoanPolicyBuilder()
       .withName("Non Renewable Policy")
       .rolling(Period.days(2))
       .notRenewable();
 
-    UUID dueDateLimitedPolicyId = loanPolicyClient.create(nonRenewablePolicy).getId();
+    UUID nonRenewablePolicyId = loanPolicyClient.create(nonRenewablePolicy).getId();
 
     //Need to remember in order to delete after test
-    policiesToDelete.add(dueDateLimitedPolicyId);
+    policiesToDelete.add(nonRenewablePolicyId);
 
-    useLoanPolicyAsFallback(dueDateLimitedPolicyId);
+    useLoanPolicyAsFallback(nonRenewablePolicyId);
 
     Response response =
       loansFixture.attemptOverride(smallAngryPlanet, jessica, OVERRIDE_COMMENT, null);
@@ -190,26 +187,23 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     DateTime loanDueDate =
       new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
-    final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
 
-    FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
-      .withName("Fixed Due Date Schedule")
-      .addSchedule(wholeMonth(2018, DateTimeConstants.FEBRUARY));
-
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
 
     LoanPolicyBuilder nonRenewablePolicy = new LoanPolicyBuilder()
       .withName("Non Renewable Policy")
       .rolling(Period.days(2))
       .notRenewable();
 
-    UUID dueDateLimitedPolicyId = loanPolicyClient.create(nonRenewablePolicy).getId();
+    UUID nonRenewablePolicyId = loanPolicyClient.create(nonRenewablePolicy).getId();
 
     //Need to remember in order to delete after test
-    policiesToDelete.add(dueDateLimitedPolicyId);
+    policiesToDelete.add(nonRenewablePolicyId);
 
-    useLoanPolicyAsFallback(dueDateLimitedPolicyId);
+    useLoanPolicyAsFallback(nonRenewablePolicyId);
 
     DateTime newDueDate = DateTime.now().plusWeeks(2);
+
     JsonObject renewedLoan =
       loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica, OVERRIDE_COMMENT, newDueDate.toString()).getJson();
 
@@ -232,7 +226,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
       renewedLoan.getInteger("renewalCount"), is(1));
 
     assertThat("last loan policy should be stored",
-      renewedLoan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
+      renewedLoan.getString("loanPolicyId"), is(nonRenewablePolicyId.toString()));
 
     assertThat("due date should be 2 weeks from now",
       renewedLoan.getString("dueDate"),
@@ -250,7 +244,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     DateTime loanDueDate =
       new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
-    final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
 
     FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
       .withName("Fixed Due Date Schedule")
@@ -490,7 +485,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43));
 
     LoanPolicyBuilder currentDueDateRollingPolicy = new LoanPolicyBuilder()
@@ -498,12 +493,12 @@ public class OverrideRenewByBarcodeTests extends APITests {
       .rolling(Period.months(2))
       .renewFromCurrentDueDate();
 
-    UUID dueDateLimitedPolicyId = loanPolicyClient.create(currentDueDateRollingPolicy).getId();
+    UUID rollingPolicyId = loanPolicyClient.create(currentDueDateRollingPolicy).getId();
 
     //Need to remember in order to delete after test
-    policiesToDelete.add(dueDateLimitedPolicyId);
+    policiesToDelete.add(rollingPolicyId);
 
-    useLoanPolicyAsFallback(dueDateLimitedPolicyId);
+    useLoanPolicyAsFallback(rollingPolicyId);
 
     final Response response =
       loansFixture.attemptOverride(smallAngryPlanet, jessica, OVERRIDE_COMMENT, null);
