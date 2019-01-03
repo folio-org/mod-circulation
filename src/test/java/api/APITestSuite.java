@@ -156,42 +156,6 @@ public class APITestSuite {
     log.info("Queries performed: {}", sortedRequests);
   }
 
-  public static void deleteAllRecords()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    OkapiHttpClient client = APITestSuite.createClient(exception ->
-      log.error("Requests to delete all for clean up failed:", exception));
-
-    ResourceClient.forRequests(client).deleteAll();
-    ResourceClient.forLoans(client).deleteAll();
-
-    ResourceClient.forItems(client).deleteAll();
-    ResourceClient.forHoldings(client).deleteAll();
-    ResourceClient.forInstances(client).deleteAll();
-
-    ResourceClient.forLoanPolicies(client).deleteAllIndividually();
-    ResourceClient.forFixedDueDateSchedules(client).deleteAllIndividually();
-
-    ResourceClient.forMaterialTypes(client).deleteAllIndividually();
-    ResourceClient.forLoanTypes(client).deleteAllIndividually();
-
-    ResourceClient.forUsers(client).deleteAllIndividually();
-
-    ResourceClient.forPatronGroups(client).deleteAllIndividually();
-    ResourceClient.forAddressTypes(client).deleteAllIndividually();
-
-    ResourceClient.forMaterialTypes(client).deleteAllIndividually();
-    ResourceClient.forLoanTypes(client).deleteAllIndividually();
-    ResourceClient.forLocations(client).deleteAllIndividually();
-    ResourceClient.forServicePoints(client).deleteAllIndividually();
-    ResourceClient.forContributorNameTypes(client).deleteAllIndividually();
-    ResourceClient.forInstanceTypes(client).deleteAllIndividually();
-    ResourceClient.forCancellationReasons(client).deleteAllIndividually();
-  }
-
   public static URL okapiUrl() {
     try {
       if (useOkapiForStorage) {
