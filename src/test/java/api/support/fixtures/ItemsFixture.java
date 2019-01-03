@@ -73,7 +73,7 @@ public class ItemsFixture {
       InstanceExamples.basedUponDunkirk(booksInstanceTypeId(),
         getPersonalContributorNameTypeId()),
       thirdFloorHoldings(),
-      ItemExamples.basedUponDunkirk(materialTypesFixture.videoRecording(),
+      ItemExamples.basedUponDunkirk(materialTypesFixture.videoRecording().getId(),
         loanTypesFixture.canCirculate()));
   }
 
@@ -112,7 +112,7 @@ public class ItemsFixture {
       InstanceExamples.basedUponSmallAngryPlanet(booksInstanceTypeId(),
         getPersonalContributorNameTypeId()),
       thirdFloorHoldings(),
-      ItemExamples.basedUponSmallAngryPlanet(materialTypesFixture.book(),
+      ItemExamples.basedUponSmallAngryPlanet(materialTypesFixture.book().getId(),
         loanTypesFixture.canCirculate()));
   }
 
@@ -138,7 +138,7 @@ public class ItemsFixture {
       InstanceExamples.basedUponNod(booksInstanceTypeId(),
         getPersonalContributorNameTypeId()),
       thirdFloorHoldings(),
-      ItemExamples.basedUponNod(materialTypesFixture.book(),
+      ItemExamples.basedUponNod(materialTypesFixture.book().getId(),
         loanTypesFixture.canCirculate()));
   }
 
@@ -165,7 +165,7 @@ public class ItemsFixture {
       InstanceExamples.basedUponTemeraire(booksInstanceTypeId(),
         getPersonalContributorNameTypeId()),
       thirdFloorHoldings(),
-      ItemExamples.basedUponTemeraire(materialTypesFixture.book(),
+      ItemExamples.basedUponTemeraire(materialTypesFixture.book().getId(),
         loanTypesFixture.canCirculate()));
   }
 
@@ -201,7 +201,7 @@ public class ItemsFixture {
       InstanceExamples.basedUponUprooted(booksInstanceTypeId(),
         getPersonalContributorNameTypeId()),
       thirdFloorHoldings(),
-      ItemExamples.basedUponUprooted(materialTypesFixture.book(),
+      ItemExamples.basedUponUprooted(materialTypesFixture.book().getId(),
         loanTypesFixture.canCirculate()));
   }
 
@@ -227,7 +227,7 @@ public class ItemsFixture {
       InstanceExamples.basedUponInterestingTimes(booksInstanceTypeId(),
         getPersonalContributorNameTypeId()),
       thirdFloorHoldings(),
-      ItemExamples.basedUponInterestingTimes(materialTypesFixture.book(),
+      ItemExamples.basedUponInterestingTimes(materialTypesFixture.book().getId(),
         loanTypesFixture.canCirculate()));
   }
 

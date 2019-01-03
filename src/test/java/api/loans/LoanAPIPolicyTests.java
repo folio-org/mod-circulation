@@ -70,13 +70,16 @@ public class LoanAPIPolicyTests extends APITests {
     createLoanPolicies();
 
     //Set the loan rules
+    final UUID book = materialTypesFixture.book().getId();
+    final UUID videoRecording = materialTypesFixture.videoRecording().getId();
+
     String rules = String.join("\n",
       "priority: t, s, c, b, a, m, g",
       "fallback-policy: " + pFallback,
-      "m " + materialTypesFixture.videoRecording() + " + g " + group1 + " : " + p1,
-      "m " + materialTypesFixture.book() + " + t " + loanTypesFixture.canCirculate() + " : " + p2,
-      "m " + materialTypesFixture.book() + " + t " + readingRoomLoanType + " : " + p3,
-      "m " + materialTypesFixture.book() + " + t " + loanTypesFixture.canCirculate() + " + g " + group1 + " : " + p4
+      "m " + videoRecording + " + g " + group1 + " : " + p1,
+      "m " + book + " + t " + loanTypesFixture.canCirculate() + " : " + p2,
+      "m " + book + " + t " + readingRoomLoanType + " : " + p3,
+      "m " + book + " + t " + loanTypesFixture.canCirculate() + " + g " + group1 + " : " + p4
       );
 
     loanRulesFixture.updateLoanRules(rules);

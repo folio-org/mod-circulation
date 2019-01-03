@@ -4,9 +4,10 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.net.MalformedURLException;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+
+import org.folio.circulation.support.http.client.IndividualResource;
 
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
@@ -19,7 +20,7 @@ public class MaterialTypesFixture {
       materialType -> getProperty(materialType, "name"));
   }
 
-  public UUID videoRecording()
+  public IndividualResource videoRecording()
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
@@ -27,10 +28,10 @@ public class MaterialTypesFixture {
 
     final JsonObject videoRecording = materialType("Video Recording");
 
-    return materialTypeRecordCreator.createIfAbsent(videoRecording).getId();
+    return materialTypeRecordCreator.createIfAbsent(videoRecording);
   }
 
-  public UUID book()
+  public IndividualResource book()
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
@@ -38,15 +39,15 @@ public class MaterialTypesFixture {
 
     final JsonObject book = materialType("Book");
 
-    return materialTypeRecordCreator.createIfAbsent(book).getId();
+    return materialTypeRecordCreator.createIfAbsent(book);
   }
 
   private JsonObject materialType(String name) {
-    final JsonObject book = new JsonObject();
+    final JsonObject materialType = new JsonObject();
 
-    write(book, "name", name);
+    write(materialType, "name", name);
 
-    return book;
+    return materialType;
   }
 
   public void cleanUp()
