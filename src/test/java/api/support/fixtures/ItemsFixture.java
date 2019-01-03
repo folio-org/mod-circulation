@@ -74,7 +74,7 @@ public class ItemsFixture {
         getPersonalContributorNameTypeId()),
       thirdFloorHoldings(),
       ItemExamples.basedUponDunkirk(materialTypesFixture.videoRecording().getId(),
-        loanTypesFixture.canCirculate()));
+        loanTypesFixture.canCirculate().getId()));
   }
 
   public InventoryItemResource basedUponSmallAngryPlanet()
@@ -113,7 +113,7 @@ public class ItemsFixture {
         getPersonalContributorNameTypeId()),
       thirdFloorHoldings(),
       ItemExamples.basedUponSmallAngryPlanet(materialTypesFixture.book().getId(),
-        loanTypesFixture.canCirculate()));
+        loanTypesFixture.canCirculate().getId()));
   }
 
   public InventoryItemResource basedUponNod()
@@ -139,7 +139,7 @@ public class ItemsFixture {
         getPersonalContributorNameTypeId()),
       thirdFloorHoldings(),
       ItemExamples.basedUponNod(materialTypesFixture.book().getId(),
-        loanTypesFixture.canCirculate()));
+        loanTypesFixture.canCirculate().getId()));
   }
 
   public InventoryItemResource basedUponTemeraire()
@@ -166,7 +166,7 @@ public class ItemsFixture {
         getPersonalContributorNameTypeId()),
       thirdFloorHoldings(),
       ItemExamples.basedUponTemeraire(materialTypesFixture.book().getId(),
-        loanTypesFixture.canCirculate()));
+        loanTypesFixture.canCirculate().getId()));
   }
 
   public InventoryItemResource basedUponTemeraire(
@@ -202,7 +202,7 @@ public class ItemsFixture {
         getPersonalContributorNameTypeId()),
       thirdFloorHoldings(),
       ItemExamples.basedUponUprooted(materialTypesFixture.book().getId(),
-        loanTypesFixture.canCirculate()));
+        loanTypesFixture.canCirculate().getId()));
   }
 
   public InventoryItemResource basedUponInterestingTimes()
@@ -228,7 +228,7 @@ public class ItemsFixture {
         getPersonalContributorNameTypeId()),
       thirdFloorHoldings(),
       ItemExamples.basedUponInterestingTimes(materialTypesFixture.book().getId(),
-        loanTypesFixture.canCirculate()));
+        loanTypesFixture.canCirculate().getId()));
   }
 
   private InventoryItemResource applyAdditionalProperties(

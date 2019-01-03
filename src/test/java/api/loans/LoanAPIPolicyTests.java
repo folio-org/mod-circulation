@@ -42,14 +42,15 @@ public class LoanAPIPolicyTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    final UUID readingRoomLoanType = loanTypesFixture.readingRoom();
+
+    final UUID readingRoom = loanTypesFixture.readingRoom().getId();
 
     JsonObject itemJson1 = itemsFixture.basedUponInterestingTimes().getJson();
     JsonObject itemJson2 = itemsFixture.basedUponDunkirk().getJson();
     JsonObject itemJson3 = itemsFixture.basedUponInterestingTimes().getJson();
     JsonObject itemJson4 = itemsFixture.basedUponDunkirk().getJson();
     JsonObject itemJson5 = itemsFixture.basedUponTemeraire(
-      builder -> builder.withTemporaryLoanType(readingRoomLoanType)).getJson();
+      builder -> builder.withTemporaryLoanType(readingRoom)).getJson();
 
     final IndividualResource alternative = patronGroupsFixture.alternative();
 
@@ -73,14 +74,15 @@ public class LoanAPIPolicyTests extends APITests {
     final UUID book = materialTypesFixture.book().getId();
     final UUID videoRecording = materialTypesFixture.videoRecording().getId();
 
+    final UUID canCirculate = loanTypesFixture.canCirculate().getId();
+
     String rules = String.join("\n",
       "priority: t, s, c, b, a, m, g",
       "fallback-policy: " + pFallback,
       "m " + videoRecording + " + g " + group1 + " : " + p1,
-      "m " + book + " + t " + loanTypesFixture.canCirculate() + " : " + p2,
-      "m " + book + " + t " + readingRoomLoanType + " : " + p3,
-      "m " + book + " + t " + loanTypesFixture.canCirculate() + " + g " + group1 + " : " + p4
-      );
+      "m " + book + " + t " + canCirculate + " : " + p2,
+      "m " + book + " + t " + readingRoom + " : " + p3,
+      "m " + book + " + t " + canCirculate + " + g " + group1 + " : " + p4);
 
     loanRulesFixture.updateLoanRules(rules);
 

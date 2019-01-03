@@ -1,50 +1,49 @@
 package api.support.fixtures;
 
-import static api.APITestSuite.createReferenceRecord;
+import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.net.MalformedURLException;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import org.folio.circulation.support.http.client.IndividualResource;
+
 import api.support.http.ResourceClient;
+import io.vertx.core.json.JsonObject;
 
 public class LoanTypesFixture {
-  private UUID canCirculateLoanTypeId;
-  private UUID readingRoomLoanTypeId;
-
-  private final ResourceClient loanTypesClient;
+  private final RecordCreator loanTypeRecordCreator;
 
   public LoanTypesFixture(ResourceClient loanTypesClient) {
-    this.loanTypesClient = loanTypesClient;
+    loanTypeRecordCreator = new RecordCreator(loanTypesClient,
+      loanType -> getProperty(loanType, "name"));
   }
 
-  public UUID readingRoom()
+  public IndividualResource readingRoom()
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
     TimeoutException {
 
-    if(readingRoomLoanTypeId == null) {
-      readingRoomLoanTypeId = createReferenceRecord(loanTypesClient,
-        "Reading Room");
-    }
-
-    return readingRoomLoanTypeId;
+    return loanTypeRecordCreator.createIfAbsent(loanType("Reading Room"));
   }
 
-  public UUID canCirculate()
+  public IndividualResource canCirculate()
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
     TimeoutException {
 
-    if(canCirculateLoanTypeId == null) {
-      canCirculateLoanTypeId = createReferenceRecord(loanTypesClient,
-        "Can Circulate");
-    }
+    return loanTypeRecordCreator.createIfAbsent(loanType("Can Circulate"));
+  }
 
-    return canCirculateLoanTypeId;
+  private JsonObject loanType(String name) {
+    final JsonObject loanType = new JsonObject();
+
+    write(loanType, "name", name);
+
+    return loanType;
   }
 
   public void cleanUp()
@@ -53,14 +52,6 @@ public class LoanTypesFixture {
     TimeoutException,
     ExecutionException {
 
-    if(canCirculateLoanTypeId != null) {
-      loanTypesClient.delete(canCirculateLoanTypeId);
-      canCirculateLoanTypeId = null;
-    }
-
-    if(readingRoomLoanTypeId != null) {
-      loanTypesClient.delete(readingRoomLoanTypeId);
-      readingRoomLoanTypeId = null;
-    }
+    loanTypeRecordCreator.cleanUp();
   }
 }

@@ -1,14 +1,9 @@
 package api;
 
-
-import static org.folio.circulation.support.JsonPropertyWriter.write;
-
 import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.List;
 import java.util.Random;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -26,10 +21,8 @@ import org.slf4j.LoggerFactory;
 
 import api.support.fakes.FakeOkapi;
 import api.support.fakes.FakeStorageModule;
-import api.support.http.ResourceClient;
 import api.support.http.URLHelper;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
 
 public class APITestSuite {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -168,74 +161,7 @@ public class APITestSuite {
     }
   }
 
-  public static UUID createReferenceRecord(
-    ResourceClient client,
-    JsonObject record)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    List<JsonObject> existingRecords = client.getAll();
-
-    String name = record.getString("name");
-
-    if (name == null) {
-      throw new IllegalArgumentException("Reference records must have a name");
-    }
-
-    if (existsInList(existingRecords, name)) {
-      return client.create(record).getId();
-    } else {
-      return findFirstByName(existingRecords, name);
-    }
-  }
-
-  public static UUID createReferenceRecord(
-    ResourceClient client,
-    String name)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    return createReferenceRecord(client, name, null, null);
-  }
-
-  public static UUID createReferenceRecord(
-    ResourceClient client,
-    String name,
-    String code,
-    String source)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    final JsonObject referenceRecord = new JsonObject();
-
-    write(referenceRecord, "name", name);
-    write(referenceRecord, "code", code);
-    write(referenceRecord, "source", source);
-
-    return createReferenceRecord(client, referenceRecord);
-  }
-
-  private static UUID findFirstByName(List<JsonObject> existingRecords, String name) {
-    return UUID.fromString(existingRecords.stream()
-      .filter(record -> record.getString("name").equals(name))
-      .findFirst()
-      .get()
-      .getString("id"));
-  }
-
-  private static boolean existsInList(List<JsonObject> existingRecords, String name) {
-    return existingRecords.stream()
-      .noneMatch(materialType -> materialType.getString("name").equals(name));
-  }
-
   private static String createFakeRequestId() {
     return String.format("%s/fake-context", new Random().nextInt(999999));
   }
-
 }
