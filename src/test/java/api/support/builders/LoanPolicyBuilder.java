@@ -340,10 +340,6 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
     return renew(fixedDueDateScheduleId);
   }
 
-  public LoanPolicyBuilder renewOverrideWith(UUID fixedDueDateScheduleId) {
-    return renew(fixedDueDateScheduleId);
-  }
-
   private LoanPolicyBuilder renew(UUID fixedDueDateScheduleId) {
     return new LoanPolicyBuilder(
       this.id,

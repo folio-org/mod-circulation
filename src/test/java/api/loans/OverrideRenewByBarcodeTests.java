@@ -1,8 +1,6 @@
 package api.loans;
 
-import api.APITestSuite;
 import api.support.APITests;
-import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import io.vertx.core.json.JsonObject;
@@ -10,20 +8,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
-import org.joda.time.DateTimeZone;
-import org.joda.time.Seconds;
 import org.junit.Test;
 
 import java.net.MalformedURLException;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static api.support.builders.FixedDueDateSchedule.forDay;
@@ -31,11 +24,9 @@ import static api.support.builders.FixedDueDateSchedule.wholeMonth;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
-import static java.net.HttpURLConnection.HTTP_OK;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -43,560 +34,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class OverrideRenewByBarcodeTests extends APITests {
 
   private static final String OVERRIDE_COMMENT = "Comment to override";
-
-  @Test
-  public void canOverrideRenewalRollingLoanFromSystemDate()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource jessica = usersFixture.jessica();
-
-    final UUID loanId = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43))
-      .getId();
-
-    DateTime newDueDate =
-      new DateTime(2019, DateTimeConstants.JANUARY, 1, 1, 1, 1);
-
-    //TODO: Renewal based upon system date,
-    // needs to be approximated, at least until we introduce a calendar and clock
-    DateTime approximateRenewalDate = DateTime.now();
-
-    final JsonObject renewedLoan = loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica, OVERRIDE_COMMENT, newDueDate.toString()).getJson();
-
-    assertThat(renewedLoan.getString("id"), is(loanId.toString()));
-
-    assertThat("user ID should match barcode",
-      renewedLoan.getString("userId"), is(jessica.getId().toString()));
-
-    assertThat("item ID should match barcode",
-      renewedLoan.getString("itemId"), is(smallAngryPlanet.getId().toString()));
-
-    assertThat("status should be open",
-      renewedLoan.getJsonObject("status").getString("name"), is("Open"));
-
-    assertThat("action should be renewed",
-      renewedLoan.getString("action"), is("Renewed through override"));
-
-    assertThat("'actionComment' field should contain comment specified for override",
-      renewedLoan.getString("actionComment"), is(OVERRIDE_COMMENT));
-
-    assertThat("renewal count should be incremented",
-      renewedLoan.getInteger("renewalCount"), is(1));
-
-    assertThat("last loan policy should be stored",
-      renewedLoan.getString("loanPolicyId"),
-      is(APITestSuite.canCirculateRollingLoanPolicyId().toString()));
-
-    assertThat("due date should be 1st of Feb 2019",
-      renewedLoan.getString("dueDate"),
-      isEquivalentTo(newDueDate));
-
-    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
-
-    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
-  }
-
-  @Test
-  public void canOverrideRenewalRollingLoanFromCurrentDueDate()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource jessica = usersFixture.jessica();
-
-    final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43));
-
-    DateTime newDueDate =
-      new DateTime(2019, DateTimeConstants.JANUARY, 1, 1, 1, 1);
-
-    final UUID loanId = loan.getId();
-
-    LoanPolicyBuilder currentDueDateRollingPolicy = new LoanPolicyBuilder()
-      .withName("Current Due Date Rolling Policy")
-      .rolling(Period.months(2))
-      .renewFromCurrentDueDate();
-
-    UUID dueDateLimitedPolicyId = loanPolicyClient.create(currentDueDateRollingPolicy).getId();
-
-    //Need to remember in order to delete after test
-    policiesToDelete.add(dueDateLimitedPolicyId);
-
-    useLoanPolicyAsFallback(dueDateLimitedPolicyId);
-
-    final JsonObject renewedLoan =
-      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica, OVERRIDE_COMMENT, newDueDate.toString()).getJson();
-
-    assertThat(renewedLoan.getString("id"), is(loanId.toString()));
-
-    assertThat("user ID should match barcode",
-      renewedLoan.getString("userId"), is(jessica.getId().toString()));
-
-    assertThat("item ID should match barcode",
-      renewedLoan.getString("itemId"), is(smallAngryPlanet.getId().toString()));
-
-    assertThat("status should be open",
-      renewedLoan.getJsonObject("status").getString("name"), is("Open"));
-
-    assertThat("action should be renewed",
-      renewedLoan.getString("action"), is("Renewed through override"));
-
-    assertThat("'actionComment' field should contain comment specified for override",
-      renewedLoan.getString("actionComment"), is(OVERRIDE_COMMENT));
-
-    assertThat("renewal count should be incremented",
-      renewedLoan.getInteger("renewalCount"), is(1));
-
-    assertThat("last loan policy should be stored",
-      renewedLoan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
-
-    assertThat("due date should be 1st of Feb 2019",
-      renewedLoan.getString("dueDate"),
-      isEquivalentTo(newDueDate));
-
-    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
-
-    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
-  }
-
-  @Test
-  public void canOverrideRenewalUsingDueDateLimitedRollingLoanPolicy()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
-      .withName("March Only Due Date Limit")
-      .addSchedule(wholeMonth(2018, DateTimeConstants.MARCH));
-
-    DateTime newDueDate =
-      new DateTime(2019, DateTimeConstants.JANUARY, 1, 1, 1, 1);
-
-    final UUID dueDateLimitScheduleId = fixedDueDateScheduleClient.create(
-      dueDateLimitSchedule).getId();
-
-    //Need to remember in order to delete after test
-    schedulesToDelete.add(dueDateLimitScheduleId);
-
-    LoanPolicyBuilder dueDateLimitedPolicy = new LoanPolicyBuilder()
-      .withName("Due Date Limited Rolling Policy")
-      .rolling(Period.weeks(2))
-      .limitedBySchedule(dueDateLimitScheduleId)
-      .renewFromCurrentDueDate();
-
-    UUID dueDateLimitedPolicyId = loanPolicyClient.create(dueDateLimitedPolicy).getId();
-
-    //Need to remember in order to delete after test
-    policiesToDelete.add(dueDateLimitedPolicyId);
-
-    useLoanPolicyAsFallback(dueDateLimitedPolicyId);
-
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource steve = usersFixture.steve();
-
-    final DateTime loanDate = new DateTime(2018, DateTimeConstants.MARCH, 7, 11, 43, 54, DateTimeZone.UTC);
-
-    loansFixture.checkOutByBarcode(
-      new CheckOutByBarcodeRequestBuilder()
-        .forItem(smallAngryPlanet)
-        .to(steve)
-        .on(loanDate)
-        .at(UUID.randomUUID()));
-
-    final IndividualResource response =
-      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, steve, OVERRIDE_COMMENT, newDueDate.toString());
-
-    final JsonObject loan = response.getJson();
-
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
-
-    assertThat("due date should be 1st of Feb 2019",
-      loan.getString("dueDate"),
-      isEquivalentTo(newDueDate));
-  }
-
-  @Test
-  public void canOverrideRenewalRollingLoanUsingDifferentPeriod()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource jessica = usersFixture.jessica();
-
-    final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43));
-
-    DateTime newDueDate =
-      new DateTime(2019, DateTimeConstants.JANUARY, 1, 1, 1, 1);
-
-    final UUID loanId = loan.getId();
-
-    LoanPolicyBuilder currentDueDateRollingPolicy = new LoanPolicyBuilder()
-      .withName("Current Due Date Different Period Rolling Policy")
-      .rolling(Period.months(2))
-      .renewFromCurrentDueDate()
-      .renewWith(Period.months(1));
-
-    UUID dueDateLimitedPolicyId = loanPolicyClient.create(currentDueDateRollingPolicy).getId();
-
-    //Need to remember in order to delete after test
-    policiesToDelete.add(dueDateLimitedPolicyId);
-
-    useLoanPolicyAsFallback(dueDateLimitedPolicyId);
-
-    final JsonObject renewedLoan =
-      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica, OVERRIDE_COMMENT, newDueDate.toString()).getJson();
-
-    assertThat(renewedLoan.getString("id"), is(loanId.toString()));
-
-    assertThat("user ID should match barcode",
-      renewedLoan.getString("userId"), is(jessica.getId().toString()));
-
-    assertThat("item ID should match barcode",
-      renewedLoan.getString("itemId"), is(smallAngryPlanet.getId().toString()));
-
-    assertThat("status should be open",
-      renewedLoan.getJsonObject("status").getString("name"), is("Open"));
-
-    assertThat("action should be renewed",
-      renewedLoan.getString("action"), is("Renewed through override"));
-
-    assertThat("'actionComment' field should contain comment specified for override",
-      renewedLoan.getString("actionComment"), is(OVERRIDE_COMMENT));
-
-    assertThat("renewal count should be incremented",
-      renewedLoan.getInteger("renewalCount"), is(1));
-
-    assertThat("last loan policy should be stored",
-      renewedLoan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
-
-    assertThat("due date should be 1st of Feb 2019",
-      renewedLoan.getString("dueDate"),
-      isEquivalentTo(newDueDate));
-
-    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
-
-    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
-  }
-
-  @Test
-  public void canOverrideRenewalUsingAlternateDueDateLimitedRollingLoanPolicy()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
-      .withName("March Only Due Date Limit")
-      .addSchedule(wholeMonth(2018, DateTimeConstants.MARCH));
-
-    final UUID dueDateLimitScheduleId = fixedDueDateScheduleClient.create(
-      dueDateLimitSchedule).getId();
-
-    DateTime newDueDate =
-      new DateTime(2019, DateTimeConstants.JANUARY, 1, 1, 1, 1);
-
-    //Need to remember in order to delete after test
-    schedulesToDelete.add(dueDateLimitScheduleId);
-
-    LoanPolicyBuilder dueDateLimitedPolicy = new LoanPolicyBuilder()
-      .withName("Due Date Limited Rolling Policy")
-      .rolling(Period.weeks(3))
-      .renewFromCurrentDueDate()
-      .renewWith(Period.days(8), dueDateLimitScheduleId);
-
-    UUID dueDateLimitedPolicyId = loanPolicyClient.create(dueDateLimitedPolicy).getId();
-
-    //Need to remember in order to delete after test
-    policiesToDelete.add(dueDateLimitedPolicyId);
-
-    useLoanPolicyAsFallback(dueDateLimitedPolicyId);
-
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource steve = usersFixture.steve();
-
-    final DateTime loanDate = new DateTime(2018, DateTimeConstants.MARCH, 4, 11, 43, 54, DateTimeZone.UTC);
-
-    loansFixture.checkOutByBarcode(
-      new CheckOutByBarcodeRequestBuilder()
-        .forItem(smallAngryPlanet)
-        .to(steve)
-        .on(loanDate)
-        .at(UUID.randomUUID()));
-
-    final IndividualResource response =
-      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, steve, OVERRIDE_COMMENT, newDueDate.toString());
-
-    final JsonObject loan = response.getJson();
-
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
-
-    assertThat("due date should be 1st of Feb 2019",
-      loan.getString("dueDate"),
-      isEquivalentTo(newDueDate));
-  }
-
-  @Test
-  public void canOverrideRenewalUsingLoanDueDateLimitSchedulesWhenDifferentPeriodAndNotAlternateLimits()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
-      .withName("March Only Due Date Limit")
-      .addSchedule(wholeMonth(2018, DateTimeConstants.MARCH));
-
-    final UUID dueDateLimitScheduleId = fixedDueDateScheduleClient.create(
-      dueDateLimitSchedule).getId();
-
-    DateTime newDueDate =
-      new DateTime(2019, DateTimeConstants.JANUARY, 1, 1, 1, 1);
-
-    //Need to remember in order to delete after test
-    schedulesToDelete.add(dueDateLimitScheduleId);
-
-    LoanPolicyBuilder dueDateLimitedPolicy = new LoanPolicyBuilder()
-      .withName("Due Date Limited Rolling Policy")
-      .rolling(Period.weeks(3))
-      .limitedBySchedule(dueDateLimitScheduleId)
-      .renewFromCurrentDueDate()
-      .renewWith(Period.days(8));
-
-    UUID dueDateLimitedPolicyId = loanPolicyClient.create(dueDateLimitedPolicy).getId();
-
-    //Need to remember in order to delete after test
-    policiesToDelete.add(dueDateLimitedPolicyId);
-
-    useLoanPolicyAsFallback(dueDateLimitedPolicyId);
-
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource steve = usersFixture.steve();
-
-    final DateTime loanDate = new DateTime(2018, DateTimeConstants.MARCH, 4, 11, 43, 54, DateTimeZone.UTC);
-
-    loansFixture.checkOutByBarcode(
-      new CheckOutByBarcodeRequestBuilder()
-        .forItem(smallAngryPlanet)
-        .to(steve)
-        .on(loanDate)
-        .at(UUID.randomUUID()));
-
-    final IndividualResource response =
-      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, steve, OVERRIDE_COMMENT, newDueDate.toString());
-
-    final JsonObject loan = response.getJson();
-
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
-
-    assertThat("due date should be 1st of Feb 2019",
-      loan.getString("dueDate"),
-      isEquivalentTo(newDueDate));
-  }
-
-  @Test
-  public void canOverrideRenewalUsingFixedDueDateLoanPolicy()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    //TODO: Need to be able to inject system date here
-    final DateTime renewalDate = DateTime.now();
-    //e.g. Clock.freeze(renewalDate)
-
-    FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
-      .withName("Kludgy Fixed Due Date Schedule")
-      .addSchedule(wholeMonth(2018, DateTimeConstants.FEBRUARY))
-      .addSchedule(forDay(renewalDate));
-
-    final UUID fixedDueDateSchedulesId = fixedDueDateScheduleClient.create(
-      fixedDueDateSchedules).getId();
-
-    DateTime newDueDate =
-      new DateTime(2019, DateTimeConstants.JANUARY, 1, 1, 1, 1);
-
-    //Need to remember in order to delete after test
-    schedulesToDelete.add(fixedDueDateSchedulesId);
-
-    LoanPolicyBuilder dueDateLimitedPolicy = new LoanPolicyBuilder()
-      .withName("Fixed Due Date Policy")
-      .fixed(fixedDueDateSchedulesId)
-      .renewFromSystemDate();
-
-    UUID fixedDueDatePolicyId = loanPolicyClient.create(dueDateLimitedPolicy).getId();
-
-    //Need to remember in order to delete after test
-    policiesToDelete.add(fixedDueDatePolicyId);
-
-    useLoanPolicyAsFallback(fixedDueDatePolicyId);
-
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource steve = usersFixture.steve();
-
-    final DateTime loanDate = new DateTime(2018, DateTimeConstants.FEBRUARY, 10, 11, 23, 12, DateTimeZone.UTC);
-
-    loansFixture.checkOutByBarcode(
-      new CheckOutByBarcodeRequestBuilder()
-        .forItem(smallAngryPlanet)
-        .to(steve)
-        .on(loanDate)
-        .at(UUID.randomUUID()));
-
-    final IndividualResource response = loansFixture.overrideRenewalByBarcode(smallAngryPlanet, steve, OVERRIDE_COMMENT, newDueDate.toString());
-
-    final JsonObject loan = response.getJson();
-
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(fixedDueDatePolicyId.toString()));
-
-    assertThat("renewal count should be incremented",
-      loan.getInteger("renewalCount"), is(1));
-
-    assertThat("due date should be 1st of Feb 2019",
-      loan.getString("dueDate"),
-      isEquivalentTo(newDueDate));
-  }
-
-  @Test
-  public void canOverrideRenewalMultipleTimesUpToRenewalLimit()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource jessica = usersFixture.jessica();
-
-    LoanPolicyBuilder limitedRenewalsPolicy = new LoanPolicyBuilder()
-      .withName("Limited Renewals Policy")
-      .rolling(Period.days(2))
-      .renewFromCurrentDueDate()
-      .limitedRenewals(3);
-
-    UUID limitedRenewalsPolicyId = loanPolicyClient.create(limitedRenewalsPolicy).getId();
-
-    //Need to remember in order to delete after test
-    policiesToDelete.add(limitedRenewalsPolicyId);
-
-    useLoanPolicyAsFallback(limitedRenewalsPolicyId);
-
-    final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43, DateTimeZone.UTC));
-
-    DateTime newDueDate =
-      new DateTime(2019, DateTimeConstants.JANUARY, 1, 1, 1, 1);
-
-    final UUID loanId = loan.getId();
-
-    loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica, OVERRIDE_COMMENT, newDueDate.toString());
-
-    loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica, OVERRIDE_COMMENT, newDueDate.plusDays(1).toString());
-
-    final JsonObject renewedLoan =
-      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica, OVERRIDE_COMMENT, newDueDate.plusDays(2).toString()).getJson();
-
-    assertThat(renewedLoan.getString("id"), is(loanId.toString()));
-
-    assertThat("status should be open",
-      renewedLoan.getJsonObject("status").getString("name"), is("Open"));
-
-    assertThat("action should be renewed",
-      renewedLoan.getString("action"), is("Renewed through override"));
-
-    assertThat("'actionComment' field should contain comment specified for override",
-      renewedLoan.getString("actionComment"), is(OVERRIDE_COMMENT));
-
-    assertThat("renewal count should be incremented",
-      renewedLoan.getInteger("renewalCount"), is(3));
-
-    assertThat("last loan policy should be stored",
-      renewedLoan.getString("loanPolicyId"), is(limitedRenewalsPolicyId.toString()));
-
-    assertThat("due date should be 1st of Feb 2019",
-      renewedLoan.getString("dueDate"),
-      isEquivalentTo(newDueDate.plusDays(2)));
-
-    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
-
-    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
-  }
-
-  @Test
-  public void canGetOverrideRenewaledLoan()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource jessica = usersFixture.jessica();
-
-    final UUID loanId = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43))
-      .getId();
-
-    DateTime newDueDate =
-      new DateTime(2019, DateTimeConstants.JANUARY, 1, 1, 1, 1);
-
-    //TODO: Renewal based upon system date,
-    // needs to be approximated, at least until we introduce a calendar and clock
-    DateTime approximateRenewalDate = DateTime.now();
-
-    final IndividualResource response =
-      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica, OVERRIDE_COMMENT, newDueDate.toString());
-
-    final CompletableFuture<Response> getCompleted = new CompletableFuture<>();
-
-    client.get(APITestSuite.circulationModuleUrl(response.getLocation()),
-      ResponseHandler.json(getCompleted));
-
-    final Response getResponse = getCompleted.get(2, TimeUnit.SECONDS);
-
-    assertThat(getResponse.getStatusCode(), is(HTTP_OK));
-
-    JsonObject renewedLoan = getResponse.getJson();
-
-    assertThat(renewedLoan.getString("id"), is(loanId.toString()));
-
-    assertThat("user ID should match barcode",
-      renewedLoan.getString("userId"), is(jessica.getId().toString()));
-
-    assertThat("item ID should match barcode",
-      renewedLoan.getString("itemId"), is(smallAngryPlanet.getId().toString()));
-
-    assertThat("status should be open",
-      renewedLoan.getJsonObject("status").getString("name"), is("Open"));
-
-    assertThat("action should be renewed",
-      renewedLoan.getString("action"), is("Renewed through override"));
-
-    assertThat("'actionComment' field should contain comment specified for override",
-      renewedLoan.getString("actionComment"), is(OVERRIDE_COMMENT));
-
-    assertThat("renewal count should be incremented",
-      renewedLoan.getInteger("renewalCount"), is(1));
-
-    assertThat("last loan policy should be stored",
-      renewedLoan.getString("loanPolicyId"),
-      is(APITestSuite.canCirculateRollingLoanPolicyId().toString()));
-
-    assertThat("due date should be 1st of Feb 2019",
-      renewedLoan.getString("dueDate"),
-      isEquivalentTo(newDueDate));
-  }
 
   @Test
   public void cannotOverrideRenewalWhenLoanPolicyDoesNotExist()
@@ -689,25 +126,135 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canOverrideRenewalToSpecifiedDateWhenDateFallsOutsideOfTheDateRangesInTheLoanPolicy() throws
+  public void cannotOverrideRenewalWhenCommentPropertyIsBlank() throws
     InterruptedException,
-    ExecutionException,
-    TimeoutException, MalformedURLException {
-
-    final DateTime renewalDate = DateTime.now();
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43));
+    final Response response =
+      loansFixture.attemptOverride(smallAngryPlanet, jessica, StringUtils.EMPTY, null);
 
-    final UUID loanId = loan.getId();
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Override renewal request must have a comment"),
+      hasParameter("comment", null))));
+  }
+
+  @Test
+  public void canOverrideRenewalWhenItemIsNotRenewableAndNewDueDateIsNotSpecified() throws
+    InterruptedException,
+    ExecutionException,
+    TimeoutException, MalformedURLException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    DateTime loanDueDate =
+      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
+    final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
 
     FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
-      .withName("Kludgy Fixed Due Date Schedule")
-      .addSchedule(wholeMonth(2018, DateTimeConstants.FEBRUARY))
-      .addSchedule(forDay(renewalDate));
+      .withName("Fixed Due Date Schedule")
+      .addSchedule(wholeMonth(2018, DateTimeConstants.FEBRUARY));
+
+    LoanPolicyBuilder nonRenewablePolicy = new LoanPolicyBuilder()
+      .withName("Non Renewable Policy")
+      .rolling(Period.days(2))
+      .notRenewable();
+
+    UUID dueDateLimitedPolicyId = loanPolicyClient.create(nonRenewablePolicy).getId();
+
+    //Need to remember in order to delete after test
+    policiesToDelete.add(dueDateLimitedPolicyId);
+
+    useLoanPolicyAsFallback(dueDateLimitedPolicyId);
+
+    Response response =
+      loansFixture.attemptOverride(smallAngryPlanet, jessica, OVERRIDE_COMMENT, null);
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("New due date must be specified when due date calculation fails"))));
+  }
+
+  @Test
+  public void canOverrideRenewalWhenItemIsNotRenewableAndNewDueDateIsSpecified() throws
+    InterruptedException,
+    ExecutionException,
+    TimeoutException, MalformedURLException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    DateTime loanDueDate =
+      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
+    final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
+
+    FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
+      .withName("Fixed Due Date Schedule")
+      .addSchedule(wholeMonth(2018, DateTimeConstants.FEBRUARY));
+
+
+    LoanPolicyBuilder nonRenewablePolicy = new LoanPolicyBuilder()
+      .withName("Non Renewable Policy")
+      .rolling(Period.days(2))
+      .notRenewable();
+
+    UUID dueDateLimitedPolicyId = loanPolicyClient.create(nonRenewablePolicy).getId();
+
+    //Need to remember in order to delete after test
+    policiesToDelete.add(dueDateLimitedPolicyId);
+
+    useLoanPolicyAsFallback(dueDateLimitedPolicyId);
+
+    DateTime newDueDate = DateTime.now().plusWeeks(2);
+    JsonObject renewedLoan =
+      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica, OVERRIDE_COMMENT, newDueDate.toString()).getJson();
+
+    assertThat("user ID should match barcode",
+      renewedLoan.getString("userId"), is(jessica.getId().toString()));
+
+    assertThat("item ID should match barcode",
+      renewedLoan.getString("itemId"), is(smallAngryPlanet.getId().toString()));
+
+    assertThat("status should be open",
+      renewedLoan.getJsonObject("status").getString("name"), is("Open"));
+
+    assertThat("action should be renewed",
+      renewedLoan.getString("action"), is("Renewed through override"));
+
+    assertThat("'actionComment' field should contain comment specified for override",
+      renewedLoan.getString("actionComment"), is(OVERRIDE_COMMENT));
+
+    assertThat("renewal count should be incremented",
+      renewedLoan.getInteger("renewalCount"), is(1));
+
+    assertThat("last loan policy should be stored",
+      renewedLoan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
+
+    assertThat("due date should be 2 weeks from now",
+      renewedLoan.getString("dueDate"),
+      isEquivalentTo(newDueDate));
+  }
+
+  @Test
+  public void canOverrideRenewalWhenDateFallsOutsideOfTheDateRangesInTheFixedLoanPolicyAndDueDateIsNotSpecified() throws
+    InterruptedException,
+    ExecutionException,
+    TimeoutException, MalformedURLException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    DateTime loanDueDate =
+      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
+    final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
+
+    FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
+      .withName("Fixed Due Date Schedule")
+      .addSchedule(wholeMonth(2018, DateTimeConstants.FEBRUARY));
 
     final UUID fixedDueDateSchedulesId = fixedDueDateScheduleClient.create(
       fixedDueDateSchedules).getId();
@@ -717,8 +264,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     LoanPolicyBuilder currentDueDateRollingPolicy = new LoanPolicyBuilder()
       .withName("Current Due Date Rolling Policy")
-      .rolling(Period.months(2))
-      .renewOverrideWith(fixedDueDateSchedulesId)
+      .fixed(fixedDueDateSchedulesId)
       .renewFromCurrentDueDate();
 
     UUID dueDateLimitedPolicyId = loanPolicyClient.create(currentDueDateRollingPolicy).getId();
@@ -728,8 +274,51 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     useLoanPolicyAsFallback(dueDateLimitedPolicyId);
 
-    DateTime newDueDate =
-      new DateTime(2025, DateTimeConstants.JANUARY, 1, 1, 1, 1);
+    Response response =
+      loansFixture.attemptOverride(smallAngryPlanet, jessica, OVERRIDE_COMMENT, null);
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("New due date must be specified when due date calculation fails"))));
+  }
+
+  @Test
+  public void canOverrideRenewalWhenDateFallsOutsideOfTheDateRangesInTheFixedLoanPolicyAndDueDateIsSpecified() throws
+    InterruptedException,
+    ExecutionException,
+    TimeoutException, MalformedURLException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    DateTime loanDueDate =
+      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
+    final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
+
+    final UUID loanId = loan.getId();
+
+    FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
+      .withName("Fixed Due Date Schedule")
+      .addSchedule(wholeMonth(2018, DateTimeConstants.FEBRUARY));
+
+    final UUID fixedDueDateSchedulesId = fixedDueDateScheduleClient.create(
+      fixedDueDateSchedules).getId();
+
+    //Need to remember in order to delete after test
+    schedulesToDelete.add(fixedDueDateSchedulesId);
+
+    LoanPolicyBuilder currentDueDateRollingPolicy = new LoanPolicyBuilder()
+      .withName("Current Due Date Rolling Policy")
+      .fixed(fixedDueDateSchedulesId)
+      .renewFromCurrentDueDate();
+
+    UUID dueDateLimitedPolicyId = loanPolicyClient.create(currentDueDateRollingPolicy).getId();
+
+    //Need to remember in order to delete after test
+    policiesToDelete.add(dueDateLimitedPolicyId);
+
+    useLoanPolicyAsFallback(dueDateLimitedPolicyId);
+
+    DateTime newDueDate = DateTime.now().plusWeeks(1);
     final JsonObject renewedLoan =
       loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica, OVERRIDE_COMMENT, newDueDate.toString()).getJson();
 
@@ -756,7 +345,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     assertThat("last loan policy should be stored",
       renewedLoan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
 
-    assertThat("due date should be 1st of January 2025",
+    assertThat("due date should be 2 months from previous due date",
       renewedLoan.getString("dueDate"),
       isEquivalentTo(newDueDate));
 
@@ -766,7 +355,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideRenewalWhenNewDueDateIsNotSpecifiedAndDateFallsOutsideOfTheDateRangesInTheLoanPolicy() throws
+  public void canOverrideRenewalWhenDateFallsOutsideOfTheDateRangesInTheRollingLoanPolicy() throws
     InterruptedException,
     ExecutionException,
     TimeoutException, MalformedURLException {
@@ -776,13 +365,14 @@ public class OverrideRenewByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43));
+    DateTime loanDueDate =
+      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
+    final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
 
     final UUID loanId = loan.getId();
 
     FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
-      .withName("Kludgy Fixed Due Date Schedule")
+      .withName("Fixed Due Date Schedule")
       .addSchedule(wholeMonth(2018, DateTimeConstants.FEBRUARY))
       .addSchedule(forDay(renewalDate));
 
@@ -795,7 +385,117 @@ public class OverrideRenewByBarcodeTests extends APITests {
     LoanPolicyBuilder currentDueDateRollingPolicy = new LoanPolicyBuilder()
       .withName("Current Due Date Rolling Policy")
       .rolling(Period.months(2))
-      .renewOverrideWith(fixedDueDateSchedulesId)
+      .limitedBySchedule(fixedDueDateSchedulesId)
+      .renewFromCurrentDueDate();
+
+    UUID dueDateLimitedPolicyId = loanPolicyClient.create(currentDueDateRollingPolicy).getId();
+
+    //Need to remember in order to delete after test
+    policiesToDelete.add(dueDateLimitedPolicyId);
+
+    useLoanPolicyAsFallback(dueDateLimitedPolicyId);
+
+    final JsonObject renewedLoan =
+      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica, OVERRIDE_COMMENT, null)
+        .getJson();
+
+    assertThat(renewedLoan.getString("id"), is(loanId.toString()));
+
+    assertThat("user ID should match barcode",
+      renewedLoan.getString("userId"), is(jessica.getId().toString()));
+
+    assertThat("item ID should match barcode",
+      renewedLoan.getString("itemId"), is(smallAngryPlanet.getId().toString()));
+
+    assertThat("status should be open",
+      renewedLoan.getJsonObject("status").getString("name"), is("Open"));
+
+    assertThat("action should be renewed",
+      renewedLoan.getString("action"), is("Renewed through override"));
+
+    assertThat("'actionComment' field should contain comment specified for override",
+      renewedLoan.getString("actionComment"), is(OVERRIDE_COMMENT));
+
+    assertThat("renewal count should be incremented",
+      renewedLoan.getInteger("renewalCount"), is(1));
+
+    DateTime expectedDueDate = loanDueDate.plusWeeks(3).plusMonths(2);
+    assertThat("due date should be 1st of Feb 2019",
+      renewedLoan.getString("dueDate"),
+      isEquivalentTo(expectedDueDate));
+  }
+
+  @Test
+  public void canOverrideRenewalWhenLoanReachedRenewalLimitAndDueDateIsNotSpecified() throws
+    InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    LoanPolicyBuilder limitedRenewalsPolicy = new LoanPolicyBuilder()
+      .withName("Limited Renewals policy")
+      .rolling(Period.weeks(1))
+      .limitedRenewals(1);
+
+    UUID limitedRenewalsPolicyId = loanPolicyClient.create(limitedRenewalsPolicy).getId();
+
+    //Need to remember in order to delete after test
+    policiesToDelete.add(limitedRenewalsPolicyId);
+
+    useLoanPolicyAsFallback(limitedRenewalsPolicyId);
+
+    DateTime loanDate = DateTime.now();
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDate).getJson();
+
+    loansFixture.renewLoan(smallAngryPlanet, jessica);
+
+    final JsonObject renewedLoan =
+      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica, OVERRIDE_COMMENT, null)
+        .getJson();
+
+    assertThat("user ID should match barcode",
+      renewedLoan.getString("userId"), is(jessica.getId().toString()));
+
+    assertThat("item ID should match barcode",
+      renewedLoan.getString("itemId"), is(smallAngryPlanet.getId().toString()));
+
+    assertThat("status should be open",
+      renewedLoan.getJsonObject("status").getString("name"), is("Open"));
+
+    assertThat("action should be renewed",
+      renewedLoan.getString("action"), is("Renewed through override"));
+
+    assertThat("'actionComment' field should contain comment specified for override",
+      renewedLoan.getString("actionComment"), is(OVERRIDE_COMMENT));
+
+    assertThat("renewal count should be incremented",
+      renewedLoan.getInteger("renewalCount"), is(2));
+
+    DateTime expectedDueDate = loanDate.plusWeeks(3);
+    assertThat("due date should be 3 weeks later",
+      renewedLoan.getString("dueDate"),
+      isEquivalentTo(expectedDueDate));
+  }
+
+  @Test
+  public void cannotOverrideRenewalWhenLoanDoesNotMatchAnyOfOverrideCases() throws
+    InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+      new DateTime(2018, 4, 21, 11, 21, 43));
+
+    LoanPolicyBuilder currentDueDateRollingPolicy = new LoanPolicyBuilder()
+      .withName("Current Due Date Rolling Policy")
+      .rolling(Period.months(2))
       .renewFromCurrentDueDate();
 
     UUID dueDateLimitedPolicyId = loanPolicyClient.create(currentDueDateRollingPolicy).getId();
@@ -809,26 +509,10 @@ public class OverrideRenewByBarcodeTests extends APITests {
       loansFixture.attemptOverride(smallAngryPlanet, jessica, OVERRIDE_COMMENT, null);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("New due date must be specified when due date calculation fails"),
-      hasParameter("dueDate", null))));
-  }
-
-  @Test
-  public void cannotOverrideRenewalWhenCommentPropertyIsBlank() throws
-    InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource jessica = usersFixture.jessica();
-
-    final Response response =
-      loansFixture.attemptOverride(smallAngryPlanet, jessica, StringUtils.EMPTY, null);
-
-    assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Override renewal request must have a comment"),
-      hasParameter("comment", null))));
+      hasMessage("Override renewal does not match any of expected cases: " +
+        "item is not renewable, " +
+        "reached number of renewals limit or " +
+        "renewal date falls outside of the date ranges in the loan policy"))));
   }
 
   private Matcher<ValidationError> hasUserRelatedParameter(IndividualResource user) {

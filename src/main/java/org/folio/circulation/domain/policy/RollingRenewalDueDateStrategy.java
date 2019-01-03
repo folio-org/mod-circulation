@@ -66,12 +66,12 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
     }
   }
 
-  private HttpResult<DateTime> calculateDueDate(DateTime from, DateTime loanDate) {
+  protected HttpResult<DateTime> calculateDueDate(DateTime from, DateTime loanDate) {
     return renewalDueDate(from)
       .next(dueDate -> truncateDueDateBySchedule(loanDate, dueDate));
   }
 
-  private HttpResult<DateTime> renewalDueDate(DateTime from) {
+  protected HttpResult<DateTime> renewalDueDate(DateTime from) {
     return period.addTo(from,
       () -> validationError(RENEWAL_UNRECOGNISED_PERIOD_MESSAGE),
       interval -> validationError(String.format(RENEWAL_UNRECOGNISED_INTERVAL_MESSAGE, interval)),

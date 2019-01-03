@@ -91,30 +91,48 @@ public class LoanPolicy {
     }
   }
 
-  public HttpResult<Loan> overrideRenewal(Loan loan,
+  public HttpResult<Loan> overrideRenewal(Loan loan, DateTime systemDate,
                                           DateTime overrideDueDate, String comment) {
     try {
-      HttpResult<DateTime> proposedDueDateResult = null;
-
-      List<ValidationError> errors = new ArrayList<>();
-
-      if (overrideDueDate == null) {
-        errors.add(errorForDueDate());
-      } else {
-        proposedDueDateResult = HttpResult.succeeded(overrideDueDate);
+      if (isNotRenewable()) {
+        return overrideRenewalForDueDate(loan, overrideDueDate, comment);
       }
-      if (proposedDueDateResult != null && proposedDueDateResult.succeeded()) {
-        errorWhenEarlierOrSameDueDate(loan, proposedDueDateResult.value(), errors);
-      }
+      final HttpResult<DateTime> proposedDueDateResult =
+        determineStrategy(true, systemDate).calculateDueDate(loan);
 
-      if (proposedDueDateResult != null && errors.isEmpty()) {
+      final JsonObject loansPolicy = getLoansPolicy();
+      if (proposedDueDateResult.failed() && isFixed(loansPolicy)) {
+        return overrideRenewalForDueDate(loan, overrideDueDate, comment);
+      }
+      if (proposedDueDateResult.failed() && isRolling(loansPolicy)) {
+        DueDateStrategy dueDateStrategy = getRollingOverrideRenewalDueDateStrategy(systemDate);
+        return dueDateStrategy.calculateDueDate(loan)
+          .map(dueDate -> loan.overrideRenewal(dueDate, getId(), comment));
+      }
+      if (proposedDueDateResult.succeeded() &&
+        reachedNumberOfRenewalsLimit(loan) && !unlimitedRenewals()) {
         return proposedDueDateResult.map(dueDate -> loan.overrideRenewal(dueDate, getId(), comment));
-      } else {
-        return HttpResult.failed(new ValidationErrorFailure(errors));
       }
+      return HttpResult.failed(new ValidationErrorFailure(errorForNotMatchingOverrideCases()));
+
     } catch (Exception e) {
       return failed(new ServerErrorFailure(e));
     }
+  }
+
+  private HttpResult<Loan> overrideRenewalForDueDate(Loan loan, DateTime overrideDueDate, String comment) {
+    if (overrideDueDate == null) {
+      return HttpResult.failed(new ValidationErrorFailure(errorForDueDate()));
+    }
+    return HttpResult.succeeded(loan.overrideRenewal(overrideDueDate, getId(), comment));
+  }
+
+  private DueDateStrategy getRollingOverrideRenewalDueDateStrategy(DateTime systemDate) {
+    final JsonObject loansPolicy = getLoansPolicy();
+    final JsonObject renewalsPolicy = getRenewalsPolicy();
+    return new RollingOverrideRenewalDueDateStrategy(getId(), getName(),
+      systemDate, getRenewFrom(), getRenewalPeriod(loansPolicy, renewalsPolicy),
+      getRenewalDueDateLimitSchedules(), this::errorForPolicy);
   }
 
   private ValidationError errorForDueDate() {
@@ -123,6 +141,14 @@ public class LoanPolicy {
 
     String reason = "New due date must be specified when due date calculation fails";
     return new ValidationError(reason, parameters);
+  }
+
+  private ValidationError errorForNotMatchingOverrideCases() {
+    String reason = "Override renewal does not match any of expected cases: " +
+      "item is not renewable, " +
+      "reached number of renewals limit or " +
+      "renewal date falls outside of the date ranges in the loan policy";
+    return new ValidationError(reason, new HashMap<>());
   }
 
   private ValidationError errorForPolicy(String reason) {
