@@ -10,9 +10,9 @@ import java.util.function.Function;
  * Overrides {@link #calculateDueDate(DateTime, DateTime)} in {@link RollingRenewalDueDateStrategy}
  * to skip due date truncating
  */
-class RollingOverrideRenewalDueDateStrategy extends RollingRenewalDueDateStrategy {
+class RollingRenewalOverrideDueDateStrategy extends RollingRenewalDueDateStrategy {
 
-  RollingOverrideRenewalDueDateStrategy(String loanPolicyId, String loanPolicyName, DateTime systemDate,
+  RollingRenewalOverrideDueDateStrategy(String loanPolicyId, String loanPolicyName, DateTime systemDate,
                                         String renewFrom, Period period,
                                         FixedDueDateSchedules dueDateLimitSchedules,
                                         Function<String, ValidationError> errorForPolicy) {

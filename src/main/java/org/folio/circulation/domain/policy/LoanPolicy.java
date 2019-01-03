@@ -130,7 +130,7 @@ public class LoanPolicy {
   private DueDateStrategy getRollingOverrideRenewalDueDateStrategy(DateTime systemDate) {
     final JsonObject loansPolicy = getLoansPolicy();
     final JsonObject renewalsPolicy = getRenewalsPolicy();
-    return new RollingOverrideRenewalDueDateStrategy(getId(), getName(),
+    return new RollingRenewalOverrideDueDateStrategy(getId(), getName(),
       systemDate, getRenewFrom(), getRenewalPeriod(loansPolicy, renewalsPolicy),
       getRenewalDueDateLimitSchedules(), this::errorForPolicy);
   }
