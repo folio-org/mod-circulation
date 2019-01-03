@@ -1,7 +1,5 @@
 package api.loans;
 
-import static api.support.fixtures.UserExamples.basedUponJessicaPontefract;
-import static api.support.fixtures.UserExamples.basedUponStevenJones;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.InterfaceUrls.loansUrl;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -36,11 +34,9 @@ import org.joda.time.Period;
 import org.joda.time.format.ISODateTimeFormat;
 import org.junit.Test;
 
-import api.APITestSuite;
 import api.support.APITests;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanBuilder;
-import api.support.builders.UserBuilder;
 import api.support.http.InterfaceUrls;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonArray;

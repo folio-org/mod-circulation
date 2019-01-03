@@ -1,6 +1,6 @@
 package api.loans;
 
-import static api.APITestSuite.END_OF_2019_DUE_DATE;
+import static api.support.APITestContext.END_OF_2019_DUE_DATE;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID;

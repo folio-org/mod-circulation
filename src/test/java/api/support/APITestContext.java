@@ -1,4 +1,4 @@
-package api;
+package api.support;
 
 import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
@@ -24,13 +24,15 @@ import api.support.fakes.FakeStorageModule;
 import api.support.http.URLHelper;
 import io.vertx.core.Vertx;
 
-public class APITestSuite {
+public class APITestContext {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  public static final String TENANT_ID = "test_tenant";
-  public static final String USER_ID = "79ff2a8b-d9c3-5b39-ad4a-0a84025ab085";
-  public static final String TOKEN = "eyJhbGciOiJIUzUxMiJ9eyJzdWIiOiJhZG1pbiIsInVzZXJfaWQiOiI3OWZmMmE4Yi1kOWMzLTViMzktYWQ0YS0wYTg0MDI1YWIwODUiLCJ0ZW5hbnQiOiJ0ZXN0X3RlbmFudCJ9BShwfHcNClt5ZXJ8ImQTMQtAM1sQEnhsfWNmXGsYVDpuaDN3RVQ9";
+  private static final String TENANT_ID = "test_tenant";
+  private static final String USER_ID = "79ff2a8b-d9c3-5b39-ad4a-0a84025ab085";
+
+  private static final String TOKEN = "eyJhbGciOiJIUzUxMiJ9eyJzdWIiOiJhZG1pbiIsInVzZXJfaWQiOiI3OWZmMmE4Yi1kOWMzLTViMzktYWQ0YS0wYTg0MDI1YWIwODUiLCJ0ZW5hbnQiOiJ0ZXN0X3RlbmFudCJ9BShwfHcNClt5ZXJ8ImQTMQtAM1sQEnhsfWNmXGsYVDpuaDN3RVQ9";
   public static final DateTime END_OF_2019_DUE_DATE = new DateTime(2019, 12, 31, 23, 59, 59, DateTimeZone.UTC);
+
   private static final String REQUEST_ID = createFakeRequestId();
 
   private static VertxAssistant vertxAssistant;
@@ -40,6 +42,18 @@ public class APITestSuite {
   private static String fakeOkapiDeploymentId;
   private static Boolean useOkapiForStorage;
   private static Boolean useOkapiForInitialRequests;
+
+  static String getToken() {
+    return TOKEN;
+  }
+
+  public static String getTenantId() {
+    return TENANT_ID;
+  }
+
+  public static String getUserId() {
+    return USER_ID;
+  }
 
   public static int circulationModulePort() {
     return port;
@@ -73,12 +87,12 @@ public class APITestSuite {
       okapiUrl(), TENANT_ID, TOKEN, USER_ID, REQUEST_ID, exceptionHandler);
   }
 
-  public static OkapiHttpClient createClient() {
-    return APITestSuite.createClient(exception ->
+  static OkapiHttpClient createClient() {
+    return APITestContext.createClient(exception ->
       log.error("Request failed:", exception));
   }
 
-  public static void deployVerticles()
+  static void deployVerticles()
     throws InterruptedException,
     ExecutionException,
     TimeoutException {
@@ -116,7 +130,7 @@ public class APITestSuite {
     return fakeStorageModuleDeployed;
   }
 
-  public static void undeployVerticles()
+  static void undeployVerticles()
     throws InterruptedException,
     ExecutionException,
     TimeoutException {
@@ -149,7 +163,7 @@ public class APITestSuite {
     log.info("Queries performed: {}", sortedRequests);
   }
 
-  public static URL okapiUrl() {
+  static URL okapiUrl() {
     try {
       if (useOkapiForStorage) {
         return new URL("http://localhost:9130");

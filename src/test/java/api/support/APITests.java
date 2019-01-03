@@ -1,6 +1,6 @@
 package api.support;
 
-import static api.APITestSuite.createClient;
+import static api.support.APITestContext.createClient;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -22,7 +22,6 @@ import org.junit.BeforeClass;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import api.APITestSuite;
 import api.support.fixtures.AddressTypesFixture;
 import api.support.fixtures.CancellationReasonsFixture;
 import api.support.fixtures.ItemsFixture;
@@ -144,7 +143,7 @@ public abstract class APITests {
     TimeoutException,
     MalformedURLException {
 
-    APITestSuite.deployVerticles();
+    APITestContext.deployVerticles();
 
     //Delete everything first just in case
     deleteAllRecords();
@@ -184,7 +183,7 @@ public abstract class APITests {
 
     deleteOftenCreatedRecords();
 
-    APITestSuite.undeployVerticles();
+    APITestContext.undeployVerticles();
   }
 
   @After
@@ -292,7 +291,7 @@ public abstract class APITests {
     ExecutionException,
     TimeoutException {
 
-    OkapiHttpClient client = APITestSuite.createClient(exception ->
+    OkapiHttpClient client = APITestContext.createClient(exception ->
       log.error("Requests to delete all for clean up failed:", exception));
 
     ResourceClient.forRequests(client).deleteAll();
