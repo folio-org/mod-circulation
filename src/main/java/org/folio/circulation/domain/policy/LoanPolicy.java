@@ -105,7 +105,7 @@ public class LoanPolicy {
         return overrideRenewalForDueDate(loan, overrideDueDate, comment);
       }
       if (proposedDueDateResult.failed() && isRolling(loansPolicy)) {
-        DueDateStrategy dueDateStrategy = getRollingOverrideRenewalDueDateStrategy(systemDate);
+        DueDateStrategy dueDateStrategy = getRollingRenewalOverrideDueDateStrategy(systemDate);
         return dueDateStrategy.calculateDueDate(loan)
           .map(dueDate -> loan.overrideRenewal(dueDate, getId(), comment));
       }
@@ -127,7 +127,7 @@ public class LoanPolicy {
     return HttpResult.succeeded(loan.overrideRenewal(overrideDueDate, getId(), comment));
   }
 
-  private DueDateStrategy getRollingOverrideRenewalDueDateStrategy(DateTime systemDate) {
+  private DueDateStrategy getRollingRenewalOverrideDueDateStrategy(DateTime systemDate) {
     final JsonObject loansPolicy = getLoansPolicy();
     final JsonObject renewalsPolicy = getRenewalsPolicy();
     return new RollingRenewalOverrideDueDateStrategy(getId(), getName(),
