@@ -1,6 +1,18 @@
 package org.folio.circulation.domain.policy;
 
-import io.vertx.core.json.JsonObject;
+import static org.folio.circulation.support.HttpResult.failed;
+import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getNestedIntegerProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
+
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
@@ -9,18 +21,7 @@ import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
-
-import static org.folio.circulation.support.HttpResult.failed;
-import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getNestedIntegerProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
+import io.vertx.core.json.JsonObject;
 
 public class LoanPolicy {
   private final JsonObject representation;
@@ -101,18 +102,22 @@ public class LoanPolicy {
         determineStrategy(true, systemDate).calculateDueDate(loan);
 
       final JsonObject loansPolicy = getLoansPolicy();
+
       if (proposedDueDateResult.failed() && isFixed(loansPolicy)) {
         return overrideRenewalForDueDate(loan, overrideDueDate, comment);
       }
+      
       if (proposedDueDateResult.failed() && isRolling(loansPolicy)) {
         DueDateStrategy dueDateStrategy = getRollingRenewalOverrideDueDateStrategy(systemDate);
         return dueDateStrategy.calculateDueDate(loan)
           .map(dueDate -> loan.overrideRenewal(dueDate, getId(), comment));
       }
+
       if (proposedDueDateResult.succeeded() &&
         reachedNumberOfRenewalsLimit(loan) && !unlimitedRenewals()) {
         return proposedDueDateResult.map(dueDate -> loan.overrideRenewal(dueDate, getId(), comment));
       }
+
       return HttpResult.failed(new ValidationErrorFailure(errorForNotMatchingOverrideCases()));
 
     } catch (Exception e) {

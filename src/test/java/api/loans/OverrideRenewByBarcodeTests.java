@@ -147,7 +147,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
   public void canOverrideRenewalWhenItemIsNotRenewableAndNewDueDateIsNotSpecified() throws
     InterruptedException,
     ExecutionException,
-    TimeoutException, MalformedURLException {
+    TimeoutException,
+    MalformedURLException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -168,6 +169,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
     policiesToDelete.add(nonRenewablePolicyId);
 
     useLoanPolicyAsFallback(nonRenewablePolicyId);
+
+    loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
 
     Response response =
       loansFixture.attemptOverride(smallAngryPlanet, jessica, OVERRIDE_COMMENT, null);
@@ -180,7 +183,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
   public void canOverrideRenewalWhenItemIsNotRenewableAndNewDueDateIsSpecified() throws
     InterruptedException,
     ExecutionException,
-    TimeoutException, MalformedURLException {
+    TimeoutException,
+    MalformedURLException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -202,10 +206,13 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     useLoanPolicyAsFallback(nonRenewablePolicyId);
 
+    loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
+
     DateTime newDueDate = DateTime.now().plusWeeks(2);
 
     JsonObject renewedLoan =
-      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica, OVERRIDE_COMMENT, newDueDate.toString()).getJson();
+      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica,
+        OVERRIDE_COMMENT, newDueDate.toString()).getJson();
 
     assertThat("user ID should match barcode",
       renewedLoan.getString("userId"), is(jessica.getId().toString()));
@@ -269,6 +276,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     useLoanPolicyAsFallback(dueDateLimitedPolicyId);
 
+    loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
+
     Response response =
       loansFixture.attemptOverride(smallAngryPlanet, jessica, OVERRIDE_COMMENT, null);
 
@@ -287,7 +296,9 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     DateTime loanDueDate =
       new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
-    final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
+
+    final IndividualResource loan = loansFixture.checkOutByBarcode(
+      smallAngryPlanet, jessica, loanDueDate);
 
     final UUID loanId = loan.getId();
 
@@ -312,6 +323,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
     policiesToDelete.add(dueDateLimitedPolicyId);
 
     useLoanPolicyAsFallback(dueDateLimitedPolicyId);
+
+    loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
 
     DateTime newDueDate = DateTime.now().plusWeeks(1);
     final JsonObject renewedLoan =
@@ -390,6 +403,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     useLoanPolicyAsFallback(dueDateLimitedPolicyId);
 
+    loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
+
     final JsonObject renewedLoan =
       loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica, OVERRIDE_COMMENT, null)
         .getJson();
@@ -447,8 +462,11 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     loansFixture.renewLoan(smallAngryPlanet, jessica);
 
+    loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
+
     final JsonObject renewedLoan =
-      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica, OVERRIDE_COMMENT, null)
+      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica,
+        OVERRIDE_COMMENT, null)
         .getJson();
 
     assertThat("user ID should match barcode",
