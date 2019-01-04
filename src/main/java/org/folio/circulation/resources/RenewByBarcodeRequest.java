@@ -1,17 +1,16 @@
 package org.folio.circulation.resources;
 
+import io.vertx.core.json.JsonObject;
+import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.support.HttpResult;
+
 import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
 
-import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.support.HttpResult;
-
-import io.vertx.core.json.JsonObject;
-
 public class RenewByBarcodeRequest {
-  static final String USER_BARCODE = "userBarcode";
-  private static final String ITEM_BARCODE = "itemBarcode";
+  public static final String USER_BARCODE = "userBarcode";
+  public static final String ITEM_BARCODE = "itemBarcode";
 
   private final String itemBarcode;
   private final String userBarcode;

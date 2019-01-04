@@ -108,6 +108,34 @@ resourceTypes:
           body:
             text/plain:
               example: "Internal server error"
+  /circulation/override-renewal-by-barcode:
+    displayName: Override renewal of an existing loan using barcode for item and loanee
+    post:
+      description: Updates the due date of an existing loan
+      is: [
+        language,
+        validate
+      ]
+      body:
+        application/json:
+          type: !include override-renewal-by-barcode-request.json
+          example: !include examples/override-renewal-by-barcode-request.json
+      responses:
+        200:
+          body:
+            application/json:
+              type: loan
+              example: !include examples/loan.json
+        201:
+          body:
+            application/json:
+              type: loan
+              example: !include examples/loan.json
+        500:
+          description: "Internal server error"
+          body:
+            text/plain:
+              example: "Internal server error"
   /check-in-by-barcode:
     displayName: Checkin an existing loan using barcode for item and loanee
     post:

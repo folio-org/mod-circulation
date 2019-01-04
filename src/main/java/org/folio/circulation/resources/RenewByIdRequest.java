@@ -1,13 +1,12 @@
 package org.folio.circulation.resources;
 
-import static org.folio.circulation.support.HttpResult.succeeded;
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
-
+import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.HttpResult;
 
-import io.vertx.core.json.JsonObject;
+import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
 
 public class RenewByIdRequest {
   static final String USER_ID = "userId";

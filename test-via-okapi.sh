@@ -6,13 +6,13 @@ circulation_direct_address=http://localhost:9605
 circulation_instance_id=localhost-9605
 
 #Needs to be the specific version of mod-inventory-storage you want to use for testing
-inventory_storage_module_id="mod-inventory-storage-14.0.0-SNAPSHOT"
+inventory_storage_module_id="mod-inventory-storage-14.1.0-SNAPSHOT"
 
 #Needs to be the specific version of mod-circulation-storage you want to use for testing
 circulation_storage_module_id="mod-circulation-storage-6.3.0-SNAPSHOT"
 
 #Needs to be the specific version of mod-users you want to use for testing
-users_storage_module_id="mod-users-15.3.0-SNAPSHOT"
+users_storage_module_id="mod-users-15.3.1-SNAPSHOT"
 
 #remove log output
 rm test-via-okapi.log
@@ -70,7 +70,8 @@ echo "Run tests via Okapi"
 # to run a smaller set of tests
 mvn -Dokapi.address="${okapi_proxy_address}" \
 -Duse.okapi.initial.requests="true"  \
--Duse.okapi.storage.requests="true" clean test \
+-Duse.okapi.storage.requests="true" \
+clean test \
 | tee -a test-via-okapi.log
 
 test_results=$?
