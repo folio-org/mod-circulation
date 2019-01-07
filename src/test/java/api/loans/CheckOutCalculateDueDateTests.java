@@ -1,26 +1,31 @@
 package api.loans;
 
-import api.APITestSuite;
-import api.support.APITests;
-import api.support.builders.CheckOutByBarcodeRequestBuilder;
-import api.support.http.InterfaceUrls;
-import api.support.http.ResourceClient;
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.domain.OpeningDay;
-import org.folio.circulation.domain.OpeningDayPeriod;
-import org.folio.circulation.domain.OpeningHour;
-import org.folio.circulation.domain.policy.DueDateManagement;
-import org.folio.circulation.domain.policy.LoanPolicyPeriod;
-import org.folio.circulation.domain.policy.LoansPolicyProfile;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static api.APITestSuite.END_OF_2019_DUE_DATE;
+import static api.APITestSuite.exampleFixedDueDateSchedulesId;
+import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID;
+import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_ID;
+import static api.support.fixtures.CalendarExamples.CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID;
+import static api.support.fixtures.CalendarExamples.CASE_WED_THU_FRI_SERVICE_POINT_ID;
+import static api.support.fixtures.CalendarExamples.FRIDAY_DATE;
+import static api.support.fixtures.CalendarExamples.THURSDAY_DATE;
+import static api.support.fixtures.CalendarExamples.WEDNESDAY_DATE;
+import static api.support.fixtures.CalendarExamples.getCurrentAndNextFakeOpeningDayByServId;
+import static api.support.fixtures.CalendarExamples.getCurrentFakeOpeningDayByServId;
+import static api.support.fixtures.CalendarExamples.getFirstFakeOpeningDayByServId;
+import static api.support.fixtures.CalendarExamples.getLastFakeOpeningDayByServId;
+import static api.support.fixtures.LibraryHoursExamples.CASE_CALENDAR_IS_UNAVAILABLE_SERVICE_POINT_ID;
+import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_IN_THU_SERVICE_POINT_ID;
+import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_SERVICE_POINT_ID;
+import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static org.folio.circulation.domain.policy.LoanPolicyPeriod.HOURS;
+import static org.folio.circulation.resources.CheckOutByBarcodeResource.DATE_TIME_FORMATTER;
+import static org.folio.circulation.support.PeriodUtil.calculateOffset;
+import static org.folio.circulation.support.PeriodUtil.calculateOffsetTime;
+import static org.folio.circulation.support.PeriodUtil.isInCurrentLocalDateTime;
+import static org.folio.circulation.support.PeriodUtil.isOffsetTimeInCurrentDayPeriod;
+import static org.folio.circulation.support.PeriodUtil.isTimeInHourPeriod;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
@@ -34,19 +39,28 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.SplittableRandom;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import static api.APITestSuite.*;
-import static api.support.fixtures.CalendarExamples.*;
-import static api.support.fixtures.LibraryHoursExamples.*;
-import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static org.folio.circulation.domain.policy.LoanPolicyPeriod.HOURS;
-import static org.folio.circulation.resources.CheckOutByBarcodeResource.DATE_TIME_FORMATTER;
-import static org.folio.circulation.support.PeriodUtil.*;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
+import org.folio.circulation.domain.OpeningDay;
+import org.folio.circulation.domain.OpeningDayPeriod;
+import org.folio.circulation.domain.OpeningHour;
+import org.folio.circulation.domain.policy.DueDateManagement;
+import org.folio.circulation.domain.policy.LoanPolicyPeriod;
+import org.folio.circulation.domain.policy.LoansPolicyProfile;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.OkapiHttpClient;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import api.APITestSuite;
+import api.support.APITests;
+import api.support.builders.CheckOutByBarcodeRequestBuilder;
+import api.support.http.ResourceClient;
+import io.vertx.core.json.JsonObject;
 
 public class CheckOutCalculateDueDateTests extends APITests {
 
@@ -1821,32 +1835,13 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
   private String createLoanPolicies(JsonObject loanPolicyEntry)
     throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+
     ResourceClient policyResourceClient = ResourceClient.forLoanPolicies(client);
+
     IndividualResource resource = policyResourceClient.create(loanPolicyEntry);
-    String LoanPolicyId = resource.getId().toString();
-    return createLoanRules(LoanPolicyId);
-  }
 
-  /**
-   * Create a new LoanRules with loanPolicy
-   */
-  private String createLoanRules(String loanPolicyId) {
-    CompletableFuture<Response> completed = new CompletableFuture<>();
-    JsonObject newRulesRequest = getLoanRulesValue(loanPolicyId);
-    client.put(InterfaceUrls.loanRulesUrl(), newRulesRequest, ResponseHandler.any(completed));
-    return loanPolicyId;
-  }
+    useLoanPolicyAsFallback(resource.getId());
 
-  /**
-   * Set the loan rules
-   */
-  private JsonObject getLoanRulesValue(String loanPolicyId) {
-    String rules = String.join("\n",
-      "priority: t, s, c, b, a, m, g",
-      "fallback-policy: " + loanPolicyId,
-      "m " + APITestSuite.bookMaterialTypeId() + " + t " + canCirculateLoanTypeId() + " : " + loanPolicyId,
-      "m " + APITestSuite.bookMaterialTypeId() + " + t " + readingRoomLoanTypeId() + " : " + loanPolicyId);
-    return new JsonObject()
-      .put("loanRulesAsTextFile", rules);
+    return resource.getId().toString();
   }
 }
