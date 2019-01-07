@@ -134,8 +134,8 @@ public class CheckOutCalculateDueDateTests extends APITests {
     assertThat("last loan policy should be stored",
       loan.getString("loanPolicyId"), is(loanPolicyId));
 
-    assertThat("due date should be " + FIXED_DUE_DATE,
-      loan.getString("dueDate"), isEquivalentTo(FIXED_DUE_DATE));
+    assertThat("due date should be " + END_OF_2019_DUE_DATE,
+      loan.getString("dueDate"), isEquivalentTo(END_OF_2019_DUE_DATE));
   }
 
   /**

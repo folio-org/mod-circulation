@@ -1,15 +1,9 @@
 package api.support.http;
 
-import api.support.builders.Builder;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.JsonArrayHelper;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
-import org.hamcrest.CoreMatchers;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
+import java.lang.invoke.MethodHandles;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -20,10 +14,21 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import org.folio.circulation.support.JsonArrayHelper;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.OkapiHttpClient;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
+import org.hamcrest.CoreMatchers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import api.support.builders.Builder;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 public class ResourceClient {
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final OkapiHttpClient client;
   private final UrlMaker urlMaker;
@@ -204,16 +209,20 @@ public class ResourceClient {
 
     CompletableFuture<Response> createCompleted = new CompletableFuture<>();
 
+    log.debug("Attempting to create %s record: %s", resourceName,
+      request.encodePrettily());
+
     client.post(urlMaker.combine(""), request,
       ResponseHandler.json(createCompleted));
 
     Response response = createCompleted.get(5, TimeUnit.SECONDS);
 
     assertThat(
-      String.format("Failed to create %s: %s", resourceName, response.getBody()),
-      response.getStatusCode(), is(HttpURLConnection.HTTP_CREATED));
+      String.format("Failed to create %s: %s", resourceName,
+        response.getBody()), response.getStatusCode(),
+      is(HttpURLConnection.HTTP_CREATED));
 
-    System.out.println(String.format("Created resource %s: %s", resourceName,
+    log.debug(String.format("Created resource %s: %s", resourceName,
       response.getJson().encodePrettily()));
 
     return new IndividualResource(response);

@@ -1,6 +1,6 @@
 package api.loans;
 
-import static api.APITestSuite.FIXED_DUE_DATE;
+import static api.APITestSuite.END_OF_2019_DUE_DATE;
 import static api.support.builders.ItemBuilder.AWAITING_PICKUP;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.builders.RequestBuilder.CLOSED_FILLED;
@@ -181,7 +181,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat("due date should be based upon fixed due date schedule",
       loan.getString("dueDate"),
-      isEquivalentTo(FIXED_DUE_DATE));
+      isEquivalentTo(END_OF_2019_DUE_DATE));
   }
 
   @Test
