@@ -110,6 +110,10 @@ public class InterfaceUrls {
     return APITestSuite.circulationModuleUrl("/circulation/renew-by-barcode");
   }
 
+  public static URL overrideRenewalByBarcodeUrl() {
+    return APITestSuite.circulationModuleUrl("/circulation/override-renewal-by-barcode");
+  }
+
   public static URL renewByIdUrl() {
     return APITestSuite.circulationModuleUrl("/circulation/renew-by-id");
   }

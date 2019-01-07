@@ -1,12 +1,16 @@
 package org.folio.circulation;
 
-import java.lang.invoke.MethodHandles;
-
+import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Future;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpServer;
+import io.vertx.ext.web.Router;
 import org.folio.circulation.resources.CheckInByBarcodeResource;
 import org.folio.circulation.resources.CheckOutByBarcodeResource;
 import org.folio.circulation.resources.LoanCollectionResource;
 import org.folio.circulation.resources.LoanRulesEngineResource;
 import org.folio.circulation.resources.LoanRulesResource;
+import org.folio.circulation.resources.OverrideRenewalByBarcodeResource;
 import org.folio.circulation.resources.RenewByBarcodeResource;
 import org.folio.circulation.resources.RenewByIdResource;
 import org.folio.circulation.resources.RequestCollectionResource;
@@ -14,11 +18,7 @@ import org.folio.circulation.resources.RequestQueueResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Future;
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpServer;
-import io.vertx.ext.web.Router;
+import java.lang.invoke.MethodHandles;
 
 public class CirculationVerticle extends AbstractVerticle {
   private HttpServer server;
@@ -44,6 +44,7 @@ public class CirculationVerticle extends AbstractVerticle {
     new LoanCollectionResource(client).register(router);
     new RequestCollectionResource(client).register(router);
     new RequestQueueResource(client).register(router);
+    new OverrideRenewalByBarcodeResource(client).register(router);
 
     new LoanRulesResource         ("/circulation/loan-rules", client)
       .register(router);

@@ -337,7 +337,10 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
     if(!Objects.equals(profile, "Fixed")) {
       throw new IllegalArgumentException("Can only be used with fixed profile");
     }
+    return renew(fixedDueDateScheduleId);
+  }
 
+  private LoanPolicyBuilder renew(UUID fixedDueDateScheduleId) {
     return new LoanPolicyBuilder(
       this.id,
       this.name,

@@ -22,4 +22,9 @@ public class LoanRenewalService {
     return loanPolicyRepository.lookupLoanPolicy(loan)
       .thenApply(r -> r.next(policy -> policy.renew(loan, DateTime.now())));
   }
+
+  public CompletableFuture<HttpResult<Loan>> overrideRenewal(Loan loan, DateTime dueDate, String comment) {
+    return loanPolicyRepository.lookupLoanPolicy(loan)
+      .thenApply(r -> r.next(policy -> policy.overrideRenewal(loan, DateTime.now(), dueDate, comment)));
+  }
 }

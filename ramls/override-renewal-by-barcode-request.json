@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "description": "Request to override renewal of an existing loan, found by barcodes of item and loanee",
+  "properties": {
+    "itemBarcode": {
+      "description": "Barcode of the item to be renewed",
+      "type": "string"
+    },
+    "userBarcode": {
+      "description": "Barcode of the user (representing the patron) the item has been loaned to",
+      "type": "string"
+    },
+    "dueDate": {
+      "description": "New due date for renewed loan",
+      "type": "string",
+      "format": "date-time"
+    },
+    "comment": {
+      "description": "Comment to override action stored in loan history",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "itemBarcode",
+    "userBarcode",
+    "comment"
+  ]
+}

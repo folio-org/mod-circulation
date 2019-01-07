@@ -9,6 +9,7 @@ node_modules/
 
 #IntelliJ
 .idea/
+*.iml
 #netbeans
 nbproject/
 #eclipse
