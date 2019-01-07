@@ -59,7 +59,6 @@ import org.slf4j.LoggerFactory;
 import api.APITestSuite;
 import api.support.APITests;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
-import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
 public class CheckOutCalculateDueDateTests extends APITests {
@@ -96,7 +95,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     JsonObject loanPolicyEntry = createLoanPolicyEntry(loanPolicyName, true,
       LoansPolicyProfile.ROLLING.name(), DueDateManagement.KEEP_THE_CURRENT_DUE_DATE.getValue(),
       duration, "Months");
-    String loanPolicyId = createLoanPolicies(loanPolicyEntry);
+    String loanPolicyId = createLoanPolicy(loanPolicyEntry);
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -131,7 +130,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     final UUID checkoutServicePointId = UUID.randomUUID();
 
     String fixedDueDateScheduleId = exampleFixedDueDateSchedulesId().toString();
-    String loanPolicyId = createLoanPolicies(
+    String loanPolicyId = createLoanPolicy(
       createLoanPolicyEntryFixed("Keep the current due date: FIXED",
         fixedDueDateScheduleId,
         LoansPolicyProfile.FIXED.name(),
@@ -169,7 +168,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     final UUID checkoutServicePointId = UUID.fromString(CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID);
 
     String fixedDueDateScheduleId = exampleFixedDueDateSchedulesId().toString();
-    String loanPolicyId = createLoanPolicies(
+    String loanPolicyId = createLoanPolicy(
       createLoanPolicyEntryFixed("MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY: FIXED",
         fixedDueDateScheduleId,
         LoansPolicyProfile.FIXED.name(),
@@ -210,7 +209,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     final UUID checkoutServicePointId = UUID.fromString(CASE_WED_THU_FRI_SERVICE_POINT_ID);
 
     String fixedDueDateScheduleId = exampleFixedDueDateSchedulesId().toString();
-    String loanPolicyId = createLoanPolicies(
+    String loanPolicyId = createLoanPolicy(
       createLoanPolicyEntryFixed("MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY: FIXED",
         fixedDueDateScheduleId,
         LoansPolicyProfile.FIXED.name(),
@@ -251,7 +250,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     final UUID checkoutServicePointId = UUID.fromString(CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID);
 
     String fixedDueDateScheduleId = exampleFixedDueDateSchedulesId().toString();
-    String loanPolicyId = createLoanPolicies(
+    String loanPolicyId = createLoanPolicy(
       createLoanPolicyEntryFixed("MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY: FIXED",
         fixedDueDateScheduleId,
         LoansPolicyProfile.FIXED.name(),
@@ -292,7 +291,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     final UUID checkoutServicePointId = UUID.fromString(CASE_WED_THU_FRI_SERVICE_POINT_ID);
 
     String fixedDueDateScheduleId = exampleFixedDueDateSchedulesId().toString();
-    String loanPolicyId = createLoanPolicies(
+    String loanPolicyId = createLoanPolicy(
       createLoanPolicyEntryFixed("MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY: FIXED",
         fixedDueDateScheduleId,
         LoansPolicyProfile.FIXED.name(),
@@ -333,7 +332,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     final UUID checkoutServicePointId = UUID.fromString(CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID);
 
     String fixedDueDateScheduleId = exampleFixedDueDateSchedulesId().toString();
-    String loanPolicyId = createLoanPolicies(
+    String loanPolicyId = createLoanPolicy(
       createLoanPolicyEntryFixed("MOVE_TO_THE_END_OF_THE_CURRENT_DAY: FIXED",
         fixedDueDateScheduleId,
         LoansPolicyProfile.FIXED.name(),
@@ -374,7 +373,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     final UUID checkoutServicePointId = UUID.fromString(CASE_WED_THU_FRI_SERVICE_POINT_ID);
 
     String fixedDueDateScheduleId = exampleFixedDueDateSchedulesId().toString();
-    String loanPolicyId = createLoanPolicies(
+    String loanPolicyId = createLoanPolicy(
       createLoanPolicyEntryFixed("MOVE_TO_THE_END_OF_THE_CURRENT_DAY: FIXED",
         fixedDueDateScheduleId,
         LoansPolicyProfile.FIXED.name(),
@@ -1259,7 +1258,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     JsonObject loanPolicyEntry = createLoanPolicyEntry(loanPolicyName, true,
       LoansPolicyProfile.ROLLING.name(), DueDateManagement.KEEP_THE_CURRENT_DUE_DATE_TIME.getValue(),
       duration, "Hours");
-    String loanPolicyId = createLoanPolicies(loanPolicyEntry);
+    String loanPolicyId = createLoanPolicy(loanPolicyEntry);
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -1302,7 +1301,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     JsonObject loanPolicyEntry = createLoanPolicyEntry(loanPolicyName, true,
       LoansPolicyProfile.ROLLING.name(), DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.getValue(),
       duration, "Days");
-    String loanPolicyId = createLoanPolicies(loanPolicyEntry);
+    String loanPolicyId = createLoanPolicy(loanPolicyEntry);
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -1346,7 +1345,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     JsonObject loanPolicyEntry = createLoanPolicyEntry(loanPolicyName, true,
       LoansPolicyProfile.ROLLING.name(), DueDateManagement.KEEP_THE_CURRENT_DUE_DATE_TIME.getValue(),
       duration, "Hours");
-    String loanPolicyId = createLoanPolicies(loanPolicyEntry);
+    String loanPolicyId = createLoanPolicy(loanPolicyEntry);
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -1383,7 +1382,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     JsonObject loanPolicyEntry = createLoanPolicyEntry(loanPolicyName, false,
       LoansPolicyProfile.ROLLING.name(), DueDateManagement.KEEP_THE_CURRENT_DUE_DATE.getValue(),
       duration, "Minutes");
-    String loanPolicyId = createLoanPolicies(loanPolicyEntry);
+    String loanPolicyId = createLoanPolicy(loanPolicyEntry);
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -1414,7 +1413,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     JsonObject loanPolicyEntry = createLoanPolicyEntry(loanPolicyName, true,
       LoansPolicyProfile.ROLLING.name(), DueDateManagement.KEEP_THE_CURRENT_DUE_DATE_TIME.getValue(),
       duration, "Hours");
-    String loanPolicyId = createLoanPolicies(loanPolicyEntry);
+    String loanPolicyId = createLoanPolicy(loanPolicyEntry);
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -1444,7 +1443,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     JsonObject loanPolicyEntry = createLoanPolicyEntry(loanPolicyName, true,
       policyProfileName, dueDateManagement.getValue(), duration, interval);
-    String loanPolicyId = createLoanPolicies(loanPolicyEntry);
+    String loanPolicyId = createLoanPolicy(loanPolicyEntry);
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -1480,7 +1479,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     JsonObject loanPolicyEntry = createLoanPolicyOffsetTimeEntry(loanPolicyName, policyProfileName,
       dueDateManagement.getValue(), duration, interval, offsetDuration, offsetInterval);
-    String loanPolicyId = createLoanPolicies(loanPolicyEntry);
+    String loanPolicyId = createLoanPolicy(loanPolicyEntry);
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -1767,7 +1766,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
   /**
    * Create a fake json LoanPolicy
    */
-  private JsonObject createLoanPolicyEntry(String name, boolean loanable,
+  private JsonObject  createLoanPolicyEntry(String name, boolean loanable,
                                            String profileId, String dueDateManagement,
                                            int duration, String intervalId) {
     return new JsonObject()
@@ -1833,12 +1832,12 @@ public class CheckOutCalculateDueDateTests extends APITests {
         .put("differentPeriod", false));
   }
 
-  private String createLoanPolicies(JsonObject loanPolicyEntry)
+  private String createLoanPolicy(JsonObject loanPolicyEntry)
     throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
-    ResourceClient policyResourceClient = ResourceClient.forLoanPolicies(client);
+    IndividualResource resource = loanPolicyClient.create(loanPolicyEntry);
 
-    IndividualResource resource = policyResourceClient.create(loanPolicyEntry);
+    policiesToDelete.add(resource.getId());
 
     useLoanPolicyAsFallback(resource.getId());
 
