@@ -160,7 +160,6 @@ public class APITestSuite {
   private static UUID canCirculateRollingLoanPolicyId;
   private static UUID canCirculateFixedLoanPolicyId;
   private static UUID exampleFixedDueDateSchedulesId;
-  private static UUID exampleFixedDueDateScheduleOnePeriodId;
 
   private static UUID courseReservesCancellationReasonId;
   private static UUID patronRequestCancellationReasonId;
