@@ -173,7 +173,7 @@ public class CheckOutByBarcodeResource extends Resource {
       }
 
       DateTime endDate = new DateTime(openingPeriods.get(0).getEndDate()).withZone(DateTimeZone.UTC);
-      return calculateNewInitialDueDate(loanAndRelatedRecords, loan, loanPolicy, endDate);
+      return calculateNewInitialDueDate(loanAndRelatedRecords, endDate);
     }
 
     // if loanPolicy is not loanable
@@ -208,17 +208,17 @@ public class CheckOutByBarcodeResource extends Resource {
       case MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY:
         OpeningDayPeriod prevDayPeriod = openingDays.get(POSITION_PREV_DAY);
         DateTime prevDateTime = getDateTimeForFixedPeriod(prevDayPeriod);
-        return calculateNewInitialDueDate(loanAndRelatedRecords, loan, loanPolicy, prevDateTime);
+        return calculateNewInitialDueDate(loanAndRelatedRecords, prevDateTime);
 
       case MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY:
         OpeningDayPeriod nextDayPeriod = openingDays.get(POSITION_NEXT_DAY);
         DateTime nextDateTime = getDateTimeForFixedPeriod(nextDayPeriod);
-        return calculateNewInitialDueDate(loanAndRelatedRecords, loan, loanPolicy, nextDateTime);
+        return calculateNewInitialDueDate(loanAndRelatedRecords, nextDateTime);
 
       case MOVE_TO_THE_END_OF_THE_CURRENT_DAY:
         OpeningDayPeriod currentDayPeriod = openingDays.get(POSITION_CURRENT_DAY);
         DateTime currentDateTime = getDateTimeForFixedPeriod(currentDayPeriod);
-        return calculateNewInitialDueDate(loanAndRelatedRecords, loan, loanPolicy, currentDateTime);
+        return calculateNewInitialDueDate(loanAndRelatedRecords, currentDateTime);
 
       default:
         return calculateDefaultInitialDueDate(loanAndRelatedRecords, loan, loanPolicy);
@@ -250,7 +250,7 @@ public class CheckOutByBarcodeResource extends Resource {
         OpeningDayPeriod openingDayPeriod = openingDays.get(openingDays.size() / 2);
 
         DateTime dateTime = getTermDueDate(openingDayPeriod);
-        return calculateNewInitialDueDate(loanAndRelatedRecords, loan, loanPolicy, dateTime);
+        return calculateNewInitialDueDate(loanAndRelatedRecords, dateTime);
 
       case MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS:
         LoanPolicyPeriod period = calendar.getPeriod();
@@ -259,7 +259,7 @@ public class CheckOutByBarcodeResource extends Resource {
         int offsetDuration = loanPolicy.getOffsetPeriodDuration();
 
         DateTime dateTimeNextPoint = getShortTermDueDateRollover(openingDays, period, duration, offsetInterval, offsetDuration);
-        return calculateNewInitialDueDate(loanAndRelatedRecords, loan, loanPolicy, dateTimeNextPoint);
+        return calculateNewInitialDueDate(loanAndRelatedRecords, dateTimeNextPoint);
 
       default:
         return calculateDefaultInitialDueDate(loanAndRelatedRecords, loan, loanPolicy);
@@ -275,17 +275,17 @@ public class CheckOutByBarcodeResource extends Resource {
       case MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY:
         OpeningDayPeriod prevDayPeriod = findOpeningDay(openingDays, POSITION_PREV_DAY);
         DateTime prevDateTime = getTermDueDate(prevDayPeriod);
-        return calculateNewInitialDueDate(loanAndRelatedRecords, loan, loanPolicy, prevDateTime);
+        return calculateNewInitialDueDate(loanAndRelatedRecords, prevDateTime);
 
       case MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY:
         OpeningDayPeriod nextDayPeriod = findOpeningDay(openingDays, POSITION_NEXT_DAY);
         DateTime nextDateTime = getTermDueDate(nextDayPeriod);
-        return calculateNewInitialDueDate(loanAndRelatedRecords, loan, loanPolicy, nextDateTime);
+        return calculateNewInitialDueDate(loanAndRelatedRecords, nextDateTime);
 
       case MOVE_TO_THE_END_OF_THE_CURRENT_DAY:
         OpeningDayPeriod currentDayPeriod = findOpeningDay(openingDays, POSITION_CURRENT_DAY);
         DateTime currentDateTime = getTermDueDate(currentDayPeriod);
-        return calculateNewInitialDueDate(loanAndRelatedRecords, loan, loanPolicy, currentDateTime);
+        return calculateNewInitialDueDate(loanAndRelatedRecords, currentDateTime);
 
       default:
         return calculateDefaultInitialDueDate(loanAndRelatedRecords, loan, loanPolicy);
@@ -302,13 +302,10 @@ public class CheckOutByBarcodeResource extends Resource {
   }
 
   private HttpResult<LoanAndRelatedRecords> calculateNewInitialDueDate(LoanAndRelatedRecords loanAndRelatedRecords,
-                                                                       Loan loan, LoanPolicy loanPolicy,
                                                                        DateTime newDueDate) {
-    return loanPolicy.calculateInitialDueDate(loan)
-      .map(dueDate -> {
-        loanAndRelatedRecords.getLoan().changeDueDate(newDueDate);
-        return loanAndRelatedRecords;
-      });
+    Loan loan1 = loanAndRelatedRecords.getLoan();
+    loan1.changeDueDate(newDueDate);
+    return HttpResult.succeeded(loanAndRelatedRecords);
   }
 
   private DateTime getShortTermDueDateRollover(List<OpeningDayPeriod> openingDays,

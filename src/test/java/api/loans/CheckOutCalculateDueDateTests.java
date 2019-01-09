@@ -27,7 +27,6 @@ import static org.folio.circulation.support.PeriodUtil.isTimeInHourPeriod;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -49,25 +48,15 @@ import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.LoanPolicyPeriod;
 import org.folio.circulation.domain.policy.LoansPolicyProfile;
 import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import api.APITestSuite;
 import api.support.APITests;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import io.vertx.core.json.JsonObject;
 
 public class CheckOutCalculateDueDateTests extends APITests {
-
-  private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
-  private static final OkapiHttpClient client = APITestSuite
-    .createClient(exception ->
-      LOG.error("Request to circulation module failed:", exception));
 
   /**
    * Scenario for Long-term loans:
