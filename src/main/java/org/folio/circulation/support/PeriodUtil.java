@@ -13,6 +13,10 @@ import java.util.stream.Stream;
 
 public class PeriodUtil {
 
+  public static final int MAX_SECOND_VAL = 59;
+  public static final int MAX_NANO_VAL = 999_999_999;
+  private static final int DEFAULT_VAL = 0;
+
   private PeriodUtil() {
     // not use
   }
@@ -82,7 +86,7 @@ public class PeriodUtil {
   public static LocalTime calculateOffsetTime(LocalTime offsetTime, LoanPolicyPeriod offsetInterval, int offsetDuration) {
     switch (offsetInterval) {
       case HOURS:
-        return offsetTime.plusHours(offsetDuration);
+        return offsetTime.plusHours(offsetDuration).withMinute(DEFAULT_VAL);
       case MINUTES:
         return offsetTime.plusMinutes(offsetDuration);
       default:

@@ -34,9 +34,9 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -368,10 +368,10 @@ public class CheckOutByBarcodeResource extends Resource {
         LocalTime offsetTime = calculateOffsetTime(startTimeNextAvailablePeriod, offsetInterval, offsetDuration);
         return new DateTime(LocalDateTime.of(localDate, offsetTime).toString());
       } else {
-        return getDateTimeOfNextPeriod(nextDayPeriod, offsetInterval, offsetDuration);
+        return getDateTimeOfNextPeriod(currentDayPeriod, nextDayPeriod, offsetInterval, offsetDuration);
       }
     } else {
-      return getDateTimeOfNextPeriod(nextDayPeriod, offsetInterval, offsetDuration);
+      return getDateTimeOfNextPeriod(currentDayPeriod, nextDayPeriod, offsetInterval, offsetDuration);
     }
   }
 
@@ -389,7 +389,7 @@ public class CheckOutByBarcodeResource extends Resource {
     return localTime;
   }
 
-  private DateTime getDateTimeOfNextPeriod(OpeningDayPeriod nextDayPeriod,
+  private DateTime getDateTimeOfNextPeriod(OpeningDayPeriod currentDayPeriod, OpeningDayPeriod nextDayPeriod,
                                            LoanPolicyPeriod offsetInterval, int offsetDuration) {
     OpeningDay nextOpeningDay = nextDayPeriod.getOpeningDay();
     String nextDate = nextOpeningDay.getDate();
@@ -407,22 +407,56 @@ public class CheckOutByBarcodeResource extends Resource {
         return new DateTime(LocalDateTime.of(localDate, offsetTime).toString());
       }
 
-      Optional<LocalTime> startTimeOpt = openingHoursList.stream()
-        .filter(period -> isTimeInHourPeriod(period, START_TIME_OF_DAY))
-        .map(period -> LocalTime.parse(period.getStartTime()))
-        .findAny();
-      if (startTimeOpt.isPresent()) {
-        LocalTime startTime = startTimeOpt.get();
+      // rollover case
+      if (isRolloverHours(currentDayPeriod, nextDayPeriod)) {
+        String time = nextOpeningDay.getOpeningHour().get(POSITION_CURRENT_DAY).getStartTime();
+        LocalTime startTime = LocalTime.parse(time);
+        return new DateTime(LocalDateTime.of(localDate, startTime).toString());
+      } else {
+        LocalTime startTime = openingHoursList.stream()
+          .filter(this::isLater)
+          .map(period -> LocalTime.parse(period.getStartTime()))
+          .findAny()
+          .orElse(LocalTime.parse(openingHoursList.get(openingHoursList.size() - 1).getStartTime()));
         return new DateTime(LocalDateTime.of(localDate, startTime).toString());
       }
-
-      LocalTime startTime = openingHoursList.stream()
-        .filter(this::isLater)
-        .map(period -> LocalTime.parse(period.getStartTime()))
-        .findAny()
-        .orElse(LocalTime.parse(openingHoursList.get(openingHoursList.size() - 1).getStartTime()));
-      return new DateTime(LocalDateTime.of(localDate, startTime).toString());
     }
+  }
+
+  /**
+   * Determine the rollover hours of service point
+   * <p>
+   * 'rollover' scenarios where the service point remains open for a continuity of hours that flow from one system date into the next
+   */
+  private boolean isRolloverHours(OpeningDayPeriod currentDayPeriod, OpeningDayPeriod nextDayPeriod) {
+    OpeningDay currentOpeningDay = currentDayPeriod.getOpeningDay();
+    OpeningDay nextOpeningDay = nextDayPeriod.getOpeningDay();
+
+    if (!currentOpeningDay.getOpen()) {
+      return false;
+    }
+
+    // The case when the library works on different days
+    LocalDate currentDate = LocalDate.parse(currentOpeningDay.getDate(), DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+    LocalDate nextDate = LocalDate.parse(nextOpeningDay.getDate(), DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+    if (ChronoUnit.DAYS.between(currentDate, nextDate) > 1) {
+      return false;
+    }
+
+    // The case when the library is open 24 hours every day
+    if (currentOpeningDay.getAllDay() && nextOpeningDay.getAllDay()) {
+      return false;
+    }
+
+    List<OpeningHour> currentOpeningHours = currentOpeningDay.getOpeningHour();
+    LocalTime endTime = LocalTime.parse(currentOpeningHours.get(currentOpeningHours.size() - 1).getEndTime())
+      .withSecond(MAX_SECOND_VAL)
+      .withNano(MAX_NANO_VAL);
+
+    List<OpeningHour> nextOpeningHours = nextOpeningDay.getOpeningHour();
+    LocalTime startTime = LocalTime.parse(nextOpeningHours.get(0).getStartTime());
+
+    return endTime.equals(LocalTime.MAX) && startTime.equals(LocalTime.MIN) && nextOpeningHours.size() > 1;
   }
 
   private boolean isLater(OpeningHour period) {

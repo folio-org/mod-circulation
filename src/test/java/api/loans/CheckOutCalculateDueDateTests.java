@@ -23,7 +23,6 @@ import static org.folio.circulation.support.PeriodUtil.calculateOffset;
 import static org.folio.circulation.support.PeriodUtil.calculateOffsetTime;
 import static org.folio.circulation.support.PeriodUtil.isInCurrentLocalDateTime;
 import static org.folio.circulation.support.PeriodUtil.isOffsetTimeInCurrentDayPeriod;
-import static org.folio.circulation.support.PeriodUtil.isTimeInHourPeriod;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -35,7 +34,6 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.SplittableRandom;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -1214,7 +1212,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     DueDateManagement dueDateManagement = DueDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS;
     int duration = 2;
     String interval = "Hours";
-    int offsetDuration = 2;
+    int offsetDuration = 0;
     String offsetInterval = "Hours";
 
     List<OpeningDayPeriod> openingDays = getCurrentAndNextFakeOpeningDayByServId(servicePointId);
@@ -1553,17 +1551,22 @@ public class CheckOutCalculateDueDateTests extends APITests {
     List<OpeningHour> openingHoursList = currentDayPeriod.getOpeningDay().getOpeningHour();
 
     LocalDate localDate = LocalDate.parse(currentDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+    boolean isInPeriod = false;
     LocalTime newOffsetTime = null;
     for (int i = 0; i < openingHoursList.size() - 1; i++) {
       LocalTime startTimeFirst = LocalTime.parse(openingHoursList.get(i).getStartTime());
       LocalTime startTimeSecond = LocalTime.parse(openingHoursList.get(i + 1).getStartTime());
       if (offsetTime.isAfter(startTimeFirst) && offsetTime.isBefore(startTimeSecond)) {
+        isInPeriod = true;
+        newOffsetTime = startTimeSecond;
+        break;
+      } else {
         newOffsetTime = startTimeSecond;
       }
     }
 
-    return new DateTime(LocalDateTime.of(localDate,
-      Objects.isNull(newOffsetTime) ? offsetTime : newOffsetTime).toString());
+    LocalTime localTime = Objects.isNull(newOffsetTime) ? offsetTime.withMinute(0) : newOffsetTime;
+    return new DateTime(LocalDateTime.of(localDate, isInPeriod ? localTime : offsetTime).toString());
   }
 
 
@@ -1747,7 +1750,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
   /**
    * Create a fake json LoanPolicy
    */
-  private JsonObject  createLoanPolicyEntry(String name, boolean loanable,
+  private JsonObject createLoanPolicyEntry(String name, boolean loanable,
                                            String profileId, String dueDateManagement,
                                            int duration, String intervalId) {
     return new JsonObject()
