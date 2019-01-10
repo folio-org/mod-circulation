@@ -1,6 +1,5 @@
 package org.folio.circulation.domain;
 
-import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.LoanPolicyPeriod;
 import org.folio.circulation.domain.policy.LoansPolicyProfile;
@@ -34,6 +33,12 @@ public class CalendarRepository {
     this.resourceClient = clients.calendarStorageClient();
   }
 
+  /**
+   * Get the period of days with an opening endpoint
+   * <p>
+   * `mod-calendar` API returns 3 days from a current schedule:
+   * previous opened, requested and next opened
+   */
   public CompletionStage<HttpResult<LoanAndRelatedRecords>> lookupPeriod(HttpResult<LoanAndRelatedRecords> records,
                                                                          String checkoutServicePointId) {
     if (!Objects.isNull(records.cause())) {
@@ -46,6 +51,12 @@ public class CalendarRepository {
       .thenCombine(getPeriod(checkoutServicePointId, loanPolicy), this::addCalendar);
   }
 
+  /**
+   * Get the closing date of service point
+   * <p>
+   * When `mod-calendar` API cannot calculate or determine opening endpoints,
+   * there may be cases when the app needs to know the opening hours of the service point.
+   */
   public CompletionStage<HttpResult<LoanAndRelatedRecords>> lookupLibraryHours(HttpResult<LoanAndRelatedRecords> records,
                                                                                String checkoutServicePointId) {
     if (!Objects.isNull(records.cause())) {
@@ -60,10 +71,6 @@ public class CalendarRepository {
     LoanPolicyPeriod interval = loanPolicy.getPeriodInterval();
     int duration = loanPolicy.getPeriodDuration();
 
-    LoanPolicyPeriod offsetPeriodInterval = loanPolicy.getOffsetPeriodInterval();
-    int offsetDuration = loanPolicy.getOffsetPeriodDuration();
-
-    DueDateManagement dueDateManagement = loanPolicy.getDueDateManagement();
     LoansPolicyProfile loansPolicyProfile = loanPolicy.getLoansPolicyProfile();
 
     String serviceId;
@@ -71,8 +78,7 @@ public class CalendarRepository {
       List<DateTime> fixedDueDates = loanPolicy.getFixedDueDates();
       serviceId = collectPathQueryForFixedSchedules(servicePointId, fixedDueDates);
     } else {
-      serviceId = collectPathQuery(servicePointId, duration, interval, dueDateManagement,
-        offsetDuration, offsetPeriodInterval);
+      serviceId = collectPathQuery(servicePointId, duration, interval);
     }
 
     return FetchSingleRecord.<Calendar>forRecord(RECORD_NAME)

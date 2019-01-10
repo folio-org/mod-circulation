@@ -1,14 +1,12 @@
 package org.folio.circulation.support;
 
 import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.LoanPolicyPeriod;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Days;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 public class CalendarQueryUtil {
@@ -46,9 +44,7 @@ public class CalendarQueryUtil {
   }
 
   public static String collectPathQuery(String servicePointId,
-                                        int duration, LoanPolicyPeriod interval,
-                                        DueDateManagement dueDateManagement,
-                                        int offsetDuration, LoanPolicyPeriod offsetPeriodInterval) {
+                                        int duration, LoanPolicyPeriod interval) {
     String unit;
     int amount;
     DateTime nowDateTime = DateTime.now().withZone(DateTimeZone.UTC);
@@ -73,12 +69,12 @@ public class CalendarQueryUtil {
         break;
 
       case HOURS:
-        amount = calculateAmountForHours(duration, dueDateManagement, offsetDuration, offsetPeriodInterval);
+        amount = duration;
         unit = HOUR_QUERY_VAL;
         break;
 
       case MINUTES:
-        amount = calculateAmountForMinutes(duration, dueDateManagement, offsetDuration, offsetPeriodInterval);
+        amount = calculateAmountForMinutes(duration);
         unit = HOUR_QUERY_VAL;
         break;
 
@@ -90,50 +86,8 @@ public class CalendarQueryUtil {
     return String.format(PATH_PARAM_WITH_QUERY, servicePointId, startDate, unit, amount);
   }
 
-  private static int calculateAmountForHours(int duration, DueDateManagement dueDateManagement,
-                                             int offsetDuration, LoanPolicyPeriod offsetPeriodInterval) {
-    int amount;
-    if (dueDateManagement == DueDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS
-      && !Objects.isNull(offsetPeriodInterval)) {
-      switch (offsetPeriodInterval) {
-        case HOURS:
-          amount = duration + offsetDuration;
-          break;
-        case MINUTES:
-          amount = duration + offsetDuration / FULL_HOUR;
-          break;
-        default:
-          amount = duration;
-      }
-    } else {
-      amount = duration;
-    }
-    return amount;
-  }
-
-  private static int calculateAmountForMinutes(int duration, DueDateManagement dueDateManagement,
-                                               int offsetDuration, LoanPolicyPeriod offsetPeriodInterval) {
-    int amount;
-    if (dueDateManagement == DueDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS
-      && !Objects.isNull(offsetPeriodInterval)) {
-      int fullHour = duration / FULL_HOUR;
-      switch (offsetPeriodInterval) {
-        case HOURS:
-          amount = fullHour + offsetDuration;
-          break;
-
-        case MINUTES:
-          int newAmount = (fullHour == 0) ? DEFAULT_AMOUNT : fullHour;
-          amount = newAmount + offsetDuration / FULL_HOUR;
-          break;
-
-        default:
-          amount = duration;
-      }
-    } else {
-      int fullHour = duration / FULL_HOUR;
-      amount = (fullHour == 0) ? DEFAULT_AMOUNT : fullHour;
-    }
-    return amount;
+  private static int calculateAmountForMinutes(int duration) {
+    int fullHour = duration / FULL_HOUR;
+    return (fullHour == 0) ? DEFAULT_AMOUNT : fullHour;
   }
 }

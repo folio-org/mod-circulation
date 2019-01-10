@@ -1218,7 +1218,8 @@ public class CheckOutCalculateDueDateTests extends APITests {
     String offsetInterval = "Hours";
 
     List<OpeningDayPeriod> openingDays = getCurrentAndNextFakeOpeningDayByServId(servicePointId);
-    DateTime expectedDueDate = getRolloverForHourlyPeriod(duration, openingDays.get(0), openingDays.get(1), offsetDuration);
+    DateTime expectedDueDate = getRolloverForHourlyPeriod(duration, openingDays.get(0), openingDays.get(1), offsetDuration)
+      .plusHours(offsetDuration);
 
     checkDayWithOffsetTime(servicePointId, loanPolicyName,
       policyProfileName, dueDateManagement, duration, interval, expectedDueDate, offsetDuration, offsetInterval);
@@ -1550,15 +1551,6 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
   private DateTime findDateTimeInPeriod(OpeningDayPeriod currentDayPeriod, LocalTime offsetTime, String currentDate) {
     List<OpeningHour> openingHoursList = currentDayPeriod.getOpeningDay().getOpeningHour();
-    Optional<LocalTime> startTimeOpt = openingHoursList.stream()
-      .filter(period -> isTimeInHourPeriod(period, offsetTime))
-      .map(period -> LocalTime.parse(period.getStartTime()))
-      .findAny();
-
-    if (startTimeOpt.isPresent()) {
-      LocalDate localDate = LocalDate.parse(currentDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
-      return new DateTime(LocalDateTime.of(localDate, startTimeOpt.get()).toString());
-    }
 
     LocalDate localDate = LocalDate.parse(currentDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
     LocalTime newOffsetTime = null;

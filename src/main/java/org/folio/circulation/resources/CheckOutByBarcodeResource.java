@@ -303,8 +303,8 @@ public class CheckOutByBarcodeResource extends Resource {
 
   private HttpResult<LoanAndRelatedRecords> calculateNewInitialDueDate(LoanAndRelatedRecords loanAndRelatedRecords,
                                                                        DateTime newDueDate) {
-    Loan loan1 = loanAndRelatedRecords.getLoan();
-    loan1.changeDueDate(newDueDate);
+    Loan loan = loanAndRelatedRecords.getLoan();
+    loan.changeDueDate(newDueDate);
     return HttpResult.succeeded(loanAndRelatedRecords);
   }
 
@@ -345,61 +345,66 @@ public class CheckOutByBarcodeResource extends Resource {
   private DateTime getRolloverForHourlyPeriod(int duration, OpeningDayPeriod currentDayPeriod, OpeningDayPeriod nextDayPeriod,
                                               LoanPolicyPeriod offsetInterval, int offsetDuration) {
 
-    if (currentDayPeriod.getOpeningDay().getAllDay()) {
-      String currentDate = currentDayPeriod.getOpeningDay().getDate();
-      LocalDate localDate = LocalDate.parse(currentDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
-      LocalDateTime localDateTime = localDate.atTime(LocalTime.now(ZoneOffset.UTC)).plusHours(duration);
+    OpeningDay currentOpeningDay = currentDayPeriod.getOpeningDay();
+    String currentDate = currentOpeningDay.getDate();
+    LocalTime localTime = LocalTime.now(ZoneOffset.UTC);
+    LocalDate localDate = LocalDate.parse(currentDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+
+    // The case when the current day is open all day
+    if (currentOpeningDay.getOpen() && currentOpeningDay.getAllDay()) {
+      LocalDateTime localDateTime = localDate.atTime(localTime)
+        .plusHours(duration);
 
       return calculateOffset(localDateTime, offsetInterval, offsetDuration);
-    } else {
-      LocalTime offsetTime = calculateOffsetTime(LocalTime.now(ZoneOffset.UTC).plusHours(duration), offsetInterval, offsetDuration);
-      String currentDate = currentDayPeriod.getOpeningDay().getDate();
+    }
 
-      if (isOffsetTimeInCurrentDayPeriod(currentDayPeriod, offsetTime)) {
+    // The case when the current day is open and has a certain time period
+    if (currentOpeningDay.getOpen()) {
+      LocalTime localTimeShift = localTime.plusHours(duration);
+
+      if (isOffsetTimeInCurrentDayPeriod(currentDayPeriod, localTimeShift)) {
         List<OpeningHour> openingHoursList = currentDayPeriod.getOpeningDay().getOpeningHour();
-        Optional<LocalTime> startTimeOpt = openingHoursList.stream()
-          .filter(period -> isTimeInHourPeriod(period, offsetTime))
-          .map(period -> LocalTime.parse(period.getStartTime()))
-          .findAny();
-
-        if (startTimeOpt.isPresent()) {
-          LocalDate localDate = LocalDate.parse(currentDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
-          return new DateTime(LocalDateTime.of(localDate, startTimeOpt.get()).toString());
-        }
-
-        LocalDate localDate = LocalDate.parse(currentDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
-        LocalTime newOffsetTime = findTimeBetweenPeriods(openingHoursList, offsetTime);
-        return new DateTime(LocalDateTime.of(localDate, newOffsetTime).toString());
+        LocalTime startTimeNextAvailablePeriod = findStartTimeOfNextPeriod(openingHoursList, localTimeShift);
+        LocalTime offsetTime = calculateOffsetTime(startTimeNextAvailablePeriod, offsetInterval, offsetDuration);
+        return new DateTime(LocalDateTime.of(localDate, offsetTime).toString());
       } else {
-        return getDayForHourlyPeriod(nextDayPeriod);
+        return getDateTimeOfNextPeriod(nextDayPeriod, offsetInterval, offsetDuration);
       }
+    } else {
+      return getDateTimeOfNextPeriod(nextDayPeriod, offsetInterval, offsetDuration);
     }
   }
 
-  private LocalTime findTimeBetweenPeriods(List<OpeningHour> openingHoursList, LocalTime offsetTime) {
+  /**
+   * Find earliest SPID-1 startTime for the closest next Open=true available hours for SPID-1
+   */
+  private LocalTime findStartTimeOfNextPeriod(List<OpeningHour> openingHoursList, LocalTime localTime) {
     for (int i = 0; i < openingHoursList.size() - 1; i++) {
       LocalTime startTimeFirst = LocalTime.parse(openingHoursList.get(i).getStartTime());
       LocalTime startTimeSecond = LocalTime.parse(openingHoursList.get(i + 1).getStartTime());
-      if (offsetTime.isAfter(startTimeFirst) && offsetTime.isBefore(startTimeSecond)) {
+      if (localTime.isAfter(startTimeFirst) && localTime.isBefore(startTimeSecond)) {
         return startTimeSecond;
       }
     }
-    return offsetTime;
+    return localTime;
   }
 
-  private DateTime getDayForHourlyPeriod(OpeningDayPeriod nextDayPeriod) {
+  private DateTime getDateTimeOfNextPeriod(OpeningDayPeriod nextDayPeriod,
+                                           LoanPolicyPeriod offsetInterval, int offsetDuration) {
     OpeningDay nextOpeningDay = nextDayPeriod.getOpeningDay();
     String nextDate = nextOpeningDay.getDate();
     LocalDate localDate = LocalDate.parse(nextDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
 
     if (nextOpeningDay.getAllDay()) {
-      return new DateTime(localDate.atTime(LocalTime.MIN).toString());
+      LocalTime offsetTime = calculateOffsetTime(LocalTime.MIN, offsetInterval, offsetDuration);
+      return new DateTime(localDate.atTime(offsetTime).toString());
     } else {
       List<OpeningHour> openingHoursList = nextOpeningDay.getOpeningHour();
       if (openingHoursList.size() == 1) {
         OpeningHour openingHour = openingHoursList.get(0);
         LocalTime startTime = LocalTime.parse(openingHour.getStartTime());
-        return new DateTime(LocalDateTime.of(localDate, startTime).toString());
+        LocalTime offsetTime = calculateOffsetTime(startTime, offsetInterval, offsetDuration);
+        return new DateTime(LocalDateTime.of(localDate, offsetTime).toString());
       }
 
       Optional<LocalTime> startTimeOpt = openingHoursList.stream()
