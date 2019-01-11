@@ -172,7 +172,8 @@ public class CheckOutByBarcodeResource extends Resource {
         return calculateDefaultInitialDueDate(loanAndRelatedRecords, loan, loanPolicy);
       }
 
-      DateTime endDate = new DateTime(openingPeriods.get(0).getEndDate()).withZone(DateTimeZone.UTC);
+      DateTime endDate = new DateTime(openingPeriods.get(0).getEndDate())
+        .withZoneRetainFields(DateTimeZone.UTC);
       return calculateNewInitialDueDate(loanAndRelatedRecords, endDate);
     }
 
@@ -304,7 +305,8 @@ public class CheckOutByBarcodeResource extends Resource {
   private HttpResult<LoanAndRelatedRecords> calculateNewInitialDueDate(LoanAndRelatedRecords loanAndRelatedRecords,
                                                                        DateTime newDueDate) {
     Loan loan = loanAndRelatedRecords.getLoan();
-    loan.changeDueDate(newDueDate);
+    DateTime dueDateWithZone = newDueDate.withZoneRetainFields(DateTimeZone.UTC);
+    loan.changeDueDate(dueDateWithZone);
     return HttpResult.succeeded(loanAndRelatedRecords);
   }
 
@@ -525,17 +527,26 @@ public class CheckOutByBarcodeResource extends Resource {
 
     LocalDate localDate = LocalDate.parse(date, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
     if (allDay) {
-      return new DateTime(localDate.atTime(LocalTime.MAX).toString()).withZone(DateTimeZone.UTC);
+      return getDateTimeZoneRetain(localDate.atTime(LocalTime.MAX));
     } else {
       List<OpeningHour> openingHours = openingDay.getOpeningHour();
       if (openingHours.isEmpty()) {
-        return new DateTime(localDate.atTime(LocalTime.MAX).toString()).withZone(DateTimeZone.UTC);
+        return getDateTimeZoneRetain(localDate.atTime(LocalTime.MAX));
       } else {
         OpeningHour openingHour = openingHours.get(openingHours.size() - 1);
         LocalTime localTime = LocalTime.parse(openingHour.getEndTime());
-        return new DateTime(LocalDateTime.of(localDate, localTime).toString()).withZone(DateTimeZone.UTC);
+        return getDateTimeZoneRetain(LocalDateTime.of(localDate, localTime));
       }
     }
+  }
+
+
+  /**
+   * Get DateTime in a specific zone
+   */
+  private DateTime getDateTimeZoneRetain(LocalDateTime localDateTime){
+    return new DateTime(localDateTime.toString())
+      .withZoneRetainFields(DateTimeZone.UTC);
   }
 
   /**
