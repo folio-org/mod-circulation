@@ -23,8 +23,9 @@ import static org.junit.Assert.assertThat;
 @RunWith(JUnitParamsRunner.class)
 public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
-  private static final String EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES = "Renewal date falls outside of the date ranges " +
-    "in the limit schedule of rolling policy";
+  private static final String EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES =
+    "Renewal date falls outside of the date ranges " +
+      "in the limit schedule of rolling loan policy";
 
   @Test
   @Parameters({
