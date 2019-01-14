@@ -1,21 +1,22 @@
 package org.folio.circulation.domain.policy;
 
-import static org.folio.circulation.support.HttpResult.failed;
-
-import java.util.function.Function;
-
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 
+import java.util.function.Function;
+
+import static org.folio.circulation.support.HttpResult.failed;
+
 class RollingRenewalDueDateStrategy extends DueDateStrategy {
   private static final String RENEW_FROM_SYSTEM_DATE = "SYSTEM_DATE";
   private static final String RENEW_FROM_DUE_DATE = "CURRENT_DUE_DATE";
 
   private static final String NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE =
-    "renewal date falls outside of the date ranges in the loan policy";
+    "Renewal date falls outside of the date ranges " +
+      "in the limit schedule of rolling policy";
 
   private static final String RENEWAL_UNRECOGNISED_INTERVAL_MESSAGE =
     "the interval \"%s\" in the loan policy is not recognised";

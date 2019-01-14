@@ -12,7 +12,8 @@ import static org.folio.circulation.support.HttpResult.failed;
 
 class FixedScheduleRenewalDueDateStrategy extends DueDateStrategy {
   private static final String NO_APPLICABLE_DUE_DATE_SCHEDULE_MESSAGE =
-    "renewal date falls outside of the date ranges in the loan policy";
+    "Renewal date falls outside of the date ranges " +
+      "in the fixed schedule of fixed loan policy";
 
   private final FixedDueDateSchedules fixedDueDateSchedules;
   private final DateTime systemDate;
@@ -29,10 +30,9 @@ class FixedScheduleRenewalDueDateStrategy extends DueDateStrategy {
     this.systemDate = systemDate;
 
     //TODO: Find a better way to fail
-    if(fixedDueDateSchedules != null) {
+    if (fixedDueDateSchedules != null) {
       this.fixedDueDateSchedules = fixedDueDateSchedules;
-    }
-    else {
+    } else {
       this.fixedDueDateSchedules = new NoFixedDueDateSchedules();
     }
   }
@@ -46,8 +46,7 @@ class FixedScheduleRenewalDueDateStrategy extends DueDateStrategy {
         .map(HttpResult::succeeded)
         .orElseGet(() -> failed(
           validationError(NO_APPLICABLE_DUE_DATE_SCHEDULE_MESSAGE)));
-    }
-    catch(Exception e) {
+    } catch (Exception e) {
       logException(e, "Error occurred during fixed schedule renewal due date calculation");
       return failed(new ServerErrorFailure(e));
     }
