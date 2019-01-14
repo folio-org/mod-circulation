@@ -1,18 +1,6 @@
 package org.folio.circulation.domain.policy;
 
-import static org.folio.circulation.support.HttpResult.failed;
-import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getNestedIntegerProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
-
+import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
@@ -21,7 +9,18 @@ import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 
-import io.vertx.core.json.JsonObject;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
+
+import static org.folio.circulation.support.HttpResult.failed;
+import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getNestedIntegerProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
 
 public class LoanPolicy {
   private final JsonObject representation;
@@ -57,7 +56,7 @@ public class LoanPolicy {
     //TODO: Create HttpResult wrapper that traps exceptions
     try {
       if(isNotRenewable()) {
-        return failedResult(errorForPolicy("items with this loan policy cannot be renewed"));
+        return failedResult(errorForPolicy("Loan is not renewable"));
       }
 
       final HttpResult<DateTime> proposedDueDateResult =
@@ -181,7 +180,7 @@ public class LoanPolicy {
 
     if(isSameOrBefore(loan, proposedDueDate)) {
       errors.add(errorForPolicy(
-        "renewal at this time would not change the due date"));
+        "Renewal would not change the due date"));
     }
   }
 

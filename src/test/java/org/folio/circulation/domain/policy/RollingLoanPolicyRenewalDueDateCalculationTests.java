@@ -377,7 +377,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     final HttpResult<Loan> result = loanPolicy.renew(loan, renewalDate);
 
     assertThat(result,
-      hasValidationFailure("renewal at this time would not change the due date"));
+      hasValidationFailure("Renewal would not change the due date"));
   }
 
   @Test
@@ -402,7 +402,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     final HttpResult<Loan> result = loanPolicy.renew(loan, renewalDate);
 
     assertThat(result,
-      hasValidationFailure("renewal at this time would not change the due date"));
+      hasValidationFailure("Renewal would not change the due date"));
   }
 
   private Loan loanFor(DateTime loanDate) {

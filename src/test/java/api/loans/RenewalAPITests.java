@@ -666,7 +666,7 @@ abstract class RenewalAPITests extends APITests {
       hasLoanPolicyNameParameter("Limited Renewals And Limited Due Date Policy"))));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("renewal at this time would not change the due date"),
+      hasMessage("Renewal would not change the due date"),
       hasLoanPolicyIdParameter(limitedRenewalsPolicyId),
       hasLoanPolicyNameParameter("Limited Renewals And Limited Due Date Policy"))));
   }
@@ -699,7 +699,7 @@ abstract class RenewalAPITests extends APITests {
     final Response response = attemptRenewal(smallAngryPlanet, jessica);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("items with this loan policy cannot be renewed"),
+      hasMessage("Loan is not renewable"),
       hasLoanPolicyIdParameter(notRenewablePolicyId),
       hasLoanPolicyNameParameter("Non Renewable Policy"))));
   }
@@ -743,7 +743,7 @@ abstract class RenewalAPITests extends APITests {
     final Response response = attemptRenewal(smallAngryPlanet, jessica);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("items with this loan policy cannot be renewed"),
+      hasMessage("Loan is not renewable"),
       hasLoanPolicyIdParameter(notRenewablePolicyId),
       hasLoanPolicyNameParameter("Non Renewable Policy"))));
   }
