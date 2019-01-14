@@ -16,7 +16,7 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
 
   private static final String NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE =
     "Renewal date falls outside of the date ranges " +
-      "in the limit schedule of rolling policy";
+      "in the limit schedule of rolling loan policy";
 
   private static final String RENEWAL_UNRECOGNISED_INTERVAL_MESSAGE =
     "the interval \"%s\" in the loan policy is not recognised";
