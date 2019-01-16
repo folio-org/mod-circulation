@@ -7,8 +7,10 @@ Version 2.0. See the file "[LICENSE](LICENSE)" for more information.
 
 ## Documentation
 
-Further documentation about this module can be found in the
-[Guide](doc/guide.md) file within the `/doc/` folder.
+Further documentation about this module can be found in the [/doc/](doc) folder:
+
+* [Guide](doc/guide.md) - introduction for developers
+* [Loanrules](doc/loanrules.md) - how the loan rules file and the loan rules engine work
 
 ## Goal
 
