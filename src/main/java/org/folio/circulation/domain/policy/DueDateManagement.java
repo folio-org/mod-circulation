@@ -9,7 +9,7 @@ import java.util.function.Predicate;
 public enum DueDateManagement {
 
   /**
-   * Short-term loans:
+   * Long-term loans:
    * Loan period = Months|Weeks|Days
    * value="CURRENT_DUE_DATE", Keep the current due date</option>
    * value="END_OF_THE_PREVIOUS_OPEN_DAY", Move to the end of the previous open day
@@ -22,7 +22,7 @@ public enum DueDateManagement {
   MOVE_TO_THE_END_OF_THE_CURRENT_DAY("END_OF_THE_CURRENT_DAY"),
 
   /**
-   * Long-term loans::
+   * Short-term loans::
    * Loan period = Hours|Minutes
    * value="CURRENT_DUE_DATE_TIME", Keep the current due date/time
    * value="END_OF_THE_CURRENT_SERVICE_POINT_HOURS", Move to the end of the current service point hours
