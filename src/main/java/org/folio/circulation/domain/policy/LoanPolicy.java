@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
+import static org.folio.circulation.domain.policy.LoansPolicyProfile.getProfileByName;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
