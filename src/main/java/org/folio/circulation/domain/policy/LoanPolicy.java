@@ -56,7 +56,7 @@ public class LoanPolicy {
     //TODO: Create HttpResult wrapper that traps exceptions
     try {
       if(isNotRenewable()) {
-        return failedResult(errorForPolicy("Loan is not renewable"));
+        return failedResult(errorForPolicy("loan is not renewable"));
       }
 
       final HttpResult<DateTime> proposedDueDateResult =
@@ -180,7 +180,7 @@ public class LoanPolicy {
 
     if(isSameOrBefore(loan, proposedDueDate)) {
       errors.add(errorForPolicy(
-        "Renewal would not change the due date"));
+        "renewal would not change the due date"));
     }
   }
 

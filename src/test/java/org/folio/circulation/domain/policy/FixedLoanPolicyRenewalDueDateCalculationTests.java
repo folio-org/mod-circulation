@@ -20,7 +20,7 @@ import static org.junit.Assert.assertThat;
 public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
   private static final String EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES =
-    "Renewal date falls outside of the date ranges " +
+    "renewal date falls outside of the date ranges " +
       "in the fixed schedule of fixed loan policy";
   @Test
   public void shouldFailWhenLoanDateIsBeforeOnlyScheduleAvailable() {
@@ -219,7 +219,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     final HttpResult<Loan> result = loanPolicy.renew(loan, renewalDate);
 
     assertThat(result,
-      hasValidationFailure("Renewal would not change the due date"));
+      hasValidationFailure("renewal would not change the due date"));
   }
 
   @Test
@@ -243,7 +243,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     final HttpResult<Loan> result = loanPolicy.renew(loan, renewalDate);
 
     assertThat(result,
-      hasValidationFailure("Renewal would not change the due date"));
+      hasValidationFailure("renewal would not change the due date"));
   }
 
   @Test
