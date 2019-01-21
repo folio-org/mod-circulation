@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
+import static org.folio.circulation.domain.policy.LoansPolicyProfile.getProfileByName;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
@@ -23,6 +24,10 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
 
 public class LoanPolicy {
+
+  private static final String LOANS_POLICY_KEY = "loansPolicy";
+  private static final String PERIOD_KEY = "period";
+
   private final JsonObject representation;
   private final FixedDueDateSchedules fixedDueDateSchedules;
   private final FixedDueDateSchedules alternateRenewalFixedDueDateSchedules;
@@ -239,7 +244,7 @@ public class LoanPolicy {
   }
 
   private JsonObject getLoansPolicy() {
-    return representation.getJsonObject("loansPolicy");
+    return representation.getJsonObject(LOANS_POLICY_KEY);
   }
 
   private JsonObject getRenewalsPolicy() {
@@ -270,8 +275,8 @@ public class LoanPolicy {
   }
 
   private Period getPeriod(JsonObject policy) {
-    String interval = getNestedStringProperty(policy, "period", "intervalId");
-    Integer duration = getNestedIntegerProperty(policy, "period", "duration");
+    String interval = getNestedStringProperty(policy, PERIOD_KEY, "intervalId");
+    Integer duration = getNestedIntegerProperty(policy, PERIOD_KEY, "duration");
     return Period.from(duration, interval);
   }
 
@@ -326,6 +331,74 @@ public class LoanPolicy {
   //TODO: potentially remove this, when builder can create class or JSON representation
   LoanPolicy withAlternateRenewalSchedules(JsonObject renewalSchedules) {
     return withAlternateRenewalSchedules(FixedDueDateSchedules.from(renewalSchedules));
+  }
+
+  public boolean isLoanable() {
+    return representation.getBoolean("loanable", false);
+  }
+
+  public LoansPolicyProfile getLoansPolicyProfile() {
+    JsonObject loansPolicyObj = representation.getJsonObject(LOANS_POLICY_KEY);
+    if (Objects.isNull(loansPolicyObj)) {
+      return LoansPolicyProfile.INCORRECT;
+    }
+
+    String profileId = loansPolicyObj.getString("profileId");
+    return getProfileByName(profileId);
+  }
+
+  public List<DateTime> getFixedDueDates() {
+    return fixedDueDateSchedules.getDueDates();
+  }
+
+  public DueDateManagement getDueDateManagement() {
+    JsonObject loansPolicyObj = representation.getJsonObject(LOANS_POLICY_KEY);
+    if (Objects.isNull(loansPolicyObj)) {
+      return DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
+    }
+
+    String dateManagementId = loansPolicyObj.getString("closedLibraryDueDateManagementId");
+    return DueDateManagement.getDueDateManagement(dateManagementId);
+  }
+
+  public LoanPolicyPeriod getPeriodInterval() {
+    return getPeriod(PERIOD_KEY);
+  }
+
+  public int getPeriodDuration() {
+    return getDuration(PERIOD_KEY);
+  }
+
+  public int getOffsetPeriodDuration() {
+    return getDuration("openingTimeOffset");
+  }
+
+  public LoanPolicyPeriod getOffsetPeriodInterval() {
+    return getPeriod("openingTimeOffset");
+  }
+
+  private LoanPolicyPeriod getPeriod(String val) {
+    JsonObject loansPolicyObj = representation.getJsonObject(LOANS_POLICY_KEY);
+    if (Objects.isNull(loansPolicyObj)) {
+      return LoanPolicyPeriod.INCORRECT;
+    }
+
+    JsonObject period = loansPolicyObj.getJsonObject(val);
+    if (Objects.isNull(period)) {
+      return LoanPolicyPeriod.INCORRECT;
+    }
+
+    String intervalId = period.getString("intervalId");
+    return LoanPolicyPeriod.getProfileByName(intervalId);
+  }
+
+  private int getDuration(String val) {
+    JsonObject loansPolicyObj = representation.getJsonObject(LOANS_POLICY_KEY);
+    JsonObject period = loansPolicyObj.getJsonObject(val);
+    if (Objects.isNull(period)) {
+      return 0;
+    }
+    return period.getInteger("duration");
   }
 
   public String getId() {

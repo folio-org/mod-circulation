@@ -6,27 +6,41 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   private final Loan loan;
   private final RequestQueue requestQueue;
   private final LoanPolicy loanPolicy;
+  private final Calendar calendar;
+  private final LibraryHours libraryHours;
 
   private LoanAndRelatedRecords(
     Loan loan,
     RequestQueue requestQueue,
-    LoanPolicy loanPolicy) {
+    LoanPolicy loanPolicy, Calendar calendar,
+    LibraryHours libraryHours) {
 
     this.loan = loan;
     this.requestQueue = requestQueue;
     this.loanPolicy = loanPolicy;
+    this.calendar = calendar;
+    this.libraryHours = libraryHours;
   }
 
   public LoanAndRelatedRecords(Loan loan) {
-    this(loan, null, null);
+    this(loan, null, null, null, null);
   }
 
   public LoanAndRelatedRecords withLoan(Loan newLoan) {
-    return new LoanAndRelatedRecords(newLoan, requestQueue, loanPolicy);
+    return new LoanAndRelatedRecords(newLoan, requestQueue, loanPolicy, calendar,libraryHours);
   }
 
   public LoanAndRelatedRecords withRequestingUser(User newUser) {
     return withLoan(loan.withUser(newUser));
+  }
+
+  LoanAndRelatedRecords withCalendar(Calendar newCalendar) {
+    return new LoanAndRelatedRecords(loan, requestQueue, loanPolicy, newCalendar, libraryHours);
+  }
+
+  LoanAndRelatedRecords withLibraryHours(LibraryHours newLibraryHours) {
+    return new LoanAndRelatedRecords(loan, requestQueue,
+      loanPolicy, calendar, newLibraryHours);
   }
 
   public LoanAndRelatedRecords withProxyingUser(User newProxy) {
@@ -35,12 +49,12 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
 
   public LoanAndRelatedRecords withLoanPolicy(LoanPolicy newLoanPolicy) {
     return new LoanAndRelatedRecords(loan, requestQueue,
-      newLoanPolicy);
+      newLoanPolicy, calendar, libraryHours);
   }
 
   public LoanAndRelatedRecords withRequestQueue(RequestQueue newRequestQueue) {
     return new LoanAndRelatedRecords(loan, newRequestQueue,
-      loanPolicy);
+      loanPolicy, calendar, libraryHours);
   }
 
   public LoanAndRelatedRecords withItem(Item newItem) {
@@ -49,6 +63,10 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
 
   public Loan getLoan() {
     return loan;
+  }
+
+  public Calendar getCalendar() {
+    return calendar;
   }
 
   public RequestQueue getRequestQueue() {
@@ -61,6 +79,10 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
 
   public LoanPolicy getLoanPolicy() {
     return loanPolicy;
+  }
+
+  public LibraryHours getLibraryHours() {
+    return libraryHours;
   }
 
   @Override
