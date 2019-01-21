@@ -1,5 +1,6 @@
 package api;
 
+
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.lang.invoke.MethodHandles;
@@ -31,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import api.loans.CheckInByBarcodeTests;
 import api.loans.CheckInByReplacingLoanTests;
 import api.loans.CheckOutByBarcodeTests;
+import api.loans.CheckOutCalculateDueDateTests;
 import api.loans.LoanAPILocationTests;
 import api.loans.LoanAPIPolicyTests;
 import api.loans.LoanAPIProxyTests;
@@ -75,11 +77,11 @@ import api.support.http.URLHelper;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 
-
 @RunWith(Suite.class)
 
 @Suite.SuiteClasses({
   CheckOutByBarcodeTests.class,
+  CheckOutCalculateDueDateTests.class,
   RenewByBarcodeTests.class,
   RenewByIdTests.class,
   OverrideRenewByBarcodeTests.class,
@@ -122,6 +124,7 @@ public class APITestSuite {
   public static final String TENANT_ID = "test_tenant";
   public static final String USER_ID = "79ff2a8b-d9c3-5b39-ad4a-0a84025ab085";
   public static final String TOKEN = "eyJhbGciOiJIUzUxMiJ9eyJzdWIiOiJhZG1pbiIsInVzZXJfaWQiOiI3OWZmMmE4Yi1kOWMzLTViMzktYWQ0YS0wYTg0MDI1YWIwODUiLCJ0ZW5hbnQiOiJ0ZXN0X3RlbmFudCJ9BShwfHcNClt5ZXJ8ImQTMQtAM1sQEnhsfWNmXGsYVDpuaDN3RVQ9";
+  public static final DateTime END_OF_2019_DUE_DATE = new DateTime(2019, 12, 31, 23, 59, 59, DateTimeZone.UTC);
   private static final String REQUEST_ID = createFakeRequestId();
 
   private static VertxAssistant vertxAssistant;
@@ -293,6 +296,10 @@ public class APITestSuite {
 
   public static UUID fakeServicePoint() {
     return fakeServicePointId;
+  }
+
+  public static UUID exampleFixedDueDateSchedulesId() {
+    return exampleFixedDueDateSchedulesId;
   }
 
   @BeforeClass
@@ -597,9 +604,9 @@ public class APITestSuite {
 
   private static void createServicePoints()
     throws InterruptedException,
-      MalformedURLException,
-      TimeoutException,
-      ExecutionException {
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
 
     ResourceClient servicePointsClient = ResourceClient.forServicePoints(createClient());
 
@@ -761,9 +768,9 @@ public class APITestSuite {
         .withName("Example Fixed Due Date Schedule")
         .withDescription("Example Fixed Due Date Schedule")
         .addSchedule(new FixedDueDateSchedule(
-          new DateTime(2018, 1, 1, 0, 0, 0, DateTimeZone.UTC),
-          new DateTime(2018, 12, 31, 23, 59, 59, DateTimeZone.UTC),
-          new DateTime(2018, 12, 31, 23, 59, 59, DateTimeZone.UTC)
+          new DateTime(2019, 1, 1, 0, 0, 0, DateTimeZone.UTC),
+          new DateTime(2019, 12, 31, 23, 59, 59, DateTimeZone.UTC),
+          END_OF_2019_DUE_DATE
         ));
 
     exampleFixedDueDateSchedulesId = fixedDueDateSchedulesClient.create(
@@ -820,14 +827,13 @@ public class APITestSuite {
 
     String name = record.getString("name");
 
-    if(name == null) {
+    if (name == null) {
       throw new IllegalArgumentException("Reference records must have a name");
     }
 
-    if(existsInList(existingRecords, name)) {
+    if (existsInList(existingRecords, name)) {
       return client.create(record).getId();
-    }
-    else {
+    } else {
       return findFirstByName(existingRecords, name);
     }
   }
@@ -868,17 +874,17 @@ public class APITestSuite {
     TimeoutException {
 
     courseReservesCancellationReasonId = createReferenceRecord(
-        ResourceClient.forCancellationReasons(createClient()),
-        new JsonObject()
-            .put("name", "Course Reserves")
-            .put("description", "Item Needed for Course Reserves")
+      ResourceClient.forCancellationReasons(createClient()),
+      new JsonObject()
+        .put("name", "Course Reserves")
+        .put("description", "Item Needed for Course Reserves")
     );
 
     patronRequestCancellationReasonId = createReferenceRecord(
-        ResourceClient.forCancellationReasons(createClient()),
-        new JsonObject()
-            .put("name", "Patron Request")
-            .put("description", "Item cancelled at Patron request")
+      ResourceClient.forCancellationReasons(createClient()),
+      new JsonObject()
+        .put("name", "Patron Request")
+        .put("description", "Item cancelled at Patron request")
     );
   }
 
@@ -889,7 +895,7 @@ public class APITestSuite {
     TimeoutException {
 
     ResourceClient cancellationReasonClient =
-        ResourceClient.forCancellationReasons(createClient());
+      ResourceClient.forCancellationReasons(createClient());
 
     cancellationReasonClient.delete(courseReservesCancellationReasonId);
     cancellationReasonClient.delete(patronRequestCancellationReasonId);

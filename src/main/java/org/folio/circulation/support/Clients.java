@@ -21,6 +21,7 @@ public class Clients {
   private final LoanRulesClient loanRulesClient;
   private final CollectionResourceClient loanRulesStorageClient;
   private final CollectionResourceClient servicePointsStorageClient;
+  private final CollectionResourceClient calendarStorageClient;
   private final CollectionResourceClient patronGroupsStorageClient;
 
   public static Clients create(WebContext context, HttpClient httpClient) {
@@ -44,6 +45,7 @@ public class Clients {
       fixedDueDateSchedulesStorageClient = createFixedDueDateSchedulesStorageClient(client, context);
       servicePointsStorageClient = createServicePointsStorageClient(client, context);
       patronGroupsStorageClient = createPatronGroupsStorageClient(client, context);
+      calendarStorageClient = createCalendarStorageClient(client, context);
     }
     catch(MalformedURLException e) {
       throw new InvalidOkapiLocationException(context.getOkapiLocation(), e);
@@ -96,6 +98,10 @@ public class Clients {
   
   public CollectionResourceClient patronGroupsStorage() {
     return patronGroupsStorageClient;
+  }
+
+  public CollectionResourceClient calendarStorageClient() {
+    return calendarStorageClient;
   }
 
 
@@ -234,7 +240,12 @@ public class Clients {
       throws MalformedURLException {
     return getCollectionResourceClient(client, context, "/groups");
   }
-  
 
+  private CollectionResourceClient createCalendarStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+    return getCollectionResourceClient(client, context, "/calendar/periods");
+  }
   
 }

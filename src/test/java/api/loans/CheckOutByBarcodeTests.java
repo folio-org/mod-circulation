@@ -1,5 +1,6 @@
 package api.loans;
 
+import static api.APITestSuite.END_OF_2019_DUE_DATE;
 import static api.support.builders.ItemBuilder.AWAITING_PICKUP;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.builders.RequestBuilder.CLOSED_FILLED;
@@ -161,7 +162,7 @@ public class CheckOutByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
+    final DateTime loanDate = new DateTime(2019, 3, 18, 11, 43, 54, DateTimeZone.UTC);
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -180,7 +181,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat("due date should be based upon fixed due date schedule",
       loan.getString("dueDate"),
-      isEquivalentTo(new DateTime(2018, 12, 31, 23, 59, 59, DateTimeZone.UTC)));
+      isEquivalentTo(END_OF_2019_DUE_DATE));
   }
 
   @Test
@@ -514,10 +515,10 @@ public class CheckOutByBarcodeTests extends APITests {
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
-      .forItem(smallAngryPlanet)
-      .to(jessica)
-      .proxiedBy(james)
-      .at(UUID.randomUUID()));
+        .forItem(smallAngryPlanet)
+        .to(jessica)
+        .proxiedBy(james)
+        .at(UUID.randomUUID()));
 
     JsonObject loan = response.getJson();
 
@@ -555,7 +556,7 @@ public class CheckOutByBarcodeTests extends APITests {
       "Loan policy %s could not be found, please check loan rules",
       nonExistentloanPolicyId)));
   }
-  
+
   @Test
   public void cannotCheckOutWhenServicePointOfCheckoutNotPresent()
     throws InterruptedException,
@@ -565,14 +566,14 @@ public class CheckOutByBarcodeTests extends APITests {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
-    
+
     final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
 
     final Response response = loansFixture.attemptCheckOutByBarcode(422,
-        new CheckOutByBarcodeRequestBuilder()
-          .forItem(smallAngryPlanet)
-          .to(james)
-          .on(loanDate));
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(james)
+        .on(loanDate));
 
     assertThat(response.getStatusCode(), is(422));
 

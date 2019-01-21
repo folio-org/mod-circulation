@@ -1,22 +1,13 @@
 package org.folio.circulation.resources;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
-
-import java.util.UUID;
-
-import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.domain.LoanRepository;
-import org.folio.circulation.domain.LoanRepresentation;
-import org.folio.circulation.domain.RequestQueueRepository;
-import org.folio.circulation.domain.UpdateItem;
-import org.folio.circulation.domain.UpdateRequestQueue;
-import org.folio.circulation.domain.User;
-import org.folio.circulation.domain.UserRepository;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
+import org.folio.circulation.domain.*;
+import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.LoanPolicy;
+import org.folio.circulation.domain.policy.LoanPolicyPeriod;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
 import org.folio.circulation.domain.representations.LoanProperties;
@@ -38,12 +29,30 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.ISODateTimeFormat;
 
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
+
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.policy.LoanPolicyPeriod.*;
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
+import static org.folio.circulation.support.PeriodUtil.*;
+import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 public class CheckOutByBarcodeResource extends Resource {
+
+  public static final String DATE_TIME_FORMATTER = "yyyy-MM-dd'Z'";
+  private static final LocalTime START_TIME_OF_DAY = LocalTime.of(6, 0);
+  private static final int POSITION_PREV_DAY = 0;
+  private static final int POSITION_CURRENT_DAY = 1;
+  private static final int POSITION_NEXT_DAY = 2;
+
   public CheckOutByBarcodeResource(HttpClient client) {
     super(client);
   }
@@ -79,16 +88,18 @@ public class CheckOutByBarcodeResource extends Resource {
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
+    final CalendarRepository calendarRepository = new CalendarRepository(clients);
+    final CalendarRepository libraryHoursRepository = new CalendarRepository(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
-        clients, () -> failure(
-        "Cannot check out item via proxy when relationship is invalid",
-        CheckOutByBarcodeRequest.PROXY_USER_BARCODE,
-        proxyUserBarcode));
-    
+      clients, () -> failure(
+      "Cannot check out item via proxy when relationship is invalid",
+      CheckOutByBarcodeRequest.PROXY_USER_BARCODE,
+      proxyUserBarcode));
+
     final ServicePointOfCheckoutPresentValidator servicePointOfCheckoutPresentValidator
       = new ServicePointOfCheckoutPresentValidator(message -> failure(message,
-        CheckOutByBarcodeRequest.SERVICE_POINT_ID, checkoutServicePointId));
+      CheckOutByBarcodeRequest.SERVICE_POINT_ID, checkoutServicePointId));
 
     final AwaitingPickupValidator awaitingPickupValidator = new AwaitingPickupValidator(
       message -> failure(message,
@@ -111,7 +122,7 @@ public class CheckOutByBarcodeResource extends Resource {
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
-    
+
     completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(Loan.from(loan))))
       .thenApply(servicePointOfCheckoutPresentValidator::refuseCheckOutWhenServicePointIsNotPresent)
       .thenCombineAsync(userRepository.getUserByBarcode(userBarcode), this::addUser)
@@ -126,6 +137,8 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenApply(awaitingPickupValidator::refuseWhenUserIsNotAwaitingPickup)
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
+      .thenComposeAsync(r -> libraryHoursRepository.lookupLibraryHours(r, checkoutServicePointId))
+      .thenComposeAsync(r -> calendarRepository.lookupPeriod(r, checkoutServicePointId))
       .thenApply(r -> r.next(this::calculateDueDate))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
@@ -141,19 +154,414 @@ public class CheckOutByBarcodeResource extends Resource {
 
     final Loan loan = loanAndRelatedRecords.getLoan();
     final LoanPolicy loanPolicy = loanAndRelatedRecords.getLoanPolicy();
+    final Calendar calendar = loanAndRelatedRecords.getCalendar();
+    final DueDateManagement dueDateManagement = loanPolicy.getDueDateManagement();
+    final LibraryHours libraryHours = loanAndRelatedRecords.getLibraryHours();
 
+    // if the calendar API (`GET: /calendar/periods/:id/calculateopening`) is not available
+    // then the due date calculated like: `Keep Current DueDate`
+    if (Objects.isNull(calendar.getRepresentation()) && libraryHours.getTotalRecords() == 0) {
+      return calculateDefaultInitialDueDate(loanAndRelatedRecords, loan, loanPolicy);
+    }
+
+    if (Objects.isNull(calendar.getRepresentation())) {
+      List<Calendar> openingPeriods = libraryHours.getOpeningPeriods();
+      if (openingPeriods.isEmpty()) {
+        // if the calendar API (`GET: /calendar/periods/:id/period`) doesn't have LibraryHours
+        // then the due date calculated like: `Keep Current DueDate`
+        return calculateDefaultInitialDueDate(loanAndRelatedRecords, loan, loanPolicy);
+      }
+
+      DateTime endDate = new DateTime(openingPeriods.get(0).getEndDate())
+        .withZoneRetainFields(DateTimeZone.UTC);
+      return calculateNewInitialDueDate(loanAndRelatedRecords, endDate);
+    }
+
+    // if loanPolicy is not loanable
+    // then the due date calculated like: `Keep Current DueDate`
+    if (!loanPolicy.isLoanable()) {
+      return calculateDefaultInitialDueDate(loanAndRelatedRecords, loan, loanPolicy);
+    }
+
+    if (isKeepCurrentDueDate(dueDateManagement)) {
+      return calculateDefaultInitialDueDate(loanAndRelatedRecords, loan, loanPolicy);
+    }
+
+    LoanPolicyPeriod periodInterval = loanPolicy.getPeriodInterval();
+    if (isLongTermLoans(periodInterval)) {
+      return calculateLongTermDueDate(loanAndRelatedRecords, loan, loanPolicy,
+        calendar, dueDateManagement);
+    } else if (isShortTermLoans(periodInterval)) {
+      return calculateShortTermDueDate(loanAndRelatedRecords, loan, loanPolicy,
+        calendar, dueDateManagement);
+    } else {
+      return calculateFixedDueDate(loanAndRelatedRecords, loan, loanPolicy,
+        calendar, dueDateManagement);
+    }
+  }
+
+  private HttpResult<LoanAndRelatedRecords> calculateFixedDueDate(LoanAndRelatedRecords loanAndRelatedRecords,
+                                                                  Loan loan, LoanPolicy loanPolicy, Calendar calendar,
+                                                                  DueDateManagement dueDateManagement) {
+    List<OpeningDayPeriod> openingDays = calendar.getOpeningDays();
+
+    switch (dueDateManagement) {
+      case MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY:
+        OpeningDayPeriod prevDayPeriod = openingDays.get(POSITION_PREV_DAY);
+        DateTime prevDateTime = getDateTimeForFixedPeriod(prevDayPeriod);
+        return calculateNewInitialDueDate(loanAndRelatedRecords, prevDateTime);
+
+      case MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY:
+        OpeningDayPeriod nextDayPeriod = openingDays.get(POSITION_NEXT_DAY);
+        DateTime nextDateTime = getDateTimeForFixedPeriod(nextDayPeriod);
+        return calculateNewInitialDueDate(loanAndRelatedRecords, nextDateTime);
+
+      case MOVE_TO_THE_END_OF_THE_CURRENT_DAY:
+        OpeningDayPeriod currentDayPeriod = openingDays.get(POSITION_CURRENT_DAY);
+        DateTime currentDateTime = getDateTimeForFixedPeriod(currentDayPeriod);
+        return calculateNewInitialDueDate(loanAndRelatedRecords, currentDateTime);
+
+      default:
+        return calculateDefaultInitialDueDate(loanAndRelatedRecords, loan, loanPolicy);
+    }
+  }
+
+  private DateTime getDateTimeForFixedPeriod(OpeningDayPeriod prevDayPeriod) {
+    OpeningDay openingDay = prevDayPeriod.getOpeningDay();
+    String date = openingDay.getDate();
+    LocalDate localDate = LocalDate.parse(date, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+
+    if (openingDay.getAllDay()) {
+      return new DateTime(localDate.atTime(LocalTime.MAX).toString());
+    } else {
+      List<OpeningHour> openingHours = openingDay.getOpeningHour();
+      OpeningHour openingHour = openingHours.get(openingHours.size() - 1);
+      LocalTime localTime = LocalTime.parse(openingHour.getEndTime());
+      return new DateTime(LocalDateTime.of(localDate, localTime).toString());
+    }
+  }
+
+  private HttpResult<LoanAndRelatedRecords> calculateShortTermDueDate(LoanAndRelatedRecords loanAndRelatedRecords,
+                                                                      Loan loan, LoanPolicy loanPolicy, Calendar calendar,
+                                                                      DueDateManagement dueDateManagement) {
+    List<OpeningDayPeriod> openingDays = calendar.getOpeningDays();
+
+    switch (dueDateManagement) {
+      case MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS:
+        OpeningDayPeriod openingDayPeriod = openingDays.get(openingDays.size() / 2);
+
+        DateTime dateTime = getTermDueDate(openingDayPeriod);
+        return calculateNewInitialDueDate(loanAndRelatedRecords, dateTime);
+
+      case MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS:
+        LoanPolicyPeriod period = calendar.getPeriod();
+        int duration = calendar.getDuration();
+        LoanPolicyPeriod offsetInterval = loanPolicy.getOffsetPeriodInterval();
+        int offsetDuration = loanPolicy.getOffsetPeriodDuration();
+
+        DateTime dateTimeNextPoint = getShortTermDueDateRollover(openingDays, period, duration, offsetInterval, offsetDuration);
+        return calculateNewInitialDueDate(loanAndRelatedRecords, dateTimeNextPoint);
+
+      default:
+        return calculateDefaultInitialDueDate(loanAndRelatedRecords, loan, loanPolicy);
+    }
+  }
+
+  private HttpResult<LoanAndRelatedRecords> calculateLongTermDueDate(LoanAndRelatedRecords loanAndRelatedRecords,
+                                                                     Loan loan, LoanPolicy loanPolicy,
+                                                                     Calendar calendar, DueDateManagement dueDateManagement) {
+    List<OpeningDayPeriod> openingDays = calendar.getOpeningDays();
+
+    switch (dueDateManagement) {
+      case MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY:
+        OpeningDayPeriod prevDayPeriod = findOpeningDay(openingDays, POSITION_PREV_DAY);
+        DateTime prevDateTime = getTermDueDate(prevDayPeriod);
+        return calculateNewInitialDueDate(loanAndRelatedRecords, prevDateTime);
+
+      case MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY:
+        OpeningDayPeriod nextDayPeriod = findOpeningDay(openingDays, POSITION_NEXT_DAY);
+        DateTime nextDateTime = getTermDueDate(nextDayPeriod);
+        return calculateNewInitialDueDate(loanAndRelatedRecords, nextDateTime);
+
+      case MOVE_TO_THE_END_OF_THE_CURRENT_DAY:
+        OpeningDayPeriod currentDayPeriod = findOpeningDay(openingDays, POSITION_CURRENT_DAY);
+        DateTime currentDateTime = getTermDueDate(currentDayPeriod);
+        return calculateNewInitialDueDate(loanAndRelatedRecords, currentDateTime);
+
+      default:
+        return calculateDefaultInitialDueDate(loanAndRelatedRecords, loan, loanPolicy);
+    }
+  }
+
+  private HttpResult<LoanAndRelatedRecords> calculateDefaultInitialDueDate(LoanAndRelatedRecords loanAndRelatedRecords,
+                                                                           Loan loan, LoanPolicy loanPolicy) {
     return loanPolicy.calculateInitialDueDate(loan)
       .map(dueDate -> {
         loanAndRelatedRecords.getLoan().changeDueDate(dueDate);
-
         return loanAndRelatedRecords;
       });
+  }
+
+  private HttpResult<LoanAndRelatedRecords> calculateNewInitialDueDate(LoanAndRelatedRecords loanAndRelatedRecords,
+                                                                       DateTime newDueDate) {
+    Loan loan = loanAndRelatedRecords.getLoan();
+    DateTime dueDateWithZone = newDueDate.withZoneRetainFields(DateTimeZone.UTC);
+    loan.changeDueDate(dueDateWithZone);
+    return HttpResult.succeeded(loanAndRelatedRecords);
+  }
+
+  private DateTime getShortTermDueDateRollover(List<OpeningDayPeriod> openingDays,
+                                               LoanPolicyPeriod period, int duration,
+                                               LoanPolicyPeriod offsetInterval, int offsetDuration) {
+
+    OpeningDayPeriod currentDayPeriod = openingDays.get(openingDays.size() / 2);
+    OpeningDayPeriod nextDayPeriod = openingDays.get(openingDays.size() - 1);
+
+    if (period == HOURS) {
+      return getRolloverForHourlyPeriod(duration, currentDayPeriod, nextDayPeriod, offsetInterval, offsetDuration);
+    } else {
+      OpeningDay currentOpeningDay = currentDayPeriod.getOpeningDay();
+      String currentDate = currentOpeningDay.getDate();
+
+      if (currentOpeningDay.getOpen()) {
+        return getRolloverForMinutesPeriod(duration, currentDayPeriod, nextDayPeriod, currentOpeningDay,
+          currentDate, offsetInterval, offsetDuration);
+      } else {
+        OpeningDay nextOpeningDay = nextDayPeriod.getOpeningDay();
+        String nextDate = nextOpeningDay.getDate();
+        LocalDate nextLocalDate = LocalDate.parse(nextDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+
+        if (nextOpeningDay.getAllDay()) {
+          LocalDateTime localDateTime = nextLocalDate.atTime(LocalTime.MIN);
+          return calculateOffset(localDateTime, offsetInterval, offsetDuration);
+        }
+
+        OpeningHour openingHour = nextOpeningDay.getOpeningHour().get(0);
+        LocalTime startTime = LocalTime.parse(openingHour.getStartTime());
+        LocalDateTime localDateTime = LocalDateTime.of(nextLocalDate, startTime);
+        return calculateOffset(localDateTime, offsetInterval, offsetDuration);
+      }
+    }
+  }
+
+  private DateTime getRolloverForHourlyPeriod(int duration, OpeningDayPeriod currentDayPeriod, OpeningDayPeriod nextDayPeriod,
+                                              LoanPolicyPeriod offsetInterval, int offsetDuration) {
+
+    OpeningDay currentOpeningDay = currentDayPeriod.getOpeningDay();
+    String currentDate = currentOpeningDay.getDate();
+    LocalTime localTime = LocalTime.now(ZoneOffset.UTC);
+    LocalDate localDate = LocalDate.parse(currentDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+
+    // The case when the current day is open all day
+    if (currentOpeningDay.getOpen() && currentOpeningDay.getAllDay()) {
+      LocalDateTime localDateTime = localDate.atTime(localTime)
+        .plusHours(duration);
+
+      return calculateOffset(localDateTime, offsetInterval, offsetDuration);
+    }
+
+    // The case when the current day is open and has a certain time period
+    if (currentOpeningDay.getOpen()) {
+      LocalTime localTimeShift = localTime.plusHours(duration);
+
+      if (isOffsetTimeInCurrentDayPeriod(currentDayPeriod, localTimeShift)) {
+        List<OpeningHour> openingHoursList = currentDayPeriod.getOpeningDay().getOpeningHour();
+        LocalTime startTimeNextAvailablePeriod = findStartTimeOfNextPeriod(openingHoursList, localTimeShift);
+        LocalTime offsetTime = calculateOffsetTime(startTimeNextAvailablePeriod, offsetInterval, offsetDuration);
+        return new DateTime(LocalDateTime.of(localDate, offsetTime).toString());
+      } else {
+        return getDateTimeOfNextPeriod(currentDayPeriod, nextDayPeriod, offsetInterval, offsetDuration);
+      }
+    } else {
+      return getDateTimeOfNextPeriod(currentDayPeriod, nextDayPeriod, offsetInterval, offsetDuration);
+    }
+  }
+
+  /**
+   * Find earliest SPID-1 startTime for the closest next Open=true available hours for SPID-1
+   */
+  private LocalTime findStartTimeOfNextPeriod(List<OpeningHour> openingHoursList, LocalTime localTime) {
+    for (int i = 0; i < openingHoursList.size() - 1; i++) {
+      LocalTime startTimeFirst = LocalTime.parse(openingHoursList.get(i).getStartTime());
+      LocalTime startTimeSecond = LocalTime.parse(openingHoursList.get(i + 1).getStartTime());
+      if (localTime.isAfter(startTimeFirst) && localTime.isBefore(startTimeSecond)) {
+        return startTimeSecond;
+      }
+    }
+    return localTime;
+  }
+
+  private DateTime getDateTimeOfNextPeriod(OpeningDayPeriod currentDayPeriod, OpeningDayPeriod nextDayPeriod,
+                                           LoanPolicyPeriod offsetInterval, int offsetDuration) {
+    OpeningDay nextOpeningDay = nextDayPeriod.getOpeningDay();
+    String nextDate = nextOpeningDay.getDate();
+    LocalDate localDate = LocalDate.parse(nextDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+
+    if (nextOpeningDay.getAllDay()) {
+      LocalTime offsetTime = calculateOffsetTime(LocalTime.MIN, offsetInterval, offsetDuration);
+      return new DateTime(localDate.atTime(offsetTime).toString());
+    } else {
+      List<OpeningHour> openingHoursList = nextOpeningDay.getOpeningHour();
+      if (openingHoursList.size() == 1) {
+        OpeningHour openingHour = openingHoursList.get(0);
+        LocalTime startTime = LocalTime.parse(openingHour.getStartTime());
+        LocalTime offsetTime = calculateOffsetTime(startTime, offsetInterval, offsetDuration);
+        return new DateTime(LocalDateTime.of(localDate, offsetTime).toString());
+      }
+
+      // rollover case
+      if (isRolloverHours(currentDayPeriod, nextDayPeriod)) {
+        String time = nextOpeningDay.getOpeningHour().get(POSITION_CURRENT_DAY).getStartTime();
+        LocalTime startTime = LocalTime.parse(time);
+        return new DateTime(LocalDateTime.of(localDate, startTime).toString());
+      } else {
+        LocalTime startTime = openingHoursList.stream()
+          .filter(this::isLater)
+          .map(period -> LocalTime.parse(period.getStartTime()))
+          .findAny()
+          .orElse(LocalTime.parse(openingHoursList.get(openingHoursList.size() - 1).getStartTime()));
+        return new DateTime(LocalDateTime.of(localDate, startTime).toString());
+      }
+    }
+  }
+
+  /**
+   * Determine the rollover hours of service point
+   * <p>
+   * 'rollover' scenarios where the service point remains open for a continuity of hours that flow from one system date into the next
+   */
+  private boolean isRolloverHours(OpeningDayPeriod currentDayPeriod, OpeningDayPeriod nextDayPeriod) {
+    OpeningDay currentOpeningDay = currentDayPeriod.getOpeningDay();
+    OpeningDay nextOpeningDay = nextDayPeriod.getOpeningDay();
+
+    if (!currentOpeningDay.getOpen()) {
+      return false;
+    }
+
+    // The case when the library works on different days
+    LocalDate currentDate = LocalDate.parse(currentOpeningDay.getDate(), DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+    LocalDate nextDate = LocalDate.parse(nextOpeningDay.getDate(), DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+    if (ChronoUnit.DAYS.between(currentDate, nextDate) > 1) {
+      return false;
+    }
+
+    // The case when the library is open 24 hours every day
+    if (currentOpeningDay.getAllDay() && nextOpeningDay.getAllDay()) {
+      return false;
+    }
+
+    List<OpeningHour> currentOpeningHours = currentOpeningDay.getOpeningHour();
+    LocalTime endTime = LocalTime.parse(currentOpeningHours.get(currentOpeningHours.size() - 1).getEndTime())
+      .withSecond(MAX_SECOND_VAL)
+      .withNano(MAX_NANO_VAL);
+
+    List<OpeningHour> nextOpeningHours = nextOpeningDay.getOpeningHour();
+    LocalTime startTime = LocalTime.parse(nextOpeningHours.get(0).getStartTime());
+
+    return endTime.equals(LocalTime.MAX) && startTime.equals(LocalTime.MIN) && nextOpeningHours.size() > 1;
+  }
+
+  private boolean isLater(OpeningHour period) {
+    LocalTime startTime = LocalTime.parse(period.getStartTime());
+    LocalTime endTime = LocalTime.parse(period.getEndTime());
+    return START_TIME_OF_DAY.isBefore(startTime) || START_TIME_OF_DAY.isBefore(endTime);
+  }
+
+  private DateTime getRolloverForMinutesPeriod(int duration, OpeningDayPeriod currentDayPeriod, OpeningDayPeriod nextDayPeriod,
+                                               OpeningDay currentOpeningDay, String currentDate,
+                                               LoanPolicyPeriod offsetInterval, int offsetDuration) {
+
+    if (currentOpeningDay.getAllDay()) {
+      LocalDate currentLocalDate = LocalDate.parse(currentDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+      LocalDateTime currentEndLocalDateTime = LocalDateTime.of(currentLocalDate, LocalTime.MAX);
+      LocalDateTime offsetLocalDateTime = LocalDateTime.of(currentLocalDate, LocalTime.now(ZoneOffset.UTC)).plusMinutes(duration);
+
+      if (isInCurrentLocalDateTime(currentEndLocalDateTime, offsetLocalDateTime)) {
+        return calculateOffset(offsetLocalDateTime, offsetInterval, offsetDuration);
+      } else {
+        return getDayForMinutesPeriod(nextDayPeriod, offsetInterval, offsetDuration);
+      }
+    } else {
+      LocalTime offsetTime = LocalTime.now(ZoneOffset.UTC).plusMinutes(duration);
+      if (isOffsetTimeInCurrentDayPeriod(currentDayPeriod, offsetTime)) {
+        LocalDate localDate = LocalDate.parse(currentDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+        return calculateOffset(LocalDateTime.of(localDate, offsetTime), offsetInterval, offsetDuration);
+      } else {
+        return getDayForMinutesPeriod(nextDayPeriod, offsetInterval, offsetDuration);
+      }
+    }
+  }
+
+  private DateTime getDayForMinutesPeriod(OpeningDayPeriod nextDayPeriod,
+                                          LoanPolicyPeriod offsetInterval, int offsetDuration) {
+    OpeningDay nextOpeningDay = nextDayPeriod.getOpeningDay();
+    String nextDate = nextOpeningDay.getDate();
+    LocalDate localDate = LocalDate.parse(nextDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+
+    if (nextOpeningDay.getAllDay()) {
+      return calculateOffset(localDate.atTime(LocalTime.MIN), offsetInterval, offsetDuration);
+    } else {
+      OpeningHour openingHour = nextOpeningDay.getOpeningHour().get(0);
+      LocalTime startTime = LocalTime.parse(openingHour.getStartTime());
+      return calculateOffset(LocalDateTime.of(localDate, startTime), offsetInterval, offsetDuration);
+    }
+  }
+
+  private OpeningDayPeriod findOpeningDay(List<OpeningDayPeriod> openingDays, int position) {
+    switch (position) {
+      case POSITION_PREV_DAY:
+        return openingDays.get(position);
+      case POSITION_CURRENT_DAY:
+        return openingDays.get(position);
+      case POSITION_NEXT_DAY:
+        return openingDays.get(position);
+      default:
+        return openingDays.get(POSITION_CURRENT_DAY);
+    }
+  }
+
+  private DateTime getTermDueDate(OpeningDayPeriod openingDayPeriod) {
+    OpeningDay openingDay = openingDayPeriod.getOpeningDay();
+    boolean allDay = openingDay.getAllDay();
+    String date = openingDay.getDate();
+
+    LocalDate localDate = LocalDate.parse(date, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+    if (allDay) {
+      return getDateTimeZoneRetain(localDate.atTime(LocalTime.MAX));
+    } else {
+      List<OpeningHour> openingHours = openingDay.getOpeningHour();
+      if (openingHours.isEmpty()) {
+        return getDateTimeZoneRetain(localDate.atTime(LocalTime.MAX));
+      } else {
+        OpeningHour openingHour = openingHours.get(openingHours.size() - 1);
+        LocalTime localTime = LocalTime.parse(openingHour.getEndTime());
+        return getDateTimeZoneRetain(LocalDateTime.of(localDate, localTime));
+      }
+    }
+  }
+
+
+  /**
+   * Get DateTime in a specific zone
+   */
+  private DateTime getDateTimeZoneRetain(LocalDateTime localDateTime){
+    return new DateTime(localDateTime.toString())
+      .withZoneRetainFields(DateTimeZone.UTC);
+  }
+
+  /**
+   * If CurrentDueDate == KEEP_THE_CURRENT_DUE_DATE or KEEP_THE_CURRENT_DUE_DATE_TIME then the due date
+   * should remain unchanged from system calculated due date timestamp
+   */
+  private boolean isKeepCurrentDueDate(DueDateManagement dueDateManagement) {
+    return dueDateManagement == DueDateManagement.KEEP_THE_CURRENT_DUE_DATE
+      || dueDateManagement == DueDateManagement.KEEP_THE_CURRENT_DUE_DATE_TIME;
   }
 
   private void copyOrDefaultLoanDate(JsonObject request, JsonObject loan) {
     final String loanDateProperty = "loanDate";
 
-    if(request.containsKey(loanDateProperty)) {
+    if (request.containsKey(loanDateProperty)) {
       loan.put(loanDateProperty, request.getString(loanDateProperty));
     } else {
       loan.put(loanDateProperty, DateTime.now().toDateTime(DateTimeZone.UTC)
@@ -162,10 +570,9 @@ public class CheckOutByBarcodeResource extends Resource {
   }
 
   private WritableHttpResult<JsonObject> createdLoanFrom(HttpResult<JsonObject> result) {
-    if(result.failed()) {
+    if (result.failed()) {
       return HttpResult.failed(result.cause());
-    }
-    else {
+    } else {
       return new CreatedJsonHttpResult(result.value(),
         String.format("/circulation/loans/%s", result.value().getString("id")));
     }

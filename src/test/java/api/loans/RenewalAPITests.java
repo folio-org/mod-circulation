@@ -1,5 +1,30 @@
 package api.loans;
 
+import api.APITestSuite;
+import api.support.APITests;
+import api.support.builders.CheckOutByBarcodeRequestBuilder;
+import api.support.builders.FixedDueDateSchedule;
+import api.support.builders.FixedDueDateSchedulesBuilder;
+import api.support.builders.LoanPolicyBuilder;
+import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
+import org.folio.circulation.support.http.server.ValidationError;
+import org.hamcrest.Matcher;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.Seconds;
+import org.junit.Test;
+
+import java.net.MalformedURLException;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import static api.support.builders.FixedDueDateSchedule.forDay;
 import static api.support.builders.FixedDueDateSchedule.wholeMonth;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
@@ -14,32 +39,6 @@ import static java.net.HttpURLConnection.HTTP_OK;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-
-import java.net.MalformedURLException;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
-import org.folio.circulation.support.http.server.ValidationError;
-import org.hamcrest.Matcher;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.Seconds;
-import org.junit.Test;
-
-import api.APITestSuite;
-import api.support.APITests;
-import api.support.builders.CheckOutByBarcodeRequestBuilder;
-import api.support.builders.FixedDueDateSchedule;
-import api.support.builders.FixedDueDateSchedulesBuilder;
-import api.support.builders.LoanPolicyBuilder;
-import io.vertx.core.json.JsonObject;
 
 abstract class RenewalAPITests extends APITests {
   abstract Response attemptRenewal(IndividualResource user, IndividualResource item);
@@ -666,7 +665,7 @@ abstract class RenewalAPITests extends APITests {
       hasLoanPolicyNameParameter("Limited Renewals And Limited Due Date Policy"))));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Renewal would not change the due date"),
+      hasMessage("renewal would not change the due date"),
       hasLoanPolicyIdParameter(limitedRenewalsPolicyId),
       hasLoanPolicyNameParameter("Limited Renewals And Limited Due Date Policy"))));
   }
@@ -699,7 +698,7 @@ abstract class RenewalAPITests extends APITests {
     final Response response = attemptRenewal(smallAngryPlanet, jessica);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Loan is not renewable"),
+      hasMessage("loan is not renewable"),
       hasLoanPolicyIdParameter(notRenewablePolicyId),
       hasLoanPolicyNameParameter("Non Renewable Policy"))));
   }
@@ -743,7 +742,7 @@ abstract class RenewalAPITests extends APITests {
     final Response response = attemptRenewal(smallAngryPlanet, jessica);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Loan is not renewable"),
+      hasMessage("loan is not renewable"),
       hasLoanPolicyIdParameter(notRenewablePolicyId),
       hasLoanPolicyNameParameter("Non Renewable Policy"))));
   }

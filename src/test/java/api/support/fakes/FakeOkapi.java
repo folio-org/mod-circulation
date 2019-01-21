@@ -1,7 +1,11 @@
 package api.support.fakes;
 
-import java.lang.invoke.MethodHandles;
-
+import api.APITestSuite;
+import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Future;
+import io.vertx.core.MultiMap;
+import io.vertx.core.http.HttpServer;
+import io.vertx.ext.web.Router;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.folio.circulation.support.http.client.BufferHelper;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
@@ -10,11 +14,10 @@ import org.folio.circulation.support.http.server.ServerErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import api.APITestSuite;
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Future;
-import io.vertx.core.http.HttpServer;
-import io.vertx.ext.web.Router;
+import java.lang.invoke.MethodHandles;
+
+import static api.support.fixtures.CalendarExamples.getCalendarById;
+import static api.support.fixtures.LibraryHoursExamples.*;
 
 public class FakeOkapi extends AbstractVerticle {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -152,6 +155,8 @@ public class FakeOkapi extends AbstractVerticle {
       .create().register(router);
 
     registerLoanRulesStorage(router);
+    registerCalendar(router);
+    registerLibraryHours(router);
 
     new FakeStorageModuleBuilder()
       .withRecordName("institution")
@@ -189,24 +194,24 @@ public class FakeOkapi extends AbstractVerticle {
       .register(router);
 
     new FakeStorageModuleBuilder()
-        .withRecordName("cancellationReason")
-        .withCollectionPropertyName("cancellationReasons")
-        .withRootPath("/cancellation-reason-storage/cancellation-reasons")
-        .withRequiredProperties("name", "description")
-        .withChangeMetadata()
-        .create()
-        .register(router);
-    
+      .withRecordName("cancellationReason")
+      .withCollectionPropertyName("cancellationReasons")
+      .withRootPath("/cancellation-reason-storage/cancellation-reasons")
+      .withRequiredProperties("name", "description")
+      .withChangeMetadata()
+      .create()
+      .register(router);
+
     new FakeStorageModuleBuilder()
-        .withRecordName("service point")
-        .withCollectionPropertyName("servicepoints")
-        .withRootPath("/service-points")
-        .withRequiredProperties("name", "code", "discoveryDisplayName")
-        .withUniqueProperties("name")
-        .withChangeMetadata()
-        .disallowCollectionDelete()
-        .create()
-        .register(router);
+      .withRecordName("service point")
+      .withCollectionPropertyName("servicepoints")
+      .withRootPath("/service-points")
+      .withRequiredProperties("name", "code", "discoveryDisplayName")
+      .withUniqueProperties("name")
+      .withChangeMetadata()
+      .disallowCollectionDelete()
+      .create()
+      .register(router);
 
     server.requestHandler(router::accept)
       .listen(PORT_TO_USE, result -> {
@@ -241,7 +246,7 @@ public class FakeOkapi extends AbstractVerticle {
   public void stop(Future<Void> stopFuture) {
     log.debug("Stopping fake okapi");
 
-    if(server != null) {
+    if (server != null) {
       server.close(result -> {
         if (result.succeeded()) {
           log.info("Stopped listening on {}", server.actualPort());
@@ -269,5 +274,87 @@ public class FakeOkapi extends AbstractVerticle {
       log.debug("/loan-rules-storage GET returns {}", loanRules);
       routingContext.response().setStatusCode(200).end(loanRules);
     });
+  }
+
+  private void registerLibraryHours(Router router) {
+    router.get("/calendar/periods/:id/period")
+      .handler(routingContext -> {
+        String servicePointId = routingContext.pathParam("id");
+        switch (servicePointId) {
+          case CASE_CALENDAR_IS_UNAVAILABLE_SERVICE_POINT_ID:
+            routingContext.response()
+              .putHeader("content-type", "application/json")
+              .setStatusCode(404)
+              .end();
+            break;
+
+          case CASE_CLOSED_LIBRARY_SERVICE_POINT_ID:
+            routingContext.response()
+              .setStatusCode(200)
+              .putHeader("content-type", "application/json")
+              .end(findFakeLibraryHoursById(servicePointId));
+            break;
+
+          case CASE_CLOSED_LIBRARY_IN_THU_SERVICE_POINT_ID:
+            routingContext.response()
+              .setStatusCode(200)
+              .putHeader("content-type", "application/json")
+              .end(findFakeLibraryHoursById(servicePointId));
+            break;
+
+          default:
+            routingContext.response()
+              .setStatusCode(200)
+              .putHeader("content-type", "application/json")
+              .end(findFakeLibraryHoursById(servicePointId));
+        }
+      });
+  }
+
+  private void registerCalendar(Router router) {
+    router.get("/calendar/periods/:id/calculateopening")
+      .handler(routingContext -> {
+        String servicePointId = routingContext.pathParam("id");
+        switch (servicePointId) {
+          case CASE_CALENDAR_IS_UNAVAILABLE_SERVICE_POINT_ID:
+            routingContext.response()
+              .putHeader("content-type", "application/json")
+              .setStatusCode(404)
+              .end();
+            break;
+
+          case CASE_CLOSED_LIBRARY_SERVICE_POINT_ID:
+            routingContext.response()
+              .putHeader("content-type", "application/json")
+              .setStatusCode(404)
+              .end();
+            break;
+
+          case CASE_CLOSED_LIBRARY_IN_THU_SERVICE_POINT_ID:
+            routingContext.response()
+              .putHeader("content-type", "application/json")
+              .setStatusCode(404)
+              .end();
+            break;
+
+          default:
+            MultiMap queries = routingContext.queryParams();
+            routingContext.response()
+              .setStatusCode(200)
+              .putHeader("content-type", "application/json")
+              .end(findFakeCalendarById(servicePointId, queries));
+        }
+      });
+  }
+
+  private String findFakeLibraryHoursById(String servicePointId) {
+    log.debug(String.format("GET: /calendar/periods/%s/period", servicePointId));
+    return getLibraryHoursById(servicePointId).toString();
+  }
+
+  private String findFakeCalendarById(String servicePointId, MultiMap queries) {
+    log.debug(String.format("GET: /calendar/periods/%s/calculateopening, queries=%s",
+      servicePointId, queries));
+    return getCalendarById(servicePointId).toString();
   }
 }

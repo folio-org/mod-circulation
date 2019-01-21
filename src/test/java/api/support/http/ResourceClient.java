@@ -3,6 +3,7 @@ package api.support.http;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
+import java.lang.invoke.MethodHandles;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -19,12 +20,16 @@ import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
 import org.hamcrest.CoreMatchers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import api.support.builders.Builder;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class ResourceClient {
-  
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
   private final OkapiHttpClient client;
   private final UrlMaker urlMaker;
   private final String resourceName;
@@ -73,6 +78,11 @@ public class ResourceClient {
   public static ResourceClient forUsers(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::usersUrl,
       "users");
+  }
+
+  public static ResourceClient forCalendar(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::calendarUrl,
+      "calendar", "calendars");
   }
 
   public static ResourceClient forProxyRelationships(OkapiHttpClient client) {
@@ -137,12 +147,12 @@ public class ResourceClient {
 
   public static ResourceClient forCancellationReasons(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::cancellationReasonsStorageUrl,
-        "cancellationReasons");
+      "cancellationReasons");
   }
-  
+
   public static ResourceClient forServicePoints(OkapiHttpClient client) {
-   return new ResourceClient(client, InterfaceUrls::servicePointsStorageUrl,
-       "service points", "servicepoints");
+    return new ResourceClient(client, InterfaceUrls::servicePointsStorageUrl,
+      "service points", "servicepoints");
   }
 
   private ResourceClient(
@@ -199,16 +209,20 @@ public class ResourceClient {
 
     CompletableFuture<Response> createCompleted = new CompletableFuture<>();
 
+    log.debug("Attempting to create %s record: %s", resourceName,
+      request.encodePrettily());
+
     client.post(urlMaker.combine(""), request,
       ResponseHandler.json(createCompleted));
 
     Response response = createCompleted.get(5, TimeUnit.SECONDS);
 
     assertThat(
-      String.format("Failed to create %s: %s", resourceName, response.getBody()),
-      response.getStatusCode(), is(HttpURLConnection.HTTP_CREATED));
+      String.format("Failed to create %s: %s", resourceName,
+        response.getBody()), response.getStatusCode(),
+      is(HttpURLConnection.HTTP_CREATED));
 
-    System.out.println(String.format("Created resource %s: %s", resourceName,
+    log.debug(String.format("Created resource %s: %s", resourceName,
       response.getJson().encodePrettily()));
 
     return new IndividualResource(response);
@@ -268,6 +282,28 @@ public class ResourceClient {
 
     return new IndividualResource(getResponse);
   }
+
+  public IndividualResource createAtSpecificPath(Builder builder, String path, String jsonArray, String jsonId)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
+    JsonObject representation = builder.create();
+    JsonArray array = representation.getJsonArray(jsonArray);
+    String id = array.getJsonObject(0).getString(jsonId);
+
+    final URL location = urlMaker.combine(String.format("/%s/%s", id, path));
+
+    client.get(location, ResponseHandler.json(getCompleted));
+
+    Response getResponse = getCompleted
+      .get(5, TimeUnit.SECONDS)
+      .attachBody(representation.toString());
+    return new IndividualResource(getResponse);
+  }
+
 
   public Response attemptReplace(UUID id, Builder builder)
     throws MalformedURLException,
@@ -368,9 +404,9 @@ public class ResourceClient {
 
   public Response attemptGet(IndividualResource resource)
     throws MalformedURLException,
-      InterruptedException,
-      ExecutionException,
-      TimeoutException {
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
 
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
