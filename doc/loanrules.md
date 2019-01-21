@@ -47,13 +47,21 @@ These are the single letter criteria type names:
 * `g` the patron's patron group (like staff, undergrad, visitor)
 * `m` the item's material type (like book, newspaper)
 * `t` the item's loan type (like rare, course-reserve)
-* `a` the item's campus (location)
-* `b` the item's branch (location)
-* `c` the item's collection (location)
-* `s` the item's shelf (location)
+* `a` the item's institution (location)
+* `b` the item's campus (location)
+* `c` the item's library (location)
+* `s` the item's location (location)
 
-`a`, `b`, `c` and `s` build a location hierarchy; `a`, `b` and `c` are not
-implemented for FOLIO version 1, only `s`.
+`a`, `b`, `c` and `s` build a location hierarchy.
+
+`s` is the only location level than is implemented in the loan rules engine yet.
+
+The loan rules editor and the loan rules engine haven't been migrated to the
+complete location hierarchy yet (see
+[UIIN-127 Migrate to hierarchical location end-point](https://issues.folio.org/browse/UIIN-127)).
+
+`a`, `b` and `c` can be put into the loan rules file but they havn't been
+implemented in the loan rules engine yet causing these rules to never match.
 
 ## Criterium
 
@@ -274,3 +282,8 @@ It must be after the priority line and before the first rule.
 
 For `priority: last-line` it must be after the last rule.
 
+## Single loan rules file
+
+For one tenant there is only a single loan rules file.
+
+It must have a single priority line and a single fallback-policy line.
