@@ -36,26 +36,36 @@ public class CalendarExamples {
   public static final String THURSDAY_DATE = "2018-12-12Z";
   public static final String FRIDAY_DATE = "2018-12-13Z";
 
+  private static final String START_TIME_FIRST_PERIOD = "08:00";
+  private static final String END_TIME_FIRST_PERIOD = "12:00";
+
+  private static final String START_TIME_SECOND_PERIOD = "14:00";
+  public static final String END_TIME_SECOND_PERIOD = "19:00";
+
   private static final Map<String, OpeningDayPeriodBuilder> fakeOpeningPeriods = new HashMap<>();
+
+  private CalendarExamples() {
+    // not use
+  }
 
   static {
     fakeOpeningPeriods.put(CASE_WED_THU_FRI_SERVICE_POINT_ID, new OpeningDayPeriodBuilder(CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID,
       // prev day
       createDayPeriod(
         createWeekdays("WEDNESDAY"),
-        createOpeningDay(Arrays.asList(createOpeningHour("08:00", "12:00"), createOpeningHour("14:00", "19:00")),
+        createOpeningDay(Arrays.asList(createOpeningHour(START_TIME_FIRST_PERIOD, END_TIME_FIRST_PERIOD), createOpeningHour(START_TIME_SECOND_PERIOD, END_TIME_SECOND_PERIOD)),
           WEDNESDAY_DATE, false, true, false)
       ),
       // current day
       createDayPeriod(
         createWeekdays("THURSDAY"),
-        createOpeningDay(Arrays.asList(createOpeningHour("08:00", "12:00"), createOpeningHour("14:00", "19:00")),
+        createOpeningDay(Arrays.asList(createOpeningHour(START_TIME_FIRST_PERIOD, END_TIME_FIRST_PERIOD), createOpeningHour(START_TIME_SECOND_PERIOD, END_TIME_SECOND_PERIOD)),
           THURSDAY_DATE, false, true, false)
       ),
       // next day
       createDayPeriod(
         createWeekdays("FRIDAY"),
-        createOpeningDay(Arrays.asList(createOpeningHour("08:00", "12:00"), createOpeningHour("14:00", "19:00")),
+        createOpeningDay(Arrays.asList(createOpeningHour(START_TIME_FIRST_PERIOD, END_TIME_FIRST_PERIOD), createOpeningHour(START_TIME_SECOND_PERIOD, END_TIME_SECOND_PERIOD)),
           FRIDAY_DATE, false, true, false)
       )));
     fakeOpeningPeriods.put(CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID, new OpeningDayPeriodBuilder(CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID,
@@ -94,7 +104,7 @@ public class CalendarExamples {
       // prev day
       createDayPeriod(
         createWeekdays("FRIDAY"),
-        createOpeningDay(Arrays.asList(createOpeningHour("08:00", "12:00"), createOpeningHour("14:00", "19:00")),
+        createOpeningDay(Arrays.asList(createOpeningHour(START_TIME_FIRST_PERIOD, END_TIME_FIRST_PERIOD), createOpeningHour(START_TIME_SECOND_PERIOD, END_TIME_SECOND_PERIOD)),
           "2018-12-14Z", false, true, false)
       ),
       // current day
@@ -105,7 +115,7 @@ public class CalendarExamples {
       // next day
       createDayPeriod(
         createWeekdays("MONDAY"),
-        createOpeningDay(Arrays.asList(createOpeningHour("08:00", "12:00"), createOpeningHour("14:00", "19:00")),
+        createOpeningDay(Arrays.asList(createOpeningHour(START_TIME_FIRST_PERIOD, END_TIME_FIRST_PERIOD), createOpeningHour(START_TIME_SECOND_PERIOD, END_TIME_SECOND_PERIOD)),
           "2018-12-17Z", false, true, false)
       )));
   }

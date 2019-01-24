@@ -1,9 +1,9 @@
 package org.folio.circulation.support;
 
-import org.folio.circulation.domain.OpeningDayPeriod;
+import org.folio.circulation.domain.OpeningDay;
 import org.folio.circulation.domain.OpeningHour;
+import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.LoanPolicyPeriod;
-import org.joda.time.DateTime;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -13,63 +13,34 @@ import java.util.stream.Stream;
 
 public class PeriodUtil {
 
-  public static final int MAX_SECOND_VAL = 59;
-  public static final int MAX_NANO_VAL = 999_999_999;
-  private static final int DEFAULT_VAL = 0;
-
   private PeriodUtil() {
     // not use
   }
 
   /**
-   * Determine whether the offset time is in the time period of the currentDayPeriod
-   *
-   * @param currentDayPeriod OpeningDayPeriod with the hourly period
-   * @param offsetTime       LocalTime with some offset hour or minutes
-   * @return true if OpeningDayPeriod is contains offsetTime in the hourly period
+   * If CurrentDueDate == KEEP_THE_CURRENT_DUE_DATE or KEEP_THE_CURRENT_DUE_DATE_TIME then the due date
+   * should remain unchanged from system calculated due date timestamp
    */
-  public static boolean isOffsetTimeInCurrentDayPeriod(OpeningDayPeriod currentDayPeriod, LocalTime offsetTime) {
-
-    if (!currentDayPeriod.getOpeningDay().getOpen()) {
-      return false;
-    }
-
-    boolean isInOpenPeriodsOfDAy = currentDayPeriod.getOpeningDay().getOpeningHour().stream()
-      .anyMatch(period -> {
-        LocalTime startTime = LocalTime.parse(period.getStartTime());
-        LocalTime endTime = LocalTime.parse(period.getEndTime());
-        return isInPeriod(offsetTime, startTime, endTime);
-      });
-
-    return isInPeriodOfDay(currentDayPeriod, offsetTime, isInOpenPeriodsOfDAy);
+  public static boolean isKeepCurrentDueDate(DueDateManagement dueDateManagement) {
+    return dueDateManagement == DueDateManagement.KEEP_THE_CURRENT_DUE_DATE
+      || dueDateManagement == DueDateManagement.KEEP_THE_CURRENT_DUE_DATE_TIME;
   }
 
-  public static boolean isTimeInHourPeriod(OpeningHour period, LocalTime time) {
-    LocalTime startTime = LocalTime.parse(period.getStartTime());
-    LocalTime endTime = LocalTime.parse(period.getEndTime());
-    return startTime.equals(time) || (time.isAfter(startTime) && time.isBefore(endTime));
+  /**
+   * Determine whether time is in any of the periods
+   */
+  public static boolean isInPeriodOpeningDay(List<OpeningHour> openingHoursList, LocalTime timeShift) {
+    return openingHoursList.stream()
+      .anyMatch(hours -> isTimeInCertainPeriod(timeShift,
+        LocalTime.parse(hours.getStartTime()), LocalTime.parse(hours.getEndTime())));
   }
 
-
-  private static boolean isInPeriodOfDay(OpeningDayPeriod currentDayPeriod, LocalTime offsetTime, boolean isInOpenPeriodsOfDAy) {
-
-    if (isInOpenPeriodsOfDAy && currentDayPeriod.getOpeningDay().getOpeningHour().size() == 1) {
-      return false;
-    }
-
-    List<String> collect = currentDayPeriod.getOpeningDay().getOpeningHour().stream()
-      .flatMap(period -> Stream.of(period.getStartTime(), period.getEndTime()))
-      .collect(Collectors.toList());
-
-    LocalTime startTime = LocalTime.parse(collect.get(0));
-    LocalTime endTime = LocalTime.parse(collect.get(collect.size() - 1));
-
-    return isInPeriod(offsetTime, startTime, endTime);
-  }
-
-  private static boolean isInPeriod(LocalTime offsetTime, LocalTime startTime, LocalTime endTime) {
-    return (offsetTime.isAfter(startTime) && offsetTime.isBefore(endTime))
-      || (offsetTime.equals(startTime) || offsetTime.equals(endTime));
+  /**
+   * Determine whether the `time` is within a period `startTime` and `endTime`
+   */
+  private static boolean isTimeInCertainPeriod(LocalTime time, LocalTime startTime, LocalTime endTime) {
+    return (time.isAfter(startTime) && time.isBefore(endTime))
+      || (time.equals(startTime) || time.equals(endTime));
   }
 
   /**
@@ -83,25 +54,41 @@ public class PeriodUtil {
     return offsetLocalDateTime.isBefore(currentLocalDateTime) || offsetLocalDateTime.isEqual(currentLocalDateTime);
   }
 
-  public static LocalTime calculateOffsetTime(LocalTime offsetTime, LoanPolicyPeriod offsetInterval, int offsetDuration) {
-    switch (offsetInterval) {
-      case HOURS:
-        return offsetTime.plusHours(offsetDuration).withMinute(DEFAULT_VAL);
-      case MINUTES:
-        return offsetTime.plusMinutes(offsetDuration);
-      default:
-        return offsetTime;
+  /**
+   * Determine whether the time shift is in the current day or period
+   *
+   * @param period   HOURS or MINUTES
+   * @param duration the time shift
+   */
+  public static boolean isDateTimeWithDurationInsideDay(OpeningDay openingDay, LocalTime time,
+                                                        LoanPolicyPeriod period, int duration) {
+    if (openingDay.getAllDay()) {
+      return true;
     }
+
+    LocalTime[] startEndTime = getStartAndEndTime(openingDay.getOpeningHour());
+    LocalTime startTime = startEndTime[0];
+    LocalTime endTime = startEndTime[1];
+    LocalTime timeShift = getTimeShift(time, period, duration);
+    return isTimeInCertainPeriod(timeShift, startTime, endTime);
   }
 
-  public static DateTime calculateOffset(LocalDateTime localDateTime, LoanPolicyPeriod offsetInterval, int offsetDuration) {
-    switch (offsetInterval) {
-      case HOURS:
-        return new DateTime(localDateTime.plusHours(offsetDuration).toString());
-      case MINUTES:
-        return new DateTime(localDateTime.plusMinutes(offsetDuration).toString());
-      default:
-        return new DateTime(localDateTime.toString());
-    }
+  public static LocalTime getTimeShift(LocalTime time, LoanPolicyPeriod period, int duration) {
+    return (LoanPolicyPeriod.MINUTES == period) ?
+      time.plusMinutes(duration) : time.plusHours(duration);
+  }
+
+  /**
+   * Get start and end time in the  period
+   * The method allows to determine the boundary values ​​of the day period.
+   */
+  public static LocalTime[] getStartAndEndTime(List<OpeningHour> openingHours) {
+    List<String> collect = openingHours.stream()
+      .flatMap(hours -> Stream.of(hours.getStartTime(), hours.getEndTime()))
+      .collect(Collectors.toList());
+
+    LocalTime startTime = LocalTime.parse(collect.get(0));
+    LocalTime endTime = LocalTime.parse(collect.get(collect.size() - 1));
+    return new LocalTime[]{startTime, endTime};
   }
 }
