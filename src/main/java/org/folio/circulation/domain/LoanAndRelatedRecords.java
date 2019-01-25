@@ -7,19 +7,19 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   private final RequestQueue requestQueue;
   private final LoanPolicy loanPolicy;
   private final Calendar calendar;
-  private final LibraryHours libraryHours;
+  private final Calendar fixedDueDateDays;
 
   private LoanAndRelatedRecords(
     Loan loan,
     RequestQueue requestQueue,
     LoanPolicy loanPolicy, Calendar calendar,
-    LibraryHours libraryHours) {
+    Calendar fixedDueDateDays) {
 
     this.loan = loan;
     this.requestQueue = requestQueue;
     this.loanPolicy = loanPolicy;
     this.calendar = calendar;
-    this.libraryHours = libraryHours;
+    this.fixedDueDateDays = fixedDueDateDays;
   }
 
   public LoanAndRelatedRecords(Loan loan) {
@@ -27,7 +27,7 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   }
 
   public LoanAndRelatedRecords withLoan(Loan newLoan) {
-    return new LoanAndRelatedRecords(newLoan, requestQueue, loanPolicy, calendar,libraryHours);
+    return new LoanAndRelatedRecords(newLoan, requestQueue, loanPolicy, calendar, fixedDueDateDays);
   }
 
   public LoanAndRelatedRecords withRequestingUser(User newUser) {
@@ -35,12 +35,7 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   }
 
   LoanAndRelatedRecords withCalendar(Calendar newCalendar) {
-    return new LoanAndRelatedRecords(loan, requestQueue, loanPolicy, newCalendar, libraryHours);
-  }
-
-  LoanAndRelatedRecords withLibraryHours(LibraryHours newLibraryHours) {
-    return new LoanAndRelatedRecords(loan, requestQueue,
-      loanPolicy, calendar, newLibraryHours);
+    return new LoanAndRelatedRecords(loan, requestQueue, loanPolicy, newCalendar, fixedDueDateDays);
   }
 
   public LoanAndRelatedRecords withProxyingUser(User newProxy) {
@@ -49,16 +44,20 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
 
   public LoanAndRelatedRecords withLoanPolicy(LoanPolicy newLoanPolicy) {
     return new LoanAndRelatedRecords(loan, requestQueue,
-      newLoanPolicy, calendar, libraryHours);
+      newLoanPolicy, calendar, fixedDueDateDays);
   }
 
   public LoanAndRelatedRecords withRequestQueue(RequestQueue newRequestQueue) {
     return new LoanAndRelatedRecords(loan, newRequestQueue,
-      loanPolicy, calendar, libraryHours);
+      loanPolicy, calendar, fixedDueDateDays);
   }
 
   public LoanAndRelatedRecords withItem(Item newItem) {
     return withLoan(loan.withItem(newItem));
+  }
+
+  public LoanAndRelatedRecords withFixedDueDateDays(Calendar newFixedDueDateDays) {
+    return new LoanAndRelatedRecords(loan, requestQueue, loanPolicy, calendar, newFixedDueDateDays);
   }
 
   public Loan getLoan() {
@@ -81,8 +80,8 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
     return loanPolicy;
   }
 
-  public LibraryHours getLibraryHours() {
-    return libraryHours;
+  public Calendar getFixedDueDateDays() {
+    return fixedDueDateDays;
   }
 
   @Override

@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 
 import static org.folio.circulation.support.HttpResult.failed;
 
-class FixedDueDateSchedules {
+public class FixedDueDateSchedules {
   private final List<JsonObject> schedules;
 
   FixedDueDateSchedules(List<JsonObject> schedules) {
@@ -32,7 +32,7 @@ class FixedDueDateSchedules {
     }
   }
 
-  Optional<DateTime> findDueDateFor(DateTime date) {
+  public Optional<DateTime> findDueDateFor(DateTime date) {
     return findScheduleFor(date)
       .map(this::getDueDate);
   }

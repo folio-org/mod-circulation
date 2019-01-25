@@ -1,8 +1,7 @@
 package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
-
-import static org.folio.circulation.support.CalendarQueryUtil.getField;
+import org.apache.commons.lang3.StringUtils;
 
 public class OpeningHour {
 
@@ -13,8 +12,8 @@ public class OpeningHour {
   private String endTime;
 
   OpeningHour(JsonObject jsonObject) {
-    this.startTime = getField(jsonObject.getString(START_TIME_KEY));
-    this.endTime = getField(jsonObject.getString(END_TIME_KEY));
+    this.startTime = StringUtils.defaultIfBlank(jsonObject.getString(START_TIME_KEY), StringUtils.EMPTY);
+    this.endTime = StringUtils.defaultIfBlank(jsonObject.getString(END_TIME_KEY), StringUtils.EMPTY);
   }
 
   private OpeningHour(String startTime, String endTime) {

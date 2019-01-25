@@ -4,7 +4,21 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import org.folio.circulation.domain.*;
+import org.folio.circulation.domain.Calendar;
+import org.folio.circulation.domain.CalendarRepository;
+import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.LoanRepository;
+import org.folio.circulation.domain.LoanRepresentation;
+import org.folio.circulation.domain.OpeningDay;
+import org.folio.circulation.domain.OpeningDayPeriod;
+import org.folio.circulation.domain.OpeningHour;
+import org.folio.circulation.domain.RequestQueueRepository;
+import org.folio.circulation.domain.UpdateItem;
+import org.folio.circulation.domain.UpdateRequestQueue;
+import org.folio.circulation.domain.User;
+import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.LoanPolicyPeriod;
@@ -15,6 +29,7 @@ import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
 import org.folio.circulation.domain.validation.AwaitingPickupValidator;
 import org.folio.circulation.domain.validation.ExistingOpenLoanValidator;
 import org.folio.circulation.domain.validation.InactiveUserValidator;
+import org.folio.circulation.domain.validation.ItemIsNotLoanableValidator;
 import org.folio.circulation.domain.validation.ItemNotFoundValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointOfCheckoutPresentValidator;
@@ -22,6 +37,7 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CreatedJsonHttpResult;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.PeriodUtil;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.WritableHttpResult;
 import org.folio.circulation.support.http.server.WebContext;
@@ -37,12 +53,20 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.policy.LoanPolicyPeriod.*;
+import static org.folio.circulation.domain.policy.LoanPolicyPeriod.HOURS;
+import static org.folio.circulation.domain.policy.LoanPolicyPeriod.isLongTermLoans;
+import static org.folio.circulation.domain.policy.LoanPolicyPeriod.isShortTermLoans;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
-import static org.folio.circulation.support.PeriodUtil.*;
+import static org.folio.circulation.support.PeriodUtil.MAX_NANO_VAL;
+import static org.folio.circulation.support.PeriodUtil.MAX_SECOND_VAL;
+import static org.folio.circulation.support.PeriodUtil.calculateOffset;
+import static org.folio.circulation.support.PeriodUtil.calculateOffsetTime;
+import static org.folio.circulation.support.PeriodUtil.isInCurrentLocalDateTime;
+import static org.folio.circulation.support.PeriodUtil.isOffsetTimeInCurrentDayPeriod;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 public class CheckOutByBarcodeResource extends Resource {
@@ -89,7 +113,6 @@ public class CheckOutByBarcodeResource extends Resource {
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final CalendarRepository calendarRepository = new CalendarRepository(clients);
-    final CalendarRepository libraryHoursRepository = new CalendarRepository(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> failure(
@@ -118,6 +141,9 @@ public class CheckOutByBarcodeResource extends Resource {
     final ExistingOpenLoanValidator openLoanValidator = new ExistingOpenLoanValidator(
       loanRepository, message -> failure(message, ITEM_BARCODE, itemBarcode));
 
+    final ItemIsNotLoanableValidator itemIsNotLoanableValidator = new ItemIsNotLoanableValidator(
+      () -> failure("Item is not loanable", ITEM_BARCODE, itemBarcode));
+
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
 
@@ -137,9 +163,12 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenApply(awaitingPickupValidator::refuseWhenUserIsNotAwaitingPickup)
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
-      .thenComposeAsync(r -> libraryHoursRepository.lookupLibraryHours(r, checkoutServicePointId))
-      .thenComposeAsync(r -> calendarRepository.lookupPeriod(r, checkoutServicePointId))
-      .thenApply(r -> r.next(this::calculateDueDate))
+      .thenApply(itemIsNotLoanableValidator::refuseWhenItemIsNotLoanable)
+      .thenApply(r -> r.next(this::calculateDefaultInitialDueDate))
+      .thenComposeAsync(r -> r.after(calendarRepository::lookupPeriod))
+      .thenApply(r -> r.next(this::applyCLDDM))
+      .thenComposeAsync(r -> r.after(calendarRepository::lookupPeriodForFixedDueDateSchedule))
+      .thenApply(r -> r.next(this::applyFixedDueDateLimit))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
       .thenComposeAsync(r -> r.after(loanRepository::createLoan))
@@ -149,59 +178,37 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
-  private HttpResult<LoanAndRelatedRecords> calculateDueDate(
+  private HttpResult<LoanAndRelatedRecords> applyCLDDM(
     LoanAndRelatedRecords loanAndRelatedRecords) {
-
-    final Loan loan = loanAndRelatedRecords.getLoan();
     final LoanPolicy loanPolicy = loanAndRelatedRecords.getLoanPolicy();
     final Calendar calendar = loanAndRelatedRecords.getCalendar();
     final DueDateManagement dueDateManagement = loanPolicy.getDueDateManagement();
-    final LibraryHours libraryHours = loanAndRelatedRecords.getLibraryHours();
 
     // if the calendar API (`GET: /calendar/periods/:id/calculateopening`) is not available
     // then the due date calculated like: `Keep Current DueDate`
-    if (Objects.isNull(calendar.getRepresentation()) && libraryHours.getTotalRecords() == 0) {
-      return calculateDefaultInitialDueDate(loanAndRelatedRecords, loan, loanPolicy);
-    }
-
     if (Objects.isNull(calendar.getRepresentation())) {
-      List<Calendar> openingPeriods = libraryHours.getOpeningPeriods();
-      if (openingPeriods.isEmpty()) {
-        // if the calendar API (`GET: /calendar/periods/:id/period`) doesn't have LibraryHours
-        // then the due date calculated like: `Keep Current DueDate`
-        return calculateDefaultInitialDueDate(loanAndRelatedRecords, loan, loanPolicy);
-      }
-
-      DateTime endDate = new DateTime(openingPeriods.get(0).getEndDate())
-        .withZoneRetainFields(DateTimeZone.UTC);
-      return calculateNewInitialDueDate(loanAndRelatedRecords, endDate);
-    }
-
-    // if loanPolicy is not loanable
-    // then the due date calculated like: `Keep Current DueDate`
-    if (!loanPolicy.isLoanable()) {
-      return calculateDefaultInitialDueDate(loanAndRelatedRecords, loan, loanPolicy);
+      return HttpResult.succeeded(loanAndRelatedRecords);
     }
 
     if (isKeepCurrentDueDate(dueDateManagement)) {
-      return calculateDefaultInitialDueDate(loanAndRelatedRecords, loan, loanPolicy);
+      return HttpResult.succeeded(loanAndRelatedRecords);
     }
 
     LoanPolicyPeriod periodInterval = loanPolicy.getPeriodInterval();
     if (isLongTermLoans(periodInterval)) {
-      return calculateLongTermDueDate(loanAndRelatedRecords, loan, loanPolicy,
+      return calculateLongTermDueDate(loanAndRelatedRecords,
         calendar, dueDateManagement);
     } else if (isShortTermLoans(periodInterval)) {
-      return calculateShortTermDueDate(loanAndRelatedRecords, loan, loanPolicy,
+      return calculateShortTermDueDate(loanAndRelatedRecords, loanPolicy,
         calendar, dueDateManagement);
     } else {
-      return calculateFixedDueDate(loanAndRelatedRecords, loan, loanPolicy,
+      return calculateFixedDueDate(loanAndRelatedRecords,
         calendar, dueDateManagement);
     }
   }
 
   private HttpResult<LoanAndRelatedRecords> calculateFixedDueDate(LoanAndRelatedRecords loanAndRelatedRecords,
-                                                                  Loan loan, LoanPolicy loanPolicy, Calendar calendar,
+                                                                  Calendar calendar,
                                                                   DueDateManagement dueDateManagement) {
     List<OpeningDayPeriod> openingDays = calendar.getOpeningDays();
 
@@ -222,7 +229,7 @@ public class CheckOutByBarcodeResource extends Resource {
         return calculateNewInitialDueDate(loanAndRelatedRecords, currentDateTime);
 
       default:
-        return calculateDefaultInitialDueDate(loanAndRelatedRecords, loan, loanPolicy);
+        return calculateDefaultInitialDueDate(loanAndRelatedRecords);
     }
   }
 
@@ -242,7 +249,7 @@ public class CheckOutByBarcodeResource extends Resource {
   }
 
   private HttpResult<LoanAndRelatedRecords> calculateShortTermDueDate(LoanAndRelatedRecords loanAndRelatedRecords,
-                                                                      Loan loan, LoanPolicy loanPolicy, Calendar calendar,
+                                                                      LoanPolicy loanPolicy, Calendar calendar,
                                                                       DueDateManagement dueDateManagement) {
     List<OpeningDayPeriod> openingDays = calendar.getOpeningDays();
 
@@ -254,8 +261,8 @@ public class CheckOutByBarcodeResource extends Resource {
         return calculateNewInitialDueDate(loanAndRelatedRecords, dateTime);
 
       case MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS:
-        LoanPolicyPeriod period = calendar.getPeriod();
-        int duration = calendar.getDuration();
+        LoanPolicyPeriod period = loanPolicy.getPeriodInterval();
+        int duration = loanPolicy.getPeriodDuration();
         LoanPolicyPeriod offsetInterval = loanPolicy.getOffsetPeriodInterval();
         int offsetDuration = loanPolicy.getOffsetPeriodDuration();
 
@@ -263,12 +270,11 @@ public class CheckOutByBarcodeResource extends Resource {
         return calculateNewInitialDueDate(loanAndRelatedRecords, dateTimeNextPoint);
 
       default:
-        return calculateDefaultInitialDueDate(loanAndRelatedRecords, loan, loanPolicy);
+        return calculateDefaultInitialDueDate(loanAndRelatedRecords);
     }
   }
 
   private HttpResult<LoanAndRelatedRecords> calculateLongTermDueDate(LoanAndRelatedRecords loanAndRelatedRecords,
-                                                                     Loan loan, LoanPolicy loanPolicy,
                                                                      Calendar calendar, DueDateManagement dueDateManagement) {
     List<OpeningDayPeriod> openingDays = calendar.getOpeningDays();
 
@@ -289,12 +295,13 @@ public class CheckOutByBarcodeResource extends Resource {
         return calculateNewInitialDueDate(loanAndRelatedRecords, currentDateTime);
 
       default:
-        return calculateDefaultInitialDueDate(loanAndRelatedRecords, loan, loanPolicy);
+        return calculateDefaultInitialDueDate(loanAndRelatedRecords);
     }
   }
 
-  private HttpResult<LoanAndRelatedRecords> calculateDefaultInitialDueDate(LoanAndRelatedRecords loanAndRelatedRecords,
-                                                                           Loan loan, LoanPolicy loanPolicy) {
+  private HttpResult<LoanAndRelatedRecords> calculateDefaultInitialDueDate(LoanAndRelatedRecords loanAndRelatedRecords) {
+    Loan loan = loanAndRelatedRecords.getLoan();
+    LoanPolicy loanPolicy = loanAndRelatedRecords.getLoanPolicy();
     return loanPolicy.calculateInitialDueDate(loan)
       .map(dueDate -> {
         loanAndRelatedRecords.getLoan().changeDueDate(dueDate);
@@ -544,7 +551,7 @@ public class CheckOutByBarcodeResource extends Resource {
   /**
    * Get DateTime in a specific zone
    */
-  private DateTime getDateTimeZoneRetain(LocalDateTime localDateTime){
+  private DateTime getDateTimeZoneRetain(LocalDateTime localDateTime) {
     return new DateTime(localDateTime.toString())
       .withZoneRetainFields(DateTimeZone.UTC);
   }
@@ -557,6 +564,52 @@ public class CheckOutByBarcodeResource extends Resource {
     return dueDateManagement == DueDateManagement.KEEP_THE_CURRENT_DUE_DATE
       || dueDateManagement == DueDateManagement.KEEP_THE_CURRENT_DUE_DATE_TIME;
   }
+
+  private HttpResult<LoanAndRelatedRecords> applyFixedDueDateLimit(LoanAndRelatedRecords relatedRecords) {
+    final Loan loan = relatedRecords.getLoan();
+    final LoanPolicy loanPolicy = relatedRecords.getLoanPolicy();
+    Optional<DateTime> optionalDueDateLimit = loanPolicy.getFixedDueDateSchedules()
+      .findDueDateFor(loan.getLoanDate());
+    if (!optionalDueDateLimit.isPresent()) {
+      return HttpResult.succeeded(relatedRecords);
+    }
+    DateTime dueDateLimit = optionalDueDateLimit.get();
+
+    if (!PeriodUtil.isAfterDate(loan.getDueDate(), dueDateLimit)) {
+      return HttpResult.succeeded(relatedRecords);
+    }
+
+    LoanPolicyPeriod periodInterval = loanPolicy.getPeriodInterval();
+
+    if (isShortTermLoans(periodInterval)) {
+      return recalculateShortTermDueDate(relatedRecords);
+    }
+    //the same case for long term and fixed loan policy
+    return recalculateLongTermDueDate(relatedRecords);
+  }
+
+  private HttpResult<LoanAndRelatedRecords> recalculateLongTermDueDate(
+    LoanAndRelatedRecords relatedRecords) {
+    //TODO: move applying CLDDM to separeate place for reusing
+    //Applying 'MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY'
+    List<OpeningDayPeriod> openingDays =
+      relatedRecords.getFixedDueDateDays().getOpeningDays();
+    OpeningDayPeriod prevDayPeriod = findOpeningDay(openingDays, POSITION_PREV_DAY);
+    DateTime prevDateTime = getTermDueDate(prevDayPeriod);
+    return calculateNewInitialDueDate(relatedRecords, prevDateTime);
+  }
+
+  private HttpResult<LoanAndRelatedRecords> recalculateShortTermDueDate(
+    LoanAndRelatedRecords relatedRecords) {
+    //TODO: move applying CLDDM to separeate place for reusing
+    //Applying 'MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS'
+    List<OpeningDayPeriod> openingDays =
+      relatedRecords.getFixedDueDateDays().getOpeningDays();
+    OpeningDayPeriod openingDayPeriod = openingDays.get(openingDays.size() / 2);
+    DateTime dateTime = getTermDueDate(openingDayPeriod);
+    return calculateNewInitialDueDate(relatedRecords, dateTime);
+  }
+
 
   private void copyOrDefaultLoanDate(JsonObject request, JsonObject loan) {
     final String loanDateProperty = "loanDate";

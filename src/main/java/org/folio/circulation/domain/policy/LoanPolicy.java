@@ -14,7 +14,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
-import static org.folio.circulation.domain.policy.LoansPolicyProfile.getProfileByName;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
@@ -302,11 +301,11 @@ public class LoanPolicy {
     return representation.getString("name");
   }
 
-  private boolean isFixed(JsonObject loansPolicy) {
+  public boolean isFixed(JsonObject loansPolicy) {
     return isProfile(loansPolicy, "Fixed");
   }
 
-  private boolean isRolling(JsonObject loansPolicy) {
+  public boolean isRolling(JsonObject loansPolicy) {
     return isProfile(loansPolicy, "Rolling");
   }
 
@@ -337,18 +336,8 @@ public class LoanPolicy {
     return representation.getBoolean("loanable", false);
   }
 
-  public LoansPolicyProfile getLoansPolicyProfile() {
-    JsonObject loansPolicyObj = representation.getJsonObject(LOANS_POLICY_KEY);
-    if (Objects.isNull(loansPolicyObj)) {
-      return LoansPolicyProfile.INCORRECT;
-    }
-
-    String profileId = loansPolicyObj.getString("profileId");
-    return getProfileByName(profileId);
-  }
-
-  public List<DateTime> getFixedDueDates() {
-    return fixedDueDateSchedules.getDueDates();
+  public FixedDueDateSchedules getFixedDueDateSchedules() {
+    return fixedDueDateSchedules;
   }
 
   public DueDateManagement getDueDateManagement() {
