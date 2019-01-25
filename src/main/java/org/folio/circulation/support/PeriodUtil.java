@@ -5,7 +5,6 @@ import org.folio.circulation.domain.OpeningHour;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.LoanPolicyPeriod;
 
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -44,24 +43,9 @@ public class PeriodUtil {
   }
 
   /**
-   * Determine whether the offset date is in the time period of the incoming current date
-   *
-   * @param currentLocalDateTime incoming LocalDateTime
-   * @param offsetLocalDateTime  LocalDateTime with some offset days / hour / minutes
-   * @return true if offsetLocalDateTime is contains offsetLocalDateTime in the time period
-   */
-  public static boolean isInCurrentLocalDateTime(LocalDateTime currentLocalDateTime, LocalDateTime offsetLocalDateTime) {
-    return offsetLocalDateTime.isBefore(currentLocalDateTime) || offsetLocalDateTime.isEqual(currentLocalDateTime);
-  }
-
-  /**
    * Determine whether the time shift is in the current day or period
-   *
-   * @param period   HOURS or MINUTES
-   * @param duration the time shift
    */
-  public static boolean isDateTimeWithDurationInsideDay(OpeningDay openingDay, LocalTime time,
-                                                        LoanPolicyPeriod period, int duration) {
+  public static boolean isDateTimeWithDurationInsideDay(OpeningDay openingDay, LocalTime timeShift) {
     if (openingDay.getAllDay()) {
       return true;
     }
@@ -69,7 +53,6 @@ public class PeriodUtil {
     LocalTime[] startEndTime = getStartAndEndTime(openingDay.getOpeningHour());
     LocalTime startTime = startEndTime[0];
     LocalTime endTime = startEndTime[1];
-    LocalTime timeShift = getTimeShift(time, period, duration);
     return isTimeInCertainPeriod(timeShift, startTime, endTime);
   }
 

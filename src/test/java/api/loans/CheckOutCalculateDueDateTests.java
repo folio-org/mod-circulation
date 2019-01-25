@@ -34,7 +34,6 @@ import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static org.folio.circulation.domain.policy.DueDateManagement.*;
 import static org.folio.circulation.domain.policy.LoanPolicyPeriod.HOURS;
 import static org.folio.circulation.resources.CheckOutByBarcodeResource.DATE_TIME_FORMATTER;
-import static org.folio.circulation.support.PeriodUtil.isInCurrentLocalDateTime;
 import static org.folio.circulation.support.PeriodUtil.isInPeriodOpeningDay;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -1183,6 +1182,17 @@ public class CheckOutCalculateDueDateTests extends APITests {
       LocalTime localTime = LocalTime.parse(openingHour.getStartTime());
       return new DateTime(LocalDateTime.of(localDate, localTime).toString()).withZoneRetainFields(DateTimeZone.UTC);
     }
+  }
+
+  /**
+   * Determine whether the offset date is in the time period of the incoming current date
+   *
+   * @param currentLocalDateTime incoming LocalDateTime
+   * @param offsetLocalDateTime  LocalDateTime with some offset days / hour / minutes
+   * @return true if offsetLocalDateTime is contains offsetLocalDateTime in the time period
+   */
+  private boolean isInCurrentLocalDateTime(LocalDateTime currentLocalDateTime, LocalDateTime offsetLocalDateTime) {
+    return offsetLocalDateTime.isBefore(currentLocalDateTime) || offsetLocalDateTime.isEqual(currentLocalDateTime);
   }
 
   /**

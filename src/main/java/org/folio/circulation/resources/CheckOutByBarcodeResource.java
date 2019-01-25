@@ -88,7 +88,6 @@ public class CheckOutByBarcodeResource extends Resource {
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final CalendarRepository calendarRepository = new CalendarRepository(clients);
-    final CalendarRepository libraryHoursRepository = new CalendarRepository(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> failure(
@@ -136,7 +135,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenApply(awaitingPickupValidator::refuseWhenUserIsNotAwaitingPickup)
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
-      .thenComposeAsync(r -> libraryHoursRepository.lookupLibraryHours(r, checkoutServicePointId))
+      .thenComposeAsync(r -> calendarRepository.lookupLibraryHours(r, checkoutServicePointId))
       .thenComposeAsync(r -> calendarRepository.lookupPeriod(r, checkoutServicePointId))
       .thenApply(r -> r.next(this::calculateDueDate))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
@@ -227,7 +226,7 @@ public class CheckOutByBarcodeResource extends Resource {
     LocalDate localDate = LocalDate.parse(date, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
 
     if (openingDay.getAllDay()) {
-      return new DateTime(localDate.atTime(LocalTime.MAX).toString());
+      return dateTimeWrapper(localDate.atTime(LocalTime.MAX));
     } else {
       List<OpeningHour> openingHours = openingDay.getOpeningHour();
       OpeningHour openingHour = openingHours.get(openingHours.size() - 1);
@@ -321,7 +320,7 @@ public class CheckOutByBarcodeResource extends Resource {
     LocalTime timeOfCurrentDay = LocalTime.now(ZoneOffset.UTC);
     LocalTime timeShift = getTimeShift(timeOfCurrentDay, period, duration);
 
-    if (isDateTimeWithDurationInsideDay(currentOpeningDay, timeOfCurrentDay, period, duration)) {
+    if (isDateTimeWithDurationInsideDay(currentOpeningDay, timeShift)) {
       return getDateTimeInsideOpeningDay(currentOpeningDay, dateOfCurrentDay, timeShift, offsetInterval, offsetDuration);
     }
 
@@ -338,7 +337,7 @@ public class CheckOutByBarcodeResource extends Resource {
       return getDateTimeOfOpeningDay(nextOpeningDay, offsetInterval, offsetDuration);
     }
 
-    return calculateOffset(currentOpeningDay, dateOfCurrentDay, timeShift, LoanPolicyPeriod.INCORRECT, 0);
+    return dateTimeWrapper(LocalDateTime.of(dateOfCurrentDay, timeShift));
   }
 
   /**
@@ -379,12 +378,12 @@ public class CheckOutByBarcodeResource extends Resource {
   private DateTime getDateTimeInsideOpeningDay(OpeningDay openingDay, LocalDate date,
                                                LocalTime timeShift, LoanPolicyPeriod offsetInterval, int offsetDuration) {
     if (openingDay.getAllDay()) {
-      return calculateOffset(openingDay, date, timeShift, LoanPolicyPeriod.INCORRECT, 0);
+      return dateTimeWrapper(LocalDateTime.of(date, timeShift));
     }
 
     List<OpeningHour> openingHoursList = openingDay.getOpeningHour();
     if (isInPeriodOpeningDay(openingHoursList, timeShift)) {
-      return calculateOffset(openingDay, date, timeShift, LoanPolicyPeriod.INCORRECT, 0);
+      return dateTimeWrapper(LocalDateTime.of(date, timeShift));
     }
 
     LocalTime startTimeOfNextPeriod = findStartTimeOfOpeningPeriod(openingHoursList, timeShift);

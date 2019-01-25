@@ -255,7 +255,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
     LocalTime timeOfCurrentDay = LocalTime.now(ZoneOffset.UTC);
     LocalTime timeShift = getTimeShift(timeOfCurrentDay, period, duration);
 
-    if (isDateTimeWithDurationInsideDay(currentOpeningDay, timeOfCurrentDay, period, duration)) {
+    if (isDateTimeWithDurationInsideDay(currentOpeningDay, timeShift)) {
       if (isInPeriodOpeningDay(currentDayPeriod, timeShift)) {
         return calculateOffset(currentOpeningDay, dateOfCurrentDay, timeShift, LoanPolicyPeriod.INCORRECT, 0);
       }
