@@ -131,7 +131,7 @@ public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
 
 
   @Test
-  public void shouldUseMoveToThePreviousOpenDayStrategyForLongTermLoanPolicyWhenDueDateDoesNotExtendBeyondFixedDueDate()
+  public void shouldUseSelectedClosedLibraryStrategyWhenDueDateDoesNotExtendBeyondFixedDueDate()
     throws
     InterruptedException,
     MalformedURLException,
