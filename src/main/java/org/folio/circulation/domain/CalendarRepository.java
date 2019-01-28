@@ -42,7 +42,7 @@ public class CalendarRepository {
     DateTime dueDate = relatedRecords.getLoan().getDueDate();
     String servicePointId = relatedRecords.getLoan().getCheckoutServicePointId();
 
-    //TODO: replace after calendar api change
+    //replace after calendar api change
     String path = String.format(PATH_PARAM_WITH_QUERY, servicePointId, dueDate, "hour", 1);
 
     return FetchSingleRecord.<Calendar>forRecord(RECORD_NAME)

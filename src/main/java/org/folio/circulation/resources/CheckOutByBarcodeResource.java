@@ -590,8 +590,8 @@ public class CheckOutByBarcodeResource extends Resource {
 
   private HttpResult<LoanAndRelatedRecords> recalculateLongTermDueDate(
     LoanAndRelatedRecords relatedRecords) {
-    //TODO: move applying CLDDM to separeate place for reusing
-    //Applying 'MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY'
+    // Move applying CLDDM to separate place for reusing
+    // Applying 'MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY'
     List<OpeningDayPeriod> openingDays =
       relatedRecords.getFixedDueDateDays().getOpeningDays();
     OpeningDayPeriod prevDayPeriod = findOpeningDay(openingDays, POSITION_PREV_DAY);
@@ -601,8 +601,8 @@ public class CheckOutByBarcodeResource extends Resource {
 
   private HttpResult<LoanAndRelatedRecords> recalculateShortTermDueDate(
     LoanAndRelatedRecords relatedRecords) {
-    //TODO: move applying CLDDM to separeate place for reusing
-    //Applying 'MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS'
+    // Move applying CLDDM to separate place for reusing
+    // Applying 'MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS'
     List<OpeningDayPeriod> openingDays =
       relatedRecords.getFixedDueDateDays().getOpeningDays();
     OpeningDayPeriod openingDayPeriod = openingDays.get(openingDays.size() / 2);

@@ -1,36 +1,9 @@
 package api;
 
 
-import static org.folio.circulation.support.JsonPropertyWriter.write;
-
-import java.lang.invoke.MethodHandles;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-
-import org.folio.circulation.Launcher;
-import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.VertxAssistant;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import api.loans.CheckInByBarcodeTests;
 import api.loans.CheckInByReplacingLoanTests;
+import api.loans.CheckOutByBarcodeFixedDueDateScenariosTest;
 import api.loans.CheckOutByBarcodeTests;
 import api.loans.CheckOutCalculateDueDateTests;
 import api.loans.LoanAPILocationTests;
@@ -76,12 +49,40 @@ import api.support.http.ResourceClient;
 import api.support.http.URLHelper;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.Launcher;
+import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.VertxAssistant;
+import org.folio.circulation.support.http.client.OkapiHttpClient;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.lang.invoke.MethodHandles;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.List;
+import java.util.Random;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 @RunWith(Suite.class)
 
 @Suite.SuiteClasses({
   CheckOutByBarcodeTests.class,
   CheckOutCalculateDueDateTests.class,
+  CheckOutByBarcodeFixedDueDateScenariosTest.class,
   RenewByBarcodeTests.class,
   RenewByIdTests.class,
   OverrideRenewByBarcodeTests.class,

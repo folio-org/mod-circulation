@@ -36,6 +36,16 @@ public class CalendarExamples {
   public static final String THURSDAY_DATE = "2018-12-12Z";
   public static final String FRIDAY_DATE = "2018-12-13Z";
 
+  private static final String START_TIME_FIRST_PERIOD = "08:00";
+  private static final String END_TIME_FIRST_PERIOD = "12:00";
+
+  private static final String START_TIME_SECOND_PERIOD = "14:00";
+  public static final String END_TIME_SECOND_PERIOD = "19:00";
+
+  public static final String CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY = "2019-02-01Z";
+  public static final String CASE_FRI_SAT_MON_SERVICE_POINT_CURR_DAY = "2019-02-02Z";
+  public static final String CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY = "2019-02-04Z";
+
   private static final Map<String, OpeningDayPeriodBuilder> fakeOpeningPeriods = new HashMap<>();
 
   static {
@@ -95,18 +105,18 @@ public class CalendarExamples {
       createDayPeriod(
         createWeekdays("FRIDAY"),
         createOpeningDay(Arrays.asList(createOpeningHour("08:00", "12:00"), createOpeningHour("14:00", "19:00")),
-          "2018-12-14Z", false, true, false)
+          CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY, false, true, false)
       ),
       // current day
       createDayPeriod(
         createWeekdays("SATURDAY"),
-        createOpeningDay(new ArrayList<>(), "2018-12-15Z", false, false, false)
+        createOpeningDay(new ArrayList<>(), CASE_FRI_SAT_MON_SERVICE_POINT_CURR_DAY, false, false, false)
       ),
       // next day
       createDayPeriod(
         createWeekdays("MONDAY"),
         createOpeningDay(Arrays.asList(createOpeningHour("08:00", "12:00"), createOpeningHour("14:00", "19:00")),
-          "2018-12-17Z", false, true, false)
+          CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY, false, true, false)
       )));
   }
 
