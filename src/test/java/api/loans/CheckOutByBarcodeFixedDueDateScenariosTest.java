@@ -22,6 +22,7 @@ import java.util.concurrent.TimeoutException;
 import static api.support.builders.FixedDueDateSchedule.wholeMonth;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_CURR_DAY;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_ID;
+import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY;
 import static api.support.fixtures.CalendarExamples.END_TIME_SECOND_PERIOD;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -122,6 +123,54 @@ public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
 
     DateTime expectedDate =
       DateTime.parse(CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY, DateTimeFormat.forPattern(DATE_TIME_FORMATTER))
+        .withTime(LocalTime.parse(END_TIME_SECOND_PERIOD))
+        .withZoneRetainFields(DateTimeZone.UTC);
+    assertThat("due date should be " + expectedDate,
+      loan.getJson().getString("dueDate"), isEquivalentTo(expectedDate));
+  }
+
+
+  @Test
+  public void shouldUseMoveToThePreviousOpenDayStrategyForLongTermLoanPolicyWhenDueDateDoesNotExtendBeyondFixedDueDate()
+    throws
+    InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource jessica = usersFixture.jessica();
+    UUID checkoutServicePointId = UUID.fromString(CASE_FRI_SAT_MON_SERVICE_POINT_ID);
+
+    DateTime loanDate =
+      new DateTime(2019, DateTimeConstants.JANUARY, 25, 10, 0, DateTimeZone.UTC);
+
+    DateTime limitDueDate =
+      DateTime.parse(CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY, DateTimeFormat.forPattern(DATE_TIME_FORMATTER))
+        .withZoneRetainFields(DateTimeZone.UTC);
+    UUID fixedDueDateScheduleId = fixedDueDateScheduleClient.create(new FixedDueDateSchedulesBuilder()
+      .withName("Fixed Due Date Schedule")
+      .addSchedule(wholeMonth(2019, DateTimeConstants.JANUARY, limitDueDate))).getId();
+    schedulesToDelete.add(fixedDueDateScheduleId);
+
+    LoanPolicyBuilder loanPolicy = new LoanPolicyBuilder()
+      .withName("Loan policy")
+      .rolling(Period.days(8))
+      .closedLibraryDueDateManagement(DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY)
+      .limitedBySchedule(fixedDueDateScheduleId);
+
+    UUID loanPolicyId = loanPolicyClient.create(loanPolicy).getId();
+    useLoanPolicyAsFallback(loanPolicyId);
+
+    IndividualResource loan = loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(jessica)
+        .at(checkoutServicePointId)
+        .on(loanDate));
+
+    DateTime expectedDate =
+      DateTime.parse(CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY, DateTimeFormat.forPattern(DATE_TIME_FORMATTER))
         .withTime(LocalTime.parse(END_TIME_SECOND_PERIOD))
         .withZoneRetainFields(DateTimeZone.UTC);
     assertThat("due date should be " + expectedDate,
