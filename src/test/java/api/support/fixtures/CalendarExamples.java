@@ -36,7 +36,7 @@ public class CalendarExamples {
   public static final String THURSDAY_DATE = "2018-12-12Z";
   public static final String FRIDAY_DATE = "2018-12-13Z";
 
-  private static final String START_TIME_FIRST_PERIOD = "08:00";
+  public static final String START_TIME_FIRST_PERIOD = "08:00";
   private static final String END_TIME_FIRST_PERIOD = "12:00";
 
   private static final String START_TIME_SECOND_PERIOD = "14:00";
@@ -175,5 +175,10 @@ public class CalendarExamples {
 
   public static OpeningDayPeriod getLastFakeOpeningDayByServId(String serviceId) {
     return fakeOpeningPeriods.get(serviceId).getLastPeriod();
+  }
+
+  public static List<OpeningDayPeriod> getFakeOpeningDayByServId(String serviceId) {
+    OpeningDayPeriodBuilder periodBuilder = fakeOpeningPeriods.get(serviceId);
+    return Arrays.asList(periodBuilder.getFirstPeriod(), periodBuilder.getCurrentPeriod(), periodBuilder.getLastPeriod());
   }
 }

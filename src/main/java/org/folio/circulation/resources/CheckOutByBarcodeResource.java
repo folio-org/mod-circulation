@@ -242,9 +242,10 @@ public class CheckOutByBarcodeResource extends Resource {
 
     switch (dueDateManagement) {
       case MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS:
-        OpeningDayPeriod openingDayPeriod = openingDays.get(openingDays.size() / 2);
+        LoanPolicyPeriod periodSp = calendar.getPeriod();
+        int durationSp = calendar.getDuration();
 
-        DateTime dateTime = getTermDueDate(openingDayPeriod);
+        DateTime dateTime = getShortTermDueDateEndCurrentHours(openingDays, periodSp, durationSp);
         return calculateNewInitialDueDate(loanAndRelatedRecords, dateTime);
 
       case MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS:
@@ -304,6 +305,47 @@ public class CheckOutByBarcodeResource extends Resource {
     return HttpResult.succeeded(loanAndRelatedRecords);
   }
 
+  private DateTime getShortTermDueDateEndCurrentHours(List<OpeningDayPeriod> openingDays,
+                                                      LoanPolicyPeriod period, int duration) {
+
+    OpeningDayPeriod prevOpeningPeriod = openingDays.get(POSITION_PREV_DAY);
+    OpeningDay currentOpeningDay = openingDays.get(POSITION_CURRENT_DAY).getOpeningDay();
+
+    if (!currentOpeningDay.getOpen()) {
+      return getTermDueDate(prevOpeningPeriod);
+    }
+
+    LocalDate dateOfCurrentDay = LocalDate.parse(currentOpeningDay.getDate(), DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+    LocalTime timeOfCurrentDay = LocalTime.now(ZoneOffset.UTC);
+    LocalTime timeShift = getTimeShift(timeOfCurrentDay, period, duration);
+
+    if (isDateTimeWithDurationInsideDay(currentOpeningDay, timeShift)) {
+      return getDateTimeInsideOpeningDay(currentOpeningDay, dateOfCurrentDay, timeShift);
+    }
+
+    OpeningDay prevOpeningDay = prevOpeningPeriod.getOpeningDay();
+    return getDateTimeOutsidePeriod(prevOpeningDay, currentOpeningDay, dateOfCurrentDay, timeShift);
+  }
+
+  private DateTime getDateTimeOutsidePeriod(OpeningDay prevOpeningDay, OpeningDay currentOpeningDay,
+                                            LocalDate dateOfCurrentDay, LocalTime timeShift) {
+    LocalTime[] startAndEndTime = getStartAndEndTime(currentOpeningDay.getOpeningHour());
+    LocalTime startTime = startAndEndTime[0];
+    LocalTime endTime = startAndEndTime[1];
+
+    if (timeShift.isAfter(endTime)) {
+      return dateTimeWrapper(LocalDateTime.of(dateOfCurrentDay, endTime));
+    }
+
+    if (timeShift.isBefore(startTime)) {
+      LocalDate dateOfPrevDay = LocalDate.parse(prevOpeningDay.getDate(), DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+      LocalTime prevEndTime = getStartAndEndTime(prevOpeningDay.getOpeningHour())[1];
+      return dateTimeWrapper(LocalDateTime.of(dateOfPrevDay, prevEndTime));
+    }
+
+    return dateTimeWrapper(LocalDateTime.of(dateOfCurrentDay, timeShift));
+  }
+
   private DateTime getShortTermDueDateNextHours(List<OpeningDayPeriod> openingDays,
                                                 LoanPolicyPeriod period, int duration,
                                                 LoanPolicyPeriod offsetInterval, int offsetDuration) {
@@ -330,11 +372,13 @@ public class CheckOutByBarcodeResource extends Resource {
     LocalTime endTime = startAndEndTime[1];
 
     if (timeShift.isBefore(startTime)) {
-      return getStartDateTimeOfOpeningDay(currentOpeningDay, dateOfCurrentDay, offsetInterval, offsetDuration);
+      LocalDate dateOfNextDay = LocalDate.parse(nextOpeningDay.getDate(), DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+      return getStartDateTimeOfOpeningDay(nextOpeningDay, dateOfNextDay, offsetInterval, offsetDuration);
     }
 
     if (timeShift.isAfter(endTime)) {
-      return getDateTimeOfOpeningDay(nextOpeningDay, offsetInterval, offsetDuration);
+      LocalDate dateOfNextDay = LocalDate.parse(nextOpeningDay.getDate(), DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+      return getStartDateTimeOfOpeningDay(nextOpeningDay, dateOfNextDay, offsetInterval, offsetDuration);
     }
 
     return dateTimeWrapper(LocalDateTime.of(dateOfCurrentDay, timeShift));
@@ -373,7 +417,8 @@ public class CheckOutByBarcodeResource extends Resource {
   }
 
   /**
-   * Get the date inside the period or within the opening day if the day is open all day
+   * Get the dateTime inside the period or within the opening day if the day is open all day
+   * If `timeShift` is not found then return the start of day or period
    */
   private DateTime getDateTimeInsideOpeningDay(OpeningDay openingDay, LocalDate date,
                                                LocalTime timeShift, LoanPolicyPeriod offsetInterval, int offsetDuration) {
@@ -388,6 +433,25 @@ public class CheckOutByBarcodeResource extends Resource {
 
     LocalTime startTimeOfNextPeriod = findStartTimeOfOpeningPeriod(openingHoursList, timeShift);
     return calculateOffset(openingDay, date, startTimeOfNextPeriod, offsetInterval, offsetDuration);
+  }
+
+  /**
+   * Get the dateTime inside the period or within the opening day if the day is open all day
+   * If `timeShift` is not found then return the end of day or period
+   */
+  private DateTime getDateTimeInsideOpeningDay(OpeningDay openingDay, LocalDate date,
+                                               LocalTime timeShift) {
+    if (openingDay.getAllDay()) {
+      return dateTimeWrapper(LocalDateTime.of(date, timeShift));
+    }
+
+    List<OpeningHour> openingHoursList = openingDay.getOpeningHour();
+    if (isInPeriodOpeningDay(openingHoursList, timeShift)) {
+      return dateTimeWrapper(LocalDateTime.of(date, timeShift));
+    }
+
+    LocalTime endTime = findEndTimeOfOpeningPeriod(openingHoursList, timeShift);
+    return dateTimeWrapper(LocalDateTime.of(date, endTime));
   }
 
   private DateTime calculateOffset(OpeningDay openingDay, LocalDate date, LocalTime time,
@@ -485,8 +549,8 @@ public class CheckOutByBarcodeResource extends Resource {
         return getDateTimeZoneRetain(localDate.atTime(LocalTime.MAX));
       } else {
         OpeningHour openingHour = openingHours.get(openingHours.size() - 1);
-        LocalTime localTime = LocalTime.parse(openingHour.getEndTime());
-        return getDateTimeZoneRetain(LocalDateTime.of(localDate, localTime));
+        LocalTime endTime = LocalTime.parse(openingHour.getEndTime());
+        return getDateTimeZoneRetain(LocalDateTime.of(localDate, endTime));
       }
     }
   }

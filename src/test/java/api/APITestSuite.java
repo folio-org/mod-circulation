@@ -34,6 +34,7 @@ import api.loans.CheckInByReplacingLoanTests;
 import api.loans.CheckOutByBarcodeTests;
 import api.loans.CheckOutCalculateDueDateTests;
 import api.loans.CheckOutCalculateOffsetTimeTests;
+import api.loans.CheckOutCalculateDueDateShortTermTests;
 import api.loans.LoanAPILocationTests;
 import api.loans.LoanAPIPolicyTests;
 import api.loans.LoanAPIProxyTests;
@@ -84,6 +85,7 @@ import io.vertx.core.json.JsonObject;
   CheckOutByBarcodeTests.class,
   CheckOutCalculateDueDateTests.class,
   CheckOutCalculateOffsetTimeTests.class,
+  CheckOutCalculateDueDateShortTermTests.class,
   RenewByBarcodeTests.class,
   RenewByIdTests.class,
   OverrideRenewByBarcodeTests.class,
