@@ -1,34 +1,35 @@
 package api.support.fixtures;
 
+import static api.support.fixtures.UserExamples.basedUponCharlotteBroadwell;
 import static api.support.fixtures.UserExamples.basedUponJamesRodwell;
 import static api.support.fixtures.UserExamples.basedUponJessicaPontefract;
 import static api.support.fixtures.UserExamples.basedUponRebeccaStuart;
 import static api.support.fixtures.UserExamples.basedUponStevenJones;
 import static java.util.function.Function.identity;
+import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 import java.net.MalformedURLException;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
 import org.folio.circulation.support.http.client.IndividualResource;
-import org.joda.time.DateTime;
 
-import api.support.builders.ProxyRelationshipBuilder;
 import api.support.builders.UserBuilder;
 import api.support.http.ResourceClient;
 
 public class UsersFixture {
-  private final ResourceClient proxyRelationshipClient;
   private final RecordCreator userRecordCreator;
+  private final PatronGroupsFixture patronGroupsFixture;
 
   public UsersFixture(
     ResourceClient usersClient,
-    ResourceClient proxyRelationshipClient) {
+    PatronGroupsFixture patronGroupsFixture) {
 
-    this.proxyRelationshipClient = proxyRelationshipClient;
-    userRecordCreator = new RecordCreator(usersClient);
+    this.userRecordCreator = new RecordCreator(usersClient,
+      user -> getProperty(user, "username"));
+
+    this.patronGroupsFixture = patronGroupsFixture;
   }
 
   public void cleanUp()
@@ -40,81 +41,14 @@ public class UsersFixture {
     userRecordCreator.cleanUp();
   }
 
-  public void expiredProxyFor(
-    IndividualResource sponsor,
-    IndividualResource proxy)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    proxyFor(sponsor.getId(), proxy.getId(), DateTime.now().minusYears(1));
-  }
-
-  public void currentProxyFor(
-    IndividualResource sponsor,
-    IndividualResource proxy)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    proxyFor(sponsor.getId(), proxy.getId(), DateTime.now().plusYears(1));
-  }
-
-  private void proxyFor(
-    UUID sponsorUserId,
-    UUID proxyUserId,
-    DateTime expirationDate)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    proxyRelationshipClient.create(new ProxyRelationshipBuilder()
-      .sponsor(sponsorUserId)
-      .proxy(proxyUserId)
-      .active()
-      .expires(expirationDate));
-  }
-
-  public void inactiveProxyFor(
-    IndividualResource sponsor,
-    IndividualResource proxy)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    proxyRelationshipClient.create(new ProxyRelationshipBuilder()
-      .sponsor(sponsor.getId())
-      .proxy(proxy.getId())
-      .inactive()
-      .expires(DateTime.now().plusYears(1)));
-  }
-
-  public void nonExpiringProxyFor(
-    IndividualResource sponsor,
-    IndividualResource proxy)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    proxyRelationshipClient.create(new ProxyRelationshipBuilder()
-      .sponsor(sponsor.getId())
-      .proxy(proxy.getId())
-      .active()
-      .doesNotExpire());
-  }
-
   public IndividualResource jessica()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
 
-    return userRecordCreator.create(basedUponJessicaPontefract());
+    return userRecordCreator.createIfAbsent(basedUponJessicaPontefract()
+        .inGroupFor(patronGroupsFixture.regular()));
   }
 
   public IndividualResource james()
@@ -123,7 +57,8 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return userRecordCreator.create(basedUponJamesRodwell());
+    return userRecordCreator.createIfAbsent(basedUponJamesRodwell()
+      .inGroupFor(patronGroupsFixture.regular()));
   }
 
   public IndividualResource rebecca()
@@ -132,7 +67,7 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return userRecordCreator.create(basedUponRebeccaStuart());
+    return rebecca(identity());
   }
   
   public IndividualResource rebecca(
@@ -142,8 +77,9 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return userRecordCreator.create(
-      additionalProperties.apply(basedUponRebeccaStuart()));
+    return userRecordCreator.createIfAbsent(
+      additionalProperties.apply(basedUponRebeccaStuart()
+        .inGroupFor(patronGroupsFixture.regular())));
   }
 
   public IndividualResource steve()
@@ -157,20 +93,18 @@ public class UsersFixture {
 
   public IndividualResource steve(
     Function<UserBuilder, UserBuilder> additionalUserProperties)
-
-    throws
-    InterruptedException,
+    throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
 
-    return userRecordCreator.create(
-      additionalUserProperties.apply(basedUponStevenJones()));
+    return userRecordCreator.createIfAbsent(
+      additionalUserProperties.apply(basedUponStevenJones()
+        .inGroupFor(patronGroupsFixture.regular())));
   }
 
   public IndividualResource charlotte()
-    throws
-    InterruptedException,
+    throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
@@ -185,7 +119,17 @@ public class UsersFixture {
     TimeoutException,
     ExecutionException {
 
-    return userRecordCreator.create(additionalConfiguration.apply(
-      UserExamples.basedUponCharlotteBroadwell()));
+    return userRecordCreator.createIfAbsent(
+      additionalConfiguration.apply(basedUponCharlotteBroadwell()
+        .inGroupFor(patronGroupsFixture.regular())));
+  }
+
+  public void remove(IndividualResource user)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    userRecordCreator.delete(user);
   }
 }

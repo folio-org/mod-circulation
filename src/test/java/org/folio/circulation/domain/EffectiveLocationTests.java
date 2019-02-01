@@ -28,7 +28,7 @@ public class EffectiveLocationTests {
         .withPermanentLocation(popularReadingLocationId)
         .withNoTemporaryLocation()
         .create(),
-      new InstanceBuilder("").create(),
+      instanceBuilder().create(),
       null, null, null);
 
     assertThat(item.getLocationId(), is(popularReadingLocationId));
@@ -49,7 +49,7 @@ public class EffectiveLocationTests {
         .withPermanentLocation(popularReadingLocationId)
         .withTemporaryLocation(secondFloorEconomicsLocationId)
         .create(),
-      new InstanceBuilder("").create(),
+      instanceBuilder().create(),
       null, null, null);
 
     assertThat(item.getLocationId(), is(secondFloorEconomicsLocationId));
@@ -71,7 +71,7 @@ public class EffectiveLocationTests {
         .withPermanentLocation(firstFloorComputerScienceLocationId)
         .withTemporaryLocation(popularReadingLocationId)
         .create(),
-      new InstanceBuilder("").create(),
+      instanceBuilder().create(),
       null, null, null);
 
     assertThat(item.getLocationId(), is(secondFloorEconomicsLocationId));
@@ -93,7 +93,7 @@ public class EffectiveLocationTests {
         .withPermanentLocation(firstFloorComputerScienceLocationId)
         .withTemporaryLocation(popularReadingLocationId)
         .create(),
-      new InstanceBuilder("").create(),
+      instanceBuilder().create(),
       null, null, null);
 
     assertThat(item.getLocationId(), is(thirdFloorDisplayCaseLocationId));
@@ -114,7 +114,7 @@ public class EffectiveLocationTests {
         .withPermanentLocation(popularReadingLocationId)
         .withNoTemporaryLocation()
         .create(),
-      new InstanceBuilder("").create(),
+      instanceBuilder().create(),
       null, null, null);
 
     assertThat(item.getLocationId(), is(firstFloorComputerScienceLocationId));
@@ -134,7 +134,7 @@ public class EffectiveLocationTests {
         .withPermanentLocation(firstFloorComputerScienceLocationId)
         .withNoTemporaryLocation()
         .create(),
-      new InstanceBuilder("").create(),
+      instanceBuilder().create(),
       null, null, null);
 
     assertThat(item.getLocationId(), is(popularReadingLocationId));
@@ -155,7 +155,7 @@ public class EffectiveLocationTests {
         .withPermanentLocation(firstFloorComputerScienceLocationId)
         .withTemporaryLocation(popularReadingLocationId)
         .create(),
-      new InstanceBuilder("").create(),
+      instanceBuilder().create(),
       null, null, null);
 
     assertThat(item.getLocationId(), is(secondFloorEconomicsLocationId));
@@ -177,7 +177,7 @@ public class EffectiveLocationTests {
         .withPermanentLocation(firstFloorComputerScienceLocationId)
         .withNoTemporaryLocation()
         .create(),
-      new InstanceBuilder("").create(),
+      instanceBuilder().create(),
       null, null, null);
 
     assertThat(item.getLocationId(), is(popularReadingLocationId));
@@ -196,7 +196,7 @@ public class EffectiveLocationTests {
         .withNoPermanentLocation()
         .withTemporaryLocation(popularReadingLocationId)
         .create(),
-      new InstanceBuilder("").create(),
+      instanceBuilder().create(),
       null, null, null);
 
     assertThat(item.getLocationId(), is(secondFloorEconomicsLocationId));
@@ -215,7 +215,7 @@ public class EffectiveLocationTests {
         .withNoPermanentLocation()
         .withNoTemporaryLocation()
         .create(),
-      new InstanceBuilder("").create(),
+      instanceBuilder().create(),
       null, null, null);
 
     assertThat(item.getLocationId(), is(thirdFloorDisplayCaseLocationId));
@@ -234,7 +234,7 @@ public class EffectiveLocationTests {
         .withNoPermanentLocation()
         .withNoTemporaryLocation()
         .create(),
-      new InstanceBuilder("").create(),
+      instanceBuilder().create(),
       null, null, null);
 
     assertThat(item.getLocationId(), is(secondFloorEconomicsLocationId));
@@ -253,7 +253,7 @@ public class EffectiveLocationTests {
         .withNoPermanentLocation()
         .withNoTemporaryLocation()
         .create(),
-      new InstanceBuilder("").create(),
+      instanceBuilder().create(),
       null, null, null);
 
     assertThat(item.getLocationId(), is(secondFloorEconomicsLocationId));
@@ -272,7 +272,7 @@ public class EffectiveLocationTests {
         .withNoPermanentLocation()
         .withTemporaryLocation(secondFloorEconomicsLocationId)
         .create(),
-      new InstanceBuilder("").create(),
+      instanceBuilder().create(),
       null, null, null);
 
     assertThat(item.getLocationId(), is(secondFloorEconomicsLocationId));
@@ -292,7 +292,7 @@ public class EffectiveLocationTests {
         .withNoPermanentLocation()
         .withTemporaryLocation(thirdFloorDisplayCaseLocationId)
         .create(),
-      new InstanceBuilder("").create(),
+      instanceBuilder().create(),
       null, null, null);
 
     assertThat(item.getLocationId(), is(secondFloorEconomicsLocationId));
@@ -312,7 +312,7 @@ public class EffectiveLocationTests {
         .withNoPermanentLocation()
         .withTemporaryLocation(secondFloorEconomicsLocationId)
         .create(),
-      new InstanceBuilder("").create(),
+      instanceBuilder().create(),
       null, null, null);
 
     assertThat(item.getLocationId(), is(thirdFloorDisplayCaseLocationId));
@@ -329,7 +329,7 @@ public class EffectiveLocationTests {
         .withNoPermanentLocation()
         .withNoTemporaryLocation()
         .create(),
-      new InstanceBuilder("").create(),
+      instanceBuilder().create(),
       null, null, null);
 
     assertThat(item.getLocationId(), nullValue());
@@ -345,7 +345,7 @@ public class EffectiveLocationTests {
         .withPermanentLocation(secondFloorEconomicsLocationId)
         .withNoTemporaryLocation()
         .create(),
-      new InstanceBuilder("").create(),
+      instanceBuilder().create(),
       null, null, null);
 
     assertThat(item.getLocationId(), is(secondFloorEconomicsLocationId));
@@ -361,7 +361,7 @@ public class EffectiveLocationTests {
         .withNoTemporaryLocation()
         .create(),
       null,
-      new InstanceBuilder("").create(),
+      instanceBuilder().create(),
       null, null, null);
 
     assertThat(item.getLocationId(), is(secondFloorEconomicsLocationId));
@@ -372,9 +372,13 @@ public class EffectiveLocationTests {
     final Item item = new Item(
       null,
       null,
-      new InstanceBuilder("").create(),
+      instanceBuilder().create(),
       null, null, null);
 
     assertThat(item.getLocationId(), nullValue());
+  }
+
+  private InstanceBuilder instanceBuilder() {
+    return new InstanceBuilder("", null);
   }
 }

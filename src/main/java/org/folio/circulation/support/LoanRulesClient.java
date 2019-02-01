@@ -1,22 +1,23 @@
 package org.folio.circulation.support;
 
-import io.vertx.core.Handler;
-import io.vertx.core.http.HttpClientResponse;
+import java.lang.invoke.MethodHandles;
+import java.net.MalformedURLException;
+import java.net.URL;
+
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.server.WebContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.invoke.MethodHandles;
-import java.net.MalformedURLException;
-import java.net.URL;
+import io.vertx.core.Handler;
+import io.vertx.core.http.HttpClientResponse;
 
 public class LoanRulesClient {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private final OkapiHttpClient client;
   private final URL root;
 
-  public LoanRulesClient(OkapiHttpClient client, WebContext context)
+  LoanRulesClient(OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     this.client = client;
@@ -30,7 +31,8 @@ public class LoanRulesClient {
     String patronGroup,
     Handler<HttpClientResponse> responseHandler) {
 
-    String loanRulesQuery = queryParameters(loanTypeId, locationId, materialTypeId, patronGroup);
+    String loanRulesQuery = queryParameters(loanTypeId, locationId,
+      materialTypeId, patronGroup);
 
     log.info("Applying loan rules for {}", loanRulesQuery);
 

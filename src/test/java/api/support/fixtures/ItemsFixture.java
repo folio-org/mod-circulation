@@ -1,9 +1,11 @@
 package api.support.fixtures;
 
-import static api.APITestSuite.booksInstanceTypeId;
-import static api.APITestSuite.thirdFloorLocationId;
+import static java.util.function.Function.identity;
+import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.net.MalformedURLException;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
@@ -14,43 +16,90 @@ import org.folio.circulation.support.http.client.OkapiHttpClient;
 import api.support.builders.HoldingBuilder;
 import api.support.builders.InstanceBuilder;
 import api.support.builders.ItemBuilder;
+import api.support.http.InventoryItemResource;
 import api.support.http.ResourceClient;
+import io.vertx.core.json.JsonObject;
 
 public class ItemsFixture {
-
   private final ResourceClient itemsClient;
   private final ResourceClient holdingsClient;
   private final ResourceClient instancesClient;
+  private final MaterialTypesFixture materialTypesFixture;
+  private final LoanTypesFixture loanTypesFixture;
+  private final LocationsFixture locationsFixture;
+  private final RecordCreator instanceTypeRecordCreator;
+  private final RecordCreator contributorNameTypeRecordCreator;
 
-  public ItemsFixture(OkapiHttpClient client) {
+  public ItemsFixture(
+    OkapiHttpClient client,
+    MaterialTypesFixture materialTypesFixture,
+    LoanTypesFixture loanTypesFixture,
+    LocationsFixture locationsFixture,
+    ResourceClient instanceTypesClient,
+    ResourceClient contributorNameTypesClient) {
+
     itemsClient = ResourceClient.forItems(client);
     holdingsClient = ResourceClient.forHoldings(client);
     instancesClient = ResourceClient.forInstances(client);
+    this.materialTypesFixture = materialTypesFixture;
+    this.loanTypesFixture = loanTypesFixture;
+    this.locationsFixture = locationsFixture;
+
+    instanceTypeRecordCreator = new RecordCreator(instanceTypesClient,
+      instanceType -> getProperty(instanceType, "name"));
+
+    contributorNameTypeRecordCreator = new RecordCreator(
+      contributorNameTypesClient, nameType -> getProperty(nameType, "name"));
   }
 
-  public IndividualResource basedUponDunkirk()
+  public void cleanUp()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    //TODO: Also clean up created instances, holdings record and items
+    instanceTypeRecordCreator.cleanUp();
+    contributorNameTypeRecordCreator.cleanUp();
+  }
+
+  public InventoryItemResource basedUponDunkirk()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
 
     return create(
-      InstanceExamples.basedUponDunkirk(),
-      ItemExamples.basedUponDunkirk());
+      InstanceExamples.basedUponDunkirk(booksInstanceTypeId(),
+        getPersonalContributorNameTypeId()),
+      thirdFloorHoldings(),
+      ItemExamples.basedUponDunkirk(materialTypesFixture.videoRecording().getId(),
+        loanTypesFixture.canCirculate().getId()));
   }
 
-  public IndividualResource basedUponSmallAngryPlanet()
+  public InventoryItemResource basedUponSmallAngryPlanet()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
 
-    return create(
-      InstanceExamples.basedUponSmallAngryPlanet(),
-      ItemExamples.basedUponSmallAngryPlanet());
+    return basedUponSmallAngryPlanet(identity());
   }
 
-  public IndividualResource basedUponSmallAngryPlanet(
+  public InventoryItemResource basedUponSmallAngryPlanet(
+    Function<ItemBuilder, ItemBuilder> additionalItemProperties)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return basedUponSmallAngryPlanet(
+      identity(),
+      additionalItemProperties);
+  }
+
+  public InventoryItemResource basedUponSmallAngryPlanet(
+    Function<HoldingBuilder, HoldingBuilder> additionalHoldingsRecordProperties,
     Function<ItemBuilder, ItemBuilder> additionalItemProperties)
     throws InterruptedException,
     MalformedURLException,
@@ -58,23 +107,25 @@ public class ItemsFixture {
     ExecutionException {
 
     return applyAdditionalProperties(
+      additionalHoldingsRecordProperties,
       additionalItemProperties,
-      InstanceExamples.basedUponSmallAngryPlanet(),
-      ItemExamples.basedUponSmallAngryPlanet());
+      InstanceExamples.basedUponSmallAngryPlanet(booksInstanceTypeId(),
+        getPersonalContributorNameTypeId()),
+      thirdFloorHoldings(),
+      ItemExamples.basedUponSmallAngryPlanet(materialTypesFixture.book().getId(),
+        loanTypesFixture.canCirculate().getId()));
   }
 
-  public IndividualResource basedUponNod()
+  public InventoryItemResource basedUponNod()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
 
-    return create(
-      InstanceExamples.basedUponNod(),
-      ItemExamples.basedUponNod());
+    return basedUponNod(identity());
   }
 
-  public IndividualResource basedUponNod(
+  public InventoryItemResource basedUponNod(
     Function<ItemBuilder, ItemBuilder> additionalItemProperties)
     throws InterruptedException,
     MalformedURLException,
@@ -82,23 +133,26 @@ public class ItemsFixture {
     ExecutionException {
 
     return applyAdditionalProperties(
+      identity(),
       additionalItemProperties,
-      InstanceExamples.basedUponNod(),
-      ItemExamples.basedUponNod());
+      InstanceExamples.basedUponNod(booksInstanceTypeId(),
+        getPersonalContributorNameTypeId()),
+      thirdFloorHoldings(),
+      ItemExamples.basedUponNod(materialTypesFixture.book().getId(),
+        loanTypesFixture.canCirculate().getId()));
   }
 
-  public IndividualResource basedUponTemeraire()
+  public InventoryItemResource basedUponTemeraire()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
 
-    return create(
-      InstanceExamples.basedUponTemeraire(),
-      ItemExamples.basedUponTemeraire());
+    return basedUponTemeraire(identity());
   }
 
-  public IndividualResource basedUponTemeraire(
+  public InventoryItemResource basedUponTemeraire(
+    Function<HoldingBuilder, HoldingBuilder> additionalHoldingsRecordProperties,
     Function<ItemBuilder, ItemBuilder> additionalItemProperties)
     throws InterruptedException,
     MalformedURLException,
@@ -106,23 +160,35 @@ public class ItemsFixture {
     ExecutionException {
 
     return applyAdditionalProperties(
+      additionalHoldingsRecordProperties,
       additionalItemProperties,
-      InstanceExamples.basedUponTemeraire(),
-      ItemExamples.basedUponTemeraire());
+      InstanceExamples.basedUponTemeraire(booksInstanceTypeId(),
+        getPersonalContributorNameTypeId()),
+      thirdFloorHoldings(),
+      ItemExamples.basedUponTemeraire(materialTypesFixture.book().getId(),
+        loanTypesFixture.canCirculate().getId()));
   }
 
-  public IndividualResource basedUponUprooted()
+  public InventoryItemResource basedUponTemeraire(
+    Function<ItemBuilder, ItemBuilder> additionalItemProperties)
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
 
-    return create(
-      InstanceExamples.basedUponUprooted(),
-      ItemExamples.basedUponUprooted());
+    return basedUponTemeraire(identity(), additionalItemProperties);
   }
 
-  public IndividualResource basedUponUprooted(
+  public InventoryItemResource basedUponUprooted()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return basedUponUprooted(identity());
+  }
+
+  public InventoryItemResource basedUponUprooted(
     Function<ItemBuilder, ItemBuilder> additionalItemProperties)
     throws InterruptedException,
     MalformedURLException,
@@ -130,23 +196,25 @@ public class ItemsFixture {
     ExecutionException {
 
     return applyAdditionalProperties(
+      identity(),
       additionalItemProperties,
-      InstanceExamples.basedUponUprooted(),
-      ItemExamples.basedUponUprooted());
+      InstanceExamples.basedUponUprooted(booksInstanceTypeId(),
+        getPersonalContributorNameTypeId()),
+      thirdFloorHoldings(),
+      ItemExamples.basedUponUprooted(materialTypesFixture.book().getId(),
+        loanTypesFixture.canCirculate().getId()));
   }
 
-  public IndividualResource basedUponInterestingTimes()
+  public InventoryItemResource basedUponInterestingTimes()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
 
-    return create(
-      InstanceExamples.basedUponInterestingTimes(),
-      ItemExamples.basedUponInterestingTimes());
+    return basedUponInterestingTimes(identity());
   }
 
-  public IndividualResource basedUponInterestingTimes(
+  public InventoryItemResource basedUponInterestingTimes(
     Function<ItemBuilder, ItemBuilder> additionalItemProperties)
     throws InterruptedException,
     MalformedURLException,
@@ -154,14 +222,20 @@ public class ItemsFixture {
     ExecutionException {
 
     return applyAdditionalProperties(
+      identity(),
       additionalItemProperties,
-      InstanceExamples.basedUponInterestingTimes(),
-      ItemExamples.basedUponInterestingTimes());
+      InstanceExamples.basedUponInterestingTimes(booksInstanceTypeId(),
+        getPersonalContributorNameTypeId()),
+      thirdFloorHoldings(),
+      ItemExamples.basedUponInterestingTimes(materialTypesFixture.book().getId(),
+        loanTypesFixture.canCirculate().getId()));
   }
 
-  private IndividualResource applyAdditionalProperties(
+  private InventoryItemResource applyAdditionalProperties(
+    Function<HoldingBuilder, HoldingBuilder> additionalHoldingsRecordProperties,
     Function<ItemBuilder, ItemBuilder> additionalItemProperties,
     InstanceBuilder instanceBuilder,
+    HoldingBuilder holdingsRecordBuilder,
     ItemBuilder itemBuilder)
     throws InterruptedException,
     MalformedURLException,
@@ -170,11 +244,13 @@ public class ItemsFixture {
 
     return create(
       instanceBuilder,
+      additionalHoldingsRecordProperties.apply(holdingsRecordBuilder),
       additionalItemProperties.apply(itemBuilder));
   }
 
-  private IndividualResource create(
+  private InventoryItemResource create(
     InstanceBuilder instanceBuilder,
+    HoldingBuilder holdingsRecordBuilder,
     ItemBuilder itemBuilder)
     throws MalformedURLException,
     InterruptedException,
@@ -184,14 +260,53 @@ public class ItemsFixture {
     IndividualResource instance = instancesClient.create(
       instanceBuilder.withInstanceTypeId(booksInstanceTypeId()));
 
-    IndividualResource holding = holdingsClient.create(new HoldingBuilder()
-      .forInstance(instance.getId())
-      .withPermanentLocation(thirdFloorLocationId())
-      .withNoTemporaryLocation()
-      .withCallNumber("123456"));
+    IndividualResource holding = holdingsClient.create(
+      holdingsRecordBuilder.forInstance(instance.getId()));
 
-    return itemsClient.create(
+    final IndividualResource item = itemsClient.create(
       itemBuilder.forHolding(holding.getId())
-      .create());
+        .create());
+
+    return new InventoryItemResource(item, holding, instance);
+  }
+
+  private HoldingBuilder thirdFloorHoldings()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return new HoldingBuilder()
+      .withPermanentLocation(locationsFixture.thirdFloor())
+      .withNoTemporaryLocation()
+      .withCallNumber("123456");
+  }
+
+  private UUID booksInstanceTypeId()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final JsonObject booksInstanceType = new JsonObject();
+
+    write(booksInstanceType, "name", "Books");
+    write(booksInstanceType, "code", "BO");
+    write(booksInstanceType, "source", "tests");
+
+    return instanceTypeRecordCreator.createIfAbsent(booksInstanceType).getId();
+  }
+
+  private UUID getPersonalContributorNameTypeId()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final JsonObject personalName = new JsonObject();
+
+    write(personalName, "name", "Personal name");
+
+    return contributorNameTypeRecordCreator.createIfAbsent(personalName).getId();
   }
 }

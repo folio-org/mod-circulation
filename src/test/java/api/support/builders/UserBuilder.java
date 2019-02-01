@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.UUID;
 
+import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
 
-import api.APITestSuite;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -24,7 +24,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
 
   public UserBuilder() {
     this("sjones", "Jones", "Steven", null, "785493025613",
-      APITestSuite.regularGroupId(), true, null, new ArrayList<>());
+      null, true, null, new ArrayList<>());
   }
 
   private UserBuilder(
@@ -184,6 +184,10 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.active,
       this.expirationDate,
       this.addresses);
+  }
+
+  public UserBuilder inGroupFor(IndividualResource patronGroup) {
+    return withPatronGroupId(patronGroup.getId());
   }
 
   public UserBuilder withPatronGroupId(UUID patronGroupId) {

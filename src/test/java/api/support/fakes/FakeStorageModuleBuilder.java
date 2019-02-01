@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
-import api.APITestSuite;
+import api.support.APITestContext;
 
 public class FakeStorageModuleBuilder {
   private final String rootPath;
@@ -21,7 +21,7 @@ public class FakeStorageModuleBuilder {
     this(
       null,
       null,
-      APITestSuite.TENANT_ID,
+      APITestContext.getTenantId(),
       new ArrayList<>(),
       new ArrayList<>(),
       true,

@@ -6,7 +6,6 @@ import static java.net.HttpURLConnection.HTTP_OK;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.util.List;
 import java.util.UUID;
@@ -22,8 +21,8 @@ import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
-import api.support.builders.UserBuilder;
 import api.support.http.InterfaceUrls;
+import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class RequestsAPIDeletionTests extends APITests {
@@ -33,30 +32,32 @@ public class RequestsAPIDeletionTests extends APITests {
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
-    ExecutionException,
-    UnsupportedEncodingException {
+    ExecutionException {
 
-    UUID requesterId = usersClient.create(new UserBuilder()).getId();
+    UUID requesterId = usersFixture.rebecca().getId();
 
-    UUID firstItemId = itemsFixture.basedUponSmallAngryPlanet().getId();
-    UUID secondItemId = itemsFixture.basedUponNod().getId();
-    UUID thirdItemId = itemsFixture.basedUponInterestingTimes().getId();
+    final InventoryItemResource nod = itemsFixture.basedUponNod();
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
 
-    loansFixture.checkOutItem(firstItemId);
-    loansFixture.checkOutItem(secondItemId);
-    loansFixture.checkOutItem(thirdItemId);
-
-    requestsClient.create(new RequestBuilder()
-      .withItemId(firstItemId)
-      .withRequesterId(requesterId));
+    loansFixture.checkOutByBarcode(nod);
+    loansFixture.checkOutByBarcode(smallAngryPlanet);
+    loansFixture.checkOutByBarcode(temeraire);
 
     requestsClient.create(new RequestBuilder()
-      .withItemId(secondItemId)
-      .withRequesterId(requesterId));
+      .withItemId(nod.getId())
+      .withRequesterId(requesterId))
+      .getId();
 
     requestsClient.create(new RequestBuilder()
-      .withItemId(thirdItemId)
-      .withRequesterId(requesterId));
+      .withItemId(smallAngryPlanet.getId())
+      .withRequesterId(requesterId))
+      .getId();
+
+    requestsClient.create(new RequestBuilder()
+      .withItemId(temeraire.getId())
+      .withRequesterId(requesterId))
+      .getId();
 
     CompletableFuture<Response> deleteCompleted = new CompletableFuture<>();
 
@@ -88,52 +89,47 @@ public class RequestsAPIDeletionTests extends APITests {
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
-    ExecutionException,
-    UnsupportedEncodingException {
+    ExecutionException {
 
-    UUID firstId = UUID.randomUUID();
-    UUID secondId = UUID.randomUUID();
-    UUID thirdId = UUID.randomUUID();
+    UUID requesterId = usersFixture.rebecca().getId();
 
-    UUID requesterId = usersClient.create(new UserBuilder()).getId();
+    final InventoryItemResource nod = itemsFixture.basedUponNod();
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
 
-    UUID firstItemId = itemsFixture.basedUponNod().getId();
-    UUID secondItemId = itemsFixture.basedUponSmallAngryPlanet().getId();
-    UUID thirdItemId = itemsFixture.basedUponTemeraire().getId();
+    loansFixture.checkOutByBarcode(nod);
+    loansFixture.checkOutByBarcode(smallAngryPlanet);
+    loansFixture.checkOutByBarcode(temeraire);
 
-    loansFixture.checkOutItem(firstItemId);
-    loansFixture.checkOutItem(secondItemId);
-    loansFixture.checkOutItem(thirdItemId);
+    final UUID firstRequestId = requestsClient.create(new RequestBuilder()
+      .withItemId(nod.getId())
+      .withRequesterId(requesterId))
+      .getId();
 
-    requestsClient.create(new RequestBuilder()
-      .withId(firstId)
-      .withItemId(firstItemId)
-      .withRequesterId(requesterId));
+    final UUID secondRequestId = requestsClient.create(new RequestBuilder()
+      .withItemId(smallAngryPlanet.getId())
+      .withRequesterId(requesterId))
+      .getId();
 
-    requestsClient.create(new RequestBuilder()
-      .withId(secondId)
-      .withItemId(secondItemId)
-      .withRequesterId(requesterId));
-
-    requestsClient.create(new RequestBuilder()
-      .withId(thirdId)
-      .withItemId(thirdItemId)
-      .withRequesterId(requesterId));
+    final UUID thirdRequestId = requestsClient.create(new RequestBuilder()
+      .withItemId(temeraire.getId())
+      .withRequesterId(requesterId))
+      .getId();
 
     CompletableFuture<Response> deleteCompleted = new CompletableFuture<>();
 
-    client.delete(InterfaceUrls.requestsUrl(String.format("/%s", secondId)),
+    client.delete(InterfaceUrls.requestsUrl(String.format("/%s", secondRequestId)),
       ResponseHandler.any(deleteCompleted));
 
     Response deleteResponse = deleteCompleted.get(5, TimeUnit.SECONDS);
 
     assertThat(deleteResponse.getStatusCode(), is(HTTP_NO_CONTENT));
 
-    assertThat(requestsClient.getById(firstId).getStatusCode(), is(HTTP_OK));
+    assertThat(requestsClient.getById(firstRequestId).getStatusCode(), is(HTTP_OK));
 
-    assertThat(requestsClient.getById(secondId).getStatusCode(), is(HTTP_NOT_FOUND));
+    assertThat(requestsClient.getById(secondRequestId).getStatusCode(), is(HTTP_NOT_FOUND));
 
-    assertThat(requestsClient.getById(thirdId).getStatusCode(), is(HTTP_OK));
+    assertThat(requestsClient.getById(thirdRequestId).getStatusCode(), is(HTTP_OK));
 
     CompletableFuture<Response> getAllCompleted = new CompletableFuture<>();
 
@@ -155,5 +151,4 @@ public class RequestsAPIDeletionTests extends APITests {
   private List<JsonObject> getRequests(JsonObject page) {
     return JsonArrayHelper.toList(page.getJsonArray("requests"));
   }
-
 }

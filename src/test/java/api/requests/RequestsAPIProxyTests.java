@@ -1,30 +1,28 @@
 package api.requests;
 
-import io.vertx.core.json.JsonObject;
-import api.support.APITests;
-import api.support.builders.RequestBuilder;
-import api.support.http.InterfaceUrls;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDate;
-import org.junit.Test;
+import static api.support.http.InterfaceUrls.requestsUrl;
+import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
+import static org.folio.HttpStatus.HTTP_CREATED;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.folio.HttpStatus.HTTP_CREATED;
-import static api.support.http.InterfaceUrls.requestsUrl;
-import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
+import org.junit.Test;
+
+import api.support.APITests;
+import api.support.builders.RequestBuilder;
+import api.support.http.InterfaceUrls;
+import api.support.http.InventoryItemResource;
+import io.vertx.core.json.JsonObject;
 
 public class RequestsAPIProxyTests extends APITests {
   @Test
@@ -34,19 +32,19 @@ public class RequestsAPIProxyTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
-    loansFixture.checkOut(item, usersFixture.steve());
+    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.steve());
 
     IndividualResource sponsor = usersFixture.jessica();
     IndividualResource proxy = usersFixture.james();
 
-    usersFixture.currentProxyFor(sponsor, proxy);
+    proxyRelationshipsFixture.currentProxyFor(sponsor, proxy);
 
     JsonObject requestRequest = new RequestBuilder()
-      .forItem(item)
-      .withRequesterId(sponsor.getId())
-      .withUserProxyId(proxy.getId())
+      .forItem(smallAngryPlanet)
+      .by(sponsor)
+      .proxiedBy(proxy)
       .create();
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
@@ -96,12 +94,12 @@ public class RequestsAPIProxyTests extends APITests {
     IndividualResource sponsor = usersFixture.jessica();
     IndividualResource proxy = usersFixture.james();
 
-    usersFixture.nonExpiringProxyFor(sponsor, proxy);
+    proxyRelationshipsFixture.nonExpiringProxyFor(sponsor, proxy);
 
     JsonObject requestRequest = new RequestBuilder()
       .forItem(item)
-      .withRequesterId(sponsor.getId())
-      .withUserProxyId(proxy.getId())
+      .by(sponsor)
+      .proxiedBy(proxy)
       .create();
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
@@ -121,19 +119,21 @@ public class RequestsAPIProxyTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
-    loansFixture.checkOut(item, usersFixture.steve());
+    final IndividualResource steve = usersFixture.steve();
 
-    IndividualResource sponsor = usersFixture.jessica();
-    IndividualResource proxy = usersFixture.james();
+    loansFixture.checkOutByBarcode(smallAngryPlanet, steve);
 
-    usersFixture.inactiveProxyFor(sponsor, proxy);
+    final IndividualResource jessica = usersFixture.jessica();
+    final IndividualResource james = usersFixture.james();
+
+    proxyRelationshipsFixture.inactiveProxyFor(jessica, james);
 
     JsonObject requestRequest = new RequestBuilder()
-      .forItem(item)
-      .withRequesterId(sponsor.getId())
-      .withUserProxyId(proxy.getId())
+      .forItem(smallAngryPlanet)
+      .by(jessica)
+      .proxiedBy(james)
       .create();
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
@@ -153,19 +153,21 @@ public class RequestsAPIProxyTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
-    loansFixture.checkOut(item, usersFixture.steve());
+    final IndividualResource steve = usersFixture.steve();
+    
+    loansFixture.checkOutByBarcode(smallAngryPlanet, steve);
 
-    IndividualResource sponsor = usersFixture.jessica();
-    IndividualResource proxy = usersFixture.james();
+    IndividualResource jessica = usersFixture.jessica();
+    IndividualResource james = usersFixture.james();
 
-    usersFixture.expiredProxyFor(sponsor, proxy);
+    proxyRelationshipsFixture.expiredProxyFor(jessica, james);
 
     JsonObject requestRequest = new RequestBuilder()
-      .forItem(item)
-      .withRequesterId(sponsor.getId())
-      .withUserProxyId(proxy.getId())
+      .forItem(smallAngryPlanet)
+      .by(jessica)
+      .proxiedBy(james)
       .create();
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
@@ -185,20 +187,20 @@ public class RequestsAPIProxyTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
-    loansFixture.checkOut(item, usersFixture.steve());
+    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.steve());
 
-    IndividualResource unexpectedSponsor = usersFixture.jessica();
-    IndividualResource otherUser = usersFixture.charlotte();
-    IndividualResource proxy = usersFixture.james();
+    IndividualResource jessica = usersFixture.jessica();
+    IndividualResource charlotte = usersFixture.charlotte();
+    IndividualResource james = usersFixture.james();
 
-    usersFixture.expiredProxyFor(unexpectedSponsor, proxy);
+    proxyRelationshipsFixture.expiredProxyFor(jessica, james);
 
     JsonObject requestRequest = new RequestBuilder()
-      .forItem(item)
-      .withRequesterId(otherUser.getId())
-      .withUserProxyId(proxy.getId())
+      .forItem(smallAngryPlanet)
+      .by(charlotte)
+      .proxiedBy(james)
       .create();
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
@@ -218,29 +220,20 @@ public class RequestsAPIProxyTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    UUID id = UUID.randomUUID();
+    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
 
-    UUID itemId = itemsFixture.basedUponTemeraire().getId();
-
-    loansFixture.checkOutItem(itemId);
+    loansFixture.checkOutByBarcode(temeraire, usersFixture.steve());
 
     IndividualResource sponsor = usersFixture.jessica();
     IndividualResource proxy = usersFixture.rebecca();
 
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-
     IndividualResource createdRequest = requestsClient.create(
       new RequestBuilder()
         .recall()
-        .withId(id)
-        .withRequestDate(requestDate)
-        .withItemId(itemId)
-        .withRequesterId(sponsor.getId())
-        .fulfilToHoldShelf()
-        .withRequestExpiration(new LocalDate(2017, 7, 30))
-        .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
+        .forItem(temeraire)
+        .by(sponsor));
 
-    usersFixture.currentProxyFor(sponsor, proxy);
+    proxyRelationshipsFixture.currentProxyFor(sponsor, proxy);
 
     JsonObject updatedRequest = createdRequest.copyJson();
 
@@ -248,7 +241,7 @@ public class RequestsAPIProxyTests extends APITests {
 
     CompletableFuture<Response> putCompleted = new CompletableFuture<>();
 
-    client.put(InterfaceUrls.requestsUrl(String.format("/%s", id)),
+    client.put(InterfaceUrls.requestsUrl(String.format("/%s", createdRequest.getId())),
       updatedRequest, ResponseHandler.any(putCompleted));
 
     Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
@@ -286,29 +279,20 @@ public class RequestsAPIProxyTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    UUID id = UUID.randomUUID();
+    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
 
-    UUID itemId = itemsFixture.basedUponTemeraire().getId();
-
-    loansFixture.checkOutItem(itemId);
+    loansFixture.checkOutByBarcode(temeraire, usersFixture.rebecca());
 
     IndividualResource sponsor = usersFixture.jessica();
     IndividualResource proxy = usersFixture.james();
 
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-
     IndividualResource createdRequest = requestsClient.create(
       new RequestBuilder()
         .recall()
-        .withId(id)
-        .withRequestDate(requestDate)
-        .withItemId(itemId)
-        .withRequesterId(sponsor.getId())
-        .fulfilToHoldShelf()
-        .withRequestExpiration(new LocalDate(2017, 7, 30))
-        .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
+        .forItem(temeraire)
+        .by(sponsor));
 
-    usersFixture.expiredProxyFor(sponsor, proxy);
+    proxyRelationshipsFixture.expiredProxyFor(sponsor, proxy);
 
     JsonObject updatedRequest = createdRequest.copyJson();
 
@@ -316,7 +300,7 @@ public class RequestsAPIProxyTests extends APITests {
 
     CompletableFuture<Response> putCompleted = new CompletableFuture<>();
 
-    client.put(InterfaceUrls.requestsUrl(String.format("/%s", id)),
+    client.put(InterfaceUrls.requestsUrl(String.format("/%s", createdRequest.getId())),
       updatedRequest, ResponseHandler.any(putCompleted));
 
     Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
@@ -331,30 +315,21 @@ public class RequestsAPIProxyTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    UUID id = UUID.randomUUID();
+    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
 
-    UUID itemId = itemsFixture.basedUponTemeraire().getId();
-
-    loansFixture.checkOutItem(itemId);
+    loansFixture.checkOutByBarcode(temeraire);
 
     IndividualResource unexpectedSponsor = usersFixture.jessica();
     IndividualResource otherUser = usersFixture.charlotte();
     IndividualResource proxy = usersFixture.james();
 
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-
     IndividualResource createdRequest = requestsClient.create(
       new RequestBuilder()
         .recall()
-        .withId(id)
-        .withRequestDate(requestDate)
-        .withItemId(itemId)
-        .withRequesterId(otherUser.getId())
-        .fulfilToHoldShelf()
-        .withRequestExpiration(new LocalDate(2017, 7, 30))
-        .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
+        .forItem(temeraire)
+        .by(otherUser));
 
-    usersFixture.currentProxyFor(unexpectedSponsor, proxy);
+    proxyRelationshipsFixture.currentProxyFor(unexpectedSponsor, proxy);
 
     JsonObject updatedRequest = createdRequest.copyJson();
 
@@ -362,7 +337,7 @@ public class RequestsAPIProxyTests extends APITests {
 
     CompletableFuture<Response> putCompleted = new CompletableFuture<>();
 
-    client.put(InterfaceUrls.requestsUrl(String.format("/%s", id)),
+    client.put(InterfaceUrls.requestsUrl(String.format("/%s", createdRequest.getId())),
       updatedRequest, ResponseHandler.any(putCompleted));
 
     Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
