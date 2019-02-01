@@ -53,16 +53,17 @@ public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
     DateTime limitDueDate =
       DateTime.parse(CASE_FRI_SAT_MON_SERVICE_POINT_CURR_DAY, DateTimeFormat.forPattern(DATE_TIME_FORMATTER))
         .withZoneRetainFields(DateTimeZone.UTC);
-    UUID fixedDueDateScheduleId = fixedDueDateScheduleClient.create(new FixedDueDateSchedulesBuilder()
+    FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
       .withName("Fixed Due Date Schedule")
-      .addSchedule(wholeMonth(2019, DateTimeConstants.JANUARY, limitDueDate))).getId();
-    schedulesToDelete.add(fixedDueDateScheduleId);
+      .addSchedule(wholeMonth(2019, DateTimeConstants.JANUARY, limitDueDate));
+    UUID fixedDueDateSchedulesId = loanPoliciesFixture.createSchedule(
+      fixedDueDateSchedules).getId();
 
     LoanPolicyBuilder loanPolicy = new LoanPolicyBuilder()
       .withName("Loan policy")
       .rolling(Period.days(8))
-      .closedLibraryDueDateManagement(DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY)
-      .limitedBySchedule(fixedDueDateScheduleId);
+      .withClosedLibraryDueDateManagement(DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.getValue())
+      .limitedBySchedule(fixedDueDateSchedulesId);
 
     UUID loanPolicyId = loanPolicyClient.create(loanPolicy).getId();
     useLoanPolicyAsFallback(loanPolicyId);
@@ -100,15 +101,17 @@ public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
     DateTime limitDueDate =
       DateTime.parse(CASE_FRI_SAT_MON_SERVICE_POINT_CURR_DAY, DateTimeFormat.forPattern(DATE_TIME_FORMATTER))
         .withZoneRetainFields(DateTimeZone.UTC);
-    UUID fixedDueDateScheduleId = fixedDueDateScheduleClient.create(new FixedDueDateSchedulesBuilder()
+
+    FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
       .withName("Fixed Due Date Schedule")
-      .addSchedule(wholeMonth(2019, DateTimeConstants.JANUARY, limitDueDate))).getId();
-    schedulesToDelete.add(fixedDueDateScheduleId);
+      .addSchedule(wholeMonth(2019, DateTimeConstants.JANUARY, limitDueDate));
+    UUID fixedDueDateSchedulesId = loanPoliciesFixture.createSchedule(
+      fixedDueDateSchedules).getId();
 
     LoanPolicyBuilder loanPolicy = new LoanPolicyBuilder()
       .withName("Loan policy")
-      .closedLibraryDueDateManagement(DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY)
-      .fixed(fixedDueDateScheduleId);
+      .withClosedLibraryDueDateManagement(DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.getValue())
+      .fixed(fixedDueDateSchedulesId);
 
 
     UUID loanPolicyId = loanPolicyClient.create(loanPolicy).getId();
@@ -148,16 +151,17 @@ public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
     DateTime limitDueDate =
       DateTime.parse(CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY, DateTimeFormat.forPattern(DATE_TIME_FORMATTER))
         .withZoneRetainFields(DateTimeZone.UTC);
-    UUID fixedDueDateScheduleId = fixedDueDateScheduleClient.create(new FixedDueDateSchedulesBuilder()
+    FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
       .withName("Fixed Due Date Schedule")
-      .addSchedule(wholeMonth(2019, DateTimeConstants.JANUARY, limitDueDate))).getId();
-    schedulesToDelete.add(fixedDueDateScheduleId);
+      .addSchedule(wholeMonth(2019, DateTimeConstants.JANUARY, limitDueDate));
+    UUID fixedDueDateSchedulesId = loanPoliciesFixture.createSchedule(
+      fixedDueDateSchedules).getId();
 
     LoanPolicyBuilder loanPolicy = new LoanPolicyBuilder()
       .withName("Loan policy")
       .rolling(Period.days(8))
-      .closedLibraryDueDateManagement(DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY)
-      .limitedBySchedule(fixedDueDateScheduleId);
+      .withClosedLibraryDueDateManagement(DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.getValue())
+      .limitedBySchedule(fixedDueDateSchedulesId);
 
     UUID loanPolicyId = loanPolicyClient.create(loanPolicy).getId();
     useLoanPolicyAsFallback(loanPolicyId);

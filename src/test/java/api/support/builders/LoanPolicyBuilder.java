@@ -1,11 +1,10 @@
 package api.support.builders;
 
-import java.util.Objects;
-import java.util.UUID;
-
+import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.policy.Period;
 
-import io.vertx.core.json.JsonObject;
+import java.util.Objects;
+import java.util.UUID;
 
 public class LoanPolicyBuilder extends JsonBuilder implements Builder {
   private static final String RENEW_FROM_SYSTEM_DATE = "SYSTEM_DATE";
@@ -252,7 +251,7 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.id,
       this.name,
       this.description,
-      true,
+      this.loanable,
       "Rolling",
       period.asJson(),
       null,
@@ -271,7 +270,7 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.id,
       this.name,
       this.description,
-      true,
+      this.loanable,
       "Fixed",
       null,
       fixedDueDateScheduleId,
