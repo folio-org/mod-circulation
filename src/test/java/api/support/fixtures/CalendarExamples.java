@@ -7,7 +7,6 @@ import org.folio.circulation.domain.OpeningDayPeriod;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -26,6 +25,8 @@ public class CalendarExamples {
   public static final String CASE_FRI_SAT_MON_SERVICE_POINT_ID = "22222222-2f09-4bc9-8924-3734882d44a3";
   public static final String CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID = "33333333-2f09-4bc9-8924-3734882d44a3";
   public static final String CASE_WED_THU_FRI_SERVICE_POINT_ID = "44444444-2f09-4bc9-8924-3734882d44a3";
+
+  public static final String CASE_PREV_OPEN_AND_CURRENT_NEXT_CLOSED = "85346678-2f09-4bc9-8924-3734882d44a3";
 
   static final String CASE_START_DATE_MONTHS_AGO_AND_END_DATE_THU = "12345698-2f09-4bc9-8924-3734882d44a3";
 
@@ -49,6 +50,23 @@ public class CalendarExamples {
   }
 
   static {
+    fakeOpeningPeriods.put(CASE_PREV_OPEN_AND_CURRENT_NEXT_CLOSED, new OpeningDayPeriodBuilder(CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID,
+      // prev day
+      createDayPeriod(
+        createWeekdays("WEDNESDAY"),
+        createOpeningDay(Arrays.asList(createOpeningHour(START_TIME_FIRST_PERIOD, END_TIME_FIRST_PERIOD), createOpeningHour(START_TIME_SECOND_PERIOD, END_TIME_SECOND_PERIOD)),
+          WEDNESDAY_DATE, false, true, false)
+      ),
+      // current day
+      createDayPeriod(
+        createWeekdays("THURSDAY"),
+        createOpeningDay(new ArrayList<>(), THURSDAY_DATE, false, false, false)
+      ),
+      // next day
+      createDayPeriod(
+        createWeekdays("FRIDAY"),
+        createOpeningDay(new ArrayList<>(), FRIDAY_DATE, false, false, false)
+      )));
     fakeOpeningPeriods.put(CASE_WED_THU_FRI_SERVICE_POINT_ID, new OpeningDayPeriodBuilder(CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID,
       // prev day
       createDayPeriod(
@@ -122,6 +140,9 @@ public class CalendarExamples {
 
   public static CalendarBuilder getCalendarById(String serviceId) {
     switch (serviceId) {
+      case CASE_PREV_OPEN_AND_CURRENT_NEXT_CLOSED:
+        return new CalendarBuilder(fakeOpeningPeriods.get(serviceId));
+
       case CASE_FRI_SAT_MON_SERVICE_POINT_ID:
         return new CalendarBuilder(fakeOpeningPeriods.get(serviceId));
 
@@ -135,21 +156,21 @@ public class CalendarExamples {
         return new CalendarBuilder(fakeOpeningPeriods.get(serviceId));
 
       case CASE_START_DATE_MONTHS_AGO_AND_END_DATE_THU:
-        LocalDate localThursdayDate = LocalDate.parse(THURSDAY_DATE, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+        LocalDate localThursdayDate = LocalDate.parse(THURSDAY_DATE, DATE_TIME_FORMATTER);
         LocalDateTime endDate = localThursdayDate.atTime(LocalTime.MIN);
         LocalDateTime startDate = endDate.minusMonths(1);
         return new CalendarBuilder(CASE_START_DATE_MONTHS_AGO_AND_END_DATE_THU,
           startDate, endDate);
 
       case CASE_START_DATE_MONTHS_AGO_AND_END_DATE_WED:
-        LocalDate localWednesdayDate = LocalDate.parse(WEDNESDAY_DATE, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+        LocalDate localWednesdayDate = LocalDate.parse(WEDNESDAY_DATE, DATE_TIME_FORMATTER);
         LocalDateTime endDateWednesday = localWednesdayDate.atTime(LocalTime.MIN);
         LocalDateTime startDateWednesday = endDateWednesday.minusMonths(1);
         return new CalendarBuilder(CASE_START_DATE_MONTHS_AGO_AND_END_DATE_THU,
           startDateWednesday, endDateWednesday);
 
       case CASE_START_DATE_FRI_AND_END_DATE_NEXT_MONTHS:
-        LocalDate localFridayDate = LocalDate.parse(FRIDAY_DATE, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+        LocalDate localFridayDate = LocalDate.parse(FRIDAY_DATE, DATE_TIME_FORMATTER);
         LocalDateTime startDateFriday = localFridayDate.atTime(LocalTime.MIN);
         LocalDateTime endDateFriday = startDateFriday.plusMonths(1);
         return new CalendarBuilder(CASE_START_DATE_MONTHS_AGO_AND_END_DATE_THU,

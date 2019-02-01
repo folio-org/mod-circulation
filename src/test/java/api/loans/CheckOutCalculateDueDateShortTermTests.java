@@ -19,7 +19,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.SplittableRandom;
 import java.util.UUID;
@@ -227,7 +226,7 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
     LoanPolicyPeriod period = interval.equals(INTERVAL_HOURS)
       ? LoanPolicyPeriod.HOURS
       : LoanPolicyPeriod.MINUTES;
-    LocalDate dateOfDay = LocalDate.parse(openingDay.getDate(), DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+    LocalDate dateOfDay = LocalDate.parse(openingDay.getDate(), DATE_TIME_FORMATTER);
     LocalTime timeShift = getTimeShift(LocalTime.now(ZoneOffset.UTC), period, duration);
     return getDateTimeZoneRetain(LocalDateTime.of(dateOfDay, timeShift));
   }
@@ -235,7 +234,7 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
   private DateTime getEndDateTimeOpeningDay(OpeningDay openingDay) {
     boolean allDay = openingDay.getAllDay();
     String date = openingDay.getDate();
-    LocalDate localDate = LocalDate.parse(date, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+    LocalDate localDate = LocalDate.parse(date, DATE_TIME_FORMATTER);
 
     if (allDay) {
       return getDateTimeOfEndDay(localDate);
@@ -270,7 +269,7 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
       ? LoanPolicyPeriod.HOURS
       : LoanPolicyPeriod.MINUTES;
 
-    LocalDate dateOfCurrentDay = LocalDate.parse(currentOpeningDay.getDate(), DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+    LocalDate dateOfCurrentDay = LocalDate.parse(currentOpeningDay.getDate(), DATE_TIME_FORMATTER);
     LocalTime timeShift = getTimeShift(LocalTime.now(ZoneOffset.UTC), period, duration);
 
     if (isDateTimeWithDurationInsideDay(currentOpeningDay, timeShift)) {
@@ -289,7 +288,7 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
       return getDateTimeZoneRetain(LocalDateTime.of(dateOfCurrentDay, endTime));
     }
 
-    LocalDate dateOfPrevDay = LocalDate.parse(prevOpeningDay.getDate(), DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+    LocalDate dateOfPrevDay = LocalDate.parse(prevOpeningDay.getDate(), DATE_TIME_FORMATTER);
     LocalTime prevEndTime = getStartAndEndTime(prevOpeningDay.getOpeningHour())[1];
     return getDateTimeZoneRetain(LocalDateTime.of(dateOfPrevDay, prevEndTime));
   }
