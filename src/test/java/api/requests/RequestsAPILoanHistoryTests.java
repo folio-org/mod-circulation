@@ -13,7 +13,7 @@ import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
-import api.support.builders.UserBuilder;
+import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
 
@@ -25,17 +25,14 @@ public class RequestsAPILoanHistoryTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    UUID id = UUID.randomUUID();
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
-
-    UUID loanId = loansFixture.checkOutItem(itemId).getId();
+    UUID loanId = loansFixture.checkOutByBarcode(smallAngryPlanet).getId();
 
     requestsClient.create(new RequestBuilder()
       .hold()
-      .withId(id)
-      .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
+      .forItem(smallAngryPlanet)
+      .withRequesterId(usersFixture.charlotte().getId()));
 
     JsonObject loanFromStorage = loansStorageClient.getById(loanId).getJson();
 
@@ -53,17 +50,14 @@ public class RequestsAPILoanHistoryTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    UUID id = UUID.randomUUID();
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
-
-    UUID loanId = loansFixture.checkOutItem(itemId).getId();
+    UUID loanId = loansFixture.checkOutByBarcode(smallAngryPlanet).getId();
 
     requestsClient.create(new RequestBuilder()
       .recall()
-      .withId(id)
-      .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
+      .forItem(smallAngryPlanet)
+      .withRequesterId(usersFixture.charlotte().getId()));
 
     JsonObject loanFromStorage = loansStorageClient.getById(loanId).getJson();
 
@@ -78,17 +72,14 @@ public class RequestsAPILoanHistoryTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    UUID id = UUID.randomUUID();
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
-
-    UUID loanId = loansFixture.checkOutItem(itemId).getId();
+    UUID loanId = loansFixture.checkOutByBarcode(smallAngryPlanet).getId();
 
     requestsClient.create(new RequestBuilder()
       .page()
-      .withId(id)
-      .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
+      .forItem(smallAngryPlanet)
+      .withRequesterId(usersFixture.charlotte().getId()));
 
     JsonObject loanFromStorage = loansStorageClient.getById(loanId).getJson();
 
@@ -106,22 +97,18 @@ public class RequestsAPILoanHistoryTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    UUID id = UUID.randomUUID();
-
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    UUID itemId = smallAngryPlanet.getId();
 
-    UUID closedLoanId = loansFixture.checkOutItem(itemId).getId();
+    UUID closedLoanId = loansFixture.checkOutByBarcode(smallAngryPlanet).getId();
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
-    loansFixture.checkOutItem(itemId).getId();
+    loansFixture.checkOutByBarcode(smallAngryPlanet);
 
     requestsClient.create(new RequestBuilder()
       .hold()
-      .withId(id)
-      .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
+      .forItem(smallAngryPlanet)
+      .by(usersFixture.charlotte()));
 
     JsonObject closedLoanFromStorage = loansStorageClient.getById(closedLoanId)
       .getJson();
@@ -140,22 +127,18 @@ public class RequestsAPILoanHistoryTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    UUID id = UUID.randomUUID();
-
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    UUID itemId = smallAngryPlanet.getId();
 
-    UUID closedLoanId = loansFixture.checkOutItem(itemId).getId();
+    UUID closedLoanId = loansFixture.checkOutByBarcode(smallAngryPlanet).getId();
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
-    loansFixture.checkOutItem(itemId).getId();
+    loansFixture.checkOutByBarcode(smallAngryPlanet);
 
     requestsClient.create(new RequestBuilder()
       .recall()
-      .withId(id)
-      .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
+      .forItem(smallAngryPlanet)
+      .by(usersFixture.charlotte()));
 
     JsonObject closedLoanFromStorage = loansStorageClient.getById(closedLoanId)
       .getJson();
@@ -174,22 +157,20 @@ public class RequestsAPILoanHistoryTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    UUID id = UUID.randomUUID();
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final InventoryItemResource nod = itemsFixture.basedUponNod();
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    loansFixture.checkOutByBarcode(smallAngryPlanet);
 
-    UUID otherItemId = itemsFixture.basedUponNod().getId();
-
-    loansFixture.checkOutItem(itemId).getId();
-    UUID loanForOtherItemId = loansFixture.checkOutItem(otherItemId).getId();
+    UUID loanForOtherItemId = loansFixture.checkOutByBarcode(nod).getId();
 
     requestsClient.create(new RequestBuilder()
       .hold()
-      .withId(id)
-      .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
+      .forItem(smallAngryPlanet)
+      .by(usersFixture.james()));
 
-    JsonObject storageLoanForOtherItem = loansStorageClient.getById(loanForOtherItemId)
+    JsonObject storageLoanForOtherItem = loansStorageClient
+      .getById(loanForOtherItemId)
       .getJson();
 
     assertThat("action snapshot for open loan for other item should not change",
@@ -206,22 +187,20 @@ public class RequestsAPILoanHistoryTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    UUID id = UUID.randomUUID();
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final InventoryItemResource nod = itemsFixture.basedUponNod();
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    loansFixture.checkOutByBarcode(smallAngryPlanet);
 
-    UUID otherItemId = itemsFixture.basedUponNod().getId();
-
-    loansFixture.checkOutItem(itemId).getId();
-    UUID loanForOtherItemId = loansFixture.checkOutItem(otherItemId).getId();
+    UUID loanForOtherItemId = loansFixture.checkOutByBarcode(nod).getId();
 
     requestsClient.create(new RequestBuilder()
       .recall()
-      .withId(id)
-      .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
+      .forItem(smallAngryPlanet)
+      .by(usersFixture.james()));
 
-    JsonObject storageLoanForOtherItem = loansStorageClient.getById(loanForOtherItemId)
+    JsonObject storageLoanForOtherItem = loansStorageClient
+      .getById(loanForOtherItemId)
       .getJson();
 
     assertThat("action snapshot for open loan for other item should not change",
@@ -238,19 +217,16 @@ public class RequestsAPILoanHistoryTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    UUID id = UUID.randomUUID();
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
-
-    UUID loanId = loansFixture.checkOutItem(itemId).getId();
+    UUID loanId = loansFixture.checkOutByBarcode(smallAngryPlanet).getId();
 
     loansClient.delete(loanId);
 
     requestsClient.create(new RequestBuilder()
       .hold()
-      .withId(id)
-      .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
+      .forItem(smallAngryPlanet)
+      .by(usersFixture.charlotte()));
   }
 
   @Test
@@ -260,18 +236,15 @@ public class RequestsAPILoanHistoryTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    UUID id = UUID.randomUUID();
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
-
-    UUID loanId = loansFixture.checkOutItem(itemId).getId();
+    UUID loanId = loansFixture.checkOutByBarcode(smallAngryPlanet).getId();
 
     loansClient.delete(loanId);
 
     requestsClient.create(new RequestBuilder()
       .recall()
-      .withId(id)
-      .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
+      .forItem(smallAngryPlanet)
+      .by(usersFixture.charlotte()));
   }
 }

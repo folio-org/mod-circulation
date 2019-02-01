@@ -1,3 +1,6 @@
 #!/usr/bin/env bash
 
-mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent test
+#remove log output
+rm tests.log
+
+mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent test | tee -a tests.log

@@ -1,10 +1,11 @@
 package api.support.builders;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import api.APITestSuite;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.util.UUID;
+
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 public class InstanceBuilder extends JsonBuilder implements Builder {
   private final UUID id;
@@ -12,12 +13,12 @@ public class InstanceBuilder extends JsonBuilder implements Builder {
   private final UUID instanceTypeId;
   private final JsonArray contributors;
 
-  public InstanceBuilder(String title) {
-    this(UUID.randomUUID(), title);
+  public InstanceBuilder(String title, UUID instanceTypeId) {
+    this(UUID.randomUUID(), title, instanceTypeId);
   }
 
-  private InstanceBuilder(UUID id, String title) {
-    this(id, title, new JsonArray(), APITestSuite.booksInstanceTypeId());
+  private InstanceBuilder(UUID id, String title, UUID instanceTypeId) {
+    this(id, title, new JsonArray(), instanceTypeId);
   }
 
   private InstanceBuilder(
@@ -77,11 +78,12 @@ public class InstanceBuilder extends JsonBuilder implements Builder {
       this.instanceTypeId);
   }
 
-  public InstanceBuilder withContributor(String name) {
-    return withContributors(this.contributors.copy()
-      .add(new JsonObject()
-        .put("name", name)
-        .put("contributorNameTypeId",
-          APITestSuite.personalContributorNameTypeId().toString())));
+  public InstanceBuilder withContributor(String name, UUID typeId) {
+    final JsonObject newContributor = new JsonObject();
+
+    write(newContributor, "name", name);
+    write(newContributor, "contributorNameTypeId", typeId);
+
+    return withContributors(this.contributors.copy().add(newContributor));
   }
 }

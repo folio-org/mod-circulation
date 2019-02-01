@@ -1,11 +1,11 @@
 package api.support.builders;
 
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.domain.policy.DueDateManagement;
-import org.folio.circulation.domain.policy.Period;
-
 import java.util.Objects;
 import java.util.UUID;
+
+import org.folio.circulation.domain.policy.Period;
+
+import io.vertx.core.json.JsonObject;
 
 public class LoanPolicyBuilder extends JsonBuilder implements Builder {
   private static final String RENEW_FROM_SYSTEM_DATE = "SYSTEM_DATE";
@@ -23,15 +23,20 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
   private final boolean renewWithDifferentPeriod;
   private final JsonObject differentRenewalPeriod;
   private final UUID alternateFixedDueDateScheduleId;
+  private final String closedLibraryDueDateManagementId;
+  private final JsonObject openingTimeOffsetPeriod;
   private final boolean renewable;
-  private final DueDateManagement closedLibraryDueDateManagementId;
+  private final boolean loanable;
 
   public LoanPolicyBuilder() {
     this(UUID.randomUUID(),
       "Example Loan Policy",
       "An example loan policy",
+      true,
       null,
       null,
+      null,
+      "KEEP_CURRENT_DATE",
       null,
       true,
       null,
@@ -39,31 +44,38 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       false,
       null,
       null,
-      true,
-      null);
+      true
+    );
   }
 
   private LoanPolicyBuilder(
     UUID id,
     String name,
     String description,
+    boolean loanable,
     String profile,
     JsonObject loanPeriod,
     UUID fixedDueDateScheduleId,
+    String closedLibraryDueDateManagementId,
+    JsonObject openingTimeOffsetPeriod,
     boolean unlimitedRenewals,
     Integer numberAllowed, String renewFrom,
     boolean renewWithDifferentPeriod,
     JsonObject differentRenewalPeriod,
     UUID alternateFixedDueDateScheduleId,
-    boolean renewable,
-    DueDateManagement closedLibraryDueDateManagementId) {
+    boolean renewable) {
 
     this.id = id;
     this.name = name;
     this.description = description;
+    this.loanable = loanable;
     this.profile = profile;
     this.loanPeriod = loanPeriod;
     this.fixedDueDateScheduleId = fixedDueDateScheduleId;
+
+    this.closedLibraryDueDateManagementId = closedLibraryDueDateManagementId;
+    this.openingTimeOffsetPeriod = openingTimeOffsetPeriod;
+
     this.unlimitedRenewals = unlimitedRenewals;
     this.renewFrom = renewFrom;
     this.renewWithDifferentPeriod = renewWithDifferentPeriod;
@@ -71,7 +83,6 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
     this.alternateFixedDueDateScheduleId = alternateFixedDueDateScheduleId;
     this.numberAllowed = numberAllowed;
     this.renewable = renewable;
-    this.closedLibraryDueDateManagementId = closedLibraryDueDateManagementId;
   }
 
   @Override
@@ -84,7 +95,7 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
 
     put(request, "name", this.name);
     put(request, "description", this.description);
-    put(request, "loanable", true);
+    put(request, "loanable", loanable);
     put(request, "renewable", renewable);
 
     JsonObject loansPolicy = new JsonObject();
@@ -97,16 +108,19 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
 
       //Due date limited rolling policy, maybe should be separate property
       put(loansPolicy, "fixedDueDateScheduleId", fixedDueDateScheduleId);
+
+      put(loansPolicy, "closedLibraryDueDateManagementId",
+        closedLibraryDueDateManagementId);
+
+      put(loansPolicy, "openingTimeOffset", openingTimeOffsetPeriod);
     }
     else if(Objects.equals(profile, "Fixed")) {
       put(loansPolicy, "fixedDueDateScheduleId", fixedDueDateScheduleId);
-    }
 
-    if (closedLibraryDueDateManagementId != null) {
       put(loansPolicy, "closedLibraryDueDateManagementId",
-        closedLibraryDueDateManagementId.getValue());
-    } else {
-      put(loansPolicy, "closedLibraryDueDateManagementId", "KEEP_CURRENT_DATE");
+        closedLibraryDueDateManagementId);
+
+      put(loansPolicy, "openingTimeOffset", openingTimeOffsetPeriod);
     }
 
     put(request, "loansPolicy", loansPolicy);
@@ -143,16 +157,18 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       id,
       this.name,
       this.description,
+      this.loanable,
       this.profile,
       this.loanPeriod,
       this.fixedDueDateScheduleId,
-      this.unlimitedRenewals,
+      this.closedLibraryDueDateManagementId,
+      this.openingTimeOffsetPeriod, this.unlimitedRenewals,
       this.numberAllowed,
       this.renewFrom,
       this.renewWithDifferentPeriod,
       this.differentRenewalPeriod,
       this.alternateFixedDueDateScheduleId,
-      this.renewable, closedLibraryDueDateManagementId);
+      this.renewable);
   }
 
   public LoanPolicyBuilder withName(String name) {
@@ -160,17 +176,18 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.id,
       name,
       this.description,
+      this.loanable,
       this.profile,
       this.loanPeriod,
       this.fixedDueDateScheduleId,
-      this.unlimitedRenewals,
+      this.closedLibraryDueDateManagementId,
+      this.openingTimeOffsetPeriod, this.unlimitedRenewals,
       this.numberAllowed,
       this.renewFrom,
       this.renewWithDifferentPeriod,
       this.differentRenewalPeriod,
       this.alternateFixedDueDateScheduleId,
-      this.renewable,
-      closedLibraryDueDateManagementId);
+      this.renewable);
   }
 
   public LoanPolicyBuilder withDescription(String description) {
@@ -178,35 +195,56 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.id,
       this.name,
       description,
+      this.loanable,
       this.profile,
       this.loanPeriod,
       this.fixedDueDateScheduleId,
-      this.unlimitedRenewals,
+      this.closedLibraryDueDateManagementId,
+      this.openingTimeOffsetPeriod, this.unlimitedRenewals,
       this.numberAllowed,
       this.renewFrom,
       this.renewWithDifferentPeriod,
       this.differentRenewalPeriod,
       this.alternateFixedDueDateScheduleId,
-      this.renewable,
-      closedLibraryDueDateManagementId);
+      this.renewable);
+  }
+
+  public LoanPolicyBuilder withLoanable(boolean loanable) {
+    return new LoanPolicyBuilder(
+      this.id,
+      this.name,
+      this.description,
+      loanable,
+      this.profile,
+      this.loanPeriod,
+      this.fixedDueDateScheduleId,
+      this.closedLibraryDueDateManagementId,
+      this.openingTimeOffsetPeriod, this.unlimitedRenewals,
+      this.numberAllowed,
+      this.renewFrom,
+      this.renewWithDifferentPeriod,
+      this.differentRenewalPeriod,
+      this.alternateFixedDueDateScheduleId,
+      this.renewable);
   }
 
   public LoanPolicyBuilder withLoansProfile(String profile) {
     return new LoanPolicyBuilder(
       this.id,
       this.name,
-      description,
+      this.description,
+      this.loanable,
       profile,
       this.loanPeriod,
       this.fixedDueDateScheduleId,
-      this.unlimitedRenewals,
+      this.closedLibraryDueDateManagementId,
+      this.openingTimeOffsetPeriod, this.unlimitedRenewals,
       this.numberAllowed,
       this.renewFrom,
       this.renewWithDifferentPeriod,
       this.differentRenewalPeriod,
       this.alternateFixedDueDateScheduleId,
-      this.renewable,
-      closedLibraryDueDateManagementId);
+      this.renewable);
   }
 
   public LoanPolicyBuilder rolling(Period period) {
@@ -214,17 +252,18 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.id,
       this.name,
       this.description,
+      true,
       "Rolling",
       period.asJson(),
       null,
-      this.unlimitedRenewals,
+      this.closedLibraryDueDateManagementId,
+      this.openingTimeOffsetPeriod, this.unlimitedRenewals,
       this.numberAllowed,
       this.renewFrom,
       this.renewWithDifferentPeriod,
       this.differentRenewalPeriod,
       this.alternateFixedDueDateScheduleId,
-      this.renewable,
-      closedLibraryDueDateManagementId);
+      this.renewable);
   }
 
   public LoanPolicyBuilder fixed(UUID fixedDueDateScheduleId) {
@@ -232,17 +271,18 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.id,
       this.name,
       this.description,
+      true,
       "Fixed",
       null,
       fixedDueDateScheduleId,
-      this.unlimitedRenewals,
+      this.closedLibraryDueDateManagementId,
+      this.openingTimeOffsetPeriod, this.unlimitedRenewals,
       this.numberAllowed,
       RENEW_FROM_SYSTEM_DATE,
       this.renewWithDifferentPeriod,
       this.differentRenewalPeriod,
       this.alternateFixedDueDateScheduleId,
-      this.renewable,
-      closedLibraryDueDateManagementId);
+      this.renewable);
   }
 
   public LoanPolicyBuilder limitedBySchedule(UUID fixedDueDateScheduleId) {
@@ -255,17 +295,18 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.id,
       this.name,
       this.description,
+      this.loanable,
       this.profile,
       this.loanPeriod,
       fixedDueDateScheduleId,
-      this.unlimitedRenewals,
+      this.closedLibraryDueDateManagementId,
+      this.openingTimeOffsetPeriod, this.unlimitedRenewals,
       this.numberAllowed,
       this.renewFrom,
       this.renewWithDifferentPeriod,
       this.differentRenewalPeriod,
       this.alternateFixedDueDateScheduleId,
-      this.renewable,
-      closedLibraryDueDateManagementId);
+      this.renewable);
   }
 
   public LoanPolicyBuilder unlimitedRenewals() {
@@ -273,17 +314,18 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.id,
       this.name,
       this.description,
+      this.loanable,
       this.profile,
       this.loanPeriod,
       this.fixedDueDateScheduleId,
-      true,
+      this.closedLibraryDueDateManagementId,
+      this.openingTimeOffsetPeriod, true,
       null,
       this.renewFrom,
       this.renewWithDifferentPeriod,
       this.differentRenewalPeriod,
       this.alternateFixedDueDateScheduleId,
-      this.renewable,
-      closedLibraryDueDateManagementId);
+      this.renewable);
   }
 
   public LoanPolicyBuilder limitedRenewals(int limit) {
@@ -291,17 +333,18 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.id,
       this.name,
       this.description,
+      this.loanable,
       this.profile,
       this.loanPeriod,
       this.fixedDueDateScheduleId,
-      false,
+      this.closedLibraryDueDateManagementId,
+      this.openingTimeOffsetPeriod, false,
       limit,
       this.renewFrom,
       this.renewWithDifferentPeriod,
       this.differentRenewalPeriod,
       this.alternateFixedDueDateScheduleId,
-      this.renewable,
-      closedLibraryDueDateManagementId);
+      this.renewable);
   }
 
   public LoanPolicyBuilder renewFromSystemDate() {
@@ -317,17 +360,18 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.id,
       this.name,
       this.description,
+      this.loanable,
       this.profile,
       this.loanPeriod,
       this.fixedDueDateScheduleId,
-      this.unlimitedRenewals,
+      this.closedLibraryDueDateManagementId,
+      this.openingTimeOffsetPeriod, this.unlimitedRenewals,
       this.numberAllowed,
       renewFrom,
       this.renewWithDifferentPeriod,
       this.differentRenewalPeriod,
       this.alternateFixedDueDateScheduleId,
-      this.renewable,
-      closedLibraryDueDateManagementId);
+      this.renewable);
   }
 
   public LoanPolicyBuilder renewWith(Period period) {
@@ -339,17 +383,18 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.id,
       this.name,
       this.description,
+      this.loanable,
       this.profile,
       this.loanPeriod,
       this.fixedDueDateScheduleId,
-      this.unlimitedRenewals,
+      this.closedLibraryDueDateManagementId,
+      this.openingTimeOffsetPeriod, this.unlimitedRenewals,
       this.numberAllowed,
       this.renewFrom,
       true,
       period.asJson(),
       dueDateLimitScheduleId,
-      this.renewable,
-      closedLibraryDueDateManagementId);
+      this.renewable);
   }
 
   public Builder renewWith(UUID fixedDueDateScheduleId) {
@@ -364,17 +409,18 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.id,
       this.name,
       this.description,
+      this.loanable,
       this.profile,
       this.loanPeriod,
       this.fixedDueDateScheduleId,
-      this.unlimitedRenewals,
+      this.closedLibraryDueDateManagementId,
+      this.openingTimeOffsetPeriod, this.unlimitedRenewals,
       this.numberAllowed,
       this.renewFrom,
       true,
       null,
       fixedDueDateScheduleId,
-      this.renewable,
-      closedLibraryDueDateManagementId);
+      this.renewable);
   }
 
   public LoanPolicyBuilder notRenewable() {
@@ -382,34 +428,58 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.id,
       this.name,
       this.description,
+      this.loanable,
       this.profile,
       this.loanPeriod,
       this.fixedDueDateScheduleId,
-      this.unlimitedRenewals,
+      this.closedLibraryDueDateManagementId,
+      this.openingTimeOffsetPeriod, this.unlimitedRenewals,
       this.numberAllowed,
       this.renewFrom,
       this.renewWithDifferentPeriod,
       this.differentRenewalPeriod,
       this.alternateFixedDueDateScheduleId,
-      false,
-      closedLibraryDueDateManagementId);
+      false);
   }
 
-  public LoanPolicyBuilder closedLibraryDueDateManagement(DueDateManagement dueDateManagement) {
+  public LoanPolicyBuilder withClosedLibraryDueDateManagement(
+    String closedLibraryDueDateManagementId) {
+
     return new LoanPolicyBuilder(
       this.id,
       this.name,
       this.description,
+      this.loanable,
       this.profile,
       this.loanPeriod,
       this.fixedDueDateScheduleId,
+      closedLibraryDueDateManagementId,
+      this.openingTimeOffsetPeriod, this.unlimitedRenewals,
+      this.numberAllowed,
+      this.renewFrom,
+      this.renewWithDifferentPeriod,
+      this.differentRenewalPeriod,
+      this.alternateFixedDueDateScheduleId,
+      this.renewable);
+  }
+
+  public LoanPolicyBuilder withOpeningTimeOffset(Period openingTimeOffsetPeriod) {
+    return new LoanPolicyBuilder(
+      this.id,
+      this.name,
+      this.description,
+      this.loanable,
+      this.profile,
+      this.loanPeriod,
+      this.fixedDueDateScheduleId,
+      this.closedLibraryDueDateManagementId,
+      openingTimeOffsetPeriod.asJson(),
       this.unlimitedRenewals,
       this.numberAllowed,
       this.renewFrom,
       this.renewWithDifferentPeriod,
       this.differentRenewalPeriod,
       this.alternateFixedDueDateScheduleId,
-      this.renewable,
-      dueDateManagement);
+      this.renewable);
   }
 }

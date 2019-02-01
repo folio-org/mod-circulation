@@ -72,7 +72,8 @@ public class ItemSummaryRepresentation {
           item.getItemId());
       }
     } else {
-      log.warn("Null materialType object for item {}", item.getItemId());
+      log.warn("No material type {} found for item {}", item.getMaterialTypeId(),
+        item.getItemId());
     }
 
     return itemSummary;

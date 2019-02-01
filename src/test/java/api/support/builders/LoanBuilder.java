@@ -9,7 +9,6 @@ import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 
-import api.APITestSuite;
 import io.vertx.core.json.JsonObject;
 
 public class LoanBuilder extends JsonBuilder implements Builder {
@@ -30,7 +29,7 @@ public class LoanBuilder extends JsonBuilder implements Builder {
   private final UUID checkinServicePointId;
 
   public LoanBuilder() {
-    this(UUID.randomUUID(), UUID.randomUUID(), APITestSuite.userId(), new DateTime(2017, 3, 6, 16, 4, 43), null, "Open",
+    this(UUID.randomUUID(), UUID.randomUUID(), null, new DateTime(2017, 3, 6, 16, 4, 43), null, "Open",
         null, null, "checkedout", null, null, null);
   }
 
