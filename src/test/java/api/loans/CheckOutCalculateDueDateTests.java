@@ -866,6 +866,37 @@ public class CheckOutCalculateDueDateTests extends APITests {
       loan.getString(DUE_DATE_KEY), isEquivalentTo(loanDate.plusHours(duration)));
   }
 
+  /**
+   * Exception test scenario of Calendar API
+   */
+  @Test
+  public void testScenarioWhenCalendarApiIsEmpty()
+    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+
+    final DateTime loanDate = DateTime.now().toDateTime(DateTimeZone.UTC);
+    int duration = 1;
+    String loanPolicyName = "Calendar API is unavailable";
+    JsonObject loanPolicyEntry = createLoanPolicyEntry(loanPolicyName, true,
+      LoansPolicyProfile.ROLLING.name(), DueDateManagement.KEEP_THE_CURRENT_DUE_DATE_TIME.getValue(),
+      duration, INTERVAL_HOURS);
+    String loanPolicyId = createLoanPolicy(loanPolicyEntry);
+
+    final IndividualResource response = loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(itemsFixture.basedUponSmallAngryPlanet())
+        .to(usersFixture.steve())
+        .on(loanDate)
+        .at(UUID.fromString(CASE_CALENDAR_IS_EMPTY_SERVICE_POINT_ID)));
+
+    final JsonObject loan = response.getJson();
+
+    assertThat(ERROR_MESSAGE_LOAN_POLICY,
+      loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
+
+    assertThat(ERROR_MESSAGE_DUE_DATE + duration,
+      loan.getString(DUE_DATE_KEY), isEquivalentTo(loanDate.plusHours(duration)));
+  }
+
   private void checkFixedDayOrTime(String servicePointId, String policyProfileName,
                                    DueDateManagement dueDateManagement, int duration, String interval,
                                    DateTime expectedDueDate, boolean isIncludeTime)

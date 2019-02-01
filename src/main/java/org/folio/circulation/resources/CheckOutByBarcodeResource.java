@@ -164,17 +164,9 @@ public class CheckOutByBarcodeResource extends Resource {
     }
 
     // if the calendar API (`GET: /calendar/periods/:id/period`) doesn't have LibraryHours
+    // or loanPolicy is not loanable
     // then the due date calculated like: `Keep Current DueDate`
-    if (Objects.isNull(calendar.getRepresentation())) {
-      List<Calendar> openingPeriods = libraryHours.getOpeningPeriods();
-      DateTime endDate = new DateTime(openingPeriods.get(0).getEndDate())
-        .withZoneRetainFields(DateTimeZone.UTC);
-      return calculateNewInitialDueDate(loanAndRelatedRecords, endDate);
-    }
-
-    // if loanPolicy is not loanable
-    // then the due date calculated like: `Keep Current DueDate`
-    if (!loanPolicy.isLoanable()) {
+    if (!loanPolicy.isLoanable() || calendar.getRepresentation().isEmpty()) {
       return calculateDefaultInitialDueDate(loanAndRelatedRecords, loan, loanPolicy);
     }
 

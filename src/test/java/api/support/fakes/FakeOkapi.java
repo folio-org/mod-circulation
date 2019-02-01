@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
 
+import static api.support.fixtures.CalendarExamples.CASE_CALENDAR_IS_EMPTY_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.getCalendarById;
 import static api.support.fixtures.LibraryHoursExamples.*;
 
@@ -327,6 +328,13 @@ public class FakeOkapi extends AbstractVerticle {
             routingContext.response()
               .putHeader("content-type", "application/json")
               .setStatusCode(404)
+              .end();
+            break;
+
+          case CASE_CALENDAR_IS_EMPTY_SERVICE_POINT_ID:
+            routingContext.response()
+              .putHeader("content-type", "application/json")
+              .setStatusCode(200)
               .end();
             break;
 
