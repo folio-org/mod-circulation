@@ -1,29 +1,5 @@
 package api.support.fixtures;
 
-import api.support.CheckInByBarcodeResponse;
-import api.support.builders.CheckInByBarcodeRequestBuilder;
-import api.support.builders.CheckOutByBarcodeRequestBuilder;
-import api.support.builders.LoanBuilder;
-import api.support.builders.OverrideRenewalByBarcodeRequestBuilder;
-import api.support.builders.RenewByBarcodeRequestBuilder;
-import api.support.builders.RenewByIdRequestBuilder;
-import api.support.http.ResourceClient;
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-
-import java.net.MalformedURLException;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import static api.APITestSuite.fakeServicePoint;
 import static api.support.RestAssuredClient.from;
 import static api.support.RestAssuredClient.post;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
@@ -37,16 +13,46 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
+import java.net.MalformedURLException;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.OkapiHttpClient;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+
+import api.support.CheckInByBarcodeResponse;
+import api.support.builders.CheckInByBarcodeRequestBuilder;
+import api.support.builders.CheckOutByBarcodeRequestBuilder;
+import api.support.builders.LoanBuilder;
+import api.support.builders.OverrideRenewalByBarcodeRequestBuilder;
+import api.support.builders.RenewByBarcodeRequestBuilder;
+import api.support.builders.RenewByIdRequestBuilder;
+import api.support.http.ResourceClient;
+import io.vertx.core.json.JsonObject;
+
 public class LoansFixture {
   private final ResourceClient loansClient;
   private final OkapiHttpClient client;
+  private final UsersFixture usersFixture;
+  private final ServicePointsFixture servicePointsFixture;
 
   public LoansFixture(
     ResourceClient loansClient,
-    OkapiHttpClient client) {
+    OkapiHttpClient client,
+    UsersFixture usersFixture,
+    ServicePointsFixture servicePointsFixture) {
 
     this.loansClient = loansClient;
     this.client = client;
+    this.usersFixture = usersFixture;
+    this.servicePointsFixture = servicePointsFixture;
   }
 
   public IndividualResource checkOut(
@@ -77,7 +83,7 @@ public class LoansFixture {
       .withDueDate(loanDate.plusWeeks(3)));
   }
 
-  public IndividualResource checkOutItem(UUID itemId, UUID loanId)
+  private IndividualResource checkOutItem(UUID itemId, UUID loanId)
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
@@ -97,22 +103,6 @@ public class LoansFixture {
     TimeoutException {
 
     return checkOutItem(itemId, UUID.randomUUID());
-  }
-
-  public void renewLoan(UUID loanId)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    Response getResponse = loansClient.getById(loanId);
-
-    //TODO: Should also change the due date
-    JsonObject renewedLoan = getResponse.getJson().copy()
-      .put("action", "renewed")
-      .put("renewalCount", 1);
-
-    loansClient.replace(loanId, renewedLoan);
   }
 
   public Response attemptCheckOut(
@@ -138,6 +128,15 @@ public class LoansFixture {
       response.getStatusCode(), is(UNPROCESSABLE_ENTITY));
 
     return response;
+  }
+
+  public IndividualResource checkOutByBarcode(IndividualResource item)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return checkOutByBarcode(item, usersFixture.jessica());
   }
 
   public IndividualResource checkOutByBarcode(
@@ -329,11 +328,16 @@ public class LoansFixture {
         "check-in-by-barcode-request")));
   }
 
-  public CheckInByBarcodeResponse checkInByBarcode(IndividualResource item) {
+  public CheckInByBarcodeResponse checkInByBarcode(IndividualResource item)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
     return checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(item)
       .on(DateTime.now(DateTimeZone.UTC))
-      .at(fakeServicePoint()));
+      .at(servicePointsFixture.fake()));
   }
 
   public CheckInByBarcodeResponse checkInByBarcode(

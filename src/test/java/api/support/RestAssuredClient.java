@@ -9,7 +9,6 @@ import java.net.URL;
 import org.folio.circulation.support.http.OkapiHeader;
 import org.folio.circulation.support.http.client.Response;
 
-import api.APITestSuite;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.config.HttpClientConfig;
@@ -21,10 +20,10 @@ import io.vertx.core.json.JsonObject;
 public class RestAssuredClient {
   private static RequestSpecification defaultHeaders(String requestId) {
     return new RequestSpecBuilder()
-      .addHeader(OKAPI_URL, APITestSuite.okapiUrl().toString())
-      .addHeader(TENANT, APITestSuite.TENANT_ID)
-      .addHeader(OkapiHeader.TOKEN, APITestSuite.TOKEN)
-      .addHeader(OkapiHeader.USER_ID, APITestSuite.USER_ID)
+      .addHeader(OKAPI_URL, APITestContext.okapiUrl().toString())
+      .addHeader(TENANT, APITestContext.getTenantId())
+      .addHeader(OkapiHeader.TOKEN, APITestContext.getToken())
+      .addHeader(OkapiHeader.USER_ID, APITestContext.getUserId())
       .addHeader(OkapiHeader.REQUEST_ID, requestId)
       .setAccept("application/json, text/plain")
       .setContentType("application/json")

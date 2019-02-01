@@ -38,7 +38,7 @@ public class LoanAPIProxyTests extends APITests {
     IndividualResource sponsor = usersFixture.jessica();
     IndividualResource proxy = usersFixture.james();
 
-    usersFixture.currentProxyFor(sponsor, proxy);
+    proxyRelationshipsFixture.currentProxyFor(sponsor, proxy);
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
@@ -75,7 +75,7 @@ public class LoanAPIProxyTests extends APITests {
     IndividualResource sponsor = usersFixture.jessica();
     IndividualResource proxy = usersFixture.james();
 
-    usersFixture.nonExpiringProxyFor(sponsor, proxy);
+    proxyRelationshipsFixture.nonExpiringProxyFor(sponsor, proxy);
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
@@ -112,7 +112,7 @@ public class LoanAPIProxyTests extends APITests {
     IndividualResource sponsor = usersFixture.jessica();
     IndividualResource proxy = usersFixture.james();
 
-    usersFixture.inactiveProxyFor(sponsor, proxy);
+    proxyRelationshipsFixture.inactiveProxyFor(sponsor, proxy);
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
@@ -150,7 +150,7 @@ public class LoanAPIProxyTests extends APITests {
     IndividualResource sponsor = usersFixture.jessica();
     IndividualResource proxy = usersFixture.james();
 
-    usersFixture.expiredProxyFor(sponsor, proxy);
+    proxyRelationshipsFixture.expiredProxyFor(sponsor, proxy);
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
@@ -189,7 +189,7 @@ public class LoanAPIProxyTests extends APITests {
     IndividualResource otherUser = usersFixture.charlotte();
     IndividualResource proxy = usersFixture.james();
 
-    usersFixture.currentProxyFor(unexpectedSponsor, proxy);
+    proxyRelationshipsFixture.currentProxyFor(unexpectedSponsor, proxy);
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
@@ -273,7 +273,7 @@ public class LoanAPIProxyTests extends APITests {
       .withLoanDate(loanDate)
       .withDueDate(dueDate));
 
-    usersFixture.currentProxyFor(sponsor, proxy);
+    proxyRelationshipsFixture.currentProxyFor(sponsor, proxy);
 
     JsonObject loan = new LoanBuilder()
       .withId(id)
@@ -319,7 +319,7 @@ public class LoanAPIProxyTests extends APITests {
       .withLoanDate(loanDate)
       .withDueDate(dueDate));
 
-    usersFixture.expiredProxyFor(sponsor, proxy);
+    proxyRelationshipsFixture.expiredProxyFor(sponsor, proxy);
 
     JsonObject loan = new LoanBuilder()
       .withId(id)
@@ -366,7 +366,7 @@ public class LoanAPIProxyTests extends APITests {
       .withLoanDate(loanDate)
       .withDueDate(dueDate));
 
-    usersFixture.currentProxyFor(unexpectedSponsor, proxy);
+    proxyRelationshipsFixture.currentProxyFor(unexpectedSponsor, proxy);
 
     JsonObject loan = new LoanBuilder()
       .withId(id)

@@ -1,48 +1,66 @@
 package api.support.fixtures;
 
-import api.APITestSuite;
+import java.util.UUID;
+
 import api.support.builders.ItemBuilder;
 
 public class ItemExamples {
-  public static ItemBuilder basedUponSmallAngryPlanet() {
+  public static ItemBuilder basedUponSmallAngryPlanet(
+    UUID bookMaterialTypeId,
+    UUID loanTypeId) {
+
     return new ItemBuilder()
-      .withPermanentLoanType(APITestSuite.canCirculateLoanTypeId())
-      .withMaterialType(APITestSuite.bookMaterialTypeId())
+      .withPermanentLoanType(loanTypeId)
+      .withMaterialType(bookMaterialTypeId)
       .withBarcode("036000291452");
   }
 
-  static ItemBuilder basedUponNod() {
+  static ItemBuilder basedUponNod(
+    UUID bookMaterialTypeId,
+    UUID loanTypeId) {
+
     return new ItemBuilder()
-      .withPermanentLoanType(APITestSuite.canCirculateLoanTypeId())
-      .withMaterialType(APITestSuite.bookMaterialTypeId())
+      .withPermanentLoanType(loanTypeId)
+      .withMaterialType(bookMaterialTypeId)
       .withBarcode("565578437802");
   }
 
-  static ItemBuilder basedUponUprooted() {
+  static ItemBuilder basedUponUprooted(
+    UUID bookMaterialTypeId, UUID loanTypeId) {
+
     return new ItemBuilder()
-      .withPermanentLoanType(APITestSuite.canCirculateLoanTypeId())
-      .withMaterialType(APITestSuite.bookMaterialTypeId())
+      .withPermanentLoanType(loanTypeId)
+      .withMaterialType(bookMaterialTypeId)
       .withBarcode("657670342075");
   }
 
-  public static ItemBuilder basedUponTemeraire() {
+  public static ItemBuilder basedUponTemeraire(
+    UUID bookMaterialTypeId,
+    UUID loanTypeId) {
+
     return new ItemBuilder()
-      .withPermanentLoanType(APITestSuite.canCirculateLoanTypeId())
-      .withMaterialType(APITestSuite.bookMaterialTypeId())
+      .withPermanentLoanType(loanTypeId)
+      .withMaterialType(bookMaterialTypeId)
       .withBarcode("232142443432");
   }
 
-  static ItemBuilder basedUponInterestingTimes() {
+  static ItemBuilder basedUponInterestingTimes(
+    UUID bookMaterialTypeId,
+    UUID loanTypeId) {
+
     return new ItemBuilder()
-      .withPermanentLoanType(APITestSuite.canCirculateLoanTypeId())
-      .withMaterialType(APITestSuite.bookMaterialTypeId())
+      .withPermanentLoanType(loanTypeId)
+      .withMaterialType(bookMaterialTypeId)
       .withBarcode("56454543534");
   }
 
-  static ItemBuilder basedUponDunkirk() {
+  static ItemBuilder basedUponDunkirk(
+    UUID videoRecordingMaterialTypeId,
+    UUID loanTypeId) {
+
     return new ItemBuilder()
-      .withPermanentLoanType(APITestSuite.canCirculateLoanTypeId())
-      .withMaterialType(APITestSuite.videoRecordingMaterialTypeId())
+      .withPermanentLoanType(loanTypeId)
+      .withMaterialType(videoRecordingMaterialTypeId)
       .withBarcode("70594943205");
   }
 }
