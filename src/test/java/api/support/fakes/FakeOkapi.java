@@ -1,11 +1,13 @@
 package api.support.fakes;
 
-import api.APITestSuite;
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Future;
-import io.vertx.core.MultiMap;
-import io.vertx.core.http.HttpServer;
-import io.vertx.ext.web.Router;
+import static api.support.fixtures.CalendarExamples.getCalendarById;
+import static api.support.fixtures.LibraryHoursExamples.CASE_CALENDAR_IS_UNAVAILABLE_SERVICE_POINT_ID;
+import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_IN_THU_SERVICE_POINT_ID;
+import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_SERVICE_POINT_ID;
+import static api.support.fixtures.LibraryHoursExamples.getLibraryHoursById;
+
+import java.lang.invoke.MethodHandles;
+
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.folio.circulation.support.http.client.BufferHelper;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
@@ -14,6 +16,12 @@ import org.folio.circulation.support.http.server.ServerErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import api.support.APITestContext;
+import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Future;
+import io.vertx.core.MultiMap;
+import io.vertx.core.http.HttpServer;
+import io.vertx.ext.web.Router;
 import java.lang.invoke.MethodHandles;
 
 import static api.support.fixtures.CalendarExamples.CASE_CALENDAR_IS_EMPTY_SERVICE_POINT_ID;
@@ -229,13 +237,13 @@ public class FakeOkapi extends AbstractVerticle {
     //During loan creation, a request to /circulation/loan-rules/apply is made,
     //which is effectively to itself, so needs to be routed back
     router.get("/circulation/loan-rules/apply").handler(context -> {
-      OkapiHttpClient client = APITestSuite.createClient(throwable ->
+      OkapiHttpClient client = APITestContext.createClient(throwable ->
         ServerErrorResponse.internalError(context.response(),
           String.format("Exception when forward loan rules apply request: %s",
             throwable.getMessage())));
 
       client.get(String.format("http://localhost:%s/circulation/loan-rules/apply?%s"
-        , APITestSuite.circulationModulePort(), context.request().query()),
+        , APITestContext.circulationModulePort(), context.request().query()),
         httpClientResponse ->
           httpClientResponse.bodyHandler(buffer ->
             ForwardResponse.forward(context.response(), httpClientResponse,

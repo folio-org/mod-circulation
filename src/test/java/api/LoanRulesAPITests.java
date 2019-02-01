@@ -1,30 +1,22 @@
 package api;
 
-import io.vertx.core.json.JsonObject;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsStringIgnoringCase;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.core.Is.is;
 
-import api.support.http.InterfaceUrls;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.hamcrest.core.Is.is;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
+import org.junit.Test;
 
-public class LoanRulesAPITests {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+import api.support.APITests;
+import api.support.http.InterfaceUrls;
+import io.vertx.core.json.JsonObject;
 
-  OkapiHttpClient client = APITestSuite.createClient(exception -> {
-    log.error("Request to circulation module failed:", exception);
-  });
-
+public class LoanRulesAPITests extends APITests {
   @Test
   public void canGet() throws Exception {
     getText();
@@ -34,14 +26,14 @@ public class LoanRulesAPITests {
   public void canPutAndGet() throws Exception {
     String rule = "priority: t, s, c, b, a, m, g\nfallback-policy: no-circulation\n";
 
-    Response response = put(rule);
-    assertThat(response.getStatusCode(), is(204));
+    loanRulesFixture.updateLoanRules(rule);
+
     assertThat(getText(), is(rule));
 
     rule = "priority: t, s, c, b, a, m, g\nfallback-policy: loan-forever\n";
 
-    response = put(rule);
-    assertThat(response.getStatusCode(), is(204));
+    loanRulesFixture.updateLoanRules(rule);
+
     assertThat(getText(), is(rule));
   }
 
@@ -55,9 +47,14 @@ public class LoanRulesAPITests {
 
   @Test
   public void canReportValidationError() throws Exception {
-    Response response = put("\t");
+    JsonObject rules = new JsonObject();
+    rules.put("loanRulesAsTextFile", "\t");
+    Response response = putExpectingFailure(rules);
+
     assertThat(response.getStatusCode(), is(422));
+
     JsonObject json = new JsonObject(response.getBody());
+
     assertThat(json.getString("message"), containsStringIgnoringCase("tab"));
     assertThat(json.getInteger("line"), is(1));
     assertThat(json.getInteger("column"), is(2));
@@ -78,13 +75,7 @@ public class LoanRulesAPITests {
     return text;
   }
 
-  private Response put(String rulesAsText) throws Exception {
-    JsonObject rules = new JsonObject();
-    rules.put("loanRulesAsTextFile", rulesAsText);
-    return put(rules);
-  }
-
-  private Response put(JsonObject rules) throws Exception {
+  private Response putExpectingFailure(JsonObject rules) throws Exception {
     CompletableFuture<Response> completed = new CompletableFuture<>();
     client.put(InterfaceUrls.loanRulesUrl(), rules, ResponseHandler.any(completed));
     return completed.get(5, TimeUnit.SECONDS);
