@@ -1,48 +1,13 @@
 package api.loans;
 
-import static api.support.APITestContext.END_OF_2019_DUE_DATE;
-import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID;
-import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_ID;
-import static api.support.fixtures.CalendarExamples.CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID;
-import static api.support.fixtures.CalendarExamples.CASE_WED_THU_FRI_SERVICE_POINT_ID;
-import static api.support.fixtures.CalendarExamples.FRIDAY_DATE;
-import static api.support.fixtures.CalendarExamples.THURSDAY_DATE;
-import static api.support.fixtures.CalendarExamples.WEDNESDAY_DATE;
-import static api.support.fixtures.CalendarExamples.getCurrentAndNextFakeOpeningDayByServId;
-import static api.support.fixtures.CalendarExamples.getCurrentFakeOpeningDayByServId;
-import static api.support.fixtures.CalendarExamples.getFirstFakeOpeningDayByServId;
-import static api.support.fixtures.CalendarExamples.getLastFakeOpeningDayByServId;
-import static api.support.fixtures.LibraryHoursExamples.CASE_CALENDAR_IS_UNAVAILABLE_SERVICE_POINT_ID;
-import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_IN_THU_SERVICE_POINT_ID;
-import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_SERVICE_POINT_ID;
-import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static org.folio.circulation.domain.policy.LoanPolicyPeriod.HOURS;
-import static org.folio.circulation.resources.CheckOutByBarcodeResource.DATE_TIME_FORMATTER;
-import static org.folio.circulation.support.PeriodUtil.calculateOffset;
-import static org.folio.circulation.support.PeriodUtil.calculateOffsetTime;
-import static org.folio.circulation.support.PeriodUtil.isInCurrentLocalDateTime;
-import static org.folio.circulation.support.PeriodUtil.isOffsetTimeInCurrentDayPeriod;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-
-import java.net.MalformedURLException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Objects;
-import java.util.SplittableRandom;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
+import api.support.APITests;
+import api.support.builders.CheckOutByBarcodeRequestBuilder;
+import api.support.builders.LoanPolicyBuilder;
+import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.OpeningDay;
 import org.folio.circulation.domain.OpeningDayPeriod;
 import org.folio.circulation.domain.OpeningHour;
 import org.folio.circulation.domain.policy.DueDateManagement;
-import org.folio.circulation.domain.policy.LoanPolicyPeriod;
 import org.folio.circulation.domain.policy.LoansPolicyProfile;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -50,10 +15,29 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
-import api.support.APITests;
-import api.support.builders.CheckOutByBarcodeRequestBuilder;
-import api.support.builders.LoanPolicyBuilder;
-import io.vertx.core.json.JsonObject;
+import java.net.MalformedURLException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneOffset;
+import java.util.List;
+import java.util.Objects;
+import java.util.SplittableRandom;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+
+import static api.support.APITestContext.END_OF_2019_DUE_DATE;
+import static api.support.fixtures.CalendarExamples.*;
+import static api.support.fixtures.LibraryHoursExamples.CASE_CALENDAR_IS_UNAVAILABLE_SERVICE_POINT_ID;
+import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static org.folio.circulation.domain.policy.DueDateManagement.*;
+import static org.folio.circulation.domain.policy.LoanPolicyPeriod.HOURS;
+import static org.folio.circulation.resources.CheckOutByBarcodeResource.DATE_TIME_FORMATTER;
+import static org.folio.circulation.support.PeriodUtil.isInPeriodOpeningDay;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.joda.time.DateTimeConstants.MINUTES_PER_HOUR;
 
 public class CheckOutCalculateDueDateTests extends APITests {
 
@@ -173,8 +157,6 @@ public class CheckOutCalculateDueDateTests extends APITests {
     String loanPolicyId = createLoanPolicy(
       createLoanPolicyEntryFixed("MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY: FIXED",
         fixedDueDateScheduleId,
-        DueDateManagement.MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY.getValue()));
-        LoansPolicyProfile.FIXED.name(),
         MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY.getValue()));
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
@@ -217,7 +199,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     String loanPolicyId = createLoanPolicy(
       createLoanPolicyEntryFixed("MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY: FIXED",
         fixedDueDateScheduleId,
-        DueDateManagement.MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY.getValue()));
+        MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY.getValue()));
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -259,7 +241,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     String loanPolicyId = createLoanPolicy(
       createLoanPolicyEntryFixed("MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY: FIXED",
         fixedDueDateScheduleId,
-        DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.getValue()));
+        MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.getValue()));
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -301,7 +283,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     String loanPolicyId = createLoanPolicy(
       createLoanPolicyEntryFixed("MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY: FIXED",
         fixedDueDateScheduleId,
-        DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.getValue()));
+        MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.getValue()));
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -343,7 +325,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     String loanPolicyId = createLoanPolicy(
       createLoanPolicyEntryFixed("MOVE_TO_THE_END_OF_THE_CURRENT_DAY: FIXED",
         fixedDueDateScheduleId,
-        DueDateManagement.MOVE_TO_THE_END_OF_THE_CURRENT_DAY.getValue()));
+        MOVE_TO_THE_END_OF_THE_CURRENT_DAY.getValue()));
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -385,7 +367,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     String loanPolicyId = createLoanPolicy(
       createLoanPolicyEntryFixed("MOVE_TO_THE_END_OF_THE_CURRENT_DAY: FIXED",
         fixedDueDateScheduleId,
-        DueDateManagement.MOVE_TO_THE_END_OF_THE_CURRENT_DAY.getValue()));
+        MOVE_TO_THE_END_OF_THE_CURRENT_DAY.getValue()));
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -839,7 +821,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     final IndividualResource steve = usersFixture.steve();
     final DateTime loanDate = DateTime.now().toDateTime(DateTimeZone.UTC);
     final UUID checkoutServicePointId = UUID.randomUUID();
-    int duration = new SplittableRandom().nextInt(1, 60);
+    int duration = new SplittableRandom().nextInt(1, MINUTES_PER_HOUR);
 
     String loanPolicyName = "Loan Policy Exception Scenario";
     JsonObject loanPolicyEntry = createLoanPolicyEntry(loanPolicyName, false,
@@ -1159,7 +1141,8 @@ public class CheckOutCalculateDueDateTests extends APITests {
    * Create a fake json LoanPolicy
    */
   private JsonObject createLoanPolicyEntry(String name, boolean loanable,
-    String profileId, String dueDateManagement, int duration, String intervalId) {
+                                           String profileId, String dueDateManagement,
+                                           int duration, String intervalId) {
 
     return new LoanPolicyBuilder()
       .withName(name)
@@ -1176,31 +1159,13 @@ public class CheckOutCalculateDueDateTests extends APITests {
    * Create a fake json LoanPolicy for fixed period
    */
   private JsonObject createLoanPolicyEntryFixed(String name,
-      UUID fixedDueDateScheduleId, String dueDateManagement) {
-
+                                                UUID fixedDueDateScheduleId,
+                                                String dueDateManagement) {
     return new LoanPolicyBuilder()
       .withName(name)
       .withDescription("New LoanPolicy")
       .fixed(fixedDueDateScheduleId)
       .withClosedLibraryDueDateManagement(dueDateManagement)
-      .renewFromCurrentDueDate()
-      .create();
-  }
-
-  /**
-   * Create a fake json LoanPolicy
-   */
-  private JsonObject createLoanPolicyOffsetTimeEntry(String name,
-      String profileId, String dueDateManagement, int duration, String intervalId,
-      int offsetDuration, String offsetInterval) {
-
-    return new LoanPolicyBuilder()
-      .withName(name)
-      .withDescription("LoanPolicy")
-      .withLoansProfile(profileId)
-      .rolling(Period.from(duration, intervalId))
-      .withClosedLibraryDueDateManagement(dueDateManagement)
-      .withOpeningTimeOffset(Period.from(offsetDuration, offsetInterval))
       .renewFromCurrentDueDate()
       .create();
   }
