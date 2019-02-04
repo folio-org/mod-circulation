@@ -1,18 +1,18 @@
 package org.folio.circulation.loanrules;
 
 /**
- * Store the UUID of the loan policy.
+ * Store the UUID of the policy.
  */
-public class LoanPolicy {
+public class Policy {
   /** UUID of the loan policy. */
   @SuppressWarnings("squid:ClassVariableVisibilityCheck")  // Drools directly uses public fields
   public String id;
 
   /**
-   * Set loan policy.
-   * @param id  UUID of the loan policy.
+   * Set policy.
+   * @param id  UUID of the policy.
    */
-  public LoanPolicy(String id) {
+  public Policy(String id) {
     this.id = id;
   }
 
@@ -23,10 +23,10 @@ public class LoanPolicy {
 
   @Override
   public boolean equals(Object o) {
-    if (!(o instanceof LoanPolicy)) {
+    if (!(o instanceof Policy)) {
       return false;
     }
-    LoanPolicy other = (LoanPolicy) o;
+    Policy other = (Policy) o;
     if (id == null) {
       return other.id == null;
     }

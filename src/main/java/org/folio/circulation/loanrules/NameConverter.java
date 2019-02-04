@@ -76,6 +76,7 @@ public class NameConverter extends LoanRulesBaseListener {
 
   @Override
   public void exitPolicy(PolicyContext policyContext) {
-    replace(policyContext.NAME(), replacements.get("policy"));
+    TerminalNode name = policyContext.NAME();
+    tokenStreamRewriter.replace(name.getSymbol(), replacements.get("policy").get(name.getText()));
   }
 }

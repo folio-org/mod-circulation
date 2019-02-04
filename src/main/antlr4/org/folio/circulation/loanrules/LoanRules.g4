@@ -89,8 +89,8 @@ tokens { INDENT, DEDENT }
 }
 
 loanRulesFile
-  : NEWLINE* 'priority' ':' 'first-line' ( NEWLINE | statement )*  NEWLINE* fallbackpolicy noStatementAfterFallbackPolicy EOF
-  | NEWLINE* 'priority' ':' priority     NEWLINE* fallbackpolicy   ( NEWLINE | statement )* EOF
+  : NEWLINE* 'priority' ':' 'first-line' ( NEWLINE | statement )*  NEWLINE* fallbackpolicy+ noStatementAfterFallbackPolicy EOF
+  | NEWLINE* 'priority' ':' priority     NEWLINE* fallbackpolicy+   ( NEWLINE | statement )* EOF
   ;
 
 priority
@@ -132,7 +132,7 @@ indent : INDENT ;
 
 dedent : DEDENT ;
 
-expr: criterium ('+' criterium)* policy?
+expr: criterium ('+' criterium)* policies?
     ;
 
 criterium : CRITERIUM_LETTER
@@ -147,15 +147,21 @@ criterium : CRITERIUM_LETTER
 
 all : 'all';
 
-fallbackpolicy : 'fallback-policy' policy NEWLINE
+fallbackpolicy : 'fallback-policy' policies NEWLINE
                ;
 
-policy : ':' NAME
-       | ':'           { notifyErrorListeners("Policy missing after ':'"); }
-       | ':' NAME NAME { notifyErrorListeners("Only one policy allowed");  }
+policies : ':' policy+ 
+         ;
+
+policy : POLICY_TYPE 
+          ( NAME
+          | { notifyErrorListeners("Name missing."); }
+          )
        ;
 
 CRITERIUM_LETTER: [tabcsmg];
+
+POLICY_TYPE: [lrn];
 
 NAME: [0-9a-zA-Z-]+;
 

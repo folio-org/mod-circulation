@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -24,6 +25,7 @@ import org.folio.circulation.loanrules.LoanRulesParser.IndentContext;
 import org.folio.circulation.loanrules.LoanRulesParser.LastLinePrioritiesContext;
 import org.folio.circulation.loanrules.LoanRulesParser.LinePriorityContext;
 import org.folio.circulation.loanrules.LoanRulesParser.LoanRulesFileContext;
+import org.folio.circulation.loanrules.LoanRulesParser.PoliciesContext;
 import org.folio.circulation.loanrules.LoanRulesParser.PolicyContext;
 import org.folio.circulation.loanrules.LoanRulesParser.SevenCriteriumLettersContext;
 import org.folio.circulation.loanrules.LoanRulesParser.ThreePrioritiesContext;
@@ -243,7 +245,7 @@ public class Text2Drools extends LoanRulesBaseListener {
   @Override
   public void exitFallbackpolicy(FallbackpolicyContext fallbackpolicy) {
     popObsoleteMatchers();
-    generateRule(fallbackpolicy.policy());
+    generateRule(fallbackpolicy.policies());
   }
 
   @Override
@@ -263,26 +265,42 @@ public class Text2Drools extends LoanRulesBaseListener {
     }
     stack.push(matcher);
 
-    generateRule(expr.policy());
+    generateRule(expr.policies());
   }
 
-  private void generateRule(PolicyContext policy) {
-    if (policy == null) {
+  private void generateRule(PoliciesContext policies) {
+    if (policies == null) {
       return;
     }
 
-    int line = policy.getStart().getLine();
+    int line = policies.getStart().getLine();
     drools.append("rule \"line ").append(line).append("\"\n");
     drools.append("  salience ").append(getSalience(line)).append("\n");
     drools.append("  when\n");
     stack.descendingIterator().forEachRemaining(matcher -> drools.append(matcher.drools));
     drools.append("  then\n");
-    drools.append("    match.loanPolicyId = ");
-    appendQuotedString(drools, policy.NAME(0).getText());
-    drools.append(     ";\n");
+
+    for (PolicyContext policy : policies.policy()) {
+      drools.append(policyMatchString(policy));
+      appendQuotedString(drools, policy.NAME().getText());
+      drools.append(";\n");
+    }
+
     drools.append("    match.lineNumber = ").append(line).append(";\n");
     drools.append("    drools.halt();\n");
     drools.append("end\n\n");
+  }
+
+  private String policyMatchString(PolicyContext policy) {
+    String policyTypeName = "";
+    if (policy.POLICY_TYPE().toString().equals("l")) {
+      policyTypeName = "loan";
+    } else if (policy.POLICY_TYPE().toString().equals("r")) {
+      policyTypeName = "request";
+    } else if (policy.POLICY_TYPE().toString().equals("n")) {
+      policyTypeName = "notice";
+    }
+    return String.format("    match.%sPolicyId = ", policyTypeName);
   }
 
   private int getSalience(int line) {
