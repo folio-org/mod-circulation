@@ -56,23 +56,19 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.policy.LoanPolicyPeriod.HOURS;
-import static org.folio.circulation.domain.policy.LoanPolicyPeriod.isLongTermLoans;
-import static org.folio.circulation.domain.policy.LoanPolicyPeriod.isShortTermLoans;
 import static org.folio.circulation.domain.policy.LoanPolicyPeriod.isLongTermLoans;
 import static org.folio.circulation.domain.policy.LoanPolicyPeriod.isShortTermLoans;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
-import static org.folio.circulation.support.PeriodUtil.MAX_NANO_VAL;
-import static org.folio.circulation.support.PeriodUtil.MAX_SECOND_VAL;
-import static org.folio.circulation.support.PeriodUtil.calculateOffset;
-import static org.folio.circulation.support.PeriodUtil.calculateOffsetTime;
-import static org.folio.circulation.support.PeriodUtil.isInCurrentLocalDateTime;
-import static org.folio.circulation.support.PeriodUtil.isOffsetTimeInCurrentDayPeriod;
+import static org.folio.circulation.support.PeriodUtil.getStartAndEndTime;
+import static org.folio.circulation.support.PeriodUtil.getTimeShift;
+import static org.folio.circulation.support.PeriodUtil.isDateTimeWithDurationInsideDay;
+import static org.folio.circulation.support.PeriodUtil.isInPeriodOpeningDay;
+import static org.folio.circulation.support.PeriodUtil.isKeepCurrentDueDate;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 public class CheckOutByBarcodeResource extends Resource {
 
-  private static final String DATE_TIME_FORMAT = "yyyy-MM-dd'Z'";
+  public static final String DATE_TIME_FORMAT = "yyyy-MM-dd'Z'";
   public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT);
   private static final int POSITION_PREV_DAY = 0;
   private static final int POSITION_CURRENT_DAY = 1;

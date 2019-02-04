@@ -38,7 +38,7 @@ public class CalendarExamples {
   public static final String THURSDAY_DATE = "2018-12-12Z";
   public static final String FRIDAY_DATE = "2018-12-13Z";
 
-  private static final String START_TIME_FIRST_PERIOD = "08:00";
+  public static final String START_TIME_FIRST_PERIOD = "08:00";
   private static final String END_TIME_FIRST_PERIOD = "12:00";
 
   private static final String START_TIME_SECOND_PERIOD = "14:00";
@@ -48,11 +48,6 @@ public class CalendarExamples {
   public static final String CASE_FRI_SAT_MON_SERVICE_POINT_CURR_DAY = "2019-02-02Z";
   public static final String CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY = "2019-02-04Z";
 
-  public static final String START_TIME_FIRST_PERIOD = "08:00";
-  private static final String END_TIME_FIRST_PERIOD = "12:00";
-
-  private static final String START_TIME_SECOND_PERIOD = "14:00";
-  public static final String END_TIME_SECOND_PERIOD = "19:00";
 
   private static final Map<String, OpeningDayPeriodBuilder> fakeOpeningPeriods = new HashMap<>();
 

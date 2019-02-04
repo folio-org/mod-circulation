@@ -1,5 +1,7 @@
 package org.folio.circulation.domain;
 
+import org.folio.circulation.domain.policy.LoanPolicy;
+import org.folio.circulation.domain.policy.LoanPolicyPeriod;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
@@ -39,6 +41,10 @@ public class CalendarRepository {
   }
 
   private CompletableFuture<HttpResult<Calendar>> getPeriod(LoanAndRelatedRecords relatedRecords) {
+    LoanPolicy loanPolicy = relatedRecords.getLoanPolicy();
+    LoanPolicyPeriod interval = loanPolicy.getPeriodInterval();
+    int duration = loanPolicy.getPeriodDuration();
+
     DateTime dueDate = relatedRecords.getLoan().getDueDate();
     String servicePointId = relatedRecords.getLoan().getCheckoutServicePointId();
 
@@ -47,7 +53,7 @@ public class CalendarRepository {
 
     return FetchSingleRecord.<Calendar>forRecord(RECORD_NAME)
       .using(resourceClient)
-      .mapTo(Calendar::new)
+      .mapTo(jsonObject -> new Calendar(jsonObject, interval, duration))
       .whenNotFound(CALENDAR_HTTP_RESULT)
       .fetch(path);
   }

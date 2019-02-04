@@ -3,6 +3,7 @@ package org.folio.circulation.domain;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.domain.policy.LoanPolicyPeriod;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,8 +26,18 @@ public class Calendar {
   private String endDate;
   private List<OpeningDayPeriod> openingDays;
 
+  private LoanPolicyPeriod period;
+  private int duration;
+
   Calendar(JsonObject representation) {
     this.representation = representation;
+    initFields();
+  }
+
+  Calendar(JsonObject representation, LoanPolicyPeriod period, int duration) {
+    this.representation = representation;
+    this.period = period;
+    this.duration = duration;
     initFields();
   }
 
@@ -43,6 +54,14 @@ public class Calendar {
     this.startDate = StringUtils.defaultIfBlank(representation.getString(START_DATE_KEY), StringUtils.EMPTY);
     this.endDate = StringUtils.defaultIfBlank(representation.getString(END_DATE_KEY), StringUtils.EMPTY);
     this.openingDays = fillOpeningDayPeriod();
+  }
+
+  public LoanPolicyPeriod getPeriod() {
+    return period;
+  }
+
+  public int getDuration() {
+    return duration;
   }
 
   public JsonObject getRepresentation() {

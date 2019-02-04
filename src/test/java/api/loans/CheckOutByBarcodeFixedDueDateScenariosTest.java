@@ -26,7 +26,7 @@ import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POI
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY;
 import static api.support.fixtures.CalendarExamples.END_TIME_SECOND_PERIOD;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static org.folio.circulation.resources.CheckOutByBarcodeResource.DATE_TIME_FORMATTER;
+import static org.folio.circulation.resources.CheckOutByBarcodeResource.DATE_TIME_FORMAT;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
@@ -51,7 +51,7 @@ public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
       new DateTime(2019, DateTimeConstants.JANUARY, 25, 10, 0, DateTimeZone.UTC);
 
     DateTime limitDueDate =
-      DateTime.parse(CASE_FRI_SAT_MON_SERVICE_POINT_CURR_DAY, DateTimeFormat.forPattern(DATE_TIME_FORMATTER))
+      DateTime.parse(CASE_FRI_SAT_MON_SERVICE_POINT_CURR_DAY, DateTimeFormat.forPattern(DATE_TIME_FORMAT))
         .withZoneRetainFields(DateTimeZone.UTC);
     FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
       .withName("Fixed Due Date Schedule")
@@ -76,7 +76,7 @@ public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
         .on(loanDate));
 
     DateTime expectedDate =
-      DateTime.parse(CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY, DateTimeFormat.forPattern(DATE_TIME_FORMATTER))
+      DateTime.parse(CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY, DateTimeFormat.forPattern(DATE_TIME_FORMAT))
         .withTime(LocalTime.parse(END_TIME_SECOND_PERIOD))
         .withZoneRetainFields(DateTimeZone.UTC);
     assertThat("due date should be " + expectedDate,
@@ -99,7 +99,7 @@ public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
       new DateTime(2019, DateTimeConstants.JANUARY, 25, 10, 0, DateTimeZone.UTC);
 
     DateTime limitDueDate =
-      DateTime.parse(CASE_FRI_SAT_MON_SERVICE_POINT_CURR_DAY, DateTimeFormat.forPattern(DATE_TIME_FORMATTER))
+      DateTime.parse(CASE_FRI_SAT_MON_SERVICE_POINT_CURR_DAY, DateTimeFormat.forPattern(DATE_TIME_FORMAT))
         .withZoneRetainFields(DateTimeZone.UTC);
 
     FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
@@ -125,7 +125,7 @@ public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
         .on(loanDate));
 
     DateTime expectedDate =
-      DateTime.parse(CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY, DateTimeFormat.forPattern(DATE_TIME_FORMATTER))
+      DateTime.parse(CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY, DateTimeFormat.forPattern(DATE_TIME_FORMAT))
         .withTime(LocalTime.parse(END_TIME_SECOND_PERIOD))
         .withZoneRetainFields(DateTimeZone.UTC);
     assertThat("due date should be " + expectedDate,
@@ -149,7 +149,7 @@ public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
       new DateTime(2019, DateTimeConstants.JANUARY, 25, 10, 0, DateTimeZone.UTC);
 
     DateTime limitDueDate =
-      DateTime.parse(CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY, DateTimeFormat.forPattern(DATE_TIME_FORMATTER))
+      DateTime.parse(CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY, DateTimeFormat.forPattern(DATE_TIME_FORMAT))
         .withZoneRetainFields(DateTimeZone.UTC);
     FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
       .withName("Fixed Due Date Schedule")
@@ -174,7 +174,7 @@ public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
         .on(loanDate));
 
     DateTime expectedDate =
-      DateTime.parse(CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY, DateTimeFormat.forPattern(DATE_TIME_FORMATTER))
+      DateTime.parse(CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY, DateTimeFormat.forPattern(DATE_TIME_FORMAT))
         .withTime(LocalTime.parse(END_TIME_SECOND_PERIOD))
         .withZoneRetainFields(DateTimeZone.UTC);
     assertThat("due date should be " + expectedDate,
