@@ -89,7 +89,7 @@ public class LoanRulesEngineAPITests extends APITests {
   private String rules2 = String.join("\n",
       "priority: t, s, c, b, a, m, g",
       "fallback-policy: l " + p6,
-      "m " + m1 + ": " + p1,
+      "m " + m1 + ": l " + p1,
       "m " + m1 + " + t " + t1 + " : l " + p2,
       "m " + m1 + " + t " + t1 + " + g " + g1 + " : l " + p3
       );

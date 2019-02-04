@@ -150,7 +150,8 @@ all : 'all';
 fallbackpolicy : 'fallback-policy' policies NEWLINE
                ;
 
-policies : ':' policy+ 
+policies : ':' policy+
+         | ':' { notifyErrorListeners("Policy missing after ':'"); }
          ;
 
 policy : POLICY_TYPE 

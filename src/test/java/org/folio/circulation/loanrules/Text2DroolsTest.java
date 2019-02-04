@@ -241,7 +241,7 @@ public class Text2DroolsTest {
       Text2Drools.convert("priority: first-line\nm book: l policy-a");
       fail();
     } catch (LoanRulesException e) {
-      assertThat(e, matches("fallback", 2, 17));
+      assertThat(e, matches("fallback", 2, 19));
     }
   }
 
@@ -358,7 +358,7 @@ public class Text2DroolsTest {
       Text2Drools.convert(HEADER + "m book: l policy-a l policy-b");
       fail();
     } catch (LoanRulesException e) {
-      assertThat(e, matches("Only one policy allowed", 3, 26));
+      assertThat(e, matches("Only one policy of type l allowed", 3, 6));
     }
   }
 

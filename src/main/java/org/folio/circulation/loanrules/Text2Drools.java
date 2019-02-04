@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -206,6 +207,27 @@ public class Text2Drools extends LoanRulesBaseListener {
 
   private PriorityType getType(LinePriorityContext ctx) {
     return PriorityType.getPriorityType(ctx.getText());
+  }
+
+  @Override
+  public void enterPolicies(PoliciesContext policiesContext) {
+    String[] policyTypes = {"l", "r", "n"};
+    for (String policyType : policyTypes) {
+      List<PolicyContext> policies = filterPolicies(policiesContext, policyType);
+      if (policies.size() > 1) {
+        Token token = policiesContext.getStart();
+        throw new LoanRulesException(
+          String.format("Only one policy of type %s allowed", policyType),
+          token.getLine(), token.getCharPositionInLine());
+      }
+    }
+  }
+
+  private List<PolicyContext> filterPolicies(PoliciesContext policies, String policyType) {
+    return policies.policy().stream()
+      .filter(policy -> policy.POLICY_TYPE().getText().equals(policyType))
+      .collect(Collectors.toList());
+      
   }
 
   @Override
