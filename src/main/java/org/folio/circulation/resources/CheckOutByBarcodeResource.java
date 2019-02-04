@@ -34,6 +34,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -348,19 +349,13 @@ public class CheckOutByBarcodeResource extends Resource {
     // Exception case when dateTime is outside the period
     LocalTime[] startAndEndTime = getStartAndEndTime(currentOpeningDay.getOpeningHour());
     LocalTime startTime = startAndEndTime[0];
-    LocalTime endTime = startAndEndTime[1];
 
     if (timeShift.isBefore(startTime)) {
-      LocalDate dateOfNextDay = LocalDate.parse(nextOpeningDay.getDate(), DATE_TIME_FORMATTER);
-      return getStartDateTimeOfOpeningDay(nextOpeningDay, dateOfNextDay, offsetInterval, offsetDuration);
+      return getStartDateTimeOfOpeningDay(currentOpeningDay, dateOfCurrentDay, offsetInterval, offsetDuration);
     }
 
-    if (timeShift.isAfter(endTime)) {
-      LocalDate dateOfNextDay = LocalDate.parse(nextOpeningDay.getDate(), DATE_TIME_FORMATTER);
-      return getStartDateTimeOfOpeningDay(nextOpeningDay, dateOfNextDay, offsetInterval, offsetDuration);
-    }
-
-    return dateTimeWrapper(LocalDateTime.of(dateOfCurrentDay, timeShift));
+    LocalDate dateOfNextDay = LocalDate.parse(nextOpeningDay.getDate(), DATE_TIME_FORMATTER);
+    return getStartDateTimeOfOpeningDay(nextOpeningDay, dateOfNextDay, offsetInterval, offsetDuration);
   }
 
   /**
@@ -434,10 +429,11 @@ public class CheckOutByBarcodeResource extends Resource {
   }
 
   private DateTime calculateOffset(OpeningDay openingDay, LocalDate date, LocalTime time,
-                                   LoanPolicyPeriod offsetInterval, int offsetDuration) {
+                                   LoanPolicyPeriod offsetInterval, int offset) {
 
     LocalDateTime dateTime = LocalDateTime.of(date, time);
     List<OpeningHour> openingHours = openingDay.getOpeningHour();
+    int offsetDuration = determineOffsetDurationWithinDay(dateTime, offsetInterval, offset);
     switch (offsetInterval) {
       case HOURS:
         if (openingDay.getAllDay()) {
@@ -456,6 +452,22 @@ public class CheckOutByBarcodeResource extends Resource {
       default:
         return dateTimeWrapper(dateTime);
     }
+  }
+
+  private int determineOffsetDurationWithinDay(LocalDateTime dateTime,
+                                               LoanPolicyPeriod offsetInterval, int offsetDuration) {
+
+    if (LoanPolicyPeriod.MINUTES == offsetInterval) {
+      return offsetDuration;
+    }
+
+    LocalDate date = dateTime.toLocalDate();
+    LocalTime time = dateTime.toLocalTime();
+
+    LocalDate offsetDate = dateTime.plusHours(offsetDuration).toLocalDate();
+    return date.isEqual(offsetDate)
+      ? offsetDuration
+      : (int) ChronoUnit.HOURS.between(time, LocalTime.MAX);
   }
 
   private DateTime getDateTimeOffsetInPeriod(List<OpeningHour> openingHour, LocalDate date, LocalTime offsetTime) {

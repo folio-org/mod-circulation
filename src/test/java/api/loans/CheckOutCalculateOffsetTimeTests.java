@@ -54,6 +54,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
   private static final String INTERVAL_MINUTES = "Minutes";
   private static final String OFFSET_INTERVAL_HOURS = "Hours";
   private static final String OFFSET_INTERVAL_MINUTES = "Minutes";
+  private static final int START_VAL = 1;
 
   private final String dueDateManagement =
     DueDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS.getValue();
@@ -69,7 +70,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
   public void testOffsetIntervalHoursIfCurrentDayIsClosed() throws Exception {
     String servicePointId = CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID;
     int duration = 1;
-    int offsetDuration = new SplittableRandom().nextInt(0, 23);
+    int offsetDuration = new SplittableRandom().nextInt(START_VAL, 23);
 
     // next day
     OpeningDayPeriod dayPeriod = getLastFakeOpeningDayByServId(servicePointId);
@@ -91,7 +92,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
   public void testOffsetIntervalMinutesIfCurrentDayIsClosed() throws Exception {
     String servicePointId = CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID;
     int duration = 1;
-    int offsetDuration = new SplittableRandom().nextInt(0, MINUTES_PER_HOUR);
+    int offsetDuration = new SplittableRandom().nextInt(START_VAL, MINUTES_PER_HOUR);
 
     // next day
     OpeningDayPeriod dayPeriod = getLastFakeOpeningDayByServId(servicePointId);
@@ -112,8 +113,8 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
   @Test
   public void testOffsetIntervalHoursIfCurrentDayIsClosedWithPeriod() throws Exception {
     String servicePointId = CASE_FRI_SAT_MON_SERVICE_POINT_ID;
-    int duration = new SplittableRandom().nextInt(0, HOURS_PER_DAY);
-    int offsetDuration = new SplittableRandom().nextInt(0, 4);
+    int duration = new SplittableRandom().nextInt(START_VAL, HOURS_PER_DAY);
+    int offsetDuration = new SplittableRandom().nextInt(START_VAL, 4);
 
     // next day
     OpeningDayPeriod dayPeriod = getLastFakeOpeningDayByServId(servicePointId);
@@ -141,8 +142,8 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
   @Test
   public void testOffsetIntervalMinutesIfCurrentDayIsClosedWithPeriod() throws Exception {
     String servicePointId = CASE_FRI_SAT_MON_SERVICE_POINT_ID;
-    int duration = new SplittableRandom().nextInt(0, MINUTES_PER_HOUR);
-    int offsetDuration = new SplittableRandom().nextInt(0, MINUTES_PER_HOUR);
+    int duration = new SplittableRandom().nextInt(START_VAL, MINUTES_PER_HOUR);
+    int offsetDuration = new SplittableRandom().nextInt(START_VAL, MINUTES_PER_HOUR);
 
     // next day
     OpeningDayPeriod dayPeriod = getLastFakeOpeningDayByServId(servicePointId);
@@ -164,7 +165,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
   public void testOffsetIntervalHoursIfCurrentAllDayOpen() throws Exception {
     String servicePointId = CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID;
     int duration = 1;
-    int offsetDuration = new SplittableRandom().nextInt(0, 6);
+    int offsetDuration = new SplittableRandom().nextInt(START_VAL, 6);
 
     // current day
     OpeningDayPeriod dayPeriod = getCurrentFakeOpeningDayByServId(servicePointId);
@@ -187,7 +188,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
   public void testOffsetIntervalMinutesIfCurrentAllDayOpen() throws Exception {
     String servicePointId = CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID;
     int duration = 15;
-    int offsetDuration = new SplittableRandom().nextInt(0, MINUTES_PER_HOUR);
+    int offsetDuration = new SplittableRandom().nextInt(START_VAL, MINUTES_PER_HOUR);
 
     // current day
     OpeningDayPeriod dayPeriod = getCurrentFakeOpeningDayByServId(servicePointId);
@@ -210,7 +211,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
   public void testOffsetIntervalHoursForPeriod() throws Exception {
     String servicePointId = CASE_WED_THU_FRI_SERVICE_POINT_ID;
     int duration = 1;
-    int offsetDuration = 0;
+    int offsetDuration = START_VAL;
 
     List<OpeningDayPeriod> openingDays = getCurrentAndNextFakeOpeningDayByServId(servicePointId);
     DateTime expectedDueDate = getExpectedDateTimeFromPeriod(openingDays, INTERVAL_HOURS, duration,
@@ -228,10 +229,42 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
    * Test period: WED=open, THU=open, FRI=open
    */
   @Test
+  public void testOffsetDurationWithinDayHours() throws Exception {
+    String servicePointId = CASE_WED_THU_FRI_SERVICE_POINT_ID;
+    int duration;
+    int offsetDuration = HOURS_PER_DAY;
+
+    LocalTime endTimeOfPeriod = LocalTime.parse(END_TIME_SECOND_PERIOD);
+    LocalTime timeNow = LocalTime.now(ZoneOffset.UTC);
+
+    // The value of `duration` is calculated taking into account the exit for the period.
+    if (timeNow.isBefore(endTimeOfPeriod)) {
+      duration = (int) ChronoUnit.HOURS.between(timeNow, endTimeOfPeriod) + 1;
+    } else {
+      duration = HOURS_PER_DAY - (int) ChronoUnit.HOURS.between(endTimeOfPeriod, timeNow) + 1;
+    }
+
+    OpeningDay openingDay = getLastFakeOpeningDayByServId(servicePointId).getOpeningDay();
+    LocalDate expectedDate = LocalDate.parse(openingDay.getDate(), DATE_TIME_FORMATTER);
+    LocalTime expectedTime = LocalTime.parse(END_TIME_SECOND_PERIOD).plusHours(offsetDuration);
+
+    DateTime expectedDueDate = timeZoneWrapper(LocalDateTime.of(expectedDate, expectedTime));
+    checkOffsetTime(expectedDueDate, servicePointId, INTERVAL_HOURS, duration,
+      OFFSET_INTERVAL_HOURS, offsetDuration);
+  }
+
+  /**
+   * Loan period: Hours
+   * Offset period: Hours
+   * Current day: period
+   * Next day: period
+   * Test period: WED=open, THU=open, FRI=open
+   */
+  @Test
   public void testOffsetIntervalHoursForPeriodCase1() throws Exception {
     String servicePointId = CASE_WED_THU_FRI_SERVICE_POINT_ID;
     int duration;
-    int offsetDuration = 0;
+    int offsetDuration = START_VAL;
 
     LocalTime endTimeOfPeriod = LocalTime.parse(END_TIME_SECOND_PERIOD);
     LocalTime timeNow = LocalTime.now(ZoneOffset.UTC);
@@ -275,7 +308,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
       duration = (int) ChronoUnit.HOURS.between(timeNow, starTmeOfPeriod) - 1;
     }
 
-    OpeningDay openingDay = getLastFakeOpeningDayByServId(servicePointId).getOpeningDay();
+    OpeningDay openingDay = getCurrentFakeOpeningDayByServId(servicePointId).getOpeningDay();
     LocalDate expectedDate = LocalDate.parse(openingDay.getDate(), DATE_TIME_FORMATTER);
     LocalTime expectedTime = LocalTime.parse(START_TIME_FIRST_PERIOD).plusHours(offsetDuration);
 
@@ -294,8 +327,8 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
   @Test
   public void testOffsetIntervalMinutesForPeriod() throws Exception {
     String servicePointId = CASE_WED_THU_FRI_SERVICE_POINT_ID;
-    int duration = new SplittableRandom().nextInt(0, MINUTES_PER_HOUR);
-    int offsetDuration = new SplittableRandom().nextInt(0, MINUTES_PER_HOUR);
+    int duration = new SplittableRandom().nextInt(START_VAL, MINUTES_PER_HOUR);
+    int offsetDuration = new SplittableRandom().nextInt(START_VAL, MINUTES_PER_HOUR);
 
     List<OpeningDayPeriod> openingDays = getCurrentAndNextFakeOpeningDayByServId(servicePointId);
     DateTime expectedDueDate = getExpectedDateTimeFromPeriod(openingDays, INTERVAL_MINUTES, duration,
@@ -316,7 +349,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
   public void testOffsetIntervalMinutesCurrentDay() throws Exception {
     String servicePointId = CASE_WED_THU_FRI_SERVICE_POINT_ID;
     int duration = 1;
-    int offsetDuration = new SplittableRandom().nextInt(0, MINUTES_PER_HOUR);
+    int offsetDuration = new SplittableRandom().nextInt(START_VAL, MINUTES_PER_HOUR);
 
     List<OpeningDayPeriod> openingDays = getCurrentAndNextFakeOpeningDayByServId(servicePointId);
     DateTime expectedDueDate =
@@ -337,7 +370,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
   public void testOffsetIntervalMinutesWhenCurrentAndNextDayIsClosed() throws Exception {
     String servicePointId = CASE_PREV_OPEN_AND_CURRENT_NEXT_CLOSED;
     int duration = 1;
-    int offsetDuration = new SplittableRandom().nextInt(0, MINUTES_PER_HOUR);
+    int offsetDuration = new SplittableRandom().nextInt(START_VAL, MINUTES_PER_HOUR);
 
     OpeningDayPeriod dayPeriod = getFirstFakeOpeningDayByServId(servicePointId);
     LocalDate expectedDate = LocalDate.parse(dayPeriod.getOpeningDay().getDate(), DATE_TIME_FORMATTER);
