@@ -40,14 +40,14 @@ public class NameConverterTest {
 
   private String loanRulesNames = String.join("\n",
       "priority: last-line",
-      "fallback-policy: fallback",
-      "m book withoutreplacement dvd + t withoutreplacement: policy-x",
+      "fallback-policy: l fallback",
+      "m book withoutreplacement dvd + t withoutreplacement: l policy-x",
       ""
   );
   private String loanRulesUuids = String.join("\n",
       "priority: last-line",
-      "fallback-policy: 0",
-      "m 123 withoutreplacement 987 + t withoutreplacement: 1",
+      "fallback-policy: l 0",
+      "m 123 withoutreplacement 987 + t withoutreplacement: l 1",
       ""
   );
 

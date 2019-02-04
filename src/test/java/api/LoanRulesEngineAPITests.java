@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.loanrules.ItemType;
-import org.folio.circulation.loanrules.LoanPolicy;
+import org.folio.circulation.loanrules.Policy;
 import org.folio.circulation.loanrules.LoanType;
 import org.folio.circulation.loanrules.PatronGroup;
 import org.folio.circulation.loanrules.ShelvingLocation;
@@ -37,7 +37,7 @@ public class LoanRulesEngineAPITests extends APITests {
     }
   }
 
-  private LoanPolicy apply(ItemType itemType, LoanType loanType,
+  private Policy apply(ItemType itemType, LoanType loanType,
       PatronGroup patronGroup, ShelvingLocation shelvingLocation) {
     try {
       CompletableFuture<Response> completed = new CompletableFuture<>();
@@ -54,7 +54,7 @@ public class LoanRulesEngineAPITests extends APITests {
       JsonObject json = new JsonObject(response.getBody());
       String loanPolicyId = json.getString("loanPolicyId");
       assert loanPolicyId != null;
-      return new LoanPolicy(loanPolicyId);
+      return new Policy(loanPolicyId);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -69,29 +69,29 @@ public class LoanRulesEngineAPITests extends APITests {
   private PatronGroup g2 = new PatronGroup("87d14197-6de3-4ba5-9201-6c4129504adf");
   private ShelvingLocation s1 = new ShelvingLocation("cdc0b09d-dd56-4377-ae10-a20b50121dc4");
   private ShelvingLocation s2 = new ShelvingLocation("fe91de23-6bf5-4179-a90e-3e87769af86e");
-  private LoanPolicy p6 = new LoanPolicy("6a475259-8a97-4992-a415-76440f5f7c23");
-  private LoanPolicy p7 = new LoanPolicy("7b586360-8ba8-4aa3-b526-875510608d34");
-  private LoanPolicy p1 = new LoanPolicy("f6f88da8-2aaf-48c7-944e-0de3f4cc2368");
-  private LoanPolicy p2 = new LoanPolicy("c42e3a01-eb61-4edd-8cb0-8c7ecc0b4ca2");
-  private LoanPolicy p3 = new LoanPolicy("f0c8d755-0e56-4d38-9a45-9cd9248b1ae8");
-  private LoanPolicy p4 = new LoanPolicy("0122feae-bd0e-4405-88de-525d93ba7cfd");
+  private Policy p6 = new Policy("6a475259-8a97-4992-a415-76440f5f7c23");
+  private Policy p7 = new Policy("7b586360-8ba8-4aa3-b526-875510608d34");
+  private Policy p1 = new Policy("f6f88da8-2aaf-48c7-944e-0de3f4cc2368");
+  private Policy p2 = new Policy("c42e3a01-eb61-4edd-8cb0-8c7ecc0b4ca2");
+  private Policy p3 = new Policy("f0c8d755-0e56-4d38-9a45-9cd9248b1ae8");
+  private Policy p4 = new Policy("0122feae-bd0e-4405-88de-525d93ba7cfd");
 
-  private String rulesFallback =  "priority: t, s, c, b, a, m, g\nfallback-policy: " + p6;
-  private String rulesFallback2 = "priority: t, s, c, b, a, m, g\nfallback-policy: " + p7;
+  private String rulesFallback =  "priority: t, s, c, b, a, m, g\nfallback-policy: l " + p6;
+  private String rulesFallback2 = "priority: t, s, c, b, a, m, g\nfallback-policy: l " + p7;
 
   private String rules1 = String.join("\n",
       "priority: t, s, c, b, a, m, g",
-      "fallback-policy: " + p2,
-      "m " + m2 + ": " + p3,
-      "    g " + g2 + ": " + p4
+      "fallback-policy: l " + p2,
+      "m " + m2 + ": l " + p3,
+      "    g " + g2 + ": l " + p4
       );
 
   private String rules2 = String.join("\n",
       "priority: t, s, c, b, a, m, g",
-      "fallback-policy: " + p6,
+      "fallback-policy: l " + p6,
       "m " + m1 + ": " + p1,
-      "m " + m1 + " + t " + t1 + " : " + p2,
-      "m " + m1 + " + t " + t1 + " + g " + g1 + " : " + p3
+      "m " + m1 + " + t " + t1 + " : l " + p2,
+      "m " + m1 + " + t " + t1 + " + g " + g1 + " : l " + p3
       );
 
   @Before
@@ -198,7 +198,7 @@ public class LoanRulesEngineAPITests extends APITests {
     assertThat(apply(m1, t1, g1, s2), is(p3));
   }
 
-  private void matches(JsonArray array, int match, LoanPolicy policy, int line) {
+  private void matches(JsonArray array, int match, Policy policy, int line) {
     JsonObject o = array.getJsonObject(match);
     assertThat("["+match+"].loanPolicyId of "+o, o.getString("loanPolicyId"), is(policy.id));
     assertThat("["+match+"].loanRuleLine of "+o, o.getInteger("loanRuleLine"), is(line));

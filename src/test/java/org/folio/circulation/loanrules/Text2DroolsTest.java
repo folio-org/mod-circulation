@@ -18,7 +18,7 @@ import static org.junit.Assert.fail;
 public class Text2DroolsTest {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  private static final String HEADER = "priority: last-line\nfallback-policy: no-loan\n";
+  private static final String HEADER = "priority: last-line\nfallback-policy: l no-loan\n";
 
   @Test
   public void headerFallbackPolicy() {
@@ -29,15 +29,15 @@ public class Text2DroolsTest {
 
   private String test1 = String.join("\n",
       "priority: t, s, c, b, a, m, g",
-      "fallback-policy: no-loan",
-      "m book cd dvd: policy-a",
-      "m newspaper + g all: policy-c",
-      "m streaming-subscription: policy-c",
-      "    g visitor: in-house",
-      "    g undergrad: in-house",
-      "m book cd dvd + t special-items : in-house",
-      "t special-items: policy-d",
-      "    g visitor: in-house"
+      "fallback-policy: l no-loan",
+      "m book cd dvd: l policy-a",
+      "m newspaper + g all: l policy-c",
+      "m streaming-subscription: l policy-c",
+      "    g visitor: l in-house",
+      "    g undergrad: l in-house",
+      "m book cd dvd + t special-items : l in-house",
+      "t special-items: l policy-d",
+      "    g visitor: l in-house"
       );
   private String [][] test1cases = new String[][] {
     // item type,   loan type,      patron type,   loan policies
@@ -108,8 +108,8 @@ public class Text2DroolsTest {
     try {
       Text2Drools.convert(String.join("\n",
           "priority: first-line",
-          "fallback-policy: no-loan",
-          "m book: policy-a"));
+          "fallback-policy: l no-loan",
+          "m book: l policy-a"));
       fail();
     } catch (LoanRulesException e) {
       assertThat(e, matches("fallback-policy", 3, 1));
@@ -121,9 +121,9 @@ public class Text2DroolsTest {
     String loanRules = String.join("\n",
         "priority: first-line",
         "g visitor",
-        "  t special-items: in-house",
-        "m book: policy-b",
-        "fallback-policy: no-loan",
+        "  t special-items: l in-house",
+        "m book: l policy-b",
+        "fallback-policy: l no-loan",
         "",
         ""
     );
@@ -138,7 +138,7 @@ public class Text2DroolsTest {
   @Test
   public void tab() {
     try {
-      Text2Drools.convert(HEADER + "  \t m book: policy-a");
+      Text2Drools.convert(HEADER + "  \t m book: l policy-a");
       fail();
     } catch (LoanRulesException e) {
       assertThat(e, matches("Tab", 3, 4));
@@ -148,7 +148,7 @@ public class Text2DroolsTest {
   @Test
   public void missingPriority() {
     try {
-      Text2Drools.convert("fallback-policy: no-loan");
+      Text2Drools.convert("fallback-policy: l no-loan");
       fail();
     } catch (LoanRulesException e) {
       assertThat(e, matches("priority", 1, 1));
@@ -158,7 +158,7 @@ public class Text2DroolsTest {
   @Test
   public void reject6CriteriumTypes() {
     try {
-      Text2Drools.convert("priority: t g m a b c\nfallback-policy: no-loan");
+      Text2Drools.convert("priority: t g m a b c\nfallback-policy: l no-loan");
       fail();
     } catch (LoanRulesException e) {
       assertThat(e, matches("7 letters expected, found only 6", 1, 11));
@@ -168,7 +168,7 @@ public class Text2DroolsTest {
   @Test
   public void reject8CriteriumTypes() {
     try {
-      Text2Drools.convert("priority: t g m a b c s s\nfallback-policy: no-loan");
+      Text2Drools.convert("priority: t g m a b c s s\nfallback-policy: l no-loan");
       fail();
     } catch (LoanRulesException e) {
       assertThat(e, matches("Only 7 letters expected, found 8", 1, 11));
@@ -178,7 +178,7 @@ public class Text2DroolsTest {
   @Test
   public void duplicateCriteriumType() {
     try {
-      Text2Drools.convert("priority: t g m a b s s\nfallback-policy: no-loan");
+      Text2Drools.convert("priority: t g m a b s s\nfallback-policy: l no-loan");
       fail();
     } catch (LoanRulesException e) {
       assertThat(e, matches("Duplicate letter s", 1, 23));
@@ -188,7 +188,7 @@ public class Text2DroolsTest {
   @Test
   public void duplicatePriorityType() {
     try {
-      Text2Drools.convert("priority: number-of-criteria, number-of-criteria, last-line\nfallback-policy: no-loan");
+      Text2Drools.convert("priority: number-of-criteria, number-of-criteria, last-line\nfallback-policy: l no-loan");
       fail();
     } catch (LoanRulesException e) {
       assertThat(e, matches("Duplicate priority", 1, 31));
@@ -199,11 +199,11 @@ public class Text2DroolsTest {
   public void twoPriorities() {
     Drools drools = new Drools(Text2Drools.convert(String.join("\n",
         "priority: number-of-criteria, first-line",
-        "fallback-policy: no-loan",
-        "m book: policy-a",
-        "g student: policy-b",
-        "m dvd: policy-c",
-        "     g visitor: policy-d"
+        "fallback-policy: l no-loan",
+        "m book: l policy-a",
+        "g student: l policy-b",
+        "m dvd: l policy-c",
+        "     g visitor: l policy-d"
         )));
     assertThat(drools.loanPolicy("book", "regular", "student", "shelf"), is("policy-a"));
     assertThat(drools.loanPolicy("dvd",  "regular", "student", "shelf"), is("policy-b"));
@@ -214,11 +214,11 @@ public class Text2DroolsTest {
   public void threePriorities() {
     Drools drools = new Drools(Text2Drools.convert(String.join("\n",
         "priority: criterium(t, s, c, b, a, m, g), number-of-criteria, first-line",
-        "fallback-policy: no-loan",
-        "m book: policy-a",
-        "g student: policy-b",
-        "m dvd: policy-c",
-        "     g visitor: policy-d"
+        "fallback-policy: l no-loan",
+        "m book: l policy-a",
+        "g student: l policy-b",
+        "m dvd: l policy-c",
+        "     g visitor: l policy-d"
         )));
     assertThat(drools.loanPolicy("book", "regular", "student", "shelf"), is("policy-a"));
     assertThat(drools.loanPolicy("dvd",  "regular", "student", "shelf"), is("policy-c"));
@@ -228,7 +228,7 @@ public class Text2DroolsTest {
   @Test
   public void missingFallbackPolicy() {
     try {
-      Text2Drools.convert("priority: last-line\nm book: policy-a");
+      Text2Drools.convert("priority: last-line\nm book: l policy-a");
       fail();
     } catch (LoanRulesException e) {
       assertThat(e, matches("fallback", 2, 1));
@@ -238,7 +238,7 @@ public class Text2DroolsTest {
   @Test
   public void missingFallbackPolicyFirstLine() {
     try {
-      Text2Drools.convert("priority: first-line\nm book: policy-a");
+      Text2Drools.convert("priority: first-line\nm book: l policy-a");
       fail();
     } catch (LoanRulesException e) {
       assertThat(e, matches("fallback", 2, 17));
@@ -248,7 +248,7 @@ public class Text2DroolsTest {
   @Test
   public void indentedFallbackPolicy() {
     try {
-      Text2Drools.convert(HEADER + "m book\n  fallback-policy: policy-b");
+      Text2Drools.convert(HEADER + "m book\n  fallback-policy: l policy-b");
       fail();
     } catch (LoanRulesException e) {
       assertThat(e, matches("mismatched input 'fallback-policy'", 4, 3));
@@ -258,7 +258,7 @@ public class Text2DroolsTest {
   @Test
   public void exclamationBeforePriority() {
     try {
-      Text2Drools.convert("! fallback-policy: policy-a");
+      Text2Drools.convert("! fallback-policy: l policy-a");
       fail();
     } catch (LoanRulesException e) {
       assertThat(e, matches("mismatched input '!'", 1, 1));
@@ -268,7 +268,7 @@ public class Text2DroolsTest {
   @Test
   public void emptyNameList() {
     try {
-      Text2Drools.convert(HEADER + "m: policy-a");
+      Text2Drools.convert(HEADER + "m: l policy-a");
       fail();
     } catch (LoanRulesException e) {
       assertThat(e, matches("Name missing", 3, 2));
@@ -279,8 +279,8 @@ public class Text2DroolsTest {
   public void noSpaceAroundColon() {
     Drools drools = new Drools(Text2Drools.convert(String.join("\n",
         "priority:last-line",
-        "fallback-policy:no-loan",
-        "s new:policy-a")));
+        "fallback-policy:l no-loan",
+        "s new:l policy-a")));
     assertThat(drools.loanPolicy("dvd", "regular", "student", "shelf"), is("no-loan"));
     assertThat(drools.loanPolicy("dvd", "regular", "student", "new"  ), is("policy-a"));
   }
@@ -289,15 +289,15 @@ public class Text2DroolsTest {
   public void multiSpaceAroundColon() {
     Drools drools = new Drools(Text2Drools.convert(String.join("\n",
         "priority   :   last-line",
-        "fallback-policy   :   no-loan",
-        "s new   :   policy-a")));
+        "fallback-policy   :   l no-loan",
+        "s new   :   l policy-a")));
     assertThat(drools.loanPolicy("dvd", "regular", "student", "shelf"), is("no-loan"));
     assertThat(drools.loanPolicy("dvd", "regular", "student", "new"  ), is("policy-a"));
   }
 
   @Test
   public void negation() {
-    Drools drools = new Drools(Text2Drools.convert(HEADER + "m !dvd !music: policy-a"));
+    Drools drools = new Drools(Text2Drools.convert(HEADER + "m !dvd !music: l policy-a"));
     assertThat(drools.loanPolicy("dvd",       "regular", "student", "shelf"), is("no-loan"));
     assertThat(drools.loanPolicy("music",     "regular", "student", "shelf"), is("no-loan"));
     assertThat(drools.loanPolicy("newspaper", "regular", "student", "shelf"), is("policy-a"));
@@ -305,7 +305,7 @@ public class Text2DroolsTest {
 
   @Test
   public void negationSingle() {
-    Drools drools = new Drools(Text2Drools.convert(HEADER + "m !dvd: policy-a"));
+    Drools drools = new Drools(Text2Drools.convert(HEADER + "m !dvd: l policy-a"));
     assertThat(drools.loanPolicy("dvd",       "regular", "student", "shelf"), is("no-loan"));
     assertThat(drools.loanPolicy("newspaper", "regular", "student", "shelf"), is("policy-a"));
   }
@@ -314,12 +314,12 @@ public class Text2DroolsTest {
   public void shelvingLocation() {
     Drools drools = new Drools(Text2Drools.convert(String.join("\n",
         "priority: last-line",
-        "fallback-policy: no-loan",
-        "s new: policy-a",
-        "m book: policy-b",
-        "a new: policy-c",
-        "b new: policy-d",
-        "c new: policy-e")));
+        "fallback-policy: l no-loan",
+        "s new: l policy-a",
+        "m book: l policy-b",
+        "a new: l policy-c",
+        "b new: l policy-d",
+        "c new: l policy-e")));
     assertThat(drools.loanPolicy("dvd",  "regular", "student",  "new"),   is("policy-a"));
     assertThat(drools.loanPolicy("book", "regular", "student",  "new"),   is("policy-b"));
     assertThat(drools.loanPolicy("book", "regular", "student",  "shelf"), is("policy-b"));
@@ -329,11 +329,11 @@ public class Text2DroolsTest {
   public void shelvingLocationDefaultPriority() {
     Drools drools = new Drools(Text2Drools.convert(String.join("\n",
         "priority: t, s, c, b, a, m, g",
-        "fallback-policy: no-loan",
-        "s new: policy-new",
-        "t special-items: policy-special",
-        "m book: policy-book",
-        "s stacks: policy-stacks")));
+        "fallback-policy: l no-loan",
+        "s new: l policy-new",
+        "t special-items: l policy-special",
+        "m book: l policy-book",
+        "s stacks: l policy-stacks")));
     assertThat(drools.loanPolicy("book", "regular",       "student", "new"),         is("policy-new"));
     assertThat(drools.loanPolicy("book", "regular",       "student", "open-stacks"), is("policy-book"));
     assertThat(drools.loanPolicy("book", "regular",       "student", "stacks"),      is("policy-stacks"));
@@ -355,7 +355,7 @@ public class Text2DroolsTest {
   @Test
   public void duplicateLoanPolicy() {
     try {
-      Text2Drools.convert(HEADER + "m book: policy-a policy-b");
+      Text2Drools.convert(HEADER + "m book: l policy-a l policy-b");
       fail();
     } catch (LoanRulesException e) {
       assertThat(e, matches("Only one policy allowed", 3, 26));
@@ -364,13 +364,13 @@ public class Text2DroolsTest {
 
   @Test
   public void comment() {
-    String drools = Text2Drools.convert(HEADER + "# m book: loan-anyhow");
+    String drools = Text2Drools.convert(HEADER + "# m book: l loan-anyhow");
     assertThat(drools, not(containsString("loan-anyhow")));
   }
 
   @Test
   public void commentWithoutSpace() {
-    String drools = Text2Drools.convert(HEADER + "#m book: loan-anyhow");
+    String drools = Text2Drools.convert(HEADER + "#m book: l loan-anyhow");
     assertThat(drools, not(containsString("loan-anyhow")));
   }
 

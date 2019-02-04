@@ -78,11 +78,11 @@ public class LoanAPIPolicyTests extends APITests {
 
     String rules = String.join("\n",
       "priority: t, s, c, b, a, m, g",
-      "fallback-policy: " + pFallback,
-      "m " + videoRecording + " + g " + group1 + " : " + p1,
-      "m " + book + " + t " + canCirculate + " : " + p2,
-      "m " + book + " + t " + readingRoom + " : " + p3,
-      "m " + book + " + t " + canCirculate + " + g " + group1 + " : " + p4);
+      "fallback-policy: l " + pFallback,
+      "m " + videoRecording + " + g " + group1 + " : l " + p1,
+      "m " + book + " + t " + canCirculate + " : l " + p2,
+      "m " + book + " + t " + readingRoom + " : l " + p3,
+      "m " + book + " + t " + canCirculate + " + g " + group1 + " : l " + p4);
 
     loanRulesFixture.updateLoanRules(rules);
 
