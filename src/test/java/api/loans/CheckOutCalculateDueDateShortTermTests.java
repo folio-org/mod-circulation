@@ -21,6 +21,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.SplittableRandom;
 import java.util.UUID;
@@ -144,7 +145,7 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
 
   /**
    * Loan period: Hours
-   * Current day: open allDay
+   * Current day: open
    * Current and next day: period
    * Test period: WED=open, THU=open, FRI=open
    */
@@ -162,7 +163,6 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
 
   /**
    * Loan period: Minutes
-   * Current day: open allDay
    * Current and next day: open allDay
    * Test period: WED=open, THU=open, FRI=open
    */
@@ -180,7 +180,6 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
 
   /**
    * Loan period: Minutes
-   * Current day: open allDay
    * Current and next day: period
    * Test period: WED=open, THU=open, FRI=open
    */
@@ -189,6 +188,60 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
     String servicePointId = CASE_WED_THU_FRI_SERVICE_POINT_ID;
     int duration = new SplittableRandom().nextInt(START_VAL, MINUTES_PER_HOUR);
     String interval = INTERVAL_MINUTES;
+
+    List<OpeningDayPeriod> openingDayPeriods = getFakeOpeningDayByServId(servicePointId);
+    DateTime expectedDueDate = getTimeOpeningPeriodDay(openingDayPeriods, interval, duration);
+
+    checkOffsetTime(expectedDueDate, servicePointId, interval, duration);
+  }
+
+  /**
+   * Loan period: Hours
+   * Current and next day: period
+   * Test period: WED=open, THU=open, FRI=open
+   */
+  @Test
+  public void testHoursLoanTimeOutsidePeriod() throws Exception {
+    String servicePointId = CASE_WED_THU_FRI_SERVICE_POINT_ID;
+    int duration;
+    String interval = INTERVAL_HOURS;
+
+    LocalTime endTimeOfPeriod = LocalTime.parse(END_TIME_SECOND_PERIOD);
+    LocalTime timeNow = LocalTime.now(ZoneOffset.UTC);
+
+    // The value of `duration` is calculated taking into account the exit for the period.
+    if (timeNow.isBefore(endTimeOfPeriod)) {
+      duration = (int) ChronoUnit.HOURS.between(timeNow, endTimeOfPeriod) + 1;
+    } else {
+      duration = HOURS_PER_DAY - (int) ChronoUnit.HOURS.between(endTimeOfPeriod, timeNow) + 1;
+    }
+
+    List<OpeningDayPeriod> openingDayPeriods = getFakeOpeningDayByServId(servicePointId);
+    DateTime expectedDueDate = getTimeOpeningPeriodDay(openingDayPeriods, interval, duration);
+
+    checkOffsetTime(expectedDueDate, servicePointId, interval, duration);
+  }
+
+  /**
+   * Loan period: Hours
+   * Current and next day: period
+   * Test period: WED=open, THU=open, FRI=open
+   */
+  @Test
+  public void testHoursLoanTimeOutsidePeriodCase2() throws Exception {
+    String servicePointId = CASE_WED_THU_FRI_SERVICE_POINT_ID;
+    int duration;
+    String interval = INTERVAL_HOURS;
+
+    LocalTime starTmeOfPeriod = LocalTime.parse(START_TIME_FIRST_PERIOD);
+    LocalTime timeNow = LocalTime.now(ZoneOffset.UTC);
+
+    // The value is calculated taking into account the transition to the next period
+    if (timeNow.isAfter(starTmeOfPeriod)) {
+      duration = HOURS_PER_DAY - (int) ChronoUnit.HOURS.between(starTmeOfPeriod, timeNow) - 1;
+    } else {
+      duration = (int) ChronoUnit.HOURS.between(timeNow, starTmeOfPeriod) - 1;
+    }
 
     List<OpeningDayPeriod> openingDayPeriods = getFakeOpeningDayByServId(servicePointId);
     DateTime expectedDueDate = getTimeOpeningPeriodDay(openingDayPeriods, interval, duration);
