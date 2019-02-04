@@ -22,7 +22,7 @@ import org.folio.circulation.loanrules.LoanRulesParser.DedentContext;
 import org.folio.circulation.loanrules.LoanRulesParser.DefaultPrioritiesContext;
 import org.folio.circulation.loanrules.LoanRulesParser.ExprContext;
 import org.folio.circulation.loanrules.LoanRulesParser.FallbackpolicyContext;
-import org.folio.circulation.loanrules.LoanRulesParser.FallbakcpoliciesContext;
+import org.folio.circulation.loanrules.LoanRulesParser.FallbackpoliciesContext;
 import org.folio.circulation.loanrules.LoanRulesParser.IndentContext;
 import org.folio.circulation.loanrules.LoanRulesParser.LastLinePrioritiesContext;
 import org.folio.circulation.loanrules.LoanRulesParser.LinePriorityContext;
@@ -232,7 +232,7 @@ public class Text2Drools extends LoanRulesBaseListener {
   }
 
   @Override
-  public void enterFallbakcpolicies(FallbakcpoliciesContext ctx) {
+  public void enterFallbackpolicies(FallbackpoliciesContext ctx) {
     Token token = ctx.getStart();
 
     for (String policyType: policyTypes) {
