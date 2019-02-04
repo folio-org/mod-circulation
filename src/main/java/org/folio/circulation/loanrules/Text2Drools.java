@@ -22,6 +22,7 @@ import org.folio.circulation.loanrules.LoanRulesParser.DedentContext;
 import org.folio.circulation.loanrules.LoanRulesParser.DefaultPrioritiesContext;
 import org.folio.circulation.loanrules.LoanRulesParser.ExprContext;
 import org.folio.circulation.loanrules.LoanRulesParser.FallbackpolicyContext;
+import org.folio.circulation.loanrules.LoanRulesParser.FallbakcpoliciesContext;
 import org.folio.circulation.loanrules.LoanRulesParser.IndentContext;
 import org.folio.circulation.loanrules.LoanRulesParser.LastLinePrioritiesContext;
 import org.folio.circulation.loanrules.LoanRulesParser.LinePriorityContext;
@@ -100,6 +101,8 @@ public class Text2Drools extends LoanRulesBaseListener {
   private static Matcher defaultMatcher = new Matcher(0, Collections.emptySet(), 0, null);
 
   private int indentation = 0;
+
+  private String[] policyTypes = {"l", "r", "n"};
 
   private enum PriorityType {
     NONE,
@@ -211,7 +214,6 @@ public class Text2Drools extends LoanRulesBaseListener {
 
   @Override
   public void enterPolicies(PoliciesContext policiesContext) {
-    String[] policyTypes = {"l", "r", "n"};
     for (String policyType : policyTypes) {
       List<PolicyContext> policies = filterPolicies(policiesContext, policyType);
       if (policies.size() > 1) {
@@ -227,7 +229,26 @@ public class Text2Drools extends LoanRulesBaseListener {
     return policies.policy().stream()
       .filter(policy -> policy.POLICY_TYPE().getText().equals(policyType))
       .collect(Collectors.toList());
-      
+  }
+
+  @Override
+  public void enterFallbakcpolicies(FallbakcpoliciesContext ctx) {
+    Token token = ctx.getStart();
+
+    for (String policyType: policyTypes) {
+      Long count = ctx.fallbackpolicy().stream()
+      .filter(fbp -> fbp.policies().policy(0).POLICY_TYPE().toString().equals(policyType))
+      .collect(Collectors.counting());
+      if (count > 1) {
+        throw new LoanRulesException(
+          String.format("Only one fallback policy of type %s is allowed", policyType),
+          token.getLine(), token.getCharPositionInLine());
+      } else if (count == 0) {
+        throw new LoanRulesException(
+          "Must have a fallback policy of type %s",
+          token.getLine(), token.getCharPositionInLine());
+      }
+    }
   }
 
   @Override

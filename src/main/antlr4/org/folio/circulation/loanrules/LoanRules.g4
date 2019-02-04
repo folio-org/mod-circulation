@@ -147,6 +147,9 @@ criterium : CRITERIUM_LETTER
 
 all : 'all';
 
+fallbakcpolicies : fallbackpolicy+
+                 ;
+
 fallbackpolicy : 'fallback-policy' policies NEWLINE
                ;
 
