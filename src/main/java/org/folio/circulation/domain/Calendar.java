@@ -94,13 +94,14 @@ public class Calendar {
     return openingDays;
   }
 
-
   private List<OpeningDayPeriod> fillOpeningDayPeriod() {
     List<OpeningDayPeriod> dayPeriods = new ArrayList<>();
     JsonArray openingDaysJson = representation.getJsonArray(OPENING_DAYS_KEY);
-    for (int i = 0; i < openingDaysJson.size(); i++) {
-      JsonObject jsonObject = openingDaysJson.getJsonObject(i);
-      dayPeriods.add(new OpeningDayPeriod(jsonObject));
+    if (openingDaysJson != null) {
+      for (int i = 0; i < openingDaysJson.size(); i++) {
+        JsonObject jsonObject = openingDaysJson.getJsonObject(i);
+        dayPeriods.add(new OpeningDayPeriod(jsonObject));
+      }
     }
     return dayPeriods;
   }
