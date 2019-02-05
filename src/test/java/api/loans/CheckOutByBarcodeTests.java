@@ -208,7 +208,11 @@ public class CheckOutByBarcodeTests extends APITests {
     UUID dueDateLimitedPolicyId = loanPoliciesFixture.create(dueDateLimitedPolicy)
       .getId();
 
-    useLoanPolicyAsFallback(dueDateLimitedPolicyId);
+    useLoanPolicyAsFallback(
+      dueDateLimitedPolicyId,
+      requestPoliciesFixture.noAllowedTypes().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -536,7 +540,11 @@ public class CheckOutByBarcodeTests extends APITests {
 
     final UUID nonExistentloanPolicyId = UUID.randomUUID();
 
-    useLoanPolicyAsFallback(nonExistentloanPolicyId);
+    useLoanPolicyAsFallback(
+      nonExistentloanPolicyId,
+      requestPoliciesFixture.noAllowedTypes().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();

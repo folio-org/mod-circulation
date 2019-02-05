@@ -24,13 +24,13 @@ public class LoanRulesAPITests extends APITests {
 
   @Test
   public void canPutAndGet() throws Exception {
-    String rule = "priority: t, s, c, b, a, m, g\nfallback-policy: l no-circulation\n";
+    String rule = "priority: t, s, c, b, a, m, g\nfallback-policy: l no-circulation\nfallback-policy: r no-hold\nfallback-policy: n basic-notice\n";
 
     loanRulesFixture.updateLoanRules(rule);
 
     assertThat(getText(), is(rule));
 
-    rule = "priority: t, s, c, b, a, m, g\nfallback-policy: l loan-forever\n";
+    rule = "priority: t, s, c, b, a, m, g\nfallback-policy: l loan-forever\nfallback-policy: r two-week-hold\nfallback-policy: n two-week-notice\n";
 
     loanRulesFixture.updateLoanRules(rule);
 

@@ -24,11 +24,14 @@ import api.support.http.InterfaceUrls;
 import io.vertx.core.json.JsonObject;
 
 public class LoanAPIPolicyTests extends APITests {
-  private static UUID pFallback;
-  private static UUID p1;
-  private static UUID p2;
-  private static UUID p3;
-  private static UUID p4;
+  private static UUID lpFallback;
+  private static UUID rpFallback;
+  private static UUID npFallback;
+
+  private static UUID lp1;
+  private static UUID lp2;
+  private static UUID lp3;
+  private static UUID lp4;
 
   public LoanAPIPolicyTests() {
     super(false);
@@ -78,11 +81,13 @@ public class LoanAPIPolicyTests extends APITests {
 
     String rules = String.join("\n",
       "priority: t, s, c, b, a, m, g",
-      "fallback-policy: l " + pFallback,
-      "m " + videoRecording + " + g " + group1 + " : l " + p1,
-      "m " + book + " + t " + canCirculate + " : l " + p2,
-      "m " + book + " + t " + readingRoom + " : l " + p3,
-      "m " + book + " + t " + canCirculate + " + g " + group1 + " : l " + p4);
+      "fallback-policy: l " + lpFallback,
+      "fallback-policy: r " + rpFallback,
+      "fallback-policy: n " + npFallback,
+      "m " + videoRecording + " + g " + group1 + " : l " + lp1,
+      "m " + book + " + t " + canCirculate + " : l " + lp2,
+      "m " + book + " + t " + readingRoom + " : l " + lp3,
+      "m " + book + " + t " + canCirculate + " + g " + group1 + " : l " + lp4);
 
     loanRulesFixture.updateLoanRules(rules);
 
@@ -162,7 +167,7 @@ public class LoanAPIPolicyTests extends APITests {
          .put("renewFromId", "CURRENT_DUE_DATE")
          .put("differentPeriod", false));
 
-    p1 = loanPoliciesFixture.create(p1Json).getId();
+    lp1 = loanPoliciesFixture.create(p1Json).getId();
 
     JsonObject p2Json = new JsonObject()
        .put("name", "Policy 2")
@@ -176,7 +181,7 @@ public class LoanAPIPolicyTests extends APITests {
          .put("renewFromId", "CURRENT_DUE_DATE")
          .put("differentPeriod", false));
 
-    p2 = loanPoliciesFixture.create(p2Json).getId();
+    lp2 = loanPoliciesFixture.create(p2Json).getId();
 
     JsonObject p3Json = new JsonObject()
       .put("name", "Policy 3")
@@ -190,7 +195,7 @@ public class LoanAPIPolicyTests extends APITests {
         .put("renewFromId", "CURRENT_DUE_DATE")
         .put("differentPeriod", false));
 
-    p3 = loanPoliciesFixture.create(p3Json).getId();
+    lp3 = loanPoliciesFixture.create(p3Json).getId();
 
     JsonObject p4Json = new JsonObject()
        .put("name", "Policy 4")
@@ -204,9 +209,9 @@ public class LoanAPIPolicyTests extends APITests {
          .put("renewFromId", "CURRENT_DUE_DATE")
          .put("differentPeriod", false));
 
-    p4 = loanPoliciesFixture.create(p4Json).getId();
+    lp4 = loanPoliciesFixture.create(p4Json).getId();
 
-    JsonObject pFallbackJson = new JsonObject()
+    JsonObject lpFallbackJson = new JsonObject()
        .put("name", "Fallback")
        .put("description", "Fallback!!!")
        .put("loanable", true) //Workaround for policy validation in mod-circulation-storage
@@ -218,6 +223,6 @@ public class LoanAPIPolicyTests extends APITests {
          .put("renewFromId", "CURRENT_DUE_DATE")
          .put("differentPeriod", false));
 
-    pFallback = loanPoliciesFixture.create(pFallbackJson).getId();
+    lpFallback = loanPoliciesFixture.create(lpFallbackJson).getId();
   }
 }

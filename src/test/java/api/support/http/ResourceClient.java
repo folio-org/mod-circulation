@@ -14,6 +14,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import javax.naming.spi.ResolveResult;
+
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
@@ -63,6 +65,16 @@ public class ResourceClient {
   public static ResourceClient forLoanPolicies(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::loanPoliciesStorageUrl,
       "loan policies", "loanPolicies");
+  }
+
+  public static ResourceClient forRequestPolicies(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::requestPoliciesStorageUrl,
+      "request policies", "requestPolicies");
+  }
+
+  public static ResourceClient forNoticePolicies(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::noticePoliciesStorageUrl,
+      "notice policies", "noticePolicies");
   }
 
   public static ResourceClient forFixedDueDateSchedules(OkapiHttpClient client) {

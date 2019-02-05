@@ -69,29 +69,40 @@ public class LoanRulesEngineAPITests extends APITests {
   private PatronGroup g2 = new PatronGroup("87d14197-6de3-4ba5-9201-6c4129504adf");
   private ShelvingLocation s1 = new ShelvingLocation("cdc0b09d-dd56-4377-ae10-a20b50121dc4");
   private ShelvingLocation s2 = new ShelvingLocation("fe91de23-6bf5-4179-a90e-3e87769af86e");
-  private Policy p6 = new Policy("6a475259-8a97-4992-a415-76440f5f7c23");
-  private Policy p7 = new Policy("7b586360-8ba8-4aa3-b526-875510608d34");
-  private Policy p1 = new Policy("f6f88da8-2aaf-48c7-944e-0de3f4cc2368");
-  private Policy p2 = new Policy("c42e3a01-eb61-4edd-8cb0-8c7ecc0b4ca2");
-  private Policy p3 = new Policy("f0c8d755-0e56-4d38-9a45-9cd9248b1ae8");
-  private Policy p4 = new Policy("0122feae-bd0e-4405-88de-525d93ba7cfd");
+  // Loan Policies
+  private Policy lp6 = new Policy("6a475259-8a97-4992-a415-76440f5f7c23");
+  private Policy lp7 = new Policy("7b586360-8ba8-4aa3-b526-875510608d34");
+  private Policy lp1 = new Policy("f6f88da8-2aaf-48c7-944e-0de3f4cc2368");
+  private Policy lp2 = new Policy("c42e3a01-eb61-4edd-8cb0-8c7ecc0b4ca2");
+  private Policy lp3 = new Policy("f0c8d755-0e56-4d38-9a45-9cd9248b1ae8");
+  private Policy lp4 = new Policy("0122feae-bd0e-4405-88de-525d93ba7cfd");
+  // Request Policies
+  private Policy rp1 = new Policy("52069c78-75f6-4de5-bec0-85b87fbf9414");
+  private Policy rp2 = new Policy("921d07d7-2869-4add-9cdd-98a1c4b9de64");
+  // Notice Policies
+  private Policy np1 = new Policy("662cb440-c66b-46ba-b70f-7ebff4026644");
+  private Policy np2 = new Policy("b6bcddac-7c6c-4b29-a6fe-4627ef78c782");
 
-  private String rulesFallback =  "priority: t, s, c, b, a, m, g\nfallback-policy: l " + p6;
-  private String rulesFallback2 = "priority: t, s, c, b, a, m, g\nfallback-policy: l " + p7;
+  private String rulesFallback =  "priority: t, s, c, b, a, m, g\nfallback-policy: l " + lp6 + "\nfallback-policy: r " + rp1 + "\nfallback-policy: n " + np1;
+  private String rulesFallback2 = "priority: t, s, c, b, a, m, g\nfallback-policy: l " + lp7 + "\nfallback-policy: r " + rp2 + "\nfallback-policy: n " + np2;
 
   private String rules1 = String.join("\n",
       "priority: t, s, c, b, a, m, g",
-      "fallback-policy: l " + p2,
-      "m " + m2 + ": l " + p3,
-      "    g " + g2 + ": l " + p4
+      "fallback-policy: l " + lp2,
+      "fallback-policy: r " + rp1,
+      "fallback-policy: n " + np1,
+      "m " + m2 + ": l " + lp3,
+      "    g " + g2 + ": l " + lp4
       );
 
   private String rules2 = String.join("\n",
       "priority: t, s, c, b, a, m, g",
-      "fallback-policy: l " + p6,
-      "m " + m1 + ": l " + p1,
-      "m " + m1 + " + t " + t1 + " : l " + p2,
-      "m " + m1 + " + t " + t1 + " + g " + g1 + " : l " + p3
+      "fallback-policy: l " + lp6,
+      "fallback-policy: r " + rp1,
+      "fallback-policy: n " + np1,
+      "m " + m1 + ": l " + lp1,
+      "m " + m1 + " + t " + t1 + " : l " + lp2,
+      "m " + m1 + " + t " + t1 + " + g " + g1 + " : l " + lp3
       );
 
   @Before
@@ -124,7 +135,7 @@ public class LoanRulesEngineAPITests extends APITests {
     String [] p = {
         "item_type_id=" + m1,
         "loan_type_id=" + t1,
-        "patron_type_id=" + p1,
+        "patron_type_id=" + lp1,
         "shelving_location_id=" + s1
     };
 
@@ -153,10 +164,10 @@ public class LoanRulesEngineAPITests extends APITests {
   }
 
   private void applyInvalidUuid(String uuid) {
-    applyInvalidUuid( uuid, t1.id, p1.id, s1.id);
-    applyInvalidUuid(m1.id,  uuid, p1.id, s1.id);
+    applyInvalidUuid( uuid, t1.id, lp1.id, s1.id);
+    applyInvalidUuid(m1.id,  uuid, lp1.id, s1.id);
     applyInvalidUuid(m1.id, t1.id,  uuid, s1.id);
-    applyInvalidUuid(m1.id, t1.id, p1.id,  uuid);
+    applyInvalidUuid(m1.id, t1.id, lp1.id,  uuid);
   }
 
   @Test
@@ -178,24 +189,24 @@ public class LoanRulesEngineAPITests extends APITests {
   @Test
   public void fallback() {
     setRules(rulesFallback);
-    assertThat(apply(m1, t1, g1, s1), is(p6));
+    assertThat(apply(m1, t1, g1, s1), is(lp6));
   }
 
   @Test
   public void test1() {
     setRules(rules1);
-    assertThat(apply(m2, t2, g2, s2), is(p4));
-    assertThat(apply(m2, t2, g1, s2), is(p3));
-    assertThat(apply(m1, t2, g1, s2), is(p2));
+    assertThat(apply(m2, t2, g2, s2), is(lp4));
+    assertThat(apply(m2, t2, g1, s2), is(lp3));
+    assertThat(apply(m1, t2, g1, s2), is(lp2));
   }
 
   @Test
   public void test2() {
     setRules(rules2);
-    assertThat(apply(m2, t2, g2, s2), is(p6));
-    assertThat(apply(m1, t2, g2, s2), is(p1));
-    assertThat(apply(m1, t1, g2, s2), is(p2));
-    assertThat(apply(m1, t1, g1, s2), is(p3));
+    assertThat(apply(m2, t2, g2, s2), is(lp6));
+    assertThat(apply(m1, t2, g2, s2), is(lp1));
+    assertThat(apply(m1, t1, g2, s2), is(lp2));
+    assertThat(apply(m1, t1, g1, s2), is(lp3));
   }
 
   private void matches(JsonArray array, int match, Policy policy, int line) {
@@ -221,37 +232,37 @@ public class LoanRulesEngineAPITests extends APITests {
         response.getStatusCode(), is(200));
     JsonObject json = new JsonObject(response.getBody());
     JsonArray array = json.getJsonArray("loanRuleMatches");
-    matches(array, 0, p4, 4);
-    matches(array, 1, p3, 3);
-    matches(array, 2, p2, 2);
+    matches(array, 0, lp4, 4);
+    matches(array, 1, lp3, 3);
+    matches(array, 2, lp2, 2);
     assertThat(array.size(), is(3));
   }
 
   @Test
   public void setRulesInvalidatesCache() {
     setRules(rulesFallback);
-    assertThat(apply(m1, t1, g1, s1), is(p6));
+    assertThat(apply(m1, t1, g1, s1), is(lp6));
     setRules(rulesFallback2);
-    assertThat(apply(m1, t1, g1, s1), is(p7));
+    assertThat(apply(m1, t1, g1, s1), is(lp7));
     setRules(rulesFallback);
-    assertThat(apply(m1, t1, g1, s1), is(p6));
+    assertThat(apply(m1, t1, g1, s1), is(lp6));
     setRules(rulesFallback2);
-    assertThat(apply(m1, t1, g1, s1), is(p7));
+    assertThat(apply(m1, t1, g1, s1), is(lp7));
   }
 
   @Test
   public void cache() throws Exception {
     setRules(rulesFallback);
-    assertThat(apply(m1, t1, g1, s1), is(p6));
+    assertThat(apply(m1, t1, g1, s1), is(lp6));
 
     updateLoanRulesInStorageWithoutInvalidatingCache(rulesFallback2);
 
-    assertThat(apply(m1, t1, g1, s1), is(p6));
+    assertThat(apply(m1, t1, g1, s1), is(lp6));
 
     // reduce cache time to trigger reload from storage backend
     LoanRulesEngineResource.setCacheTime(0, 0);
 
-    assertThat(apply(m1, t1, g1, s1), is(p7));
+    assertThat(apply(m1, t1, g1, s1), is(lp7));
   }
 
   private void updateLoanRulesInStorageWithoutInvalidatingCache(String rules)

@@ -31,8 +31,10 @@ import api.support.fixtures.LoanTypesFixture;
 import api.support.fixtures.LoansFixture;
 import api.support.fixtures.LocationsFixture;
 import api.support.fixtures.MaterialTypesFixture;
+import api.support.fixtures.NoticePoliciesFixture;
 import api.support.fixtures.PatronGroupsFixture;
 import api.support.fixtures.ProxyRelationshipsFixture;
+import api.support.fixtures.RequestPoliciesFixture;
 import api.support.fixtures.RequestsFixture;
 import api.support.fixtures.ServicePointsFixture;
 import api.support.fixtures.UsersFixture;
@@ -78,6 +80,12 @@ public abstract class APITests {
   protected final ResourceClient loanPolicyClient
     = ResourceClient.forLoanPolicies(client);
 
+  protected final ResourceClient requestPolicyClient
+    = ResourceClient.forRequestPolicies(client);
+
+  protected final ResourceClient noticePolicyClient
+    = ResourceClient.forNoticePolicies(client);
+
   private final ResourceClient instanceTypesClient
     = ResourceClient.forInstanceTypes(client);
 
@@ -99,6 +107,12 @@ public abstract class APITests {
 
   protected final LoanPoliciesFixture loanPoliciesFixture
     = new LoanPoliciesFixture(loanPolicyClient, fixedDueDateScheduleClient);
+
+  protected final RequestPoliciesFixture requestPoliciesFixture
+    = new RequestPoliciesFixture(requestPolicyClient);
+
+  protected final NoticePoliciesFixture noticePoliciesFixture
+    = new NoticePoliciesFixture(noticePolicyClient);
 
   protected final LoanRulesFixture loanRulesFixture
     = new LoanRulesFixture(client);
@@ -228,7 +242,11 @@ public abstract class APITests {
     MalformedURLException {
 
     log.info("Using rolling loan policy as fallback policy");
-    useLoanPolicyAsFallback(loanPoliciesFixture.canCirculateRolling().getId());
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.noAllowedTypes().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
   }
 
   protected void useExampleFixedPolicyLoanRules()
@@ -238,15 +256,19 @@ public abstract class APITests {
     MalformedURLException {
 
     log.info("Using fixed loan policy as fallback policy");
-    useLoanPolicyAsFallback(loanPoliciesFixture.canCirculateFixed().getId());
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateFixed().getId(),
+      requestPoliciesFixture.noAllowedTypes().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
   }
 
-  protected void useLoanPolicyAsFallback(UUID loanPolicyId)
+  protected void useLoanPolicyAsFallback(UUID loanPolicyId, UUID requestPolicyId, UUID noticePolicyId)
     throws InterruptedException,
     ExecutionException,
     TimeoutException {
 
-    loanRulesFixture.updateLoanRules(loanPolicyId);
+    loanRulesFixture.updateLoanRules(loanPolicyId, requestPolicyId, noticePolicyId);
     warmUpApplyEndpoint();
   }
 

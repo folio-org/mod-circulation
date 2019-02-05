@@ -60,6 +60,14 @@ public class InterfaceUrls {
     return APITestContext.viaOkapiModuleUrl("/loan-policy-storage/loan-policies" + subPath);
   }
 
+  static URL requestPoliciesStorageUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/request-policy-storage/request-policies" + subPath);
+  }
+
+  static URL noticePoliciesStorageUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/notice-policy-storage/notice-policies" + subPath);
+  }
+
   static URL fixedDueDateSchedulesStorageUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/fixed-due-date-schedule-storage/fixed-due-date-schedules" + subPath);
   }

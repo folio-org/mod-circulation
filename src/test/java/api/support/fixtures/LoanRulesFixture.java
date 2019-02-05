@@ -23,12 +23,12 @@ public class LoanRulesFixture {
     this.client = client;
   }
 
-  public void updateLoanRules(UUID loanPolicyId)
+  public void updateLoanRules(UUID loanPolicyId, UUID requestPolicyId, UUID noticePolicyId)
     throws InterruptedException,
     ExecutionException,
     TimeoutException {
 
-    String rule = soleFallbackPolicyRule(loanPolicyId);
+    String rule = soleFallbackPolicyRule(loanPolicyId, requestPolicyId, noticePolicyId);
 
     updateLoanRules(rule);
   }
@@ -53,8 +53,8 @@ public class LoanRulesFixture {
       response.getStatusCode(), is(204));
   }
 
-  private String soleFallbackPolicyRule(UUID loanPolicyId) {
-    return String.format("priority: t, s, c, b, a, m, g%nfallback-policy: l %s%n",
-      loanPolicyId);
+  private String soleFallbackPolicyRule(UUID loanPolicyId, UUID requestPolicyId, UUID noticePolicyId) {
+    return String.format("priority: t, s, c, b, a, m, g%nfallback-policy: l %s%nfallback-policy: r %s%nfallback-policy: n %s%n",
+      loanPolicyId, requestPolicyId, noticePolicyId);
   }
 }

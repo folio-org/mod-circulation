@@ -245,7 +245,7 @@ public class Text2Drools extends LoanRulesBaseListener {
           token.getLine(), token.getCharPositionInLine());
       } else if (count == 0) {
         throw new LoanRulesException(
-          "Must have a fallback policy of type %s",
+          String.format("Must have a fallback policy of type %s", policyType),
           token.getLine(), token.getCharPositionInLine());
       }
     }
