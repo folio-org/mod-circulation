@@ -11,6 +11,8 @@ import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.LoansPolicyProfile;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
+import org.hamcrest.MatcherAssert;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
@@ -28,16 +30,34 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import static api.support.APITestContext.END_OF_2019_DUE_DATE;
-import static api.support.fixtures.CalendarExamples.*;
+import static api.support.fixtures.CalendarExamples.CASE_CALENDAR_IS_EMPTY_SERVICE_POINT_ID;
+import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID;
+import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_ID;
+import static api.support.fixtures.CalendarExamples.CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID;
+import static api.support.fixtures.CalendarExamples.CASE_WED_THU_FRI_SERVICE_POINT_ID;
+import static api.support.fixtures.CalendarExamples.END_TIME_SECOND_PERIOD;
+import static api.support.fixtures.CalendarExamples.FRIDAY_DATE;
+import static api.support.fixtures.CalendarExamples.THURSDAY_DATE;
+import static api.support.fixtures.CalendarExamples.WEDNESDAY_DATE;
+import static api.support.fixtures.CalendarExamples.getCurrentAndNextFakeOpeningDayByServId;
+import static api.support.fixtures.CalendarExamples.getCurrentFakeOpeningDayByServId;
+import static api.support.fixtures.CalendarExamples.getFirstFakeOpeningDayByServId;
+import static api.support.fixtures.CalendarExamples.getLastFakeOpeningDayByServId;
 import static api.support.fixtures.LibraryHoursExamples.CASE_CALENDAR_IS_UNAVAILABLE_SERVICE_POINT_ID;
+import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static org.folio.circulation.domain.policy.DueDateManagement.*;
+import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
+import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
+import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS;
+import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_END_OF_THE_CURRENT_DAY;
+import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY;
+import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY;
 import static org.folio.circulation.domain.policy.LoanPolicyPeriod.HOURS;
 import static org.folio.circulation.resources.CheckOutByBarcodeResource.DATE_TIME_FORMATTER;
 import static org.folio.circulation.support.PeriodUtil.isInPeriodOpeningDay;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.joda.time.DateTimeConstants.MINUTES_PER_HOUR;
 
 public class CheckOutCalculateDueDateTests extends APITests {
 
@@ -814,38 +834,35 @@ public class CheckOutCalculateDueDateTests extends APITests {
    * - Loanable = N
    */
   @Test
-  public void testExceptionScenario()
+  public void testItemIsNotLoanable()
     throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
     final DateTime loanDate = DateTime.now().toDateTime(DateTimeZone.UTC);
     final UUID checkoutServicePointId = UUID.randomUUID();
-    int duration = new SplittableRandom().nextInt(1, MINUTES_PER_HOUR);
+    int duration = new SplittableRandom().nextInt(1, 60);
 
     String loanPolicyName = "Loan Policy Exception Scenario";
     JsonObject loanPolicyEntry = createLoanPolicyEntry(loanPolicyName, false,
       LoansPolicyProfile.ROLLING.name(), DueDateManagement.KEEP_THE_CURRENT_DUE_DATE.getValue(),
-      duration, INTERVAL_MINUTES);
-    String loanPolicyId = createLoanPolicy(loanPolicyEntry);
+      duration, "Minutes");
+    createLoanPolicy(loanPolicyEntry);
 
-    final IndividualResource response = loansFixture.checkOutByBarcode(
+    final Response response = loansFixture.attemptCheckOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
         .on(loanDate)
         .at(checkoutServicePointId));
 
-    final JsonObject loan = response.getJson();
+    MatcherAssert.assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
 
-    assertThat(ERROR_MESSAGE_LOAN_POLICY,
-      loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
-
-    assertThat(ERROR_MESSAGE_DUE_DATE + duration,
-      loan.getString(DUE_DATE_KEY), isEquivalentTo(loanDate.plusMinutes(duration)));
+    MatcherAssert.assertThat(response.getJson(), hasErrorWith(hasMessage(
+      "Item is not loanable")));
   }
 
-  /**
+  /** 1
    * Test scenario when Calendar API is unavailable
    */
   @Test

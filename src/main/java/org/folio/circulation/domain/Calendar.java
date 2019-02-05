@@ -2,12 +2,11 @@ package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.policy.LoanPolicyPeriod;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.folio.circulation.support.CalendarQueryUtil.getField;
 
 public class Calendar {
 
@@ -27,19 +26,18 @@ public class Calendar {
   private String endDate;
   private List<OpeningDayPeriod> openingDays;
 
-  // additional field
   private LoanPolicyPeriod period;
   private int duration;
+
+  Calendar(JsonObject representation) {
+    this.representation = representation;
+    initFields();
+  }
 
   Calendar(JsonObject representation, LoanPolicyPeriod period, int duration) {
     this.representation = representation;
     this.period = period;
     this.duration = duration;
-    initFields();
-  }
-
-  Calendar(JsonObject representation) {
-    this.representation = representation;
     initFields();
   }
 
@@ -50,11 +48,11 @@ public class Calendar {
    * init fields
    */
   private void initFields() {
-    this.id = getField(representation.getString(ID_KEY));
-    this.servicePointId = getField(representation.getString(SERVICE_POINT_ID_KEY));
-    this.name = getField(representation.getString(NAME_KEY));
-    this.startDate = getField(representation.getString(START_DATE_KEY));
-    this.endDate = getField(representation.getString(END_DATE_KEY));
+    this.id = StringUtils.defaultIfBlank(representation.getString(ID_KEY), StringUtils.EMPTY);
+    this.servicePointId = StringUtils.defaultIfBlank(representation.getString(SERVICE_POINT_ID_KEY), StringUtils.EMPTY);
+    this.name = StringUtils.defaultIfBlank(representation.getString(NAME_KEY), StringUtils.EMPTY);
+    this.startDate = StringUtils.defaultIfBlank(representation.getString(START_DATE_KEY), StringUtils.EMPTY);
+    this.endDate = StringUtils.defaultIfBlank(representation.getString(END_DATE_KEY), StringUtils.EMPTY);
     this.openingDays = fillOpeningDayPeriod();
   }
 

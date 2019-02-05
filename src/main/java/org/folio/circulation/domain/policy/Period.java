@@ -1,16 +1,15 @@
 package org.folio.circulation.domain.policy;
 
-import static org.folio.circulation.support.HttpResult.failed;
+import io.vertx.core.json.JsonObject;
+import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.ValidationErrorFailure;
+import org.joda.time.DateTime;
 
 import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.function.Supplier;
 
-import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.ValidationErrorFailure;
-import org.joda.time.DateTime;
-
-import io.vertx.core.json.JsonObject;
+import static org.folio.circulation.support.HttpResult.failed;
 
 public class Period {
   private final Integer duration;
@@ -33,7 +32,7 @@ public class Period {
     return from(duration, "Days");
   }
 
-  static Period hours(int duration) {
+  public static Period hours(int duration) {
     return from(duration, "Hours");
   }
 

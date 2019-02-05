@@ -4,6 +4,8 @@ import org.folio.circulation.domain.OpeningDay;
 import org.folio.circulation.domain.OpeningHour;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.LoanPolicyPeriod;
+import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
 
 import java.time.LocalTime;
 import java.util.List;
@@ -73,5 +75,11 @@ public class PeriodUtil {
     LocalTime startTime = LocalTime.parse(collect.get(0));
     LocalTime endTime = LocalTime.parse(collect.get(collect.size() - 1));
     return new LocalTime[]{startTime, endTime};
+  }
+
+  public static boolean isAfterDate(DateTime first, DateTime second) {
+    LocalDate firstDate = first.toLocalDate();
+    LocalDate secondDate = second.toLocalDate();
+    return firstDate.isAfter(secondDate);
   }
 }

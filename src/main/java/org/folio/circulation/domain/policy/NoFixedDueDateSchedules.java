@@ -14,7 +14,7 @@ class NoFixedDueDateSchedules extends FixedDueDateSchedules {
   }
 
   @Override
-  Optional<DateTime> findDueDateFor(DateTime date) {
+  public Optional<DateTime> findDueDateFor(DateTime date) {
     return Optional.empty();
   }
 
