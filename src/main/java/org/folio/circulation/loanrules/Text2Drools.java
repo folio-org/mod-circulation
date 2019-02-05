@@ -239,6 +239,8 @@ public class Text2Drools extends LoanRulesBaseListener {
       Long count = ctx.fallbackpolicy().stream()
       .filter(fbp -> fbp.policies().policy(0).POLICY_TYPE().toString().equals(policyType))
       .collect(Collectors.counting());
+
+      // Make sure there is exactly one of each type of policy
       if (count > 1) {
         throw new LoanRulesException(
           String.format("Only one fallback policy of type %s is allowed", policyType),
@@ -249,6 +251,24 @@ public class Text2Drools extends LoanRulesBaseListener {
           token.getLine(), token.getCharPositionInLine());
       }
     }
+
+    // Generate fallback rule
+    int line = ctx.getStart().getLine();
+    drools.append("rule \"line ").append(line).append("\"\n");
+    drools.append("  salience ").append(getSalience(line)).append("\n");
+    drools.append("  when\n");
+    drools.append("  then\n");
+
+    for (FallbackpolicyContext fallbackPolicy : ctx.fallbackpolicy()) {
+      PolicyContext policy = fallbackPolicy.policies().policy(0);
+      drools.append(policyMatchString(policy));
+      appendQuotedString(drools, policy.NAME().getText());
+      drools.append(";\n");
+    }
+
+    drools.append("    match.lineNumber = ").append(line).append(";\n");
+    drools.append("    drools.halt();\n");
+    drools.append("end\n\n");
   }
 
   @Override
@@ -283,12 +303,6 @@ public class Text2Drools extends LoanRulesBaseListener {
     priority[0] = PriorityType.CRITERIUM;
     priority[1] = PriorityType.NUMBER_OF_CRITERIA;
     priority[2] = PriorityType.LAST_LINE;
-  }
-
-  @Override
-  public void exitFallbackpolicy(FallbackpolicyContext fallbackpolicy) {
-    popObsoleteMatchers();
-    generateRule(fallbackpolicy.policies());
   }
 
   @Override

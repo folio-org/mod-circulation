@@ -37,7 +37,7 @@ public class Text2DroolsTest {
       "m streaming-subscription: l policy-c",
       "    g visitor: l in-house",
       "    g undergrad: l in-house",
-      "m book cd dvd + t special-items : l in-house",
+      "m book cd dvd + t special-items: l in-house",
       "t special-items: l policy-d",
       "    g visitor: l in-house"
       );
@@ -62,7 +62,7 @@ public class Text2DroolsTest {
     String drools = Text2Drools.convert(test1);
     log.debug("drools = {}" + drools);
     for (String [] s : test1cases) {
-      assertThat(first3(s), Drools.loanPolicies(drools, s[0], s[1], s[2], "shelf"), is(s[3]));
+      assertThat(first3(s), Drools.loanPolicy(drools, s[0], s[1], s[2], "shelf"), is(s[3]));
     }
   }
 
@@ -132,9 +132,9 @@ public class Text2DroolsTest {
         ""
     );
     String [][] cases = {
-        { "book", "special-items", "visitor",     "in-house", "policy-b", "no-loan", "no-loan", "no-loan" },
-        { "book", "special-items", "undergrad",               "policy-b", "no-loan", "no-loan", "no-loan" },
-        { "dvd",  "special-items", "undergrad",                           "no-loan", "no-loan", "no-loan" },
+        { "book", "special-items", "visitor",     "in-house", "policy-b", "no-loan" },
+        { "book", "special-items", "undergrad",               "policy-b", "no-loan" },
+        { "dvd",  "special-items", "undergrad",                           "no-loan" },
     };
     testLoanPolicies(loanRules, cases);
   }
