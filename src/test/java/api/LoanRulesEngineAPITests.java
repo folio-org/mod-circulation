@@ -232,8 +232,8 @@ public class LoanRulesEngineAPITests extends APITests {
         response.getStatusCode(), is(200));
     JsonObject json = new JsonObject(response.getBody());
     JsonArray array = json.getJsonArray("loanRuleMatches");
-    matches(array, 0, lp4, 4);
-    matches(array, 1, lp3, 3);
+    matches(array, 0, lp4, 6);
+    matches(array, 1, lp3, 5);
     matches(array, 2, lp2, 2);
     assertThat(array.size(), is(3));
   }
