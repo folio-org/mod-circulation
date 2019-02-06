@@ -392,7 +392,9 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
     ExecutionException {
 
     IndividualResource loanPolicy = loanPoliciesFixture.create(loanPolicyEntry);
-    useLoanPolicyAsFallback(loanPolicy.getId());
+    UUID requestPolicyId = requestPoliciesFixture.noAllowedTypes().getId();
+    UUID noticePolicyId = noticePoliciesFixture.activeNotice().getId();
+    useLoanPolicyAsFallback(loanPolicy.getId(), requestPolicyId, noticePolicyId);
 
     return loanPolicy.getId().toString();
   }
