@@ -1,10 +1,41 @@
 package api.loans;
 
+import api.support.APITests;
+import api.support.builders.CheckOutByBarcodeRequestBuilder;
+import api.support.builders.LoanPolicyBuilder;
+import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.OpeningDay;
+import org.folio.circulation.domain.OpeningDayPeriod;
+import org.folio.circulation.domain.OpeningHour;
+import org.folio.circulation.domain.policy.DueDateManagement;
+import org.folio.circulation.domain.policy.LoansPolicyProfile;
+import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
+import org.hamcrest.MatcherAssert;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.junit.Test;
+
+import java.net.MalformedURLException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneOffset;
+import java.util.List;
+import java.util.Objects;
+import java.util.SplittableRandom;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+
 import static api.support.APITestContext.END_OF_2019_DUE_DATE;
+import static api.support.fixtures.CalendarExamples.CASE_CALENDAR_IS_EMPTY_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.CASE_WED_THU_FRI_SERVICE_POINT_ID;
+import static api.support.fixtures.CalendarExamples.END_TIME_SECOND_PERIOD;
 import static api.support.fixtures.CalendarExamples.FRIDAY_DATE;
 import static api.support.fixtures.CalendarExamples.THURSDAY_DATE;
 import static api.support.fixtures.CalendarExamples.WEDNESDAY_DATE;
@@ -13,49 +44,32 @@ import static api.support.fixtures.CalendarExamples.getCurrentFakeOpeningDayBySe
 import static api.support.fixtures.CalendarExamples.getFirstFakeOpeningDayByServId;
 import static api.support.fixtures.CalendarExamples.getLastFakeOpeningDayByServId;
 import static api.support.fixtures.LibraryHoursExamples.CASE_CALENDAR_IS_UNAVAILABLE_SERVICE_POINT_ID;
-import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_IN_THU_SERVICE_POINT_ID;
-import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_SERVICE_POINT_ID;
+import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
+import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
+import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS;
+import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_END_OF_THE_CURRENT_DAY;
+import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY;
+import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY;
 import static org.folio.circulation.domain.policy.LoanPolicyPeriod.HOURS;
 import static org.folio.circulation.resources.CheckOutByBarcodeResource.DATE_TIME_FORMATTER;
-import static org.folio.circulation.support.PeriodUtil.calculateOffset;
-import static org.folio.circulation.support.PeriodUtil.calculateOffsetTime;
-import static org.folio.circulation.support.PeriodUtil.isInCurrentLocalDateTime;
-import static org.folio.circulation.support.PeriodUtil.isOffsetTimeInCurrentDayPeriod;
+import static org.folio.circulation.support.PeriodUtil.isInPeriodOpeningDay;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import java.net.MalformedURLException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Objects;
-import java.util.SplittableRandom;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
-import org.folio.circulation.domain.OpeningDay;
-import org.folio.circulation.domain.OpeningDayPeriod;
-import org.folio.circulation.domain.OpeningHour;
-import org.folio.circulation.domain.policy.DueDateManagement;
-import org.folio.circulation.domain.policy.LoanPolicyPeriod;
-import org.folio.circulation.domain.policy.LoansPolicyProfile;
-import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.junit.Test;
-
-import api.support.APITests;
-import api.support.builders.CheckOutByBarcodeRequestBuilder;
-import api.support.builders.LoanPolicyBuilder;
-import io.vertx.core.json.JsonObject;
-
 public class CheckOutCalculateDueDateTests extends APITests {
+
+  private static final String INTERVAL_MONTHS = "Months";
+  private static final String INTERVAL_HOURS = "Hours";
+  private static final String INTERVAL_MINUTES = "Minutes";
+
+  private static final String DUE_DATE_KEY = "dueDate";
+  private static final String LOAN_POLICY_ID_KEY = "loanPolicyId";
+
+  private static final String ERROR_MESSAGE_DUE_DATE = "due date should be ";
+  private static final String ERROR_MESSAGE_LOAN_POLICY = "last loan policy should be stored";
 
   /**
    * Scenario for Long-term loans:
@@ -82,7 +96,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     String loanPolicyName = "Keep the current due date: Rolling";
     JsonObject loanPolicyEntry = createLoanPolicyEntry(loanPolicyName, true,
       LoansPolicyProfile.ROLLING.name(), DueDateManagement.KEEP_THE_CURRENT_DUE_DATE.getValue(),
-      duration, "Months");
+      duration, INTERVAL_MONTHS);
     String loanPolicyId = createLoanPolicy(loanPolicyEntry);
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
@@ -94,11 +108,11 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     final JsonObject loan = response.getJson();
 
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(loanPolicyId));
+    assertThat(ERROR_MESSAGE_LOAN_POLICY,
+      loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
 
-    assertThat("due date should be " + duration,
-      loan.getString("dueDate"), isEquivalentTo(loanDate.plusMonths(duration)));
+    assertThat(ERROR_MESSAGE_DUE_DATE + duration,
+      loan.getString(DUE_DATE_KEY), isEquivalentTo(loanDate.plusMonths(duration)));
   }
 
   /**
@@ -134,11 +148,11 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     final JsonObject loan = response.getJson();
 
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(loanPolicyId));
+    assertThat(ERROR_MESSAGE_LOAN_POLICY,
+      loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
 
-    assertThat("due date should be " + END_OF_2019_DUE_DATE,
-      loan.getString("dueDate"), isEquivalentTo(END_OF_2019_DUE_DATE));
+    assertThat(ERROR_MESSAGE_DUE_DATE + END_OF_2019_DUE_DATE,
+      loan.getString(DUE_DATE_KEY), isEquivalentTo(END_OF_2019_DUE_DATE));
   }
 
   /**
@@ -163,7 +177,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     String loanPolicyId = createLoanPolicy(
       createLoanPolicyEntryFixed("MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY: FIXED",
         fixedDueDateScheduleId,
-        DueDateManagement.MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY.getValue()));
+        MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY.getValue()));
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -173,14 +187,14 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     final JsonObject loan = response.getJson();
 
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(loanPolicyId));
+    assertThat(ERROR_MESSAGE_LOAN_POLICY,
+      loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
 
-    DateTime expectedDate = new DateTime(LocalDate.parse(WEDNESDAY_DATE, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER))
+    DateTime expectedDate = new DateTime(LocalDate.parse(WEDNESDAY_DATE, DATE_TIME_FORMATTER)
       .atTime(LocalTime.MAX).toString()).withZoneRetainFields(DateTimeZone.UTC);
 
-    assertThat("due date should be " + expectedDate,
-      loan.getString("dueDate"), isEquivalentTo(expectedDate));
+    assertThat(ERROR_MESSAGE_DUE_DATE + expectedDate,
+      loan.getString(DUE_DATE_KEY), isEquivalentTo(expectedDate));
   }
 
   /**
@@ -205,7 +219,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     String loanPolicyId = createLoanPolicy(
       createLoanPolicyEntryFixed("MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY: FIXED",
         fixedDueDateScheduleId,
-        DueDateManagement.MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY.getValue()));
+        MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY.getValue()));
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -215,14 +229,14 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     final JsonObject loan = response.getJson();
 
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(loanPolicyId));
+    assertThat(ERROR_MESSAGE_LOAN_POLICY,
+      loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
 
-    DateTime expectedDate = new DateTime(LocalDate.parse(WEDNESDAY_DATE, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER))
-      .atTime(LocalTime.parse("19:00")).toString()).withZoneRetainFields(DateTimeZone.UTC);
+    DateTime expectedDate = new DateTime(LocalDate.parse(WEDNESDAY_DATE, DATE_TIME_FORMATTER)
+      .atTime(LocalTime.parse(END_TIME_SECOND_PERIOD)).toString()).withZoneRetainFields(DateTimeZone.UTC);
 
-    assertThat("due date should be " + expectedDate,
-      loan.getString("dueDate"), isEquivalentTo(expectedDate));
+    assertThat(ERROR_MESSAGE_DUE_DATE + expectedDate,
+      loan.getString(DUE_DATE_KEY), isEquivalentTo(expectedDate));
   }
 
   /**
@@ -247,7 +261,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     String loanPolicyId = createLoanPolicy(
       createLoanPolicyEntryFixed("MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY: FIXED",
         fixedDueDateScheduleId,
-        DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.getValue()));
+        MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.getValue()));
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -257,14 +271,14 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     final JsonObject loan = response.getJson();
 
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(loanPolicyId));
+    assertThat(ERROR_MESSAGE_LOAN_POLICY,
+      loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
 
-    DateTime expectedDate = new DateTime(LocalDate.parse(FRIDAY_DATE, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER))
+    DateTime expectedDate = new DateTime(LocalDate.parse(FRIDAY_DATE, DATE_TIME_FORMATTER)
       .atTime(LocalTime.MAX).toString()).withZoneRetainFields(DateTimeZone.UTC);
 
-    assertThat("due date should be " + expectedDate,
-      loan.getString("dueDate"), isEquivalentTo(expectedDate));
+    assertThat(ERROR_MESSAGE_DUE_DATE + expectedDate,
+      loan.getString(DUE_DATE_KEY), isEquivalentTo(expectedDate));
   }
 
   /**
@@ -289,7 +303,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     String loanPolicyId = createLoanPolicy(
       createLoanPolicyEntryFixed("MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY: FIXED",
         fixedDueDateScheduleId,
-        DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.getValue()));
+        MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.getValue()));
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -299,14 +313,14 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     final JsonObject loan = response.getJson();
 
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(loanPolicyId));
+    assertThat(ERROR_MESSAGE_LOAN_POLICY,
+      loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
 
-    DateTime expectedDate = new DateTime(LocalDate.parse(FRIDAY_DATE, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER))
-      .atTime(LocalTime.parse("19:00")).toString()).withZoneRetainFields(DateTimeZone.UTC);
+    DateTime expectedDate = new DateTime(LocalDate.parse(FRIDAY_DATE, DATE_TIME_FORMATTER)
+      .atTime(LocalTime.parse(END_TIME_SECOND_PERIOD)).toString()).withZoneRetainFields(DateTimeZone.UTC);
 
-    assertThat("due date should be " + expectedDate,
-      loan.getString("dueDate"), isEquivalentTo(expectedDate));
+    assertThat(ERROR_MESSAGE_DUE_DATE + expectedDate,
+      loan.getString(DUE_DATE_KEY), isEquivalentTo(expectedDate));
   }
 
   /**
@@ -331,7 +345,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     String loanPolicyId = createLoanPolicy(
       createLoanPolicyEntryFixed("MOVE_TO_THE_END_OF_THE_CURRENT_DAY: FIXED",
         fixedDueDateScheduleId,
-        DueDateManagement.MOVE_TO_THE_END_OF_THE_CURRENT_DAY.getValue()));
+        MOVE_TO_THE_END_OF_THE_CURRENT_DAY.getValue()));
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -341,14 +355,14 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     final JsonObject loan = response.getJson();
 
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(loanPolicyId));
+    assertThat(ERROR_MESSAGE_LOAN_POLICY,
+      loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
 
-    DateTime expectedDate = new DateTime(LocalDate.parse(THURSDAY_DATE, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER))
+    DateTime expectedDate = new DateTime(LocalDate.parse(THURSDAY_DATE, DATE_TIME_FORMATTER)
       .atTime(LocalTime.MAX).toString()).withZoneRetainFields(DateTimeZone.UTC);
 
-    assertThat("due date should be " + expectedDate,
-      loan.getString("dueDate"), isEquivalentTo(expectedDate));
+    assertThat(ERROR_MESSAGE_DUE_DATE + expectedDate,
+      loan.getString(DUE_DATE_KEY), isEquivalentTo(expectedDate));
   }
 
   /**
@@ -373,7 +387,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     String loanPolicyId = createLoanPolicy(
       createLoanPolicyEntryFixed("MOVE_TO_THE_END_OF_THE_CURRENT_DAY: FIXED",
         fixedDueDateScheduleId,
-        DueDateManagement.MOVE_TO_THE_END_OF_THE_CURRENT_DAY.getValue()));
+        MOVE_TO_THE_END_OF_THE_CURRENT_DAY.getValue()));
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -383,14 +397,14 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     final JsonObject loan = response.getJson();
 
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(loanPolicyId));
+    assertThat(ERROR_MESSAGE_LOAN_POLICY,
+      loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
 
-    DateTime expectedDate = new DateTime(LocalDate.parse(THURSDAY_DATE, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER))
-      .atTime(LocalTime.parse("19:00")).toString()).withZoneRetainFields(DateTimeZone.UTC);
+    DateTime expectedDate = new DateTime(LocalDate.parse(THURSDAY_DATE, DATE_TIME_FORMATTER)
+      .atTime(LocalTime.parse(END_TIME_SECOND_PERIOD)).toString()).withZoneRetainFields(DateTimeZone.UTC);
 
-    assertThat("due date should be " + expectedDate,
-      loan.getString("dueDate"), isEquivalentTo(expectedDate));
+    assertThat(ERROR_MESSAGE_DUE_DATE + expectedDate,
+      loan.getString(DUE_DATE_KEY), isEquivalentTo(expectedDate));
   }
 
   /**
@@ -411,18 +425,15 @@ public class CheckOutCalculateDueDateTests extends APITests {
     throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
     String servicePointId = CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID;
-    String loanPolicyName = "MoveToEndOfPreviousAllOpenDay";
     String policyProfileName = LoansPolicyProfile.ROLLING.name();
-    DueDateManagement dueDateManagement = DueDateManagement.MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY;
     int duration = 3;
-    String interval = "Months";
 
     // get datetime of endDay
     OpeningDayPeriod openingDay = getFirstFakeOpeningDayByServId(servicePointId);
     DateTime expectedDueDate = getEndDateTimeOpeningDay(openingDay.getOpeningDay());
 
-    checkFixedDayOrTime(servicePointId, loanPolicyName,
-      policyProfileName, dueDateManagement, duration, interval, expectedDueDate, false);
+    checkFixedDayOrTime(servicePointId, policyProfileName, MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY,
+      duration, INTERVAL_MONTHS, expectedDueDate, false);
   }
 
   /**
@@ -444,18 +455,15 @@ public class CheckOutCalculateDueDateTests extends APITests {
     throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
     String servicePointId = CASE_FRI_SAT_MON_SERVICE_POINT_ID;
-    String loanPolicyName = "MoveToEndOfPreviousOpenDay";
     String policyProfileName = LoansPolicyProfile.ROLLING.name();
-    DueDateManagement dueDateManagement = DueDateManagement.MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY;
     int duration = 2;
-    String interval = "Months";
 
     // get last datetime from hours period
     OpeningDayPeriod openingDay = getFirstFakeOpeningDayByServId(servicePointId);
     DateTime expectedDueDate = getEndDateTimeOpeningDay(openingDay.getOpeningDay());
 
-    checkFixedDayOrTime(servicePointId, loanPolicyName,
-      policyProfileName, dueDateManagement, duration, interval, expectedDueDate, false);
+    checkFixedDayOrTime(servicePointId, policyProfileName, MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY,
+      duration, INTERVAL_MONTHS, expectedDueDate, false);
   }
 
   /**
@@ -476,18 +484,15 @@ public class CheckOutCalculateDueDateTests extends APITests {
     throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
     String servicePointId = CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID;
-    String loanPolicyName = "MoveToEndOfPreviousOpenDay";
     String policyProfileName = LoansPolicyProfile.ROLLING.name();
-    DueDateManagement dueDateManagement = DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY;
     int duration = 5;
-    String interval = "Months";
 
     // get datetime of endDay
     OpeningDayPeriod openingDay = getLastFakeOpeningDayByServId(servicePointId);
     DateTime expectedDueDate = getEndDateTimeOpeningDay(openingDay.getOpeningDay());
 
-    checkFixedDayOrTime(servicePointId, loanPolicyName,
-      policyProfileName, dueDateManagement, duration, interval, expectedDueDate, false);
+    checkFixedDayOrTime(servicePointId, policyProfileName, MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY,
+      duration, INTERVAL_MONTHS, expectedDueDate, false);
   }
 
   /**
@@ -509,18 +514,15 @@ public class CheckOutCalculateDueDateTests extends APITests {
     throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
     String servicePointId = CASE_FRI_SAT_MON_SERVICE_POINT_ID;
-    String loanPolicyName = "Move to the end of the next open day";
     String policyProfileName = LoansPolicyProfile.ROLLING.name();
-    DueDateManagement dueDateManagement = DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY;
     int duration = 5;
-    String interval = "Months";
 
     // get last datetime from hours period
     OpeningDayPeriod openingDay = getLastFakeOpeningDayByServId(servicePointId);
     DateTime expectedDueDate = getEndDateTimeOpeningDay(openingDay.getOpeningDay());
 
-    checkFixedDayOrTime(servicePointId, loanPolicyName,
-      policyProfileName, dueDateManagement, duration, interval, expectedDueDate, false);
+    checkFixedDayOrTime(servicePointId, policyProfileName, MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY,
+      duration, INTERVAL_MONTHS, expectedDueDate, false);
   }
 
   /**
@@ -542,17 +544,14 @@ public class CheckOutCalculateDueDateTests extends APITests {
     throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
     String servicePointId = CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID;
-    String loanPolicyName = "Move to the end of the current day";
     String policyProfileName = LoansPolicyProfile.ROLLING.name();
-    DueDateManagement dueDateManagement = DueDateManagement.MOVE_TO_THE_END_OF_THE_CURRENT_DAY;
     int duration = 5;
-    String interval = "Months";
 
     OpeningDayPeriod openingDay = getCurrentFakeOpeningDayByServId(servicePointId);
     DateTime expectedDueDate = getEndDateTimeOpeningDay(openingDay.getOpeningDay());
 
-    checkFixedDayOrTime(servicePointId, loanPolicyName,
-      policyProfileName, dueDateManagement, duration, interval, expectedDueDate, false);
+    checkFixedDayOrTime(servicePointId, policyProfileName, MOVE_TO_THE_END_OF_THE_CURRENT_DAY,
+      duration, INTERVAL_MONTHS, expectedDueDate, false);
   }
 
   /**
@@ -574,17 +573,14 @@ public class CheckOutCalculateDueDateTests extends APITests {
     throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
     String servicePointId = CASE_FRI_SAT_MON_SERVICE_POINT_ID;
-    String loanPolicyName = "Move to the end of the current day";
     String policyProfileName = LoansPolicyProfile.ROLLING.name();
-    DueDateManagement dueDateManagement = DueDateManagement.MOVE_TO_THE_END_OF_THE_CURRENT_DAY;
     int duration = 5;
-    String interval = "Months";
 
     OpeningDayPeriod openingDay = getCurrentFakeOpeningDayByServId(servicePointId);
     DateTime expectedDueDate = getEndDateTimeOpeningDay(openingDay.getOpeningDay());
 
-    checkFixedDayOrTime(servicePointId, loanPolicyName,
-      policyProfileName, dueDateManagement, duration, interval, expectedDueDate, false);
+    checkFixedDayOrTime(servicePointId, policyProfileName, MOVE_TO_THE_END_OF_THE_CURRENT_DAY,
+      duration, INTERVAL_MONTHS, expectedDueDate, false);
   }
 
   /**
@@ -606,141 +602,14 @@ public class CheckOutCalculateDueDateTests extends APITests {
     throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
     String servicePointId = CASE_WED_THU_FRI_SERVICE_POINT_ID;
-    String loanPolicyName = "Move to the end of the current day";
     String policyProfileName = LoansPolicyProfile.ROLLING.name();
-    DueDateManagement dueDateManagement = DueDateManagement.MOVE_TO_THE_END_OF_THE_CURRENT_DAY;
     int duration = 2;
-    String interval = "Months";
 
     OpeningDayPeriod openingDay = getCurrentFakeOpeningDayByServId(servicePointId);
     DateTime expectedDueDate = getEndDateTimeOpeningDay(openingDay.getOpeningDay());
 
-    checkFixedDayOrTime(servicePointId, loanPolicyName,
-      policyProfileName, dueDateManagement, duration, interval, expectedDueDate, false);
-  }
-
-  /**
-   * Test scenario for Short-term loans
-   * Loanable = Y
-   * Loan profile = Rolling
-   * Loan period = X Hours
-   * Closed Library Due Date Management = Move to the end of the current service point hours
-   * <p>
-   * Calendar allDay = true (exclude current day)
-   * Test period: FRI=open, SAT=close, MON=open
-   * <p>
-   * Expected result:
-   * Then the due date timestamp should be changed to the endTime of the current service point for SPID-1 (i.e., truncating the loan length)
-   */
-  @Test
-  public void testMoveToEndOfCurrentServicePointHoursAllDay()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
-
-    String servicePointId = CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID;
-    String loanPolicyName = "Move to the end of the current service point hours";
-    String policyProfileName = LoansPolicyProfile.ROLLING.name();
-    DueDateManagement dueDateManagement = DueDateManagement.MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS;
-    int duration = 2;
-    String interval = "Hours";
-
-    OpeningDayPeriod openingDay = getCurrentFakeOpeningDayByServId(servicePointId);
-    DateTime expectedDueDate = getEndDateTimeOpeningDay(openingDay.getOpeningDay());
-
-    checkFixedDayOrTime(servicePointId, loanPolicyName,
-      policyProfileName, dueDateManagement, duration, interval, expectedDueDate, false);
-  }
-
-  /**
-   * Test scenario for Short-term loans
-   * Loanable = Y
-   * Loan profile = Rolling
-   * Loan period = X Hours
-   * Closed Library Due Date Management = Move to the end of the current service point hours
-   * <p>
-   * Calendar allDay = true (exclude current day)
-   * Test period: WED=open, THU=open, FRI=open
-   * <p>
-   * Expected result:
-   * Then the due date timestamp should be changed to the endTime of the current service point for SPID-1 (i.e., truncating the loan length)
-   */
-  @Test
-  public void testMoveToEndOfCurrentServicePointHoursAllDayCase2()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
-
-    String servicePointId = CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID;
-    String loanPolicyName = "Move to the end of the current service point hours";
-    String policyProfileName = LoansPolicyProfile.ROLLING.name();
-    DueDateManagement dueDateManagement = DueDateManagement.MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS;
-    int duration = 2;
-    String interval = "Hours";
-
-    OpeningDayPeriod openingDay = getCurrentFakeOpeningDayByServId(servicePointId);
-    DateTime expectedDueDate = getEndDateTimeOpeningDay(openingDay.getOpeningDay());
-
-    checkFixedDayOrTime(servicePointId, loanPolicyName,
-      policyProfileName, dueDateManagement, duration, interval, expectedDueDate, false);
-  }
-
-  /**
-   * Test scenario for Short-term loans
-   * Loanable = Y
-   * Loan profile = Rolling
-   * Loan period = X Hours
-   * Closed Library Due Date Management = Move to the end of the current service point hours
-   * <p>
-   * Calendar allDay = false
-   * Test period: FRI=open, SAT=close, MON=open
-   * <p>
-   * Expected result:
-   * Then the due date timestamp should be changed to the endTime of the current service point for SPID-1 (i.e., truncating the loan length)
-   */
-  @Test
-  public void testMoveToEndOfCurrentServicePointHours()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
-
-    String servicePointId = CASE_FRI_SAT_MON_SERVICE_POINT_ID;
-    String loanPolicyName = "Move to the end of the current service point hours";
-    String policyProfileName = LoansPolicyProfile.ROLLING.name();
-    DueDateManagement dueDateManagement = DueDateManagement.MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS;
-    int duration = 5;
-    String interval = "Hours";
-
-    OpeningDayPeriod openingDay = getCurrentFakeOpeningDayByServId(servicePointId);
-    DateTime expectedDueDate = getEndDateTimeOpeningDay(openingDay.getOpeningDay());
-
-    checkFixedDayOrTime(servicePointId, loanPolicyName,
-      policyProfileName, dueDateManagement, duration, interval, expectedDueDate, false);
-  }
-
-  /**
-   * Test scenario for Short-term loans
-   * Loanable = Y
-   * Loan profile = Rolling
-   * Loan period = X Hours
-   * Closed Library Due Date Management = Move to the end of the current service point hours
-   * <p>
-   * Calendar allDay = false
-   * Test period: WED=open, THU=open, FRI=open
-   * <p>
-   * Expected result:
-   * Then the due date timestamp should be changed to the endTime of the current service point for SPID-1 (i.e., truncating the loan length)
-   */
-  @Test
-  public void testMoveToEndOfCurrentServicePointHoursCase2()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
-
-    String servicePointId = CASE_WED_THU_FRI_SERVICE_POINT_ID;
-    String loanPolicyName = "Move to the end of the current service point hours";
-    String policyProfileName = LoansPolicyProfile.ROLLING.name();
-    DueDateManagement dueDateManagement = DueDateManagement.MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS;
-    int duration = 5;
-    String interval = "Hours";
-
-    OpeningDayPeriod openingDay = getCurrentFakeOpeningDayByServId(servicePointId);
-    DateTime expectedDueDate = getEndDateTimeOpeningDay(openingDay.getOpeningDay());
-
-    checkFixedDayOrTime(servicePointId, loanPolicyName,
-      policyProfileName, dueDateManagement, duration, interval, expectedDueDate, false);
+    checkFixedDayOrTime(servicePointId, policyProfileName, MOVE_TO_THE_END_OF_THE_CURRENT_DAY,
+      duration, INTERVAL_MONTHS, expectedDueDate, false);
   }
 
   /**
@@ -764,47 +633,15 @@ public class CheckOutCalculateDueDateTests extends APITests {
     throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
     String servicePointId = CASE_FRI_SAT_MON_SERVICE_POINT_ID;
-    String loanPolicyName = "Move to the beginning of the next open service point hours";
     String policyProfileName = LoansPolicyProfile.ROLLING.name();
-    DueDateManagement dueDateManagement = DueDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS;
+
     int duration = 5;
-    String interval = "Hours";
 
     OpeningDayPeriod openingDay = getLastFakeOpeningDayByServId(servicePointId);
     DateTime expectedDueDate = getStartDateTimeOpeningDay(openingDay.getOpeningDay());
 
-    checkFixedDayOrTime(servicePointId, loanPolicyName,
-      policyProfileName, dueDateManagement, duration, interval, expectedDueDate, false);
-  }
-
-  /**
-   * Test scenario for Short-term loans
-   * Loanable = Y
-   * Loan profile = Rolling
-   * Loan period = Hours
-   * Closed Library Due Date Management = Move to the beginning of the next open service point hours
-   * Calendar allDay = false
-   * Test period: WED=open, THU=open, FRI=open
-   * <p>
-   * Expected result:
-   * Then the due date timestamp should be changed to the earliest SPID-1 startTime for the closest next Open=true available hours for SPID-1
-   */
-  @Test
-  public void testMoveToBeginningOfNextOpenServicePointHoursCase2()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
-
-    String servicePointId = CASE_WED_THU_FRI_SERVICE_POINT_ID;
-    String loanPolicyName = "Move to the beginning of the next open service point hours";
-    String policyProfileName = LoansPolicyProfile.ROLLING.name();
-    DueDateManagement dueDateManagement = DueDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS;
-    int duration = 1;
-    String interval = "Hours";
-
-    List<OpeningDayPeriod> openingDays = getCurrentAndNextFakeOpeningDayByServId(servicePointId);
-    DateTime expectedDueDate = getStartDateTimeOpeningDayRollover(openingDays, interval, duration);
-
-    checkFixedDayOrTime(servicePointId, loanPolicyName,
-      policyProfileName, dueDateManagement, duration, interval, expectedDueDate, true);
+    checkFixedDayOrTime(servicePointId, policyProfileName, MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS,
+      duration, INTERVAL_HOURS, expectedDueDate, false);
   }
 
   /**
@@ -824,17 +661,14 @@ public class CheckOutCalculateDueDateTests extends APITests {
     throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
     String servicePointId = CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID;
-    String loanPolicyName = "Move to the beginning of the next open service point hours";
     String policyProfileName = LoansPolicyProfile.ROLLING.name();
-    DueDateManagement dueDateManagement = DueDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS;
     int duration = 5;
-    String interval = "Hours";
 
     OpeningDayPeriod openingDay = getLastFakeOpeningDayByServId(servicePointId);
     DateTime expectedDueDate = getStartDateTimeOpeningDay(openingDay.getOpeningDay());
 
-    checkFixedDayOrTime(servicePointId, loanPolicyName,
-      policyProfileName, dueDateManagement, duration, interval, expectedDueDate, false);
+    checkFixedDayOrTime(servicePointId, policyProfileName, MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS,
+      duration, INTERVAL_HOURS, expectedDueDate, false);
   }
 
   /**
@@ -854,51 +688,18 @@ public class CheckOutCalculateDueDateTests extends APITests {
     throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
     String servicePointId = CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID;
-    String loanPolicyName = "Move to the beginning of the next open service point hours";
     String policyProfileName = LoansPolicyProfile.ROLLING.name();
-    DueDateManagement dueDateManagement = DueDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS;
     int duration = 5;
-    String interval = "Hours";
 
     List<OpeningDayPeriod> openingDays = getCurrentAndNextFakeOpeningDayByServId(servicePointId);
     String currentDate = openingDays.get(0).getOpeningDay().getDate();
-    LocalDate localDate = LocalDate.parse(currentDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+    LocalDate localDate = LocalDate.parse(currentDate, DATE_TIME_FORMATTER);
     LocalDateTime localDateTime = localDate.atTime(LocalTime.now(ZoneOffset.UTC))
       .plusHours(duration);
     DateTime expectedDueDate = new DateTime(localDateTime.toString()).withZoneRetainFields(DateTimeZone.UTC);
 
-    checkFixedDayOrTime(servicePointId, loanPolicyName,
-      policyProfileName, dueDateManagement, duration, interval, expectedDueDate, true);
-  }
-
-  /**
-   * Test scenario for Short-term loans
-   * Loanable = Y
-   * Loan profile = Rolling
-   * Loan period = Minutes
-   * Closed Library Due Date Management = Move to the beginning of the next open service point hours
-   * Calendar allDay = false
-   * Test period: WED=open, THU=open, FRI=open
-   * <p>
-   * Expected result:
-   * Then the due date timestamp should be changed to the earliest SPID-1 startTime for the closest next Open=true available hours for SPID-1
-   */
-  @Test
-  public void testMoveToBeginningOfNextOpenServicePointMinutes()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
-
-    String servicePointId = CASE_WED_THU_FRI_SERVICE_POINT_ID;
-    String loanPolicyName = "Move to the beginning of the next open service point hours";
-    String policyProfileName = LoansPolicyProfile.ROLLING.name();
-    DueDateManagement dueDateManagement = DueDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS;
-    int duration = 30;
-    String interval = "Minutes";
-
-    List<OpeningDayPeriod> openingDays = getCurrentAndNextFakeOpeningDayByServId(servicePointId);
-    DateTime expectedDueDate = getStartDateTimeOpeningDayRollover(openingDays, interval, duration);
-
-    checkFixedDayOrTime(servicePointId, loanPolicyName,
-      policyProfileName, dueDateManagement, duration, interval, expectedDueDate, true);
+    checkFixedDayOrTime(servicePointId, policyProfileName, MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS,
+      duration, INTERVAL_HOURS, expectedDueDate, true);
   }
 
   /**
@@ -918,17 +719,15 @@ public class CheckOutCalculateDueDateTests extends APITests {
     throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
     String servicePointId = CASE_FRI_SAT_MON_SERVICE_POINT_ID;
-    String loanPolicyName = "Move to the beginning of the next open service point hours";
     String policyProfileName = LoansPolicyProfile.ROLLING.name();
-    DueDateManagement dueDateManagement = DueDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS;
     int duration = 30;
-    String interval = "Minutes";
+    String interval = INTERVAL_MINUTES;
 
     List<OpeningDayPeriod> openingDays = getCurrentAndNextFakeOpeningDayByServId(servicePointId);
     DateTime expectedDueDate = getStartDateTimeOpeningDayRollover(openingDays, interval, duration);
 
-    checkFixedDayOrTime(servicePointId, loanPolicyName,
-      policyProfileName, dueDateManagement, duration, interval, expectedDueDate, true);
+    checkFixedDayOrTime(servicePointId, policyProfileName, MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS,
+      duration, interval, expectedDueDate, true);
   }
 
   /**
@@ -948,17 +747,15 @@ public class CheckOutCalculateDueDateTests extends APITests {
     throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
     String servicePointId = CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID;
-    String loanPolicyName = "Move to the beginning of the next open service point hours";
     String policyProfileName = LoansPolicyProfile.ROLLING.name();
-    DueDateManagement dueDateManagement = DueDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS;
     int duration = 30;
-    String interval = "Minutes";
+    String interval = INTERVAL_MINUTES;
 
     List<OpeningDayPeriod> openingDays = getCurrentAndNextFakeOpeningDayByServId(servicePointId);
     DateTime expectedDueDate = getStartDateTimeOpeningDayRollover(openingDays, interval, duration);
 
-    checkFixedDayOrTime(servicePointId, loanPolicyName,
-      policyProfileName, dueDateManagement, duration, interval, expectedDueDate, true);
+    checkFixedDayOrTime(servicePointId, policyProfileName, MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS,
+      duration, interval, expectedDueDate, true);
   }
 
   /**
@@ -978,344 +775,15 @@ public class CheckOutCalculateDueDateTests extends APITests {
     throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
     String servicePointId = CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID;
-    String loanPolicyName = "Move to the beginning of the next open service point hours";
     String policyProfileName = LoansPolicyProfile.ROLLING.name();
-    DueDateManagement dueDateManagement = DueDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS;
     int duration = 30;
-    String interval = "Minutes";
+    String interval = INTERVAL_MINUTES;
 
     List<OpeningDayPeriod> openingDays = getCurrentAndNextFakeOpeningDayByServId(servicePointId);
     DateTime expectedDueDate = getStartDateTimeOpeningDayRollover(openingDays, interval, duration);
 
-    checkFixedDayOrTime(servicePointId, loanPolicyName,
-      policyProfileName, dueDateManagement, duration, interval, expectedDueDate, true);
-  }
-
-  /**
-   * Test scenario for Short-term loans
-   * Loanable = Y
-   * Loan profile = Rolling
-   * Loan period = Minutes
-   * Closed Library Due Date Management = Move to the beginning of the next open service point hours
-   * Calendar allDay = true
-   * Test period: FRI=open, SAT=close, MON=open
-   * Test offset period: 1 Hour
-   * <p>
-   * Expected result:
-   * Then the due date timestamp should be changed to the earliest SPID-1 startTime for the closest next Open=true available hours for SPID-1
-   */
-  @Test
-  public void testAdditionalLoanPolicyConfigurationsOffsetInterval()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
-
-    String servicePointId = CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID;
-    String loanPolicyName = "Move to the beginning of the next open service point hours";
-    String policyProfileName = LoansPolicyProfile.ROLLING.name();
-    DueDateManagement dueDateManagement = DueDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS;
-    int duration = 30;
-    String interval = "Minutes";
-    int offsetDuration = 1;
-    String offsetInterval = "Hours";
-
-    List<OpeningDayPeriod> openingDays = getCurrentAndNextFakeOpeningDayByServId(servicePointId);
-    DateTime expectedDueDate = getStartDateTimeOpeningDayRollover(openingDays, interval, duration).plusHours(offsetDuration);
-
-    checkDayWithOffsetTime(servicePointId, loanPolicyName,
-      policyProfileName, dueDateManagement, duration, interval, expectedDueDate, offsetDuration, offsetInterval);
-  }
-
-  /**
-   * Test scenario for Short-term loans
-   * Loanable = Y
-   * Loan profile = Rolling
-   * Loan period = Minutes
-   * Closed Library Due Date Management = Move to the beginning of the next open service point hours
-   * Calendar allDay = true
-   * Test period: FRI=open, SAT=close, MON=open
-   * Test offset period: 1 Hour
-   * <p>
-   * Expected result:
-   * Then the due date timestamp should be changed to the earliest SPID-1 startTime for the closest next Open=true available hours for SPID-1
-   */
-  @Test
-  public void testAdditionalLoanPolicyConfigurationsMinutes()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
-
-    String servicePointId = CASE_FRI_SAT_MON_SERVICE_POINT_ID;
-    String loanPolicyName = "Move to the beginning of the next open service point hours";
-    String policyProfileName = LoansPolicyProfile.ROLLING.name();
-    DueDateManagement dueDateManagement = DueDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS;
-    int duration = 30;
-    String interval = "Minutes";
-    int offsetDuration = 1;
-    String offsetInterval = "Hours";
-
-    List<OpeningDayPeriod> openingDays = getCurrentAndNextFakeOpeningDayByServId(servicePointId);
-    DateTime expectedDueDate = getStartDateTimeOpeningDayRollover(openingDays, interval, duration).plusHours(offsetDuration);
-
-    checkDayWithOffsetTime(servicePointId, loanPolicyName,
-      policyProfileName, dueDateManagement, duration, interval, expectedDueDate, offsetDuration, offsetInterval);
-  }
-
-  /**
-   * Test scenario for Short-term loans
-   * Loanable = Y
-   * Loan profile = Rolling
-   * Loan period = Minutes
-   * Closed Library Due Date Management = Move to the beginning of the next open service point hours
-   * Calendar allDay = false
-   * Test period: FRI=open, SAT=close, MON=open
-   * Test offset period: 45 minutes
-   * <p>
-   * Expected result:
-   * Then the due date timestamp should be changed to the earliest SPID-1 startTime for the closest next Open=true available hours for SPID-1
-   */
-  @Test
-  public void testAdditionalLoanPolicyConfigurationsMinutesCase1()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
-
-    String servicePointId = CASE_FRI_SAT_MON_SERVICE_POINT_ID;
-    String loanPolicyName = "Move to the beginning of the next open service point hours";
-    String policyProfileName = LoansPolicyProfile.ROLLING.name();
-    DueDateManagement dueDateManagement = DueDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS;
-    int duration = 30;
-    String interval = "Minutes";
-    int offsetDuration = 45;
-    String offsetInterval = "Minutes";
-
-    List<OpeningDayPeriod> openingDays = getCurrentAndNextFakeOpeningDayByServId(servicePointId);
-    DateTime expectedDueDate = getStartDateTimeOpeningDayRollover(openingDays, interval, duration).plusMinutes(offsetDuration);
-
-    checkDayWithOffsetTime(servicePointId, loanPolicyName,
-      policyProfileName, dueDateManagement, duration, interval, expectedDueDate, offsetDuration, offsetInterval);
-  }
-
-  /**
-   * Test scenario for Short-term loans
-   * Loanable = Y
-   * Loan profile = Rolling
-   * Loan period = Minutes
-   * Closed Library Due Date Management = Move to the beginning of the next open service point hours
-   * Calendar allDay = false
-   * Test period: WED=open, THU=open, FRI=open
-   * Test offset period: 60 minutes
-   * <p>
-   * Expected result:
-   * Then the due date timestamp should be changed to the earliest SPID-1 startTime for the closest next Open=true available hours for SPID-1
-   */
-  @Test
-  public void testAdditionalLoanPolicyConfigurationsMinutesCase2()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
-
-    String servicePointId = CASE_WED_THU_FRI_SERVICE_POINT_ID;
-    String loanPolicyName = "Move to the beginning of the next open service point hours";
-    String policyProfileName = LoansPolicyProfile.ROLLING.name();
-    DueDateManagement dueDateManagement = DueDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS;
-    int duration = 30;
-    String interval = "Minutes";
-    int offsetDuration = 60;
-    String offsetInterval = "Minutes";
-
-    OpeningDayPeriod currentFakePeriod = getCurrentFakeOpeningDayByServId(servicePointId);
-
-    DateTime expectedDueDate = getRolloverForMinutesPeriod(duration, currentFakePeriod, getLastFakeOpeningDayByServId(servicePointId),
-      currentFakePeriod.getOpeningDay(), currentFakePeriod.getOpeningDay().getDate(), offsetDuration);
-
-    checkDayWithOffsetTime(servicePointId, loanPolicyName,
-      policyProfileName, dueDateManagement, duration, interval, expectedDueDate, offsetDuration, offsetInterval);
-  }
-
-  /**
-   * Test scenario for Short-term loans
-   * Loanable = Y
-   * Loan profile = Rolling
-   * Loan period = Minutes
-   * Closed Library Due Date Management = Move to the beginning of the next open service point hours
-   * Calendar allDay = true
-   * Test period: WED=open, THU=open, FRI=open
-   * Test offset period: 35 minutes
-   * <p>
-   * Expected result:
-   * Then the due date timestamp should be changed to the earliest SPID-1 startTime for the closest next Open=true available hours for SPID-1
-   */
-  @Test
-  public void testAdditionalLoanPolicyConfigurationsMinutesAllDay()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
-
-    String servicePointId = CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID;
-    String loanPolicyName = "Move to the beginning of the next open service point hours";
-    String policyProfileName = LoansPolicyProfile.ROLLING.name();
-    DueDateManagement dueDateManagement = DueDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS;
-    int duration = 30;
-    String interval = "Minutes";
-    int offsetDuration = 35;
-    String offsetInterval = "Minutes";
-
-    List<OpeningDayPeriod> openingDays = getCurrentAndNextFakeOpeningDayByServId(servicePointId);
-    DateTime expectedDueDate = getStartDateTimeOpeningDayRollover(openingDays, interval, duration)
-      .plusMinutes(offsetDuration);
-
-    checkDayWithOffsetTime(servicePointId, loanPolicyName,
-      policyProfileName, dueDateManagement, duration, interval, expectedDueDate, offsetDuration, offsetInterval);
-  }
-
-  /**
-   * Test scenario for Short-term loans
-   * Loanable = Y
-   * Loan profile = Rolling
-   * Loan period = Random Hours
-   * Closed Library Due Date Management = Move to the beginning of the next open service point hours
-   * Calendar allDay = true
-   * Test period: WED=open, THU=open, FRI=open
-   * Test offset period: Random Hours
-   * <p>
-   * Expected result:
-   * Then the due date timestamp should be changed to the earliest SPID-1 startTime for the closest next Open=true available hours for SPID-1
-   */
-  @Test
-  public void testAdditionalLoanPolicyConfigurationsHoursAllDay()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
-
-    String servicePointId = CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID;
-    String loanPolicyName = "Move to the beginning of the next open service point hours";
-    String policyProfileName = LoansPolicyProfile.ROLLING.name();
-    DueDateManagement dueDateManagement = DueDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS;
-    int duration = new SplittableRandom().nextInt(1, 10);
-    String interval = "Hours";
-    int offsetDuration = new SplittableRandom().nextInt(1, 24);
-    String offsetInterval = "Hours";
-
-    List<OpeningDayPeriod> openingDays = getCurrentAndNextFakeOpeningDayByServId(servicePointId);
-    OpeningDayPeriod openingDayPeriod = openingDays.get(0);
-    String currentDate = openingDayPeriod.getOpeningDay().getDate();
-    LocalDate localDate = LocalDate.parse(currentDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
-    LocalDateTime localDateTime = localDate.atTime(LocalTime.now(ZoneOffset.UTC))
-      .plusHours(duration)
-      .plusHours(offsetDuration);
-    DateTime expectedDueDate = new DateTime(localDateTime.toString()).withZoneRetainFields(DateTimeZone.UTC);
-
-    checkDayWithOffsetTime(servicePointId, loanPolicyName,
-      policyProfileName, dueDateManagement, duration, interval, expectedDueDate, offsetDuration, offsetInterval);
-  }
-
-  /**
-   * Test scenario for Short-term loans
-   * Loanable = Y
-   * Loan profile = Rolling
-   * Loan period = Minutes
-   * Closed Library Due Date Management = Move to the beginning of the next open service point hours
-   * Calendar allDay = true
-   * Test period: WED=open, THU=open, FRI=open
-   * Test offset period: 2 Hours
-   * <p>
-   * Expected result:
-   * Then the due date timestamp should be changed to the earliest SPID-1 startTime for the closest next Open=true available hours for SPID-1
-   */
-  @Test
-  public void testAdditionalLoanPolicyConfigurationsHours()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
-
-    String servicePointId = CASE_WED_THU_FRI_SERVICE_POINT_ID;
-    String loanPolicyName = "Move to the beginning of the next open service point hours";
-    String policyProfileName = LoansPolicyProfile.ROLLING.name();
-    DueDateManagement dueDateManagement = DueDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS;
-    int duration = 2;
-    String interval = "Hours";
-    int offsetDuration = 0;
-    String offsetInterval = "Hours";
-
-    List<OpeningDayPeriod> openingDays = getCurrentAndNextFakeOpeningDayByServId(servicePointId);
-    DateTime expectedDueDate = getRolloverForHourlyPeriod(duration, openingDays.get(0), openingDays.get(1), offsetDuration)
-      .plusHours(offsetDuration);
-
-    checkDayWithOffsetTime(servicePointId, loanPolicyName,
-      policyProfileName, dueDateManagement, duration, interval, expectedDueDate, offsetDuration, offsetInterval);
-  }
-
-  /**
-   * Test scenario when Library is close in current day
-   * Library Yours: 1 period (end today)
-   * Loan period = Random Hours
-   * Test period: WED=open, THU=open, FRI=open
-   * <p>
-   * Expected result:
-   * Given any scenarios wherein Closed Library Due Date Management configurations will lead to a due date timestamp
-   * that falls outside of the range of a Fixed due date schedule,
-   * then the loan period should be truncated to the closing time
-   * for the service point on the endDate of the appropriate Fixed Due Date Schedule
-   */
-  @Test
-  public void testAdditionalScenarioWhenClosedLibraryTodayHours()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
-
-    final DateTime loanDate = DateTime.now().toDateTime(DateTimeZone.UTC);
-    int duration = 1;
-
-    String loanPolicyName = "Closed Library";
-    JsonObject loanPolicyEntry = createLoanPolicyEntry(loanPolicyName, true,
-      LoansPolicyProfile.ROLLING.name(), DueDateManagement.KEEP_THE_CURRENT_DUE_DATE_TIME.getValue(),
-      duration, "Hours");
-    String loanPolicyId = createLoanPolicy(loanPolicyEntry);
-
-    final IndividualResource response = loansFixture.checkOutByBarcode(
-      new CheckOutByBarcodeRequestBuilder()
-        .forItem(itemsFixture.basedUponSmallAngryPlanet())
-        .to(usersFixture.steve())
-        .on(loanDate)
-        .at(UUID.fromString(CASE_CLOSED_LIBRARY_SERVICE_POINT_ID)));
-
-    final JsonObject loan = response.getJson();
-
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(loanPolicyId));
-
-    DateTime expectedDate = new DateTime(LocalDate.parse(THURSDAY_DATE, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER))
-      .atTime(LocalTime.MIN).toString()).withZoneRetainFields(DateTimeZone.UTC);
-    assertThat("due date should be " + duration,
-      loan.getString("dueDate"), isEquivalentTo(expectedDate));
-  }
-
-  /**
-   * Test scenario when Library is close in current day
-   * Library Yours: 1 periods (end today)
-   * Loan period = X Months
-   * Test period: WED=open, THU=open, FRI=open
-   * <p>
-   * Expected result:
-   * Given any scenarios wherein Closed Library Due Date Management configurations will lead to a due date timestamp
-   * that falls outside of the range of a Fixed due date schedule,
-   * then the loan period should be truncated to the closing time
-   * for the service point on the endDate of the appropriate Fixed Due Date Schedule
-   */
-  @Test
-  public void testAdditionalScenarioWhenClosedLibraryTodayDay()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
-
-    final DateTime loanDate = DateTime.now().toDateTime(DateTimeZone.UTC);
-    int duration = new SplittableRandom().nextInt(1, 2);
-
-    String loanPolicyName = "Closed Library";
-    JsonObject loanPolicyEntry = createLoanPolicyEntry(loanPolicyName, true,
-      LoansPolicyProfile.ROLLING.name(), DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.getValue(),
-      duration, "Days");
-    String loanPolicyId = createLoanPolicy(loanPolicyEntry);
-
-    final IndividualResource response = loansFixture.checkOutByBarcode(
-      new CheckOutByBarcodeRequestBuilder()
-        .forItem(itemsFixture.basedUponSmallAngryPlanet())
-        .to(usersFixture.steve())
-        .on(loanDate)
-        .at(UUID.fromString(CASE_CLOSED_LIBRARY_IN_THU_SERVICE_POINT_ID)));
-
-    final JsonObject loan = response.getJson();
-
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(loanPolicyId));
-
-    DateTime expectedDate = new DateTime(LocalDate.parse(WEDNESDAY_DATE, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER))
-      .atTime(LocalTime.MIN).toString()).withZoneRetainFields(DateTimeZone.UTC);
-    assertThat("due date should be " + duration,
-      loan.getString("dueDate"), isEquivalentTo(expectedDate));
+    checkFixedDayOrTime(servicePointId, policyProfileName, MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS,
+      duration, interval, expectedDueDate, true);
   }
 
   /**
@@ -1341,7 +809,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     String loanPolicyName = "Keep the current due date/time";
     JsonObject loanPolicyEntry = createLoanPolicyEntry(loanPolicyName, true,
       LoansPolicyProfile.ROLLING.name(), DueDateManagement.KEEP_THE_CURRENT_DUE_DATE_TIME.getValue(),
-      duration, "Hours");
+      duration, INTERVAL_HOURS);
     String loanPolicyId = createLoanPolicy(loanPolicyEntry);
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
@@ -1353,11 +821,11 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     final JsonObject loan = response.getJson();
 
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(loanPolicyId));
+    assertThat(ERROR_MESSAGE_LOAN_POLICY,
+      loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
 
-    assertThat("due date should be " + duration,
-      loan.getString("dueDate"), isEquivalentTo(loanDate.plusHours(duration)));
+    assertThat(ERROR_MESSAGE_DUE_DATE + duration,
+      loan.getString(DUE_DATE_KEY), isEquivalentTo(loanDate.plusHours(duration)));
   }
 
   /**
@@ -1366,7 +834,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    * - Loanable = N
    */
   @Test
-  public void testExceptionScenario()
+  public void testItemIsNotLoanable()
     throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -1379,25 +847,22 @@ public class CheckOutCalculateDueDateTests extends APITests {
     JsonObject loanPolicyEntry = createLoanPolicyEntry(loanPolicyName, false,
       LoansPolicyProfile.ROLLING.name(), DueDateManagement.KEEP_THE_CURRENT_DUE_DATE.getValue(),
       duration, "Minutes");
-    String loanPolicyId = createLoanPolicy(loanPolicyEntry);
+    createLoanPolicy(loanPolicyEntry);
 
-    final IndividualResource response = loansFixture.checkOutByBarcode(
+    final Response response = loansFixture.attemptCheckOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
         .on(loanDate)
         .at(checkoutServicePointId));
 
-    final JsonObject loan = response.getJson();
+    MatcherAssert.assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
 
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(loanPolicyId));
-
-    assertThat("due date should be " + duration,
-      loan.getString("dueDate"), isEquivalentTo(loanDate.plusMinutes(duration)));
+    MatcherAssert.assertThat(response.getJson(), hasErrorWith(hasMessage(
+      "Item is not loanable")));
   }
 
-  /**
+  /** 1
    * Test scenario when Calendar API is unavailable
    */
   @Test
@@ -1409,7 +874,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     String loanPolicyName = "Calendar API is unavailable";
     JsonObject loanPolicyEntry = createLoanPolicyEntry(loanPolicyName, true,
       LoansPolicyProfile.ROLLING.name(), DueDateManagement.KEEP_THE_CURRENT_DUE_DATE_TIME.getValue(),
-      duration, "Hours");
+      duration, INTERVAL_HOURS);
     String loanPolicyId = createLoanPolicy(loanPolicyEntry);
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
@@ -1421,16 +886,47 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     final JsonObject loan = response.getJson();
 
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(loanPolicyId));
+    assertThat(ERROR_MESSAGE_LOAN_POLICY,
+      loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
 
-    assertThat("due date should be " + duration,
-      loan.getString("dueDate"), isEquivalentTo(loanDate.plusHours(duration)));
+    assertThat(ERROR_MESSAGE_DUE_DATE + duration,
+      loan.getString(DUE_DATE_KEY), isEquivalentTo(loanDate.plusHours(duration)));
   }
 
-  private void checkFixedDayOrTime(String servicePointId, String loanPolicyName,
-                                   String policyProfileName, DueDateManagement dueDateManagement,
-                                   int duration, String interval, DateTime expectedDueDate, boolean isIncludeTime)
+  /**
+   * Exception test scenario of Calendar API
+   */
+  @Test
+  public void testScenarioWhenCalendarApiIsEmpty()
+    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+
+    final DateTime loanDate = DateTime.now().toDateTime(DateTimeZone.UTC);
+    int duration = 1;
+    String loanPolicyName = "Calendar API is unavailable";
+    JsonObject loanPolicyEntry = createLoanPolicyEntry(loanPolicyName, true,
+      LoansPolicyProfile.ROLLING.name(), DueDateManagement.KEEP_THE_CURRENT_DUE_DATE_TIME.getValue(),
+      duration, INTERVAL_HOURS);
+    String loanPolicyId = createLoanPolicy(loanPolicyEntry);
+
+    final IndividualResource response = loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(itemsFixture.basedUponSmallAngryPlanet())
+        .to(usersFixture.steve())
+        .on(loanDate)
+        .at(UUID.fromString(CASE_CALENDAR_IS_EMPTY_SERVICE_POINT_ID)));
+
+    final JsonObject loan = response.getJson();
+
+    assertThat(ERROR_MESSAGE_LOAN_POLICY,
+      loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
+
+    assertThat(ERROR_MESSAGE_DUE_DATE + duration,
+      loan.getString(DUE_DATE_KEY), isEquivalentTo(loanDate.plusHours(duration)));
+  }
+
+  private void checkFixedDayOrTime(String servicePointId, String policyProfileName,
+                                   DueDateManagement dueDateManagement, int duration, String interval,
+                                   DateTime expectedDueDate, boolean isIncludeTime)
     throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -1438,7 +934,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     final DateTime loanDate = DateTime.now().toDateTime(DateTimeZone.UTC);
     final UUID checkoutServicePointId = UUID.fromString(servicePointId);
 
-    JsonObject loanPolicyEntry = createLoanPolicyEntry(loanPolicyName, true,
+    JsonObject loanPolicyEntry = createLoanPolicyEntry(dueDateManagement.getValue(), true,
       policyProfileName, dueDateManagement.getValue(), duration, interval);
     String loanPolicyId = createLoanPolicy(loanPolicyEntry);
 
@@ -1451,115 +947,36 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     final JsonObject loan = response.getJson();
 
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(loanPolicyId));
+    assertThat(ERROR_MESSAGE_LOAN_POLICY,
+      loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
 
     if (isIncludeTime) {
       checkDateTime(expectedDueDate, loan);
     } else {
-      DateTime actualDueDate = DateTime.parse(loan.getString("dueDate"));
-      assertThat("due date should be " + expectedDueDate + ", actual due date is " + actualDueDate,
+      DateTime actualDueDate = DateTime.parse(loan.getString(DUE_DATE_KEY));
+      assertThat(ERROR_MESSAGE_DUE_DATE + expectedDueDate + ", actual due date is " + actualDueDate,
         actualDueDate.compareTo(expectedDueDate) == 0);
     }
   }
 
-  private void checkDayWithOffsetTime(String servicePointId, String loanPolicyName,
-                                      String policyProfileName, DueDateManagement dueDateManagement,
-                                      int duration, String interval, DateTime expectedDueDate,
-                                      int offsetDuration, String offsetInterval)
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
-
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource steve = usersFixture.steve();
-    final DateTime loanDate = DateTime.now().toDateTime(DateTimeZone.UTC);
-    final UUID checkoutServicePointId = UUID.fromString(servicePointId);
-
-    JsonObject loanPolicyEntry = createLoanPolicyOffsetTimeEntry(loanPolicyName, policyProfileName,
-      dueDateManagement.getValue(), duration, interval, offsetDuration, offsetInterval);
-    String loanPolicyId = createLoanPolicy(loanPolicyEntry);
-
-    final IndividualResource response = loansFixture.checkOutByBarcode(
-      new CheckOutByBarcodeRequestBuilder()
-        .forItem(smallAngryPlanet)
-        .to(steve)
-        .on(loanDate)
-        .at(checkoutServicePointId));
-
-    final JsonObject loan = response.getJson();
-
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(loanPolicyId));
-
-    checkDateTime(expectedDueDate, loan);
-  }
-
   /**
-   * Checl the day and dateTime
+   * Check the day and dateTime
    */
   private void checkDateTime(DateTime expectedDueDate, JsonObject loan) {
-    DateTime actualDueDate = getThresholdDateTime(DateTime.parse(loan.getString("dueDate")));
+    DateTime actualDueDate = getThresholdDateTime(DateTime.parse(loan.getString(DUE_DATE_KEY)));
 
     assertThat("due date day should be " + expectedDueDate.getDayOfWeek() + " day of week",
       actualDueDate.getDayOfWeek() == expectedDueDate.getDayOfWeek());
 
     DateTime thresholdDateTime = getThresholdDateTime(expectedDueDate);
-    assertThat("due date should be " + thresholdDateTime + ", actual due date is " + actualDueDate,
+    assertThat(ERROR_MESSAGE_DUE_DATE + thresholdDateTime + ", actual due date is " + actualDueDate,
       actualDueDate.compareTo(thresholdDateTime) == 0);
-  }
-
-  /**
-   * Test scenario for Short-term loans
-   * Loanable = Y
-   * Loan profile = Fixed
-   */
-  private DateTime getRolloverForMinutesPeriod(int duration, OpeningDayPeriod currentDayPeriod, OpeningDayPeriod nextDayPeriod,
-                                               OpeningDay currentOpeningDay, String currentDate, int offsetDuration) {
-
-    if (currentOpeningDay.getAllDay()) {
-      LocalDate currentLocalDate = LocalDate.parse(currentDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
-      LocalDateTime currentEndLocalDateTime = LocalDateTime.of(currentLocalDate, LocalTime.MAX);
-      LocalDateTime offsetLocalDateTime = LocalDateTime.of(currentLocalDate, LocalTime.now(ZoneOffset.UTC)).plusMinutes(duration);
-
-      if (isInCurrentLocalDateTime(currentEndLocalDateTime, offsetLocalDateTime)) {
-        return calculateOffset(offsetLocalDateTime, LoanPolicyPeriod.MINUTES, offsetDuration).withZoneRetainFields(DateTimeZone.UTC);
-      } else {
-        OpeningDay nextOpeningDay = nextDayPeriod.getOpeningDay();
-        String nextDate = nextOpeningDay.getDate();
-        LocalDate localDate = LocalDate.parse(nextDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
-
-        if (nextOpeningDay.getAllDay()) {
-          return calculateOffset(localDate.atTime(LocalTime.MIN), LoanPolicyPeriod.MINUTES, offsetDuration).withZoneRetainFields(DateTimeZone.UTC);
-        } else {
-          OpeningHour openingHour = nextOpeningDay.getOpeningHour().get(0);
-          LocalTime startTime = LocalTime.parse(openingHour.getStartTime());
-          return calculateOffset(LocalDateTime.of(localDate, startTime), LoanPolicyPeriod.MINUTES, offsetDuration).withZoneRetainFields(DateTimeZone.UTC);
-        }
-      }
-    } else {
-      LocalTime offsetTime = LocalTime.now(ZoneOffset.UTC).plusMinutes(duration);
-      if (isOffsetTimeInCurrentDayPeriod(currentDayPeriod, offsetTime)) {
-        LocalDate localDate = LocalDate.parse(currentDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
-        return calculateOffset(LocalDateTime.of(localDate, offsetTime), LoanPolicyPeriod.MINUTES, offsetDuration).withZoneRetainFields(DateTimeZone.UTC);
-      } else {
-        OpeningDay nextOpeningDay = nextDayPeriod.getOpeningDay();
-        String nextDate = nextOpeningDay.getDate();
-        LocalDate localDate = LocalDate.parse(nextDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
-
-        if (nextOpeningDay.getAllDay()) {
-          return calculateOffset(localDate.atTime(LocalTime.MIN), LoanPolicyPeriod.MINUTES, offsetDuration).withZoneRetainFields(DateTimeZone.UTC);
-        } else {
-          OpeningHour openingHour = nextOpeningDay.getOpeningHour().get(0);
-          LocalTime startTime = LocalTime.parse(openingHour.getStartTime());
-          return calculateOffset(LocalDateTime.of(localDate, startTime), LoanPolicyPeriod.MINUTES, offsetDuration).withZoneRetainFields(DateTimeZone.UTC);
-        }
-      }
-    }
   }
 
   private DateTime findDateTimeInPeriod(OpeningDayPeriod currentDayPeriod, LocalTime offsetTime, String currentDate) {
     List<OpeningHour> openingHoursList = currentDayPeriod.getOpeningDay().getOpeningHour();
 
-    LocalDate localDate = LocalDate.parse(currentDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+    LocalDate localDate = LocalDate.parse(currentDate, DATE_TIME_FORMATTER);
     boolean isInPeriod = false;
     LocalTime newOffsetTime = null;
     for (int i = 0; i < openingHoursList.size() - 1; i++) {
@@ -1578,36 +995,6 @@ public class CheckOutCalculateDueDateTests extends APITests {
     return new DateTime(LocalDateTime.of(localDate, isInPeriod ? localTime : offsetTime).toString()).withZoneRetainFields(DateTimeZone.UTC);
   }
 
-
-  private DateTime getRolloverForHourlyPeriod(int duration, OpeningDayPeriod currentDayPeriod, OpeningDayPeriod nextDayPeriod, int offsetDuration) {
-
-    if (currentDayPeriod.getOpeningDay().getAllDay()) {
-      String currentDate = currentDayPeriod.getOpeningDay().getDate();
-      LocalDate localDate = LocalDate.parse(currentDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
-      LocalDateTime localDateTime = localDate.atTime(LocalTime.now(ZoneOffset.UTC)).plusHours(duration);
-      return calculateOffset(localDateTime, LoanPolicyPeriod.HOURS, offsetDuration);
-    } else {
-      LocalTime offsetTime = calculateOffsetTime(LocalTime.now(ZoneOffset.UTC).plusHours(duration), LoanPolicyPeriod.HOURS, offsetDuration);
-      String currentDate = currentDayPeriod.getOpeningDay().getDate();
-
-      if (isOffsetTimeInCurrentDayPeriod(currentDayPeriod, offsetTime)) {
-        return findDateTimeInPeriod(currentDayPeriod, offsetTime, currentDate);
-      } else {
-        OpeningDay nextOpeningDay = nextDayPeriod.getOpeningDay();
-        String nextDate = nextOpeningDay.getDate();
-        LocalDate localDate = LocalDate.parse(nextDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
-
-        if (nextOpeningDay.getAllDay()) {
-          return new DateTime(localDate.atTime(LocalTime.MIN).toString());
-        } else {
-          OpeningHour openingHour = nextOpeningDay.getOpeningHour().get(0);
-          LocalTime startTime = LocalTime.parse(openingHour.getStartTime());
-          return new DateTime(LocalDateTime.of(localDate, startTime).toString());
-        }
-      }
-    }
-  }
-
   private DateTime getStartDateTimeOpeningDayRollover(List<OpeningDayPeriod> openingDays, String interval, int duration) {
     OpeningDayPeriod currentDayPeriod = openingDays.get(0);
     OpeningDayPeriod nextDayPeriod = openingDays.get(1);
@@ -1620,12 +1007,12 @@ public class CheckOutCalculateDueDateTests extends APITests {
         LocalTime offsetTime = LocalTime.now(ZoneOffset.UTC).plusHours(duration);
         String currentDate = currentDayPeriod.getOpeningDay().getDate();
 
-        if (isOffsetTimeInCurrentDayPeriod(currentDayPeriod, offsetTime)) {
+        if (isInPeriodOpeningDay(currentDayPeriod.getOpeningDay().getOpeningHour(), offsetTime)) {
           return findDateTimeInPeriod(currentDayPeriod, offsetTime, currentDate);
         } else {
           OpeningDay nextOpeningDay = nextDayPeriod.getOpeningDay();
           String nextDate = nextOpeningDay.getDate();
-          LocalDate localDate = LocalDate.parse(nextDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+          LocalDate localDate = LocalDate.parse(nextDate, DATE_TIME_FORMATTER);
 
           if (nextOpeningDay.getAllDay()) {
             return new DateTime(localDate.atTime(LocalTime.MIN).toString()).withZoneRetainFields(DateTimeZone.UTC);
@@ -1642,7 +1029,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
       if (currentOpeningDay.getOpen()) {
         if (currentOpeningDay.getAllDay()) {
-          LocalDate currentLocalDate = LocalDate.parse(currentDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+          LocalDate currentLocalDate = LocalDate.parse(currentDate, DATE_TIME_FORMATTER);
           LocalDateTime currentEndLocalDateTime = LocalDateTime.of(currentLocalDate, LocalTime.MAX);
           LocalDateTime offsetLocalDateTime = LocalDateTime.of(currentLocalDate, LocalTime.now(ZoneOffset.UTC)).plusMinutes(duration);
 
@@ -1651,7 +1038,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
           } else {
             OpeningDay nextOpeningDay = nextDayPeriod.getOpeningDay();
             String nextDate = nextOpeningDay.getDate();
-            LocalDate localDate = LocalDate.parse(nextDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+            LocalDate localDate = LocalDate.parse(nextDate, DATE_TIME_FORMATTER);
 
             if (nextOpeningDay.getAllDay()) {
               return new DateTime(localDate.atTime(LocalTime.MIN).toString()).withZoneRetainFields(DateTimeZone.UTC);
@@ -1663,13 +1050,13 @@ public class CheckOutCalculateDueDateTests extends APITests {
           }
         } else {
           LocalTime offsetTime = LocalTime.now(ZoneOffset.UTC).plusMinutes(duration);
-          if (isOffsetTimeInCurrentDayPeriod(currentDayPeriod, offsetTime)) {
-            LocalDate localDate = LocalDate.parse(currentDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+          if (isInPeriodOpeningDay(currentOpeningDay.getOpeningHour(), offsetTime)) {
+            LocalDate localDate = LocalDate.parse(currentDate, DATE_TIME_FORMATTER);
             return new DateTime(LocalDateTime.of(localDate, offsetTime).toString()).withZoneRetainFields(DateTimeZone.UTC);
           } else {
             OpeningDay nextOpeningDay = nextDayPeriod.getOpeningDay();
             String nextDate = nextOpeningDay.getDate();
-            LocalDate localDate = LocalDate.parse(nextDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+            LocalDate localDate = LocalDate.parse(nextDate, DATE_TIME_FORMATTER);
 
             if (nextOpeningDay.getAllDay()) {
               return new DateTime(localDate.atTime(LocalTime.MIN).toString()).withZoneRetainFields(DateTimeZone.UTC);
@@ -1683,7 +1070,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
       } else {
         OpeningDay nextOpeningDay = nextDayPeriod.getOpeningDay();
         String nextDate = nextOpeningDay.getDate();
-        LocalDate nextLocalDate = LocalDate.parse(nextDate, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+        LocalDate nextLocalDate = LocalDate.parse(nextDate, DATE_TIME_FORMATTER);
 
         if (nextOpeningDay.getAllDay()) {
           return new DateTime(nextLocalDate.atTime(LocalTime.MIN).toString()).withZoneRetainFields(DateTimeZone.UTC);
@@ -1707,7 +1094,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
   private DateTime getEndDateTimeOpeningDay(OpeningDay openingDay) {
     boolean allDay = openingDay.getAllDay();
     String date = openingDay.getDate();
-    LocalDate localDate = LocalDate.parse(date, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+    LocalDate localDate = LocalDate.parse(date, DATE_TIME_FORMATTER);
 
     if (allDay) {
       return getDateTimeOfEndDay(localDate);
@@ -1726,7 +1113,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
   private DateTime getStartDateTimeOpeningDay(OpeningDay openingDay) {
     boolean allDay = openingDay.getAllDay();
     String date = openingDay.getDate();
-    LocalDate localDate = LocalDate.parse(date, DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER));
+    LocalDate localDate = LocalDate.parse(date, DATE_TIME_FORMATTER);
 
     if (allDay) {
       return getDateTimeOfStartDay(localDate);
@@ -1740,6 +1127,17 @@ public class CheckOutCalculateDueDateTests extends APITests {
       LocalTime localTime = LocalTime.parse(openingHour.getStartTime());
       return new DateTime(LocalDateTime.of(localDate, localTime).toString()).withZoneRetainFields(DateTimeZone.UTC);
     }
+  }
+
+  /**
+   * Determine whether the offset date is in the time period of the incoming current date
+   *
+   * @param currentLocalDateTime incoming LocalDateTime
+   * @param offsetLocalDateTime  LocalDateTime with some offset days / hour / minutes
+   * @return true if offsetLocalDateTime is contains offsetLocalDateTime in the time period
+   */
+  private boolean isInCurrentLocalDateTime(LocalDateTime currentLocalDateTime, LocalDateTime offsetLocalDateTime) {
+    return offsetLocalDateTime.isBefore(currentLocalDateTime) || offsetLocalDateTime.isEqual(currentLocalDateTime);
   }
 
   /**
@@ -1760,7 +1158,8 @@ public class CheckOutCalculateDueDateTests extends APITests {
    * Create a fake json LoanPolicy
    */
   private JsonObject createLoanPolicyEntry(String name, boolean loanable,
-    String profileId, String dueDateManagement, int duration, String intervalId) {
+                                           String profileId, String dueDateManagement,
+                                           int duration, String intervalId) {
 
     return new LoanPolicyBuilder()
       .withName(name)
@@ -1777,31 +1176,13 @@ public class CheckOutCalculateDueDateTests extends APITests {
    * Create a fake json LoanPolicy for fixed period
    */
   private JsonObject createLoanPolicyEntryFixed(String name,
-      UUID fixedDueDateScheduleId, String dueDateManagement) {
-
+                                                UUID fixedDueDateScheduleId,
+                                                String dueDateManagement) {
     return new LoanPolicyBuilder()
       .withName(name)
       .withDescription("New LoanPolicy")
       .fixed(fixedDueDateScheduleId)
       .withClosedLibraryDueDateManagement(dueDateManagement)
-      .renewFromCurrentDueDate()
-      .create();
-  }
-
-  /**
-   * Create a fake json LoanPolicy
-   */
-  private JsonObject createLoanPolicyOffsetTimeEntry(String name,
-      String profileId, String dueDateManagement, int duration, String intervalId,
-      int offsetDuration, String offsetInterval) {
-
-    return new LoanPolicyBuilder()
-      .withName(name)
-      .withDescription("LoanPolicy")
-      .withLoansProfile(profileId)
-      .rolling(Period.from(duration, intervalId))
-      .withClosedLibraryDueDateManagement(dueDateManagement)
-      .withOpeningTimeOffset(Period.from(offsetDuration, offsetInterval))
       .renewFromCurrentDueDate()
       .create();
   }

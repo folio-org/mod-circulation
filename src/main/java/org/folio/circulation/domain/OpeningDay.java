@@ -2,13 +2,12 @@ package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collector;
-
-import static org.folio.circulation.support.CalendarQueryUtil.getField;
 
 public class OpeningDay {
 
@@ -26,7 +25,7 @@ public class OpeningDay {
 
   OpeningDay(JsonObject jsonObject, String key) {
     JsonObject openingDayJson = jsonObject.getJsonObject(key);
-    this.date = getField(openingDayJson.getString(DATE_KEY));
+    this.date = StringUtils.defaultIfBlank(openingDayJson.getString(DATE_KEY), StringUtils.EMPTY);
     this.allDay = openingDayJson.getBoolean(ALL_DAY_KEY, false);
     this.open = openingDayJson.getBoolean(OPEN_KEY, false);
     this.exceptional = openingDayJson.getBoolean(EXCEPTIONAL_KEY, false);

@@ -1,8 +1,7 @@
 package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
-
-import static org.folio.circulation.support.CalendarQueryUtil.getField;
+import org.apache.commons.lang3.StringUtils;
 
 public class Weekdays {
 
@@ -11,7 +10,7 @@ public class Weekdays {
 
   Weekdays(JsonObject jsonObject, String key) {
     JsonObject weekDaysJson = jsonObject.getJsonObject(key);
-    this.day = getField(weekDaysJson.getString(DAY_KEY));
+    this.day = StringUtils.defaultIfBlank(weekDaysJson.getString(DAY_KEY), StringUtils.EMPTY);
   }
 
   private Weekdays(String day) {
