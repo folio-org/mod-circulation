@@ -1,19 +1,22 @@
 # Loan Rules
 
-The loan rules engine calculates the loan policy (that specifies the loan period)
-based on the patron's patron group and the item's material type, loan type, and location.
+The loan rules engine calculates the loan policies based on the patron's
+patron group and the item's material type, loan type, and location.
 
 Example loan rules file:
 
-    fallback-policy: no-circulation
-    m book : regular-loan
-    m newspaper: reading-room
-    m streaming-subscription: policy-s
-        g visitor undergrad: in-house
+    fallback-policy: l no-circulation
+    fallback-policy: r no-requests
+    fallback-policy: n no-notices
+    m book : l regular-loan r no-requests n no-notices
+    m newspaper: l reading-room r no-requests n no-notices
+    m streaming-subscription: l policy-s r no-requests n no-notices
+        g visitor undergrad: l in-house r no-requests n no-notices
 
 How does this short example work?
 
-The default is the `no-circulation` loan policy. It is taken if no other rule matches.
+Each of the `fallback-policy` lines defines a default policy for one of the 3 policy types.
+An `l` indicates a loan policy, `r` a request policy, and `n` a notice policy.
 
 After `m` is the item's material type. Books can be loaned using the `regular-loan` loan policy,
 newspapers can be loaned for the `reading-room` only.
@@ -22,6 +25,9 @@ Streaming subscriptions use the `policy-s` loan policy; however there are two
 exceptions placed in the next line using indentation: For the user groups (`g`)
 `visitor` and `undergrad` the streaming subscriptions can be loaned using
 the `in-house` loan policy only.
+
+The request and notice policies in this example are the same as the default, but
+they work the same way as the loan policies.
 
 ## Line comment
 
@@ -33,12 +39,14 @@ until the end of the line are ignored.
 A name of a loan policy, a patron group, a material type, a loan type or a location
 can contain only these characters: a-z, A-Z, 0-9 and minus "-".
 
-## Loan Policy
+## Policies
 
-The name of a loan policy is appended to a criteria line separated by a colon.
-If the line matches then that policy is applied.
+A list of policies is appended to a criteria line after a colon, with each policy's
+type indicated by an `l`, `r`, or `n`.
+They can be in any order, but must have one of each type.
+If the line matches then those policies are applied.
 
-The loan policy is optional.
+Policies are optional.
 
 ## Criteria type names
 
@@ -87,7 +95,7 @@ To avoid long lines one may replace the `+` by a line break followed by an inden
 
 ```
 g visitor
-    t rare: policy-a
+    t rare: l loan-policy-a r request-policy-a n notice-policy-a
 ```
 
 The second line matches when the criteria of the first and the second line matches.
@@ -95,14 +103,14 @@ The second line matches when the criteria of the first and the second line match
 Indentation allows for a nested hierarchy:
 
 ```
-g staff: policy-a
-g visitor: policy-b
-    m book: policy-c
-        t rare: policy-d
-        t course-reserve: policy-e
-            s law-department: policy-f
-            s math-department: policy-g
-    s new-acquisition: policy-h
+g staff: l loan-policy-a r request-policy-a n notice-policy-a
+g visitor: l loan-policy-b r request-policy-b n notice-policy-b
+    m book: l loan-policy-c r request-policy-c n notice-policy-c
+        t rare: l loan-policy-d r request-policy-d n notice-policy-d
+        t course-reserve: l loan-policy-e r request-policy-e n notice-policy-e
+            s law-department: l loan-policy-f r request-policy-f n notice-policy-f
+            s math-department: l loan-policy-g r request-policy-g n notice-policy-g
+    s new-acquisition: l loan-policy-h r request-policy-h n notice-policy-h
 ```
 
 A current line matches if the current line's criteria matches and for
@@ -111,33 +119,36 @@ has matching criteria.
 
 The hierarchy shown before contains these rules:
 
-Patron group staff (indentation level 0) gives policy-a. (This is true for any material type,
-any loan type and any shelving location.)
+Patron group staff (indentation level 0) gives loan-policy-a, request-policy-a, and notice-policy-a.
+(This is true for any material type, any loan type and any shelving location.)
 
 Patron group visitor (indentation level 0) and shelving location new-acquisition
-(indentation level 1) gives policy-h. (This is true for any loan type and any material type.)
+(indentation level 1) gives loan-policy-h, request-policy-h, and notice-policy-h.
+(This is true for any loan type and any material type.)
 
 Patron group visitor (indentation level 0) and material type book (indentation level 1)
 and loan type course-reserve (indentation level 2) and shelving location math-department
-(indentation level 3) gives policy-g.
+(indentation level 3) gives loan-policy-g, request-policy-g, and notice-policy-g.
 
 Patron group visitor (indentation level 0) and material type book (indentation level 1)
 and loan type course-reserve (indentation level 2) and shelving location law-department
-(indentation level 3) gives policy-f.
+(indentation level 3) gives loan-policy-f, request-policy-f, notice-policy-f.
 
 Patron group visitor (indentation level 0) and material type book (indentation level 1)
 and loan type course-reserve (indentation level 2) and any shelving location different from
-math-department and law-department gives policy-e.
+math-department and law-department gives loan-policy-e, request-policy-e, and notice-policy-e.
 
 Patron group visitor (indentation level 0) and material type book (indentation level 1)
-and loan type rare (indentation level 2) gives policy-d. (This is true for any shelving location.)
-
-Patron group visitor (indentation level 0) and material type book (indentation level 1)
-and any loan type different from rare and course-reserve gives policy-c.
+and loan type rare (indentation level 2) gives loan-policy-d, request-policy-d, and notice-policy-d.
 (This is true for any shelving location.)
 
+Patron group visitor (indentation level 0) and material type book (indentation level 1)
+and any loan type different from rare and course-reserve gives loan-policy-c, request-policy-c,
+and notice-policy-c. (This is true for any shelving location.)
+
 Patron group visitor (indentation level 0) and any material type different from book and globe
-gives policy-b. (This is true for any loan type and any shelving location.)
+gives loan-policy-b, request-policy-b, and notice-policy-b. (This is true for any loan type
+and any shelving location.)
 
 ## Multiple matching rules
 
@@ -177,26 +188,30 @@ Example a:
 
 ```
 priority: criterium(t, s, c, b, a, m, g), number-of-criteria, last-line
-fallback-policy: no-circulation
-g visitor: policy-a
-t rare: policy-c
-m book: policy-e
+fallback-policy: l no-circulation
+fallback-policy: r no-request
+fallback-policy: n no-notice
+g visitor: l loan-policy-a r request-policy-a n notice-policy-a
+t rare: l loan-policy-c r request-policy-c n notice-policy-c
+m book: l loan-policy-e r request-policy-e n notice-policy-e
 ```
 
 A loan for patron group `visitor` and loan type `rare` and material type `book` matches
-all three rules. However, the policy-c rule is the only rule with the highest criterium
-type `t` and wins.
+all three rules. However, the rule with loan-policy-c, request-policy-c, and notice-policy-c
+is the only rule with the highest criterium type `t` and wins.
 
 Example b:
 
 ```
 priority: criterium(t, s, c, b, a, m, g), number-of-criteria, last-line
-fallback-policy: no-circulation
-g visitor: policy-a
-    t rare: policy-b
-t rare: policy-c
-    m book: policy-d
-m book: policy-e
+fallback-policy: l no-circulation
+fallback-policy: r no-request
+fallback-policy: n no-notice
+g visitor:l loan-policy-a r request-policy-a n notice-policy-a
+    t rare: l loan-policy-b r request-policy-b n notice-policy-b
+t rare: l loan-policy-c r request-policy-c n notice-policy-c
+    m book: l loan-policy-d r request-policy-d n notice-policy-d
+m book: l loan-policy-e r request-policy-e n notice-policy-e
 ```
 
 We assign priority numbers to the criterium types:
@@ -207,19 +222,21 @@ all five rules and each rule has this priority:
 
 ```
 priority: criterium(t, s, c, b, a, m, g), number-of-criteria, last-line
-fallback-policy: no-circulation
-g visitor: max(g=1)=1: policy-a
-g visitor + t rare: max(g=1, t=7)=7: policy-b
-t rare: max(t=7)=7: policy-c
-t rare + m book: max(t=7, m=2)=7: policy-d
-m book: max(m=2)=2: policy-e
+fallback-policy: l no-circulation
+fallback-policy: r no-request
+fallback-policy: n no-notice
+g visitor: max(g=1)=1: l loan-policy-a r request-policy-a n notice-policy-a
+g visitor + t rare: max(g=1, t=7)=7: l loan-policy-b r request-policy-b n notice-policy-b
+t rare: max(t=7)=7: l loan-policy-c r request-policy-c n notice-policy-c
+t rare + m book: max(t=7, m=2)=7: l loan-policy-d r request-policy-d n notice-policy-d
+m book: max(m=2)=2: l loan-policy-e r request-policy-e n notice-policy-e
 ```
 
 The three rules with policy-b, policy-c and policy-d have the highest criterium type priority of 7.
 For the tie we need to continue with "2. Rule specificity priority".
 
-The rule with policy-e has a lower criterium type priority of 2,
-the rule with policy-a has the lowest criterium type priority of 1.
+The rule with loan-policy-e has a lower criterium type priority of 2,
+the rule with loan-policy-a has the lowest criterium type priority of 1.
 
 ### Rule specificity priority (number-of-criteria)
 
@@ -228,19 +245,21 @@ Any number of location criterium types (`a`, `b`, `c`, `s`) count as one.
 
 ```
 priority: criterium(t, s, c, b, a, m, g), number-of-criteria, last-line
-fallback-policy: no-circulation
-g visitor + t rare: policy-b
-t rare: policy-c
-t rare + m book: policy-d
+fallback-policy: l no-circulation
+fallback-policy: r no-request
+fallback-policy: n no-notice
+g visitor + t rare: l loan-policy-b r request-policy-b n notice-policy-b
+t rare: l loan-policy-c r request-policy-c n notice-policy-c
+t rare + m book: l loan-policy-d r request-policy-d n notice-policy-d
 ```
 
 A loan for material type `book` and loan type `rare` and patron group `visitor` matches
-all three rules. The criterium type priority is the same (`t`). The line with policy-b has a
-specificity of 2 because it has two criteria (`g` and `t`). The line with policy-c has a
-specificity of 1 because it has only one criterium (`t`). The line policy-d has a
+all three rules. The criterium type priority is the same (`t`). The line with loan-policy-b has a
+specificity of 2 because it has two criteria (`g` and `t`). The line with loan-policy-c has a
+specificity of 1 because it has only one criterium (`t`). The line loan-policy-d has a
 specificity of 2 because it has two criteria (`t` and `m`).
 
-The rules with policy-b and policy-d have the highest specificity priority of 2.
+The rules with loan-policy-b and loan-policy-d have the highest specificity priority of 2.
 
 Use the `all` keyword to match all names of that criterium type. That way the
 criterium type is used for both the Criterium type priority and the Rule specificity
@@ -248,14 +267,16 @@ priority but without restricting to some names. Example:
 
 ```
 priority: criterium(t, s, c, b, a, m, g), number-of-criteria, last-line
-fallback-policy: no-circulation
-g visitor + t rare: policy-b
-t rare: policy-c
-t rare + m book: policy-d
-g all + t all + s course-reserve: policy-e
+fallback-policy: l no-circulation
+fallback-policy: r no-request
+fallback-policy: n no-notice
+g visitor + t rare: l loan-policy-b r request-policy-b n notice-policy-b
+t rare: l loan-policy-c r request-policy-c n notice-policy-c
+t rare + m book: l loan-policy-d r request-policy-d n notice-policy-d
+g all + t all + s course-reserve: l loan-policy-e r request-policy-e n notice-policy-e
 ```
 
-The policy-e rule has priority over the other three rules because it has a `t` criterium
+The loan-policy-e rule has priority over the other three rules because it has a `t` criterium
 and uses three criteria.
 
 ### Line number priority
@@ -266,18 +287,21 @@ first matching rule (the rule with the lowest line number) is taken.
 
 ```
 priority: criterium(t, s, c, b, a, m, g), number-of-criteria, last-line
-fallback-policy: no-circulation
-g visitor + t rare: policy-b
-t rare + m book: policy-d
+fallback-policy: l no-circulation
+fallback-policy: r no-request
+fallback-policy: n no-notice
+g visitor + t rare: l loan-policy-b r request-policy-b n notice-policy-b
+t rare + m book: l loan-policy-d r request-policy-d n notice-policy-d
 ```
 
 A loan for material type `book` and loan type `rare` and patron group `visitor` matches
 both lines. The criterium type priority is the same (`t`). They both have two criteria.
-The line with policy-d has higher priority because it is last (it has a higher line number).
+The line with loanpolicy-d has higher priority because it is last (it has a higher line number).
 
 ## Fallback policy
 
-There always must be a line with a fallback policy like `fallback-policy: no-circulation`.
+There always must be a set of three lines with a fallback policy for each type
+like `fallback-policy: l no-circulation`.
 It must be after the priority line and before the first rule.
 
 For `priority: last-line` it must be after the last rule.
@@ -286,4 +310,4 @@ For `priority: last-line` it must be after the last rule.
 
 For one tenant there is only a single loan rules file.
 
-It must have a single priority line and a single fallback-policy line.
+It must have a single priority line and three fallback-policy lines.
