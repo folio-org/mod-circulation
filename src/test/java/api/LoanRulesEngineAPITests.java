@@ -91,8 +91,8 @@ public class LoanRulesEngineAPITests extends APITests {
       "fallback-policy: l " + lp2,
       "fallback-policy: r " + rp1,
       "fallback-policy: n " + np1,
-      "m " + m2 + ": l " + lp3,
-      "    g " + g2 + ": l " + lp4
+      "m " + m2 + ": l " + lp3 + " r " + rp1 + " n " + np1,
+      "    g " + g2 + ": l " + lp4 + " r " + rp1 + " n " + np1
       );
 
   private String rules2 = String.join("\n",
@@ -100,9 +100,9 @@ public class LoanRulesEngineAPITests extends APITests {
       "fallback-policy: l " + lp6,
       "fallback-policy: r " + rp1,
       "fallback-policy: n " + np1,
-      "m " + m1 + ": l " + lp1,
-      "m " + m1 + " + t " + t1 + " : l " + lp2,
-      "m " + m1 + " + t " + t1 + " + g " + g1 + " : l " + lp3
+      "m " + m1 + ": l " + lp1 + " r " + rp1 + " n " + np1,
+      "m " + m1 + " + t " + t1 + " : l " + lp2 + " r " + rp1 + " n " + np1,
+      "m " + m1 + " + t " + t1 + " + g " + g1 + " : l " + lp3 + " r " + rp1 + " n " + np1
       );
 
   @Before

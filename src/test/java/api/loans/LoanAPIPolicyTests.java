@@ -33,6 +33,16 @@ public class LoanAPIPolicyTests extends APITests {
   private static UUID lp3;
   private static UUID lp4;
 
+  private static UUID rp1;
+  private static UUID rp2;
+  private static UUID rp3;
+  private static UUID rp4;
+
+  private static UUID np1;
+  private static UUID np2;
+  private static UUID np3;
+  private static UUID np4;
+
   public LoanAPIPolicyTests() {
     super(false);
   }
@@ -84,10 +94,10 @@ public class LoanAPIPolicyTests extends APITests {
       "fallback-policy: l " + lpFallback,
       "fallback-policy: r " + rpFallback,
       "fallback-policy: n " + npFallback,
-      "m " + videoRecording + " + g " + group1 + " : l " + lp1,
-      "m " + book + " + t " + canCirculate + " : l " + lp2,
-      "m " + book + " + t " + readingRoom + " : l " + lp3,
-      "m " + book + " + t " + canCirculate + " + g " + group1 + " : l " + lp4);
+      "m " + videoRecording + " + g " + group1 + " : l " + lp1 + " r " + rp1 + " n " + np1,
+      "m " + book + " + t " + canCirculate + " : l " + lp2 + " r " + rp2 + " n " + np2,
+      "m " + book + " + t " + readingRoom + " : l " + lp3 + " r " + rp3 + " n " + np3,
+      "m " + book + " + t " + canCirculate + " + g " + group1 + " : l " + lp4 + " r " + rp4 + " n " + np4);
 
     loanRulesFixture.updateLoanRules(rules);
 

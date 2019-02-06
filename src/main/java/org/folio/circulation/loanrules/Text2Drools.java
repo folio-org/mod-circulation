@@ -216,10 +216,14 @@ public class Text2Drools extends LoanRulesBaseListener {
   public void enterPolicies(PoliciesContext policiesContext) {
     for (String policyType : policyTypes) {
       List<PolicyContext> policies = filterPolicies(policiesContext, policyType);
+      Token token = policiesContext.getStart();
       if (policies.size() > 1) {
-        Token token = policiesContext.getStart();
         throw new LoanRulesException(
           String.format("Only one policy of type %s allowed", policyType),
+          token.getLine(), token.getCharPositionInLine());
+      } else if (policies.size() == 0 && policiesContext.parent instanceof ExprContext) {
+        throw new LoanRulesException(
+          String.format("Must contain one of each policy type, missing type %s", policyType),
           token.getLine(), token.getCharPositionInLine());
       }
     }
