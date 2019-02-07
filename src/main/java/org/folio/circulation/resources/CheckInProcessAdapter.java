@@ -30,6 +30,7 @@ class CheckInProcessAdapter {
   private final LoanRepository loanRepository;
   private final ServicePointRepository servicePointRepository;
 
+  @SuppressWarnings("squid:S00107")
   CheckInProcessAdapter(
     ItemByBarcodeInStorageFinder itemFinder,
     SingleOpenLoanForItemInStorageFinder singleOpenLoanFinder,
