@@ -94,8 +94,10 @@ public class CheckOutCalculateDueDateTests extends APITests {
     assertThat(ERROR_MESSAGE_LOAN_POLICY,
       loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
 
-    assertThat(ERROR_MESSAGE_DUE_DATE + duration,
-      loan.getString(DUE_DATE_KEY), isEquivalentTo(loanDate.plusMonths(duration)));
+    DateTime expectedDateTime = loanDate.plusMonths(duration);
+
+    assertThat(ERROR_MESSAGE_DUE_DATE + expectedDateTime,
+      loan.getString(DUE_DATE_KEY), isEquivalentTo(expectedDateTime));
   }
 
   /**
@@ -633,8 +635,10 @@ public class CheckOutCalculateDueDateTests extends APITests {
     assertThat(ERROR_MESSAGE_LOAN_POLICY,
       loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
 
-    assertThat(ERROR_MESSAGE_DUE_DATE + duration,
-      loan.getString(DUE_DATE_KEY), isEquivalentTo(loanDate.plusHours(duration)));
+    DateTime expectedDateTime = loanDate.plusHours(duration);
+
+    assertThat(ERROR_MESSAGE_DUE_DATE + expectedDateTime,
+      loan.getString(DUE_DATE_KEY), isEquivalentTo(expectedDateTime));
   }
 
   /**
@@ -698,8 +702,10 @@ public class CheckOutCalculateDueDateTests extends APITests {
     assertThat(ERROR_MESSAGE_LOAN_POLICY,
       loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
 
-    assertThat(ERROR_MESSAGE_DUE_DATE + duration,
-      loan.getString(DUE_DATE_KEY), isEquivalentTo(loanDate.plusHours(duration)));
+    DateTime expectedDateTime = loanDate.plusHours(duration);
+
+    assertThat(ERROR_MESSAGE_DUE_DATE + expectedDateTime,
+      loan.getString(DUE_DATE_KEY), isEquivalentTo(expectedDateTime));
   }
 
   /**
@@ -729,8 +735,10 @@ public class CheckOutCalculateDueDateTests extends APITests {
     assertThat(ERROR_MESSAGE_LOAN_POLICY,
       loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
 
-    assertThat(ERROR_MESSAGE_DUE_DATE + duration,
-      loan.getString(DUE_DATE_KEY), isEquivalentTo(loanDate.plusHours(duration)));
+    DateTime expectedDateTime = loanDate.plusHours(duration);
+
+    assertThat(ERROR_MESSAGE_DUE_DATE + expectedDateTime,
+      loan.getString(DUE_DATE_KEY), isEquivalentTo(expectedDateTime));
   }
 
   private void checkFixedDayOrTime(String servicePointId, String policyProfileName,
@@ -762,7 +770,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     DateTime actualDueDate = DateTime.parse(loan.getString(DUE_DATE_KEY));
 
     assertThat(ERROR_MESSAGE_DUE_DATE + expectedDueDate + ", actual due date is " + actualDueDate,
-      actualDueDate.compareTo(expectedDueDate) == 0);
+      actualDueDate.isEqual(expectedDueDate));
   }
 
   private DateTime getEndDateTimeOpeningDay(OpeningDay openingDay) {

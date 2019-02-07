@@ -60,7 +60,7 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
   /**
    * Loan period: Hours
    * Current day: closed
-   * Next day: open allDay
+   * Next and prev day: open allDay
    * Test period: FRI=open, SAT=close, MON=open
    */
   @Test
@@ -77,7 +77,7 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
   /**
    * Loan period: Hours
    * Current day: closed
-   * Next day: period
+   * Next and prev day: period
    * Test period: FRI=open, SAT=close, MON=open
    */
   @Test
@@ -94,7 +94,7 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
   /**
    * Loan period: Minutes
    * Current day: closed
-   * Next day: open allDay
+   * Next and prev day: open allDay
    * Test period: FRI=open, SAT=close, MON=open
    */
   @Test
@@ -111,7 +111,7 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
   /**
    * Loan period: Minutes
    * Current day: closed
-   * Next day: period
+   * Next and prev day: period
    * Test period: FRI=open, SAT=close, MON=open
    */
   @Test
@@ -127,7 +127,6 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
 
   /**
    * Loan period: Hours
-   * Current day: open allDay
    * Current and next day: open allDay
    * Test period: WED=open, THU=open, FRI=open
    */
@@ -145,7 +144,6 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
 
   /**
    * Loan period: Hours
-   * Current day: open
    * Current and next day: period
    * Test period: WED=open, THU=open, FRI=open
    */
@@ -283,7 +281,7 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
     DateTime thresholdDateTime = getThresholdDateTime(expectedDueDate);
 
     assertThat("due date should be " + thresholdDateTime + ", actual due date is " + actualDueDate,
-      actualDueDate.compareTo(thresholdDateTime) == 0);
+      actualDueDate.isEqual(thresholdDateTime));
   }
 
   /**

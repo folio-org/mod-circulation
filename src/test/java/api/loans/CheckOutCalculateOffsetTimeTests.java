@@ -213,8 +213,6 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
     int duration = new SplittableRandom().nextInt(START_VAL, HOURS_PER_DAY);
     int offsetDuration = START_VAL;
 
-    System.out.println(">>>> duration: " + duration);
-
     List<OpeningDayPeriod> openingDays = getCurrentAndNextFakeOpeningDayByServId(servicePointId);
     DateTime expectedDueDate = getExpectedDateTimeFromPeriod(openingDays, INTERVAL_HOURS, duration,
       OFFSET_INTERVAL_HOURS, offsetDuration);
@@ -416,7 +414,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
     DateTime thresholdDateTime = getThresholdDateTime(expectedDueDate);
 
     assertThat("due date should be " + thresholdDateTime + ", actual due date is "
-      + actualDueDate, actualDueDate.compareTo(thresholdDateTime) == 0);
+      + actualDueDate, actualDueDate.isEqual(thresholdDateTime));
   }
 
   /**
@@ -455,6 +453,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
         return calculateOffset(currentOpeningDay, dateOfCurrentDay, timeShift,
           LoanPolicyPeriod.INCORRECT, 0);
       }
+
       LocalTime startTimeOfNextPeriod = findStartTime(currentDayPeriod, timeShift);
       return calculateOffset(currentOpeningDay, dateOfCurrentDay, startTimeOfNextPeriod,
         offsetPeriod, offsetDuration);
@@ -490,6 +489,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
 
     LocalDateTime dateTime = LocalDateTime.of(date, time);
     List<OpeningHour> openingHours = openingDay.getOpeningHour();
+
     switch (offsetInterval) {
       case HOURS:
         LocalTime offsetTime = time.plusHours(offsetDuration);
