@@ -210,7 +210,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
   @Test
   public void testOffsetIntervalHoursForPeriod() throws Exception {
     String servicePointId = CASE_WED_THU_FRI_SERVICE_POINT_ID;
-    int duration = 1;
+    int duration = new SplittableRandom().nextInt(START_VAL, HOURS_PER_DAY);
     int offsetDuration = START_VAL;
 
     List<OpeningDayPeriod> openingDays = getCurrentAndNextFakeOpeningDayByServId(servicePointId);
@@ -414,7 +414,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
     DateTime thresholdDateTime = getThresholdDateTime(expectedDueDate);
 
     assertThat("due date should be " + thresholdDateTime + ", actual due date is "
-      + actualDueDate, actualDueDate.compareTo(thresholdDateTime) == 0);
+      + actualDueDate, actualDueDate.isEqual(thresholdDateTime));
   }
 
   /**
@@ -453,6 +453,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
         return calculateOffset(currentOpeningDay, dateOfCurrentDay, timeShift,
           LoanPolicyPeriod.INCORRECT, 0);
       }
+
       LocalTime startTimeOfNextPeriod = findStartTime(currentDayPeriod, timeShift);
       return calculateOffset(currentOpeningDay, dateOfCurrentDay, startTimeOfNextPeriod,
         offsetPeriod, offsetDuration);
@@ -461,10 +462,26 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
         return calculateOffset(nextOpeningDay, dateOfNextDay, timeShift,
           LoanPolicyPeriod.INCORRECT, 0);
       }
-      LocalTime startTimeOfNextPeriod = findStartTime(nextDayPeriod, timeShift);
-      return calculateOffset(nextOpeningDay, dateOfNextDay, startTimeOfNextPeriod,
+
+      if (isInPeriodCurrentDay(period, duration, dateOfCurrentDay, timeOfCurrentDay)) {
+        LocalTime startTimeOfNextPeriod = findStartTime(nextDayPeriod, timeShift);
+        return calculateOffset(nextOpeningDay, dateOfNextDay, startTimeOfNextPeriod,
+          offsetPeriod, offsetDuration);
+      }
+
+      LocalTime startTimeOfNextPeriod = findStartTime(currentDayPeriod, timeShift);
+      return calculateOffset(currentOpeningDay, dateOfCurrentDay, startTimeOfNextPeriod,
         offsetPeriod, offsetDuration);
     }
+  }
+
+  private boolean isInPeriodCurrentDay(LoanPolicyPeriod period, int duration,
+                                       LocalDate dateOfCurrentDay, LocalTime timeOfCurrentDay) {
+
+    LocalDateTime dateTime = (LoanPolicyPeriod.HOURS == period)
+      ? LocalDateTime.of(dateOfCurrentDay, timeOfCurrentDay).plusHours(duration)
+      : LocalDateTime.of(dateOfCurrentDay, timeOfCurrentDay).plusMinutes(duration);
+    return dateTime.toLocalDate().isEqual(dateOfCurrentDay);
   }
 
   private DateTime calculateOffset(OpeningDay openingDay, LocalDate date, LocalTime time,
@@ -472,6 +489,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
 
     LocalDateTime dateTime = LocalDateTime.of(date, time);
     List<OpeningHour> openingHours = openingDay.getOpeningHour();
+
     switch (offsetInterval) {
       case HOURS:
         LocalTime offsetTime = time.plusHours(offsetDuration);
@@ -495,6 +513,9 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
   }
 
   private LocalTime findStartTime(List<OpeningHour> openingHoursList, LocalTime time) {
+    LocalTime startTimePeriod
+      = LocalTime.parse(openingHoursList.get(0).getStartTime());
+
     for (int i = 0; i < openingHoursList.size() - 1; i++) {
       LocalTime startTimeFirst = LocalTime.parse(openingHoursList.get(i).getStartTime());
       LocalTime startTimeSecond = LocalTime.parse(openingHoursList.get(i + 1).getStartTime());
@@ -502,7 +523,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
         return startTimeSecond;
       }
     }
-    return time;
+    return startTimePeriod;
   }
 
   private LocalTime findEndTime(List<OpeningHour> openingHoursList, LocalTime time) {
