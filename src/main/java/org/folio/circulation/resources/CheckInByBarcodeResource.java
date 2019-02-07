@@ -7,6 +7,7 @@ import org.folio.circulation.domain.CheckInProcessRecords;
 import org.folio.circulation.domain.LoanCheckInService;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.RequestQueueRepository;
+import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.UserRepository;
@@ -46,6 +47,7 @@ public class CheckInByBarcodeResource extends Resource {
     final ItemRepository itemRepository = new ItemRepository(clients, true, true);
     final UserRepository userRepository = new UserRepository(clients);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
+    final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
 
     final LoanCheckInService loanCheckInService = new LoanCheckInService();
 
@@ -68,7 +70,8 @@ public class CheckInByBarcodeResource extends Resource {
 
     final CheckInProcessAdapter processAdapter = new CheckInProcessAdapter(
       itemFinder, singleOpenLoanFinder, loanCheckInService,
-      requestQueueRepository, updateItem, requestQueueUpdate, loanRepository);
+      requestQueueRepository, updateItem, requestQueueUpdate, loanRepository,
+      servicePointRepository);
 
     checkInRequestResult
       .map(CheckInProcessRecords::new)
@@ -83,6 +86,8 @@ public class CheckInByBarcodeResource extends Resource {
         processAdapter::updateRequestQueue, CheckInProcessRecords::withRequestQueue))
       .thenComposeAsync(updateRequestQueueResult -> updateRequestQueueResult.combineAfter(
         processAdapter::updateItem, CheckInProcessRecords::withItem))
+      .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
+        processAdapter::getDestinationServicePoint, CheckInProcessRecords::withItem))
       .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
         processAdapter::updateLoan, CheckInProcessRecords::withLoan))
       .thenApply(CheckInByBarcodeResponse::from)

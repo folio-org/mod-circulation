@@ -43,8 +43,15 @@ public class UpdateItem {
     UUID checkInServicePointId) {
 
     if (requestQueue.hasOutstandingFulfillableRequests()) {
-      return item.changeStatus(requestQueue.getHighestPriorityFulfillableRequest()
-        .checkedInItemStatus());
+      Request request = requestQueue.getHighestPriorityFulfillableRequest();
+      String pickupServicePointIdString = request.getPickupServicePointId();
+      UUID pickUpServicePointId = pickupServicePointIdString == null ? null : UUID.fromString(request.getPickupServicePointId());
+      if (pickUpServicePointId == null || checkInServicePointId == null || checkInServicePointId.equals(pickUpServicePointId)) {
+        return item.changeStatus(requestQueue.getHighestPriorityFulfillableRequest()
+          .checkedInItemStatus());
+      } else {
+        return item.inTransitToServicePoint(pickUpServicePointId);
+      }
     } else {
       if(item.homeLocationIsServedBy(checkInServicePointId)) {
         return item.available();
@@ -73,6 +80,10 @@ public class UpdateItem {
     return onLoanUpdate(loanAndRelatedRecords.getLoan(),
       loanAndRelatedRecords.getRequestQueue())
       .thenApply(itemResult -> itemResult.map(loanAndRelatedRecords::withItem));
+  }
+
+  public Item onDestinationServicePointUpdate(Item item, ServicePoint servicePoint) {
+    return item.updateDestinationServicePoint(servicePoint);
   }
 
   private CompletableFuture<HttpResult<Item>> onLoanUpdate(

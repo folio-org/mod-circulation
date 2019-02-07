@@ -4,7 +4,7 @@
   "provides": [
     {
       "id": "circulation",
-      "version": "5.4",
+      "version": "5.5",
       "handlers": [
         {
           "methods": [
@@ -596,7 +596,7 @@
     },
     {
       "id": "loan-policy-storage",
-      "version": "1.2"
+      "version": "1.2 2.0"
     },
     {
       "id": "fixed-due-date-schedules-storage",
