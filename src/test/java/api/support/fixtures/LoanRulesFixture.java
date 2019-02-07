@@ -54,7 +54,7 @@ public class LoanRulesFixture {
   }
 
   private String soleFallbackPolicyRule(UUID loanPolicyId, UUID requestPolicyId, UUID noticePolicyId) {
-    return String.format("priority: t, s, c, b, a, m, g%nfallback-policy: l %s%nfallback-policy: r %s%nfallback-policy: n %s%n",
+    return String.format("priority: t, s, c, b, a, m, g%nfallback-policy: l %s r %s n %s%n",
       loanPolicyId, requestPolicyId, noticePolicyId);
   }
 }

@@ -22,7 +22,6 @@ import org.folio.circulation.loanrules.LoanRulesParser.DedentContext;
 import org.folio.circulation.loanrules.LoanRulesParser.DefaultPrioritiesContext;
 import org.folio.circulation.loanrules.LoanRulesParser.ExprContext;
 import org.folio.circulation.loanrules.LoanRulesParser.FallbackpolicyContext;
-import org.folio.circulation.loanrules.LoanRulesParser.FallbackpoliciesContext;
 import org.folio.circulation.loanrules.LoanRulesParser.IndentContext;
 import org.folio.circulation.loanrules.LoanRulesParser.LastLinePrioritiesContext;
 import org.folio.circulation.loanrules.LoanRulesParser.LinePriorityContext;
@@ -236,12 +235,12 @@ public class Text2Drools extends LoanRulesBaseListener {
   }
 
   @Override
-  public void enterFallbackpolicies(FallbackpoliciesContext ctx) {
+  public void enterFallbackpolicy(FallbackpolicyContext ctx) {
     Token token = ctx.getStart();
 
     for (String policyType: policyTypes) {
-      Long count = ctx.fallbackpolicy().stream()
-      .filter(fbp -> fbp.policies().policy(0).POLICY_TYPE().toString().equals(policyType))
+      Long count = ctx.policies().policy().stream()
+      .filter(fbp -> fbp.POLICY_TYPE().toString().equals(policyType))
       .collect(Collectors.counting());
 
       // Make sure there is exactly one of each type of policy
@@ -263,10 +262,9 @@ public class Text2Drools extends LoanRulesBaseListener {
     drools.append("  when\n");
     drools.append("  then\n");
 
-    for (FallbackpolicyContext fallbackPolicy : ctx.fallbackpolicy()) {
-      PolicyContext policy = fallbackPolicy.policies().policy(0);
-      drools.append(policyMatchString(policy));
-      appendQuotedString(drools, policy.NAME().getText());
+    for (PolicyContext fallbackPolicy : ctx.policies().policy()) {
+      drools.append(policyMatchString(fallbackPolicy));
+      appendQuotedString(drools, fallbackPolicy.NAME().getText());
       drools.append(";\n");
     }
 

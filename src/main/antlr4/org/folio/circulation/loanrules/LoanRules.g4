@@ -89,8 +89,8 @@ tokens { INDENT, DEDENT }
 }
 
 loanRulesFile
-  : NEWLINE* 'priority' ':' 'first-line' ( NEWLINE | statement )*  NEWLINE* fallbackpolicies noStatementAfterFallbackPolicy EOF
-  | NEWLINE* 'priority' ':' priority     NEWLINE* fallbackpolicies   ( NEWLINE | statement )* EOF
+  : NEWLINE* 'priority' ':' 'first-line' ( NEWLINE | statement )*  NEWLINE* fallbackpolicy noStatementAfterFallbackPolicy EOF
+  | NEWLINE* 'priority' ':' priority     NEWLINE* fallbackpolicy   ( NEWLINE | statement )* EOF
   ;
 
 priority
@@ -146,9 +146,6 @@ criterium : CRITERIUM_LETTER
           ;
 
 all : 'all';
-
-fallbackpolicies : fallbackpolicy+
-                 ;
 
 fallbackpolicy : 'fallback-policy' policies NEWLINE
                ;

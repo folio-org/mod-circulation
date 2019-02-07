@@ -23,8 +23,12 @@ public class NameConverterTest {
     m.put("dvd", "987");
     name2uuid.put("m", m);
     Map<String,String> policy = new HashMap<>();
-    policy.put("fallback", "0");
-    policy.put("policy-x", "1");
+    policy.put("loan-fallback", "0");
+    policy.put("request-fallback", "1");
+    policy.put("notice-fallback", "2");
+    policy.put("policy-x", "3");
+    policy.put("policy-y", "4");
+    policy.put("policy-z", "5");
     name2uuid.put("policy", policy);
 
     for (Entry<String,Map<String,String>> typeMap : name2uuid.entrySet()) {
@@ -40,14 +44,14 @@ public class NameConverterTest {
 
   private String loanRulesNames = String.join("\n",
       "priority: last-line",
-      "fallback-policy: l fallback",
-      "m book withoutreplacement dvd + t withoutreplacement: l policy-x",
+      "fallback-policy: l loan-fallback r request-fallback n notice-fallback",
+      "m book withoutreplacement dvd + t withoutreplacement: l policy-x r policy-y n policy-z",
       ""
   );
   private String loanRulesUuids = String.join("\n",
       "priority: last-line",
-      "fallback-policy: l 0",
-      "m 123 withoutreplacement 987 + t withoutreplacement: l 1",
+      "fallback-policy: l 0 r 1 n 2",
+      "m 123 withoutreplacement 987 + t withoutreplacement: l 3 r 4 n 5",
       ""
   );
 
