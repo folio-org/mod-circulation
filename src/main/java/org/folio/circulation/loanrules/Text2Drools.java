@@ -220,7 +220,7 @@ public class Text2Drools extends LoanRulesBaseListener {
         throw new LoanRulesException(
           String.format("Only one policy of type %s allowed", policyType),
           token.getLine(), token.getCharPositionInLine());
-      } else if (policies.size() == 0) {
+      } else if (policies.isEmpty()) {
         throw new LoanRulesException(
           String.format("Must contain one of each policy type, missing type %s", policyType),
           token.getLine(), token.getCharPositionInLine());
