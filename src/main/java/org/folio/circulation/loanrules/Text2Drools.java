@@ -220,7 +220,7 @@ public class Text2Drools extends LoanRulesBaseListener {
         throw new LoanRulesException(
           String.format("Only one policy of type %s allowed", policyType),
           token.getLine(), token.getCharPositionInLine());
-      } else if (policies.size() == 0 && policiesContext.parent instanceof ExprContext) {
+      } else if (policies.size() == 0) {
         throw new LoanRulesException(
           String.format("Must contain one of each policy type, missing type %s", policyType),
           token.getLine(), token.getCharPositionInLine());
@@ -256,21 +256,8 @@ public class Text2Drools extends LoanRulesBaseListener {
     }
 
     // Generate fallback rule
-    int line = ctx.getStart().getLine();
-    drools.append("rule \"line ").append(line).append("\"\n");
-    drools.append("  salience ").append(getSalience(line)).append("\n");
-    drools.append("  when\n");
-    drools.append("  then\n");
-
-    for (PolicyContext fallbackPolicy : ctx.policies().policy()) {
-      drools.append(policyMatchString(fallbackPolicy));
-      appendQuotedString(drools, fallbackPolicy.NAME().getText());
-      drools.append(";\n");
-    }
-
-    drools.append("    match.lineNumber = ").append(line).append(";\n");
-    drools.append("    drools.halt();\n");
-    drools.append("end\n\n");
+    popObsoleteMatchers();
+    generateRule(ctx.policies());
   }
 
   @Override
