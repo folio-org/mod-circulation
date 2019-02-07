@@ -435,4 +435,17 @@ public class Text2DroolsTest {
       assertThat(e, matches("Must contain one of each policy type, missing type r", 3, 6));
     }
   }
+
+  @Test
+  public void alternatePolicyOrder() {
+    try {
+      Text2Drools.convert(String.join("\n",
+        "priority: first-line",
+        "m book: r allow-hold n general-notice l two-week",
+        "fallback-policy: l no-loan r no-hold n basic-notice"
+      ));
+    } catch (LoanRulesException e) {
+      fail("Loan rules should build correctly in any order");
+    }
+  }
 }
