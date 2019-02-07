@@ -38,6 +38,7 @@
       "enum": [
         "Open - Not yet filled",
         "Open - Awaiting pickup",
+        "Open - In transit",
         "Closed - Filled",
         "Closed - Cancelled"
       ]

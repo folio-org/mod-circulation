@@ -332,6 +332,7 @@ public class RequestsAPICreationTests extends APITests {
   @Parameters({
     "Open - Not yet filled",
     "Open - Awaiting pickup",
+    "Open - In transit",
     "Closed - Filled"
   })
   public void canCreateARequestWithValidStatus(String status)
@@ -392,7 +393,8 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(response.getBody(),
       is("Request status must be \"Open - Not yet filled\", " +
-        "\"Open - Awaiting pickup\" or \"Closed - Filled\""));
+        "\"Open - Awaiting pickup\", \"Open - In transit\" " +
+        "or \"Closed - Filled\""));
   }
 
   //TODO: Replace with validation error message
@@ -426,7 +428,8 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(response.getBody(),
       is("Request status must be \"Open - Not yet filled\", " +
-        "\"Open - Awaiting pickup\" or \"Closed - Filled\""));
+        "\"Open - Awaiting pickup\", \"Open - In transit\" " +
+        "or \"Closed - Filled\""));
   }
 
   @Test

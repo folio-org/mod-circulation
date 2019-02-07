@@ -3,6 +3,7 @@ package api.support.fixtures;
 import static api.support.fixtures.ServicePointExamples.basedUponCircDesk1;
 import static api.support.fixtures.ServicePointExamples.basedUponCircDesk2;
 import static api.support.fixtures.ServicePointExamples.basedUponCircDesk3;
+import static api.support.fixtures.ServicePointExamples.basedUponCircDesk4;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 import java.net.MalformedURLException;
@@ -56,6 +57,15 @@ public class ServicePointsFixture {
       ExecutionException {
 
     return servicePointRecordCreator.createIfAbsent(basedUponCircDesk3());
+  }
+
+  public IndividualResource cd4() 
+      throws InterruptedException, 
+      MalformedURLException, 
+      TimeoutException, 
+      ExecutionException {
+
+    return servicePointRecordCreator.createIfAbsent(basedUponCircDesk4());
   }
 
   public IndividualResource fake()

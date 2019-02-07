@@ -36,17 +36,23 @@ public class UpdateRequestQueue {
 
     final RequestQueue requestQueue = relatedRecords.getRequestQueue();
 
-    return onCheckIn(requestQueue)
+    return onCheckIn(requestQueue, relatedRecords.getLoan().getCheckInServicePointId())
       .thenApply(result -> result.map(relatedRecords::withRequestQueue));
   }
 
   public CompletableFuture<HttpResult<RequestQueue>> onCheckIn(
-    RequestQueue requestQueue) {
+    RequestQueue requestQueue, String checkInServicePointId) {
 
     if (requestQueue.hasOutstandingFulfillableRequests()) {
       Request firstRequest = requestQueue.getHighestPriorityFulfillableRequest();
 
-      firstRequest.changeStatus(RequestStatus.OPEN_AWAITING_PICKUP);
+      String requestPickupServicePointId = firstRequest.getPickupServicePointId();
+
+      if (checkInServicePointId == null || requestPickupServicePointId == null || checkInServicePointId.equalsIgnoreCase(requestPickupServicePointId)) {
+        firstRequest.changeStatus(RequestStatus.OPEN_AWAITING_PICKUP);
+      } else {
+        firstRequest.changeStatus(RequestStatus.OPEN_IN_TRANSIT);
+      }
 
       return requestRepository.update(firstRequest)
         .thenApply(result -> result.map(v -> requestQueue));

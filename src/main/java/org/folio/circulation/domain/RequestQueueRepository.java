@@ -40,10 +40,11 @@ public class RequestQueueRepository {
 
   public CompletableFuture<HttpResult<RequestQueue>> get(String itemId) {
       String unencodedQuery = String.format(
-        "itemId==%s and status==(\"%s\" or \"%s\") sortBy position/sort.ascending",
+        "itemId==%s and status==(\"%s\" or \"%s\" or \"%s\") sortBy position/sort.ascending",
         itemId,
         RequestStatus.OPEN_AWAITING_PICKUP.getValue(),
-        RequestStatus.OPEN_NOT_YET_FILLED.getValue());
+        RequestStatus.OPEN_NOT_YET_FILLED.getValue(),
+        RequestStatus.OPEN_IN_TRANSIT.getValue());
 
     final int maximumSupportedRequestQueueSize = 1000;
 
