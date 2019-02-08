@@ -5,11 +5,10 @@ import org.folio.circulation.domain.OpeningDay;
 import org.folio.circulation.domain.OpeningHour;
 import org.folio.circulation.domain.policy.LoanPolicyPeriod;
 import org.joda.time.DateTime;
+import org.joda.time.Hours;
+import org.joda.time.LocalDate;
+import org.joda.time.LocalTime;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static org.folio.circulation.support.PeriodUtil.getStartAndEndTime;
@@ -53,7 +52,7 @@ public class StartOfNextOpenHoursStrategy extends ClosedLibraryStrategy {
     }
 
     LocalDate dateOfCurrentDay = LocalDate.parse(currentOpeningDay.getDate(), DATE_TIME_FORMATTER);
-    LocalTime timeOfCurrentDay = LocalTime.ofSecondOfDay(startDate.getSecondOfDay());
+    LocalTime timeOfCurrentDay = startDate.toLocalTime();
     LocalTime timeShift = getTimeShift(timeOfCurrentDay, loanPeriod, duration);
 
     if (isDateTimeWithDurationInsideDay(currentOpeningDay, timeShift)) {
@@ -94,7 +93,7 @@ public class StartOfNextOpenHoursStrategy extends ClosedLibraryStrategy {
    */
   private DateTime getStartDateTimeOfOpeningDay(OpeningDay openingDay, LocalDate date) {
     if (openingDay.getAllDay()) {
-      return calculateOffset(openingDay, date, LocalTime.MIN);
+      return calculateOffset(openingDay, date, LocalTime.MIDNIGHT);
     }
 
     List<OpeningHour> openingHoursList = openingDay.getOpeningHour();
@@ -109,12 +108,12 @@ public class StartOfNextOpenHoursStrategy extends ClosedLibraryStrategy {
   private DateTime getDateTimeInsideOpeningDay(OpeningDay openingDay, LocalDate date,
                                                LocalTime timeShift) {
     if (openingDay.getAllDay()) {
-      return dateTimeWrapper(LocalDateTime.of(date, timeShift));
+      return dateTimeWrapper(date.toDateTime(timeShift));
     }
 
     List<OpeningHour> openingHoursList = openingDay.getOpeningHour();
     if (isInPeriodOpeningDay(openingHoursList, timeShift)) {
-      return dateTimeWrapper(LocalDateTime.of(date, timeShift));
+      return dateTimeWrapper(date.toDateTime(timeShift));
     }
 
     LocalTime startTimeOfNextPeriod = findStartTimeOfOpeningPeriod(openingHoursList, timeShift);
@@ -127,7 +126,7 @@ public class StartOfNextOpenHoursStrategy extends ClosedLibraryStrategy {
    */
   private DateTime calculateOffset(OpeningDay openingDay, LocalDate date, LocalTime time) {
 
-    LocalDateTime dateTime = LocalDateTime.of(date, time);
+    DateTime dateTime = date.toDateTime(time);
     List<OpeningHour> openingHours = openingDay.getOpeningHour();
     int offset = determineOffsetDurationWithinDay(dateTime);
     switch (offsetInterval) {
@@ -150,7 +149,7 @@ public class StartOfNextOpenHoursStrategy extends ClosedLibraryStrategy {
     }
   }
 
-  private int determineOffsetDurationWithinDay(LocalDateTime dateTime) {
+  private int determineOffsetDurationWithinDay(DateTime dateTime) {
 
     if (LoanPolicyPeriod.MINUTES == offsetInterval) {
       return offsetDuration;
@@ -162,16 +161,16 @@ public class StartOfNextOpenHoursStrategy extends ClosedLibraryStrategy {
     LocalDate offsetDate = dateTime.plusHours(offsetDuration).toLocalDate();
     return date.isEqual(offsetDate)
       ? offsetDuration
-      : (int) ChronoUnit.HOURS.between(time, LocalTime.MAX);
+      : Hours.hoursBetween(time, END_OF_A_DAY).getHours();
   }
 
   private DateTime getDateTimeOffsetInPeriod(List<OpeningHour> openingHour, LocalDate date, LocalTime offsetTime) {
     if (isInPeriodOpeningDay(openingHour, offsetTime)) {
-      return dateTimeWrapper(LocalDateTime.of(date, offsetTime));
+      return dateTimeWrapper(date.toDateTime(offsetTime));
     }
 
     LocalTime endTimeOfPeriod = findEndTimeOfOpeningPeriod(openingHour, offsetTime);
-    return dateTimeWrapper(LocalDateTime.of(date, endTimeOfPeriod));
+    return dateTimeWrapper(date.toDateTime(endTimeOfPeriod));
   }
 
   /**

@@ -5,10 +5,9 @@ import org.folio.circulation.domain.OpeningDay;
 import org.folio.circulation.domain.OpeningHour;
 import org.folio.circulation.domain.policy.LoanPolicyPeriod;
 import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
+import org.joda.time.LocalTime;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 
 import static org.folio.circulation.support.PeriodUtil.getStartAndEndTime;
@@ -45,7 +44,7 @@ public class EndOfCurrentHoursStrategy extends ClosedLibraryStrategy {
     }
 
     LocalDate dateOfCurrentDay = LocalDate.parse(currentOpeningDay.getDate(), DATE_TIME_FORMATTER);
-    LocalTime timeOfCurrentDay = LocalTime.ofSecondOfDay(loanDate.getSecondOfDay());
+    LocalTime timeOfCurrentDay = loanDate.toLocalTime();
     LocalTime timeShift = getTimeShift(timeOfCurrentDay, loanPeriod, duration);
 
     if (isDateTimeWithDurationInsideDay(currentOpeningDay, timeShift)) {
@@ -58,16 +57,16 @@ public class EndOfCurrentHoursStrategy extends ClosedLibraryStrategy {
   private DateTime getDateTimeInsideOpeningDay(OpeningDay openingDay, LocalDate date,
                                                LocalTime timeShift) {
     if (openingDay.getAllDay()) {
-      return dateTimeWrapper(LocalDateTime.of(date, timeShift));
+      return dateTimeWrapper(date.toDateTime(timeShift));
     }
 
     List<OpeningHour> openingHoursList = openingDay.getOpeningHour();
     if (isInPeriodOpeningDay(openingHoursList, timeShift)) {
-      return dateTimeWrapper(LocalDateTime.of(date, timeShift));
+      return dateTimeWrapper(date.toDateTime(timeShift));
     }
 
     LocalTime endTime = findEndTimeOfOpeningPeriod(openingHoursList, timeShift);
-    return dateTimeWrapper(LocalDateTime.of(date, endTime));
+    return dateTimeWrapper(date.toDateTime(endTime));
   }
 
   private DateTime getDateTimeOutsidePeriod(OpeningDay prevOpeningDay, OpeningDay currentOpeningDay,
@@ -77,16 +76,16 @@ public class EndOfCurrentHoursStrategy extends ClosedLibraryStrategy {
     LocalTime endTime = startAndEndTime[1];
 
     if (timeShift.isAfter(endTime)) {
-      return dateTimeWrapper(LocalDateTime.of(dateOfCurrentDay, endTime));
+      return dateTimeWrapper(dateOfCurrentDay.toDateTime(endTime));
     }
 
     if (timeShift.isBefore(startTime)) {
       LocalDate dateOfPrevDay = LocalDate.parse(prevOpeningDay.getDate(), DATE_TIME_FORMATTER);
       LocalTime prevEndTime = getStartAndEndTime(prevOpeningDay.getOpeningHour())[1];
-      return dateTimeWrapper(LocalDateTime.of(dateOfPrevDay, prevEndTime));
+      return dateTimeWrapper(dateOfPrevDay.toDateTime(prevEndTime));
     }
 
-    return dateTimeWrapper(LocalDateTime.of(dateOfCurrentDay, timeShift));
+    return dateTimeWrapper(dateOfCurrentDay.toDateTime(timeShift));
   }
 
 }

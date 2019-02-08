@@ -9,17 +9,20 @@ import org.folio.circulation.domain.policy.LoanPolicyPeriod;
 import org.folio.circulation.support.PeriodUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
+import org.joda.time.LocalTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public abstract class ClosedLibraryStrategy {
 
   public static final String DATE_TIME_FORMAT = "yyyy-MM-dd'Z'";
-  public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT);
+  public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormat.forPattern(DATE_TIME_FORMAT);
+  public static final LocalTime END_OF_A_DAY = new LocalTime(23, 59, 59);
+
+
   private final LoanPolicyPeriod loanPeriod;
 
   protected ClosedLibraryStrategy(LoanPolicyPeriod loanPeriod) {
@@ -66,7 +69,7 @@ public abstract class ClosedLibraryStrategy {
     if (LoanPolicyPeriod.isShortTermLoans(loanPeriod)) {
       return PeriodUtil.isDateTimeWithDurationInsideDay(
         requestedDay,
-        LocalTime.ofSecondOfDay(requestedDate.getSecondOfDay()));
+        requestedDate.toLocalTime());
     }
     return true;
   }
@@ -77,15 +80,15 @@ public abstract class ClosedLibraryStrategy {
 
     LocalDate localDate = LocalDate.parse(date, DATE_TIME_FORMATTER);
     if (allDay) {
-      return getDateTimeZoneRetain(localDate.atTime(LocalTime.MAX));
+      return getDateTimeZoneRetain(localDate.toDateTime(END_OF_A_DAY));
     } else {
       List<OpeningHour> openingHours = openingDay.getOpeningHour();
       if (openingHours.isEmpty()) {
-        return getDateTimeZoneRetain(localDate.atTime(LocalTime.MAX));
+        return getDateTimeZoneRetain(localDate.toDateTime(END_OF_A_DAY));
       } else {
         OpeningHour openingHour = openingHours.get(openingHours.size() - 1);
         LocalTime endTime = LocalTime.parse(openingHour.getEndTime());
-        return getDateTimeZoneRetain(LocalDateTime.of(localDate, endTime));
+        return getDateTimeZoneRetain(localDate.toDateTime(endTime));
       }
     }
   }
@@ -93,13 +96,13 @@ public abstract class ClosedLibraryStrategy {
   /**
    * Get DateTime in a specific zone
    */
-  protected DateTime getDateTimeZoneRetain(LocalDateTime localDateTime) {
-    return dateTimeWrapper(localDateTime)
+  protected DateTime getDateTimeZoneRetain(DateTime dateTime) {
+    return dateTimeWrapper(dateTime)
       .withZoneRetainFields(DateTimeZone.UTC);
   }
 
 
-  protected DateTime dateTimeWrapper(LocalDateTime dateTime) {
+  protected DateTime dateTimeWrapper(DateTime dateTime) {
     return new DateTime(dateTime.toString());
   }
 

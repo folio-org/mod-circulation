@@ -4,9 +4,9 @@ import api.support.builders.CalendarBuilder;
 import api.support.builders.OpeningDayPeriodBuilder;
 import org.folio.circulation.domain.OpeningDayPeriod;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import org.joda.time.LocalDate;
+import org.joda.time.DateTime;
+import org.joda.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -163,22 +163,22 @@ public class CalendarExamples {
 
       case CASE_START_DATE_MONTHS_AGO_AND_END_DATE_THU:
         LocalDate localThursdayDate = LocalDate.parse(THURSDAY_DATE, DATE_TIME_FORMATTER);
-        LocalDateTime endDate = localThursdayDate.atTime(LocalTime.MIN);
-        LocalDateTime startDate = endDate.minusMonths(1);
+        DateTime endDate = localThursdayDate.toDateTime(LocalTime.MIDNIGHT);
+        DateTime startDate = endDate.minusMonths(1);
         return new CalendarBuilder(CASE_START_DATE_MONTHS_AGO_AND_END_DATE_THU,
           startDate, endDate);
 
       case CASE_START_DATE_MONTHS_AGO_AND_END_DATE_WED:
         LocalDate localWednesdayDate = LocalDate.parse(WEDNESDAY_DATE, DATE_TIME_FORMATTER);
-        LocalDateTime endDateWednesday = localWednesdayDate.atTime(LocalTime.MIN);
-        LocalDateTime startDateWednesday = endDateWednesday.minusMonths(1);
+        DateTime endDateWednesday = localWednesdayDate.toDateTime(LocalTime.MIDNIGHT);
+        DateTime startDateWednesday = endDateWednesday.minusMonths(1);
         return new CalendarBuilder(CASE_START_DATE_MONTHS_AGO_AND_END_DATE_THU,
           startDateWednesday, endDateWednesday);
 
       case CASE_START_DATE_FRI_AND_END_DATE_NEXT_MONTHS:
         LocalDate localFridayDate = LocalDate.parse(FRIDAY_DATE, DATE_TIME_FORMATTER);
-        LocalDateTime startDateFriday = localFridayDate.atTime(LocalTime.MIN);
-        LocalDateTime endDateFriday = startDateFriday.plusMonths(1);
+        DateTime startDateFriday = localFridayDate.toDateTime(LocalTime.MIDNIGHT);
+        DateTime endDateFriday = startDateFriday.plusMonths(1);
         return new CalendarBuilder(CASE_START_DATE_MONTHS_AGO_AND_END_DATE_THU,
           startDateFriday, endDateFriday);
 

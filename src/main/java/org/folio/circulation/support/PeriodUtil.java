@@ -2,12 +2,11 @@ package org.folio.circulation.support;
 
 import org.folio.circulation.domain.OpeningDay;
 import org.folio.circulation.domain.OpeningHour;
-import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.LoanPolicyPeriod;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
-import java.time.LocalTime;
+import org.joda.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -16,15 +15,6 @@ public class PeriodUtil {
 
   private PeriodUtil() {
     // not use
-  }
-
-  /**
-   * If CurrentDueDate == KEEP_THE_CURRENT_DUE_DATE or KEEP_THE_CURRENT_DUE_DATE_TIME then the due date
-   * should remain unchanged from system calculated due date timestamp
-   */
-  public static boolean isKeepCurrentDueDate(DueDateManagement dueDateManagement) {
-    return dueDateManagement == DueDateManagement.KEEP_THE_CURRENT_DUE_DATE
-      || dueDateManagement == DueDateManagement.KEEP_THE_CURRENT_DUE_DATE_TIME;
   }
 
   /**
