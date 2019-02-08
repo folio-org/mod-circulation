@@ -1,4 +1,4 @@
-package org.folio.circulation.loanrules;
+package org.folio.circulation.circulationrules;
 
 /**
  * Store the UUID of the item's type (the material type).

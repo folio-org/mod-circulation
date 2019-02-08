@@ -1,4 +1,4 @@
-package org.folio.circulation.loanrules;
+package org.folio.circulation.circulationrules;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -16,31 +16,31 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.folio.circulation.loanrules.LoanRulesParser.CriteriumContext;
-import org.folio.circulation.loanrules.LoanRulesParser.CriteriumPriorityContext;
-import org.folio.circulation.loanrules.LoanRulesParser.DedentContext;
-import org.folio.circulation.loanrules.LoanRulesParser.DefaultPrioritiesContext;
-import org.folio.circulation.loanrules.LoanRulesParser.ExprContext;
-import org.folio.circulation.loanrules.LoanRulesParser.FallbackpolicyContext;
-import org.folio.circulation.loanrules.LoanRulesParser.IndentContext;
-import org.folio.circulation.loanrules.LoanRulesParser.LastLinePrioritiesContext;
-import org.folio.circulation.loanrules.LoanRulesParser.LinePriorityContext;
-import org.folio.circulation.loanrules.LoanRulesParser.LoanRulesFileContext;
-import org.folio.circulation.loanrules.LoanRulesParser.PoliciesContext;
-import org.folio.circulation.loanrules.LoanRulesParser.PolicyContext;
-import org.folio.circulation.loanrules.LoanRulesParser.SevenCriteriumLettersContext;
-import org.folio.circulation.loanrules.LoanRulesParser.ThreePrioritiesContext;
-import org.folio.circulation.loanrules.LoanRulesParser.TwoPrioritiesContext;
+import org.folio.circulation.circulationrules.CirculationRulesParser.CriteriumContext;
+import org.folio.circulation.circulationrules.CirculationRulesParser.CriteriumPriorityContext;
+import org.folio.circulation.circulationrules.CirculationRulesParser.DedentContext;
+import org.folio.circulation.circulationrules.CirculationRulesParser.DefaultPrioritiesContext;
+import org.folio.circulation.circulationrules.CirculationRulesParser.ExprContext;
+import org.folio.circulation.circulationrules.CirculationRulesParser.FallbackpolicyContext;
+import org.folio.circulation.circulationrules.CirculationRulesParser.IndentContext;
+import org.folio.circulation.circulationrules.CirculationRulesParser.LastLinePrioritiesContext;
+import org.folio.circulation.circulationrules.CirculationRulesParser.LinePriorityContext;
+import org.folio.circulation.circulationrules.CirculationRulesParser.CirculationRulesFileContext;
+import org.folio.circulation.circulationrules.CirculationRulesParser.PoliciesContext;
+import org.folio.circulation.circulationrules.CirculationRulesParser.PolicyContext;
+import org.folio.circulation.circulationrules.CirculationRulesParser.SevenCriteriumLettersContext;
+import org.folio.circulation.circulationrules.CirculationRulesParser.ThreePrioritiesContext;
+import org.folio.circulation.circulationrules.CirculationRulesParser.TwoPrioritiesContext;
 
 /**
- * Convert a loan rules text in FOLIO format into a drools rules text.
+ * Convert a circulation rules text in FOLIO format into a drools rules text.
  */
-public class Text2Drools extends LoanRulesBaseListener {
+public class Text2Drools extends CirculationRulesBaseListener {
   @SuppressWarnings("squid:CommentedOutCodeLine")  // Example code is allowed
   /* Example drools file:
 
-  package loanrules
-  import org.folio.circulation.loanrules.*
+  package circulationrules
+  import org.folio.circulation.circulationrules.*
   global LoanPolicy loanPolicy
   global java.lang.Integer lineNumber
 
@@ -78,8 +78,8 @@ public class Text2Drools extends LoanRulesBaseListener {
   */
 
   private StringBuilder drools = new StringBuilder(
-      "package loanrules\n" +
-      "import org.folio.circulation.loanrules.*\n" +
+      "package circulationrules\n" +
+      "import org.folio.circulation.circulationrules.*\n" +
       "global Match match\n" +
       "\n"
       );
@@ -130,20 +130,20 @@ public class Text2Drools extends LoanRulesBaseListener {
   }
 
   /**
-   * Convert loan rules from FOLIO text format into a Drools file.
-   * @param text String with a loan rules file in FOLIO syntax.
+   * Convert lcirculationoan rules from FOLIO text format into a Drools file.
+   * @param text String with a circulation rules file in FOLIO syntax.
    * @return Drools file
    */
   public static String convert(String text) {
     Text2Drools text2drools = new Text2Drools();
 
     CharStream input = CharStreams.fromString(text);
-    LoanRulesLexer lexer = new LoanRulesLexer(input);
+    CirculationRulesLexer lexer = new CirculationRulesLexer(input);
     CommonTokenStream tokens = new CommonTokenStream(lexer);
-    LoanRulesParser parser = new LoanRulesParser(tokens);
+    CirculationRulesParser parser = new CirculationRulesParser(tokens);
     parser.removeErrorListeners(); // remove ConsoleErrorListener
     parser.addErrorListener(new ErrorListener());
-    LoanRulesFileContext entryPoint = parser.loanRulesFile();
+    CirculationRulesFileContext entryPoint = parser.circulationRulesFile();
     ParseTreeWalker walker = new ParseTreeWalker();
     walker.walk(text2drools, entryPoint);
 
@@ -186,7 +186,7 @@ public class Text2Drools extends LoanRulesBaseListener {
       Token token = letters.getStart();
       String message = size < 7 ? "7 letters expected, found only " + size
                                 : "Only 7 letters expected, found " + size;
-      throw new LoanRulesException(message,
+      throw new CirculationRulesException(message,
           token.getLine(), token.getCharPositionInLine() + 1);
     }
 
@@ -194,7 +194,7 @@ public class Text2Drools extends LoanRulesBaseListener {
       String letter = letters.CRITERIUM_LETTER(i).getText();
       if (criteriumPriority.put(letter, 7 - i) != null) {
         Token token = letters.CRITERIUM_LETTER(i).getSymbol();
-        throw new LoanRulesException("Duplicate letter " + letter,
+        throw new CirculationRulesException("Duplicate letter " + letter,
             token.getLine(), token.getCharPositionInLine() + 1);
       }
     }
@@ -217,11 +217,11 @@ public class Text2Drools extends LoanRulesBaseListener {
       List<PolicyContext> policies = filterPolicies(policiesContext, policyType);
       Token token = policiesContext.getStart();
       if (policies.size() > 1) {
-        throw new LoanRulesException(
+        throw new CirculationRulesException(
           String.format("Only one policy of type %s allowed", policyType),
           token.getLine(), token.getCharPositionInLine());
       } else if (policies.isEmpty()) {
-        throw new LoanRulesException(
+        throw new CirculationRulesException(
           String.format("Must contain one of each policy type, missing type %s", policyType),
           token.getLine(), token.getCharPositionInLine());
       }
@@ -245,11 +245,11 @@ public class Text2Drools extends LoanRulesBaseListener {
 
       // Make sure there is exactly one of each type of policy
       if (count > 1) {
-        throw new LoanRulesException(
+        throw new CirculationRulesException(
           String.format("Only one fallback policy of type %s is allowed", policyType),
           token.getLine(), token.getCharPositionInLine());
       } else if (count == 0) {
-        throw new LoanRulesException(
+        throw new CirculationRulesException(
           String.format("Must have a fallback policy of type %s", policyType),
           token.getLine(), token.getCharPositionInLine());
       }
@@ -282,7 +282,7 @@ public class Text2Drools extends LoanRulesBaseListener {
 
     if (priority[0].equals(priority[1])) {
       Token token = ctx.criteriumPriority(1).getStart();
-      throw new LoanRulesException("Duplicate priority type",
+      throw new CirculationRulesException("Duplicate priority type",
           token.getLine(), token.getCharPositionInLine() + 1);
     }
   }

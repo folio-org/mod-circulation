@@ -1,4 +1,4 @@
-grammar LoanRules;
+grammar CirculationRules;
 
 /*
  * The INDENT and DEDENT code (the code in @lexer::members) has been taken from
@@ -76,10 +76,10 @@ tokens { INDENT, DEDENT }
     while (indentCount != getSavedIndent()) {
       if (indentCount > getSavedIndent()) {
         indentStack.push(indentCount);
-        tokenQueue.offer(createToken(LoanRulesParser.INDENT, "INDENT" + indentCount, next));
+        tokenQueue.offer(createToken(CirculationRulesParser.INDENT, "INDENT" + indentCount, next));
       } else {
         indentStack.pop();
-        tokenQueue.offer(createToken(LoanRulesParser.DEDENT, "DEDENT"+getSavedIndent(), next));
+        tokenQueue.offer(createToken(CirculationRulesParser.DEDENT, "DEDENT"+getSavedIndent(), next));
       }
     }
     pendingDent = false;
@@ -88,7 +88,7 @@ tokens { INDENT, DEDENT }
   }
 }
 
-loanRulesFile
+circulationRulesFile
   : NEWLINE* 'priority' ':' 'first-line' ( NEWLINE | statement )*  NEWLINE* fallbackpolicy noStatementAfterFallbackPolicy EOF
   | NEWLINE* 'priority' ':' priority     NEWLINE* fallbackpolicy   ( NEWLINE | statement )* EOF
   ;
@@ -181,7 +181,7 @@ NEWLINE : ( '\r'? '\n' | '\r' ) { if (pendingDent) {
 WS : ' '+ { setChannel(HIDDEN); if (pendingDent) { indentCount += getText().length(); } } ;
 
 TAB : '\t' { if (true) {  // "if (true)" prevents a compile error "unreachable code"
-               throw new org.folio.circulation.loanrules.LoanRulesException(
+               throw new org.folio.circulation.circulationrules.CirculationRulesException(
                   "Tabulator character is not allowed, use spaces instead.",
                    getLine(), getCharPositionInLine()+1);
              }

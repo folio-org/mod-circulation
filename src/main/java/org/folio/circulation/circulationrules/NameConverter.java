@@ -1,20 +1,20 @@
-package org.folio.circulation.loanrules;
+package org.folio.circulation.circulationrules;
 
 import org.antlr.v4.runtime.BufferedTokenStream;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.TokenStreamRewriter;
 import org.antlr.v4.runtime.tree.TerminalNode;
-import org.folio.circulation.loanrules.LoanRulesParser.CriteriumContext;
-import org.folio.circulation.loanrules.LoanRulesParser.PolicyContext;
+import org.folio.circulation.circulationrules.CirculationRulesParser.CriteriumContext;
+import org.folio.circulation.circulationrules.CirculationRulesParser.PolicyContext;
 
 import java.util.List;
 import java.util.Map;
 
 /**
  * Make a UUID to name or a name to UUID conversion of the names in each criterium
- * and the policy names in the loan rules file.
+ * and the policy names in the circulation rules file.
  */
-public class NameConverter extends LoanRulesBaseListener {
+public class NameConverter extends CirculationRulesBaseListener {
   /*
    * Implementation idea:
    * Terence Parr: "The Definitive ANTLR 4 Reference", Pragmatic Bookshelf, 2012,

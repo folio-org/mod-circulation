@@ -1,21 +1,21 @@
-package org.folio.circulation.loanrules;
+package org.folio.circulation.circulationrules;
 
 /**
- * Exception about an error in loan rules.
+ * Exception about an error in circulation rules.
  */
-public class LoanRulesException extends IllegalArgumentException {
+public class CirculationRulesException extends IllegalArgumentException {
   private static final long serialVersionUID = 243533650859582936L;
   private final int line;
   private final int column;
 
   /**
-   * Create an exception about an error in loan rules.
+   * Create an exception about an error in circulation rules.
    *
    * @param message  description of the error
    * @param line  line of the error
    * @param column  column of the error
    */
-  public LoanRulesException(String message, int line, int column) {
+  public CirculationRulesException(String message, int line, int column) {
     super(message);
     this.line = line;
     this.column = column;

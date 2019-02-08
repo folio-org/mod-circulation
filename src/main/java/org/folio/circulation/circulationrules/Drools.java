@@ -1,4 +1,4 @@
-package org.folio.circulation.loanrules;
+package org.folio.circulation.circulationrules;
 
 import org.kie.api.KieServices;
 import org.kie.api.builder.KieBuilder;
@@ -22,12 +22,12 @@ public class Drools {
 
   /**
    * Create the Drools kieSession based on a String containing a drools file.
-   * @param drools A file in Drools syntax with the loan rules.
+   * @param drools A file in Drools syntax with the circulation rules.
    */
   public Drools(String drools) {
     KieServices kieServices = KieServices.Factory.get();
     KieFileSystem kfs = kieServices.newKieFileSystem();
-    kfs.write("src/main/resources/loanrules/loan-rules.drl", drools);
+    kfs.write("src/main/resources/circulationrules/circulation-rules.drl", drools);
     KieBuilder kieBuilder = kieServices.newKieBuilder(kfs);
     kieBuilder.buildAll();
     if (kieBuilder.getResults().hasMessages(Level.ERROR)) {
@@ -72,7 +72,7 @@ public class Drools {
    * @param loanType the item's loan type
    * @param patronGroup group the patron belongs to
    * @param shelvingLocation - item's shelving location
-   * @return matches, each match has a loanPolicyId and a loanRuleLine field
+   * @return matches, each match has a loanPolicyId and a circulationRuleLine field
    */
   public JsonArray loanPolicies(String itemType, String loanType, String patronGroup, String shelvingLocation) {
     KieSession kieSession = createSession(itemType, loanType, patronGroup, shelvingLocation);
@@ -80,7 +80,7 @@ public class Drools {
     while (kieSession.fireAllRules() > 0) {
       JsonObject json = new JsonObject();
       json.put("loanPolicyId", match.loanPolicyId);
-      json.put("loanRuleLine", match.lineNumber);
+      json.put("circulationRuleLine", match.lineNumber);
       array.add(json);
     }
     kieSession.dispose();
@@ -108,7 +108,7 @@ public class Drools {
    * @param loanType - loan type
    * @param patronGroup group the patron belongs to
    * @param shelvingLocation - item's shelving location
-   * @return matches, each match has a loanPolicyId and a loanRuleLine field
+   * @return matches, each match has a loanPolicyId and a circulationRuleLine field
    */
   public static JsonArray loanPolicies(String droolsFile,
       String itemType, String loanType, String patronGroup, String shelvingLocation) {

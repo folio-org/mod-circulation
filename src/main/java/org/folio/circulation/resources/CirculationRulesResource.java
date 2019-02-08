@@ -8,8 +8,8 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.folio.circulation.loanrules.LoanRulesException;
-import org.folio.circulation.loanrules.Text2Drools;
+import org.folio.circulation.circulationrules.CirculationRulesException;
+import org.folio.circulation.circulationrules.Text2Drools;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.JsonHttpResult;
@@ -23,9 +23,9 @@ import java.lang.invoke.MethodHandles;
 import static org.folio.circulation.support.http.server.ServerErrorResponse.internalError;
 
 /**
- * Write and read the loan rules.
+ * Write and read the circulation rules.
  */
-public class LoanRulesResource extends Resource {
+public class CirculationRulesResource extends Resource {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final String rootPath;
@@ -35,7 +35,7 @@ public class LoanRulesResource extends Resource {
    * @param rootPath  URL path
    * @param client
    */
-  public LoanRulesResource(String rootPath, HttpClient client) {
+  public CirculationRulesResource(String rootPath, HttpClient client) {
     super(client);
     this.rootPath = rootPath;
   }
@@ -53,27 +53,27 @@ public class LoanRulesResource extends Resource {
 
   private void get(RoutingContext routingContext) {
     final Clients clients = Clients.create(new WebContext(routingContext), client);
-    CollectionResourceClient loansRulesClient = clients.loanRulesStorage();
+    CollectionResourceClient circulationRulesClient = clients.circulationRulesStorage();
 
-    log.debug("get(RoutingContext) client={}", loansRulesClient);
+    log.debug("get(RoutingContext) client={}", circulationRulesClient);
 
-    if (loansRulesClient == null) {
+    if (circulationRulesClient == null) {
       internalError(routingContext.response(),
         "Cannot initialise client to storage interface");
       return;
     }
 
-    loansRulesClient.get().thenAccept(response -> {
+    circulationRulesClient.get().thenAccept(response -> {
       try {
         if (response.getStatusCode() != 200) {
           ForwardResponse.forward(routingContext.response(), response);
           return;
         }
-        JsonObject loanRules = new JsonObject(response.getBody());
-        loanRules.put("loanRulesAsDrools", Text2Drools.convert(
-          loanRules.getString("loanRulesAsTextFile")));
+        JsonObject circulationRules = new JsonObject(response.getBody());
+        circulationRules.put("circulationRulesAsDrools", Text2Drools.convert(
+          circulationRules.getString("circulationRulesAsTextFile")));
 
-        new OkJsonHttpResult(loanRules)
+        new OkJsonHttpResult(circulationRules)
           .writeTo(routingContext.response());
       }
       catch (Exception e) {
@@ -86,7 +86,7 @@ public class LoanRulesResource extends Resource {
   @SuppressWarnings("squid:S2147")
   private void put(RoutingContext routingContext) {
     final Clients clients = Clients.create(new WebContext(routingContext), client);
-    CollectionResourceClient loansRulesClient = clients.loanRulesStorage();
+    CollectionResourceClient loansRulesClient = clients.circulationRulesStorage();
 
     if (loansRulesClient == null) {
       internalError(routingContext.response(),
@@ -98,21 +98,21 @@ public class LoanRulesResource extends Resource {
     try {
       // try to convert, do not safe if conversion fails
       rulesInput = routingContext.getBodyAsJson();
-      Text2Drools.convert(rulesInput.getString("loanRulesAsTextFile"));
-    } catch (LoanRulesException e) {
-      loanRulesError(routingContext.response(), e);
+      Text2Drools.convert(rulesInput.getString("circulationRulesAsTextFile"));
+    } catch (CirculationRulesException e) {
+      circulationRulesError(routingContext.response(), e);
       return;
     } catch (DecodeException e) {
-      loanRulesError(routingContext.response(), e);
+      circulationRulesError(routingContext.response(), e);
       return;
     } catch (Exception e) {
       internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
       return;
     }
-    LoanRulesEngineResource.clearCache(new WebContext(routingContext).getTenantId());
+    CirculationRulesEngineResource.clearCache(new WebContext(routingContext).getTenantId());
     JsonObject rules = rulesInput.copy();
 
-    rules.remove("loanRulesAsDrools");
+    rules.remove("circulationRulesAsDrools");
 
     loansRulesClient.put(rules).thenAccept(response -> {
       if (response.getStatusCode() == 204) {
@@ -123,7 +123,7 @@ public class LoanRulesResource extends Resource {
     });
   }
 
-  private static void loanRulesError(HttpServerResponse response, LoanRulesException e) {
+  private static void circulationRulesError(HttpServerResponse response, CirculationRulesException e) {
     JsonObject body = new JsonObject();
     body.put("message", e.getMessage());
     body.put("line", e.getLine());
@@ -131,7 +131,7 @@ public class LoanRulesResource extends Resource {
     new JsonHttpResult(422, body, null).writeTo(response);
   }
 
-  private static void loanRulesError(HttpServerResponse response, DecodeException e) {
+  private static void circulationRulesError(HttpServerResponse response, DecodeException e) {
     JsonObject body = new JsonObject();
     body.put("message", e.getMessage());  // already contains line and column number
     new JsonHttpResult(422, body, null).writeTo(response);

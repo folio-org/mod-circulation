@@ -8,8 +8,8 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.folio.circulation.loanrules.Drools;
-import org.folio.circulation.loanrules.Text2Drools;
+import org.folio.circulation.circulationrules.Drools;
+import org.folio.circulation.circulationrules.Text2Drools;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.OkJsonHttpResult;
@@ -24,10 +24,10 @@ import java.util.Map;
 import static org.folio.circulation.support.http.server.ServerErrorResponse.internalError;
 
 /**
- * The loan rules engine calculates the loan policy based on
+ * The circulation rules engine calculates the loan policy based on
  * item type, loan type, patron type and shelving location.
  */
-public class LoanRulesEngineResource extends Resource {
+public class CirculationRulesEngineResource extends Resource {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private static final String ITEM_TYPE_ID_NAME = "item_type_id";
@@ -38,15 +38,15 @@ public class LoanRulesEngineResource extends Resource {
   private final String applyPath;
   private final String applyAllPath;
 
-  /** after this time the rules get loaded before executing the loan rules engine */
+  /** after this time the rules get loaded before executing the circulation rules engine */
   private static long maxAgeInMilliseconds = 5000;
-  /** after this time the loan rules engine is executed first for a fast reply
-   * and then the loan rules get reloaded */
+  /** after this time the circulation rules engine is executed first for a fast reply
+   * and then the circulation rules get reloaded */
   private static long triggerAgeInMilliseconds = 4000;
 
   private class Rules {
-    String loanRulesAsTextFile = "";
-    String loanRulesAsDrools = "";
+    String circulationRulesAsTextFile = "";
+    String circulationRulesAsDrools = "";
     Drools drools;
     /** System.currentTimeMillis() of the last load/reload of the rules from the storage */
     long reloadTimestamp;
@@ -57,26 +57,26 @@ public class LoanRulesEngineResource extends Resource {
 
   /**
    * Set the cache time.
-   * @param triggerAgeInMilliseconds  after this time the loan rules engine is executed first for a fast reply
-   *                                  and then the loan rules get reloaded
-   * @param maxAgeInMilliseconds  after this time the rules get loaded before executing the loan rules engine
+   * @param triggerAgeInMilliseconds  after this time the circulation rules engine is executed first for a fast reply
+   *                                  and then the circulation rules get reloaded
+   * @param maxAgeInMilliseconds  after this time the rules get loaded before executing the circulation rules engine
    */
   public static void setCacheTime(long triggerAgeInMilliseconds, long maxAgeInMilliseconds) {
-    LoanRulesEngineResource.triggerAgeInMilliseconds = triggerAgeInMilliseconds;
-    LoanRulesEngineResource.maxAgeInMilliseconds = maxAgeInMilliseconds;
+    CirculationRulesEngineResource.triggerAgeInMilliseconds = triggerAgeInMilliseconds;
+    CirculationRulesEngineResource.maxAgeInMilliseconds = maxAgeInMilliseconds;
   }
 
   /**
    * Completely drop the cache. This enforces rebuilding the drools rules
-   * even when the loan rules haven't changed.
+   * even when the circulation rules haven't changed.
    */
   public static void dropCache() {
     rulesMap.clear();
   }
 
   /**
-   * Enforce reload of all loan rules of all tenants.
-   * This doesn't rebuild the drools rules if the loan rules haven't changed.
+   * Enforce reload of all circulation rules of all tenants.
+   * This doesn't rebuild the drools rules if the circulation rules haven't changed.
    */
   public static void clearCache() {
     for (Rules rules: rulesMap.values()) {
@@ -86,8 +86,8 @@ public class LoanRulesEngineResource extends Resource {
   }
 
   /**
-   * Enforce reload of the tenant's loan rules.
-   * This doesn't rebuild the drools rules if the loan rules haven't changed.
+   * Enforce reload of the tenant's circulation rules.
+   * This doesn't rebuild the drools rules if the circulation rules haven't changed.
    * @param tenantId  id of the tenant
    */
   static void clearCache(String tenantId) {
@@ -99,12 +99,12 @@ public class LoanRulesEngineResource extends Resource {
   }
 
   /**
-   * Create a loan rules engine that listens at applyPath and applyAllPath.
-   * @param applyPath  URL path for loan rules triggering that returns the first match
-   * @param applyAllPath  URL path for loan rules triggering that returns all matches
+   * Create a circulation rules engine that listens at applyPath and applyAllPath.
+   * @param applyPath  URL path for circulation rules triggering that returns the first match
+   * @param applyAllPath  URL path for circulation rules triggering that returns all matches
    * @param client  the HttpClient to use for requests via Okapi
    */
-  public LoanRulesEngineResource(String applyPath, String applyAllPath, HttpClient client) {
+  public CirculationRulesEngineResource(String applyPath, String applyAllPath, HttpClient client) {
     super(client);
     this.applyPath = applyPath;
     this.applyAllPath = applyAllPath;
@@ -148,20 +148,20 @@ public class LoanRulesEngineResource extends Resource {
   }
 
   /**
-   * Load the loan rules from the storage module.
+   * Load the circulation rules from the storage module.
    * @param rules - where to store the rules and reload information
    * @param routingContext - where to report any error
    * @param done - invoked after success
    */
   private void reloadRules(Rules rules, RoutingContext routingContext, Handler<Void> done) {
     final Clients clients = Clients.create(new WebContext(routingContext), client);
-    CollectionResourceClient loansRulesClient = clients.loanRulesStorage();
+    CollectionResourceClient circulationRulesClient = clients.circulationRulesStorage();
 
-    if (loansRulesClient == null) {
+    if (circulationRulesClient == null) {
       return;
     }
 
-    loansRulesClient.get().thenAccept(response -> {
+    circulationRulesClient.get().thenAccept(response -> {
       try {
         if (response.getStatusCode() != 200) {
           ForwardResponse.forward(routingContext.response(), response);
@@ -171,22 +171,22 @@ public class LoanRulesEngineResource extends Resource {
 
         rules.reloadTimestamp = System.currentTimeMillis();
         rules.reloadInitiated = false;
-        JsonObject loanRules = new JsonObject(response.getBody());
+        JsonObject circulationRules = new JsonObject(response.getBody());
         if (log.isDebugEnabled()) {
-          log.debug("loanRules = {}", loanRules.encodePrettily());
+          log.debug("circulationRules = {}", circulationRules.encodePrettily());
         }
-        String loanRulesAsTextFile = loanRules.getString("loanRulesAsTextFile");
-        if (loanRulesAsTextFile == null) {
-          throw new NullPointerException("loanRulesAsTextFile");
+        String circulationRulesAsTextFile = circulationRules.getString("circulationRulesAsTextFile");
+        if (circulationRulesAsTextFile == null) {
+          throw new NullPointerException("circulationRulesAsTextFile");
         }
-        if (rules.loanRulesAsTextFile.equals(loanRulesAsTextFile)) {
+        if (rules.circulationRulesAsTextFile.equals(circulationRulesAsTextFile)) {
           done.handle(null);
           return;
         }
-        rules.loanRulesAsTextFile = loanRulesAsTextFile;
-        rules.loanRulesAsDrools = Text2Drools.convert(loanRulesAsTextFile);
-        log.debug("loanRulesAsDrools = {}", rules.loanRulesAsDrools);
-        rules.drools = new Drools(rules.loanRulesAsDrools);
+        rules.circulationRulesAsTextFile = circulationRulesAsTextFile;
+        rules.circulationRulesAsDrools = Text2Drools.convert(circulationRulesAsTextFile);
+        log.debug("circulationRulesAsDrools = {}", rules.circulationRulesAsDrools);
+        rules.drools = new Drools(rules.circulationRulesAsDrools);
         done.handle(null);
       }
       catch (Exception e) {
@@ -286,14 +286,14 @@ public class LoanRulesEngineResource extends Resource {
   }
 
   private void applyAll(RoutingContext routingContext) {
-    String loanRules = routingContext.pathParam("loan_rules");
-    if (loanRules == null) {
+    String circulationRules = routingContext.pathParam("circulation_rules");
+    if (circulationRules == null) {
       drools(routingContext, drools -> applyAll(routingContext, drools));
       return;
     }
 
     try {
-      String droolsFile = Text2Drools.convert(loanRules);
+      String droolsFile = Text2Drools.convert(circulationRules);
       Drools drools = new Drools(droolsFile);
       applyAll(routingContext, drools);
     }
@@ -314,7 +314,7 @@ public class LoanRulesEngineResource extends Resource {
       String patronGroupId = request.getParam(PATRON_TYPE_ID_NAME);
       String shelvingLocationId = request.getParam(SHELVING_LOCATION_ID_NAME);
       JsonArray matches = drools.loanPolicies(itemTypeId, loanTypeId, patronGroupId, shelvingLocationId);
-      JsonObject json = new JsonObject().put("loanRuleMatches", matches);
+      JsonObject json = new JsonObject().put("circulationRuleMatches", matches);
 
       new OkJsonHttpResult(json)
         .writeTo(routingContext.response());

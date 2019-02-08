@@ -12,12 +12,12 @@ import org.slf4j.LoggerFactory;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpClientResponse;
 
-public class LoanRulesClient {
+public class CirculationRulesClient {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private final OkapiHttpClient client;
   private final URL root;
 
-  LoanRulesClient(OkapiHttpClient client, WebContext context)
+  CirculationRulesClient(OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     this.client = client;
@@ -31,12 +31,12 @@ public class LoanRulesClient {
     String patronGroup,
     Handler<HttpClientResponse> responseHandler) {
 
-    String loanRulesQuery = queryParameters(loanTypeId, locationId,
+    String circulationRulesQuery = queryParameters(loanTypeId, locationId,
       materialTypeId, patronGroup);
 
-    log.info("Applying loan rules for {}", loanRulesQuery);
+    log.info("Applying circulation rules for {}", circulationRulesQuery);
 
-    client.get(String.format("%s/%s?%s", root, "apply", loanRulesQuery),
+    client.get(String.format("%s/%s?%s", root, "apply", circulationRulesQuery),
       responseHandler);
   }
 

@@ -25,12 +25,12 @@ import static org.folio.circulation.support.HttpResult.succeeded;
 public class LoanPolicyRepository {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  private final LoanRulesClient loanRulesClient;
+  private final CirculationRulesClient circulationRulesClient;
   private final CollectionResourceClient loanPoliciesStorageClient;
   private final CollectionResourceClient fixedDueDateSchedulesStorageClient;
 
   public LoanPolicyRepository(Clients clients) {
-    loanRulesClient = clients.loanRules();
+    circulationRulesClient = clients.circulationRules();
     loanPoliciesStorageClient = clients.loanPoliciesStorage();
     fixedDueDateSchedulesStorageClient = clients.fixedDueDateSchedules();
   }
@@ -123,7 +123,7 @@ public class LoanPolicyRepository {
 
     return SingleRecordFetcher.json(loanPoliciesStorageClient, "loan policy",
       response -> HttpResult.failed(new ServerErrorFailure(
-        String.format("Loan policy %s could not be found, please check loan rules", loanPolicyId))))
+        String.format("Loan policy %s could not be found, please check circulation rules", loanPolicyId))))
       .fetch(loanPolicyId);
   }
 
@@ -136,12 +136,12 @@ public class LoanPolicyRepository {
 
     if(item.isNotFound()) {
       return CompletableFuture.completedFuture(HttpResult.failed(
-        new ServerErrorFailure("Unable to apply loan rules for unknown item")));
+        new ServerErrorFailure("Unable to apply circulation rules for unknown item")));
     }
 
     if(item.doesNotHaveHolding()) {
       return CompletableFuture.completedFuture(HttpResult.failed(
-        new ServerErrorFailure("Unable to apply loan rules for unknown holding")));
+        new ServerErrorFailure("Unable to apply circulation rules for unknown holding")));
     }
 
     String loanTypeId = item.determineLoanTypeForItem();
@@ -151,19 +151,19 @@ public class LoanPolicyRepository {
 
     String patronGroupId = user.getPatronGroupId();
 
-    CompletableFuture<Response> loanRulesResponse = new CompletableFuture<>();
+    CompletableFuture<Response> circulationRulesResponse = new CompletableFuture<>();
 
     log.info(
-      "Applying loan rules for material type: {}, patron group: {}, loan type: {}, location: {}",
+      "Applying circulation rules for material type: {}, patron group: {}, loan type: {}, location: {}",
       materialTypeId, patronGroupId, loanTypeId, locationId);
 
-    loanRulesClient.applyRules(loanTypeId, locationId, materialTypeId,
-      patronGroupId, ResponseHandler.any(loanRulesResponse));
+      circulationRulesClient.applyRules(loanTypeId, locationId, materialTypeId,
+      patronGroupId, ResponseHandler.any(circulationRulesResponse));
 
-    loanRulesResponse.thenAcceptAsync(response -> {
+      circulationRulesResponse.thenAcceptAsync(response -> {
       if (response.getStatusCode() == 404) {
         findLoanPolicyCompleted.complete(HttpResult.failed(
-          new ServerErrorFailure("Unable to apply loan rules")));
+          new ServerErrorFailure("Unable to apply circulation rules")));
       } else if (response.getStatusCode() != 200) {
         findLoanPolicyCompleted.complete(HttpResult.failed(
           new ForwardOnFailure(response)));
