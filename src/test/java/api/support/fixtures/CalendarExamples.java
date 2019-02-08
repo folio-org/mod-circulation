@@ -17,7 +17,7 @@ import static org.folio.circulation.domain.OpeningDay.createOpeningDay;
 import static org.folio.circulation.domain.OpeningDayPeriod.createDayPeriod;
 import static org.folio.circulation.domain.OpeningHour.createOpeningHour;
 import static org.folio.circulation.domain.Weekdays.createWeekdays;
-import static org.folio.circulation.resources.CheckOutByBarcodeResource.DATE_TIME_FORMATTER;
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategy.DATE_TIME_FORMATTER;
 
 public class CalendarExamples {
 
@@ -61,86 +61,86 @@ public class CalendarExamples {
       createDayPeriod(
         createWeekdays("WEDNESDAY"),
         createOpeningDay(Arrays.asList(createOpeningHour(START_TIME_FIRST_PERIOD, END_TIME_FIRST_PERIOD), createOpeningHour(START_TIME_SECOND_PERIOD, END_TIME_SECOND_PERIOD)),
-          WEDNESDAY_DATE, false, true, false)
+          WEDNESDAY_DATE, false, true)
       ),
       // current day
       createDayPeriod(
         createWeekdays("THURSDAY"),
-        createOpeningDay(new ArrayList<>(), THURSDAY_DATE, false, false, false)
+        createOpeningDay(new ArrayList<>(), THURSDAY_DATE, false, false)
       ),
       // next day
       createDayPeriod(
         createWeekdays("FRIDAY"),
-        createOpeningDay(new ArrayList<>(), FRIDAY_DATE, false, false, false)
+        createOpeningDay(new ArrayList<>(), FRIDAY_DATE, false, false)
       )));
     fakeOpeningPeriods.put(CASE_WED_THU_FRI_SERVICE_POINT_ID, new OpeningDayPeriodBuilder(CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID,
       // prev day
       createDayPeriod(
         createWeekdays("WEDNESDAY"),
         createOpeningDay(Arrays.asList(createOpeningHour(START_TIME_FIRST_PERIOD, END_TIME_FIRST_PERIOD), createOpeningHour(START_TIME_SECOND_PERIOD, END_TIME_SECOND_PERIOD)),
-          WEDNESDAY_DATE, false, true, false)
+          WEDNESDAY_DATE, false, true)
       ),
       // current day
       createDayPeriod(
         createWeekdays("THURSDAY"),
-        createOpeningDay(Arrays.asList(createOpeningHour(START_TIME_FIRST_PERIOD, END_TIME_FIRST_PERIOD), createOpeningHour(START_TIME_SECOND_PERIOD, END_TIME_SECOND_PERIOD)),
-          THURSDAY_DATE, false, true, false)
+        createOpeningDay(new ArrayList<>(),
+          THURSDAY_DATE, false, false)
       ),
       // next day
       createDayPeriod(
         createWeekdays("FRIDAY"),
         createOpeningDay(Arrays.asList(createOpeningHour(START_TIME_FIRST_PERIOD, END_TIME_FIRST_PERIOD), createOpeningHour(START_TIME_SECOND_PERIOD, END_TIME_SECOND_PERIOD)),
-          FRIDAY_DATE, false, true, false)
+          FRIDAY_DATE, false, true)
       )));
     fakeOpeningPeriods.put(CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID, new OpeningDayPeriodBuilder(CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID,
       // prev day
       createDayPeriod(
         createWeekdays("WEDNESDAY"),
-        createOpeningDay(new ArrayList<>(), WEDNESDAY_DATE, true, true, false)
+        createOpeningDay(new ArrayList<>(), WEDNESDAY_DATE, true, true)
       ),
       // current day
       createDayPeriod(
         createWeekdays("THURSDAY"),
-        createOpeningDay(new ArrayList<>(), THURSDAY_DATE, true, true, false)
+        createOpeningDay(new ArrayList<>(), THURSDAY_DATE, false, false)
       ),
       // next day
       createDayPeriod(
         createWeekdays("FRIDAY"),
-        createOpeningDay(new ArrayList<>(), FRIDAY_DATE, true, true, false)
+        createOpeningDay(new ArrayList<>(), FRIDAY_DATE, true, true)
       )));
     fakeOpeningPeriods.put(CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID, new OpeningDayPeriodBuilder(CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID,
       // prev day
       createDayPeriod(
         createWeekdays("FRIDAY"),
-        createOpeningDay(new ArrayList<>(), "2018-12-14Z", true, true, false)
+        createOpeningDay(new ArrayList<>(), "2018-12-14Z", true, true)
       ),
       // current day
       createDayPeriod(
         createWeekdays("SATURDAY"),
-        createOpeningDay(new ArrayList<>(), "2018-12-15Z", false, false, false)
+        createOpeningDay(new ArrayList<>(), "2018-12-15Z", false, false)
       ),
       // next day
       createDayPeriod(
         createWeekdays("MONDAY"),
-        createOpeningDay(new ArrayList<>(), "2018-12-17Z", true, true, false)
+        createOpeningDay(new ArrayList<>(), "2018-12-17Z", true, true)
       )));
     fakeOpeningPeriods.put(CASE_FRI_SAT_MON_SERVICE_POINT_ID, new OpeningDayPeriodBuilder(CASE_FRI_SAT_MON_SERVICE_POINT_ID,
       // prev day
       createDayPeriod(
         createWeekdays("FRIDAY"),
         createOpeningDay(Arrays.asList(createOpeningHour(START_TIME_FIRST_PERIOD, END_TIME_FIRST_PERIOD), createOpeningHour(START_TIME_SECOND_PERIOD, END_TIME_SECOND_PERIOD)),
-          CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY, false, true, false)
+          CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY, false, true)
       ),
       // current day
       createDayPeriod(
         createWeekdays("SATURDAY"),
-        createOpeningDay(new ArrayList<>(), CASE_FRI_SAT_MON_SERVICE_POINT_CURR_DAY, false, false, false)
+        createOpeningDay(new ArrayList<>(), CASE_FRI_SAT_MON_SERVICE_POINT_CURR_DAY, false, false)
       ),
       // next day
       createDayPeriod(
         createWeekdays("MONDAY"),
         createOpeningDay(Arrays.asList(createOpeningHour(START_TIME_FIRST_PERIOD, END_TIME_FIRST_PERIOD), createOpeningHour(START_TIME_SECOND_PERIOD, END_TIME_SECOND_PERIOD)),
-          CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY, false, true, false)
+          CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY, false, true)
       )));
   }
 

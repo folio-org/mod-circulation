@@ -14,22 +14,30 @@ public class OpeningDay {
   private static final String DATE_KEY = "date";
   private static final String ALL_DAY_KEY = "allDay";
   private static final String OPEN_KEY = "open";
-  private static final String EXCEPTIONAL_KEY = "exceptional";
   private static final String OPENING_HOUR_KEY = "openingHour";
 
   private List<OpeningHour> openingHour;
   private String date;
   private boolean allDay;
   private boolean open;
-  private boolean exceptional;
 
   OpeningDay(JsonObject jsonObject, String key) {
     JsonObject openingDayJson = jsonObject.getJsonObject(key);
     this.date = StringUtils.defaultIfBlank(openingDayJson.getString(DATE_KEY), StringUtils.EMPTY);
     this.allDay = openingDayJson.getBoolean(ALL_DAY_KEY, false);
     this.open = openingDayJson.getBoolean(OPEN_KEY, false);
-    this.exceptional = openingDayJson.getBoolean(EXCEPTIONAL_KEY, false);
     this.openingHour = fillOpeningDay(openingDayJson);
+  }
+
+  private OpeningDay(List<OpeningHour> openingHour, String date, boolean allDay, boolean open) {
+    this.openingHour = openingHour;
+    this.date = date;
+    this.allDay = allDay;
+    this.open = open;
+  }
+
+  public static OpeningDay createOpeningDay(List<OpeningHour> openingHour, String date, boolean allDay, boolean open) {
+    return new OpeningDay(openingHour, date, allDay, open);
   }
 
   private List<OpeningHour> fillOpeningDay(JsonObject representation) {
@@ -45,18 +53,6 @@ public class OpeningDay {
     return dayPeriods;
   }
 
-  private OpeningDay(List<OpeningHour> openingHour, String date, boolean allDay, boolean open, boolean exceptional) {
-    this.openingHour = openingHour;
-    this.date = date;
-    this.allDay = allDay;
-    this.open = open;
-    this.exceptional = exceptional;
-  }
-
-  public static OpeningDay createOpeningDay(List<OpeningHour> openingHour, String date, boolean allDay, boolean open, boolean exceptional) {
-    return new OpeningDay(openingHour, date, allDay, open, exceptional);
-  }
-
   public String getDate() {
     return date;
   }
@@ -67,10 +63,6 @@ public class OpeningDay {
 
   public boolean getOpen() {
     return open;
-  }
-
-  public boolean getExceptional() {
-    return exceptional;
   }
 
   public List<OpeningHour> getOpeningHour() {
@@ -88,7 +80,6 @@ public class OpeningDay {
       .put(DATE_KEY, date)
       .put(ALL_DAY_KEY, allDay)
       .put(OPEN_KEY, open)
-      .put(EXCEPTIONAL_KEY, exceptional)
       .put(OPENING_HOUR_KEY, openingHourToJsonArray());
   }
 }

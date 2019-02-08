@@ -1,11 +1,10 @@
 package org.folio.circulation.support;
 
-import java.util.UUID;
-
+import io.vertx.core.json.JsonObject;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
-import io.vertx.core.json.JsonObject;
+import java.util.UUID;
 
 public class JsonPropertyFetcher {
   private JsonPropertyFetcher() {
@@ -17,7 +16,7 @@ public class JsonPropertyFetcher {
     String objectName,
     String propertyName) {
 
-    if(representation == null) {
+    if (representation == null) {
       return null;
     }
 
@@ -31,7 +30,7 @@ public class JsonPropertyFetcher {
     String objectName,
     String propertyName) {
 
-    if(representation == null) {
+    if (representation == null) {
       return null;
     }
 
@@ -49,8 +48,7 @@ public class JsonPropertyFetcher {
       final JsonObject object = representation.getJsonObject(objectName);
 
       return getDateTimeProperty(object, propertyName);
-    }
-    else {
+    } else {
       return null;
     }
   }
@@ -62,8 +60,7 @@ public class JsonPropertyFetcher {
     if (representation != null && representation.containsKey(propertyName)) {
       return DateTime.parse(
         representation.getString(propertyName));
-    }
-    else {
+    } else {
       return null;
     }
   }
@@ -75,18 +72,16 @@ public class JsonPropertyFetcher {
     if (representation != null && representation.containsKey(propertyName)) {
       return LocalDate.parse(
         representation.getString(propertyName));
-    }
-    else {
+    } else {
       return null;
     }
   }
 
 
   public static UUID getUUIDProperty(JsonObject representation, String propertyName) {
-    if(representation != null && representation.containsKey(propertyName)) {
+    if (representation != null && representation.containsKey(propertyName)) {
       return UUID.fromString(representation.getString(propertyName));
-    }
-    else {
+    } else {
       return null;
     }
   }
@@ -95,29 +90,26 @@ public class JsonPropertyFetcher {
     JsonObject representation,
     String propertyName) {
 
-    if(representation != null) {
+    if (representation != null) {
       return representation.getJsonObject(propertyName);
-    }
-    else {
+    } else {
       return null;
     }
   }
 
   public static String getProperty(JsonObject representation, String propertyName) {
-    if(representation != null) {
+    if (representation != null) {
       return representation.getString(propertyName);
-    }
-    else {
+    } else {
       return null;
     }
   }
 
 
   public static Boolean getBooleanProperty(JsonObject representation, String propertyName) {
-    if(representation != null) {
+    if (representation != null) {
       return representation.getBoolean(propertyName);
-    }
-    else {
+    } else {
       return false;
     }
   }
@@ -127,10 +119,9 @@ public class JsonPropertyFetcher {
     String propertyName,
     Integer defaultValue) {
 
-    if(representation != null) {
+    if (representation != null) {
       return representation.getInteger(propertyName, defaultValue);
-    }
-    else {
+    } else {
       return defaultValue;
     }
   }
@@ -140,15 +131,15 @@ public class JsonPropertyFetcher {
     JsonObject to,
     String propertyName) {
 
-    if(from == null) {
+    if (from == null) {
       return;
     }
 
-    if(to == null) {
+    if (to == null) {
       return;
     }
 
-    if(from.containsKey(propertyName)) {
+    if (from.containsKey(propertyName)) {
       to.put(propertyName, from.getValue(propertyName));
     }
 

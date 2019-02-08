@@ -26,7 +26,7 @@ import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POI
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY;
 import static api.support.fixtures.CalendarExamples.END_TIME_SECOND_PERIOD;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static org.folio.circulation.resources.CheckOutByBarcodeResource.DATE_TIME_FORMAT;
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategy.DATE_TIME_FORMAT;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**

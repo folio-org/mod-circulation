@@ -8,12 +8,12 @@ import org.folio.circulation.domain.OpeningDay;
 import org.folio.circulation.domain.OpeningDayPeriod;
 import org.folio.circulation.domain.OpeningHour;
 import org.folio.circulation.domain.policy.DueDateManagement;
-import org.folio.circulation.domain.policy.LoanPolicyPeriod;
 import org.folio.circulation.domain.policy.LoansPolicyProfile;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormat;
 import org.junit.Test;
 
 import java.net.MalformedURLException;
@@ -28,9 +28,17 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import static api.support.fixtures.CalendarExamples.*;
-import static org.folio.circulation.resources.CheckOutByBarcodeResource.DATE_TIME_FORMATTER;
-import static org.folio.circulation.support.PeriodUtil.*;
+import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID;
+import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_ID;
+import static api.support.fixtures.CalendarExamples.CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID;
+import static api.support.fixtures.CalendarExamples.CASE_WED_THU_FRI_SERVICE_POINT_ID;
+import static api.support.fixtures.CalendarExamples.END_TIME_SECOND_PERIOD;
+import static api.support.fixtures.CalendarExamples.START_TIME_FIRST_PERIOD;
+import static api.support.fixtures.CalendarExamples.WEDNESDAY_DATE;
+import static api.support.fixtures.CalendarExamples.getFakeOpeningDayByServId;
+import static api.support.fixtures.CalendarExamples.getFirstFakeOpeningDayByServId;
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategy.DATE_TIME_FORMAT;
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategy.DATE_TIME_FORMATTER;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.joda.time.DateTimeConstants.HOURS_PER_DAY;
@@ -53,6 +61,7 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
   private static final String INTERVAL_HOURS = "Hours";
   private static final String INTERVAL_MINUTES = "Minutes";
   private static final int START_VAL = 1;
+  private static final String END_OF_DAY = "23:59";
 
   private final String dueDateManagement =
     DueDateManagement.MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS.getValue();
@@ -132,14 +141,11 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
    */
   @Test
   public void testHoursLoanPeriodIfAllDayOpen() throws Exception {
-    String servicePointId = CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID;
     int duration = new SplittableRandom().nextInt(START_VAL, HOURS_PER_DAY);
-    String interval = INTERVAL_HOURS;
 
-    OpeningDayPeriod currentDay = getCurrentFakeOpeningDayByServId(servicePointId);
-    DateTime expectedDueDate = getTimeOpeningDay(currentDay.getOpeningDay(), interval, duration);
+    DateTime expectedDueDate = buildExpectedDueDate(WEDNESDAY_DATE, END_OF_DAY);
 
-    checkOffsetTime(expectedDueDate, servicePointId, interval, duration);
+    checkOffsetTime(expectedDueDate, CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID, INTERVAL_HOURS, duration);
   }
 
   /**
@@ -149,14 +155,11 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
    */
   @Test
   public void testHoursLoanPeriodIfDayHasPeriod() throws Exception {
-    String servicePointId = CASE_WED_THU_FRI_SERVICE_POINT_ID;
-    int duration = new SplittableRandom().nextInt(START_VAL, HOURS_PER_DAY);
-    String interval = INTERVAL_HOURS;
+    int duration = 24;
 
-    List<OpeningDayPeriod> openingDayPeriods = getFakeOpeningDayByServId(servicePointId);
-    DateTime expectedDueDate = getTimeOpeningPeriodDay(openingDayPeriods, interval, duration);
+    DateTime expectedDueDate = buildExpectedDueDate(WEDNESDAY_DATE, END_TIME_SECOND_PERIOD);
 
-    checkOffsetTime(expectedDueDate, servicePointId, interval, duration);
+    checkOffsetTime(expectedDueDate, CASE_WED_THU_FRI_SERVICE_POINT_ID, INTERVAL_HOURS, duration);
   }
 
   /**
@@ -166,14 +169,11 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
    */
   @Test
   public void testMinutesLoanPeriodIfAllDayOpen() throws Exception {
-    String servicePointId = CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID;
     int duration = new SplittableRandom().nextInt(START_VAL, MINUTES_PER_HOUR);
-    String interval = INTERVAL_MINUTES;
 
-    OpeningDayPeriod currentDay = getCurrentFakeOpeningDayByServId(servicePointId);
-    DateTime expectedDueDate = getTimeOpeningDay(currentDay.getOpeningDay(), interval, duration);
+    DateTime expectedDueDate = buildExpectedDueDate(WEDNESDAY_DATE, END_OF_DAY);
 
-    checkOffsetTime(expectedDueDate, servicePointId, interval, duration);
+    checkOffsetTime(expectedDueDate, CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID, INTERVAL_MINUTES, duration);
   }
 
   /**
@@ -183,14 +183,10 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
    */
   @Test
   public void testMinutesLoanPeriodIfDayHasPeriod() throws Exception {
-    String servicePointId = CASE_WED_THU_FRI_SERVICE_POINT_ID;
-    int duration = new SplittableRandom().nextInt(START_VAL, MINUTES_PER_HOUR);
-    String interval = INTERVAL_MINUTES;
+    int duration = 10;
+    DateTime expectedDueDate = buildExpectedDueDate(WEDNESDAY_DATE, END_TIME_SECOND_PERIOD);
 
-    List<OpeningDayPeriod> openingDayPeriods = getFakeOpeningDayByServId(servicePointId);
-    DateTime expectedDueDate = getTimeOpeningPeriodDay(openingDayPeriods, interval, duration);
-
-    checkOffsetTime(expectedDueDate, servicePointId, interval, duration);
+    checkOffsetTime(expectedDueDate, CASE_WED_THU_FRI_SERVICE_POINT_ID, INTERVAL_MINUTES, duration);
   }
 
   /**
@@ -202,7 +198,6 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
   public void testHoursLoanTimeOutsidePeriod() throws Exception {
     String servicePointId = CASE_WED_THU_FRI_SERVICE_POINT_ID;
     int duration;
-    String interval = INTERVAL_HOURS;
 
     LocalTime endTimeOfPeriod = LocalTime.parse(END_TIME_SECOND_PERIOD);
     LocalTime timeNow = LocalTime.now(ZoneOffset.UTC);
@@ -215,9 +210,9 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
     }
 
     List<OpeningDayPeriod> openingDayPeriods = getFakeOpeningDayByServId(servicePointId);
-    DateTime expectedDueDate = getTimeOpeningPeriodDay(openingDayPeriods, interval, duration);
+    DateTime expectedDueDate = buildExpectedDueDate(WEDNESDAY_DATE, END_TIME_SECOND_PERIOD);
 
-    checkOffsetTime(expectedDueDate, servicePointId, interval, duration);
+    checkOffsetTime(expectedDueDate, servicePointId, INTERVAL_HOURS, duration);
   }
 
   /**
@@ -227,9 +222,7 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
    */
   @Test
   public void testHoursLoanTimeOutsidePeriodCase2() throws Exception {
-    String servicePointId = CASE_WED_THU_FRI_SERVICE_POINT_ID;
     int duration;
-    String interval = INTERVAL_HOURS;
 
     LocalTime starTmeOfPeriod = LocalTime.parse(START_TIME_FIRST_PERIOD);
     LocalTime timeNow = LocalTime.now(ZoneOffset.UTC);
@@ -241,10 +234,9 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
       duration = (int) ChronoUnit.HOURS.between(timeNow, starTmeOfPeriod) - 1;
     }
 
-    List<OpeningDayPeriod> openingDayPeriods = getFakeOpeningDayByServId(servicePointId);
-    DateTime expectedDueDate = getTimeOpeningPeriodDay(openingDayPeriods, interval, duration);
+    DateTime expectedDueDate = buildExpectedDueDate(WEDNESDAY_DATE, END_TIME_SECOND_PERIOD);
 
-    checkOffsetTime(expectedDueDate, servicePointId, interval, duration);
+    checkOffsetTime(expectedDueDate, CASE_WED_THU_FRI_SERVICE_POINT_ID, INTERVAL_HOURS, duration);
   }
 
   /**
@@ -291,17 +283,6 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
     return dateTime.withSecondOfMinute(0).withMillisOfSecond(0);
   }
 
-  private DateTime getTimeOpeningDay(OpeningDay openingDay, String interval, int duration) {
-    LoanPolicyPeriod period = interval.equals(INTERVAL_HOURS)
-      ? LoanPolicyPeriod.HOURS
-      : LoanPolicyPeriod.MINUTES;
-
-    LocalDate dateOfDay = LocalDate.parse(openingDay.getDate(), DATE_TIME_FORMATTER);
-    LocalTime timeShift = getTimeShift(LocalTime.now(ZoneOffset.UTC), period, duration);
-
-    return getDateTimeZoneRetain(LocalDateTime.of(dateOfDay, timeShift));
-  }
-
   private DateTime getEndDateTimeOpeningDay(OpeningDay openingDay) {
     boolean allDay = openingDay.getAllDay();
     String date = openingDay.getDate();
@@ -324,59 +305,6 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
     return getDateTimeZoneRetain(localDate.atTime(LocalTime.MAX));
   }
 
-  private DateTime getTimeOpeningPeriodDay(List<OpeningDayPeriod> openingDayPeriods,
-                                           String interval, int duration) {
-
-    OpeningDay prevOpeningDay = openingDayPeriods.get(0).getOpeningDay();
-    OpeningDay currentOpeningDay = openingDayPeriods.get(1).getOpeningDay();
-
-    LoanPolicyPeriod period = interval.equals(INTERVAL_HOURS)
-      ? LoanPolicyPeriod.HOURS
-      : LoanPolicyPeriod.MINUTES;
-
-    LocalDate dateOfCurrentDay = LocalDate.parse(currentOpeningDay.getDate(), DATE_TIME_FORMATTER);
-    LocalTime timeShift = getTimeShift(LocalTime.now(ZoneOffset.UTC), period, duration);
-
-    if (isDateTimeWithDurationInsideDay(currentOpeningDay, timeShift)) {
-      if (isInPeriodOpeningDay(currentOpeningDay.getOpeningHour(), timeShift)) {
-        return getDateTimeZoneRetain(LocalDateTime.of(dateOfCurrentDay, timeShift));
-      }
-
-      LocalTime endTimeOfPeriod = findEndTimeOfOpeningPeriod(currentOpeningDay.getOpeningHour(), timeShift);
-      return getDateTimeZoneRetain(LocalDateTime.of(dateOfCurrentDay, endTimeOfPeriod));
-    }
-
-    LocalTime[] startAndEndTime = getStartAndEndTime(prevOpeningDay.getOpeningHour());
-    LocalTime endTime = startAndEndTime[1];
-
-    if (timeShift.isAfter(endTime)) {
-      return getDateTimeZoneRetain(LocalDateTime.of(dateOfCurrentDay, endTime));
-    }
-
-    LocalDate dateOfPrevDay = LocalDate.parse(prevOpeningDay.getDate(), DATE_TIME_FORMATTER);
-    LocalTime prevEndTime = getStartAndEndTime(prevOpeningDay.getOpeningHour())[1];
-    return getDateTimeZoneRetain(LocalDateTime.of(dateOfPrevDay, prevEndTime));
-  }
-
-  private LocalTime findEndTimeOfOpeningPeriod(List<OpeningHour> openingHoursList, LocalTime time) {
-    LocalTime endTimePeriod =
-      LocalTime.parse(openingHoursList.get(openingHoursList.size() - 1).getEndTime());
-
-    if (time.isAfter(endTimePeriod)) {
-      return endTimePeriod;
-    }
-
-    for (int i = 0; i < openingHoursList.size() - 1; i++) {
-      LocalTime startTimeFirst = LocalTime.parse(openingHoursList.get(i).getStartTime());
-      LocalTime endTimeFirst = LocalTime.parse(openingHoursList.get(i).getEndTime());
-      LocalTime startTimeSecond = LocalTime.parse(openingHoursList.get(i + 1).getStartTime());
-      if (time.isAfter(startTimeFirst) && time.isBefore(startTimeSecond)) {
-        return endTimeFirst;
-      }
-    }
-
-    return LocalTime.parse(openingHoursList.get(0).getEndTime());
-  }
 
   private DateTime getDateTimeZoneRetain(LocalDateTime localDateTime) {
     return new DateTime(localDateTime.toString())
@@ -408,4 +336,11 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
       .renewFromCurrentDueDate()
       .create();
   }
+
+  private DateTime buildExpectedDueDate(String date, String time) {
+    return DateTime.parse(date, DateTimeFormat.forPattern(DATE_TIME_FORMAT))
+      .withTime(org.joda.time.LocalTime.parse(time))
+      .withZoneRetainFields(DateTimeZone.UTC);
+  }
+
 }
