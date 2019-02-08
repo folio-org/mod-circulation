@@ -1,9 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "title": "Loan rule match schema",
+  "title": "Circulation rule match schema",
   "type": "object",
   "properties": {
-    "loanRuleLine": {
+    "circulationRuleLine": {
       "description": "Line number of the matching rule",
       "type": "integer"
     },
@@ -14,7 +14,7 @@
   },
   "additionalProperties": false,
   "required": [
-    "loanRuleLine",
+    "circulationRuleLine",
     "loanPolicyId"
   ]
 }

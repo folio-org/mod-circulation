@@ -203,43 +203,44 @@ resourceTypes:
         responses:
           501:
             description: "Not implemented yet"
-  /loan-rules:
-    displayName: Loan rules
+  /rules:
+    displayName: Circulation rules
     get:
-      description: Get the loan rules
+      description: Get the circulation rules
       responses:
         200:
           body:
             application/json:
-              type: !include schema/loan-rules.json
-              example: !include examples/loan-rules.json
+              type: !include schema/circulation-rules.json
+              example: !include examples/circulation-rules.json
         500:
           description: "Internal server error"
           body:
             text/plain:
               example: "Internal server error"
     put:
-      description: Set the loan rules using a text file
+      description: Set the circulation rules using a text file
       body:
         application/json:
-          type: !include schema/loan-rules-text.json
-          example: !include examples/loan-rules-text.json
+          type: !include schema/circulation-rules-text.json
+          example: !include examples/circulation-rules-text.json
       responses:
         204:
-          description: "Loan rules have been saved."
+          description: "Circulation rules have been saved."
         422:
           description: "Validation error in the text file."
           body:
             application/json:
-              type: !include schema/loan-rules-error.json
-              example: !include examples/loan-rules-error.json
+              type: !include schema/circulation-rules-error.json
+              example: !include examples/circulation-rules-error.json
         500:
           description: "Internal server error"
           body:
             text/plain:
               example: "Internal server error"
+  /loan-rules:
     /apply:
-      displayName: Apply loan rules
+      displayName: Apply circulation rules
       get:
         description: Get the loan policy when applying loan rules
         queryParameters:
@@ -275,16 +276,16 @@ resourceTypes:
             body:
               application/json:
                 type: error
-                example: !include examples/loan-rules-id-error.json
+                example: !include examples/circulation-rules-id-error.json
           500:
             description: "Internal server error"
             body:
               text/plain:
                 example: "Internal server error"
     /apply-all:
-      displayName: Apply loan rules and return all matches
+      displayName: Apply circulation rules and return all matching loan policies
       get:
-        description: Get loan rule and loan policy for each match when applying loan rules
+        description: Get loan circulation and loan policy for each match when applying loan rules
         queryParameters:
           item_type_id:
             description: "Item type id"
@@ -302,21 +303,21 @@ resourceTypes:
             description: "Shelving location id"
             pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
             required: true
-          loan_rules:
-            description: "Loan rules if provided, otherwise use stored loan rules"
+          circulation_rules:
+            description: "Circulation rules if provided, otherwise use stored loan rules"
             required: false
         responses:
           200:
             body:
               application/json:
-                type: !include schema/loan-rule-matches.json
-                example: !include examples/loan-rule-matches.json
+                type: !include schema/circulation-rule-matches.json
+                example: !include examples/circulation-rule-matches.json
           422:
             description: "Invalid id error."
             body:
               application/json:
                 type: error
-                example: !include examples/loan-rules-id-error.json
+                example: !include examples/circulation-rules-id-error.json
           500:
             description: "Internal server error"
             body:

@@ -1,21 +1,21 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "title": "Loan Rules Schema",
+  "title": "Circulation Rules Schema",
   "type": "object",
   "properties": {
     "id": {
       "type": "string"
     },
-    "loanRulesAsTextFile": {
+    "circulationRulesAsTextFile": {
       "type": "string"
     },
-    "loanRulesAsDrools": {
+    "circulationRulesAsDrools": {
       "type": "string"
     }
   },
   "additionalProperties": false,
   "required": [
-    "loanRulesAsTextFile",
-    "loanRulesAsDrools"
+    "circulationRulesAsTextFile",
+    "circulationRulesAsDrools"
   ]
 }

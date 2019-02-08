@@ -1,19 +1,19 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "title": "Loan policy ids schema",
+  "title": "Circulation policy ids schema",
   "type": "object",
   "properties": {
-    "loanRuleMatches": {
-      "id": "loanRuleMatches",
+    "circulationRuleMatches": {
+      "id": "circulationRuleMatches",
       "type": "array",
       "items": {
         "type": "object",
-        "$ref": "loan-rule-match.json"
+        "$ref": "circulation-rule-match.json"
       }
     }
   },
   "additionalProperties": false,
   "required": [
-    "loanRuleMatches"
+    "circulationRuleMatches"
   ]
 }
