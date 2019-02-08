@@ -82,9 +82,9 @@ public class ResourceClient {
       "fixed due date schedules", "fixedDueDateSchedules");
   }
 
-  public static ResourceClient forLoanRules(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::loanRulesStorageUrl,
-      "loan rules", "loanRules");
+  public static ResourceClient forCirculationRules(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::circulationRulesStorageUrl,
+      "circulation rules", "circulationRules");
   }
 
   public static ResourceClient forUsers(OkapiHttpClient client) {

@@ -585,7 +585,7 @@ abstract class RenewalAPITests extends APITests {
     final Response response = loansFixture.attemptRenewal(500, smallAngryPlanet, jessica);
 
     assertThat(response.getBody(), is(String.format(
-      "Loan policy %s could not be found, please check loan rules", unknownLoanPolicyId)));
+      "Loan policy %s could not be found, please check circulation rules", unknownLoanPolicyId)));
   }
 
   @Test

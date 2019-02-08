@@ -1,20 +1,20 @@
-package org.folio.circulation.loanrules;
+package org.folio.circulation.circulationrules;
 
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
 
 /**
- * Match a LoanRulesException that has the same line and column and contains the message as substring.
+ * Match a CirculationrulesRulesException that has the same line and column and contains the message as substring.
  */
-public class LoanRulesExceptionMatcher extends TypeSafeDiagnosingMatcher<LoanRulesException> {
+public class CirculationRulesExceptionMatcher extends TypeSafeDiagnosingMatcher<CirculationRulesException> {
 
-  private LoanRulesException expected;
+  private CirculationRulesException expected;
 
   /**
    * @param expected  match against line, column and message of expected
    */
-  public LoanRulesExceptionMatcher(LoanRulesException expected) {
+  public CirculationRulesExceptionMatcher(CirculationRulesException expected) {
     this.expected = expected;
   }
 
@@ -25,8 +25,8 @@ public class LoanRulesExceptionMatcher extends TypeSafeDiagnosingMatcher<LoanRul
    * @param column  the column number
    * @return the matcher
    */
-  public static Matcher<LoanRulesException> matches(String message, int line, int column) {
-    return new LoanRulesExceptionMatcher(new LoanRulesException(message, line, column));
+  public static Matcher<CirculationRulesException> matches(String message, int line, int column) {
+    return new CirculationRulesExceptionMatcher(new CirculationRulesException(message, line, column));
   }
 
   @Override
@@ -37,7 +37,7 @@ public class LoanRulesExceptionMatcher extends TypeSafeDiagnosingMatcher<LoanRul
   }
 
   @Override
-  protected boolean matchesSafely(LoanRulesException actual, Description description) {
+  protected boolean matchesSafely(CirculationRulesException actual, Description description) {
     boolean matches = true;
 
     if (expected.getLine() != actual.getLine() ||

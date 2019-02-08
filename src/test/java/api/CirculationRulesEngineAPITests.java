@@ -12,12 +12,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.folio.circulation.loanrules.ItemType;
-import org.folio.circulation.loanrules.Policy;
-import org.folio.circulation.loanrules.LoanType;
-import org.folio.circulation.loanrules.PatronGroup;
-import org.folio.circulation.loanrules.ShelvingLocation;
-import org.folio.circulation.resources.LoanRulesEngineResource;
+import org.folio.circulation.circulationrules.ItemType;
+import org.folio.circulation.circulationrules.Policy;
+import org.folio.circulation.circulationrules.LoanType;
+import org.folio.circulation.circulationrules.PatronGroup;
+import org.folio.circulation.circulationrules.ShelvingLocation;
+import org.folio.circulation.resources.CirculationRulesEngineResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
 import org.junit.Before;
@@ -28,10 +28,10 @@ import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-public class LoanRulesEngineAPITests extends APITests {
+public class CirculationRulesEngineAPITests extends APITests {
   private void setRules(String rules) {
     try {
-      loanRulesFixture.updateLoanRules(rules);
+      circulationRulesFixture.updateCirculationRules(rules);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -103,8 +103,8 @@ public class LoanRulesEngineAPITests extends APITests {
 
   @Before
   public void setUp() {
-    LoanRulesEngineResource.dropCache();
-    LoanRulesEngineResource.setCacheTime(1000000, 1000000);  // 1000 seconds
+    CirculationRulesEngineResource.dropCache();
+    CirculationRulesEngineResource.setCacheTime(1000000, 1000000);  // 1000 seconds
   }
 
   @Test
@@ -208,7 +208,7 @@ public class LoanRulesEngineAPITests extends APITests {
   private void matches(JsonArray array, int match, Policy policy, int line) {
     JsonObject o = array.getJsonObject(match);
     assertThat("["+match+"].loanPolicyId of "+o, o.getString("loanPolicyId"), is(policy.id));
-    assertThat("["+match+"].loanRuleLine of "+o, o.getInteger("loanRuleLine"), is(line));
+    assertThat("["+match+"].circulationRuleLine of "+o, o.getInteger("circulationRuleLine"), is(line));
   }
 
   @Test
@@ -227,7 +227,7 @@ public class LoanRulesEngineAPITests extends APITests {
     assertThat(response.getStatusCode() + " " + response.getBody(),
         response.getStatusCode(), is(200));
     JsonObject json = new JsonObject(response.getBody());
-    JsonArray array = json.getJsonArray("loanRuleMatches");
+    JsonArray array = json.getJsonArray("circulationRuleMatches");
     matches(array, 0, lp4, 4);
     matches(array, 1, lp3, 3);
     matches(array, 2, lp2, 2);
@@ -251,26 +251,26 @@ public class LoanRulesEngineAPITests extends APITests {
     setRules(rulesFallback);
     assertThat(apply(m1, t1, g1, s1), is(lp6));
 
-    updateLoanRulesInStorageWithoutInvalidatingCache(rulesFallback2);
+    updateCirculationRulesInStorageWithoutInvalidatingCache(rulesFallback2);
 
     assertThat(apply(m1, t1, g1, s1), is(lp6));
 
     // reduce cache time to trigger reload from storage backend
-    LoanRulesEngineResource.setCacheTime(0, 0);
+    CirculationRulesEngineResource.setCacheTime(0, 0);
 
     assertThat(apply(m1, t1, g1, s1), is(lp7));
   }
 
-  private void updateLoanRulesInStorageWithoutInvalidatingCache(String rules)
+  private void updateCirculationRulesInStorageWithoutInvalidatingCache(String rules)
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
     TimeoutException {
 
-    ResourceClient loanRulesClient = ResourceClient.forLoanRules(client);
+    ResourceClient circulationRulesClient = ResourceClient.forCirculationRules(client);
 
-    JsonObject json = new JsonObject().put("loanRulesAsTextFile", rules);
+    JsonObject json = new JsonObject().put("circulationRulesAsTextFile", rules);
 
-    loanRulesClient.replace(null, json);
+    circulationRulesClient.replace(null, json);
   }
 }

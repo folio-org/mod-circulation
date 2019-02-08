@@ -16,40 +16,40 @@ import org.folio.circulation.support.http.client.ResponseHandler;
 import api.support.http.InterfaceUrls;
 import io.vertx.core.json.JsonObject;
 
-public class LoanRulesFixture {
+public class CirculationRulesFixture {
   private final OkapiHttpClient client;
 
-  public LoanRulesFixture(OkapiHttpClient client) {
+  public CirculationRulesFixture(OkapiHttpClient client) {
     this.client = client;
   }
 
-  public void updateLoanRules(UUID loanPolicyId, UUID requestPolicyId, UUID noticePolicyId)
+  public void updateCirculationRules(UUID loanPolicyId, UUID requestPolicyId, UUID noticePolicyId)
     throws InterruptedException,
     ExecutionException,
     TimeoutException {
 
     String rule = soleFallbackPolicyRule(loanPolicyId, requestPolicyId, noticePolicyId);
 
-    updateLoanRules(rule);
+    updateCirculationRules(rule);
   }
 
-  public void updateLoanRules(String rules)
+  public void updateCirculationRules(String rules)
     throws InterruptedException,
     ExecutionException,
     TimeoutException {
 
-    JsonObject loanRulesRequest = new JsonObject()
-      .put("loanRulesAsTextFile", rules);
+    JsonObject circulationRulesRequest = new JsonObject()
+      .put("circulationRulesAsTextFile", rules);
 
     CompletableFuture<Response> completed = new CompletableFuture<>();
 
-    client.put(InterfaceUrls.loanRulesUrl(), loanRulesRequest,
+    client.put(InterfaceUrls.circulationRulesUrl(), circulationRulesRequest,
       ResponseHandler.any(completed));
 
     Response response = completed.get(5, TimeUnit.SECONDS);
 
     assertThat(String.format(
-      "Failed to set loan rules: %s", response.getBody()),
+      "Failed to set circulation rules: %s", response.getBody()),
       response.getStatusCode(), is(204));
   }
 

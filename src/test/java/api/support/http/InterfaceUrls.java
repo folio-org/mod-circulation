@@ -72,7 +72,7 @@ public class InterfaceUrls {
     return APITestContext.viaOkapiModuleUrl("/fixed-due-date-schedule-storage/fixed-due-date-schedules" + subPath);
   }
 
-  static URL loanRulesStorageUrl(String subPath) {
+  static URL circulationRulesStorageUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/loan-rules-storage" + subPath);
   }
 
@@ -136,14 +136,18 @@ public class InterfaceUrls {
     return circulationModuleUrl("/circulation/loans" + subPath);
   }
 
-  public static URL loanRulesUrl() {
-    return loanRulesUrl("");
+  public static URL circulationRulesUrl() {
+    return circulationRulesUrl("");
+  }
+
+  public static URL circulationRulesUrl(String subPath) {
+    return circulationModuleUrl("/circulation/rules" + subPath);
   }
 
   public static URL loanRulesUrl(String subPath) {
-    return circulationModuleUrl("/circulation/loan-rules" + subPath);
+      return circulationModuleUrl("/circulation/loan-rules" + subPath);
   }
-
+  
   static URL cancellationReasonsStorageUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl(
         "/cancellation-reason-storage/cancellation-reasons" + subPath);

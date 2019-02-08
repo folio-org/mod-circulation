@@ -60,7 +60,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
       jessica);
 
     assertThat(response.getBody(), is(String.format(
-      "Loan policy %s could not be found, please check loan rules", unknownLoanPolicyId)));
+      "Loan policy %s could not be found, please check circulation rules", unknownLoanPolicyId)));
   }
 
   @Test

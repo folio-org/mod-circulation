@@ -1,4 +1,4 @@
-package org.folio.circulation.loanrules;
+package org.folio.circulation.circulationrules;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -42,27 +42,27 @@ public class NameConverterTest {
     }
   }
 
-  private String loanRulesNames = String.join("\n",
+  private String circulationRulesNames = String.join("\n",
       "priority: last-line",
       "fallback-policy: l loan-fallback r request-fallback n notice-fallback",
       "m book withoutreplacement dvd + t withoutreplacement: l policy-x r policy-y n policy-z",
       ""
   );
-  private String loanRulesUuids = String.join("\n",
+  private String circulationRulesUuids = String.join("\n",
       "priority: last-line",
       "fallback-policy: l 0 r 1 n 2",
       "m 123 withoutreplacement 987 + t withoutreplacement: l 3 r 4 n 5",
       ""
   );
 
-  private String convertNames(String loanRules, Map<String,Map<String,String>> replacements) {
-    CharStream inputStream = CharStreams.fromString(loanRules);
-    LoanRulesLexer lexer = new LoanRulesLexer(inputStream);
+  private String convertNames(String circulationRules, Map<String,Map<String,String>> replacements) {
+    CharStream inputStream = CharStreams.fromString(circulationRules);
+    CirculationRulesLexer lexer = new CirculationRulesLexer(inputStream);
     CommonTokenStream tokenStream = new CommonTokenStream(lexer);
-    LoanRulesParser parser = new LoanRulesParser(tokenStream);
+    CirculationRulesParser parser = new CirculationRulesParser(tokenStream);
     parser.removeErrorListeners(); // remove ConsoleErrorListener
     parser.addErrorListener(new ErrorListener());
-    ParseTree parseTree = parser.loanRulesFile();
+    ParseTree parseTree = parser.circulationRulesFile();
     ParseTreeWalker walker = new ParseTreeWalker();
     NameConverter nameConverter = new NameConverter(tokenStream, replacements);
     walker.walk(nameConverter, parseTree);
@@ -71,11 +71,11 @@ public class NameConverterTest {
 
   @Test
   public void replaceNames() {
-    assertThat(convertNames(loanRulesNames, name2uuid), is(loanRulesUuids));
+    assertThat(convertNames(circulationRulesNames, name2uuid), is(circulationRulesUuids));
   }
 
   @Test
   public void replaceUuids() {
-    assertThat(convertNames(loanRulesUuids, uuid2name), is(loanRulesNames));
+    assertThat(convertNames(circulationRulesUuids, uuid2name), is(circulationRulesNames));
   }
 }

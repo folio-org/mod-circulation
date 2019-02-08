@@ -1,4 +1,4 @@
-package org.folio.circulation.loanrules;
+package org.folio.circulation.circulationrules;
 
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -10,7 +10,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
-import static org.folio.circulation.loanrules.LoanRulesExceptionMatcher.matches;
+import static org.folio.circulation.circulationrules.CirculationRulesExceptionMatcher.matches;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.fail;
@@ -81,13 +81,13 @@ public class Text2DroolsTest {
   }
 
   /**
-   * Test that Drools.loanPolicies(...) with the loanRules work for all cases.
+   * Test that Drools.loanPolicies(...) with the circulationRules work for all cases.
    * <p>
    * The first 3 element of a case are the parameters for Drools.loanPolicies(...),
    * the other parameters are the expected result.
    */
-  private void testLoanPolicies(String loanRules, String [][] cases) {
-    Drools drools = new Drools(Text2Drools.convert(loanRules));
+  private void testLoanPolicies(String circulationRules, String [][] cases) {
+    Drools drools = new Drools(Text2Drools.convert(circulationRules));
     for (String [] s : cases) {
       JsonArray array = drools.loanPolicies(s[0], s[1], s[2], "shelf");
       String [] policies = new String[array.size()];
@@ -111,14 +111,14 @@ public class Text2DroolsTest {
           "fallback-policy: l no-loan r no-hold n basic-notice",
           "m book: l policy-a r no-hold n basic-notice"));
       fail();
-    } catch (LoanRulesException e) {
+    } catch (CirculationRulesException e) {
       assertThat(e, matches("fallback-policy", 3, 1));
     }
   }
 
   @Test
   public void firstLine() {
-    String loanRules = String.join("\n",
+    String circulationRules = String.join("\n",
         "priority: first-line",
         "g visitor",
         "  t special-items: l in-house r no-hold n basic-notice",
@@ -132,7 +132,7 @@ public class Text2DroolsTest {
         { "book", "special-items", "undergrad",               "policy-b", "no-loan" },
         { "dvd",  "special-items", "undergrad",                           "no-loan" },
     };
-    testLoanPolicies(loanRules, cases);
+    testLoanPolicies(circulationRules, cases);
   }
 
   @Test
@@ -140,7 +140,7 @@ public class Text2DroolsTest {
     try {
       Text2Drools.convert(HEADER + "  \t m book: l policy-a r no-hold n basic-notice");
       fail();
-    } catch (LoanRulesException e) {
+    } catch (CirculationRulesException e) {
       assertThat(e, matches("Tab", 3, 4));
     }
   }
@@ -150,7 +150,7 @@ public class Text2DroolsTest {
     try {
       Text2Drools.convert("fallback-policy: l no-loan r no-hold n basic-notice");
       fail();
-    } catch (LoanRulesException e) {
+    } catch (CirculationRulesException e) {
       assertThat(e, matches("priority", 1, 1));
     }
   }
@@ -160,7 +160,7 @@ public class Text2DroolsTest {
     try {
       Text2Drools.convert("priority: t g m a b c\nfallback-policy: l no-loan r no-hold n basic-notice");
       fail();
-    } catch (LoanRulesException e) {
+    } catch (CirculationRulesException e) {
       assertThat(e, matches("7 letters expected, found only 6", 1, 11));
     }
   }
@@ -170,7 +170,7 @@ public class Text2DroolsTest {
     try {
       Text2Drools.convert("priority: t g m a b c s s\nfallback-policy: l no-loan r no-hold n basic-notice");
       fail();
-    } catch (LoanRulesException e) {
+    } catch (CirculationRulesException e) {
       assertThat(e, matches("Only 7 letters expected, found 8", 1, 11));
     }
   }
@@ -180,7 +180,7 @@ public class Text2DroolsTest {
     try {
       Text2Drools.convert("priority: t g m a b s s\nfallback-policy: l no-loan r no-hold n basic-notice r no-hold n basic-notice");
       fail();
-    } catch (LoanRulesException e) {
+    } catch (CirculationRulesException e) {
       assertThat(e, matches("Duplicate letter s", 1, 23));
     }
   }
@@ -190,7 +190,7 @@ public class Text2DroolsTest {
     try {
       Text2Drools.convert("priority: number-of-criteria, number-of-criteria, last-line\nfallback-policy: l no-loan r no-hold n basic-notice");
       fail();
-    } catch (LoanRulesException e) {
+    } catch (CirculationRulesException e) {
       assertThat(e, matches("Duplicate priority", 1, 31));
     }
   }
@@ -230,7 +230,7 @@ public class Text2DroolsTest {
     try {
       Text2Drools.convert("priority: last-line\nm book: l policy-a r no-hold n basic-notice");
       fail();
-    } catch (LoanRulesException e) {
+    } catch (CirculationRulesException e) {
       assertThat(e, matches("fallback", 2, 1));
     }
   }
@@ -240,7 +240,7 @@ public class Text2DroolsTest {
     try {
       Text2Drools.convert("priority: first-line\nm book: l policy-a r no-hold n basic-notice");
       fail();
-    } catch (LoanRulesException e) {
+    } catch (CirculationRulesException e) {
       assertThat(e, matches("fallback", 2, 44));
     }
   }
@@ -250,7 +250,7 @@ public class Text2DroolsTest {
     try {
       Text2Drools.convert(HEADER + "m book\n  fallback-policy: l policy-b r no-hold n basic-notice");
       fail();
-    } catch (LoanRulesException e) {
+    } catch (CirculationRulesException e) {
       assertThat(e, matches("mismatched input 'fallback-policy'", 4, 3));
     }
   }
@@ -260,7 +260,7 @@ public class Text2DroolsTest {
     try {
       Text2Drools.convert("! fallback-policy: l policy-a r no-hold n basic-notice");
       fail();
-    } catch (LoanRulesException e) {
+    } catch (CirculationRulesException e) {
       assertThat(e, matches("mismatched input '!'", 1, 1));
     }
   }
@@ -270,7 +270,7 @@ public class Text2DroolsTest {
     try {
       Text2Drools.convert(HEADER + "m: l policy-a r no-hold n basic-notice");
       fail();
-    } catch (LoanRulesException e) {
+    } catch (CirculationRulesException e) {
       assertThat(e, matches("Name missing", 3, 2));
     }
   }
@@ -347,7 +347,7 @@ public class Text2DroolsTest {
     try {
       Text2Drools.convert(HEADER + "m book:");
       fail();
-    } catch (LoanRulesException e) {
+    } catch (CirculationRulesException e) {
       assertThat(e, matches("Policy missing after ':'", 3, 8));
     }
   }
@@ -357,7 +357,7 @@ public class Text2DroolsTest {
     try {
       Text2Drools.convert(HEADER + "m book: l policy-a l policy-b r no-hold n basic-notice");
       fail();
-    } catch (LoanRulesException e) {
+    } catch (CirculationRulesException e) {
       assertThat(e, matches("Only one policy of type l allowed", 3, 6));
     }
   }
@@ -379,7 +379,7 @@ public class Text2DroolsTest {
     try {
       Text2Drools.convert("foo");
       fail();
-    } catch (LoanRulesException e) {
+    } catch (CirculationRulesException e) {
       assertThat(e, matches("extraneous input 'foo'", 1, 1));
     }
   }
@@ -413,7 +413,7 @@ public class Text2DroolsTest {
   public void missingFallbackPolicy() {
     try {
       Text2Drools.convert("priority: last-line\nfallback-policy: l no-loan r no-hold\n");
-    } catch (LoanRulesException e) {
+    } catch (CirculationRulesException e) {
       assertThat(e, matches("fallback", 2, 0));
     }
   }
@@ -422,7 +422,7 @@ public class Text2DroolsTest {
   public void duplicateFallbackPolicy() {
     try {
       Text2Drools.convert("priority: last-line\nfallback-policy: l no-loan r no-hold n basic-notice r no-hold");
-    } catch (LoanRulesException e) {
+    } catch (CirculationRulesException e) {
       assertThat(e, matches("Only one fallback policy of type r is allowed", 2, 0));
     }
   }
@@ -431,7 +431,7 @@ public class Text2DroolsTest {
   public void missingRequestPolicy() {
     try {
       Text2Drools.convert(HEADER + "m book: l no-loan n basic-notice");
-    } catch (LoanRulesException e) {
+    } catch (CirculationRulesException e) {
       assertThat(e, matches("Must contain one of each policy type, missing type r", 3, 6));
     }
   }
@@ -444,8 +444,8 @@ public class Text2DroolsTest {
         "m book: r allow-hold n general-notice l two-week",
         "fallback-policy: l no-loan r no-hold n basic-notice"
       ));
-    } catch (LoanRulesException e) {
-      fail("Loan rules should build correctly in any order");
+    } catch (CirculationRulesException e) {
+      fail("circulation rules should build correctly in any order");
     }
   }
 }

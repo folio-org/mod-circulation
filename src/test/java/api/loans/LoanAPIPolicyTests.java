@@ -83,7 +83,7 @@ public class LoanAPIPolicyTests extends APITests {
 
     createLoanPolicies();
 
-    //Set the loan rules
+    //Set the circulation rules
     final UUID book = materialTypesFixture.book().getId();
     final UUID videoRecording = materialTypesFixture.videoRecording().getId();
 
@@ -97,17 +97,17 @@ public class LoanAPIPolicyTests extends APITests {
       "m " + book + " + t " + readingRoom + " : l " + lp3 + " r " + rp3 + " n " + np3,
       "m " + book + " + t " + canCirculate + " + g " + group1 + " : l " + lp4 + " r " + rp4 + " n " + np4);
 
-    loanRulesFixture.updateLoanRules(rules);
+    circulationRulesFixture.updateCirculationRules(rules);
 
-    //Get the loan rules
+    //Get the circulation rules
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
-    client.get(InterfaceUrls.loanRulesUrl(), ResponseHandler.any(getCompleted));
+    client.get(InterfaceUrls.circulationRulesUrl(), ResponseHandler.any(getCompleted));
     Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
 
     JsonObject rulesJson = new JsonObject(getResponse.getBody());
 
-    String loanRules = rulesJson.getString("loanRulesAsTextFile");
-    assertThat("Returned rules match submitted rules", loanRules, is(rules));
+    String circulationRules = rulesJson.getString("circulationRulesAsTextFile");
+    assertThat("Returned rules match submitted rules", circulationRules, is(rules));
 
     warmUpApplyEndpoint();
 

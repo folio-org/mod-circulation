@@ -16,7 +16,7 @@ import api.support.APITests;
 import api.support.http.InterfaceUrls;
 import io.vertx.core.json.JsonObject;
 
-public class LoanRulesAPITests extends APITests {
+public class CirculationRulesAPITests extends APITests {
   @Test
   public void canGet() throws Exception {
     getText();
@@ -26,13 +26,13 @@ public class LoanRulesAPITests extends APITests {
   public void canPutAndGet() throws Exception {
     String rule = "priority: t, s, c, b, a, m, g\nfallback-policy: l no-circulation r no-hold n basic-notice\n";
 
-    loanRulesFixture.updateLoanRules(rule);
+    circulationRulesFixture.updateCirculationRules(rule);
 
     assertThat(getText(), is(rule));
 
     rule = "priority: t, s, c, b, a, m, g\nfallback-policy: l loan-forever r two-week-hold n two-week-notice\n";
 
-    loanRulesFixture.updateLoanRules(rule);
+    circulationRulesFixture.updateCirculationRules(rule);
 
     assertThat(getText(), is(rule));
   }
@@ -40,7 +40,7 @@ public class LoanRulesAPITests extends APITests {
   @Test
   public void canReportInvalidJson() throws Exception {
     CompletableFuture<Response> completed = new CompletableFuture<>();
-    client.put(InterfaceUrls.loanRulesUrl(), "foo", ResponseHandler.any(completed));
+    client.put(InterfaceUrls.circulationRulesUrl(), "foo", ResponseHandler.any(completed));
     Response response = completed.get(5, TimeUnit.SECONDS);
     assertThat(response.getStatusCode(), is(422));
   }
@@ -48,7 +48,7 @@ public class LoanRulesAPITests extends APITests {
   @Test
   public void canReportValidationError() throws Exception {
     JsonObject rules = new JsonObject();
-    rules.put("loanRulesAsTextFile", "\t");
+    rules.put("circulationRulesAsTextFile", "\t");
     Response response = putExpectingFailure(rules);
 
     assertThat(response.getStatusCode(), is(422));
@@ -62,22 +62,22 @@ public class LoanRulesAPITests extends APITests {
 
   private Response get() throws Exception {
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
-    client.get(InterfaceUrls.loanRulesUrl(), ResponseHandler.any(getCompleted));
+    client.get(InterfaceUrls.circulationRulesUrl(), ResponseHandler.any(getCompleted));
     return getCompleted.get(5, TimeUnit.SECONDS);
   }
 
-  /** @return loanRulesAsTextFile field */
+  /** @return circulationRulesAsTextFile field */
   private String getText() throws Exception {
     Response response = get();
     assertThat("GET statusCode", response.getStatusCode(), is(200));
-    String text = response.getJson().getString("loanRulesAsTextFile");
-    assertThat("loanRulesAsTextFile field", text, is(notNullValue()));
+    String text = response.getJson().getString("circulationRulesAsTextFile");
+    assertThat("circulationRulesAsTextFile field", text, is(notNullValue()));
     return text;
   }
 
   private Response putExpectingFailure(JsonObject rules) throws Exception {
     CompletableFuture<Response> completed = new CompletableFuture<>();
-    client.put(InterfaceUrls.loanRulesUrl(), rules, ResponseHandler.any(completed));
+    client.put(InterfaceUrls.circulationRulesUrl(), rules, ResponseHandler.any(completed));
     return completed.get(5, TimeUnit.SECONDS);
   }
 }

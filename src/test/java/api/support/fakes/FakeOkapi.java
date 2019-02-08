@@ -36,7 +36,7 @@ public class FakeOkapi extends AbstractVerticle {
     String.format("http://localhost:%s", PORT_TO_USE);
 
   private HttpServer server;
-  private String loanRules = "{ \"loanRulesAsTextFile\": \"\" }";
+  private String circulationRules = "{ \"circulationRulesAsTextFile\": \"\" }";
 
   public static String getAddress() {
     return address;
@@ -50,7 +50,7 @@ public class FakeOkapi extends AbstractVerticle {
 
     this.server = vertx.createHttpServer();
 
-    forwardRequestsToApplyLoanRulesBackToCirculationModule(router);
+    forwardRequestsToApplyCirculationRulesBackToCirculationModule(router);
 
     new FakeStorageModuleBuilder()
       .withRecordName("material type")
@@ -177,7 +177,7 @@ public class FakeOkapi extends AbstractVerticle {
       .withChangeMetadata()
       .create().register(router);
 
-    registerLoanRulesStorage(router);
+    registerCirculationRulesStorage(router);
     registerCalendar(router);
     registerLibraryHours(router);
 
@@ -247,13 +247,13 @@ public class FakeOkapi extends AbstractVerticle {
       });
   }
 
-  private void forwardRequestsToApplyLoanRulesBackToCirculationModule(Router router) {
+  private void forwardRequestsToApplyCirculationRulesBackToCirculationModule(Router router) {
     //During loan creation, a request to /circulation/loan-rules/apply is made,
     //which is effectively to itself, so needs to be routed back
     router.get("/circulation/loan-rules/apply").handler(context -> {
       OkapiHttpClient client = APITestContext.createClient(throwable ->
         ServerErrorResponse.internalError(context.response(),
-          String.format("Exception when forward loan rules apply request: %s",
+          String.format("Exception when forward circulation rules apply request: %s",
             throwable.getMessage())));
 
       client.get(String.format("http://localhost:%s/circulation/loan-rules/apply?%s"
@@ -281,12 +281,12 @@ public class FakeOkapi extends AbstractVerticle {
     }
   }
 
-  private void registerLoanRulesStorage(Router router) {
+  private void registerCirculationRulesStorage(Router router) {
     router.put("/loan-rules-storage").handler(routingContext -> {
       log.debug("/loan-rules-storage PUT");
       routingContext.request().bodyHandler(body -> {
-        loanRules = body.toString();
-        log.debug("/loan-rules-storage PUT body={}", loanRules);
+        circulationRules = body.toString();
+        log.debug("/loan-rules-storage PUT body={}", circulationRules);
         routingContext.response().setStatusCode(204).end();
       }).exceptionHandler(ex -> {
         log.error("Unhandled exception in body handler", ex);
@@ -294,8 +294,8 @@ public class FakeOkapi extends AbstractVerticle {
       });
     });
     router.get("/loan-rules-storage").handler(routingContext -> {
-      log.debug("/loan-rules-storage GET returns {}", loanRules);
-      routingContext.response().setStatusCode(200).end(loanRules);
+      log.debug("/loan-rules-storage GET returns {}", circulationRules);
+      routingContext.response().setStatusCode(200).end(circulationRules);
     });
   }
 

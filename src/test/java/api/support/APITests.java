@@ -4,7 +4,7 @@ import api.support.fixtures.AddressTypesFixture;
 import api.support.fixtures.CancellationReasonsFixture;
 import api.support.fixtures.ItemsFixture;
 import api.support.fixtures.LoanPoliciesFixture;
-import api.support.fixtures.LoanRulesFixture;
+import api.support.fixtures.CirculationRulesFixture;
 import api.support.fixtures.LoanTypesFixture;
 import api.support.fixtures.LoansFixture;
 import api.support.fixtures.LocationsFixture;
@@ -47,7 +47,7 @@ public abstract class APITests {
   protected final OkapiHttpClient client = createClient(exception ->
     log.error("Request to circulation module failed:", exception));
 
-  private final boolean initialiseLoanRules;
+  private final boolean initialiseCirculationRules;
 
   private final ResourceClient servicePointsClient = ResourceClient.forServicePoints(client);
 
@@ -113,8 +113,8 @@ public abstract class APITests {
   protected final NoticePoliciesFixture noticePoliciesFixture
     = new NoticePoliciesFixture(noticePolicyClient);
 
-  protected final LoanRulesFixture loanRulesFixture
-    = new LoanRulesFixture(client);
+  protected final CirculationRulesFixture circulationRulesFixture
+    = new CirculationRulesFixture(client);
 
   protected final ItemsFixture itemsFixture = new ItemsFixture(client,
     materialTypesFixture, loanTypesFixture, locationsFixture,
@@ -145,8 +145,8 @@ public abstract class APITests {
     this(true);
   }
 
-  protected APITests(boolean initialiseLoanRules) {
-    this.initialiseLoanRules = initialiseLoanRules;
+  protected APITests(boolean initialiseCirculationRules) {
+    this.initialiseCirculationRules = initialiseCirculationRules;
   }
 
   @BeforeClass
@@ -182,8 +182,8 @@ public abstract class APITests {
 
     usersClient.deleteAllIndividually();
 
-    if (initialiseLoanRules) {
-      useDefaultRollingPolicyLoanRules();
+    if (initialiseCirculationRules) {
+      useDefaultRollingPolicyCirculationRules();
     }
   }
 
@@ -234,7 +234,7 @@ public abstract class APITests {
   }
 
   //Needs to be done each time as some tests manipulate the rules
-  private void useDefaultRollingPolicyLoanRules()
+  private void useDefaultRollingPolicyCirculationRules()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -248,7 +248,7 @@ public abstract class APITests {
     );
   }
 
-  protected void useExampleFixedPolicyLoanRules()
+  protected void useExampleFixedPolicyCirculationRules()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -267,7 +267,7 @@ public abstract class APITests {
     ExecutionException,
     TimeoutException {
 
-    loanRulesFixture.updateLoanRules(loanPolicyId, requestPolicyId, noticePolicyId);
+    circulationRulesFixture.updateCirculationRules(loanPolicyId, requestPolicyId, noticePolicyId);
     warmUpApplyEndpoint();
   }
 
@@ -286,7 +286,7 @@ public abstract class APITests {
     Response response = completed.get(10, TimeUnit.SECONDS);
 
     assertThat(String.format(
-      "Failed to apply loan rules: %s", response.getBody()),
+      "Failed to apply circulation rules: %s", response.getBody()),
       response.getStatusCode(), is(200));
   }
 
