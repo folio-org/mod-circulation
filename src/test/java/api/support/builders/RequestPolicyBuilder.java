@@ -2,23 +2,21 @@ package api.support.builders;
 
 import java.util.UUID;
 
+import org.folio.circulation.domain.RequestType;
+
 import io.vertx.core.json.JsonObject;
 
 public class RequestPolicyBuilder extends JsonBuilder implements Builder {
   private final UUID id;
   private final String name;
   private final String description;
-  private final boolean allowHold;
-  private final boolean allowPage;
-  private final boolean allowRecal;
+  private final RequestType type;
 
   public RequestPolicyBuilder() {
     this(UUID.randomUUID(),
       "Example Request Policy",
       "An example request policy",
-      false,
-      false,
-      false
+      RequestType.HOLD
     );
   }
 
@@ -26,16 +24,12 @@ public class RequestPolicyBuilder extends JsonBuilder implements Builder {
     UUID id,
     String name,
     String description,
-    boolean allowHold,
-    boolean allowPage,
-    boolean allowRecal) {
+    RequestType type) {
 
     this.id = id;
     this.name = name;
     this.description = description;
-    this.allowHold = allowHold;
-    this.allowPage = allowPage;
-    this.allowRecal = allowRecal;
+    this.type = type;
   }
 
   @Override
@@ -48,9 +42,11 @@ public class RequestPolicyBuilder extends JsonBuilder implements Builder {
 
     put(request, "name", this.name);
     put(request, "description", this.description);
-    put(request, "allowHold", this.allowHold);
-    put(request, "allowPage", this.allowPage);
-    put(request, "allowRecal", this.allowRecal);
+
+    JsonObject requestType = new JsonObject();
+    put(requestType, "type", this.type.name());
+
+    put(request, "requestType", requestType);
 
     return request;
   }

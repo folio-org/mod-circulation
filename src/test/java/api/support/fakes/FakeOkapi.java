@@ -123,7 +123,7 @@ public class FakeOkapi extends AbstractVerticle {
       .withRecordName("request policy")
       .withRootPath("/request-policy-storage/request-policies")
       .withCollectionPropertyName("requestPolicies")
-      .withRequiredProperties("name", "allowHold", "allowPage", "allowRecal")
+      .withRequiredProperties("name")
       .create().register(router);
 
     new FakeStorageModuleBuilder()
