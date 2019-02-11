@@ -5,9 +5,7 @@ patron group and the item's material type, loan type, and location.
 
 Example loan rules file:
 
-    fallback-policy: l no-circulation
-    fallback-policy: r no-requests
-    fallback-policy: n no-notices
+    fallback-policy: l no-circulation r no-request n no-notice
     m book : l regular-loan r no-requests n no-notices
     m newspaper: l reading-room r no-requests n no-notices
     m streaming-subscription: l policy-s r no-requests n no-notices
@@ -15,7 +13,7 @@ Example loan rules file:
 
 How does this short example work?
 
-Each of the `fallback-policy` lines defines a default policy for one of the 3 policy types.
+The `fallback-policy` line defines a default policy for each of the 3 policy types.
 An `l` indicates a loan policy, `r` a request policy, and `n` a notice policy.
 
 After `m` is the item's material type. Books can be loaned using the `regular-loan` loan policy,
@@ -188,9 +186,7 @@ Example a:
 
 ```
 priority: criterium(t, s, c, b, a, m, g), number-of-criteria, last-line
-fallback-policy: l no-circulation
-fallback-policy: r no-request
-fallback-policy: n no-notice
+fallback-policy: l no-circulation r no-request n no-notice
 g visitor: l loan-policy-a r request-policy-a n notice-policy-a
 t rare: l loan-policy-c r request-policy-c n notice-policy-c
 m book: l loan-policy-e r request-policy-e n notice-policy-e
@@ -204,9 +200,7 @@ Example b:
 
 ```
 priority: criterium(t, s, c, b, a, m, g), number-of-criteria, last-line
-fallback-policy: l no-circulation
-fallback-policy: r no-request
-fallback-policy: n no-notice
+fallback-policy: l no-circulation r no-request n no-notice
 g visitor:l loan-policy-a r request-policy-a n notice-policy-a
     t rare: l loan-policy-b r request-policy-b n notice-policy-b
 t rare: l loan-policy-c r request-policy-c n notice-policy-c
@@ -222,9 +216,7 @@ all five rules and each rule has this priority:
 
 ```
 priority: criterium(t, s, c, b, a, m, g), number-of-criteria, last-line
-fallback-policy: l no-circulation
-fallback-policy: r no-request
-fallback-policy: n no-notice
+fallback-policy: l no-circulation r no-request n no-notice
 g visitor: max(g=1)=1: l loan-policy-a r request-policy-a n notice-policy-a
 g visitor + t rare: max(g=1, t=7)=7: l loan-policy-b r request-policy-b n notice-policy-b
 t rare: max(t=7)=7: l loan-policy-c r request-policy-c n notice-policy-c
@@ -245,9 +237,7 @@ Any number of location criterium types (`a`, `b`, `c`, `s`) count as one.
 
 ```
 priority: criterium(t, s, c, b, a, m, g), number-of-criteria, last-line
-fallback-policy: l no-circulation
-fallback-policy: r no-request
-fallback-policy: n no-notice
+fallback-policy: l no-circulation r no-request n no-notice
 g visitor + t rare: l loan-policy-b r request-policy-b n notice-policy-b
 t rare: l loan-policy-c r request-policy-c n notice-policy-c
 t rare + m book: l loan-policy-d r request-policy-d n notice-policy-d
@@ -267,9 +257,7 @@ priority but without restricting to some names. Example:
 
 ```
 priority: criterium(t, s, c, b, a, m, g), number-of-criteria, last-line
-fallback-policy: l no-circulation
-fallback-policy: r no-request
-fallback-policy: n no-notice
+fallback-policy: l no-circulation r no-request n no-notice
 g visitor + t rare: l loan-policy-b r request-policy-b n notice-policy-b
 t rare: l loan-policy-c r request-policy-c n notice-policy-c
 t rare + m book: l loan-policy-d r request-policy-d n notice-policy-d
@@ -287,9 +275,7 @@ first matching rule (the rule with the lowest line number) is taken.
 
 ```
 priority: criterium(t, s, c, b, a, m, g), number-of-criteria, last-line
-fallback-policy: l no-circulation
-fallback-policy: r no-request
-fallback-policy: n no-notice
+fallback-policy: l no-circulation r no-request n no-notice
 g visitor + t rare: l loan-policy-b r request-policy-b n notice-policy-b
 t rare + m book: l loan-policy-d r request-policy-d n notice-policy-d
 ```
@@ -300,8 +286,8 @@ The line with loanpolicy-d has higher priority because it is last (it has a high
 
 ## Fallback policy
 
-There always must be a set of three lines with a fallback policy for each type
-like `fallback-policy: l no-circulation`.
+There always must be a line with a set of three fallback policies, one for
+each type like `fallback-policy: l no-circulation r no-request n no-notice`.
 It must be after the priority line and before the first rule.
 
 For `priority: last-line` it must be after the last rule.
@@ -310,4 +296,4 @@ For `priority: last-line` it must be after the last rule.
 
 For one tenant there is only a single loan rules file.
 
-It must have a single priority line and three fallback-policy lines.
+It must have a single priority line and a single fallback-policy line.
