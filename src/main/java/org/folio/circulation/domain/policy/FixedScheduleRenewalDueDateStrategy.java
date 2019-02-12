@@ -12,8 +12,7 @@ import static org.folio.circulation.support.HttpResult.failed;
 
 class FixedScheduleRenewalDueDateStrategy extends DueDateStrategy {
   private static final String NO_APPLICABLE_DUE_DATE_SCHEDULE_MESSAGE =
-    "renewal date falls outside of the date ranges " +
-      "in the fixed schedule of fixed loan policy";
+    "renewal date falls outside of date ranges in fixed loan policy";
 
   private final FixedDueDateSchedules fixedDueDateSchedules;
   private final DateTime systemDate;
