@@ -71,7 +71,7 @@ public class CirculationRulesResource extends Resource {
         }
         JsonObject circulationRules = new JsonObject(response.getBody());
         circulationRules.put("rulesAsDrools", Text2Drools.convert(
-          circulationRules.getString("rulesAsTextFile")));
+          circulationRules.getString("rulesAsText")));
 
         new OkJsonHttpResult(circulationRules)
           .writeTo(routingContext.response());
@@ -98,7 +98,7 @@ public class CirculationRulesResource extends Resource {
     try {
       // try to convert, do not safe if conversion fails
       rulesInput = routingContext.getBodyAsJson();
-      Text2Drools.convert(rulesInput.getString("rulesAsTextFile"));
+      Text2Drools.convert(rulesInput.getString("rulesAsText"));
     } catch (CirculationRulesException e) {
       circulationRulesError(routingContext.response(), e);
       return;

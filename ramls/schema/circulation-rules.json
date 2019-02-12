@@ -6,7 +6,7 @@
     "id": {
       "type": "string"
     },
-    "rulesAsTextFile": {
+    "rulesAsText": {
       "type": "string"
     },
     "rulesAsDrools": {
@@ -15,7 +15,7 @@
   },
   "additionalProperties": false,
   "required": [
-    "rulesAsTextFile",
+    "rulesAsText",
     "rulesAsDrools"
   ]
 }

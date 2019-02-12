@@ -36,7 +36,7 @@ public class FakeOkapi extends AbstractVerticle {
     String.format("http://localhost:%s", PORT_TO_USE);
 
   private HttpServer server;
-  private String circulationRules = "{ \"rulesAsTextFile\": \"\" }";
+  private String circulationRules = "{ \"rulesAsText\": \"\" }";
 
   public static String getAddress() {
     return address;

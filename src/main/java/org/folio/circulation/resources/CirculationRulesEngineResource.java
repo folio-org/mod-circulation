@@ -45,7 +45,7 @@ public class CirculationRulesEngineResource extends Resource {
   private static long triggerAgeInMilliseconds = 4000;
 
   private class Rules {
-    String rulesAsTextFile = "";
+    String rulesAsText = "";
     String rulesAsDrools = "";
     Drools drools;
     /** System.currentTimeMillis() of the last load/reload of the rules from the storage */
@@ -175,16 +175,16 @@ public class CirculationRulesEngineResource extends Resource {
         if (log.isDebugEnabled()) {
           log.debug("circulationRules = {}", circulationRules.encodePrettily());
         }
-        String rulesAsTextFile = circulationRules.getString("rulesAsTextFile");
-        if (rulesAsTextFile == null) {
-          throw new NullPointerException("rulesAsTextFile");
+        String rulesAsText = circulationRules.getString("rulesAsText");
+        if (rulesAsText == null) {
+          throw new NullPointerException("rulesAsText");
         }
-        if (rules.rulesAsTextFile.equals(rulesAsTextFile)) {
+        if (rules.rulesAsText.equals(rulesAsText)) {
           done.handle(null);
           return;
         }
-        rules.rulesAsTextFile = rulesAsTextFile;
-        rules.rulesAsDrools = Text2Drools.convert(rulesAsTextFile);
+        rules.rulesAsText = rulesAsText;
+        rules.rulesAsDrools = Text2Drools.convert(rulesAsText);
         log.debug("rulesAsDrools = {}", rules.rulesAsDrools);
         rules.drools = new Drools(rules.rulesAsDrools);
         done.handle(null);

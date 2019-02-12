@@ -106,7 +106,7 @@ public class LoanAPIPolicyTests extends APITests {
 
     JsonObject rulesJson = new JsonObject(getResponse.getBody());
 
-    String circulationRules = rulesJson.getString("rulesAsTextFile");
+    String circulationRules = rulesJson.getString("rulesAsText");
     assertThat("Returned rules match submitted rules", circulationRules, is(rules));
 
     warmUpApplyEndpoint();
