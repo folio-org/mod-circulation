@@ -248,15 +248,15 @@ public class FakeOkapi extends AbstractVerticle {
   }
 
   private void forwardRequestsToApplyCirculationRulesBackToCirculationModule(Router router) {
-    //During loan creation, a request to /circulation/loan-rules/apply is made,
+    //During loan creation, a request to /circulation/rules/loan-policy is made,
     //which is effectively to itself, so needs to be routed back
-    router.get("/circulation/loan-rules/apply").handler(context -> {
+    router.get("/circulation/rules/loan-policy").handler(context -> {
       OkapiHttpClient client = APITestContext.createClient(throwable ->
         ServerErrorResponse.internalError(context.response(),
           String.format("Exception when forward circulation rules apply request: %s",
             throwable.getMessage())));
 
-      client.get(String.format("http://localhost:%s/circulation/loan-rules/apply?%s"
+      client.get(String.format("http://localhost:%s/circulation/rules/loan-policy?%s"
         , APITestContext.circulationModulePort(), context.request().query()),
         httpClientResponse ->
           httpClientResponse.bodyHandler(buffer ->

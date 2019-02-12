@@ -278,7 +278,7 @@ public abstract class APITests {
 
     CompletableFuture<Response> completed = new CompletableFuture<>();
 
-    client.get(InterfaceUrls.loanRulesUrl("/apply"
+    client.get(InterfaceUrls.circulationRulesUrl("/loan-policy"
         + String.format("?item_type_id=%s&loan_type_id=%s&patron_type_id=%s&shelving_location_id=%s",
       UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID())),
       ResponseHandler.any(completed));

@@ -1,6 +1,6 @@
 package api;
 
-import static api.support.http.InterfaceUrls.loanRulesUrl;
+import static api.support.http.InterfaceUrls.circulationRulesUrl;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.StringContains.containsString;
@@ -41,8 +41,8 @@ public class CirculationRulesEngineAPITests extends APITests {
       PatronGroup patronGroup, ShelvingLocation shelvingLocation) {
     try {
       CompletableFuture<Response> completed = new CompletableFuture<>();
-      URL url = loanRulesUrl(
-          "/apply"
+      URL url = circulationRulesUrl(
+          "/loan-policy"
           + "?item_type_id="         + itemType.id
           + "&loan_type_id="         + loanType.id
           + "&patron_type_id="       + patronGroup.id
@@ -110,7 +110,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   @Test
   public void applyWithoutParameters() throws Exception {
     CompletableFuture<Response> completed = new CompletableFuture<>();
-    URL url = loanRulesUrl("/apply");
+    URL url = circulationRulesUrl("/loan-policy");
     client.get(url, ResponseHandler.any(completed));
     Response response = completed.get(10, TimeUnit.SECONDS);
     assertThat(response.getStatusCode(), is(400));
@@ -119,7 +119,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   private void applyOneParameterMissing(String p1, String p2, String p3, String missing) throws Exception {
     String name = missing.substring(0, missing.indexOf("="));
     CompletableFuture<Response> completed = new CompletableFuture<>();
-    URL url = loanRulesUrl("/apply?" + p1 + "&" + p2 + "&" + p3);
+    URL url = circulationRulesUrl("/loan-policy?" + p1 + "&" + p2 + "&" + p3);
     client.get(url, ResponseHandler.any(completed));
     Response response = completed.get(10, TimeUnit.SECONDS);
     assertThat(response.getStatusCode(), is(400));
@@ -143,7 +143,7 @@ public class CirculationRulesEngineAPITests extends APITests {
 
   private void applyInvalidUuid(String i, String l, String p, String s) {
     CompletableFuture<Response> completed = new CompletableFuture<>();
-    URL url = loanRulesUrl("/apply"
+    URL url = circulationRulesUrl("/loan-policy"
         + "?item_type_id=" + i
         + "&loan_type_id=" + l
         + "&patron_type_id=" + p
@@ -215,8 +215,8 @@ public class CirculationRulesEngineAPITests extends APITests {
   public void test1ApplyAll() throws Exception {
     setRules(rules1);
     CompletableFuture<Response> completed = new CompletableFuture<>();
-    URL url = loanRulesUrl(
-        "/apply-all"
+    URL url = circulationRulesUrl(
+        "/loan-policy-all"
         + "?item_type_id="         + m2
         + "&loan_type_id="         + t2
         + "&patron_type_id="       + g2

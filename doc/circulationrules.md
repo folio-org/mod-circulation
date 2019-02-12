@@ -1,9 +1,9 @@
-# Loan Rules
+# Circulation Rules
 
-The loan rules engine calculates the loan policies based on the patron's
+The circulation rules engine calculates the loan policies based on the patron's
 patron group and the item's material type, loan type, and location.
 
-Example loan rules file:
+Example circulation rules file:
 
     fallback-policy: l no-circulation r no-request n no-notice
     m book : l regular-loan r no-requests n no-notices
@@ -60,14 +60,14 @@ These are the single letter criteria type names:
 
 `a`, `b`, `c` and `s` build a location hierarchy.
 
-`s` is the only location level than is implemented in the loan rules engine yet.
+`s` is the only location level than is implemented in the circulation rules engine yet.
 
-The loan rules editor and the loan rules engine haven't been migrated to the
+The circulation rules editor and the circulation rules engine haven't been migrated to the
 complete location hierarchy yet (see
 [UIIN-127 Migrate to hierarchical location end-point](https://issues.folio.org/browse/UIIN-127)).
 
-`a`, `b` and `c` can be put into the loan rules file but they havn't been
-implemented in the loan rules engine yet causing these rules to never match.
+`a`, `b` and `c` can be put into the circulation rules file but they havn't been
+implemented in the circulation rules engine yet causing these rules to never match.
 
 ## Criterium
 
@@ -292,8 +292,8 @@ It must be after the priority line and before the first rule.
 
 For `priority: last-line` it must be after the last rule.
 
-## Single loan rules file
+## Single circulation rules file
 
-For one tenant there is only a single loan rules file.
+For one tenant there is only a single circulation rules file.
 
 It must have a single priority line and a single fallback-policy line.

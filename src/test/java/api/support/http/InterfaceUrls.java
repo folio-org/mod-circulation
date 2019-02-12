@@ -143,10 +143,6 @@ public class InterfaceUrls {
   public static URL circulationRulesUrl(String subPath) {
     return circulationModuleUrl("/circulation/rules" + subPath);
   }
-
-  public static URL loanRulesUrl(String subPath) {
-      return circulationModuleUrl("/circulation/loan-rules" + subPath);
-  }
   
   static URL cancellationReasonsStorageUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl(

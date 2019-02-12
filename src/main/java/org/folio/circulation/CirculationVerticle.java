@@ -48,8 +48,8 @@ public class CirculationVerticle extends AbstractVerticle {
 
     new CirculationRulesResource         ("/circulation/rules", client)
       .register(router);
-    new CirculationRulesEngineResource   ("/circulation/loan-rules/apply",
-                                   "/circulation/loan-rules/apply-all", client)
+    new CirculationRulesEngineResource   ("/circulation/rules/loan-policy",
+                                   "/circulation/rules/loan-policy-all", client)
       .register(router);
 
     server.requestHandler(router::accept)

@@ -21,7 +21,7 @@ public class CirculationRulesClient {
     throws MalformedURLException {
 
     this.client = client;
-    root = context.getOkapiBasedUrl("/circulation/loan-rules");
+    root = context.getOkapiBasedUrl("/circulation/rules/loan-policy");
   }
 
   public void applyRules(
@@ -36,7 +36,7 @@ public class CirculationRulesClient {
 
     log.info("Applying circulation rules for {}", circulationRulesQuery);
 
-    client.get(String.format("%s/%s?%s", root, "apply", circulationRulesQuery),
+    client.get(String.format("%s?%s", root, circulationRulesQuery),
       responseHandler);
   }
 

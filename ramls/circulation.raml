@@ -238,11 +238,10 @@ resourceTypes:
           body:
             text/plain:
               example: "Internal server error"
-  /loan-rules:
-    /apply:
-      displayName: Apply circulation rules
+    /loan-policy:
+      displayName: Apply circulation rules for loan policy
       get:
-        description: Get the loan policy when applying loan rules
+        description: Get the loan policy when applying circulation rules
         queryParameters:
           item_type_id:
             description: "Item type id"
@@ -282,10 +281,10 @@ resourceTypes:
             body:
               text/plain:
                 example: "Internal server error"
-    /apply-all:
+    /loan-policy-all:
       displayName: Apply circulation rules and return all matching loan policies
       get:
-        description: Get loan circulation and loan policy for each match when applying loan rules
+        description: Get loan circulation and loan policy for each match when applying circulation rules
         queryParameters:
           item_type_id:
             description: "Item type id"
