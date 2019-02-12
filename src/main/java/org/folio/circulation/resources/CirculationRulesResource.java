@@ -70,8 +70,8 @@ public class CirculationRulesResource extends Resource {
           return;
         }
         JsonObject circulationRules = new JsonObject(response.getBody());
-        circulationRules.put("circulationRulesAsDrools", Text2Drools.convert(
-          circulationRules.getString("circulationRulesAsTextFile")));
+        circulationRules.put("rulesAsDrools", Text2Drools.convert(
+          circulationRules.getString("rulesAsTextFile")));
 
         new OkJsonHttpResult(circulationRules)
           .writeTo(routingContext.response());
@@ -98,7 +98,7 @@ public class CirculationRulesResource extends Resource {
     try {
       // try to convert, do not safe if conversion fails
       rulesInput = routingContext.getBodyAsJson();
-      Text2Drools.convert(rulesInput.getString("circulationRulesAsTextFile"));
+      Text2Drools.convert(rulesInput.getString("rulesAsTextFile"));
     } catch (CirculationRulesException e) {
       circulationRulesError(routingContext.response(), e);
       return;
@@ -112,7 +112,7 @@ public class CirculationRulesResource extends Resource {
     CirculationRulesEngineResource.clearCache(new WebContext(routingContext).getTenantId());
     JsonObject rules = rulesInput.copy();
 
-    rules.remove("circulationRulesAsDrools");
+    rules.remove("rulesAsDrools");
 
     loansRulesClient.put(rules).thenAccept(response -> {
       if (response.getStatusCode() == 204) {

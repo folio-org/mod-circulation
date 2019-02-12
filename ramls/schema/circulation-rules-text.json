@@ -6,12 +6,12 @@
     "id": {
       "type": "string"
     },
-    "circulationRulesAsTextFile": {
+    "rulesAsTextFile": {
       "type": "string"
     }
   },
   "additionalProperties": false,
   "required": [
-    "circulationRulesAsTextFile"
+    "rulesAsTextFile"
   ]
 }

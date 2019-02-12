@@ -45,8 +45,8 @@ public class CirculationRulesEngineResource extends Resource {
   private static long triggerAgeInMilliseconds = 4000;
 
   private class Rules {
-    String circulationRulesAsTextFile = "";
-    String circulationRulesAsDrools = "";
+    String rulesAsTextFile = "";
+    String rulesAsDrools = "";
     Drools drools;
     /** System.currentTimeMillis() of the last load/reload of the rules from the storage */
     long reloadTimestamp;
@@ -175,18 +175,18 @@ public class CirculationRulesEngineResource extends Resource {
         if (log.isDebugEnabled()) {
           log.debug("circulationRules = {}", circulationRules.encodePrettily());
         }
-        String circulationRulesAsTextFile = circulationRules.getString("circulationRulesAsTextFile");
-        if (circulationRulesAsTextFile == null) {
-          throw new NullPointerException("circulationRulesAsTextFile");
+        String rulesAsTextFile = circulationRules.getString("rulesAsTextFile");
+        if (rulesAsTextFile == null) {
+          throw new NullPointerException("rulesAsTextFile");
         }
-        if (rules.circulationRulesAsTextFile.equals(circulationRulesAsTextFile)) {
+        if (rules.rulesAsTextFile.equals(rulesAsTextFile)) {
           done.handle(null);
           return;
         }
-        rules.circulationRulesAsTextFile = circulationRulesAsTextFile;
-        rules.circulationRulesAsDrools = Text2Drools.convert(circulationRulesAsTextFile);
-        log.debug("circulationRulesAsDrools = {}", rules.circulationRulesAsDrools);
-        rules.drools = new Drools(rules.circulationRulesAsDrools);
+        rules.rulesAsTextFile = rulesAsTextFile;
+        rules.rulesAsDrools = Text2Drools.convert(rulesAsTextFile);
+        log.debug("rulesAsDrools = {}", rules.rulesAsDrools);
+        rules.drools = new Drools(rules.rulesAsDrools);
         done.handle(null);
       }
       catch (Exception e) {

@@ -39,7 +39,7 @@ public class CirculationRulesFixture {
     TimeoutException {
 
     JsonObject circulationRulesRequest = new JsonObject()
-      .put("circulationRulesAsTextFile", rules);
+      .put("rulesAsTextFile", rules);
 
     CompletableFuture<Response> completed = new CompletableFuture<>();
 

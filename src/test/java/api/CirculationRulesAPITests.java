@@ -48,7 +48,7 @@ public class CirculationRulesAPITests extends APITests {
   @Test
   public void canReportValidationError() throws Exception {
     JsonObject rules = new JsonObject();
-    rules.put("circulationRulesAsTextFile", "\t");
+    rules.put("rulesAsTextFile", "\t");
     Response response = putExpectingFailure(rules);
 
     assertThat(response.getStatusCode(), is(422));
@@ -66,12 +66,12 @@ public class CirculationRulesAPITests extends APITests {
     return getCompleted.get(5, TimeUnit.SECONDS);
   }
 
-  /** @return circulationRulesAsTextFile field */
+  /** @return rulesAsTextFile field */
   private String getText() throws Exception {
     Response response = get();
     assertThat("GET statusCode", response.getStatusCode(), is(200));
-    String text = response.getJson().getString("circulationRulesAsTextFile");
-    assertThat("circulationRulesAsTextFile field", text, is(notNullValue()));
+    String text = response.getJson().getString("rulesAsTextFile");
+    assertThat("rulesAsTextFile field", text, is(notNullValue()));
     return text;
   }
 

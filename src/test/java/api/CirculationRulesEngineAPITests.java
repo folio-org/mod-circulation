@@ -269,7 +269,7 @@ public class CirculationRulesEngineAPITests extends APITests {
 
     ResourceClient circulationRulesClient = ResourceClient.forCirculationRules(client);
 
-    JsonObject json = new JsonObject().put("circulationRulesAsTextFile", rules);
+    JsonObject json = new JsonObject().put("rulesAsTextFile", rules);
 
     circulationRulesClient.replace(null, json);
   }

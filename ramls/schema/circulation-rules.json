@@ -6,16 +6,16 @@
     "id": {
       "type": "string"
     },
-    "circulationRulesAsTextFile": {
+    "rulesAsTextFile": {
       "type": "string"
     },
-    "circulationRulesAsDrools": {
+    "rulesAsDrools": {
       "type": "string"
     }
   },
   "additionalProperties": false,
   "required": [
-    "circulationRulesAsTextFile",
-    "circulationRulesAsDrools"
+    "rulesAsTextFile",
+    "rulesAsDrools"
   ]
 }
