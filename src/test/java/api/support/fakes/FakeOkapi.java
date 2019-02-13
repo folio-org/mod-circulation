@@ -282,19 +282,19 @@ public class FakeOkapi extends AbstractVerticle {
   }
 
   private void registerCirculationRulesStorage(Router router) {
-    router.put("/loan-rules-storage").handler(routingContext -> {
-      log.debug("/loan-rules-storage PUT");
+    router.put("/circulation-rules-storage").handler(routingContext -> {
+      log.debug("/circulation-rules-storage PUT");
       routingContext.request().bodyHandler(body -> {
         circulationRules = body.toString();
-        log.debug("/loan-rules-storage PUT body={}", circulationRules);
+        log.debug("/circulation-rules-storage PUT body={}", circulationRules);
         routingContext.response().setStatusCode(204).end();
       }).exceptionHandler(ex -> {
         log.error("Unhandled exception in body handler", ex);
         routingContext.response().setStatusCode(500).end(ExceptionUtils.getStackTrace(ex));
       });
     });
-    router.get("/loan-rules-storage").handler(routingContext -> {
-      log.debug("/loan-rules-storage GET returns {}", circulationRules);
+    router.get("/circulation-rules-storage").handler(routingContext -> {
+      log.debug("/circulation-rules-storage GET returns {}", circulationRules);
       routingContext.response().setStatusCode(200).end(circulationRules);
     });
   }

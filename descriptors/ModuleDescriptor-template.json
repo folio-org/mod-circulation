@@ -676,7 +676,7 @@
     {
       "permissionName": "circulation.rules.loan-policy.get",
       "displayName": "Circulation - use circulation rules to get matching loan policy",
-      "description": "Apply loan rules to get matching loan policy"
+      "description": "Apply circulation rules to get matching loan policy"
     },
     {
       "permissionName": "circulation.rules.loan-policy-all.get",

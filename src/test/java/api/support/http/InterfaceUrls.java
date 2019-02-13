@@ -73,7 +73,7 @@ public class InterfaceUrls {
   }
 
   static URL circulationRulesStorageUrl(String subPath) {
-    return APITestContext.viaOkapiModuleUrl("/loan-rules-storage" + subPath);
+    return APITestContext.viaOkapiModuleUrl("/circulation-rules-storage" + subPath);
   }
 
   static URL usersUrl(String subPath) {

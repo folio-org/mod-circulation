@@ -224,7 +224,7 @@ public class Clients {
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context,
-      "/loan-rules-storage");
+      "/circulation-rules-storage");
   }
 
   private CollectionResourceClient createServicePointsStorageClient(
