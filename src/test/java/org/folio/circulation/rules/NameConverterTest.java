@@ -1,4 +1,4 @@
-package org.folio.circulation.circulationrules;
+package org.folio.circulation.rules;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;

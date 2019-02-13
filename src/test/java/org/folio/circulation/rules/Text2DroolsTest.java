@@ -1,4 +1,4 @@
-package org.folio.circulation.circulationrules;
+package org.folio.circulation.rules;
 
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -10,7 +10,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
-import static org.folio.circulation.circulationrules.CirculationRulesExceptionMatcher.matches;
+import static org.folio.circulation.rules.CirculationRulesExceptionMatcher.matches;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.fail;

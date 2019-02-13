@@ -1,4 +1,4 @@
-package org.folio.circulation.circulationrules;
+package org.folio.circulation.rules;
 
 import org.kie.api.KieServices;
 import org.kie.api.builder.KieBuilder;

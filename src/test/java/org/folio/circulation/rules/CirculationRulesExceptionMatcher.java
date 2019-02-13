@@ -1,4 +1,4 @@
-package org.folio.circulation.circulationrules;
+package org.folio.circulation.rules;
 
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;

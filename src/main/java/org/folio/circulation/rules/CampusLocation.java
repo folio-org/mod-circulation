@@ -1,4 +1,4 @@
-package org.folio.circulation.circulationrules;
+package org.folio.circulation.rules;
 
 /**
  * Store UUID of the campus location.

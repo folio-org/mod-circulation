@@ -181,7 +181,7 @@ NEWLINE : ( '\r'? '\n' | '\r' ) { if (pendingDent) {
 WS : ' '+ { setChannel(HIDDEN); if (pendingDent) { indentCount += getText().length(); } } ;
 
 TAB : '\t' { if (true) {  // "if (true)" prevents a compile error "unreachable code"
-               throw new org.folio.circulation.circulationrules.CirculationRulesException(
+               throw new org.folio.circulation.rules.CirculationRulesException(
                   "Tabulator character is not allowed, use spaces instead.",
                    getLine(), getCharPositionInLine()+1);
              }

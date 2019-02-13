@@ -1,11 +1,11 @@
-package org.folio.circulation.circulationrules;
+package org.folio.circulation.rules;
 
 import org.antlr.v4.runtime.BufferedTokenStream;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.TokenStreamRewriter;
 import org.antlr.v4.runtime.tree.TerminalNode;
-import org.folio.circulation.circulationrules.CirculationRulesParser.CriteriumContext;
-import org.folio.circulation.circulationrules.CirculationRulesParser.PolicyContext;
+import org.folio.circulation.rules.CirculationRulesParser.CriteriumContext;
+import org.folio.circulation.rules.CirculationRulesParser.PolicyContext;
 
 import java.util.List;
 import java.util.Map;

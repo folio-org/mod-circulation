@@ -1,4 +1,4 @@
-package org.folio.circulation.circulationrules;
+package org.folio.circulation.rules;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -16,21 +16,21 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.folio.circulation.circulationrules.CirculationRulesParser.CriteriumContext;
-import org.folio.circulation.circulationrules.CirculationRulesParser.CriteriumPriorityContext;
-import org.folio.circulation.circulationrules.CirculationRulesParser.DedentContext;
-import org.folio.circulation.circulationrules.CirculationRulesParser.DefaultPrioritiesContext;
-import org.folio.circulation.circulationrules.CirculationRulesParser.ExprContext;
-import org.folio.circulation.circulationrules.CirculationRulesParser.FallbackpolicyContext;
-import org.folio.circulation.circulationrules.CirculationRulesParser.IndentContext;
-import org.folio.circulation.circulationrules.CirculationRulesParser.LastLinePrioritiesContext;
-import org.folio.circulation.circulationrules.CirculationRulesParser.LinePriorityContext;
-import org.folio.circulation.circulationrules.CirculationRulesParser.CirculationRulesFileContext;
-import org.folio.circulation.circulationrules.CirculationRulesParser.PoliciesContext;
-import org.folio.circulation.circulationrules.CirculationRulesParser.PolicyContext;
-import org.folio.circulation.circulationrules.CirculationRulesParser.SevenCriteriumLettersContext;
-import org.folio.circulation.circulationrules.CirculationRulesParser.ThreePrioritiesContext;
-import org.folio.circulation.circulationrules.CirculationRulesParser.TwoPrioritiesContext;
+import org.folio.circulation.rules.CirculationRulesParser.CriteriumContext;
+import org.folio.circulation.rules.CirculationRulesParser.CriteriumPriorityContext;
+import org.folio.circulation.rules.CirculationRulesParser.DedentContext;
+import org.folio.circulation.rules.CirculationRulesParser.DefaultPrioritiesContext;
+import org.folio.circulation.rules.CirculationRulesParser.ExprContext;
+import org.folio.circulation.rules.CirculationRulesParser.FallbackpolicyContext;
+import org.folio.circulation.rules.CirculationRulesParser.IndentContext;
+import org.folio.circulation.rules.CirculationRulesParser.LastLinePrioritiesContext;
+import org.folio.circulation.rules.CirculationRulesParser.LinePriorityContext;
+import org.folio.circulation.rules.CirculationRulesParser.CirculationRulesFileContext;
+import org.folio.circulation.rules.CirculationRulesParser.PoliciesContext;
+import org.folio.circulation.rules.CirculationRulesParser.PolicyContext;
+import org.folio.circulation.rules.CirculationRulesParser.SevenCriteriumLettersContext;
+import org.folio.circulation.rules.CirculationRulesParser.ThreePrioritiesContext;
+import org.folio.circulation.rules.CirculationRulesParser.TwoPrioritiesContext;
 
 /**
  * Convert a circulation rules text in FOLIO format into a drools rules text.
@@ -40,7 +40,7 @@ public class Text2Drools extends CirculationRulesBaseListener {
   /* Example drools file:
 
   package circulationrules
-  import org.folio.circulation.circulationrules.*
+  import org.folio.circulation.rules.*
   global LoanPolicy loanPolicy
   global java.lang.Integer lineNumber
 
@@ -79,7 +79,7 @@ public class Text2Drools extends CirculationRulesBaseListener {
 
   private StringBuilder drools = new StringBuilder(
       "package circulationrules\n" +
-      "import org.folio.circulation.circulationrules.*\n" +
+      "import org.folio.circulation.rules.*\n" +
       "global Match match\n" +
       "\n"
       );
