@@ -3,7 +3,7 @@
   "title": "Circulation rule match schema",
   "type": "object",
   "properties": {
-    "circulationRuleLine": {
+    "ruleLine": {
       "description": "Line number of the matching rule",
       "type": "integer"
     },
@@ -14,7 +14,7 @@
   },
   "additionalProperties": false,
   "required": [
-    "circulationRuleLine",
+    "ruleLine",
     "loanPolicyId"
   ]
 }
