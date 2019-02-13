@@ -3,6 +3,8 @@ package org.folio.circulation.domain;
 import static org.folio.circulation.domain.RequestFulfilmentPreference.HOLD_SHELF;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_CANCELLED;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_FILLED;
+import static org.folio.circulation.domain.RequestStatus.CLOSED_UNFILLED;
+import static org.folio.circulation.domain.RequestStatus.CLOSED_PICKUP_EXPIRED;
 import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
 import static org.folio.circulation.domain.RequestStatus.OPEN_NOT_YET_FILLED;
 import static org.folio.circulation.domain.representations.RequestProperties.STATUS;
@@ -78,9 +80,17 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return getStatus() == CLOSED_FILLED;
   }
 
+  private boolean isUnfilled() {
+    return getStatus() == CLOSED_UNFILLED;
+  }
+
+  private boolean isPickupExpired() {
+    return getStatus() == CLOSED_PICKUP_EXPIRED;
+  }
+
   public boolean isClosed() {
     //Alternatively, check status contains "Closed"
-    return isCancelled() || isFulfilled();
+    return isCancelled() || isFulfilled() || isUnfilled() || isPickupExpired();
   }
 
   boolean isAwaitingPickup() {
