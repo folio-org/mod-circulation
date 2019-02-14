@@ -4,28 +4,28 @@ import org.folio.circulation.AdjustingOpeningDays;
 import org.folio.circulation.domain.OpeningDay;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
 
-import java.util.function.BiPredicate;
+import java.util.Objects;
+
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
 
 public class EndOfPreviousDayStrategy implements ClosedLibraryStrategy {
 
-  private final BiPredicate<DateTime, AdjustingOpeningDays> libraryIsOpenPredicate;
   private final DateTimeZone zone;
 
-  public EndOfPreviousDayStrategy(
-    BiPredicate<DateTime, AdjustingOpeningDays> libraryIsOpenPredicate,
-    DateTimeZone zone) {
-    this.libraryIsOpenPredicate = libraryIsOpenPredicate;
+  public EndOfPreviousDayStrategy(DateTimeZone zone) {
     this.zone = zone;
   }
 
   @Override
-
-  public DateTime calculateDueDate(DateTime requestedDate, AdjustingOpeningDays adjustingOpeningDays) {
-    if (libraryIsOpenPredicate.test(requestedDate, adjustingOpeningDays)) {
-      return requestedDate;
+  public DateTime calculateDueDate(DateTime requestedDate, AdjustingOpeningDays openingDays) {
+    Objects.requireNonNull(openingDays);
+    if (openingDays.getRequestedDay().getOpen()) {
+      return requestedDate.withZone(zone).withTime(END_OF_A_DAY);
     }
-    OpeningDay prevDayPeriod = adjustingOpeningDays.getPreviousDay();
-    return ClosedLibraryStrategyUtils.getTermDueDate(prevDayPeriod, zone);
+    OpeningDay previousDay = openingDays.getPreviousDay();
+    LocalDate localDate = previousDay.getDate(), DATE_TIME_FORMATTER;
+    return localDate.toDateTime(END_OF_A_DAY, zone);
   }
 }

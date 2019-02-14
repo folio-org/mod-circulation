@@ -10,7 +10,7 @@ import org.joda.time.LocalDate;
 import org.joda.time.LocalTime;
 
 import java.util.List;
-import java.util.function.BiPredicate;
+import java.util.Objects;
 
 import static org.folio.circulation.support.PeriodUtil.getStartAndEndTime;
 import static org.folio.circulation.support.PeriodUtil.getTimeShift;
@@ -20,39 +20,31 @@ import static org.folio.circulation.support.PeriodUtil.isInPeriodOpeningDay;
 public class EndOfCurrentHoursStrategy implements ClosedLibraryStrategy {
 
   private final int duration;
-  private final DateTime loanDate;
+  private final DateTime startDate;
   private final LoanPolicyPeriod loanPeriod;
-  private final BiPredicate<DateTime, AdjustingOpeningDays> libraryIsOpenPredicate;
   private final DateTimeZone zone;
 
   public EndOfCurrentHoursStrategy(
-    LoanPolicyPeriod loanPeriod, int duration, DateTime loanDate,
-    BiPredicate<DateTime, AdjustingOpeningDays> libraryIsOpenPredicate, DateTimeZone zone) {
+    LoanPolicyPeriod loanPeriod, int duration,
+    DateTime startDate, DateTimeZone zone) {
     this.loanPeriod = loanPeriod;
     this.duration = duration;
-    this.loanDate = loanDate;
-    this.libraryIsOpenPredicate = libraryIsOpenPredicate;
+    this.startDate = startDate;
     this.zone = zone;
   }
 
   @Override
-  public DateTime calculateDueDate(DateTime requestedDate, AdjustingOpeningDays adjustingOpeningDays) {
-    if (libraryIsOpenPredicate.test(requestedDate, adjustingOpeningDays)) {
-      return requestedDate;
-    }
-    return getShortTermDueDateEndCurrentHours(adjustingOpeningDays);
-  }
-
-  private DateTime getShortTermDueDateEndCurrentHours(AdjustingOpeningDays adjustingOpeningDays) {
-    OpeningDay prevOpeningDay = adjustingOpeningDays.getPreviousDay();
-    OpeningDay currentOpeningDay = adjustingOpeningDays.getRequestedDay();
+  public DateTime calculateDueDate(DateTime requestedDate, AdjustingOpeningDays openingDays) {
+    Objects.requireNonNull(openingDays);
+    OpeningDay prevOpeningDay = openingDays.getPreviousDay();
+    OpeningDay currentOpeningDay = openingDays.getRequestedDay();
 
     if (!currentOpeningDay.getOpen()) {
-      return ClosedLibraryStrategyUtils.getTermDueDate(prevOpeningDay, zone);
+      return ClosedLibraryStrategyUtils.getLatestClosingHours(prevOpeningDay, zone);
     }
 
-    LocalDate dateOfCurrentDay = LocalDate.parse(currentOpeningDay.getDate(), ClosedLibraryStrategyUtils.DATE_TIME_FORMATTER);
-    LocalTime timeOfCurrentDay = loanDate.toLocalTime();
+    LocalDate dateOfCurrentDay = currentOpeningDay.getDate();
+    LocalTime timeOfCurrentDay = startDate.toLocalTime();
     LocalTime timeShift = getTimeShift(timeOfCurrentDay, loanPeriod, duration);
 
     if (isDateTimeWithDurationInsideDay(currentOpeningDay, timeShift)) {
@@ -88,7 +80,7 @@ public class EndOfCurrentHoursStrategy implements ClosedLibraryStrategy {
     }
 
     if (timeShift.isBefore(startTime)) {
-      LocalDate dateOfPrevDay = LocalDate.parse(prevOpeningDay.getDate(), ClosedLibraryStrategyUtils.DATE_TIME_FORMATTER);
+      LocalDate dateOfPrevDay = prevOpeningDay.getDate();
       LocalTime prevEndTime = getStartAndEndTime(prevOpeningDay.getOpeningHour())[1];
       return dateOfPrevDay.toDateTime(prevEndTime, zone);
     }

@@ -5,7 +5,6 @@ import org.folio.circulation.domain.OpeningHour;
 import org.folio.circulation.domain.policy.LoanPolicyPeriod;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
-
 import org.joda.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -23,15 +22,14 @@ public class PeriodUtil {
   public static boolean isInPeriodOpeningDay(List<OpeningHour> openingHoursList, LocalTime timeShift) {
     return openingHoursList.stream()
       .anyMatch(hours -> isTimeInCertainPeriod(timeShift,
-        LocalTime.parse(hours.getStartTime()), LocalTime.parse(hours.getEndTime())));
+        hours.getStartTime(), hours.getEndTime()));
   }
 
   /**
    * Determine whether the `time` is within a period `startTime` and `endTime`
    */
   private static boolean isTimeInCertainPeriod(LocalTime time, LocalTime startTime, LocalTime endTime) {
-    return (time.isAfter(startTime) && time.isBefore(endTime))
-      || (time.equals(startTime) || time.equals(endTime));
+    return !time.isBefore(startTime) && !time.isAfter(endTime);
   }
 
   /**
@@ -58,12 +56,12 @@ public class PeriodUtil {
    * The method allows to determine the boundary values ​​of the day period.
    */
   public static LocalTime[] getStartAndEndTime(List<OpeningHour> openingHours) {
-    List<String> collect = openingHours.stream()
+    List<LocalTime> openCloseTimeList = openingHours.stream()
       .flatMap(hours -> Stream.of(hours.getStartTime(), hours.getEndTime()))
       .collect(Collectors.toList());
 
-    LocalTime startTime = LocalTime.parse(collect.get(0));
-    LocalTime endTime = LocalTime.parse(collect.get(collect.size() - 1));
+    LocalTime startTime = openCloseTimeList.get(0);
+    LocalTime endTime = (openCloseTimeList.get(openCloseTimeList.size() - 1));
     return new LocalTime[]{startTime, endTime};
   }
 

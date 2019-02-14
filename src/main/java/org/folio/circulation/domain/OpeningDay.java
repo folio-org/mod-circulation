@@ -2,7 +2,9 @@ package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import org.apache.commons.lang3.StringUtils;
+import org.joda.time.LocalDate;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,28 +17,31 @@ public class OpeningDay {
   private static final String ALL_DAY_KEY = "allDay";
   private static final String OPEN_KEY = "open";
   private static final String OPENING_HOUR_KEY = "openingHour";
+  private static final String DATE_TIME_FORMAT = "yyyy-MM-dd'Z'";
+  private static final DateTimeFormatter DATE_TIME_FORMATTER =
+    DateTimeFormat.forPattern(DATE_TIME_FORMAT);
 
   private List<OpeningHour> openingHour;
-  private String date;
+  private LocalDate date;
   private boolean allDay;
   private boolean open;
 
   OpeningDay(JsonObject jsonObject, String key) {
     JsonObject openingDayJson = jsonObject.getJsonObject(key);
-    this.date = StringUtils.defaultIfBlank(openingDayJson.getString(DATE_KEY), StringUtils.EMPTY);
+    this.date = LocalDate.parse(openingDayJson.getString(DATE_KEY), DATE_TIME_FORMATTER);
     this.allDay = openingDayJson.getBoolean(ALL_DAY_KEY, false);
     this.open = openingDayJson.getBoolean(OPEN_KEY, false);
     this.openingHour = fillOpeningDay(openingDayJson);
   }
 
-  private OpeningDay(List<OpeningHour> openingHour, String date, boolean allDay, boolean open) {
+  private OpeningDay(List<OpeningHour> openingHour, LocalDate date, boolean allDay, boolean open) {
     this.openingHour = openingHour;
     this.date = date;
     this.allDay = allDay;
     this.open = open;
   }
 
-  public static OpeningDay createOpeningDay(List<OpeningHour> openingHour, String date, boolean allDay, boolean open) {
+  public static OpeningDay createOpeningDay(List<OpeningHour> openingHour, LocalDate date, boolean allDay, boolean open) {
     return new OpeningDay(openingHour, date, allDay, open);
   }
 
@@ -53,7 +58,7 @@ public class OpeningDay {
     return dayPeriods;
   }
 
-  public String getDate() {
+  public LocalDate getDate() {
     return date;
   }
 
@@ -77,7 +82,7 @@ public class OpeningDay {
 
   JsonObject toJson() {
     return new JsonObject()
-      .put(DATE_KEY, date)
+      .put(DATE_KEY, DATE_TIME_FORMATTER.print(date))
       .put(ALL_DAY_KEY, allDay)
       .put(OPEN_KEY, open)
       .put(OPENING_HOUR_KEY, openingHourToJsonArray());

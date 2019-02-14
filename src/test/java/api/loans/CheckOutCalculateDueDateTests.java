@@ -33,7 +33,6 @@ import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_DAY_ALL_SER
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.CASE_WED_THU_FRI_SERVICE_POINT_ID;
-import static api.support.fixtures.CalendarExamples.END_TIME_SECOND_PERIOD;
 import static api.support.fixtures.CalendarExamples.FRIDAY_DATE;
 import static api.support.fixtures.CalendarExamples.WEDNESDAY_DATE;
 import static api.support.fixtures.CalendarExamples.getCurrentAndNextFakeOpeningDayByServId;
@@ -49,7 +48,6 @@ import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_BEGI
 import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY;
 import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY;
 import static org.folio.circulation.domain.policy.LoanPolicyPeriod.HOURS;
-import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.DATE_TIME_FORMATTER;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
 import static org.folio.circulation.support.PeriodUtil.isInPeriodOpeningDay;
 import static org.hamcrest.CoreMatchers.is;
@@ -80,7 +78,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    * Then the due date timestamp should remain unchanged from system calculated due date timestamp
    */
   @Test
-  public void testKeepCurrentDueDateLongTermLoans()
+  public void shouldKeepDueDateUntouchedWhenCalendarScheduleIsAbsent()
     throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -186,9 +184,8 @@ public class CheckOutCalculateDueDateTests extends APITests {
     assertThat(ERROR_MESSAGE_LOAN_POLICY,
       loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
 
-    DateTime expectedDate = LocalDate.parse(WEDNESDAY_DATE, DATE_TIME_FORMATTER)
-      .toDateTime(END_OF_A_DAY)
-      .withZoneRetainFields(DateTimeZone.UTC);
+    DateTime expectedDate =
+      WEDNESDAY_DATE.toDateTime(END_OF_A_DAY, DateTimeZone.UTC);
 
     assertThat(ERROR_MESSAGE_DUE_DATE + expectedDate,
       loan.getString(DUE_DATE_KEY), isEquivalentTo(expectedDate));
@@ -229,9 +226,8 @@ public class CheckOutCalculateDueDateTests extends APITests {
     assertThat(ERROR_MESSAGE_LOAN_POLICY,
       loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
 
-    DateTime expectedDate = LocalDate.parse(WEDNESDAY_DATE, DATE_TIME_FORMATTER)
-      .toDateTime(LocalTime.parse(END_TIME_SECOND_PERIOD))
-      .withZoneRetainFields(DateTimeZone.UTC);
+    DateTime expectedDate =
+      WEDNESDAY_DATE.toDateTime(END_OF_A_DAY, DateTimeZone.UTC);
 
     assertThat(ERROR_MESSAGE_DUE_DATE + expectedDate,
       loan.getString(DUE_DATE_KEY), isEquivalentTo(expectedDate));
@@ -272,9 +268,8 @@ public class CheckOutCalculateDueDateTests extends APITests {
     assertThat(ERROR_MESSAGE_LOAN_POLICY,
       loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
 
-    DateTime expectedDate = LocalDate.parse(FRIDAY_DATE, DATE_TIME_FORMATTER)
-      .toDateTime(END_OF_A_DAY)
-      .withZoneRetainFields(DateTimeZone.UTC);
+    DateTime expectedDate =
+      FRIDAY_DATE.toDateTime(END_OF_A_DAY, DateTimeZone.UTC);
 
     assertThat(ERROR_MESSAGE_DUE_DATE + expectedDate,
       loan.getString(DUE_DATE_KEY), isEquivalentTo(expectedDate));
@@ -315,9 +310,8 @@ public class CheckOutCalculateDueDateTests extends APITests {
     assertThat(ERROR_MESSAGE_LOAN_POLICY,
       loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
 
-    DateTime expectedDate = LocalDate.parse(FRIDAY_DATE, DATE_TIME_FORMATTER)
-      .toDateTime(LocalTime.parse(END_TIME_SECOND_PERIOD))
-      .withZoneRetainFields(DateTimeZone.UTC);
+    DateTime expectedDate =
+      FRIDAY_DATE.toDateTime(END_OF_A_DAY, DateTimeZone.UTC);
 
     assertThat(ERROR_MESSAGE_DUE_DATE + expectedDate,
       loan.getString(DUE_DATE_KEY), isEquivalentTo(expectedDate));
@@ -522,8 +516,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     int duration = 5;
 
     List<OpeningDayPeriod> openingDays = getCurrentAndNextFakeOpeningDayByServId(servicePointId);
-    String currentDate = openingDays.get(1).getOpeningDay().getDate();
-    LocalDate localDate = LocalDate.parse(currentDate, DATE_TIME_FORMATTER);
+    LocalDate localDate = openingDays.get(1).getOpeningDay().getDate();
     DateTime dateTime = localDate.toDateTime(LocalTime.MIDNIGHT);
     DateTime expectedDueDate = dateTime.withZoneRetainFields(DateTimeZone.UTC);
 
@@ -800,15 +793,14 @@ public class CheckOutCalculateDueDateTests extends APITests {
       actualDueDate.compareTo(thresholdDateTime) == 0);
   }
 
-  private DateTime findDateTimeInPeriod(OpeningDayPeriod currentDayPeriod, LocalTime offsetTime, String currentDate) {
+  private DateTime findDateTimeInPeriod(OpeningDayPeriod currentDayPeriod, LocalTime offsetTime, LocalDate currentDate) {
     List<OpeningHour> openingHoursList = currentDayPeriod.getOpeningDay().getOpeningHour();
 
-    LocalDate localDate = LocalDate.parse(currentDate, DATE_TIME_FORMATTER);
     boolean isInPeriod = false;
     LocalTime newOffsetTime = null;
     for (int i = 0; i < openingHoursList.size() - 1; i++) {
-      LocalTime startTimeFirst = LocalTime.parse(openingHoursList.get(i).getStartTime());
-      LocalTime startTimeSecond = LocalTime.parse(openingHoursList.get(i + 1).getStartTime());
+      LocalTime startTimeFirst = openingHoursList.get(i).getStartTime();
+      LocalTime startTimeSecond = openingHoursList.get(i + 1).getStartTime();
       if (offsetTime.isAfter(startTimeFirst) && offsetTime.isBefore(startTimeSecond)) {
         isInPeriod = true;
         newOffsetTime = startTimeSecond;
@@ -819,7 +811,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     }
 
     LocalTime localTime = Objects.isNull(newOffsetTime) ? offsetTime.withMinuteOfHour(0) : newOffsetTime;
-    return localDate.toDateTime(isInPeriod ? localTime : offsetTime).withZoneRetainFields(DateTimeZone.UTC);
+    return currentDate.toDateTime(isInPeriod ? localTime : offsetTime).withZoneRetainFields(DateTimeZone.UTC);
   }
 
   private DateTime getStartDateTimeOpeningDayRollover(List<OpeningDayPeriod> openingDays, String interval, int duration) {
@@ -832,81 +824,75 @@ public class CheckOutCalculateDueDateTests extends APITests {
         return dateTime.withZoneRetainFields(DateTimeZone.UTC);
       } else {
         LocalTime offsetTime = LocalTime.now(DateTimeZone.UTC).plusHours(duration);
-        String currentDate = currentDayPeriod.getOpeningDay().getDate();
+        LocalDate currentDate = currentDayPeriod.getOpeningDay().getDate();
 
         if (isInPeriodOpeningDay(currentDayPeriod.getOpeningDay().getOpeningHour(), offsetTime)) {
           return findDateTimeInPeriod(currentDayPeriod, offsetTime, currentDate);
         } else {
           OpeningDay nextOpeningDay = nextDayPeriod.getOpeningDay();
-          String nextDate = nextOpeningDay.getDate();
-          LocalDate localDate = LocalDate.parse(nextDate, DATE_TIME_FORMATTER);
+          LocalDate localDate = nextOpeningDay.getDate();
 
           if (nextOpeningDay.getAllDay()) {
             return localDate.toDateTime(LocalTime.MIDNIGHT).withZoneRetainFields(DateTimeZone.UTC);
           } else {
             OpeningHour openingHour = nextOpeningDay.getOpeningHour().get(0);
-            LocalTime startTime = LocalTime.parse(openingHour.getStartTime());
+            LocalTime startTime = openingHour.getStartTime();
             return localDate.toDateTime(startTime).withZoneRetainFields(DateTimeZone.UTC);
           }
         }
       }
     } else {
       OpeningDay currentOpeningDay = currentDayPeriod.getOpeningDay();
-      String currentDate = currentOpeningDay.getDate();
+      LocalDate currentDate = currentOpeningDay.getDate();
 
       if (currentOpeningDay.getOpen()) {
         if (currentOpeningDay.getAllDay()) {
-          LocalDate currentLocalDate = LocalDate.parse(currentDate, DATE_TIME_FORMATTER);
-          DateTime currentEndDateTime = currentLocalDate.toDateTime(END_OF_A_DAY);
+          DateTime currentEndDateTime = currentDate.toDateTime(END_OF_A_DAY);
           DateTime offsetDateTime =
-            currentLocalDate.toDateTime(LocalTime.now(DateTimeZone.UTC))
+            currentDate.toDateTime(LocalTime.now(DateTimeZone.UTC))
               .plusMinutes(duration);
 
           if (isInCurrentDateTime(currentEndDateTime, offsetDateTime)) {
             return new DateTime(offsetDateTime.toString()).withZoneRetainFields(DateTimeZone.UTC);
           } else {
             OpeningDay nextOpeningDay = nextDayPeriod.getOpeningDay();
-            String nextDate = nextOpeningDay.getDate();
-            LocalDate localDate = LocalDate.parse(nextDate, DATE_TIME_FORMATTER);
+            LocalDate nextDate = nextOpeningDay.getDate();
 
             if (nextOpeningDay.getAllDay()) {
-              return localDate.toDateTime(LocalTime.MIDNIGHT).withZoneRetainFields(DateTimeZone.UTC);
+              return nextDate.toDateTime(LocalTime.MIDNIGHT).withZoneRetainFields(DateTimeZone.UTC);
             } else {
               OpeningHour openingHour = nextOpeningDay.getOpeningHour().get(0);
-              LocalTime startTime = LocalTime.parse(openingHour.getStartTime());
-              return localDate.toDateTime(startTime).withZoneRetainFields(DateTimeZone.UTC);
+              LocalTime startTime = openingHour.getStartTime();
+              return nextDate.toDateTime(startTime).withZoneRetainFields(DateTimeZone.UTC);
             }
           }
         } else {
           LocalTime offsetTime = LocalTime.now(DateTimeZone.UTC).plusMinutes(duration);
           if (isInPeriodOpeningDay(currentOpeningDay.getOpeningHour(), offsetTime)) {
-            LocalDate localDate = LocalDate.parse(currentDate, DATE_TIME_FORMATTER);
-            return localDate.toDateTime(offsetTime).withZoneRetainFields(DateTimeZone.UTC);
+            return currentDate.toDateTime(offsetTime).withZoneRetainFields(DateTimeZone.UTC);
           } else {
             OpeningDay nextOpeningDay = nextDayPeriod.getOpeningDay();
-            String nextDate = nextOpeningDay.getDate();
-            LocalDate localDate = LocalDate.parse(nextDate, DATE_TIME_FORMATTER);
+            LocalDate nextDate = nextOpeningDay.getDate();
 
             if (nextOpeningDay.getAllDay()) {
-              return localDate.toDateTime(LocalTime.MIDNIGHT).withZoneRetainFields(DateTimeZone.UTC);
+              return nextDate.toDateTime(LocalTime.MIDNIGHT).withZoneRetainFields(DateTimeZone.UTC);
             } else {
               OpeningHour openingHour = nextOpeningDay.getOpeningHour().get(0);
-              LocalTime startTime = LocalTime.parse(openingHour.getStartTime());
-              return localDate.toDateTime(startTime).withZoneRetainFields(DateTimeZone.UTC);
+              LocalTime startTime = openingHour.getStartTime();
+              return nextDate.toDateTime(startTime).withZoneRetainFields(DateTimeZone.UTC);
             }
           }
         }
       } else {
         OpeningDay nextOpeningDay = nextDayPeriod.getOpeningDay();
-        String nextDate = nextOpeningDay.getDate();
-        LocalDate nextLocalDate = LocalDate.parse(nextDate, DATE_TIME_FORMATTER);
+        LocalDate nextDate = nextOpeningDay.getDate();
 
         if (nextOpeningDay.getAllDay()) {
-          return nextLocalDate.toDateTime(LocalTime.MIDNIGHT).withZoneRetainFields(DateTimeZone.UTC);
+          return nextDate.toDateTime(LocalTime.MIDNIGHT).withZoneRetainFields(DateTimeZone.UTC);
         }
         OpeningHour openingHour = nextOpeningDay.getOpeningHour().get(0);
-        LocalTime startTime = LocalTime.parse(openingHour.getStartTime());
-        return nextLocalDate.toDateTime(startTime).withZoneRetainFields(DateTimeZone.UTC);
+        LocalTime startTime = openingHour.getStartTime();
+        return nextDate.toDateTime(startTime).withZoneRetainFields(DateTimeZone.UTC);
       }
     }
   }
@@ -921,40 +907,25 @@ public class CheckOutCalculateDueDateTests extends APITests {
   }
 
   private DateTime getEndDateTimeOpeningDay(OpeningDay openingDay) {
-    boolean allDay = openingDay.getAllDay();
-    String date = openingDay.getDate();
-    LocalDate localDate = LocalDate.parse(date, DATE_TIME_FORMATTER);
-
-    if (allDay) {
-      return getDateTimeOfEndDay(localDate);
-    } else {
-      List<OpeningHour> openingHours = openingDay.getOpeningHour();
-
-      if (openingHours.isEmpty()) {
-        return getDateTimeOfEndDay(localDate);
-      }
-      OpeningHour openingHour = openingHours.get(openingHours.size() - 1);
-      LocalTime localTime = LocalTime.parse(openingHour.getEndTime());
-      return localDate.toDateTime(localTime).withZoneRetainFields(DateTimeZone.UTC);
-    }
+    LocalDate date = openingDay.getDate();
+    return date.toDateTime(END_OF_A_DAY, DateTimeZone.UTC);
   }
 
   private DateTime getStartDateTimeOpeningDay(OpeningDay openingDay) {
     boolean allDay = openingDay.getAllDay();
-    String date = openingDay.getDate();
-    LocalDate localDate = LocalDate.parse(date, DATE_TIME_FORMATTER);
+    LocalDate date = openingDay.getDate();
 
     if (allDay) {
-      return getDateTimeOfStartDay(localDate);
+      return getDateTimeOfStartDay(date);
     } else {
       List<OpeningHour> openingHours = openingDay.getOpeningHour();
 
       if (openingHours.isEmpty()) {
-        return getDateTimeOfStartDay(localDate);
+        return getDateTimeOfStartDay(date);
       }
       OpeningHour openingHour = openingHours.get(0);
-      LocalTime localTime = LocalTime.parse(openingHour.getStartTime());
-      return localDate.toDateTime(localTime).withZoneRetainFields(DateTimeZone.UTC);
+      LocalTime localTime = openingHour.getStartTime();
+      return date.toDateTime(localTime).withZoneRetainFields(DateTimeZone.UTC);
     }
   }
 

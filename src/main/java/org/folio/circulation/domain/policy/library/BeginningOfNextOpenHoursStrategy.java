@@ -11,7 +11,7 @@ import org.joda.time.LocalDate;
 import org.joda.time.LocalTime;
 
 import java.util.List;
-import java.util.function.BiPredicate;
+import java.util.Objects;
 
 import static org.folio.circulation.support.PeriodUtil.getStartAndEndTime;
 import static org.folio.circulation.support.PeriodUtil.getTimeShift;
@@ -25,41 +25,42 @@ public class BeginningOfNextOpenHoursStrategy implements ClosedLibraryStrategy {
   private final int offsetDuration;
   private final LoanPolicyPeriod loanPeriod;
   private final DateTime startDate;
-  private final BiPredicate<DateTime, AdjustingOpeningDays> libraryIsOpenPredicate;
   private final DateTimeZone zone;
 
   public BeginningOfNextOpenHoursStrategy(
     LoanPolicyPeriod loanPeriod, int duration,
     LoanPolicyPeriod offsetInterval,
     int offsetDuration, DateTime startDate,
-    BiPredicate<DateTime, AdjustingOpeningDays> libraryIsOpenPredicate, DateTimeZone zone) {
+    DateTimeZone zone) {
     this.loanPeriod = loanPeriod;
     this.duration = duration;
     this.offsetInterval = offsetInterval;
     this.offsetDuration = offsetDuration;
     this.startDate = startDate;
-    this.libraryIsOpenPredicate = libraryIsOpenPredicate;
     this.zone = zone;
   }
 
   @Override
-  public DateTime calculateDueDate(DateTime requestedDate, AdjustingOpeningDays adjustingOpeningDays) {
-    if (libraryIsOpenPredicate.test(requestedDate, adjustingOpeningDays)) {
-      return requestedDate;
-    }
-    return getShortTermDueDateNextHours(adjustingOpeningDays);
-  }
-
-  private DateTime getShortTermDueDateNextHours(AdjustingOpeningDays openingDays) {
+  public DateTime calculateDueDate(DateTime requestedDate, AdjustingOpeningDays openingDays) {
+    Objects.requireNonNull(openingDays);
     OpeningDay prevOpeningDay = openingDays.getPreviousDay();
     OpeningDay currentOpeningDay = openingDays.getRequestedDay();
     OpeningDay nextOpeningDay = openingDays.getNextDay();
+
+
+    if (currentOpeningDay.getOpen()) {
+      if (currentOpeningDay.getAllDay()) {
+        return requestedDate;
+      }
+
+    }
+
 
     if (!currentOpeningDay.getOpen()) {
       return getDateTimeNextOrPrevOpeningDay(prevOpeningDay, nextOpeningDay);
     }
 
-    LocalDate dateOfCurrentDay = LocalDate.parse(currentOpeningDay.getDate(), ClosedLibraryStrategyUtils.DATE_TIME_FORMATTER);
+    LocalDate dateOfCurrentDay = currentOpeningDay.getDate();
     LocalTime timeOfCurrentDay = startDate.toLocalTime();
     LocalTime timeShift = getTimeShift(timeOfCurrentDay, loanPeriod, duration);
 
@@ -75,9 +76,10 @@ public class BeginningOfNextOpenHoursStrategy implements ClosedLibraryStrategy {
       return getStartDateTimeOfOpeningDay(currentOpeningDay, dateOfCurrentDay);
     }
 
-    LocalDate dateOfNextDay = LocalDate.parse(nextOpeningDay.getDate(), ClosedLibraryStrategyUtils.DATE_TIME_FORMATTER);
+    LocalDate dateOfNextDay = nextOpeningDay.getDate();
     return getStartDateTimeOfOpeningDay(nextOpeningDay, dateOfNextDay);
   }
+
 
   /**
    * Get `dateTime` of the next day or the previous one if the next day is closed
@@ -92,7 +94,7 @@ public class BeginningOfNextOpenHoursStrategy implements ClosedLibraryStrategy {
   }
 
   private DateTime getDateTimeOfOpeningDay(OpeningDay openingDay) {
-    LocalDate date = LocalDate.parse(openingDay.getDate(), ClosedLibraryStrategyUtils.DATE_TIME_FORMATTER);
+    LocalDate date = openingDay.getDate();
     return getStartDateTimeOfOpeningDay(openingDay, date);
   }
 
@@ -105,7 +107,7 @@ public class BeginningOfNextOpenHoursStrategy implements ClosedLibraryStrategy {
     }
 
     List<OpeningHour> openingHoursList = openingDay.getOpeningHour();
-    LocalTime startTime = LocalTime.parse(openingHoursList.get(0).getStartTime());
+    LocalTime startTime = openingHoursList.get(0).getStartTime();
     return calculateOffset(openingDay, date, startTime);
   }
 
@@ -186,8 +188,8 @@ public class BeginningOfNextOpenHoursStrategy implements ClosedLibraryStrategy {
    */
   private LocalTime findStartTimeOfOpeningPeriod(List<OpeningHour> openingHoursList, LocalTime time) {
     for (int i = 0; i < openingHoursList.size() - 1; i++) {
-      LocalTime startTimeFirst = LocalTime.parse(openingHoursList.get(i).getStartTime());
-      LocalTime startTimeSecond = LocalTime.parse(openingHoursList.get(i + 1).getStartTime());
+      LocalTime startTimeFirst = openingHoursList.get(i).getStartTime();
+      LocalTime startTimeSecond = openingHoursList.get(i + 1).getStartTime();
       if (time.isAfter(startTimeFirst) && time.isBefore(startTimeSecond)) {
         return startTimeSecond;
       }

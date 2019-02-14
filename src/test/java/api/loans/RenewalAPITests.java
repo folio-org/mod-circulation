@@ -17,7 +17,6 @@ import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
-import org.joda.time.LocalTime;
 import org.joda.time.Seconds;
 import org.junit.Test;
 
@@ -47,7 +46,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static java.net.HttpURLConnection.HTTP_OK;
-import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.DATE_TIME_FORMATTER;
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -825,9 +824,8 @@ abstract class RenewalAPITests extends APITests {
     JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
 
     DateTime expectedDate =
-      DateTime.parse(CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY, DATE_TIME_FORMATTER)
-        .withTime(LocalTime.parse(END_TIME_SECOND_PERIOD))
-        .withZoneRetainFields(DateTimeZone.UTC);
+      CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY
+        .toDateTime(END_OF_A_DAY, DateTimeZone.UTC);
     assertThat("due date should be " + expectedDate,
       renewedLoan.getString("dueDate"), isEquivalentTo(expectedDate));
   }
@@ -874,9 +872,8 @@ abstract class RenewalAPITests extends APITests {
     JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
 
     DateTime expectedDate =
-      DateTime.parse(CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY, DATE_TIME_FORMATTER)
-        .withTime(LocalTime.parse(END_TIME_SECOND_PERIOD))
-        .withZoneRetainFields(DateTimeZone.UTC);
+      CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY
+        .toDateTime(END_OF_A_DAY, DateTimeZone.UTC);
     assertThat("due date should be " + expectedDate,
       renewedLoan.getString("dueDate"), isEquivalentTo(expectedDate));
   }
@@ -921,9 +918,8 @@ abstract class RenewalAPITests extends APITests {
     JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
 
     DateTime expectedDate =
-      DateTime.parse(CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY, DATE_TIME_FORMATTER)
-        .withTime(LocalTime.parse(START_TIME_FIRST_PERIOD))
-        .withZoneRetainFields(DateTimeZone.UTC);
+      CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY
+        .toDateTime(START_TIME_FIRST_PERIOD, DateTimeZone.UTC);
     assertThat("due date should be " + expectedDate,
       renewedLoan.getString("dueDate"), isEquivalentTo(expectedDate));
   }
@@ -970,9 +966,8 @@ abstract class RenewalAPITests extends APITests {
     JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
 
     DateTime expectedDate =
-      DateTime.parse(WEDNESDAY_DATE, DATE_TIME_FORMATTER)
-        .withTime(LocalTime.parse(END_TIME_SECOND_PERIOD))
-        .withZoneRetainFields(DateTimeZone.UTC);
+      WEDNESDAY_DATE
+        .toDateTime(END_TIME_SECOND_PERIOD, DateTimeZone.UTC);
     assertThat("due date should be " + expectedDate,
       renewedLoan.getString("dueDate"), isEquivalentTo(expectedDate));
   }

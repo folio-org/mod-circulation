@@ -5,6 +5,5 @@ import org.joda.time.DateTime;
 
 public interface ClosedLibraryStrategy {
 
-  DateTime calculateDueDate(DateTime requestedDate, AdjustingOpeningDays adjustingOpeningDays);
-
+  DateTime calculateDueDate(DateTime requestedDate, AdjustingOpeningDays openingDays);
 }

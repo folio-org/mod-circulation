@@ -44,7 +44,7 @@ public class DetermineClosedLibraryStrategyTest {
   @Parameterized.Parameters
   public static List<Object[]> data() {
     List<Object[]> data = new ArrayList<>();
-    data.add(new Object[]{DueDateManagement.KEEP_THE_CURRENT_DUE_DATE, KeepCurrentStrategy.class});
+    data.add(new Object[]{DueDateManagement.KEEP_THE_CURRENT_DUE_DATE, KeepCurrentDateStrategy.class});
     data.add(new Object[]{DueDateManagement.MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY, EndOfPreviousDayStrategy.class});
     data.add(new Object[]{DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY, EndOfNextOpenDayStrategy.class});
     data.add(new Object[]{DueDateManagement.MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS, EndOfCurrentHoursStrategy.class});
