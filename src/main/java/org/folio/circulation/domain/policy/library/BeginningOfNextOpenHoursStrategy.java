@@ -5,41 +5,49 @@ import org.folio.circulation.domain.OpeningDay;
 import org.folio.circulation.domain.OpeningHour;
 import org.folio.circulation.domain.policy.LoanPolicyPeriod;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.joda.time.Hours;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalTime;
 
 import java.util.List;
+import java.util.function.BiPredicate;
 
 import static org.folio.circulation.support.PeriodUtil.getStartAndEndTime;
 import static org.folio.circulation.support.PeriodUtil.getTimeShift;
 import static org.folio.circulation.support.PeriodUtil.isDateTimeWithDurationInsideDay;
 import static org.folio.circulation.support.PeriodUtil.isInPeriodOpeningDay;
 
-public class StartOfNextOpenHoursStrategy extends ClosedLibraryStrategy {
+public class BeginningOfNextOpenHoursStrategy implements ClosedLibraryStrategy {
 
   private final int duration;
   private final LoanPolicyPeriod offsetInterval;
   private final int offsetDuration;
-  private LoanPolicyPeriod loanPeriod;
-  private DateTime startDate;
+  private final LoanPolicyPeriod loanPeriod;
+  private final DateTime startDate;
+  private final BiPredicate<DateTime, AdjustingOpeningDays> libraryIsOpenPredicate;
+  private final DateTimeZone zone;
 
-  public StartOfNextOpenHoursStrategy(
+  public BeginningOfNextOpenHoursStrategy(
     LoanPolicyPeriod loanPeriod, int duration,
     LoanPolicyPeriod offsetInterval,
-    int offsetDuration, DateTime startDate) {
-    super(loanPeriod);
+    int offsetDuration, DateTime startDate,
+    BiPredicate<DateTime, AdjustingOpeningDays> libraryIsOpenPredicate, DateTimeZone zone) {
     this.loanPeriod = loanPeriod;
     this.duration = duration;
     this.offsetInterval = offsetInterval;
     this.offsetDuration = offsetDuration;
     this.startDate = startDate;
+    this.libraryIsOpenPredicate = libraryIsOpenPredicate;
+    this.zone = zone;
   }
 
   @Override
-  protected DateTime calculateIfClosed(DateTime requestedDate, AdjustingOpeningDays adjustingOpeningDays) {
-    DateTime dateTimeNextPoint = getShortTermDueDateNextHours(adjustingOpeningDays);
-    return calculateNewInitialDueDate(dateTimeNextPoint);
+  public DateTime calculateDueDate(DateTime requestedDate, AdjustingOpeningDays adjustingOpeningDays) {
+    if (libraryIsOpenPredicate.test(requestedDate, adjustingOpeningDays)) {
+      return requestedDate;
+    }
+    return getShortTermDueDateNextHours(adjustingOpeningDays);
   }
 
   private DateTime getShortTermDueDateNextHours(AdjustingOpeningDays openingDays) {
@@ -51,7 +59,7 @@ public class StartOfNextOpenHoursStrategy extends ClosedLibraryStrategy {
       return getDateTimeNextOrPrevOpeningDay(prevOpeningDay, nextOpeningDay);
     }
 
-    LocalDate dateOfCurrentDay = LocalDate.parse(currentOpeningDay.getDate(), DATE_TIME_FORMATTER);
+    LocalDate dateOfCurrentDay = LocalDate.parse(currentOpeningDay.getDate(), ClosedLibraryStrategyUtils.DATE_TIME_FORMATTER);
     LocalTime timeOfCurrentDay = startDate.toLocalTime();
     LocalTime timeShift = getTimeShift(timeOfCurrentDay, loanPeriod, duration);
 
@@ -67,7 +75,7 @@ public class StartOfNextOpenHoursStrategy extends ClosedLibraryStrategy {
       return getStartDateTimeOfOpeningDay(currentOpeningDay, dateOfCurrentDay);
     }
 
-    LocalDate dateOfNextDay = LocalDate.parse(nextOpeningDay.getDate(), DATE_TIME_FORMATTER);
+    LocalDate dateOfNextDay = LocalDate.parse(nextOpeningDay.getDate(), ClosedLibraryStrategyUtils.DATE_TIME_FORMATTER);
     return getStartDateTimeOfOpeningDay(nextOpeningDay, dateOfNextDay);
   }
 
@@ -84,7 +92,7 @@ public class StartOfNextOpenHoursStrategy extends ClosedLibraryStrategy {
   }
 
   private DateTime getDateTimeOfOpeningDay(OpeningDay openingDay) {
-    LocalDate date = LocalDate.parse(openingDay.getDate(), DATE_TIME_FORMATTER);
+    LocalDate date = LocalDate.parse(openingDay.getDate(), ClosedLibraryStrategyUtils.DATE_TIME_FORMATTER);
     return getStartDateTimeOfOpeningDay(openingDay, date);
   }
 
@@ -108,12 +116,12 @@ public class StartOfNextOpenHoursStrategy extends ClosedLibraryStrategy {
   private DateTime getDateTimeInsideOpeningDay(OpeningDay openingDay, LocalDate date,
                                                LocalTime timeShift) {
     if (openingDay.getAllDay()) {
-      return dateTimeWrapper(date.toDateTime(timeShift));
+      return date.toDateTime(timeShift, zone);
     }
 
     List<OpeningHour> openingHoursList = openingDay.getOpeningHour();
     if (isInPeriodOpeningDay(openingHoursList, timeShift)) {
-      return dateTimeWrapper(date.toDateTime(timeShift));
+      return date.toDateTime(timeShift, zone);
     }
 
     LocalTime startTimeOfNextPeriod = findStartTimeOfOpeningPeriod(openingHoursList, timeShift);
@@ -126,26 +134,26 @@ public class StartOfNextOpenHoursStrategy extends ClosedLibraryStrategy {
    */
   private DateTime calculateOffset(OpeningDay openingDay, LocalDate date, LocalTime time) {
 
-    DateTime dateTime = date.toDateTime(time);
+    DateTime dateTime = date.toDateTime(time, zone);
     List<OpeningHour> openingHours = openingDay.getOpeningHour();
     int offset = determineOffsetDurationWithinDay(dateTime);
     switch (offsetInterval) {
       case HOURS:
         if (openingDay.getAllDay()) {
-          return dateTimeWrapper(dateTime.plusHours(offset));
+          return dateTime.plusHours(offset);
         }
 
         LocalTime offsetTime = time.plusHours(offset);
         return getDateTimeOffsetInPeriod(openingHours, date, offsetTime);
       case MINUTES:
         if (openingDay.getAllDay()) {
-          return dateTimeWrapper(dateTime.plusMinutes(offset));
+          return dateTime.plusMinutes(offset);
         }
 
         offsetTime = time.plusMinutes(offset);
         return getDateTimeOffsetInPeriod(openingHours, date, offsetTime);
       default:
-        return dateTimeWrapper(dateTime);
+        return dateTime;
     }
   }
 
@@ -161,16 +169,16 @@ public class StartOfNextOpenHoursStrategy extends ClosedLibraryStrategy {
     LocalDate offsetDate = dateTime.plusHours(offsetDuration).toLocalDate();
     return date.isEqual(offsetDate)
       ? offsetDuration
-      : Hours.hoursBetween(time, END_OF_A_DAY).getHours();
+      : Hours.hoursBetween(time, ClosedLibraryStrategyUtils.END_OF_A_DAY).getHours();
   }
 
   private DateTime getDateTimeOffsetInPeriod(List<OpeningHour> openingHour, LocalDate date, LocalTime offsetTime) {
     if (isInPeriodOpeningDay(openingHour, offsetTime)) {
-      return dateTimeWrapper(date.toDateTime(offsetTime));
+      return date.toDateTime(offsetTime, zone);
     }
 
-    LocalTime endTimeOfPeriod = findEndTimeOfOpeningPeriod(openingHour, offsetTime);
-    return dateTimeWrapper(date.toDateTime(endTimeOfPeriod));
+    LocalTime endTimeOfPeriod = ClosedLibraryStrategyUtils.findEndTimeOfOpeningPeriod(openingHour, offsetTime);
+    return date.toDateTime(endTimeOfPeriod, zone);
   }
 
   /**

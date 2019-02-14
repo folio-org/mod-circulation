@@ -47,7 +47,7 @@ public class LoanPolicy {
     this.alternateRenewalFixedDueDateSchedules = alternateRenewalFixedDueDateSchedules;
   }
 
-  static LoanPolicy from(JsonObject representation) {
+  public static LoanPolicy from(JsonObject representation) {
     return new LoanPolicy(representation);
   }
 

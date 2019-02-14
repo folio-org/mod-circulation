@@ -16,7 +16,7 @@ public class OpeningHour {
     this.endTime = StringUtils.defaultIfBlank(jsonObject.getString(END_TIME_KEY), StringUtils.EMPTY);
   }
 
-  private OpeningHour(String startTime, String endTime) {
+  public OpeningHour(String startTime, String endTime) {
     this.startTime = startTime;
     this.endTime = endTime;
   }

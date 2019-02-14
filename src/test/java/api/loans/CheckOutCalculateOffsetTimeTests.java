@@ -36,8 +36,8 @@ import static api.support.fixtures.CalendarExamples.FRIDAY_DATE;
 import static api.support.fixtures.CalendarExamples.START_TIME_FIRST_PERIOD;
 import static api.support.fixtures.CalendarExamples.getFirstFakeOpeningDayByServId;
 import static api.support.fixtures.CalendarExamples.getLastFakeOpeningDayByServId;
-import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategy.DATE_TIME_FORMAT;
-import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategy.DATE_TIME_FORMATTER;
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.DATE_TIME_FORMAT;
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.DATE_TIME_FORMATTER;
 import static org.folio.circulation.support.PeriodUtil.isInPeriodOpeningDay;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -302,7 +302,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
     int offsetDuration = 1;
 
     LocalTime starTmeOfPeriod = LocalTime.parse(START_TIME_FIRST_PERIOD);
-    LocalTime timeNow = LocalTime.now(DateTimeZone.UTC);
+    LocalTime timeNow = new LocalTime(11, 0);
 
     // The value is calculated taking into account the transition to the next period
     if (timeNow.isAfter(starTmeOfPeriod)) {

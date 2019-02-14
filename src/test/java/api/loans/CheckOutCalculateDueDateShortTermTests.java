@@ -34,9 +34,9 @@ import static api.support.fixtures.CalendarExamples.END_TIME_SECOND_PERIOD;
 import static api.support.fixtures.CalendarExamples.START_TIME_FIRST_PERIOD;
 import static api.support.fixtures.CalendarExamples.WEDNESDAY_DATE;
 import static api.support.fixtures.CalendarExamples.getFirstFakeOpeningDayByServId;
-import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategy.DATE_TIME_FORMAT;
-import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategy.DATE_TIME_FORMATTER;
-import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategy.END_OF_A_DAY;
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.DATE_TIME_FORMAT;
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.DATE_TIME_FORMATTER;
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.joda.time.DateTimeConstants.HOURS_PER_DAY;
@@ -221,7 +221,7 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
     int duration;
 
     LocalTime starTmeOfPeriod = LocalTime.parse(START_TIME_FIRST_PERIOD);
-    LocalTime timeNow = LocalTime.now(DateTimeZone.UTC);
+    LocalTime timeNow = new LocalTime(11, 0);
 
     // The value is calculated taking into account the transition to the next period
     if (timeNow.isAfter(starTmeOfPeriod)) {
@@ -302,9 +302,8 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
   }
 
 
-  private DateTime getDateTimeZoneRetain(DateTime DateTime) {
-    return new DateTime(DateTime.toString())
-      .withZoneRetainFields(DateTimeZone.UTC);
+  private DateTime getDateTimeZoneRetain(DateTime dateTime) {
+    return dateTime.withZoneRetainFields(DateTimeZone.UTC);
   }
 
   private String createLoanPolicy(JsonObject loanPolicyEntry)

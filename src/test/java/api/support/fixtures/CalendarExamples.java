@@ -17,7 +17,7 @@ import static org.folio.circulation.domain.OpeningDay.createOpeningDay;
 import static org.folio.circulation.domain.OpeningDayPeriod.createDayPeriod;
 import static org.folio.circulation.domain.OpeningHour.createOpeningHour;
 import static org.folio.circulation.domain.Weekdays.createWeekdays;
-import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategy.DATE_TIME_FORMATTER;
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.DATE_TIME_FORMATTER;
 
 public class CalendarExamples {
 
@@ -39,7 +39,7 @@ public class CalendarExamples {
   public static final String FRIDAY_DATE = "2018-12-13Z";
 
   public static final String START_TIME_FIRST_PERIOD = "08:00";
-  private static final String END_TIME_FIRST_PERIOD = "12:00";
+  public static final String END_TIME_FIRST_PERIOD = "12:00";
 
   private static final String START_TIME_SECOND_PERIOD = "14:00";
   public static final String END_TIME_SECOND_PERIOD = "19:00";

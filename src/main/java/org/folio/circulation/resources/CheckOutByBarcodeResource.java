@@ -16,11 +16,9 @@ import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.policy.LoanPolicy;
-import org.folio.circulation.domain.policy.LoanPolicyPeriod;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategy;
-import org.folio.circulation.domain.policy.library.EndOfCurrentHoursStrategy;
-import org.folio.circulation.domain.policy.library.EndOfPreviousDayStrategy;
+import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
@@ -47,7 +45,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.policy.LoanPolicyPeriod.isShortTermLoans;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
@@ -168,9 +165,12 @@ public class CheckOutByBarcodeResource extends Resource {
     if (relatedRecords.getInitialDueDateDays() == null) {
       return HttpResult.succeeded(relatedRecords);
     }
+    //TODO replace with configured timezone
     ClosedLibraryStrategy strategy =
-      ClosedLibraryStrategy.determineClosedLibraryStrategy(
-        relatedRecords.getLoanPolicy(), relatedRecords.getLoan().getLoanDate());
+      ClosedLibraryStrategyUtils.determineClosedLibraryStrategy(
+        relatedRecords.getLoanPolicy(),
+        relatedRecords.getLoan().getLoanDate(),
+        DateTimeZone.UTC);
 
     DateTime dueDate = relatedRecords.getLoan().getDueDate();
     DateTime calculateDueDate =
@@ -181,12 +181,13 @@ public class CheckOutByBarcodeResource extends Resource {
   }
 
   private HttpResult<LoanAndRelatedRecords> applyFixedDueDateLimit(LoanAndRelatedRecords relatedRecords) {
+    if (relatedRecords.getFixedDueDateDays() == null) {
+      return HttpResult.succeeded(relatedRecords);
+    }
     final Loan loan = relatedRecords.getLoan();
     final LoanPolicy loanPolicy = relatedRecords.getLoanPolicy();
     final DateTime loanDate = relatedRecords.getLoan().getLoanDate();
     final DateTime dueDate = relatedRecords.getLoan().getDueDate();
-    final LoanPolicyPeriod periodInterval = loanPolicy.getPeriodInterval();
-    final int periodDuration = loanPolicy.getPeriodDuration();
 
     Optional<DateTime> optionalDueDateLimit = loanPolicy.getFixedDueDateSchedules()
       .findDueDateFor(loan.getLoanDate());
@@ -198,9 +199,10 @@ public class CheckOutByBarcodeResource extends Resource {
       return HttpResult.succeeded(relatedRecords);
     }
 
-    ClosedLibraryStrategy strategy = isShortTermLoans(periodInterval)
-      ? new EndOfCurrentHoursStrategy(periodInterval, periodDuration, loanDate)
-      : new EndOfPreviousDayStrategy(periodInterval);
+    //TODO replace with configured timezone
+    ClosedLibraryStrategy strategy =
+      ClosedLibraryStrategyUtils.determineStrategyForMovingBackward(
+        loanPolicy, loanDate, DateTimeZone.UTC);
     DateTime calculatedDate =
       strategy.calculateDueDate(dueDate, relatedRecords.getFixedDueDateDays());
     relatedRecords.getLoan().changeDueDate(calculatedDate);

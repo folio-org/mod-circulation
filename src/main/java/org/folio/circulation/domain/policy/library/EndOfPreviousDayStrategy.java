@@ -2,19 +2,30 @@ package org.folio.circulation.domain.policy.library;
 
 import org.folio.circulation.AdjustingOpeningDays;
 import org.folio.circulation.domain.OpeningDay;
-import org.folio.circulation.domain.policy.LoanPolicyPeriod;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
-public class EndOfPreviousDayStrategy extends ClosedLibraryStrategy {
+import java.util.function.BiPredicate;
 
-  public EndOfPreviousDayStrategy(LoanPolicyPeriod loanPeriod) {
-    super(loanPeriod);
+public class EndOfPreviousDayStrategy implements ClosedLibraryStrategy {
+
+  private final BiPredicate<DateTime, AdjustingOpeningDays> libraryIsOpenPredicate;
+  private final DateTimeZone zone;
+
+  public EndOfPreviousDayStrategy(
+    BiPredicate<DateTime, AdjustingOpeningDays> libraryIsOpenPredicate,
+    DateTimeZone zone) {
+    this.libraryIsOpenPredicate = libraryIsOpenPredicate;
+    this.zone = zone;
   }
 
   @Override
-  protected DateTime calculateIfClosed(DateTime requestedDate, AdjustingOpeningDays adjustingOpeningDays) {
+
+  public DateTime calculateDueDate(DateTime requestedDate, AdjustingOpeningDays adjustingOpeningDays) {
+    if (libraryIsOpenPredicate.test(requestedDate, adjustingOpeningDays)) {
+      return requestedDate;
+    }
     OpeningDay prevDayPeriod = adjustingOpeningDays.getPreviousDay();
-    DateTime prevDateTime = getTermDueDate(prevDayPeriod);
-    return calculateNewInitialDueDate(prevDateTime);
+    return ClosedLibraryStrategyUtils.getTermDueDate(prevDayPeriod, zone);
   }
 }

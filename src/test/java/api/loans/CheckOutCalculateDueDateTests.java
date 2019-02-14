@@ -49,8 +49,8 @@ import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_BEGI
 import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY;
 import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY;
 import static org.folio.circulation.domain.policy.LoanPolicyPeriod.HOURS;
-import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategy.DATE_TIME_FORMATTER;
-import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategy.END_OF_A_DAY;
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.DATE_TIME_FORMATTER;
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
 import static org.folio.circulation.support.PeriodUtil.isInPeriodOpeningDay;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -524,8 +524,8 @@ public class CheckOutCalculateDueDateTests extends APITests {
     List<OpeningDayPeriod> openingDays = getCurrentAndNextFakeOpeningDayByServId(servicePointId);
     String currentDate = openingDays.get(1).getOpeningDay().getDate();
     LocalDate localDate = LocalDate.parse(currentDate, DATE_TIME_FORMATTER);
-    DateTime DateTime = localDate.toDateTime(LocalTime.MIDNIGHT);
-    DateTime expectedDueDate = new DateTime(DateTime.toString()).withZoneRetainFields(DateTimeZone.UTC);
+    DateTime dateTime = localDate.toDateTime(LocalTime.MIDNIGHT);
+    DateTime expectedDueDate = dateTime.withZoneRetainFields(DateTimeZone.UTC);
 
     checkFixedDayOrTime(servicePointId, policyProfileName, MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS,
       duration, INTERVAL_HOURS, expectedDueDate, true);
@@ -828,8 +828,8 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     if (interval.equalsIgnoreCase(HOURS.name())) {
       if (currentDayPeriod.getOpeningDay().getAllDay()) {
-        DateTime DateTime = org.joda.time.DateTime.now(DateTimeZone.UTC).plusHours(duration);
-        return new DateTime(DateTime.toString()).withZoneRetainFields(DateTimeZone.UTC);
+        DateTime dateTime = org.joda.time.DateTime.now(DateTimeZone.UTC).plusHours(duration);
+        return dateTime.withZoneRetainFields(DateTimeZone.UTC);
       } else {
         LocalTime offsetTime = LocalTime.now(DateTimeZone.UTC).plusHours(duration);
         String currentDate = currentDayPeriod.getOpeningDay().getDate();
