@@ -339,7 +339,7 @@
             "circulation.rules.get"
           ],
           "modulePermissions": [
-            "circulation-storage.rules.get"
+            "circulation-storage.circulation-rules.get"
           ]
         },
         {
@@ -351,7 +351,7 @@
             "circulation.rules.put"
           ],
           "modulePermissions": [
-            "circulation-storage.rules.put"
+            "circulation-storage.circulation-rules.put"
           ]
         },
         {
@@ -363,7 +363,7 @@
             "circulation.rules.loan-policy.get"
           ],
           "modulePermissions": [
-            "circulation-storage.rules.get"
+            "circulation-storage.circulation-rules.get"
           ]
         },
         {
@@ -375,7 +375,7 @@
             "circulation.rules.loan-policy-all.get"
           ],
           "modulePermissions": [
-            "circulation-storage.rules.get"
+            "circulation-storage.circulation-rules.get"
           ]
         },
         {
