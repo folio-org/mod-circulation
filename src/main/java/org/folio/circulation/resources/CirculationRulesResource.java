@@ -1,12 +1,9 @@
 package org.folio.circulation.resources;
 
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpServerResponse;
-import io.vertx.core.json.DecodeException;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.handler.BodyHandler;
+import static org.folio.circulation.support.http.server.ServerErrorResponse.internalError;
+
+import java.lang.invoke.MethodHandles;
+
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.folio.circulation.rules.CirculationRulesException;
 import org.folio.circulation.rules.Text2Drools;
@@ -14,13 +11,19 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.JsonHttpResult;
 import org.folio.circulation.support.OkJsonHttpResult;
-import org.folio.circulation.support.http.server.*;
+import org.folio.circulation.support.http.server.ForwardResponse;
+import org.folio.circulation.support.http.server.SuccessResponse;
+import org.folio.circulation.support.http.server.WebContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.invoke.MethodHandles;
-
-import static org.folio.circulation.support.http.server.ServerErrorResponse.internalError;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.json.DecodeException;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.BodyHandler;
 
 /**
  * Write and read the circulation rules.
@@ -70,8 +73,6 @@ public class CirculationRulesResource extends Resource {
           return;
         }
         JsonObject circulationRules = new JsonObject(response.getBody());
-        circulationRules.put("rulesAsDrools", Text2Drools.convert(
-          circulationRules.getString("rulesAsText")));
 
         new OkJsonHttpResult(circulationRules)
           .writeTo(routingContext.response());
@@ -110,11 +111,8 @@ public class CirculationRulesResource extends Resource {
       return;
     }
     CirculationRulesEngineResource.clearCache(new WebContext(routingContext).getTenantId());
-    JsonObject rules = rulesInput.copy();
 
-    rules.remove("rulesAsDrools");
-
-    loansRulesClient.put(rules).thenAccept(response -> {
+    loansRulesClient.put(rulesInput.copy()).thenAccept(response -> {
       if (response.getStatusCode() == 204) {
         SuccessResponse.noContent(routingContext.response());
       } else {

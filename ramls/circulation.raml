@@ -222,8 +222,8 @@ resourceTypes:
       description: Set the circulation rules using a text file
       body:
         application/json:
-          type: !include schema/circulation-rules-text.json
-          example: !include examples/circulation-rules-text.json
+          type: !include schema/circulation-rules.json
+          example: !include examples/circulation-rules.json
       responses:
         204:
           description: "Circulation rules have been saved."

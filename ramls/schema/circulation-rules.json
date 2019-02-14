@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "title": "Circulation Rules Schema",
-  "description": "Circulation rules representation when fetching",
+  "title": "Circulation Rules",
+  "description": "Circulation rules record",
   "type": "object",
   "properties": {
     "id": {
@@ -10,10 +10,6 @@
     },
     "rulesAsText": {
       "description": "Circulation rules represented in text using the bespoke format",
-      "type": "string"
-    },
-    "rulesAsDrools": {
-      "description": "Circulation rules represented in drools",
       "type": "string"
     }
   },
