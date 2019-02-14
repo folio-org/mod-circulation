@@ -1,15 +1,19 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "title": "Circulation Rules Schema",
+  "description": "Circulation rules representation when fetching",
   "type": "object",
   "properties": {
     "id": {
+      "description": "ID of the circulation rules (should only ever be a single record)",
       "type": "string"
     },
     "rulesAsText": {
+      "description": "Circulation rules represented in text using the bespoke format",
       "type": "string"
     },
     "rulesAsDrools": {
+      "description": "Circulation rules represented in drools",
       "type": "string"
     }
   },

@@ -1,12 +1,15 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "title": "Circulation Rules Text Only Schema",
+  "title": "Circulation Rules",
+  "description": "Circulation rules representation when making changes",
   "type": "object",
   "properties": {
     "id": {
+      "description": "ID of the circulation rules (should only ever be a single record)",
       "type": "string"
     },
     "rulesAsText": {
+      "description": "Circulation rules represented in text using the bespoke format",
       "type": "string"
     }
   },
