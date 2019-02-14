@@ -4,13 +4,15 @@ import api.support.fixtures.AddressTypesFixture;
 import api.support.fixtures.CancellationReasonsFixture;
 import api.support.fixtures.ItemsFixture;
 import api.support.fixtures.LoanPoliciesFixture;
-import api.support.fixtures.LoanRulesFixture;
+import api.support.fixtures.CirculationRulesFixture;
 import api.support.fixtures.LoanTypesFixture;
 import api.support.fixtures.LoansFixture;
 import api.support.fixtures.LocationsFixture;
 import api.support.fixtures.MaterialTypesFixture;
+import api.support.fixtures.NoticePoliciesFixture;
 import api.support.fixtures.PatronGroupsFixture;
 import api.support.fixtures.ProxyRelationshipsFixture;
+import api.support.fixtures.RequestPoliciesFixture;
 import api.support.fixtures.RequestsFixture;
 import api.support.fixtures.ServicePointsFixture;
 import api.support.fixtures.UsersFixture;
@@ -45,7 +47,7 @@ public abstract class APITests {
   protected final OkapiHttpClient client = createClient(exception ->
     log.error("Request to circulation module failed:", exception));
 
-  private final boolean initialiseLoanRules;
+  private final boolean initialiseCirculationRules;
 
   private final ResourceClient servicePointsClient = ResourceClient.forServicePoints(client);
 
@@ -77,6 +79,12 @@ public abstract class APITests {
   protected final ResourceClient loanPolicyClient
     = ResourceClient.forLoanPolicies(client);
 
+  protected final ResourceClient requestPolicyClient
+    = ResourceClient.forRequestPolicies(client);
+
+  protected final ResourceClient noticePolicyClient
+    = ResourceClient.forNoticePolicies(client);
+
   private final ResourceClient instanceTypesClient
     = ResourceClient.forInstanceTypes(client);
 
@@ -99,8 +107,14 @@ public abstract class APITests {
   protected final LoanPoliciesFixture loanPoliciesFixture
     = new LoanPoliciesFixture(loanPolicyClient, fixedDueDateScheduleClient);
 
-  protected final LoanRulesFixture loanRulesFixture
-    = new LoanRulesFixture(client);
+  protected final RequestPoliciesFixture requestPoliciesFixture
+    = new RequestPoliciesFixture(requestPolicyClient);
+
+  protected final NoticePoliciesFixture noticePoliciesFixture
+    = new NoticePoliciesFixture(noticePolicyClient);
+
+  protected final CirculationRulesFixture circulationRulesFixture
+    = new CirculationRulesFixture(client);
 
   protected final ItemsFixture itemsFixture = new ItemsFixture(client,
     materialTypesFixture, loanTypesFixture, locationsFixture,
@@ -131,8 +145,8 @@ public abstract class APITests {
     this(true);
   }
 
-  protected APITests(boolean initialiseLoanRules) {
-    this.initialiseLoanRules = initialiseLoanRules;
+  protected APITests(boolean initialiseCirculationRules) {
+    this.initialiseCirculationRules = initialiseCirculationRules;
   }
 
   @BeforeClass
@@ -168,8 +182,8 @@ public abstract class APITests {
 
     usersClient.deleteAllIndividually();
 
-    if (initialiseLoanRules) {
-      useDefaultRollingPolicyLoanRules();
+    if (initialiseCirculationRules) {
+      useDefaultRollingPolicyCirculationRules();
     }
   }
 
@@ -220,32 +234,40 @@ public abstract class APITests {
   }
 
   //Needs to be done each time as some tests manipulate the rules
-  private void useDefaultRollingPolicyLoanRules()
+  private void useDefaultRollingPolicyCirculationRules()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
     MalformedURLException {
 
     log.info("Using rolling loan policy as fallback policy");
-    useLoanPolicyAsFallback(loanPoliciesFixture.canCirculateRolling().getId());
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.noAllowedTypes().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
   }
 
-  protected void useExampleFixedPolicyLoanRules()
+  protected void useExampleFixedPolicyCirculationRules()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
     MalformedURLException {
 
     log.info("Using fixed loan policy as fallback policy");
-    useLoanPolicyAsFallback(loanPoliciesFixture.canCirculateFixed().getId());
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateFixed().getId(),
+      requestPoliciesFixture.noAllowedTypes().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
   }
 
-  protected void useLoanPolicyAsFallback(UUID loanPolicyId)
+  protected void useLoanPolicyAsFallback(UUID loanPolicyId, UUID requestPolicyId, UUID noticePolicyId)
     throws InterruptedException,
     ExecutionException,
     TimeoutException {
 
-    loanRulesFixture.updateLoanRules(loanPolicyId);
+    circulationRulesFixture.updateCirculationRules(loanPolicyId, requestPolicyId, noticePolicyId);
     warmUpApplyEndpoint();
   }
 
@@ -256,7 +278,7 @@ public abstract class APITests {
 
     CompletableFuture<Response> completed = new CompletableFuture<>();
 
-    client.get(InterfaceUrls.loanRulesUrl("/apply"
+    client.get(InterfaceUrls.circulationRulesUrl("/loan-policy"
         + String.format("?item_type_id=%s&loan_type_id=%s&patron_type_id=%s&shelving_location_id=%s",
       UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID())),
       ResponseHandler.any(completed));
@@ -264,7 +286,7 @@ public abstract class APITests {
     Response response = completed.get(10, TimeUnit.SECONDS);
 
     assertThat(String.format(
-      "Failed to apply loan rules: %s", response.getBody()),
+      "Failed to apply circulation rules: %s", response.getBody()),
       response.getStatusCode(), is(200));
   }
 

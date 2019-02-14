@@ -60,12 +60,20 @@ public class InterfaceUrls {
     return APITestContext.viaOkapiModuleUrl("/loan-policy-storage/loan-policies" + subPath);
   }
 
+  static URL requestPoliciesStorageUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/request-policy-storage/request-policies" + subPath);
+  }
+
+  static URL noticePoliciesStorageUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/notice-policy-storage/notice-policies" + subPath);
+  }
+
   static URL fixedDueDateSchedulesStorageUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/fixed-due-date-schedule-storage/fixed-due-date-schedules" + subPath);
   }
 
-  static URL loanRulesStorageUrl(String subPath) {
-    return APITestContext.viaOkapiModuleUrl("/loan-rules-storage" + subPath);
+  static URL circulationRulesStorageUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/circulation-rules-storage" + subPath);
   }
 
   static URL usersUrl(String subPath) {
@@ -128,14 +136,14 @@ public class InterfaceUrls {
     return circulationModuleUrl("/circulation/loans" + subPath);
   }
 
-  public static URL loanRulesUrl() {
-    return loanRulesUrl("");
+  public static URL circulationRulesUrl() {
+    return circulationRulesUrl("");
   }
 
-  public static URL loanRulesUrl(String subPath) {
-    return circulationModuleUrl("/circulation/loan-rules" + subPath);
+  public static URL circulationRulesUrl(String subPath) {
+    return circulationModuleUrl("/circulation/rules" + subPath);
   }
-
+  
   static URL cancellationReasonsStorageUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl(
         "/cancellation-reason-storage/cancellation-reasons" + subPath);
