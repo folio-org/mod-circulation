@@ -623,7 +623,7 @@ abstract class RenewalAPITests extends APITests {
     final Response response = attemptRenewal(smallAngryPlanet, jessica);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("loan has reached its maximum number of renewals"),
+      hasMessage("loan at maximum renewal number"),
       hasLoanPolicyIdParameter(limitedRenewalsPolicyId),
       hasLoanPolicyNameParameter("Limited Renewals Policy"))));
   }
@@ -669,7 +669,7 @@ abstract class RenewalAPITests extends APITests {
     final Response response = attemptRenewal(smallAngryPlanet, jessica);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("loan has reached its maximum number of renewals"),
+      hasMessage("loan at maximum renewal number"),
       hasLoanPolicyIdParameter(limitedRenewalsPolicyId),
       hasLoanPolicyNameParameter("Limited Renewals And Limited Due Date Policy"))));
 
