@@ -28,6 +28,7 @@
           "type": "object",
           "properties": {
             "name": {
+              "description": "Name of the material type",
               "type": "string"
             }
           },
@@ -40,6 +41,7 @@
             "type": "object",
             "properties" : {
               "name" : {
+                "description": "Name of the contributor",
                 "type" : "string"
               }
             },
@@ -74,6 +76,7 @@
           "type": "object",
           "properties": {
             "name": {
+              "description": "Name of the item status",
               "type": "string"
             }
           },
@@ -89,6 +92,7 @@
           "type": "object",
           "properties": {
             "name": {
+              "description": "Name of the service point",
               "type": "string"
             }
           }

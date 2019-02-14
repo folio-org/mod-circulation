@@ -1,5 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "A request for an item",
+  "description": "Request for an item that might be at a different location or already checked out to another patron",
   "type": "object",
   "properties": {
     "id": {

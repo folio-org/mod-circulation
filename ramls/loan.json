@@ -46,6 +46,7 @@
           "type": "object",
           "properties": {
             "name": {
+              "description": "Name of the material type",
               "type": "string"
             }
           },
@@ -58,6 +59,7 @@
               "type": "object",
               "properties" : {
                  "name" : {
+                    "description": "Name of the contributor",
                     "type" : "string"
                   }
               },
@@ -91,6 +93,7 @@
           "type": "object",
           "properties": {
             "name": {
+              "description": "Name of the item status",
               "type": "string"
             }
           }
@@ -105,6 +108,7 @@
           "type": "object",
           "properties": {
             "name": {
+              "description": "Name of the service point",
               "type": "string"
             }
           }
@@ -162,8 +166,8 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string",
-          "description": "The unique name of the service point"
+          "description": "The unique name of the service point",
+          "type": "string"
         },
         "code": {
           "description": "The short code for the service point",
@@ -188,8 +192,8 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string",
-          "description": "The unique name of the service point"
+          "description": "Name of the service point",
+          "type": "string"
         },
         "code": {
           "description": "The short code for the service point",
