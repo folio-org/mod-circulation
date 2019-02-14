@@ -25,7 +25,7 @@ public class EndOfPreviousDayStrategy implements ClosedLibraryStrategy {
       return requestedDate.withZone(zone).withTime(END_OF_A_DAY);
     }
     OpeningDay previousDay = openingDays.getPreviousDay();
-    LocalDate localDate = previousDay.getDate(), DATE_TIME_FORMATTER;
+    LocalDate localDate = previousDay.getDate();
     return localDate.toDateTime(END_OF_A_DAY, zone);
   }
 }
