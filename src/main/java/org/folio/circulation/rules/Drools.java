@@ -66,6 +66,21 @@ public class Drools {
   }
 
   /**
+   * Calculate the request policy for itemTypeName and requestTypeName.
+   * @param itemType the name of the item type
+   * @param requestType the name of the request type
+   * @param patronGroup group the patron belongs to
+   * @param shelvingLocation - item's shelving location
+   * @return the name of the request policy
+   */
+  public String requestPolicy(String itemType, String requestType, String patronGroup, String shelvingLocation) {
+    KieSession kieSession = createSession(itemType, requestType, patronGroup, shelvingLocation);
+    kieSession.fireAllRules();
+    kieSession.dispose();
+    return match.requestPolicyId;
+  }
+
+  /**
    * Return all loan policies calculated using the drools rules
    * in the order they match.
    * @param itemType the item's material type
@@ -80,6 +95,28 @@ public class Drools {
     while (kieSession.fireAllRules() > 0) {
       JsonObject json = new JsonObject();
       json.put("loanPolicyId", match.loanPolicyId);
+      json.put("circulationRuleLine", match.lineNumber);
+      array.add(json);
+    }
+    kieSession.dispose();
+    return array;
+  }
+
+   /**
+   * Return all request policies calculated using the drools rules
+   * in the order they match.
+   * @param itemType the item's material type
+   * @param requestType the item's request type
+   * @param patronGroup group the patron belongs to
+   * @param shelvingLocation - item's shelving location
+   * @return matches, each match has a requestPolicyId and a circulationRuleLine field
+   */
+  public JsonArray requestPolicies(String itemType, String requestType, String patronGroup, String shelvingLocation) {
+    KieSession kieSession = createSession(itemType, requestType, patronGroup, shelvingLocation);
+    JsonArray array = new JsonArray();
+    while (kieSession.fireAllRules() > 0) {
+      JsonObject json = new JsonObject();
+      json.put("requestPolicyId", match.requestPolicyId);
       json.put("circulationRuleLine", match.lineNumber);
       array.add(json);
     }

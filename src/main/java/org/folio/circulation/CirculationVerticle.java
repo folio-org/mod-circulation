@@ -8,7 +8,8 @@ import io.vertx.ext.web.Router;
 import org.folio.circulation.resources.CheckInByBarcodeResource;
 import org.folio.circulation.resources.CheckOutByBarcodeResource;
 import org.folio.circulation.resources.LoanCollectionResource;
-import org.folio.circulation.resources.CirculationRulesEngineResource;
+import org.folio.circulation.resources.LoanCirculationRulesEngineResource;
+import org.folio.circulation.resources.RequestCirculationRulesEngineResource;
 import org.folio.circulation.resources.CirculationRulesResource;
 import org.folio.circulation.resources.OverrideRenewalByBarcodeResource;
 import org.folio.circulation.resources.RenewByBarcodeResource;
@@ -46,11 +47,18 @@ public class CirculationVerticle extends AbstractVerticle {
     new RequestQueueResource(client).register(router);
     new OverrideRenewalByBarcodeResource(client).register(router);
 
-    new CirculationRulesResource         ("/circulation/rules", client)
+    new CirculationRulesResource("/circulation/rules", client)
       .register(router);
-    new CirculationRulesEngineResource   ("/circulation/rules/loan-policy",
-                                   "/circulation/rules/loan-policy-all", client)
-      .register(router);
+    new LoanCirculationRulesEngineResource(
+      "/circulation/rules/loan-policy",
+      "/circulation/rules/loan-policy-all",
+       client)
+        .register(router);
+    new RequestCirculationRulesEngineResource(
+      "/circulation/rules/request-policy",
+      "/circulation/rules/request-policy-all",
+       client)
+        .register(router);
 
     server.requestHandler(router::accept)
       .listen(config().getInteger("port"), result -> {

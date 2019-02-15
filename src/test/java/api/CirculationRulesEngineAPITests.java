@@ -17,7 +17,7 @@ import org.folio.circulation.rules.Policy;
 import org.folio.circulation.rules.LoanType;
 import org.folio.circulation.rules.PatronGroup;
 import org.folio.circulation.rules.ShelvingLocation;
-import org.folio.circulation.resources.CirculationRulesEngineResource;
+import org.folio.circulation.resources.LoanCirculationRulesEngineResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
 import org.junit.Before;
@@ -103,8 +103,8 @@ public class CirculationRulesEngineAPITests extends APITests {
 
   @Before
   public void setUp() {
-    CirculationRulesEngineResource.dropCache();
-    CirculationRulesEngineResource.setCacheTime(1000000, 1000000);  // 1000 seconds
+    LoanCirculationRulesEngineResource.dropCache();
+    LoanCirculationRulesEngineResource.setCacheTime(1000000, 1000000);  // 1000 seconds
   }
 
   @Test
@@ -256,7 +256,7 @@ public class CirculationRulesEngineAPITests extends APITests {
     assertThat(apply(m1, t1, g1, s1), is(lp6));
 
     // reduce cache time to trigger reload from storage backend
-    CirculationRulesEngineResource.setCacheTime(0, 0);
+    LoanCirculationRulesEngineResource.setCacheTime(0, 0);
 
     assertThat(apply(m1, t1, g1, s1), is(lp7));
   }
