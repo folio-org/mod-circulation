@@ -274,14 +274,14 @@ public class CirculationRulesEngineAPITests extends APITests {
     assertThat(applyLoanPolicy(m1, t1, g1, s2), is(lp3));
   }
 
-  private void matches(JsonArray array, int match, Policy policy, int line) {
+  private void matchesLoanPolicy(JsonArray array, int match, Policy policy, int line) {
     JsonObject o = array.getJsonObject(match);
     assertThat("["+match+"].loanPolicyId of "+o, o.getString("loanPolicyId"), is(policy.id));
     assertThat("["+match+"].circulationRuleLine of "+o, o.getInteger("circulationRuleLine"), is(line));
   }
 
   @Test
-  public void test1ApplyAll() throws Exception {
+  public void testLoanApplyAll() throws Exception {
     setRules(rules1);
     CompletableFuture<Response> completed = new CompletableFuture<>();
     URL url = circulationRulesUrl(
@@ -297,9 +297,38 @@ public class CirculationRulesEngineAPITests extends APITests {
         response.getStatusCode(), is(200));
     JsonObject json = new JsonObject(response.getBody());
     JsonArray array = json.getJsonArray("circulationRuleMatches");
-    matches(array, 0, lp4, 4);
-    matches(array, 1, lp3, 3);
-    matches(array, 2, lp2, 2);
+    matchesLoanPolicy(array, 0, lp4, 4);
+    matchesLoanPolicy(array, 1, lp3, 3);
+    matchesLoanPolicy(array, 2, lp2, 2);
+    assertThat(array.size(), is(3));
+  }
+
+  private void matchesRequestPolicy(JsonArray array, int match, Policy policy, int line) {
+    JsonObject o = array.getJsonObject(match);
+    assertThat("["+match+"].requestPolicyId of "+o, o.getString("requestPolicyId"), is(policy.id));
+    assertThat("["+match+"].circulationRuleLine of "+o, o.getInteger("circulationRuleLine"), is(line));
+  }
+
+  @Test
+  public void testRequestApplyAll() throws Exception {
+    setRules(rules1);
+    CompletableFuture<Response> completed = new CompletableFuture<>();
+    URL url = circulationRulesUrl(
+        "/request-policy-all"
+        + "?item_type_id="         + m2
+        + "&request_type_id="         + t2
+        + "&patron_type_id="       + g2
+        + "&shelving_location_id=" + s2
+        );
+    client.get(url, ResponseHandler.any(completed));
+    Response response = completed.get(10, TimeUnit.SECONDS);
+    assertThat(response.getStatusCode() + " " + response.getBody(),
+        response.getStatusCode(), is(200));
+    JsonObject json = new JsonObject(response.getBody());
+    JsonArray array = json.getJsonArray("circulationRuleMatches");
+    matchesRequestPolicy(array, 0, rp1, 4);
+    matchesRequestPolicy(array, 1, rp1, 3);
+    matchesRequestPolicy(array, 2, rp1, 2);
     assertThat(array.size(), is(3));
   }
 

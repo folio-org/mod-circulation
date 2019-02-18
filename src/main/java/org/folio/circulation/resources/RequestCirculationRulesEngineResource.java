@@ -31,6 +31,28 @@ public class RequestCirculationRulesEngineResource extends AbstractCirculationRu
         invalidUuid(request, SHELVING_LOCATION_ID_NAME);
   }
 
+  void applyAll(RoutingContext routingContext, Drools drools) {
+    HttpServerRequest request = routingContext.request();
+    if (invalidApplyParameters(request)) {
+      return;
+    }
+    try {
+      String itemTypeId = request.getParam(ITEM_TYPE_ID_NAME);
+      String requestTypeId = request.getParam(REQUEST_TYPE_ID_NAME);
+      String patronGroupId = request.getParam(PATRON_TYPE_ID_NAME);
+      String shelvingLocationId = request.getParam(SHELVING_LOCATION_ID_NAME);
+      JsonArray matches = drools.requestPolicies(itemTypeId, requestTypeId, patronGroupId, shelvingLocationId);
+      JsonObject json = new JsonObject().put("circulationRuleMatches", matches);
+
+      new OkJsonHttpResult(json)
+        .writeTo(routingContext.response());
+    }
+    catch (Exception e) {
+      log.error("applyAll", e);
+      internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
+    }
+  }
+
   void apply(RoutingContext routingContext) {
     HttpServerRequest request = routingContext.request();
     if (invalidApplyParameters(request)) {
@@ -53,27 +75,5 @@ public class RequestCirculationRulesEngineResource extends AbstractCirculationRu
         internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
       }
     });
-  }
-
-  void applyAll(RoutingContext routingContext, Drools drools) {
-    HttpServerRequest request = routingContext.request();
-    if (invalidApplyParameters(request)) {
-      return;
-    }
-    try {
-      String itemTypeId = request.getParam(ITEM_TYPE_ID_NAME);
-      String requestTypeId = request.getParam(REQUEST_TYPE_ID_NAME);
-      String patronGroupId = request.getParam(PATRON_TYPE_ID_NAME);
-      String shelvingLocationId = request.getParam(SHELVING_LOCATION_ID_NAME);
-      JsonArray matches = drools.requestPolicies(itemTypeId, requestTypeId, patronGroupId, shelvingLocationId);
-      JsonObject json = new JsonObject().put("circulationRuleMatches", matches);
-
-      new OkJsonHttpResult(json)
-        .writeTo(routingContext.response());
-    }
-    catch (Exception e) {
-      log.error("applyAll", e);
-      internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
-    }
   }
 }
