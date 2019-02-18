@@ -155,11 +155,18 @@ public class UpdateItem {
   private ItemStatus itemStatusOnRequestCreation(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
+    RequestType type = requestAndRelatedRecords.getRequest().getRequestType();
 
-    return requestQueue.hasOutstandingRequests()
-      ? requestQueue.getHighestPriorityRequest().checkedOutItemStatus()
-      : requestAndRelatedRecords.getRequest().checkedOutItemStatus();
+    if (type == RequestType.PAGE){
+      return ItemStatus.PAGED;
+    } else {
+      //leave existing logic the same
+      RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
+
+      return requestQueue.hasOutstandingRequests()
+        ? requestQueue.getHighestPriorityRequest().checkedOutItemStatus()
+        : requestAndRelatedRecords.getRequest().checkedOutItemStatus();
+    }
   }
 
   private ItemStatus itemStatusOnLoanUpdate(

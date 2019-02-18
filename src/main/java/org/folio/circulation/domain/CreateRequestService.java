@@ -14,15 +14,18 @@ public class CreateRequestService {
   private final RequestRepository requestRepository;
   private final UpdateItem updateItem;
   private final UpdateLoanActionHistory updateLoanActionHistory;
+  private final UpdateRequest updateRequest;
 
   public CreateRequestService(
     RequestRepository requestRepository,
     UpdateItem updateItem,
-    UpdateLoanActionHistory updateLoanActionHistory) {
+    UpdateLoanActionHistory updateLoanActionHistory,
+    UpdateRequest updateRequest) {
 
     this.requestRepository = requestRepository;
     this.updateItem = updateItem;
     this.updateLoanActionHistory = updateLoanActionHistory;
+    this.updateRequest = updateRequest;
   }
 
   public CompletableFuture<HttpResult<RequestAndRelatedRecords>> createRequest(
@@ -33,6 +36,7 @@ public class CreateRequestService {
       .map(CreateRequestService::setRequestQueuePosition))
       .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
       .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreation))
+      .thenComposeAsync(r -> r.after(updateRequest::updateRequestOnCreation))
       .thenComposeAsync(r -> r.after(requestRepository::create));
   }
 
@@ -66,7 +70,7 @@ public class CreateRequestService {
 
     if (!request.allowedForItem()) {
       return failed(failure(
-        String.format("Item is not %s", CHECKED_OUT),
+        String.format("Item is %s", request.getItem().getStatus()),
         "itemId", request.getItemId()
       ));
     }

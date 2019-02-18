@@ -9,6 +9,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
+import org.hamcrest.core.Is;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -66,20 +68,25 @@ public class RequestsAPILoanHistoryTests extends APITests {
   }
 
   @Test
-  public void creatingPageRequestDoesNotChangeTheOpenLoanForSameItem()
+  public void failureCreatingPageRequestDoesNotChangeTheOpenLoanForSameItem()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
     MalformedURLException {
 
+    //Cannot create a page request for open loan item anymore.
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
     UUID loanId = loansFixture.checkOutByBarcode(smallAngryPlanet).getId();
 
-    requestsClient.create(new RequestBuilder()
+    Response pageRequestResponse = requestsClient.attemptCreate(new RequestBuilder()
       .page()
       .forItem(smallAngryPlanet)
       .withRequesterId(usersFixture.charlotte().getId()));
+
+    assertThat(
+      String.format("Failed to create page request: %s",
+        pageRequestResponse.getBody()), pageRequestResponse.getStatusCode(), Is.is(422));
 
     JsonObject loanFromStorage = loansStorageClient.getById(loanId).getJson();
 
