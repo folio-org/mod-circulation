@@ -138,6 +138,19 @@ public class Drools {
   }
 
   /**
+   * Return the request policy calculated using the drools rules and the item type and request type.
+   * @param droolsFile - rules to use
+   * @param itemType - item (material) type name
+   * @param requestType - request type name
+   * @param patronGroup group the patron belongs to
+   * @param shelvingLocation - item's shelving location
+   * @return request policy
+   */
+  public static String requestPolicy(String droolsFile, String itemType, String requestType, String patronGroup, String shelvingLocation) {
+    return new Drools(droolsFile).requestPolicy(itemType, requestType, patronGroup, shelvingLocation);
+  }
+
+  /**
    * Return all loan policies calculated using the drools rules and the item type and loan type
    * in the order they match.
    * @param droolsFile - rules to use

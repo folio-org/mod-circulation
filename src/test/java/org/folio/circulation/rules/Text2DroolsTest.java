@@ -88,6 +88,13 @@ public class Text2DroolsTest {
       testRequestPolicies(test1, requestTestCases);
   }
 
+  @Test public void testRequestPolicy() {
+    String drools = Text2Drools.convert(test1);
+    for (String[] s : requestTestCases) {
+      assertThat(first3(s), Drools.requestPolicy(drools, s[0], s[1], s[2], "shelf"), is(s[3]));
+    }
+  }
+
   /** s without the first 3 elements, converted to a String.
    * <p>
    * expected({"a", "b", "c", "d", "e", "f", "g"}) = "[d, e, f, g]"
