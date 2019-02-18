@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.policy.library;
 
-import javafx.util.Pair;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.joda.time.DateTime;
 
 import java.util.List;
@@ -18,8 +19,9 @@ public class LibraryTimetable {
 
   private static Pair<LibraryInterval, LibraryInterval> getHeadAndTail(List<LibraryInterval> intervalList) {
     if (intervalList.isEmpty()) {
-      return new Pair<>(null, null);
+      return new ImmutablePair<>(null, null);
     }
+
     LibraryInterval head = intervalList.get(0);
     LibraryInterval prevNode = head;
     for (LibraryInterval currNode : intervalList) {
@@ -27,7 +29,7 @@ public class LibraryTimetable {
       currNode.setPrevious(prevNode);
       prevNode = currNode;
     }
-    return new Pair<>(head, prevNode);
+    return new ImmutablePair<>(head, prevNode);
   }
 
 
