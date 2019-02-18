@@ -165,19 +165,20 @@ public class CheckOutByBarcodeResource extends Resource {
     if (relatedRecords.getInitialDueDateDays() == null) {
       return HttpResult.succeeded(relatedRecords);
     }
-    //TODO replace with configured timezone
+    DateTimeZone timeZone = relatedRecords.getTimeZone();
     ClosedLibraryStrategy strategy =
       ClosedLibraryStrategyUtils.determineClosedLibraryStrategy(
         relatedRecords.getLoanPolicy(),
         relatedRecords.getLoan().getLoanDate(),
-        DateTimeZone.UTC);
+        timeZone);
 
     DateTime dueDate = relatedRecords.getLoan().getDueDate();
-    DateTime calculateDueDate =
+    HttpResult<DateTime> calculateDueDate =
       strategy.calculateDueDate(dueDate, relatedRecords.getInitialDueDateDays());
-
-    relatedRecords.getLoan().changeDueDate(calculateDueDate);
-    return HttpResult.succeeded(relatedRecords);
+    return calculateDueDate.next(date -> {
+      relatedRecords.getLoan().changeDueDate(date);
+      return HttpResult.succeeded(relatedRecords);
+    });
   }
 
   private HttpResult<LoanAndRelatedRecords> applyFixedDueDateLimit(LoanAndRelatedRecords relatedRecords) {
@@ -199,14 +200,15 @@ public class CheckOutByBarcodeResource extends Resource {
       return HttpResult.succeeded(relatedRecords);
     }
 
-    //TODO replace with configured timezone
     ClosedLibraryStrategy strategy =
       ClosedLibraryStrategyUtils.determineStrategyForMovingBackward(
-        loanPolicy, loanDate, DateTimeZone.UTC);
-    DateTime calculatedDate =
+        loanPolicy, loanDate, relatedRecords.getTimeZone());
+    HttpResult<DateTime> calculatedDate =
       strategy.calculateDueDate(dueDate, relatedRecords.getFixedDueDateDays());
-    relatedRecords.getLoan().changeDueDate(calculatedDate);
-    return HttpResult.succeeded(relatedRecords);
+    return calculatedDate.next(date -> {
+      relatedRecords.getLoan().changeDueDate(date);
+      return HttpResult.succeeded(relatedRecords);
+    });
   }
 
   private void copyOrDefaultLoanDate(JsonObject request, JsonObject loan) {

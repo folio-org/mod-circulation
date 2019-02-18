@@ -77,17 +77,17 @@ public abstract class RenewalResource extends Resource {
     if (relatedRecords.getInitialDueDateDays() == null) {
       return HttpResult.succeeded(relatedRecords);
     }
-    //TODO replace with configured timezone
     ClosedLibraryStrategy strategy =
       ClosedLibraryStrategyUtils.determineClosedLibraryStrategy(
-        relatedRecords.getLoanPolicy(), DateTime.now(), DateTimeZone.UTC);
+        relatedRecords.getLoanPolicy(), DateTime.now(), relatedRecords.getTimeZone());
 
     DateTime dueDate = relatedRecords.getLoan().getDueDate();
-    DateTime calculateDueDate =
+    HttpResult<DateTime> calculateDueDate =
       strategy.calculateDueDate(dueDate, relatedRecords.getInitialDueDateDays());
-
-    relatedRecords.getLoan().changeDueDate(calculateDueDate);
-    return HttpResult.succeeded(relatedRecords);
+    return calculateDueDate.next(date -> {
+      relatedRecords.getLoan().changeDueDate(date);
+      return HttpResult.succeeded(relatedRecords);
+    });
   }
 
   private HttpResult<LoanAndRelatedRecords> applyFixedDueDateLimit(LoanAndRelatedRecords relatedRecords) {
@@ -107,14 +107,16 @@ public abstract class RenewalResource extends Resource {
     if (!PeriodUtil.isAfterDate(loan.getDueDate(), dueDateLimit)) {
       return HttpResult.succeeded(relatedRecords);
     }
-    //TODO replace with configured timezone
+    DateTimeZone timeZone = relatedRecords.getTimeZone();
     ClosedLibraryStrategy strategy =
       ClosedLibraryStrategyUtils.determineStrategyForMovingBackward(
-        loanPolicy, DateTime.now(), DateTimeZone.UTC);
-    DateTime calculatedDate =
+        loanPolicy, DateTime.now(), timeZone);
+    HttpResult<DateTime> calculatedDate =
       strategy.calculateDueDate(dueDate, relatedRecords.getFixedDueDateDays());
-    relatedRecords.getLoan().changeDueDate(calculatedDate);
-    return HttpResult.succeeded(relatedRecords);
+    return calculatedDate.next(date -> {
+      relatedRecords.getLoan().changeDueDate(date);
+      return HttpResult.succeeded(relatedRecords);
+    });
   }
 
   protected abstract CompletableFuture<HttpResult<Loan>> findLoan(

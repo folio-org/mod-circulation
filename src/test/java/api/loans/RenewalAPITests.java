@@ -16,6 +16,7 @@ import org.folio.circulation.support.http.server.ValidationError;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
+import org.joda.time.DateTimeUtils;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Seconds;
 import org.junit.Test;
@@ -36,6 +37,7 @@ import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POI
 import static api.support.fixtures.CalendarExamples.CASE_WED_THU_FRI_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.END_TIME_SECOND_PERIOD;
 import static api.support.fixtures.CalendarExamples.START_TIME_FIRST_PERIOD;
+import static api.support.fixtures.CalendarExamples.START_TIME_SECOND_PERIOD;
 import static api.support.fixtures.CalendarExamples.WEDNESDAY_DATE;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -229,7 +231,7 @@ abstract class RenewalAPITests extends APITests {
     final UUID loanId = loan.getId();
 
     LoanPolicyBuilder currentDueDateRollingPolicy = new LoanPolicyBuilder()
-      .withName("Current Due Date Different Period Rolling Policy")
+      .withName("Current Due Date Different LibraryInterval Rolling Policy")
       .rolling(Period.months(2))
       .renewFromCurrentDueDate()
       .renewWith(Period.months(1));
@@ -933,18 +935,18 @@ abstract class RenewalAPITests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();
     UUID checkoutServicePointId = UUID.fromString(CASE_WED_THU_FRI_SERVICE_POINT_ID);
-    int loanPeriodHours = 3;
-    int renewPeriodHours = 24;
+    int loanPeriodHours = 12;
+    int renewPeriodHours = 5;
 
     DateTime loanDate =
-      new DateTime(2018, DateTimeConstants.DECEMBER, 12, 8, 0, DateTimeZone.UTC);
+      WEDNESDAY_DATE.toDateTime(START_TIME_SECOND_PERIOD, DateTimeZone.UTC);
 
     LoanPolicyBuilder loanPolicy = new LoanPolicyBuilder()
       .withName("Loan policy")
       .rolling(Period.hours(loanPeriodHours))
       .renewWith(Period.hours(renewPeriodHours))
       .withClosedLibraryDueDateManagement(
-        DueDateManagement.KEEP_THE_CURRENT_DUE_DATE.getValue());
+        DueDateManagement.KEEP_THE_CURRENT_DUE_DATE_TIME.getValue());
 
     UUID loanPolicyIdForCheckOut = loanPolicyClient.create(loanPolicy).getId();
     useLoanPolicyAsFallback(loanPolicyIdForCheckOut);
@@ -963,7 +965,9 @@ abstract class RenewalAPITests extends APITests {
     ).getId();
     useLoanPolicyAsFallback(loanPolicyIdForRenew);
 
+    DateTimeUtils.setCurrentMillisFixed(loanDate.plusHours(1).getMillis());
     JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
+    DateTimeUtils.setCurrentMillisSystem();
 
     DateTime expectedDate =
       WEDNESDAY_DATE

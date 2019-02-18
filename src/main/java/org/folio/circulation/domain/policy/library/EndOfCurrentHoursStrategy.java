@@ -1,91 +1,61 @@
 package org.folio.circulation.domain.policy.library;
 
 import org.folio.circulation.AdjustingOpeningDays;
-import org.folio.circulation.domain.OpeningDay;
-import org.folio.circulation.domain.OpeningHour;
-import org.folio.circulation.domain.policy.LoanPolicyPeriod;
+import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDate;
-import org.joda.time.LocalTime;
 
-import java.util.List;
+import java.util.Collections;
 import java.util.Objects;
 
-import static org.folio.circulation.support.PeriodUtil.getStartAndEndTime;
-import static org.folio.circulation.support.PeriodUtil.getTimeShift;
-import static org.folio.circulation.support.PeriodUtil.isDateTimeWithDurationInsideDay;
-import static org.folio.circulation.support.PeriodUtil.isInPeriodOpeningDay;
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.failureForAbsentTimetable;
 
 public class EndOfCurrentHoursStrategy implements ClosedLibraryStrategy {
 
-  private final int duration;
-  private final DateTime startDate;
-  private final LoanPolicyPeriod loanPeriod;
+  private final DateTime currentTime;
   private final DateTimeZone zone;
 
   public EndOfCurrentHoursStrategy(
-    LoanPolicyPeriod loanPeriod, int duration,
-    DateTime startDate, DateTimeZone zone) {
-    this.loanPeriod = loanPeriod;
-    this.duration = duration;
-    this.startDate = startDate;
+    DateTime currentTime, DateTimeZone zone) {
+    this.currentTime = currentTime;
     this.zone = zone;
   }
 
   @Override
-  public DateTime calculateDueDate(DateTime requestedDate, AdjustingOpeningDays openingDays) {
+  public HttpResult<DateTime> calculateDueDate(DateTime requestedDate, AdjustingOpeningDays openingDays) {
     Objects.requireNonNull(openingDays);
-    OpeningDay prevOpeningDay = openingDays.getPreviousDay();
-    OpeningDay currentOpeningDay = openingDays.getRequestedDay();
+    LibraryTimetable libraryTimetable =
+      LibraryTimetableConverter.convertToLibraryTimetable(openingDays, zone);
 
-    if (!currentOpeningDay.getOpen()) {
-      return ClosedLibraryStrategyUtils.getLatestClosingHours(prevOpeningDay, zone);
+    LibraryInterval requestedInterval = libraryTimetable.findInterval(requestedDate);
+    if (requestedInterval == null) {
+      return HttpResult.failed(failureForAbsentTimetable());
+    }
+    if (requestedInterval.isOpen()) {
+      return HttpResult.succeeded(requestedDate);
     }
 
-    LocalDate dateOfCurrentDay = currentOpeningDay.getDate();
-    LocalTime timeOfCurrentDay = startDate.toLocalTime();
-    LocalTime timeShift = getTimeShift(timeOfCurrentDay, loanPeriod, duration);
-
-    if (isDateTimeWithDurationInsideDay(currentOpeningDay, timeShift)) {
-      return getDateTimeInsideOpeningDay(currentOpeningDay, dateOfCurrentDay, timeShift);
+    LibraryInterval currentTimeInterval = libraryTimetable.findInterval(currentTime);
+    if (currentTimeInterval == null) {
+      return HttpResult.failed(errorForAbsentCurrentInterval());
     }
-
-    return getDateTimeOutsidePeriod(prevOpeningDay, currentOpeningDay, dateOfCurrentDay, timeShift);
+    if (!currentTimeInterval.isOpen()) {
+      return HttpResult.failed(errorForClosedCurrentInterval());
+    }
+    return HttpResult.succeeded(currentTimeInterval.getEndTime());
   }
 
-  private DateTime getDateTimeInsideOpeningDay(OpeningDay openingDay, LocalDate date,
-                                               LocalTime timeShift) {
-    if (openingDay.getAllDay()) {
-      return date.toDateTime(timeShift, zone);
-    }
-
-    List<OpeningHour> openingHoursList = openingDay.getOpeningHour();
-    if (isInPeriodOpeningDay(openingHoursList, timeShift)) {
-      return date.toDateTime(timeShift, zone);
-    }
-
-    LocalTime endTime = ClosedLibraryStrategyUtils.findEndTimeOfOpeningPeriod(openingHoursList, timeShift);
-    return date.toDateTime(endTime, zone);
+  private ValidationErrorFailure errorForAbsentCurrentInterval() {
+    String message = "Unable to find current service point hours";
+    return new ValidationErrorFailure(new ValidationError(message, Collections.emptyMap()));
   }
 
-  private DateTime getDateTimeOutsidePeriod(OpeningDay prevOpeningDay, OpeningDay currentOpeningDay,
-                                            LocalDate dateOfCurrentDay, LocalTime timeShift) {
-    LocalTime[] startAndEndTime = getStartAndEndTime(currentOpeningDay.getOpeningHour());
-    LocalTime startTime = startAndEndTime[0];
-    LocalTime endTime = startAndEndTime[1];
-
-    if (timeShift.isAfter(endTime)) {
-      return dateOfCurrentDay.toDateTime(endTime, zone);
-    }
-
-    if (timeShift.isBefore(startTime)) {
-      LocalDate dateOfPrevDay = prevOpeningDay.getDate();
-      LocalTime prevEndTime = getStartAndEndTime(prevOpeningDay.getOpeningHour())[1];
-      return dateOfPrevDay.toDateTime(prevEndTime, zone);
-    }
-
-    return dateOfCurrentDay.toDateTime(timeShift, zone);
+  private ValidationErrorFailure errorForClosedCurrentInterval() {
+    String message = "Current service point hours are closed";
+    return new ValidationErrorFailure(new ValidationError(message, Collections.emptyMap()));
   }
+
 
 }

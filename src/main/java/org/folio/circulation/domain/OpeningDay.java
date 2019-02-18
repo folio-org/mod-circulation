@@ -28,7 +28,10 @@ public class OpeningDay {
 
   OpeningDay(JsonObject jsonObject, String key) {
     JsonObject openingDayJson = jsonObject.getJsonObject(key);
-    this.date = LocalDate.parse(openingDayJson.getString(DATE_KEY), DATE_TIME_FORMATTER);
+    String dateProperty = openingDayJson.getString(DATE_KEY);
+    if (dateProperty != null) {
+      this.date = LocalDate.parse(dateProperty, DATE_TIME_FORMATTER);
+    }
     this.allDay = openingDayJson.getBoolean(ALL_DAY_KEY, false);
     this.open = openingDayJson.getBoolean(OPEN_KEY, false);
     this.openingHour = fillOpeningDay(openingDayJson);

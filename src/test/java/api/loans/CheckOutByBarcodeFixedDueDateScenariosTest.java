@@ -172,14 +172,4 @@ public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
     assertThat("due date should be " + expectedDate,
       loan.getJson().getString("dueDate"), isEquivalentTo(expectedDate));
   }
-
-  @Test
-  public void shouldUseMoveToTheEndOfTheCurrentServicePointHoursStrategyForLongTermLoanPolicyWhenDueDateExtendsBeyondFixedDueDate()
-    throws
-    InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-    //implement after END_OF_THE_CURRENT_SERVICE_POINT_HOURS gets working correctly
-  }
 }

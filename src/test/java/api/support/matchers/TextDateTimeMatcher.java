@@ -39,7 +39,7 @@ public class TextDateTimeMatcher {
         //response representation might vary from request representation
         DateTime actual = DateTime.parse(textRepresentation);
 
-        return actual.isAfter(after) &&
+        return !actual.isBefore(after) &&
           Seconds.secondsBetween(after, actual).isLessThan(seconds);
       }
     };
