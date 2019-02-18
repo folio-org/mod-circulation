@@ -1,13 +1,14 @@
 package org.folio.circulation.domain;
 
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 
 public class RequestRules {
 
-  private static Map<ItemStatus, Boolean> _recallRules;
-  private static Map<ItemStatus, Boolean> _holdRules;
-  private static Map<ItemStatus, Boolean> _pageRules;
+  private static EnumMap<ItemStatus, Boolean> recallRules;
+  private static EnumMap<ItemStatus, Boolean> holdRules;
+  private static EnumMap<ItemStatus, Boolean> pageRules;
 
   static{
     initRecallRules();
@@ -15,46 +16,50 @@ public class RequestRules {
     initPageRules();
   }
 
+  private RequestRules(){
+    throw new IllegalStateException();
+  }
+
   private static void initRecallRules(){
-    _recallRules = new HashMap();
-    _recallRules.put(ItemStatus.CHECKED_OUT, true);
-    _recallRules.put(ItemStatus.AVAILABLE, false);
-    _recallRules.put(ItemStatus.AWAITING_PICKUP, true);
-    _recallRules.put(ItemStatus.IN_TRANSIT, true);
-    _recallRules.put(ItemStatus.MISSING, false);
-    _recallRules.put(ItemStatus.PAGED, false);
-    _recallRules.put(ItemStatus.NONE, false);
+    recallRules = new EnumMap<>(ItemStatus.class);
+    recallRules.put(ItemStatus.CHECKED_OUT, true);
+    recallRules.put(ItemStatus.AVAILABLE, false);
+    recallRules.put(ItemStatus.AWAITING_PICKUP, true);
+    recallRules.put(ItemStatus.IN_TRANSIT, true);
+    recallRules.put(ItemStatus.MISSING, false);
+    recallRules.put(ItemStatus.PAGED, false);
+    recallRules.put(ItemStatus.NONE, false);
   }
 
   private static void initHoldRules(){
-    _holdRules = new HashMap();
-    _holdRules.put(ItemStatus.CHECKED_OUT, true);
-    _holdRules.put(ItemStatus.AVAILABLE, false);
-    _holdRules.put(ItemStatus.AWAITING_PICKUP, true);
-    _holdRules.put(ItemStatus.IN_TRANSIT, true);
-    _holdRules.put(ItemStatus.MISSING, true);
-    _holdRules.put(ItemStatus.PAGED, true);
-    _holdRules.put(ItemStatus.NONE, true);
+    holdRules = new EnumMap<>(ItemStatus.class);
+    holdRules.put(ItemStatus.CHECKED_OUT, true);
+    holdRules.put(ItemStatus.AVAILABLE, false);
+    holdRules.put(ItemStatus.AWAITING_PICKUP, true);
+    holdRules.put(ItemStatus.IN_TRANSIT, true);
+    holdRules.put(ItemStatus.MISSING, true);
+    holdRules.put(ItemStatus.PAGED, true);
+    holdRules.put(ItemStatus.NONE, true);
   }
 
   private static void initPageRules(){
-    _pageRules = new HashMap();
-    _pageRules.put(ItemStatus.CHECKED_OUT, false);
-    _pageRules.put(ItemStatus.AVAILABLE, true);
-    _pageRules.put(ItemStatus.AWAITING_PICKUP, false);
-    _pageRules.put(ItemStatus.IN_TRANSIT, false);
-    _pageRules.put(ItemStatus.MISSING, false);
-    _pageRules.put(ItemStatus.PAGED, false);
-    _pageRules.put(ItemStatus.NONE, false);
+    pageRules = new EnumMap<>(ItemStatus.class);
+    pageRules.put(ItemStatus.CHECKED_OUT, false);
+    pageRules.put(ItemStatus.AVAILABLE, true);
+    pageRules.put(ItemStatus.AWAITING_PICKUP, false);
+    pageRules.put(ItemStatus.IN_TRANSIT, false);
+    pageRules.put(ItemStatus.MISSING, false);
+    pageRules.put(ItemStatus.PAGED, false);
+    pageRules.put(ItemStatus.NONE, false);
   }
 
   public static boolean canCreateRequestForItem(ItemStatus itemStatus, RequestType requestType){
     if (requestType == RequestType.HOLD){
-      return _holdRules.get(itemStatus);
+      return holdRules.get(itemStatus);
     } else if (requestType == RequestType.RECALL){
-      return _recallRules.get(itemStatus);
+      return recallRules.get(itemStatus);
     } else if (requestType == RequestType.PAGE){
-      return _pageRules.get(itemStatus);
+      return pageRules.get(itemStatus);
     } else {
       return false;
     }

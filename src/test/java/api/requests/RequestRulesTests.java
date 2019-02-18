@@ -27,8 +27,14 @@ public class RequestRulesTests {
   }
 
   @Test
-  public void cannotCreatePagedRequestWhenItemStatusNull(){
-    boolean canCreate = RequestRules.canCreateRequestForItem(ItemStatus.CHECKED_OUT, RequestType.PAGE);
+  public void cannotCreateNoneRequestWhenItemStatusIsAnything(){
+    boolean canCreate = RequestRules.canCreateRequestForItem(ItemStatus.CHECKED_OUT, RequestType.NONE);
+    Assert.assertFalse(canCreate);
+  }
+
+  @Test
+  public void cannotCreatePagedRequestWhenItemStatusIsNone(){
+    boolean canCreate = RequestRules.canCreateRequestForItem(ItemStatus.NONE, RequestType.PAGE);
     Assert.assertFalse(canCreate);
   }
 }
