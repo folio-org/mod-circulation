@@ -108,7 +108,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   @Test
-  public void applyWithoutParameters() throws Exception {
+  public void applyLoanWithoutParameters() throws Exception {
     CompletableFuture<Response> completed = new CompletableFuture<>();
     URL url = circulationRulesUrl("/loan-policy");
     client.get(url, ResponseHandler.any(completed));
@@ -116,7 +116,16 @@ public class CirculationRulesEngineAPITests extends APITests {
     assertThat(response.getStatusCode(), is(400));
   }
 
-  private void applyOneParameterMissing(String p1, String p2, String p3, String missing) throws Exception {
+  @Test
+  public void applyRequestWithoutParameters() throws Exception {
+    CompletableFuture<Response> completed = new CompletableFuture<>();
+    URL url = circulationRulesUrl("/request-policy");
+    client.get(url, ResponseHandler.any(completed));
+    Response response = completed.get(10, TimeUnit.SECONDS);
+    assertThat(response.getStatusCode(), is(400));
+  }
+
+  private void applyOneLoanParameterMissing(String p1, String p2, String p3, String missing) throws Exception {
     String name = missing.substring(0, missing.indexOf("="));
     CompletableFuture<Response> completed = new CompletableFuture<>();
     URL url = circulationRulesUrl("/loan-policy?" + p1 + "&" + p2 + "&" + p3);
@@ -126,8 +135,19 @@ public class CirculationRulesEngineAPITests extends APITests {
     assertThat(response.getBody(), containsString(name));
   }
 
+  private void applyOneRequestParameterMissing(String p1, String p2, String p3, String missing) throws Exception {
+    String name = missing.substring(0, missing.indexOf("="));
+    CompletableFuture<Response> completed = new CompletableFuture<>();
+    URL url = circulationRulesUrl("/request-policy?" + p1 + "&" + p2 + "&" + p3);
+    client.get(url, ResponseHandler.any(completed));
+    Response response = completed.get(10, TimeUnit.SECONDS);
+    assertThat(response.getStatusCode(), is(400));
+    assertThat(response.getBody(), containsString(name));
+  }
+
+
   @Test
-  public void applyOneParameterMissing() throws Exception {
+  public void applyOneLoanParameterMissing() throws Exception {
     String [] p = {
         "item_type_id=" + m1,
         "loan_type_id=" + t1,
@@ -135,10 +155,25 @@ public class CirculationRulesEngineAPITests extends APITests {
         "shelving_location_id=" + s1
     };
 
-    applyOneParameterMissing(p[1], p[2], p[3],  p[0]);
-    applyOneParameterMissing(p[0], p[2], p[3],  p[1]);
-    applyOneParameterMissing(p[0], p[1], p[3],  p[2]);
-    applyOneParameterMissing(p[0], p[1], p[2],  p[3]);
+    applyOneLoanParameterMissing(p[1], p[2], p[3],  p[0]);
+    applyOneLoanParameterMissing(p[0], p[2], p[3],  p[1]);
+    applyOneLoanParameterMissing(p[0], p[1], p[3],  p[2]);
+    applyOneLoanParameterMissing(p[0], p[1], p[2],  p[3]);
+  }
+
+  @Test
+  public void applyOneRequestParameterMissing() throws Exception {
+    String[] p = {
+        "item_type_id=" + m1,
+        "request_type_id=" + t1,
+        "patron_type_id=" + lp1,
+        "shelving_location_id=" + s1
+    };
+
+    applyOneRequestParameterMissing(p[1], p[2], p[3],  p[0]);
+    applyOneRequestParameterMissing(p[0], p[2], p[3],  p[1]);
+    applyOneRequestParameterMissing(p[0], p[1], p[3],  p[2]);
+    applyOneRequestParameterMissing(p[0], p[1], p[2],  p[3]);
   }
 
   private void applyInvalidUuid(String i, String l, String p, String s) {

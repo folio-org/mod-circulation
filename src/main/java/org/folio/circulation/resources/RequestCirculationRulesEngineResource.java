@@ -49,7 +49,7 @@ public class RequestCirculationRulesEngineResource extends AbstractCirculationRu
           .writeTo(routingContext.response());
       }
       catch (Exception e) {
-        log.error("apply", e);
+        log.error("apply request policy", e);
         internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
       }
     });

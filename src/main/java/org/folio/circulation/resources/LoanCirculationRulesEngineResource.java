@@ -49,7 +49,7 @@ public class LoanCirculationRulesEngineResource extends AbstractCirculationRules
           .writeTo(routingContext.response());
       }
       catch (Exception e) {
-        log.error("apply", e);
+        log.error("apply loan policy", e);
         internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
       }
     });
