@@ -1,44 +1,25 @@
 package org.folio.circulation.domain.policy.library;
 
-import org.folio.circulation.AdjustingOpeningDays;
 import org.folio.circulation.domain.policy.LoanPolicyPeriod;
 import org.folio.circulation.support.HttpResult;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Period;
 
-import java.util.Objects;
-
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.failureForAbsentTimetable;
 
-public class BeginningOfNextOpenHoursStrategy implements ClosedLibraryStrategy {
+public class BeginningOfNextOpenHoursStrategy extends ShortTermLoansBaseStrategy {
 
   private final Period offsetPeriod;
-  private final DateTimeZone zone;
 
   public BeginningOfNextOpenHoursStrategy(
-    LoanPolicyPeriod offsetInterval,
-    int offsetDuration,
-    DateTimeZone zone) {
+    LoanPolicyPeriod offsetInterval, int offsetDuration, DateTimeZone zone) {
+    super(zone);
     offsetPeriod = LoanPolicyPeriod.calculatePeriod(offsetInterval, offsetDuration);
-    this.zone = zone;
   }
 
   @Override
-  public HttpResult<DateTime> calculateDueDate(DateTime requestedDate, AdjustingOpeningDays openingDays) {
-    Objects.requireNonNull(openingDays);
-    LibraryTimetable libraryTimetable =
-      LibraryTimetableConverter.convertToLibraryTimetable(openingDays, zone);
-
-    LibraryInterval requestedInterval =
-      libraryTimetable.findInterval(requestedDate);
-    if (requestedInterval == null) {
-      return HttpResult.failed(failureForAbsentTimetable());
-    }
-    if (requestedInterval.isOpen()) {
-      return HttpResult.succeeded(requestedDate);
-    }
-
+  protected HttpResult<DateTime> calculateIfClosed(LibraryTimetable libraryTimetable, LibraryInterval requestedInterval) {
     LibraryInterval nextInterval = requestedInterval.getNext();
     if (nextInterval == null) {
       return HttpResult.failed(failureForAbsentTimetable());
