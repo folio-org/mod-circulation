@@ -11,7 +11,6 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   private final LoanPolicy loanPolicy;
   private final AdjustingOpeningDays initialDueDateDays;
   private final AdjustingOpeningDays fixedDueDateDays;
-  //TODO use configured timezone
   private final DateTimeZone timeZone;
 
   private LoanAndRelatedRecords(
