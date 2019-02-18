@@ -1,8 +1,6 @@
 package org.folio.circulation.domain;
 
 import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.Map;
 
 public class RequestRules {
 
