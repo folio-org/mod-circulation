@@ -37,7 +37,7 @@ public class CirculationRulesEngineAPITests extends APITests {
     }
   }
 
-  private Policy apply(ItemType itemType, LoanType loanType,
+  private Policy applyLoanPolicy(ItemType itemType, LoanType loanType,
       PatronGroup patronGroup, ShelvingLocation shelvingLocation) {
     try {
       CompletableFuture<Response> completed = new CompletableFuture<>();
@@ -53,6 +53,29 @@ public class CirculationRulesEngineAPITests extends APITests {
       assert response.getStatusCode() == 200;
       JsonObject json = new JsonObject(response.getBody());
       String loanPolicyId = json.getString("loanPolicyId");
+      assert loanPolicyId != null;
+      return new Policy(loanPolicyId);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private Policy applyRequestPolicy(ItemType itemType, String requestType,
+      PatronGroup patronGroup, ShelvingLocation shelvingLocation) {
+    try {
+      CompletableFuture<Response> completed = new CompletableFuture<>();
+      URL url = circulationRulesUrl(
+          "/request-policy"
+          + "?item_type_id="         + itemType.id
+          + "&request_type_id="         + requestType
+          + "&patron_type_id="       + patronGroup.id
+          + "&shelving_location_id=" + shelvingLocation.id
+          );
+      client.get(url, ResponseHandler.any(completed));
+      Response response = completed.get(10, TimeUnit.SECONDS);
+      assert response.getStatusCode() == 200;
+      JsonObject json = new JsonObject(response.getBody());
+      String loanPolicyId = json.getString("requestPolicyId");
       assert loanPolicyId != null;
       return new Policy(loanPolicyId);
     } catch (Exception e) {
@@ -176,11 +199,11 @@ public class CirculationRulesEngineAPITests extends APITests {
     applyOneRequestParameterMissing(p[0], p[1], p[2],  p[3]);
   }
 
-  private void applyInvalidUuid(String i, String l, String p, String s) {
+  private void applyInvalidUuid(String i, String l, String p, String s, String type) {
     CompletableFuture<Response> completed = new CompletableFuture<>();
-    URL url = circulationRulesUrl("/loan-policy"
+    URL url = circulationRulesUrl("/" + type + "-policy"
         + "?item_type_id=" + i
-        + "&loan_type_id=" + l
+        + "&" + type +"_type_id=" + l
         + "&patron_type_id=" + p
         + "&shelving_location_id=" + s);
     client.get(url, ResponseHandler.any(completed));
@@ -195,10 +218,15 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   private void applyInvalidUuid(String uuid) {
-    applyInvalidUuid( uuid, t1.id, lp1.id, s1.id);
-    applyInvalidUuid(m1.id,  uuid, lp1.id, s1.id);
-    applyInvalidUuid(m1.id, t1.id,  uuid, s1.id);
-    applyInvalidUuid(m1.id, t1.id, lp1.id,  uuid);
+    applyInvalidUuid( uuid, t1.id, lp1.id, s1.id, "loan");
+    applyInvalidUuid(m1.id,  uuid, lp1.id, s1.id, "loan");
+    applyInvalidUuid(m1.id, t1.id,  uuid, s1.id, "loan");
+    applyInvalidUuid(m1.id, t1.id, lp1.id,  uuid, "loan");
+
+    applyInvalidUuid( uuid, t1.id, lp1.id, s1.id, "request");
+    applyInvalidUuid(m1.id,  uuid, lp1.id, s1.id, "request");
+    applyInvalidUuid(m1.id, t1.id,  uuid, s1.id, "request");
+    applyInvalidUuid(m1.id, t1.id, lp1.id,  uuid, "request");
   }
 
   @Test
@@ -218,26 +246,32 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   @Test
-  public void fallback() {
+  public void loanFallback() {
     setRules(rulesFallback);
-    assertThat(apply(m1, t1, g1, s1), is(lp6));
+    assertThat(applyLoanPolicy(m1, t1, g1, s1), is(lp6));
+  }
+
+  @Test
+  public void requestFallback() {
+    setRules(rulesFallback);
+    assertThat(applyRequestPolicy(m1, t1.id, g1, s1), is(rp1));
   }
 
   @Test
   public void test1() {
     setRules(rules1);
-    assertThat(apply(m2, t2, g2, s2), is(lp4));
-    assertThat(apply(m2, t2, g1, s2), is(lp3));
-    assertThat(apply(m1, t2, g1, s2), is(lp2));
+    assertThat(applyLoanPolicy(m2, t2, g2, s2), is(lp4));
+    assertThat(applyLoanPolicy(m2, t2, g1, s2), is(lp3));
+    assertThat(applyLoanPolicy(m1, t2, g1, s2), is(lp2));
   }
 
   @Test
   public void test2() {
     setRules(rules2);
-    assertThat(apply(m2, t2, g2, s2), is(lp6));
-    assertThat(apply(m1, t2, g2, s2), is(lp1));
-    assertThat(apply(m1, t1, g2, s2), is(lp2));
-    assertThat(apply(m1, t1, g1, s2), is(lp3));
+    assertThat(applyLoanPolicy(m2, t2, g2, s2), is(lp6));
+    assertThat(applyLoanPolicy(m1, t2, g2, s2), is(lp1));
+    assertThat(applyLoanPolicy(m1, t1, g2, s2), is(lp2));
+    assertThat(applyLoanPolicy(m1, t1, g1, s2), is(lp3));
   }
 
   private void matches(JsonArray array, int match, Policy policy, int line) {
@@ -272,28 +306,28 @@ public class CirculationRulesEngineAPITests extends APITests {
   @Test
   public void setRulesInvalidatesCache() {
     setRules(rulesFallback);
-    assertThat(apply(m1, t1, g1, s1), is(lp6));
+    assertThat(applyLoanPolicy(m1, t1, g1, s1), is(lp6));
     setRules(rulesFallback2);
-    assertThat(apply(m1, t1, g1, s1), is(lp7));
+    assertThat(applyLoanPolicy(m1, t1, g1, s1), is(lp7));
     setRules(rulesFallback);
-    assertThat(apply(m1, t1, g1, s1), is(lp6));
+    assertThat(applyLoanPolicy(m1, t1, g1, s1), is(lp6));
     setRules(rulesFallback2);
-    assertThat(apply(m1, t1, g1, s1), is(lp7));
+    assertThat(applyLoanPolicy(m1, t1, g1, s1), is(lp7));
   }
 
   @Test
   public void cache() throws Exception {
     setRules(rulesFallback);
-    assertThat(apply(m1, t1, g1, s1), is(lp6));
+    assertThat(applyLoanPolicy(m1, t1, g1, s1), is(lp6));
 
     updateCirculationRulesInStorageWithoutInvalidatingCache(rulesFallback2);
 
-    assertThat(apply(m1, t1, g1, s1), is(lp6));
+    assertThat(applyLoanPolicy(m1, t1, g1, s1), is(lp6));
 
     // reduce cache time to trigger reload from storage backend
     LoanCirculationRulesEngineResource.setCacheTime(0, 0);
 
-    assertThat(apply(m1, t1, g1, s1), is(lp7));
+    assertThat(applyLoanPolicy(m1, t1, g1, s1), is(lp7));
   }
 
   private void updateCirculationRulesInStorageWithoutInvalidatingCache(String rules)
