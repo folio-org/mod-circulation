@@ -30,16 +30,16 @@ public class Text2DroolsTest {
   private String test1 = String.join("\n",
       "priority: t, s, c, b, a, m, g",
       "fallback-policy: l no-loan r no-hold n basic-notice",
-      "m book cd dvd: l policy-a r no-hold n basic-notice",
-      "m newspaper + g all: l policy-c r no-hold n basic-notice",
-      "m streaming-subscription: l policy-c r no-hold n basic-notice",
-      "    g visitor: l in-house r no-hold n basic-notice",
-      "    g undergrad: l in-house r no-hold n basic-notice",
-      "m book cd dvd + t special-items: l in-house r no-hold n basic-notice",
-      "t special-items: l policy-d r no-hold n basic-notice",
-      "    g visitor: l in-house r no-hold n basic-notice"
+      "m book cd dvd: l policy-a r request-1 n notice-1",
+      "m newspaper + g all: l policy-c r request-2 n notice-2",
+      "m streaming-subscription: l policy-c r request-3 n notice-3",
+      "    g visitor: l in-house r request-4 n notice-4",
+      "    g undergrad: l in-house r request-5 n notice-5",
+      "m book cd dvd + t special-items: l in-house r request-6 n notice-6",
+      "t special-items: l policy-d r request-7 n notice-7",
+      "    g visitor: l in-house r request-8 n notice-8"
       );
-  private String [][] test1cases = new String[][] {
+  private String [][] loanTestCases = new String[][] {
     // item type,   loan type,      patron type,   loan policies
     { "foo",       "foo",           "foo",                                                        "no-loan" },
     { "book",      "regular",       "undergrad",                                      "policy-a", "no-loan" },
@@ -48,6 +48,17 @@ public class Text2DroolsTest {
     { "newspaper", "regular",       "undergrad",                                      "policy-c", "no-loan" },
     { "newspaper", "special-items", "undergrad",                          "policy-d", "policy-c", "no-loan" },
     { "newspaper", "special-items", "visitor",                "in-house", "policy-d", "policy-c", "no-loan" },
+  };
+
+  private String[][] requestTestCases = new String[][] {
+    // item type,   request type,   patron type,   request policies
+    { "foo",        "foo",          "foo",                                                            "no-hold" },
+    { "book",       "regular",      "undergrad",                                         "request-1", "no-hold" },
+    { "book",      "special-items", "undergrad",  "request-6",              "request-7", "request-1", "no-hold" },
+    { "book",      "special-items", "visitor",    "request-8", "request-6", "request-7", "request-1", "no-hold" },
+    { "newspaper", "regular",       "undergrad",                                         "request-2", "no-hold" },
+    { "newspaper", "special-items", "undergrad",                            "request-7", "request-2", "no-hold" },
+    { "newspaper", "special-items", "visitor",                 "request-8", "request-7", "request-2", "no-hold" },
   };
 
   /** @return s[0] + " " + s[1] + " " + s[2] */
@@ -59,7 +70,7 @@ public class Text2DroolsTest {
   public void test1static() {
     String drools = Text2Drools.convert(test1);
     log.debug("drools = {}" + drools);
-    for (String [] s : test1cases) {
+    for (String [] s : loanTestCases) {
       assertThat(first3(s), Drools.loanPolicy(drools, s[0], s[1], s[2], "shelf"), is(s[3]));
     }
   }
@@ -67,9 +78,14 @@ public class Text2DroolsTest {
   @Test
   public void test1() {
     Drools drools = new Drools(Text2Drools.convert(test1));
-    for (String [] s : test1cases) {
+    for (String [] s : loanTestCases) {
       assertThat(first3(s), drools.loanPolicy(s[0], s[1], s[2], "shelf"), is(s[3]));
     }
+  }
+
+  @Test
+  public void testRequestPolicyList() {
+      testRequestPolicies(test1, requestTestCases);
   }
 
   /** s without the first 3 elements, converted to a String.
@@ -98,9 +114,21 @@ public class Text2DroolsTest {
     }
   }
 
+  private void testRequestPolicies(String circulationRules, String[][] cases) {
+      Drools drools = new Drools(Text2Drools.convert(circulationRules));
+      for (String [] s : cases) {
+        JsonArray array = drools.requestPolicies(s[0], s[1], s[2], "shelf");
+        String [] policies = new String[array.size()];
+        for (int i=0; i<array.size(); i++) {
+          policies[i] = array.getJsonObject(i).getString("requestPolicyId");
+        }
+        assertThat(first3(s), Arrays.toString(policies), is(expected(s)));
+      }
+  }
+
   @Test
   public void test1list() {
-    testLoanPolicies(test1, test1cases);
+    testLoanPolicies(test1, loanTestCases);
   }
 
   @Test
@@ -390,7 +418,7 @@ public class Text2DroolsTest {
     long start = System.currentTimeMillis();
     int n = 0;
     while (n < 100) {
-      for (String [] s : test1cases) {
+      for (String [] s : loanTestCases) {
         drools.loanPolicy(s[0], s[1], s[2], "shelf");
         n++;
       }
