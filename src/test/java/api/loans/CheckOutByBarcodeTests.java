@@ -158,7 +158,7 @@ public class CheckOutByBarcodeTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    useExampleFixedPolicyLoanRules();
+    useExampleFixedPolicyCirculationRules();
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -208,7 +208,11 @@ public class CheckOutByBarcodeTests extends APITests {
     UUID dueDateLimitedPolicyId = loanPoliciesFixture.create(dueDateLimitedPolicy)
       .getId();
 
-    useLoanPolicyAsFallback(dueDateLimitedPolicyId);
+    useLoanPolicyAsFallback(
+      dueDateLimitedPolicyId,
+      requestPoliciesFixture.noAllowedTypes().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -536,7 +540,11 @@ public class CheckOutByBarcodeTests extends APITests {
 
     final UUID nonExistentloanPolicyId = UUID.randomUUID();
 
-    useLoanPolicyAsFallback(nonExistentloanPolicyId);
+    useLoanPolicyAsFallback(
+      nonExistentloanPolicyId,
+      requestPoliciesFixture.noAllowedTypes().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -551,7 +559,7 @@ public class CheckOutByBarcodeTests extends APITests {
         .at(UUID.randomUUID()));
 
     assertThat(response.getBody(), is(String.format(
-      "Loan policy %s could not be found, please check loan rules",
+      "Loan policy %s could not be found, please check circulation rules",
       nonExistentloanPolicyId)));
   }
 

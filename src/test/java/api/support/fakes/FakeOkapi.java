@@ -36,7 +36,7 @@ public class FakeOkapi extends AbstractVerticle {
     String.format("http://localhost:%s", PORT_TO_USE);
 
   private HttpServer server;
-  private String loanRules = "{ \"loanRulesAsTextFile\": \"\" }";
+  private String circulationRules = "{ \"rulesAsText\": \"\" }";
 
   public static String getAddress() {
     return address;
@@ -50,7 +50,7 @@ public class FakeOkapi extends AbstractVerticle {
 
     this.server = vertx.createHttpServer();
 
-    forwardRequestsToApplyLoanRulesBackToCirculationModule(router);
+    forwardRequestsToApplyCirculationRulesBackToCirculationModule(router);
 
     new FakeStorageModuleBuilder()
       .withRecordName("material type")
@@ -120,6 +120,20 @@ public class FakeOkapi extends AbstractVerticle {
       .create().register(router);
 
     new FakeStorageModuleBuilder()
+      .withRecordName("request policy")
+      .withRootPath("/request-policy-storage/request-policies")
+      .withCollectionPropertyName("requestPolicies")
+      .withRequiredProperties("name")
+      .create().register(router);
+
+    new FakeStorageModuleBuilder()
+      .withRecordName("notice policy")
+      .withRootPath("/notice-policy-storage/notice-policies")
+      .withCollectionPropertyName("noticePolicies")
+      .withRequiredProperties("name", "active")
+      .create().register(router);
+
+    new FakeStorageModuleBuilder()
       .withRecordName("user group")
       .withRootPath("/groups")
       .withCollectionPropertyName("usergroups")
@@ -163,7 +177,7 @@ public class FakeOkapi extends AbstractVerticle {
       .withChangeMetadata()
       .create().register(router);
 
-    registerLoanRulesStorage(router);
+    registerCirculationRulesStorage(router);
     registerCalendar(router);
     registerLibraryHours(router);
 
@@ -233,16 +247,16 @@ public class FakeOkapi extends AbstractVerticle {
       });
   }
 
-  private void forwardRequestsToApplyLoanRulesBackToCirculationModule(Router router) {
-    //During loan creation, a request to /circulation/loan-rules/apply is made,
+  private void forwardRequestsToApplyCirculationRulesBackToCirculationModule(Router router) {
+    //During loan creation, a request to /circulation/rules/loan-policy is made,
     //which is effectively to itself, so needs to be routed back
-    router.get("/circulation/loan-rules/apply").handler(context -> {
+    router.get("/circulation/rules/loan-policy").handler(context -> {
       OkapiHttpClient client = APITestContext.createClient(throwable ->
         ServerErrorResponse.internalError(context.response(),
-          String.format("Exception when forward loan rules apply request: %s",
+          String.format("Exception when forward circulation rules apply request: %s",
             throwable.getMessage())));
 
-      client.get(String.format("http://localhost:%s/circulation/loan-rules/apply?%s"
+      client.get(String.format("http://localhost:%s/circulation/rules/loan-policy?%s"
         , APITestContext.circulationModulePort(), context.request().query()),
         httpClientResponse ->
           httpClientResponse.bodyHandler(buffer ->
@@ -267,21 +281,21 @@ public class FakeOkapi extends AbstractVerticle {
     }
   }
 
-  private void registerLoanRulesStorage(Router router) {
-    router.put("/loan-rules-storage").handler(routingContext -> {
-      log.debug("/loan-rules-storage PUT");
+  private void registerCirculationRulesStorage(Router router) {
+    router.put("/circulation-rules-storage").handler(routingContext -> {
+      log.debug("/circulation-rules-storage PUT");
       routingContext.request().bodyHandler(body -> {
-        loanRules = body.toString();
-        log.debug("/loan-rules-storage PUT body={}", loanRules);
+        circulationRules = body.toString();
+        log.debug("/circulation-rules-storage PUT body={}", circulationRules);
         routingContext.response().setStatusCode(204).end();
       }).exceptionHandler(ex -> {
         log.error("Unhandled exception in body handler", ex);
         routingContext.response().setStatusCode(500).end(ExceptionUtils.getStackTrace(ex));
       });
     });
-    router.get("/loan-rules-storage").handler(routingContext -> {
-      log.debug("/loan-rules-storage GET returns {}", loanRules);
-      routingContext.response().setStatusCode(200).end(loanRules);
+    router.get("/circulation-rules-storage").handler(routingContext -> {
+      log.debug("/circulation-rules-storage GET returns {}", circulationRules);
+      routingContext.response().setStatusCode(200).end(circulationRules);
     });
   }
 

@@ -173,7 +173,7 @@ public class LoanPolicy {
 
   private void errorWhenReachedRenewalLimit(Loan loan, List<ValidationError> errors) {
     if(!unlimitedRenewals() && reachedNumberOfRenewalsLimit(loan)) {
-      errors.add(errorForPolicy("loan has reached its maximum number of renewals"));
+      errors.add(errorForPolicy("loan at maximum renewal number"));
     }
   }
 

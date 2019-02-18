@@ -10,7 +10,7 @@ Version 2.0. See the file "[LICENSE](LICENSE)" for more information.
 Further documentation about this module can be found in the [/doc/](doc) folder:
 
 * [Guide](doc/guide.md) - introduction for developers
-* [Loanrules](doc/loanrules.md) - how the loan rules file and the loan rules engine work
+* [Circulationrules](doc/circulationrules.md) - how the circulation rules file and the circulation rules engine work
 
 ## Goal
 
@@ -201,7 +201,7 @@ Each includes an example of the error message provided and the parameter key inc
 |Check|Example Message|Parameter Key|Notes|
 |---|---|---|---|
 |Item does not exist|No item with barcode 036000291452 exists|itemBarcode| |
-|Holding does not exist| | |otherwise it is not possible to lookup loan rules|
+|Holding does not exist| | |otherwise it is not possible to lookup circulation rules|
 |Item is already checked out|Item is already checked out|itemBarcode| |
 |Existing open loan for item|Cannot check out item that already has an open loan|itemBarcode| |
 |Proxy relationship is valid|Cannot check out item via proxy when relationship is invalid| |only if proxying|
@@ -319,18 +319,17 @@ content-length: 611
 }
 ```
 
-### Loan Rules Caching
+### Circulation Rules Caching
 
-The loan rules engine used for applying loan rules has an internal, local cache which is refreshed every 5 seconds and
-when a PUT to /circulation/loan-rules changes the loan rules.
+The circulation rules engine used for applying circulation rules has an internal, local cache which is refreshed every 5 seconds and when a PUT to /circulation/rules changes the circulation rules.
 
-This is per module instance, and so may result in different responses during this window after the loan rules are changed.
+This is per module instance, and so may result in different responses during this window after the circulation rules are changed.
 
-### Loan Rules
+### Circulation Rules
 
-[doc/loanrules.md](doc/loanrules.md)
+[doc/circulationrules.md](doc/circulationrules.md)
 
-That document explains how the loan rules engine calculates the loan policy (that specifies the loan period)
+That document explains how the circulation rules engine calculates the loan policy (that specifies the loan period)
 based on the patron's patron group and the item's material type, loan type, and location.
 
 ### Item Status
