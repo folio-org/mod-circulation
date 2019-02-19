@@ -2,10 +2,9 @@ package org.folio.circulation.support;
 
 import java.util.UUID;
 
+import io.vertx.core.json.JsonObject;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
-
-import io.vertx.core.json.JsonObject;
 
 public class JsonPropertyFetcher {
   private JsonPropertyFetcher() {
