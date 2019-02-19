@@ -36,7 +36,6 @@ public class ClosedLibraryStrategyService {
     return CompletableFuture.completedFuture(HttpResult.succeeded(relatedRecords))
       .thenComposeAsync(r -> r.after(calendarRepository::lookupPeriod))
       .thenApply(r -> r.next(this::applyStrategy))
-      .thenComposeAsync(r -> r.after(calendarRepository::lookupPeriodForFixedDueDateSchedule))
       .thenApply(r -> r.next(this::applyFixedDueDateLimit));
   }
 

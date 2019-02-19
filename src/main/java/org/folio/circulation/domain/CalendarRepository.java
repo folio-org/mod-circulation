@@ -37,12 +37,6 @@ public class CalendarRepository {
       .thenApply(result -> result.map(relatedRecords::withInitialDueDateDays));
   }
 
-  public CompletableFuture<HttpResult<LoanAndRelatedRecords>> lookupPeriodForFixedDueDateSchedule(
-    LoanAndRelatedRecords relatedRecords) {
-    return getPeriod(relatedRecords)
-      .thenApply(result -> result.map((AdjustingOpeningDays t) -> relatedRecords.withFixedDueDateDays()));
-  }
-
   private CompletableFuture<HttpResult<AdjustingOpeningDays>> getPeriod(LoanAndRelatedRecords relatedRecords) {
     DateTime dueDate = relatedRecords.getLoan().getDueDate();
     String servicePointId = relatedRecords.getLoan().getCheckoutServicePointId();

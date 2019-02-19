@@ -60,10 +60,6 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
     return withLoan(loan.withItem(newItem));
   }
 
-  public LoanAndRelatedRecords withFixedDueDateDays() {
-    return new LoanAndRelatedRecords(loan, requestQueue, loanPolicy, initialDueDateDays, timeZone);
-  }
-
   public LoanAndRelatedRecords withTimeZone(DateTimeZone newTimeZone) {
     return new LoanAndRelatedRecords(loan, requestQueue, loanPolicy, initialDueDateDays, newTimeZone);
   }
