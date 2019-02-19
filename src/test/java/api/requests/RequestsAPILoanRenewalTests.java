@@ -65,29 +65,4 @@ public class RequestsAPILoanRenewalTests extends APITests {
     assertThat(changedItem.getJson().getJsonObject("status").getString("name"),
       is("Checked out"));
   }
-
-  @Test
-  public void RenewalWithOutstandingPageRequestDoesNotChangeItemStatus()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
-
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource rebecca = usersFixture.rebecca();
-
-    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
-
-    requestsClient.create(new RequestBuilder()
-      .page()
-      .forItem(smallAngryPlanet)
-      .by(usersFixture.charlotte()));
-
-    loansFixture.renewLoan(smallAngryPlanet, rebecca);
-
-    Response changedItem = itemsClient.getById(smallAngryPlanet.getId());
-
-    assertThat(changedItem.getJson().getJsonObject("status").getString("name"),
-      is("Checked out"));
-  }
 }
