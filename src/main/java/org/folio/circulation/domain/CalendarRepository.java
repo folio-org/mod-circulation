@@ -40,7 +40,7 @@ public class CalendarRepository {
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> lookupPeriodForFixedDueDateSchedule(
     LoanAndRelatedRecords relatedRecords) {
     return getPeriod(relatedRecords)
-      .thenApply(result -> result.map(relatedRecords::withFixedDueDateDays));
+      .thenApply(result -> result.map((AdjustingOpeningDays t) -> relatedRecords.withFixedDueDateDays()));
   }
 
   private CompletableFuture<HttpResult<AdjustingOpeningDays>> getPeriod(LoanAndRelatedRecords relatedRecords) {

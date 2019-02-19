@@ -19,6 +19,7 @@ import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.WebContext;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -49,7 +50,9 @@ public abstract class RenewalResource extends Resource {
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
     final LoanRenewalService loanRenewalService = LoanRenewalService.using(clients);
-    final ClosedLibraryStrategyService strategyService = ClosedLibraryStrategyService.using(clients, DateTime.now());
+    final ClosedLibraryStrategyService strategyService =
+      ClosedLibraryStrategyService.using(clients, DateTime.now(DateTimeZone.UTC), false);
+
 
     //TODO: Validation check for same user should be in the domain service
 

@@ -10,29 +10,27 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   private final RequestQueue requestQueue;
   private final LoanPolicy loanPolicy;
   private final AdjustingOpeningDays initialDueDateDays;
-  private final AdjustingOpeningDays fixedDueDateDays;
   private final DateTimeZone timeZone;
 
   private LoanAndRelatedRecords(
     Loan loan,
     RequestQueue requestQueue,
     LoanPolicy loanPolicy, AdjustingOpeningDays initialDueDateDays,
-    AdjustingOpeningDays fixedDueDateDays, DateTimeZone timeZone) {
+    DateTimeZone timeZone) {
 
     this.loan = loan;
     this.requestQueue = requestQueue;
     this.loanPolicy = loanPolicy;
     this.initialDueDateDays = initialDueDateDays;
-    this.fixedDueDateDays = fixedDueDateDays;
     this.timeZone = timeZone;
   }
 
   public LoanAndRelatedRecords(Loan loan) {
-    this(loan, null, null, null, null, DateTimeZone.UTC);
+    this(loan, null, null, null, DateTimeZone.UTC);
   }
 
   public LoanAndRelatedRecords withLoan(Loan newLoan) {
-    return new LoanAndRelatedRecords(newLoan, requestQueue, loanPolicy, initialDueDateDays, fixedDueDateDays, timeZone);
+    return new LoanAndRelatedRecords(newLoan, requestQueue, loanPolicy, initialDueDateDays, timeZone);
   }
 
   public LoanAndRelatedRecords withRequestingUser(User newUser) {
@@ -40,7 +38,7 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   }
 
   LoanAndRelatedRecords withInitialDueDateDays(AdjustingOpeningDays newOpeningDays) {
-    return new LoanAndRelatedRecords(loan, requestQueue, loanPolicy, newOpeningDays, fixedDueDateDays, timeZone);
+    return new LoanAndRelatedRecords(loan, requestQueue, loanPolicy, newOpeningDays, timeZone);
   }
 
   public LoanAndRelatedRecords withProxyingUser(User newProxy) {
@@ -49,25 +47,25 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
 
   public LoanAndRelatedRecords withLoanPolicy(LoanPolicy newLoanPolicy) {
     return new LoanAndRelatedRecords(loan, requestQueue,
-      newLoanPolicy, initialDueDateDays, fixedDueDateDays, timeZone);
+      newLoanPolicy, initialDueDateDays, timeZone);
   }
 
   public LoanAndRelatedRecords withRequestQueue(RequestQueue newRequestQueue) {
     return new LoanAndRelatedRecords(loan, newRequestQueue,
 
-      loanPolicy, initialDueDateDays, fixedDueDateDays, timeZone);
+      loanPolicy, initialDueDateDays, timeZone);
   }
 
   public LoanAndRelatedRecords withItem(Item newItem) {
     return withLoan(loan.withItem(newItem));
   }
 
-  public LoanAndRelatedRecords withFixedDueDateDays(AdjustingOpeningDays newFixedDueDateDays) {
-    return new LoanAndRelatedRecords(loan, requestQueue, loanPolicy, initialDueDateDays, newFixedDueDateDays, timeZone);
+  public LoanAndRelatedRecords withFixedDueDateDays() {
+    return new LoanAndRelatedRecords(loan, requestQueue, loanPolicy, initialDueDateDays, timeZone);
   }
 
   public LoanAndRelatedRecords withTimeZone(DateTimeZone newTimeZone) {
-    return new LoanAndRelatedRecords(loan, requestQueue, loanPolicy, initialDueDateDays, fixedDueDateDays, newTimeZone);
+    return new LoanAndRelatedRecords(loan, requestQueue, loanPolicy, initialDueDateDays, newTimeZone);
   }
 
   public Loan getLoan() {
@@ -88,10 +86,6 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
 
   public LoanPolicy getLoanPolicy() {
     return loanPolicy;
-  }
-
-  public AdjustingOpeningDays getFixedDueDateDays() {
-    return fixedDueDateDays;
   }
 
   public DateTimeZone getTimeZone() {

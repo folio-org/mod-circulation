@@ -250,7 +250,7 @@ public class LoanPolicy {
     return representation.getJsonObject("renewalsPolicy");
   }
 
-  private FixedDueDateSchedules getRenewalDueDateLimitSchedules() {
+  public FixedDueDateSchedules getRenewalDueDateLimitSchedules() {
     if(useDifferentPeriod()) {
       if(Objects.isNull(alternateRenewalFixedDueDateSchedules)
         || alternateRenewalFixedDueDateSchedules instanceof NoFixedDueDateSchedules)
@@ -287,7 +287,7 @@ public class LoanPolicy {
     return getProperty(getRenewalsPolicy(), "renewFromId");
   }
 
-  private FixedDueDateSchedules getRenewalFixedDueDateSchedules() {
+  public FixedDueDateSchedules getRenewalFixedDueDateSchedules() {
     return useDifferentPeriod()
       ? alternateRenewalFixedDueDateSchedules
       : fixedDueDateSchedules;
@@ -307,6 +307,10 @@ public class LoanPolicy {
 
   public boolean isRolling(JsonObject loansPolicy) {
     return isProfile(loansPolicy, "Rolling");
+  }
+
+  public boolean isFixed() {
+    return isFixed(representation);
   }
 
   private boolean isProfile(JsonObject loansPolicy, String profileId) {
