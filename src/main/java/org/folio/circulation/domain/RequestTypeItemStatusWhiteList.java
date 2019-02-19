@@ -2,19 +2,23 @@ package org.folio.circulation.domain;
 
 import java.util.EnumMap;
 
-public class RequestRules {
+public class RequestTypeItemStatusWhiteList {
 
   private static EnumMap<ItemStatus, Boolean> recallRules;
   private static EnumMap<ItemStatus, Boolean> holdRules;
   private static EnumMap<ItemStatus, Boolean> pageRules;
+  private static EnumMap<ItemStatus, Boolean> noneRules;
+  private static EnumMap<RequestType, EnumMap<ItemStatus, Boolean>> requestsRulesMap;
 
   static{
     initRecallRules();
     initHoldRules();
     initPageRules();
+    initNoneRules();
+    initRequestRulesMap();
   }
 
-  private RequestRules(){
+  private RequestTypeItemStatusWhiteList(){
     throw new IllegalStateException();
   }
 
@@ -51,15 +55,26 @@ public class RequestRules {
     pageRules.put(ItemStatus.NONE, false);
   }
 
+  private static void initNoneRules(){
+    noneRules = new EnumMap<>(ItemStatus.class);
+    noneRules.put(ItemStatus.CHECKED_OUT, false);
+    noneRules.put(ItemStatus.AVAILABLE, false);
+    noneRules.put(ItemStatus.AWAITING_PICKUP, false);
+    noneRules.put(ItemStatus.IN_TRANSIT, false);
+    noneRules.put(ItemStatus.MISSING, false);
+    noneRules.put(ItemStatus.PAGED, false);
+    noneRules.put(ItemStatus.NONE, false);
+  }
+
+  private static void initRequestRulesMap(){
+    requestsRulesMap = new EnumMap<>(RequestType.class);
+    requestsRulesMap.put(RequestType.HOLD, holdRules);
+    requestsRulesMap.put(RequestType.PAGE, pageRules);
+    requestsRulesMap.put(RequestType.RECALL, recallRules);
+    requestsRulesMap.put(RequestType.NONE, noneRules);
+  }
+
   public static boolean canCreateRequestForItem(ItemStatus itemStatus, RequestType requestType){
-    if (requestType == RequestType.HOLD){
-      return holdRules.get(itemStatus);
-    } else if (requestType == RequestType.RECALL){
-      return recallRules.get(itemStatus);
-    } else if (requestType == RequestType.PAGE){
-      return pageRules.get(itemStatus);
-    } else {
-      return false;
-    }
+     return requestsRulesMap.get(requestType).get(itemStatus);
   }
 }

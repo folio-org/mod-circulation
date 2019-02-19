@@ -27,7 +27,6 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.hamcrest.CoreMatchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
@@ -277,25 +276,6 @@ public class RequestsAPICreationTests extends APITests {
       .withRequesterId(usersFixture.charlotte().getId()));
 
     assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
-  }
-
-  @Test
-  public void canCreateAPageRequestForAvailableItem()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
-
-    UUID id = UUID.randomUUID();
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
-      ItemBuilder::available)
-      .getId();
-
-    requestsFixture.place(new RequestBuilder()
-      .page()
-      .withId(id)
-      .withItemId(itemId)
-      .withRequesterId(usersFixture.charlotte().getId()));
   }
 
   //TODO: Remove this once sample data is updated, temporary to aid change of item status case
@@ -840,7 +820,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void CanCreatePagedRequestWhenItemStatusIsAvailable()
+  public void canCreatePagedRequestWhenItemStatusIsAvailable()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -849,7 +829,7 @@ public class RequestsAPICreationTests extends APITests {
     //Set up the item's initial status to be AVAILABLE
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final String itemInitialStatus = smallAngryPlanet.getResponse().getJson().getJsonObject("status").getString("name");
-    assertThat(itemInitialStatus, CoreMatchers.is(ItemStatus.AVAILABLE.getValue()));
+    assertThat(itemInitialStatus, is(ItemStatus.AVAILABLE.getValue()));
 
     //Attempt to create a page request on it.  Final expected status is PAGED
     final IndividualResource servicePoint = servicePointsFixture.cd1();
@@ -861,11 +841,11 @@ public class RequestsAPICreationTests extends APITests {
 
     String finalStatus = pagedRequest.getResponse().getJson().getJsonObject("item").getString("status");
     assertThat(pagedRequest.getResponse(), hasStatus(HTTP_CREATED));
-    assertThat(finalStatus, CoreMatchers.is(ItemStatus.PAGED.getValue()));
+    assertThat(finalStatus, is(ItemStatus.PAGED.getValue()));
   }
 
   @Test
-  public void CannotCreatePagedRequestWhenItemStatusIsCheckedOut()
+  public void cannotCreatePagedRequestWhenItemStatusIsCheckedOut()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -874,7 +854,7 @@ public class RequestsAPICreationTests extends APITests {
     //Set up the item's initial status to be CHECKED OUT
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource checkedOutItem = loansFixture.checkOut(smallAngryPlanet, usersFixture.jessica());
-    assertThat(checkedOutItem.getResponse().getJson().getJsonObject("item").getJsonObject("status").getString("name"), CoreMatchers.is(ItemStatus.CHECKED_OUT.getValue()));
+    assertThat(checkedOutItem.getResponse().getJson().getJsonObject("item").getJsonObject("status").getString("name"), is(ItemStatus.CHECKED_OUT.getValue()));
 
     //Attempt to create a page request on it.
     final IndividualResource servicePoint = servicePointsFixture.cd1();
@@ -886,11 +866,11 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(pagedRequest, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = pagedRequest.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), CoreMatchers.is("item is "+ ItemStatus.CHECKED_OUT.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is "+ ItemStatus.CHECKED_OUT.toString().toLowerCase()));
   }
 
   @Test
-  public void CannotCreatePagedRequestWhenItemStatusIsAwaitingPickup()
+  public void cannotCreatePagedRequestWhenItemStatusIsAwaitingPickup()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -906,10 +886,10 @@ public class RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(servicePoint.getId())
       .by(usersFixture.james()));
 
-    loansFixture.checkInByBarcode(smallAngryPlanet,DateTime.now(),servicePoint.getId());
+    loansFixture.checkInByBarcode(smallAngryPlanet,DateTime.now(DateTimeZone.UTC),servicePoint.getId());
 
     Response pagedRequestRecord = itemsClient.getById(smallAngryPlanet.getId());
-    assertThat(pagedRequestRecord.getJson().getJsonObject("status").getString("name"), CoreMatchers.is(ItemStatus.AWAITING_PICKUP.getValue()));
+    assertThat(pagedRequestRecord.getJson().getJsonObject("status").getString("name"), is(ItemStatus.AWAITING_PICKUP.getValue()));
 
     //attempt to place a PAGED request
     final Response pagedRequest2 = requestsClient.attemptCreate(new RequestBuilder()
@@ -920,11 +900,11 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(pagedRequest2, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = pagedRequest2.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), CoreMatchers.is("item is "+ ItemStatus.AWAITING_PICKUP.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is "+ ItemStatus.AWAITING_PICKUP.toString().toLowerCase()));
   }
 
   @Test
-  public void CannotCreatePagedRequestWhenItemStatusIsPaged()
+  public void cannotCreatePagedRequestWhenItemStatusIsPaged()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -941,7 +921,7 @@ public class RequestsAPICreationTests extends APITests {
 
     String itemInitialStatus = pagedRequest.getResponse().getJson().getJsonObject("item").getString("status");
     assertThat(pagedRequest.getResponse(), hasStatus(HTTP_CREATED));
-    assertThat(itemInitialStatus, CoreMatchers.is(ItemStatus.PAGED.getValue()));
+    assertThat(itemInitialStatus, is(ItemStatus.PAGED.getValue()));
 
     //Attempt to create a page request on it.
     final Response pagedRequest2 = requestsClient.attemptCreate(new RequestBuilder()
@@ -952,12 +932,12 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(pagedRequest2, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = pagedRequest2.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), CoreMatchers.is("item is "+ ItemStatus.PAGED.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is "+ ItemStatus.PAGED.toString().toLowerCase()));
 
   }
 
   @Test
-  public void CannotCreatePagedRequestWhenItemStatusIsIntransit()
+  public void cannotCreatePagedRequestWhenItemStatusIsIntransit()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -977,17 +957,17 @@ public class RequestsAPICreationTests extends APITests {
       .by(usersFixture.james()));
 
     JsonObject requestItem = firstRequest.getJson().getJsonObject("item");
-    assertThat(requestItem.getString("status"), CoreMatchers.is ( ItemStatus.PAGED.getValue()));
-    assertThat(firstRequest.getJson().getString("status"), CoreMatchers.is (RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
+    assertThat(requestItem.getString("status"), is ( ItemStatus.PAGED.getValue()));
+    assertThat(firstRequest.getJson().getString("status"), is (RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
 
     //check it it at the "wrong" or unintended pickup location
-    loansFixture.checkInByBarcode(smallAngryPlanet,DateTime.now(),pickupServicePoint.getId());
+    loansFixture.checkInByBarcode(smallAngryPlanet,DateTime.now(DateTimeZone.UTC),pickupServicePoint.getId());
 
     MultipleRecords<JsonObject> requests = requestsFixture.getQueueFor(smallAngryPlanet);
     JsonObject pagedRequestRecord = requests.getRecords().iterator().next();
 
-    assertThat(pagedRequestRecord.getJsonObject("item").getString("status"), CoreMatchers.is(ItemStatus.IN_TRANSIT.getValue()));
-    assertThat(pagedRequestRecord.getString("status"), CoreMatchers.is(RequestStatus.OPEN_IN_TRANSIT.getValue()));
+    assertThat(pagedRequestRecord.getJsonObject("item").getString("status"), is(ItemStatus.IN_TRANSIT.getValue()));
+    assertThat(pagedRequestRecord.getString("status"), is(RequestStatus.OPEN_IN_TRANSIT.getValue()));
 
     //attempt to create a Paged request for this IN_TRANSIT item
     final Response pagedRequest2 = requestsClient.attemptCreate(new RequestBuilder()
@@ -998,6 +978,6 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(pagedRequest2, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = pagedRequest2.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), CoreMatchers.is("item is "+ ItemStatus.IN_TRANSIT.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is "+ ItemStatus.IN_TRANSIT.toString().toLowerCase()));
   }
 }

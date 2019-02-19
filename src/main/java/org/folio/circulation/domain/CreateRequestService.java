@@ -5,7 +5,6 @@ import org.folio.circulation.support.HttpResult;
 import java.util.concurrent.CompletableFuture;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.ItemStatus.*;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
@@ -14,18 +13,15 @@ public class CreateRequestService {
   private final RequestRepository requestRepository;
   private final UpdateItem updateItem;
   private final UpdateLoanActionHistory updateLoanActionHistory;
-  private final UpdateRequest updateRequest;
 
   public CreateRequestService(
     RequestRepository requestRepository,
     UpdateItem updateItem,
-    UpdateLoanActionHistory updateLoanActionHistory,
-    UpdateRequest updateRequest) {
+    UpdateLoanActionHistory updateLoanActionHistory) {
 
     this.requestRepository = requestRepository;
     this.updateItem = updateItem;
     this.updateLoanActionHistory = updateLoanActionHistory;
-    this.updateRequest = updateRequest;
   }
 
   public CompletableFuture<HttpResult<RequestAndRelatedRecords>> createRequest(
@@ -36,7 +32,6 @@ public class CreateRequestService {
       .map(CreateRequestService::setRequestQueuePosition))
       .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
       .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreation))
-      .thenComposeAsync(r -> r.after(updateRequest::updateRequestOnCreation))
       .thenComposeAsync(r -> r.after(requestRepository::create));
   }
 

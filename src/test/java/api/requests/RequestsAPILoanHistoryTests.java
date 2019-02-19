@@ -68,36 +68,6 @@ public class RequestsAPILoanHistoryTests extends APITests {
   }
 
   @Test
-  public void failureCreatingPageRequestDoesNotChangeTheOpenLoanForSameItem()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
-
-    //Cannot create a page request for open loan item anymore.
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-
-    UUID loanId = loansFixture.checkOutByBarcode(smallAngryPlanet).getId();
-
-    Response pageRequestResponse = requestsClient.attemptCreate(new RequestBuilder()
-      .page()
-      .forItem(smallAngryPlanet)
-      .withRequesterId(usersFixture.charlotte().getId()));
-
-    assertThat(
-      String.format("Failed to create page request: %s",
-        pageRequestResponse.getBody()), pageRequestResponse.getStatusCode(), Is.is(422));
-
-    JsonObject loanFromStorage = loansStorageClient.getById(loanId).getJson();
-
-    assertThat("action snapshot in storage is not still checked out",
-      loanFromStorage.getString("action"), is("checkedout"));
-
-    assertThat("item status snapshot in storage is not still checked out",
-      loanFromStorage.getString("itemStatus"), is("Checked out"));
-  }
-
-  @Test
   public void creatingHoldRequestDoesNotChangeClosedLoanForTheSameItem()
     throws InterruptedException,
     ExecutionException,
