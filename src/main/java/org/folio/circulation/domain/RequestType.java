@@ -32,18 +32,6 @@ public enum RequestType {
     this.loanAction = loanAction;
   }
 
-  Boolean canCreateRequestForItem(Item item) {
-    switch (this) {
-      case HOLD:
-      case RECALL:
-        return item.getStatus() == CHECKED_OUT;
-
-      case PAGE:
-      default:
-        return true;
-    }
-  }
-
   ItemStatus toCheckedOutItemStatus() {
     return checkedOutStatus;
   }

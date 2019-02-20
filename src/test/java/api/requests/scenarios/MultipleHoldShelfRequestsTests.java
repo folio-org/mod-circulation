@@ -16,6 +16,7 @@ import java.net.MalformedURLException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
@@ -68,10 +69,9 @@ public class MultipleHoldShelfRequestsTests extends APITests {
   @Test
   @Parameters({
     "Hold|Checked out",
-    "Recall|Checked out",
-    "Page|Checked out"
+    "Recall|Checked out"
   })
-  public void statusOfOldestRequestChangesToFulfilledWhenItemCheckedOutToRequester(
+  public void statusOfOldestHoldAndRecallRequestsChangeToFulfilledWhenItemCheckedOutToRequester(
     String requestType,
     String itemStatus)
     throws InterruptedException,
@@ -85,12 +85,10 @@ public class MultipleHoldShelfRequestsTests extends APITests {
     IndividualResource steve = usersFixture.steve();
 
     loansFixture.checkOut(smallAngryPlanet, james);
-
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
-
-    IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, steve, new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC), requestType);
+    IndividualResource  requestBySteve = requestsFixture.placeHoldShelfRequest(
+        smallAngryPlanet, steve, new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC), requestType);
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
@@ -101,7 +99,6 @@ public class MultipleHoldShelfRequestsTests extends APITests {
     assertThat(requestByJessica.getJson().getString("status"), is(CLOSED_FILLED));
 
     requestBySteve = requestsClient.get(requestBySteve);
-
     assertThat(requestBySteve.getJson().getString("status"), is(OPEN_NOT_YET_FILLED));
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
