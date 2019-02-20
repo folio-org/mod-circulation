@@ -41,6 +41,7 @@ import org.joda.time.format.ISODateTimeFormat;
 import java.util.UUID;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.applyCLDDMForLoanAndRelatedRecords;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
@@ -135,7 +136,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenApply(itemIsNotLoanableValidator::refuseWhenItemIsNotLoanable)
       .thenApply(r -> r.next(this::calculateDefaultInitialDueDate))
-      .thenComposeAsync(r -> r.after(strategyService::applyCLDDM))
+      .thenComposeAsync(r -> r.after(records -> applyCLDDMForLoanAndRelatedRecords(strategyService, records)))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
       .thenComposeAsync(r -> r.after(loanRepository::createLoan))

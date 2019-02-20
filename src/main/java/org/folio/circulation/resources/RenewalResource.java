@@ -23,6 +23,8 @@ import org.joda.time.DateTimeZone;
 
 import java.util.concurrent.CompletableFuture;
 
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.applyCLDDMForLoanAndRelatedRecords;
+
 public abstract class RenewalResource extends Resource {
   private final String rootPath;
 
@@ -60,7 +62,7 @@ public abstract class RenewalResource extends Resource {
       .thenApply(r -> r.map(LoanAndRelatedRecords::new))
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenApply(r -> r.next(loanRenewalService::renew))
-      .thenComposeAsync(r -> r.after(strategyService::applyCLDDM))
+      .thenComposeAsync(r -> r.after(records -> applyCLDDMForLoanAndRelatedRecords(strategyService, records)))
       .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(LoanResponse::from)

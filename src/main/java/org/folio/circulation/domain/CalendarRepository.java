@@ -26,23 +26,13 @@ public class CalendarRepository {
     this.resourceClient = clients.calendarStorageClient();
   }
 
-  /**
-   * Get the period of days with an opening endpoint
-   * <p>
-   * `mod-calendar` API returns 3 days from a current schedule:
-   * previous opened, requested and next opened
-   */
-  public CompletableFuture<HttpResult<LoanAndRelatedRecords>> lookupPeriod(LoanAndRelatedRecords relatedRecords) {
-    return getPeriod(relatedRecords)
-      .thenApply(result -> result.map(relatedRecords::withInitialDueDateDays));
-  }
 
-  private CompletableFuture<HttpResult<AdjustingOpeningDays>> getPeriod(LoanAndRelatedRecords relatedRecords) {
-    DateTime dueDate = relatedRecords.getLoan().getDueDate();
-    String servicePointId = relatedRecords.getLoan().getCheckoutServicePointId();
+  public CompletableFuture<HttpResult<AdjustingOpeningDays>> lookupOpeningDays(Loan loan) {
+    DateTime requestedDate = loan.getDueDate();
+    String servicePointId = loan.getCheckoutServicePointId();
 
     //replace after calendar api change
-    String path = String.format(PATH_PARAM_WITH_QUERY, servicePointId, dueDate.toLocalDate(), "hour", 1);
+    String path = String.format(PATH_PARAM_WITH_QUERY, servicePointId, requestedDate.toLocalDate(), "hour", 1);
 
     return FetchSingleRecord.<AdjustingOpeningDays>forRecord(RECORD_NAME)
       .using(resourceClient)
