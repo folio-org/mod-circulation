@@ -69,7 +69,7 @@ import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 public class CheckOutByBarcodeResource extends Resource {
 
-  public static final String DATE_TIME_FORMAT = "yyyy-MM-dd'Z'";
+  public static final String DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
   public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT);
   private static final int POSITION_PREV_DAY = 0;
   private static final int POSITION_CURRENT_DAY = 1;
