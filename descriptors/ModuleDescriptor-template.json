@@ -94,7 +94,7 @@
           "modulePermissions": [
             "circulation-storage.loans.item.put",
             "circulation-storage.loans.item.get",
-            "circulation-storage.request.collection.get",
+            "circulation-storage.loans.collection.get",
             "circulation.rules.loan-policy.get",
             "circulation.rules.request-policy.get",
             "circulation-storage.requests.collection.get",
