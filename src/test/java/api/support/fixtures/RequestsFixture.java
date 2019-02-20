@@ -19,13 +19,16 @@ import io.vertx.core.json.JsonObject;
 public class RequestsFixture {
   private final ResourceClient requestsClient;
   private final CancellationReasonsFixture cancellationReasonsFixture;
+  private final ServicePointsFixture servicePointsFixture;
 
   public RequestsFixture(
     ResourceClient requestsClient,
-    CancellationReasonsFixture cancellationReasonsFixture) {
+    CancellationReasonsFixture cancellationReasonsFixture,
+    ServicePointsFixture servicePointsFixture) {
 
     this.requestsClient = requestsClient;
     this.cancellationReasonsFixture = cancellationReasonsFixture;
+    this.servicePointsFixture = servicePointsFixture;
   }
 
   public IndividualResource place(RequestBuilder requestToBuild)
@@ -51,7 +54,8 @@ public class RequestsFixture {
       .fulfilToHoldShelf()
       .withItemId(item.getId())
       .withRequestDate(on)
-      .withRequesterId(by.getId()));
+      .withRequesterId(by.getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
   }
 
   public IndividualResource placeDeliveryRequest(

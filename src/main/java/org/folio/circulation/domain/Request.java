@@ -8,6 +8,7 @@ import static org.folio.circulation.domain.RequestStatus.CLOSED_PICKUP_EXPIRED;
 import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
 import static org.folio.circulation.domain.RequestStatus.OPEN_NOT_YET_FILLED;
 import static org.folio.circulation.domain.representations.RequestProperties.STATUS;
+import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
@@ -15,6 +16,7 @@ import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.representations.RequestProperties;
+import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
@@ -230,5 +232,20 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   String getDeliveryAddressType() {
     return representation.getString("deliveryAddressTypeId");
+  }
+
+  Request changeHoldShelfExpirationDate(DateTime holdShelfExpirationDate) {
+    write(representation, RequestProperties.HOLD_SHELF_EXPIRATION_DATE,
+        holdShelfExpirationDate);
+
+    return this;
+  }
+
+  void removeHoldShelfExpirationDate() {
+    representation.remove(RequestProperties.HOLD_SHELF_EXPIRATION_DATE);
+  }
+
+  public DateTime getHoldShelfExpirationDate() {
+    return getDateTimeProperty(representation, RequestProperties.HOLD_SHELF_EXPIRATION_DATE);
   }
 }

@@ -117,7 +117,7 @@ public class LocationsFixture {
       jubileeCampus().getId(),
       businessLibrary().getId(),
       djanoglyLibrary().getId(),
-      servicePointsFixture.fake().getId());
+      servicePointsFixture.cd1().getId());
   }
 
   private IndividualResource djanoglyLibrary()
