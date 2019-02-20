@@ -284,7 +284,7 @@ resourceTypes:
     /loan-policy-all:
       displayName: Apply circulation rules and return all matching loan policies
       get:
-        description: Get loan circulation and loan policy for each match when applying circulation rules
+        description: Get loan policy for each match when applying circulation rules
         queryParameters:
           item_type_id:
             description: "Item type id"
@@ -309,8 +309,92 @@ resourceTypes:
           200:
             body:
               application/json:
-                type: !include schema/circulation-rule-matches.json
-                example: !include examples/circulation-rule-matches.json
+                type: !include schema/circulation-rule-loan-policy-matches.json
+                example: !include examples/circulation-rule-loan-policy-matches.json
+          422:
+            description: "Invalid id error."
+            body:
+              application/json:
+                type: error
+                example: !include examples/circulation-rules-id-error.json
+          500:
+            description: "Internal server error"
+            body:
+              text/plain:
+                example: "Internal server error"
+    /request-policy:
+      displayName: Apply circulation rules for request policy
+      get:
+        description: Get the request policy when applying circulation rules
+        queryParameters:
+          item_type_id:
+            description: "Item type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          loan_type_id:
+            description: "Loan type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          patron_type_id:
+            description: "Patron type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          shelving_location_id:
+            description: "Shelving location id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+        responses:
+          200:
+            body:
+              application/json:
+                type: !include schema/request-policy-id.json
+                example: !include examples/request-policy-id.json
+          400:
+            description: "Invalid query parameters"
+            body:
+              text/plain:
+                example: "required query parameter missing: item_type_id"
+          422:
+            description: "Invalid id error."
+            body:
+              application/json:
+                type: error
+                example: !include examples/circulation-rules-id-error.json
+          500:
+            description: "Internal server error"
+            body:
+              text/plain:
+                example: "Internal server error"
+    /request-policy-all:
+      displayName: Apply circulation rules and return all matching request policies
+      get:
+        description: Get request policy for each match when applying circulation rules
+        queryParameters:
+          item_type_id:
+            description: "Item type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          loan_type_id:
+            description: "Loan type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          patron_type_id:
+            description: "Patron type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          shelving_location_id:
+            description: "Shelving location id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          rules:
+            description: "Circulation rules if provided, otherwise use stored circulation rules"
+            required: false
+        responses:
+          200:
+            body:
+              application/json:
+                type: !include schema/circulation-rule-request-policy-matches.json
+                example: !include examples/circulation-rule-request-policy-matches.json
           422:
             description: "Invalid id error."
             body:
