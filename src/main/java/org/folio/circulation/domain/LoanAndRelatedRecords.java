@@ -9,19 +9,19 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   private final Loan loan;
   private final RequestQueue requestQueue;
   private final LoanPolicy loanPolicy;
-  private final AdjustingOpeningDays initialDueDateDays;
+  private final AdjustingOpeningDays adjustingOpeningDays;
   private final DateTimeZone timeZone;
 
   private LoanAndRelatedRecords(
     Loan loan,
     RequestQueue requestQueue,
-    LoanPolicy loanPolicy, AdjustingOpeningDays initialDueDateDays,
+    LoanPolicy loanPolicy, AdjustingOpeningDays adjustingOpeningDays,
     DateTimeZone timeZone) {
 
     this.loan = loan;
     this.requestQueue = requestQueue;
     this.loanPolicy = loanPolicy;
-    this.initialDueDateDays = initialDueDateDays;
+    this.adjustingOpeningDays = adjustingOpeningDays;
     this.timeZone = timeZone;
   }
 
@@ -30,7 +30,7 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   }
 
   public LoanAndRelatedRecords withLoan(Loan newLoan) {
-    return new LoanAndRelatedRecords(newLoan, requestQueue, loanPolicy, initialDueDateDays, timeZone);
+    return new LoanAndRelatedRecords(newLoan, requestQueue, loanPolicy, adjustingOpeningDays, timeZone);
   }
 
   public LoanAndRelatedRecords withRequestingUser(User newUser) {
@@ -47,13 +47,13 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
 
   public LoanAndRelatedRecords withLoanPolicy(LoanPolicy newLoanPolicy) {
     return new LoanAndRelatedRecords(loan, requestQueue,
-      newLoanPolicy, initialDueDateDays, timeZone);
+      newLoanPolicy, adjustingOpeningDays, timeZone);
   }
 
   public LoanAndRelatedRecords withRequestQueue(RequestQueue newRequestQueue) {
     return new LoanAndRelatedRecords(loan, newRequestQueue,
 
-      loanPolicy, initialDueDateDays, timeZone);
+      loanPolicy, adjustingOpeningDays, timeZone);
   }
 
   public LoanAndRelatedRecords withItem(Item newItem) {
@@ -61,15 +61,15 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   }
 
   public LoanAndRelatedRecords withTimeZone(DateTimeZone newTimeZone) {
-    return new LoanAndRelatedRecords(loan, requestQueue, loanPolicy, initialDueDateDays, newTimeZone);
+    return new LoanAndRelatedRecords(loan, requestQueue, loanPolicy, adjustingOpeningDays, newTimeZone);
   }
 
   public Loan getLoan() {
     return loan;
   }
 
-  public AdjustingOpeningDays getInitialDueDateDays() {
-    return initialDueDateDays;
+  public AdjustingOpeningDays getAdjustingOpeningDays() {
+    return adjustingOpeningDays;
   }
 
   public RequestQueue getRequestQueue() {

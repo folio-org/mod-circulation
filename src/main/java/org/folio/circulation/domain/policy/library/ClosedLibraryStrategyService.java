@@ -40,7 +40,7 @@ public class ClosedLibraryStrategyService {
   }
 
   private HttpResult<LoanAndRelatedRecords> applyStrategy(LoanAndRelatedRecords relatedRecords) {
-    if (relatedRecords.getInitialDueDateDays() == null) {
+    if (relatedRecords.getAdjustingOpeningDays() == null) {
       return HttpResult.succeeded(relatedRecords);
     }
     DateTimeZone timeZone = relatedRecords.getTimeZone();
@@ -52,7 +52,7 @@ public class ClosedLibraryStrategyService {
 
     DateTime dueDate = relatedRecords.getLoan().getDueDate();
     HttpResult<DateTime> calculateDueDate =
-      strategy.calculateDueDate(dueDate, relatedRecords.getInitialDueDateDays());
+      strategy.calculateDueDate(dueDate, relatedRecords.getAdjustingOpeningDays());
     return calculateDueDate.next(date -> {
       relatedRecords.getLoan().changeDueDate(date);
       return HttpResult.succeeded(relatedRecords);
@@ -60,7 +60,7 @@ public class ClosedLibraryStrategyService {
   }
 
   private HttpResult<LoanAndRelatedRecords> applyFixedDueDateLimit(LoanAndRelatedRecords relatedRecords) {
-    if (relatedRecords.getInitialDueDateDays() == null) {
+    if (relatedRecords.getAdjustingOpeningDays() == null) {
       return HttpResult.succeeded(relatedRecords);
     }
     final Loan loan = relatedRecords.getLoan();
@@ -81,7 +81,7 @@ public class ClosedLibraryStrategyService {
       ClosedLibraryStrategyUtils.determineStrategyForMovingBackward(
         loanPolicy, loanDate, relatedRecords.getTimeZone());
     HttpResult<DateTime> calculatedDate =
-      strategy.calculateDueDate(dueDateLimit, relatedRecords.getInitialDueDateDays());
+      strategy.calculateDueDate(dueDateLimit, relatedRecords.getAdjustingOpeningDays());
     return calculatedDate.next(date -> {
       relatedRecords.getLoan().changeDueDate(date);
       return HttpResult.succeeded(relatedRecords);
