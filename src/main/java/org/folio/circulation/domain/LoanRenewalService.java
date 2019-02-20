@@ -4,6 +4,7 @@ import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpResult;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -20,11 +21,11 @@ public class LoanRenewalService {
 
   public CompletableFuture<HttpResult<Loan>> renew(Loan loan) {
     return loanPolicyRepository.lookupLoanPolicy(loan)
-      .thenApply(r -> r.next(policy -> policy.renew(loan, DateTime.now())));
+      .thenApply(r -> r.next(policy -> policy.renew(loan, DateTime.now(DateTimeZone.UTC))));
   }
 
   public CompletableFuture<HttpResult<Loan>> overrideRenewal(Loan loan, DateTime dueDate, String comment) {
     return loanPolicyRepository.lookupLoanPolicy(loan)
-      .thenApply(r -> r.next(policy -> policy.overrideRenewal(loan, DateTime.now(), dueDate, comment)));
+      .thenApply(r -> r.next(policy -> policy.overrideRenewal(loan, DateTime.now(DateTimeZone.UTC), dueDate, comment)));
   }
 }

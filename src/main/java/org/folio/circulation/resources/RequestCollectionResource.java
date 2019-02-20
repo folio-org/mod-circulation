@@ -50,7 +50,7 @@ public class RequestCollectionResource extends CollectionResource {
     final LoanRepository loanRepository = new LoanRepository(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateLoanActionHistory updateLoanActionHistory = new UpdateLoanActionHistory(clients);
-    final ServicePointPickupLocationValidator servicePointPickupLocationValidator 
+    final ServicePointPickupLocationValidator servicePointPickupLocationValidator
         = new ServicePointPickupLocationValidator();
 
     final ProxyRelationshipValidator proxyRelationshipValidator =
@@ -62,7 +62,7 @@ public class RequestCollectionResource extends CollectionResource {
     final RequestRepresentation requestRepresentation = new RequestRepresentation();
 
     final RequestFromRepresentationService requestFromRepresentationService
-      = new RequestFromRepresentationService(itemRepository, requestQueueRepository, 
+      = new RequestFromRepresentationService(itemRepository, requestQueueRepository,
           userRepository, loanRepository, servicePointRepository,
           proxyRelationshipValidator, servicePointPickupLocationValidator);
 
@@ -90,7 +90,7 @@ public class RequestCollectionResource extends CollectionResource {
     final UpdateRequestQueue updateRequestQueue = UpdateRequestQueue.using(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateLoanActionHistory updateLoanActionHistory = new UpdateLoanActionHistory(clients);
-    final ServicePointPickupLocationValidator servicePointPickupLocationValidator 
+    final ServicePointPickupLocationValidator servicePointPickupLocationValidator
         = new ServicePointPickupLocationValidator();
 
     final ProxyRelationshipValidator proxyRelationshipValidator =
@@ -101,6 +101,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final CreateRequestService createRequestService = new CreateRequestService(
       requestRepository, updateItem, updateLoanActionHistory);
+
 
     final UpdateRequestService updateRequestService = new UpdateRequestService(
       requestRepository, updateRequestQueue, closedRequestValidator);
@@ -113,7 +114,7 @@ public class RequestCollectionResource extends CollectionResource {
         requestQueueRepository, userRepository, loanRepository, servicePointRepository,
           proxyRelationshipValidator, servicePointPickupLocationValidator);
 
-    requestFromRepresentationService.getRequestFrom(representation)      
+    requestFromRepresentationService.getRequestFrom(representation)
       .thenComposeAsync(r -> r.afterWhen(requestRepository::exists,
         updateRequestService::replaceRequest,
         createRequestService::createRequest))
