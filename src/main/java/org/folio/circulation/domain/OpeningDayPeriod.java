@@ -6,7 +6,7 @@ public class OpeningDayPeriod {
   private static final String OPENING_DAY_KEY = "openingDay";
   private OpeningDay openingDay;
 
-  OpeningDayPeriod(JsonObject jsonObject) { ;
+  OpeningDayPeriod(JsonObject jsonObject) {
     this.openingDay = new OpeningDay(jsonObject, OPENING_DAY_KEY);
   }
 
