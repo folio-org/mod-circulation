@@ -1,9 +1,8 @@
 package org.folio.circulation.domain;
 
-import java.util.Arrays;
-
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
-import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
+
+import java.util.Arrays;
 
 public enum RequestType {
   NONE("", ItemStatus.NONE, null),
@@ -30,18 +29,6 @@ public enum RequestType {
     this.value = value;
     this.checkedOutStatus = checkedOutStatus;
     this.loanAction = loanAction;
-  }
-
-  Boolean canCreateRequestForItem(Item item) {
-    switch (this) {
-      case HOLD:
-      case RECALL:
-        return item.getStatus() == CHECKED_OUT;
-
-      case PAGE:
-      default:
-        return true;
-    }
   }
 
   ItemStatus toCheckedOutItemStatus() {

@@ -3,12 +3,16 @@ package org.folio.circulation.resources;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.domain.CreateRequestService;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.RequestRepository;
 import org.folio.circulation.domain.RequestRepresentation;
+import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateLoanActionHistory;
 import org.folio.circulation.domain.UpdateRequestQueue;
@@ -24,11 +28,6 @@ import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.NoContentHttpResult;
 import org.folio.circulation.support.OkJsonHttpResult;
 import org.folio.circulation.support.http.server.WebContext;
-
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.RoutingContext;
-import org.folio.circulation.domain.ServicePointRepository;
 
 public class RequestCollectionResource extends CollectionResource {
   public RequestCollectionResource(HttpClient client) {
@@ -50,7 +49,7 @@ public class RequestCollectionResource extends CollectionResource {
     final LoanRepository loanRepository = new LoanRepository(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateLoanActionHistory updateLoanActionHistory = new UpdateLoanActionHistory(clients);
-    final ServicePointPickupLocationValidator servicePointPickupLocationValidator 
+    final ServicePointPickupLocationValidator servicePointPickupLocationValidator
         = new ServicePointPickupLocationValidator();
 
     final ProxyRelationshipValidator proxyRelationshipValidator =
@@ -62,7 +61,7 @@ public class RequestCollectionResource extends CollectionResource {
     final RequestRepresentation requestRepresentation = new RequestRepresentation();
 
     final RequestFromRepresentationService requestFromRepresentationService
-      = new RequestFromRepresentationService(itemRepository, requestQueueRepository, 
+      = new RequestFromRepresentationService(itemRepository, requestQueueRepository,
           userRepository, loanRepository, servicePointRepository,
           proxyRelationshipValidator, servicePointPickupLocationValidator);
 
@@ -90,7 +89,7 @@ public class RequestCollectionResource extends CollectionResource {
     final UpdateRequestQueue updateRequestQueue = UpdateRequestQueue.using(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateLoanActionHistory updateLoanActionHistory = new UpdateLoanActionHistory(clients);
-    final ServicePointPickupLocationValidator servicePointPickupLocationValidator 
+    final ServicePointPickupLocationValidator servicePointPickupLocationValidator
         = new ServicePointPickupLocationValidator();
 
     final ProxyRelationshipValidator proxyRelationshipValidator =
@@ -101,6 +100,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final CreateRequestService createRequestService = new CreateRequestService(
       requestRepository, updateItem, updateLoanActionHistory);
+
 
     final UpdateRequestService updateRequestService = new UpdateRequestService(
       requestRepository, updateRequestQueue, closedRequestValidator);
@@ -113,7 +113,7 @@ public class RequestCollectionResource extends CollectionResource {
         requestQueueRepository, userRepository, loanRepository, servicePointRepository,
           proxyRelationshipValidator, servicePointPickupLocationValidator);
 
-    requestFromRepresentationService.getRequestFrom(representation)      
+    requestFromRepresentationService.getRequestFrom(representation)
       .thenComposeAsync(r -> r.afterWhen(requestRepository::exists,
         updateRequestService::replaceRequest,
         createRequestService::createRequest))

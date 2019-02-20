@@ -16,16 +16,15 @@ import java.net.MalformedURLException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import api.support.APITests;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import api.support.APITests;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
 
 @RunWith(JUnitParamsRunner.class)
 public class MultipleHoldShelfRequestsTests extends APITests {
@@ -68,10 +67,9 @@ public class MultipleHoldShelfRequestsTests extends APITests {
   @Test
   @Parameters({
     "Hold|Checked out",
-    "Recall|Checked out",
-    "Page|Checked out"
+    "Recall|Checked out"
   })
-  public void statusOfOldestRequestChangesToFulfilledWhenItemCheckedOutToRequester(
+  public void statusOfOldestHoldAndRecallRequestsChangeToFulfilledWhenItemCheckedOutToRequester(
     String requestType,
     String itemStatus)
     throws InterruptedException,
@@ -85,10 +83,8 @@ public class MultipleHoldShelfRequestsTests extends APITests {
     IndividualResource steve = usersFixture.steve();
 
     loansFixture.checkOut(smallAngryPlanet, james);
-
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
-
     IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, steve, new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC), requestType);
 
@@ -101,7 +97,6 @@ public class MultipleHoldShelfRequestsTests extends APITests {
     assertThat(requestByJessica.getJson().getString("status"), is(CLOSED_FILLED));
 
     requestBySteve = requestsClient.get(requestBySteve);
-
     assertThat(requestBySteve.getJson().getString("status"), is(OPEN_NOT_YET_FILLED));
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);

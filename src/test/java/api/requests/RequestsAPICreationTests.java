@@ -9,6 +9,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static java.util.Arrays.asList;
 import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
+import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.Matchers.contains;
@@ -28,9 +29,13 @@ import api.support.builders.ItemBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import api.support.http.InventoryItemResource;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
+import org.folio.circulation.domain.ItemStatus;
+import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
@@ -279,25 +284,6 @@ public class RequestsAPICreationTests extends APITests {
       .withRequesterId(usersFixture.charlotte().getId()));
 
     assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
-  }
-
-  @Test
-  public void canCreateAPageRequestForAvailableItem()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
-
-    UUID id = UUID.randomUUID();
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
-      ItemBuilder::available)
-      .getId();
-
-    requestsFixture.place(new RequestBuilder()
-      .page()
-      .withId(id)
-      .withItemId(itemId)
-      .withRequesterId(usersFixture.charlotte().getId()));
   }
 
   //TODO: Remove this once sample data is updated, temporary to aid change of item status case
@@ -839,5 +825,167 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Pickup service point does not exist"),
       hasUUIDParameter("pickupServicePointId", pickupServicePointId))));
+  }
+
+  @Test
+  public void canCreatePagedRequestWhenItemStatusIsAvailable()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    //Set up the item's initial status to be AVAILABLE
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final String itemInitialStatus = smallAngryPlanet.getResponse().getJson().getJsonObject("status").getString("name");
+    assertThat(itemInitialStatus, is(ItemStatus.AVAILABLE.getValue()));
+
+    //Attempt to create a page request on it.  Final expected status is PAGED
+    final IndividualResource servicePoint = servicePointsFixture.cd1();
+    final IndividualResource pagedRequest = requestsClient.create(new RequestBuilder()
+      .page()
+      .forItem(smallAngryPlanet)
+      .withPickupServicePointId(servicePoint.getId())
+      .by(usersFixture.james()));
+
+    String finalStatus = pagedRequest.getResponse().getJson().getJsonObject("item").getString("status");
+    assertThat(pagedRequest.getResponse(), hasStatus(HTTP_CREATED));
+    assertThat(finalStatus, is(ItemStatus.PAGED.getValue()));
+  }
+
+  @Test
+  public void cannotCreatePagedRequestWhenItemStatusIsCheckedOut()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    //Set up the item's initial status to be CHECKED OUT
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource checkedOutItem = loansFixture.checkOut(smallAngryPlanet, usersFixture.jessica());
+    assertThat(checkedOutItem.getResponse().getJson().getJsonObject("item").getJsonObject("status").getString("name"), is(ItemStatus.CHECKED_OUT.getValue()));
+
+    //Attempt to create a page request on it.
+    final IndividualResource servicePoint = servicePointsFixture.cd1();
+    final Response pagedRequest = requestsClient.attemptCreate(new RequestBuilder()
+      .page()
+      .forItem(smallAngryPlanet)
+      .withPickupServicePointId(servicePoint.getId())
+      .by(usersFixture.jessica()));
+
+    assertThat(pagedRequest, hasStatus(HTTP_VALIDATION_ERROR));
+    JsonArray errors = pagedRequest.getJson().getJsonArray("errors");
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.CHECKED_OUT.toString().toLowerCase()));
+  }
+
+  @Test
+  public void cannotCreatePagedRequestWhenItemStatusIsAwaitingPickup()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    //Setting up an item with AWAITING_PICKUP status
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource servicePoint = servicePointsFixture.cd1();
+
+    requestsClient.create(new RequestBuilder()
+      .page()
+      .forItem(smallAngryPlanet)
+      .withPickupServicePointId(servicePoint.getId())
+      .by(usersFixture.james()));
+
+    loansFixture.checkInByBarcode(smallAngryPlanet, DateTime.now(DateTimeZone.UTC), servicePoint.getId());
+
+    Response pagedRequestRecord = itemsClient.getById(smallAngryPlanet.getId());
+    assertThat(pagedRequestRecord.getJson().getJsonObject("status").getString("name"), is(ItemStatus.AWAITING_PICKUP.getValue()));
+
+    //attempt to place a PAGED request
+    final Response pagedRequest2 = requestsClient.attemptCreate(new RequestBuilder()
+      .page()
+      .forItem(smallAngryPlanet)
+      .withPickupServicePointId(servicePoint.getId())
+      .by(usersFixture.jessica()));
+
+    assertThat(pagedRequest2, hasStatus(HTTP_VALIDATION_ERROR));
+    JsonArray errors = pagedRequest2.getJson().getJsonArray("errors");
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.AWAITING_PICKUP.toString().toLowerCase()));
+  }
+
+  @Test
+  public void cannotCreatePagedRequestWhenItemStatusIsPaged()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    //Set up the item's initial status to be PAGED
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource servicePoint = servicePointsFixture.cd1();
+    final IndividualResource pagedRequest = requestsClient.create(new RequestBuilder()
+      .page()
+      .forItem(smallAngryPlanet)
+      .withPickupServicePointId(servicePoint.getId())
+      .by(usersFixture.james()));
+
+    String itemInitialStatus = pagedRequest.getResponse().getJson().getJsonObject("item").getString("status");
+    assertThat(pagedRequest.getResponse(), hasStatus(HTTP_CREATED));
+    assertThat(itemInitialStatus, is(ItemStatus.PAGED.getValue()));
+
+    //Attempt to create a page request on it.
+    final Response pagedRequest2 = requestsClient.attemptCreate(new RequestBuilder()
+      .page()
+      .forItem(smallAngryPlanet)
+      .withPickupServicePointId(servicePoint.getId())
+      .by(usersFixture.jessica()));
+
+    assertThat(pagedRequest2, hasStatus(HTTP_VALIDATION_ERROR));
+    JsonArray errors = pagedRequest2.getJson().getJsonArray("errors");
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.PAGED.toString().toLowerCase()));
+
+  }
+
+  @Test
+  public void cannotCreatePagedRequestWhenItemStatusIsIntransit()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    //setup item in IN_TRANSIT status
+    //In order to get the item into the IN_TRANSIT state, for now we need to go the round-about route of delivering it to the unintended pickup location first
+    //then check it in at the intended pickup location.
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
+    final IndividualResource pickupServicePoint = servicePointsFixture.cd2();
+
+    final IndividualResource firstRequest = requestsClient.create(new RequestBuilder()
+      .page()
+      .forItem(smallAngryPlanet)
+      .withPickupServicePointId(requestPickupServicePoint.getId())
+      .by(usersFixture.james()));
+
+    JsonObject requestItem = firstRequest.getJson().getJsonObject("item");
+    assertThat(requestItem.getString("status"), is(ItemStatus.PAGED.getValue()));
+    assertThat(firstRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
+
+    //check it it at the "wrong" or unintended pickup location
+    loansFixture.checkInByBarcode(smallAngryPlanet, DateTime.now(DateTimeZone.UTC), pickupServicePoint.getId());
+
+    MultipleRecords<JsonObject> requests = requestsFixture.getQueueFor(smallAngryPlanet);
+    JsonObject pagedRequestRecord = requests.getRecords().iterator().next();
+
+    assertThat(pagedRequestRecord.getJsonObject("item").getString("status"), is(ItemStatus.IN_TRANSIT.getValue()));
+    assertThat(pagedRequestRecord.getString("status"), is(RequestStatus.OPEN_IN_TRANSIT.getValue()));
+
+    //attempt to create a Paged request for this IN_TRANSIT item
+    final Response pagedRequest2 = requestsClient.attemptCreate(new RequestBuilder()
+      .page()
+      .forItem(smallAngryPlanet)
+      .withPickupServicePointId(requestPickupServicePoint.getId())
+      .by(usersFixture.jessica()));
+
+    assertThat(pagedRequest2, hasStatus(HTTP_VALIDATION_ERROR));
+    JsonArray errors = pagedRequest2.getJson().getJsonArray("errors");
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.IN_TRANSIT.toString().toLowerCase()));
   }
 }

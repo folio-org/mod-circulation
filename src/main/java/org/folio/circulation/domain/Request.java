@@ -3,8 +3,8 @@ package org.folio.circulation.domain;
 import static org.folio.circulation.domain.RequestFulfilmentPreference.HOLD_SHELF;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_CANCELLED;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_FILLED;
-import static org.folio.circulation.domain.RequestStatus.CLOSED_UNFILLED;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_PICKUP_EXPIRED;
+import static org.folio.circulation.domain.RequestStatus.CLOSED_UNFILLED;
 import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
 import static org.folio.circulation.domain.RequestStatus.OPEN_NOT_YET_FILLED;
 import static org.folio.circulation.domain.representations.RequestProperties.STATUS;
@@ -13,10 +13,9 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.util.Objects;
 
+import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.representations.RequestProperties;
-
-import io.vertx.core.json.JsonObject;
 
 public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private final JsonObject representation;
@@ -25,7 +24,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private final User proxy;
   private final Loan loan;
   private final ServicePoint pickupServicePoint;
-  
+
   private boolean changedPosition = false;
 
   public Request(
@@ -120,17 +119,16 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return new Request(representation, item, requester, newProxy, loan,
         pickupServicePoint);
   }
-  
+
   Request withLoan(Loan newLoan) {
     return new Request(representation, item, requester, proxy, newLoan,
         pickupServicePoint);
   }
-  
+
   public Request withPickupServicePoint(ServicePoint newPickupServicePoint) {
     return new Request(representation, item, requester, proxy, loan,
         newPickupServicePoint);
-  } 
-
+  }
   @Override
   public String getUserId() {
     return representation.getString("requesterId");
@@ -153,12 +151,12 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return representation.getString("id");
   }
 
-  private RequestType getRequestType() {
+  RequestType getRequestType() {
     return RequestType.from(representation.getString("requestType"));
   }
 
   Boolean allowedForItem() {
-    return getRequestType().canCreateRequestForItem(getItem());
+    return RequestTypeItemStatusWhiteList.canCreateRequestForItem(getItem().getStatus(), getRequestType());
   }
 
   String actionOnCreation() {
@@ -177,7 +175,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   public Item getItem() {
     return item;
   }
-  
+
   public Loan getLoan() {
     return loan;
   }
@@ -189,11 +187,11 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   public User getProxy() {
     return proxy;
   }
-  
+
   public String getPickupServicePointId() {
     return representation.getString("pickupServicePointId");
   }
-  
+
   public ServicePoint getPickupServicePoint() {
     return pickupServicePoint;
   }
