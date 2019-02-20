@@ -7,10 +7,10 @@ import org.folio.circulation.domain.policy.FixedDueDateSchedules;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.PeriodUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
+import java.util.Comparator;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -73,7 +73,9 @@ public class ClosedLibraryStrategyService {
       return HttpResult.succeeded(relatedRecords);
     }
     DateTime dueDateLimit = optionalDueDateLimit.get();
-    if (!PeriodUtil.isAfterDate(loan.getDueDate(), dueDateLimit)) {
+    Comparator<DateTime> dateComparator =
+      Comparator.comparing(dateTime -> dateTime.withZone(DateTimeZone.UTC).toLocalDate());
+    if (dateComparator.compare(loan.getDueDate(), dueDateLimit) <= 0) {
       return HttpResult.succeeded(relatedRecords);
     }
 
@@ -96,4 +98,5 @@ public class ClosedLibraryStrategyService {
     }
     return loanPolicy.getFixedDueDateSchedules();
   }
+
 }

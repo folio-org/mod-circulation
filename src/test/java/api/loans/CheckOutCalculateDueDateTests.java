@@ -51,7 +51,6 @@ import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_
 import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY;
 import static org.folio.circulation.domain.policy.LoanPolicyPeriod.HOURS;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
-import static org.folio.circulation.support.PeriodUtil.isInPeriodOpeningDay;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -922,6 +921,23 @@ public class CheckOutCalculateDueDateTests extends APITests {
         return nextDate.toDateTime(startTime).withZoneRetainFields(DateTimeZone.UTC);
       }
     }
+  }
+
+
+  /**
+   * Determine whether time is in any of the periods
+   */
+  public static boolean isInPeriodOpeningDay(List<OpeningHour> openingHoursList, LocalTime timeShift) {
+    return openingHoursList.stream()
+      .anyMatch(hours -> isTimeInCertainPeriod(timeShift,
+        hours.getStartTime(), hours.getEndTime()));
+  }
+
+  /**
+   * Determine whether the `time` is within a period `startTime` and `endTime`
+   */
+  private static boolean isTimeInCertainPeriod(LocalTime time, LocalTime startTime, LocalTime endTime) {
+    return !time.isBefore(startTime) && !time.isAfter(endTime);
   }
 
   /**
