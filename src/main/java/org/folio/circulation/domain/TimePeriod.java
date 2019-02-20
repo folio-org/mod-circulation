@@ -1,12 +1,11 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonObject;
-
+import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 import java.time.temporal.ChronoUnit;
 
-import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
+import io.vertx.core.json.JsonObject;
 
 public class TimePeriod {
   private final JsonObject representation;
