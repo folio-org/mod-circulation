@@ -94,6 +94,28 @@ public class RequestsFixture {
         .withPickupServicePointId(pickupServicePointId));
   }
 
+
+  public IndividualResource placeHoldShelfRequest(
+      IndividualResource item,
+      IndividualResource by,
+      DateTime on,
+      UUID pickupServicePointId,
+      String type)
+          throws InterruptedException,
+          MalformedURLException,
+          TimeoutException,
+          ExecutionException {
+
+    return place(new RequestBuilder()
+        .hold()
+        .withRequestType(type)
+        .fulfilToHoldShelf()
+        .withItemId(item.getId())
+        .withRequestDate(on)
+        .withRequesterId(by.getId())
+        .withPickupServicePointId(pickupServicePointId));
+  }
+
   public IndividualResource placeHoldShelfRequest(
     IndividualResource item,
     IndividualResource by,
