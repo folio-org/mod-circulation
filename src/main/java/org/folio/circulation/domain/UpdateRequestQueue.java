@@ -4,10 +4,14 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.HttpResult.succeeded;
 
 import java.lang.invoke.MethodHandles;
+import java.time.ZonedDateTime;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.HttpResult;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,19 +20,23 @@ public class UpdateRequestQueue {
 
   private final RequestQueueRepository requestQueueRepository;
   private final RequestRepository requestRepository;
+  private final ServicePointRepository servicePointRepository;
 
   public UpdateRequestQueue(
     RequestQueueRepository requestQueueRepository,
-    RequestRepository requestRepository) {
+    RequestRepository requestRepository,
+    ServicePointRepository servicePointRepository) {
 
     this.requestQueueRepository = requestQueueRepository;
     this.requestRepository = requestRepository;
+    this.servicePointRepository = servicePointRepository;
   }
 
   public static UpdateRequestQueue using(Clients clients) {
     return new UpdateRequestQueue(
       RequestQueueRepository.using(clients),
-      RequestRepository.using(clients));
+      RequestRepository.using(clients),
+      new ServicePointRepository(clients));
   }
 
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> onCheckIn(
@@ -48,10 +56,31 @@ public class UpdateRequestQueue {
 
       String requestPickupServicePointId = firstRequest.getPickupServicePointId();
 
-      if (checkInServicePointId == null || requestPickupServicePointId == null || checkInServicePointId.equalsIgnoreCase(requestPickupServicePointId)) {
+      if (checkInServicePointId.equalsIgnoreCase(requestPickupServicePointId)) {
         firstRequest.changeStatus(RequestStatus.OPEN_AWAITING_PICKUP);
+        if (firstRequest.getHoldShelfExpirationDate() == null) {
+          return servicePointRepository.getServicePointById(requestPickupServicePointId)
+              .thenApply(servicePointResult -> servicePointResult.map(firstRequest::withPickupServicePoint))
+              .thenApply(requestResult -> requestResult.map(request -> {
+                ServicePoint pickupServicePoint = request.getPickupServicePoint();
+                TimePeriod holdShelfExpiryPeriod = pickupServicePoint.getHoldShelfExpiryPeriod();
+                ZonedDateTime now = ZonedDateTime.now(ClockManager.getClockManager().getClock());
+                ZonedDateTime holdShelfExpirationDate = holdShelfExpiryPeriod.getInterval().addTo(now, holdShelfExpiryPeriod.getDuration());
+                // Need to use Joda time here since formatting/parsing using
+                // java.time has issues with the ISO-8601 format FOLIO uses,
+                // specifically: 2019-02-18T00:00:00.000+0000 cannot be parsed
+                // due to a missing ':' in the offset. Parsing is possible if
+                // the format is: 2019-02-18T00:00:00.000+00:00
+                firstRequest.changeHoldShelfExpirationDate(new DateTime(holdShelfExpirationDate.toInstant().toEpochMilli(), DateTimeZone.UTC));
+
+                return firstRequest;
+              }))
+              .thenComposeAsync(r -> r.after(requestRepository::update))
+              .thenApply(r -> r.map(v -> requestQueue));
+        }
       } else {
         firstRequest.changeStatus(RequestStatus.OPEN_IN_TRANSIT);
+        firstRequest.removeHoldShelfExpirationDate();
       }
 
       return requestRepository.update(firstRequest)

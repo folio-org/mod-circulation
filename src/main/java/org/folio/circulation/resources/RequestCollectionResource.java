@@ -145,7 +145,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final RequestRepository requestRepository = RequestRepository.using(clients);
     final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(
-      RequestQueueRepository.using(clients), requestRepository);
+      RequestQueueRepository.using(clients), requestRepository, new ServicePointRepository(clients));
 
     requestRepository.getById(id)
       .thenComposeAsync(r -> r.after(requestRepository::delete))
