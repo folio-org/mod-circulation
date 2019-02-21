@@ -22,7 +22,7 @@ public class CalendarRepository {
   private static final String RECORD_NAME = "openingPeriods";
   private static final String OPENING_DAY = "openingDay";
   private static final String OPENING_DAYS = "openingDays";
-  private static final String PATH_PARAM_WITH_QUERY = "%s/calculateopening?startDate=%s&unit=%s&amount=%s";
+  private static final String PATH_PARAM_WITH_QUERY = "%s/calculateopening?requestedDate=%s";
 
   private final CollectionResourceClient calendarClient;
 
@@ -32,9 +32,7 @@ public class CalendarRepository {
 
 
   public CompletableFuture<HttpResult<AdjustingOpeningDays>> lookupOpeningDays(LocalDate requestedDate, String servicePointId) {
-
-    //replace after calendar api change
-    String path = String.format(PATH_PARAM_WITH_QUERY, servicePointId, requestedDate, "hour", 1);
+    String path = String.format(PATH_PARAM_WITH_QUERY, servicePointId, requestedDate);
 
     return FetchSingleRecord.<AdjustingOpeningDays>forRecord(RECORD_NAME)
       .using(calendarClient)

@@ -2,7 +2,10 @@ package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
+import org.joda.time.LocalTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
@@ -22,9 +25,9 @@ public class OpeningDay {
   private static final String ALL_DAY_KEY = "allDay";
   private static final String OPEN_KEY = "open";
   private static final String OPENING_HOUR_KEY = "openingHour";
-  private static final String DATE_TIME_FORMAT = "yyyy-MM-dd'Z'";
+  private static final String DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
   private static final DateTimeFormatter DATE_TIME_FORMATTER =
-    DateTimeFormat.forPattern(DATE_TIME_FORMAT);
+    DateTimeFormat.forPattern(DATE_TIME_FORMAT).withZoneUTC();
 
   private List<OpeningHour> openingHour;
   private LocalDate date;
@@ -89,8 +92,9 @@ public class OpeningDay {
   }
 
   JsonObject toJson() {
+    DateTime dateTime = date.toDateTime(LocalTime.MIDNIGHT, DateTimeZone.UTC);
     return new JsonObject()
-      .put(DATE_KEY, DATE_TIME_FORMATTER.print(date))
+      .put(DATE_KEY, DATE_TIME_FORMATTER.print(dateTime))
       .put(ALL_DAY_KEY, allDay)
       .put(OPEN_KEY, open)
       .put(OPENING_HOUR_KEY, openingHourToJsonArray());
