@@ -13,7 +13,7 @@ import java.util.concurrent.CompletableFuture;
 public class CalendarRepository {
 
   private static final String RECORD_NAME = "openingPeriods";
-  private static final String PATH_PARAM_WITH_QUERY = "%s/calculateopening?startDate=%s&unit=%s&amount=%s";
+  private static final String PATH_PARAM_WITH_QUERY = "%s/calculateopening?requestedDate=%s";
 
   private static final HttpResult<Calendar> CALENDAR_HTTP_RESULT = HttpResult.succeeded(new Calendar());
 
@@ -47,9 +47,7 @@ public class CalendarRepository {
 
     DateTime dueDate = relatedRecords.getLoan().getDueDate();
     String servicePointId = relatedRecords.getLoan().getCheckoutServicePointId();
-
-    //replace after calendar api change
-    String path = String.format(PATH_PARAM_WITH_QUERY, servicePointId, dueDate.toLocalDate(), "hour", 1);
+    String path = String.format(PATH_PARAM_WITH_QUERY, servicePointId, dueDate.toLocalDate());
 
     return FetchSingleRecord.<Calendar>forRecord(RECORD_NAME)
       .using(resourceClient)
