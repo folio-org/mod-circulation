@@ -6,15 +6,9 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.StringUtil;
 import org.joda.time.DateTime;
-import org.joda.time.LocalTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 
 import java.util.concurrent.CompletableFuture;
-
-import static org.folio.circulation.resources.CheckOutByBarcodeResource.DATE_TIME_FORMAT;
 
 public class CalendarRepository {
 
@@ -24,11 +18,9 @@ public class CalendarRepository {
   private static final HttpResult<Calendar> CALENDAR_HTTP_RESULT = HttpResult.succeeded(new Calendar());
 
   private final CollectionResourceClient resourceClient;
-  private final DateTimeFormatter dateTimeFormatter;
 
   public CalendarRepository(Clients clients) {
     this.resourceClient = clients.calendarStorageClient();
-    this.dateTimeFormatter = DateTimeFormat.forPattern(DATE_TIME_FORMAT).withZoneUTC();
   }
 
   /**
@@ -55,10 +47,7 @@ public class CalendarRepository {
 
     DateTime dueDate = relatedRecords.getLoan().getDueDate();
     String servicePointId = relatedRecords.getLoan().getCheckoutServicePointId();
-
-    String formattedDateTime = dateTimeFormatter.print(dueDate.withTime(LocalTime.MIDNIGHT));
-    String encodedDateTime = StringUtil.urlEncode(formattedDateTime);
-    String path = String.format(PATH_PARAM_WITH_QUERY, servicePointId, encodedDateTime);
+    String path = String.format(PATH_PARAM_WITH_QUERY, servicePointId, dueDate.toLocalDate());
 
     return FetchSingleRecord.<Calendar>forRecord(RECORD_NAME)
       .using(resourceClient)
