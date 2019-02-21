@@ -7,11 +7,16 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collector;
 
 public class OpeningDay {
+
+  public static OpeningDay createClosedDay() {
+    return createOpeningDay(Collections.emptyList(), null, true, false);
+  }
 
   private static final String DATE_KEY = "date";
   private static final String ALL_DAY_KEY = "allDay";

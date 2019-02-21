@@ -51,6 +51,7 @@ import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_
 import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY;
 import static org.folio.circulation.domain.policy.LoanPolicyPeriod.HOURS;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
+import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -71,49 +72,6 @@ public class CheckOutCalculateDueDateTests extends APITests {
     new LocalDate(2019, 1, 1)
       .toDateTime(TEST_TIME_MORNING, DateTimeZone.UTC);
 
-  /**
-   * Scenario for Long-term loans:
-   * Loanable = Y
-   * Loan profile = Rolling
-   * Loan period = X Months|Weeks|Days
-   * Closed Library Due Date Management = Keep the current due date
-   * <p>
-   * Test period: FRI=open, SAT=close, MON=open
-   * <p>
-   * Expected result:
-   * Then the due date timestamp should remain unchanged from system calculated due date timestamp
-   */
-  @Test
-  public void shouldKeepDueDateUntouchedWhenCalendarScheduleIsAbsent()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
-
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource steve = usersFixture.steve();
-    final DateTime loanDate = TEST_DATE;
-    final UUID checkoutServicePointId = UUID.randomUUID();
-    int duration = 2;
-
-    String loanPolicyName = "Keep the current due date: Rolling";
-    JsonObject loanPolicyEntry = createLoanPolicyEntry(loanPolicyName, true,
-      LoansPolicyProfile.ROLLING.name(), DueDateManagement.KEEP_THE_CURRENT_DUE_DATE.getValue(),
-      duration, INTERVAL_MONTHS);
-    String loanPolicyId = createLoanPolicy(loanPolicyEntry);
-
-    final IndividualResource response = loansFixture.checkOutByBarcode(
-      new CheckOutByBarcodeRequestBuilder()
-        .forItem(smallAngryPlanet)
-        .to(steve)
-        .on(loanDate)
-        .at(checkoutServicePointId));
-
-    final JsonObject loan = response.getJson();
-
-    assertThat(ERROR_MESSAGE_LOAN_POLICY,
-      loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
-
-    assertThat(ERROR_MESSAGE_DUE_DATE + duration,
-      loan.getString(DUE_DATE_KEY), isEquivalentTo(loanDate.plusMonths(duration)));
-  }
 
   /**
    * Scenario for Long-term loans:
@@ -726,20 +684,15 @@ public class CheckOutCalculateDueDateTests extends APITests {
       duration, INTERVAL_HOURS);
     String loanPolicyId = createLoanPolicy(loanPolicyEntry);
 
-    final IndividualResource response = loansFixture.checkOutByBarcode(
+    Response response = loansFixture.attemptCheckOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(itemsFixture.basedUponSmallAngryPlanet())
         .to(usersFixture.steve())
         .on(loanDate)
         .at(UUID.fromString(CASE_CALENDAR_IS_UNAVAILABLE_SERVICE_POINT_ID)));
 
-    final JsonObject loan = response.getJson();
-
-    assertThat(ERROR_MESSAGE_LOAN_POLICY,
-      loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
-
-    assertThat(ERROR_MESSAGE_DUE_DATE + duration,
-      loan.getString(DUE_DATE_KEY), isEquivalentTo(loanDate.plusHours(duration)));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Calendar open periods are not found"))));
   }
 
   /**

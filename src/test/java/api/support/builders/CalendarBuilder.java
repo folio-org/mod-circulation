@@ -18,7 +18,7 @@ public class CalendarBuilder extends JsonBuilder implements Builder {
   private static final String ID_KEY = "id";
   private static final String SERVICE_POINT_ID_KEY = "servicePointId";
   private static final String NAME_KEY = "name";
-  private static final String START_DATE_KEY = "startDate";
+  public static final String START_DATE_KEY = "startDate";
   private static final String END_DATE_KEY = "endDate";
   private static final String OPENING_DAYS_KEY = "openingDays";
 

@@ -2,6 +2,8 @@ package api.support.fixtures;
 
 import api.support.builders.CalendarBuilder;
 import api.support.builders.OpeningDayPeriodBuilder;
+import io.vertx.core.MultiMap;
+import io.vertx.core.http.CaseInsensitiveHeaders;
 import org.folio.circulation.domain.OpeningDayPeriod;
 import org.folio.circulation.domain.OpeningHour;
 import org.joda.time.DateTime;
@@ -10,10 +12,12 @@ import org.joda.time.LocalTime;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static api.support.builders.CalendarBuilder.START_DATE_KEY;
 import static org.folio.circulation.domain.OpeningDay.createOpeningDay;
 import static org.folio.circulation.domain.OpeningDayPeriod.createDayPeriod;
 import static org.folio.circulation.domain.Weekdays.createWeekdays;
@@ -33,7 +37,7 @@ public class CalendarExamples {
   static final String CASE_START_DATE_MONTHS_AGO_AND_END_DATE_WED = "77777777-2f09-4bc9-8924-3734882d44a3";
   static final String CASE_START_DATE_FRI_AND_END_DATE_NEXT_MONTHS = "88888888-2f09-4bc9-8924-3734882d44a3";
 
-  public static final String CASE_CURRENT_IS_OPEN =  "7a50ce1e-ce47-4841-a01f-fd771ff3da1b";
+  public static final String CASE_CURRENT_IS_OPEN = "7a50ce1e-ce47-4841-a01f-fd771ff3da1b";
   public static final LocalDate CASE_CURRENT_IS_OPEN_PREV_DAY = new LocalDate(2019, 2, 4);
   public static final LocalDate CASE_CURRENT_IS_OPEN_CURR_DAY = new LocalDate(2019, 2, 5);
   public static final LocalDate CASE_CURRENT_IS_OPEN_NEXT_DAY = new LocalDate(2019, 2, 6);
@@ -170,7 +174,29 @@ public class CalendarExamples {
       )));
   }
 
+  private static OpeningDayPeriodBuilder buildAllDayOpenCalenderResponse(LocalDate requestedDate, String servicePointId) {
+    return new OpeningDayPeriodBuilder(servicePointId,
+      createDayPeriod(
+        createWeekdays("MONDAY"),
+        createOpeningDay(Collections.emptyList(), requestedDate.minusDays(1), true, true)
+      ),
+      createDayPeriod(
+        createWeekdays("TUESDAY"),
+        createOpeningDay(Collections.emptyList(), requestedDate, true, true)
+      ),
+      createDayPeriod(
+        createWeekdays("WEDNESDAY"),
+        createOpeningDay(Collections.emptyList(), requestedDate.plusDays(1), true, true)
+      )
+    );
+  }
+
   public static CalendarBuilder getCalendarById(String serviceId) {
+    return getCalendarById(serviceId,
+      new CaseInsensitiveHeaders().add(START_DATE_KEY, "2019-01-01"));
+  }
+
+  public static CalendarBuilder getCalendarById(String serviceId, MultiMap queries) {
     switch (serviceId) {
       case CASE_PREV_OPEN_AND_CURRENT_NEXT_CLOSED:
         return new CalendarBuilder(fakeOpeningPeriods.get(serviceId));
@@ -209,7 +235,8 @@ public class CalendarExamples {
           startDateFriday, endDateFriday);
 
       default:
-        return new CalendarBuilder(serviceId, "Default calendar");
+        LocalDate requestedDate = LocalDate.parse(queries.get(START_DATE_KEY));
+        return new CalendarBuilder(buildAllDayOpenCalenderResponse(requestedDate, serviceId));
     }
   }
 

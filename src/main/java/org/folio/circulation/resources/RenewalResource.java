@@ -53,7 +53,7 @@ public abstract class RenewalResource extends Resource {
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
     final LoanRenewalService loanRenewalService = LoanRenewalService.using(clients);
     final ClosedLibraryStrategyService strategyService =
-      ClosedLibraryStrategyService.using(clients, DateTime.now(DateTimeZone.UTC), false);
+      ClosedLibraryStrategyService.using(clients, DateTime.now(DateTimeZone.UTC), true);
 
 
     //TODO: Validation check for same user should be in the domain service

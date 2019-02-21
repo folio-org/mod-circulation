@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
@@ -347,7 +348,7 @@ public class LoanPolicy {
   public DueDateManagement getDueDateManagement() {
     JsonObject loansPolicyObj = representation.getJsonObject(LOANS_POLICY_KEY);
     if (Objects.isNull(loansPolicyObj)) {
-      return DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
+      return DueDateManagement.KEEP_THE_CURRENT_DUE_DATE_TIME;
     }
 
     String dateManagementId = loansPolicyObj.getString("closedLibraryDueDateManagementId");
@@ -404,5 +405,33 @@ public class LoanPolicy {
 
   String getAlternateRenewalsFixedDueDateScheduleId() {
     return getProperty(getRenewalsPolicy(), "alternateFixedDueDateScheduleId");
+  }
+
+  public Optional<DateTime> getScheduleLimit(DateTime loanDate, boolean isRenewal, DateTime systemDate) {
+    final JsonObject loansPolicy = getLoansPolicy();
+
+    if(loansPolicy == null) {
+      return Optional.empty();
+    }
+
+    if(isRolling(loansPolicy)) {
+      if(isRenewal) {
+        return getRenewalDueDateLimitSchedules().findDueDateFor(loanDate);
+      }
+      else {
+        return fixedDueDateSchedules.findDueDateFor(loanDate);
+      }
+    }
+    else if(isFixed(loansPolicy)) {
+      if(isRenewal) {
+        return getRenewalFixedDueDateSchedules().findDueDateFor(systemDate);
+      }
+      else {
+        return fixedDueDateSchedules.findDueDateFor(loanDate);
+      }
+    }
+    else {
+      return Optional.empty();
+    }
   }
 }

@@ -7,9 +7,15 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.HttpResult;
-import org.joda.time.DateTime;
+import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.http.server.ValidationError;
+import org.joda.time.LocalDate;
 
+import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
+
+import static org.folio.circulation.domain.OpeningDay.createClosedDay;
+import static org.folio.circulation.support.HttpResult.failed;
 
 public class CalendarRepository {
 
@@ -18,41 +24,43 @@ public class CalendarRepository {
   private static final String OPENING_DAYS = "openingDays";
   private static final String PATH_PARAM_WITH_QUERY = "%s/calculateopening?startDate=%s&unit=%s&amount=%s";
 
-  private static final HttpResult<AdjustingOpeningDays> CALENDAR_HTTP_RESULT = HttpResult.succeeded(null);
-
-  private final CollectionResourceClient resourceClient;
+  private final CollectionResourceClient calendarClient;
 
   public CalendarRepository(Clients clients) {
-    this.resourceClient = clients.calendarStorageClient();
+    this.calendarClient = clients.calendarStorageClient();
   }
 
 
-  public CompletableFuture<HttpResult<AdjustingOpeningDays>> lookupOpeningDays(Loan loan) {
-    DateTime requestedDate = loan.getDueDate();
-    String servicePointId = loan.getCheckoutServicePointId();
+  public CompletableFuture<HttpResult<AdjustingOpeningDays>> lookupOpeningDays(LocalDate requestedDate, String servicePointId) {
 
     //replace after calendar api change
-    String path = String.format(PATH_PARAM_WITH_QUERY, servicePointId, requestedDate.toLocalDate(), "hour", 1);
+    String path = String.format(PATH_PARAM_WITH_QUERY, servicePointId, requestedDate, "hour", 1);
 
     return FetchSingleRecord.<AdjustingOpeningDays>forRecord(RECORD_NAME)
-      .using(resourceClient)
+      .using(calendarClient)
       .mapTo(this::createOpeningDays)
-      .whenNotFound(CALENDAR_HTTP_RESULT)
+      .whenNotFound(failed(new ValidationErrorFailure(
+        new ValidationError("Calendar open periods are not found", Collections.emptyMap()))))
       .fetch(path);
   }
 
   private AdjustingOpeningDays createOpeningDays(JsonObject jsonObject) {
     if (jsonObject.isEmpty()) {
-      return null;
+      return buildClosedOpeningDays();
     }
     JsonArray openingDaysJson = jsonObject.getJsonArray(OPENING_DAYS);
     if (openingDaysJson.isEmpty()) {
-      return null;
+      return buildClosedOpeningDays();
     }
     OpeningDay previousDate = new OpeningDay(openingDaysJson.getJsonObject(0), OPENING_DAY);
     OpeningDay requestedDate = new OpeningDay(openingDaysJson.getJsonObject(1), OPENING_DAY);
     OpeningDay nextDate = new OpeningDay(openingDaysJson.getJsonObject(2), OPENING_DAY);
 
     return new AdjustingOpeningDays(previousDate, requestedDate, nextDate);
+  }
+
+  private AdjustingOpeningDays buildClosedOpeningDays() {
+    OpeningDay closedDay = createClosedDay();
+    return new AdjustingOpeningDays(closedDay, closedDay, closedDay);
   }
 }

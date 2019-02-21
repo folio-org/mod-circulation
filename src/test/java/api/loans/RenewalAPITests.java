@@ -403,7 +403,7 @@ abstract class RenewalAPITests extends APITests {
     ExecutionException {
 
     //TODO: Need to be able to inject system date here
-    final DateTime renewalDate = DateTime.now();
+    final DateTime renewalDate = DateTime.now(DateTimeZone.UTC);
     //e.g. Clock.freeze(renewalDate)
 
     FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
