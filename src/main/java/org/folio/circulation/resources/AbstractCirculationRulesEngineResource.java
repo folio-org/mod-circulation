@@ -1,8 +1,10 @@
 package org.folio.circulation.resources;
 
 import io.vertx.core.Handler;
+import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -11,6 +13,7 @@ import org.folio.circulation.rules.Drools;
 import org.folio.circulation.rules.Text2Drools;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.OkJsonHttpResult;
 import org.folio.circulation.support.http.server.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,10 +31,10 @@ import static org.folio.circulation.support.http.server.ServerErrorResponse.inte
 public abstract class AbstractCirculationRulesEngineResource extends Resource {
   protected static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  protected static final String ITEM_TYPE_ID_NAME = "item_type_id";
-  protected static final String PATRON_TYPE_ID_NAME = "patron_type_id";
-  protected static final String SHELVING_LOCATION_ID_NAME = "shelving_location_id";
-  protected static final String LOAN_TYPE_ID_NAME = "loan_type_id";
+  public static final String ITEM_TYPE_ID_NAME = "item_type_id";
+  public static final String PATRON_TYPE_ID_NAME = "patron_type_id";
+  public static final String SHELVING_LOCATION_ID_NAME = "shelving_location_id";
+  public static final String LOAN_TYPE_ID_NAME = "loan_type_id";
 
   protected final String applyPath;
   protected final String applyAllPath;
@@ -251,11 +254,43 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
     return false;
   }
 
-  protected abstract boolean invalidApplyParameters(HttpServerRequest request);
+  private void apply(RoutingContext routingContext) {
+    HttpServerRequest request = routingContext.request();
+    if (invalidApplyParameters(request)) {
+      return;
+    }
+    drools(routingContext, drools -> {
+      try {
+        String policyId = getPolicyId(request.params(), drools);
+        JsonObject json = new JsonObject().put(getPolicyIdKey(), policyId);
 
-  abstract void apply(RoutingContext routingContext);
+        new OkJsonHttpResult(json)
+          .writeTo(routingContext.response());
+      }
+      catch (Exception e) {
+        log.error("apply notice policy", e);
+        internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
+      }
+    });
+  }
 
-  abstract void applyAll(RoutingContext routingContext, Drools drools);
+  private void applyAll(RoutingContext routingContext, Drools drools) {
+    HttpServerRequest request = routingContext.request();
+    if (invalidApplyParameters(request)) {
+      return;
+    }
+    try {
+      JsonArray matches = getPolicies(request.params(), drools);
+      JsonObject json = new JsonObject().put("circulationRuleMatches", matches);
+
+      new OkJsonHttpResult(json)
+        .writeTo(routingContext.response());
+    }
+    catch (Exception e) {
+      log.error("applyAll", e);
+      internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
+    }
+  }
 
   private void applyAll(RoutingContext routingContext) {
     String circulationRules = routingContext.pathParam("circulation_rules");
@@ -275,5 +310,17 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
     }
   }
 
-  
+  private boolean invalidApplyParameters(HttpServerRequest request) {
+    return
+        invalidUuid(request, ITEM_TYPE_ID_NAME) ||
+        invalidUuid(request, LOAN_TYPE_ID_NAME) ||
+        invalidUuid(request, PATRON_TYPE_ID_NAME) ||
+        invalidUuid(request, SHELVING_LOCATION_ID_NAME);
+  }
+
+  protected abstract String getPolicyId(MultiMap params, Drools drools);
+
+  protected abstract String getPolicyIdKey();
+
+  protected abstract JsonArray getPolicies(MultiMap params, Drools drools);
 }

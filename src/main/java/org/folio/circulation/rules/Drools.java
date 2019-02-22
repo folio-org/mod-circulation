@@ -1,5 +1,10 @@
 package org.folio.circulation.rules;
 
+import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.ITEM_TYPE_ID_NAME;
+import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.LOAN_TYPE_ID_NAME;
+import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.PATRON_TYPE_ID_NAME;
+import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.SHELVING_LOCATION_ID_NAME;
+
 import org.kie.api.KieServices;
 import org.kie.api.builder.KieBuilder;
 import org.kie.api.builder.KieFileSystem;
@@ -7,6 +12,7 @@ import org.kie.api.builder.Message.Level;
 import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.KieSession;
 
+import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -36,14 +42,18 @@ public class Drools {
     kieContainer = kieServices.newKieContainer(kieServices.getRepository().getDefaultReleaseId());
   }
 
-  private KieSession createSession(String itemType, String loanType, String patronGroup, String shelvingLocation) {
+  private KieSession createSession(MultiMap params) {
+    String itemTypeId = params.get(ITEM_TYPE_ID_NAME);
+    String loanTypeId = params.get(LOAN_TYPE_ID_NAME);
+    String patronGroupId = params.get(PATRON_TYPE_ID_NAME);
+    String shelvingLocationId = params.get(SHELVING_LOCATION_ID_NAME);
     KieSession kieSession = kieContainer.newKieSession();
     match.loanPolicyId = null;
     kieSession.setGlobal("match", match);
-    kieSession.insert(new ItemType(itemType));
-    kieSession.insert(new LoanType(loanType));
-    kieSession.insert(new PatronGroup(patronGroup));
-    kieSession.insert(new ShelvingLocation(shelvingLocation));
+    kieSession.insert(new ItemType(itemTypeId));
+    kieSession.insert(new LoanType(loanTypeId));
+    kieSession.insert(new PatronGroup(patronGroupId));
+    kieSession.insert(new ShelvingLocation(shelvingLocationId));
     kieSession.insert(new CampusLocation(""));
     kieSession.insert(new BranchLocation(""));
     kieSession.insert(new CollectionLocation(""));
@@ -52,43 +62,24 @@ public class Drools {
 
   /**
    * Calculate the loan policy for itemTypeName and loanTypeName.
-   * @param itemType the name of the item type
-   * @param loanType the name of the loan type
-   * @param patronGroup group the patron belongs to
-   * @param shelvingLocation - item's shelving location
+   * @param params request parameters
    * @return the name of the loan policy
    */
-  public String loanPolicy(String itemType, String loanType, String patronGroup, String shelvingLocation) {
-    KieSession kieSession = createSession(itemType, loanType, patronGroup, shelvingLocation);
+  public String loanPolicy(MultiMap params) {
+    KieSession kieSession = createSession(params);
     kieSession.fireAllRules();
     kieSession.dispose();
     return match.loanPolicyId;
   }
 
   /**
-   * Return the loan policy calculated using the drools rules and the item type and loan type.
-   * @param droolsFile - rules to use
-   * @param itemType - item (material) type name
-   * @param loanType - loan type name
-   * @param patronGroup group the patron belongs to
-   * @param shelvingLocation - item's shelving location
-   * @return loan policy
-   */
-  public static String loanPolicy(String droolsFile, String itemType, String loanType, String patronGroup, String shelvingLocation) {
-    return new Drools(droolsFile).loanPolicy(itemType, loanType, patronGroup, shelvingLocation);
-  }
-
-  /**
    * Return all loan policies calculated using the drools rules
    * in the order they match.
-   * @param itemType the item's material type
-   * @param loanType the item's loan type
-   * @param patronGroup group the patron belongs to
-   * @param shelvingLocation - item's shelving location
+   * @param params request params
    * @return matches, each match has a loanPolicyId and a circulationRuleLine field
    */
-  public JsonArray loanPolicies(String itemType, String loanType, String patronGroup, String shelvingLocation) {
-    KieSession kieSession = createSession(itemType, loanType, patronGroup, shelvingLocation);
+  public JsonArray loanPolicies(MultiMap params) {
+    KieSession kieSession = createSession(params);
     JsonArray array = new JsonArray();
     while (kieSession.fireAllRules() > 0) {
       JsonObject json = new JsonObject();
@@ -101,30 +92,12 @@ public class Drools {
   }
 
   /**
-   * Return all loan policies calculated using the drools rules and the item type and loan type
-   * in the order they match.
-   * @param droolsFile - rules to use
-   * @param itemType - item (material) type
-   * @param loanType - loan type
-   * @param patronGroup group the patron belongs to
-   * @param shelvingLocation - item's shelving location
-   * @return matches, each match has a loanPolicyId and a circulationRuleLine field
-   */
-  public static JsonArray loanPolicies(String droolsFile,
-      String itemType, String loanType, String patronGroup, String shelvingLocation) {
-    return new Drools(droolsFile).loanPolicies(itemType, loanType, patronGroup, shelvingLocation);
-  }
-
-  /**
    * Calculate the request policy for itemTypeName and loanType.
-   * @param itemType the name of the item type
-   * @param loanType the name of the loan type
-   * @param patronGroup group the patron belongs to
-   * @param shelvingLocation - item's shelving location
+   * @param params request params
    * @return the name of the request policy
    */
-  public String requestPolicy(String itemType, String loanType, String patronGroup, String shelvingLocation) {
-    KieSession kieSession = createSession(itemType, loanType, patronGroup, shelvingLocation);
+  public String requestPolicy(MultiMap params) {
+    KieSession kieSession = createSession(params);
     kieSession.fireAllRules();
     kieSession.dispose();
     return match.requestPolicyId;
@@ -133,14 +106,11 @@ public class Drools {
    /**
    * Return all request policies calculated using the drools rules
    * in the order they match.
-   * @param itemType the item's material type
-   * @param loanType the item's loan type
-   * @param patronGroup group the patron belongs to
-   * @param shelvingLocation - item's shelving location
+   * @param params request params
    * @return matches, each match has a requestPolicyId and a circulationRuleLine field
    */
-  public JsonArray requestPolicies(String itemType, String loanType, String patronGroup, String shelvingLocation) {
-    KieSession kieSession = createSession(itemType, loanType, patronGroup, shelvingLocation);
+  public JsonArray requestPolicies(MultiMap params) {
+    KieSession kieSession = createSession(params);
     JsonArray array = new JsonArray();
     while (kieSession.fireAllRules() > 0) {
       JsonObject json = new JsonObject();
@@ -153,28 +123,12 @@ public class Drools {
   }
 
   /**
-   * Return the request policy calculated using the drools rules and the item type and request type.
-   * @param droolsFile - rules to use
-   * @param itemType - item (material) type name
-   * @param loanType - loan type name
-   * @param patronGroup group the patron belongs to
-   * @param shelvingLocation - item's shelving location
-   * @return request policy
-   */
-  public static String requestPolicy(String droolsFile, String itemType, String loanType, String patronGroup, String shelvingLocation) {
-    return new Drools(droolsFile).requestPolicy(itemType, loanType, patronGroup, shelvingLocation);
-  }
-
-  /**
    * Calculate the notice policy for itemTypeName and requestTypeName.
-   * @param itemType the name of the item type
-   * @param requestType the name of the request type
-   * @param patronGroup group the patron belongs to
-   * @param shelvingLocation - item's shelving location
+   * @param params request params
    * @return the name of the notice policy
    */
-  public String noticePolicy(String itemType, String requestType, String patronGroup, String shelvingLocation) {
-    KieSession kieSession = createSession(itemType, requestType, patronGroup, shelvingLocation);
+  public String noticePolicy(MultiMap params) {
+    KieSession kieSession = createSession(params);
     kieSession.fireAllRules();
     kieSession.dispose();
     return match.noticePolicyId;
@@ -183,14 +137,11 @@ public class Drools {
    /**
    * Return all notice policies calculated using the drools rules
    * in the order they match.
-   * @param itemType the item's material type
-   * @param requestType the item's request type
-   * @param patronGroup group the patron belongs to
-   * @param shelvingLocation - item's shelving location
+   * @param params request params
    * @return matches, each match has a noticePolicyId and a circulationRuleLine field
    */
-  public JsonArray noticePolicies(String itemType, String loanType, String patronGroup, String shelvingLocation) {
-    KieSession kieSession = createSession(itemType, loanType, patronGroup, shelvingLocation);
+  public JsonArray noticePolicies(MultiMap params) {
+    KieSession kieSession = createSession(params);
     JsonArray array = new JsonArray();
     while (kieSession.fireAllRules() > 0) {
       JsonObject json = new JsonObject();
@@ -202,16 +153,36 @@ public class Drools {
     return array;
   }
 
+  // NOTE: methods below used for testing
+
+  /**
+   * Return the loan policy calculated using the drools rules and the item type and loan type.
+   * @param droolsFile - rules to use
+   * @param params request parameters
+   * @return loan policy
+   */
+  public static String loanPolicy(String droolsFile, MultiMap params) {
+    return new Drools(droolsFile).loanPolicy(params);
+  }
+  
   /**
    * Return the request policy calculated using the drools rules and the item type and request type.
    * @param droolsFile - rules to use
-   * @param itemType - item (material) type name
-   * @param loanType - loan type name
-   * @param patronGroup group the patron belongs to
-   * @param shelvingLocation - item's shelving location
+   * @param params request params
    * @return request policy
    */
-  public static String noticePolicy(String droolsFile, String itemType, String loanType, String patronGroup, String shelvingLocation) {
-    return new Drools(droolsFile).noticePolicy(itemType, loanType, patronGroup, shelvingLocation);
+  public static String requestPolicy(String droolsFile, MultiMap params) {
+    return new Drools(droolsFile).requestPolicy(params);
   }
+
+  /**
+   * Return the request policy calculated using the drools rules and the item type and request type.
+   * @param droolsFile - rules to use
+   * @param params request params
+   * @return request policy
+   */
+  public static String noticePolicy(String droolsFile, MultiMap params) {
+    return new Drools(droolsFile).noticePolicy(params);
+  }
+
 }
