@@ -44,9 +44,8 @@ public class UpdateItem {
 
     if (requestQueue.hasOutstandingFulfillableRequests()) {
       Request request = requestQueue.getHighestPriorityFulfillableRequest();
-      String pickupServicePointIdString = request.getPickupServicePointId();
-      UUID pickUpServicePointId = pickupServicePointIdString == null ? null : UUID.fromString(request.getPickupServicePointId());
-      if (pickUpServicePointId == null || checkInServicePointId == null || checkInServicePointId.equals(pickUpServicePointId)) {
+      UUID pickUpServicePointId = UUID.fromString(request.getPickupServicePointId());
+      if (checkInServicePointId.equals(pickUpServicePointId)) {
         return item.changeStatus(requestQueue.getHighestPriorityFulfillableRequest()
           .checkedInItemStatus());
       } else {
