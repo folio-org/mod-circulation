@@ -31,6 +31,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
   protected static final String ITEM_TYPE_ID_NAME = "item_type_id";
   protected static final String PATRON_TYPE_ID_NAME = "patron_type_id";
   protected static final String SHELVING_LOCATION_ID_NAME = "shelving_location_id";
+  protected static final String LOAN_TYPE_ID_NAME = "loan_type_id";
 
   protected final String applyPath;
   protected final String applyAllPath;

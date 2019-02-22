@@ -8,6 +8,7 @@ import io.vertx.ext.web.Router;
 import org.folio.circulation.resources.CheckInByBarcodeResource;
 import org.folio.circulation.resources.CheckOutByBarcodeResource;
 import org.folio.circulation.resources.LoanCollectionResource;
+import org.folio.circulation.resources.NoticeCirculationRulesEngineResource;
 import org.folio.circulation.resources.LoanCirculationRulesEngineResource;
 import org.folio.circulation.resources.RequestCirculationRulesEngineResource;
 import org.folio.circulation.resources.CirculationRulesResource;
@@ -58,6 +59,11 @@ public class CirculationVerticle extends AbstractVerticle {
       "/circulation/rules/request-policy",
       "/circulation/rules/request-policy-all",
        client)
+        .register(router);
+    new NoticeCirculationRulesEngineResource(
+      "/circulation/rules/notice-policy",
+      "/circulation/rules/notice-policy-all",
+        client)
         .register(router);
 
     server.requestHandler(router::accept)
