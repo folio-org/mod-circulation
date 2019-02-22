@@ -67,7 +67,7 @@ public class CirculationRulesEngineAPITests extends APITests {
       URL url = circulationRulesUrl(
           "/request-policy"
           + "?item_type_id="         + itemType.id
-          + "&request_type_id="         + requestType
+          + "&loan_type_id="         + requestType
           + "&patron_type_id="       + patronGroup.id
           + "&shelving_location_id=" + shelvingLocation.id
           );
@@ -188,7 +188,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   public void applyOneRequestParameterMissing() throws Exception {
     String[] p = {
         "item_type_id=" + m1,
-        "request_type_id=" + t1,
+        "loan_type_id=" + t1,
         "patron_type_id=" + lp1,
         "shelving_location_id=" + s1
     };
@@ -203,7 +203,7 @@ public class CirculationRulesEngineAPITests extends APITests {
     CompletableFuture<Response> completed = new CompletableFuture<>();
     URL url = circulationRulesUrl("/" + type + "-policy"
         + "?item_type_id=" + i
-        + "&" + type +"_type_id=" + l
+        + "&loan_type_id=" + l
         + "&patron_type_id=" + p
         + "&shelving_location_id=" + s);
     client.get(url, ResponseHandler.any(completed));
@@ -220,12 +220,12 @@ public class CirculationRulesEngineAPITests extends APITests {
   private void applyInvalidUuid(String uuid) {
     applyInvalidUuid( uuid, t1.id, lp1.id, s1.id, "loan");
     applyInvalidUuid(m1.id,  uuid, lp1.id, s1.id, "loan");
-    applyInvalidUuid(m1.id, t1.id,  uuid, s1.id, "loan");
+    applyInvalidUuid(m1.id, t1.id,  uuid,  s1.id, "loan");
     applyInvalidUuid(m1.id, t1.id, lp1.id,  uuid, "loan");
 
     applyInvalidUuid( uuid, t1.id, lp1.id, s1.id, "request");
     applyInvalidUuid(m1.id,  uuid, lp1.id, s1.id, "request");
-    applyInvalidUuid(m1.id, t1.id,  uuid, s1.id, "request");
+    applyInvalidUuid(m1.id, t1.id,  uuid,  s1.id, "request");
     applyInvalidUuid(m1.id, t1.id, lp1.id,  uuid, "request");
   }
 
@@ -235,14 +235,14 @@ public class CirculationRulesEngineAPITests extends APITests {
     applyInvalidUuid("0");
     applyInvalidUuid("f");
     applyInvalidUuid("-");
-    applyInvalidUuid(  "0000000-0000-1000-8000-000000000000");
-    applyInvalidUuid( "00000000-0000-1000-8000-00000000000");
+    applyInvalidUuid("0000000-0000-1000-8000-000000000000");
+    applyInvalidUuid("00000000-0000-1000-8000-00000000000");
     applyInvalidUuid("000000000-0000-1000-8000-000000000000");
-    applyInvalidUuid( "00000000-0000-1000-8000-0000000000000");
-    applyInvalidUuid( "00000000-0000-0000-8000-000000000000");
-    applyInvalidUuid( "g0000000-0000-1000-0000-000000000000");
-    applyInvalidUuid( "00000000-0000-1000-8000-00000000000g");
-    applyInvalidUuid( "00000000000010008000000000000000");
+    applyInvalidUuid("00000000-0000-1000-8000-0000000000000");
+    applyInvalidUuid("00000000-0000-0000-8000-000000000000");
+    applyInvalidUuid("g0000000-0000-1000-0000-000000000000");
+    applyInvalidUuid("00000000-0000-1000-8000-00000000000g");
+    applyInvalidUuid("00000000000010008000000000000000");
   }
 
   @Test
@@ -316,7 +316,7 @@ public class CirculationRulesEngineAPITests extends APITests {
     URL url = circulationRulesUrl(
         "/request-policy-all"
         + "?item_type_id="         + m2
-        + "&request_type_id="         + t2
+        + "&loan_type_id="         + t2
         + "&patron_type_id="       + g2
         + "&shelving_location_id=" + s2
         );
