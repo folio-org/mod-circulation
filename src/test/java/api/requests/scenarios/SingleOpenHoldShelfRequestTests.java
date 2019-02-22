@@ -24,6 +24,8 @@ import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
 import api.support.APITests;
+import api.support.builders.CheckInByBarcodeRequestBuilder;
+import api.support.builders.RequestBuilder;
 
 public class SingleOpenHoldShelfRequestTests extends APITests {
   @Test
@@ -178,5 +180,32 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
     assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+  }
+
+  @Test
+  public void itemCannotBeCheckedInWhenRequestIsMissingPickupServicePoint()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource james = usersFixture.james();
+    IndividualResource jessica = usersFixture.jessica();
+    IndividualResource checkInServicePoint = servicePointsFixture.cd1();
+
+    loansFixture.checkOut(smallAngryPlanet, james);
+
+    requestsFixture.place(new RequestBuilder()
+        .forItem(smallAngryPlanet)
+        .by(jessica)
+        .withRequestDate(new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC))
+        .hold());
+
+    Response response = loansFixture.attemptCheckInByBarcode(new CheckInByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .at(checkInServicePoint.getId()));
+
+    assertThat(response.getJson(), hasErrorWith(hasMessage("Failed to check in item due to the highest priority request missing a pickup service point")));
   }
 }

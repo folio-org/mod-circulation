@@ -12,6 +12,7 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.ValidationErrorFailure;
 
 public class UpdateItem {
 
@@ -28,6 +29,13 @@ public class UpdateItem {
 
     return of(() -> changeItemOnCheckIn(item, requestQueue, checkInServicePointId))
       .after(updatedItem -> {
+        if (updatedItem == null) {
+          return completedFuture(ValidationErrorFailure.failedResult(
+              "Failed to check in item due to the highest priority " +
+              "request missing a pickup service point",
+              "pickupServicePointId", null));
+        }
+
         if(updatedItem.hasChanged()) {
           return storeItem(updatedItem);
         }
@@ -44,7 +52,13 @@ public class UpdateItem {
 
     if (requestQueue.hasOutstandingFulfillableRequests()) {
       Request request = requestQueue.getHighestPriorityFulfillableRequest();
-      UUID pickUpServicePointId = UUID.fromString(request.getPickupServicePointId());
+
+      String pickupServicePointIdString = request.getPickupServicePointId();
+      if (pickupServicePointIdString == null) {
+        return null;
+      }
+
+      UUID pickUpServicePointId = UUID.fromString(pickupServicePointIdString);
       if (checkInServicePointId.equals(pickUpServicePointId)) {
         return item.changeStatus(requestQueue.getHighestPriorityFulfillableRequest()
           .checkedInItemStatus());
