@@ -4,6 +4,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.of;
 import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -12,7 +13,6 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ServerErrorFailure;
-import org.folio.circulation.support.ValidationErrorFailure;
 
 public class UpdateItem {
 
@@ -27,15 +27,8 @@ public class UpdateItem {
     RequestQueue requestQueue,
     UUID checkInServicePointId) {
 
-    return of(() -> changeItemOnCheckIn(item, requestQueue, checkInServicePointId))
+    return changeItemOnCheckIn(item, requestQueue, checkInServicePointId)
       .after(updatedItem -> {
-        if (updatedItem == null) {
-          return completedFuture(ValidationErrorFailure.failedResult(
-              "Failed to check in item due to the highest priority " +
-              "request missing a pickup service point",
-              "pickupServicePointId", null));
-        }
-
         if(updatedItem.hasChanged()) {
           return storeItem(updatedItem);
         }
@@ -45,7 +38,7 @@ public class UpdateItem {
       });
   }
 
-  private Item changeItemOnCheckIn(
+  private HttpResult<Item> changeItemOnCheckIn(
     Item item,
     RequestQueue requestQueue,
     UUID checkInServicePointId) {
@@ -55,22 +48,25 @@ public class UpdateItem {
 
       String pickupServicePointIdString = request.getPickupServicePointId();
       if (pickupServicePointIdString == null) {
-        return null;
+        return failedResult(
+            "Failed to check in item due to the highest priority " +
+            "request missing a pickup service point",
+            "pickupServicePointId", null);
       }
 
       UUID pickUpServicePointId = UUID.fromString(pickupServicePointIdString);
       if (checkInServicePointId.equals(pickUpServicePointId)) {
-        return item.changeStatus(requestQueue.getHighestPriorityFulfillableRequest()
-          .checkedInItemStatus());
+        return succeeded(item.changeStatus(requestQueue.getHighestPriorityFulfillableRequest()
+          .checkedInItemStatus()));
       } else {
-        return item.inTransitToServicePoint(pickUpServicePointId);
+        return succeeded(item.inTransitToServicePoint(pickUpServicePointId));
       }
     } else {
       if(item.homeLocationIsServedBy(checkInServicePointId)) {
-        return item.available();
+        return succeeded(item.available());
       }
       else {
-        return item.inTransitToHome();
+        return succeeded(item.inTransitToHome());
       }
     }
   }
