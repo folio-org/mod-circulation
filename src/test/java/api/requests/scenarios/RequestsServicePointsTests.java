@@ -8,9 +8,6 @@ import java.net.MalformedURLException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import api.support.APITests;
-import api.support.builders.RequestBuilder;
-import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestStatus;
@@ -20,6 +17,10 @@ import org.joda.time.DateTimeZone;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import api.support.APITests;
+import api.support.builders.RequestBuilder;
+import io.vertx.core.json.JsonObject;
 
 public class RequestsServicePointsTests extends APITests {
 

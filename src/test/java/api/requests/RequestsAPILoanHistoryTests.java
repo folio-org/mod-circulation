@@ -8,13 +8,13 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.junit.Test;
+
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.junit.Test;
-
 
 public class RequestsAPILoanHistoryTests extends APITests {
   @Test

@@ -3,9 +3,6 @@ package org.folio.circulation.resources;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.domain.CreateRequestService;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
@@ -28,6 +25,10 @@ import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.NoContentHttpResult;
 import org.folio.circulation.support.OkJsonHttpResult;
 import org.folio.circulation.support.http.server.WebContext;
+
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.RoutingContext;
 
 public class RequestCollectionResource extends CollectionResource {
   public RequestCollectionResource(HttpClient client) {

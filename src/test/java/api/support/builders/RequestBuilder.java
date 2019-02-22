@@ -11,11 +11,12 @@ import static org.folio.circulation.support.JsonStringArrayHelper.toStream;
 import java.util.List;
 import java.util.UUID;
 
-import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
+
+import io.vertx.core.json.JsonObject;
 
 public class RequestBuilder extends JsonBuilder implements Builder {
   public static final String OPEN_NOT_YET_FILLED = "Open - Not yet filled";
