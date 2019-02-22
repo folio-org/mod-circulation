@@ -1,7 +1,13 @@
 package api.requests;
 
-import api.support.APITests;
-import api.support.builders.RequestBuilder;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+
+import java.lang.invoke.MethodHandles;
+import java.net.MalformedURLException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.core.Is;
@@ -9,13 +15,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.invoke.MethodHandles;
-import java.net.MalformedURLException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import api.support.APITests;
+import api.support.builders.RequestBuilder;
 
 public class RequestsAPICreateMultipleRequestsTests extends APITests {
 

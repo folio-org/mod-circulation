@@ -44,9 +44,8 @@ public class UpdateItem {
 
     if (requestQueue.hasOutstandingFulfillableRequests()) {
       Request request = requestQueue.getHighestPriorityFulfillableRequest();
-      String pickupServicePointIdString = request.getPickupServicePointId();
-      UUID pickUpServicePointId = pickupServicePointIdString == null ? null : UUID.fromString(request.getPickupServicePointId());
-      if (pickUpServicePointId == null || checkInServicePointId == null || checkInServicePointId.equals(pickUpServicePointId)) {
+      UUID pickUpServicePointId = UUID.fromString(request.getPickupServicePointId());
+      if (checkInServicePointId.equals(pickUpServicePointId)) {
         return item.changeStatus(requestQueue.getHighestPriorityFulfillableRequest()
           .checkedInItemStatus());
       } else {
@@ -157,7 +156,7 @@ public class UpdateItem {
 
     RequestType type = requestAndRelatedRecords.getRequest().getRequestType();
 
-    if (type == RequestType.PAGE){
+    if (type == RequestType.PAGE) {
       return ItemStatus.PAGED;
     } else {
       //leave existing logic the same
