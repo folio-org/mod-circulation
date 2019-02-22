@@ -293,25 +293,6 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
   }
 
-  @Test
-  public void canCreateAPageRequestForAvailableItem()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
-
-    UUID id = UUID.randomUUID();
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
-      ItemBuilder::available)
-      .getId();
-
-    requestsFixture.place(new RequestBuilder()
-      .page()
-      .withId(id)
-      .withItemId(itemId)
-      .withRequesterId(usersFixture.charlotte().getId()));
-  }
-
   //TODO: Remove this once sample data is updated, temporary to aid change of item status case
   @Test()
   public void canCreateARequestEvenWithDifferentCaseCheckedOutStatus()
