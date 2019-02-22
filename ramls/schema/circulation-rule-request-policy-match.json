@@ -8,7 +8,7 @@
       "description": "Line number of the matching rule",
       "type": "integer"
     },
-    "loanPolicyId": {
+    "requestPolicyId": {
       "description": "Request policy id specified by the matching rule",
       "type": "string"
     }

@@ -4,7 +4,7 @@
   "description": "Describes the outcome of applying circulation rules to determine a request policy",
   "type": "object",
   "properties": {
-    "loanPolicyId": {
+    "requestPolicyId": {
       "description": "ID of the request policy determined by the circulation rules",
       "type": "string"
     }
