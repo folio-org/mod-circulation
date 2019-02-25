@@ -1,6 +1,6 @@
 package org.folio.circulation.domain.policy.library;
 
-import org.folio.circulation.AdjustingOpeningDays;
+import org.folio.circulation.AdjacentOpeningDays;
 import org.folio.circulation.domain.OpeningDay;
 import org.folio.circulation.support.HttpResult;
 import org.joda.time.DateTime;
@@ -20,7 +20,7 @@ public class EndOfPreviousDayStrategy implements ClosedLibraryStrategy {
   }
 
   @Override
-  public HttpResult<DateTime> calculateDueDate(DateTime requestedDate, AdjustingOpeningDays openingDays) {
+  public HttpResult<DateTime> calculateDueDate(DateTime requestedDate, AdjacentOpeningDays openingDays) {
     Objects.requireNonNull(openingDays);
     if (openingDays.getRequestedDay().getOpen()) {
       return HttpResult.succeeded(

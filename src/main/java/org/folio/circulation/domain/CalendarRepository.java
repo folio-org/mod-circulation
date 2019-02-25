@@ -2,7 +2,7 @@ package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.AdjustingOpeningDays;
+import org.folio.circulation.AdjacentOpeningDays;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
@@ -31,10 +31,10 @@ public class CalendarRepository {
   }
 
 
-  public CompletableFuture<HttpResult<AdjustingOpeningDays>> lookupOpeningDays(LocalDate requestedDate, String servicePointId) {
+  public CompletableFuture<HttpResult<AdjacentOpeningDays>> lookupOpeningDays(LocalDate requestedDate, String servicePointId) {
     String path = String.format(PATH_PARAM_WITH_QUERY, servicePointId, requestedDate);
 
-    return FetchSingleRecord.<AdjustingOpeningDays>forRecord(RECORD_NAME)
+    return FetchSingleRecord.<AdjacentOpeningDays>forRecord(RECORD_NAME)
       .using(calendarClient)
       .mapTo(this::createOpeningDays)
       .whenNotFound(failed(new ValidationErrorFailure(
@@ -42,7 +42,7 @@ public class CalendarRepository {
       .fetch(path);
   }
 
-  private AdjustingOpeningDays createOpeningDays(JsonObject jsonObject) {
+  private AdjacentOpeningDays createOpeningDays(JsonObject jsonObject) {
     if (jsonObject.isEmpty()) {
       return buildClosedOpeningDays();
     }
@@ -54,11 +54,11 @@ public class CalendarRepository {
     OpeningDay requestedDate = new OpeningDay(openingDaysJson.getJsonObject(1), OPENING_DAY);
     OpeningDay nextDate = new OpeningDay(openingDaysJson.getJsonObject(2), OPENING_DAY);
 
-    return new AdjustingOpeningDays(previousDate, requestedDate, nextDate);
+    return new AdjacentOpeningDays(previousDate, requestedDate, nextDate);
   }
 
-  private AdjustingOpeningDays buildClosedOpeningDays() {
+  private AdjacentOpeningDays buildClosedOpeningDays() {
     OpeningDay closedDay = createClosedDay();
-    return new AdjustingOpeningDays(closedDay, closedDay, closedDay);
+    return new AdjacentOpeningDays(closedDay, closedDay, closedDay);
   }
 }

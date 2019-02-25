@@ -4,13 +4,13 @@ import org.folio.circulation.domain.OpeningDay;
 
 import java.util.Objects;
 
-public class AdjustingOpeningDays {
+public class AdjacentOpeningDays {
 
   private final OpeningDay previousDay;
   private final OpeningDay requestedDay;
   private final OpeningDay nextDay;
 
-  public AdjustingOpeningDays(OpeningDay previousDay, OpeningDay requestedDay, OpeningDay nextDay) {
+  public AdjacentOpeningDays(OpeningDay previousDay, OpeningDay requestedDay, OpeningDay nextDay) {
     Objects.requireNonNull(previousDay);
     Objects.requireNonNull(requestedDay);
     Objects.requireNonNull(nextDay);

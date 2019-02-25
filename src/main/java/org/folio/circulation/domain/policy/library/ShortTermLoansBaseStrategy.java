@@ -1,6 +1,6 @@
 package org.folio.circulation.domain.policy.library;
 
-import org.folio.circulation.AdjustingOpeningDays;
+import org.folio.circulation.AdjacentOpeningDays;
 import org.folio.circulation.support.HttpResult;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -18,7 +18,7 @@ public abstract class ShortTermLoansBaseStrategy implements ClosedLibraryStrateg
   }
 
   @Override
-  public HttpResult<DateTime> calculateDueDate(DateTime requestedDate, AdjustingOpeningDays openingDays) {
+  public HttpResult<DateTime> calculateDueDate(DateTime requestedDate, AdjacentOpeningDays openingDays) {
     Objects.requireNonNull(openingDays);
     LibraryTimetable libraryTimetable =
       LibraryTimetableConverter.convertToLibraryTimetable(openingDays, zone);

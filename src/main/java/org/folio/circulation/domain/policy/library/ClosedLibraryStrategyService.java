@@ -1,6 +1,6 @@
 package org.folio.circulation.domain.policy.library;
 
-import org.folio.circulation.AdjustingOpeningDays;
+import org.folio.circulation.AdjacentOpeningDays;
 import org.folio.circulation.domain.CalendarRepository;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.policy.LoanPolicy;
@@ -41,7 +41,7 @@ public class ClosedLibraryStrategyService {
   }
 
   private HttpResult<DateTime> applyStrategy(
-    Loan loan, LoanPolicy loanPolicy, AdjustingOpeningDays openingDays, DateTimeZone timeZone) {
+    Loan loan, LoanPolicy loanPolicy, AdjacentOpeningDays openingDays, DateTimeZone timeZone) {
     DateTime initialDueDate = loan.getDueDate();
     ClosedLibraryStrategy strategy = determineClosedLibraryStrategy(loanPolicy, currentDateTime, timeZone);
 
@@ -50,7 +50,7 @@ public class ClosedLibraryStrategyService {
   }
 
   private HttpResult<DateTime> applyFixedDueDateLimit(
-    DateTime dueDate, Loan loan, LoanPolicy loanPolicy, AdjustingOpeningDays openingDays, DateTimeZone timeZone) {
+    DateTime dueDate, Loan loan, LoanPolicy loanPolicy, AdjacentOpeningDays openingDays, DateTimeZone timeZone) {
     Optional<DateTime> optionalDueDateLimit =
       loanPolicy.getScheduleLimit(loan.getLoanDate(), isRenewal, currentDateTime);
     if (!optionalDueDateLimit.isPresent()) {

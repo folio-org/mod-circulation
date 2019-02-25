@@ -1,6 +1,6 @@
 package org.folio.circulation.domain.policy.library;
 
-import org.folio.circulation.AdjustingOpeningDays;
+import org.folio.circulation.AdjacentOpeningDays;
 import org.folio.circulation.domain.OpeningDay;
 import org.folio.circulation.domain.OpeningHour;
 import org.joda.time.DateTime;
@@ -20,14 +20,14 @@ public class LibraryTimetableConverter {
   }
 
   public static LibraryTimetable convertToLibraryTimetable(
-    AdjustingOpeningDays adjustingOpeningDays, DateTimeZone zone) {
-    if (adjustingOpeningDays == null) {
+    AdjacentOpeningDays adjacentOpeningDays, DateTimeZone zone) {
+    if (adjacentOpeningDays == null) {
       return new LibraryTimetable();
     }
     List<OpeningDay> openingDays = new ArrayList<>();
-    openingDays.add(adjustingOpeningDays.getPreviousDay());
-    openingDays.add(adjustingOpeningDays.getRequestedDay());
-    openingDays.add(adjustingOpeningDays.getNextDay());
+    openingDays.add(adjacentOpeningDays.getPreviousDay());
+    openingDays.add(adjacentOpeningDays.getRequestedDay());
+    openingDays.add(adjacentOpeningDays.getNextDay());
 
     List<Interval> openIntervals =
       openingDays.stream()
