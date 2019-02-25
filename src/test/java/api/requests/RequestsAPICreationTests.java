@@ -28,7 +28,7 @@ import api.support.fixtures.LoansFixture;
 import api.support.fixtures.RequestsFixture;
 import api.support.fixtures.UsersFixture;
 import api.support.http.ResourceClient;
-import io.vertx.core.json.JsonArray;
+
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestStatus;
@@ -47,6 +47,7 @@ import api.support.builders.ItemBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import api.support.http.InventoryItemResource;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
@@ -839,7 +840,7 @@ public class RequestsAPICreationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException{
+    MalformedURLException {
 
     //Set up the item's initial status to be AVAILABLE
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -865,7 +866,7 @@ public class RequestsAPICreationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException{
+    MalformedURLException {
 
     //Set up the item's initial status to be CHECKED OUT
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -882,7 +883,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(pagedRequest, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = pagedRequest.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is "+ ItemStatus.CHECKED_OUT.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.CHECKED_OUT.toString().toLowerCase()));
   }
 
   @Test
@@ -894,9 +895,9 @@ public class RequestsAPICreationTests extends APITests {
 
     //Setting up an item with AWAITING_PICKUP status
     final IndividualResource servicePoint = servicePointsFixture.cd1();
+
     final IndividualResource awaitingPickupItem = setupItemAwaitingPickup(servicePoint, requestsClient, itemsClient,
                                                                   itemsFixture, usersFixture, loansFixture);
-
     //attempt to place a PAGED request
     final Response pagedRequest2 = requestsClient.attemptCreate(new RequestBuilder()
       .page()
@@ -906,7 +907,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(pagedRequest2, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = pagedRequest2.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is "+ ItemStatus.AWAITING_PICKUP.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.AWAITING_PICKUP.toString().toLowerCase()));
   }
 
   @Test
@@ -914,7 +915,7 @@ public class RequestsAPICreationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException{
+    MalformedURLException {
 
     //Set up the item's initial status to be PAGED
     final IndividualResource servicePoint = servicePointsFixture.cd1();
@@ -953,7 +954,7 @@ public class RequestsAPICreationTests extends APITests {
       .by(usersFixture.jessica()));
 
     assertThat(pagedRequest2, hasStatus(HTTP_VALIDATION_ERROR));
-    JsonArray errors = pagedRequest2.getJson().getJsonArray("errors");
+    JsonArray errors = pagedRequest2.getJson().getJsonArray("errors");      
     assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is "+ ItemStatus.IN_TRANSIT.toString().toLowerCase()));
   }
 
@@ -1284,7 +1285,7 @@ public class RequestsAPICreationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException{
+    MalformedURLException {
 
     //In order to get the item into the IN_TRANSIT state, for now we need to go the round-about route of delivering it to the unintended pickup location first
     //then check it in at the intended pickup location.
@@ -1297,11 +1298,11 @@ public class RequestsAPICreationTests extends APITests {
       .by(usersFixture.james()));
 
     JsonObject requestItem = firstRequest.getJson().getJsonObject("item");
-    assertThat(requestItem.getString("status"), is ( ItemStatus.PAGED.getValue()));
-    assertThat(firstRequest.getJson().getString("status"), is (RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
+    assertThat(requestItem.getString("status"), is(ItemStatus.PAGED.getValue()));
+    assertThat(firstRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
 
     //check it it at the "wrong" or unintended pickup location
-    loansFixture.checkInByBarcode(smallAngryPlanet,DateTime.now(DateTimeZone.UTC),pickupServicePoint.getId());
+    loansFixture.checkInByBarcode(smallAngryPlanet, DateTime.now(DateTimeZone.UTC), pickupServicePoint.getId());
 
     MultipleRecords<JsonObject> requests = requestsFixture.getQueueFor(smallAngryPlanet);
     JsonObject pagedRequestRecord = requests.getRecords().iterator().next();
@@ -1311,6 +1312,7 @@ public class RequestsAPICreationTests extends APITests {
 
     return smallAngryPlanet;
   }
+
 
   public static IndividualResource setupMissingItem(ItemsFixture itemsFixture)
     throws InterruptedException,

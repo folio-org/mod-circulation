@@ -86,8 +86,8 @@ public class MultipleHoldShelfRequestsTests extends APITests {
     loansFixture.checkOut(smallAngryPlanet, james);
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
-    IndividualResource  requestBySteve = requestsFixture.placeHoldShelfRequest(
-        smallAngryPlanet, steve, new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC), requestType);
+    IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
+      smallAngryPlanet, steve, new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC), requestType);
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
 

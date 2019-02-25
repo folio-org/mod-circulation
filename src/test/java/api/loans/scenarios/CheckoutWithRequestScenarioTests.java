@@ -1,18 +1,19 @@
 package api.loans.scenarios;
 
-import api.support.APITests;
-import api.support.builders.RequestBuilder;
-import api.support.http.InventoryItemResource;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
-import org.junit.Test;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
+import org.junit.Test;
+
+import api.support.APITests;
+import api.support.builders.RequestBuilder;
+import api.support.http.InventoryItemResource;
 
 public class CheckoutWithRequestScenarioTests extends APITests {
 

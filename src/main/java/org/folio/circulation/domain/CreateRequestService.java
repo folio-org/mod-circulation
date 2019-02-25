@@ -1,13 +1,13 @@
 package org.folio.circulation.domain;
 
-import org.folio.circulation.support.HttpResult;
-
-import java.util.concurrent.CompletableFuture;
-
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
+
+import java.util.concurrent.CompletableFuture;
+
+import org.folio.circulation.support.HttpResult;
 
 public class CreateRequestService {
   private final RequestRepository requestRepository;

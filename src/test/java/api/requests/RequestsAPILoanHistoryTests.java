@@ -16,7 +16,6 @@ import api.support.builders.RequestBuilder;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
-
 public class RequestsAPILoanHistoryTests extends APITests {
   @Test
   public void creatingHoldRequestChangesTheOpenLoanForTheSameItem()
