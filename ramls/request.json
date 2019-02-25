@@ -306,6 +306,11 @@
           "description": "Is this service point a pickup location?",
           "type": "boolean"
         }
+      },
+      "tags": {
+        "type": "object",
+        "description": "Tags",
+        "$ref": "raml-util/schemas/tags.schema"
       }
     },
     "metadata": {
