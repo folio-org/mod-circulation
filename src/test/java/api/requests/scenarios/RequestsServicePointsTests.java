@@ -1,5 +1,6 @@
 package api.requests.scenarios;
 
+import api.requests.RequestsAPICreationTests;
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
 import io.vertx.core.json.JsonObject;
@@ -63,8 +64,10 @@ public class RequestsServicePointsTests extends APITests {
 
     //setup item in IN_TRANSIT status
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
-    final IndividualResource pickupServicePoint = servicePointsFixture.cd2();
-    IndividualResource inTransitItem = setupItemInTransit(requestPickupServicePoint, pickupServicePoint);
+
+    final IndividualResource inTransitItem = RequestsAPICreationTests.setupItemInTransit(requestPickupServicePoint, servicePointsFixture.cd2(),
+      itemsFixture, requestsClient,
+      usersFixture, requestsFixture, loansFixture);
 
     //now, check in at intended service point.
     loansFixture.checkInByBarcode(inTransitItem,DateTime.now(DateTimeZone.UTC),requestPickupServicePoint.getId());
@@ -106,42 +109,6 @@ public class RequestsServicePointsTests extends APITests {
 
     assertThat(pagedRequestRecord.getJsonObject("item").getString("status"), is(ItemStatus.IN_TRANSIT.getValue()));
     assertThat(pagedRequestRecord.getString("status"), is(RequestStatus.OPEN_IN_TRANSIT.getValue()));
-  }
-
-
-  public IndividualResource setupItemInTransit(IndividualResource requestPickupServicePoint, IndividualResource pickupServicePoint)
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException{
-
-    //In order to get the item into the IN_TRANSIT state, for now we need to go the round-about route of delivering it to the unintended pickup location first
-    //then check it in at the intended pickup location.
-    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-
-    final IndividualResource firstRequest = requestsClient.create(new RequestBuilder()
-      .page()
-      .forItem(smallAngryPlanet)
-      .withPickupServicePointId(requestPickupServicePoint.getId())
-      .by(usersFixture.james()));
-
-    JsonObject requestItem = firstRequest.getJson().getJsonObject("item");
-    assertThat(requestItem.getString("status"), is ( ItemStatus.PAGED.getValue()));
-    assertThat(firstRequest.getJson().getString("status"), is (RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
-
-    log.info("requestServicePoint" + requestPickupServicePoint.getId());
-    log.info("pickupServicePoint" + pickupServicePoint.getId());
-
-    //check it it at the "wrong" or unintended pickup location
-    loansFixture.checkInByBarcode(smallAngryPlanet,DateTime.now(DateTimeZone.UTC),pickupServicePoint.getId());
-
-    MultipleRecords<JsonObject> requests = requestsFixture.getQueueFor(smallAngryPlanet);
-    JsonObject pagedRequestRecord = requests.getRecords().iterator().next();
-
-    assertThat(pagedRequestRecord.getJsonObject("item").getString("status"), is(ItemStatus.IN_TRANSIT.getValue()));
-    assertThat(pagedRequestRecord.getString("status"), is(RequestStatus.OPEN_IN_TRANSIT.getValue()));
-
-    return smallAngryPlanet;
   }
 }
 
