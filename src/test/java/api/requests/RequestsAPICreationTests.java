@@ -23,12 +23,6 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import api.support.fixtures.ItemsFixture;
-import api.support.fixtures.LoansFixture;
-import api.support.fixtures.RequestsFixture;
-import api.support.fixtures.UsersFixture;
-import api.support.http.ResourceClient;
-
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestStatus;
@@ -46,7 +40,12 @@ import api.support.builders.Address;
 import api.support.builders.ItemBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
+import api.support.fixtures.ItemsFixture;
+import api.support.fixtures.LoansFixture;
+import api.support.fixtures.RequestsFixture;
+import api.support.fixtures.UsersFixture;
 import api.support.http.InventoryItemResource;
+import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
@@ -954,7 +953,7 @@ public class RequestsAPICreationTests extends APITests {
       .by(usersFixture.jessica()));
 
     assertThat(pagedRequest2, hasStatus(HTTP_VALIDATION_ERROR));
-    JsonArray errors = pagedRequest2.getJson().getJsonArray("errors");      
+    JsonArray errors = pagedRequest2.getJson().getJsonArray("errors");
     assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is "+ ItemStatus.IN_TRANSIT.toString().toLowerCase()));
   }
 
