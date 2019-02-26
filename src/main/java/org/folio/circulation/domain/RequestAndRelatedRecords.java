@@ -1,7 +1,5 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonObject;
-
 public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedRecord {
   private final Request request;
   private final RequestQueue requestQueue;
@@ -18,11 +16,7 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
     this(request, null);
   }
 
-  RequestAndRelatedRecords withItem(JsonObject updatedItem) {
-    return withItem(request.getItem().updateItem(updatedItem));
-  }
-
-  public RequestAndRelatedRecords withRequest(Request newRequest) {
+  RequestAndRelatedRecords withRequest(Request newRequest) {
     return new RequestAndRelatedRecords(newRequest.withItem(request.getItem()),
       this.requestQueue
     );
