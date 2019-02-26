@@ -166,7 +166,7 @@ public class UpdateItem {
 
     RequestType type = requestAndRelatedRecords.getRequest().getRequestType();
 
-    if (type == RequestType.PAGE){
+    if (type == RequestType.PAGE) {
       return ItemStatus.PAGED;
     } else {
       //leave existing logic the same

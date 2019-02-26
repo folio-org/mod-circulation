@@ -9,15 +9,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
-import org.hamcrest.core.Is;
 import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
-
 
 public class RequestsAPILoanHistoryTests extends APITests {
   @Test

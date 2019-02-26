@@ -9,6 +9,7 @@ import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.RequestRepository;
 import org.folio.circulation.domain.RequestRepresentation;
+import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateLoanActionHistory;
 import org.folio.circulation.domain.UpdateRequestQueue;
@@ -28,7 +29,6 @@ import org.folio.circulation.support.http.server.WebContext;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
-import org.folio.circulation.domain.ServicePointRepository;
 
 public class RequestCollectionResource extends CollectionResource {
   public RequestCollectionResource(HttpClient client) {

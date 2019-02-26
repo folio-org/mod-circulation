@@ -1,9 +1,8 @@
 package org.folio.circulation.domain;
 
-import java.util.Arrays;
-
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
-import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
+
+import java.util.Arrays;
 
 public enum RequestType {
   NONE("", ItemStatus.NONE, null),

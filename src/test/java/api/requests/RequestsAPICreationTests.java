@@ -7,10 +7,12 @@ import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
+import static java.util.Arrays.asList;
 import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
 import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.Is.is;
@@ -21,7 +23,6 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import io.vertx.core.json.JsonArray;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestStatus;
@@ -39,6 +40,7 @@ import api.support.builders.ItemBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import api.support.http.InventoryItemResource;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
@@ -74,7 +76,8 @@ public class RequestsAPICreationTests extends APITests {
       .fulfilToHoldShelf()
       .withRequestExpiration(new LocalDate(2017, 7, 30))
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
-      .withPickupServicePointId(pickupServicePointId));
+      .withPickupServicePointId(pickupServicePointId)
+      .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
     JsonObject representation = request.getJson();
 
@@ -132,6 +135,12 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat("change metadata should have updated date",
       changeMetadata.containsKey("updatedDate"), is(true));
+
+    assertThat(representation.containsKey("tags"), is(true));
+    final JsonObject tagsRepresentation = representation.getJsonObject("tags");
+
+    assertThat(tagsRepresentation.containsKey("tagList"), is(true));
+    assertThat(tagsRepresentation.getJsonArray("tagList"), contains("new", "important"));
   }
 
   @Test
@@ -824,7 +833,7 @@ public class RequestsAPICreationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException{
+    MalformedURLException {
 
     //Set up the item's initial status to be AVAILABLE
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -849,7 +858,7 @@ public class RequestsAPICreationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException{
+    MalformedURLException {
 
     //Set up the item's initial status to be CHECKED OUT
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -866,7 +875,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(pagedRequest, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = pagedRequest.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is "+ ItemStatus.CHECKED_OUT.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.CHECKED_OUT.toString().toLowerCase()));
   }
 
   @Test
@@ -886,7 +895,7 @@ public class RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(servicePoint.getId())
       .by(usersFixture.james()));
 
-    loansFixture.checkInByBarcode(smallAngryPlanet,DateTime.now(DateTimeZone.UTC),servicePoint.getId());
+    loansFixture.checkInByBarcode(smallAngryPlanet, DateTime.now(DateTimeZone.UTC), servicePoint.getId());
 
     Response pagedRequestRecord = itemsClient.getById(smallAngryPlanet.getId());
     assertThat(pagedRequestRecord.getJson().getJsonObject("status").getString("name"), is(ItemStatus.AWAITING_PICKUP.getValue()));
@@ -900,7 +909,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(pagedRequest2, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = pagedRequest2.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is "+ ItemStatus.AWAITING_PICKUP.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.AWAITING_PICKUP.toString().toLowerCase()));
   }
 
   @Test
@@ -908,7 +917,7 @@ public class RequestsAPICreationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException{
+    MalformedURLException {
 
     //Set up the item's initial status to be PAGED
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -932,7 +941,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(pagedRequest2, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = pagedRequest2.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is "+ ItemStatus.PAGED.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.PAGED.toString().toLowerCase()));
 
   }
 
@@ -941,7 +950,7 @@ public class RequestsAPICreationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException{
+    MalformedURLException {
 
     //setup item in IN_TRANSIT status
     //In order to get the item into the IN_TRANSIT state, for now we need to go the round-about route of delivering it to the unintended pickup location first
@@ -957,11 +966,11 @@ public class RequestsAPICreationTests extends APITests {
       .by(usersFixture.james()));
 
     JsonObject requestItem = firstRequest.getJson().getJsonObject("item");
-    assertThat(requestItem.getString("status"), is ( ItemStatus.PAGED.getValue()));
-    assertThat(firstRequest.getJson().getString("status"), is (RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
+    assertThat(requestItem.getString("status"), is(ItemStatus.PAGED.getValue()));
+    assertThat(firstRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
 
     //check it it at the "wrong" or unintended pickup location
-    loansFixture.checkInByBarcode(smallAngryPlanet,DateTime.now(DateTimeZone.UTC),pickupServicePoint.getId());
+    loansFixture.checkInByBarcode(smallAngryPlanet, DateTime.now(DateTimeZone.UTC), pickupServicePoint.getId());
 
     MultipleRecords<JsonObject> requests = requestsFixture.getQueueFor(smallAngryPlanet);
     JsonObject pagedRequestRecord = requests.getRecords().iterator().next();
@@ -978,6 +987,6 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(pagedRequest2, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = pagedRequest2.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is "+ ItemStatus.IN_TRANSIT.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.IN_TRANSIT.toString().toLowerCase()));
   }
 }

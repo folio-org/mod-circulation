@@ -16,7 +16,6 @@ import java.net.MalformedURLException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
@@ -87,8 +86,8 @@ public class MultipleHoldShelfRequestsTests extends APITests {
     loansFixture.checkOut(smallAngryPlanet, james);
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
-    IndividualResource  requestBySteve = requestsFixture.placeHoldShelfRequest(
-        smallAngryPlanet, steve, new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC), requestType);
+    IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
+      smallAngryPlanet, steve, new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC), requestType);
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
