@@ -226,10 +226,6 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return getFulfilmentPreference().toCheckedInItemStatus();
   }
 
-  ItemStatus checkedOutItemStatus() {
-    return getRequestType().toCheckedOutItemStatus();
-  }
-
   String getDeliveryAddressType() {
     return representation.getString("deliveryAddressTypeId");
   }

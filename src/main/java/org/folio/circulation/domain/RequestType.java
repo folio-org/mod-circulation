@@ -5,13 +5,12 @@ import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 import java.util.Arrays;
 
 public enum RequestType {
-  NONE("", ItemStatus.NONE, null),
-  HOLD("Hold", ItemStatus.CHECKED_OUT, "holdrequested"),
-  RECALL("Recall", ItemStatus.CHECKED_OUT, "recallrequested"),
-  PAGE("Page", ItemStatus.CHECKED_OUT, null);
+  NONE("", null),
+  HOLD("Hold", "holdrequested"),
+  RECALL("Recall", "recallrequested"),
+  PAGE("Page", null);
 
   public final String value;
-  public final ItemStatus checkedOutStatus;
   public final String loanAction;
 
   public static RequestType from(String value) {
@@ -21,18 +20,9 @@ public enum RequestType {
       .orElse(NONE);
   }
 
-  RequestType(
-    String value,
-    ItemStatus checkedOutStatus,
-    String loanAction) {
-
+  RequestType(String value, String loanAction) {
     this.value = value;
-    this.checkedOutStatus = checkedOutStatus;
     this.loanAction = loanAction;
-  }
-
-  ItemStatus toCheckedOutItemStatus() {
-    return checkedOutStatus;
   }
 
   String toLoanAction() {

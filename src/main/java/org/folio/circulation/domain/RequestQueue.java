@@ -1,12 +1,11 @@
 package org.folio.circulation.domain;
 
+import static java.util.Comparator.naturalOrder;
+import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static java.util.Comparator.naturalOrder;
-import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
-import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 
 public class RequestQueue {
   private Collection<Request> requests;
@@ -15,24 +14,10 @@ public class RequestQueue {
     this.requests = requests;
   }
 
-  ItemStatus checkedOutItemStatus() {
-    return hasOutstandingRequests()
-      ? getHighestPriorityRequest().checkedOutItemStatus()
-      : CHECKED_OUT;
-  }
-
   ItemStatus checkedInItemStatus() {
     return hasOutstandingFulfillableRequests()
       ? getHighestPriorityFulfillableRequest().checkedInItemStatus()
       : AVAILABLE;
-  }
-
-  boolean hasOutstandingRequests() {
-    return !openRequests().isEmpty();
-  }
-
-  Request getHighestPriorityRequest() {
-    return openRequests().get(0);
   }
 
   boolean hasOutstandingFulfillableRequests() {
@@ -61,12 +46,6 @@ public class RequestQueue {
     return requests
       .stream()
       .filter(Request::isFulfillable)
-      .collect(Collectors.toList());
-  }
-
-  private List<Request> openRequests() {
-    return requests.stream()
-      .filter(Request::isOpen)
       .collect(Collectors.toList());
   }
 

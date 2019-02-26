@@ -12,15 +12,11 @@ import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.core.Is;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
 
 public class RequestsAPICreateMultipleRequestsTests extends APITests {
-
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   @Test
   public void canCreateMultipleRequestsOfSameTypeForSameItem()
