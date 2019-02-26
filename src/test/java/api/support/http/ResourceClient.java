@@ -14,8 +14,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import javax.naming.spi.ResolveResult;
-
+import api.support.builders.Builder;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
@@ -24,10 +25,6 @@ import org.folio.circulation.support.http.client.ResponseHandler;
 import org.hamcrest.CoreMatchers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import api.support.builders.Builder;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 
 public class ResourceClient {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -295,6 +292,7 @@ public class ResourceClient {
     return new IndividualResource(getResponse);
   }
 
+  //TODO It's not used. Shall we remove it?
   public IndividualResource createAtSpecificPath(Builder builder, String path, String jsonArray, String jsonId)
     throws MalformedURLException,
     InterruptedException,
