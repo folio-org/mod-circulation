@@ -169,7 +169,8 @@ public class RequestsAPICreationTests extends APITests {
       .withRequestDate(requestDate)
       .fulfilToHoldShelf()
       .withRequestExpiration(new LocalDate(2017, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
+      .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
     assertThat(response.getStatusCode(), is(204));
 
@@ -230,6 +231,12 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat("change metadata should have updated date",
       changeMetadata.containsKey("updatedDate"), is(true));
+
+    assertThat(representation.containsKey("tags"), is(true));
+    final JsonObject tagsRepresentation = representation.getJsonObject("tags");
+
+    assertThat(tagsRepresentation.containsKey("tagList"), is(true));
+    assertThat(tagsRepresentation.getJsonArray("tagList"), contains("new", "important"));
   }
 
   @Test

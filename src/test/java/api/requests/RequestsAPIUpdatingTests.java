@@ -9,11 +9,13 @@ import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -62,13 +64,12 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     final IndividualResource charlotte = usersFixture.charlotte();
 
-    JsonObject requestToUpdate = requestsClient.getById(createdRequest.getId())
-      .getJson();
-
     requestsClient.replace(createdRequest.getId(),
       RequestBuilder.from(createdRequest)
         .hold()
-        .by(charlotte));
+        .by(charlotte)
+        .withTags(new RequestBuilder.Tags(Arrays.asList("new", "important")))
+    );
 
     Response getResponse = requestsClient.getById(createdRequest.getId());
 
@@ -115,11 +116,17 @@ public class RequestsAPIUpdatingTests extends APITests {
     assertThat("barcode is taken from requesting user",
       representation.getJsonObject("requester").getString("barcode"),
       is("6430705932"));
+
+    assertThat(representation.containsKey("tags"), is(true));
+    final JsonObject tagsRepresentation = representation.getJsonObject("tags");
+
+    assertThat(tagsRepresentation.containsKey("tagList"), is(true));
+    assertThat(tagsRepresentation.getJsonArray("tagList"), contains("new", "important"));
   }
 
   //TODO: Check does not have pickup service point any more
   @Test
-  public void canReplaceAnExistingRequestWithDeliveryAddress() 
+  public void canReplaceAnExistingRequestWithDeliveryAddress()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -393,7 +400,7 @@ public class RequestsAPIUpdatingTests extends APITests {
       representation.getJsonObject("item").containsKey("barcode"),
       is(false));
   }
-  
+
   @Test
   public void cannotReplaceAnExistingRequestWithServicePointThatIsNotForPickup()
     throws InterruptedException,
