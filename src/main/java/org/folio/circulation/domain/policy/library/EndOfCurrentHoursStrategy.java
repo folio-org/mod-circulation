@@ -1,12 +1,14 @@
 package org.folio.circulation.domain.policy.library;
 
-import java.util.Collections;
-
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+
+import java.util.Collections;
+
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.failureForAbsentTimetable;
 
 public class EndOfCurrentHoursStrategy extends ShortTermLoansBaseStrategy {
 
@@ -21,18 +23,12 @@ public class EndOfCurrentHoursStrategy extends ShortTermLoansBaseStrategy {
   protected HttpResult<DateTime> calculateIfClosed(LibraryTimetable libraryTimetable, LibraryInterval requestedInterval) {
     LibraryInterval currentTimeInterval = libraryTimetable.findInterval(currentTime);
     if (currentTimeInterval == null) {
-      return HttpResult.failed(errorForAbsentCurrentInterval());
+      return HttpResult.failed(failureForAbsentTimetable());
     }
     if (!currentTimeInterval.isOpen()) {
       return HttpResult.failed(errorForClosedCurrentInterval());
     }
     return HttpResult.succeeded(currentTimeInterval.getEndTime());
-  }
-
-
-  private ValidationErrorFailure errorForAbsentCurrentInterval() {
-    String message = "Unable to find current service point hours";
-    return new ValidationErrorFailure(new ValidationError(message, Collections.emptyMap()));
   }
 
   private ValidationErrorFailure errorForClosedCurrentInterval() {
