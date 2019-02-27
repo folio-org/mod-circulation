@@ -23,17 +23,6 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import org.folio.circulation.domain.ItemStatus;
-import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.RequestStatus;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDate;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
 import api.support.APITests;
 import api.support.builders.Address;
 import api.support.builders.ItemBuilder;
@@ -44,6 +33,16 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
+import org.folio.circulation.domain.ItemStatus;
+import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.RequestStatus;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @RunWith(JUnitParamsRunner.class)
 public class RequestsAPICreationTests extends APITests {
