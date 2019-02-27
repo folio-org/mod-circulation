@@ -1,12 +1,12 @@
 package org.folio.circulation.domain.policy.library;
 
+import java.util.Collections;
+
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-
-import java.util.Collections;
 
 public class EndOfCurrentHoursStrategy extends ShortTermLoansBaseStrategy {
 
@@ -36,7 +36,8 @@ public class EndOfCurrentHoursStrategy extends ShortTermLoansBaseStrategy {
   }
 
   private ValidationErrorFailure errorForClosedCurrentInterval() {
-    String message = "Current service point hours are closed";
+    String message =
+      "Unable to use end of current service point hours as service point is defined to be closed now";
     return new ValidationErrorFailure(new ValidationError(message, Collections.emptyMap()));
   }
 }
