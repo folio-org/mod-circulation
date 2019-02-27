@@ -13,6 +13,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
   public static final String AWAITING_PICKUP = "Awaiting pickup";
   public static final String IN_TRANSIT = "In transit";
   public static final String PAGED = "Paged";
+  public static final String MISSING = "Missing";
 
   private final UUID id;
   private final UUID holdingId;
@@ -77,6 +78,10 @@ public class ItemBuilder extends JsonBuilder implements Builder {
 
   public ItemBuilder available() {
     return withStatus(AVAILABLE);
+  }
+
+  public ItemBuilder missing() {
+    return withStatus(MISSING);
   }
 
   private ItemBuilder withStatus(String status) {
@@ -210,7 +215,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       loanTypeId,
       this.enumeration);
   }
-  
+
   public ItemBuilder withId(UUID id) {
     return new ItemBuilder(
       id,
@@ -224,7 +229,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.temporaryLoanTypeId,
       this.enumeration);
   }
-  
+
   public ItemBuilder withEnumeration(String enumeration) {
     return new ItemBuilder(
       id,

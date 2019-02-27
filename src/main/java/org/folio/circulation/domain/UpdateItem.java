@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.of;
 import static org.folio.circulation.support.HttpResult.succeeded;
@@ -74,13 +75,11 @@ public class UpdateItem {
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> onCheckOut(
     LoanAndRelatedRecords relatedRecords) {
 
-    RequestQueue requestQueue = relatedRecords.getRequestQueue();
-
     //Hack for creating returned loan - should distinguish further up the chain
     return succeeded(relatedRecords).afterWhen(
       records -> loanIsClosed(relatedRecords),
       UpdateItem::skip,
-      records -> updateItemStatusOnCheckOut(relatedRecords, requestQueue));
+      records -> updateItemStatusOnCheckOut(relatedRecords));
   }
 
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> onLoanUpdate(
@@ -114,12 +113,10 @@ public class UpdateItem {
   }
 
   private CompletableFuture<HttpResult<LoanAndRelatedRecords>> updateItemStatusOnCheckOut(
-    LoanAndRelatedRecords loanAndRelatedRecords,
-    RequestQueue requestQueue) {
+    LoanAndRelatedRecords loanAndRelatedRecords) {
 
-    return of(requestQueue::checkedOutItemStatus)
-      .after(prospectiveStatus -> updateItemWhenNotSameStatus(prospectiveStatus,
-          loanAndRelatedRecords.getLoan().getItem()))
+    return updateItemWhenNotSameStatus(CHECKED_OUT,
+      loanAndRelatedRecords.getLoan().getItem())
       .thenApply(itemResult -> itemResult.map(loanAndRelatedRecords::withItem));
   }
 
@@ -166,16 +163,9 @@ public class UpdateItem {
 
     RequestType type = requestAndRelatedRecords.getRequest().getRequestType();
 
-    if (type == RequestType.PAGE) {
-      return ItemStatus.PAGED;
-    } else {
-      //leave existing logic the same
-      RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
-
-      return requestQueue.hasOutstandingRequests()
-        ? requestQueue.getHighestPriorityRequest().checkedOutItemStatus()
-        : requestAndRelatedRecords.getRequest().checkedOutItemStatus();
-    }
+    return type == RequestType.PAGE
+      ? ItemStatus.PAGED
+      : requestAndRelatedRecords.getRequest().getItem().getStatus();
   }
 
   private ItemStatus itemStatusOnLoanUpdate(
@@ -184,7 +174,7 @@ public class UpdateItem {
 
     return loan.isClosed()
       ? itemStatusOnCheckIn(requestQueue)
-      : requestQueue.checkedOutItemStatus();
+      : CHECKED_OUT;
   }
 
   private ItemStatus itemStatusOnCheckIn(RequestQueue requestQueue) {

@@ -265,15 +265,6 @@ public class Item {
     return getItem() != null;
   }
 
-  Item updateItem(JsonObject updatedItem) {
-    return new Item(updatedItem,
-      holdingRepresentation,
-      instanceRepresentation,
-      getLocation(),
-      getMaterialType(),
-      this.primaryServicePoint);
-  }
-
   public boolean doesNotHaveHolding() {
     return holdingRepresentation == null;
   }
