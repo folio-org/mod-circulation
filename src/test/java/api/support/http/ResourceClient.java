@@ -14,8 +14,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import javax.naming.spi.ResolveResult;
-
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
@@ -26,7 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import api.support.builders.Builder;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class ResourceClient {
@@ -294,28 +291,6 @@ public class ResourceClient {
 
     return new IndividualResource(getResponse);
   }
-
-  public IndividualResource createAtSpecificPath(Builder builder, String path, String jsonArray, String jsonId)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
-    JsonObject representation = builder.create();
-    JsonArray array = representation.getJsonArray(jsonArray);
-    String id = array.getJsonObject(0).getString(jsonId);
-
-    final URL location = urlMaker.combine(String.format("/%s/%s", id, path));
-
-    client.get(location, ResponseHandler.json(getCompleted));
-
-    Response getResponse = getCompleted
-      .get(5, TimeUnit.SECONDS)
-      .attachBody(representation.toString());
-    return new IndividualResource(getResponse);
-  }
-
 
   public Response attemptReplace(UUID id, Builder builder)
     throws MalformedURLException,

@@ -80,7 +80,9 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     return withStatus(AVAILABLE);
   }
 
-  public ItemBuilder missing() {return withStatus(MISSING); }
+  public ItemBuilder missing() {
+    return withStatus(MISSING);
+  }
 
   private ItemBuilder withStatus(String status) {
     return new ItemBuilder(
