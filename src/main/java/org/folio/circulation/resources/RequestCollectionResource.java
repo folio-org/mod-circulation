@@ -36,35 +36,34 @@ public class RequestCollectionResource extends CollectionResource {
   }
 
   void create(RoutingContext routingContext) {
-    final WebContext context = new WebContext(routingContext);
-
+    final Clients clients = getClients(routingContext);
     JsonObject representation = routingContext.getBodyAsJson();
 
-    final Clients clients = Clients.create(context, client);
+    final CreateRequestService createRequestService = buildCreateRequestService(clients);
+    final RequestRepresentation requestRepresentation = new RequestRepresentation();
 
     final ItemRepository itemRepository = new ItemRepository(clients, true, false);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
-    final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
-    final RequestRepository requestRepository = RequestRepository.using(clients);
     final UserRepository userRepository = new UserRepository(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
-    final UpdateItem updateItem = new UpdateItem(clients);
-    final UpdateLoanActionHistory updateLoanActionHistory = new UpdateLoanActionHistory(clients);
+    final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
+
     final ServicePointPickupLocationValidator servicePointPickupLocationValidator
-        = new ServicePointPickupLocationValidator();
+      = new ServicePointPickupLocationValidator();
 
     final ProxyRelationshipValidator proxyRelationshipValidator =
       createProxyRelationshipValidator(representation, clients);
 
-    final CreateRequestService createRequestService = new CreateRequestService(
-      requestRepository, updateItem, updateLoanActionHistory);
-
-    final RequestRepresentation requestRepresentation = new RequestRepresentation();
-
-    final RequestFromRepresentationService requestFromRepresentationService
-      = new RequestFromRepresentationService(itemRepository, requestQueueRepository,
-          userRepository, loanRepository, servicePointRepository,
-          proxyRelationshipValidator, servicePointPickupLocationValidator);
+    final RequestFromRepresentationService requestFromRepresentationService =
+      new RequestFromRepresentationService(
+        itemRepository,
+        requestQueueRepository,
+        userRepository,
+        loanRepository,
+        servicePointRepository,
+        proxyRelationshipValidator,
+        servicePointPickupLocationValidator
+      );
 
     requestFromRepresentationService.getRequestFrom(representation)
       .thenComposeAsync(r -> r.after(createRequestService::createRequest))
@@ -75,11 +74,8 @@ public class RequestCollectionResource extends CollectionResource {
   }
 
   void replace(RoutingContext routingContext) {
-    final WebContext context = new WebContext(routingContext);
-
+    final Clients clients = getClients(routingContext);
     JsonObject representation = routingContext.getBodyAsJson();
-
-    final Clients clients = Clients.create(context, client);
 
     final ItemRepository itemRepository = new ItemRepository(clients, false, false);
     final UserRepository userRepository = new UserRepository(clients);
@@ -88,10 +84,8 @@ public class RequestCollectionResource extends CollectionResource {
     final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final UpdateRequestQueue updateRequestQueue = UpdateRequestQueue.using(clients);
-    final UpdateItem updateItem = new UpdateItem(clients);
-    final UpdateLoanActionHistory updateLoanActionHistory = new UpdateLoanActionHistory(clients);
     final ServicePointPickupLocationValidator servicePointPickupLocationValidator
-        = new ServicePointPickupLocationValidator();
+      = new ServicePointPickupLocationValidator();
 
     final ProxyRelationshipValidator proxyRelationshipValidator =
       createProxyRelationshipValidator(representation, clients);
@@ -99,8 +93,7 @@ public class RequestCollectionResource extends CollectionResource {
     final ClosedRequestValidator closedRequestValidator = new ClosedRequestValidator(
       RequestRepository.using(clients));
 
-    final CreateRequestService createRequestService = new CreateRequestService(
-      requestRepository, updateItem, updateLoanActionHistory);
+    final CreateRequestService createRequestService = buildCreateRequestService(clients);
 
 
     final UpdateRequestService updateRequestService = new UpdateRequestService(
@@ -109,10 +102,16 @@ public class RequestCollectionResource extends CollectionResource {
     String id = routingContext.request().getParam("id");
     write(representation, "id", id);
 
-    final RequestFromRepresentationService requestFromRepresentationService
-      = new RequestFromRepresentationService(itemRepository,
-        requestQueueRepository, userRepository, loanRepository, servicePointRepository,
-          proxyRelationshipValidator, servicePointPickupLocationValidator);
+    final RequestFromRepresentationService requestFromRepresentationService =
+      new RequestFromRepresentationService(
+        itemRepository,
+        requestQueueRepository,
+        userRepository,
+        loanRepository,
+        servicePointRepository,
+        proxyRelationshipValidator,
+        servicePointPickupLocationValidator
+      );
 
     requestFromRepresentationService.getRequestFrom(representation)
       .thenComposeAsync(r -> r.afterWhen(requestRepository::exists,
@@ -123,8 +122,7 @@ public class RequestCollectionResource extends CollectionResource {
   }
 
   void get(RoutingContext routingContext) {
-    WebContext context = new WebContext(routingContext);
-    Clients clients = Clients.create(context, client);
+    Clients clients = getClients(routingContext);
 
     final RequestRepository requestRepository = RequestRepository.using(clients);
     final RequestRepresentation requestRepresentation = new RequestRepresentation();
@@ -138,8 +136,7 @@ public class RequestCollectionResource extends CollectionResource {
   }
 
   void delete(RoutingContext routingContext) {
-    WebContext context = new WebContext(routingContext);
-    Clients clients = Clients.create(context, client);
+    Clients clients = getClients(routingContext);
 
     String id = routingContext.request().getParam("id");
 
@@ -155,8 +152,7 @@ public class RequestCollectionResource extends CollectionResource {
   }
 
   void getMany(RoutingContext routingContext) {
-    WebContext context = new WebContext(routingContext);
-    Clients clients = Clients.create(context, client);
+    Clients clients = getClients(routingContext);
 
     final RequestRepository requestRepository = RequestRepository.using(clients);
     final RequestRepresentation requestRepresentation = new RequestRepresentation();
@@ -168,9 +164,26 @@ public class RequestCollectionResource extends CollectionResource {
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
-  void empty(RoutingContext routingContext) {
+  private Clients getClients(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-    Clients clients = Clients.create(context, client);
+    return Clients.create(context, client);
+  }
+
+  private CreateRequestService buildCreateRequestService(Clients clients) {
+    final RequestRepository requestRepository = RequestRepository.using(clients);
+    final UpdateItem updateItem = new UpdateItem(clients);
+    final UpdateLoanActionHistory updateLoanActionHistory = new UpdateLoanActionHistory(clients);
+
+
+    return new CreateRequestService(
+      requestRepository,
+      updateItem,
+      updateLoanActionHistory
+    );
+  }
+
+  void empty(RoutingContext routingContext) {
+    Clients clients = getClients(routingContext);
 
     clients.requestsStorage().delete()
       .thenApply(NoContentHttpResult::from)
