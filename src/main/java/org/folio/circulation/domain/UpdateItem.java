@@ -116,7 +116,7 @@ public class UpdateItem {
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
     return updateItemWhenNotSameStatus(CHECKED_OUT,
-          loanAndRelatedRecords.getLoan().getItem())
+      loanAndRelatedRecords.getLoan().getItem())
       .thenApply(itemResult -> itemResult.map(loanAndRelatedRecords::withItem));
   }
 

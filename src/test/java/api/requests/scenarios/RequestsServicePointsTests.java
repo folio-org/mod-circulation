@@ -1,8 +1,5 @@
 package api.requests.scenarios;
 
-import api.requests.RequestsAPICreationTests;
-import api.support.APITests;
-
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -21,6 +18,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import api.requests.RequestsAPICreationTests;
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
 import io.vertx.core.json.JsonObject;
