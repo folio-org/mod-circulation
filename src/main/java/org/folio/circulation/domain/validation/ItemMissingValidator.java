@@ -22,7 +22,7 @@ public class ItemMissingValidator {
       HttpResult<LoanAndRelatedRecords> result) {
       return result.failWhen(
         records -> succeeded(records.getLoan().getItem().isMissing()),
-        (loans) -> {
+        loans -> {
           Item item = loans.getLoan().getItem();
           String message =
             String.format("%s (%s) (Barcode:%s) has the item status Missing and cannot be checked out",
