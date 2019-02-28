@@ -14,12 +14,10 @@ public enum DueDateManagement {
    * value="CURRENT_DUE_DATE", Keep the current due date</option>
    * value="END_OF_THE_PREVIOUS_OPEN_DAY", Move to the end of the previous open day
    * value="END_OF_THE_NEXT_OPEN_DAY", Move to the end of the next open day
-   * value="END_OF_THE_CURRENT_DAY", Move to the end of the current day
    */
   KEEP_THE_CURRENT_DUE_DATE("CURRENT_DUE_DATE"),
   MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY("END_OF_THE_PREVIOUS_OPEN_DAY"),
   MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY("END_OF_THE_NEXT_OPEN_DAY"),
-  MOVE_TO_THE_END_OF_THE_CURRENT_DAY("END_OF_THE_CURRENT_DAY"),
 
   /**
    * Short-term loans::
@@ -38,10 +36,6 @@ public enum DueDateManagement {
     this.value = value;
   }
 
-  public String getValue() {
-    return value;
-  }
-
   public static DueDateManagement getDueDateManagement(String value) {
     return Arrays.stream(values())
       .filter(predicate(value))
@@ -51,5 +45,9 @@ public enum DueDateManagement {
 
   private static Predicate<DueDateManagement> predicate(String value) {
     return en -> en.value.equals(value);
+  }
+
+  public String getValue() {
+    return value;
   }
 }
