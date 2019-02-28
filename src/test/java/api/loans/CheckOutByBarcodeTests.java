@@ -1,5 +1,6 @@
 package api.loans;
 
+import static api.requests.RequestsAPICreationTests.setupMissingItem;
 import static api.support.APITestContext.END_OF_2019_DUE_DATE;
 import static api.support.builders.ItemBuilder.AWAITING_PICKUP;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
@@ -11,6 +12,7 @@ import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasMessageContaining;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static org.hamcrest.CoreMatchers.allOf;
@@ -412,6 +414,21 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Item is already checked out"),
       hasItemBarcodeParameter(smallAngryPlanet))));
+  }
+
+  @Test
+  public void cannotCheckOutWhenItemIsMissing()    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final IndividualResource missingItem = setupMissingItem(itemsFixture);
+    final IndividualResource steve = usersFixture.steve();
+    final Response response = loansFixture.attemptCheckOutByBarcode(missingItem, steve);
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessageContaining("has the item status Missing"),
+      hasItemBarcodeParameter(missingItem))));
   }
 
   @Test

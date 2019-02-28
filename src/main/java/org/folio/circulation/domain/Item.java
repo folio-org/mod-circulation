@@ -57,6 +57,10 @@ public class Item {
     return getStatus().equals(ItemStatus.CHECKED_OUT);
   }
 
+  public boolean isMissing() {
+    return getStatus().equals(ItemStatus.MISSING);
+  }
+
   Boolean isNotSameStatus(ItemStatus prospectiveStatus) {
     return !Objects.equals(getStatus(), prospectiveStatus);
   }
