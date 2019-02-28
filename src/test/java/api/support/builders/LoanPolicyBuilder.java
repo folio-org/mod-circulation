@@ -35,7 +35,7 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       null,
       null,
       null,
-      "KEEP_CURRENT_DATE",
+      "CURRENT_DUE_DATE_TIME",
       null,
       true,
       null,

@@ -2,17 +2,15 @@ package api.support.builders;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.domain.Calendar;
 
 import java.util.List;
 import java.util.stream.Collector;
 
 public class LibraryHoursBuilder extends JsonBuilder implements Builder {
 
-  private JsonObject representation;
-
   private static final String OPENING_PERIODS_KEY = "openingPeriods";
   private static final String TOTAL_RECORDS_KEY = "totalRecords";
+  private JsonObject representation;
 
   public LibraryHoursBuilder(List<CalendarBuilder> openingPeriods) {
     this.representation = new JsonObject()

@@ -175,7 +175,8 @@ public class RequestsAPICreationTests extends APITests {
       .withRequestDate(requestDate)
       .fulfilToHoldShelf()
       .withRequestExpiration(new LocalDate(2017, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
+      .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
     assertThat(response.getStatusCode(), is(204));
 
@@ -236,6 +237,12 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat("change metadata should have updated date",
       changeMetadata.containsKey("updatedDate"), is(true));
+
+    assertThat(representation.containsKey("tags"), is(true));
+    final JsonObject tagsRepresentation = representation.getJsonObject("tags");
+
+    assertThat(tagsRepresentation.containsKey("tagList"), is(true));
+    assertThat(tagsRepresentation.getJsonArray("tagList"), contains("new", "important"));
   }
 
   @Test
@@ -896,7 +903,7 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource servicePoint = servicePointsFixture.cd1();
 
     final IndividualResource awaitingPickupItem = setupItemAwaitingPickup(servicePoint, requestsClient, itemsClient,
-                                                                  itemsFixture, usersFixture, loansFixture);
+      itemsFixture, usersFixture, loansFixture);
     //attempt to place a PAGED request
     final Response pagedRequest2 = requestsClient.attemptCreate(new RequestBuilder()
       .page()
@@ -929,7 +936,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(pagedRequest2, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = pagedRequest2.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is "+ ItemStatus.PAGED.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.PAGED.toString().toLowerCase()));
   }
 
   @Test
@@ -937,7 +944,7 @@ public class RequestsAPICreationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException{
+    MalformedURLException {
 
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
 
@@ -954,7 +961,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(pagedRequest2, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = pagedRequest2.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is "+ ItemStatus.IN_TRANSIT.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.IN_TRANSIT.toString().toLowerCase()));
   }
 
   @Test
@@ -962,7 +969,7 @@ public class RequestsAPICreationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException{
+    MalformedURLException {
 
     final IndividualResource checkedOutItem = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
@@ -977,8 +984,8 @@ public class RequestsAPICreationTests extends APITests {
 
     JsonObject requestedItem = recallRequest.getJson().getJsonObject("item");
     assertThat(recallRequest.getJson().getString("requestType"), is(RequestType.RECALL.getValue()));
-    assertThat(requestedItem.getString("status"), is ( ItemStatus.CHECKED_OUT.getValue()));
-    assertThat(recallRequest.getJson().getString("status"), is (RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
+    assertThat(requestedItem.getString("status"), is(ItemStatus.CHECKED_OUT.getValue()));
+    assertThat(recallRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }
 
   @Test
@@ -986,7 +993,7 @@ public class RequestsAPICreationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException{
+    MalformedURLException {
 
     //Setting up an item with AWAITING_PICKUP status
     final IndividualResource servicePoint = servicePointsFixture.cd1();
@@ -1002,7 +1009,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(recallRequest.getJson().getString("requestType"), is(RequestType.RECALL.getValue()));
     assertThat(recallRequest.getJson().getJsonObject("item").getString("status"), is(ItemStatus.AWAITING_PICKUP.getValue()));
-    assertThat(recallRequest.getJson().getString("status"), is (RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
+    assertThat(recallRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }
 
   @Test
@@ -1010,13 +1017,13 @@ public class RequestsAPICreationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException{
+    MalformedURLException {
 
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
 
     final IndividualResource intransitItem = setupItemInTransit(requestPickupServicePoint, servicePointsFixture.cd2(),
-                                                                    itemsFixture, requestsClient,
-                                                                    usersFixture, requestsFixture, loansFixture);
+      itemsFixture, requestsClient,
+      usersFixture, requestsFixture, loansFixture);
     //create a Recall request
     final IndividualResource recallRequest = requestsClient.create(new RequestBuilder()
       .recall()
@@ -1027,8 +1034,8 @@ public class RequestsAPICreationTests extends APITests {
     JsonObject requestItem = recallRequest.getJson().getJsonObject("item");
 
     assertThat(recallRequest.getJson().getString("requestType"), is(RequestType.RECALL.getValue()));
-    assertThat(requestItem.getString("status"), is ( ItemStatus.IN_TRANSIT.getValue()));
-    assertThat(recallRequest.getJson().getString("status"), is (RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
+    assertThat(requestItem.getString("status"), is(ItemStatus.IN_TRANSIT.getValue()));
+    assertThat(recallRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }
 
   @Test
@@ -1036,7 +1043,7 @@ public class RequestsAPICreationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException{
+    MalformedURLException {
 
     final IndividualResource availableItem = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
@@ -1049,7 +1056,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(recallResponse, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = recallResponse.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is "+ ItemStatus.AVAILABLE.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.AVAILABLE.toString().toLowerCase()));
   }
 
   @Test
@@ -1057,7 +1064,7 @@ public class RequestsAPICreationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException{
+    MalformedURLException {
 
     final IndividualResource missingItem = setupMissingItem(itemsFixture);
 
@@ -1070,7 +1077,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(holdRequest, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = holdRequest.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is "+ ItemStatus.MISSING.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.MISSING.toString().toLowerCase()));
   }
 
   @Test
@@ -1078,7 +1085,7 @@ public class RequestsAPICreationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException{
+    MalformedURLException {
 
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
     final IndividualResource pagedItem = setupPagedItem(requestPickupServicePoint, itemsFixture, requestsClient, usersFixture);
@@ -1091,7 +1098,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(recallResponse, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = recallResponse.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is "+ ItemStatus.PAGED.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.PAGED.toString().toLowerCase()));
   }
 
   @Test
@@ -1099,7 +1106,7 @@ public class RequestsAPICreationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException{
+    MalformedURLException {
 
     final IndividualResource checkedOutItem = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
@@ -1115,8 +1122,8 @@ public class RequestsAPICreationTests extends APITests {
     JsonObject requestedItem = holdRequest.getJson().getJsonObject("item");
 
     assertThat(holdRequest.getJson().getString("requestType"), is(RequestType.HOLD.getValue()));
-    assertThat(requestedItem.getString("status"), is ( ItemStatus.CHECKED_OUT.getValue()));
-    assertThat(holdRequest.getJson().getString("status"), is (RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
+    assertThat(requestedItem.getString("status"), is(ItemStatus.CHECKED_OUT.getValue()));
+    assertThat(holdRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }
 
   @Test
@@ -1124,22 +1131,22 @@ public class RequestsAPICreationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException{
+    MalformedURLException {
 
     //Setting up an item with AWAITING_PICKUP status
     final IndividualResource servicePoint = servicePointsFixture.cd1();
     final IndividualResource awaitingPickupItem = setupItemAwaitingPickup(servicePoint, requestsClient, itemsClient,
-                                                                        itemsFixture, usersFixture, loansFixture);
+      itemsFixture, usersFixture, loansFixture);
     // create a hold request
     final IndividualResource holdRequest = requestsClient.create(new RequestBuilder()
       .hold()
       .forItem(awaitingPickupItem)
       .withPickupServicePointId(servicePoint.getId())
-      .by( usersFixture.steve()));
+      .by(usersFixture.steve()));
 
     assertThat(holdRequest.getJson().getString("requestType"), is(RequestType.HOLD.getValue()));
     assertThat(holdRequest.getJson().getJsonObject("item").getString("status"), is(ItemStatus.AWAITING_PICKUP.getValue()));
-    assertThat(holdRequest.getJson().getString("status"), is (RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
+    assertThat(holdRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }
 
   @Test
@@ -1147,7 +1154,7 @@ public class RequestsAPICreationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException{
+    MalformedURLException {
 
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
 
@@ -1165,8 +1172,8 @@ public class RequestsAPICreationTests extends APITests {
     JsonObject requestedItem = holdRequest.getJson().getJsonObject("item");
 
     assertThat(holdRequest.getJson().getString("requestType"), is(RequestType.HOLD.getValue()));
-    assertThat(requestedItem.getString("status"), is ( ItemStatus.IN_TRANSIT.getValue()));
-    assertThat(holdRequest.getJson().getString("status"), is (RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
+    assertThat(requestedItem.getString("status"), is(ItemStatus.IN_TRANSIT.getValue()));
+    assertThat(holdRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }
 
   @Test
@@ -1174,7 +1181,7 @@ public class RequestsAPICreationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException{
+    MalformedURLException {
 
     final IndividualResource missingItem = setupMissingItem(itemsFixture);
 
@@ -1188,15 +1195,16 @@ public class RequestsAPICreationTests extends APITests {
     JsonObject requestedItem = holdRequest.getJson().getJsonObject("item");
 
     assertThat(holdRequest.getJson().getString("requestType"), is(RequestType.HOLD.getValue()));
-    assertThat(requestedItem.getString("status"), is ( ItemStatus.MISSING.getValue()));
-    assertThat(holdRequest.getJson().getString("status"), is (RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
+    assertThat(requestedItem.getString("status"), is(ItemStatus.MISSING.getValue()));
+    assertThat(holdRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }
+
   @Test
   public void canCreateHoldRequestWhenItemIsPaged()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException{
+    MalformedURLException {
 
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
     final IndividualResource pagedItem = setupPagedItem(requestPickupServicePoint, itemsFixture, requestsClient, usersFixture);
@@ -1205,11 +1213,11 @@ public class RequestsAPICreationTests extends APITests {
       .hold()
       .forItem(pagedItem)
       .withPickupServicePointId(requestPickupServicePoint.getId())
-      .by( usersFixture.steve()));
+      .by(usersFixture.steve()));
 
     assertThat(holdRequest.getJson().getString("requestType"), is(RequestType.HOLD.getValue()));
     assertThat(holdRequest.getJson().getJsonObject("item").getString("status"), is(ItemStatus.PAGED.getValue()));
-    assertThat(holdRequest.getJson().getString("status"), is (RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
+    assertThat(holdRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }
 
   @Test
@@ -1217,7 +1225,7 @@ public class RequestsAPICreationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException{
+    MalformedURLException {
 
     final IndividualResource availableItem = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
@@ -1230,7 +1238,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(recallResponse, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = recallResponse.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is "+ ItemStatus.AVAILABLE.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.AVAILABLE.toString().toLowerCase()));
   }
 
   public static IndividualResource setupPagedItem(IndividualResource requestPickupServicePoint, ItemsFixture itemsFixture,
@@ -1249,7 +1257,7 @@ public class RequestsAPICreationTests extends APITests {
       .by(usersFixture.james()));
 
     JsonObject requestedItem = pagedRequest.getJson().getJsonObject("item");
-    assertThat(requestedItem.getString("status"), is ( ItemStatus.PAGED.getValue()));
+    assertThat(requestedItem.getString("status"), is(ItemStatus.PAGED.getValue()));
 
     return smallAngryPlanet;
   }
@@ -1259,7 +1267,7 @@ public class RequestsAPICreationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException{
+    MalformedURLException {
 
     //Setting up an item with AWAITING_PICKUP status
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -1270,7 +1278,7 @@ public class RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(requestPickupServicePoint.getId())
       .by(usersFixture.james()));
 
-    loansFixture.checkInByBarcode(smallAngryPlanet,DateTime.now(DateTimeZone.UTC),requestPickupServicePoint.getId());
+    loansFixture.checkInByBarcode(smallAngryPlanet, DateTime.now(DateTimeZone.UTC), requestPickupServicePoint.getId());
 
     Response pagedRequestRecord = itemsClient.getById(smallAngryPlanet.getId());
     assertThat(pagedRequestRecord.getJson().getJsonObject("status").getString("name"), is(ItemStatus.AWAITING_PICKUP.getValue()));
@@ -1317,11 +1325,11 @@ public class RequestsAPICreationTests extends APITests {
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
-    MalformedURLException{
+    MalformedURLException {
 
     //There is no workflow to get an item into the MISSING status. For now assign the MISSING status to the item directly.
     IndividualResource missingItem = itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::missing);
-    assertThat( missingItem.getResponse().getJson().getJsonObject("status").getString("name"), is (ItemStatus.MISSING.getValue()));
+    assertThat(missingItem.getResponse().getJson().getJsonObject("status").getString("name"), is(ItemStatus.MISSING.getValue()));
 
     return missingItem;
   }

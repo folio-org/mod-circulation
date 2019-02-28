@@ -1,41 +1,39 @@
 package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
-import org.apache.commons.lang3.StringUtils;
+import org.joda.time.LocalTime;
+
 
 public class OpeningHour {
 
   private static final String START_TIME_KEY = "startTime";
   private static final String END_TIME_KEY = "endTime";
+  private static final String TIME_PATTERN = "kk:mm";
 
-  private String startTime;
-  private String endTime;
+  private LocalTime startTime;
+  private LocalTime endTime;
 
   OpeningHour(JsonObject jsonObject) {
-    this.startTime = StringUtils.defaultIfBlank(jsonObject.getString(START_TIME_KEY), StringUtils.EMPTY);
-    this.endTime = StringUtils.defaultIfBlank(jsonObject.getString(END_TIME_KEY), StringUtils.EMPTY);
+    this.startTime = LocalTime.parse(jsonObject.getString(START_TIME_KEY));
+    this.endTime = LocalTime.parse(jsonObject.getString(END_TIME_KEY));
   }
 
-  private OpeningHour(String startTime, String endTime) {
+  public OpeningHour(LocalTime startTime, LocalTime endTime) {
     this.startTime = startTime;
     this.endTime = endTime;
   }
 
-  public String getStartTime() {
+  public LocalTime getStartTime() {
     return startTime;
   }
 
-  public String getEndTime() {
+  public LocalTime getEndTime() {
     return endTime;
-  }
-
-  public static OpeningHour createOpeningHour(String startTime, String endTime) {
-    return new OpeningHour(startTime, endTime);
   }
 
   JsonObject toJson() {
     return new JsonObject()
-      .put(START_TIME_KEY, startTime)
-      .put(END_TIME_KEY, endTime);
+      .put(START_TIME_KEY, startTime.toString(TIME_PATTERN))
+      .put(END_TIME_KEY, endTime.toString(TIME_PATTERN));
   }
 }
