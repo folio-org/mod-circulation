@@ -1,5 +1,7 @@
 package org.folio.circulation.domain.policy;
 
+import org.joda.time.Period;
+
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.function.Predicate;
@@ -28,5 +30,22 @@ public enum LoanPolicyPeriod {
 
   private static Predicate<LoanPolicyPeriod> predicate(String name) {
     return period -> period.name().equalsIgnoreCase(name);
+  }
+
+  public static Period calculatePeriod(LoanPolicyPeriod period, int duration) {
+    switch (period) {
+      case MONTHS:
+        return Period.months(duration);
+      case WEEKS:
+        return Period.weeks(duration);
+      case DAYS:
+        return Period.days(duration);
+      case HOURS:
+        return Period.hours(duration);
+      case MINUTES:
+        return Period.minutes(duration);
+      default:
+        return Period.millis(duration);
+    }
   }
 }
