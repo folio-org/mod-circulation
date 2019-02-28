@@ -21,6 +21,7 @@ import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
 import org.folio.circulation.domain.validation.AwaitingPickupValidator;
+import org.folio.circulation.domain.validation.ItemMissingValidator;
 import org.folio.circulation.domain.validation.ItemNotFoundValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointLoanLocationValidator;
@@ -70,9 +71,12 @@ public class LoanCollectionResource extends CollectionResource {
     final AlreadyCheckedOutValidator alreadyCheckedOutValidator = new AlreadyCheckedOutValidator(
       message -> failure(message, "itemId", loan.getItemId()));
 
+    final ItemMissingValidator itemMissingValidator = new ItemMissingValidator(
+      message -> failure(message, "itemId", loan.getItemId()));
+
     final ItemNotFoundValidator itemNotFoundValidator = createItemNotFoundValidator(loan);
-    
-    final ServicePointLoanLocationValidator spLoanLocationValidator = 
+
+    final ServicePointLoanLocationValidator spLoanLocationValidator =
         new ServicePointLoanLocationValidator();
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
@@ -87,6 +91,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
       .thenApply(this::refuseWhenHoldingDoesNotExist)
       .thenApply(alreadyCheckedOutValidator::refuseWhenItemIsAlreadyCheckedOut)
+      .thenApply(itemMissingValidator::refuseWhenItemIsMissing)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenCombineAsync(requestQueueRepository.get(loan.getItemId()), this::addRequestQueue)
       .thenCombineAsync(userRepository.getUserFailOnNotFound(loan.getUserId()), this::addUser)
@@ -124,8 +129,8 @@ public class LoanCollectionResource extends CollectionResource {
         loan.getProxyUserId()));
 
     final ItemNotFoundValidator itemNotFoundValidator = createItemNotFoundValidator(loan);
-    
-    final ServicePointLoanLocationValidator spLoanLocationValidator = 
+
+    final ServicePointLoanLocationValidator spLoanLocationValidator =
         new ServicePointLoanLocationValidator();
 
     completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(loan)))
@@ -249,7 +254,7 @@ public class LoanCollectionResource extends CollectionResource {
       .next(Loan::closedLoanHasCheckInServicePointId)
       .next(v -> loanAndRelatedRecords);
   }
-  
+
   private HttpResult<LoanAndRelatedRecords> refuseWhenNotOpenOrClosed(
     HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
@@ -267,7 +272,7 @@ public class LoanCollectionResource extends CollectionResource {
       .next(Loan::openLoanHasUserId)
       .next(v -> loanAndRelatedRecords);
   }
-  
+
   private CompletableFuture<HttpResult<LoanAndRelatedRecords>> getServicePointsForLoanAndRelated(
     HttpResult<LoanAndRelatedRecords> larrResult,
     ServicePointRepository servicePointRepository) {

@@ -4,6 +4,7 @@ import static org.folio.circulation.support.HttpResult.succeeded;
 
 import java.util.function.Function;
 
+import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ValidationErrorFailure;
@@ -19,10 +20,17 @@ public class ItemMissingValidator {
 
     public HttpResult<LoanAndRelatedRecords> refuseWhenItemIsMissing(
       HttpResult<LoanAndRelatedRecords> result) {
-
       return result.failWhen(
         records -> succeeded(records.getLoan().getItem().isMissing()),
-        x -> itemMissingErrorFunction.apply("Item is missing"));
+        (loans) -> {
+          Item item = loans.getLoan().getItem();
+          String message =
+            String.format("%s (%s) (Barcode:%s) has the item status Missing and cannot be checked out",
+                          item.getTitle(),
+                          item.getMaterialType().getString("name"),
+                          item.getBarcode());
+          return itemMissingErrorFunction.apply(message);
+        });
   }
 
 }

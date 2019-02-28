@@ -1,11 +1,13 @@
 package api.loans;
 
+import static api.requests.RequestsAPICreationTests.setupMissingItem;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.InterfaceUrls.loansUrl;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasMessageContaining;
 import static api.support.matchers.ValidationErrorMatchers.hasNullParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static org.hamcrest.CoreMatchers.allOf;
@@ -304,7 +306,7 @@ public class LoanAPITests extends APITests {
       hasMessage(String.format("No item with ID %s could be found", unknownItemId)),
       hasUUIDParameter("itemId", unknownItemId))));
   }
-  
+
   @Test
   public void cannotCreateALoanWithUnknownCheckInServicePointId()
     throws InterruptedException,
@@ -413,7 +415,7 @@ public class LoanAPITests extends APITests {
     MalformedURLException {
 
     UUID loanId = UUID.randomUUID();
-    
+
     UUID checkinServicePointId = servicePointsFixture.cd1().getId();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
@@ -600,6 +602,23 @@ public class LoanAPITests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Item is already checked out"),
       hasUUIDParameter("itemId", smallAngryPlanet.getId()))));
+  }
+
+  @Test
+  public void cannotCheckOutMissingItem()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final IndividualResource missingItem = setupMissingItem(itemsFixture);
+    final IndividualResource steve = usersFixture.steve();
+
+    Response response = loansFixture.attemptCheckOut(missingItem, steve);
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessageContaining("has the item status Missing"),
+      hasUUIDParameter("itemId", missingItem.getId()))));
   }
 
   @Test
@@ -1401,7 +1420,7 @@ public class LoanAPITests extends APITests {
 
     UUID smallAngryPlanetId = itemsFixture.basedUponSmallAngryPlanet().getId();
     UUID nodId = itemsFixture.basedUponNod().getId();
-    
+
     UUID checkinServicePointId = servicePointsFixture.cd1().getId();
     UUID checkinServicePointId2 = servicePointsFixture.cd2().getId();
 
@@ -1456,14 +1475,14 @@ public class LoanAPITests extends APITests {
 
     assertThat(getResponse.getStatusCode(), is(HttpURLConnection.HTTP_NOT_FOUND));
   }
-  
+
   @Test
   public void canCreateALoanWithServicePoints()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
     MalformedURLException {
-    
+
     UUID loanId = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
     UUID userId = usersFixture.charlotte().getId();
@@ -1485,7 +1504,7 @@ public class LoanAPITests extends APITests {
       .withCheckoutServicePointId(checkoutServicePointId));
 
     JsonObject loanJson = loansClient.getById(loanId).getJson();
-    
+
     assertThat("loan has checkin service point id", loanJson.containsKey("checkinServicePointId"), is(true));
     assertThat("loan has checkout service point id", loanJson.containsKey("checkoutServicePointId"), is(true));
     assertThat("loan has checkin service point", loanJson.containsKey("checkinServicePoint"), is(true));
@@ -1498,7 +1517,7 @@ public class LoanAPITests extends APITests {
     ExecutionException,
     TimeoutException,
     MalformedURLException {
-    
+
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
 
@@ -1506,16 +1525,16 @@ public class LoanAPITests extends APITests {
     UUID checkoutServicePointId = servicePointsFixture.cd2().getId();
 
     UUID userId = usersFixture.charlotte().getId();
-    
+
     UUID loan1Id = UUID.randomUUID();
     UUID item1Id = itemsFixture.basedUponDunkirk().getId();
-    
+
     UUID loan2Id = UUID.randomUUID();
     UUID item2Id = itemsFixture.basedUponSmallAngryPlanet().getId();
-    
+
     UUID loan3Id = UUID.randomUUID();
     UUID item3Id = itemsFixture.basedUponUprooted().getId();
-    
+
     loansClient.create(new LoanBuilder()
       .withId(loan1Id)
       .open()
@@ -1525,7 +1544,7 @@ public class LoanAPITests extends APITests {
       .withDueDate(dueDate)
       .withCheckinServicePointId(checkinServicePointId)
       .withCheckoutServicePointId(checkoutServicePointId));
-    
+
     loansClient.create(new LoanBuilder()
       .withId(loan2Id)
       .open()
@@ -1535,7 +1554,7 @@ public class LoanAPITests extends APITests {
       .withDueDate(dueDate)
       .withCheckinServicePointId(checkinServicePointId)
       .withCheckoutServicePointId(checkoutServicePointId));
-    
+
     loansClient.create(new LoanBuilder()
       .withId(loan3Id)
       .open()
@@ -1545,22 +1564,22 @@ public class LoanAPITests extends APITests {
       .withDueDate(dueDate)
       .withCheckinServicePointId(checkinServicePointId)
       .withCheckoutServicePointId(checkoutServicePointId));
-    
+
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
     client.get(InterfaceUrls.loansUrl(), ResponseHandler.any(getCompleted));
-    
+
     Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
-    
+
     assertThat(String.format("Failed to get list of requests: %s",
       getResponse.getBody()),
-      getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));    
-    
+      getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+
     List<JsonObject> loanList = getLoans(getResponse.getJson());
-    
+
     loanList.forEach(this::loanHasCheckinServicePointProperties);
     loanList.forEach(this::loanHasCheckoutServicePointProperties);
-    
+
   }
 
   private void loanHasExpectedProperties(JsonObject loan) {
@@ -1607,7 +1626,7 @@ public class LoanAPITests extends APITests {
       type, property, resource),
       resource.containsKey(property), is(true));
   }
-  
+
   private void loanHasCheckinServicePointProperties(JsonObject loanJson) {
     hasProperty("checkinServicePointId", loanJson, "loan");
     hasProperty("checkinServicePoint", loanJson, "loan");
@@ -1616,7 +1635,7 @@ public class LoanAPITests extends APITests {
     hasProperty("code", loanJson.getJsonObject("checkinServicePoint"),
         "checkinServicePoint");
   }
-  
+
   private void loanHasCheckoutServicePointProperties(JsonObject loanJson) {
     hasProperty("checkoutServicePointId", loanJson, "loan");
     hasProperty("checkoutServicePoint", loanJson, "loan");

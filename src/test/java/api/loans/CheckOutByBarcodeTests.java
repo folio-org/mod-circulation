@@ -12,6 +12,7 @@ import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasMessageContaining;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static org.hamcrest.CoreMatchers.allOf;
@@ -426,7 +427,7 @@ public class CheckOutByBarcodeTests extends APITests {
     final Response response = loansFixture.attemptCheckOutByBarcode(missingItem, steve);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Item is missing"),
+      hasMessageContaining("has the item status Missing"),
       hasItemBarcodeParameter(missingItem))));
   }
 
