@@ -1,5 +1,6 @@
 package api.loans;
 
+import static api.requests.RequestsAPICreationTests.setupMissingItem;
 import static api.support.APITestContext.END_OF_2019_DUE_DATE;
 import static api.support.builders.ItemBuilder.AWAITING_PICKUP;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
@@ -412,6 +413,21 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Item is already checked out"),
       hasItemBarcodeParameter(smallAngryPlanet))));
+  }
+
+  @Test
+  public void cannotCheckOutWhenItemIsMissing()    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final IndividualResource missingItem = setupMissingItem(itemsFixture);
+    final IndividualResource steve = usersFixture.steve();
+    final Response response = loansFixture.attemptCheckOutByBarcode(missingItem, steve);
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Item is missing"),
+      hasItemBarcodeParameter(missingItem))));
   }
 
   @Test
