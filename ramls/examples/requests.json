@@ -21,13 +21,23 @@
       "position": 1,
       "item": {
         "title": "Children of Time",
-        "barcode": "760932543816"
+        "barcode": "760932543816",
+        "copyNumbers": [
+          "1",
+          "2"
+        ]
       },
       "requester": {
         "firstName": "Stephen",
         "lastName": "Jones",
         "middleName": "Anthony",
         "barcode": "567023127436"
+      },
+      "tags": {
+        "tagList": [
+          "new",
+          "important"
+        ]
       }
     }
   ],

@@ -29,7 +29,7 @@ class RequestFromRepresentationService {
   private final ServicePointRepository servicePointRepository;
   private final ProxyRelationshipValidator proxyRelationshipValidator;
   private final ServicePointPickupLocationValidator servicePointPickupLocationValidator;
-  
+
 
   RequestFromRepresentationService(
     ItemRepository itemRepository,
@@ -62,8 +62,7 @@ class RequestFromRepresentationService {
       .thenComposeAsync(r -> r.combineAfter(userRepository::getProxyUser, Request::withProxy))
       .thenComposeAsync(r -> r.combineAfter(servicePointRepository::getServicePointForRequest, Request::withPickupServicePoint))
       .thenApply(r -> r.map(RequestAndRelatedRecords::new))
-      .thenComposeAsync(r -> r.combineAfter(requestQueueRepository::get,
-        RequestAndRelatedRecords::withRequestQueue))
+      .thenComposeAsync(r -> r.combineAfter(requestQueueRepository::get, RequestAndRelatedRecords::withRequestQueue))
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenApply(servicePointPickupLocationValidator::checkServicePointPickupLocation);
   }
