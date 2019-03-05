@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Result of applying circulation rules to determine a request policy",
+  "description": "Describes the outcome of applying circulation rules to determine a request policy",
+  "type": "object",
+  "properties": {
+    "requestPolicyId": {
+      "description": "ID of the request policy determined by the circulation rules",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "requestPolicyId"
+  ]
+}
