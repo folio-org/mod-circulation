@@ -1,5 +1,23 @@
 package org.folio.circulation.resources;
 
+import static org.folio.circulation.support.http.server.ServerErrorResponse.internalError;
+
+import java.lang.invoke.MethodHandles;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.folio.circulation.rules.Drools;
+import org.folio.circulation.rules.Text2Drools;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.OkJsonHttpResult;
+import org.folio.circulation.support.http.server.ClientErrorResponse;
+import org.folio.circulation.support.http.server.ForwardResponse;
+import org.folio.circulation.support.http.server.WebContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpServerRequest;
@@ -7,21 +25,6 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.folio.circulation.rules.Drools;
-import org.folio.circulation.rules.Text2Drools;
-import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.OkJsonHttpResult;
-import org.folio.circulation.support.http.server.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.lang.invoke.MethodHandles;
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.folio.circulation.support.http.server.ServerErrorResponse.internalError;
 
 /**
  * The circulation rules engine calculates the loan policy based on
@@ -38,28 +41,38 @@ public class CirculationRulesEngineResource extends Resource {
   private final String applyPath;
   private final String applyAllPath;
 
-  /** after this time the rules get loaded before executing the circulation rules engine */
+  /**
+   * after this time the rules get loaded before executing the circulation rules engine
+   */
   private static long maxAgeInMilliseconds = 5000;
-  /** after this time the circulation rules engine is executed first for a fast reply
-   * and then the circulation rules get reloaded */
+  /**
+   * after this time the circulation rules engine is executed first for a fast reply
+   * and then the circulation rules get reloaded
+   */
   private static long triggerAgeInMilliseconds = 4000;
 
   private class Rules {
     String rulesAsText = "";
     String rulesAsDrools = "";
     Drools drools;
-    /** System.currentTimeMillis() of the last load/reload of the rules from the storage */
+    /**
+     * System.currentTimeMillis() of the last load/reload of the rules from the storage
+     */
     long reloadTimestamp;
     boolean reloadInitiated = false;
   }
-  /** rules and Drools for each tenantId */
-  private static Map<String,Rules> rulesMap = new HashMap<>();
+
+  /**
+   * rules and Drools for each tenantId
+   */
+  private static Map<String, Rules> rulesMap = new HashMap<>();
 
   /**
    * Set the cache time.
-   * @param triggerAgeInMilliseconds  after this time the circulation rules engine is executed first for a fast reply
-   *                                  and then the circulation rules get reloaded
-   * @param maxAgeInMilliseconds  after this time the rules get loaded before executing the circulation rules engine
+   *
+   * @param triggerAgeInMilliseconds after this time the circulation rules engine is executed first for a fast reply
+   *                                 and then the circulation rules get reloaded
+   * @param maxAgeInMilliseconds     after this time the rules get loaded before executing the circulation rules engine
    */
   public static void setCacheTime(long triggerAgeInMilliseconds, long maxAgeInMilliseconds) {
     CirculationRulesEngineResource.triggerAgeInMilliseconds = triggerAgeInMilliseconds;
@@ -79,7 +92,7 @@ public class CirculationRulesEngineResource extends Resource {
    * This doesn't rebuild the drools rules if the circulation rules haven't changed.
    */
   public static void clearCache() {
-    for (Rules rules: rulesMap.values()) {
+    for (Rules rules : rulesMap.values()) {
       // timestamp in the past enforces reload
       rules.reloadTimestamp = 0;
     }
@@ -88,7 +101,8 @@ public class CirculationRulesEngineResource extends Resource {
   /**
    * Enforce reload of the tenant's circulation rules.
    * This doesn't rebuild the drools rules if the circulation rules haven't changed.
-   * @param tenantId  id of the tenant
+   *
+   * @param tenantId id of the tenant
    */
   static void clearCache(String tenantId) {
     Rules rules = rulesMap.get(tenantId);
@@ -100,9 +114,10 @@ public class CirculationRulesEngineResource extends Resource {
 
   /**
    * Create a circulation rules engine that listens at applyPath and applyAllPath.
-   * @param applyPath  URL path for circulation rules triggering that returns the first match
-   * @param applyAllPath  URL path for circulation rules triggering that returns all matches
-   * @param client  the HttpClient to use for requests via Okapi
+   *
+   * @param applyPath    URL path for circulation rules triggering that returns the first match
+   * @param applyAllPath URL path for circulation rules triggering that returns all matches
+   * @param client       the HttpClient to use for requests via Okapi
    */
   public CirculationRulesEngineResource(String applyPath, String applyAllPath, HttpClient client) {
     super(client);
@@ -112,10 +127,11 @@ public class CirculationRulesEngineResource extends Resource {
 
   /**
    * Register the paths set in the constructor.
-   * @param router  where to register
+   *
+   * @param router where to register
    */
   public void register(Router router) {
-    router.get(applyPath   ).handler(this::apply);
+    router.get(applyPath).handler(this::apply);
     router.get(applyAllPath).handler(this::applyAll);
   }
 
@@ -137,6 +153,7 @@ public class CirculationRulesEngineResource extends Resource {
   /**
    * Reload is needed if the last reload is TRIGGER_AGE_IN_MILLISECONDS old
    * and a reload hasn't been initiated yet.
+   *
    * @param rules - rules to reload
    * @return whether reload is needed
    */
@@ -149,9 +166,10 @@ public class CirculationRulesEngineResource extends Resource {
 
   /**
    * Load the circulation rules from the storage module.
-   * @param rules - where to store the rules and reload information
+   *
+   * @param rules          - where to store the rules and reload information
    * @param routingContext - where to report any error
-   * @param done - invoked after success
+   * @param done           - invoked after success
    */
   private void reloadRules(Rules rules, RoutingContext routingContext, Handler<Void> done) {
     final Clients clients = Clients.create(new WebContext(routingContext), client);
@@ -188,8 +206,7 @@ public class CirculationRulesEngineResource extends Resource {
         log.debug("rulesAsDrools = {}", rules.rulesAsDrools);
         rules.drools = new Drools(rules.rulesAsDrools);
         done.handle(null);
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
         log.error("reloadRules", e);
         if (routingContext.response().ended()) {
           return;
@@ -202,8 +219,9 @@ public class CirculationRulesEngineResource extends Resource {
   /**
    * Return a Drools for the tenantId of the routingContext. On error send the
    * error message via the routingContext's response.
+   *
    * @param routingContext - where to get the tenantId and send any error message
-   * @param droolsHandler - where to provide the Drools
+   * @param droolsHandler  - where to provide the Drools
    */
   private void drools(RoutingContext routingContext, Handler<Drools> droolsHandler) {
     try {
@@ -213,7 +231,7 @@ public class CirculationRulesEngineResource extends Resource {
         droolsHandler.handle(rules.drools);
         if (reloadNeeded(rules)) {
           rules.reloadInitiated = true;
-          reloadRules(rules, routingContext, done -> {});
+          reloadRules(rules, routingContext, done -> { });
         }
         return;
       }
@@ -245,9 +263,9 @@ public class CirculationRulesEngineResource extends Resource {
       ClientErrorResponse.badRequest(request.response(), "required query parameter missing: " + paramName);
       return true;
     }
-    if (! uuid.matches(regex)) {
+    if (!uuid.matches(regex)) {
       ClientErrorResponse.badRequest(request.response(), "invalid uuid format of " + paramName +
-          ", expecting " + regex + " but it is " + uuid);
+        ", expecting " + regex + " but it is " + uuid);
       return true;
     }
     return false;
@@ -255,7 +273,7 @@ public class CirculationRulesEngineResource extends Resource {
 
   private boolean invalidApplyParameters(HttpServerRequest request) {
     return
-        invalidUuid(request, ITEM_TYPE_ID_NAME) ||
+      invalidUuid(request, ITEM_TYPE_ID_NAME) ||
         invalidUuid(request, LOAN_TYPE_ID_NAME) ||
         invalidUuid(request, PATRON_TYPE_ID_NAME) ||
         invalidUuid(request, SHELVING_LOCATION_ID_NAME);
@@ -277,8 +295,7 @@ public class CirculationRulesEngineResource extends Resource {
 
         new OkJsonHttpResult(json)
           .writeTo(routingContext.response());
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
         log.error("apply", e);
         internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
       }
@@ -296,8 +313,7 @@ public class CirculationRulesEngineResource extends Resource {
       String droolsFile = Text2Drools.convert(circulationRules);
       Drools drools = new Drools(droolsFile);
       applyAll(routingContext, drools);
-    }
-    catch (Exception e) {
+    } catch (Exception e) {
       log.error("applyAll", e);
       internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
     }
@@ -318,8 +334,7 @@ public class CirculationRulesEngineResource extends Resource {
 
       new OkJsonHttpResult(json)
         .writeTo(routingContext.response());
-    }
-    catch (Exception e) {
+    } catch (Exception e) {
       log.error("applyAll", e);
       internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
     }

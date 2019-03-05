@@ -51,7 +51,7 @@ public class RequestCollectionResource extends CollectionResource {
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateLoanActionHistory updateLoanActionHistory = new UpdateLoanActionHistory(clients);
     final ServicePointPickupLocationValidator servicePointPickupLocationValidator
-        = new ServicePointPickupLocationValidator();
+      = new ServicePointPickupLocationValidator();
 
     final ProxyRelationshipValidator proxyRelationshipValidator =
       createProxyRelationshipValidator(representation, clients);
@@ -61,10 +61,16 @@ public class RequestCollectionResource extends CollectionResource {
 
     final RequestRepresentation requestRepresentation = new RequestRepresentation();
 
-    final RequestFromRepresentationService requestFromRepresentationService
-      = new RequestFromRepresentationService(itemRepository, requestQueueRepository,
-          userRepository, loanRepository, servicePointRepository,
-          proxyRelationshipValidator, servicePointPickupLocationValidator);
+    final RequestFromRepresentationService requestFromRepresentationService =
+      new RequestFromRepresentationService(
+        itemRepository,
+        requestQueueRepository,
+        userRepository,
+        loanRepository,
+        servicePointRepository,
+        proxyRelationshipValidator,
+        servicePointPickupLocationValidator
+      );
 
     requestFromRepresentationService.getRequestFrom(representation)
       .thenComposeAsync(r -> r.after(createRequestService::createRequest))
@@ -91,7 +97,7 @@ public class RequestCollectionResource extends CollectionResource {
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateLoanActionHistory updateLoanActionHistory = new UpdateLoanActionHistory(clients);
     final ServicePointPickupLocationValidator servicePointPickupLocationValidator
-        = new ServicePointPickupLocationValidator();
+      = new ServicePointPickupLocationValidator();
 
     final ProxyRelationshipValidator proxyRelationshipValidator =
       createProxyRelationshipValidator(representation, clients);
@@ -111,8 +117,8 @@ public class RequestCollectionResource extends CollectionResource {
 
     final RequestFromRepresentationService requestFromRepresentationService
       = new RequestFromRepresentationService(itemRepository,
-        requestQueueRepository, userRepository, loanRepository, servicePointRepository,
-          proxyRelationshipValidator, servicePointPickupLocationValidator);
+      requestQueueRepository, userRepository, loanRepository, servicePointRepository,
+      proxyRelationshipValidator, servicePointPickupLocationValidator);
 
     requestFromRepresentationService.getRequestFrom(representation)
       .thenComposeAsync(r -> r.afterWhen(requestRepository::exists,

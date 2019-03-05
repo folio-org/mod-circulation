@@ -29,7 +29,7 @@ class RequestFromRepresentationService {
   private final ServicePointRepository servicePointRepository;
   private final ProxyRelationshipValidator proxyRelationshipValidator;
   private final ServicePointPickupLocationValidator servicePointPickupLocationValidator;
-  
+
 
   RequestFromRepresentationService(
     ItemRepository itemRepository,
@@ -71,12 +71,11 @@ class RequestFromRepresentationService {
   private HttpResult<JsonObject> validateStatus(JsonObject representation) {
     RequestStatus status = RequestStatus.from(representation);
 
-    if(!status.isValid()) {
+    if (!status.isValid()) {
       //TODO: Replace this with validation error
       // (but don't want to change behaviour at the moment)
       return failed(new BadRequestFailure(RequestStatus.invalidStatusErrorMessage()));
-    }
-    else {
+    } else {
       status.writeTo(representation);
       return succeeded(representation);
     }

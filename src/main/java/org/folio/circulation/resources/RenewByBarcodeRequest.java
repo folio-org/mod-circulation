@@ -1,12 +1,13 @@
 package org.folio.circulation.resources;
 
-import io.vertx.core.json.JsonObject;
-import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.support.HttpResult;
-
 import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
+
+import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.support.HttpResult;
+
+import io.vertx.core.json.JsonObject;
 
 public class RenewByBarcodeRequest {
   public static final String USER_BARCODE = "userBarcode";
@@ -23,13 +24,13 @@ public class RenewByBarcodeRequest {
   public static HttpResult<RenewByBarcodeRequest> from(JsonObject json) {
     final String itemBarcode = getProperty(json, ITEM_BARCODE);
 
-    if(StringUtils.isBlank(itemBarcode)) {
+    if (StringUtils.isBlank(itemBarcode)) {
       return failedResult("Renewal request must have an item barcode", ITEM_BARCODE, null);
     }
 
     final String userBarcode = getProperty(json, USER_BARCODE);
 
-    if(StringUtils.isBlank(userBarcode)) {
+    if (StringUtils.isBlank(userBarcode)) {
       return failedResult("Renewal request must have a user barcode", USER_BARCODE, null);
     }
 

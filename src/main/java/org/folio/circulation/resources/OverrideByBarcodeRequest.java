@@ -1,14 +1,15 @@
 package org.folio.circulation.resources;
 
-import io.vertx.core.json.JsonObject;
-import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.support.HttpResult;
-import org.joda.time.DateTime;
-
 import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
+
+import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.support.HttpResult;
+import org.joda.time.DateTime;
+
+import io.vertx.core.json.JsonObject;
 
 public class OverrideByBarcodeRequest {
 
@@ -47,17 +48,17 @@ public class OverrideByBarcodeRequest {
 
   public static HttpResult<OverrideByBarcodeRequest> from(JsonObject json) {
     final String itemBarcode = getProperty(json, ITEM_BARCODE);
-    if(StringUtils.isBlank(itemBarcode)) {
+    if (StringUtils.isBlank(itemBarcode)) {
       return failedResult("Override renewal request must have an item barcode", ITEM_BARCODE, null);
     }
 
     final String userBarcode = getProperty(json, USER_BARCODE);
-    if(StringUtils.isBlank(userBarcode)) {
+    if (StringUtils.isBlank(userBarcode)) {
       return failedResult("Override renewal request must have a user barcode", USER_BARCODE, null);
     }
 
     final String comment = getProperty(json, COMMENT_PROPERTY);
-    if(StringUtils.isBlank(comment)) {
+    if (StringUtils.isBlank(comment)) {
       return failedResult("Override renewal request must have a comment", COMMENT_PROPERTY, null);
     }
     final DateTime dueDate = getDateTimeProperty(json, DUE_DATE);

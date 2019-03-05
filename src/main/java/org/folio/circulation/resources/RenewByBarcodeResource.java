@@ -1,7 +1,7 @@
 package org.folio.circulation.resources;
 
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.json.JsonObject;
+import java.util.concurrent.CompletableFuture;
+
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.UserRepository;
@@ -9,7 +9,8 @@ import org.folio.circulation.storage.SingleOpenLoanByUserAndItemBarcodeFinder;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ItemRepository;
 
-import java.util.concurrent.CompletableFuture;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.json.JsonObject;
 
 public class RenewByBarcodeResource extends RenewalResource {
   public RenewByBarcodeResource(HttpClient client) {

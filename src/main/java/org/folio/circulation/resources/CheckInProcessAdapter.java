@@ -94,10 +94,10 @@ class CheckInProcessAdapter {
     if (item.getInTransitDestinationServicePointId() != null && item.getInTransitDestinationServicePoint() == null) {
       final UUID inTransitDestinationServicePointId = UUID.fromString(item.getInTransitDestinationServicePointId());
       return servicePointRepository.getServicePointById(inTransitDestinationServicePointId)
-          .thenCompose(result ->
-            result.after(servicePoint ->
-              completedFuture(succeeded(updateItem.onDestinationServicePointUpdate(item, servicePoint))))
-          );
+        .thenCompose(result ->
+          result.after(servicePoint ->
+            completedFuture(succeeded(updateItem.onDestinationServicePointUpdate(item, servicePoint))))
+        );
     }
 
     return completedFuture(succeeded(item));

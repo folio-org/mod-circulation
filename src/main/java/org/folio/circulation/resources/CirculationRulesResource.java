@@ -35,7 +35,8 @@ public class CirculationRulesResource extends Resource {
 
   /**
    * Set the URL path.
-   * @param rootPath  URL path
+   *
+   * @param rootPath URL path
    * @param client
    */
   public CirculationRulesResource(String rootPath, HttpClient client) {
@@ -45,7 +46,8 @@ public class CirculationRulesResource extends Resource {
 
   /**
    * Register the path set in the constructor.
-   * @param router  where to register
+   *
+   * @param router where to register
    */
   public void register(Router router) {
     router.put(rootPath).handler(BodyHandler.create());
@@ -76,8 +78,7 @@ public class CirculationRulesResource extends Resource {
 
         new OkJsonHttpResult(circulationRules)
           .writeTo(routingContext.response());
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
         internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
       }
     });

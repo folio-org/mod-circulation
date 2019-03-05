@@ -77,7 +77,7 @@ public class LoanCollectionResource extends CollectionResource {
     final ItemNotFoundValidator itemNotFoundValidator = createItemNotFoundValidator(loan);
 
     final ServicePointLoanLocationValidator spLoanLocationValidator =
-        new ServicePointLoanLocationValidator();
+      new ServicePointLoanLocationValidator();
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
@@ -126,12 +126,12 @@ public class LoanCollectionResource extends CollectionResource {
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> failure("proxyUserId is not valid", "proxyUserId",
-        loan.getProxyUserId()));
+      loan.getProxyUserId()));
 
     final ItemNotFoundValidator itemNotFoundValidator = createItemNotFoundValidator(loan);
 
     final ServicePointLoanLocationValidator spLoanLocationValidator =
-        new ServicePointLoanLocationValidator();
+      new ServicePointLoanLocationValidator();
 
     completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(loan)))
       .thenCompose(larrResult ->
@@ -236,11 +236,10 @@ public class LoanCollectionResource extends CollectionResource {
     HttpResult<LoanAndRelatedRecords> result) {
 
     return result.next(loan -> {
-      if(loan.getLoan().getItem().doesNotHaveHolding()) {
+      if (loan.getLoan().getItem().doesNotHaveHolding()) {
         return HttpResult.failed(failure(
           "Holding does not exist", ITEM_ID, loan.getLoan().getItemId()));
-      }
-      else {
+      } else {
         return result;
       }
     });

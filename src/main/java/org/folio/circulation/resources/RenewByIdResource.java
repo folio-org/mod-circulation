@@ -45,7 +45,7 @@ public class RenewByIdResource extends RenewalResource {
 
     final SingleOpenLoanForItemInStorageFinder singleOpenLoanFinder
       = new SingleOpenLoanForItemInStorageFinder(loanRepository, userRepository,
-        moreThanOneOpenLoanFailure(itemId), false);
+      moreThanOneOpenLoanFailure(itemId), false);
 
     final ItemByIdInStorageFinder itemFinder = new ItemByIdInStorageFinder(
       itemRepository, noItemFoundForIdFailure(itemId));
@@ -63,10 +63,9 @@ public class RenewByIdResource extends RenewalResource {
     Loan loan,
     RenewByIdRequest idRequest) {
 
-    if(userMatches(loan, idRequest.getUserId())) {
+    if (userMatches(loan, idRequest.getUserId())) {
       return succeeded(loan);
-    }
-    else {
+    } else {
       return failed(failure("Cannot renew item checked out to different user",
         RenewByIdRequest.USER_ID, idRequest.getUserId()));
     }
