@@ -1,10 +1,10 @@
 package org.folio.circulation.domain.policy;
 
+import java.util.function.Function;
+
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
-
-import java.util.function.Function;
 
 /**
  * Overrides {@link #calculateDueDate(DateTime, DateTime)} in {@link RollingRenewalDueDateStrategy}

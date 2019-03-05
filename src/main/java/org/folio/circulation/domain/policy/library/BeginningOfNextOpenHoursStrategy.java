@@ -1,12 +1,12 @@
 package org.folio.circulation.domain.policy.library;
 
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.failureForAbsentTimetable;
+
 import org.folio.circulation.domain.policy.LoanPolicyPeriod;
 import org.folio.circulation.support.HttpResult;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Period;
-
-import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.failureForAbsentTimetable;
 
 public class BeginningOfNextOpenHoursStrategy extends ShortTermLoansBaseStrategy {
 

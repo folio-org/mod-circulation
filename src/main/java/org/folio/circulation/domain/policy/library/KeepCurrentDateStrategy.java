@@ -1,11 +1,11 @@
 package org.folio.circulation.domain.policy.library;
 
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
+
 import org.folio.circulation.AdjacentOpeningDays;
 import org.folio.circulation.support.HttpResult;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-
-import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
 
 public class KeepCurrentDateStrategy implements ClosedLibraryStrategy {
 

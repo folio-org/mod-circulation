@@ -1,5 +1,11 @@
 package org.folio.circulation.domain.policy.library;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.folio.circulation.AdjacentOpeningDays;
 import org.folio.circulation.domain.OpeningDay;
 import org.folio.circulation.domain.OpeningHour;
@@ -7,12 +13,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.joda.time.LocalTime;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class LibraryTimetableConverter {
 

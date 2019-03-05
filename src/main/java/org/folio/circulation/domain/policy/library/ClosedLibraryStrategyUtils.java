@@ -1,5 +1,10 @@
 package org.folio.circulation.domain.policy.library;
 
+import static org.folio.circulation.domain.policy.LoanPolicyPeriod.isShortTermLoans;
+
+import java.util.Collections;
+import java.util.concurrent.CompletableFuture;
+
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.LoanPolicy;
@@ -10,11 +15,6 @@ import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalTime;
-
-import java.util.Collections;
-import java.util.concurrent.CompletableFuture;
-
-import static org.folio.circulation.domain.policy.LoanPolicyPeriod.isShortTermLoans;
 
 public final class ClosedLibraryStrategyUtils {
 

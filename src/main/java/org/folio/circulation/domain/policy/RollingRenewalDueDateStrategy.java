@@ -1,14 +1,14 @@
 package org.folio.circulation.domain.policy;
 
+import static org.folio.circulation.support.HttpResult.failed;
+
+import java.util.function.Function;
+
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
-
-import java.util.function.Function;
-
-import static org.folio.circulation.support.HttpResult.failed;
 
 class RollingRenewalDueDateStrategy extends DueDateStrategy {
   private static final String RENEW_FROM_SYSTEM_DATE = "SYSTEM_DATE";
@@ -52,7 +52,7 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
 
   @Override
   HttpResult<DateTime> calculateDueDate(Loan loan) {
-    if(StringUtils.isBlank(renewFrom)) {
+    if (StringUtils.isBlank(renewFrom)) {
       return failed(validationError(RENEW_FROM_UNRECOGNISED_MESSAGE));
     }
 

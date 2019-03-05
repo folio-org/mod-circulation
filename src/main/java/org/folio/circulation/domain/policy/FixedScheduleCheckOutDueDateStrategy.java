@@ -1,14 +1,14 @@
 package org.folio.circulation.domain.policy;
 
+import static org.folio.circulation.support.HttpResult.failed;
+
+import java.util.function.Function;
+
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
-
-import java.util.function.Function;
-
-import static org.folio.circulation.support.HttpResult.failed;
 
 class FixedScheduleCheckOutDueDateStrategy extends DueDateStrategy {
   private static final String NO_APPLICABLE_DUE_DATE_SCHEDULE_MESSAGE =
@@ -25,10 +25,9 @@ class FixedScheduleCheckOutDueDateStrategy extends DueDateStrategy {
     super(loanPolicyId, loanPolicyName, errorForPolicy);
 
     //TODO: Find a better way to fail
-    if(fixedDueDateSchedules != null) {
+    if (fixedDueDateSchedules != null) {
       this.fixedDueDateSchedules = fixedDueDateSchedules;
-    }
-    else {
+    } else {
       this.fixedDueDateSchedules = new NoFixedDueDateSchedules();
     }
   }
@@ -44,8 +43,7 @@ class FixedScheduleCheckOutDueDateStrategy extends DueDateStrategy {
         .map(HttpResult::succeeded)
         .orElseGet(() -> failed(
           validationError(NO_APPLICABLE_DUE_DATE_SCHEDULE_MESSAGE)));
-    }
-    catch(Exception e) {
+    } catch (Exception e) {
       logException(e, "Error occurred during fixed schedule check out due date calculation");
       return failed(new ServerErrorFailure(e));
     }

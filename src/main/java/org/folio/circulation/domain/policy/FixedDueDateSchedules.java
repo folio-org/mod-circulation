@@ -1,11 +1,6 @@
 package org.folio.circulation.domain.policy;
 
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.JsonArrayHelper;
-import org.folio.circulation.support.ValidationErrorFailure;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
+import static org.folio.circulation.support.HttpResult.failed;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,7 +8,13 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static org.folio.circulation.support.HttpResult.failed;
+import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.JsonArrayHelper;
+import org.folio.circulation.support.ValidationErrorFailure;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+
+import io.vertx.core.json.JsonObject;
 
 public class FixedDueDateSchedules {
   private final List<JsonObject> schedules;

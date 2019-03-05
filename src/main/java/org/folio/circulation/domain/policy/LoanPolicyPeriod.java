@@ -1,10 +1,10 @@
 package org.folio.circulation.domain.policy;
 
-import org.joda.time.Period;
-
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.function.Predicate;
+
+import org.joda.time.Period;
 
 public enum LoanPolicyPeriod {
 

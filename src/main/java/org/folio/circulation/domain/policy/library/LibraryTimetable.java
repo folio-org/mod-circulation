@@ -1,10 +1,10 @@
 package org.folio.circulation.domain.policy.library;
 
+import java.util.List;
+
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.joda.time.DateTime;
-
-import java.util.List;
 
 public class LibraryTimetable {
 

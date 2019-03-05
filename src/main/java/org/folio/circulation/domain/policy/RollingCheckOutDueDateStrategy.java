@@ -1,11 +1,11 @@
 package org.folio.circulation.domain.policy;
 
+import java.util.function.Function;
+
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
-
-import java.util.function.Function;
 
 class RollingCheckOutDueDateStrategy extends DueDateStrategy {
   private static final String NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE =
