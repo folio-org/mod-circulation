@@ -14,7 +14,8 @@ public class ServicePointBuilder extends JsonBuilder implements Builder {
   private final String description;
   private final Integer shelvingLagTime;
   private final Boolean pickupLocation;
-    
+  private final JsonObject holdShelfExpiryPeriod;
+
   public ServicePointBuilder(
       UUID id, 
       String name,
@@ -22,7 +23,8 @@ public class ServicePointBuilder extends JsonBuilder implements Builder {
       String discoveryDisplayName,
       String description,
       Integer shelvingLagTime,
-      Boolean pickupLocation) {
+      Boolean pickupLocation,
+      JsonObject holdShelfExpiryPeriod) {
     this.id = id;
     this.name = name;
     this.code = code;
@@ -30,6 +32,7 @@ public class ServicePointBuilder extends JsonBuilder implements Builder {
     this.description = description;
     this.shelvingLagTime = shelvingLagTime;
     this.pickupLocation = pickupLocation;
+    this.holdShelfExpiryPeriod = holdShelfExpiryPeriod;
   }
   
   public ServicePointBuilder(String name, String code, String discoveryDisplayName) {
@@ -40,7 +43,8 @@ public class ServicePointBuilder extends JsonBuilder implements Builder {
         discoveryDisplayName,
         null,
         null,
-        false);
+        false,
+        null);
   }
   
   public static ServicePointBuilder from(IndividualResource response) {
@@ -52,7 +56,8 @@ public class ServicePointBuilder extends JsonBuilder implements Builder {
         getProperty(representation, "discoveryDisplayName"),
         getProperty(representation, "description"),
         getIntegerProperty(representation, "shelvingLagTime", null),
-        getBooleanProperty(representation, "pickupLocation")
+        getBooleanProperty(representation, "pickupLocation"),
+        getObjectProperty(representation, "holdShelfExpiryPeriod")
     );
   }
 
@@ -66,7 +71,8 @@ public class ServicePointBuilder extends JsonBuilder implements Builder {
     put(servicePoint, "description", this.description);
     put(servicePoint, "shelvingLagTime", this.shelvingLagTime);
     put(servicePoint, "pickupLocation", this.pickupLocation);
-    
+    put(servicePoint, "holdShelfExpiryPeriod", this.holdShelfExpiryPeriod);
+
     return servicePoint;
   }
   
@@ -78,7 +84,8 @@ public class ServicePointBuilder extends JsonBuilder implements Builder {
       this.discoveryDisplayName,
       this.description,
       this.shelvingLagTime,
-      this.pickupLocation);
+      this.pickupLocation,
+      this.holdShelfExpiryPeriod);
   }
   
   public ServicePointBuilder withName(String newName) {
@@ -89,7 +96,8 @@ public class ServicePointBuilder extends JsonBuilder implements Builder {
       this.discoveryDisplayName,
       this.description,
       this.shelvingLagTime,
-      this.pickupLocation);
+      this.pickupLocation,
+      this.holdShelfExpiryPeriod);
   }
 
   public ServicePointBuilder withCode(String newCode) {
@@ -100,7 +108,8 @@ public class ServicePointBuilder extends JsonBuilder implements Builder {
       this.discoveryDisplayName,
       this.description,
       this.shelvingLagTime,
-      this.pickupLocation);
+      this.pickupLocation,
+      this.holdShelfExpiryPeriod);
   }  
   
   public ServicePointBuilder withDiscoveryDisplayName(String newDiscoveryDisplayName) {
@@ -111,7 +120,8 @@ public class ServicePointBuilder extends JsonBuilder implements Builder {
       newDiscoveryDisplayName,
       this.description,
       this.shelvingLagTime,
-      this.pickupLocation);
+      this.pickupLocation,
+      this.holdShelfExpiryPeriod);
   }  
   
   public ServicePointBuilder withDescription(String newDescription) {
@@ -122,7 +132,8 @@ public class ServicePointBuilder extends JsonBuilder implements Builder {
       this.discoveryDisplayName,
       newDescription,
       this.shelvingLagTime,
-      this.pickupLocation);
+      this.pickupLocation,
+      this.holdShelfExpiryPeriod);
   }  
   
   public ServicePointBuilder withShelvingLagTime(Integer newShelvingLagTime) {
@@ -133,7 +144,8 @@ public class ServicePointBuilder extends JsonBuilder implements Builder {
       this.discoveryDisplayName,
       this.description,
       newShelvingLagTime,
-      this.pickupLocation);
+      this.pickupLocation,
+      this.holdShelfExpiryPeriod);
   }  
   
   public ServicePointBuilder withPickupLocation(Boolean newPickupLocation) {
@@ -144,6 +156,24 @@ public class ServicePointBuilder extends JsonBuilder implements Builder {
       this.discoveryDisplayName,
       this.description,
       this.shelvingLagTime,
-      newPickupLocation);
+      newPickupLocation,
+      this.holdShelfExpiryPeriod);
+  }
+
+  public ServicePointBuilder withHoldShelfExpriyPeriod(int duration, String intervalId) {
+    final JsonObject holdShelfExpiryPeriod = new JsonObject();
+
+    put(holdShelfExpiryPeriod, "duration", duration);
+    put(holdShelfExpiryPeriod, "intervalId", intervalId);
+
+    return new ServicePointBuilder(
+      this.id,
+      this.name,
+      this.code,
+      this.discoveryDisplayName,
+      this.description,
+      this.shelvingLagTime,
+      this.pickupLocation,
+      holdShelfExpiryPeriod);
   }
 }

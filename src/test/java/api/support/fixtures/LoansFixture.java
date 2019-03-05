@@ -337,7 +337,7 @@ public class LoansFixture {
     return checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(item)
       .on(DateTime.now(DateTimeZone.UTC))
-      .at(servicePointsFixture.fake()));
+      .at(servicePointsFixture.cd1()));
   }
 
   public CheckInByBarcodeResponse checkInByBarcode(

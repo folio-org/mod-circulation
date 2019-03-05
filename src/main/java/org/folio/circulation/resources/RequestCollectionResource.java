@@ -9,6 +9,7 @@ import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.RequestRepository;
 import org.folio.circulation.domain.RequestRepresentation;
+import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateLoanActionHistory;
 import org.folio.circulation.domain.UpdateRequestQueue;
@@ -28,7 +29,6 @@ import org.folio.circulation.support.http.server.WebContext;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
-import org.folio.circulation.domain.ServicePointRepository;
 
 public class RequestCollectionResource extends CollectionResource {
   public RequestCollectionResource(HttpClient client) {
@@ -50,7 +50,7 @@ public class RequestCollectionResource extends CollectionResource {
     final LoanRepository loanRepository = new LoanRepository(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateLoanActionHistory updateLoanActionHistory = new UpdateLoanActionHistory(clients);
-    final ServicePointPickupLocationValidator servicePointPickupLocationValidator 
+    final ServicePointPickupLocationValidator servicePointPickupLocationValidator
         = new ServicePointPickupLocationValidator();
 
     final ProxyRelationshipValidator proxyRelationshipValidator =
@@ -62,7 +62,7 @@ public class RequestCollectionResource extends CollectionResource {
     final RequestRepresentation requestRepresentation = new RequestRepresentation();
 
     final RequestFromRepresentationService requestFromRepresentationService
-      = new RequestFromRepresentationService(itemRepository, requestQueueRepository, 
+      = new RequestFromRepresentationService(itemRepository, requestQueueRepository,
           userRepository, loanRepository, servicePointRepository,
           proxyRelationshipValidator, servicePointPickupLocationValidator);
 
@@ -90,7 +90,7 @@ public class RequestCollectionResource extends CollectionResource {
     final UpdateRequestQueue updateRequestQueue = UpdateRequestQueue.using(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateLoanActionHistory updateLoanActionHistory = new UpdateLoanActionHistory(clients);
-    final ServicePointPickupLocationValidator servicePointPickupLocationValidator 
+    final ServicePointPickupLocationValidator servicePointPickupLocationValidator
         = new ServicePointPickupLocationValidator();
 
     final ProxyRelationshipValidator proxyRelationshipValidator =
@@ -101,6 +101,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final CreateRequestService createRequestService = new CreateRequestService(
       requestRepository, updateItem, updateLoanActionHistory);
+
 
     final UpdateRequestService updateRequestService = new UpdateRequestService(
       requestRepository, updateRequestQueue, closedRequestValidator);
@@ -113,7 +114,7 @@ public class RequestCollectionResource extends CollectionResource {
         requestQueueRepository, userRepository, loanRepository, servicePointRepository,
           proxyRelationshipValidator, servicePointPickupLocationValidator);
 
-    requestFromRepresentationService.getRequestFrom(representation)      
+    requestFromRepresentationService.getRequestFrom(representation)
       .thenComposeAsync(r -> r.afterWhen(requestRepository::exists,
         updateRequestService::replaceRequest,
         createRequestService::createRequest))
@@ -144,7 +145,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final RequestRepository requestRepository = RequestRepository.using(clients);
     final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(
-      RequestQueueRepository.using(clients), requestRepository);
+      RequestQueueRepository.using(clients), requestRepository, new ServicePointRepository(clients));
 
     requestRepository.getById(id)
       .thenComposeAsync(r -> r.after(requestRepository::delete))

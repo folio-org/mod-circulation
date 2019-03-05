@@ -3,6 +3,7 @@ package api.support.matchers;
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 import static org.folio.circulation.support.JsonArrayHelper.toStream;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasProperty;
 
@@ -84,6 +85,24 @@ public class ValidationErrorMatchers {
       @Override
       protected boolean matchesSafely(ValidationError error, Description description) {
         final Matcher<Object> matcher = hasProperty("message", equalTo(message));
+
+        matcher.describeMismatch(error, description);
+
+        return matcher.matches(error);
+      }
+    };
+  }
+
+  public static TypeSafeDiagnosingMatcher<ValidationError> hasMessageContaining(String message) {
+    return new TypeSafeDiagnosingMatcher<ValidationError>() {
+      @Override
+      public void describeTo(Description description) {
+        description.appendText("has message ").appendValue(message);
+      }
+
+      @Override
+      protected boolean matchesSafely(ValidationError error, Description description) {
+        final Matcher<Object> matcher = hasProperty("message", containsString(message));
 
         matcher.describeMismatch(error, description);
 

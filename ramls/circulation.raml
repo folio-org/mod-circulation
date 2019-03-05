@@ -1,6 +1,6 @@
 #%RAML 1.0
 title: Circulation
-version: v6.0
+version: v7.2
 protocols: [ HTTP, HTTPS ]
 baseUri: http://localhost:9130
 
@@ -108,7 +108,7 @@ resourceTypes:
           body:
             text/plain:
               example: "Internal server error"
-  /circulation/override-renewal-by-barcode:
+  /override-renewal-by-barcode:
     displayName: Override renewal of an existing loan using barcode for item and loanee
     post:
       description: Updates the due date of an existing loan
@@ -239,9 +239,9 @@ resourceTypes:
             text/plain:
               example: "Internal server error"
     /loan-policy:
-      displayName: Apply circulation rules for loan policy
+      displayName: Execute circulation rules and return the loan policy that will be applied
       get:
-        description: Get the loan policy when applying circulation rules
+        description: Execute circulation rules and return the loan policy that will be applied, either the matching loan policy with the highest priority or the fallback loan policy
         queryParameters:
           item_type_id:
             description: "Item type id"
@@ -282,9 +282,9 @@ resourceTypes:
               text/plain:
                 example: "Internal server error"
     /loan-policy-all:
-      displayName: Apply circulation rules and return all matching loan policies
+      displayName: Execute circulation rules and return all matching loan policies
       get:
-        description: Get loan policy for each match when applying circulation rules
+        description: Execute circulation rules and return all matching loan policies in decreasing priority and the fallback loan policy
         queryParameters:
           item_type_id:
             description: "Item type id"
@@ -323,9 +323,9 @@ resourceTypes:
               text/plain:
                 example: "Internal server error"
     /request-policy:
-      displayName: Apply circulation rules for request policy
+      displayName: Execute circulation rules and return the request policy that will be applied
       get:
-        description: Get the request policy when applying circulation rules
+        description: Execute circulation rules and return the request policy that will be applied, either the matching request policy with the highest priority or the fallback request policy
         queryParameters:
           item_type_id:
             description: "Item type id"
@@ -366,9 +366,9 @@ resourceTypes:
               text/plain:
                 example: "Internal server error"
     /request-policy-all:
-      displayName: Apply circulation rules and return all matching request policies
+      displayName: Execute circulation rules and return all matching request policies
       get:
-        description: Get request policy for each match when applying circulation rules
+        description: Execute circulation rules and return all matching request policies policies in decreasing priority and the fallback request policy
         queryParameters:
           item_type_id:
             description: "Item type id"

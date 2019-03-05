@@ -2,34 +2,58 @@ package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
+import org.joda.time.LocalTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collector;
 
 public class OpeningDay {
 
+  public static OpeningDay createClosedDay() {
+    return createOpeningDay(Collections.emptyList(), null, true, false);
+  }
+
   private static final String DATE_KEY = "date";
   private static final String ALL_DAY_KEY = "allDay";
   private static final String OPEN_KEY = "open";
-  private static final String EXCEPTIONAL_KEY = "exceptional";
   private static final String OPENING_HOUR_KEY = "openingHour";
+  private static final String DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
+  private static final DateTimeFormatter DATE_TIME_FORMATTER =
+    DateTimeFormat.forPattern(DATE_TIME_FORMAT).withZoneUTC();
 
   private List<OpeningHour> openingHour;
-  private String date;
+  private LocalDate date;
   private boolean allDay;
   private boolean open;
-  private boolean exceptional;
 
   OpeningDay(JsonObject jsonObject, String key) {
     JsonObject openingDayJson = jsonObject.getJsonObject(key);
-    this.date = StringUtils.defaultIfBlank(openingDayJson.getString(DATE_KEY), StringUtils.EMPTY);
+    String dateProperty = openingDayJson.getString(DATE_KEY);
+    if (dateProperty != null) {
+      this.date = LocalDate.parse(dateProperty, DATE_TIME_FORMATTER);
+    }
     this.allDay = openingDayJson.getBoolean(ALL_DAY_KEY, false);
     this.open = openingDayJson.getBoolean(OPEN_KEY, false);
-    this.exceptional = openingDayJson.getBoolean(EXCEPTIONAL_KEY, false);
     this.openingHour = fillOpeningDay(openingDayJson);
+  }
+
+  private OpeningDay(List<OpeningHour> openingHour, LocalDate date, boolean allDay, boolean open) {
+    this.openingHour = openingHour;
+    this.date = date;
+    this.allDay = allDay;
+    this.open = open;
+  }
+
+  public static OpeningDay createOpeningDay(List<OpeningHour> openingHour, LocalDate date, boolean allDay, boolean open) {
+    return new OpeningDay(openingHour, date, allDay, open);
   }
 
   private List<OpeningHour> fillOpeningDay(JsonObject representation) {
@@ -45,19 +69,7 @@ public class OpeningDay {
     return dayPeriods;
   }
 
-  private OpeningDay(List<OpeningHour> openingHour, String date, boolean allDay, boolean open, boolean exceptional) {
-    this.openingHour = openingHour;
-    this.date = date;
-    this.allDay = allDay;
-    this.open = open;
-    this.exceptional = exceptional;
-  }
-
-  public static OpeningDay createOpeningDay(List<OpeningHour> openingHour, String date, boolean allDay, boolean open, boolean exceptional) {
-    return new OpeningDay(openingHour, date, allDay, open, exceptional);
-  }
-
-  public String getDate() {
+  public LocalDate getDate() {
     return date;
   }
 
@@ -67,10 +79,6 @@ public class OpeningDay {
 
   public boolean getOpen() {
     return open;
-  }
-
-  public boolean getExceptional() {
-    return exceptional;
   }
 
   public List<OpeningHour> getOpeningHour() {
@@ -84,11 +92,11 @@ public class OpeningDay {
   }
 
   JsonObject toJson() {
+    DateTime dateTime = date.toDateTime(LocalTime.MIDNIGHT, DateTimeZone.UTC);
     return new JsonObject()
-      .put(DATE_KEY, date)
+      .put(DATE_KEY, DATE_TIME_FORMATTER.print(dateTime))
       .put(ALL_DAY_KEY, allDay)
       .put(OPEN_KEY, open)
-      .put(EXCEPTIONAL_KEY, exceptional)
       .put(OPENING_HOUR_KEY, openingHourToJsonArray());
   }
 }

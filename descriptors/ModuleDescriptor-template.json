@@ -4,7 +4,7 @@
   "provides": [
     {
       "id": "circulation",
-      "version": "6.0",
+      "version": "7.2",
       "handlers": [
         {
           "methods": [
@@ -618,7 +618,7 @@
     },
     {
       "id": "request-storage",
-      "version": "2.5"
+      "version": "3.0"
     },
     {
       "id": "users",
@@ -647,6 +647,10 @@
     {
       "id": "service-points",
       "version": "3.0"
+    },
+    {
+      "id": "calendar",
+      "version": "2.0"
     }
   ],
   "permissionSets": [

@@ -164,7 +164,7 @@ public class Drools {
   public static String loanPolicy(String droolsFile, MultiMap params) {
     return new Drools(droolsFile).loanPolicy(params);
   }
-  
+
   /**
    * Return the request policy calculated using the drools rules and the item type and request type.
    * @param droolsFile - rules to use

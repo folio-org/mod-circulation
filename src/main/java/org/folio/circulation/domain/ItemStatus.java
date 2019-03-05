@@ -9,7 +9,9 @@ public enum ItemStatus {
   AVAILABLE("Available"),
   AWAITING_PICKUP("Awaiting pickup"),
   CHECKED_OUT("Checked out"),
-  IN_TRANSIT("In transit");
+  IN_TRANSIT("In transit"),
+  MISSING("Missing"),
+  PAGED("Paged");
 
   public static ItemStatus from(String value) {
     return Arrays.stream(values())
