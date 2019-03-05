@@ -66,6 +66,21 @@ public class Drools {
   }
 
   /**
+   * Calculate the request policy for itemTypeName and requestTypeName.
+   * @param itemType the name of the item type
+   * @param requestType the name of the request type
+   * @param patronGroup group the patron belongs to
+   * @param shelvingLocation - item's shelving location
+   * @return the name of the request policy
+   */
+  public String requestPolicy(String itemType, String requestType, String patronGroup, String shelvingLocation) {
+    KieSession kieSession = createSession(itemType, requestType, patronGroup, shelvingLocation);
+    kieSession.fireAllRules();
+    kieSession.dispose();
+    return match.requestPolicyId;
+  }
+
+  /**
    * Return all loan policies calculated using the drools rules
    * in the order they match.
    * @param itemType the item's material type
@@ -87,6 +102,28 @@ public class Drools {
     return array;
   }
 
+   /**
+   * Return all request policies calculated using the drools rules
+   * in the order they match.
+   * @param itemType the item's material type
+   * @param requestType the item's request type
+   * @param patronGroup group the patron belongs to
+   * @param shelvingLocation - item's shelving location
+   * @return matches, each match has a requestPolicyId and a circulationRuleLine field
+   */
+  public JsonArray requestPolicies(String itemType, String requestType, String patronGroup, String shelvingLocation) {
+    KieSession kieSession = createSession(itemType, requestType, patronGroup, shelvingLocation);
+    JsonArray array = new JsonArray();
+    while (kieSession.fireAllRules() > 0) {
+      JsonObject json = new JsonObject();
+      json.put("requestPolicyId", match.requestPolicyId);
+      json.put("circulationRuleLine", match.lineNumber);
+      array.add(json);
+    }
+    kieSession.dispose();
+    return array;
+  }
+
   /**
    * Return the loan policy calculated using the drools rules and the item type and loan type.
    * @param droolsFile - rules to use
@@ -101,17 +138,15 @@ public class Drools {
   }
 
   /**
-   * Return all loan policies calculated using the drools rules and the item type and loan type
-   * in the order they match.
+   * Return the request policy calculated using the drools rules and the item type and request type.
    * @param droolsFile - rules to use
-   * @param itemType - item (material) type
-   * @param loanType - loan type
+   * @param itemType - item (material) type name
+   * @param requestType - request type name
    * @param patronGroup group the patron belongs to
    * @param shelvingLocation - item's shelving location
-   * @return matches, each match has a loanPolicyId and a circulationRuleLine field
+   * @return request policy
    */
-  public static JsonArray loanPolicies(String droolsFile,
-      String itemType, String loanType, String patronGroup, String shelvingLocation) {
-    return new Drools(droolsFile).loanPolicies(itemType, loanType, patronGroup, shelvingLocation);
+  public static String requestPolicy(String droolsFile, String itemType, String requestType, String patronGroup, String shelvingLocation) {
+    return new Drools(droolsFile).requestPolicy(itemType, requestType, patronGroup, shelvingLocation);
   }
 }

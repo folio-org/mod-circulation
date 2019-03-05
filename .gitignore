@@ -4,6 +4,7 @@ target/
 .vertx/
 metrics/
 *.log
+.antlr
 
 node_modules/
 

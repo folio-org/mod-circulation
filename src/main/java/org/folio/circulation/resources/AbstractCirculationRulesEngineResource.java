@@ -3,7 +3,6 @@ package org.folio.circulation.resources;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpServerRequest;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -12,7 +11,6 @@ import org.folio.circulation.rules.Drools;
 import org.folio.circulation.rules.Text2Drools;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.OkJsonHttpResult;
 import org.folio.circulation.support.http.server.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,22 +25,21 @@ import static org.folio.circulation.support.http.server.ServerErrorResponse.inte
  * The circulation rules engine calculates the loan policy based on
  * item type, loan type, patron type and shelving location.
  */
-public class CirculationRulesEngineResource extends Resource {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+public abstract class AbstractCirculationRulesEngineResource extends Resource {
+  protected static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  private static final String ITEM_TYPE_ID_NAME = "item_type_id";
-  private static final String LOAN_TYPE_ID_NAME = "loan_type_id";
-  private static final String PATRON_TYPE_ID_NAME = "patron_type_id";
-  private static final String SHELVING_LOCATION_ID_NAME = "shelving_location_id";
+  protected static final String ITEM_TYPE_ID_NAME = "item_type_id";
+  protected static final String PATRON_TYPE_ID_NAME = "patron_type_id";
+  protected static final String SHELVING_LOCATION_ID_NAME = "shelving_location_id";
 
-  private final String applyPath;
-  private final String applyAllPath;
+  protected final String applyPath;
+  protected final String applyAllPath;
 
   /** after this time the rules get loaded before executing the circulation rules engine */
-  private static long maxAgeInMilliseconds = 5000;
+  protected static long maxAgeInMilliseconds = 5000;
   /** after this time the circulation rules engine is executed first for a fast reply
    * and then the circulation rules get reloaded */
-  private static long triggerAgeInMilliseconds = 4000;
+  protected static long triggerAgeInMilliseconds = 4000;
 
   private class Rules {
     String rulesAsText = "";
@@ -62,8 +59,8 @@ public class CirculationRulesEngineResource extends Resource {
    * @param maxAgeInMilliseconds  after this time the rules get loaded before executing the circulation rules engine
    */
   public static void setCacheTime(long triggerAgeInMilliseconds, long maxAgeInMilliseconds) {
-    CirculationRulesEngineResource.triggerAgeInMilliseconds = triggerAgeInMilliseconds;
-    CirculationRulesEngineResource.maxAgeInMilliseconds = maxAgeInMilliseconds;
+    AbstractCirculationRulesEngineResource.triggerAgeInMilliseconds = triggerAgeInMilliseconds;
+    AbstractCirculationRulesEngineResource.maxAgeInMilliseconds = maxAgeInMilliseconds;
   }
 
   /**
@@ -104,7 +101,7 @@ public class CirculationRulesEngineResource extends Resource {
    * @param applyAllPath  URL path for circulation rules triggering that returns all matches
    * @param client  the HttpClient to use for requests via Okapi
    */
-  public CirculationRulesEngineResource(String applyPath, String applyAllPath, HttpClient client) {
+  public AbstractCirculationRulesEngineResource(String applyPath, String applyAllPath, HttpClient client) {
     super(client);
     this.applyPath = applyPath;
     this.applyAllPath = applyAllPath;
@@ -205,7 +202,7 @@ public class CirculationRulesEngineResource extends Resource {
    * @param routingContext - where to get the tenantId and send any error message
    * @param droolsHandler - where to provide the Drools
    */
-  private void drools(RoutingContext routingContext, Handler<Drools> droolsHandler) {
+  protected void drools(RoutingContext routingContext, Handler<Drools> droolsHandler) {
     try {
       String tenantId = getTenantId(routingContext);
       Rules rules = rulesMap.get(tenantId);
@@ -238,7 +235,7 @@ public class CirculationRulesEngineResource extends Resource {
     }
   }
 
-  private boolean invalidUuid(HttpServerRequest request, String paramName) {
+  protected boolean invalidUuid(HttpServerRequest request, String paramName) {
     final String regex = "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$";
     String uuid = request.getParam(paramName);
     if (uuid == null) {
@@ -253,37 +250,11 @@ public class CirculationRulesEngineResource extends Resource {
     return false;
   }
 
-  private boolean invalidApplyParameters(HttpServerRequest request) {
-    return
-        invalidUuid(request, ITEM_TYPE_ID_NAME) ||
-        invalidUuid(request, LOAN_TYPE_ID_NAME) ||
-        invalidUuid(request, PATRON_TYPE_ID_NAME) ||
-        invalidUuid(request, SHELVING_LOCATION_ID_NAME);
-  }
+  protected abstract boolean invalidApplyParameters(HttpServerRequest request);
 
-  private void apply(RoutingContext routingContext) {
-    HttpServerRequest request = routingContext.request();
-    if (invalidApplyParameters(request)) {
-      return;
-    }
-    drools(routingContext, drools -> {
-      try {
-        String itemTypeId = request.getParam(ITEM_TYPE_ID_NAME);
-        String loanTypeId = request.getParam(LOAN_TYPE_ID_NAME);
-        String patronGroupId = request.getParam(PATRON_TYPE_ID_NAME);
-        String shelvingLocationId = request.getParam(SHELVING_LOCATION_ID_NAME);
-        String loanPolicyId = drools.loanPolicy(itemTypeId, loanTypeId, patronGroupId, shelvingLocationId);
-        JsonObject json = new JsonObject().put("loanPolicyId", loanPolicyId);
+  abstract void apply(RoutingContext routingContext);
 
-        new OkJsonHttpResult(json)
-          .writeTo(routingContext.response());
-      }
-      catch (Exception e) {
-        log.error("apply", e);
-        internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
-      }
-    });
-  }
+  abstract void applyAll(RoutingContext routingContext, Drools drools);
 
   private void applyAll(RoutingContext routingContext) {
     String circulationRules = routingContext.pathParam("circulation_rules");
@@ -303,25 +274,5 @@ public class CirculationRulesEngineResource extends Resource {
     }
   }
 
-  private void applyAll(RoutingContext routingContext, Drools drools) {
-    HttpServerRequest request = routingContext.request();
-    if (invalidApplyParameters(request)) {
-      return;
-    }
-    try {
-      String itemTypeId = request.getParam(ITEM_TYPE_ID_NAME);
-      String loanTypeId = request.getParam(LOAN_TYPE_ID_NAME);
-      String patronGroupId = request.getParam(PATRON_TYPE_ID_NAME);
-      String shelvingLocationId = request.getParam(SHELVING_LOCATION_ID_NAME);
-      JsonArray matches = drools.loanPolicies(itemTypeId, loanTypeId, patronGroupId, shelvingLocationId);
-      JsonObject json = new JsonObject().put("circulationRuleMatches", matches);
-
-      new OkJsonHttpResult(json)
-        .writeTo(routingContext.response());
-    }
-    catch (Exception e) {
-      log.error("applyAll", e);
-      internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
-    }
-  }
+  
 }
