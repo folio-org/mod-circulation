@@ -149,19 +149,4 @@ public class Drools {
   public static String requestPolicy(String droolsFile, String itemType, String requestType, String patronGroup, String shelvingLocation) {
     return new Drools(droolsFile).requestPolicy(itemType, requestType, patronGroup, shelvingLocation);
   }
-
-  /**
-   * Return all loan policies calculated using the drools rules and the item type and loan type
-   * in the order they match.
-   * @param droolsFile - rules to use
-   * @param itemType - item (material) type
-   * @param loanType - loan type
-   * @param patronGroup group the patron belongs to
-   * @param shelvingLocation - item's shelving location
-   * @return matches, each match has a loanPolicyId and a circulationRuleLine field
-   */
-  public static JsonArray loanPolicies(String droolsFile,
-      String itemType, String loanType, String patronGroup, String shelvingLocation) {
-    return new Drools(droolsFile).loanPolicies(itemType, loanType, patronGroup, shelvingLocation);
-  }
 }
