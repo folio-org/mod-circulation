@@ -29,6 +29,11 @@ public class LoanRepresentation {
     return extendedRepresentation;
   }
 
+
+  public JsonObject extendedLoan(LoanAndRelatedRecords relatedRecords) {
+    return extendedLoan(relatedRecords.getLoan());
+  }
+
   private JsonObject extendedLoan(JsonObject loan, Item item) {
     //No need to pass on the itemStatus property, as only used to populate the history
     //and could be confused with aggregation of current status

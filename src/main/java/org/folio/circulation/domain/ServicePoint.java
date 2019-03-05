@@ -4,6 +4,7 @@ import io.vertx.core.json.JsonObject;
 
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
 
 public class ServicePoint {
@@ -43,6 +44,10 @@ public class ServicePoint {
   
   public Boolean getPickupLocation() {
     return getBooleanProperty(representation, "pickupLocation");
+  }
+  
+  public TimePeriod getHoldShelfExpiryPeriod() {
+    return TimePeriod.from(getObjectProperty(representation, "holdShelfExpiryPeriod"));
   }
   
   public static ServicePoint from(JsonObject representation) {

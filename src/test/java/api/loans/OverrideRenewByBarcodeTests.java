@@ -25,6 +25,7 @@ import org.folio.circulation.support.http.server.ValidationError;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
+import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -468,7 +469,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
       noticePoliciesFixture.activeNotice().getId()
     );
 
-    DateTime loanDate = DateTime.now();
+    DateTime loanDate = DateTime.now(DateTimeZone.UTC);
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDate).getJson();
 
     loansFixture.renewLoan(smallAngryPlanet, jessica);

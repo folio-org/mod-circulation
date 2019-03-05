@@ -1,41 +1,44 @@
 package org.folio.circulation.domain;
 
+import org.folio.circulation.AdjacentOpeningDays;
 import org.folio.circulation.domain.policy.LoanPolicy;
+import org.joda.time.DateTimeZone;
 
 public class LoanAndRelatedRecords implements UserRelatedRecord {
+
   private final Loan loan;
   private final RequestQueue requestQueue;
   private final LoanPolicy loanPolicy;
-  private final Calendar calendar;
-  private final Calendar fixedDueDateDays;
+  private final AdjacentOpeningDays adjacentOpeningDays;
+  private final DateTimeZone timeZone;
 
   private LoanAndRelatedRecords(
     Loan loan,
     RequestQueue requestQueue,
-    LoanPolicy loanPolicy, Calendar calendar,
-    Calendar fixedDueDateDays) {
+    LoanPolicy loanPolicy, AdjacentOpeningDays adjacentOpeningDays,
+    DateTimeZone timeZone) {
 
     this.loan = loan;
     this.requestQueue = requestQueue;
     this.loanPolicy = loanPolicy;
-    this.calendar = calendar;
-    this.fixedDueDateDays = fixedDueDateDays;
+    this.adjacentOpeningDays = adjacentOpeningDays;
+    this.timeZone = timeZone;
   }
 
   public LoanAndRelatedRecords(Loan loan) {
-    this(loan, null, null, null, null);
+    this(loan, null, null, null, DateTimeZone.UTC);
   }
 
   public LoanAndRelatedRecords withLoan(Loan newLoan) {
-    return new LoanAndRelatedRecords(newLoan, requestQueue, loanPolicy, calendar, fixedDueDateDays);
+    return new LoanAndRelatedRecords(newLoan, requestQueue, loanPolicy, adjacentOpeningDays, timeZone);
   }
 
   public LoanAndRelatedRecords withRequestingUser(User newUser) {
     return withLoan(loan.withUser(newUser));
   }
 
-  LoanAndRelatedRecords withCalendar(Calendar newCalendar) {
-    return new LoanAndRelatedRecords(loan, requestQueue, loanPolicy, newCalendar, fixedDueDateDays);
+  LoanAndRelatedRecords withInitialDueDateDays(AdjacentOpeningDays newOpeningDays) {
+    return new LoanAndRelatedRecords(loan, requestQueue, loanPolicy, newOpeningDays, timeZone);
   }
 
   public LoanAndRelatedRecords withProxyingUser(User newProxy) {
@@ -44,28 +47,29 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
 
   public LoanAndRelatedRecords withLoanPolicy(LoanPolicy newLoanPolicy) {
     return new LoanAndRelatedRecords(loan, requestQueue,
-      newLoanPolicy, calendar, fixedDueDateDays);
+      newLoanPolicy, adjacentOpeningDays, timeZone);
   }
 
   public LoanAndRelatedRecords withRequestQueue(RequestQueue newRequestQueue) {
     return new LoanAndRelatedRecords(loan, newRequestQueue,
-      loanPolicy, calendar, fixedDueDateDays);
+
+      loanPolicy, adjacentOpeningDays, timeZone);
   }
 
   public LoanAndRelatedRecords withItem(Item newItem) {
     return withLoan(loan.withItem(newItem));
   }
 
-  public LoanAndRelatedRecords withFixedDueDateDays(Calendar newFixedDueDateDays) {
-    return new LoanAndRelatedRecords(loan, requestQueue, loanPolicy, calendar, newFixedDueDateDays);
+  public LoanAndRelatedRecords withTimeZone(DateTimeZone newTimeZone) {
+    return new LoanAndRelatedRecords(loan, requestQueue, loanPolicy, adjacentOpeningDays, newTimeZone);
   }
 
   public Loan getLoan() {
     return loan;
   }
 
-  public Calendar getCalendar() {
-    return calendar;
+  public AdjacentOpeningDays getAdjacentOpeningDays() {
+    return adjacentOpeningDays;
   }
 
   public RequestQueue getRequestQueue() {
@@ -80,8 +84,8 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
     return loanPolicy;
   }
 
-  public Calendar getFixedDueDateDays() {
-    return fixedDueDateDays;
+  public DateTimeZone getTimeZone() {
+    return timeZone;
   }
 
   @Override

@@ -3,18 +3,21 @@ package org.folio.circulation.domain;
 import static org.folio.circulation.domain.RequestFulfilmentPreference.HOLD_SHELF;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_CANCELLED;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_FILLED;
-import static org.folio.circulation.domain.RequestStatus.CLOSED_UNFILLED;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_PICKUP_EXPIRED;
+import static org.folio.circulation.domain.RequestStatus.CLOSED_UNFILLED;
 import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
 import static org.folio.circulation.domain.RequestStatus.OPEN_NOT_YET_FILLED;
+import static org.folio.circulation.domain.representations.RequestProperties.HOLD_SHELF_EXPIRATION_DATE;
+import static org.folio.circulation.domain.representations.RequestProperties.POSITION;
 import static org.folio.circulation.domain.representations.RequestProperties.STATUS;
+import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.domain.representations.RequestProperties;
+import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
@@ -25,7 +28,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private final User proxy;
   private final Loan loan;
   private final ServicePoint pickupServicePoint;
-  
+
   private boolean changedPosition = false;
 
   public Request(
@@ -120,17 +123,16 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return new Request(representation, item, requester, newProxy, loan,
         pickupServicePoint);
   }
-  
+
   Request withLoan(Loan newLoan) {
     return new Request(representation, item, requester, proxy, newLoan,
         pickupServicePoint);
   }
-  
+
   public Request withPickupServicePoint(ServicePoint newPickupServicePoint) {
     return new Request(representation, item, requester, proxy, loan,
         newPickupServicePoint);
-  } 
-
+  }
   @Override
   public String getUserId() {
     return representation.getString("requesterId");
@@ -153,12 +155,12 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return representation.getString("id");
   }
 
-  private RequestType getRequestType() {
+  RequestType getRequestType() {
     return RequestType.from(representation.getString("requestType"));
   }
 
   Boolean allowedForItem() {
-    return getRequestType().canCreateRequestForItem(getItem());
+    return RequestTypeItemStatusWhiteList.canCreateRequestForItem(getItem().getStatus(), getRequestType());
   }
 
   String actionOnCreation() {
@@ -177,7 +179,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   public Item getItem() {
     return item;
   }
-  
+
   public Loan getLoan() {
     return loan;
   }
@@ -189,18 +191,18 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   public User getProxy() {
     return proxy;
   }
-  
+
   public String getPickupServicePointId() {
     return representation.getString("pickupServicePointId");
   }
-  
+
   public ServicePoint getPickupServicePoint() {
     return pickupServicePoint;
   }
 
   Request changePosition(Integer newPosition) {
     if(!Objects.equals(getPosition(), newPosition)) {
-      write(representation, RequestProperties.POSITION, newPosition);
+      write(representation, POSITION, newPosition);
       changedPosition = true;
     }
 
@@ -208,12 +210,12 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   void removePosition() {
-    representation.remove(RequestProperties.POSITION);
+    representation.remove(POSITION);
     changedPosition = true;
   }
 
   public Integer getPosition() {
-    return getIntegerProperty(representation, RequestProperties.POSITION, null);
+    return getIntegerProperty(representation, POSITION, null);
   }
 
   boolean hasChangedPosition() {
@@ -224,11 +226,22 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return getFulfilmentPreference().toCheckedInItemStatus();
   }
 
-  ItemStatus checkedOutItemStatus() {
-    return getRequestType().toCheckedOutItemStatus();
-  }
-
   String getDeliveryAddressType() {
     return representation.getString("deliveryAddressTypeId");
+  }
+
+  Request changeHoldShelfExpirationDate(DateTime holdShelfExpirationDate) {
+    write(representation, HOLD_SHELF_EXPIRATION_DATE,
+        holdShelfExpirationDate);
+
+    return this;
+  }
+
+  void removeHoldShelfExpirationDate() {
+    representation.remove(HOLD_SHELF_EXPIRATION_DATE);
+  }
+
+  public DateTime getHoldShelfExpirationDate() {
+    return getDateTimeProperty(representation, HOLD_SHELF_EXPIRATION_DATE);
   }
 }

@@ -1,8 +1,13 @@
 package api.requests;
 
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
+import static api.support.http.InterfaceUrls.requestsUrl;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
+import static java.lang.String.format;
+import static java.util.Arrays.asList;
+import static org.folio.circulation.support.http.client.ResponseHandler.any;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
@@ -21,7 +26,6 @@ import java.util.concurrent.TimeoutException;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
@@ -31,12 +35,15 @@ import api.support.APITests;
 import api.support.builders.Address;
 import api.support.builders.ItemBuilder;
 import api.support.builders.RequestBuilder;
-import api.support.http.InterfaceUrls;
 import api.support.http.InventoryItemResource;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
 public class RequestsAPIRetrievalTests extends APITests {
+
+  private static final String NEW_TAG = "new";
+  private static final String IMPORTANT_TAG = "important";
+
   @Test
   public void canGetARequestById()
     throws MalformedURLException,
@@ -45,7 +52,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     TimeoutException {
 
     String enumeration = "DUMMY_ENUMERATION";
-    
+
     UUID facultyGroupId = patronGroupsFixture.faculty().getId();
     UUID staffGroupId = patronGroupsFixture.staff().getId();
 
@@ -53,10 +60,10 @@ public class RequestsAPIRetrievalTests extends APITests {
       itemBuilder -> itemBuilder.withEnumeration(enumeration));
 
     final IndividualResource sponsor = usersFixture.rebecca(
-        builder -> builder.withPatronGroupId(facultyGroupId));
+      builder -> builder.withPatronGroupId(facultyGroupId));
 
     final IndividualResource proxy = usersFixture.steve(
-        builder -> builder.withPatronGroupId(staffGroupId));
+      builder -> builder.withPatronGroupId(staffGroupId));
 
     final IndividualResource cd1 = servicePointsFixture.cd1();
 
@@ -78,16 +85,17 @@ public class RequestsAPIRetrievalTests extends APITests {
         .fulfilToHoldShelf()
         .withRequestExpiration(new LocalDate(2017, 7, 30))
         .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
-        .withPickupServicePointId(pickupServicePointId));
+        .withPickupServicePointId(pickupServicePointId)
+        .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG)))
+    );
 
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
-    client.get(InterfaceUrls.requestsUrl(String.format("/%s", createdRequest.getId())),
-      ResponseHandler.any(getCompleted));
+    client.get(requestsUrl(format("/%s", createdRequest.getId())), any(getCompleted));
 
     Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat(String.format("Failed to get request: %s", getResponse.getBody()),
+    assertThat(format("Failed to get request: %s", getResponse.getBody()),
       getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
 
     JsonObject representation = getResponse.getJson();
@@ -106,7 +114,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(representation.containsKey("proxy"), is(true));
     final JsonObject proxySummary = representation.getJsonObject("proxy");
 
-    assertThat(proxySummary.containsKey("patronGroup"), is (true));
+    assertThat(proxySummary.containsKey("patronGroup"), is(true));
     assertThat(proxySummary.getString("patronGroupId"), is(staffGroupId));
     assertThat(proxySummary.getJsonObject("patronGroup").getString("id"),
       is(staffGroupId));
@@ -122,7 +130,7 @@ public class RequestsAPIRetrievalTests extends APITests {
       is(cd1.getJson().getString("discoveryDisplayName")));
 
     assertThat(pickupServicePoint.getBoolean("pickupLocation"),
-        is(cd1.getJson().getBoolean("pickupLocation")));
+      is(cd1.getJson().getBoolean("pickupLocation")));
 
     assertThat("has information taken from item",
       representation.containsKey("item"), is(true));
@@ -134,9 +142,9 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     assertThat("barcode is taken from item",
       itemSummary.getString("barcode"), is("036000291452"));
-    
+
     assertThat(itemSummary.getString("enumeration"), is(enumeration));
-    
+
     assertThat(itemSummary.getString("status"), is(CHECKED_OUT));
 
     assertThat("has information taken from requesting user",
@@ -164,7 +172,7 @@ public class RequestsAPIRetrievalTests extends APITests {
       requesterSummary.getString("barcode"),
       is("6059539205"));
 
-    assertThat(requesterSummary.containsKey("patronGroup"), is (true));
+    assertThat(requesterSummary.containsKey("patronGroup"), is(true));
     assertThat(requesterSummary.getString("patronGroupId"), is(facultyGroupId));
     assertThat(requesterSummary.getJsonObject("patronGroup").getString("id"),
       is(facultyGroupId));
@@ -178,6 +186,13 @@ public class RequestsAPIRetrievalTests extends APITests {
     //TODO: Improve this by checking actual date
     assertThat("current loan has non-null due date",
       representation.getJsonObject("loan").getString("dueDate"), notNullValue());
+
+
+    assertThat(representation.containsKey("tags"), is(true));
+    final JsonObject tagsRepresentation = representation.getJsonObject("tags");
+
+    assertThat(tagsRepresentation.containsKey("tagList"), is(true));
+    assertThat(tagsRepresentation.getJsonArray("tagList"), contains(NEW_TAG, IMPORTANT_TAG));
   }
 
   @Test
@@ -244,7 +259,7 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     assertThat(getResponse.getStatusCode(), is(HttpURLConnection.HTTP_NOT_FOUND));
   }
-  
+
   @Test
   public void canGetMultipleRequests()
     throws MalformedURLException,
@@ -256,7 +271,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     final IndividualResource cd2 = servicePointsFixture.cd2();
     UUID pickupServicePointId = cd1.getId();
     UUID pickupServicePointId2 = cd2.getId();
-    
+
     UUID facultyGroupId = patronGroupsFixture.faculty().getId();
     UUID staffGroupId = patronGroupsFixture.staff().getId();
 
@@ -264,14 +279,14 @@ public class RequestsAPIRetrievalTests extends APITests {
     final IndividualResource charlotte = usersFixture.charlotte();
 
     final IndividualResource sponsor = usersFixture.rebecca(
-        builder -> builder.withPatronGroupId(facultyGroupId));
+      builder -> builder.withPatronGroupId(facultyGroupId));
 
     final IndividualResource proxy = usersFixture.steve(
       builder -> builder.withPatronGroupId(staffGroupId));
 
     UUID proxyId = proxy.getId();
     UUID requesterId = sponsor.getId();
-    
+
     proxyRelationshipsFixture.nonExpiringProxyFor(sponsor, proxy);
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -290,61 +305,77 @@ public class RequestsAPIRetrievalTests extends APITests {
       .withItemId(smallAngryPlanet.getId())
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
-      .withPickupServicePointId(pickupServicePointId));
+      .withPickupServicePointId(pickupServicePointId)
+      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG)))
+    );
 
     requestsClient.create(new RequestBuilder()
       .withItemId(nod.getId())
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
-      .withPickupServicePointId(pickupServicePointId2));
+      .withPickupServicePointId(pickupServicePointId2)
+      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG)))
+    );
 
     requestsClient.create(new RequestBuilder()
       .withItemId(interestingTimes.getId())
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
-      .withPickupServicePointId(pickupServicePointId));
+      .withPickupServicePointId(pickupServicePointId)
+      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG)))
+    );
 
     requestsClient.create(new RequestBuilder()
       .withItemId(temeraire.getId())
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
-      .withPickupServicePointId(pickupServicePointId2));
+      .withPickupServicePointId(pickupServicePointId2)
+      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG)))
+    );
 
     requestsClient.create(new RequestBuilder()
       .withItemId(nod.getId())
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
-      .withPickupServicePointId(pickupServicePointId));
+      .withPickupServicePointId(pickupServicePointId)
+      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG)))
+    );
 
     requestsClient.create(new RequestBuilder()
       .withItemId(uprooted.getId())
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
-      .withPickupServicePointId(pickupServicePointId));
+      .withPickupServicePointId(pickupServicePointId)
+      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG)))
+    );
 
     requestsClient.create(new RequestBuilder()
       .withItemId(temeraire.getId())
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
-      .withPickupServicePointId(pickupServicePointId2));
-    
+      .withPickupServicePointId(pickupServicePointId2)
+      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG)))
+    );
+
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
-    client.get(InterfaceUrls.requestsUrl(), ResponseHandler.any(getCompleted));
+    client.get(requestsUrl(), any(getCompleted));
 
     Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
-    
-    assertThat(String.format("Failed to get list of requests: %s",
+
+    assertThat(format("Failed to get list of requests: %s",
       getResponse.getBody()),
       getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
-    
+
     List<JsonObject> requestList = getRequests(getResponse.getJson());
-    
+
     requestList.forEach(this::requestHasExpectedProperties);
     requestList.forEach(this::requestHasExpectedLoanProperties);
     requestList.forEach(this::requestHasServicePointProperties);
     requestList.forEach(this::requestHasPatronGroupProperties);
+    requestList.forEach(this::requestHasTags);
   }
+
 
   @Test
   public void fulfilledByDeliveryIncludesAddressWhenFindingMultipleRequests()
@@ -445,7 +476,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     TimeoutException {
 
     UUID requesterId = usersFixture.charlotte().getId();
-    
+
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut).getId())
       .withRequesterId(requesterId));
@@ -476,22 +507,20 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     CompletableFuture<Response> getFirstPageCompleted = new CompletableFuture<>();
 
-    client.get(InterfaceUrls.requestsUrl() + "?limit=4",
-      ResponseHandler.any(getFirstPageCompleted));
+    client.get(requestsUrl() + "?limit=4", any(getFirstPageCompleted));
 
     CompletableFuture<Response> getSecondPageCompleted = new CompletableFuture<>();
 
-    client.get(InterfaceUrls.requestsUrl() + "?limit=4&offset=4",
-      ResponseHandler.any(getSecondPageCompleted));
+    client.get(requestsUrl() + "?limit=4&offset=4", any(getSecondPageCompleted));
 
     Response firstPageResponse = getFirstPageCompleted.get(5, TimeUnit.SECONDS);
     Response secondPageResponse = getSecondPageCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat(String.format("Failed to get first page of requests: %s",
+    assertThat(format("Failed to get first page of requests: %s",
       firstPageResponse.getBody()),
       firstPageResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
 
-    assertThat(String.format("Failed to get second page of requests: %s",
+    assertThat(format("Failed to get second page of requests: %s",
       secondPageResponse.getBody()),
       secondPageResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
 
@@ -551,13 +580,11 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     CompletableFuture<Response> getRequestsCompleted = new CompletableFuture<>();
 
-    client.get(InterfaceUrls.requestsUrl()
-        + String.format("?query=requester.lastName=%s", "Pontefract"),
-      ResponseHandler.any(getRequestsCompleted));
+    client.get(requestsUrl() + format("?query=requester.lastName=%s", "Pontefract"), any(getRequestsCompleted));
 
     Response getRequestsResponse = getRequestsCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat(String.format("Failed to get requests: %s",
+    assertThat(format("Failed to get requests: %s",
       getRequestsResponse.getBody()),
       getRequestsResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
 
@@ -613,13 +640,11 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     CompletableFuture<Response> getRequestsCompleted = new CompletableFuture<>();
 
-    client.get(InterfaceUrls.requestsUrl()
-        + String.format("?query=proxy.lastName=%s", "Rodwell"),
-      ResponseHandler.any(getRequestsCompleted));
+    client.get(requestsUrl() + format("?query=proxy.lastName=%s", "Rodwell"), any(getRequestsCompleted));
 
     Response getRequestsResponse = getRequestsCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat(String.format("Failed to get requests: %s",
+    assertThat(format("Failed to get requests: %s",
       getRequestsResponse.getBody()),
       getRequestsResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
 
@@ -672,12 +697,11 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     CompletableFuture<Response> getRequestsCompleted = new CompletableFuture<>();
 
-    client.get(InterfaceUrls.requestsUrl() + "?query=item.title=Nod",
-      ResponseHandler.any(getRequestsCompleted));
+    client.get(requestsUrl() + "?query=item.title=Nod", any(getRequestsCompleted));
 
     Response getRequestsResponse = getRequestsCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat(String.format("Failed to get requests: %s",
+    assertThat(format("Failed to get requests: %s",
       getRequestsResponse.getBody()),
       getRequestsResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
 
@@ -712,14 +736,14 @@ public class RequestsAPIRetrievalTests extends APITests {
   private void requestHasExpectedLoanProperties(JsonObject request) {
     hasProperty("dueDate", request.getJsonObject("loan"), "loan");
   }
-  
+
   private void requestHasServicePointProperties(JsonObject request) {
     hasProperty("pickupServicePointId", request, "request");
     hasProperty("pickupServicePoint", request, "request");
     hasProperty("name", request.getJsonObject("pickupServicePoint"),
-        "pickupServicePoint");
+      "pickupServicePoint");
   }
-  
+
   private void requestHasPatronGroupProperties(JsonObject request) {
     hasProperty("proxy", request, "proxy");
 
@@ -738,12 +762,20 @@ public class RequestsAPIRetrievalTests extends APITests {
     hasProperty("desc", request.getJsonObject("requester").getJsonObject("patronGroup"), "group");
   }
 
+
+  private void requestHasTags(JsonObject request) {
+    hasProperty("tags",request,"tags");
+
+    hasProperty("tagList",request.getJsonObject("tags"),"List");
+
+  }
+
   private void hasProperty(String property, JsonObject resource, String type) {
-    assertThat(String.format("%s should have %s: %s: is missing outer property",
+    assertThat(format("%s should have %s: %s: is missing outer property",
       type, property, resource),
       resource, notNullValue());
 
-    assertThat(String.format("%s should have %s: %s",
+    assertThat(format("%s should have %s: %s",
       type, property, resource),
       resource.containsKey(property), is(true));
   }

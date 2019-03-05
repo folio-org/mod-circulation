@@ -16,7 +16,6 @@ import api.support.builders.RequestBuilder;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
-
 public class RequestsAPILoanHistoryTests extends APITests {
   @Test
   public void creatingHoldRequestChangesTheOpenLoanForTheSameItem()
@@ -62,31 +61,6 @@ public class RequestsAPILoanHistoryTests extends APITests {
     JsonObject loanFromStorage = loansStorageClient.getById(loanId).getJson();
 
     assertThat("item status snapshot in storage is not checked out",
-      loanFromStorage.getString("itemStatus"), is("Checked out"));
-  }
-
-  @Test
-  public void creatingPageRequestDoesNotChangeTheOpenLoanForSameItem()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
-
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-
-    UUID loanId = loansFixture.checkOutByBarcode(smallAngryPlanet).getId();
-
-    requestsClient.create(new RequestBuilder()
-      .page()
-      .forItem(smallAngryPlanet)
-      .withRequesterId(usersFixture.charlotte().getId()));
-
-    JsonObject loanFromStorage = loansStorageClient.getById(loanId).getJson();
-
-    assertThat("action snapshot in storage is not still checked out",
-      loanFromStorage.getString("action"), is("checkedout"));
-
-    assertThat("item status snapshot in storage is not still checked out",
       loanFromStorage.getString("itemStatus"), is("Checked out"));
   }
 

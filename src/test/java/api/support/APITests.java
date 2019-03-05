@@ -139,7 +139,7 @@ public abstract class APITests {
     = new CancellationReasonsFixture(ResourceClient.forCancellationReasons(client));
 
   protected final RequestsFixture requestsFixture = new RequestsFixture(
-    requestsClient, cancellationReasonsFixture);
+    requestsClient, cancellationReasonsFixture, servicePointsFixture);
 
   protected APITests() {
     this(true);
