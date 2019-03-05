@@ -83,6 +83,29 @@ public class CirculationRulesEngineAPITests extends APITests {
     }
   }
 
+  private Policy applyNoticePolicy(ItemType itemType, String noticeType,
+          PatronGroup patronGroup, ShelvingLocation shelvingLocation) {
+        try {
+          CompletableFuture<Response> completed = new CompletableFuture<>();
+          URL url = circulationRulesUrl(
+              "/notice-policy"
+              + "?item_type_id="         + itemType.id
+              + "&loan_type_id="         + noticeType
+              + "&patron_type_id="       + patronGroup.id
+              + "&shelving_location_id=" + shelvingLocation.id
+              );
+          client.get(url, ResponseHandler.any(completed));
+          Response response = completed.get(10, TimeUnit.SECONDS);
+          assert response.getStatusCode() == 200;
+          JsonObject json = new JsonObject(response.getBody());
+          String noticePolicyId = json.getString("noticePolicyId");
+          assert noticePolicyId != null;
+          return new Policy(noticePolicyId);
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+
   //Test data to work with our defined values
   private ItemType m1 = new ItemType("96d4bdf1-5fc2-40ef-9ace-6d7e3e48ec4d");
   private ItemType m2 = new ItemType("b6375fcb-caaf-4b94-944d-b1a6bb589425");
@@ -148,6 +171,15 @@ public class CirculationRulesEngineAPITests extends APITests {
     assertThat(response.getStatusCode(), is(400));
   }
 
+  @Test
+  public void applyNoticeWithoutParameters() throws Exception {
+    CompletableFuture<Response> completed = new CompletableFuture<>();
+    URL url = circulationRulesUrl("/notice-policy");
+    client.get(url, ResponseHandler.any(completed));
+    Response response = completed.get(10, TimeUnit.SECONDS);
+    assertThat(response.getStatusCode(), is(400));
+  }
+
   private void applyOneLoanParameterMissing(String p1, String p2, String p3, String missing) throws Exception {
     String name = missing.substring(0, missing.indexOf("="));
     CompletableFuture<Response> completed = new CompletableFuture<>();
@@ -168,6 +200,15 @@ public class CirculationRulesEngineAPITests extends APITests {
     assertThat(response.getBody(), containsString(name));
   }
 
+  private void applyOneNoticeParameterMissing(String p1, String p2, String p3, String missing) throws Exception {
+      String name = missing.substring(0, missing.indexOf("="));
+      CompletableFuture<Response> completed = new CompletableFuture<>();
+      URL url = circulationRulesUrl("/notice-policy?" + p1 + "&" + p2 + "&" + p3);
+      client.get(url, ResponseHandler.any(completed));
+      Response response = completed.get(10, TimeUnit.SECONDS);
+      assertThat(response.getStatusCode(), is(400));
+      assertThat(response.getBody(), containsString(name));
+    }
 
   @Test
   public void applyOneLoanParameterMissing() throws Exception {
@@ -197,6 +238,21 @@ public class CirculationRulesEngineAPITests extends APITests {
     applyOneRequestParameterMissing(p[0], p[2], p[3],  p[1]);
     applyOneRequestParameterMissing(p[0], p[1], p[3],  p[2]);
     applyOneRequestParameterMissing(p[0], p[1], p[2],  p[3]);
+  }
+
+  @Test
+  public void applyOneNoticeParameterMissing() throws Exception {
+    String[] p = {
+        "item_type_id=" + m1,
+        "loan_type_id=" + t1,
+        "patron_type_id=" + lp1,
+        "shelving_location_id=" + s1
+    };
+
+    applyOneNoticeParameterMissing(p[1], p[2], p[3],  p[0]);
+    applyOneNoticeParameterMissing(p[0], p[2], p[3],  p[1]);
+    applyOneNoticeParameterMissing(p[0], p[1], p[3],  p[2]);
+    applyOneNoticeParameterMissing(p[0], p[1], p[2],  p[3]);
   }
 
   private void applyInvalidUuid(String i, String l, String p, String s, String type) {
@@ -255,6 +311,12 @@ public class CirculationRulesEngineAPITests extends APITests {
   public void requestFallback() {
     setRules(rulesFallback);
     assertThat(applyRequestPolicy(m1, t1.id, g1, s1), is(rp1));
+  }
+
+  @Test
+  public void noticeFallback() {
+    setRules(rulesFallback);
+    assertThat(applyNoticePolicy(m1, t1.id, g1, s1), is(np1));
   }
 
   @Test
