@@ -79,7 +79,7 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
   }
 
   @Test
-  public void holdingAndInstanceIdComesFromMultipleRecordsForMultipleRequests()
+  public void checkRelatedRecordsForMultipleRequests()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
