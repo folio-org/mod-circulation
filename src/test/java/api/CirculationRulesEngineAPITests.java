@@ -12,12 +12,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.folio.circulation.resources.LoanCirculationRulesEngineResource;
 import org.folio.circulation.rules.ItemType;
-import org.folio.circulation.rules.Policy;
 import org.folio.circulation.rules.LoanType;
 import org.folio.circulation.rules.PatronGroup;
+import org.folio.circulation.rules.Policy;
 import org.folio.circulation.rules.ShelvingLocation;
-import org.folio.circulation.resources.LoanCirculationRulesEngineResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
 import org.junit.Before;

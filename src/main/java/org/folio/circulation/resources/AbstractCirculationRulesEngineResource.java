@@ -1,25 +1,28 @@
 package org.folio.circulation.resources;
 
+import static org.folio.circulation.support.http.server.ServerErrorResponse.internalError;
+
+import java.lang.invoke.MethodHandles;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.folio.circulation.rules.Drools;
+import org.folio.circulation.rules.Text2Drools;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.http.server.ClientErrorResponse;
+import org.folio.circulation.support.http.server.ForwardResponse;
+import org.folio.circulation.support.http.server.WebContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.folio.circulation.rules.Drools;
-import org.folio.circulation.rules.Text2Drools;
-import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.http.server.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.lang.invoke.MethodHandles;
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.folio.circulation.support.http.server.ServerErrorResponse.internalError;
 
 /**
  * The circulation rules engine calculates the loan policy based on
