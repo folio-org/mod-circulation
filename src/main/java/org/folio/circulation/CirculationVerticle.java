@@ -1,5 +1,7 @@
 package org.folio.circulation;
 
+import java.lang.invoke.MethodHandles;
+
 import org.folio.circulation.resources.CheckInByBarcodeResource;
 import org.folio.circulation.resources.CheckOutByBarcodeResource;
 import org.folio.circulation.resources.CirculationRulesResource;
