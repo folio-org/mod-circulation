@@ -1,19 +1,25 @@
 package api.loans;
 
-import static api.support.builders.FixedDueDateSchedule.forDay;
-import static api.support.builders.FixedDueDateSchedule.wholeMonth;
-import static api.support.builders.ItemBuilder.CHECKED_OUT;
-import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
-import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
-import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
-import static api.support.matchers.ValidationErrorMatchers.hasMessage;
-import static api.support.matchers.ValidationErrorMatchers.hasParameter;
-import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
-import static java.net.HttpURLConnection.HTTP_OK;
-import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
+import api.support.APITestContext;
+import api.support.APITests;
+import api.support.builders.CheckOutByBarcodeRequestBuilder;
+import api.support.builders.FixedDueDateSchedule;
+import api.support.builders.FixedDueDateSchedulesBuilder;
+import api.support.builders.LoanPolicyBuilder;
+import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.policy.DueDateManagement;
+import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
+import org.folio.circulation.support.http.server.ValidationError;
+import org.hamcrest.Matcher;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeConstants;
+import org.joda.time.DateTimeUtils;
+import org.joda.time.DateTimeZone;
+import org.joda.time.Seconds;
+import org.junit.Test;
 
 import java.net.MalformedURLException;
 import java.util.UUID;
@@ -22,30 +28,40 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
-import org.folio.circulation.support.http.server.ValidationError;
-import org.hamcrest.Matcher;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.Seconds;
-import org.junit.Test;
-
-import api.APITestSuite;
-import api.support.APITests;
-import api.support.builders.CheckOutByBarcodeRequestBuilder;
-import api.support.builders.FixedDueDateSchedule;
-import api.support.builders.FixedDueDateSchedulesBuilder;
-import api.support.builders.LoanPolicyBuilder;
-import io.vertx.core.json.JsonObject;
+import static api.support.builders.FixedDueDateSchedule.forDay;
+import static api.support.builders.FixedDueDateSchedule.wholeMonth;
+import static api.support.builders.ItemBuilder.CHECKED_OUT;
+import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_ID;
+import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY;
+import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY;
+import static api.support.fixtures.CalendarExamples.CASE_WED_THU_FRI_SERVICE_POINT_ID;
+import static api.support.fixtures.CalendarExamples.END_TIME_SECOND_PERIOD;
+import static api.support.fixtures.CalendarExamples.START_TIME_FIRST_PERIOD;
+import static api.support.fixtures.CalendarExamples.START_TIME_SECOND_PERIOD;
+import static api.support.fixtures.CalendarExamples.WEDNESDAY_DATE;
+import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
+import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
+import static api.support.matchers.UUIDMatcher.is;
+import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
+import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
+import static java.net.HttpURLConnection.HTTP_OK;
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
+import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 abstract class RenewalAPITests extends APITests {
   abstract Response attemptRenewal(IndividualResource user, IndividualResource item);
+
   abstract IndividualResource renew(IndividualResource user, IndividualResource item);
+
   abstract Matcher<ValidationError> hasUserRelatedParameter(IndividualResource user);
+
   abstract Matcher<ValidationError> hasItemRelatedParameter(IndividualResource item);
+
   abstract Matcher<ValidationError> hasItemNotFoundMessage(IndividualResource item);
 
   @Test
@@ -59,12 +75,12 @@ abstract class RenewalAPITests extends APITests {
     final IndividualResource jessica = usersFixture.jessica();
 
     final UUID loanId = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      new DateTime(2018, 4, 21, 11, 21, 43))
+      new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC))
       .getId();
 
     //TODO: Renewal based upon system date,
     // needs to be approximated, at least until we introduce a calendar and clock
-    DateTime approximateRenewalDate = DateTime.now();
+    DateTime approximateRenewalDate = DateTime.now(DateTimeZone.UTC);
 
     final JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
 
@@ -87,7 +103,7 @@ abstract class RenewalAPITests extends APITests {
 
     assertThat("last loan policy should be stored",
       renewedLoan.getString("loanPolicyId"),
-      is(APITestSuite.canCirculateRollingLoanPolicyId().toString()));
+      is(loanPoliciesFixture.canCirculateRolling().getId()));
 
     assertThat("due date should be approximately 3 weeks after renewal date, based upon loan policy",
       renewedLoan.getString("dueDate"),
@@ -109,7 +125,7 @@ abstract class RenewalAPITests extends APITests {
     final IndividualResource jessica = usersFixture.jessica();
 
     final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      new DateTime(2018, 4, 21, 11, 21, 43));
+      new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
 
     final UUID loanId = loan.getId();
 
@@ -118,12 +134,14 @@ abstract class RenewalAPITests extends APITests {
       .rolling(Period.months(2))
       .renewFromCurrentDueDate();
 
-    UUID dueDateLimitedPolicyId = loanPolicyClient.create(currentDueDateRollingPolicy).getId();
+    UUID dueDateLimitedPolicyId = loanPoliciesFixture
+      .create(currentDueDateRollingPolicy).getId();
 
-    //Need to remember in order to delete after test
-    policiesToDelete.add(dueDateLimitedPolicyId);
-
-    useLoanPolicyAsFallback(dueDateLimitedPolicyId);
+    useLoanPolicyAsFallback(
+      dueDateLimitedPolicyId,
+      requestPoliciesFixture.noAllowedTypes().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     final JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
 
@@ -149,7 +167,7 @@ abstract class RenewalAPITests extends APITests {
 
     assertThat("due date should be 2 months after initial due date date",
       renewedLoan.getString("dueDate"),
-        isEquivalentTo(new DateTime(2018, 7, 12, 11, 21, 43)));
+      isEquivalentTo(new DateTime(2018, 7, 12, 11, 21, 43, DateTimeZone.UTC)));
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
@@ -167,11 +185,8 @@ abstract class RenewalAPITests extends APITests {
       .withName("March Only Due Date Limit")
       .addSchedule(wholeMonth(2018, 3));
 
-    final UUID dueDateLimitScheduleId = fixedDueDateScheduleClient.create(
+    final UUID dueDateLimitScheduleId = loanPoliciesFixture.createSchedule(
       dueDateLimitSchedule).getId();
-
-    //Need to remember in order to delete after test
-    schedulesToDelete.add(dueDateLimitScheduleId);
 
     LoanPolicyBuilder dueDateLimitedPolicy = new LoanPolicyBuilder()
       .withName("Due Date Limited Rolling Policy")
@@ -179,12 +194,14 @@ abstract class RenewalAPITests extends APITests {
       .limitedBySchedule(dueDateLimitScheduleId)
       .renewFromCurrentDueDate();
 
-    UUID dueDateLimitedPolicyId = loanPolicyClient.create(dueDateLimitedPolicy).getId();
+    UUID dueDateLimitedPolicyId = loanPoliciesFixture
+      .create(dueDateLimitedPolicy).getId();
 
-    //Need to remember in order to delete after test
-    policiesToDelete.add(dueDateLimitedPolicyId);
-
-    useLoanPolicyAsFallback(dueDateLimitedPolicyId);
+    useLoanPolicyAsFallback(
+      dueDateLimitedPolicyId,
+      requestPoliciesFixture.noAllowedTypes().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -221,7 +238,7 @@ abstract class RenewalAPITests extends APITests {
     final IndividualResource jessica = usersFixture.jessica();
 
     final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      new DateTime(2018, 4, 21, 11, 21, 43));
+      new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
 
     final UUID loanId = loan.getId();
 
@@ -231,12 +248,14 @@ abstract class RenewalAPITests extends APITests {
       .renewFromCurrentDueDate()
       .renewWith(Period.months(1));
 
-    UUID dueDateLimitedPolicyId = loanPolicyClient.create(currentDueDateRollingPolicy).getId();
+    UUID dueDateLimitedPolicyId = loanPoliciesFixture
+      .create(currentDueDateRollingPolicy).getId();
 
-    //Need to remember in order to delete after test
-    policiesToDelete.add(dueDateLimitedPolicyId);
-
-    useLoanPolicyAsFallback(dueDateLimitedPolicyId);
+    useLoanPolicyAsFallback(
+      dueDateLimitedPolicyId,
+      requestPoliciesFixture.noAllowedTypes().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     final JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
 
@@ -262,7 +281,7 @@ abstract class RenewalAPITests extends APITests {
 
     assertThat("due date should be 2 months after initial due date date",
       renewedLoan.getString("dueDate"),
-      isEquivalentTo(new DateTime(2018, 6, 12, 11, 21, 43)));
+      isEquivalentTo(new DateTime(2018, 6, 12, 11, 21, 43, DateTimeZone.UTC)));
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
@@ -280,11 +299,8 @@ abstract class RenewalAPITests extends APITests {
       .withName("March Only Due Date Limit")
       .addSchedule(wholeMonth(2018, 3));
 
-    final UUID dueDateLimitScheduleId = fixedDueDateScheduleClient.create(
+    final UUID dueDateLimitScheduleId = loanPoliciesFixture.createSchedule(
       dueDateLimitSchedule).getId();
-
-    //Need to remember in order to delete after test
-    schedulesToDelete.add(dueDateLimitScheduleId);
 
     LoanPolicyBuilder dueDateLimitedPolicy = new LoanPolicyBuilder()
       .withName("Due Date Limited Rolling Policy")
@@ -292,12 +308,14 @@ abstract class RenewalAPITests extends APITests {
       .renewFromCurrentDueDate()
       .renewWith(Period.days(8), dueDateLimitScheduleId);
 
-    UUID dueDateLimitedPolicyId = loanPolicyClient.create(dueDateLimitedPolicy).getId();
+    UUID dueDateLimitedPolicyId = loanPoliciesFixture
+      .create(dueDateLimitedPolicy).getId();
 
-    //Need to remember in order to delete after test
-    policiesToDelete.add(dueDateLimitedPolicyId);
-
-    useLoanPolicyAsFallback(dueDateLimitedPolicyId);
+    useLoanPolicyAsFallback(
+      dueDateLimitedPolicyId,
+      requestPoliciesFixture.noAllowedTypes().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -334,11 +352,8 @@ abstract class RenewalAPITests extends APITests {
       .withName("March Only Due Date Limit")
       .addSchedule(wholeMonth(2018, 3));
 
-    final UUID dueDateLimitScheduleId = fixedDueDateScheduleClient.create(
+    final UUID dueDateLimitScheduleId = loanPoliciesFixture.createSchedule(
       dueDateLimitSchedule).getId();
-
-    //Need to remember in order to delete after test
-    schedulesToDelete.add(dueDateLimitScheduleId);
 
     LoanPolicyBuilder dueDateLimitedPolicy = new LoanPolicyBuilder()
       .withName("Due Date Limited Rolling Policy")
@@ -347,12 +362,14 @@ abstract class RenewalAPITests extends APITests {
       .renewFromCurrentDueDate()
       .renewWith(Period.days(8));
 
-    UUID dueDateLimitedPolicyId = loanPolicyClient.create(dueDateLimitedPolicy).getId();
+    UUID dueDateLimitedPolicyId = loanPoliciesFixture
+      .create(dueDateLimitedPolicy).getId();
 
-    //Need to remember in order to delete after test
-    policiesToDelete.add(dueDateLimitedPolicyId);
-
-    useLoanPolicyAsFallback(dueDateLimitedPolicyId);
+    useLoanPolicyAsFallback(
+      dueDateLimitedPolicyId,
+      requestPoliciesFixture.noAllowedTypes().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -386,7 +403,7 @@ abstract class RenewalAPITests extends APITests {
     ExecutionException {
 
     //TODO: Need to be able to inject system date here
-    final DateTime renewalDate = DateTime.now();
+    final DateTime renewalDate = DateTime.now(DateTimeZone.UTC);
     //e.g. Clock.freeze(renewalDate)
 
     FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
@@ -394,23 +411,22 @@ abstract class RenewalAPITests extends APITests {
       .addSchedule(wholeMonth(2018, 2))
       .addSchedule(forDay(renewalDate));
 
-    final UUID fixedDueDateSchedulesId = fixedDueDateScheduleClient.create(
+    final UUID fixedDueDateSchedulesId = loanPoliciesFixture.createSchedule(
       fixedDueDateSchedules).getId();
-
-    //Need to remember in order to delete after test
-    schedulesToDelete.add(fixedDueDateSchedulesId);
 
     LoanPolicyBuilder dueDateLimitedPolicy = new LoanPolicyBuilder()
       .withName("Fixed Due Date Policy")
       .fixed(fixedDueDateSchedulesId)
       .renewFromSystemDate();
 
-    UUID fixedDueDatePolicyId = loanPolicyClient.create(dueDateLimitedPolicy).getId();
+    UUID fixedDueDatePolicyId = loanPoliciesFixture.create(dueDateLimitedPolicy)
+      .getId();
 
-    //Need to remember in order to delete after test
-    policiesToDelete.add(fixedDueDatePolicyId);
-
-    useLoanPolicyAsFallback(fixedDueDatePolicyId);
+    useLoanPolicyAsFallback(
+      fixedDueDatePolicyId,
+      requestPoliciesFixture.noAllowedTypes().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -460,12 +476,14 @@ abstract class RenewalAPITests extends APITests {
       .renewFromCurrentDueDate()
       .limitedRenewals(3);
 
-    UUID limitedRenewalsPolicyId = loanPolicyClient.create(limitedRenewalsPolicy).getId();
+    UUID limitedRenewalsPolicyId = loanPoliciesFixture
+      .create(limitedRenewalsPolicy).getId();
 
-    //Need to remember in order to delete after test
-    policiesToDelete.add(limitedRenewalsPolicyId);
-
-    useLoanPolicyAsFallback(limitedRenewalsPolicyId);
+    useLoanPolicyAsFallback(
+      limitedRenewalsPolicyId,
+      requestPoliciesFixture.noAllowedTypes().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
@@ -512,18 +530,18 @@ abstract class RenewalAPITests extends APITests {
     final IndividualResource jessica = usersFixture.jessica();
 
     final UUID loanId = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      new DateTime(2018, 4, 21, 11, 21, 43))
+      new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC))
       .getId();
 
     //TODO: Renewal based upon system date,
     // needs to be approximated, at least until we introduce a calendar and clock
-    DateTime approximateRenewalDate = DateTime.now();
+    DateTime approximateRenewalDate = DateTime.now(DateTimeZone.UTC);
 
     final IndividualResource response = renew(smallAngryPlanet, jessica);
 
     final CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
-    client.get(APITestSuite.circulationModuleUrl(response.getLocation()),
+    client.get(APITestContext.circulationModuleUrl(response.getLocation()),
       ResponseHandler.json(getCompleted));
 
     final Response getResponse = getCompleted.get(2, TimeUnit.SECONDS);
@@ -551,7 +569,7 @@ abstract class RenewalAPITests extends APITests {
 
     assertThat("last loan policy should be stored",
       renewedLoan.getString("loanPolicyId"),
-      is(APITestSuite.canCirculateRollingLoanPolicyId().toString()));
+      is(loanPoliciesFixture.canCirculateRolling().getId()));
 
     assertThat("due date should be approximately 3 weeks after renewal date, based upon loan policy",
       renewedLoan.getString("dueDate"),
@@ -571,14 +589,18 @@ abstract class RenewalAPITests extends APITests {
     final UUID unknownLoanPolicyId = UUID.randomUUID();
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      new DateTime(2018, 4, 21, 11, 21, 43));
+      new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
 
-    useLoanPolicyAsFallback(unknownLoanPolicyId);
+    useLoanPolicyAsFallback(
+      unknownLoanPolicyId,
+      requestPoliciesFixture.noAllowedTypes().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     final Response response = loansFixture.attemptRenewal(500, smallAngryPlanet, jessica);
 
     assertThat(response.getBody(), is(String.format(
-      "Loan policy %s could not be found, please check loan rules", unknownLoanPolicyId)));
+      "Loan policy %s could not be found, please check circulation rules", unknownLoanPolicyId)));
   }
 
   @Test
@@ -597,12 +619,14 @@ abstract class RenewalAPITests extends APITests {
       .renewFromCurrentDueDate()
       .limitedRenewals(3);
 
-    UUID limitedRenewalsPolicyId = loanPolicyClient.create(limitedRenewalsPolicy).getId();
+    UUID limitedRenewalsPolicyId = loanPoliciesFixture
+      .create(limitedRenewalsPolicy).getId();
 
-    //Need to remember in order to delete after test
-    policiesToDelete.add(limitedRenewalsPolicyId);
-
-    useLoanPolicyAsFallback(limitedRenewalsPolicyId);
+    useLoanPolicyAsFallback(
+      limitedRenewalsPolicyId,
+      requestPoliciesFixture.noAllowedTypes().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
@@ -614,7 +638,7 @@ abstract class RenewalAPITests extends APITests {
     final Response response = attemptRenewal(smallAngryPlanet, jessica);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("loan has reached its maximum number of renewals"),
+      hasMessage("loan at maximum renewal number"),
       hasLoanPolicyIdParameter(limitedRenewalsPolicyId),
       hasLoanPolicyNameParameter("Limited Renewals Policy"))));
   }
@@ -635,23 +659,22 @@ abstract class RenewalAPITests extends APITests {
       .addSchedule(FixedDueDateSchedule.yesterdayOnly())
       .addSchedule(FixedDueDateSchedule.todayOnly());
 
-    final UUID yesterdayAndTodayOnlySchedulesId = fixedDueDateScheduleClient.create(
-      yesterdayAndTodayOnlySchedules).getId();
-
-    //Need to remember in order to delete after test
-    schedulesToDelete.add(yesterdayAndTodayOnlySchedulesId);
+    final UUID yesterdayAndTodayOnlySchedulesId
+      = loanPoliciesFixture.createSchedule(yesterdayAndTodayOnlySchedules).getId();
 
     LoanPolicyBuilder limitedRenewalsPolicy = new LoanPolicyBuilder()
       .withName("Limited Renewals And Limited Due Date Policy")
       .fixed(yesterdayAndTodayOnlySchedulesId)
       .limitedRenewals(1);
 
-    UUID limitedRenewalsPolicyId = loanPolicyClient.create(limitedRenewalsPolicy).getId();
+    UUID limitedRenewalsPolicyId = loanPoliciesFixture
+      .create(limitedRenewalsPolicy).getId();
 
-    //Need to remember in order to delete after test
-    policiesToDelete.add(limitedRenewalsPolicyId);
-
-    useLoanPolicyAsFallback(limitedRenewalsPolicyId);
+    useLoanPolicyAsFallback(
+      limitedRenewalsPolicyId,
+      requestPoliciesFixture.noAllowedTypes().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       DateTime.now(DateTimeZone.UTC).minusDays(1)).getJson();
@@ -661,12 +684,12 @@ abstract class RenewalAPITests extends APITests {
     final Response response = attemptRenewal(smallAngryPlanet, jessica);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("loan has reached its maximum number of renewals"),
+      hasMessage("loan at maximum renewal number"),
       hasLoanPolicyIdParameter(limitedRenewalsPolicyId),
       hasLoanPolicyNameParameter("Limited Renewals And Limited Due Date Policy"))));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("renewal at this time would not change the due date"),
+      hasMessage("renewal would not change the due date"),
       hasLoanPolicyIdParameter(limitedRenewalsPolicyId),
       hasLoanPolicyNameParameter("Limited Renewals And Limited Due Date Policy"))));
   }
@@ -686,12 +709,14 @@ abstract class RenewalAPITests extends APITests {
       .rolling(Period.days(2))
       .notRenewable();
 
-    UUID notRenewablePolicyId = loanPolicyClient.create(limitedRenewalsPolicy).getId();
+    UUID notRenewablePolicyId = loanPoliciesFixture
+      .create(limitedRenewalsPolicy).getId();
 
-    //Need to remember in order to delete after test
-    policiesToDelete.add(notRenewablePolicyId);
-
-    useLoanPolicyAsFallback(notRenewablePolicyId);
+    useLoanPolicyAsFallback(
+      notRenewablePolicyId,
+      requestPoliciesFixture.noAllowedTypes().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
@@ -699,7 +724,7 @@ abstract class RenewalAPITests extends APITests {
     final Response response = attemptRenewal(smallAngryPlanet, jessica);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("items with this loan policy cannot be renewed"),
+      hasMessage("loan is not renewable"),
       hasLoanPolicyIdParameter(notRenewablePolicyId),
       hasLoanPolicyNameParameter("Non Renewable Policy"))));
   }
@@ -719,23 +744,22 @@ abstract class RenewalAPITests extends APITests {
       .withName("Today Only Due Date Limit")
       .addSchedule(FixedDueDateSchedule.todayOnly());
 
-    final UUID todayOnlySchedulesId = fixedDueDateScheduleClient.create(
+    final UUID todayOnlySchedulesId = loanPoliciesFixture.createSchedule(
       todayOnlySchedules).getId();
-
-    //Need to remember in order to delete after test
-    schedulesToDelete.add(todayOnlySchedulesId);
 
     LoanPolicyBuilder limitedRenewalsPolicy = new LoanPolicyBuilder()
       .withName("Non Renewable Policy")
       .fixed(todayOnlySchedulesId)
       .notRenewable();
 
-    UUID notRenewablePolicyId = loanPolicyClient.create(limitedRenewalsPolicy).getId();
+    UUID notRenewablePolicyId = loanPoliciesFixture
+      .create(limitedRenewalsPolicy).getId();
 
-    //Need to remember in order to delete after test
-    policiesToDelete.add(notRenewablePolicyId);
-
-    useLoanPolicyAsFallback(notRenewablePolicyId);
+    useLoanPolicyAsFallback(
+      notRenewablePolicyId,
+      requestPoliciesFixture.noAllowedTypes().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       DateTime.now(DateTimeZone.UTC));
@@ -743,7 +767,7 @@ abstract class RenewalAPITests extends APITests {
     final Response response = attemptRenewal(smallAngryPlanet, jessica);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("items with this loan policy cannot be renewed"),
+      hasMessage("loan is not renewable"),
       hasLoanPolicyIdParameter(notRenewablePolicyId),
       hasLoanPolicyNameParameter("Non Renewable Policy"))));
   }
@@ -760,7 +784,7 @@ abstract class RenewalAPITests extends APITests {
 
     loansFixture.checkOut(smallAngryPlanet, steve);
 
-    usersClient.delete(steve.getId());
+    usersFixture.remove(steve);
 
     Response response = attemptRenewal(smallAngryPlanet, steve);
 
@@ -803,13 +827,221 @@ abstract class RenewalAPITests extends APITests {
     final IndividualResource jessica = usersFixture.jessica();
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      new DateTime(2018, 4, 21, 11, 21, 43));
+      new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
 
     final Response response = attemptRenewal(smallAngryPlanet, james);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-        hasMessage("Cannot renew item checked out to different user"),
-        hasUserRelatedParameter(james))));
+      hasMessage("Cannot renew item checked out to different user"),
+      hasUserRelatedParameter(james))));
+  }
+
+  @Test
+  public void testMoveToEndOfPreviousOpenDay()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource jessica = usersFixture.jessica();
+    UUID checkoutServicePointId = UUID.fromString(CASE_FRI_SAT_MON_SERVICE_POINT_ID);
+    int loanPeriodDays = 5;
+    int renewPeriodDays = 3;
+
+    DateTime loanDate =
+      new DateTime(2019, DateTimeConstants.JANUARY, 25, 10, 0, DateTimeZone.UTC);
+
+    LoanPolicyBuilder loanPolicy = new LoanPolicyBuilder()
+      .withName("Loan policy")
+      .rolling(Period.days(loanPeriodDays))
+      .renewWith(Period.days(renewPeriodDays))
+      .withClosedLibraryDueDateManagement(
+        DueDateManagement.KEEP_THE_CURRENT_DUE_DATE.getValue());
+
+    UUID loanPolicyIdForCheckOut = loanPolicyClient.create(loanPolicy).getId();
+    useLoanPolicyAsFallback(loanPolicyIdForCheckOut,
+      requestPoliciesFixture.noAllowedTypes().getId(),
+      noticePoliciesFixture.activeNotice().getId());
+
+    loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(jessica)
+        .at(checkoutServicePointId)
+        .on(loanDate));
+
+    UUID loanPolicyIdForRenew = loanPolicyClient.create(loanPolicy
+      .withName("For renew")
+      .withClosedLibraryDueDateManagement(
+        DueDateManagement.MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY.getValue())
+    ).getId();
+    useLoanPolicyAsFallback(loanPolicyIdForRenew,
+      requestPoliciesFixture.noAllowedTypes().getId(),
+      noticePoliciesFixture.activeNotice().getId());
+
+    JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
+
+    DateTime expectedDate =
+      CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY
+        .toDateTime(END_OF_A_DAY, DateTimeZone.UTC);
+    assertThat("due date should be " + expectedDate,
+      renewedLoan.getString("dueDate"), isEquivalentTo(expectedDate));
+  }
+
+  @Test
+  public void testMoveToEndOfNextOpenDay()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource jessica = usersFixture.jessica();
+    UUID checkoutServicePointId = UUID.fromString(CASE_FRI_SAT_MON_SERVICE_POINT_ID);
+    int loanPeriodDays = 5;
+    int renewPeriodDays = 3;
+
+    DateTime loanDate =
+      new DateTime(2019, DateTimeConstants.JANUARY, 25, 10, 0, DateTimeZone.UTC);
+
+    LoanPolicyBuilder loanPolicy = new LoanPolicyBuilder()
+      .withName("Loan policy")
+      .rolling(Period.days(loanPeriodDays))
+      .renewWith(Period.days(renewPeriodDays))
+      .withClosedLibraryDueDateManagement(
+        DueDateManagement.KEEP_THE_CURRENT_DUE_DATE.getValue());
+
+    UUID loanPolicyIdForCheckOut = loanPolicyClient.create(loanPolicy).getId();
+    useLoanPolicyAsFallback(loanPolicyIdForCheckOut,
+      requestPoliciesFixture.noAllowedTypes().getId(),
+      noticePoliciesFixture.activeNotice().getId());
+
+    loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(jessica)
+        .at(checkoutServicePointId)
+        .on(loanDate));
+
+    UUID loanPolicyIdForRenew = loanPolicyClient.create(loanPolicy
+      .withName("For renew")
+      .withClosedLibraryDueDateManagement(
+        DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.getValue())
+    ).getId();
+    useLoanPolicyAsFallback(loanPolicyIdForRenew,
+      requestPoliciesFixture.noAllowedTypes().getId(),
+      noticePoliciesFixture.activeNotice().getId());
+
+    JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
+
+    DateTime expectedDate =
+      CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY
+        .toDateTime(END_OF_A_DAY, DateTimeZone.UTC);
+    assertThat("due date should be " + expectedDate,
+      renewedLoan.getString("dueDate"), isEquivalentTo(expectedDate));
+  }
+
+  @Test
+  public void testMoveToEndOfNextOpenServicePointHours()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource jessica = usersFixture.jessica();
+    UUID checkoutServicePointId = UUID.fromString(CASE_FRI_SAT_MON_SERVICE_POINT_ID);
+    int loanPeriodHours = 8;
+
+    DateTime loanDate =
+      new DateTime(2019, DateTimeConstants.FEBRUARY, 1, 10, 0, DateTimeZone.UTC);
+
+    LoanPolicyBuilder loanPolicy = new LoanPolicyBuilder()
+      .withName("Loan policy")
+      .rolling(Period.hours(loanPeriodHours))
+      .withClosedLibraryDueDateManagement(
+        DueDateManagement.KEEP_THE_CURRENT_DUE_DATE.getValue());
+
+    UUID loanPolicyIdForCheckOut = loanPolicyClient.create(loanPolicy).getId();
+    useLoanPolicyAsFallback(loanPolicyIdForCheckOut,
+      requestPoliciesFixture.noAllowedTypes().getId(),
+      noticePoliciesFixture.activeNotice().getId());
+
+    loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(jessica)
+        .at(checkoutServicePointId)
+        .on(loanDate));
+
+    UUID loanPolicyIdForRenew = loanPolicyClient.create(loanPolicy
+      .withName("For renew")
+      .withClosedLibraryDueDateManagement(
+        DueDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS.getValue())
+    ).getId();
+    useLoanPolicyAsFallback(loanPolicyIdForRenew,
+      requestPoliciesFixture.noAllowedTypes().getId(),
+      noticePoliciesFixture.activeNotice().getId());
+
+    JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
+
+    DateTime expectedDate =
+      CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY
+        .toDateTime(START_TIME_FIRST_PERIOD, DateTimeZone.UTC);
+    assertThat("due date should be " + expectedDate,
+      renewedLoan.getString("dueDate"), isEquivalentTo(expectedDate));
+  }
+
+  @Test
+  public void testMoveToEndOfCurrentServicePointHours()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource jessica = usersFixture.jessica();
+    UUID checkoutServicePointId = UUID.fromString(CASE_WED_THU_FRI_SERVICE_POINT_ID);
+    int loanPeriodHours = 12;
+    int renewPeriodHours = 5;
+
+    DateTime loanDate =
+      WEDNESDAY_DATE.toDateTime(START_TIME_SECOND_PERIOD, DateTimeZone.UTC);
+
+    LoanPolicyBuilder loanPolicy = new LoanPolicyBuilder()
+      .withName("Loan policy")
+      .rolling(Period.hours(loanPeriodHours))
+      .renewWith(Period.hours(renewPeriodHours))
+      .withClosedLibraryDueDateManagement(
+        DueDateManagement.KEEP_THE_CURRENT_DUE_DATE_TIME.getValue());
+
+    UUID loanPolicyIdForCheckOut = loanPolicyClient.create(loanPolicy).getId();
+    useLoanPolicyAsFallback(loanPolicyIdForCheckOut,
+      requestPoliciesFixture.noAllowedTypes().getId(),
+      noticePoliciesFixture.activeNotice().getId());
+
+    loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(jessica)
+        .at(checkoutServicePointId)
+        .on(loanDate));
+
+    UUID loanPolicyIdForRenew = loanPolicyClient.create(loanPolicy
+      .withName("For renew")
+      .withClosedLibraryDueDateManagement(
+        DueDateManagement.MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS.getValue())
+    ).getId();
+    useLoanPolicyAsFallback(loanPolicyIdForRenew,
+      requestPoliciesFixture.noAllowedTypes().getId(),
+      noticePoliciesFixture.activeNotice().getId());
+
+    DateTimeUtils.setCurrentMillisFixed(loanDate.plusHours(1).getMillis());
+    JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
+    DateTimeUtils.setCurrentMillisSystem();
+
+    DateTime expectedDate =
+      WEDNESDAY_DATE
+        .toDateTime(END_TIME_SECOND_PERIOD, DateTimeZone.UTC);
+    assertThat("due date should be " + expectedDate,
+      renewedLoan.getString("dueDate"), isEquivalentTo(expectedDate));
   }
 
   private Matcher<ValidationError> hasLoanPolicyIdParameter(UUID loanPolicyId) {

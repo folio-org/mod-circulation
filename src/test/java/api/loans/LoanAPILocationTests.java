@@ -1,8 +1,5 @@
 package api.loans;
 
-import static api.APITestSuite.mezzanineDisplayCaseLocationId;
-import static api.APITestSuite.secondFloorEconomicsLocationId;
-import static api.APITestSuite.thirdFloorLocationId;
 import static api.support.JsonCollectionAssistant.getRecordById;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -18,10 +15,6 @@ import org.folio.circulation.support.http.client.Response;
 import org.junit.Test;
 
 import api.support.APITests;
-import api.support.builders.HoldingBuilder;
-import api.support.builders.LoanBuilder;
-import api.support.fixtures.InstanceExamples;
-import api.support.fixtures.ItemExamples;
 import io.vertx.core.json.JsonObject;
 
 public class LoanAPILocationTests extends APITests {
@@ -32,31 +25,22 @@ public class LoanAPILocationTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    UUID instanceId = instancesClient.create(
-      InstanceExamples.basedUponSmallAngryPlanet()).getId();
+    final IndividualResource thirdFloor = locationsFixture.thirdFloor();
+    final IndividualResource secondFloorEconomics = locationsFixture.secondFloorEconomics();
 
-    UUID holdingId = holdingsClient.create(
-      new HoldingBuilder()
-        .forInstance(instanceId)
-        .withPermanentLocation(thirdFloorLocationId())
-        .withTemporaryLocation(mezzanineDisplayCaseLocationId())
-        .create())
-      .getId();
-
-    UUID itemId = itemsClient.create(
-      ItemExamples.basedUponSmallAngryPlanet()
-        .forHolding(holdingId)
+    final IndividualResource item = itemsFixture.basedUponSmallAngryPlanet(
+      holdingsRecordBuilder -> holdingsRecordBuilder
+        .withPermanentLocation(thirdFloor),
+      itemBuilder -> itemBuilder
         .withNoPermanentLocation()
-        .withTemporaryLocation(secondFloorEconomicsLocationId()))
-      .getId();
+        .withTemporaryLocation(secondFloorEconomics)
+    );
 
-    UUID loanId = UUID.randomUUID();
+    final IndividualResource checkOutResponse = loansFixture.checkOut(item,
+      usersFixture.jessica());
 
-    IndividualResource response = loansClient.create(new LoanBuilder()
-      .withId(loanId)
-      .withItemId(itemId));
-
-    JsonObject createdLoan = response.getJson();
+    UUID loanId = checkOutResponse.getId();
+    JsonObject createdLoan = checkOutResponse.getJson();
 
     assertThat("has item location",
       createdLoan.getJsonObject("item").containsKey("location"), is(true));
@@ -86,43 +70,31 @@ public class LoanAPILocationTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    UUID firstInstanceId = instancesClient.create(
-      InstanceExamples.basedUponSmallAngryPlanet()).getId();
+    final IndividualResource thirdFloor = locationsFixture.thirdFloor();
+    final IndividualResource secondFloorEconomics = locationsFixture.secondFloorEconomics();
 
-    UUID firstHoldingId = holdingsClient.create(
-      new HoldingBuilder()
-        .forInstance(firstInstanceId)
-        .withPermanentLocation(secondFloorEconomicsLocationId())
-        .create())
+    final IndividualResource firstItem = itemsFixture.basedUponSmallAngryPlanet(
+      holdingsRecordBuilder -> holdingsRecordBuilder
+        .withPermanentLocation(secondFloorEconomics),
+      itemBuilder -> itemBuilder
+        .withPermanentLocation(thirdFloor));
+
+    UUID firstLoanId = loansFixture.checkOut(firstItem, usersFixture.jessica())
       .getId();
 
-    UUID firstItemId = itemsClient.create(
-      ItemExamples.basedUponSmallAngryPlanet()
-        .forHolding(firstHoldingId)
-        .withPermanentLocation(thirdFloorLocationId()))
-      .getId();
+    final IndividualResource mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
 
-    UUID firstLoanId = loansClient.create(new LoanBuilder()
-      .withItemId(firstItemId)).getId();
-
-    UUID secondInstanceId = instancesClient.create(
-      InstanceExamples.basedUponTemeraire()).getId();
-
-    UUID secondHoldingId = holdingsClient.create(
-      new HoldingBuilder()
-        .forInstance(secondInstanceId)
-        .withPermanentLocation(mezzanineDisplayCaseLocationId())
+    final IndividualResource secondItem = itemsFixture.basedUponTemeraire(
+      holdingsRecordBuilder -> holdingsRecordBuilder
+        .withPermanentLocation(mezzanineDisplayCase)
+        .withNoTemporaryLocation(),
+      itemBuilder -> itemBuilder
+        .withNoPermanentLocation()
         .withNoTemporaryLocation()
-        .create())
-      .getId();
+    );
 
-    UUID secondItemId = itemsClient.create(
-      ItemExamples.basedUponTemeraire()
-        .forHolding(secondHoldingId))
+    UUID secondLoanId = loansFixture.checkOut(secondItem, usersFixture.james())
       .getId();
-
-    UUID secondLoanId = loansClient.create(new LoanBuilder()
-      .withItemId(secondItemId)).getId();
 
     List<JsonObject> fetchedLoansResponse = loansClient.getAll();
 

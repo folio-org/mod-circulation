@@ -14,6 +14,9 @@ circulation_storage_module_id="mod-circulation-storage-6.3.0-SNAPSHOT"
 #Needs to be the specific version of mod-users you want to use for testing
 users_storage_module_id="mod-users-15.3.1-SNAPSHOT"
 
+#Needs to be the specific version of mod-calendar you want to use for testing
+calendar_storage_module_id="mod-calendar-1.3.0-SNAPSHOT"
+
 #remove log output
 rm test-via-okapi.log
 
@@ -49,6 +52,15 @@ activate_inventory_storage_json="${activate_inventory_storage_json/moduleidhere/
 curl -w '\n' -X POST -D - \
      -H "Content-type: application/json" \
      -d "${activate_inventory_storage_json}"  \
+     "${okapi_proxy_address}/_/proxy/tenants/${tenant_id}/modules"
+
+echo "Activate calendar storage for ${tenant_id}"
+activate_calendar_storage_json=$(cat ./activate.json)
+activate_calendar_storage_json="${activate_calendar_storage_json/moduleidhere/$calendar_storage_module_id}"
+
+curl -w '\n' -X POST -D - \
+     -H "Content-type: application/json" \
+     -d "${activate_calendar_storage_json}"  \
      "${okapi_proxy_address}/_/proxy/tenants/${tenant_id}/modules"
 
 echo "Generate Descriptors from Templates"
@@ -87,6 +99,9 @@ curl -X DELETE -D - -w '\n' "${okapi_proxy_address}/_/proxy/tenants/${tenant_id}
 
 echo "Deactivate inventory storage for ${tenant_id}"
 curl -X DELETE -D - -w '\n' "${okapi_proxy_address}/_/proxy/tenants/${tenant_id}/modules/${inventory_storage_module_id}"
+
+echo "Deactivate calendar storage for ${tenant_id}"
+curl -X DELETE -D - -w '\n' "${okapi_proxy_address}/_/proxy/tenants/${tenant_id}/modules/${calendar_storage_module_id}"
 
 echo "Deleting ${tenant_id}"
 ./delete-tenant.sh ${tenant_id}

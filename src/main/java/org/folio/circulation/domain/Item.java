@@ -29,6 +29,7 @@ public class Item {
   private JsonObject locationRepresentation;
   private JsonObject materialTypeRepresentation;
   private ServicePoint primaryServicePoint;
+  private ServicePoint inTransitDestinationServicePoint;
 
   private boolean changed = false;
 
@@ -54,6 +55,10 @@ public class Item {
 
   public boolean isCheckedOut() {
     return getStatus().equals(ItemStatus.CHECKED_OUT);
+  }
+
+  public boolean isMissing() {
+    return getStatus().equals(ItemStatus.MISSING);
   }
 
   Boolean isNotSameStatus(ItemStatus prospectiveStatus) {
@@ -151,6 +156,10 @@ public class Item {
     return materialTypeRepresentation;
   }
 
+  public JsonArray getCopyNumbers() {
+    return getItem() == null ? new JsonArray() : getItem().getJsonArray("copyNumbers");
+  }
+
   public String getMaterialTypeId() {
     return getProperty(getItem(), ItemProperties.MATERIAL_TYPE_ID);
   }
@@ -190,16 +199,7 @@ public class Item {
       return null;
     }
 
-    //TODO: Hack as destination service point
-    // can only be primary service point for effective location at the moment
-    if(matchingId(UUID.fromString(getInTransitDestinationServicePointId()),
-      getPrimaryServicePointId())) {
-
-      return getPrimaryServicePoint();
-    }
-    else {
-      return null;
-    }
+    return inTransitDestinationServicePoint;
   }
 
   private ServicePoint getPrimaryServicePoint() {
@@ -230,7 +230,17 @@ public class Item {
 
   Item inTransitToHome() {
     return changeStatus(IN_TRANSIT)
-      .changeDestination(getPrimaryServicePointId());
+      .changeDestination(getPrimaryServicePointId())
+      .changeInTransitDestinationServicePoint(getPrimaryServicePoint());
+  }
+
+  Item inTransitToServicePoint(UUID destinationServicePointId) {
+    return changeStatus(IN_TRANSIT)
+      .changeDestination(destinationServicePointId);
+  }
+
+  Item updateDestinationServicePoint(ServicePoint servicePoint) {
+    return changeInTransitDestinationServicePoint(servicePoint);
   }
 
   private Item changeDestination(UUID destinationServicePointId) {
@@ -243,6 +253,14 @@ public class Item {
   private Item removeDestination() {
     remove(itemRepresentation, IN_TRANSIT_DESTINATION_SERVICE_POINT_ID);
 
+    this.inTransitDestinationServicePoint = null;
+
+    return this;
+  }
+
+  private Item changeInTransitDestinationServicePoint(ServicePoint inTransitDestinationServicePoint) {
+    this.inTransitDestinationServicePoint = inTransitDestinationServicePoint;
+
     return this;
   }
 
@@ -253,15 +271,6 @@ public class Item {
   public boolean isFound() {
     //TODO: Possibly replace with unknown item when migrated
     return getItem() != null;
-  }
-
-  Item updateItem(JsonObject updatedItem) {
-    return new Item(updatedItem,
-      holdingRepresentation,
-      instanceRepresentation,
-      getLocation(),
-      getMaterialType(),
-      this.primaryServicePoint);
   }
 
   public boolean doesNotHaveHolding() {

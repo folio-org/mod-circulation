@@ -1,8 +1,13 @@
 package api.requests;
 
-import static api.APITestSuite.workAddressTypeId;
+import static api.support.builders.ItemBuilder.CHECKED_OUT;
+import static api.support.http.InterfaceUrls.requestsUrl;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
+import static java.lang.String.format;
+import static java.util.Arrays.asList;
+import static org.folio.circulation.support.http.client.ResponseHandler.any;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
@@ -21,7 +26,6 @@ import java.util.concurrent.TimeoutException;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
@@ -31,12 +35,18 @@ import api.support.APITests;
 import api.support.builders.Address;
 import api.support.builders.ItemBuilder;
 import api.support.builders.RequestBuilder;
-import api.support.builders.UserBuilder;
-import api.support.http.InterfaceUrls;
+import api.support.http.InventoryItemResource;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
 public class RequestsAPIRetrievalTests extends APITests {
+
+  private static final String NEW_TAG = "new";
+  private static final String IMPORTANT_TAG = "important";
+  private static final String ONE_COPY_NUMBER = "1";
+  private static final String TWO_COPY_NUMBER = "2";
+
+
   @Test
   public void canGetARequestById()
     throws MalformedURLException,
@@ -44,137 +54,138 @@ public class RequestsAPIRetrievalTests extends APITests {
     ExecutionException,
     TimeoutException {
 
-    UUID requestId = UUID.fromString("d9960d24-8862-4178-be2c-c1a574188a92"); //to track in logs
-    UUID loanId = UUID.fromString("61d74730-5cdb-4675-ab88-1828ee1ad248");
-
-    UUID itemId = UUID.fromString("60c50f1b-7d6c-4b59-863a-a4da213d9530");
     String enumeration = "DUMMY_ENUMERATION";
-    
+
     UUID facultyGroupId = patronGroupsFixture.faculty().getId();
-    groupsToDelete.add(facultyGroupId);
-
     UUID staffGroupId = patronGroupsFixture.staff().getId();
-    groupsToDelete.add(staffGroupId);
 
-    itemsFixture.basedUponSmallAngryPlanet(itemBuilder -> itemBuilder
-        .withId(itemId)
-        .withEnumeration(enumeration));
-    
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+      itemBuilder -> itemBuilder
+        .withEnumeration(enumeration)
+        .withCopyNumbers(asList(ONE_COPY_NUMBER, TWO_COPY_NUMBER))
+    );
+
     final IndividualResource sponsor = usersFixture.rebecca(
-        builder -> builder.withPatronGroupId(facultyGroupId));
+      builder -> builder.withPatronGroupId(facultyGroupId));
 
     final IndividualResource proxy = usersFixture.steve(
-        builder -> builder.withPatronGroupId(staffGroupId));
+      builder -> builder.withPatronGroupId(staffGroupId));
 
     final IndividualResource cd1 = servicePointsFixture.cd1();
 
     UUID pickupServicePointId = cd1.getId();
 
-    usersFixture.nonExpiringProxyFor(sponsor, proxy);
+    proxyRelationshipsFixture.nonExpiringProxyFor(sponsor, proxy);
 
-    loansFixture.checkOutItem(itemId, loanId);
+    loansFixture.checkOutByBarcode(smallAngryPlanet);
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
-    requestsClient.create(new RequestBuilder()
-      .recall()
-      .withId(requestId)
-      .withRequestDate(requestDate)
-      .withItemId(itemId)
-      .withRequesterId(sponsor.getId())
-      .withUserProxyId(proxy.getId())
-      .fulfilToHoldShelf()
-      .withRequestExpiration(new LocalDate(2017, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
-      .withPickupServicePointId(pickupServicePointId));
+    final IndividualResource createdRequest = requestsClient.create(
+      new RequestBuilder()
+        .recall()
+        .withRequestDate(requestDate)
+        .forItem(smallAngryPlanet)
+        .by(sponsor)
+        .proxiedBy(proxy)
+        .fulfilToHoldShelf()
+        .withRequestExpiration(new LocalDate(2017, 7, 30))
+        .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
+        .withPickupServicePointId(pickupServicePointId)
+        .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG)))
+    );
 
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
-    client.get(InterfaceUrls.requestsUrl(String.format("/%s", requestId)),
-      ResponseHandler.any(getCompleted));
+    client.get(requestsUrl(format("/%s", createdRequest.getId())), any(getCompleted));
 
     Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat(String.format("Failed to get request: %s", getResponse.getBody()),
+    assertThat(format("Failed to get request: %s", getResponse.getBody()),
       getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
 
     JsonObject representation = getResponse.getJson();
 
-    assertThat(representation.getString("id"), is(requestId.toString()));
+    assertThat(representation.getString("id"), is(createdRequest.getId()));
     assertThat(representation.getString("requestType"), is("Recall"));
     assertThat(representation.getString("requestDate"), isEquivalentTo(requestDate));
-    assertThat(representation.getString("itemId"), is(itemId.toString()));
-    assertThat(representation.getString("requesterId"), is(sponsor.getId().toString()));
+    assertThat(representation.getString("itemId"), is(smallAngryPlanet.getId()));
+    assertThat(representation.getString("requesterId"), is(sponsor.getId()));
     assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
     assertThat(representation.getString("requestExpirationDate"), is("2017-07-30"));
     assertThat(representation.getString("holdShelfExpirationDate"), is("2017-08-31"));
-    assertThat(representation.getString("pickupServicePointId"),
-        is(pickupServicePointId.toString()));
+    assertThat(representation.getString("pickupServicePointId"), is(pickupServicePointId));
     assertThat(representation.getString("status"), is("Open - Not yet filled"));
 
     assertThat(representation.containsKey("proxy"), is(true));
-    assertThat(representation.getJsonObject("proxy").containsKey("patronGroup"), is (true));
-    assertThat(representation.getJsonObject("proxy").getString("patronGroupId"),
-        is(staffGroupId.toString()));
-    assertThat(representation.getJsonObject("proxy").getJsonObject("patronGroup").getString("id"),
-        is(staffGroupId.toString()));
+    final JsonObject proxySummary = representation.getJsonObject("proxy");
 
-    assertThat(representation.containsKey("requester"), is(true));
-    assertThat(representation.getJsonObject("requester").containsKey("patronGroup"), is (true));
-    assertThat(representation.getJsonObject("requester").getString("patronGroupId"),
-        is(facultyGroupId.toString()));
-    assertThat(representation.getJsonObject("requester").getJsonObject("patronGroup").getString("id"),
-        is(facultyGroupId.toString()));
+    assertThat(proxySummary.containsKey("patronGroup"), is(true));
+    assertThat(proxySummary.getString("patronGroupId"), is(staffGroupId));
+    assertThat(proxySummary.getJsonObject("patronGroup").getString("id"),
+      is(staffGroupId));
 
     assertThat(representation.containsKey("pickupServicePoint"), is(true));
-    assertThat(representation.getJsonObject("pickupServicePoint").getString("name"),
-        is(cd1.getJson().getString("name")));
-    assertThat(representation.getJsonObject("pickupServicePoint").getString("code"),
-        is(cd1.getJson().getString("code")));
-    assertThat(representation.getJsonObject("pickupServicePoint").getString("discoveryDisplayName"),
-        is(cd1.getJson().getString("discoveryDisplayName")));
-    assertThat(representation.getJsonObject("pickupServicePoint").getBoolean("pickupLocation"),
-        is(cd1.getJson().getBoolean("pickupLocation")));
+
+    final JsonObject pickupServicePoint = representation.getJsonObject("pickupServicePoint");
+
+    assertThat(pickupServicePoint.getString("name"), is(cd1.getJson().getString("name")));
+    assertThat(pickupServicePoint.getString("code"), is(cd1.getJson().getString("code")));
+
+    assertThat(pickupServicePoint.getString("discoveryDisplayName"),
+      is(cd1.getJson().getString("discoveryDisplayName")));
+
+    assertThat(pickupServicePoint.getBoolean("pickupLocation"),
+      is(cd1.getJson().getBoolean("pickupLocation")));
 
     assertThat("has information taken from item",
       representation.containsKey("item"), is(true));
 
+    final JsonObject itemSummary = representation.getJsonObject("item");
+
     assertThat("title is taken from item",
-      representation.getJsonObject("item").getString("title"),
-      is("The Long Way to a Small, Angry Planet"));
+      itemSummary.getString("title"), is("The Long Way to a Small, Angry Planet"));
 
     assertThat("barcode is taken from item",
-      representation.getJsonObject("item").getString("barcode"),
-      is("036000291452"));
-    
-    assertThat(representation.getJsonObject("item").getString("enumeration"),
-        is(enumeration));
-    
-    assertThat(representation.getJsonObject("item").getString("status"),
-        is(ItemBuilder.CHECKED_OUT));
+      itemSummary.getString("barcode"), is("036000291452"));
+
+    assertThat(itemSummary.getString("enumeration"), is(enumeration));
+
+    assertThat(itemSummary.getString("status"), is(CHECKED_OUT));
+
+    assertThat(itemSummary.containsKey("copyNumbers"), is(true));
+
+    assertThat(itemSummary.getJsonArray("copyNumbers"), contains(ONE_COPY_NUMBER, TWO_COPY_NUMBER));
 
     assertThat("has information taken from requesting user",
       representation.containsKey("requester"), is(true));
 
+    final JsonObject requesterSummary = representation.getJsonObject("requester");
+
     assertThat("last name is taken from requesting user",
-      representation.getJsonObject("requester").getString("lastName"),
+      requesterSummary.getString("lastName"),
       is("Stuart"));
 
     assertThat("first name is taken from requesting user",
-      representation.getJsonObject("requester").getString("firstName"),
+      requesterSummary.getString("firstName"),
       is("Rebecca"));
 
     assertThat("middle name is not taken from requesting user",
-      representation.getJsonObject("requester").containsKey("middleName"),
+      requesterSummary.containsKey("middleName"),
       is(false));
 
     assertThat("barcode is taken from requesting user",
-      representation.getJsonObject("requester").getString("barcode"),
+      requesterSummary.getString("barcode"),
       is("6059539205"));
 
     assertThat("barcode is taken from requesting user",
-      representation.getJsonObject("requester").getString("barcode"),
+      requesterSummary.getString("barcode"),
       is("6059539205"));
+
+    assertThat(requesterSummary.containsKey("patronGroup"), is(true));
+    assertThat(requesterSummary.getString("patronGroupId"), is(facultyGroupId));
+    assertThat(requesterSummary.getJsonObject("patronGroup").getString("id"),
+      is(facultyGroupId));
 
     assertThat("current loan is present",
       representation.containsKey("loan"), is(true));
@@ -185,6 +196,13 @@ public class RequestsAPIRetrievalTests extends APITests {
     //TODO: Improve this by checking actual date
     assertThat("current loan has non-null due date",
       representation.getJsonObject("loan").getString("dueDate"), notNullValue());
+
+
+    assertThat(representation.containsKey("tags"), is(true));
+    final JsonObject tagsRepresentation = representation.getJsonObject("tags");
+
+    assertThat(tagsRepresentation.containsKey("tagList"), is(true));
+    assertThat(tagsRepresentation.getJsonArray("tagList"), contains(NEW_TAG, IMPORTANT_TAG));
   }
 
   @Test
@@ -197,9 +215,11 @@ public class RequestsAPIRetrievalTests extends APITests {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       ItemBuilder::available);
 
+    final IndividualResource workAddressType = addressTypesFixture.work();
+
     final IndividualResource charlotte = usersFixture.charlotte(
       builder -> builder.withAddress(
-        new Address(workAddressTypeId(),
+        new Address(workAddressType.getId(),
           "Fake first address line",
           "Fake second address line",
           "Fake city",
@@ -214,22 +234,22 @@ public class RequestsAPIRetrievalTests extends APITests {
     IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
       .recall()
       .forItem(smallAngryPlanet)
-      .deliverToAddress(workAddressTypeId())
-      .by(charlotte));
+      .by(charlotte)
+      .deliverToAddress(workAddressType.getId()));
 
     JsonObject representation = requestsClient.getById(createdRequest.getId()).getJson();
 
     assertThat(representation.getString("id"), is(not(emptyString())));
     assertThat(representation.getString("requestType"), is("Recall"));
     assertThat(representation.getString("fulfilmentPreference"), is("Delivery"));
-    assertThat(representation.getString("deliveryAddressTypeId"), is(workAddressTypeId()));
+    assertThat(representation.getString("deliveryAddressTypeId"), is(workAddressType.getId()));
 
     assertThat("Request should have a delivery address",
       representation.containsKey("deliveryAddress"), is(true));
 
     final JsonObject deliveryAddress = representation.getJsonObject("deliveryAddress");
 
-    assertThat(deliveryAddress.getString("addressTypeId"), is(workAddressTypeId()));
+    assertThat(deliveryAddress.getString("addressTypeId"), is(workAddressType.getId()));
     assertThat(deliveryAddress.getString("addressLine1"), is("Fake first address line"));
     assertThat(deliveryAddress.getString("addressLine2"), is("Fake second address line"));
     assertThat(deliveryAddress.getString("city"), is("Fake city"));
@@ -250,7 +270,6 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(getResponse.getStatusCode(), is(HttpURLConnection.HTTP_NOT_FOUND));
   }
 
-  
   @Test
   public void canGetMultipleRequests()
     throws MalformedURLException,
@@ -262,26 +281,23 @@ public class RequestsAPIRetrievalTests extends APITests {
     final IndividualResource cd2 = servicePointsFixture.cd2();
     UUID pickupServicePointId = cd1.getId();
     UUID pickupServicePointId2 = cd2.getId();
-    
-    UUID facultyGroupId = patronGroupsFixture.faculty().getId();
-    groupsToDelete.add(facultyGroupId);
 
+    UUID facultyGroupId = patronGroupsFixture.faculty().getId();
     UUID staffGroupId = patronGroupsFixture.staff().getId();
-    groupsToDelete.add(staffGroupId);
 
     final IndividualResource jessica = usersFixture.jessica();
     final IndividualResource charlotte = usersFixture.charlotte();
 
     final IndividualResource sponsor = usersFixture.rebecca(
-        builder -> builder.withPatronGroupId(facultyGroupId));
+      builder -> builder.withPatronGroupId(facultyGroupId));
 
     final IndividualResource proxy = usersFixture.steve(
       builder -> builder.withPatronGroupId(staffGroupId));
 
     UUID proxyId = proxy.getId();
     UUID requesterId = sponsor.getId();
-    
-    usersFixture.nonExpiringProxyFor(sponsor, proxy);
+
+    proxyRelationshipsFixture.nonExpiringProxyFor(sponsor, proxy);
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource nod = itemsFixture.basedUponNod();
@@ -299,61 +315,77 @@ public class RequestsAPIRetrievalTests extends APITests {
       .withItemId(smallAngryPlanet.getId())
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
-      .withPickupServicePointId(pickupServicePointId));
+      .withPickupServicePointId(pickupServicePointId)
+      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG)))
+    );
 
     requestsClient.create(new RequestBuilder()
       .withItemId(nod.getId())
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
-      .withPickupServicePointId(pickupServicePointId2));
+      .withPickupServicePointId(pickupServicePointId2)
+      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG)))
+    );
 
     requestsClient.create(new RequestBuilder()
       .withItemId(interestingTimes.getId())
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
-      .withPickupServicePointId(pickupServicePointId));
+      .withPickupServicePointId(pickupServicePointId)
+      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG)))
+    );
 
     requestsClient.create(new RequestBuilder()
       .withItemId(temeraire.getId())
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
-      .withPickupServicePointId(pickupServicePointId2));
+      .withPickupServicePointId(pickupServicePointId2)
+      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG)))
+    );
 
     requestsClient.create(new RequestBuilder()
       .withItemId(nod.getId())
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
-      .withPickupServicePointId(pickupServicePointId));
+      .withPickupServicePointId(pickupServicePointId)
+      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG)))
+    );
 
     requestsClient.create(new RequestBuilder()
       .withItemId(uprooted.getId())
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
-      .withPickupServicePointId(pickupServicePointId));
+      .withPickupServicePointId(pickupServicePointId)
+      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG)))
+    );
 
     requestsClient.create(new RequestBuilder()
       .withItemId(temeraire.getId())
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
-      .withPickupServicePointId(pickupServicePointId2));
-    
+      .withPickupServicePointId(pickupServicePointId2)
+      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG)))
+    );
+
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
 
-    client.get(InterfaceUrls.requestsUrl(), ResponseHandler.any(getCompleted));
+    client.get(requestsUrl(), any(getCompleted));
 
     Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
-    
-    assertThat(String.format("Failed to get list of requests: %s",
+
+    assertThat(format("Failed to get list of requests: %s",
       getResponse.getBody()),
       getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
-    
+
     List<JsonObject> requestList = getRequests(getResponse.getJson());
-    
+
     requestList.forEach(this::requestHasExpectedProperties);
     requestList.forEach(this::requestHasExpectedLoanProperties);
     requestList.forEach(this::requestHasServicePointProperties);
     requestList.forEach(this::requestHasPatronGroupProperties);
+    requestList.forEach(this::requestHasTags);
   }
+
 
   @Test
   public void fulfilledByDeliveryIncludesAddressWhenFindingMultipleRequests()
@@ -364,9 +396,11 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
+    final IndividualResource workAddressType = addressTypesFixture.work();
+
     final IndividualResource charlotte = usersFixture.charlotte(
       builder -> builder.withAddress(
-        new Address(workAddressTypeId(),
+        new Address(workAddressType.getId(),
           "Fake first address line",
           "Fake second address line",
           "Fake city",
@@ -381,7 +415,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     requestsFixture.place(new RequestBuilder()
       .recall()
       .forItem(smallAngryPlanet)
-      .deliverToAddress(workAddressTypeId())
+      .deliverToAddress(workAddressType.getId())
       .by(charlotte));
 
     final List<JsonObject> allRequests = requestsClient.getAll();
@@ -393,14 +427,14 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(representation.getString("id"), is(not(emptyString())));
     assertThat(representation.getString("requestType"), is("Recall"));
     assertThat(representation.getString("fulfilmentPreference"), is("Delivery"));
-    assertThat(representation.getString("deliveryAddressTypeId"), is(workAddressTypeId()));
+    assertThat(representation.getString("deliveryAddressTypeId"), is(workAddressType.getId()));
 
     assertThat("Request should have a delivery address",
       representation.containsKey("deliveryAddress"), is(true));
 
     final JsonObject deliveryAddress = representation.getJsonObject("deliveryAddress");
 
-    assertThat(deliveryAddress.getString("addressTypeId"), is(workAddressTypeId()));
+    assertThat(deliveryAddress.getString("addressTypeId"), is(workAddressType.getId()));
     assertThat(deliveryAddress.getString("addressLine1"), is("Fake first address line"));
     assertThat(deliveryAddress.getString("addressLine2"), is("Fake second address line"));
     assertThat(deliveryAddress.getString("city"), is("Fake city"));
@@ -424,10 +458,12 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     loansFixture.checkOut(smallAngryPlanet, james);
 
+    final IndividualResource workAddressType = addressTypesFixture.work();
+
     requestsFixture.place(new RequestBuilder()
       .recall()
       .forItem(smallAngryPlanet)
-      .deliverToAddress(workAddressTypeId())
+      .deliverToAddress(workAddressType.getId())
       .by(charlotte));
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
@@ -449,8 +485,8 @@ public class RequestsAPIRetrievalTests extends APITests {
     ExecutionException,
     TimeoutException {
 
-    UUID requesterId = usersClient.create(new UserBuilder()).getId();
-    
+    UUID requesterId = usersFixture.charlotte().getId();
+
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut).getId())
       .withRequesterId(requesterId));
@@ -481,22 +517,20 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     CompletableFuture<Response> getFirstPageCompleted = new CompletableFuture<>();
 
-    client.get(InterfaceUrls.requestsUrl() + "?limit=4",
-      ResponseHandler.any(getFirstPageCompleted));
+    client.get(requestsUrl() + "?limit=4", any(getFirstPageCompleted));
 
     CompletableFuture<Response> getSecondPageCompleted = new CompletableFuture<>();
 
-    client.get(InterfaceUrls.requestsUrl() + "?limit=4&offset=4",
-      ResponseHandler.any(getSecondPageCompleted));
+    client.get(requestsUrl() + "?limit=4&offset=4", any(getSecondPageCompleted));
 
     Response firstPageResponse = getFirstPageCompleted.get(5, TimeUnit.SECONDS);
     Response secondPageResponse = getSecondPageCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat(String.format("Failed to get first page of requests: %s",
+    assertThat(format("Failed to get first page of requests: %s",
       firstPageResponse.getBody()),
       firstPageResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
 
-    assertThat(String.format("Failed to get second page of requests: %s",
+    assertThat(format("Failed to get second page of requests: %s",
       secondPageResponse.getBody()),
       secondPageResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
 
@@ -523,13 +557,8 @@ public class RequestsAPIRetrievalTests extends APITests {
     ExecutionException,
     TimeoutException {
 
-    UUID firstRequester = usersClient.create(new UserBuilder()
-      .withName("Jones", "Steven"))
-      .getId();
-
-    UUID secondRequester = usersClient.create(new UserBuilder()
-      .withName("Norton", "Jessica"))
-      .getId();
+    UUID firstRequester = usersFixture.steve().getId();
+    UUID secondRequester = usersFixture.jessica().getId();
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut).getId())
@@ -561,13 +590,11 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     CompletableFuture<Response> getRequestsCompleted = new CompletableFuture<>();
 
-    client.get(InterfaceUrls.requestsUrl()
-        + String.format("?query=requester.lastName=%s", "Norton"),
-      ResponseHandler.any(getRequestsCompleted));
+    client.get(requestsUrl() + format("?query=requester.lastName=%s", "Pontefract"), any(getRequestsCompleted));
 
     Response getRequestsResponse = getRequestsCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat(String.format("Failed to get requests: %s",
+    assertThat(format("Failed to get requests: %s",
       getRequestsResponse.getBody()),
       getRequestsResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
 
@@ -593,8 +620,8 @@ public class RequestsAPIRetrievalTests extends APITests {
     final IndividualResource firstProxy = usersFixture.charlotte();
     final IndividualResource secondProxy = usersFixture.james();
 
-    usersFixture.currentProxyFor(sponsor, firstProxy);
-    usersFixture.currentProxyFor(sponsor, secondProxy);
+    proxyRelationshipsFixture.currentProxyFor(sponsor, firstProxy);
+    proxyRelationshipsFixture.currentProxyFor(sponsor, secondProxy);
 
     requestsClient.create(new RequestBuilder()
       .forItem(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut))
@@ -623,13 +650,11 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     CompletableFuture<Response> getRequestsCompleted = new CompletableFuture<>();
 
-    client.get(InterfaceUrls.requestsUrl()
-        + String.format("?query=proxy.lastName=%s", "Rodwell"),
-      ResponseHandler.any(getRequestsCompleted));
+    client.get(requestsUrl() + format("?query=proxy.lastName=%s", "Rodwell"), any(getRequestsCompleted));
 
     Response getRequestsResponse = getRequestsCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat(String.format("Failed to get requests: %s",
+    assertThat(format("Failed to get requests: %s",
       getRequestsResponse.getBody()),
       getRequestsResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
 
@@ -650,7 +675,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     ExecutionException,
     TimeoutException {
 
-    UUID requesterId = usersClient.create(new UserBuilder()).getId();
+    UUID requesterId = usersFixture.charlotte().getId();
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut).getId())
@@ -682,12 +707,11 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     CompletableFuture<Response> getRequestsCompleted = new CompletableFuture<>();
 
-    client.get(InterfaceUrls.requestsUrl() + "?query=item.title=Nod",
-      ResponseHandler.any(getRequestsCompleted));
+    client.get(requestsUrl() + "?query=item.title=Nod", any(getRequestsCompleted));
 
     Response getRequestsResponse = getRequestsCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat(String.format("Failed to get requests: %s",
+    assertThat(format("Failed to get requests: %s",
       getRequestsResponse.getBody()),
       getRequestsResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
 
@@ -722,14 +746,14 @@ public class RequestsAPIRetrievalTests extends APITests {
   private void requestHasExpectedLoanProperties(JsonObject request) {
     hasProperty("dueDate", request.getJsonObject("loan"), "loan");
   }
-  
+
   private void requestHasServicePointProperties(JsonObject request) {
     hasProperty("pickupServicePointId", request, "request");
     hasProperty("pickupServicePoint", request, "request");
     hasProperty("name", request.getJsonObject("pickupServicePoint"),
-        "pickupServicePoint");
+      "pickupServicePoint");
   }
-  
+
   private void requestHasPatronGroupProperties(JsonObject request) {
     hasProperty("proxy", request, "proxy");
 
@@ -748,12 +772,20 @@ public class RequestsAPIRetrievalTests extends APITests {
     hasProperty("desc", request.getJsonObject("requester").getJsonObject("patronGroup"), "group");
   }
 
+
+  private void requestHasTags(JsonObject request) {
+    hasProperty("tags",request,"tags");
+
+    hasProperty("tagList",request.getJsonObject("tags"),"List");
+
+  }
+
   private void hasProperty(String property, JsonObject resource, String type) {
-    assertThat(String.format("%s should have %s: %s: is missing outer property",
+    assertThat(format("%s should have %s: %s: is missing outer property",
       type, property, resource),
       resource, notNullValue());
 
-    assertThat(String.format("%s should have %s: %s",
+    assertThat(format("%s should have %s: %s",
       type, property, resource),
       resource.containsKey(property), is(true));
   }

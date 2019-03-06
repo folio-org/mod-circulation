@@ -1,9 +1,11 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "title": "Loan policy id schema",
+  "title": "Result of applying circulation rules to determine a loan policy",
+  "description": "Describes the outcome of applying loan rules to determine a loan policy",
   "type": "object",
   "properties": {
     "loanPolicyId": {
+      "description": "ID of the loan policy determined by the circulation rules",
       "type": "string"
     }
   },

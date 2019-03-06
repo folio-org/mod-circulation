@@ -1,11 +1,9 @@
 package org.folio.circulation.domain.policy;
 
-import static api.support.matchers.FailureMatcher.hasValidationFailure;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
-
-import java.util.UUID;
-
+import api.support.builders.FixedDueDateSchedule;
+import api.support.builders.FixedDueDateSchedulesBuilder;
+import api.support.builders.LoanBuilder;
+import api.support.builders.LoanPolicyBuilder;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.http.server.ValidationError;
@@ -13,12 +11,16 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
-import api.support.builders.FixedDueDateSchedule;
-import api.support.builders.FixedDueDateSchedulesBuilder;
-import api.support.builders.LoanBuilder;
-import api.support.builders.LoanPolicyBuilder;
+import java.util.UUID;
+
+import static api.support.matchers.FailureMatcher.hasValidationFailure;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 
 public class FixedLoanPolicyRenewalDueDateCalculationTests {
+
+  private static final String EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES =
+    "renewal date falls outside of date ranges in fixed loan policy";
   @Test
   public void shouldFailWhenLoanDateIsBeforeOnlyScheduleAvailable() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -36,7 +38,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     final HttpResult<Loan> result = loanPolicy.renew(loan, renewalDate);
 
     assertThat(result, hasValidationFailure(
-      "renewal date falls outside of the date ranges in the loan policy"));
+      EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
   }
 
   @Test
@@ -56,7 +58,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     final HttpResult<Loan> result = loanPolicy.renew(loan, renewalDate);
 
     assertThat(result, hasValidationFailure(
-      "renewal date falls outside of the date ranges in the loan policy"));
+      EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
   }
 
   @Test
@@ -192,7 +194,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     final HttpResult<Loan> result = loanPolicy.renew(loan, renewalDate);
 
     assertThat(result, hasValidationFailure(
-      "renewal date falls outside of the date ranges in the loan policy"));
+      EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
   }
 
   @Test
@@ -216,7 +218,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     final HttpResult<Loan> result = loanPolicy.renew(loan, renewalDate);
 
     assertThat(result,
-      hasValidationFailure("renewal at this time would not change the due date"));
+      hasValidationFailure("renewal would not change the due date"));
   }
 
   @Test
@@ -240,7 +242,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     final HttpResult<Loan> result = loanPolicy.renew(loan, renewalDate);
 
     assertThat(result,
-      hasValidationFailure("renewal at this time would not change the due date"));
+      hasValidationFailure("renewal would not change the due date"));
   }
 
   @Test
@@ -269,10 +271,10 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     final HttpResult<Loan> result = loanPolicy.renew(loan, renewalDate);
 
     assertThat(result, hasValidationFailure(
-      "renewal date falls outside of the date ranges in the loan policy"));
+      EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
 
     assertThat(result, hasValidationFailure(
-      "loan has reached its maximum number of renewals"));
+      "loan at maximum renewal number"));
 
   }
 
@@ -295,7 +297,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     final HttpResult<Loan> result = loanPolicy.renew(loan, renewalDate);
 
     assertThat(result, hasValidationFailure(
-      "renewal date falls outside of the date ranges in the loan policy"));
+      EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
   }
 
   @Test
@@ -316,7 +318,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     final HttpResult<Loan> result = loanPolicy.renew(loan, renewalDate);
 
     assertThat(result, hasValidationFailure(
-      "renewal date falls outside of the date ranges in the loan policy"));
+      EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
   }
 
   @Test
@@ -335,7 +337,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     final HttpResult<Loan> result = loanPolicy.renew(loan, renewalDate);
 
     assertThat(result, hasValidationFailure(
-      "renewal date falls outside of the date ranges in the loan policy"));
+      EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
   }
 
   @Test
@@ -352,7 +354,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     final HttpResult<DateTime> result = calculator.calculateDueDate(loan);
 
     assertThat(result, hasValidationFailure(
-      "renewal date falls outside of the date ranges in the loan policy"));
+      EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
   }
 
   @Test
@@ -369,7 +371,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     final HttpResult<DateTime> result = calculator.calculateDueDate(loan);
 
     assertThat(result, hasValidationFailure(
-      "renewal date falls outside of the date ranges in the loan policy"));
+      EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
   }
 
   private Loan existingLoan() {

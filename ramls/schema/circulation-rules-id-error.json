@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Circulation Rules Error Schema",
+  "description": "Describes an error within the circulation rules",
+  "type": "object",
+  "properties": {
+    "message": {
+      "description": "Description of the error",
+      "type": "string"
+    },
+    "line": {
+      "description": "Line where the error occurred",
+      "type": "integer"
+    },
+    "column": {
+      "description": "Column where the error occurred",
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "message",
+    "line",
+    "column"
+  ]
+}

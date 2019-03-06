@@ -1,34 +1,49 @@
 package api.support.fixtures;
 
 import java.net.MalformedURLException;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 
 import api.support.builders.Builder;
 import api.support.http.ResourceClient;
+import io.vertx.core.json.JsonObject;
 
+//TODO May need to support checking if record exists in store already?
 class RecordCreator {
   private final ResourceClient client;
-  private final Set<UUID> recordIdsToDelete = new HashSet<>();
+  private final Map<String, IndividualResource> identityMap;
+  private final Set<UUID> createdRecordIds;
+  private final Function<JsonObject, String> identityMapKey;
 
-  RecordCreator(ResourceClient client) {
+  RecordCreator(
+    ResourceClient client,
+    Function<JsonObject, String> identityMapKey) {
+
     this.client = client;
+    this.identityMap = new HashMap<>();
+    this.createdRecordIds = new HashSet<>();
+    this.identityMapKey = identityMapKey;
   }
 
-  IndividualResource create(Builder builder)
+  private IndividualResource create(JsonObject record)
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
 
-    final IndividualResource createdRecord = client.create(builder);
+    final IndividualResource createdRecord = client.create(record);
 
-    recordIdsToDelete.add(createdRecord.getId());
+    createdRecordIds.add(createdRecord.getId());
 
     return createdRecord;
   }
@@ -39,10 +54,71 @@ class RecordCreator {
     ExecutionException,
     TimeoutException {
 
-    for (UUID userId : recordIdsToDelete) {
+    for (UUID userId : createdRecordIds) {
       client.delete(userId);
     }
 
-    recordIdsToDelete.clear();
+    createdRecordIds.clear();
+  }
+
+  IndividualResource createIfAbsent(Builder recordBuilder)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return createIfAbsent(recordBuilder.create());
+  }
+
+  IndividualResource createIfAbsent(JsonObject record)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return createIfAbsent(identityMapKey.apply(record), record);
+  }
+
+  private IndividualResource createIfAbsent(String key, JsonObject record)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    //Cannot use computeIfAbsent as create(record) can throw checked exceptions
+    if(needsCreating(key)) {
+      final IndividualResource user = create(record);
+
+      identityMap.put(key, user);
+    }
+
+    return identityMap.get(key);
+  }
+
+  private boolean needsCreating(String key) {
+    return !identityMap.containsKey(key);
+  }
+
+  public void delete(IndividualResource record)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    client.delete(record.getId());
+    createdRecordIds.remove(record.getId());
+    removeFromIdentityMap(record);
+  }
+
+  private void removeFromIdentityMap(IndividualResource record) {
+
+    //TODO: Find a better way of removing from the identity map
+    final Optional<String> possibleRecordKey = identityMap.values()
+      .stream()
+      .filter(r -> Objects.equals(r.getId(), record.getId()))
+      .map(r -> identityMapKey.apply(r.getJson()))
+      .findFirst();
+
+    possibleRecordKey.ifPresent(identityMap::remove);
   }
 }

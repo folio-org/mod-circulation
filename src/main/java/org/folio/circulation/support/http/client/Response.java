@@ -40,6 +40,10 @@ public class Response {
       headers);
   }
 
+  public Response attachBody(String body){
+    return new Response(statusCode, body, contentType, headers);
+  }
+
   public boolean hasBody() {
     return getBody() != null && getBody().trim() != "";
   }

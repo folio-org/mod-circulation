@@ -1,6 +1,6 @@
 #%RAML 1.0
 title: Circulation
-version: v5.3
+version: v7.3
 protocols: [ HTTP, HTTPS ]
 baseUri: http://localhost:9130
 
@@ -108,7 +108,7 @@ resourceTypes:
           body:
             text/plain:
               example: "Internal server error"
-  /circulation/override-renewal-by-barcode:
+  /override-renewal-by-barcode:
     displayName: Override renewal of an existing loan using barcode for item and loanee
     post:
       description: Updates the due date of an existing loan
@@ -203,45 +203,45 @@ resourceTypes:
         responses:
           501:
             description: "Not implemented yet"
-  /loan-rules:
-    displayName: Loan rules
+  /rules:
+    displayName: Circulation rules
     get:
-      description: Get the loan rules
+      description: Get the circulation rules
       responses:
         200:
           body:
             application/json:
-              type: !include schema/loan-rules.json
-              example: !include examples/loan-rules.json
+              type: !include schema/circulation-rules.json
+              example: !include examples/circulation-rules.json
         500:
           description: "Internal server error"
           body:
             text/plain:
               example: "Internal server error"
     put:
-      description: Set the loan rules using a text file
+      description: Set the circulation rules using a text file
       body:
         application/json:
-          type: !include schema/loan-rules-text.json
-          example: !include examples/loan-rules-text.json
+          type: !include schema/circulation-rules.json
+          example: !include examples/circulation-rules.json
       responses:
         204:
-          description: "Loan rules have been saved."
+          description: "Circulation rules have been saved."
         422:
           description: "Validation error in the text file."
           body:
             application/json:
-              type: !include schema/loan-rules-error.json
-              example: !include examples/loan-rules-error.json
+              type: !include schema/circulation-rules-error.json
+              example: !include examples/circulation-rules-error.json
         500:
           description: "Internal server error"
           body:
             text/plain:
               example: "Internal server error"
-    /apply:
-      displayName: Apply loan rules
+    /loan-policy:
+      displayName: Execute circulation rules and return the loan policy that will be applied
       get:
-        description: Get the loan policy when applying loan rules
+        description: Execute circulation rules and return the loan policy that will be applied, either the matching loan policy with the highest priority or the fallback loan policy
         queryParameters:
           item_type_id:
             description: "Item type id"
@@ -275,16 +275,16 @@ resourceTypes:
             body:
               application/json:
                 type: error
-                example: !include examples/loan-rules-id-error.json
+                example: !include examples/circulation-rules-id-error.json
           500:
             description: "Internal server error"
             body:
               text/plain:
                 example: "Internal server error"
-    /apply-all:
-      displayName: Apply loan rules and return all matches
+    /loan-policy-all:
+      displayName: Execute circulation rules and return all matching loan policies
       get:
-        description: Get loan rule and loan policy for each match when applying loan rules
+        description: Execute circulation rules and return all matching loan policies in decreasing priority and the fallback loan policy
         queryParameters:
           item_type_id:
             description: "Item type id"
@@ -302,21 +302,105 @@ resourceTypes:
             description: "Shelving location id"
             pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
             required: true
-          loan_rules:
-            description: "Loan rules if provided, otherwise use stored loan rules"
+          rules:
+            description: "Circulation rules if provided, otherwise use stored circulation rules"
             required: false
         responses:
           200:
             body:
               application/json:
-                type: !include schema/loan-rule-matches.json
-                example: !include examples/loan-rule-matches.json
+                type: !include schema/circulation-rule-loan-policy-matches.json
+                example: !include examples/circulation-rule-loan-policy-matches.json
           422:
             description: "Invalid id error."
             body:
               application/json:
                 type: error
-                example: !include examples/loan-rules-id-error.json
+                example: !include examples/circulation-rules-id-error.json
+          500:
+            description: "Internal server error"
+            body:
+              text/plain:
+                example: "Internal server error"
+    /request-policy:
+      displayName: Execute circulation rules and return the request policy that will be applied
+      get:
+        description: Execute circulation rules and return the request policy that will be applied, either the matching request policy with the highest priority or the fallback request policy
+        queryParameters:
+          item_type_id:
+            description: "Item type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          loan_type_id:
+            description: "Loan type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          patron_type_id:
+            description: "Patron type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          shelving_location_id:
+            description: "Shelving location id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+        responses:
+          200:
+            body:
+              application/json:
+                type: !include schema/request-policy-id.json
+                example: !include examples/request-policy-id.json
+          400:
+            description: "Invalid query parameters"
+            body:
+              text/plain:
+                example: "required query parameter missing: item_type_id"
+          422:
+            description: "Invalid id error."
+            body:
+              application/json:
+                type: error
+                example: !include examples/circulation-rules-id-error.json
+          500:
+            description: "Internal server error"
+            body:
+              text/plain:
+                example: "Internal server error"
+    /request-policy-all:
+      displayName: Execute circulation rules and return all matching request policies
+      get:
+        description: Execute circulation rules and return all matching request policies policies in decreasing priority and the fallback request policy
+        queryParameters:
+          item_type_id:
+            description: "Item type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          loan_type_id:
+            description: "Loan type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          patron_type_id:
+            description: "Patron type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          shelving_location_id:
+            description: "Shelving location id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          rules:
+            description: "Circulation rules if provided, otherwise use stored circulation rules"
+            required: false
+        responses:
+          200:
+            body:
+              application/json:
+                type: !include schema/circulation-rule-request-policy-matches.json
+                example: !include examples/circulation-rule-request-policy-matches.json
+          422:
+            description: "Invalid id error."
+            body:
+              application/json:
+                type: error
+                example: !include examples/circulation-rules-id-error.json
           500:
             description: "Internal server error"
             body:

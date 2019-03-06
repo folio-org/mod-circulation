@@ -1,9 +1,11 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.of;
 import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -26,7 +28,7 @@ public class UpdateItem {
     RequestQueue requestQueue,
     UUID checkInServicePointId) {
 
-    return of(() -> changeItemOnCheckIn(item, requestQueue, checkInServicePointId))
+    return changeItemOnCheckIn(item, requestQueue, checkInServicePointId)
       .after(updatedItem -> {
         if(updatedItem.hasChanged()) {
           return storeItem(updatedItem);
@@ -37,20 +39,35 @@ public class UpdateItem {
       });
   }
 
-  private Item changeItemOnCheckIn(
+  private HttpResult<Item> changeItemOnCheckIn(
     Item item,
     RequestQueue requestQueue,
     UUID checkInServicePointId) {
 
     if (requestQueue.hasOutstandingFulfillableRequests()) {
-      return item.changeStatus(requestQueue.getHighestPriorityFulfillableRequest()
-        .checkedInItemStatus());
+      Request request = requestQueue.getHighestPriorityFulfillableRequest();
+
+      String pickupServicePointIdString = request.getPickupServicePointId();
+      if (pickupServicePointIdString == null) {
+        return failedResult(
+            "Failed to check in item due to the highest priority " +
+            "request missing a pickup service point",
+            "pickupServicePointId", null);
+      }
+
+      UUID pickUpServicePointId = UUID.fromString(pickupServicePointIdString);
+      if (checkInServicePointId.equals(pickUpServicePointId)) {
+        return succeeded(item.changeStatus(requestQueue.getHighestPriorityFulfillableRequest()
+          .checkedInItemStatus()));
+      } else {
+        return succeeded(item.inTransitToServicePoint(pickUpServicePointId));
+      }
     } else {
       if(item.homeLocationIsServedBy(checkInServicePointId)) {
-        return item.available();
+        return succeeded(item.available());
       }
       else {
-        return item.inTransitToHome();
+        return succeeded(item.inTransitToHome());
       }
     }
   }
@@ -58,13 +75,11 @@ public class UpdateItem {
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> onCheckOut(
     LoanAndRelatedRecords relatedRecords) {
 
-    RequestQueue requestQueue = relatedRecords.getRequestQueue();
-
     //Hack for creating returned loan - should distinguish further up the chain
     return succeeded(relatedRecords).afterWhen(
       records -> loanIsClosed(relatedRecords),
       UpdateItem::skip,
-      records -> updateItemStatusOnCheckOut(relatedRecords, requestQueue));
+      records -> updateItemStatusOnCheckOut(relatedRecords));
   }
 
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> onLoanUpdate(
@@ -73,6 +88,10 @@ public class UpdateItem {
     return onLoanUpdate(loanAndRelatedRecords.getLoan(),
       loanAndRelatedRecords.getRequestQueue())
       .thenApply(itemResult -> itemResult.map(loanAndRelatedRecords::withItem));
+  }
+
+  public Item onDestinationServicePointUpdate(Item item, ServicePoint servicePoint) {
+    return item.updateDestinationServicePoint(servicePoint);
   }
 
   private CompletableFuture<HttpResult<Item>> onLoanUpdate(
@@ -94,12 +113,10 @@ public class UpdateItem {
   }
 
   private CompletableFuture<HttpResult<LoanAndRelatedRecords>> updateItemStatusOnCheckOut(
-    LoanAndRelatedRecords loanAndRelatedRecords,
-    RequestQueue requestQueue) {
+    LoanAndRelatedRecords loanAndRelatedRecords) {
 
-    return of(requestQueue::checkedOutItemStatus)
-      .after(prospectiveStatus -> updateItemWhenNotSameStatus(prospectiveStatus,
-          loanAndRelatedRecords.getLoan().getItem()))
+    return updateItemWhenNotSameStatus(CHECKED_OUT,
+      loanAndRelatedRecords.getLoan().getItem())
       .thenApply(itemResult -> itemResult.map(loanAndRelatedRecords::withItem));
   }
 
@@ -144,11 +161,11 @@ public class UpdateItem {
   private ItemStatus itemStatusOnRequestCreation(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
+    RequestType type = requestAndRelatedRecords.getRequest().getRequestType();
 
-    return requestQueue.hasOutstandingRequests()
-      ? requestQueue.getHighestPriorityRequest().checkedOutItemStatus()
-      : requestAndRelatedRecords.getRequest().checkedOutItemStatus();
+    return type == RequestType.PAGE
+      ? ItemStatus.PAGED
+      : requestAndRelatedRecords.getRequest().getItem().getStatus();
   }
 
   private ItemStatus itemStatusOnLoanUpdate(
@@ -157,7 +174,7 @@ public class UpdateItem {
 
     return loan.isClosed()
       ? itemStatusOnCheckIn(requestQueue)
-      : requestQueue.checkedOutItemStatus();
+      : CHECKED_OUT;
   }
 
   private ItemStatus itemStatusOnCheckIn(RequestQueue requestQueue) {

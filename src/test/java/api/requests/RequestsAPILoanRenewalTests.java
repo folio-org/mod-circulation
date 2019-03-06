@@ -1,18 +1,19 @@
 package api.requests;
 
-import api.support.APITests;
-import api.support.builders.RequestBuilder;
-import api.support.builders.UserBuilder;
-import org.folio.circulation.support.http.client.Response;
-import org.junit.Test;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
+import org.junit.Test;
+
+import api.support.APITests;
+import api.support.builders.RequestBuilder;
+import api.support.http.InventoryItemResource;
 
 public class RequestsAPILoanRenewalTests extends APITests {
   @Test
@@ -22,21 +23,19 @@ public class RequestsAPILoanRenewalTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    UUID id = UUID.randomUUID();
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource rebecca = usersFixture.rebecca();
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
-
-    UUID loanId = loansFixture.checkOutItem(itemId).getId();
+    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
 
     requestsClient.create(new RequestBuilder()
-      .hold()
-      .withId(id)
-      .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
+      .recall()
+      .forItem(smallAngryPlanet)
+      .by(usersFixture.charlotte()));
 
-    loansFixture.renewLoan(loanId);
+    loansFixture.renewLoan(smallAngryPlanet, rebecca);
 
-    Response changedItem = itemsClient.getById(itemId);
+    Response changedItem = itemsClient.getById(smallAngryPlanet.getId());
 
     assertThat(changedItem.getJson().getJsonObject("status").getString("name"),
       is("Checked out"));
@@ -49,48 +48,19 @@ public class RequestsAPILoanRenewalTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    UUID id = UUID.randomUUID();
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource rebecca = usersFixture.rebecca();
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
-
-    UUID loanId = loansFixture.checkOutItem(itemId).getId();
+    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
 
     requestsClient.create(new RequestBuilder()
       .recall()
-      .withId(id)
-      .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
+      .forItem(smallAngryPlanet)
+      .by(usersFixture.charlotte()));
 
-    loansFixture.renewLoan(loanId);
+    loansFixture.renewLoan(smallAngryPlanet, rebecca);
 
-    Response changedItem = itemsClient.getById(itemId);
-
-    assertThat(changedItem.getJson().getJsonObject("status").getString("name"),
-      is("Checked out"));
-  }
-
-  @Test
-  public void RenewalWithOutstandingPageRequestDoesNotChangeItemStatus()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
-
-    UUID id = UUID.randomUUID();
-
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
-
-    UUID loanId = loansFixture.checkOutItem(itemId).getId();
-
-    requestsClient.create(new RequestBuilder()
-      .page()
-      .withId(id)
-      .withItemId(itemId)
-      .withRequesterId(usersClient.create(new UserBuilder()).getId()));
-
-    loansFixture.renewLoan(loanId);
-
-    Response changedItem = itemsClient.getById(itemId);
+    Response changedItem = itemsClient.getById(smallAngryPlanet.getId());
 
     assertThat(changedItem.getJson().getJsonObject("status").getString("name"),
       is("Checked out"));

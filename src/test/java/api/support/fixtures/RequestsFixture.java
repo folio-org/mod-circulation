@@ -1,27 +1,34 @@
 package api.support.fixtures;
 
-import api.support.RestAssuredClient;
-import api.support.builders.RequestBuilder;
-import api.support.http.InterfaceUrls;
-import api.support.http.ResourceClient;
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.joda.time.DateTime;
-
 import java.net.MalformedURLException;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
-import static api.APITestSuite.courseReservesCancellationReasonId;
+import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.joda.time.DateTime;
+
+import api.support.RestAssuredClient;
+import api.support.builders.RequestBuilder;
+import api.support.http.InterfaceUrls;
+import api.support.http.ResourceClient;
+import io.vertx.core.json.JsonObject;
 
 public class RequestsFixture {
   private final ResourceClient requestsClient;
+  private final CancellationReasonsFixture cancellationReasonsFixture;
+  private final ServicePointsFixture servicePointsFixture;
 
-  public RequestsFixture(ResourceClient requestsClient) {
+  public RequestsFixture(
+    ResourceClient requestsClient,
+    CancellationReasonsFixture cancellationReasonsFixture,
+    ServicePointsFixture servicePointsFixture) {
+
     this.requestsClient = requestsClient;
+    this.cancellationReasonsFixture = cancellationReasonsFixture;
+    this.servicePointsFixture = servicePointsFixture;
   }
 
   public IndividualResource place(RequestBuilder requestToBuild)
@@ -47,7 +54,8 @@ public class RequestsFixture {
       .fulfilToHoldShelf()
       .withItemId(item.getId())
       .withRequestDate(on)
-      .withRequesterId(by.getId()));
+      .withRequesterId(by.getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
   }
 
   public IndividualResource placeDeliveryRequest(
@@ -65,6 +73,47 @@ public class RequestsFixture {
       .withRequestDate(on)
       .withItemId(item.getId())
       .withRequesterId(by.getId()));
+  }
+
+  public IndividualResource placeHoldShelfRequest(
+      IndividualResource item,
+      IndividualResource by,
+      DateTime on,
+      UUID pickupServicePointId)
+          throws InterruptedException,
+          MalformedURLException,
+          TimeoutException,
+          ExecutionException {
+
+    return place(new RequestBuilder()
+        .hold()
+        .fulfilToHoldShelf()
+        .withItemId(item.getId())
+        .withRequestDate(on)
+        .withRequesterId(by.getId())
+        .withPickupServicePointId(pickupServicePointId));
+  }
+
+
+  public IndividualResource placeHoldShelfRequest(
+      IndividualResource item,
+      IndividualResource by,
+      DateTime on,
+      UUID pickupServicePointId,
+      String type)
+          throws InterruptedException,
+          MalformedURLException,
+          TimeoutException,
+          ExecutionException {
+
+    return place(new RequestBuilder()
+        .hold()
+        .withRequestType(type)
+        .fulfilToHoldShelf()
+        .withItemId(item.getId())
+        .withRequestDate(on)
+        .withRequesterId(by.getId())
+        .withPickupServicePointId(pickupServicePointId));
   }
 
   public IndividualResource placeHoldShelfRequest(
@@ -91,9 +140,12 @@ public class RequestsFixture {
     ExecutionException,
     TimeoutException {
 
+    final IndividualResource courseReservesCancellationReason
+      = cancellationReasonsFixture.courseReserves();
+
     final RequestBuilder cancelledRequestBySteve = RequestBuilder.from(request)
       .cancelled()
-      .withCancellationReasonId(courseReservesCancellationReasonId());
+      .withCancellationReasonId(courseReservesCancellationReason.getId());
 
     requestsClient.replace(request.getId(), cancelledRequestBySteve);
   }

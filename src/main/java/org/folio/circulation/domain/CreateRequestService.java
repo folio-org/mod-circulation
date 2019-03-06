@@ -1,14 +1,13 @@
 package org.folio.circulation.domain;
 
-import org.folio.circulation.support.HttpResult;
-
-import java.util.concurrent.CompletableFuture;
-
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.ItemStatus.*;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
+
+import java.util.concurrent.CompletableFuture;
+
+import org.folio.circulation.support.HttpResult;
 
 public class CreateRequestService {
   private final RequestRepository requestRepository;
@@ -66,7 +65,7 @@ public class CreateRequestService {
 
     if (!request.allowedForItem()) {
       return failed(failure(
-        String.format("Item is not %s", CHECKED_OUT),
+        String.format("Item is %s", request.getItem().getStatus()),
         "itemId", request.getItemId()
       ));
     }

@@ -1,85 +1,99 @@
 package api.support.http;
 
-import api.APITestSuite;
+import static api.support.APITestContext.circulationModuleUrl;
 
 import java.net.URL;
 import java.util.UUID;
 
+import api.support.APITestContext;
+
 public class InterfaceUrls {
   static URL materialTypesStorageUrl(String subPath) {
-    return APITestSuite.viaOkapiModuleUrl("/material-types" + subPath);
+    return APITestContext.viaOkapiModuleUrl("/material-types" + subPath);
   }
 
   static URL loanTypesStorageUrl(String subPath) {
-    return APITestSuite.viaOkapiModuleUrl("/loan-types" + subPath);
+    return APITestContext.viaOkapiModuleUrl("/loan-types" + subPath);
   }
 
   static URL institutionsStorageUrl(String subPath) {
-    return APITestSuite.viaOkapiModuleUrl("/location-units/institutions" + subPath);
+    return APITestContext.viaOkapiModuleUrl("/location-units/institutions" + subPath);
   }
 
   static URL campusesStorageUrl(String subPath) {
-    return APITestSuite.viaOkapiModuleUrl("/location-units/campuses" + subPath);
+    return APITestContext.viaOkapiModuleUrl("/location-units/campuses" + subPath);
   }
 
   static URL librariesStorageUrl(String subPath) {
-    return APITestSuite.viaOkapiModuleUrl("/location-units/libraries" + subPath);
+    return APITestContext.viaOkapiModuleUrl("/location-units/libraries" + subPath);
   }
 
   static URL locationsStorageUrl(String subPath) {
-    return APITestSuite.viaOkapiModuleUrl("/locations" + subPath);
+    return APITestContext.viaOkapiModuleUrl("/locations" + subPath);
   }
 
   static URL instanceTypesStorageUrl(String subPath) {
-    return APITestSuite.viaOkapiModuleUrl("/instance-types" + subPath);
+    return APITestContext.viaOkapiModuleUrl("/instance-types" + subPath);
   }
 
   static URL contributorNameTypesStorageUrl(String subPath) {
-    return APITestSuite.viaOkapiModuleUrl("/contributor-name-types" + subPath);
+    return APITestContext.viaOkapiModuleUrl("/contributor-name-types" + subPath);
   }
 
   static URL itemsStorageUrl(String subPath) {
-    return APITestSuite.viaOkapiModuleUrl("/item-storage/items" + subPath);
+    return APITestContext.viaOkapiModuleUrl("/item-storage/items" + subPath);
   }
 
   static URL holdingsStorageUrl(String subPath) {
-    return APITestSuite.viaOkapiModuleUrl("/holdings-storage/holdings" + subPath);
+    return APITestContext.viaOkapiModuleUrl("/holdings-storage/holdings" + subPath);
   }
 
   static URL instancesStorageUrl(String subPath) {
-    return APITestSuite.viaOkapiModuleUrl("/instance-storage/instances" + subPath);
+    return APITestContext.viaOkapiModuleUrl("/instance-storage/instances" + subPath);
   }
 
   static URL loansStorageUrl(String subPath) {
-    return APITestSuite.viaOkapiModuleUrl("/loan-storage/loans" + subPath);
+    return APITestContext.viaOkapiModuleUrl("/loan-storage/loans" + subPath);
   }
 
   static URL loanPoliciesStorageUrl(String subPath) {
-    return APITestSuite.viaOkapiModuleUrl("/loan-policy-storage/loan-policies" + subPath);
+    return APITestContext.viaOkapiModuleUrl("/loan-policy-storage/loan-policies" + subPath);
+  }
+
+  static URL requestPoliciesStorageUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/request-policy-storage/request-policies" + subPath);
+  }
+
+  static URL noticePoliciesStorageUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/notice-policy-storage/notice-policies" + subPath);
   }
 
   static URL fixedDueDateSchedulesStorageUrl(String subPath) {
-    return APITestSuite.viaOkapiModuleUrl("/fixed-due-date-schedule-storage/fixed-due-date-schedules" + subPath);
+    return APITestContext.viaOkapiModuleUrl("/fixed-due-date-schedule-storage/fixed-due-date-schedules" + subPath);
   }
 
-  static URL loanRulesStorageUrl(String subPath) {
-    return APITestSuite.viaOkapiModuleUrl("/loan-rules-storage" + subPath);
+  static URL circulationRulesStorageUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/circulation-rules-storage" + subPath);
   }
 
   static URL usersUrl(String subPath) {
-    return APITestSuite.viaOkapiModuleUrl("/users" + subPath);
+    return APITestContext.viaOkapiModuleUrl("/users" + subPath);
+  }
+
+  static URL calendarUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/calendar/periods"+ subPath);
   }
 
   static URL proxyRelationshipsUrl(String subPath) {
-    return APITestSuite.viaOkapiModuleUrl("/proxiesfor" + subPath);
+    return APITestContext.viaOkapiModuleUrl("/proxiesfor" + subPath);
   }
 
   static URL patronGroupsStorageUrl(String subPath) {
-    return APITestSuite.viaOkapiModuleUrl("/groups" + subPath);
+    return APITestContext.viaOkapiModuleUrl("/groups" + subPath);
   }
 
   static URL addressTypesUrl(String subPath) {
-    return APITestSuite.viaOkapiModuleUrl("/addresstypes" + subPath);
+    return APITestContext.viaOkapiModuleUrl("/addresstypes" + subPath);
   }
 
   public static URL requestsUrl() {
@@ -87,7 +101,7 @@ public class InterfaceUrls {
   }
 
   public static URL requestsUrl(String subPath) {
-    return APITestSuite.circulationModuleUrl("/circulation/requests" + subPath);
+    return circulationModuleUrl("/circulation/requests" + subPath);
   }
 
   public static URL requestQueueUrl(UUID itemId) {
@@ -95,23 +109,23 @@ public class InterfaceUrls {
   }
 
   public static URL checkOutByBarcodeUrl() {
-    return APITestSuite.circulationModuleUrl("/circulation/check-out-by-barcode");
+    return circulationModuleUrl("/circulation/check-out-by-barcode");
   }
 
   public static URL checkInByBarcodeUrl() {
-    return APITestSuite.circulationModuleUrl("/circulation/check-in-by-barcode");
+    return circulationModuleUrl("/circulation/check-in-by-barcode");
   }
 
   public static URL renewByBarcodeUrl() {
-    return APITestSuite.circulationModuleUrl("/circulation/renew-by-barcode");
+    return circulationModuleUrl("/circulation/renew-by-barcode");
   }
 
   public static URL overrideRenewalByBarcodeUrl() {
-    return APITestSuite.circulationModuleUrl("/circulation/override-renewal-by-barcode");
+    return circulationModuleUrl("/circulation/override-renewal-by-barcode");
   }
 
   public static URL renewByIdUrl() {
-    return APITestSuite.circulationModuleUrl("/circulation/renew-by-id");
+    return circulationModuleUrl("/circulation/renew-by-id");
   }
 
   public static URL loansUrl() {
@@ -119,23 +133,23 @@ public class InterfaceUrls {
   }
 
   public static URL loansUrl(String subPath) {
-    return APITestSuite.circulationModuleUrl("/circulation/loans" + subPath);
+    return circulationModuleUrl("/circulation/loans" + subPath);
   }
 
-  public static URL loanRulesUrl() {
-    return loanRulesUrl("");
+  public static URL circulationRulesUrl() {
+    return circulationRulesUrl("");
   }
 
-  public static URL loanRulesUrl(String subPath) {
-    return APITestSuite.circulationModuleUrl("/circulation/loan-rules" + subPath);
+  public static URL circulationRulesUrl(String subPath) {
+    return circulationModuleUrl("/circulation/rules" + subPath);
   }
-
-  public static URL cancellationReasonsStorageUrl(String subPath) {
-    return APITestSuite.viaOkapiModuleUrl(
+  
+  static URL cancellationReasonsStorageUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl(
         "/cancellation-reason-storage/cancellation-reasons" + subPath);
   }
 
-  public static URL servicePointsStorageUrl(String subPath) {
-    return APITestSuite.viaOkapiModuleUrl("/service-points" + subPath);
+  static URL servicePointsStorageUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/service-points" + subPath);
   }
 }

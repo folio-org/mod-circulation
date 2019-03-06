@@ -16,18 +16,28 @@
       "requesterId": "61d939e4-f2ae-4c53-95d2-224a802fa2a6",
       "itemId": "3e5d5433-a271-499c-94f4-5f3e4652e537",
       "fulfilmentPreference": "Delivery",
-      "requestExpirationDate": "2017-08-31",
-      "holdShelfExpirationDate": "2017-09-01",
+      "requestExpirationDate": "2017-08-31T22:25:37Z",
+      "holdShelfExpirationDate": "2017-09-01T22:25:37Z",
       "position": 1,
       "item": {
         "title": "Children of Time",
-        "barcode": "760932543816"
+        "barcode": "760932543816",
+        "copyNumbers": [
+          "1",
+          "2"
+        ]
       },
       "requester": {
         "firstName": "Stephen",
         "lastName": "Jones",
         "middleName": "Anthony",
         "barcode": "567023127436"
+      },
+      "tags": {
+        "tagList": [
+          "new",
+          "important"
+        ]
       }
     }
   ],

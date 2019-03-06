@@ -11,16 +11,20 @@ public enum RequestStatus {
   NONE(""),
   OPEN_NOT_YET_FILLED("Open - Not yet filled"),
   OPEN_AWAITING_PICKUP("Open - Awaiting pickup"),
+  OPEN_IN_TRANSIT("Open - In transit"),
   CLOSED_FILLED("Closed - Filled"),
-  CLOSED_CANCELLED("Closed - Cancelled");
+  CLOSED_CANCELLED("Closed - Cancelled"),
+  CLOSED_UNFILLED("Closed - Unfilled"),
+  CLOSED_PICKUP_EXPIRED("Closed - Pickup expired");
 
   private final String value;
 
   public static String invalidStatusErrorMessage() {
     //TODO: Generalise this to join all states
-    return String.format("Request status must be \"%s\", \"%s\" or \"%s\"",
+    return String.format("Request status must be \"%s\", \"%s\", \"%s\", \"%s\", \"%s\" or \"%s\"",
       OPEN_NOT_YET_FILLED.getValue(), OPEN_AWAITING_PICKUP.getValue(),
-      CLOSED_FILLED.getValue());
+      OPEN_IN_TRANSIT.getValue(), CLOSED_FILLED.getValue(),
+      CLOSED_UNFILLED.getValue(), CLOSED_PICKUP_EXPIRED.getValue());
   }
 
   public static RequestStatus from(String value) {

@@ -1,12 +1,9 @@
 package api.loans;
 
-import static api.APITestSuite.canCirculateLoanTypeId;
-import static api.APITestSuite.readingRoomLoanTypeId;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -15,39 +12,42 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import api.APITestSuite;
 import api.support.APITests;
 import api.support.builders.LoanBuilder;
 import api.support.http.InterfaceUrls;
-import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
 public class LoanAPIPolicyTests extends APITests {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static UUID lpFallback;
+  private static UUID rpFallback;
+  private static UUID npFallback;
 
-  static UUID pFallback;
-  static UUID p1;
-  static UUID p2;
-  static UUID p3;
-  static UUID p4;
+  private static UUID lp1;
+  private static UUID lp2;
+  private static UUID lp3;
+  private static UUID lp4;
 
-  protected static final OkapiHttpClient client = APITestSuite.createClient(exception -> {
-    log.error("Request to circulation module failed:", exception);
-  });
+  private static UUID rp1;
+  private static UUID rp2;
+  private static UUID rp3;
+  private static UUID rp4;
+
+  private static UUID np1;
+  private static UUID np2;
+  private static UUID np3;
+  private static UUID np4;
 
   public LoanAPIPolicyTests() {
     super(false);
   }
 
+  //TODO: Split into multiple tests
   @Test
   public void canRetrieveLoanPolicyId()
     throws InterruptedException,
@@ -55,16 +55,26 @@ public class LoanAPIPolicyTests extends APITests {
     TimeoutException,
     ExecutionException {
 
+
+    final UUID readingRoom = loanTypesFixture.readingRoom().getId();
+
     JsonObject itemJson1 = itemsFixture.basedUponInterestingTimes().getJson();
     JsonObject itemJson2 = itemsFixture.basedUponDunkirk().getJson();
     JsonObject itemJson3 = itemsFixture.basedUponInterestingTimes().getJson();
     JsonObject itemJson4 = itemsFixture.basedUponDunkirk().getJson();
     JsonObject itemJson5 = itemsFixture.basedUponTemeraire(
-      builder -> builder.withTemporaryLoanType(readingRoomLoanTypeId())).getJson();
+      builder -> builder.withTemporaryLoanType(readingRoom)).getJson();
 
-    JsonObject user1 = APITestSuite.userRecord1();
-    JsonObject user2 = APITestSuite.userRecord2();
+    final IndividualResource alternative = patronGroupsFixture.alternative();
+
+    JsonObject user1 = usersFixture.jessica().getJson();
+
+    JsonObject user2 = usersFixture.charlotte(
+      userBuilder -> userBuilder.inGroupFor(alternative))
+      .getJson();
+
     UUID group1 = UUID.fromString(user1.getString("patronGroup"));
+
     UUID itemId1 = UUID.fromString(itemJson1.getString("id"));
     UUID itemId2 = UUID.fromString(itemJson2.getString("id"));
     UUID itemId3 = UUID.fromString(itemJson3.getString("id"));
@@ -73,36 +83,31 @@ public class LoanAPIPolicyTests extends APITests {
 
     createLoanPolicies();
 
-    //Set the loan rules
+    //Set the circulation rules
+    final UUID book = materialTypesFixture.book().getId();
+    final UUID videoRecording = materialTypesFixture.videoRecording().getId();
+
+    final UUID canCirculate = loanTypesFixture.canCirculate().getId();
+
     String rules = String.join("\n",
       "priority: t, s, c, b, a, m, g",
-      "fallback-policy: " + pFallback,
-      "m " + APITestSuite.videoRecordingMaterialTypeId() + " + g " + group1 + " : " + p1,
-      "m " + APITestSuite.bookMaterialTypeId() + " + t " + canCirculateLoanTypeId() + " : " + p2,
-      "m " + APITestSuite.bookMaterialTypeId() + " + t " + readingRoomLoanTypeId() + " : " + p3,
-      "m " + APITestSuite.bookMaterialTypeId() + " + t " + canCirculateLoanTypeId() + " + g " + group1 + " : " + p4
-      );
-    JsonObject newRulesRequest = new JsonObject().put("loanRulesAsTextFile", rules);
-    CompletableFuture<Response> completed = new CompletableFuture<>();
+      "fallback-policy: l " + lpFallback + " r " + rpFallback + " n " + npFallback,
+      "m " + videoRecording + " + g " + group1 + " : l " + lp1 + " r " + rp1 + " n " + np1,
+      "m " + book + " + t " + canCirculate + " : l " + lp2 + " r " + rp2 + " n " + np2,
+      "m " + book + " + t " + readingRoom + " : l " + lp3 + " r " + rp3 + " n " + np3,
+      "m " + book + " + t " + canCirculate + " + g " + group1 + " : l " + lp4 + " r " + rp4 + " n " + np4);
 
-    client.put(InterfaceUrls.loanRulesUrl(), newRulesRequest,
-      ResponseHandler.any(completed));
+    circulationRulesFixture.updateCirculationRules(rules);
 
-    Response response = completed.get(5, TimeUnit.SECONDS);
-
-    assertThat(String.format(
-      "Failed to set loan rules: %s", response.getBody()),
-      response.getStatusCode(), is(204));
-
-    //Get the loan rules
+    //Get the circulation rules
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
-    client.get(InterfaceUrls.loanRulesUrl(), ResponseHandler.any(getCompleted));
+    client.get(InterfaceUrls.circulationRulesUrl(), ResponseHandler.any(getCompleted));
     Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
 
     JsonObject rulesJson = new JsonObject(getResponse.getBody());
 
-    String loanRules = rulesJson.getString("loanRulesAsTextFile");
-    assertThat("Returned rules match submitted rules", loanRules, is(rules));
+    String circulationRules = rulesJson.getString("rulesAsText");
+    assertThat("Returned rules match submitted rules", circulationRules, is(rules));
 
     warmUpApplyEndpoint();
 
@@ -134,6 +139,7 @@ public class LoanAPIPolicyTests extends APITests {
     InterruptedException,
     ExecutionException,
     TimeoutException {
+
     IndividualResource loanResponse = loansClient.create(new LoanBuilder()
       .withId(id)
       .withUserId(userId)
@@ -143,18 +149,19 @@ public class LoanAPIPolicyTests extends APITests {
       .withStatus(status));
 
     JsonObject loanJson = loanResponse.getJson();
-    ResourceClient policyResourceClient = ResourceClient.forLoanPolicies(client);
-    JsonObject policyJson = policyResourceClient.getById(UUID.fromString(loanJson.getString("loanPolicyId"))).getJson();
-    assertThat("policy is " + policyName, policyJson.getString("name"), is(policyName));
+
+    JsonObject policyJson = loanPolicyClient.getById(
+      UUID.fromString(loanJson.getString("loanPolicyId")))
+      .getJson();
+
+    assertThat(policyJson.getString("name"), is(policyName));
   }
 
-  private static void createLoanPolicies()
+  private void createLoanPolicies()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
-
-    ResourceClient policyResourceClient = ResourceClient.forLoanPolicies(client);
 
     JsonObject p1Json = new JsonObject()
        .put("name", "Policy 1")
@@ -168,7 +175,7 @@ public class LoanAPIPolicyTests extends APITests {
          .put("renewFromId", "CURRENT_DUE_DATE")
          .put("differentPeriod", false));
 
-    p1 = policyResourceClient.create(p1Json).getId();
+    lp1 = loanPoliciesFixture.create(p1Json).getId();
 
     JsonObject p2Json = new JsonObject()
        .put("name", "Policy 2")
@@ -182,7 +189,7 @@ public class LoanAPIPolicyTests extends APITests {
          .put("renewFromId", "CURRENT_DUE_DATE")
          .put("differentPeriod", false));
 
-    p2 = policyResourceClient.create(p2Json).getId();
+    lp2 = loanPoliciesFixture.create(p2Json).getId();
 
     JsonObject p3Json = new JsonObject()
       .put("name", "Policy 3")
@@ -196,7 +203,7 @@ public class LoanAPIPolicyTests extends APITests {
         .put("renewFromId", "CURRENT_DUE_DATE")
         .put("differentPeriod", false));
 
-    p3 = policyResourceClient.create(p3Json).getId();
+    lp3 = loanPoliciesFixture.create(p3Json).getId();
 
     JsonObject p4Json = new JsonObject()
        .put("name", "Policy 4")
@@ -210,9 +217,9 @@ public class LoanAPIPolicyTests extends APITests {
          .put("renewFromId", "CURRENT_DUE_DATE")
          .put("differentPeriod", false));
 
-    p4 = policyResourceClient.create(p4Json).getId();
+    lp4 = loanPoliciesFixture.create(p4Json).getId();
 
-    JsonObject pFallbackJson = new JsonObject()
+    JsonObject lpFallbackJson = new JsonObject()
        .put("name", "Fallback")
        .put("description", "Fallback!!!")
        .put("loanable", true) //Workaround for policy validation in mod-circulation-storage
@@ -224,6 +231,6 @@ public class LoanAPIPolicyTests extends APITests {
          .put("renewFromId", "CURRENT_DUE_DATE")
          .put("differentPeriod", false));
 
-    pFallback = policyResourceClient.create(pFallbackJson).getId();
+    lpFallback = loanPoliciesFixture.create(lpFallbackJson).getId();
   }
 }

@@ -1,5 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "A request for an item",
+  "description": "Request for an item that might be at a different location or already checked out to another patron",
   "type": "object",
   "properties": {
     "id": {
@@ -38,6 +40,7 @@
       "enum": [
         "Open - Not yet filled",
         "Open - Awaiting pickup",
+        "Open - In transit",
         "Closed - Filled",
         "Closed - Cancelled"
       ]
@@ -112,6 +115,12 @@
               }
             }
           }
+        }
+      },
+      "copyNumbers": {
+        "type": "array",
+        "items": {
+          "type": "string"
         }
       },
       "additionalProperties": false
@@ -264,12 +273,12 @@
     "requestExpirationDate": {
       "description": "Date when the request expires",
       "type": "string",
-      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+      "format": "date-time"
     },
     "holdShelfExpirationDate": {
       "description": "Date when an item returned to the hold shelf expires",
       "type": "string",
-      "pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2}"
+      "format": "date-time"
     },
     "pickupServicePointId": {
       "description": "The ID of the Service Point where this request can be picked up",
@@ -303,6 +312,11 @@
           "description": "Is this service point a pickup location?",
           "type": "boolean"
         }
+      },
+      "tags": {
+        "type": "object",
+        "description": "Tags",
+        "$ref": "raml-util/schemas/tags.schema"
       }
     },
     "metadata": {

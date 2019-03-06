@@ -4,7 +4,7 @@
   "provides": [
     {
       "id": "circulation",
-      "version": "5.4",
+      "version": "7.3",
       "handlers": [
         {
           "methods": [
@@ -16,9 +16,12 @@
           ],
           "modulePermissions": [
             "circulation-storage.loans.item.post",
+            "calendar.collection.get",
+            "calendar.collection.add",
             "circulation-storage.loans.item.get",
             "circulation-storage.loans.collection.get",
-            "circulation.loan-rules.apply.get",
+            "circulation.rules.loan-policy.get",
+            "circulation.rules.request-policy.get",
             "circulation-storage.requests.collection.get",
             "circulation-storage.requests.item.put",
             "inventory-storage.items.item.put",
@@ -37,6 +40,7 @@
             "inventory-storage.material-types.item.get",
             "inventory-storage.material-types.collection.get",
             "circulation-storage.loan-policies.item.get",
+            "circulation-storage.request-policies.item.get",
             "circulation-storage.fixed-due-date-schedules.item.get",
             "circulation-storage.fixed-due-date-schedules.collection.get"
           ]
@@ -53,7 +57,8 @@
             "circulation-storage.loans.item.put",
             "circulation-storage.loans.item.get",
             "circulation-storage.loans.collection.get",
-            "circulation.loan-rules.apply.get",
+            "circulation.rules.loan-policy.get",
+            "circulation.rules.request-policy.get",
             "circulation-storage.requests.collection.get",
             "circulation-storage.requests.item.put",
             "inventory-storage.items.item.put",
@@ -73,6 +78,7 @@
             "users.collection.get",
             "proxiesfor.collection.get",
             "circulation-storage.loan-policies.item.get",
+            "circulation-storage.request-policies.item.get",
             "circulation-storage.fixed-due-date-schedules.item.get",
             "circulation-storage.fixed-due-date-schedules.collection.get"
           ]
@@ -89,7 +95,8 @@
             "circulation-storage.loans.item.put",
             "circulation-storage.loans.item.get",
             "circulation-storage.loans.collection.get",
-            "circulation.loan-rules.apply.get",
+            "circulation.rules.loan-policy.get",
+            "circulation.rules.request-policy.get",
             "circulation-storage.requests.collection.get",
             "circulation-storage.requests.item.put",
             "inventory-storage.items.item.put",
@@ -109,6 +116,7 @@
             "users.collection.get",
             "proxiesfor.collection.get",
             "circulation-storage.loan-policies.item.get",
+            "circulation-storage.request-policies.item.get",
             "circulation-storage.fixed-due-date-schedules.item.get",
             "circulation-storage.fixed-due-date-schedules.collection.get"
           ]
@@ -125,7 +133,8 @@
             "circulation-storage.loans.item.put",
             "circulation-storage.loans.item.get",
             "circulation-storage.loans.collection.get",
-            "circulation.loan-rules.apply.get",
+            "circulation.rules.loan-policy.get",
+            "circulation.rules.request-policy.get",
             "circulation-storage.requests.collection.get",
             "circulation-storage.requests.item.put",
             "inventory-storage.items.item.put",
@@ -145,6 +154,7 @@
             "users.collection.get",
             "proxiesfor.collection.get",
             "circulation-storage.loan-policies.item.get",
+            "circulation-storage.request-policies.item.get",
             "circulation-storage.fixed-due-date-schedules.item.get",
             "circulation-storage.fixed-due-date-schedules.collection.get"
           ]
@@ -161,7 +171,8 @@
             "circulation-storage.loans.item.put",
             "circulation-storage.loans.item.get",
             "circulation-storage.loans.collection.get",
-            "circulation.loan-rules.apply.get",
+            "circulation.rules.loan-policy.get",
+            "circulation.rules.request-policy.get",
             "circulation-storage.requests.collection.get",
             "circulation-storage.requests.item.put",
             "inventory-storage.items.item.put",
@@ -181,6 +192,7 @@
             "users.collection.get",
             "proxiesfor.collection.get",
             "circulation-storage.loan-policies.item.get",
+            "circulation-storage.request-policies.item.get",
             "circulation-storage.fixed-due-date-schedules.item.get",
             "circulation-storage.fixed-due-date-schedules.collection.get"
           ]
@@ -223,7 +235,8 @@
             "circulation-storage.loans.item.post",
             "circulation-storage.loans.item.get",
             "circulation-storage.loans.collection.get",
-            "circulation.loan-rules.apply.get",
+            "circulation.rules.loan-policy.get",
+            "circulation.rules.request-policy.get",
             "circulation-storage.requests.collection.get",
             "circulation-storage.requests.item.put",
             "inventory-storage.items.item.put",
@@ -243,6 +256,7 @@
             "proxiesfor.collection.get",
             "inventory-storage.material-types.item.get",
             "circulation-storage.loan-policies.item.get",
+            "circulation-storage.request-policies.item.get",
             "circulation-storage.fixed-due-date-schedules.item.get",
             "circulation-storage.fixed-due-date-schedules.collection.get"
           ]
@@ -294,7 +308,8 @@
           "modulePermissions": [
             "circulation-storage.loans.item.put",
             "circulation-storage.loans.collection.get",
-            "circulation.loan-rules.apply.get",
+            "circulation.rules.loan-policy.get",
+            "circulation.rules.request-policy.get",
             "circulation-storage.requests.item.put",
             "circulation-storage.requests.collection.get",
             "inventory-storage.items.item.get",
@@ -313,6 +328,7 @@
             "proxiesfor.collection.get",
             "inventory-storage.material-types.item.get",
             "circulation-storage.loan-policies.item.get",
+            "circulation-storage.request-policies.item.get",
             "circulation-storage.fixed-due-date-schedules.item.get"
           ]
         },
@@ -332,48 +348,72 @@
           "methods": [
             "GET"
           ],
-          "pathPattern": "/circulation/loan-rules",
+          "pathPattern": "/circulation/rules",
           "permissionsRequired": [
-            "circulation.loan-rules.get"
+            "circulation.rules.get"
           ],
           "modulePermissions": [
-            "circulation-storage.loan-rules.get"
+            "circulation-storage.circulation-rules.get"
           ]
         },
         {
           "methods": [
             "PUT"
           ],
-          "pathPattern": "/circulation/loan-rules",
+          "pathPattern": "/circulation/rules",
           "permissionsRequired": [
-            "circulation.loan-rules.put"
+            "circulation.rules.put"
           ],
           "modulePermissions": [
-            "circulation-storage.loan-rules.put"
+            "circulation-storage.circulation-rules.put"
           ]
         },
         {
           "methods": [
             "GET"
           ],
-          "pathPattern": "/circulation/loan-rules/apply",
+          "pathPattern": "/circulation/rules/loan-policy",
           "permissionsRequired": [
-            "circulation.loan-rules.apply.get"
+            "circulation.rules.loan-policy.get"
           ],
           "modulePermissions": [
-            "circulation-storage.loan-rules.get"
+            "circulation-storage.circulation-rules.get"
           ]
         },
         {
           "methods": [
             "GET"
           ],
-          "pathPattern": "/circulation/loan-rules/apply-all",
+          "pathPattern": "/circulation/rules/loan-policy-all",
           "permissionsRequired": [
-            "circulation.loan-rules.apply-all.get"
+            "circulation.rules.loan-policy-all.get"
           ],
           "modulePermissions": [
-            "circulation-storage.loan-rules.get"
+            "circulation-storage.circulation-rules.get"
+          ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/rules/request-policy",
+          "permissionsRequired": [
+            "circulation.rules.request-policy.get"
+          ],
+          "modulePermissions": [
+            "circulation-storage.circulation-rules.get"
+          ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/rules/request-policy-all",
+          "permissionsRequired": [
+            "circulation.rules.request-policy-all.get"
+          ],
+          "modulePermissions": [
+            "circulation-storage.circulation-rules.get"
           ]
         },
         {
@@ -561,7 +601,7 @@
       "version": "5.3"
     },
     {
-      "id": "loan-rules-storage",
+      "id": "circulation-rules-storage",
       "version": "1.0"
     },
     {
@@ -578,7 +618,7 @@
     },
     {
       "id": "request-storage",
-      "version": "2.3"
+      "version": "3.0"
     },
     {
       "id": "users",
@@ -594,7 +634,11 @@
     },
     {
       "id": "loan-policy-storage",
-      "version": "1.2"
+      "version": "1.2 2.0"
+    },
+    {
+      "id": "request-policy-storage",
+      "version": "1.0"
     },
     {
       "id": "fixed-due-date-schedules-storage",
@@ -603,6 +647,10 @@
     {
       "id": "service-points",
       "version": "3.0"
+    },
+    {
+      "id": "calendar",
+      "version": "2.0"
     }
   ],
   "permissionSets": [
@@ -662,24 +710,34 @@
       "description": "delete individual loan"
     },
     {
-      "permissionName": "circulation.loan-rules.get",
-      "displayName": "Circulation - get loan rules",
-      "description": "Get loan rules"
+      "permissionName": "circulation.rules.get",
+      "displayName": "Circulation - get circulation rules",
+      "description": "Get circulation rules"
     },
     {
-      "permissionName": "circulation.loan-rules.put",
-      "displayName": "Circulation - modify loan rules",
-      "description": "Modify loan rules"
+      "permissionName": "circulation.rules.put",
+      "displayName": "Circulation - modify circulation rules",
+      "description": "Modify circulation rules"
     },
     {
-      "permissionName": "circulation.loan-rules.apply.get",
-      "displayName": "Circulation - apply loan rules",
-      "description": "Apply loan rules to get matching policy"
+      "permissionName": "circulation.rules.loan-policy.get",
+      "displayName": "Circulation - use circulation rules to get matching loan policy",
+      "description": "Apply circulation rules to get matching loan policy"
     },
     {
-      "permissionName": "circulation.loan-rules.apply-all.get",
-      "displayName": "Circulation - apply loan rules - all matching policies",
-      "description": "Apply loan rules to get all matching policies"
+      "permissionName": "circulation.rules.loan-policy-all.get",
+      "displayName": "Circulation - use circulation rules to get all matching loan policies",
+      "description": "Apply circulation rules to get all matching loan policies"
+    },
+    {
+      "permissionName": "circulation.rules.request-policy.get",
+      "displayName": "Circulation - use circulation rules to get matching request policy",
+      "description": "Apply circulation rules to get matching request policy"
+    },
+    {
+      "permissionName": "circulation.rules.request-policy-all.get",
+      "displayName": "Circulation - use circulation rules to get all matching request policies",
+      "description": "Apply circulation rules to get all matching request policies"
     },
     {
       "permissionName": "circulation.requests.collection.get",
@@ -732,10 +790,12 @@
         "circulation.loans.item.put",
         "circulation.loans.item.delete",
         "circulation.loans.collection.delete",
-        "circulation.loan-rules.put",
-        "circulation.loan-rules.get",
-        "circulation.loan-rules.apply.get",
-        "circulation.loan-rules.apply-all.get",
+        "circulation.rules.put",
+        "circulation.rules.get",
+        "circulation.rules.loan-policy.get",
+        "circulation.rules.loan-policy-all.get",
+        "circulation.rules.request-policy.get",
+        "circulation.rules.request-policy-all.get",
         "circulation.requests.collection.get",
         "circulation.requests.item.get",
         "circulation.requests.item.post",

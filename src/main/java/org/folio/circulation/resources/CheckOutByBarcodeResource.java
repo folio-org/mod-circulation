@@ -1,6 +1,7 @@
 package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.applyCLDDMForLoanAndRelatedRecords;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
@@ -18,12 +19,15 @@ import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
+import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
 import org.folio.circulation.domain.validation.AwaitingPickupValidator;
 import org.folio.circulation.domain.validation.ExistingOpenLoanValidator;
 import org.folio.circulation.domain.validation.InactiveUserValidator;
+import org.folio.circulation.domain.validation.ItemIsNotLoanableValidator;
+import org.folio.circulation.domain.validation.ItemMissingValidator;
 import org.folio.circulation.domain.validation.ItemNotFoundValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointOfCheckoutPresentValidator;
@@ -44,6 +48,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class CheckOutByBarcodeResource extends Resource {
+
   public CheckOutByBarcodeResource(HttpClient client) {
     super(client);
   }
@@ -60,17 +65,18 @@ public class CheckOutByBarcodeResource extends Resource {
 
     JsonObject request = routingContext.getBodyAsJson();
 
-    final JsonObject loan = new JsonObject();
-    loan.put("id", UUID.randomUUID().toString());
+    final JsonObject loanJson = new JsonObject();
+    loanJson.put("id", UUID.randomUUID().toString());
 
-    copyOrDefaultLoanDate(request, loan);
+    copyOrDefaultLoanDate(request, loanJson);
 
     final String itemBarcode = request.getString(CheckOutByBarcodeRequest.ITEM_BARCODE);
     final String userBarcode = request.getString(CheckOutByBarcodeRequest.USER_BARCODE);
     final String proxyUserBarcode = request.getString(CheckOutByBarcodeRequest.PROXY_USER_BARCODE);
     final String checkoutServicePointId = request.getString(CheckOutByBarcodeRequest.SERVICE_POINT_ID);
 
-    loan.put(LoanProperties.CHECKOUT_SERVICE_POINT_ID, checkoutServicePointId);
+    loanJson.put(LoanProperties.CHECKOUT_SERVICE_POINT_ID, checkoutServicePointId);
+    Loan loan = Loan.from(loanJson);
 
     final Clients clients = Clients.create(context, client);
 
@@ -79,16 +85,17 @@ public class CheckOutByBarcodeResource extends Resource {
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
+    final ClosedLibraryStrategyService strategyService = ClosedLibraryStrategyService.using(clients, loan.getLoanDate(), false);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
-        clients, () -> failure(
-        "Cannot check out item via proxy when relationship is invalid",
-        CheckOutByBarcodeRequest.PROXY_USER_BARCODE,
-        proxyUserBarcode));
-    
+      clients, () -> failure(
+      "Cannot check out item via proxy when relationship is invalid",
+      CheckOutByBarcodeRequest.PROXY_USER_BARCODE,
+      proxyUserBarcode));
+
     final ServicePointOfCheckoutPresentValidator servicePointOfCheckoutPresentValidator
       = new ServicePointOfCheckoutPresentValidator(message -> failure(message,
-        CheckOutByBarcodeRequest.SERVICE_POINT_ID, checkoutServicePointId));
+      CheckOutByBarcodeRequest.SERVICE_POINT_ID, checkoutServicePointId));
 
     final AwaitingPickupValidator awaitingPickupValidator = new AwaitingPickupValidator(
       message -> failure(message,
@@ -101,18 +108,24 @@ public class CheckOutByBarcodeResource extends Resource {
       () -> failure(String.format("No item with barcode %s could be found", itemBarcode),
         ITEM_BARCODE, itemBarcode));
 
+    final ItemMissingValidator itemMissingValidator = new ItemMissingValidator(
+      message -> failure(message, ITEM_BARCODE, itemBarcode));
+
     final InactiveUserValidator inactiveUserValidator = InactiveUserValidator.forUser(userBarcode);
     final InactiveUserValidator inactiveProxyUserValidator = InactiveUserValidator.forProxy(proxyUserBarcode);
 
     final ExistingOpenLoanValidator openLoanValidator = new ExistingOpenLoanValidator(
       loanRepository, message -> failure(message, ITEM_BARCODE, itemBarcode));
 
+    final ItemIsNotLoanableValidator itemIsNotLoanableValidator = new ItemIsNotLoanableValidator(
+      () -> failure("Item is not loanable", ITEM_BARCODE, itemBarcode));
+
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
-    
-    completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(Loan.from(loan))))
+
+    completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(loan)))
       .thenApply(servicePointOfCheckoutPresentValidator::refuseCheckOutWhenServicePointIsNotPresent)
       .thenCombineAsync(userRepository.getUserByBarcode(userBarcode), this::addUser)
       .thenCombineAsync(userRepository.getProxyUserByBarcode(proxyUserBarcode), this::addProxyUser)
@@ -121,12 +134,15 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenCombineAsync(itemRepository.fetchByBarcode(itemBarcode), this::addItem)
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
       .thenApply(alreadyCheckedOutValidator::refuseWhenItemIsAlreadyCheckedOut)
+      .thenApply(itemMissingValidator::refuseWhenItemIsMissing)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenComposeAsync(r -> r.after(openLoanValidator::refuseWhenHasOpenLoan))
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenApply(awaitingPickupValidator::refuseWhenUserIsNotAwaitingPickup)
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
-      .thenApply(r -> r.next(this::calculateDueDate))
+      .thenApply(itemIsNotLoanableValidator::refuseWhenItemIsNotLoanable)
+      .thenApply(r -> r.next(this::calculateDefaultInitialDueDate))
+      .thenComposeAsync(r -> r.after(records -> applyCLDDMForLoanAndRelatedRecords(strategyService, records)))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
       .thenComposeAsync(r -> r.after(loanRepository::createLoan))
@@ -136,16 +152,12 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
-  private HttpResult<LoanAndRelatedRecords> calculateDueDate(
-    LoanAndRelatedRecords loanAndRelatedRecords) {
-
-    final Loan loan = loanAndRelatedRecords.getLoan();
-    final LoanPolicy loanPolicy = loanAndRelatedRecords.getLoanPolicy();
-
+  private HttpResult<LoanAndRelatedRecords> calculateDefaultInitialDueDate(LoanAndRelatedRecords loanAndRelatedRecords) {
+    Loan loan = loanAndRelatedRecords.getLoan();
+    LoanPolicy loanPolicy = loanAndRelatedRecords.getLoanPolicy();
     return loanPolicy.calculateInitialDueDate(loan)
       .map(dueDate -> {
         loanAndRelatedRecords.getLoan().changeDueDate(dueDate);
-
         return loanAndRelatedRecords;
       });
   }
@@ -153,7 +165,7 @@ public class CheckOutByBarcodeResource extends Resource {
   private void copyOrDefaultLoanDate(JsonObject request, JsonObject loan) {
     final String loanDateProperty = "loanDate";
 
-    if(request.containsKey(loanDateProperty)) {
+    if (request.containsKey(loanDateProperty)) {
       loan.put(loanDateProperty, request.getString(loanDateProperty));
     } else {
       loan.put(loanDateProperty, DateTime.now().toDateTime(DateTimeZone.UTC)
@@ -162,10 +174,9 @@ public class CheckOutByBarcodeResource extends Resource {
   }
 
   private WritableHttpResult<JsonObject> createdLoanFrom(HttpResult<JsonObject> result) {
-    if(result.failed()) {
+    if (result.failed()) {
       return HttpResult.failed(result.cause());
-    }
-    else {
+    } else {
       return new CreatedJsonHttpResult(result.value(),
         String.format("/circulation/loans/%s", result.value().getString("id")));
     }

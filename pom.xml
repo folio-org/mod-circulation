@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <artifactId>mod-circulation</artifactId>
   <groupId>org.folio</groupId>
-  <version>14.2.0-SNAPSHOT</version>
+  <version>15.0.0-SNAPSHOT</version>
   <licenses>
     <license>
       <name>Apache License 2.0</name>
@@ -290,13 +290,6 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.20</version>
         <configuration>
-          <excludes>
-            <exclude>api/**/**Tests.class</exclude>
-          </excludes>
-          <includes>
-            <include>api/APITestSuite.class</include>
-            <include>org/folio/circulation/**/*</include>
-          </includes>
           <!-- TODO: update to version 3.0.0 and remove useSystemClassLoader
                https://issues.folio.org/browse/FOLIO-1609
                https://issues.apache.org/jira/browse/SUREFIRE-1588

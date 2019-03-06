@@ -1,5 +1,7 @@
 package api.loans;
 
+import static api.requests.RequestsAPICreationTests.setupMissingItem;
+import static api.support.APITestContext.END_OF_2019_DUE_DATE;
 import static api.support.builders.ItemBuilder.AWAITING_PICKUP;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.builders.RequestBuilder.CLOSED_FILLED;
@@ -10,6 +12,7 @@ import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasMessageContaining;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static org.hamcrest.CoreMatchers.allOf;
@@ -35,7 +38,7 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.Seconds;
 import org.junit.Test;
 
-import api.APITestSuite;
+import api.support.APITestContext;
 import api.support.APITests;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.FixedDueDateSchedule;
@@ -88,7 +91,8 @@ public class CheckOutByBarcodeTests extends APITests {
       loan.getString("loanDate"), isEquivalentTo(loanDate));
 
     assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateRollingLoanPolicyId()));
+      loan.getString("loanPolicyId"),
+      is(loanPoliciesFixture.canCirculateRolling().getId()));
 
     assertThat("due date should be 3 weeks after loan date, based upon loan policy",
       loan.getString("dueDate"), isEquivalentTo(loanDate.plusWeeks(3)));
@@ -156,12 +160,12 @@ public class CheckOutByBarcodeTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    useExampleFixedPolicyLoanRules();
+    useExampleFixedPolicyCirculationRules();
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
+    final DateTime loanDate = new DateTime(2019, 3, 18, 11, 43, 54, DateTimeZone.UTC);
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -176,11 +180,12 @@ public class CheckOutByBarcodeTests extends APITests {
       loan.getString("loanDate"), isEquivalentTo(loanDate));
 
     assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(APITestSuite.canCirculateFixedLoanPolicyId()));
+      loan.getString("loanPolicyId"),
+      is(loanPoliciesFixture.canCirculateFixed().getId()));
 
     assertThat("due date should be based upon fixed due date schedule",
       loan.getString("dueDate"),
-      isEquivalentTo(new DateTime(2018, 12, 31, 23, 59, 59, DateTimeZone.UTC)));
+      isEquivalentTo(END_OF_2019_DUE_DATE));
   }
 
   @Test
@@ -194,23 +199,22 @@ public class CheckOutByBarcodeTests extends APITests {
       .withName("March Only Due Date Limit")
       .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 3));
 
-    final UUID dueDateLimitScheduleId = fixedDueDateScheduleClient.create(
+    final UUID dueDateLimitScheduleId = loanPoliciesFixture.createSchedule(
       dueDateLimitSchedule).getId();
-
-    //Need to remember in order to delete after test
-    schedulesToDelete.add(dueDateLimitScheduleId);
 
     LoanPolicyBuilder dueDateLimitedPolicy = new LoanPolicyBuilder()
       .withName("Due Date Limited Rolling Policy")
       .rolling(Period.days(30))
       .limitedBySchedule(dueDateLimitScheduleId);
 
-    UUID dueDateLimitedPolicyId = loanPolicyClient.create(dueDateLimitedPolicy).getId();
+    UUID dueDateLimitedPolicyId = loanPoliciesFixture.create(dueDateLimitedPolicy)
+      .getId();
 
-    //Need to remember in order to delete after test
-    policiesToDelete.add(dueDateLimitedPolicyId);
-
-    useLoanPolicyAsFallback(dueDateLimitedPolicyId);
+    useLoanPolicyAsFallback(
+      dueDateLimitedPolicyId,
+      requestPoliciesFixture.noAllowedTypes().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -254,7 +258,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     final CompletableFuture<Response> completed = new CompletableFuture<>();
 
-    client.get(APITestSuite.circulationModuleUrl(response.getLocation()),
+    client.get(APITestContext.circulationModuleUrl(response.getLocation()),
       ResponseHandler.json(completed));
 
     final Response getResponse = completed.get(2, TimeUnit.SECONDS);
@@ -294,10 +298,11 @@ public class CheckOutByBarcodeTests extends APITests {
     TimeoutException,
     ExecutionException {
 
+    //TODO: Review this to see if can simplify by not creating user at all?
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    usersClient.delete(steve.getId());
+    usersFixture.remove(steve);
 
     final Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, steve);
 
@@ -335,7 +340,7 @@ public class CheckOutByBarcodeTests extends APITests {
     final IndividualResource james = usersFixture.james();
     final IndividualResource steve = usersFixture.steve(UserBuilder::inactive);
 
-    usersFixture.currentProxyFor(james, steve);
+    proxyRelationshipsFixture.currentProxyFor(james, steve);
 
     final Response response = loansFixture.attemptCheckOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -409,6 +414,21 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Item is already checked out"),
       hasItemBarcodeParameter(smallAngryPlanet))));
+  }
+
+  @Test
+  public void cannotCheckOutWhenItemIsMissing()    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final IndividualResource missingItem = setupMissingItem(itemsFixture);
+    final IndividualResource steve = usersFixture.steve();
+    final Response response = loansFixture.attemptCheckOutByBarcode(missingItem, steve);
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessageContaining("has the item status Missing"),
+      hasItemBarcodeParameter(missingItem))));
   }
 
   @Test
@@ -510,14 +530,14 @@ public class CheckOutByBarcodeTests extends APITests {
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
 
-    usersFixture.currentProxyFor(jessica, james);
+    proxyRelationshipsFixture.currentProxyFor(jessica, james);
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
-      .forItem(smallAngryPlanet)
-      .to(jessica)
-      .proxiedBy(james)
-      .at(UUID.randomUUID()));
+        .forItem(smallAngryPlanet)
+        .to(jessica)
+        .proxiedBy(james)
+        .at(UUID.randomUUID()));
 
     JsonObject loan = response.getJson();
 
@@ -537,7 +557,11 @@ public class CheckOutByBarcodeTests extends APITests {
 
     final UUID nonExistentloanPolicyId = UUID.randomUUID();
 
-    useLoanPolicyAsFallback(nonExistentloanPolicyId);
+    useLoanPolicyAsFallback(
+      nonExistentloanPolicyId,
+      requestPoliciesFixture.noAllowedTypes().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -552,10 +576,10 @@ public class CheckOutByBarcodeTests extends APITests {
         .at(UUID.randomUUID()));
 
     assertThat(response.getBody(), is(String.format(
-      "Loan policy %s could not be found, please check loan rules",
+      "Loan policy %s could not be found, please check circulation rules",
       nonExistentloanPolicyId)));
   }
-  
+
   @Test
   public void cannotCheckOutWhenServicePointOfCheckoutNotPresent()
     throws InterruptedException,
@@ -565,14 +589,14 @@ public class CheckOutByBarcodeTests extends APITests {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
-    
+
     final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
 
     final Response response = loansFixture.attemptCheckOutByBarcode(422,
-        new CheckOutByBarcodeRequestBuilder()
-          .forItem(smallAngryPlanet)
-          .to(james)
-          .on(loanDate));
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(james)
+        .on(loanDate));
 
     assertThat(response.getStatusCode(), is(422));
 

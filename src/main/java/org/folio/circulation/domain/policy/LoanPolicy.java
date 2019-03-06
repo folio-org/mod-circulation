@@ -1,18 +1,6 @@
 package org.folio.circulation.domain.policy;
 
-import static org.folio.circulation.support.HttpResult.failed;
-import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getNestedIntegerProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
-
+import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
@@ -21,9 +9,25 @@ import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 
-import io.vertx.core.json.JsonObject;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+
+import static org.folio.circulation.support.HttpResult.failed;
+import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getNestedIntegerProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
 
 public class LoanPolicy {
+
+  private static final String LOANS_POLICY_KEY = "loansPolicy";
+  private static final String PERIOD_KEY = "period";
+
   private final JsonObject representation;
   private final FixedDueDateSchedules fixedDueDateSchedules;
   private final FixedDueDateSchedules alternateRenewalFixedDueDateSchedules;
@@ -44,7 +48,7 @@ public class LoanPolicy {
     this.alternateRenewalFixedDueDateSchedules = alternateRenewalFixedDueDateSchedules;
   }
 
-  static LoanPolicy from(JsonObject representation) {
+  public static LoanPolicy from(JsonObject representation) {
     return new LoanPolicy(representation);
   }
 
@@ -57,7 +61,7 @@ public class LoanPolicy {
     //TODO: Create HttpResult wrapper that traps exceptions
     try {
       if(isNotRenewable()) {
-        return failedResult(errorForPolicy("items with this loan policy cannot be renewed"));
+        return failedResult(errorForPolicy("loan is not renewable"));
       }
 
       final HttpResult<DateTime> proposedDueDateResult =
@@ -170,7 +174,7 @@ public class LoanPolicy {
 
   private void errorWhenReachedRenewalLimit(Loan loan, List<ValidationError> errors) {
     if(!unlimitedRenewals() && reachedNumberOfRenewalsLimit(loan)) {
-      errors.add(errorForPolicy("loan has reached its maximum number of renewals"));
+      errors.add(errorForPolicy("loan at maximum renewal number"));
     }
   }
 
@@ -181,7 +185,7 @@ public class LoanPolicy {
 
     if(isSameOrBefore(loan, proposedDueDate)) {
       errors.add(errorForPolicy(
-        "renewal at this time would not change the due date"));
+        "renewal would not change the due date"));
     }
   }
 
@@ -240,14 +244,14 @@ public class LoanPolicy {
   }
 
   private JsonObject getLoansPolicy() {
-    return representation.getJsonObject("loansPolicy");
+    return representation.getJsonObject(LOANS_POLICY_KEY);
   }
 
   private JsonObject getRenewalsPolicy() {
     return representation.getJsonObject("renewalsPolicy");
   }
 
-  private FixedDueDateSchedules getRenewalDueDateLimitSchedules() {
+  public FixedDueDateSchedules getRenewalDueDateLimitSchedules() {
     if(useDifferentPeriod()) {
       if(Objects.isNull(alternateRenewalFixedDueDateSchedules)
         || alternateRenewalFixedDueDateSchedules instanceof NoFixedDueDateSchedules)
@@ -271,8 +275,8 @@ public class LoanPolicy {
   }
 
   private Period getPeriod(JsonObject policy) {
-    String interval = getNestedStringProperty(policy, "period", "intervalId");
-    Integer duration = getNestedIntegerProperty(policy, "period", "duration");
+    String interval = getNestedStringProperty(policy, PERIOD_KEY, "intervalId");
+    Integer duration = getNestedIntegerProperty(policy, PERIOD_KEY, "duration");
     return Period.from(duration, interval);
   }
 
@@ -284,7 +288,7 @@ public class LoanPolicy {
     return getProperty(getRenewalsPolicy(), "renewFromId");
   }
 
-  private FixedDueDateSchedules getRenewalFixedDueDateSchedules() {
+  public FixedDueDateSchedules getRenewalFixedDueDateSchedules() {
     return useDifferentPeriod()
       ? alternateRenewalFixedDueDateSchedules
       : fixedDueDateSchedules;
@@ -298,12 +302,16 @@ public class LoanPolicy {
     return representation.getString("name");
   }
 
-  private boolean isFixed(JsonObject loansPolicy) {
+  public boolean isFixed(JsonObject loansPolicy) {
     return isProfile(loansPolicy, "Fixed");
   }
 
-  private boolean isRolling(JsonObject loansPolicy) {
+  public boolean isRolling(JsonObject loansPolicy) {
     return isProfile(loansPolicy, "Rolling");
+  }
+
+  public boolean isFixed() {
+    return isFixed(representation);
   }
 
   private boolean isProfile(JsonObject loansPolicy, String profileId) {
@@ -329,6 +337,64 @@ public class LoanPolicy {
     return withAlternateRenewalSchedules(FixedDueDateSchedules.from(renewalSchedules));
   }
 
+  public boolean isLoanable() {
+    return representation.getBoolean("loanable", false);
+  }
+
+  public FixedDueDateSchedules getFixedDueDateSchedules() {
+    return fixedDueDateSchedules;
+  }
+
+  public DueDateManagement getDueDateManagement() {
+    JsonObject loansPolicyObj = representation.getJsonObject(LOANS_POLICY_KEY);
+    if (Objects.isNull(loansPolicyObj)) {
+      return DueDateManagement.KEEP_THE_CURRENT_DUE_DATE_TIME;
+    }
+
+    String dateManagementId = loansPolicyObj.getString("closedLibraryDueDateManagementId");
+    return DueDateManagement.getDueDateManagement(dateManagementId);
+  }
+
+  public LoanPolicyPeriod getPeriodInterval() {
+    return getPeriod(PERIOD_KEY);
+  }
+
+  public int getPeriodDuration() {
+    return getDuration(PERIOD_KEY);
+  }
+
+  public int getOffsetPeriodDuration() {
+    return getDuration("openingTimeOffset");
+  }
+
+  public LoanPolicyPeriod getOffsetPeriodInterval() {
+    return getPeriod("openingTimeOffset");
+  }
+
+  private LoanPolicyPeriod getPeriod(String val) {
+    JsonObject loansPolicyObj = representation.getJsonObject(LOANS_POLICY_KEY);
+    if (Objects.isNull(loansPolicyObj)) {
+      return LoanPolicyPeriod.INCORRECT;
+    }
+
+    JsonObject period = loansPolicyObj.getJsonObject(val);
+    if (Objects.isNull(period)) {
+      return LoanPolicyPeriod.INCORRECT;
+    }
+
+    String intervalId = period.getString("intervalId");
+    return LoanPolicyPeriod.getProfileByName(intervalId);
+  }
+
+  private int getDuration(String val) {
+    JsonObject loansPolicyObj = representation.getJsonObject(LOANS_POLICY_KEY);
+    JsonObject period = loansPolicyObj.getJsonObject(val);
+    if (Objects.isNull(period)) {
+      return 0;
+    }
+    return period.getInteger("duration");
+  }
+
   public String getId() {
     return representation.getString("id");
   }
@@ -339,5 +405,33 @@ public class LoanPolicy {
 
   String getAlternateRenewalsFixedDueDateScheduleId() {
     return getProperty(getRenewalsPolicy(), "alternateFixedDueDateScheduleId");
+  }
+
+  public Optional<DateTime> getScheduleLimit(DateTime loanDate, boolean isRenewal, DateTime systemDate) {
+    final JsonObject loansPolicy = getLoansPolicy();
+
+    if(loansPolicy == null) {
+      return Optional.empty();
+    }
+
+    if(isRolling(loansPolicy)) {
+      if(isRenewal) {
+        return getRenewalDueDateLimitSchedules().findDueDateFor(loanDate);
+      }
+      else {
+        return fixedDueDateSchedules.findDueDateFor(loanDate);
+      }
+    }
+    else if(isFixed(loansPolicy)) {
+      if(isRenewal) {
+        return getRenewalFixedDueDateSchedules().findDueDateFor(systemDate);
+      }
+      else {
+        return fixedDueDateSchedules.findDueDateFor(loanDate);
+      }
+    }
+    else {
+      return Optional.empty();
+    }
   }
 }

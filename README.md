@@ -1,14 +1,16 @@
 # mod-circulation
 
-Copyright (C) 2017-2018 The Open Library Foundation
+Copyright (C) 2017-2019 The Open Library Foundation
 
 This software is distributed under the terms of the Apache License,
 Version 2.0. See the file "[LICENSE](LICENSE)" for more information.
 
 ## Documentation
 
-Further documentation about this module can be found in the
-[Guide](doc/guide.md) file within the `/doc/` folder.
+Further documentation about this module can be found in the [/doc/](doc) folder:
+
+* [Guide](doc/guide.md) - introduction for developers
+* [Circulationrules](doc/circulationrules.md) - how the circulation rules file and the circulation rules engine work
 
 ## Goal
 
@@ -85,6 +87,18 @@ for the ability to reorder the queue manually.
 It is not possible to create a loan that is already closed via POST
 due to checks that are performed during this request. 
 However it can be done when creating a loan in a specific location via PUT 
+
+#### API Tests
+
+As it is intended that API tests can be run against real module instances,
+some scenarios are not easily replicated without breaking this capability.
+
+For example, previously there were tests that verified that some of the APIs
+could handle missing inventory records. As mod-inventory-storage does not allow
+used holdings or instance records to be deleted, these tests were removed.
+
+These tests need to be replaced by tests that use specialised implementations 
+of the storage interfaces, separate to the fakes used for general API tests.  
 
 ### Check Out By Barcode
 
@@ -187,7 +201,7 @@ Each includes an example of the error message provided and the parameter key inc
 |Check|Example Message|Parameter Key|Notes|
 |---|---|---|---|
 |Item does not exist|No item with barcode 036000291452 exists|itemBarcode| |
-|Holding does not exist| | |otherwise it is not possible to lookup loan rules|
+|Holding does not exist| | |otherwise it is not possible to lookup circulation rules|
 |Item is already checked out|Item is already checked out|itemBarcode| |
 |Existing open loan for item|Cannot check out item that already has an open loan|itemBarcode| |
 |Proxy relationship is valid|Cannot check out item via proxy when relationship is invalid| |only if proxying|
@@ -305,18 +319,17 @@ content-length: 611
 }
 ```
 
-### Loan Rules Caching
+### Circulation Rules Caching
 
-The loan rules engine used for applying loan rules has an internal, local cache which is refreshed every 5 seconds and
-when a PUT to /circulation/loan-rules changes the loan rules.
+The circulation rules engine used for applying circulation rules has an internal, local cache which is refreshed every 5 seconds and when a PUT to /circulation/rules changes the circulation rules.
 
-This is per module instance, and so may result in different responses during this window after the loan rules are changed.
+This is per module instance, and so may result in different responses during this window after the circulation rules are changed.
 
-### Loan Rules
+### Circulation Rules
 
-[doc/loanrules.md](doc/loanrules.md)
+[doc/circulationrules.md](doc/circulationrules.md)
 
-That document explains how the loan rules engine calculates the loan policy (that specifies the loan period)
+That document explains how the circulation rules engine calculates the loan policy (that specifies the loan period)
 based on the patron's patron group and the item's material type, loan type, and location.
 
 ### Item Status
