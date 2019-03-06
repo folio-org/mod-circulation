@@ -10,7 +10,7 @@
       "type": "array",
       "items": {
         "type": "object",
-        "$ref": "circulation-rule-match.json"
+        "$ref": "circulation-rule-loan-policy-match.json"
       }
     }
   },

@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Circulation policy ids schema",
+  "description": "All rule matches from an application of the rules",
+  "type": "object",
+  "properties": {
+    "ruleMatches": {
+      "id": "ruleMatches",
+      "description": "Set of all rule matches",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "$ref": "circulation-rule-request-policy-match.json"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "ruleMatches"
+  ]
+}
