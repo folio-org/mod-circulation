@@ -1,15 +1,16 @@
 package org.folio.circulation.resources;
 
+import static org.folio.circulation.support.http.server.ServerErrorResponse.internalError;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.folio.circulation.rules.Drools;
+import org.folio.circulation.support.OkJsonHttpResult;
+
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.folio.circulation.rules.Drools;
-import org.folio.circulation.support.OkJsonHttpResult;
-
-import static org.folio.circulation.support.http.server.ServerErrorResponse.internalError;
 
 /**
  * The circulation rules engine calculates the request policy based on
