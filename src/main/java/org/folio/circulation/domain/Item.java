@@ -156,6 +156,10 @@ public class Item {
     return materialTypeRepresentation;
   }
 
+  public JsonArray getCopyNumbers() {
+    return getItem() == null ? new JsonArray() : getItem().getJsonArray("copyNumbers");
+  }
+
   public String getMaterialTypeId() {
     return getProperty(getItem(), ItemProperties.MATERIAL_TYPE_ID);
   }
