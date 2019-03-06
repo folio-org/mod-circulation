@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpServer;
 import io.vertx.ext.web.Router;
 
@@ -35,7 +36,8 @@ public class CirculationVerticle extends AbstractVerticle {
 
     Router router = Router.router(vertx);
 
-    HttpClient client = vertx.createHttpClient();
+    // bump up the connection pool size from the default value of 5 
+    HttpClient client = vertx.createHttpClient(new HttpClientOptions().setMaxPoolSize(100));
 
     this.server = vertx.createHttpServer();
 
