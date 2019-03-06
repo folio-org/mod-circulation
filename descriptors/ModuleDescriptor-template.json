@@ -426,6 +426,30 @@
           "methods": [
             "GET"
           ],
+          "pathPattern": "/circulation/rules/notice-policy",
+          "permissionsRequired": [
+            "circulation.rules.notice-policy.get"
+          ],
+          "modulePermissions": [
+            "circulation-storage.circulation-rules.get"
+          ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/rules/notice-policy-all",
+          "permissionsRequired": [
+            "circulation.rules.notice-policy-all.get"
+          ],
+          "modulePermissions": [
+            "circulation-storage.circulation-rules.get"
+          ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
           "pathPattern": "/circulation/requests",
           "permissionsRequired": [
             "circulation.requests.collection.get"
