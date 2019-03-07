@@ -6,15 +6,20 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTimeZone;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+
+import static org.folio.circulation.support.HttpResult.failed;
 
 public class ConfigurationRepository {
 
   private static final DateTimeZone DEFAULT_DATE_TIME_ZONE = DateTimeZone.UTC;
-  private static final HttpResult<DateTimeZone> HTTP_RESULT = HttpResult.succeeded(DEFAULT_DATE_TIME_ZONE);
+  private static final String ERROR_MESSAGE = "Time zone configuration not found";
 
   private static final String PATH_QUERY = "?query=(module=ORG%20and%20configName=localeSettings)";
   private static final String RECORD_NAME = "configs";
@@ -37,7 +42,8 @@ public class ConfigurationRepository {
     return FetchSingleRecord.<DateTimeZone>forRecord(RECORD_NAME)
       .using(calendarClient)
       .mapTo(this::findDateTimeZone)
-      .whenNotFound(HTTP_RESULT)
+      .whenNotFound(failed(new ValidationErrorFailure(
+        new ValidationError(ERROR_MESSAGE, Collections.emptyMap()))))
       .fetch(PATH_QUERY);
   }
 
