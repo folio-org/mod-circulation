@@ -17,6 +17,11 @@ public class TimeZoneConfigBuilder extends JsonBuilder implements Builder {
       .put(VALUE_KEY, value);
   }
 
+  public TimeZoneConfigBuilder(String value) {
+    this.representation = new JsonObject()
+      .put(VALUE_KEY, value);
+  }
+
   @Override
   public JsonObject create() {
     return this.representation;
