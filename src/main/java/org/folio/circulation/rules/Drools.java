@@ -4,6 +4,7 @@ import static org.folio.circulation.resources.AbstractCirculationRulesEngineReso
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.LOAN_TYPE_ID_NAME;
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.PATRON_TYPE_ID_NAME;
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.SHELVING_LOCATION_ID_NAME;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import org.kie.api.KieServices;
 import org.kie.api.builder.KieBuilder;
@@ -80,13 +81,18 @@ public class Drools {
    */
   public JsonArray loanPolicies(MultiMap params) {
     KieSession kieSession = createSession(params);
+
     JsonArray array = new JsonArray();
+
     while (kieSession.fireAllRules() > 0) {
       JsonObject json = new JsonObject();
-      json.put("loanPolicyId", match.loanPolicyId);
-      json.put("circulationRuleLine", match.lineNumber);
+
+      write(json, "loanPolicyId", match.loanPolicyId);
+      writeLineMatch(json);
+
       array.add(json);
     }
+
     kieSession.dispose();
     return array;
   }
@@ -111,14 +117,20 @@ public class Drools {
    */
   public JsonArray requestPolicies(MultiMap params) {
     KieSession kieSession = createSession(params);
+
     JsonArray array = new JsonArray();
+
     while (kieSession.fireAllRules() > 0) {
       JsonObject json = new JsonObject();
-      json.put("requestPolicyId", match.requestPolicyId);
-      json.put("circulationRuleLine", match.lineNumber);
+
+      write(json, "requestPolicyId", match.requestPolicyId);
+      writeLineMatch(json);
+
       array.add(json);
     }
+
     kieSession.dispose();
+
     return array;
   }
 
@@ -142,15 +154,25 @@ public class Drools {
    */
   public JsonArray noticePolicies(MultiMap params) {
     KieSession kieSession = createSession(params);
+
     JsonArray array = new JsonArray();
+
     while (kieSession.fireAllRules() > 0) {
       JsonObject json = new JsonObject();
+
       json.put("noticePolicyId", match.noticePolicyId);
-      json.put("circulationRuleLine", match.lineNumber);
+      writeLineMatch(json);
+
       array.add(json);
     }
+
     kieSession.dispose();
+
     return array;
+  }
+
+  private void writeLineMatch(JsonObject json) {
+    write(json, "circulationRuleLine", match.lineNumber);
   }
 
   // NOTE: methods below used for testing
@@ -171,18 +193,7 @@ public class Drools {
    * @param params request params
    * @return request policy
    */
-  public static String requestPolicy(String droolsFile, MultiMap params) {
+  static String requestPolicy(String droolsFile, MultiMap params) {
     return new Drools(droolsFile).requestPolicy(params);
   }
-
-  /**
-   * Return the request policy calculated using the drools rules and the item type and request type.
-   * @param droolsFile - rules to use
-   * @param params request params
-   * @return request policy
-   */
-  public static String noticePolicy(String droolsFile, MultiMap params) {
-    return new Drools(droolsFile).noticePolicy(params);
-  }
-
 }
