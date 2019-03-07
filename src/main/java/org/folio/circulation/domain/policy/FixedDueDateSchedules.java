@@ -36,7 +36,6 @@ public class FixedDueDateSchedules {
 
   // for test only
   static FixedDueDateSchedules from(JsonObject representation) {
-    //TODO: Replace this with better check
     if (representation == null) {
       return new NoFixedDueDateSchedules();
     } else {
