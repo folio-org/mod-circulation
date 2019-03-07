@@ -371,6 +371,12 @@ public class CirculationRulesEngineAPITests extends APITests {
     assertThat("["+match+"].circulationRuleLine of "+o, o.getInteger("circulationRuleLine"), is(line));
   }
 
+  private void matchesNoticePolicy(JsonArray array, int match, Policy policy, int line) {
+    JsonObject o = array.getJsonObject(match);
+    assertThat("["+match+"].noticePolicyId of "+o, o.getString("noticePolicyId"), is(policy.id));
+    assertThat("["+match+"].circulationRuleLine of "+o, o.getInteger("circulationRuleLine"), is(line));
+  }
+
   @Test
   public void testRequestApplyAll() throws Exception {
     setRules(rules1);
@@ -391,6 +397,35 @@ public class CirculationRulesEngineAPITests extends APITests {
     matchesRequestPolicy(array, 0, rp1, 4);
     matchesRequestPolicy(array, 1, rp1, 3);
     matchesRequestPolicy(array, 2, rp1, 2);
+    assertThat(array.size(), is(3));
+  }
+
+  @Test
+  public void canDetermineAllPatronNoticePolicyMatches() throws Exception {
+    setRules(rules1);
+
+    CompletableFuture<Response> completed = new CompletableFuture<>();
+
+    URL url = circulationRulesUrl(
+      "/notice-policy-all"
+        + "?item_type_id="         + m2
+        + "&loan_type_id="         + t2
+        + "&patron_type_id="       + g2
+        + "&shelving_location_id=" + s2
+    );
+
+    client.get(url, ResponseHandler.any(completed));
+
+    Response response = completed.get(10, TimeUnit.SECONDS);
+    assertThat(response.getStatusCode() + " " + response.getBody(),
+      response.getStatusCode(), is(200));
+    JsonObject json = new JsonObject(response.getBody());
+    JsonArray array = json.getJsonArray("circulationRuleMatches");
+
+    matchesNoticePolicy(array, 0, np1, 4);
+    matchesNoticePolicy(array, 1, np1, 3);
+    matchesNoticePolicy(array, 2, np1, 2);
+
     assertThat(array.size(), is(3));
   }
 
