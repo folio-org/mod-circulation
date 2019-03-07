@@ -39,14 +39,14 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
   public static final String SHELVING_LOCATION_ID_NAME = "shelving_location_id";
   public static final String LOAN_TYPE_ID_NAME = "loan_type_id";
 
-  protected final String applyPath;
-  protected final String applyAllPath;
+  private final String applyPath;
+  private final String applyAllPath;
 
   /** after this time the rules get loaded before executing the circulation rules engine */
-  protected static long maxAgeInMilliseconds = 5000;
+  private static long maxAgeInMilliseconds = 5000;
   /** after this time the circulation rules engine is executed first for a fast reply
    * and then the circulation rules get reloaded */
-  protected static long triggerAgeInMilliseconds = 4000;
+  private static long triggerAgeInMilliseconds = 4000;
 
   private class Rules {
     String rulesAsText = "";
@@ -76,17 +76,6 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
    */
   public static void dropCache() {
     rulesMap.clear();
-  }
-
-  /**
-   * Enforce reload of all circulation rules of all tenants.
-   * This doesn't rebuild the drools rules if the circulation rules haven't changed.
-   */
-  public static void clearCache() {
-    for (Rules rules: rulesMap.values()) {
-      // timestamp in the past enforces reload
-      rules.reloadTimestamp = 0;
-    }
   }
 
   /**
@@ -239,7 +228,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
     }
   }
 
-  protected boolean invalidUuid(HttpServerRequest request, String paramName) {
+  private boolean invalidUuid(HttpServerRequest request, String paramName) {
     final String regex = "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$";
     String uuid = request.getParam(paramName);
     if (uuid == null) {
