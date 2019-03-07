@@ -108,7 +108,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
    * @param applyAllPath  URL path for circulation rules triggering that returns all matches
    * @param client  the HttpClient to use for requests via Okapi
    */
-  public AbstractCirculationRulesEngineResource(String applyPath, String applyAllPath, HttpClient client) {
+  AbstractCirculationRulesEngineResource(String applyPath, String applyAllPath, HttpClient client) {
     super(client);
     this.applyPath = applyPath;
     this.applyAllPath = applyAllPath;
@@ -119,17 +119,13 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
    * @param router  where to register
    */
   @Override
-public void register(Router router) {
+  public void register(Router router) {
     router.get(applyPath   ).handler(this::apply);
     router.get(applyAllPath).handler(this::applyAll);
   }
 
   private String getTenantId(RoutingContext routingContext) {
-    String tenantId = routingContext.request().getHeader("X-Okapi-Tenant");
-    if (tenantId == null) {
-      return "";
-    }
-    return tenantId;
+    return new WebContext(routingContext).getTenantId();
   }
 
   private boolean isCurrent(Rules rules) {
