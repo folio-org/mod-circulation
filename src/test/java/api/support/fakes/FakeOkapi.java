@@ -15,9 +15,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
+import java.util.List;
 
 import static api.support.fixtures.CalendarExamples.CASE_CALENDAR_IS_EMPTY_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.getCalendarById;
+import static api.support.fixtures.ConfigurationExample.getConfigurations;
 import static api.support.fixtures.LibraryHoursExamples.CASE_CALENDAR_IS_UNAVAILABLE_SERVICE_POINT_ID;
 import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_IN_THU_SERVICE_POINT_ID;
 import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_SERVICE_POINT_ID;
@@ -175,6 +177,7 @@ public class FakeOkapi extends AbstractVerticle {
     registerCirculationRulesStorage(router);
     registerCalendar(router);
     registerLibraryHours(router);
+    registerConfiguration(router);
 
     new FakeStorageModuleBuilder()
       .withRecordName("institution")
@@ -326,6 +329,19 @@ public class FakeOkapi extends AbstractVerticle {
               .putHeader("content-type", "application/json")
               .end(findFakeLibraryHoursById(servicePointId));
         }
+      });
+  }
+
+  private void registerConfiguration(Router router) {
+    String configUrl = "/configurations/entries";
+    router.get(configUrl)
+      .handler(routingContext -> {
+        List<String> query = routingContext.queryParam("query");
+        log.debug(configUrl, "?query=", query);
+        routingContext.response()
+          .putHeader("content-type", "application/json")
+          .setStatusCode(200)
+          .end(getConfigurations());
       });
   }
 
