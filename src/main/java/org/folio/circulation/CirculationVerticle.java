@@ -7,6 +7,7 @@ import org.folio.circulation.resources.CheckOutByBarcodeResource;
 import org.folio.circulation.resources.CirculationRulesResource;
 import org.folio.circulation.resources.LoanCirculationRulesEngineResource;
 import org.folio.circulation.resources.LoanCollectionResource;
+import org.folio.circulation.resources.NoticeCirculationRulesEngineResource;
 import org.folio.circulation.resources.OverrideRenewalByBarcodeResource;
 import org.folio.circulation.resources.RenewByBarcodeResource;
 import org.folio.circulation.resources.RenewByIdResource;
@@ -61,6 +62,11 @@ public class CirculationVerticle extends AbstractVerticle {
       "/circulation/rules/request-policy",
       "/circulation/rules/request-policy-all",
        client)
+        .register(router);
+    new NoticeCirculationRulesEngineResource(
+      "/circulation/rules/notice-policy",
+      "/circulation/rules/notice-policy-all",
+        client)
         .register(router);
 
     server.requestHandler(router::accept)

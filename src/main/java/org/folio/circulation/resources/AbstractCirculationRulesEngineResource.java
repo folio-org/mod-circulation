@@ -11,6 +11,7 @@ import org.folio.circulation.rules.Drools;
 import org.folio.circulation.rules.Text2Drools;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.OkJsonHttpResult;
 import org.folio.circulation.support.http.server.ClientErrorResponse;
 import org.folio.circulation.support.http.server.ForwardResponse;
 import org.folio.circulation.support.http.server.WebContext;
@@ -18,8 +19,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.vertx.core.Handler;
+import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -31,18 +34,19 @@ import io.vertx.ext.web.RoutingContext;
 public abstract class AbstractCirculationRulesEngineResource extends Resource {
   protected static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  protected static final String ITEM_TYPE_ID_NAME = "item_type_id";
-  protected static final String PATRON_TYPE_ID_NAME = "patron_type_id";
-  protected static final String SHELVING_LOCATION_ID_NAME = "shelving_location_id";
+  public static final String ITEM_TYPE_ID_NAME = "item_type_id";
+  public static final String PATRON_TYPE_ID_NAME = "patron_type_id";
+  public static final String SHELVING_LOCATION_ID_NAME = "shelving_location_id";
+  public static final String LOAN_TYPE_ID_NAME = "loan_type_id";
 
-  protected final String applyPath;
-  protected final String applyAllPath;
+  private final String applyPath;
+  private final String applyAllPath;
 
   /** after this time the rules get loaded before executing the circulation rules engine */
-  protected static long maxAgeInMilliseconds = 5000;
+  private static long maxAgeInMilliseconds = 5000;
   /** after this time the circulation rules engine is executed first for a fast reply
    * and then the circulation rules get reloaded */
-  protected static long triggerAgeInMilliseconds = 4000;
+  private static long triggerAgeInMilliseconds = 4000;
 
   private class Rules {
     String rulesAsText = "";
@@ -75,17 +79,6 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
   }
 
   /**
-   * Enforce reload of all circulation rules of all tenants.
-   * This doesn't rebuild the drools rules if the circulation rules haven't changed.
-   */
-  public static void clearCache() {
-    for (Rules rules: rulesMap.values()) {
-      // timestamp in the past enforces reload
-      rules.reloadTimestamp = 0;
-    }
-  }
-
-  /**
    * Enforce reload of the tenant's circulation rules.
    * This doesn't rebuild the drools rules if the circulation rules haven't changed.
    * @param tenantId  id of the tenant
@@ -104,7 +97,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
    * @param applyAllPath  URL path for circulation rules triggering that returns all matches
    * @param client  the HttpClient to use for requests via Okapi
    */
-  public AbstractCirculationRulesEngineResource(String applyPath, String applyAllPath, HttpClient client) {
+  AbstractCirculationRulesEngineResource(String applyPath, String applyAllPath, HttpClient client) {
     super(client);
     this.applyPath = applyPath;
     this.applyAllPath = applyAllPath;
@@ -114,17 +107,14 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
    * Register the paths set in the constructor.
    * @param router  where to register
    */
+  @Override
   public void register(Router router) {
     router.get(applyPath   ).handler(this::apply);
     router.get(applyAllPath).handler(this::applyAll);
   }
 
   private String getTenantId(RoutingContext routingContext) {
-    String tenantId = routingContext.request().getHeader("X-Okapi-Tenant");
-    if (tenantId == null) {
-      return "";
-    }
-    return tenantId;
+    return new WebContext(routingContext).getTenantId();
   }
 
   private boolean isCurrent(Rules rules) {
@@ -238,7 +228,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
     }
   }
 
-  protected boolean invalidUuid(HttpServerRequest request, String paramName) {
+  private boolean invalidUuid(HttpServerRequest request, String paramName) {
     final String regex = "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$";
     String uuid = request.getParam(paramName);
     if (uuid == null) {
@@ -253,11 +243,43 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
     return false;
   }
 
-  protected abstract boolean invalidApplyParameters(HttpServerRequest request);
+  private void apply(RoutingContext routingContext) {
+    HttpServerRequest request = routingContext.request();
+    if (invalidApplyParameters(request)) {
+      return;
+    }
+    drools(routingContext, drools -> {
+      try {
+        String policyId = getPolicyId(request.params(), drools);
+        JsonObject json = new JsonObject().put(getPolicyIdKey(), policyId);
 
-  abstract void apply(RoutingContext routingContext);
+        new OkJsonHttpResult(json)
+          .writeTo(routingContext.response());
+      }
+      catch (Exception e) {
+        log.error("apply notice policy", e);
+        internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
+      }
+    });
+  }
 
-  abstract void applyAll(RoutingContext routingContext, Drools drools);
+  private void applyAll(RoutingContext routingContext, Drools drools) {
+    HttpServerRequest request = routingContext.request();
+    if (invalidApplyParameters(request)) {
+      return;
+    }
+    try {
+      JsonArray matches = getPolicies(request.params(), drools);
+      JsonObject json = new JsonObject().put("circulationRuleMatches", matches);
+
+      new OkJsonHttpResult(json)
+        .writeTo(routingContext.response());
+    }
+    catch (Exception e) {
+      log.error("applyAll", e);
+      internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
+    }
+  }
 
   private void applyAll(RoutingContext routingContext) {
     String circulationRules = routingContext.pathParam("circulation_rules");
@@ -277,5 +299,17 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
     }
   }
 
-  
+  private boolean invalidApplyParameters(HttpServerRequest request) {
+    return
+        invalidUuid(request, ITEM_TYPE_ID_NAME) ||
+        invalidUuid(request, LOAN_TYPE_ID_NAME) ||
+        invalidUuid(request, PATRON_TYPE_ID_NAME) ||
+        invalidUuid(request, SHELVING_LOCATION_ID_NAME);
+  }
+
+  protected abstract String getPolicyId(MultiMap params, Drools drools);
+
+  protected abstract String getPolicyIdKey();
+
+  protected abstract JsonArray getPolicies(MultiMap params, Drools drools);
 }
