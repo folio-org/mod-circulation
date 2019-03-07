@@ -8,8 +8,20 @@
   "requestExpirationDate": "2017-07-25T22:25:37Z",
   "position": 1,
   "item": {
+    "title": "Children of Time",
+    "barcode": "760932543816",
     "location": {
       "name": "Main Library"
-    }
+    },
+    "copyNumbers": [
+      "1",
+      "2"
+    ]
+  },
+  "tags": {
+    "tagList": [
+      "new",
+      "important"
+    ]
   }
 }

@@ -43,6 +43,9 @@ public class RequestsAPIRetrievalTests extends APITests {
 
   private static final String NEW_TAG = "new";
   private static final String IMPORTANT_TAG = "important";
+  private static final String ONE_COPY_NUMBER = "1";
+  private static final String TWO_COPY_NUMBER = "2";
+
 
   @Test
   public void canGetARequestById()
@@ -57,7 +60,10 @@ public class RequestsAPIRetrievalTests extends APITests {
     UUID staffGroupId = patronGroupsFixture.staff().getId();
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
-      itemBuilder -> itemBuilder.withEnumeration(enumeration));
+      itemBuilder -> itemBuilder
+        .withEnumeration(enumeration)
+        .withCopyNumbers(asList(ONE_COPY_NUMBER, TWO_COPY_NUMBER))
+    );
 
     final IndividualResource sponsor = usersFixture.rebecca(
       builder -> builder.withPatronGroupId(facultyGroupId));
@@ -146,6 +152,10 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(itemSummary.getString("enumeration"), is(enumeration));
 
     assertThat(itemSummary.getString("status"), is(CHECKED_OUT));
+
+    assertThat(itemSummary.containsKey("copyNumbers"), is(true));
+
+    assertThat(itemSummary.getJsonArray("copyNumbers"), contains(ONE_COPY_NUMBER, TWO_COPY_NUMBER));
 
     assertThat("has information taken from requesting user",
       representation.containsKey("requester"), is(true));

@@ -7,27 +7,27 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonArray;
 
 /**
- * The circulation rules engine calculates the request policy based on
- * item type, request type, patron type and shelving location.
+ * The circulation rules engine calculates the loan policy based on
+ * item type, loan type, patron type and shelving location.
  */
-public class RequestCirculationRulesEngineResource extends AbstractCirculationRulesEngineResource {
+public class NoticeCirculationRulesEngineResource extends AbstractCirculationRulesEngineResource {
 
-  public RequestCirculationRulesEngineResource(String applyPath, String applyAllPath, HttpClient client) {
+  public NoticeCirculationRulesEngineResource(String applyPath, String applyAllPath, HttpClient client) {
     super(applyPath, applyAllPath, client);
   }
 
   @Override
   protected String getPolicyId(MultiMap params, Drools drools) {
-    return drools.requestPolicy(params);
+    return drools.noticePolicy(params);
   }
 
   @Override
   protected String getPolicyIdKey() {
-    return "requestPolicyId";
+    return "noticePolicyId";
   }
 
   @Override
   protected JsonArray getPolicies(MultiMap params, Drools drools) {
-    return drools.requestPolicies(params);
+    return drools.noticePolicies(params);
   }
 }

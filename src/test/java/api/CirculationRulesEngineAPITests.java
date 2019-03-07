@@ -12,12 +12,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.folio.circulation.resources.LoanCirculationRulesEngineResource;
 import org.folio.circulation.rules.ItemType;
-import org.folio.circulation.rules.Policy;
 import org.folio.circulation.rules.LoanType;
 import org.folio.circulation.rules.PatronGroup;
+import org.folio.circulation.rules.Policy;
 import org.folio.circulation.rules.ShelvingLocation;
-import org.folio.circulation.resources.LoanCirculationRulesEngineResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
 import org.junit.Before;
@@ -67,7 +67,7 @@ public class CirculationRulesEngineAPITests extends APITests {
       URL url = circulationRulesUrl(
           "/request-policy"
           + "?item_type_id="         + itemType.id
-          + "&request_type_id="         + requestType
+          + "&loan_type_id="         + requestType
           + "&patron_type_id="       + patronGroup.id
           + "&shelving_location_id=" + shelvingLocation.id
           );
@@ -82,6 +82,29 @@ public class CirculationRulesEngineAPITests extends APITests {
       throw new RuntimeException(e);
     }
   }
+
+  private Policy applyNoticePolicy(ItemType itemType, String noticeType,
+          PatronGroup patronGroup, ShelvingLocation shelvingLocation) {
+        try {
+          CompletableFuture<Response> completed = new CompletableFuture<>();
+          URL url = circulationRulesUrl(
+              "/notice-policy"
+              + "?item_type_id="         + itemType.id
+              + "&loan_type_id="         + noticeType
+              + "&patron_type_id="       + patronGroup.id
+              + "&shelving_location_id=" + shelvingLocation.id
+              );
+          client.get(url, ResponseHandler.any(completed));
+          Response response = completed.get(10, TimeUnit.SECONDS);
+          assert response.getStatusCode() == 200;
+          JsonObject json = new JsonObject(response.getBody());
+          String noticePolicyId = json.getString("noticePolicyId");
+          assert noticePolicyId != null;
+          return new Policy(noticePolicyId);
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
 
   //Test data to work with our defined values
   private ItemType m1 = new ItemType("96d4bdf1-5fc2-40ef-9ace-6d7e3e48ec4d");
@@ -148,6 +171,15 @@ public class CirculationRulesEngineAPITests extends APITests {
     assertThat(response.getStatusCode(), is(400));
   }
 
+  @Test
+  public void applyNoticeWithoutParameters() throws Exception {
+    CompletableFuture<Response> completed = new CompletableFuture<>();
+    URL url = circulationRulesUrl("/notice-policy");
+    client.get(url, ResponseHandler.any(completed));
+    Response response = completed.get(10, TimeUnit.SECONDS);
+    assertThat(response.getStatusCode(), is(400));
+  }
+
   private void applyOneLoanParameterMissing(String p1, String p2, String p3, String missing) throws Exception {
     String name = missing.substring(0, missing.indexOf("="));
     CompletableFuture<Response> completed = new CompletableFuture<>();
@@ -168,6 +200,15 @@ public class CirculationRulesEngineAPITests extends APITests {
     assertThat(response.getBody(), containsString(name));
   }
 
+  private void applyOneNoticeParameterMissing(String p1, String p2, String p3, String missing) throws Exception {
+      String name = missing.substring(0, missing.indexOf("="));
+      CompletableFuture<Response> completed = new CompletableFuture<>();
+      URL url = circulationRulesUrl("/notice-policy?" + p1 + "&" + p2 + "&" + p3);
+      client.get(url, ResponseHandler.any(completed));
+      Response response = completed.get(10, TimeUnit.SECONDS);
+      assertThat(response.getStatusCode(), is(400));
+      assertThat(response.getBody(), containsString(name));
+    }
 
   @Test
   public void applyOneLoanParameterMissing() throws Exception {
@@ -188,7 +229,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   public void applyOneRequestParameterMissing() throws Exception {
     String[] p = {
         "item_type_id=" + m1,
-        "request_type_id=" + t1,
+        "loan_type_id=" + t1,
         "patron_type_id=" + lp1,
         "shelving_location_id=" + s1
     };
@@ -199,11 +240,26 @@ public class CirculationRulesEngineAPITests extends APITests {
     applyOneRequestParameterMissing(p[0], p[1], p[2],  p[3]);
   }
 
+  @Test
+  public void applyOneNoticeParameterMissing() throws Exception {
+    String[] p = {
+        "item_type_id=" + m1,
+        "loan_type_id=" + t1,
+        "patron_type_id=" + lp1,
+        "shelving_location_id=" + s1
+    };
+
+    applyOneNoticeParameterMissing(p[1], p[2], p[3],  p[0]);
+    applyOneNoticeParameterMissing(p[0], p[2], p[3],  p[1]);
+    applyOneNoticeParameterMissing(p[0], p[1], p[3],  p[2]);
+    applyOneNoticeParameterMissing(p[0], p[1], p[2],  p[3]);
+  }
+
   private void applyInvalidUuid(String i, String l, String p, String s, String type) {
     CompletableFuture<Response> completed = new CompletableFuture<>();
     URL url = circulationRulesUrl("/" + type + "-policy"
         + "?item_type_id=" + i
-        + "&" + type +"_type_id=" + l
+        + "&loan_type_id=" + l
         + "&patron_type_id=" + p
         + "&shelving_location_id=" + s);
     client.get(url, ResponseHandler.any(completed));
@@ -220,12 +276,12 @@ public class CirculationRulesEngineAPITests extends APITests {
   private void applyInvalidUuid(String uuid) {
     applyInvalidUuid( uuid, t1.id, lp1.id, s1.id, "loan");
     applyInvalidUuid(m1.id,  uuid, lp1.id, s1.id, "loan");
-    applyInvalidUuid(m1.id, t1.id,  uuid, s1.id, "loan");
+    applyInvalidUuid(m1.id, t1.id,  uuid,  s1.id, "loan");
     applyInvalidUuid(m1.id, t1.id, lp1.id,  uuid, "loan");
 
     applyInvalidUuid( uuid, t1.id, lp1.id, s1.id, "request");
     applyInvalidUuid(m1.id,  uuid, lp1.id, s1.id, "request");
-    applyInvalidUuid(m1.id, t1.id,  uuid, s1.id, "request");
+    applyInvalidUuid(m1.id, t1.id,  uuid,  s1.id, "request");
     applyInvalidUuid(m1.id, t1.id, lp1.id,  uuid, "request");
   }
 
@@ -235,14 +291,14 @@ public class CirculationRulesEngineAPITests extends APITests {
     applyInvalidUuid("0");
     applyInvalidUuid("f");
     applyInvalidUuid("-");
-    applyInvalidUuid(  "0000000-0000-1000-8000-000000000000");
-    applyInvalidUuid( "00000000-0000-1000-8000-00000000000");
+    applyInvalidUuid("0000000-0000-1000-8000-000000000000");
+    applyInvalidUuid("00000000-0000-1000-8000-00000000000");
     applyInvalidUuid("000000000-0000-1000-8000-000000000000");
-    applyInvalidUuid( "00000000-0000-1000-8000-0000000000000");
-    applyInvalidUuid( "00000000-0000-0000-8000-000000000000");
-    applyInvalidUuid( "g0000000-0000-1000-0000-000000000000");
-    applyInvalidUuid( "00000000-0000-1000-8000-00000000000g");
-    applyInvalidUuid( "00000000000010008000000000000000");
+    applyInvalidUuid("00000000-0000-1000-8000-0000000000000");
+    applyInvalidUuid("00000000-0000-0000-8000-000000000000");
+    applyInvalidUuid("g0000000-0000-1000-0000-000000000000");
+    applyInvalidUuid("00000000-0000-1000-8000-00000000000g");
+    applyInvalidUuid("00000000000010008000000000000000");
   }
 
   @Test
@@ -255,6 +311,12 @@ public class CirculationRulesEngineAPITests extends APITests {
   public void requestFallback() {
     setRules(rulesFallback);
     assertThat(applyRequestPolicy(m1, t1.id, g1, s1), is(rp1));
+  }
+
+  @Test
+  public void noticeFallback() {
+    setRules(rulesFallback);
+    assertThat(applyNoticePolicy(m1, t1.id, g1, s1), is(np1));
   }
 
   @Test
@@ -309,6 +371,12 @@ public class CirculationRulesEngineAPITests extends APITests {
     assertThat("["+match+"].circulationRuleLine of "+o, o.getInteger("circulationRuleLine"), is(line));
   }
 
+  private void matchesNoticePolicy(JsonArray array, int match, Policy policy, int line) {
+    JsonObject o = array.getJsonObject(match);
+    assertThat("["+match+"].noticePolicyId of "+o, o.getString("noticePolicyId"), is(policy.id));
+    assertThat("["+match+"].circulationRuleLine of "+o, o.getInteger("circulationRuleLine"), is(line));
+  }
+
   @Test
   public void testRequestApplyAll() throws Exception {
     setRules(rules1);
@@ -316,7 +384,7 @@ public class CirculationRulesEngineAPITests extends APITests {
     URL url = circulationRulesUrl(
         "/request-policy-all"
         + "?item_type_id="         + m2
-        + "&request_type_id="         + t2
+        + "&loan_type_id="         + t2
         + "&patron_type_id="       + g2
         + "&shelving_location_id=" + s2
         );
@@ -329,6 +397,35 @@ public class CirculationRulesEngineAPITests extends APITests {
     matchesRequestPolicy(array, 0, rp1, 4);
     matchesRequestPolicy(array, 1, rp1, 3);
     matchesRequestPolicy(array, 2, rp1, 2);
+    assertThat(array.size(), is(3));
+  }
+
+  @Test
+  public void canDetermineAllPatronNoticePolicyMatches() throws Exception {
+    setRules(rules1);
+
+    CompletableFuture<Response> completed = new CompletableFuture<>();
+
+    URL url = circulationRulesUrl(
+      "/notice-policy-all"
+        + "?item_type_id="         + m2
+        + "&loan_type_id="         + t2
+        + "&patron_type_id="       + g2
+        + "&shelving_location_id=" + s2
+    );
+
+    client.get(url, ResponseHandler.any(completed));
+
+    Response response = completed.get(10, TimeUnit.SECONDS);
+    assertThat(response.getStatusCode() + " " + response.getBody(),
+      response.getStatusCode(), is(200));
+    JsonObject json = new JsonObject(response.getBody());
+    JsonArray array = json.getJsonArray("circulationRuleMatches");
+
+    matchesNoticePolicy(array, 0, np1, 4);
+    matchesNoticePolicy(array, 1, np1, 3);
+    matchesNoticePolicy(array, 2, np1, 2);
+
     assertThat(array.size(), is(3));
   }
 

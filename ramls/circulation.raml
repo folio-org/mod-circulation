@@ -1,6 +1,6 @@
 #%RAML 1.0
 title: Circulation
-version: v7.2
+version: v7.4
 protocols: [ HTTP, HTTPS ]
 baseUri: http://localhost:9130
 
@@ -395,6 +395,90 @@ resourceTypes:
               application/json:
                 type: !include schema/circulation-rule-request-policy-matches.json
                 example: !include examples/circulation-rule-request-policy-matches.json
+          422:
+            description: "Invalid id error."
+            body:
+              application/json:
+                type: error
+                example: !include examples/circulation-rules-id-error.json
+          500:
+            description: "Internal server error"
+            body:
+              text/plain:
+                example: "Internal server error"
+    /notice-policy:
+      displayName: Apply circulation rules for notice policy
+      get:
+        description: Get the notice policy when applying circulation rules
+        queryParameters:
+          item_type_id:
+            description: "Item type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          loan_type_id:
+            description: "Loan type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          patron_type_id:
+            description: "Patron type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          shelving_location_id:
+            description: "Shelving location id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+        responses:
+          200:
+            body:
+              application/json:
+                type: !include schema/notice-policy-id.json
+                example: !include examples/notice-policy-id.json
+          400:
+            description: "Invalid query parameters"
+            body:
+              text/plain:
+                example: "required query parameter missing: item_type_id"
+          422:
+            description: "Invalid id error."
+            body:
+              application/json:
+                type: error
+                example: !include examples/circulation-rules-id-error.json
+          500:
+            description: "Internal server error"
+            body:
+              text/plain:
+                example: "Internal server error"
+    /notice-policy-all:
+      displayName: Apply circulation rules and return all matching notice policies
+      get:
+        description: Get notice policy for each match when applying circulation rules
+        queryParameters:
+          item_type_id:
+            description: "Item type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          loan_type_id:
+            description: "Loan type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          patron_type_id:
+            description: "Patron type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          shelving_location_id:
+            description: "Shelving location id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          rules:
+            description: "Circulation rules if provided, otherwise use stored circulation rules"
+            required: false
+        responses:
+          200:
+            body:
+              application/json:
+                type: !include schema/circulation-rule-notice-policy-matches.json
+                example: !include examples/circulation-rule-notice-policy-matches.json
           422:
             description: "Invalid id error."
             body:
