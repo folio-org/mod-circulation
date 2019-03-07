@@ -4,7 +4,7 @@
   "provides": [
     {
       "id": "circulation",
-      "version": "7.4",
+      "version": "7.5",
       "handlers": [
         {
           "methods": [
@@ -42,7 +42,8 @@
             "circulation-storage.loan-policies.item.get",
             "circulation-storage.request-policies.item.get",
             "circulation-storage.fixed-due-date-schedules.item.get",
-            "circulation-storage.fixed-due-date-schedules.collection.get"
+            "circulation-storage.fixed-due-date-schedules.collection.get",
+            "configuration.entries.collection.get"
           ]
         },
         {
@@ -156,7 +157,8 @@
             "circulation-storage.loan-policies.item.get",
             "circulation-storage.request-policies.item.get",
             "circulation-storage.fixed-due-date-schedules.item.get",
-            "circulation-storage.fixed-due-date-schedules.collection.get"
+            "circulation-storage.fixed-due-date-schedules.collection.get",
+            "configuration.entries.collection.get"
           ]
         },
         {
