@@ -17,18 +17,31 @@ import static org.folio.circulation.support.HttpResult.failed;
 
 public class FixedDueDateSchedules {
   private final List<JsonObject> schedules;
+  private final DateTimeZone timeZone;
 
-  FixedDueDateSchedules(List<JsonObject> schedules) {
+  FixedDueDateSchedules(List<JsonObject> schedules, DateTimeZone timeZone) {
     this.schedules = schedules;
+    this.timeZone = timeZone;
   }
 
+  static FixedDueDateSchedules from(JsonObject representation, DateTimeZone timeZone) {
+    //TODO: Replace this with better check
+    if (representation == null) {
+      return new NoFixedDueDateSchedules();
+    } else {
+      return new FixedDueDateSchedules(JsonArrayHelper.toList(
+        representation.getJsonArray("schedules")), timeZone);
+    }
+  }
+
+  // for test only
   static FixedDueDateSchedules from(JsonObject representation) {
     //TODO: Replace this with better check
     if (representation == null) {
       return new NoFixedDueDateSchedules();
     } else {
       return new FixedDueDateSchedules(JsonArrayHelper.toList(
-        representation.getJsonArray("schedules")));
+        representation.getJsonArray("schedules")), DateTimeZone.UTC);
     }
   }
 
@@ -46,15 +59,15 @@ public class FixedDueDateSchedules {
 
   private Predicate<? super JsonObject> isWithin(DateTime date) {
     return schedule -> {
-      DateTime from = DateTime.parse(schedule.getString("from"));
-      DateTime to = DateTime.parse(schedule.getString("to"));
+      DateTime from = DateTime.parse(schedule.getString("from")).withZoneRetainFields(timeZone);
+      DateTime to = DateTime.parse(schedule.getString("to")).withZoneRetainFields(timeZone);
 
       return date.isAfter(from) && date.isBefore(to);
     };
   }
 
   private DateTime getDueDate(JsonObject schedule) {
-    return DateTime.parse(schedule.getString("due"));
+    return DateTime.parse(schedule.getString("due")).withZoneRetainFields(timeZone);
   }
 
   List<DateTime> getDueDates() {

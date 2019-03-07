@@ -8,6 +8,7 @@ import org.folio.circulation.domain.User;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
+import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,25 +36,27 @@ public class LoanPolicyRepository {
     fixedDueDateSchedulesStorageClient = clients.fixedDueDateSchedules();
   }
 
-  public CompletableFuture<HttpResult<LoanPolicy>> lookupLoanPolicy(Loan loan) {
-    return lookupLoanPolicy(loan.getItem(), loan.getUser());
+  public CompletableFuture<HttpResult<LoanPolicy>> lookupLoanPolicy(Loan loan, DateTimeZone timeZone) {
+    return lookupLoanPolicy(loan.getItem(), loan.getUser(), timeZone);
   }
 
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> lookupLoanPolicy(
     LoanAndRelatedRecords relatedRecords) {
 
-    return lookupLoanPolicy(relatedRecords.getLoan())
+    DateTimeZone timeZone = relatedRecords.getTimeZone();
+    return lookupLoanPolicy(relatedRecords.getLoan(), timeZone)
       .thenApply(result -> result.map(relatedRecords::withLoanPolicy));
   }
 
   private CompletableFuture<HttpResult<LoanPolicy>> lookupLoanPolicy(
     Item item,
-    User user) {
+    User user,
+    DateTimeZone timeZone) {
 
     return lookupLoanPolicyId(item, user)
       .thenComposeAsync(r -> r.after(this::lookupLoanPolicy))
       .thenApply(result -> result.map(this::toLoanPolicy))
-      .thenComposeAsync(r -> r.after(this::lookupSchedules));
+      .thenComposeAsync(r -> r.after(loanPolicy -> lookupSchedules(loanPolicy, timeZone)));
   }
 
   private LoanPolicy toLoanPolicy(JsonObject representation) {
@@ -61,7 +64,7 @@ public class LoanPolicyRepository {
       new NoFixedDueDateSchedules(), new NoFixedDueDateSchedules());
   }
 
-  private CompletableFuture<HttpResult<LoanPolicy>> lookupSchedules(LoanPolicy loanPolicy) {
+  private CompletableFuture<HttpResult<LoanPolicy>> lookupSchedules(LoanPolicy loanPolicy, DateTimeZone timeZone) {
     List<String> scheduleIds = new ArrayList<>();
 
     final String loanScheduleId = loanPolicy.getLoansFixedDueDateScheduleId();
@@ -79,7 +82,7 @@ public class LoanPolicyRepository {
       return CompletableFuture.completedFuture(succeeded(loanPolicy));
     }
 
-    return getSchedules(scheduleIds)
+    return getSchedules(scheduleIds, timeZone)
       .thenApply(r -> r.next(schedules -> {
         final FixedDueDateSchedules loanSchedule = schedules.getOrDefault(
           loanScheduleId, new NoFixedDueDateSchedules());
@@ -94,7 +97,7 @@ public class LoanPolicyRepository {
   }
 
   private CompletableFuture<HttpResult<Map<String, FixedDueDateSchedules>>> getSchedules(
-    Collection<String> schedulesIds) {
+    Collection<String> schedulesIds, DateTimeZone timeZone) {
 
     String schedulesQuery = multipleRecordsCqlQuery(schedulesIds);
 
@@ -114,7 +117,7 @@ public class LoanPolicyRepository {
         return succeeded(schedules.stream()
           .collect(Collectors.toMap(
             s -> s.getString("id"),
-            FixedDueDateSchedules::from)));
+            r -> FixedDueDateSchedules.from(r,timeZone))));
       });
   }
 
