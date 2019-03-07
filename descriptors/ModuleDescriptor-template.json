@@ -671,10 +671,6 @@
       "version": "1.0"
     },
     {
-      "id": "notice-policy-storage",
-      "version": "1.0"
-    },
-    {
       "id": "fixed-due-date-schedules-storage",
       "version": "2.0"
     },
