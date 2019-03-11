@@ -1,11 +1,14 @@
 package api.support.fakes;
 
-import api.support.APITestContext;
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Future;
-import io.vertx.core.MultiMap;
-import io.vertx.core.http.HttpServer;
-import io.vertx.ext.web.Router;
+import static api.support.fixtures.CalendarExamples.CASE_CALENDAR_IS_EMPTY_SERVICE_POINT_ID;
+import static api.support.fixtures.CalendarExamples.getCalendarById;
+import static api.support.fixtures.LibraryHoursExamples.CASE_CALENDAR_IS_UNAVAILABLE_SERVICE_POINT_ID;
+import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_IN_THU_SERVICE_POINT_ID;
+import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_SERVICE_POINT_ID;
+import static api.support.fixtures.LibraryHoursExamples.getLibraryHoursById;
+
+import java.lang.invoke.MethodHandles;
+
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.folio.circulation.support.http.client.BufferHelper;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
@@ -14,16 +17,12 @@ import org.folio.circulation.support.http.server.ServerErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.invoke.MethodHandles;
-import java.util.List;
-
-import static api.support.fixtures.CalendarExamples.CASE_CALENDAR_IS_EMPTY_SERVICE_POINT_ID;
-import static api.support.fixtures.CalendarExamples.getCalendarById;
-import static api.support.fixtures.ConfigurationExample.getConfigurations;
-import static api.support.fixtures.LibraryHoursExamples.CASE_CALENDAR_IS_UNAVAILABLE_SERVICE_POINT_ID;
-import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_IN_THU_SERVICE_POINT_ID;
-import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_SERVICE_POINT_ID;
-import static api.support.fixtures.LibraryHoursExamples.getLibraryHoursById;
+import api.support.APITestContext;
+import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Future;
+import io.vertx.core.MultiMap;
+import io.vertx.core.http.HttpServer;
+import io.vertx.ext.web.Router;
 
 public class FakeOkapi extends AbstractVerticle {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -177,7 +176,6 @@ public class FakeOkapi extends AbstractVerticle {
     registerCirculationRulesStorage(router);
     registerCalendar(router);
     registerLibraryHours(router);
-    registerConfiguration(router);
 
     new FakeStorageModuleBuilder()
       .withRecordName("institution")
@@ -231,6 +229,14 @@ public class FakeOkapi extends AbstractVerticle {
       .withUniqueProperties("name")
       .withChangeMetadata()
       .disallowCollectionDelete()
+      .create()
+      .register(router);
+
+    new FakeStorageModuleBuilder()
+      .withRecordName("configuration")
+      .withCollectionPropertyName("configs")
+      .withRootPath("/configurations/entries")
+      .withChangeMetadata()
       .create()
       .register(router);
 
@@ -329,19 +335,6 @@ public class FakeOkapi extends AbstractVerticle {
               .putHeader("content-type", "application/json")
               .end(findFakeLibraryHoursById(servicePointId));
         }
-      });
-  }
-
-  private void registerConfiguration(Router router) {
-    String configUrl = "/configurations/entries";
-    router.get(configUrl)
-      .handler(routingContext -> {
-        List<String> query = routingContext.queryParam("query");
-        log.debug(configUrl, "?query=", query);
-        routingContext.response()
-          .putHeader("content-type", "application/json")
-          .setStatusCode(200)
-          .end(getConfigurations());
       });
   }
 

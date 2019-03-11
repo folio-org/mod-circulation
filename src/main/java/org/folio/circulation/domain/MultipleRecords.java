@@ -48,15 +48,7 @@ public class MultipleRecords<T> {
             recordsPropertyName, response.getStatusCode(), response.getBody())));
       }
 
-      final JsonObject json = response.getJson();
-
-      List<T> wrappedRecords = mapToList(json,
-        recordsPropertyName, mapper);
-
-      Integer totalRecords = json.getInteger(TOTAL_RECORDS_PROPERTY_NAME);
-
-      return succeeded(new MultipleRecords<>(
-        wrappedRecords, totalRecords));
+      return from(response.getJson(), mapper, recordsPropertyName);
     }
     else {
       log.warn("Did not receive response to request");
@@ -64,6 +56,17 @@ public class MultipleRecords<T> {
         String.format("Did not receive response to request for multiple %s",
           recordsPropertyName)));
     }
+  }
+
+  public static <T> HttpResult<MultipleRecords<T>> from(JsonObject representation,
+                                                        Function<JsonObject, T> mapper,
+                                                        String recordsPropertyName) {
+
+    List<T> wrappedRecords = mapToList(representation, recordsPropertyName, mapper);
+    Integer totalRecords = representation.getInteger(TOTAL_RECORDS_PROPERTY_NAME);
+
+    return succeeded(new MultipleRecords<>(
+      wrappedRecords, totalRecords));
   }
 
   Map<String, T> toMap(Function<T, String> keyMapper) {
@@ -79,7 +82,7 @@ public class MultipleRecords<T> {
    * @return new multiple records collection with mapped records
    * and same total record count
    */
-  public <R> MultipleRecords<R> mapRecords(Function<T, R> mapper) {
+   <R> MultipleRecords<R> mapRecords(Function<T, R> mapper) {
     return new MultipleRecords<>(
       getRecords().stream().map(mapper).collect(Collectors.toList()),
         getTotalRecords());
