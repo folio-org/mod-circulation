@@ -155,7 +155,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return representation.getString("id");
   }
 
-  RequestType getRequestType() {
+  public RequestType getRequestType() {
     return RequestType.from(representation.getString("requestType"));
   }
 

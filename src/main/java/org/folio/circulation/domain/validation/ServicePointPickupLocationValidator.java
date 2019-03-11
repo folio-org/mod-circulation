@@ -7,6 +7,7 @@ import java.lang.invoke.MethodHandles;
 
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
+import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.slf4j.Logger;
@@ -14,7 +15,7 @@ import org.slf4j.LoggerFactory;
 
 public class ServicePointPickupLocationValidator {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-  
+
   public HttpResult<RequestAndRelatedRecords> checkServicePointPickupLocation(
       HttpResult<RequestAndRelatedRecords> requestAndRelatedRecordsResult) {
 
@@ -37,8 +38,15 @@ public class ServicePointPickupLocationValidator {
     }
 
     if(request.getPickupServicePointId() == null) {
-      log.info("No pickup service point specified for request");
-      return succeeded(requestAndRelatedRecords);
+      if(request.getRequestType() == RequestType.HOLD) {
+        log.info("Hold Requests require a Pickup Service Point");
+        return failed(ValidationErrorFailure.failure(
+                "Hold Requests require a Pickup Service Point", "id",
+                request.getId()));
+      } else {
+        log.info("No pickup service point specified for request");
+        return succeeded(requestAndRelatedRecords);
+      }
     }
 
     if(request.getPickupServicePointId() != null && request.getPickupServicePoint() == null) {
