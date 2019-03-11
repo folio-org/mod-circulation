@@ -229,7 +229,7 @@ public class ResourceClient {
     client.post(urlMaker.combine(""), request,
       ResponseHandler.json(createCompleted));
 
-    Response response = createCompleted.get(5, TimeUnit.SECONDS);
+    Response response = createCompleted.get(500, TimeUnit.SECONDS);
 
     assertThat(
       String.format("Failed to create %s: %s", resourceName,
@@ -275,7 +275,7 @@ public class ResourceClient {
 
     client.put(location, representation, ResponseHandler.any(createCompleted));
 
-    Response createResponse = createCompleted.get(5, TimeUnit.SECONDS);
+    Response createResponse = createCompleted.get(500, TimeUnit.SECONDS);
 
     assertThat(
       String.format("Failed to create %s %s: %s", resourceName, id, createResponse.getBody()),
@@ -448,7 +448,7 @@ public class ResourceClient {
     client.delete(urlMaker.combine(""),
       ResponseHandler.any(deleteAllFinished));
 
-    Response response = deleteAllFinished.get(5, TimeUnit.SECONDS);
+    Response response = deleteAllFinished.get(500, TimeUnit.SECONDS);
 
     assertThat(String.format(
       "Failed to delete %s: %s", resourceName, response.getBody()),

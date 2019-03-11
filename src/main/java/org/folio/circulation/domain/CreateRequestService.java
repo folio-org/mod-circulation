@@ -7,32 +7,39 @@ import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.domain.policy.RequestPolicy;
+import org.folio.circulation.domain.policy.RequestPolicyRepository;
 import org.folio.circulation.support.HttpResult;
 
 public class CreateRequestService {
   private final RequestRepository requestRepository;
   private final UpdateItem updateItem;
   private final UpdateLoanActionHistory updateLoanActionHistory;
+  private final RequestPolicyRepository requestPolicyRepository;
   private final UpdateLoan updateLoan;
 
   public CreateRequestService(
     RequestRepository requestRepository,
     UpdateItem updateItem,
     UpdateLoanActionHistory updateLoanActionHistory,
-    UpdateLoan updateLoan) {
+    UpdateLoan updateLoan,
+    RequestPolicyRepository requestPolicyRepository) {
 
     this.requestRepository = requestRepository;
     this.updateItem = updateItem;
     this.updateLoanActionHistory = updateLoanActionHistory;
     this.updateLoan = updateLoan;
+    this.requestPolicyRepository = requestPolicyRepository;
   }
 
   public CompletableFuture<HttpResult<RequestAndRelatedRecords>> createRequest(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     return completedFuture(refuseWhenItemIsNotValid(requestAndRelatedRecords)
-      .next(CreateRequestService::refuseWhenItemDoesNotExist)
-      .map(CreateRequestService::setRequestQueuePosition))
+      .next(CreateRequestService::refuseWhenItemDoesNotExist))
+      .thenComposeAsync( r-> r.after(requestPolicyRepository::lookupRequestPolicy)) //get policy
+      .thenApply( r -> r.next(CreateRequestService::refuseWhenRequestCannotBeFulfilled)) //check policy here
+      .thenApply(r -> r.map(CreateRequestService::setRequestQueuePosition))
       .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
       .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreation))
       .thenComposeAsync(r -> r.after(updateLoan::onRequestCreation))
@@ -56,6 +63,22 @@ public class CreateRequestService {
       return failed(failure(
         "Item does not exist", "itemId",
         requestAndRelatedRecords.getRequest().getItemId()));
+    }
+    else {
+      return succeeded(requestAndRelatedRecords);
+    }
+  }
+
+  private static HttpResult<RequestAndRelatedRecords> refuseWhenRequestCannotBeFulfilled(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    RequestPolicy requestPolicy = requestAndRelatedRecords.getRequestPolicy();
+    RequestType requestType =  requestAndRelatedRecords.getRequest().getRequestType();
+
+    if(!requestPolicy.containsType(requestType)) {
+      return failed(failure(
+        "Request Type is not valid", "requestType",
+        requestType.getValue()));
     }
     else {
       return succeeded(requestAndRelatedRecords);

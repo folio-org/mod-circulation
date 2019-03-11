@@ -16,6 +16,7 @@ import org.folio.circulation.domain.UpdateLoanActionHistory;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.UpdateRequestService;
 import org.folio.circulation.domain.UserRepository;
+import org.folio.circulation.domain.policy.RequestPolicyRepository;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.representations.RequestProperties;
 import org.folio.circulation.domain.validation.ClosedRequestValidator;
@@ -51,6 +52,7 @@ public class RequestCollectionResource extends CollectionResource {
     final UserRepository userRepository = new UserRepository(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
+    final RequestPolicyRepository requestPolicyRepository = new RequestPolicyRepository(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateLoanActionHistory updateLoanActionHistory = new UpdateLoanActionHistory(clients);
     final UpdateLoan updateLoan = new UpdateLoan(clients, loanRepository, loanPolicyRepository);
@@ -61,7 +63,7 @@ public class RequestCollectionResource extends CollectionResource {
       createProxyRelationshipValidator(representation, clients);
 
     final CreateRequestService createRequestService = new CreateRequestService(
-      requestRepository, updateItem, updateLoanActionHistory, updateLoan);
+      requestRepository, updateItem, updateLoanActionHistory, updateLoan, requestPolicyRepository);
 
     final RequestRepresentation requestRepresentation = new RequestRepresentation();
 
@@ -91,6 +93,7 @@ public class RequestCollectionResource extends CollectionResource {
     final LoanRepository loanRepository = new LoanRepository(clients);
     final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
+    final RequestPolicyRepository requestPolicyRepository =  new RequestPolicyRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final UpdateRequestQueue updateRequestQueue = UpdateRequestQueue.using(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
@@ -106,7 +109,7 @@ public class RequestCollectionResource extends CollectionResource {
       RequestRepository.using(clients));
 
     final CreateRequestService createRequestService = new CreateRequestService(
-      requestRepository, updateItem, updateLoanActionHistory, updateLoan);
+      requestRepository, updateItem, updateLoanActionHistory, updateLoan, requestPolicyRepository);
 
 
     final UpdateRequestService updateRequestService = new UpdateRequestService(
