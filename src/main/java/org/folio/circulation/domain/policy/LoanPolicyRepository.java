@@ -25,12 +25,12 @@ import static org.folio.circulation.support.HttpResult.succeeded;
 public class LoanPolicyRepository {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  private final CirculationRulesClient circulationRulesClient;
+  private final CirculationRulesClient circulationLoanRulesClient;
   private final CollectionResourceClient loanPoliciesStorageClient;
   private final CollectionResourceClient fixedDueDateSchedulesStorageClient;
 
   public LoanPolicyRepository(Clients clients) {
-    circulationRulesClient = clients.circulationRules();
+    circulationLoanRulesClient = clients.circulationLoanRules();
     loanPoliciesStorageClient = clients.loanPoliciesStorage();
     fixedDueDateSchedulesStorageClient = clients.fixedDueDateSchedules();
   }
@@ -157,7 +157,7 @@ public class LoanPolicyRepository {
       "Applying circulation rules for material type: {}, patron group: {}, loan type: {}, location: {}",
       materialTypeId, patronGroupId, loanTypeId, locationId);
 
-      circulationRulesClient.applyRules(loanTypeId, locationId, materialTypeId,
+      circulationLoanRulesClient.applyRules(loanTypeId, locationId, materialTypeId,
       patronGroupId, ResponseHandler.any(circulationRulesResponse));
 
       circulationRulesResponse.thenAcceptAsync(response -> {

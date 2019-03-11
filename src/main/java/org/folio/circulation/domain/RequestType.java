@@ -33,7 +33,7 @@ public enum RequestType {
     return value;
   }
 
-  private boolean nameMatches(String value) {
+  public boolean nameMatches(String value) {
     return equalsIgnoreCase(getValue(), value);
   }
 }

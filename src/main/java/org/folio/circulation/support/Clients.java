@@ -1,6 +1,8 @@
 package org.folio.circulation.support;
 
 import io.vertx.core.http.HttpClient;
+
+import org.folio.circulation.domain.CirculationActionType;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.server.WebContext;
 
@@ -18,8 +20,10 @@ public class Clients {
   private final CollectionResourceClient proxiesForClient;
   private final CollectionResourceClient loanPoliciesStorageClient;
   private final CollectionResourceClient fixedDueDateSchedulesStorageClient;
-  private final CirculationRulesClient circulationRulesClient;
+  private final CirculationRulesClient circulationLoanRulesClient;
+  private final CirculationRulesClient circulationRequestRulesClient;
   private final CollectionResourceClient circulationRulesStorageClient;
+  private final CollectionResourceClient requestPoliciesStorageClient;
   private final CollectionResourceClient servicePointsStorageClient;
   private final CollectionResourceClient calendarStorageClient;
   private final CollectionResourceClient patronGroupsStorageClient;
@@ -39,9 +43,11 @@ public class Clients {
       locationsStorageClient = createLocationsStorageClient(client, context);
       materialTypesStorageClient = createMaterialTypesStorageClient(client, context);
       proxiesForClient = createProxyUsersStorageClient(client, context);
-      circulationRulesClient = new CirculationRulesClient(client, context);
+      circulationLoanRulesClient = new CirculationRulesClient(client, context, CirculationActionType.LOAN);
+      circulationRequestRulesClient = new CirculationRulesClient(client, context, CirculationActionType.REQUEST);
       circulationRulesStorageClient = createCirculationRulesStorageClient(client, context);
       loanPoliciesStorageClient = createLoanPoliciesStorageClient(client, context);
+      requestPoliciesStorageClient = createRequestPoliciesStorageClient(client, context);
       fixedDueDateSchedulesStorageClient = createFixedDueDateSchedulesStorageClient(client, context);
       servicePointsStorageClient = createServicePointsStorageClient(client, context);
       patronGroupsStorageClient = createPatronGroupsStorageClient(client, context);
@@ -55,6 +61,8 @@ public class Clients {
   public CollectionResourceClient requestsStorage() {
     return requestsStorageClient;
   }
+
+  public CollectionResourceClient requestPoliciesStorage() { return requestPoliciesStorageClient; }
 
   public CollectionResourceClient itemsStorage() {
     return itemsStorageClient;
@@ -91,11 +99,11 @@ public class Clients {
   public CollectionResourceClient fixedDueDateSchedules() {
     return fixedDueDateSchedulesStorageClient;
   }
-  
+
   public CollectionResourceClient servicePointsStorage() {
     return servicePointsStorageClient;
   }
-  
+
   public CollectionResourceClient patronGroupsStorage() {
     return patronGroupsStorageClient;
   }
@@ -109,8 +117,12 @@ public class Clients {
     return proxiesForClient;
   }
 
-  public CirculationRulesClient circulationRules() {
-    return circulationRulesClient;
+  public CirculationRulesClient circulationLoanRules() {
+    return circulationLoanRulesClient;
+  }
+
+  public CirculationRulesClient circulationRequestRules(){
+    return circulationRequestRulesClient;
   }
 
   public CollectionResourceClient circulationRulesStorage() {
@@ -209,6 +221,15 @@ public class Clients {
       "/loan-policy-storage/loan-policies");
   }
 
+  private CollectionResourceClient createRequestPoliciesStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context,
+      "/request-policy-storage/request-policies");
+  }
+
   private CollectionResourceClient createFixedDueDateSchedulesStorageClient(
     OkapiHttpClient client,
     WebContext context)
@@ -233,7 +254,7 @@ public class Clients {
       throws MalformedURLException {
     return getCollectionResourceClient(client, context, "/service-points");
   }
-  
+
   private CollectionResourceClient createPatronGroupsStorageClient(
       OkapiHttpClient client,
       WebContext context)
@@ -247,5 +268,5 @@ public class Clients {
     throws MalformedURLException {
     return getCollectionResourceClient(client, context, "/calendar/periods");
   }
-  
+
 }
