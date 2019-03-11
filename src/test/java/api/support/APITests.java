@@ -58,6 +58,8 @@ public abstract class APITests {
   private final ResourceClient librariesClient = ResourceClient.forLibraries(client);
   private final ResourceClient locationsClient = ResourceClient.forLocations(client);
 
+  protected final ResourceClient configClient = ResourceClient.forConfiguration(client);
+
   private final ResourceClient patronGroupsClient
     = ResourceClient.forPatronGroups(client);
 
@@ -177,6 +179,7 @@ public abstract class APITests {
     itemsClient.deleteAll();
     holdingsClient.deleteAll();
     instancesClient.deleteAll();
+    configClient.deleteAll();
 
     //TODO: Only cleans up reference records, move items, holdings records
     // and instances into here too
@@ -188,7 +191,6 @@ public abstract class APITests {
       useDefaultRollingPolicyCirculationRules();
     }
 
-    configureDefaultTimezone();
   }
 
   @AfterClass
@@ -216,6 +218,7 @@ public abstract class APITests {
     itemsClient.deleteAll();
     holdingsClient.deleteAll();
     instancesClient.deleteAll();
+    configClient.deleteAll();
 
     //TODO: Only cleans up reference records, move items, holdings records
     // and instances into here too
@@ -347,16 +350,6 @@ public abstract class APITests {
     ResourceClient.forContributorNameTypes(client).deleteAllIndividually();
     ResourceClient.forInstanceTypes(client).deleteAllIndividually();
     ResourceClient.forCancellationReasons(client).deleteAllIndividually();
-  }
-
-  private void configureDefaultTimezone()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    ResourceClient.forConfiguration(client)
-      .create(ConfigurationExample.utcTimezoneConfiguration());
   }
 
 }
