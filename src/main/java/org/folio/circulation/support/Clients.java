@@ -1,10 +1,13 @@
 package org.folio.circulation.support;
 
-import io.vertx.core.http.HttpClient;
+import java.net.MalformedURLException;
+
+import org.folio.circulation.domain.CirculationActionType;
+
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.server.WebContext;
 
-import java.net.MalformedURLException;
+import io.vertx.core.http.HttpClient;
 
 public class Clients {
   private final CollectionResourceClient requestsStorageClient;

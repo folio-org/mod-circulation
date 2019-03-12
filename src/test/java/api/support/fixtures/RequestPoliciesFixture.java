@@ -8,7 +8,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.domain.RequestType;
-import org.folio.circulation.domain.policy.RequestPolicy;
 import org.folio.circulation.support.http.client.IndividualResource;
 
 import api.support.builders.RequestPolicyBuilder;
