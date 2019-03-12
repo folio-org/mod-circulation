@@ -42,12 +42,12 @@ public class UpdateLoan {
     Loan loan = request.getLoan();
     if (request.getRequestType() == RequestType.RECALL && loan != null) {
       return loanRepository.getById(loan.getId())
-      .thenApply(r -> r.map(LoanAndRelatedRecords::new))
-      .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
-      .thenApply(r -> r.next(this::recall))
-      .thenComposeAsync(r -> r.after(records -> applyCLDDMForLoanAndRelatedRecords(closedLibraryStrategyService, records)))
-      .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
-      .thenApply(r -> r.map(v -> requestAndRelatedRecords));
+          .thenApply(r -> r.map(LoanAndRelatedRecords::new))
+          .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
+          .thenApply(r -> r.next(this::recall))
+          .thenComposeAsync(r -> r.after(records -> applyCLDDMForLoanAndRelatedRecords(closedLibraryStrategyService, records)))
+          .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
+          .thenApply(r -> r.map(v -> requestAndRelatedRecords));
     } else {
       return completedFuture(succeeded(requestAndRelatedRecords));
     }
