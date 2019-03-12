@@ -257,7 +257,7 @@ public class ResourceClient {
 
     client.put(location, representation, ResponseHandler.any(createCompleted));
 
-    return createCompleted.get(5, TimeUnit.SECONDS);
+    return createCompleted.get(500, TimeUnit.SECONDS);
   }
 
   public IndividualResource createAtSpecificLocation(Builder builder)

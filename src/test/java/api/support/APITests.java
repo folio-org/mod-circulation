@@ -249,7 +249,7 @@ public abstract class APITests {
     log.info("Using rolling loan policy as fallback policy");
     useLoanPolicyAsFallback(
       loanPoliciesFixture.canCirculateRolling().getId(),
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
   }
@@ -263,7 +263,7 @@ public abstract class APITests {
     log.info("Using fixed loan policy as fallback policy");
     useLoanPolicyAsFallback(
       loanPoliciesFixture.canCirculateFixed().getId(),
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
   }
