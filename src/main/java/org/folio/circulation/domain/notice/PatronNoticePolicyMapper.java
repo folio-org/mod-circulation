@@ -50,7 +50,7 @@ public class PatronNoticePolicyMapper implements Function<JsonObject, HttpResult
 
 
   private NoticeDescriptor toNoticeDescriptor(JsonObject representation) {
-    NoticeDescriptor.Builder builder = new NoticeDescriptor.Builder();
+    NoticeDescriptorBuilder builder = new NoticeDescriptorBuilder();
 
     String templateId = representation.getString(TEMPLATE_ID);
     if (templateId == null) {
