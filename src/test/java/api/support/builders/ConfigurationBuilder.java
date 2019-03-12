@@ -13,15 +13,15 @@ public class ConfigurationBuilder extends JsonBuilder implements Builder {
 
   private JsonObject representation;
 
-  public ConfigurationBuilder(List<TimeZoneConfigBuilder> configurations) {
+  public ConfigurationBuilder(List<ConfigRecordBuilder> configurations) {
     this.representation = new JsonObject()
       .put(TOTAL_RECORDS_KEY, configurations.size())
       .put(CONFIGS_KEY, openingDaysToJsonArray(configurations));
   }
 
-  private JsonArray openingDaysToJsonArray(List<TimeZoneConfigBuilder> configurations) {
+  private JsonArray openingDaysToJsonArray(List<ConfigRecordBuilder> configurations) {
     return configurations.stream()
-      .map(TimeZoneConfigBuilder::toJson)
+      .map(ConfigRecordBuilder::create)
       .collect(Collector.of(JsonArray::new, JsonArray::add, JsonArray::add));
   }
 

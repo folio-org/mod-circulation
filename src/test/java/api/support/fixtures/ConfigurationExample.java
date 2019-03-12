@@ -2,7 +2,7 @@ package api.support.fixtures;
 
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
-import api.support.builders.TimeZoneConfigBuilder;
+import api.support.builders.ConfigRecordBuilder;
 import io.vertx.core.json.JsonObject;
 
 public class ConfigurationExample {
@@ -15,16 +15,16 @@ public class ConfigurationExample {
     // not use
   }
 
-  public static TimeZoneConfigBuilder utcTimezoneConfiguration() {
+  public static ConfigRecordBuilder utcTimezoneConfiguration() {
     return getLocaleAndTimeZoneConfiguration("UTC");
   }
 
-  public static TimeZoneConfigBuilder newYorkTimezoneConfiguration() {
+  public static ConfigRecordBuilder newYorkTimezoneConfiguration() {
     return getLocaleAndTimeZoneConfiguration("America/New_York");
   }
 
-  private static TimeZoneConfigBuilder getLocaleAndTimeZoneConfiguration(String timezone) {
-    return new TimeZoneConfigBuilder(DEFAULT_MOD, DEFAULT_NAME,
+  private static ConfigRecordBuilder getLocaleAndTimeZoneConfiguration(String timezone) {
+    return new ConfigRecordBuilder(DEFAULT_MOD, DEFAULT_NAME,
       combinedConfiguration(timezone).encodePrettily());
   }
 

@@ -2,7 +2,7 @@ package api.support.builders;
 
 import io.vertx.core.json.JsonObject;
 
-public class TimeZoneConfigBuilder extends JsonBuilder implements Builder {
+public class ConfigRecordBuilder extends JsonBuilder implements Builder {
 
   private static final String MODULE_KEY = "module";
   private static final String CONFIG_NAME_KEY = "configName";
@@ -10,14 +10,14 @@ public class TimeZoneConfigBuilder extends JsonBuilder implements Builder {
 
   private JsonObject representation;
 
-  public TimeZoneConfigBuilder(String module, String configName, String value) {
+  public ConfigRecordBuilder(String module, String configName, String value) {
     this.representation = new JsonObject()
       .put(MODULE_KEY, module)
       .put(CONFIG_NAME_KEY, configName)
       .put(VALUE_KEY, value);
   }
 
-  public TimeZoneConfigBuilder(String value) {
+  public ConfigRecordBuilder(String value) {
     this.representation = new JsonObject()
       .put(VALUE_KEY, value);
   }
@@ -32,7 +32,4 @@ public class TimeZoneConfigBuilder extends JsonBuilder implements Builder {
     return this.representation.toString();
   }
 
-  JsonObject toJson() {
-    return representation;
-  }
 }
