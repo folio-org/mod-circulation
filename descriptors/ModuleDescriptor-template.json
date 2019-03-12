@@ -4,7 +4,7 @@
   "provides": [
     {
       "id": "circulation",
-      "version": "7.5",
+      "version": "7.4",
       "handlers": [
         {
           "methods": [
@@ -676,6 +676,10 @@
     },
     {
       "id": "calendar",
+      "version": "2.0"
+    },
+    {
+      "id": "configuration",
       "version": "2.0"
     }
   ],
