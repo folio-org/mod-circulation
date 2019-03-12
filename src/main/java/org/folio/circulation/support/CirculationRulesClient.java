@@ -4,7 +4,6 @@ import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import org.folio.circulation.domain.CirculationActionType;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.server.WebContext;
 import org.slf4j.Logger;
@@ -17,16 +16,12 @@ public class CirculationRulesClient {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private final OkapiHttpClient client;
   private final URL root;
-  private static final String LOAN_POLICY_PATH = "/circulation/rules/loan-policy";
-  private static final String REQUEST_POLICY_PATH = "/circulation/rules/request-policy";
 
-  CirculationRulesClient(OkapiHttpClient client, WebContext context, CirculationActionType circulationType)
+  CirculationRulesClient(OkapiHttpClient client, WebContext context, String policyPath)
     throws MalformedURLException {
 
     this.client = client;
-    root = context.getOkapiBasedUrl(
-      circulationType == CirculationActionType.LOAN ? LOAN_POLICY_PATH : REQUEST_POLICY_PATH
-    );
+    root = context.getOkapiBasedUrl(policyPath);
   }
 
   public void applyRules(
