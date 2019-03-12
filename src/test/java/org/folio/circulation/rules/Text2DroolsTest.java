@@ -1,5 +1,9 @@
 package org.folio.circulation.rules;
 
+import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.ITEM_TYPE_ID_NAME;
+import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.LOAN_TYPE_ID_NAME;
+import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.PATRON_TYPE_ID_NAME;
+import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.SHELVING_LOCATION_ID_NAME;
 import static org.folio.circulation.rules.CirculationRulesExceptionMatcher.matches;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -16,6 +20,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.vertx.core.MultiMap;
+import io.vertx.core.http.CaseInsensitiveHeaders;
 import io.vertx.core.json.JsonArray;
 
 public class Text2DroolsTest {
@@ -27,7 +33,7 @@ public class Text2DroolsTest {
   public void headerFallbackPolicy() {
     String droolsText = Text2Drools.convert(HEADER);
     Drools drools = new Drools(droolsText);
-    assertThat(drools.loanPolicy("foo", "bar", "baz", "shelf"), is("no-loan"));
+    assertThat(drools.loanPolicy(params("foo", "bar", "biz", "shelf")), is("no-loan"));
   }
 
   private String test1 = String.join("\n",
@@ -74,7 +80,7 @@ public class Text2DroolsTest {
     String drools = Text2Drools.convert(test1);
     log.debug("drools = {}" + drools);
     for (String [] s : loanTestCases) {
-      assertThat(first3(s), Drools.loanPolicy(drools, s[0], s[1], s[2], "shelf"), is(s[3]));
+      assertThat(first3(s), Drools.loanPolicy(drools, params(s[0], s[1], s[2], "shelf")), is(s[3]));
     }
   }
 
@@ -82,7 +88,7 @@ public class Text2DroolsTest {
   public void test1() {
     Drools drools = new Drools(Text2Drools.convert(test1));
     for (String [] s : loanTestCases) {
-      assertThat(first3(s), drools.loanPolicy(s[0], s[1], s[2], "shelf"), is(s[3]));
+      assertThat(first3(s), drools.loanPolicy(params(s[0], s[1], s[2], "shelf")), is(s[3]));
     }
   }
 
@@ -94,7 +100,7 @@ public class Text2DroolsTest {
   @Test public void testRequestPolicy() {
     String drools = Text2Drools.convert(test1);
     for (String[] s : requestTestCases) {
-      assertThat(first3(s), Drools.requestPolicy(drools, s[0], s[1], s[2], "shelf"), is(s[3]));
+      assertThat(first3(s), Drools.requestPolicy(drools, params(s[0], s[1], s[2], "shelf")), is(s[3]));
     }
   }
 
@@ -115,7 +121,7 @@ public class Text2DroolsTest {
   private void testLoanPolicies(String circulationRules, String [][] cases) {
     Drools drools = new Drools(Text2Drools.convert(circulationRules));
     for (String [] s : cases) {
-      JsonArray array = drools.loanPolicies(s[0], s[1], s[2], "shelf");
+      JsonArray array = drools.loanPolicies(params(s[0], s[1], s[2], "shelf"));
       String [] policies = new String[array.size()];
       for (int i=0; i<array.size(); i++) {
         policies[i] = array.getJsonObject(i).getString("loanPolicyId");
@@ -127,7 +133,7 @@ public class Text2DroolsTest {
   private void testRequestPolicies(String circulationRules, String[][] cases) {
       Drools drools = new Drools(Text2Drools.convert(circulationRules));
       for (String [] s : cases) {
-        JsonArray array = drools.requestPolicies(s[0], s[1], s[2], "shelf");
+        JsonArray array = drools.requestPolicies(params(s[0], s[1], s[2], "shelf"));
         String [] policies = new String[array.size()];
         for (int i=0; i<array.size(); i++) {
           policies[i] = array.getJsonObject(i).getString("requestPolicyId");
@@ -243,9 +249,9 @@ public class Text2DroolsTest {
         "m dvd: l policy-c r no-hold n basic-notice",
         "     g visitor: l policy-d r no-hold n basic-notice"
         )));
-    assertThat(drools.loanPolicy("book", "regular", "student", "shelf"), is("policy-a"));
-    assertThat(drools.loanPolicy("dvd",  "regular", "student", "shelf"), is("policy-b"));
-    assertThat(drools.loanPolicy("dvd",  "regular", "visitor", "shelf"), is("policy-d"));
+    assertThat(drools.loanPolicy(params("book", "regular", "student", "shelf")), is("policy-a"));
+    assertThat(drools.loanPolicy(params("dvd",  "regular", "student", "shelf")), is("policy-b"));
+    assertThat(drools.loanPolicy(params("dvd",  "regular", "visitor", "shelf")), is("policy-d"));
   }
 
   @Test
@@ -258,9 +264,9 @@ public class Text2DroolsTest {
         "m dvd: l policy-c r no-hold n basic-notice",
         "     g visitor: l policy-d r no-hold n basic-notice"
         )));
-    assertThat(drools.loanPolicy("book", "regular", "student", "shelf"), is("policy-a"));
-    assertThat(drools.loanPolicy("dvd",  "regular", "student", "shelf"), is("policy-c"));
-    assertThat(drools.loanPolicy("dvd",  "regular", "visitor", "shelf"), is("policy-d"));
+    assertThat(drools.loanPolicy(params("book", "regular", "student", "shelf")), is("policy-a"));
+    assertThat(drools.loanPolicy(params("dvd",  "regular", "student", "shelf")), is("policy-c"));
+    assertThat(drools.loanPolicy(params("dvd",  "regular", "visitor", "shelf")), is("policy-d"));
   }
 
   @Test
@@ -319,8 +325,8 @@ public class Text2DroolsTest {
         "priority:last-line",
         "fallback-policy:l no-loan r no-hold n basic-notice",
         "s new:l policy-a r no-hold n basic-notice")));
-    assertThat(drools.loanPolicy("dvd", "regular", "student", "shelf"), is("no-loan"));
-    assertThat(drools.loanPolicy("dvd", "regular", "student", "new"  ), is("policy-a"));
+    assertThat(drools.loanPolicy(params("dvd", "regular", "student", "shelf")), is("no-loan"));
+    assertThat(drools.loanPolicy(params("dvd", "regular", "student", "new"  )), is("policy-a"));
   }
 
   @Test
@@ -329,23 +335,23 @@ public class Text2DroolsTest {
         "priority   :   last-line",
         "fallback-policy   :   l no-loan r no-hold n basic-notice",
         "s new   :   l policy-a r no-hold n basic-notice")));
-    assertThat(drools.loanPolicy("dvd", "regular", "student", "shelf"), is("no-loan"));
-    assertThat(drools.loanPolicy("dvd", "regular", "student", "new"  ), is("policy-a"));
+    assertThat(drools.loanPolicy(params("dvd", "regular", "student", "shelf")), is("no-loan"));
+    assertThat(drools.loanPolicy(params("dvd", "regular", "student", "new"  )), is("policy-a"));
   }
 
   @Test
   public void negation() {
     Drools drools = new Drools(Text2Drools.convert(HEADER + "m !dvd !music: l policy-a r no-hold n basic-notice"));
-    assertThat(drools.loanPolicy("dvd",       "regular", "student", "shelf"), is("no-loan"));
-    assertThat(drools.loanPolicy("music",     "regular", "student", "shelf"), is("no-loan"));
-    assertThat(drools.loanPolicy("newspaper", "regular", "student", "shelf"), is("policy-a"));
+    assertThat(drools.loanPolicy(params("dvd",       "regular", "student", "shelf")), is("no-loan"));
+    assertThat(drools.loanPolicy(params("music",     "regular", "student", "shelf")), is("no-loan"));
+    assertThat(drools.loanPolicy(params("newspaper", "regular", "student", "shelf")), is("policy-a"));
   }
 
   @Test
   public void negationSingle() {
     Drools drools = new Drools(Text2Drools.convert(HEADER + "m !dvd: l policy-a r no-hold n basic-notice"));
-    assertThat(drools.loanPolicy("dvd",       "regular", "student", "shelf"), is("no-loan"));
-    assertThat(drools.loanPolicy("newspaper", "regular", "student", "shelf"), is("policy-a"));
+    assertThat(drools.loanPolicy(params("dvd",       "regular", "student", "shelf")), is("no-loan"));
+    assertThat(drools.loanPolicy(params("newspaper", "regular", "student", "shelf")), is("policy-a"));
   }
 
   @Test
@@ -358,9 +364,9 @@ public class Text2DroolsTest {
         "a new: l policy-c r no-hold n basic-notice",
         "b new: l policy-d r no-hold n basic-notice",
         "c new: l policy-e r no-hold n basic-notice")));
-    assertThat(drools.loanPolicy("dvd",  "regular", "student",  "new"),   is("policy-a"));
-    assertThat(drools.loanPolicy("book", "regular", "student",  "new"),   is("policy-b"));
-    assertThat(drools.loanPolicy("book", "regular", "student",  "shelf"), is("policy-b"));
+    assertThat(drools.loanPolicy(params("dvd",  "regular", "student",  "new")),   is("policy-a"));
+    assertThat(drools.loanPolicy(params("book", "regular", "student",  "new")),   is("policy-b"));
+    assertThat(drools.loanPolicy(params("book", "regular", "student",  "shelf")), is("policy-b"));
   }
 
   @Test
@@ -372,12 +378,12 @@ public class Text2DroolsTest {
         "t special-items: l policy-special r no-hold n basic-notice",
         "m book: l policy-book r no-hold n basic-notice",
         "s stacks: l policy-stacks r no-hold n basic-notice")));
-    assertThat(drools.loanPolicy("book", "regular",       "student", "new"),         is("policy-new"));
-    assertThat(drools.loanPolicy("book", "regular",       "student", "open-stacks"), is("policy-book"));
-    assertThat(drools.loanPolicy("book", "regular",       "student", "stacks"),      is("policy-stacks"));
-    assertThat(drools.loanPolicy("book", "special-items", "student", "new"),         is("policy-special"));
-    assertThat(drools.loanPolicy("book", "special-items", "student", "stacks"),      is("policy-special"));
-    assertThat(drools.loanPolicy("book", "special-items", "student", "open-stacks"), is("policy-special"));
+    assertThat(drools.loanPolicy(params("book", "regular",       "student", "new")),         is("policy-new"));
+    assertThat(drools.loanPolicy(params("book", "regular",       "student", "open-stacks")), is("policy-book"));
+    assertThat(drools.loanPolicy(params("book", "regular",       "student", "stacks")),      is("policy-stacks"));
+    assertThat(drools.loanPolicy(params("book", "special-items", "student", "new")),         is("policy-special"));
+    assertThat(drools.loanPolicy(params("book", "special-items", "student", "stacks")),      is("policy-special"));
+    assertThat(drools.loanPolicy(params("book", "special-items", "student", "open-stacks")), is("policy-special"));
   }
 
   @Test
@@ -429,7 +435,7 @@ public class Text2DroolsTest {
     int n = 0;
     while (n < 100) {
       for (String [] s : loanTestCases) {
-        drools.loanPolicy(s[0], s[1], s[2], "shelf");
+        drools.loanPolicy(params(s[0], s[1], s[2], "shelf"));
         n++;
       }
     }
@@ -486,4 +492,14 @@ public class Text2DroolsTest {
       fail("circulation rules should build correctly in any order");
     }
   }
+
+  private MultiMap params(String itId, String ltId, String ptId, String slId) {
+    MultiMap params = new CaseInsensitiveHeaders();
+    params.add(ITEM_TYPE_ID_NAME, itId);
+    params.add(LOAN_TYPE_ID_NAME, ltId);
+    params.add(PATRON_TYPE_ID_NAME, ptId);
+    params.add(SHELVING_LOCATION_ID_NAME, slId);
+    return params;
+  }
+
 }

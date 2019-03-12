@@ -1,11 +1,13 @@
 package org.folio.circulation.support.http.client;
 
+import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
+
+import org.apache.commons.lang3.StringUtils;
+
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.CaseInsensitiveHeaders;
 import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.json.JsonObject;
-
-import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 
 public class Response {
   protected final String body;
@@ -40,12 +42,8 @@ public class Response {
       headers);
   }
 
-  public Response attachBody(String body){
-    return new Response(statusCode, body, contentType, headers);
-  }
-
   public boolean hasBody() {
-    return getBody() != null && getBody().trim() != "";
+    return StringUtils.isNotBlank(getBody());
   }
 
   public int getStatusCode() {
@@ -73,7 +71,7 @@ public class Response {
     return text != null ? text : "";
   }
 
-  public String getHeader(String name) {
+  String getHeader(String name) {
     return headers.get(name);
   }
 }

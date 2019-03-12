@@ -4,7 +4,7 @@
   "provides": [
     {
       "id": "circulation",
-      "version": "7.3",
+      "version": "7.4",
       "handlers": [
         {
           "methods": [
@@ -420,6 +420,30 @@
           "methods": [
             "GET"
           ],
+          "pathPattern": "/circulation/rules/notice-policy",
+          "permissionsRequired": [
+            "circulation.rules.notice-policy.get"
+          ],
+          "modulePermissions": [
+            "circulation-storage.circulation-rules.get"
+          ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/rules/notice-policy-all",
+          "permissionsRequired": [
+            "circulation.rules.notice-policy-all.get"
+          ],
+          "modulePermissions": [
+            "circulation-storage.circulation-rules.get"
+          ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
           "pathPattern": "/circulation/requests",
           "permissionsRequired": [
             "circulation.requests.collection.get"
@@ -740,6 +764,16 @@
       "description": "Apply circulation rules to get all matching request policies"
     },
     {
+      "permissionName": "circulation.rules.notice-policy.get",
+      "displayName": "Circulation - use circulation rules to get matching notice policy",
+      "description": "Apply circulation rules to get matching notice policy"
+    },
+    {
+      "permissionName": "circulation.rules.notice-policy-all.get",
+      "displayName": "Circulation - use circulation rules to get all matching notice policies",
+      "description": "Apply circulation rules to get all matching notice policies"
+    },
+    {
       "permissionName": "circulation.requests.collection.get",
       "displayName": "circulation - get request collection",
       "description": "get request collection"
@@ -796,6 +830,8 @@
         "circulation.rules.loan-policy-all.get",
         "circulation.rules.request-policy.get",
         "circulation.rules.request-policy-all.get",
+        "circulation.rules.notice-policy.get",
+        "circulation.rules.notice-policy-all.get",
         "circulation.requests.collection.get",
         "circulation.requests.item.get",
         "circulation.requests.item.post",

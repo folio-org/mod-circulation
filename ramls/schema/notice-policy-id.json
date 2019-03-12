@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Result of applying circulation rules to determine a notice policy",
+  "description": "Describes the outcome of applying circulation rules to determine a notice policy",
+  "type": "object",
+  "properties": {
+    "noticePolicyId": {
+      "description": "ID of the notice policy determined by the circulation rules",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "noticePolicyId"
+  ]
+}
