@@ -39,6 +39,7 @@ public class SingleClosedRequestTests extends APITests {
       .withRequestDate(new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC))
       .fulfilled() //TODO: Replace with closed cancelled when introduced
       .withItemId(smallAngryPlanet.getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(jessica.getId()));
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
@@ -74,6 +75,7 @@ public class SingleClosedRequestTests extends APITests {
       .withRequestDate(new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC))
       .fulfilled() //TODO: Replace with closed cancelled when introduced
       .withItemId(smallAngryPlanet.getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(jessica.getId()));
 
     loansFixture.checkInByBarcode(smallAngryPlanet);

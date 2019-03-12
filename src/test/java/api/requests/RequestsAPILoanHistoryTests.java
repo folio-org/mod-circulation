@@ -31,6 +31,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
     requestsClient.create(new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(usersFixture.charlotte().getId()));
 
     JsonObject loanFromStorage = loansStorageClient.getById(loanId).getJson();
@@ -82,6 +83,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
     requestsClient.create(new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .by(usersFixture.charlotte()));
 
     JsonObject closedLoanFromStorage = loansStorageClient.getById(closedLoanId)
@@ -141,6 +143,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
     requestsClient.create(new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .by(usersFixture.james()));
 
     JsonObject storageLoanForOtherItem = loansStorageClient
@@ -200,6 +203,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
     requestsClient.create(new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .by(usersFixture.charlotte()));
   }
 

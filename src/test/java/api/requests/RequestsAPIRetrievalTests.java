@@ -489,30 +489,37 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut).getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(requesterId));
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponNod(ItemBuilder::checkOut).getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(requesterId));
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponInterestingTimes(ItemBuilder::checkOut).getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(requesterId));
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(requesterId));
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponNod(ItemBuilder::checkOut).getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(requesterId));
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponUprooted(ItemBuilder::checkOut).getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(requesterId));
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(requesterId));
 
     CompletableFuture<Response> getFirstPageCompleted = new CompletableFuture<>();
@@ -562,30 +569,37 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut).getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(firstRequester));
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponNod(ItemBuilder::checkOut).getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(firstRequester));
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponInterestingTimes(ItemBuilder::checkOut).getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(secondRequester));
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(firstRequester));
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponNod(ItemBuilder::checkOut).getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(firstRequester));
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponUprooted(ItemBuilder::checkOut).getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(secondRequester));
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(secondRequester));
 
     CompletableFuture<Response> getRequestsCompleted = new CompletableFuture<>();
@@ -625,26 +639,31 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     requestsClient.create(new RequestBuilder()
       .forItem(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut))
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .by(sponsor)
       .proxiedBy(firstProxy));
 
     requestsClient.create(new RequestBuilder()
       .forItem(itemsFixture.basedUponNod(ItemBuilder::checkOut))
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .by(sponsor)
       .proxiedBy(secondProxy));
 
     requestsClient.create(new RequestBuilder()
       .forItem(itemsFixture.basedUponNod(ItemBuilder::checkOut))
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .by(sponsor)
       .proxiedBy(secondProxy));
 
     requestsClient.create(new RequestBuilder()
       .forItem(itemsFixture.basedUponUprooted(ItemBuilder::checkOut))
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .by(sponsor)
       .proxiedBy(firstProxy));
 
     requestsClient.create(new RequestBuilder()
       .forItem(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut))
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .by(sponsor)
       .proxiedBy(secondProxy));
 
@@ -679,30 +698,37 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut).getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(requesterId));
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponNod(ItemBuilder::checkOut).getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(requesterId));
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponInterestingTimes(ItemBuilder::checkOut).getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(requesterId));
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(requesterId));
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponNod(ItemBuilder::checkOut).getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(requesterId));
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponUprooted(ItemBuilder::checkOut).getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(requesterId));
 
     requestsClient.create(new RequestBuilder()
       .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(requesterId));
 
     CompletableFuture<Response> getRequestsCompleted = new CompletableFuture<>();

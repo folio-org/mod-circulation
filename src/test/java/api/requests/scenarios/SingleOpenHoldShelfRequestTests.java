@@ -17,6 +17,7 @@ import java.net.MalformedURLException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
@@ -200,7 +201,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
         .forItem(smallAngryPlanet)
         .by(jessica)
         .withRequestDate(new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC))
-        .hold());
+        .recall());
 
     Response response = loansFixture.attemptCheckInByBarcode(new CheckInByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)

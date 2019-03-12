@@ -7,6 +7,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
 
@@ -72,7 +73,8 @@ public class RequestsFixture {
       .deliverToAddress(UUID.randomUUID())
       .withRequestDate(on)
       .withItemId(item.getId())
-      .withRequesterId(by.getId()));
+      .withRequesterId(by.getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
   }
 
   public IndividualResource placeHoldShelfRequest(
@@ -126,12 +128,15 @@ public class RequestsFixture {
     TimeoutException,
     ExecutionException {
 
-    return place(new RequestBuilder()
+      IndividualResource resource = place(new RequestBuilder()
       .withRequestType(type)
       .deliverToAddress(UUID.randomUUID())
       .withRequestDate(on)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withItemId(item.getId())
       .withRequesterId(by.getId()));
+
+      return resource;
   }
 
   public void cancelRequest(IndividualResource request)

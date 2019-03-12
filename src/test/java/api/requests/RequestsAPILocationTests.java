@@ -47,6 +47,7 @@ public class RequestsAPILocationTests extends APITests {
       .open()
       .hold()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .by(requester));
 
     JsonObject representation = request.getJson();
@@ -95,6 +96,7 @@ public class RequestsAPILocationTests extends APITests {
       .open()
       .hold()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .by(usersFixture.rebecca()));
 
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire(
@@ -111,6 +113,7 @@ public class RequestsAPILocationTests extends APITests {
       .open()
       .hold()
       .forItem(temeraire)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .by(usersFixture.steve()));
 
     List<JsonObject> fetchedRequestsResponse = requestsClient.getAll();

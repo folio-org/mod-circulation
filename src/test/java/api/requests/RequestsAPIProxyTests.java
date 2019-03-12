@@ -45,6 +45,7 @@ public class RequestsAPIProxyTests extends APITests {
       .forItem(smallAngryPlanet)
       .by(sponsor)
       .proxiedBy(proxy)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .create();
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
@@ -100,6 +101,7 @@ public class RequestsAPIProxyTests extends APITests {
       .forItem(item)
       .by(sponsor)
       .proxiedBy(proxy)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .create();
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
@@ -134,6 +136,7 @@ public class RequestsAPIProxyTests extends APITests {
       .forItem(smallAngryPlanet)
       .by(jessica)
       .proxiedBy(james)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .create();
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
@@ -156,7 +159,7 @@ public class RequestsAPIProxyTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
     final IndividualResource steve = usersFixture.steve();
-    
+
     loansFixture.checkOutByBarcode(smallAngryPlanet, steve);
 
     IndividualResource jessica = usersFixture.jessica();
@@ -168,6 +171,7 @@ public class RequestsAPIProxyTests extends APITests {
       .forItem(smallAngryPlanet)
       .by(jessica)
       .proxiedBy(james)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .create();
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
@@ -201,6 +205,7 @@ public class RequestsAPIProxyTests extends APITests {
       .forItem(smallAngryPlanet)
       .by(charlotte)
       .proxiedBy(james)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .create();
 
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();

@@ -32,6 +32,7 @@ public class RequestsForDifferentItemsTests extends APITests {
       new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .by(usersFixture.jessica())
       .create());
 
@@ -40,6 +41,7 @@ public class RequestsForDifferentItemsTests extends APITests {
       .hold()
       .forItem(nod)
       .by(usersFixture.rebecca())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .create());
 
     final IndividualResource secondRequestForNod = requestsClient.create(
@@ -47,12 +49,14 @@ public class RequestsForDifferentItemsTests extends APITests {
         .hold()
         .forItem(nod)
         .by(usersFixture.james())
+        .withPickupServicePointId(servicePointsFixture.cd1().getId())
         .create());
 
     final IndividualResource secondRequestForSmallAngryPlannet = requestsClient.create(
       new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .by(usersFixture.charlotte())
       .create());
 

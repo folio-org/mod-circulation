@@ -39,6 +39,7 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
 
     IndividualResource response = requestsClient.create(new RequestBuilder()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .by(usersFixture.charlotte()));
 
     JsonObject createdRequest = response.getJson();
@@ -98,11 +99,13 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
 
     UUID firstRequestId = requestsClient.create(new RequestBuilder()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .by(charlotte))
       .getId();
 
     UUID secondRequestId = requestsClient.create(new RequestBuilder()
       .forItem(temeraire)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .by(charlotte))
       .getId();
 

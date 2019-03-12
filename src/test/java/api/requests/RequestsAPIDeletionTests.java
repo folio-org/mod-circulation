@@ -46,16 +46,19 @@ public class RequestsAPIDeletionTests extends APITests {
 
     requestsClient.create(new RequestBuilder()
       .withItemId(nod.getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(requesterId))
       .getId();
 
     requestsClient.create(new RequestBuilder()
       .withItemId(smallAngryPlanet.getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(requesterId))
       .getId();
 
     requestsClient.create(new RequestBuilder()
       .withItemId(temeraire.getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(requesterId))
       .getId();
 
@@ -103,16 +106,19 @@ public class RequestsAPIDeletionTests extends APITests {
 
     final UUID firstRequestId = requestsClient.create(new RequestBuilder()
       .withItemId(nod.getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(requesterId))
       .getId();
 
     final UUID secondRequestId = requestsClient.create(new RequestBuilder()
       .withItemId(smallAngryPlanet.getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(requesterId))
       .getId();
 
     final UUID thirdRequestId = requestsClient.create(new RequestBuilder()
       .withItemId(temeraire.getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(requesterId))
       .getId();
 

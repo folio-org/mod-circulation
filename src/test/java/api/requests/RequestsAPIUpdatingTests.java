@@ -66,6 +66,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     requestsClient.replace(createdRequest.getId(),
       RequestBuilder.from(createdRequest)
         .hold()
+        .withPickupServicePointId(servicePointsFixture.cd1().getId())
         .by(charlotte)
         .withTags(new RequestBuilder.Tags(Arrays.asList("new", "important")))
     );
@@ -210,6 +211,7 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     requestsClient.replace(createdRequest.getId(),
       RequestBuilder.from(createdRequest)
+        .withPickupServicePointId(servicePointsFixture.cd1().getId())
         .hold());
 
     Response getResponse = requestsClient.getById(createdRequest.getId());

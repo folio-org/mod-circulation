@@ -34,6 +34,7 @@ public class RequestsAPITitleTests extends APITests {
 
     IndividualResource response = requestsClient.create(new RequestBuilder()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .by(usersFixture.james()));
 
     JsonObject createdRequest = response.getJson();
@@ -72,6 +73,7 @@ public class RequestsAPITitleTests extends APITests {
 
     IndividualResource response = requestsClient.create(new RequestBuilder()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .by(usersFixture.steve()));
 
     JsonObject createdRequest = response.getJson();
@@ -111,6 +113,7 @@ public class RequestsAPITitleTests extends APITests {
 
     UUID firstRequestId = requestsClient.create(new RequestBuilder()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .by(usersFixture.james()))
       .getId();
 
@@ -118,6 +121,7 @@ public class RequestsAPITitleTests extends APITests {
 
     UUID secondRequestId = requestsClient.create(new RequestBuilder()
       .forItem(temeraire)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .by(usersFixture.james()))
       .getId();
 
