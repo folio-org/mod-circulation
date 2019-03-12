@@ -17,15 +17,15 @@ public class CirculationRulesClient {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private final OkapiHttpClient client;
   private final URL root;
-  private static final String loanPolicyPath = "/circulation/rules/loan-policy";
-  private static final String requestPolicyPath = "/circulation/rules/request-policy";
+  private static final String LOAN_POLICY_PATH = "/circulation/rules/loan-policy";
+  private static final String REQUEST_POLICY_PATH = "/circulation/rules/request-policy";
 
   CirculationRulesClient(OkapiHttpClient client, WebContext context, CirculationActionType circulationType)
     throws MalformedURLException {
 
     this.client = client;
     root = context.getOkapiBasedUrl(
-      circulationType == CirculationActionType.LOAN ? loanPolicyPath : requestPolicyPath
+      circulationType == CirculationActionType.LOAN ? LOAN_POLICY_PATH : REQUEST_POLICY_PATH
     );
   }
 
