@@ -14,6 +14,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 
+import api.support.builders.ServicePointBuilder;
 import api.support.http.ResourceClient;
 
 public class ServicePointsFixture {
@@ -85,5 +86,14 @@ public class ServicePointsFixture {
       ExecutionException {
 
     return servicePointRecordCreator.createIfAbsent(basedUponCircDesk6());
+  }
+
+  public IndividualResource create(ServicePointBuilder builder)
+      throws InterruptedException,
+      MalformedURLException,
+      TimeoutException,
+      ExecutionException {
+
+    return servicePointRecordCreator.createIfAbsent(builder);
   }
 }

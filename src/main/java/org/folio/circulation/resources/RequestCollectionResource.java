@@ -11,10 +11,12 @@ import org.folio.circulation.domain.RequestRepository;
 import org.folio.circulation.domain.RequestRepresentation;
 import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.domain.UpdateItem;
+import org.folio.circulation.domain.UpdateLoan;
 import org.folio.circulation.domain.UpdateLoanActionHistory;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.UpdateRequestService;
 import org.folio.circulation.domain.UserRepository;
+import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.representations.RequestProperties;
 import org.folio.circulation.domain.validation.ClosedRequestValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
@@ -48,8 +50,10 @@ public class RequestCollectionResource extends CollectionResource {
     final RequestRepository requestRepository = RequestRepository.using(clients);
     final UserRepository userRepository = new UserRepository(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
+    final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateLoanActionHistory updateLoanActionHistory = new UpdateLoanActionHistory(clients);
+    final UpdateLoan updateLoan = new UpdateLoan(clients, loanRepository, loanPolicyRepository);
     final ServicePointPickupLocationValidator servicePointPickupLocationValidator
         = new ServicePointPickupLocationValidator();
 
@@ -57,7 +61,7 @@ public class RequestCollectionResource extends CollectionResource {
       createProxyRelationshipValidator(representation, clients);
 
     final CreateRequestService createRequestService = new CreateRequestService(
-      requestRepository, updateItem, updateLoanActionHistory);
+      requestRepository, updateItem, updateLoanActionHistory, updateLoan);
 
     final RequestRepresentation requestRepresentation = new RequestRepresentation();
 
@@ -87,8 +91,10 @@ public class RequestCollectionResource extends CollectionResource {
     final LoanRepository loanRepository = new LoanRepository(clients);
     final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
+    final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final UpdateRequestQueue updateRequestQueue = UpdateRequestQueue.using(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
+    final UpdateLoan updateLoan = new UpdateLoan(clients, loanRepository, loanPolicyRepository);
     final UpdateLoanActionHistory updateLoanActionHistory = new UpdateLoanActionHistory(clients);
     final ServicePointPickupLocationValidator servicePointPickupLocationValidator
         = new ServicePointPickupLocationValidator();
@@ -100,7 +106,7 @@ public class RequestCollectionResource extends CollectionResource {
       RequestRepository.using(clients));
 
     final CreateRequestService createRequestService = new CreateRequestService(
-      requestRepository, updateItem, updateLoanActionHistory);
+      requestRepository, updateItem, updateLoanActionHistory, updateLoan);
 
 
     final UpdateRequestService updateRequestService = new UpdateRequestService(
