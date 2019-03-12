@@ -1,10 +1,11 @@
 package org.folio.circulation.support;
 
-import io.vertx.core.http.HttpClient;
+import java.net.MalformedURLException;
+
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.server.WebContext;
 
-import java.net.MalformedURLException;
+import io.vertx.core.http.HttpClient;
 
 public class Clients {
   private final CollectionResourceClient requestsStorageClient;
@@ -23,6 +24,8 @@ public class Clients {
   private final CollectionResourceClient servicePointsStorageClient;
   private final CollectionResourceClient calendarStorageClient;
   private final CollectionResourceClient patronGroupsStorageClient;
+  private final CollectionResourceClient patronNoticePolicesStorageClient;
+  private final CollectionResourceClient patronNoticeClient;
 
   public static Clients create(WebContext context, HttpClient httpClient) {
     return new Clients(context.createHttpClient(httpClient), context);
@@ -46,6 +49,8 @@ public class Clients {
       servicePointsStorageClient = createServicePointsStorageClient(client, context);
       patronGroupsStorageClient = createPatronGroupsStorageClient(client, context);
       calendarStorageClient = createCalendarStorageClient(client, context);
+      patronNoticePolicesStorageClient = createPatronNoticePolicesStorageClient(client, context);
+      patronNoticeClient = createPatronNoticeClient(client, context);
     }
     catch(MalformedURLException e) {
       throw new InvalidOkapiLocationException(context.getOkapiLocation(), e);
@@ -91,11 +96,11 @@ public class Clients {
   public CollectionResourceClient fixedDueDateSchedules() {
     return fixedDueDateSchedulesStorageClient;
   }
-  
+
   public CollectionResourceClient servicePointsStorage() {
     return servicePointsStorageClient;
   }
-  
+
   public CollectionResourceClient patronGroupsStorage() {
     return patronGroupsStorageClient;
   }
@@ -115,6 +120,14 @@ public class Clients {
 
   public CollectionResourceClient circulationRulesStorage() {
     return circulationRulesStorageClient;
+  }
+
+  public CollectionResourceClient patronNoticePolicesStorageClient() {
+    return patronNoticePolicesStorageClient;
+  }
+
+  public CollectionResourceClient patronNoticeClient() {
+    return patronNoticeClient;
   }
 
   private static CollectionResourceClient getCollectionResourceClient(
@@ -247,5 +260,19 @@ public class Clients {
     throws MalformedURLException {
     return getCollectionResourceClient(client, context, "/calendar/periods");
   }
-  
+
+  private CollectionResourceClient createPatronNoticePolicesStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+    return getCollectionResourceClient(client, context, "/patron-notice-policy-storage/patron-notice-policies");
+  }
+
+  private CollectionResourceClient createPatronNoticeClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+    return getCollectionResourceClient(client, context, "/patron-notice");
+  }
+
 }

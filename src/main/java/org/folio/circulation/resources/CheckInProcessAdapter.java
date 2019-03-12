@@ -3,6 +3,7 @@ package org.folio.circulation.resources;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.HttpResult.succeeded;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -16,9 +17,17 @@ import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateRequestQueue;
+import org.folio.circulation.domain.notice.NoticeDescriptor;
+import org.folio.circulation.domain.notice.NoticeEventType;
+import org.folio.circulation.domain.notice.NoticeTiming;
+import org.folio.circulation.domain.notice.PatronNoticePolicy;
+import org.folio.circulation.domain.notice.PatronNoticePolicyRepository;
+import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.storage.ItemByBarcodeInStorageFinder;
 import org.folio.circulation.storage.SingleOpenLoanForItemInStorageFinder;
 import org.folio.circulation.support.HttpResult;
+
+import io.vertx.core.json.JsonObject;
 
 class CheckInProcessAdapter {
   private final ItemByBarcodeInStorageFinder itemFinder;
@@ -29,6 +38,8 @@ class CheckInProcessAdapter {
   private final UpdateRequestQueue requestQueueUpdate;
   private final LoanRepository loanRepository;
   private final ServicePointRepository servicePointRepository;
+  private final PatronNoticePolicyRepository patronNoticePolicyRepository;
+  private final PatronNoticeService patronNoticeService;
 
   @SuppressWarnings("squid:S00107")
   CheckInProcessAdapter(
@@ -37,7 +48,8 @@ class CheckInProcessAdapter {
     LoanCheckInService loanCheckInService,
     RequestQueueRepository requestQueueRepository,
     UpdateItem updateItem, UpdateRequestQueue requestQueueUpdate,
-    LoanRepository loanRepository, ServicePointRepository servicePointRepository) {
+    LoanRepository loanRepository, ServicePointRepository servicePointRepository,
+    PatronNoticePolicyRepository patronNoticePolicyRepository, PatronNoticeService patronNoticeService) {
 
     this.itemFinder = itemFinder;
     this.singleOpenLoanFinder = singleOpenLoanFinder;
@@ -47,6 +59,8 @@ class CheckInProcessAdapter {
     this.requestQueueUpdate = requestQueueUpdate;
     this.loanRepository = loanRepository;
     this.servicePointRepository = servicePointRepository;
+    this.patronNoticePolicyRepository = patronNoticePolicyRepository;
+    this.patronNoticeService = patronNoticeService;
   }
 
   CompletableFuture<HttpResult<Item>> findItem(CheckInProcessRecords records) {
@@ -101,5 +115,24 @@ class CheckInProcessAdapter {
     }
 
     return completedFuture(succeeded(item));
+  }
+
+  CompletableFuture<HttpResult<CheckInProcessRecords>> sendCheckInPatronNotice(CheckInProcessRecords records) {
+    if (records.getLoan() == null) {
+      return CompletableFuture.completedFuture(HttpResult.succeeded(records));
+    }
+    return patronNoticePolicyRepository.lookupNoticePolicy(records.getLoan())
+      .thenApply(r -> r.next(policy -> {
+        sendCheckOutPatronNoticeWhenPolicyFound(records, policy);
+        return HttpResult.succeeded(records);
+      }));
+  }
+
+  private void sendCheckOutPatronNoticeWhenPolicyFound(CheckInProcessRecords records, PatronNoticePolicy patronNoticePolicy) {
+    Loan loan = records.getLoan();
+    List<NoticeDescriptor> noticeDescriptors =
+      patronNoticePolicy.lookupLoanNoticeDescriptor(NoticeEventType.CHECK_IN, NoticeTiming.UPON_AT);
+    JsonObject noticeContext = patronNoticeService.createNoticeContextFromLoan(loan);
+    patronNoticeService.sendPatronNotice(noticeDescriptors, loan.getUserId(), noticeContext);
   }
 }

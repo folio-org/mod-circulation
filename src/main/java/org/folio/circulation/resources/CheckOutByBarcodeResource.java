@@ -5,7 +5,9 @@ import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyU
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
@@ -17,6 +19,12 @@ import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.UserRepository;
+import org.folio.circulation.domain.notice.NoticeDescriptor;
+import org.folio.circulation.domain.notice.NoticeEventType;
+import org.folio.circulation.domain.notice.NoticeTiming;
+import org.folio.circulation.domain.notice.PatronNoticePolicy;
+import org.folio.circulation.domain.notice.PatronNoticePolicyRepository;
+import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
@@ -86,6 +94,8 @@ public class CheckOutByBarcodeResource extends Resource {
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final ClosedLibraryStrategyService strategyService = ClosedLibraryStrategyService.using(clients, loan.getLoanDate(), false);
+    final PatronNoticePolicyRepository patronNoticePolicyRepository = new PatronNoticePolicyRepository(clients);
+    final PatronNoticeService patronNoticeService = new PatronNoticeService(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> failure(
@@ -146,6 +156,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
       .thenComposeAsync(r -> r.after(loanRepository::createLoan))
+      .thenComposeAsync(r -> r.after(records -> sendCheckOutPatronNotice(records, patronNoticePolicyRepository, patronNoticeService)))
       .thenApply(r -> r.map(LoanAndRelatedRecords::getLoan))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(this::createdLoanFrom)
@@ -205,4 +216,29 @@ public class CheckOutByBarcodeResource extends Resource {
     return HttpResult.combine(loanResult, inventoryRecordsResult,
       LoanAndRelatedRecords::withItem);
   }
+
+  private CompletableFuture<HttpResult<LoanAndRelatedRecords>> sendCheckOutPatronNotice(
+    LoanAndRelatedRecords relatedRecords,
+    PatronNoticePolicyRepository noticePolicyRepository,
+    PatronNoticeService patronNoticeService) {
+    return noticePolicyRepository.lookupNoticePolicy(relatedRecords.getLoan())
+      .thenApply(r -> r.next(policy -> {
+        sendCheckOutPatronNoticeWhenPolicyFound(relatedRecords, policy,
+          patronNoticeService);
+        return HttpResult.succeeded(relatedRecords);
+      }));
+  }
+
+  private void sendCheckOutPatronNoticeWhenPolicyFound(
+    LoanAndRelatedRecords relatedRecords,
+    PatronNoticePolicy patronNoticePolicy,
+    PatronNoticeService patronNoticeService) {
+
+    Loan loan = relatedRecords.getLoan();
+    List<NoticeDescriptor> noticeDescriptors =
+      patronNoticePolicy.lookupLoanNoticeDescriptor(NoticeEventType.CHECK_OUT, NoticeTiming.UPON_AT);
+    JsonObject noticeContext = patronNoticeService.createNoticeContextFromLoan(loan);
+    patronNoticeService.sendPatronNotice(noticeDescriptors, relatedRecords.getUserId(), noticeContext);
+  }
+
 }

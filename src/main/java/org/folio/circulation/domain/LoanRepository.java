@@ -51,11 +51,12 @@ public class LoanRepository {
       storageLoan.put("loanPolicyId", loanAndRelatedRecords.getLoanPolicy().getId());
     }
 
+    User user = loanAndRelatedRecords.getLoan().getUser();
     return loansStorageClient.post(storageLoan).thenApply(response -> {
       if (response.getStatusCode() == 201) {
         return succeeded(
           loanAndRelatedRecords.withLoan(Loan.from(response.getJson(),
-            loanAndRelatedRecords.getLoan().getItem())));
+            loanAndRelatedRecords.getLoan().getItem()).withUser(user)));
       } else {
         return failed(new ForwardOnFailure(response));
       }

@@ -1,15 +1,7 @@
 package org.folio.circulation.domain.policy;
 
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.domain.User;
-import org.folio.circulation.support.*;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.folio.circulation.support.CqlHelper.multipleRecordsCqlQuery;
+import static org.folio.circulation.support.HttpResult.succeeded;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
@@ -19,8 +11,24 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import static org.folio.circulation.support.CqlHelper.multipleRecordsCqlQuery;
-import static org.folio.circulation.support.HttpResult.succeeded;
+import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.User;
+import org.folio.circulation.support.CirculationRulesClient;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.ForwardOnFailure;
+import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.JsonArrayHelper;
+import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.SingleRecordFetcher;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.vertx.core.json.JsonObject;
 
 public class LoanPolicyRepository {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -157,7 +165,7 @@ public class LoanPolicyRepository {
       "Applying circulation rules for material type: {}, patron group: {}, loan type: {}, location: {}",
       materialTypeId, patronGroupId, loanTypeId, locationId);
 
-      circulationRulesClient.applyRules(loanTypeId, locationId, materialTypeId,
+      circulationRulesClient.applyRulesForLoanPolicy(loanTypeId, locationId, materialTypeId,
       patronGroupId, ResponseHandler.any(circulationRulesResponse));
 
       circulationRulesResponse.thenAcceptAsync(response -> {

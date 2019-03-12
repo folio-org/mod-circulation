@@ -65,7 +65,7 @@ public class InterfaceUrls {
   }
 
   static URL noticePoliciesStorageUrl(String subPath) {
-    return APITestContext.viaOkapiModuleUrl("/notice-policy-storage/notice-policies" + subPath);
+    return APITestContext.viaOkapiModuleUrl("/patron-notice-policy-storage/patron-notice-policies" + subPath);
   }
 
   static URL fixedDueDateSchedulesStorageUrl(String subPath) {
@@ -151,5 +151,13 @@ public class InterfaceUrls {
 
   static URL servicePointsStorageUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/service-points" + subPath);
+  }
+
+  static URL patronNoticesUrl() {
+    return proxyRelationshipsUrl("");
+  }
+
+  static URL patronNoticesUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/patron-notice" + subPath);
   }
 }
