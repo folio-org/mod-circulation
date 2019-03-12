@@ -42,6 +42,17 @@ public class MaterialTypesFixture {
     return materialTypeRecordCreator.createIfAbsent(book);
   }
 
+  public IndividualResource any()
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    final JsonObject book = materialType("Book");
+
+    return materialTypeRecordCreator.createIfAbsent(book);
+  }
+
   private JsonObject materialType(String name) {
     final JsonObject materialType = new JsonObject();
 

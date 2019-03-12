@@ -110,6 +110,10 @@ class RecordCreator {
     removeFromIdentityMap(record);
   }
 
+  public IndividualResource getExistingRecord(String name){
+     return identityMap.get(name);
+  }
+
   private void removeFromIdentityMap(IndividualResource record) {
 
     //TODO: Find a better way of removing from the identity map

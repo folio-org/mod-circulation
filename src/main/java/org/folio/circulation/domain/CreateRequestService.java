@@ -33,7 +33,8 @@ public class CreateRequestService {
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     return completedFuture(refuseWhenItemIsNotValid(requestAndRelatedRecords)
-      .next(CreateRequestService::refuseWhenItemDoesNotExist))
+      .next(CreateRequestService::refuseWhenItemDoesNotExist)
+      .next(CreateRequestService::refuseWhenInvalidUserAndPatronGroup))
       .thenComposeAsync( r-> r.after(requestPolicyRepository::lookupRequestPolicy)) //get policy
       .thenApply( r -> r.next(CreateRequestService::refuseWhenRequestCannotBeFulfilled)) //check policy here
       .thenApply(r -> r.map(CreateRequestService::setRequestQueuePosition))
@@ -73,7 +74,7 @@ public class CreateRequestService {
 
     if(!requestPolicy.containsType(requestType)) {
       return failed(failure(
-        "Request Type is not valid", "requestType",
+        "Request Type " + requestType.getValue() + " is not valid", "requestType",
         requestType.getValue()));
     }
     else {
@@ -90,6 +91,28 @@ public class CreateRequestService {
       return failed(failure(
         String.format("Item is %s", request.getItem().getStatus()),
         "itemId", request.getItemId()
+      ));
+    }
+    else {
+      return succeeded(requestAndRelatedRecords);
+    }
+  }
+
+  private static HttpResult<RequestAndRelatedRecords> refuseWhenInvalidUserAndPatronGroup(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    Request request = requestAndRelatedRecords.getRequest();
+    User requester = request.getRequester();
+
+    if (requester == null){
+      return failed(failure(
+        "A valid user and patron group are required. User is null",
+        "User", null
+      ));
+    } else if (requester.getPatronGroupId() == null) {
+      return failed(failure(
+        "A valid patron group is required. PatronGroup ID is null",
+        "PatronGroupId", null
       ));
     }
     else {
