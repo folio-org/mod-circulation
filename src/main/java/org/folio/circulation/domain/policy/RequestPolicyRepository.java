@@ -100,7 +100,8 @@ public class RequestPolicyRepository {
         findRequestPolicyCompleted.complete(HttpResult.failed(
           new ForwardOnFailure(response)));
       } else {
-        findRequestPolicyCompleted.complete(succeeded(response.getJson().getString("requestPolicyId")));
+        findRequestPolicyCompleted.complete(
+          succeeded(response.getJson().getString("requestPolicyId")));
       }
     });
 
