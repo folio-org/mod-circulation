@@ -677,6 +677,10 @@
     {
       "id": "calendar",
       "version": "2.0"
+    },
+    {
+      "id": "patron-notice",
+      "version": "1.0"
     }
   ],
   "permissionSets": [

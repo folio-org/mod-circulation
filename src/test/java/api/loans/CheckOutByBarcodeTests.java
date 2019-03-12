@@ -617,7 +617,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void patronNoticeOnCheckoutHasBeenSendWhenCheckoutLoanNoticeIsDefined()
+  public void checkoutNoticeIsSentWhenPolicyDefinesCheckoutNotice()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,

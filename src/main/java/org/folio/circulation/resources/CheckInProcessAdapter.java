@@ -123,12 +123,12 @@ class CheckInProcessAdapter {
     }
     return patronNoticePolicyRepository.lookupNoticePolicy(records.getLoan())
       .thenApply(r -> r.next(policy -> {
-        sendCheckOutPatronNoticeWhenPolicyFound(records, policy);
+        sendCheckInPatronNoticeWhenPolicyFound(records, policy);
         return HttpResult.succeeded(records);
       }));
   }
 
-  private void sendCheckOutPatronNoticeWhenPolicyFound(CheckInProcessRecords records, PatronNoticePolicy patronNoticePolicy) {
+  private void sendCheckInPatronNoticeWhenPolicyFound(CheckInProcessRecords records, PatronNoticePolicy patronNoticePolicy) {
     Loan loan = records.getLoan();
     List<NoticeDescriptor> noticeDescriptors =
       patronNoticePolicy.lookupLoanNoticeDescriptor(NoticeEventType.CHECK_IN, NoticeTiming.UPON_AT);

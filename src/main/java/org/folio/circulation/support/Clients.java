@@ -265,7 +265,8 @@ public class Clients {
     OkapiHttpClient client,
     WebContext context)
     throws MalformedURLException {
-    return getCollectionResourceClient(client, context, "/patron-notice-policy-storage/patron-notice-policies");
+    return getCollectionResourceClient(client, context,
+      "/patron-notice-policy-storage/patron-notice-policies");
   }
 
   private CollectionResourceClient createPatronNoticeClient(
