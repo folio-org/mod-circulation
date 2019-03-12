@@ -147,7 +147,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return representation.getString("fulfilmentPreference");
   }
 
-  private RequestFulfilmentPreference getFulfilmentPreference() {
+  public RequestFulfilmentPreference getFulfilmentPreference() {
     return RequestFulfilmentPreference.from(getFulfilmentPreferenceName());
   }
 
