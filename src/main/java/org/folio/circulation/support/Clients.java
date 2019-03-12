@@ -2,8 +2,6 @@ package org.folio.circulation.support;
 
 import java.net.MalformedURLException;
 
-import org.folio.circulation.domain.CirculationActionType;
-
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.server.WebContext;
 
@@ -45,8 +43,8 @@ public class Clients {
       locationsStorageClient = createLocationsStorageClient(client, context);
       materialTypesStorageClient = createMaterialTypesStorageClient(client, context);
       proxiesForClient = createProxyUsersStorageClient(client, context);
-      circulationLoanRulesClient = new CirculationRulesClient(client, context, CirculationActionType.LOAN);
-      circulationRequestRulesClient = new CirculationRulesClient(client, context, CirculationActionType.REQUEST);
+      circulationLoanRulesClient = new CirculationRulesClient(client, context, "/circulation/rules/loan-policy");
+      circulationRequestRulesClient = new CirculationRulesClient(client, context, "/circulation/rules/request-policy");
       circulationRulesStorageClient = createCirculationRulesStorageClient(client, context);
       loanPoliciesStorageClient = createLoanPoliciesStorageClient(client, context);
       requestPoliciesStorageClient = createRequestPoliciesStorageClient(client, context);
