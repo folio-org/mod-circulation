@@ -164,6 +164,11 @@ public class ResourceClient {
       "service points", "servicepoints");
   }
 
+  public static ResourceClient forConfiguration(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::configurationUrl,
+      "configuration entries", "configs");
+  }
+
   private ResourceClient(
     OkapiHttpClient client,
     UrlMaker urlMaker,

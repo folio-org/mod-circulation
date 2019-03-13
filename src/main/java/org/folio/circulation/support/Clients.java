@@ -23,6 +23,7 @@ public class Clients {
   private final CollectionResourceClient servicePointsStorageClient;
   private final CollectionResourceClient calendarStorageClient;
   private final CollectionResourceClient patronGroupsStorageClient;
+  private final CollectionResourceClient configurationStorageClient;
 
   public static Clients create(WebContext context, HttpClient httpClient) {
     return new Clients(context.createHttpClient(httpClient), context);
@@ -46,6 +47,7 @@ public class Clients {
       servicePointsStorageClient = createServicePointsStorageClient(client, context);
       patronGroupsStorageClient = createPatronGroupsStorageClient(client, context);
       calendarStorageClient = createCalendarStorageClient(client, context);
+      configurationStorageClient = createConfigurationStorageClient(client, context);
     }
     catch(MalformedURLException e) {
       throw new InvalidOkapiLocationException(context.getOkapiLocation(), e);
@@ -104,6 +106,9 @@ public class Clients {
     return calendarStorageClient;
   }
 
+  public CollectionResourceClient configurationStorageClient() {
+    return configurationStorageClient;
+  }
 
   public CollectionResourceClient userProxies() {
     return proxiesForClient;
@@ -246,6 +251,13 @@ public class Clients {
     WebContext context)
     throws MalformedURLException {
     return getCollectionResourceClient(client, context, "/calendar/periods");
+  }
+
+  private CollectionResourceClient createConfigurationStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+    return getCollectionResourceClient(client, context, "/configurations/entries");
   }
   
 }

@@ -67,15 +67,15 @@ public class LoanPolicyRepository {
     final String loanScheduleId = loanPolicy.getLoansFixedDueDateScheduleId();
     final String alternateRenewalsSchedulesId = loanPolicy.getAlternateRenewalsFixedDueDateScheduleId();
 
-    if(loanScheduleId != null) {
+    if (loanScheduleId != null) {
       scheduleIds.add(loanScheduleId);
     }
 
-    if(alternateRenewalsSchedulesId != null) {
+    if (alternateRenewalsSchedulesId != null) {
       scheduleIds.add(alternateRenewalsSchedulesId);
     }
 
-    if(scheduleIds.isEmpty()) {
+    if (scheduleIds.isEmpty()) {
       return CompletableFuture.completedFuture(succeeded(loanPolicy));
     }
 
@@ -101,7 +101,7 @@ public class LoanPolicyRepository {
     return fixedDueDateSchedulesStorageClient.getMany(schedulesQuery,
       schedulesIds.size(), 0)
       .thenApply(schedulesResponse -> {
-        if(schedulesResponse.getStatusCode() != 200) {
+        if (schedulesResponse.getStatusCode() != 200) {
           return HttpResult.failed(new ServerErrorFailure(
             String.format("Fixed due date schedules request (%s) failed %s: %s",
               schedulesQuery, schedulesResponse.getStatusCode(),
@@ -134,12 +134,12 @@ public class LoanPolicyRepository {
     CompletableFuture<HttpResult<String>> findLoanPolicyCompleted
       = new CompletableFuture<>();
 
-    if(item.isNotFound()) {
+    if (item.isNotFound()) {
       return CompletableFuture.completedFuture(HttpResult.failed(
         new ServerErrorFailure("Unable to apply circulation rules for unknown item")));
     }
 
-    if(item.doesNotHaveHolding()) {
+    if (item.doesNotHaveHolding()) {
       return CompletableFuture.completedFuture(HttpResult.failed(
         new ServerErrorFailure("Unable to apply circulation rules for unknown holding")));
     }
@@ -157,10 +157,10 @@ public class LoanPolicyRepository {
       "Applying circulation rules for material type: {}, patron group: {}, loan type: {}, location: {}",
       materialTypeId, patronGroupId, loanTypeId, locationId);
 
-      circulationRulesClient.applyRules(loanTypeId, locationId, materialTypeId,
+    circulationRulesClient.applyRules(loanTypeId, locationId, materialTypeId,
       patronGroupId, ResponseHandler.any(circulationRulesResponse));
 
-      circulationRulesResponse.thenAcceptAsync(response -> {
+    circulationRulesResponse.thenAcceptAsync(response -> {
       if (response.getStatusCode() == 404) {
         findLoanPolicyCompleted.complete(HttpResult.failed(
           new ServerErrorFailure("Unable to apply circulation rules")));

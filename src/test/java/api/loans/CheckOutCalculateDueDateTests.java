@@ -3,6 +3,7 @@ package api.loans;
 import api.support.APITests;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanPolicyBuilder;
+import api.support.fixtures.ConfigurationExample;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.OpeningDay;
 import org.folio.circulation.domain.OpeningDayPeriod;
@@ -52,6 +53,8 @@ import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_
 import static org.folio.circulation.domain.policy.LoanPolicyPeriod.HOURS;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -72,6 +75,78 @@ public class CheckOutCalculateDueDateTests extends APITests {
     new LocalDate(2019, 1, 1)
       .toDateTime(TEST_TIME_MORNING, DateTimeZone.UTC);
 
+  @Test
+  public void testRespectSelectedTimezoneForDueDateCalculations() throws Exception {
+
+    String expectedTimeZone = "America/New_York";
+    DateTime expectedDateTime = new DateTime(2019, 12, 31, 23, 59, 59, DateTimeZone.forID(expectedTimeZone));
+
+    Response configResponse = configClient.create(ConfigurationExample.newYorkTimezoneConfiguration())
+      .getResponse();
+    assertThat(configResponse.getBody(), not(containsString(DateTimeZone.UTC.toString())));
+
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+    final UUID checkoutServicePointId = UUID.randomUUID();
+
+    UUID fixedDueDateScheduleId = loanPoliciesFixture
+      .createExampleFixedDueDateSchedule().getId();
+
+    String loanPolicyId = createLoanPolicy(
+      createLoanPolicyEntryFixed("Keep the current due date: FIXED",
+        fixedDueDateScheduleId,
+        DueDateManagement.KEEP_THE_CURRENT_DUE_DATE.getValue()));
+
+    final IndividualResource response = loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .on(new DateTime(2019, 1, 11, 14, 43, 54, DateTimeZone.forID(expectedTimeZone)))
+        .at(checkoutServicePointId));
+
+    final JsonObject loan = response.getJson();
+
+    assertThat(ERROR_MESSAGE_LOAN_POLICY,
+      loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
+
+    assertThat(ERROR_MESSAGE_DUE_DATE + END_OF_2019_DUE_DATE,
+      loan.getString(DUE_DATE_KEY), isEquivalentTo(expectedDateTime));
+  }
+
+  @Test
+  public void testRespectUtcTimezoneForDueDateCalculations() throws Exception {
+
+    Response configResponse = configClient.create(ConfigurationExample.utcTimezoneConfiguration())
+      .getResponse();
+    assertThat(configResponse.getBody(), containsString(DateTimeZone.UTC.toString()));
+
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+    final UUID checkoutServicePointId = UUID.randomUUID();
+
+    UUID fixedDueDateScheduleId = loanPoliciesFixture
+      .createExampleFixedDueDateSchedule().getId();
+
+    String loanPolicyId = createLoanPolicy(
+      createLoanPolicyEntryFixed("Keep the current due date: FIXED",
+        fixedDueDateScheduleId,
+        DueDateManagement.KEEP_THE_CURRENT_DUE_DATE.getValue()));
+
+    final IndividualResource response = loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .on(new DateTime(2019, 1, 11, 14, 43, 54, DateTimeZone.UTC))
+        .at(checkoutServicePointId));
+
+    final JsonObject loan = response.getJson();
+
+    assertThat(ERROR_MESSAGE_LOAN_POLICY,
+      loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
+
+    assertThat(ERROR_MESSAGE_DUE_DATE + END_OF_2019_DUE_DATE,
+      loan.getString(DUE_DATE_KEY), isEquivalentTo(END_OF_2019_DUE_DATE));
+  }
 
   /**
    * Scenario for Long-term loans:

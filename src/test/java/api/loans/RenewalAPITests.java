@@ -6,6 +6,7 @@ import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.FixedDueDateSchedule;
 import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.LoanPolicyBuilder;
+import api.support.fixtures.ConfigurationExample;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
@@ -50,6 +51,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -120,6 +122,8 @@ abstract class RenewalAPITests extends APITests {
     MalformedURLException,
     TimeoutException,
     ExecutionException {
+
+    configClient.create(ConfigurationExample.utcTimezoneConfiguration());
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -1040,6 +1044,62 @@ abstract class RenewalAPITests extends APITests {
     DateTime expectedDate =
       WEDNESDAY_DATE
         .toDateTime(END_TIME_SECOND_PERIOD, DateTimeZone.UTC);
+    assertThat("due date should be " + expectedDate,
+      renewedLoan.getString("dueDate"), isEquivalentTo(expectedDate));
+  }
+
+  @Test
+  public void testRespectSelectedTimezoneForDueDateCalculations() throws Exception {
+
+    String expectedTimeZone = "America/New_York";
+
+    Response response = configClient.create(ConfigurationExample.newYorkTimezoneConfiguration())
+      .getResponse();
+    assertThat(response.getBody(), containsString(expectedTimeZone));
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource jessica = usersFixture.jessica();
+    UUID checkoutServicePointId = UUID.fromString(CASE_FRI_SAT_MON_SERVICE_POINT_ID);
+    int loanPeriodHours = 8;
+
+    DateTime loanDate =
+      new DateTime(2019, DateTimeConstants.FEBRUARY, 1, 10, 0, DateTimeZone.forID(expectedTimeZone));
+
+    LoanPolicyBuilder loanPolicy = new LoanPolicyBuilder()
+      .withName("Loan policy")
+      .rolling(Period.hours(loanPeriodHours))
+      .withClosedLibraryDueDateManagement(
+        DueDateManagement.KEEP_THE_CURRENT_DUE_DATE.getValue());
+
+    UUID loanPolicyIdForCheckOut = loanPolicyClient.create(loanPolicy).getId();
+    useLoanPolicyAsFallback(loanPolicyIdForCheckOut,
+      requestPoliciesFixture.noAllowedTypes().getId(),
+      noticePoliciesFixture.activeNotice().getId());
+
+    loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(jessica)
+        .at(checkoutServicePointId)
+        .on(loanDate));
+
+    UUID loanPolicyIdForRenew = loanPolicyClient.create(loanPolicy
+      .withName("For renew")
+      .withClosedLibraryDueDateManagement(
+        DueDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS.getValue())
+    ).getId();
+    useLoanPolicyAsFallback(loanPolicyIdForRenew,
+      requestPoliciesFixture.noAllowedTypes().getId(),
+      noticePoliciesFixture.activeNotice().getId());
+
+    JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
+
+    DateTime expectedDate =
+      CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY
+        .toDateTime(START_TIME_FIRST_PERIOD, DateTimeZone.forID(expectedTimeZone));
+
+    assertThat(response.getBody(), containsString(expectedTimeZone));
+
     assertThat("due date should be " + expectedDate,
       renewedLoan.getString("dueDate"), isEquivalentTo(expectedDate));
   }

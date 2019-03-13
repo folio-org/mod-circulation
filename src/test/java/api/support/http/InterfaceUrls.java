@@ -152,4 +152,8 @@ public class InterfaceUrls {
   static URL servicePointsStorageUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/service-points" + subPath);
   }
+
+  static URL configurationUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/configurations/entries" + subPath);
+  }
 }

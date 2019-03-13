@@ -7,6 +7,7 @@ import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 import java.util.UUID;
 
+import org.folio.circulation.domain.ConfigurationRepository;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
@@ -86,6 +87,7 @@ public class CheckOutByBarcodeResource extends Resource {
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final ClosedLibraryStrategyService strategyService = ClosedLibraryStrategyService.using(clients, loan.getLoanDate(), false);
+    final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> failure(
@@ -139,6 +141,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(openLoanValidator::refuseWhenHasOpenLoan))
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenApply(awaitingPickupValidator::refuseWhenUserIsNotAwaitingPickup)
+      .thenComposeAsync(r -> r.after(configurationRepository::lookupTimeZone))
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenApply(itemIsNotLoanableValidator::refuseWhenItemIsNotLoanable)
       .thenApply(r -> r.next(this::calculateDefaultInitialDueDate))

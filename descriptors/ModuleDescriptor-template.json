@@ -42,7 +42,8 @@
             "circulation-storage.loan-policies.item.get",
             "circulation-storage.request-policies.item.get",
             "circulation-storage.fixed-due-date-schedules.item.get",
-            "circulation-storage.fixed-due-date-schedules.collection.get"
+            "circulation-storage.fixed-due-date-schedules.collection.get",
+            "configuration.entries.collection.get"
           ]
         },
         {
@@ -156,7 +157,8 @@
             "circulation-storage.loan-policies.item.get",
             "circulation-storage.request-policies.item.get",
             "circulation-storage.fixed-due-date-schedules.item.get",
-            "circulation-storage.fixed-due-date-schedules.collection.get"
+            "circulation-storage.fixed-due-date-schedules.collection.get",
+            "configuration.entries.collection.get"
           ]
         },
         {
@@ -674,6 +676,10 @@
     },
     {
       "id": "calendar",
+      "version": "2.0"
+    },
+    {
+      "id": "configuration",
       "version": "2.0"
     }
   ],
