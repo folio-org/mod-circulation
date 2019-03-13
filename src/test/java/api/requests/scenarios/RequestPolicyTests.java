@@ -119,7 +119,7 @@ public class RequestPolicyTests extends APITests {
 
     assertThat(recallResponse, hasStatus(HTTP_VALIDATION_ERROR));
     assertThat(recallResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("Request Type Recall is not valid"))));
+      hasMessage("Recall requests are not allowed for this patron and item combination"))));
   }
 
   @Test
@@ -202,11 +202,11 @@ public class RequestPolicyTests extends APITests {
 
     assertThat(recallResponse, hasStatus(HTTP_VALIDATION_ERROR));
     assertThat(recallResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("Request Type Hold is not valid"))));
+      hasMessage("Hold requests are not allowed for this patron and item combination"))));
   }
 
   @Test
-  public void canCreatePageRequestsWithRequestPolicyAllowingPagings()
+  public void canCreatePageRequestsWithRequestPolicyAllowingPageRequests()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -272,7 +272,7 @@ public class RequestPolicyTests extends APITests {
 
     assertThat(recallResponse, hasStatus(HTTP_VALIDATION_ERROR));
     assertThat(recallResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("Request Type Page is not valid"))));
+      hasMessage("Page requests are not allowed for this patron and item combination"))));
   }
 
   @Test
