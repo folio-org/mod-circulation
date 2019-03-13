@@ -8,7 +8,6 @@ import org.folio.circulation.domain.User;
 import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
-import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,27 +35,25 @@ public class LoanPolicyRepository {
     fixedDueDateSchedulesStorageClient = clients.fixedDueDateSchedules();
   }
 
-  public CompletableFuture<HttpResult<LoanPolicy>> lookupLoanPolicy(Loan loan, DateTimeZone timeZone) {
-    return lookupLoanPolicy(loan.getItem(), loan.getUser(), timeZone);
+  public CompletableFuture<HttpResult<LoanPolicy>> lookupLoanPolicy(Loan loan) {
+    return lookupLoanPolicy(loan.getItem(), loan.getUser());
   }
 
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> lookupLoanPolicy(
     LoanAndRelatedRecords relatedRecords) {
 
-    DateTimeZone timeZone = relatedRecords.getTimeZone();
-    return lookupLoanPolicy(relatedRecords.getLoan(), timeZone)
+    return lookupLoanPolicy(relatedRecords.getLoan())
       .thenApply(result -> result.map(relatedRecords::withLoanPolicy));
   }
 
   private CompletableFuture<HttpResult<LoanPolicy>> lookupLoanPolicy(
     Item item,
-    User user,
-    DateTimeZone timeZone) {
+    User user) {
 
     return lookupLoanPolicyId(item, user)
       .thenComposeAsync(r -> r.after(this::lookupLoanPolicy))
       .thenApply(result -> result.map(this::toLoanPolicy))
-      .thenComposeAsync(r -> r.after(loanPolicy -> lookupSchedules(loanPolicy, timeZone)));
+      .thenComposeAsync(r -> r.after(this::lookupSchedules));
   }
 
   private LoanPolicy toLoanPolicy(JsonObject representation) {
@@ -64,25 +61,25 @@ public class LoanPolicyRepository {
       new NoFixedDueDateSchedules(), new NoFixedDueDateSchedules());
   }
 
-  private CompletableFuture<HttpResult<LoanPolicy>> lookupSchedules(LoanPolicy loanPolicy, DateTimeZone timeZone) {
+  private CompletableFuture<HttpResult<LoanPolicy>> lookupSchedules(LoanPolicy loanPolicy) {
     List<String> scheduleIds = new ArrayList<>();
 
     final String loanScheduleId = loanPolicy.getLoansFixedDueDateScheduleId();
     final String alternateRenewalsSchedulesId = loanPolicy.getAlternateRenewalsFixedDueDateScheduleId();
 
-    if(loanScheduleId != null) {
+    if (loanScheduleId != null) {
       scheduleIds.add(loanScheduleId);
     }
 
-    if(alternateRenewalsSchedulesId != null) {
+    if (alternateRenewalsSchedulesId != null) {
       scheduleIds.add(alternateRenewalsSchedulesId);
     }
 
-    if(scheduleIds.isEmpty()) {
+    if (scheduleIds.isEmpty()) {
       return CompletableFuture.completedFuture(succeeded(loanPolicy));
     }
 
-    return getSchedules(scheduleIds, timeZone)
+    return getSchedules(scheduleIds)
       .thenApply(r -> r.next(schedules -> {
         final FixedDueDateSchedules loanSchedule = schedules.getOrDefault(
           loanScheduleId, new NoFixedDueDateSchedules());
@@ -97,14 +94,14 @@ public class LoanPolicyRepository {
   }
 
   private CompletableFuture<HttpResult<Map<String, FixedDueDateSchedules>>> getSchedules(
-    Collection<String> schedulesIds, DateTimeZone timeZone) {
+    Collection<String> schedulesIds) {
 
     String schedulesQuery = multipleRecordsCqlQuery(schedulesIds);
 
     return fixedDueDateSchedulesStorageClient.getMany(schedulesQuery,
       schedulesIds.size(), 0)
       .thenApply(schedulesResponse -> {
-        if(schedulesResponse.getStatusCode() != 200) {
+        if (schedulesResponse.getStatusCode() != 200) {
           return HttpResult.failed(new ServerErrorFailure(
             String.format("Fixed due date schedules request (%s) failed %s: %s",
               schedulesQuery, schedulesResponse.getStatusCode(),
@@ -117,7 +114,7 @@ public class LoanPolicyRepository {
         return succeeded(schedules.stream()
           .collect(Collectors.toMap(
             s -> s.getString("id"),
-            r -> FixedDueDateSchedules.from(r,timeZone))));
+            FixedDueDateSchedules::from)));
       });
   }
 
@@ -137,12 +134,12 @@ public class LoanPolicyRepository {
     CompletableFuture<HttpResult<String>> findLoanPolicyCompleted
       = new CompletableFuture<>();
 
-    if(item.isNotFound()) {
+    if (item.isNotFound()) {
       return CompletableFuture.completedFuture(HttpResult.failed(
         new ServerErrorFailure("Unable to apply circulation rules for unknown item")));
     }
 
-    if(item.doesNotHaveHolding()) {
+    if (item.doesNotHaveHolding()) {
       return CompletableFuture.completedFuture(HttpResult.failed(
         new ServerErrorFailure("Unable to apply circulation rules for unknown holding")));
     }
@@ -160,10 +157,10 @@ public class LoanPolicyRepository {
       "Applying circulation rules for material type: {}, patron group: {}, loan type: {}, location: {}",
       materialTypeId, patronGroupId, loanTypeId, locationId);
 
-      circulationRulesClient.applyRules(loanTypeId, locationId, materialTypeId,
+    circulationRulesClient.applyRules(loanTypeId, locationId, materialTypeId,
       patronGroupId, ResponseHandler.any(circulationRulesResponse));
 
-      circulationRulesResponse.thenAcceptAsync(response -> {
+    circulationRulesResponse.thenAcceptAsync(response -> {
       if (response.getStatusCode() == 404) {
         findLoanPolicyCompleted.complete(HttpResult.failed(
           new ServerErrorFailure("Unable to apply circulation rules")));

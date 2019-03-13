@@ -5,42 +5,27 @@ import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import static org.folio.circulation.support.HttpResult.failed;
 
 public class FixedDueDateSchedules {
   private final List<JsonObject> schedules;
-  private final DateTimeZone timeZone;
 
-  FixedDueDateSchedules(List<JsonObject> schedules, DateTimeZone timeZone) {
+  FixedDueDateSchedules(List<JsonObject> schedules) {
     this.schedules = schedules;
-    this.timeZone = timeZone;
   }
 
-  static FixedDueDateSchedules from(JsonObject representation, DateTimeZone timeZone) {
-    //TODO: Replace this with better check
-    if (representation == null) {
-      return new NoFixedDueDateSchedules();
-    } else {
-      return new FixedDueDateSchedules(JsonArrayHelper.toList(
-        representation.getJsonArray("schedules")), timeZone);
-    }
-  }
-
-  // for test only
   static FixedDueDateSchedules from(JsonObject representation) {
     if (representation == null) {
       return new NoFixedDueDateSchedules();
     } else {
       return new FixedDueDateSchedules(JsonArrayHelper.toList(
-        representation.getJsonArray("schedules")), DateTimeZone.UTC);
+        representation.getJsonArray("schedules")));
     }
   }
 
@@ -58,25 +43,15 @@ public class FixedDueDateSchedules {
 
   private Predicate<? super JsonObject> isWithin(DateTime date) {
     return schedule -> {
-      DateTime from = DateTime.parse(schedule.getString("from")).withZoneRetainFields(timeZone);
-      DateTime to = DateTime.parse(schedule.getString("to")).withZoneRetainFields(timeZone);
+      DateTime from = DateTime.parse(schedule.getString("from"));
+      DateTime to = DateTime.parse(schedule.getString("to"));
 
       return date.isAfter(from) && date.isBefore(to);
     };
   }
 
   private DateTime getDueDate(JsonObject schedule) {
-    return DateTime.parse(schedule.getString("due")).withZoneRetainFields(timeZone);
-  }
-
-  List<DateTime> getDueDates() {
-    return schedules.stream()
-      .map(schedule ->
-        new DateTime(schedule.getString("due"))
-          .millisOfDay()
-          .withMaximumValue()
-          .withZone(DateTimeZone.UTC))
-      .collect(Collectors.toList());
+    return DateTime.parse(schedule.getString("due"));
   }
 
   public boolean isEmpty() {

@@ -3,7 +3,6 @@ package org.folio.circulation.domain.policy;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
 import java.util.ArrayList;
 import java.util.Optional;
@@ -11,7 +10,7 @@ import java.util.function.Supplier;
 
 class NoFixedDueDateSchedules extends FixedDueDateSchedules {
   NoFixedDueDateSchedules() {
-    super(new ArrayList<>(), DateTimeZone.UTC);
+    super(new ArrayList<>());
   }
 
   @Override
