@@ -11,10 +11,8 @@ import io.vertx.core.json.JsonObject;
 public class RequestPolicy {
 
   private List<String> requestTypes;
-  private final JsonObject representation;
 
   public RequestPolicy(JsonObject representation){
-    this.representation = representation;
     this.requestTypes = JsonStringArrayHelper
       .toStream(representation, "requestTypes")
       .collect(Collectors.toList());
