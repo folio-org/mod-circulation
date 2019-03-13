@@ -6,28 +6,28 @@ import java.util.stream.Collectors;
 
 public class PatronNoticePolicy {
 
-  private final List<NoticeDescriptor> loanNoticeDescriptors;
-  private final List<NoticeDescriptor> requestNoticeDescriptors;
+  private final List<NoticeConfiguration> loanNoticeConfigurations;
+  private final List<NoticeConfiguration> requestNoticeConfigurations;
 
   public PatronNoticePolicy(
-    List<NoticeDescriptor> loanNoticeDescriptors,
-    List<NoticeDescriptor> requestNoticeDescriptors) {
-    this.loanNoticeDescriptors = loanNoticeDescriptors;
-    this.requestNoticeDescriptors = requestNoticeDescriptors;
+    List<NoticeConfiguration> loanNoticeConfigurations,
+    List<NoticeConfiguration> requestNoticeConfigurations) {
+    this.loanNoticeConfigurations = loanNoticeConfigurations;
+    this.requestNoticeConfigurations = requestNoticeConfigurations;
   }
 
-  public List<NoticeDescriptor> lookupLoanNoticeDescriptor(
+  public List<NoticeConfiguration> lookupLoanNoticeDescriptor(
     NoticeEventType eventType, NoticeTiming timing) {
-    return lookupNoticeDescriptor(loanNoticeDescriptors, eventType, timing);
+    return lookupNoticeDescriptor(loanNoticeConfigurations, eventType, timing);
   }
 
-  public List<NoticeDescriptor> lookupRequestNoticeDescriptor(
+  public List<NoticeConfiguration> lookupRequestNoticeDescriptor(
     NoticeEventType eventType, NoticeTiming timing) {
-    return lookupNoticeDescriptor(requestNoticeDescriptors, eventType, timing);
+    return lookupNoticeDescriptor(requestNoticeConfigurations, eventType, timing);
   }
 
-  private List<NoticeDescriptor> lookupNoticeDescriptor(
-    List<NoticeDescriptor> descriptorList, NoticeEventType eventType, NoticeTiming timing) {
+  private List<NoticeConfiguration> lookupNoticeDescriptor(
+    List<NoticeConfiguration> descriptorList, NoticeEventType eventType, NoticeTiming timing) {
     return descriptorList.stream()
       .filter(d -> Objects.equals(d.getNoticeEventType(), eventType))
       .filter(d -> Objects.equals(d.getTiming(), timing))

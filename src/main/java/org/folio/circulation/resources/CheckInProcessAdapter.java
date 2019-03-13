@@ -17,7 +17,7 @@ import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateRequestQueue;
-import org.folio.circulation.domain.notice.NoticeDescriptor;
+import org.folio.circulation.domain.notice.NoticeConfiguration;
 import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticePolicy;
@@ -130,9 +130,9 @@ class CheckInProcessAdapter {
 
   private void sendCheckInPatronNoticeWhenPolicyFound(CheckInProcessRecords records, PatronNoticePolicy patronNoticePolicy) {
     Loan loan = records.getLoan();
-    List<NoticeDescriptor> noticeDescriptors =
+    List<NoticeConfiguration> noticeConfigurations =
       patronNoticePolicy.lookupLoanNoticeDescriptor(NoticeEventType.CHECK_IN, NoticeTiming.UPON_AT);
     JsonObject noticeContext = patronNoticeService.createNoticeContextFromLoan(loan);
-    patronNoticeService.sendPatronNotice(noticeDescriptors, loan.getUserId(), noticeContext);
+    patronNoticeService.sendPatronNotice(noticeConfigurations, loan.getUserId(), noticeContext);
   }
 }

@@ -4,56 +4,56 @@ import java.util.UUID;
 
 import io.vertx.core.json.JsonObject;
 
-public class NoticeDescriptorBuilder extends JsonBuilder implements Builder {
+public class NoticeConfigurationBuilder extends JsonBuilder implements Builder {
 
   private final UUID templateId;
   private final String format;
   private final String eventType;
 
-  public NoticeDescriptorBuilder() {
+  public NoticeConfigurationBuilder() {
     this(UUID.randomUUID(), "Email", null);
   }
 
-  public NoticeDescriptorBuilder(UUID templateId, String format, String eventType) {
+  public NoticeConfigurationBuilder(UUID templateId, String format, String eventType) {
     this.templateId = templateId;
     this.format = format;
     this.eventType = eventType;
   }
 
-  public NoticeDescriptorBuilder withTemplateId(UUID templateId) {
-    return new NoticeDescriptorBuilder(
+  public NoticeConfigurationBuilder withTemplateId(UUID templateId) {
+    return new NoticeConfigurationBuilder(
       templateId,
       this.format,
       this.eventType
     );
   }
 
-  public NoticeDescriptorBuilder withFormat(UUID templateId) {
-    return new NoticeDescriptorBuilder(
+  public NoticeConfigurationBuilder withFormat(UUID templateId) {
+    return new NoticeConfigurationBuilder(
       templateId,
       format,
       this.eventType
     );
   }
 
-  public NoticeDescriptorBuilder withEventType(String eventType) {
-    return new NoticeDescriptorBuilder(
+  public NoticeConfigurationBuilder withEventType(String eventType) {
+    return new NoticeConfigurationBuilder(
       templateId,
       this.format,
       eventType
     );
   }
 
-  public NoticeDescriptorBuilder withCheckOutEvent() {
-    return new NoticeDescriptorBuilder(
+  public NoticeConfigurationBuilder withCheckOutEvent() {
+    return new NoticeConfigurationBuilder(
       templateId,
       this.format,
       "Check out"
     );
   }
 
-  public NoticeDescriptorBuilder withCheckInEvent() {
-    return new NoticeDescriptorBuilder(
+  public NoticeConfigurationBuilder withCheckInEvent() {
+    return new NoticeConfigurationBuilder(
       templateId,
       this.format,
       "Check in"

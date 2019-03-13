@@ -50,7 +50,7 @@ import api.support.builders.FixedDueDateSchedule;
 import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
-import api.support.builders.NoticeDescriptorBuilder;
+import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.UserBuilder;
 import io.vertx.core.json.JsonArray;
@@ -624,11 +624,11 @@ public class CheckOutByBarcodeTests extends APITests {
     ExecutionException {
 
     UUID checkOutTemplateId = UUID.randomUUID();
-    JsonObject checkOutNoticeDescriptor = new NoticeDescriptorBuilder()
+    JsonObject checkOutNoticeDescriptor = new NoticeConfigurationBuilder()
       .withTemplateId(checkOutTemplateId)
       .withCheckOutEvent()
       .create();
-    JsonObject checkInNoticeDescriptor = new NoticeDescriptorBuilder()
+    JsonObject checkInNoticeDescriptor = new NoticeConfigurationBuilder()
       .withTemplateId(UUID.randomUUID())
       .withCheckInEvent()
       .create();

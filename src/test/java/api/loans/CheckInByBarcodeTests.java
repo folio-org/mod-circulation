@@ -30,7 +30,7 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.CheckInByBarcodeResponse;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
-import api.support.builders.NoticeDescriptorBuilder;
+import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.matchers.UUIDMatcher;
 import io.vertx.core.json.JsonObject;
@@ -314,11 +314,11 @@ public class CheckInByBarcodeTests extends APITests {
     ExecutionException {
 
     UUID checkInTemplateId = UUID.randomUUID();
-    JsonObject checkOutNoticeDescriptor = new NoticeDescriptorBuilder()
+    JsonObject checkOutNoticeDescriptor = new NoticeConfigurationBuilder()
       .withTemplateId(checkInTemplateId)
       .withCheckInEvent()
       .create();
-    JsonObject renewNoticeDescriptor = new NoticeDescriptorBuilder()
+    JsonObject renewNoticeDescriptor = new NoticeConfigurationBuilder()
       .withTemplateId(UUID.randomUUID())
       .withEventType("Renew")
       .create();
@@ -379,11 +379,11 @@ public class CheckInByBarcodeTests extends APITests {
     ExecutionException {
 
     UUID checkInTemplateId = UUID.randomUUID();
-    JsonObject checkOutNoticeDescriptor = new NoticeDescriptorBuilder()
+    JsonObject checkOutNoticeDescriptor = new NoticeConfigurationBuilder()
       .withTemplateId(checkInTemplateId)
       .withCheckInEvent()
       .create();
-    JsonObject renewNoticeDescriptor = new NoticeDescriptorBuilder()
+    JsonObject renewNoticeDescriptor = new NoticeConfigurationBuilder()
       .withTemplateId(UUID.randomUUID())
       .withEventType("Renew")
       .create();

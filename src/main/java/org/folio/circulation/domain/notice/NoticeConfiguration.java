@@ -2,7 +2,7 @@ package org.folio.circulation.domain.notice;
 
 import org.joda.time.Period;
 
-public class NoticeDescriptor {
+public class NoticeConfiguration {
 
   private String templateId;
 
@@ -18,7 +18,7 @@ public class NoticeDescriptor {
 
   private Period recurringPeriod;
 
-  public NoticeDescriptor(
+  public NoticeConfiguration(
     String templateId, NoticeFormat noticeFormat, NoticeEventType noticeEventType,
     NoticeTiming timing, Period timingPeriod,
     boolean recurring, Period recurringPeriod) {

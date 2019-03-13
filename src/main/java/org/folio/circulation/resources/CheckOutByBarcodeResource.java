@@ -19,7 +19,7 @@ import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.UserRepository;
-import org.folio.circulation.domain.notice.NoticeDescriptor;
+import org.folio.circulation.domain.notice.NoticeConfiguration;
 import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticePolicy;
@@ -235,10 +235,10 @@ public class CheckOutByBarcodeResource extends Resource {
     PatronNoticeService patronNoticeService) {
 
     Loan loan = relatedRecords.getLoan();
-    List<NoticeDescriptor> noticeDescriptors =
+    List<NoticeConfiguration> noticeConfigurations =
       patronNoticePolicy.lookupLoanNoticeDescriptor(NoticeEventType.CHECK_OUT, NoticeTiming.UPON_AT);
     JsonObject noticeContext = patronNoticeService.createNoticeContextFromLoan(loan);
-    patronNoticeService.sendPatronNotice(noticeDescriptors, relatedRecords.getUserId(), noticeContext);
+    patronNoticeService.sendPatronNotice(noticeConfigurations, relatedRecords.getUserId(), noticeContext);
   }
 
 }

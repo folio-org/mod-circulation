@@ -47,8 +47,8 @@ public class NoticeDescriptorBuilder {
     return this;
   }
 
-  public NoticeDescriptor build() {
-    return new NoticeDescriptor(
+  public NoticeConfiguration build() {
+    return new NoticeConfiguration(
       templateId, noticeFormat, noticeEventType,
       timing, timingPeriod, recurring, recurringPeriod);
   }

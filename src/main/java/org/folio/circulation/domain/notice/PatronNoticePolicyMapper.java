@@ -37,19 +37,19 @@ public class PatronNoticePolicyMapper implements Function<JsonObject, HttpResult
   @Override
   public HttpResult<PatronNoticePolicy> apply(JsonObject representation) {
     try {
-      List<NoticeDescriptor> loanNoticeDescriptors =
+      List<NoticeConfiguration> loanNoticeConfigurations =
         JsonArrayHelper.mapToList(representation, LOAN_NOTICES, this::toNoticeDescriptor);
-      List<NoticeDescriptor> requestNoticeDescriptors =
+      List<NoticeConfiguration> requestNoticeConfigurations =
         JsonArrayHelper.mapToList(representation, REQUEST_NOTICES, this::toNoticeDescriptor);
 
-      return HttpResult.succeeded(new PatronNoticePolicy(loanNoticeDescriptors, requestNoticeDescriptors));
+      return HttpResult.succeeded(new PatronNoticePolicy(loanNoticeConfigurations, requestNoticeConfigurations));
     } catch (IllegalArgumentException ex) {
       return HttpResult.failed(new ServerErrorFailure("Unable to parse patron notice policy:" + ex.getMessage()));
     }
   }
 
 
-  private NoticeDescriptor toNoticeDescriptor(JsonObject representation) {
+  private NoticeConfiguration toNoticeDescriptor(JsonObject representation) {
     NoticeDescriptorBuilder builder = new NoticeDescriptorBuilder();
 
     String templateId = representation.getString(TEMPLATE_ID);

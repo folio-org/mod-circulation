@@ -27,8 +27,8 @@ public class PatronNoticeService {
     this.patronNoticeClient = clients.patronNoticeClient();
   }
 
-  public void sendPatronNotice(List<NoticeDescriptor> noticeDescriptors, String recipientId, JsonObject context) {
-    noticeDescriptors.stream()
+  public void sendPatronNotice(List<NoticeConfiguration> noticeConfigurations, String recipientId, JsonObject context) {
+    noticeConfigurations.stream()
       .map(this::toPatronNotice)
       .map(n -> n.setRecipientId(recipientId))
       .map(n -> n.setContext(context))
@@ -54,11 +54,11 @@ public class PatronNoticeService {
       .put("dueDate", NOTICE_DATE_TIME_FORMATTER.print(loan.getDueDate()));
   }
 
-  private PatronNotice toPatronNotice(NoticeDescriptor noticeDescriptor) {
+  private PatronNotice toPatronNotice(NoticeConfiguration noticeConfiguration) {
     PatronNotice patronNotice = new PatronNotice();
-    patronNotice.setTemplateId(noticeDescriptor.getTemplateId());
-    patronNotice.setDeliveryChannel(noticeDescriptor.getNoticeFormat().getDeliveryChannel());
-    patronNotice.setOutputFormat(noticeDescriptor.getNoticeFormat().getOutputFormat());
+    patronNotice.setTemplateId(noticeConfiguration.getTemplateId());
+    patronNotice.setDeliveryChannel(noticeConfiguration.getNoticeFormat().getDeliveryChannel());
+    patronNotice.setOutputFormat(noticeConfiguration.getNoticeFormat().getOutputFormat());
     return patronNotice;
   }
 
