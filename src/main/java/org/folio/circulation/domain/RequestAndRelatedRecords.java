@@ -1,38 +1,53 @@
 package org.folio.circulation.domain;
 
+import org.folio.circulation.domain.policy.RequestPolicy;
+
 public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedRecord {
   private final Request request;
   private final RequestQueue requestQueue;
+  private final RequestPolicy requestPolicy;
 
   private RequestAndRelatedRecords(
     Request request,
-    RequestQueue requestQueue) {
+    RequestQueue requestQueue,
+    RequestPolicy requestPolicy) {
 
     this.request = request;
     this.requestQueue = requestQueue;
+    this.requestPolicy = requestPolicy;
   }
 
   public RequestAndRelatedRecords(Request request) {
-    this(request, null);
+    this(request, null, null);
   }
 
   RequestAndRelatedRecords withRequest(Request newRequest) {
     return new RequestAndRelatedRecords(newRequest.withItem(request.getItem()),
-      this.requestQueue
+      this.requestQueue, null
+    );
+  }
+
+  public RequestAndRelatedRecords withRequestPolicy(RequestPolicy newRequestPolicy) {
+    return new RequestAndRelatedRecords(
+      this.request,
+      this.requestQueue,
+      newRequestPolicy
     );
   }
 
   public RequestAndRelatedRecords withRequestQueue(RequestQueue newRequestQueue) {
     return new RequestAndRelatedRecords(
       this.request,
-      newRequestQueue
+      newRequestQueue,
+      this.requestPolicy
     );
   }
 
   public RequestAndRelatedRecords withItem(Item newItem) {
     return new RequestAndRelatedRecords(
       this.request.withItem(newItem),
-      this.requestQueue
+      this.requestQueue,
+      this.requestPolicy
     );
   }
 
@@ -43,6 +58,8 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
   RequestQueue getRequestQueue() {
     return requestQueue;
   }
+
+  RequestPolicy getRequestPolicy() {return requestPolicy; }
 
   @Override
   public String getUserId() {

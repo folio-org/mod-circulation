@@ -7,24 +7,29 @@ import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.domain.policy.RequestPolicy;
+import org.folio.circulation.domain.policy.RequestPolicyRepository;
 import org.folio.circulation.support.HttpResult;
 
 public class CreateRequestService {
   private final RequestRepository requestRepository;
   private final UpdateItem updateItem;
   private final UpdateLoanActionHistory updateLoanActionHistory;
+  private final RequestPolicyRepository requestPolicyRepository;
   private final UpdateLoan updateLoan;
 
   public CreateRequestService(
     RequestRepository requestRepository,
     UpdateItem updateItem,
     UpdateLoanActionHistory updateLoanActionHistory,
-    UpdateLoan updateLoan) {
+    UpdateLoan updateLoan,
+    RequestPolicyRepository requestPolicyRepository) {
 
     this.requestRepository = requestRepository;
     this.updateItem = updateItem;
     this.updateLoanActionHistory = updateLoanActionHistory;
     this.updateLoan = updateLoan;
+    this.requestPolicyRepository = requestPolicyRepository;
   }
 
   public CompletableFuture<HttpResult<RequestAndRelatedRecords>> createRequest(
@@ -32,7 +37,10 @@ public class CreateRequestService {
 
     return completedFuture(refuseWhenItemIsNotValid(requestAndRelatedRecords)
       .next(CreateRequestService::refuseWhenItemDoesNotExist)
-      .map(CreateRequestService::setRequestQueuePosition))
+      .next(CreateRequestService::refuseWhenInvalidUserAndPatronGroup))
+      .thenComposeAsync( r-> r.after(requestPolicyRepository::lookupRequestPolicy))
+      .thenApply( r -> r.next(CreateRequestService::refuseWhenRequestCannotBeFulfilled))
+      .thenApply(r -> r.map(CreateRequestService::setRequestQueuePosition))
       .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
       .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreation))
       .thenComposeAsync(r -> r.after(updateLoan::onRequestCreation))
@@ -62,6 +70,22 @@ public class CreateRequestService {
     }
   }
 
+  private static HttpResult<RequestAndRelatedRecords> refuseWhenRequestCannotBeFulfilled(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    RequestPolicy requestPolicy = requestAndRelatedRecords.getRequestPolicy();
+    RequestType requestType =  requestAndRelatedRecords.getRequest().getRequestType();
+
+    if(!requestPolicy.allowsType(requestType)) {
+      return failed(failure(
+        requestType.getValue() + " requests are not allowed for this patron and item combination", Request.REQUEST_TYPE,
+        requestType.getValue()));
+    }
+    else {
+      return succeeded(requestAndRelatedRecords);
+    }
+  }
+
   private static HttpResult<RequestAndRelatedRecords> refuseWhenItemIsNotValid(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
@@ -69,8 +93,31 @@ public class CreateRequestService {
 
     if (!request.allowedForItem()) {
       return failed(failure(
-        String.format("Item is %s", request.getItem().getStatus()),
-        "itemId", request.getItemId()
+        String.format("%s requests are not allowed for %s item status combination", request.getRequestType().getValue() , request.getItem().getStatus().getValue()),
+        request.getRequestType().getValue(),
+        request.getItemId()
+      ));
+    }
+    else {
+      return succeeded(requestAndRelatedRecords);
+    }
+  }
+
+  private static HttpResult<RequestAndRelatedRecords> refuseWhenInvalidUserAndPatronGroup(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    Request request = requestAndRelatedRecords.getRequest();
+    User requester = request.getRequester();
+
+    if (requester == null){
+      return failed(failure(
+        "A valid user and patron group are required. User is null",
+        "User", null
+      ));
+    } else if (requester.getPatronGroupId() == null) {
+      return failed(failure(
+        "A valid patron group is required. PatronGroup ID is null",
+        "PatronGroupId", null
       ));
     }
     else {

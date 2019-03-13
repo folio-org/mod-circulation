@@ -53,7 +53,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     useLoanPolicyAsFallback(
       unknownLoanPolicyId,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
 
@@ -174,7 +174,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     useLoanPolicyAsFallback(
       nonRenewablePolicyId,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
 
@@ -212,7 +212,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     useLoanPolicyAsFallback(
       nonRenewablePolicyId,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
 
@@ -281,7 +281,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     useLoanPolicyAsFallback(
       dueDateLimitedPolicyId,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
 
@@ -327,7 +327,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     useLoanPolicyAsFallback(
       dueDateLimitedPolicyId,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
 
@@ -408,7 +408,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     useLoanPolicyAsFallback(
       dueDateLimitedPolicyId,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
 
@@ -465,7 +465,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     useLoanPolicyAsFallback(
       limitedRenewalsPolicyId,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
 
@@ -528,7 +528,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     useLoanPolicyAsFallback(
       rollingPolicyId,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
 

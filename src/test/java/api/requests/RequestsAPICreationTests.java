@@ -19,14 +19,17 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
+import java.util.ArrayList;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.PatronGroup;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
+import org.folio.circulation.domain.policy.RequestPolicy;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
@@ -42,6 +45,8 @@ import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import api.support.fixtures.ItemsFixture;
 import api.support.fixtures.LoansFixture;
+import api.support.fixtures.MaterialTypesFixture;
+import api.support.fixtures.RequestPoliciesFixture;
 import api.support.fixtures.RequestsFixture;
 import api.support.fixtures.UsersFixture;
 import api.support.http.InventoryItemResource;
@@ -518,7 +523,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void creatingARequestDoesNotStoreRequesterInformationWhenUserNotFound()
+  public void cannotCreateRequestWithUserBelongingToNoPatronGroup()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -526,27 +531,26 @@ public class RequestsAPICreationTests extends APITests {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
+    final IndividualResource noUserGroupBob = usersFixture.noUserGroupBob();
 
     loansFixture.checkOut(smallAngryPlanet, jessica);
 
-    UUID nonExistentRequester = UUID.randomUUID();
-
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
-    IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
+    final Response recallResponse = requestsClient.attemptCreate(new RequestBuilder()
       .recall()
-      .withRequestDate(requestDate)
       .forItem(smallAngryPlanet)
-      .withRequesterId(nonExistentRequester));
+      .withRequestDate(requestDate)
+      .by(noUserGroupBob));
 
-    JsonObject representation = createdRequest.getJson();
+    assertThat(recallResponse, hasStatus(HTTP_VALIDATION_ERROR));
 
-    assertThat("has no information for missing requesting user",
-      representation.containsKey("requester"), is(false));
+    assertThat(recallResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("A valid patron group is required. PatronGroup ID is null"))));
   }
 
   @Test
-  public void creatingARequestStoresItemInformationWhenRequestingUserNotFound()
+  public void cannotCreateRequestWithoutValidUser()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -561,27 +565,16 @@ public class RequestsAPICreationTests extends APITests {
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
-    IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
+    final Response recallResponse = requestsClient.attemptCreate(new RequestBuilder()
       .recall()
-      .withRequestDate(requestDate)
       .forItem(smallAngryPlanet)
+      .withRequestDate(requestDate)
       .withRequesterId(nonExistentRequesterId));
 
-    JsonObject representation = createdRequest.getJson();
+    assertThat(recallResponse, hasStatus(HTTP_VALIDATION_ERROR));
 
-    assertThat("has information taken from item",
-      representation.containsKey("item"), is(true));
-
-    assertThat("title is taken from item",
-      representation.getJsonObject("item").getString("title"),
-      is("The Long Way to a Small, Angry Planet"));
-
-    assertThat("barcode is taken from item",
-      representation.getJsonObject("item").getString("barcode"),
-      is("036000291452"));
-
-    assertThat("has no information for missing requesting user",
-      representation.containsKey("requester"), is(false));
+    assertThat(recallResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("A valid user and patron group are required. User is null"))));
   }
 
   @Test
@@ -889,7 +882,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(pagedRequest, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = pagedRequest.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.CHECKED_OUT.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is (("Page requests are not allowed for " + ItemStatus.CHECKED_OUT.getValue() + " item status combination").toLowerCase()));
   }
 
   @Test
@@ -913,7 +906,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(pagedRequest2, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = pagedRequest2.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.AWAITING_PICKUP.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is (("Page requests are not allowed for " + ItemStatus.AWAITING_PICKUP.getValue() + " item status combination").toLowerCase()));
   }
 
   @Test
@@ -936,7 +929,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(pagedRequest2, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = pagedRequest2.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.PAGED.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is(("Page requests are not allowed for " + ItemStatus.PAGED.getValue() + " item status combination").toLowerCase()));
   }
 
   @Test
@@ -961,7 +954,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(pagedRequest2, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = pagedRequest2.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.IN_TRANSIT.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is (("Page requests are not allowed for " + ItemStatus.IN_TRANSIT.getValue() + " item status combination").toLowerCase()));
   }
 
   @Test
@@ -1056,7 +1049,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(recallResponse, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = recallResponse.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.AVAILABLE.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is (("Recall requests are not allowed for " + ItemStatus.AVAILABLE.getValue() + " item status combination").toLowerCase()));
   }
 
   @Test
@@ -1077,7 +1070,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(holdRequest, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = holdRequest.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.MISSING.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is (("Recall requests are not allowed for " + ItemStatus.MISSING.getValue() + " item status combination").toLowerCase()));
   }
 
   @Test
@@ -1098,7 +1091,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(recallResponse, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = recallResponse.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.PAGED.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is (("Recall requests are not allowed for " + ItemStatus.PAGED.getValue() + " item status combination").toLowerCase()));
   }
 
   @Test
@@ -1238,8 +1231,9 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(recallResponse, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = recallResponse.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.AVAILABLE.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is(("Hold requests are not allowed for " + ItemStatus.AVAILABLE.getValue() + " item status combination").toLowerCase()));
   }
+
 
   public static IndividualResource setupPagedItem(IndividualResource requestPickupServicePoint, ItemsFixture itemsFixture,
                                                   ResourceClient requestClient, UsersFixture usersFixture)

@@ -114,7 +114,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     final IndividualResource loanPolicy = loanPoliciesFixture.create(canCirculateRollingPolicy);
 
     useLoanPolicyAsFallback(loanPolicy.getId(),
-        requestPoliciesFixture.noAllowedTypes().getId(),
+        requestPoliciesFixture.allowAllRequestPolicy().getId(),
         noticePoliciesFixture.activeNotice().getId());
 
     final IndividualResource loan = loansFixture.checkOut(smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
@@ -157,7 +157,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     final IndividualResource loanPolicy = loanPoliciesFixture.create(canCirculateRollingPolicy);
 
     useLoanPolicyAsFallback(loanPolicy.getId(),
-        requestPoliciesFixture.noAllowedTypes().getId(),
+        requestPoliciesFixture.allowAllRequestPolicy().getId(),
         noticePoliciesFixture.activeNotice().getId());
 
     // We use the loan date to calculate the MGD
@@ -203,7 +203,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     final IndividualResource loanPolicy = loanPoliciesFixture.create(canCirculateRollingPolicy);
 
     useLoanPolicyAsFallback(loanPolicy.getId(),
-        requestPoliciesFixture.noAllowedTypes().getId(),
+        requestPoliciesFixture.allowAllRequestPolicy().getId(),
         noticePoliciesFixture.activeNotice().getId());
 
     // We use the loan date to calculate the minimum guaranteed due date (MGD)
@@ -249,7 +249,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     final IndividualResource loanPolicy = loanPoliciesFixture.create(canCirculateRollingPolicy);
 
     useLoanPolicyAsFallback(loanPolicy.getId(),
-        requestPoliciesFixture.noAllowedTypes().getId(),
+        requestPoliciesFixture.allowAllRequestPolicy().getId(),
         noticePoliciesFixture.activeNotice().getId());
 
     // We use the loan date to calculate the minimum guaranteed due date (MGD)
@@ -297,7 +297,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     final IndividualResource loanPolicy = loanPoliciesFixture.create(canCirculateRollingPolicy);
 
     useLoanPolicyAsFallback(loanPolicy.getId(),
-        requestPoliciesFixture.noAllowedTypes().getId(),
+        requestPoliciesFixture.allowAllRequestPolicy().getId(),
         noticePoliciesFixture.activeNotice().getId());
 
     servicePointsFixture.create(new ServicePointBuilder(checkOutServicePointId, "CLDDM Desk", "clddm", "CLDDM Desk Test", null, null, TRUE, null));
@@ -373,7 +373,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     final IndividualResource loanPolicy = loanPoliciesFixture.create(canCirculateRollingPolicy);
 
     useLoanPolicyAsFallback(loanPolicy.getId(),
-        requestPoliciesFixture.noAllowedTypes().getId(),
+        requestPoliciesFixture.allowAllRequestPolicy().getId(),
         noticePoliciesFixture.activeNotice().getId());
 
     // We use the loan date to calculate the minimum guaranteed due date (MGD)

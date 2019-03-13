@@ -143,7 +143,7 @@ abstract class RenewalAPITests extends APITests {
 
     useLoanPolicyAsFallback(
       dueDateLimitedPolicyId,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
 
@@ -203,7 +203,7 @@ abstract class RenewalAPITests extends APITests {
 
     useLoanPolicyAsFallback(
       dueDateLimitedPolicyId,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
 
@@ -257,7 +257,7 @@ abstract class RenewalAPITests extends APITests {
 
     useLoanPolicyAsFallback(
       dueDateLimitedPolicyId,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
 
@@ -317,7 +317,7 @@ abstract class RenewalAPITests extends APITests {
 
     useLoanPolicyAsFallback(
       dueDateLimitedPolicyId,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
 
@@ -371,7 +371,7 @@ abstract class RenewalAPITests extends APITests {
 
     useLoanPolicyAsFallback(
       dueDateLimitedPolicyId,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
 
@@ -428,7 +428,7 @@ abstract class RenewalAPITests extends APITests {
 
     useLoanPolicyAsFallback(
       fixedDueDatePolicyId,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
 
@@ -485,7 +485,7 @@ abstract class RenewalAPITests extends APITests {
 
     useLoanPolicyAsFallback(
       limitedRenewalsPolicyId,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
 
@@ -597,7 +597,7 @@ abstract class RenewalAPITests extends APITests {
 
     useLoanPolicyAsFallback(
       unknownLoanPolicyId,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
 
@@ -628,7 +628,7 @@ abstract class RenewalAPITests extends APITests {
 
     useLoanPolicyAsFallback(
       limitedRenewalsPolicyId,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
 
@@ -676,7 +676,7 @@ abstract class RenewalAPITests extends APITests {
 
     useLoanPolicyAsFallback(
       limitedRenewalsPolicyId,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
 
@@ -718,7 +718,7 @@ abstract class RenewalAPITests extends APITests {
 
     useLoanPolicyAsFallback(
       notRenewablePolicyId,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
 
@@ -761,7 +761,7 @@ abstract class RenewalAPITests extends APITests {
 
     useLoanPolicyAsFallback(
       notRenewablePolicyId,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
 
@@ -864,7 +864,7 @@ abstract class RenewalAPITests extends APITests {
 
     UUID loanPolicyIdForCheckOut = loanPolicyClient.create(loanPolicy).getId();
     useLoanPolicyAsFallback(loanPolicyIdForCheckOut,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId());
 
     loansFixture.checkOutByBarcode(
@@ -880,7 +880,7 @@ abstract class RenewalAPITests extends APITests {
         DueDateManagement.MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY.getValue())
     ).getId();
     useLoanPolicyAsFallback(loanPolicyIdForRenew,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId());
 
     JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
@@ -916,7 +916,7 @@ abstract class RenewalAPITests extends APITests {
 
     UUID loanPolicyIdForCheckOut = loanPolicyClient.create(loanPolicy).getId();
     useLoanPolicyAsFallback(loanPolicyIdForCheckOut,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId());
 
     loansFixture.checkOutByBarcode(
@@ -932,7 +932,7 @@ abstract class RenewalAPITests extends APITests {
         DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.getValue())
     ).getId();
     useLoanPolicyAsFallback(loanPolicyIdForRenew,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId());
 
     JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
@@ -966,7 +966,7 @@ abstract class RenewalAPITests extends APITests {
 
     UUID loanPolicyIdForCheckOut = loanPolicyClient.create(loanPolicy).getId();
     useLoanPolicyAsFallback(loanPolicyIdForCheckOut,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId());
 
     loansFixture.checkOutByBarcode(
@@ -982,7 +982,7 @@ abstract class RenewalAPITests extends APITests {
         DueDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS.getValue())
     ).getId();
     useLoanPolicyAsFallback(loanPolicyIdForRenew,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId());
 
     JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
@@ -1018,7 +1018,7 @@ abstract class RenewalAPITests extends APITests {
 
     UUID loanPolicyIdForCheckOut = loanPolicyClient.create(loanPolicy).getId();
     useLoanPolicyAsFallback(loanPolicyIdForCheckOut,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId());
 
     loansFixture.checkOutByBarcode(
@@ -1034,7 +1034,7 @@ abstract class RenewalAPITests extends APITests {
         DueDateManagement.MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS.getValue())
     ).getId();
     useLoanPolicyAsFallback(loanPolicyIdForRenew,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId());
 
     DateTimeUtils.setCurrentMillisFixed(loanDate.plusHours(1).getMillis());
@@ -1073,7 +1073,7 @@ abstract class RenewalAPITests extends APITests {
 
     UUID loanPolicyIdForCheckOut = loanPolicyClient.create(loanPolicy).getId();
     useLoanPolicyAsFallback(loanPolicyIdForCheckOut,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId());
 
     loansFixture.checkOutByBarcode(
@@ -1089,7 +1089,7 @@ abstract class RenewalAPITests extends APITests {
         DueDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS.getValue())
     ).getId();
     useLoanPolicyAsFallback(loanPolicyIdForRenew,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId());
 
     JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();

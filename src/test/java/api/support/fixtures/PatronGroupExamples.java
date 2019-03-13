@@ -10,12 +10,16 @@ class PatronGroupExamples {
   static PatronGroupBuilder alternative() {
     return new PatronGroupBuilder("Alternative Group", "Alternative group");
   }
-  
+
   static PatronGroupBuilder staff() {
     return new PatronGroupBuilder("staff", "Staff users");
   }
-  
+
   static PatronGroupBuilder faculty() {
     return new PatronGroupBuilder("faculty", "Faculty users");
-  }  
+  }
+
+  static PatronGroupBuilder undergrad(){
+    return new PatronGroupBuilder("undergrad", "Undergraduate users");
+  }
 }
