@@ -1073,7 +1073,7 @@ abstract class RenewalAPITests extends APITests {
 
     UUID loanPolicyIdForCheckOut = loanPolicyClient.create(loanPolicy).getId();
     useLoanPolicyAsFallback(loanPolicyIdForCheckOut,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId());
 
     loansFixture.checkOutByBarcode(
@@ -1089,7 +1089,7 @@ abstract class RenewalAPITests extends APITests {
         DueDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS.getValue())
     ).getId();
     useLoanPolicyAsFallback(loanPolicyIdForRenew,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId());
 
     JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
