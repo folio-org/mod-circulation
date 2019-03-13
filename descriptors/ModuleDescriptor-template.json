@@ -43,6 +43,7 @@
             "circulation-storage.request-policies.item.get",
             "circulation-storage.fixed-due-date-schedules.item.get",
             "circulation-storage.fixed-due-date-schedules.collection.get",
+            "circulation-storage.patron-notice-policies.item.get",
             "patron-notice.post"
           ]
         },
@@ -82,6 +83,7 @@
             "circulation-storage.request-policies.item.get",
             "circulation-storage.fixed-due-date-schedules.item.get",
             "circulation-storage.fixed-due-date-schedules.collection.get",
+            "circulation-storage.patron-notice-policies.item.get",
             "patron-notice.post"
           ]
         },
@@ -677,6 +679,10 @@
     {
       "id": "calendar",
       "version": "2.0"
+    },
+    {
+      "id": "patron-notice-policy-storage",
+      "version": "0.7"
     },
     {
       "id": "patron-notice",
