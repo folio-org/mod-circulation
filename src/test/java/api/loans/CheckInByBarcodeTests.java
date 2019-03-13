@@ -314,17 +314,17 @@ public class CheckInByBarcodeTests extends APITests {
     ExecutionException {
 
     UUID checkInTemplateId = UUID.randomUUID();
-    JsonObject checkOutNoticeDescriptor = new NoticeConfigurationBuilder()
+    JsonObject checkOutNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(checkInTemplateId)
       .withCheckInEvent()
       .create();
-    JsonObject renewNoticeDescriptor = new NoticeConfigurationBuilder()
+    JsonObject renewNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(UUID.randomUUID())
       .withEventType("Renew")
       .create();
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with checkout notice")
-      .withLoanNotices(Arrays.asList(checkOutNoticeDescriptor, renewNoticeDescriptor));
+      .withLoanNotices(Arrays.asList(checkOutNoticeConfiguration, renewNoticeConfiguration));
     useLoanPolicyAsFallback(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.noAllowedTypes().getId(),
@@ -379,17 +379,17 @@ public class CheckInByBarcodeTests extends APITests {
     ExecutionException {
 
     UUID checkInTemplateId = UUID.randomUUID();
-    JsonObject checkOutNoticeDescriptor = new NoticeConfigurationBuilder()
+    JsonObject checkOutNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(checkInTemplateId)
       .withCheckInEvent()
       .create();
-    JsonObject renewNoticeDescriptor = new NoticeConfigurationBuilder()
+    JsonObject renewNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(UUID.randomUUID())
       .withEventType("Renew")
       .create();
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with checkout notice")
-      .withLoanNotices(Arrays.asList(checkOutNoticeDescriptor, renewNoticeDescriptor));
+      .withLoanNotices(Arrays.asList(checkOutNoticeConfiguration, renewNoticeConfiguration));
     useLoanPolicyAsFallback(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.noAllowedTypes().getId(),

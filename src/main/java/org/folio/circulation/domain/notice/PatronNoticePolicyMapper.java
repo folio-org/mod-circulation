@@ -38,9 +38,9 @@ public class PatronNoticePolicyMapper implements Function<JsonObject, HttpResult
   public HttpResult<PatronNoticePolicy> apply(JsonObject representation) {
     try {
       List<NoticeConfiguration> loanNoticeConfigurations =
-        JsonArrayHelper.mapToList(representation, LOAN_NOTICES, this::toNoticeDescriptor);
+        JsonArrayHelper.mapToList(representation, LOAN_NOTICES, this::toNoticeConfiguration);
       List<NoticeConfiguration> requestNoticeConfigurations =
-        JsonArrayHelper.mapToList(representation, REQUEST_NOTICES, this::toNoticeDescriptor);
+        JsonArrayHelper.mapToList(representation, REQUEST_NOTICES, this::toNoticeConfiguration);
 
       return HttpResult.succeeded(new PatronNoticePolicy(loanNoticeConfigurations, requestNoticeConfigurations));
     } catch (IllegalArgumentException ex) {
@@ -49,7 +49,7 @@ public class PatronNoticePolicyMapper implements Function<JsonObject, HttpResult
   }
 
 
-  private NoticeConfiguration toNoticeDescriptor(JsonObject representation) {
+  private NoticeConfiguration toNoticeConfiguration(JsonObject representation) {
     NoticeConfigurationBuilder builder = new NoticeConfigurationBuilder();
 
     String templateId = representation.getString(TEMPLATE_ID);

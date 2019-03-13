@@ -131,7 +131,7 @@ class CheckInProcessAdapter {
   private void sendCheckInPatronNoticeWhenPolicyFound(CheckInProcessRecords records, PatronNoticePolicy patronNoticePolicy) {
     Loan loan = records.getLoan();
     List<NoticeConfiguration> noticeConfigurations =
-      patronNoticePolicy.lookupLoanNoticeDescriptor(NoticeEventType.CHECK_IN, NoticeTiming.UPON_AT);
+      patronNoticePolicy.lookupLoanNoticeConfiguration(NoticeEventType.CHECK_IN, NoticeTiming.UPON_AT);
     JsonObject noticeContext = patronNoticeService.createNoticeContextFromLoan(loan);
     patronNoticeService.sendPatronNotice(noticeConfigurations, loan.getUserId(), noticeContext);
   }

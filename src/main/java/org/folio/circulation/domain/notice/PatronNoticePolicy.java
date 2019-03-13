@@ -16,17 +16,17 @@ public class PatronNoticePolicy {
     this.requestNoticeConfigurations = requestNoticeConfigurations;
   }
 
-  public List<NoticeConfiguration> lookupLoanNoticeDescriptor(
+  public List<NoticeConfiguration> lookupLoanNoticeConfiguration(
     NoticeEventType eventType, NoticeTiming timing) {
-    return lookupNoticeDescriptor(loanNoticeConfigurations, eventType, timing);
+    return lookupNoticeConfiguration(loanNoticeConfigurations, eventType, timing);
   }
 
-  public List<NoticeConfiguration> lookupRequestNoticeDescriptor(
+  public List<NoticeConfiguration> lookupRequestNoticeConfiguration(
     NoticeEventType eventType, NoticeTiming timing) {
-    return lookupNoticeDescriptor(requestNoticeConfigurations, eventType, timing);
+    return lookupNoticeConfiguration(requestNoticeConfigurations, eventType, timing);
   }
 
-  private List<NoticeConfiguration> lookupNoticeDescriptor(
+  private List<NoticeConfiguration> lookupNoticeConfiguration(
     List<NoticeConfiguration> descriptorList, NoticeEventType eventType, NoticeTiming timing) {
     return descriptorList.stream()
       .filter(d -> Objects.equals(d.getNoticeEventType(), eventType))

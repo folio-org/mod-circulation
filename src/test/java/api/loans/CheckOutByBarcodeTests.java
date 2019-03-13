@@ -624,17 +624,17 @@ public class CheckOutByBarcodeTests extends APITests {
     ExecutionException {
 
     UUID checkOutTemplateId = UUID.randomUUID();
-    JsonObject checkOutNoticeDescriptor = new NoticeConfigurationBuilder()
+    JsonObject checkOutNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(checkOutTemplateId)
       .withCheckOutEvent()
       .create();
-    JsonObject checkInNoticeDescriptor = new NoticeConfigurationBuilder()
+    JsonObject checkInNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(UUID.randomUUID())
       .withCheckInEvent()
       .create();
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with checkout notice")
-      .withLoanNotices(Arrays.asList(checkOutNoticeDescriptor, checkInNoticeDescriptor));
+      .withLoanNotices(Arrays.asList(checkOutNoticeConfiguration, checkInNoticeConfiguration));
     useLoanPolicyAsFallback(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.noAllowedTypes().getId(),

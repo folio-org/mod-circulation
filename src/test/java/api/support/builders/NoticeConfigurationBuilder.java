@@ -62,15 +62,15 @@ public class NoticeConfigurationBuilder extends JsonBuilder implements Builder {
 
   @Override
   public JsonObject create() {
-    JsonObject noticeDescriptor = new JsonObject();
+    JsonObject noticeConfiguration = new JsonObject();
 
     JsonObject sendOptions = new JsonObject();
     put(sendOptions, "sendWhen", eventType);
 
-    put(noticeDescriptor, "templateId", templateId);
-    put(noticeDescriptor, "format", format);
-    put(noticeDescriptor, "sendOptions", sendOptions);
-    put(noticeDescriptor, "templateId", templateId);
-    return noticeDescriptor;
+    put(noticeConfiguration, "templateId", templateId);
+    put(noticeConfiguration, "format", format);
+    put(noticeConfiguration, "sendOptions", sendOptions);
+    put(noticeConfiguration, "templateId", templateId);
+    return noticeConfiguration;
   }
 }
