@@ -3,6 +3,7 @@ package org.folio.circulation.domain.policy;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
@@ -10,18 +11,21 @@ import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 import static org.folio.circulation.support.HttpResult.failed;
+import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedIntegerProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
+import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 public class LoanPolicy {
 
@@ -275,8 +279,12 @@ public class LoanPolicy {
   }
 
   private Period getPeriod(JsonObject policy) {
-    String interval = getNestedStringProperty(policy, PERIOD_KEY, "intervalId");
-    Integer duration = getNestedIntegerProperty(policy, PERIOD_KEY, "duration");
+    return getPeriod(policy, PERIOD_KEY);
+  }
+
+  private Period getPeriod(JsonObject policy, String periodKey) {
+    String interval = getNestedStringProperty(policy, periodKey, "intervalId");
+    Integer duration = getNestedIntegerProperty(policy, periodKey, "duration");
     return Period.from(duration, interval);
   }
 
@@ -433,5 +441,77 @@ public class LoanPolicy {
     else {
       return Optional.empty();
     }
+  }
+
+  public HttpResult<Loan> recall(Loan loan) {
+    final JsonObject recalls = representation
+        .getJsonObject("requestManagement", new JsonObject())
+        .getJsonObject("recalls", new JsonObject());
+
+    final HttpResult<DateTime> minimumDueDateResult =
+        getDueDate("minimumGuaranteedLoanPeriod", recalls,
+            loan.getLoanDate(), null);
+
+    final DateTime systemDate = ClockManager.getClockManager().getDateTime();
+
+    final HttpResult<DateTime> recallDueDateResult =
+        getDueDate("recallReturnInterval", recalls, systemDate, systemDate);
+
+    final List<ValidationError> errors = new ArrayList<>();
+
+    errors.addAll(combineValidationErrors(recallDueDateResult));
+    errors.addAll(combineValidationErrors(minimumDueDateResult));
+
+    if (errors.isEmpty()) {
+      return minimumDueDateResult
+          .combine(recallDueDateResult, this::determineDueDate)
+          .map(dueDate -> changeDueDate(dueDate, loan));
+    } else {
+      return failed(new ValidationErrorFailure(errors));
+    }
+  }
+
+  private DateTime determineDueDate(DateTime minimumGuaranteedDueDate,
+      DateTime recallDueDate) {
+    if (minimumGuaranteedDueDate == null ||
+        recallDueDate.isAfter(minimumGuaranteedDueDate)) {
+      return recallDueDate;
+    } else {
+      return minimumGuaranteedDueDate;
+    }
+  }
+
+  private Loan changeDueDate(DateTime dueDate, Loan loan) {
+    loan.changeDueDate(dueDate);
+    return loan;
+  }
+
+  private HttpResult<DateTime> getDueDate(String key,
+      JsonObject representation,
+      DateTime initialDateTime,
+      DateTime defaultDateTime) {
+    final HttpResult<DateTime> result;
+
+    if (representation.containsKey(key)) {
+      result = getPeriod(representation, key).addTo(initialDateTime,
+          () -> failure(errorForPolicy(String.format("the \"%s\" in the loan policy is not recognized", key))), 
+          interval -> failure(errorForPolicy(String.format("the interval \"%s\" in \"%s\" is not recognized", interval, key))),
+          duration -> failure(errorForPolicy(String.format("the duration \"%s\" in \"%s\" is invalid", duration, key))));
+    } else {
+      result = succeeded(defaultDateTime);
+    }
+
+    return result;
+  }
+
+  private List<ValidationError> combineValidationErrors(HttpResult<?> result) {
+    if(result.failed() && result.cause() instanceof ValidationErrorFailure) {
+      final ValidationErrorFailure failureCause =
+          (ValidationErrorFailure) result.cause();
+
+      return new ArrayList<>(failureCause.getErrors());
+    }
+
+    return Collections.emptyList();
   }
 }

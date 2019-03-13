@@ -124,7 +124,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
         pickupServicePoint);
   }
 
-  Request withLoan(Loan newLoan) {
+  public Request withLoan(Loan newLoan) {
     return new Request(representation, item, requester, proxy, newLoan,
         pickupServicePoint);
   }

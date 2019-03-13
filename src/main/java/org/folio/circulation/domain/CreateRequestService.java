@@ -13,15 +13,18 @@ public class CreateRequestService {
   private final RequestRepository requestRepository;
   private final UpdateItem updateItem;
   private final UpdateLoanActionHistory updateLoanActionHistory;
+  private final UpdateLoan updateLoan;
 
   public CreateRequestService(
     RequestRepository requestRepository,
     UpdateItem updateItem,
-    UpdateLoanActionHistory updateLoanActionHistory) {
+    UpdateLoanActionHistory updateLoanActionHistory,
+    UpdateLoan updateLoan) {
 
     this.requestRepository = requestRepository;
     this.updateItem = updateItem;
     this.updateLoanActionHistory = updateLoanActionHistory;
+    this.updateLoan = updateLoan;
   }
 
   public CompletableFuture<HttpResult<RequestAndRelatedRecords>> createRequest(
@@ -32,6 +35,7 @@ public class CreateRequestService {
       .map(CreateRequestService::setRequestQueuePosition))
       .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
       .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreation))
+      .thenComposeAsync(r -> r.after(updateLoan::onRequestCreation))
       .thenComposeAsync(r -> r.after(requestRepository::create));
   }
 
