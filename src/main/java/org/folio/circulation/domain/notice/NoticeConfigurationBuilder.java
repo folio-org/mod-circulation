@@ -2,7 +2,7 @@ package org.folio.circulation.domain.notice;
 
 import org.joda.time.Period;
 
-public class NoticeDescriptorBuilder {
+public class NoticeConfigurationBuilder {
 
   private String templateId;
   private NoticeFormat noticeFormat;
@@ -12,37 +12,37 @@ public class NoticeDescriptorBuilder {
   private boolean recurring;
   private Period recurringPeriod;
 
-  public NoticeDescriptorBuilder setTemplateId(String templateId) {
+  public NoticeConfigurationBuilder setTemplateId(String templateId) {
     this.templateId = templateId;
     return this;
   }
 
-  public NoticeDescriptorBuilder setNoticeFormat(NoticeFormat noticeFormat) {
+  public NoticeConfigurationBuilder setNoticeFormat(NoticeFormat noticeFormat) {
     this.noticeFormat = noticeFormat;
     return this;
   }
 
-  public NoticeDescriptorBuilder setNoticeEventType(NoticeEventType noticeEventType) {
+  public NoticeConfigurationBuilder setNoticeEventType(NoticeEventType noticeEventType) {
     this.noticeEventType = noticeEventType;
     return this;
   }
 
-  public NoticeDescriptorBuilder setTiming(NoticeTiming timing) {
+  public NoticeConfigurationBuilder setTiming(NoticeTiming timing) {
     this.timing = timing;
     return this;
   }
 
-  public NoticeDescriptorBuilder setTimingPeriod(Period timingPeriod) {
+  public NoticeConfigurationBuilder setTimingPeriod(Period timingPeriod) {
     this.timingPeriod = timingPeriod;
     return this;
   }
 
-  public NoticeDescriptorBuilder setRecurring(boolean recurring) {
+  public NoticeConfigurationBuilder setRecurring(boolean recurring) {
     this.recurring = recurring;
     return this;
   }
 
-  public NoticeDescriptorBuilder setRecurringPeriod(Period recurringPeriod) {
+  public NoticeConfigurationBuilder setRecurringPeriod(Period recurringPeriod) {
     this.recurringPeriod = recurringPeriod;
     return this;
   }
