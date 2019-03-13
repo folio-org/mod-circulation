@@ -4,6 +4,7 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import org.folio.circulation.domain.ConfigurationRepository;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRenewalService;
@@ -52,6 +53,7 @@ public abstract class RenewalResource extends Resource {
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
     final LoanRenewalService loanRenewalService = LoanRenewalService.using(clients);
+    final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
     final ClosedLibraryStrategyService strategyService =
       ClosedLibraryStrategyService.using(clients, DateTime.now(DateTimeZone.UTC), true);
 
@@ -60,6 +62,7 @@ public abstract class RenewalResource extends Resource {
 
     findLoan(routingContext.getBodyAsJson(), loanRepository, itemRepository, userRepository)
       .thenApply(r -> r.map(LoanAndRelatedRecords::new))
+      .thenComposeAsync(r -> r.after(configurationRepository::lookupTimeZone))
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenApply(r -> r.next(loanRenewalService::renew))
       .thenComposeAsync(r -> r.after(records -> applyCLDDMForLoanAndRelatedRecords(strategyService, records)))
