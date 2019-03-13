@@ -279,6 +279,4 @@ public class Clients {
     throws MalformedURLException {
     return getCollectionResourceClient(client, context, "/configurations/entries");
   }
-
-
 }
