@@ -463,23 +463,27 @@ public class LoanPolicy {
     errors.addAll(combineValidationErrors(minimumDueDateResult));
 
     if (errors.isEmpty()) {
-      final DateTime minimumGuaranteedDueDate = minimumDueDateResult.value();
-      final DateTime recallDueDate = recallDueDateResult.value();
-
-      final DateTime newDueDate;
-      if (minimumGuaranteedDueDate == null ||
-          recallDueDate.isAfter(minimumGuaranteedDueDate)) {
-        newDueDate = recallDueDate;
-      } else {
-        newDueDate = minimumGuaranteedDueDate;
-      }
-
-      loan.changeDueDate(newDueDate);
-
-      return succeeded(loan);
+      return minimumDueDateResult
+          .combine(recallDueDateResult, this::determineDueDate)
+          .map(dueDate -> changeDueDate(dueDate, loan));
     } else {
       return failed(new ValidationErrorFailure(errors));
     }
+  }
+
+  private DateTime determineDueDate(DateTime minimumGuaranteedDueDate,
+      DateTime recallDueDate) {
+    if (minimumGuaranteedDueDate == null ||
+        recallDueDate.isAfter(minimumGuaranteedDueDate)) {
+      return recallDueDate;
+    } else {
+      return minimumGuaranteedDueDate;
+    }
+  }
+
+  private Loan changeDueDate(DateTime dueDate, Loan loan) {
+    loan.changeDueDate(dueDate);
+    return loan;
   }
 
   private HttpResult<DateTime> getDueDate(String key,
