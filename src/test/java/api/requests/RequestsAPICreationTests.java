@@ -882,7 +882,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(pagedRequest, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = pagedRequest.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.CHECKED_OUT.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is (("Page requests are not allowed for " + ItemStatus.CHECKED_OUT.getValue() + " item status combination").toLowerCase()));
   }
 
   @Test
@@ -906,7 +906,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(pagedRequest2, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = pagedRequest2.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.AWAITING_PICKUP.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is (("Page requests are not allowed for " + ItemStatus.AWAITING_PICKUP.getValue() + " item status combination").toLowerCase()));
   }
 
   @Test
@@ -929,7 +929,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(pagedRequest2, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = pagedRequest2.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.PAGED.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is(("Page requests are not allowed for " + ItemStatus.PAGED.getValue() + " item status combination").toLowerCase()));
   }
 
   @Test
@@ -954,7 +954,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(pagedRequest2, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = pagedRequest2.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.IN_TRANSIT.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is (("Page requests are not allowed for " + ItemStatus.IN_TRANSIT.getValue() + " item status combination").toLowerCase()));
   }
 
   @Test
@@ -1049,7 +1049,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(recallResponse, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = recallResponse.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.AVAILABLE.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is (("Recall requests are not allowed for " + ItemStatus.AVAILABLE.getValue() + " item status combination").toLowerCase()));
   }
 
   @Test
@@ -1070,7 +1070,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(holdRequest, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = holdRequest.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.MISSING.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is (("Recall requests are not allowed for " + ItemStatus.MISSING.getValue() + " item status combination").toLowerCase()));
   }
 
   @Test
@@ -1091,7 +1091,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(recallResponse, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = recallResponse.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.PAGED.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is (("Recall requests are not allowed for " + ItemStatus.PAGED.getValue() + " item status combination").toLowerCase()));
   }
 
   @Test
@@ -1231,7 +1231,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(recallResponse, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = recallResponse.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.AVAILABLE.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is(("Hold requests are not allowed for " + ItemStatus.AVAILABLE.getValue() + " item status combination").toLowerCase()));
   }
 
 

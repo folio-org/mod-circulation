@@ -72,9 +72,9 @@ public class CreateRequestService {
     RequestPolicy requestPolicy = requestAndRelatedRecords.getRequestPolicy();
     RequestType requestType =  requestAndRelatedRecords.getRequest().getRequestType();
 
-    if(!requestPolicy.containsType(requestType)) {
+    if(!requestPolicy.allowsType(requestType)) {
       return failed(failure(
-        "Request Type " + requestType.getValue() + " is not valid", "requestType",
+        requestType.getValue() + " requests are not allowed for this patron and item combination", "requestType",
         requestType.getValue()));
     }
     else {
@@ -89,8 +89,9 @@ public class CreateRequestService {
 
     if (!request.allowedForItem()) {
       return failed(failure(
-        String.format("Item is %s", request.getItem().getStatus()),
-        "itemId", request.getItemId()
+        String.format("%s requests are not allowed for %s item status combination", request.getRequestType().getValue() , request.getItem().getStatus().getValue()),
+        request.getRequestType().getValue(),
+        request.getItemId()
       ));
     }
     else {
