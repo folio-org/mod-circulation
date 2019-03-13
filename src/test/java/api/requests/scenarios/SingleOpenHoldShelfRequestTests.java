@@ -200,7 +200,9 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
         .forItem(smallAngryPlanet)
         .by(jessica)
         .withRequestDate(new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC))
-        .hold());
+        .hold()
+        .withFulfilmentPreference("Delivery")
+        .withPickupServicePointId(null));
 
     Response response = loansFixture.attemptCheckInByBarcode(new CheckInByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)

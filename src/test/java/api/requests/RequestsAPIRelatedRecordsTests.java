@@ -34,11 +34,13 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
     MalformedURLException {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOutByBarcode(smallAngryPlanet);
 
     IndividualResource response = requestsClient.create(new RequestBuilder()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(usersFixture.charlotte()));
 
     JsonObject createdRequest = response.getJson();
@@ -90,6 +92,7 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
     );
 
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOutByBarcode(smallAngryPlanet);
     loansFixture.checkOutByBarcode(temeraire);
@@ -98,11 +101,13 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
 
     UUID firstRequestId = requestsClient.create(new RequestBuilder()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(charlotte))
       .getId();
 
     UUID secondRequestId = requestsClient.create(new RequestBuilder()
       .forItem(temeraire)
+      .withPickupServicePointId(pickupServicePointId)
       .by(charlotte))
       .getId();
 

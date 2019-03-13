@@ -166,6 +166,8 @@ public class RequestsAPICreationTests extends APITests {
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
     Response response = requestsClient.attemptCreateAtSpecificLocation(new RequestBuilder()
       .withId(id)
       .open()
@@ -176,6 +178,7 @@ public class RequestsAPICreationTests extends APITests {
       .fulfilToHoldShelf()
       .withRequestExpiration(new LocalDate(2017, 7, 30))
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
+      .withPickupServicePointId(pickupServicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
     assertThat(response.getStatusCode(), is(204));
@@ -313,6 +316,7 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
     final IndividualResource rebecca = usersFixture.rebecca();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     UUID itemId = smallAngryPlanet.getId();
 
@@ -331,6 +335,7 @@ public class RequestsAPICreationTests extends APITests {
       .withRequestDate(requestDate)
       .forItem(smallAngryPlanet)
       .by(steve)
+      .withPickupServicePointId(pickupServicePointId)
       .fulfilToHoldShelf()
       .withRequestExpiration(new LocalDate(2017, 7, 30))
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
@@ -352,6 +357,7 @@ public class RequestsAPICreationTests extends APITests {
     final InventoryItemResource smallAngryPlanet =
       itemsFixture.basedUponSmallAngryPlanet(itemBuilder -> itemBuilder
         .withBarcode("036000291452"));
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     UUID itemId = smallAngryPlanet.getId();
 
@@ -363,6 +369,7 @@ public class RequestsAPICreationTests extends APITests {
       .recall().fulfilToHoldShelf()
       .withItemId(itemId)
       .withRequesterId(requesterId)
+      .withPickupServicePointId(pickupServicePointId)
       .withStatus(status));
 
     JsonObject representation = request.getJson();
@@ -503,12 +510,14 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
     final IndividualResource steve = usersFixture.steve();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOut(smallAngryPlanet, rebecca);
 
     IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
       .recall().fulfilToHoldShelf()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(steve)
       .withNoStatus());
 
@@ -526,6 +535,7 @@ public class RequestsAPICreationTests extends APITests {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOut(smallAngryPlanet, jessica);
 
@@ -537,6 +547,7 @@ public class RequestsAPICreationTests extends APITests {
       .recall()
       .withRequestDate(requestDate)
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(nonExistentRequester));
 
     JsonObject representation = createdRequest.getJson();
@@ -554,6 +565,7 @@ public class RequestsAPICreationTests extends APITests {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOut(smallAngryPlanet, steve);
 
@@ -565,6 +577,7 @@ public class RequestsAPICreationTests extends APITests {
       .recall()
       .withRequestDate(requestDate)
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(nonExistentRequesterId));
 
     JsonObject representation = createdRequest.getJson();
@@ -593,6 +606,7 @@ public class RequestsAPICreationTests extends APITests {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     final IndividualResource steve = usersFixture.steve(
       b -> b.withName("Jones", "Steven", "Anthony"));
@@ -604,6 +618,7 @@ public class RequestsAPICreationTests extends APITests {
     IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
       .recall()
       .withRequestDate(requestDate)
+      .withPickupServicePointId(pickupServicePointId)
       .forItem(smallAngryPlanet)
       .by(steve));
 
@@ -638,6 +653,7 @@ public class RequestsAPICreationTests extends APITests {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource james = usersFixture.james();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     final IndividualResource steveWithNoBarcode = usersFixture.steve(
       UserBuilder::withNoBarcode);
@@ -650,6 +666,7 @@ public class RequestsAPICreationTests extends APITests {
       .recall()
       .withRequestDate(requestDate)
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(steveWithNoBarcode));
 
     JsonObject representation = createdRequest.getJson();
@@ -682,12 +699,14 @@ public class RequestsAPICreationTests extends APITests {
 
     final IndividualResource rebecca = usersFixture.rebecca();
     final IndividualResource charlotte = usersFixture.charlotte();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOut(smallAngryPlanet, rebecca);
 
     IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
       .recall()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(charlotte));
 
     JsonObject representation = createdRequest.getJson();
@@ -716,6 +735,7 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
     final IndividualResource steve = usersFixture.steve();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     UUID itemId = smallAngryPlanet.getId();
 
@@ -727,6 +747,7 @@ public class RequestsAPICreationTests extends APITests {
       .recall()
       .withRequestDate(requestDate)
       .withItemId(itemId)
+      .withPickupServicePointId(pickupServicePointId)
       .by(steve)
       .create();
 
