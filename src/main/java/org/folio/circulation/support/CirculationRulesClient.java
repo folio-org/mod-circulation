@@ -17,46 +17,26 @@ public class CirculationRulesClient {
   private final OkapiHttpClient client;
   private final URL root;
 
-  CirculationRulesClient(OkapiHttpClient client, WebContext context)
+  CirculationRulesClient(OkapiHttpClient client, WebContext context, String subPath)
     throws MalformedURLException {
 
     this.client = client;
-    root = context.getOkapiBasedUrl("/circulation/rules");
+    root = context.getOkapiBasedUrl(subPath);
   }
 
-  public void applyRulesForLoanPolicy(
+  public void applyRules(
     String loanTypeId,
     String locationId,
     String materialTypeId,
     String patronGroup,
     Handler<HttpClientResponse> responseHandler) {
-    applyRules(loanTypeId, locationId, materialTypeId, patronGroup,
-      "loan-policy", responseHandler);
-  }
 
-  public void applyRulesForNoticePolicy(
-    String loanTypeId,
-    String locationId,
-    String materialTypeId,
-    String patronGroup,
-    Handler<HttpClientResponse> responseHandler) {
-    applyRules(loanTypeId, locationId, materialTypeId, patronGroup,
-      "notice-policy", responseHandler);
-  }
-
-  private void applyRules(
-    String loanTypeId,
-    String locationId,
-    String materialTypeId,
-    String patronGroup,
-    String path,
-    Handler<HttpClientResponse> responseHandler) {
     String circulationRulesQuery = queryParameters(loanTypeId, locationId,
       materialTypeId, patronGroup);
 
     log.info("Applying circulation rules for {}", circulationRulesQuery);
 
-    client.get(String.format("%s/%s?%s", root, path, circulationRulesQuery),
+    client.get(String.format("%s?%s", root, circulationRulesQuery),
       responseHandler);
   }
 

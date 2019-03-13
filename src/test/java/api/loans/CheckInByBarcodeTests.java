@@ -307,7 +307,7 @@ public class CheckInByBarcodeTests extends APITests {
   }
 
   @Test
-  public void patronNoticeOnCheckInHasBeenSendWhenCheckInLoanNoticeIsDefinedAndLoanExists()
+  public void patronNoticeOnCheckInIsSentWhenCheckInLoanNoticeIsDefinedAndLoanExists()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,

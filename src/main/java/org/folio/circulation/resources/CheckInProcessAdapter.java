@@ -21,8 +21,8 @@ import org.folio.circulation.domain.notice.NoticeDescriptor;
 import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticePolicy;
-import org.folio.circulation.domain.notice.PatronNoticePolicyRepository;
 import org.folio.circulation.domain.notice.PatronNoticeService;
+import org.folio.circulation.domain.policy.PatronNoticePolicyRepository;
 import org.folio.circulation.storage.ItemByBarcodeInStorageFinder;
 import org.folio.circulation.storage.SingleOpenLoanForItemInStorageFinder;
 import org.folio.circulation.support.HttpResult;
@@ -121,7 +121,7 @@ class CheckInProcessAdapter {
     if (records.getLoan() == null) {
       return CompletableFuture.completedFuture(HttpResult.succeeded(records));
     }
-    return patronNoticePolicyRepository.lookupNoticePolicy(records.getLoan())
+    return patronNoticePolicyRepository.lookupPolicy(records.getLoan())
       .thenApply(r -> r.next(policy -> {
         sendCheckInPatronNoticeWhenPolicyFound(records, policy);
         return HttpResult.succeeded(records);

@@ -1,9 +1,9 @@
 package org.folio.circulation.resources;
 
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.applyCLDDMForLoanAndRelatedRecords;
+
+import java.util.concurrent.CompletableFuture;
+
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRenewalService;
@@ -21,9 +21,10 @@ import org.folio.circulation.support.http.server.WebContext;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
-import java.util.concurrent.CompletableFuture;
-
-import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.applyCLDDMForLoanAndRelatedRecords;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
 
 public abstract class RenewalResource extends Resource {
   private final String rootPath;

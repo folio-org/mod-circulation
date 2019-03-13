@@ -19,7 +19,8 @@ public class Clients {
   private final CollectionResourceClient proxiesForClient;
   private final CollectionResourceClient loanPoliciesStorageClient;
   private final CollectionResourceClient fixedDueDateSchedulesStorageClient;
-  private final CirculationRulesClient circulationRulesClient;
+  private final CirculationRulesClient loanPolicyCirculationRulesClient;
+  private final CirculationRulesClient noticePolicyCirculationRulesClient;
   private final CollectionResourceClient circulationRulesStorageClient;
   private final CollectionResourceClient servicePointsStorageClient;
   private final CollectionResourceClient calendarStorageClient;
@@ -42,7 +43,8 @@ public class Clients {
       locationsStorageClient = createLocationsStorageClient(client, context);
       materialTypesStorageClient = createMaterialTypesStorageClient(client, context);
       proxiesForClient = createProxyUsersStorageClient(client, context);
-      circulationRulesClient = new CirculationRulesClient(client, context);
+      loanPolicyCirculationRulesClient =  createLoanPolicyCirculationRulesClient(client, context);
+      noticePolicyCirculationRulesClient = createNoticePolicyCirculationRulesClient(client, context);
       circulationRulesStorageClient = createCirculationRulesStorageClient(client, context);
       loanPoliciesStorageClient = createLoanPoliciesStorageClient(client, context);
       fixedDueDateSchedulesStorageClient = createFixedDueDateSchedulesStorageClient(client, context);
@@ -114,8 +116,12 @@ public class Clients {
     return proxiesForClient;
   }
 
-  public CirculationRulesClient circulationRules() {
-    return circulationRulesClient;
+  public CirculationRulesClient loanPolicyCirculationRules() {
+    return loanPolicyCirculationRulesClient;
+  }
+
+  public CirculationRulesClient noticePolicyCirculationRules() {
+    return noticePolicyCirculationRulesClient;
   }
 
   public CollectionResourceClient circulationRulesStorage() {
@@ -230,6 +236,23 @@ public class Clients {
     return getCollectionResourceClient(client, context,
       "/fixed-due-date-schedule-storage/fixed-due-date-schedules");
   }
+
+  private CirculationRulesClient createLoanPolicyCirculationRulesClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+    return new CirculationRulesClient(client, context,
+      "/circulation/rules/loan-policy");
+  }
+
+  private CirculationRulesClient createNoticePolicyCirculationRulesClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+    return new CirculationRulesClient(client, context,
+      "/circulation/rules/notice-policy");
+  }
+
 
   private CollectionResourceClient createCirculationRulesStorageClient(
     OkapiHttpClient client,

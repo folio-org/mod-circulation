@@ -23,10 +23,10 @@ import org.folio.circulation.domain.notice.NoticeDescriptor;
 import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticePolicy;
-import org.folio.circulation.domain.notice.PatronNoticePolicyRepository;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
+import org.folio.circulation.domain.policy.PatronNoticePolicyRepository;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
 import org.folio.circulation.domain.representations.LoanProperties;
@@ -221,7 +221,7 @@ public class CheckOutByBarcodeResource extends Resource {
     LoanAndRelatedRecords relatedRecords,
     PatronNoticePolicyRepository noticePolicyRepository,
     PatronNoticeService patronNoticeService) {
-    return noticePolicyRepository.lookupNoticePolicy(relatedRecords.getLoan())
+    return noticePolicyRepository.lookupPolicy(relatedRecords.getLoan())
       .thenApply(r -> r.next(policy -> {
         sendCheckOutPatronNoticeWhenPolicyFound(relatedRecords, policy,
           patronNoticeService);
