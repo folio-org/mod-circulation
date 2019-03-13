@@ -43,8 +43,8 @@ public class Clients {
       locationsStorageClient = createLocationsStorageClient(client, context);
       materialTypesStorageClient = createMaterialTypesStorageClient(client, context);
       proxiesForClient = createProxyUsersStorageClient(client, context);
-      circulationLoanRulesClient = new CirculationRulesClient(client, context, "/circulation/rules/loan-policy");
-      circulationRequestRulesClient = new CirculationRulesClient(client, context, "/circulation/rules/request-policy");
+      circulationLoanRulesClient = createCirculationLoanRulesClient(client, context);
+      circulationRequestRulesClient = createCirculationRequestRulesClient(client, context);
       circulationRulesStorageClient = createCirculationRulesStorageClient(client, context);
       loanPoliciesStorageClient = createLoanPoliciesStorageClient(client, context);
       requestPoliciesStorageClient = createRequestPoliciesStorageClient(client, context);
@@ -140,6 +140,22 @@ public class Clients {
     throws MalformedURLException {
 
     return new CollectionResourceClient(client, context.getOkapiBasedUrl(path));
+  }
+
+  private static CirculationRulesClient createCirculationLoanRulesClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+
+    return new CirculationRulesClient(client, context, "/circulation/rules/loan-policy");
+  }
+
+  private static CirculationRulesClient createCirculationRequestRulesClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+
+    return new CirculationRulesClient(client, context, "/circulation/rules/request-policy");
   }
 
   private static CollectionResourceClient createRequestsStorageClient(

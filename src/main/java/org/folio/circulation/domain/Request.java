@@ -29,6 +29,8 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private final Loan loan;
   private final ServicePoint pickupServicePoint;
 
+  public static final String REQUEST_TYPE = "requestType";
+
   private boolean changedPosition = false;
 
   public Request(
@@ -156,7 +158,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   RequestType getRequestType() {
-    return RequestType.from(representation.getString("requestType"));
+    return RequestType.from(representation.getString(REQUEST_TYPE));
   }
 
   Boolean allowedForItem() {

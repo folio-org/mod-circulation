@@ -38,8 +38,8 @@ public class CreateRequestService {
     return completedFuture(refuseWhenItemIsNotValid(requestAndRelatedRecords)
       .next(CreateRequestService::refuseWhenItemDoesNotExist)
       .next(CreateRequestService::refuseWhenInvalidUserAndPatronGroup))
-      .thenComposeAsync( r-> r.after(requestPolicyRepository::lookupRequestPolicy)) //get policy
-      .thenApply( r -> r.next(CreateRequestService::refuseWhenRequestCannotBeFulfilled)) //check policy here
+      .thenComposeAsync( r-> r.after(requestPolicyRepository::lookupRequestPolicy))
+      .thenApply( r -> r.next(CreateRequestService::refuseWhenRequestCannotBeFulfilled))
       .thenApply(r -> r.map(CreateRequestService::setRequestQueuePosition))
       .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
       .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreation))
@@ -78,7 +78,7 @@ public class CreateRequestService {
 
     if(!requestPolicy.allowsType(requestType)) {
       return failed(failure(
-        requestType.getValue() + " requests are not allowed for this patron and item combination", "requestType",
+        requestType.getValue() + " requests are not allowed for this patron and item combination", Request.REQUEST_TYPE,
         requestType.getValue()));
     }
     else {
