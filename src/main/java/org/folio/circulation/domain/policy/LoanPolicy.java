@@ -9,9 +9,7 @@ import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -454,11 +452,7 @@ public class LoanPolicy {
         getDueDate("minimumGuaranteedLoanPeriod", recalls,
             loan.getLoanDate(), null);
 
-    // Use a java.time Clock, which allows unit tests to use a fixed clock
-    final DateTime systemDate = new DateTime(
-        ZonedDateTime.now(
-            ClockManager.getClockManager().getClock()).toInstant().toEpochMilli(),
-        DateTimeZone.UTC);
+    final DateTime systemDate = ClockManager.getClockManager().getDateTime();
 
     final HttpResult<DateTime> recallDueDateResult =
         getDueDate("recallReturnInterval", recalls, systemDate, systemDate);
@@ -469,14 +463,15 @@ public class LoanPolicy {
     errors.addAll(combineValidationErrors(minimumDueDateResult));
 
     if (errors.isEmpty()) {
-      final DateTime mgd = minimumDueDateResult.value();
-      final DateTime rd = recallDueDateResult.value();
+      final DateTime minimumGuaranteedDueDate = minimumDueDateResult.value();
+      final DateTime recallDueDate = recallDueDateResult.value();
 
       final DateTime newDueDate;
-      if (mgd == null || rd.isAfter(mgd)) {
-        newDueDate = rd;
+      if (minimumGuaranteedDueDate == null ||
+          recallDueDate.isAfter(minimumGuaranteedDueDate)) {
+        newDueDate = recallDueDate;
       } else {
-        newDueDate = mgd;
+        newDueDate = minimumGuaranteedDueDate;
       }
 
       loan.changeDueDate(newDueDate);

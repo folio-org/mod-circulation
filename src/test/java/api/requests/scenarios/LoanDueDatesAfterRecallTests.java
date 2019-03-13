@@ -13,7 +13,6 @@ import java.net.MalformedURLException;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -46,9 +45,8 @@ import junitparams.naming.TestCaseName;
  * Notes:<br>
  *  MGD = Minimum guaranteed due date<br>
  *  RD = Recall due date<br>
- * 
- * @author mreno
  *
+ * @see <a href="https://issues.folio.org/browse/CIRC-203">CIRC-203</a>
  */
 @RunWith(JUnitParamsRunner.class)
 public class LoanDueDatesAfterRecallTests extends APITests {
@@ -85,11 +83,11 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
-    assertThat("due date is not the original date",
+    assertThat("due date is the original date",
         storedLoan.getString("dueDate"), not(originalDueDate));
 
-    final String expectedDueDate = new DateTime(ZonedDateTime.now(clock).toInstant().toEpochMilli(), DateTimeZone.UTC).toString(ISODateTimeFormat.dateTime());
-    assertThat("due date is the current date",
+    final String expectedDueDate = ClockManager.getClockManager().getDateTime().toString(ISODateTimeFormat.dateTime());
+    assertThat("due date is not the current date",
         storedLoan.getString("dueDate"), is(expectedDueDate));
   }
 
@@ -128,11 +126,11 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
-    assertThat("due date is not the original date",
+    assertThat("due date is the original date",
         storedLoan.getString("dueDate"), not(originalDueDate));
 
-    final String expectedDueDate = new DateTime(ZonedDateTime.now(clock).toInstant().toEpochMilli(), DateTimeZone.UTC).plusMonths(2).toString(ISODateTimeFormat.dateTime());
-    assertThat("due date is the RD (2 months)",
+    final String expectedDueDate = ClockManager.getClockManager().getDateTime().plusMonths(2).toString(ISODateTimeFormat.dateTime());
+    assertThat("due date is not the recall due date (2 months)",
         storedLoan.getString("dueDate"), is(expectedDueDate));
   }
 
@@ -175,11 +173,11 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
-    assertThat("due date is not the original date",
+    assertThat("due date is the original date",
         storedLoan.getString("dueDate"), not(originalDueDate));
 
     final String expectedDueDate = loanDate.plusWeeks(2).toString(ISODateTimeFormat.dateTime());
-    assertThat("due date is the MGD (2 weeks)",
+    assertThat("due date is not the minimum guaranteeded due date (2 weeks)",
         storedLoan.getString("dueDate"), is(expectedDueDate));
   }
 
@@ -208,7 +206,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
         requestPoliciesFixture.noAllowedTypes().getId(),
         noticePoliciesFixture.activeNotice().getId());
 
-    // We use the loan date to calculate the MGD
+    // We use the loan date to calculate the minimum guaranteed due date (MGD)
     final DateTime loanDate = DateTime.now(DateTimeZone.UTC);
 
     final IndividualResource loan =
@@ -221,11 +219,11 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
-    assertThat("due date is not the original date",
+    assertThat("due date is the original date",
         storedLoan.getString("dueDate"), not(originalDueDate));
 
-    final String expectedDueDate = new DateTime(ZonedDateTime.now(clock).toInstant().toEpochMilli(), DateTimeZone.UTC).plusWeeks(1).toString(ISODateTimeFormat.dateTime());
-    assertThat("due date is the RD (1 week)",
+    final String expectedDueDate = ClockManager.getClockManager().getDateTime().plusWeeks(1).toString(ISODateTimeFormat.dateTime());
+    assertThat("due date is not the recall due date (1 week)",
         storedLoan.getString("dueDate"), is(expectedDueDate));
   }
 
@@ -254,7 +252,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
         requestPoliciesFixture.noAllowedTypes().getId(),
         noticePoliciesFixture.activeNotice().getId());
 
-    // We use the loan date to calculate the MGD
+    // We use the loan date to calculate the minimum guaranteed due date (MGD)
     final DateTime loanDate = DateTime.now(DateTimeZone.UTC);
 
     final IndividualResource loan =
@@ -267,11 +265,11 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
-    assertThat("due date is not the original date",
+    assertThat("due date is the original date",
         storedLoan.getString("dueDate"), not(originalDueDate));
 
     final String expectedDueDate = loanDate.plusWeeks(2).toString(ISODateTimeFormat.dateTime());
-    assertThat("due date is the MGD (2 weeks)",
+    assertThat("due date is not the minimum guaranteed due date (2 weeks)",
         storedLoan.getString("dueDate"), is(expectedDueDate));
   }
 
@@ -304,8 +302,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     servicePointsFixture.create(new ServicePointBuilder(checkOutServicePointId, "CLDDM Desk", "clddm", "CLDDM Desk Test", null, null, TRUE, null));
 
-    // We use the loan date to calculate the MGD
-//    final DateTime loanDate = DateTime.now(DateTimeZone.UTC);
+    // We use the loan date to calculate the minimum guaranteed due date (MGD)
     final DateTime loanDate =
         new DateTime(2019, DateTimeConstants.JANUARY, 25, 10, 0, DateTimeZone.UTC);
 
@@ -327,15 +324,14 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
-    assertThat("due date is not the original date",
+    assertThat("due date is the original date",
         storedLoan.getString("dueDate"), not(originalDueDate));
 
     final String expectedDueDate =
         CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY
           .toDateTime(END_OF_A_DAY, DateTimeZone.UTC).toString(ISODateTimeFormat.dateTime());
 
-//    String expectedDueDate = loanDate.plusWeeks(2).toString(ISODateTimeFormat.dateTime());
-    assertThat("due date is the moved to Monday",
+    assertThat("due date is not moved to Monday",
         storedLoan.getString("dueDate"), is(expectedDueDate));
   }
 
@@ -380,7 +376,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
         requestPoliciesFixture.noAllowedTypes().getId(),
         noticePoliciesFixture.activeNotice().getId());
 
-    // We use the loan date to calculate the MGD
+    // We use the loan date to calculate the minimum guaranteed due date (MGD)
     final DateTime loanDate = DateTime.now(DateTimeZone.UTC);
 
     loansFixture.checkOut(smallAngryPlanet, steve, loanDate);
@@ -388,10 +384,10 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     final Response response = requestsFixture.attemptPlaceHoldShelfRequest(smallAngryPlanet, jessica,
         DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Recall");
 
-    assertThat("Status code is 422", response.getStatusCode(), is(422));
-    assertThat("errors is present", response.getJson().getJsonArray("errors"), notNullValue());
-    assertThat("errors is size 1", response.getJson().getJsonArray("errors").size(), is(1));
-    assertThat("first error has the experted message field",
+    assertThat("Status code is not 422", response.getStatusCode(), is(422));
+    assertThat("errors is not present", response.getJson().getJsonArray("errors"), notNullValue());
+    assertThat("errors is not size 1", response.getJson().getJsonArray("errors").size(), is(1));
+    assertThat("first error does not have the expected message field",
         response.getJson().getJsonArray("errors").getJsonObject(0).getString("message"),
         is(expectedMessage));
   }
