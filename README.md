@@ -396,6 +396,12 @@ Loans include information from the item, including locations, holdingsRecordId a
 
 Requests include information from the item, including holdingsRecordId and instanceId.
 
+## Known limitations
+
+* Tenant-selected timezone is supported only for check-out and renew
+* Patron notices are implemented for check-in and check-out
+* Date formatting for patron notices does not respect tenant-selected locale
+
 ## Additional Information
 
 Other [modules](https://dev.folio.org/source-code/#server-side).
