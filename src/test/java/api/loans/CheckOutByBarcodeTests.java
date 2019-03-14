@@ -39,8 +39,6 @@ import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Seconds;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 import org.junit.Test;
 
 import api.support.APITestContext;
@@ -57,9 +55,6 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class CheckOutByBarcodeTests extends APITests {
-
-  private static final DateTimeFormatter NOTICE_DATE_TIME_FORMATTER =
-    DateTimeFormat.forPattern("MM/dd/yyyy kk:mm z");
 
   @Test
   public void canCheckOutUsingItemAndUserBarcode()
@@ -675,7 +670,7 @@ public class CheckOutByBarcodeTests extends APITests {
       noticeContext, notNullValue());
     assertThat("sent notice context should have dueDate property",
       noticeContext.getString("dueDate"),
-      is(loanDate.plusWeeks(3).toString(NOTICE_DATE_TIME_FORMATTER)));
+      isEquivalentTo(loanDate.plusWeeks(3)));
   }
 
   private Matcher<ValidationError> hasUserBarcodeParameter(IndividualResource user) {

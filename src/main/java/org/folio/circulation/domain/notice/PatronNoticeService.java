@@ -8,8 +8,6 @@ import org.folio.circulation.domain.User;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.joda.time.DateTimeZone;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,9 +16,6 @@ import io.vertx.core.json.JsonObject;
 public class PatronNoticeService {
 
   private static final Logger log = LoggerFactory.getLogger(PatronNoticeService.class);
-
-  private static final DateTimeFormatter NOTICE_DATE_TIME_FORMATTER =
-    DateTimeFormat.forPattern("MM/dd/yyyy kk:mm z");
 
   private CollectionResourceClient patronNoticeClient;
 
@@ -56,8 +51,7 @@ public class PatronNoticeService {
     return new JsonObject()
       .put("patron", patron)
       .put("item", itemContext)
-      .put("dueDate", NOTICE_DATE_TIME_FORMATTER.print(
-        loan.getDueDate().withZone(timeZone)));
+      .put("dueDate", loan.getDueDate().withZone(timeZone).toString());
   }
 
   private PatronNotice toPatronNotice(NoticeConfiguration noticeConfiguration) {
