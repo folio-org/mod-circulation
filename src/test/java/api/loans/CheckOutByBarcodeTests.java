@@ -59,7 +59,7 @@ import io.vertx.core.json.JsonObject;
 public class CheckOutByBarcodeTests extends APITests {
 
   private static final DateTimeFormatter NOTICE_DATE_TIME_FORMATTER =
-    DateTimeFormat.forPattern("MM/dd/yyyy hh:mm a");
+    DateTimeFormat.forPattern("MM/dd/yyyy kk:mm z");
 
   @Test
   public void canCheckOutUsingItemAndUserBarcode()
@@ -637,7 +637,7 @@ public class CheckOutByBarcodeTests extends APITests {
       .withLoanNotices(Arrays.asList(checkOutNoticeConfiguration, checkInNoticeConfiguration));
     useLoanPolicyAsFallback(
       loanPoliciesFixture.canCirculateRolling().getId(),
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId());
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();

@@ -4,10 +4,6 @@ import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyU
 
 import java.util.concurrent.CompletableFuture;
 
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.domain.ConfigurationRepository;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;

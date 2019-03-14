@@ -7,6 +7,7 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
@@ -19,7 +20,7 @@ public class PatronNoticeService {
   private static final Logger log = LoggerFactory.getLogger(PatronNoticeService.class);
 
   private static final DateTimeFormatter NOTICE_DATE_TIME_FORMATTER =
-    DateTimeFormat.forPattern("MM/dd/yyyy hh:mm a");
+    DateTimeFormat.forPattern("MM/dd/yyyy kk:mm z");
 
   private CollectionResourceClient patronNoticeClient;
 
@@ -36,6 +37,10 @@ public class PatronNoticeService {
   }
 
   public JsonObject createNoticeContextFromLoan(Loan loan) {
+    return createNoticeContextFromLoan(loan, DateTimeZone.UTC);
+  }
+
+  public JsonObject createNoticeContextFromLoan(Loan loan, DateTimeZone timeZone) {
     User user = loan.getUser();
     Item item = loan.getItem();
 
@@ -51,7 +56,8 @@ public class PatronNoticeService {
     return new JsonObject()
       .put("patron", patron)
       .put("item", itemContext)
-      .put("dueDate", NOTICE_DATE_TIME_FORMATTER.print(loan.getDueDate()));
+      .put("dueDate", NOTICE_DATE_TIME_FORMATTER.print(
+        loan.getDueDate().withZone(timeZone)));
   }
 
   private PatronNotice toPatronNotice(NoticeConfiguration noticeConfiguration) {

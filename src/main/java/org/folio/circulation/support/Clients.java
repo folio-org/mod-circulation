@@ -176,6 +176,14 @@ public class Clients {
     return new CirculationRulesClient(client, context, "/circulation/rules/request-policy");
   }
 
+  private static CirculationRulesClient createCirculationNoticeRulesClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+
+    return new CirculationRulesClient(client, context, "/circulation/rules/notice-policy");
+  }
+
   private static CollectionResourceClient createRequestsStorageClient(
     OkapiHttpClient client,
     WebContext context)
@@ -275,22 +283,6 @@ public class Clients {
 
     return getCollectionResourceClient(client, context,
       "/fixed-due-date-schedule-storage/fixed-due-date-schedules");
-  }
-
-  private CirculationRulesClient createLoanPolicyCirculationRulesClient(
-    OkapiHttpClient client,
-    WebContext context)
-    throws MalformedURLException {
-    return new CirculationRulesClient(client, context,
-      "/circulation/rules/loan-policy");
-  }
-
-  private CirculationRulesClient createNoticePolicyCirculationRulesClient(
-    OkapiHttpClient client,
-    WebContext context)
-    throws MalformedURLException {
-    return new CirculationRulesClient(client, context,
-      "/circulation/rules/notice-policy");
   }
 
 

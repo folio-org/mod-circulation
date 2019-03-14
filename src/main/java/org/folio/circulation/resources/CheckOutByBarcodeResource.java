@@ -240,7 +240,8 @@ public class CheckOutByBarcodeResource extends Resource {
     Loan loan = relatedRecords.getLoan();
     List<NoticeConfiguration> noticeConfigurations =
       patronNoticePolicy.lookupLoanNoticeConfiguration(NoticeEventType.CHECK_OUT, NoticeTiming.UPON_AT);
-    JsonObject noticeContext = patronNoticeService.createNoticeContextFromLoan(loan);
+    JsonObject noticeContext = patronNoticeService.createNoticeContextFromLoan(
+      loan, relatedRecords.getTimeZone());
     patronNoticeService.sendPatronNotice(noticeConfigurations, relatedRecords.getUserId(), noticeContext);
   }
 
