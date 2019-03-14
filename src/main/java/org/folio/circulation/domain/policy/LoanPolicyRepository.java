@@ -1,17 +1,8 @@
 package org.folio.circulation.domain.policy;
 
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.domain.User;
-import org.folio.circulation.support.*;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.folio.circulation.support.CqlHelper.multipleRecordsCqlQuery;
+import static org.folio.circulation.support.HttpResult.succeeded;
 
-import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -19,46 +10,36 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import static org.folio.circulation.support.CqlHelper.multipleRecordsCqlQuery;
-import static org.folio.circulation.support.HttpResult.succeeded;
+import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.JsonArrayHelper;
+import org.folio.circulation.support.ServerErrorFailure;
 
-public class LoanPolicyRepository {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+import io.vertx.core.json.JsonObject;
 
-  private final CirculationRulesClient circulationLoanRulesClient;
-  private final CollectionResourceClient loanPoliciesStorageClient;
+public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy> {
+
   private final CollectionResourceClient fixedDueDateSchedulesStorageClient;
 
   public LoanPolicyRepository(Clients clients) {
-    circulationLoanRulesClient = clients.circulationLoanRules();
-    loanPoliciesStorageClient = clients.loanPoliciesStorage();
-    fixedDueDateSchedulesStorageClient = clients.fixedDueDateSchedules();
-  }
-
-  public CompletableFuture<HttpResult<LoanPolicy>> lookupLoanPolicy(Loan loan) {
-    return lookupLoanPolicy(loan.getItem(), loan.getUser());
+    super(clients.circulationLoanRules(), clients.loanPoliciesStorage());
+    this.fixedDueDateSchedulesStorageClient = clients.fixedDueDateSchedules();
   }
 
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> lookupLoanPolicy(
     LoanAndRelatedRecords relatedRecords) {
 
-    return lookupLoanPolicy(relatedRecords.getLoan())
+    return lookupPolicy(relatedRecords.getLoan())
       .thenApply(result -> result.map(relatedRecords::withLoanPolicy));
   }
 
-  private CompletableFuture<HttpResult<LoanPolicy>> lookupLoanPolicy(
-    Item item,
-    User user) {
-
-    return lookupLoanPolicyId(item, user)
-      .thenComposeAsync(r -> r.after(this::lookupLoanPolicy))
-      .thenApply(result -> result.map(this::toLoanPolicy))
+  @Override
+  public CompletableFuture<HttpResult<LoanPolicy>> lookupPolicy(Loan loan) {
+    return super.lookupPolicy(loan)
       .thenComposeAsync(r -> r.after(this::lookupSchedules));
-  }
-
-  private LoanPolicy toLoanPolicy(JsonObject representation) {
-    return new LoanPolicy(representation,
-      new NoFixedDueDateSchedules(), new NoFixedDueDateSchedules());
   }
 
   private CompletableFuture<HttpResult<LoanPolicy>> lookupSchedules(LoanPolicy loanPolicy) {
@@ -118,62 +99,19 @@ public class LoanPolicyRepository {
       });
   }
 
-  private CompletableFuture<HttpResult<JsonObject>> lookupLoanPolicy(
-    String loanPolicyId) {
-
-    return SingleRecordFetcher.json(loanPoliciesStorageClient, "loan policy",
-      response -> HttpResult.failed(new ServerErrorFailure(
-        String.format("Loan policy %s could not be found, please check circulation rules", loanPolicyId))))
-      .fetch(loanPolicyId);
+  @Override
+  protected String getPolicyNotFoundErrorMessage(String policyId) {
+    return String.format("Loan policy %s could not be found, please check circulation rules", policyId);
   }
 
-  private CompletableFuture<HttpResult<String>> lookupLoanPolicyId(
-    Item item,
-    User user) {
-
-    CompletableFuture<HttpResult<String>> findLoanPolicyCompleted
-      = new CompletableFuture<>();
-
-    if (item.isNotFound()) {
-      return CompletableFuture.completedFuture(HttpResult.failed(
-        new ServerErrorFailure("Unable to apply circulation rules for unknown item")));
-    }
-
-    if (item.doesNotHaveHolding()) {
-      return CompletableFuture.completedFuture(HttpResult.failed(
-        new ServerErrorFailure("Unable to apply circulation rules for unknown holding")));
-    }
-
-    String loanTypeId = item.determineLoanTypeForItem();
-    String locationId = item.getLocationId();
-
-    String materialTypeId = item.getMaterialTypeId();
-
-    String patronGroupId = user.getPatronGroupId();
-
-    CompletableFuture<Response> circulationRulesResponse = new CompletableFuture<>();
-
-    log.info(
-      "Applying circulation rules for material type: {}, patron group: {}, loan type: {}, location: {}",
-      materialTypeId, patronGroupId, loanTypeId, locationId);
-
-      circulationLoanRulesClient.applyRules(loanTypeId, locationId, materialTypeId,
-      patronGroupId, ResponseHandler.any(circulationRulesResponse));
-
-    circulationRulesResponse.thenAcceptAsync(response -> {
-      if (response.getStatusCode() == 404) {
-        findLoanPolicyCompleted.complete(HttpResult.failed(
-          new ServerErrorFailure("Unable to apply circulation rules")));
-      } else if (response.getStatusCode() != 200) {
-        findLoanPolicyCompleted.complete(HttpResult.failed(
-          new ForwardOnFailure(response)));
-      } else {
-        String policyId = response.getJson().getString("loanPolicyId");
-        findLoanPolicyCompleted.complete(succeeded(policyId));
-      }
-    });
-
-    return findLoanPolicyCompleted;
+  @Override
+  protected HttpResult<LoanPolicy> toPolicy(JsonObject representation) {
+    return HttpResult.succeeded(new LoanPolicy(representation,
+      new NoFixedDueDateSchedules(), new NoFixedDueDateSchedules()));
   }
 
+  @Override
+  protected String fetchPolicyId(JsonObject jsonObject) {
+    return jsonObject.getString("loanPolicyId");
+  }
 }

@@ -94,6 +94,9 @@ public abstract class APITests {
   private final ResourceClient contributorNameTypesClient
     = ResourceClient.forContributorNameTypes(client);
 
+  protected final ResourceClient patronNoticesClient =
+    ResourceClient.forPatronNotices(client);
+
   protected final ServicePointsFixture servicePointsFixture
     = new ServicePointsFixture(servicePointsClient);
 

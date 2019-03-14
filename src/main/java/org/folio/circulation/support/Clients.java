@@ -21,11 +21,14 @@ public class Clients {
   private final CollectionResourceClient fixedDueDateSchedulesStorageClient;
   private final CirculationRulesClient circulationLoanRulesClient;
   private final CirculationRulesClient circulationRequestRulesClient;
+  private final CirculationRulesClient circulationNoticeRulesClient;
   private final CollectionResourceClient circulationRulesStorageClient;
   private final CollectionResourceClient requestPoliciesStorageClient;
   private final CollectionResourceClient servicePointsStorageClient;
   private final CollectionResourceClient calendarStorageClient;
   private final CollectionResourceClient patronGroupsStorageClient;
+  private final CollectionResourceClient patronNoticePolicesStorageClient;
+  private final CollectionResourceClient patronNoticeClient;
   private final CollectionResourceClient configurationStorageClient;
 
   public static Clients create(WebContext context, HttpClient httpClient) {
@@ -45,6 +48,7 @@ public class Clients {
       proxiesForClient = createProxyUsersStorageClient(client, context);
       circulationLoanRulesClient = createCirculationLoanRulesClient(client, context);
       circulationRequestRulesClient = createCirculationRequestRulesClient(client, context);
+      circulationNoticeRulesClient = createCirculationNoticeRulesClient(client, context);
       circulationRulesStorageClient = createCirculationRulesStorageClient(client, context);
       loanPoliciesStorageClient = createLoanPoliciesStorageClient(client, context);
       requestPoliciesStorageClient = createRequestPoliciesStorageClient(client, context);
@@ -52,6 +56,8 @@ public class Clients {
       servicePointsStorageClient = createServicePointsStorageClient(client, context);
       patronGroupsStorageClient = createPatronGroupsStorageClient(client, context);
       calendarStorageClient = createCalendarStorageClient(client, context);
+      patronNoticePolicesStorageClient = createPatronNoticePolicesStorageClient(client, context);
+      patronNoticeClient = createPatronNoticeClient(client, context);
       configurationStorageClient = createConfigurationStorageClient(client, context);
     }
     catch(MalformedURLException e) {
@@ -129,8 +135,20 @@ public class Clients {
     return circulationRequestRulesClient;
   }
 
+  public CirculationRulesClient circulationNoticeRules(){
+    return circulationNoticeRulesClient;
+  }
+
   public CollectionResourceClient circulationRulesStorage() {
     return circulationRulesStorageClient;
+  }
+
+  public CollectionResourceClient patronNoticePolicesStorageClient() {
+    return patronNoticePolicesStorageClient;
+  }
+
+  public CollectionResourceClient patronNoticeClient() {
+    return patronNoticeClient;
   }
 
   private static CollectionResourceClient getCollectionResourceClient(
@@ -156,6 +174,14 @@ public class Clients {
     throws MalformedURLException {
 
     return new CirculationRulesClient(client, context, "/circulation/rules/request-policy");
+  }
+
+  private static CirculationRulesClient createCirculationNoticeRulesClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+
+    return new CirculationRulesClient(client, context, "/circulation/rules/notice-policy");
   }
 
   private static CollectionResourceClient createRequestsStorageClient(
@@ -259,6 +285,7 @@ public class Clients {
       "/fixed-due-date-schedule-storage/fixed-due-date-schedules");
   }
 
+
   private CollectionResourceClient createCirculationRulesStorageClient(
     OkapiHttpClient client,
     WebContext context)
@@ -288,6 +315,22 @@ public class Clients {
     throws MalformedURLException {
     return getCollectionResourceClient(client, context, "/calendar/periods");
   }
+
+  private CollectionResourceClient createPatronNoticePolicesStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+    return getCollectionResourceClient(client, context,
+      "/patron-notice-policy-storage/patron-notice-policies");
+  }
+
+  private CollectionResourceClient createPatronNoticeClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+    return getCollectionResourceClient(client, context, "/patron-notice");
+  }
+
 
   private CollectionResourceClient createConfigurationStorageClient(
     OkapiHttpClient client,

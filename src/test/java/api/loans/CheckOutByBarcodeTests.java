@@ -21,6 +21,8 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -33,6 +35,7 @@ import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Seconds;
@@ -45,11 +48,14 @@ import api.support.builders.FixedDueDateSchedule;
 import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
+import api.support.builders.NoticeConfigurationBuilder;
+import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.UserBuilder;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class CheckOutByBarcodeTests extends APITests {
+
   @Test
   public void canCheckOutUsingItemAndUserBarcode()
     throws InterruptedException,
@@ -66,10 +72,10 @@ public class CheckOutByBarcodeTests extends APITests {
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
-      .forItem(smallAngryPlanet)
-      .to(steve)
-      .on(loanDate)
-      .at(checkoutServicePointId));
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .on(loanDate)
+        .at(checkoutServicePointId));
 
     final JsonObject loan = response.getJson();
 
@@ -417,7 +423,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenItemIsMissing()    throws InterruptedException,
+  public void cannotCheckOutWhenItemIsMissing() throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
@@ -603,6 +609,68 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Check out must be performed at a service point"),
       hasServicePointParameter(null))));
+  }
+
+  @Test
+  public void checkoutNoticeIsSentWhenPolicyDefinesCheckoutNotice()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    UUID checkOutTemplateId = UUID.randomUUID();
+    JsonObject checkOutNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(checkOutTemplateId)
+      .withCheckOutEvent()
+      .create();
+    JsonObject checkInNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withCheckInEvent()
+      .create();
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with checkout notice")
+      .withLoanNotices(Arrays.asList(checkOutNoticeConfiguration, checkInNoticeConfiguration));
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId());
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+
+    final DateTime loanDate =
+      new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
+
+    final IndividualResource response = loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .on(loanDate)
+        .at(UUID.randomUUID()));
+
+    final JsonObject loan = response.getJson();
+
+    assertThat("due date should 3 weeks from loan date",
+      loan.getString("dueDate"),
+      isEquivalentTo(loanDate.plusWeeks(3)));
+
+    List<JsonObject> sentNotices = patronNoticesClient.getAll();
+    assertThat("one notice should have been sent", sentNotices, Matchers.hasSize(1));
+
+    JsonObject notice = sentNotices.get(0);
+    assertThat("sent notice should have template id form notice policy",
+      notice.getString("templateId"), is(checkOutTemplateId));
+    assertThat("sent notice should have email delivery channel",
+      notice.getString("deliveryChannel"), is("email"));
+    assertThat("sent notice should have output format",
+      notice.getString("outputFormat"), is("text/html"));
+
+    JsonObject noticeContext = notice.getJsonObject("context");
+    assertThat("sent notice should have context property",
+      noticeContext, notNullValue());
+    assertThat("sent notice context should have dueDate property",
+      noticeContext.getString("dueDate"),
+      isEquivalentTo(loanDate.plusWeeks(3)));
   }
 
   private Matcher<ValidationError> hasUserBarcodeParameter(IndividualResource user) {

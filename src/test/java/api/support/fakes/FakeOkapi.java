@@ -124,7 +124,7 @@ public class FakeOkapi extends AbstractVerticle {
 
     new FakeStorageModuleBuilder()
       .withRecordName("notice policy")
-      .withRootPath("/notice-policy-storage/notice-policies")
+      .withRootPath("/patron-notice-policy-storage/patron-notice-policies")
       .withCollectionPropertyName("noticePolicies")
       .withRequiredProperties("name", "active")
       .create().register(router);
@@ -233,6 +233,14 @@ public class FakeOkapi extends AbstractVerticle {
       .register(router);
 
     new FakeStorageModuleBuilder()
+      .withRecordName("patron notice")
+      .withCollectionPropertyName("patronnotices")
+      .withRootPath("/patron-notice")
+      .disallowCollectionDelete()
+      .create()
+      .register(router);
+
+    new FakeStorageModuleBuilder()
       .withRecordName("configuration")
       .withCollectionPropertyName("configs")
       .withRootPath("/configurations/entries")
@@ -261,6 +269,20 @@ public class FakeOkapi extends AbstractVerticle {
             throwable.getMessage())));
 
       client.get(String.format("http://localhost:%s/circulation/rules/loan-policy?%s"
+        , APITestContext.circulationModulePort(), context.request().query()),
+        httpClientResponse ->
+          httpClientResponse.bodyHandler(buffer ->
+            ForwardResponse.forward(context.response(), httpClientResponse,
+              BufferHelper.stringFromBuffer(buffer))));
+    });
+
+    router.get("/circulation/rules/notice-policy").handler(context -> {
+      OkapiHttpClient client = APITestContext.createClient(throwable ->
+        ServerErrorResponse.internalError(context.response(),
+          String.format("Exception when forward circulation rules apply request: %s",
+            throwable.getMessage())));
+
+      client.get(String.format("http://localhost:%s/circulation/rules/notice-policy?%s"
         , APITestContext.circulationModulePort(), context.request().query()),
         httpClientResponse ->
           httpClientResponse.bodyHandler(buffer ->
