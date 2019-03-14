@@ -103,8 +103,12 @@ of the storage interfaces, separate to the fakes used for general API tests.
 #### Tenant-selected timezone and locale support
 
 * Tenant-selected timezone is supported only for check-out and renewal (and not for overridden renewals or request creation)
-* Patron notices are only implemented for check-in and check-out
 * Date formatting for patron notices does not respect tenant-selected locale
+
+#### Patron notices
+
+Patron notices are only implemented for check-in and check-out
+
 
 ### Check Out By Barcode
 
