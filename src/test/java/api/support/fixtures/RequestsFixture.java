@@ -8,6 +8,7 @@ import java.util.function.Function;
 
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 
 import api.support.RestAssuredClient;
@@ -38,6 +39,15 @@ public class RequestsFixture {
     ExecutionException {
 
     return requestsClient.create(requestToBuild);
+  }
+
+  public Response attemptPlace(RequestBuilder requestToBuild)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return requestsClient.attemptCreate(requestToBuild);
   }
 
   public IndividualResource placeHoldShelfRequest(
@@ -132,6 +142,27 @@ public class RequestsFixture {
       .withRequestDate(on)
       .withItemId(item.getId())
       .withRequesterId(by.getId()));
+  }
+
+  public Response attemptPlaceHoldShelfRequest(
+      IndividualResource item,
+      IndividualResource by,
+      DateTime on,
+      UUID pickupServicePointId,
+      String type)
+          throws InterruptedException,
+          MalformedURLException,
+          TimeoutException,
+          ExecutionException {
+
+    return attemptPlace(new RequestBuilder()
+        .hold()
+        .withRequestType(type)
+        .fulfilToHoldShelf()
+        .withItemId(item.getId())
+        .withRequestDate(on)
+        .withRequesterId(by.getId())
+        .withPickupServicePointId(pickupServicePointId));
   }
 
   public void cancelRequest(IndividualResource request)

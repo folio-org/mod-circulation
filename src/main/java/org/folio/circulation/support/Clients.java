@@ -19,14 +19,17 @@ public class Clients {
   private final CollectionResourceClient proxiesForClient;
   private final CollectionResourceClient loanPoliciesStorageClient;
   private final CollectionResourceClient fixedDueDateSchedulesStorageClient;
-  private final CirculationRulesClient loanPolicyCirculationRulesClient;
-  private final CirculationRulesClient noticePolicyCirculationRulesClient;
+  private final CirculationRulesClient circulationLoanRulesClient;
+  private final CirculationRulesClient circulationRequestRulesClient;
+  private final CirculationRulesClient circulationNoticeRulesClient;
   private final CollectionResourceClient circulationRulesStorageClient;
+  private final CollectionResourceClient requestPoliciesStorageClient;
   private final CollectionResourceClient servicePointsStorageClient;
   private final CollectionResourceClient calendarStorageClient;
   private final CollectionResourceClient patronGroupsStorageClient;
   private final CollectionResourceClient patronNoticePolicesStorageClient;
   private final CollectionResourceClient patronNoticeClient;
+  private final CollectionResourceClient configurationStorageClient;
 
   public static Clients create(WebContext context, HttpClient httpClient) {
     return new Clients(context.createHttpClient(httpClient), context);
@@ -43,16 +46,19 @@ public class Clients {
       locationsStorageClient = createLocationsStorageClient(client, context);
       materialTypesStorageClient = createMaterialTypesStorageClient(client, context);
       proxiesForClient = createProxyUsersStorageClient(client, context);
-      loanPolicyCirculationRulesClient =  createLoanPolicyCirculationRulesClient(client, context);
-      noticePolicyCirculationRulesClient = createNoticePolicyCirculationRulesClient(client, context);
+      circulationLoanRulesClient = createCirculationLoanRulesClient(client, context);
+      circulationRequestRulesClient = createCirculationRequestRulesClient(client, context);
+      circulationNoticeRulesClient = createCirculationNoticeRulesClient(client, context);
       circulationRulesStorageClient = createCirculationRulesStorageClient(client, context);
       loanPoliciesStorageClient = createLoanPoliciesStorageClient(client, context);
+      requestPoliciesStorageClient = createRequestPoliciesStorageClient(client, context);
       fixedDueDateSchedulesStorageClient = createFixedDueDateSchedulesStorageClient(client, context);
       servicePointsStorageClient = createServicePointsStorageClient(client, context);
       patronGroupsStorageClient = createPatronGroupsStorageClient(client, context);
       calendarStorageClient = createCalendarStorageClient(client, context);
       patronNoticePolicesStorageClient = createPatronNoticePolicesStorageClient(client, context);
       patronNoticeClient = createPatronNoticeClient(client, context);
+      configurationStorageClient = createConfigurationStorageClient(client, context);
     }
     catch(MalformedURLException e) {
       throw new InvalidOkapiLocationException(context.getOkapiLocation(), e);
@@ -62,6 +68,8 @@ public class Clients {
   public CollectionResourceClient requestsStorage() {
     return requestsStorageClient;
   }
+
+  public CollectionResourceClient requestPoliciesStorage() { return requestPoliciesStorageClient; }
 
   public CollectionResourceClient itemsStorage() {
     return itemsStorageClient;
@@ -111,17 +119,24 @@ public class Clients {
     return calendarStorageClient;
   }
 
+  public CollectionResourceClient configurationStorageClient() {
+    return configurationStorageClient;
+  }
 
   public CollectionResourceClient userProxies() {
     return proxiesForClient;
   }
 
-  public CirculationRulesClient loanPolicyCirculationRules() {
-    return loanPolicyCirculationRulesClient;
+  public CirculationRulesClient circulationLoanRules() {
+    return circulationLoanRulesClient;
   }
 
-  public CirculationRulesClient noticePolicyCirculationRules() {
-    return noticePolicyCirculationRulesClient;
+  public CirculationRulesClient circulationRequestRules(){
+    return circulationRequestRulesClient;
+  }
+
+  public CirculationRulesClient circulationNoticeRules(){
+    return circulationNoticeRulesClient;
   }
 
   public CollectionResourceClient circulationRulesStorage() {
@@ -143,6 +158,22 @@ public class Clients {
     throws MalformedURLException {
 
     return new CollectionResourceClient(client, context.getOkapiBasedUrl(path));
+  }
+
+  private static CirculationRulesClient createCirculationLoanRulesClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+
+    return new CirculationRulesClient(client, context, "/circulation/rules/loan-policy");
+  }
+
+  private static CirculationRulesClient createCirculationRequestRulesClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+
+    return new CirculationRulesClient(client, context, "/circulation/rules/request-policy");
   }
 
   private static CollectionResourceClient createRequestsStorageClient(
@@ -228,6 +259,15 @@ public class Clients {
       "/loan-policy-storage/loan-policies");
   }
 
+  private CollectionResourceClient createRequestPoliciesStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context,
+      "/request-policy-storage/request-policies");
+  }
+
   private CollectionResourceClient createFixedDueDateSchedulesStorageClient(
     OkapiHttpClient client,
     WebContext context)
@@ -269,7 +309,7 @@ public class Clients {
       throws MalformedURLException {
     return getCollectionResourceClient(client, context, "/service-points");
   }
-  
+
   private CollectionResourceClient createPatronGroupsStorageClient(
       OkapiHttpClient client,
       WebContext context)
@@ -299,4 +339,11 @@ public class Clients {
     return getCollectionResourceClient(client, context, "/patron-notice");
   }
 
+
+  private CollectionResourceClient createConfigurationStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+    return getCollectionResourceClient(client, context, "/configurations/entries");
+  }
 }

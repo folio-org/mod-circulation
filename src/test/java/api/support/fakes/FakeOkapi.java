@@ -240,6 +240,14 @@ public class FakeOkapi extends AbstractVerticle {
       .create()
       .register(router);
 
+    new FakeStorageModuleBuilder()
+      .withRecordName("configuration")
+      .withCollectionPropertyName("configs")
+      .withRootPath("/configurations/entries")
+      .withChangeMetadata()
+      .create()
+      .register(router);
+
     server.requestHandler(router::accept)
       .listen(PORT_TO_USE, result -> {
         if (result.succeeded()) {
@@ -275,6 +283,20 @@ public class FakeOkapi extends AbstractVerticle {
             throwable.getMessage())));
 
       client.get(String.format("http://localhost:%s/circulation/rules/notice-policy?%s"
+        , APITestContext.circulationModulePort(), context.request().query()),
+        httpClientResponse ->
+          httpClientResponse.bodyHandler(buffer ->
+            ForwardResponse.forward(context.response(), httpClientResponse,
+              BufferHelper.stringFromBuffer(buffer))));
+    });
+
+    router.get("/circulation/rules/request-policy").handler(context -> {
+      OkapiHttpClient client = APITestContext.createClient(throwable ->
+        ServerErrorResponse.internalError(context.response(),
+          String.format("Exception when forward circulation rules apply request: %s",
+            throwable.getMessage())));
+
+      client.get(String.format("http://localhost:%s/circulation/rules/request-policy?%s"
         , APITestContext.circulationModulePort(), context.request().query()),
         httpClientResponse ->
           httpClientResponse.bodyHandler(buffer ->

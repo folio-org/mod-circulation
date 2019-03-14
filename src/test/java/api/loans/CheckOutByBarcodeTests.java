@@ -223,7 +223,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     useLoanPolicyAsFallback(
       dueDateLimitedPolicyId,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
 
@@ -570,7 +570,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     useLoanPolicyAsFallback(
       nonExistentloanPolicyId,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
 

@@ -57,6 +57,8 @@ public abstract class APITests {
   private final ResourceClient librariesClient = ResourceClient.forLibraries(client);
   private final ResourceClient locationsClient = ResourceClient.forLocations(client);
 
+  protected final ResourceClient configClient = ResourceClient.forConfiguration(client);
+
   private final ResourceClient patronGroupsClient
     = ResourceClient.forPatronGroups(client);
 
@@ -179,6 +181,7 @@ public abstract class APITests {
     itemsClient.deleteAll();
     holdingsClient.deleteAll();
     instancesClient.deleteAll();
+    configClient.deleteAll();
 
     //TODO: Only cleans up reference records, move items, holdings records
     // and instances into here too
@@ -189,6 +192,7 @@ public abstract class APITests {
     if (initialiseCirculationRules) {
       useDefaultRollingPolicyCirculationRules();
     }
+
   }
 
   @AfterClass
@@ -216,6 +220,7 @@ public abstract class APITests {
     itemsClient.deleteAll();
     holdingsClient.deleteAll();
     instancesClient.deleteAll();
+    configClient.deleteAll();
 
     //TODO: Only cleans up reference records, move items, holdings records
     // and instances into here too
@@ -247,7 +252,7 @@ public abstract class APITests {
     log.info("Using rolling loan policy as fallback policy");
     useLoanPolicyAsFallback(
       loanPoliciesFixture.canCirculateRolling().getId(),
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
   }
@@ -261,7 +266,7 @@ public abstract class APITests {
     log.info("Using fixed loan policy as fallback policy");
     useLoanPolicyAsFallback(
       loanPoliciesFixture.canCirculateFixed().getId(),
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
   }
@@ -287,7 +292,7 @@ public abstract class APITests {
       UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID())),
       ResponseHandler.any(completed));
 
-    Response response = completed.get(10, TimeUnit.SECONDS);
+    Response response = completed.get(5, TimeUnit.SECONDS);
 
     assertThat(String.format(
       "Failed to apply circulation rules: %s", response.getBody()),
@@ -348,4 +353,5 @@ public abstract class APITests {
     ResourceClient.forInstanceTypes(client).deleteAllIndividually();
     ResourceClient.forCancellationReasons(client).deleteAllIndividually();
   }
+
 }

@@ -102,7 +102,7 @@ public class LoanRepository {
    * success with null if the no open loan is found,
    * failure if more than one open loan for the item found
    */
-  CompletableFuture<HttpResult<Loan>> findOpenLoanForRequest(Request request) {
+  public CompletableFuture<HttpResult<Loan>> findOpenLoanForRequest(Request request) {
     return findOpenLoans(request.getItemId())
       .thenApply(loansResult -> loansResult.next(loans -> {
         //TODO: Consider introducing an unknown loan class, instead of null

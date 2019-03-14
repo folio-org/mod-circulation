@@ -160,4 +160,8 @@ public class InterfaceUrls {
   static URL patronNoticesUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/patron-notice" + subPath);
   }
+
+  static URL configurationUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/configurations/entries" + subPath);
+  }
 }

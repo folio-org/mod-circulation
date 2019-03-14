@@ -17,11 +17,11 @@ public class CirculationRulesClient {
   private final OkapiHttpClient client;
   private final URL root;
 
-  CirculationRulesClient(OkapiHttpClient client, WebContext context, String subPath)
+  CirculationRulesClient(OkapiHttpClient client, WebContext context, String policyPath)
     throws MalformedURLException {
 
     this.client = client;
-    root = context.getOkapiBasedUrl(subPath);
+    root = context.getOkapiBasedUrl(policyPath);
   }
 
   public void applyRules(

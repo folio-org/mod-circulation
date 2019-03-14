@@ -56,11 +56,11 @@ class RequestFromRepresentationService {
       .thenApply(r -> r.next(this::validateStatus))
       .thenApply(r -> r.map(this::removeRelatedRecordInformation))
       .thenApply(r -> r.map(Request::from))
-      //.thenComposeAsync(r -> r.combineAfter(loanRepository::findOpenLoanById, Request::withLoan))
       .thenComposeAsync(r -> r.combineAfter(itemRepository::fetchFor, Request::withItem))
       .thenComposeAsync(r -> r.combineAfter(userRepository::getUser, Request::withRequester))
       .thenComposeAsync(r -> r.combineAfter(userRepository::getProxyUser, Request::withProxy))
       .thenComposeAsync(r -> r.combineAfter(servicePointRepository::getServicePointForRequest, Request::withPickupServicePoint))
+      .thenComposeAsync(r -> r.combineAfter(loanRepository::findOpenLoanForRequest, Request::withLoan))
       .thenApply(r -> r.map(RequestAndRelatedRecords::new))
       .thenComposeAsync(r -> r.combineAfter(requestQueueRepository::get,
         RequestAndRelatedRecords::withRequestQueue))

@@ -1,6 +1,8 @@
 package api.support.fixtures;
 
+import static api.support.fixtures.UserExamples.basedUponBobbyBibbin;
 import static api.support.fixtures.UserExamples.basedUponCharlotteBroadwell;
+import static api.support.fixtures.UserExamples.basedUponHenryHanks;
 import static api.support.fixtures.UserExamples.basedUponJamesRodwell;
 import static api.support.fixtures.UserExamples.basedUponJessicaPontefract;
 import static api.support.fixtures.UserExamples.basedUponRebeccaStuart;
@@ -69,7 +71,7 @@ public class UsersFixture {
 
     return rebecca(identity());
   }
-  
+
   public IndividualResource rebecca(
     Function<UserBuilder, UserBuilder> additionalProperties)
     throws InterruptedException,
@@ -122,6 +124,47 @@ public class UsersFixture {
     return userRecordCreator.createIfAbsent(
       additionalConfiguration.apply(basedUponCharlotteBroadwell()
         .inGroupFor(patronGroupsFixture.regular())));
+  }
+
+  public IndividualResource undergradHenry()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return undergradHenry(identity());
+  }
+
+  public IndividualResource undergradHenry(
+    Function<UserBuilder, UserBuilder> additionalUserProperties)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return userRecordCreator.createIfAbsent(
+      additionalUserProperties.apply(basedUponHenryHanks()
+        .inGroupFor(patronGroupsFixture.undergrad())));
+  }
+
+  public IndividualResource noUserGroupBob()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return noUserGroupBob(identity());
+  }
+
+  public IndividualResource noUserGroupBob(
+    Function<UserBuilder, UserBuilder> additionalUserProperties)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return userRecordCreator.createIfAbsent(
+      additionalUserProperties.apply(basedUponBobbyBibbin()));
   }
 
   public void remove(IndividualResource user)
