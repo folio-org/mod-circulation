@@ -98,7 +98,13 @@ could handle missing inventory records. As mod-inventory-storage does not allow
 used holdings or instance records to be deleted, these tests were removed.
 
 These tests need to be replaced by tests that use specialised implementations 
-of the storage interfaces, separate to the fakes used for general API tests.  
+of the storage interfaces, separate to the fakes used for general API tests.
+
+#### Tenant-selected timezone and locale support
+
+* Tenant-selected timezone is supported only for check-out and renewal (and not for overridden renewals or request creation)
+* Patron notices are only implemented for check-in and check-out
+* Date formatting for patron notices does not respect tenant-selected locale
 
 ### Check Out By Barcode
 
@@ -395,12 +401,6 @@ Loans include information from the item, including locations, holdingsRecordId a
 #### Requests
 
 Requests include information from the item, including holdingsRecordId and instanceId.
-
-## Known limitations
-
-* Tenant-selected timezone is supported only for check-out and renew
-* Patron notices are implemented for check-in and check-out
-* Date formatting for patron notices does not respect tenant-selected locale
 
 ## Additional Information
 
