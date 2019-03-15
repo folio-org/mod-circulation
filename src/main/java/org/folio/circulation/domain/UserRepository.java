@@ -1,5 +1,6 @@
 package org.folio.circulation.domain;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
@@ -57,7 +58,7 @@ public class UserRepository {
   public CompletableFuture<HttpResult<User>> getProxyUserByBarcode(String barcode) {
     //Not proxying, so no need to get proxy user
     if(StringUtils.isBlank(barcode)) {
-      return CompletableFuture.completedFuture(succeeded(null));
+      return completedFuture(succeeded(null));
     }
     else {
       return getUserByBarcode(barcode, "proxyUserBarcode");
@@ -92,7 +93,7 @@ public class UserRepository {
       .collect(Collectors.toList());
 
     if (usersToFetch.isEmpty()) {
-      return CompletableFuture.completedFuture(HttpResult.succeeded(multipleRequests));
+      return completedFuture(succeeded(multipleRequests));
     }
 
     final String query = CqlHelper.multipleRecordsCqlQuery(usersToFetch);

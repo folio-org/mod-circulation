@@ -1,5 +1,8 @@
 package org.folio.circulation.domain;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.HttpResult.succeeded;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -48,7 +51,7 @@ class PatronGroupRepository {
       .collect(Collectors.toList());
 
     if (groupsToFetch.isEmpty()) {
-      return CompletableFuture.completedFuture(HttpResult.succeeded(multipleRequests));
+      return completedFuture(succeeded(multipleRequests));
     }
 
     final String query = CqlHelper.multipleRecordsCqlQuery(groupsToFetch);
