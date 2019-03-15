@@ -245,7 +245,7 @@ public class ItemRepository {
     HttpResult<MultipleRecords<T>> result,
     BiFunction<T, Item, T> includeItemMap) {
 
-    if (result.value().getRecords().isEmpty()) {
+    if (result.failed() || result.value().getRecords().isEmpty()) {
       return CompletableFuture.completedFuture(result);
     }
 
