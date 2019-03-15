@@ -258,13 +258,37 @@ public class RequestsAPICreationTests extends APITests {
     MalformedURLException {
 
     UUID itemId = UUID.randomUUID();
+    UUID patronId = usersFixture.charlotte().getId();
 
+    //Check RECALL
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .recall()
       .withItemId(itemId)
-      .withRequesterId(usersFixture.charlotte().getId()));
+      .withRequesterId(patronId));
 
     assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Item does not exist"))));
+
+    //check HOLD
+    postResponse = requestsClient.attemptCreate(new RequestBuilder()
+      .hold()
+      .withItemId(itemId)
+      .withRequesterId(patronId));
+
+    assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Item does not exist"))));
+
+    //check PAGE
+    postResponse = requestsClient.attemptCreate(new RequestBuilder()
+      .page()
+      .withItemId(itemId)
+      .withRequesterId(patronId));
+
+    assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Item does not exist"))));
   }
 
   @Test
