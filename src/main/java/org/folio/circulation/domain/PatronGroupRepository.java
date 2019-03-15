@@ -47,6 +47,10 @@ class PatronGroupRepository {
       .distinct()
       .collect(Collectors.toList());
 
+    if (groupsToFetch.isEmpty()) {
+      return CompletableFuture.completedFuture(HttpResult.succeeded(multipleRequests));
+    }
+
     final String query = CqlHelper.multipleRecordsCqlQuery(groupsToFetch);
 
     return patronGroupsStorageClient.getMany(query, groupsToFetch.size(), 0)
@@ -54,7 +58,7 @@ class PatronGroupRepository {
       .thenApply(multiplePatronGroupsResult -> multiplePatronGroupsResult.next(
         patronGroups -> matchGroupsToUsers(multipleRequests, patronGroups)));
   }
-    
+
   private HttpResult<MultipleRecords<PatronGroup>> mapResponseToPatronGroups(Response response) {
     return MultipleRecords.from(response, PatronGroup::from, "usergroups");
   }
