@@ -35,9 +35,9 @@ public class CreateRequestService {
   public CompletableFuture<HttpResult<RequestAndRelatedRecords>> createRequest(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    return completedFuture(refuseWhenItemIsNotValid(requestAndRelatedRecords)
-      .next(CreateRequestService::refuseWhenItemDoesNotExist)
-      .next(CreateRequestService::refuseWhenInvalidUserAndPatronGroup))
+    return completedFuture(refuseWhenItemDoesNotExist(requestAndRelatedRecords)
+      .next(CreateRequestService::refuseWhenInvalidUserAndPatronGroup)
+      .next(CreateRequestService::refuseWhenItemIsNotValid))
       .thenComposeAsync( r-> r.after(requestPolicyRepository::lookupRequestPolicy))
       .thenApply( r -> r.next(CreateRequestService::refuseWhenRequestCannotBeFulfilled))
       .thenApply(r -> r.map(CreateRequestService::setRequestQueuePosition))
