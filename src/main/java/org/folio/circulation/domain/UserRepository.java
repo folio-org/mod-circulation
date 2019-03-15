@@ -79,7 +79,7 @@ public class UserRepository {
         .next(user -> user.map(HttpResult::succeeded).orElseGet(() -> failed(failure(
           "Could not find user with matching barcode", propertyName, barcode)))));
   }
-  
+
   CompletableFuture<HttpResult<MultipleRecords<Request>>> findUsersForRequests(
     MultipleRecords<Request> multipleRequests) {
 
@@ -90,6 +90,10 @@ public class UserRepository {
       .flatMap(Collection::stream)
       .distinct()
       .collect(Collectors.toList());
+
+    if (usersToFetch.isEmpty()) {
+      return CompletableFuture.completedFuture(HttpResult.succeeded(multipleRequests));
+    }
 
     final String query = CqlHelper.multipleRecordsCqlQuery(usersToFetch);
 
