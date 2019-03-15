@@ -245,6 +245,10 @@ public class ItemRepository {
     HttpResult<MultipleRecords<T>> result,
     BiFunction<T, Item, T> includeItemMap) {
 
+    if (result.value().getRecords().isEmpty()) {
+      return CompletableFuture.completedFuture(result);
+    }
+
     return result.combineAfter(r -> fetchFor(getItemIds(r)),
       (records, items) -> new MultipleRecords<>(
         matchItemToRecord(records, items, includeItemMap),
