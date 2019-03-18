@@ -348,7 +348,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       .withPickupServicePointId(newPickupServicePointId);
   }
 
-  public RequestBuilder withFulfilmentPreference(String fulfilmentPreference) {
+  private RequestBuilder withFulfilmentPreference(String fulfilmentPreference) {
     return new RequestBuilder(
       this.id,
       this.requestType,
