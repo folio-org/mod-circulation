@@ -8,6 +8,7 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -34,6 +35,8 @@ public class RequestsAPIProxyTests extends APITests {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
     loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.steve());
 
     IndividualResource sponsor = usersFixture.jessica();
@@ -43,6 +46,7 @@ public class RequestsAPIProxyTests extends APITests {
 
     JsonObject requestRequest = new RequestBuilder()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(sponsor)
       .proxiedBy(proxy)
       .create();
@@ -89,6 +93,8 @@ public class RequestsAPIProxyTests extends APITests {
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
 
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
     loansFixture.checkOut(item, usersFixture.steve());
 
     IndividualResource sponsor = usersFixture.jessica();
@@ -98,6 +104,7 @@ public class RequestsAPIProxyTests extends APITests {
 
     JsonObject requestRequest = new RequestBuilder()
       .forItem(item)
+      .withPickupServicePointId(pickupServicePointId)
       .by(sponsor)
       .proxiedBy(proxy)
       .create();
@@ -156,7 +163,7 @@ public class RequestsAPIProxyTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
     final IndividualResource steve = usersFixture.steve();
-    
+
     loansFixture.checkOutByBarcode(smallAngryPlanet, steve);
 
     IndividualResource jessica = usersFixture.jessica();
@@ -221,6 +228,7 @@ public class RequestsAPIProxyTests extends APITests {
     MalformedURLException {
 
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOutByBarcode(temeraire, usersFixture.steve());
 
@@ -230,6 +238,7 @@ public class RequestsAPIProxyTests extends APITests {
     IndividualResource createdRequest = requestsClient.create(
       new RequestBuilder()
         .recall()
+        .withPickupServicePointId(pickupServicePointId)
         .forItem(temeraire)
         .by(sponsor));
 
@@ -280,6 +289,7 @@ public class RequestsAPIProxyTests extends APITests {
     MalformedURLException {
 
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOutByBarcode(temeraire, usersFixture.rebecca());
 
@@ -289,6 +299,7 @@ public class RequestsAPIProxyTests extends APITests {
     IndividualResource createdRequest = requestsClient.create(
       new RequestBuilder()
         .recall()
+        .withPickupServicePointId(pickupServicePointId)
         .forItem(temeraire)
         .by(sponsor));
 
@@ -316,6 +327,7 @@ public class RequestsAPIProxyTests extends APITests {
     MalformedURLException {
 
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOutByBarcode(temeraire);
 
@@ -326,6 +338,7 @@ public class RequestsAPIProxyTests extends APITests {
     IndividualResource createdRequest = requestsClient.create(
       new RequestBuilder()
         .recall()
+        .withPickupServicePointId(pickupServicePointId)
         .forItem(temeraire)
         .by(otherUser));
 

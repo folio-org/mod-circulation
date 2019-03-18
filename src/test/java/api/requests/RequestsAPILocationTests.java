@@ -6,6 +6,7 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -29,6 +30,7 @@ public class RequestsAPILocationTests extends APITests {
     final IndividualResource thirdFloor = locationsFixture.thirdFloor();
     final IndividualResource secondFloorEconomics = locationsFixture.secondFloorEconomics();
     final IndividualResource mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       holdingBuilder -> holdingBuilder
@@ -46,6 +48,7 @@ public class RequestsAPILocationTests extends APITests {
     IndividualResource request = requestsFixture.place(new RequestBuilder()
       .open()
       .hold()
+      .withPickupServicePointId(pickupServicePointId)
       .forItem(smallAngryPlanet)
       .by(requester));
 
@@ -82,6 +85,7 @@ public class RequestsAPILocationTests extends APITests {
     final IndividualResource thirdFloor = locationsFixture.thirdFloor();
     final IndividualResource secondFloorEconomics = locationsFixture.secondFloorEconomics();
     final IndividualResource mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       holdingBuilder -> holdingBuilder
@@ -94,6 +98,7 @@ public class RequestsAPILocationTests extends APITests {
     IndividualResource firstRequest = requestsFixture.place(new RequestBuilder()
       .open()
       .hold()
+      .withPickupServicePointId(pickupServicePointId)
       .forItem(smallAngryPlanet)
       .by(usersFixture.rebecca()));
 
@@ -110,6 +115,7 @@ public class RequestsAPILocationTests extends APITests {
     IndividualResource secondRequest = requestsFixture.place(new RequestBuilder()
       .open()
       .hold()
+      .withPickupServicePointId(pickupServicePointId)
       .forItem(temeraire)
       .by(usersFixture.steve()));
 
