@@ -36,6 +36,7 @@ import io.vertx.core.json.JsonObject;
 
 public class OverrideRenewByBarcodeTests extends APITests {
   private static final String OVERRIDE_COMMENT = "Comment to override";
+  private static final String ITEM_IS_NOT_LOANABLE_MESSAGE = "item is not loanable";
 
   @Test
   public void cannotOverrideRenewalWhenLoanPolicyDoesNotExist()
@@ -538,6 +539,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Override renewal does not match any of expected cases: " +
+        "item is not loanable, " +
         "item is not renewable, " +
         "reached number of renewals limit or " +
         "renewal date falls outside of the date ranges in the loan policy"))));
@@ -614,6 +616,78 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     JsonObject loanAfterCheckIn = loansFixture.checkInByBarcode(smallAngryPlanet).getLoan();
     assertActionCommentIsAbsentInLoan(loanAfterCheckIn);
+  }
+
+  @Test
+  public void cannotOverrideRenewalWhenItemIsNotLoanableAndNewDueDateIsNotSpecified() throws
+    InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    DateTime loanDueDate =
+      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
+
+    LoanPolicyBuilder notLoanablePolicy = new LoanPolicyBuilder()
+      .withName("Not Loanable Policy")
+      .withLoanable(false);
+    createLoanPolicyAndSetAsFallback(notLoanablePolicy);
+
+    JsonObject renewalResponse =
+      loansFixture.attemptRenewal(422, smallAngryPlanet, jessica).getJson();
+    assertThat(renewalResponse, hasErrorWith(allOf(
+      hasMessage(ITEM_IS_NOT_LOANABLE_MESSAGE))));
+
+    Response response = loansFixture.attemptOverride(smallAngryPlanet, jessica,
+      OVERRIDE_COMMENT, null);
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("New due date must be specified when due date calculation fails"))));
+  }
+
+  @Test
+  public void canOverrideRenewalWhenItemIsNotLoanableAndNewDueDateIsSpecified() throws
+    InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    DateTime loanDueDate =
+      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
+
+    LoanPolicyBuilder notLoanablePolicy = new LoanPolicyBuilder()
+      .withName("Not Loanable Policy")
+      .withLoanable(false);
+    createLoanPolicyAndSetAsFallback(notLoanablePolicy);
+
+    JsonObject renewalResponse =
+      loansFixture.attemptRenewal(422, smallAngryPlanet, jessica).getJson();
+    assertThat(renewalResponse, hasErrorWith(allOf(
+      hasMessage(ITEM_IS_NOT_LOANABLE_MESSAGE))));
+
+    DateTime newDueDate = DateTime.now().plusWeeks(2);
+
+    JsonObject renewedLoan =
+      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica,
+        OVERRIDE_COMMENT, newDueDate.toString()).getJson();
+
+    assertThat("action should be renewed",
+      renewedLoan.getString("action"), is("Renewed through override"));
+    assertThat("'actionComment' field should contain comment specified for override",
+      renewedLoan.getString("actionComment"), is(OVERRIDE_COMMENT));
+    assertThat("due date should be 2 weeks from now",
+      renewedLoan.getString("dueDate"),
+      isEquivalentTo(newDueDate));
   }
 
   private Matcher<ValidationError> hasUserRelatedParameter(IndividualResource user) {
