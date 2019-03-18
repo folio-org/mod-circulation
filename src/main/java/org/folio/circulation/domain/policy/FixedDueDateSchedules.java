@@ -5,13 +5,11 @@ import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import static org.folio.circulation.support.HttpResult.failed;
 
@@ -23,7 +21,6 @@ public class FixedDueDateSchedules {
   }
 
   static FixedDueDateSchedules from(JsonObject representation) {
-    //TODO: Replace this with better check
     if (representation == null) {
       return new NoFixedDueDateSchedules();
     } else {
@@ -55,16 +52,6 @@ public class FixedDueDateSchedules {
 
   private DateTime getDueDate(JsonObject schedule) {
     return DateTime.parse(schedule.getString("due"));
-  }
-
-  List<DateTime> getDueDates() {
-    return schedules.stream()
-      .map(schedule ->
-        new DateTime(schedule.getString("due"))
-          .millisOfDay()
-          .withMaximumValue()
-          .withZone(DateTimeZone.UTC))
-      .collect(Collectors.toList());
   }
 
   public boolean isEmpty() {

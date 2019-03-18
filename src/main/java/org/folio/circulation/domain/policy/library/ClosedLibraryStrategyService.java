@@ -59,7 +59,7 @@ public class ClosedLibraryStrategyService {
 
     DateTime dueDateLimit = optionalDueDateLimit.get();
     Comparator<DateTime> dateComparator =
-      Comparator.comparing(dateTime -> dateTime.withZone(DateTimeZone.UTC).toLocalDate());
+      Comparator.comparing(dateTime -> dateTime.withZone(timeZone).toLocalDate());
     if (dateComparator.compare(dueDate, dueDateLimit) <= 0) {
       return HttpResult.succeeded(dueDate);
     }

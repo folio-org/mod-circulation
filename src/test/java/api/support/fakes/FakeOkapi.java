@@ -1,11 +1,14 @@
 package api.support.fakes;
 
-import api.support.APITestContext;
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Future;
-import io.vertx.core.MultiMap;
-import io.vertx.core.http.HttpServer;
-import io.vertx.ext.web.Router;
+import static api.support.fixtures.CalendarExamples.CASE_CALENDAR_IS_EMPTY_SERVICE_POINT_ID;
+import static api.support.fixtures.CalendarExamples.getCalendarById;
+import static api.support.fixtures.LibraryHoursExamples.CASE_CALENDAR_IS_UNAVAILABLE_SERVICE_POINT_ID;
+import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_IN_THU_SERVICE_POINT_ID;
+import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_SERVICE_POINT_ID;
+import static api.support.fixtures.LibraryHoursExamples.getLibraryHoursById;
+
+import java.lang.invoke.MethodHandles;
+
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.folio.circulation.support.http.client.BufferHelper;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
@@ -14,14 +17,12 @@ import org.folio.circulation.support.http.server.ServerErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.invoke.MethodHandles;
-
-import static api.support.fixtures.CalendarExamples.CASE_CALENDAR_IS_EMPTY_SERVICE_POINT_ID;
-import static api.support.fixtures.CalendarExamples.getCalendarById;
-import static api.support.fixtures.LibraryHoursExamples.CASE_CALENDAR_IS_UNAVAILABLE_SERVICE_POINT_ID;
-import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_IN_THU_SERVICE_POINT_ID;
-import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_SERVICE_POINT_ID;
-import static api.support.fixtures.LibraryHoursExamples.getLibraryHoursById;
+import api.support.APITestContext;
+import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Future;
+import io.vertx.core.MultiMap;
+import io.vertx.core.http.HttpServer;
+import io.vertx.ext.web.Router;
 
 public class FakeOkapi extends AbstractVerticle {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -123,7 +124,7 @@ public class FakeOkapi extends AbstractVerticle {
 
     new FakeStorageModuleBuilder()
       .withRecordName("notice policy")
-      .withRootPath("/notice-policy-storage/notice-policies")
+      .withRootPath("/patron-notice-policy-storage/patron-notice-policies")
       .withCollectionPropertyName("noticePolicies")
       .withRequiredProperties("name", "active")
       .create().register(router);
@@ -231,6 +232,22 @@ public class FakeOkapi extends AbstractVerticle {
       .create()
       .register(router);
 
+    new FakeStorageModuleBuilder()
+      .withRecordName("patron notice")
+      .withCollectionPropertyName("patronnotices")
+      .withRootPath("/patron-notice")
+      .disallowCollectionDelete()
+      .create()
+      .register(router);
+
+    new FakeStorageModuleBuilder()
+      .withRecordName("configuration")
+      .withCollectionPropertyName("configs")
+      .withRootPath("/configurations/entries")
+      .withChangeMetadata()
+      .create()
+      .register(router);
+
     server.requestHandler(router::accept)
       .listen(PORT_TO_USE, result -> {
         if (result.succeeded()) {
@@ -252,6 +269,34 @@ public class FakeOkapi extends AbstractVerticle {
             throwable.getMessage())));
 
       client.get(String.format("http://localhost:%s/circulation/rules/loan-policy?%s"
+        , APITestContext.circulationModulePort(), context.request().query()),
+        httpClientResponse ->
+          httpClientResponse.bodyHandler(buffer ->
+            ForwardResponse.forward(context.response(), httpClientResponse,
+              BufferHelper.stringFromBuffer(buffer))));
+    });
+
+    router.get("/circulation/rules/notice-policy").handler(context -> {
+      OkapiHttpClient client = APITestContext.createClient(throwable ->
+        ServerErrorResponse.internalError(context.response(),
+          String.format("Exception when forward circulation rules apply request: %s",
+            throwable.getMessage())));
+
+      client.get(String.format("http://localhost:%s/circulation/rules/notice-policy?%s"
+        , APITestContext.circulationModulePort(), context.request().query()),
+        httpClientResponse ->
+          httpClientResponse.bodyHandler(buffer ->
+            ForwardResponse.forward(context.response(), httpClientResponse,
+              BufferHelper.stringFromBuffer(buffer))));
+    });
+
+    router.get("/circulation/rules/request-policy").handler(context -> {
+      OkapiHttpClient client = APITestContext.createClient(throwable ->
+        ServerErrorResponse.internalError(context.response(),
+          String.format("Exception when forward circulation rules apply request: %s",
+            throwable.getMessage())));
+
+      client.get(String.format("http://localhost:%s/circulation/rules/request-policy?%s"
         , APITestContext.circulationModulePort(), context.request().query()),
         httpClientResponse ->
           httpClientResponse.bodyHandler(buffer ->

@@ -1,3 +1,33 @@
+## 15.0.0 2019-03-15
+
+* Introduces endpoints to determine request and patron notice policies (CIRC-187, CIRC-196, CIRC-197)
+* Due date calculation includes closed due date management (CIRC-158, CIRC-159, CIRC-160, CIRC-180, CIRC-186, CIRC-217, CIRC-206, CIRC-226)
+* Respect chosen timezone when calculating due date during check out and renewal (CIRC-224, CIRC-238)
+* Provides override mechanism for renewals (CIRC-174, CIRC-180, CIRC-212, CIRC-221)
+* Send patron notices when item is checked out or checked in to return loan (CIRC-222)
+* Introduces support for page requests (CIRC-189)
+* Populates `hold shelf expiration date` when request begins `awaiting pickup` (CIRC-194)
+* Requests only begin `awaiting pickup` when checked in to selected service point (CIRC-172, CIRC-193)
+* Restricts when requests can be created based upon policy and item status whitelist (CIRC-207, CIRC-208, CIRC-230)
+* Changes loan due date when recall request is created depending upon policy (CIRC-203)
+* Prevents check out of missing items (CIRC-231)
+* Improves validation of loans (CIRC-173)
+* Adds `tags` to requests (CIRC-188, CIRC-232)
+* Improves RAML documentation (CIRC-142, CIRC-220, CIRC-244)
+* Increases HTTP client connection pool size from 5 to 100 connections (CIRC-225)
+* Includes `copy number` from item in requests (CIRC-175)
+* Uses Alpine docker image (CIRC-185)
+* Provides `circulation 7.4`
+* Requires `loan-storage 5.3`
+* Requires `circulation-rules-storage 1.0`
+* Requires `request-storage 3.0`
+* Requires `loan-policy-storage 1.2 or 2.0`
+* Requires `request-policy-storage 1.0`
+* Requires `calendar 2.0`
+* Requires `patron-notice-policy-storage 0.7`
+* Requires `patron-notice 1.0`
+* Requires `configuration 2.0`
+
 ## 14.1.0 2018-12-06
 
 * Include item ID in check in API response when no loan is present (CIRC-176)

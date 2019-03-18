@@ -51,11 +51,13 @@ public class LoanRepository {
       storageLoan.put("loanPolicyId", loanAndRelatedRecords.getLoanPolicy().getId());
     }
 
+    User user = loanAndRelatedRecords.getLoan().getUser();
+    User proxy = loanAndRelatedRecords.getLoan().getProxy();
     return loansStorageClient.post(storageLoan).thenApply(response -> {
       if (response.getStatusCode() == 201) {
         return succeeded(
           loanAndRelatedRecords.withLoan(Loan.from(response.getJson(),
-            loanAndRelatedRecords.getLoan().getItem())));
+            loanAndRelatedRecords.getLoan().getItem(), user, proxy)));
       } else {
         return failed(new ForwardOnFailure(response));
       }
@@ -100,7 +102,7 @@ public class LoanRepository {
    * success with null if the no open loan is found,
    * failure if more than one open loan for the item found
    */
-  CompletableFuture<HttpResult<Loan>> findOpenLoanForRequest(Request request) {
+  public CompletableFuture<HttpResult<Loan>> findOpenLoanForRequest(Request request) {
     return findOpenLoans(request.getItemId())
       .thenApply(loansResult -> loansResult.next(loans -> {
         //TODO: Consider introducing an unknown loan class, instead of null
@@ -163,8 +165,8 @@ public class LoanRepository {
   private HttpResult<MultipleRecords<Loan>> mapResponseToLoans(Response response) {
     return MultipleRecords.from(response, Loan::from, "loans");
   }
-  
-  
+
+
 
   private static JsonObject mapToStorageRepresentation(Loan loan, Item item) {
     JsonObject storageLoan = loan.asJson();

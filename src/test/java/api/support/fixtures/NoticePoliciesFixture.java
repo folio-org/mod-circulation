@@ -41,4 +41,13 @@ public class NoticePoliciesFixture {
 
     return noticePolicyRecordCreator.createIfAbsent(activeNoticePolicy);
   }
+
+  public IndividualResource create(NoticePolicyBuilder noticePolicy)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+    return noticePolicyRecordCreator.createIfAbsent(noticePolicy);
+  }
+
 }

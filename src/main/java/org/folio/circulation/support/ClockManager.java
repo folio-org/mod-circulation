@@ -1,6 +1,10 @@
 package org.folio.circulation.support;
 
 import java.time.Clock;
+import java.time.ZonedDateTime;
+
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 // This class allows for unit tests to replace the clock used by the module.
 // Ideally, we'd use dependency injection for this.
@@ -11,6 +15,10 @@ public class ClockManager {
 
   private ClockManager() {
     super();
+  }
+
+  public static ClockManager getClockManager() {
+    return INSTANCE;
   }
 
   public void setClock(Clock clock) {
@@ -25,7 +33,8 @@ public class ClockManager {
     return clock;
   }
 
-  public static ClockManager getClockManager() {
-    return INSTANCE;
+  public DateTime getDateTime() {
+    return new DateTime(ZonedDateTime.now(clock).toInstant().toEpochMilli(),
+        DateTimeZone.UTC);
   }
 }

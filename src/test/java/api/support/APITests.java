@@ -1,10 +1,32 @@
 package api.support;
 
+import static api.support.APITestContext.createClient;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+
+import java.lang.invoke.MethodHandles;
+import java.net.MalformedURLException;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import org.folio.circulation.support.http.client.OkapiHttpClient;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import api.support.fixtures.AddressTypesFixture;
 import api.support.fixtures.CancellationReasonsFixture;
+import api.support.fixtures.CirculationRulesFixture;
 import api.support.fixtures.ItemsFixture;
 import api.support.fixtures.LoanPoliciesFixture;
-import api.support.fixtures.CirculationRulesFixture;
 import api.support.fixtures.LoanTypesFixture;
 import api.support.fixtures.LoansFixture;
 import api.support.fixtures.LocationsFixture;
@@ -18,27 +40,6 @@ import api.support.fixtures.ServicePointsFixture;
 import api.support.fixtures.UsersFixture;
 import api.support.http.InterfaceUrls;
 import api.support.http.ResourceClient;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.lang.invoke.MethodHandles;
-import java.net.MalformedURLException;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import static api.support.APITestContext.createClient;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public abstract class APITests {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -55,6 +56,8 @@ public abstract class APITests {
   private final ResourceClient campusesClient = ResourceClient.forCampuses(client);
   private final ResourceClient librariesClient = ResourceClient.forLibraries(client);
   private final ResourceClient locationsClient = ResourceClient.forLocations(client);
+
+  protected final ResourceClient configClient = ResourceClient.forConfiguration(client);
 
   private final ResourceClient patronGroupsClient
     = ResourceClient.forPatronGroups(client);
@@ -90,6 +93,9 @@ public abstract class APITests {
 
   private final ResourceClient contributorNameTypesClient
     = ResourceClient.forContributorNameTypes(client);
+
+  protected final ResourceClient patronNoticesClient =
+    ResourceClient.forPatronNotices(client);
 
   protected final ServicePointsFixture servicePointsFixture
     = new ServicePointsFixture(servicePointsClient);
@@ -175,6 +181,7 @@ public abstract class APITests {
     itemsClient.deleteAll();
     holdingsClient.deleteAll();
     instancesClient.deleteAll();
+    configClient.deleteAll();
 
     //TODO: Only cleans up reference records, move items, holdings records
     // and instances into here too
@@ -185,6 +192,7 @@ public abstract class APITests {
     if (initialiseCirculationRules) {
       useDefaultRollingPolicyCirculationRules();
     }
+
   }
 
   @AfterClass
@@ -212,6 +220,7 @@ public abstract class APITests {
     itemsClient.deleteAll();
     holdingsClient.deleteAll();
     instancesClient.deleteAll();
+    configClient.deleteAll();
 
     //TODO: Only cleans up reference records, move items, holdings records
     // and instances into here too
@@ -243,7 +252,7 @@ public abstract class APITests {
     log.info("Using rolling loan policy as fallback policy");
     useLoanPolicyAsFallback(
       loanPoliciesFixture.canCirculateRolling().getId(),
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
   }
@@ -257,7 +266,7 @@ public abstract class APITests {
     log.info("Using fixed loan policy as fallback policy");
     useLoanPolicyAsFallback(
       loanPoliciesFixture.canCirculateFixed().getId(),
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
   }
@@ -283,7 +292,7 @@ public abstract class APITests {
       UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID())),
       ResponseHandler.any(completed));
 
-    Response response = completed.get(10, TimeUnit.SECONDS);
+    Response response = completed.get(5, TimeUnit.SECONDS);
 
     assertThat(String.format(
       "Failed to apply circulation rules: %s", response.getBody()),
@@ -344,4 +353,5 @@ public abstract class APITests {
     ResourceClient.forInstanceTypes(client).deleteAllIndividually();
     ResourceClient.forCancellationReasons(client).deleteAllIndividually();
   }
+
 }
