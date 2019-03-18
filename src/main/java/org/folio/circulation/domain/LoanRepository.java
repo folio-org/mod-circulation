@@ -165,9 +165,7 @@ public class LoanRepository {
   private HttpResult<MultipleRecords<Loan>> mapResponseToLoans(Response response) {
     return MultipleRecords.from(response, Loan::from, "loans");
   }
-
-
-
+  
   private static JsonObject mapToStorageRepresentation(Loan loan, Item item) {
     JsonObject storageLoan = loan.asJson();
 
@@ -190,6 +188,8 @@ public class LoanRepository {
 
   private static void removeSummaryProperties(JsonObject storageLoan) {
     storageLoan.remove("item");
+    storageLoan.remove("checkinServicePoint");
+    storageLoan.remove("checkoutServicePoint");
   }
 
   public CompletableFuture<HttpResult<Boolean>> hasOpenLoan(String itemId) {

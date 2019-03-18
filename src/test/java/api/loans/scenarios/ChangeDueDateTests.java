@@ -18,7 +18,6 @@ import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -28,7 +27,6 @@ import io.vertx.core.json.JsonObject;
 public class ChangeDueDateTests extends APITests {
 
   @Test
-  @Ignore("Fails due to summary properties being incorrectly stored")
   public void canRenewALoanByExtendingTheDueDate()
     throws InterruptedException,
     MalformedURLException,
