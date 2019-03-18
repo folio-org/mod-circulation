@@ -814,7 +814,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
 
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("Hold Shelf Fulfilment Requests require a Pickup Service Point"))));
+      hasMessage("Hold Shelf Fulfillment Requests require a Pickup Service Point"))));
   }
 
   @Test

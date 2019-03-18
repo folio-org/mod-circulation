@@ -39,9 +39,9 @@ public class ServicePointPickupLocationValidator {
 
     if(request.getPickupServicePointId() == null) {
       if(request.getFulfilmentPreference() == RequestFulfilmentPreference.HOLD_SHELF) {
-        log.info("Hold Shelf Fulfilment Requests require a Pickup Service Point");
+        log.info("Hold Shelf Fulfillment Requests require a Pickup Service Point");
         return failed(ValidationErrorFailure.failure(
-              "Hold Shelf Fulfilment Requests require a Pickup Service Point", "id",
+              "Hold Shelf Fulfillment Requests require a Pickup Service Point", "id",
               request.getId()));
       } else {
         log.info("No pickup service point specified for request");
