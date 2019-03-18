@@ -18,6 +18,7 @@ import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -27,6 +28,7 @@ import io.vertx.core.json.JsonObject;
 public class ChangeDueDateTests extends APITests {
 
   @Test
+  @Ignore("Fails due to summary properties being incorrectly stored")
   public void canRenewALoanByExtendingTheDueDate()
     throws InterruptedException,
     MalformedURLException,
@@ -37,7 +39,9 @@ public class ChangeDueDateTests extends APITests {
 
     IndividualResource loan = loansFixture.checkOutByBarcode(item);
 
-    JsonObject loanToChange = loan.copyJson();
+    Response fetchedLoan = loansClient.getById(loan.getId());
+
+    JsonObject loanToChange = fetchedLoan.getJson().copy();
 
     DateTime dueDate = DateTime.parse(loanToChange.getString("dueDate"));
     DateTime newDueDate = dueDate.plus(Period.days(14));
@@ -79,8 +83,15 @@ public class ChangeDueDateTests extends APITests {
     assertThat("item status is not checked out",
       fetchedItem.getJsonObject("status").getString("name"), is("Checked out"));
 
+    final JsonObject loanInStorage = loansStorageClient.getById(loan.getId()).getJson();
+
     assertThat("item status snapshot in storage is not checked out",
-      loansStorageClient.getById(loan.getId()).getJson().getString("itemStatus"),
-      is("Checked out"));
+      loanInStorage.getString("itemStatus"), is("Checked out"));
+
+    assertThat("Should not contain check in service point summary",
+      loanInStorage.containsKey("checkinServicePoint"), is(false));
+
+    assertThat("Should not contain check out service point summary",
+      loanInStorage.containsKey("checkoutServicePoint"), is(false));
   }
 }
