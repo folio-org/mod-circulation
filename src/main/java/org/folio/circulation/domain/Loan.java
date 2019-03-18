@@ -1,18 +1,7 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonObject;
-import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.domain.representations.LoanProperties;
-import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.ServerErrorFailure;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-
-import java.util.Objects;
-import java.util.UUID;
-
-import static org.folio.circulation.domain.representations.LoanProperties.CHECKIN_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION_COMMENT;
+import static org.folio.circulation.domain.representations.LoanProperties.CHECKIN_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.DUE_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.RETURN_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.STATUS;
@@ -25,6 +14,18 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringP
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
+
+import java.util.Objects;
+import java.util.UUID;
+
+import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.domain.representations.LoanProperties;
+import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.ServerErrorFailure;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+
+import io.vertx.core.json.JsonObject;
 
 public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   private final JsonObject representation;
@@ -234,6 +235,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public Loan renew(DateTime dueDate, String basedUponLoanPolicyId) {
     changeAction("renewed");
+    changeActionComment(null);
     changeLoanPolicy(basedUponLoanPolicyId);
     changeDueDate(dueDate);
     incrementRenewalCount();
@@ -255,6 +257,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   Loan checkIn(DateTime returnDate, UUID servicePointId) {
     changeAction("checkedin");
+    changeActionComment(null);
     changeStatus("Closed");
     changeReturnDate(returnDate);
     changeSystemReturnDate(DateTime.now(DateTimeZone.UTC));

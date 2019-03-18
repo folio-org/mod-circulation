@@ -10,6 +10,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
@@ -542,6 +543,79 @@ public class OverrideRenewByBarcodeTests extends APITests {
         "renewal date falls outside of the date ranges in the loan policy"))));
   }
 
+  @Test
+  public void renewalRemovesActionCommentAfterOverride() throws
+    InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    DateTime loanDueDate =
+      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
+
+    LoanPolicyBuilder nonRenewablePolicy = new LoanPolicyBuilder()
+      .withName("Non Renewable Policy")
+      .rolling(Period.days(2))
+      .notRenewable();
+    createLoanPolicyAndSetAsFallback(nonRenewablePolicy);
+
+    loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
+
+    DateTime newDueDate = DateTime.now().plusWeeks(2);
+
+    JsonObject loanAfterOverride =
+      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica,
+        OVERRIDE_COMMENT, newDueDate.toString()).getJson();
+    assertLoanHasActionComment(loanAfterOverride, OVERRIDE_COMMENT);
+
+    LoanPolicyBuilder renewablePolicy = new LoanPolicyBuilder()
+      .withName("Renewable Policy")
+      .rolling(Period.days(2));
+    createLoanPolicyAndSetAsFallback(renewablePolicy);
+
+    JsonObject loanAfterRenewal = loansFixture.renewLoan(smallAngryPlanet, jessica).getJson();
+    assertActionCommentIsAbsentInLoan(loanAfterRenewal);
+  }
+
+  @Test
+  public void checkInRemovesActionCommentAfterOverride() throws
+    InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    DateTime loanDueDate =
+      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
+
+    LoanPolicyBuilder nonRenewablePolicy = new LoanPolicyBuilder()
+      .withName("Non Renewable Policy")
+      .rolling(Period.days(2))
+      .notRenewable();
+    createLoanPolicyAndSetAsFallback(nonRenewablePolicy);
+
+    loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
+
+    DateTime newDueDate = DateTime.now().plusWeeks(2);
+
+    JsonObject loanAfterOverride =
+      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica,
+        OVERRIDE_COMMENT, newDueDate.toString()).getJson();
+    assertLoanHasActionComment(loanAfterOverride, OVERRIDE_COMMENT);
+
+    JsonObject loanAfterCheckIn = loansFixture.checkInByBarcode(smallAngryPlanet).getLoan();
+    assertActionCommentIsAbsentInLoan(loanAfterCheckIn);
+  }
+
   private Matcher<ValidationError> hasUserRelatedParameter(IndividualResource user) {
     return hasParameter("userBarcode", user.getJson().getString("barcode"));
   }
@@ -553,5 +627,27 @@ public class OverrideRenewByBarcodeTests extends APITests {
   private Matcher<ValidationError> hasItemNotFoundMessage(IndividualResource item) {
     return hasMessage(String.format("No item with barcode %s exists",
       item.getJson().getString("barcode")));
+  }
+
+  private void createLoanPolicyAndSetAsFallback(LoanPolicyBuilder loanPolicyBuilder) throws
+    InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+    UUID policyId =
+      loanPoliciesFixture.create(loanPolicyBuilder).getId();
+    useLoanPolicyAsFallback(
+      policyId,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId());
+  }
+
+  private void assertLoanHasActionComment(JsonObject loan, String actionComment) {
+    assertThat("loan should have 'actionComment' property",
+      loan.getString("actionComment"), is(actionComment));
+  }
+  private void assertActionCommentIsAbsentInLoan(JsonObject loan) {
+    assertThat("'actionComment' property should be absent in loan",
+      loan.getString("actionComment"), nullValue());
   }
 }
