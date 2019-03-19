@@ -141,24 +141,32 @@ public class LoansFixture {
 
   public IndividualResource checkOutByBarcode(
     IndividualResource item,
-    IndividualResource to) {
+    IndividualResource to)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
 
     return checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
       .forItem(item)
       .to(to)
-      .at(UUID.randomUUID()));
+      .at(defaultServicePoint()));
   }
 
   public IndividualResource checkOutByBarcode(
     IndividualResource item,
     IndividualResource to,
-    DateTime loanDate) {
+    DateTime loanDate)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
 
     return checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
       .forItem(item)
       .to(to)
       .on(loanDate)
-      .at(UUID.randomUUID()));
+      .at(defaultServicePoint()));
   }
 
   public IndividualResource checkOutByBarcode(
@@ -337,7 +345,7 @@ public class LoansFixture {
     return checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(item)
       .on(DateTime.now(DateTimeZone.UTC))
-      .at(servicePointsFixture.cd1()));
+      .at(defaultServicePoint()));
   }
 
   public CheckInByBarcodeResponse checkInByBarcode(
@@ -349,5 +357,14 @@ public class LoansFixture {
       .forItem(item)
       .on(checkInDate)
       .at(servicePointId));
+  }
+
+  private IndividualResource defaultServicePoint()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return servicePointsFixture.cd1();
   }
 }

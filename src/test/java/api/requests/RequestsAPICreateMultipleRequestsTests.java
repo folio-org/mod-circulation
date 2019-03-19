@@ -4,6 +4,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -25,22 +26,26 @@ public class RequestsAPICreateMultipleRequestsTests extends APITests {
     MalformedURLException {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOut(smallAngryPlanet, usersFixture.steve());
 
     final IndividualResource firstRequest = requestsClient.create(new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(usersFixture.jessica()));
 
     final IndividualResource secondRequest = requestsClient.create(new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(usersFixture.rebecca()));
 
     final IndividualResource thirdRequest = requestsClient.create(new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(usersFixture.charlotte()));
 
     assertThat(firstRequest.getJson().getInteger("position"), is(1));
@@ -56,22 +61,26 @@ public class RequestsAPICreateMultipleRequestsTests extends APITests {
     MalformedURLException {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOut(smallAngryPlanet, usersFixture.rebecca());
 
     final IndividualResource firstRequest = requestsClient.create(new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(usersFixture.james()));
 
     final IndividualResource secondRequest = requestsClient.create(new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(usersFixture.charlotte()));
 
     final IndividualResource thirdRequest = requestsClient.create(new RequestBuilder()
       .recall()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(usersFixture.steve()));
 
     assertThat(firstRequest.getJson().getInteger("position"), is(1));
@@ -87,17 +96,20 @@ public class RequestsAPICreateMultipleRequestsTests extends APITests {
     MalformedURLException {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOut(smallAngryPlanet, usersFixture.rebecca());
 
     final IndividualResource firstRequest = requestsClient.create(new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(usersFixture.james()));
 
     final IndividualResource secondRequest = requestsClient.create(new RequestBuilder()
       .recall()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(usersFixture.steve()));
 
     assertThat(firstRequest.getJson().getInteger("position"), is(1));
@@ -122,6 +134,7 @@ public class RequestsAPICreateMultipleRequestsTests extends APITests {
     MalformedURLException {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOut(smallAngryPlanet, usersFixture.steve());
 
@@ -130,6 +143,7 @@ public class RequestsAPICreateMultipleRequestsTests extends APITests {
         .open()
         .hold()
         .forItem(smallAngryPlanet)
+        .withPickupServicePointId(pickupServicePointId)
         .by(usersFixture.jessica()));
 
     final IndividualResource secondRequest = requestsClient.createAtSpecificLocation(
@@ -137,6 +151,7 @@ public class RequestsAPICreateMultipleRequestsTests extends APITests {
         .open()
         .hold()
         .forItem(smallAngryPlanet)
+        .withPickupServicePointId(pickupServicePointId)
         .by(usersFixture.rebecca()));
 
     final IndividualResource thirdRequest = requestsClient.createAtSpecificLocation(
@@ -144,6 +159,7 @@ public class RequestsAPICreateMultipleRequestsTests extends APITests {
         .open()
         .hold()
         .forItem(smallAngryPlanet)
+        .withPickupServicePointId(pickupServicePointId)
         .by(usersFixture.charlotte()));
 
     assertThat("First request should have position",
