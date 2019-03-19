@@ -15,8 +15,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.CoreMatchers;
@@ -355,9 +357,11 @@ public class CheckInByBarcodeTests extends APITests {
     assertThat("Closed loan should be present",
       loanRepresentation, notNullValue());
 
-    List<JsonObject> sentNotices = patronNoticesClient.getAll();
-    MatcherAssert.assertThat("one notice should have been sent", sentNotices, Matchers.hasSize(1));
+    Awaitility.await()
+      .atMost(5, TimeUnit.SECONDS)
+      .until(patronNoticesClient::getAll, Matchers.hasSize(1));
 
+    List<JsonObject> sentNotices = patronNoticesClient.getAll();
     JsonObject notice = sentNotices.get(0);
     MatcherAssert.assertThat("sent notice should have template id form notice policy",
       notice.getString("templateId"), UUIDMatcher.is(checkInTemplateId));
@@ -413,8 +417,12 @@ public class CheckInByBarcodeTests extends APITests {
     assertThat("Response should not include a loan",
       checkInResponse.getJson().containsKey("loan"), is(false));
 
-    List<JsonObject> sentNotices = patronNoticesClient.getAll();
-    MatcherAssert.assertThat("Notice shouldn't be sent second time",
-      sentNotices.size(), Matchers.lessThan(2));
+    Awaitility.await()
+      .timeout(1, TimeUnit.SECONDS)
+      .untilAsserted(() -> {
+        List<JsonObject> sentNotices = patronNoticesClient.getAll();
+        MatcherAssert.assertThat("Notice shouldn't be sent second time",
+          sentNotices.size(), Matchers.lessThan(2));
+      });
   }
 }
