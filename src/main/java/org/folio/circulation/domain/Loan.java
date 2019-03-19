@@ -119,6 +119,11 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   private void changeActionComment(String comment) {
     representation.put(ACTION_COMMENT, comment);
   }
+
+  private void removeActionComment() {
+    representation.remove(ACTION_COMMENT);
+  }
+
   public HttpResult<Void> isValidStatus() {
     if (!representation.containsKey(STATUS)) {
       return failed(new ServerErrorFailure("Loan does not have a status"));
@@ -235,7 +240,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public Loan renew(DateTime dueDate, String basedUponLoanPolicyId) {
     changeAction("renewed");
-    changeActionComment(null);
+    removeActionComment();
     changeLoanPolicy(basedUponLoanPolicyId);
     changeDueDate(dueDate);
     incrementRenewalCount();
@@ -257,7 +262,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   Loan checkIn(DateTime returnDate, UUID servicePointId) {
     changeAction("checkedin");
-    changeActionComment(null);
+    removeActionComment();
     changeStatus("Closed");
     changeReturnDate(returnDate);
     changeSystemReturnDate(DateTime.now(DateTimeZone.UTC));
