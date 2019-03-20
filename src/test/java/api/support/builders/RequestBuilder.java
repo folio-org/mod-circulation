@@ -634,8 +634,11 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.tags);
   }
 
-  public RequestBuilder withPickupServicePointId(UUID newPickupServicePointId) {
+  public RequestBuilder withPickupServicePoint(IndividualResource newPickupServicePoint) {
+    return withPickupServicePointId(newPickupServicePoint.getId());
+  }
 
+  public RequestBuilder withPickupServicePointId(UUID newPickupServicePointId) {
     return new RequestBuilder(
       this.id,
       this.requestType,

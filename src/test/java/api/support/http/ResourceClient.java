@@ -114,6 +114,11 @@ public class ResourceClient {
       "storage loans", "loans");
   }
 
+  public static ResourceClient forRequestsStorage(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::requestStorageUrl,
+      "storage requests", "requests");
+  }
+
   public static ResourceClient forMaterialTypes(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::materialTypesStorageUrl,
       "material types", "mtypes");

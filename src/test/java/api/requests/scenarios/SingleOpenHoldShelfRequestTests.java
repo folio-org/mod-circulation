@@ -5,6 +5,7 @@ import static api.support.builders.ItemBuilder.AWAITING_PICKUP;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.builders.RequestBuilder.CLOSED_FILLED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
+import static api.support.http.ResourceClient.forRequestsStorage;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
@@ -14,6 +15,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -26,6 +28,8 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.http.ResourceClient;
+import io.vertx.core.json.JsonObject;
 
 public class SingleOpenHoldShelfRequestTests extends APITests {
   @Test
@@ -196,16 +200,37 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
 
     loansFixture.checkOut(smallAngryPlanet, james);
 
-    requestsFixture.place(new RequestBuilder()
-        .forItem(smallAngryPlanet)
-        .by(jessica)
-        .withRequestDate(new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC))
-        .hold());
+    final IndividualResource holdRequest = requestsFixture.place(new RequestBuilder()
+      .hold()
+      .forItem(smallAngryPlanet)
+      .by(jessica)
+      .withRequestDate(new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC))
+      .withPickupServicePoint(servicePointsFixture.cd1()));
+
+    removeServicePoint(holdRequest.getId());
 
     Response response = loansFixture.attemptCheckInByBarcode(new CheckInByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .at(checkInServicePoint.getId()));
 
-    assertThat(response.getJson(), hasErrorWith(hasMessage("Failed to check in item due to the highest priority request missing a pickup service point")));
+    assertThat(response.getJson(), hasErrorWith(hasMessage(
+      "Failed to check in item due to the highest priority request missing a pickup service point")));
+  }
+
+  private void removeServicePoint(UUID requestId)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    final ResourceClient requestsStorage = forRequestsStorage(client);
+
+    final Response fetchedRequest = requestsStorage.getById(requestId);
+
+    final JsonObject holdRequestWithoutPickupServicePoint = fetchedRequest.getJson();
+
+    holdRequestWithoutPickupServicePoint.remove("pickupServicePointId");
+
+    requestsStorage.replace(requestId, holdRequestWithoutPickupServicePoint);
   }
 }

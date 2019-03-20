@@ -32,10 +32,12 @@ public class RequestsAPILoanRenewalTests extends APITests {
     final IndividualResource rebecca = usersFixture.rebecca();
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     requestsClient.create(new RequestBuilder()
       .recall()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(usersFixture.charlotte()));
 
     Response response = renewByBarcodeClient.attemptCreate(
@@ -60,10 +62,11 @@ public class RequestsAPILoanRenewalTests extends APITests {
     final IndividualResource rebecca = usersFixture.rebecca();
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
-
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     requestsClient.create(new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(usersFixture.charlotte()));
 
     Response response = renewByBarcodeClient.attemptCreate(
@@ -80,12 +83,14 @@ public class RequestsAPILoanRenewalTests extends APITests {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
 
     requestsClient.create(new RequestBuilder()
       .recall()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(usersFixture.charlotte()));
 
     Response response = renewByIdClient.attemptCreate(
@@ -110,10 +115,11 @@ public class RequestsAPILoanRenewalTests extends APITests {
     final IndividualResource rebecca = usersFixture.rebecca();
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
-
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     requestsClient.create(new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(usersFixture.charlotte()));
 
     Response response = renewByIdClient.attemptCreate(
@@ -130,12 +136,14 @@ public class RequestsAPILoanRenewalTests extends APITests {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
 
     requestsClient.create(new RequestBuilder()
       .recall()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(usersFixture.charlotte()));
 
     Response response = overrideRenewalByBarcodeClient.attemptCreate(
@@ -181,10 +189,11 @@ public class RequestsAPILoanRenewalTests extends APITests {
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
-
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     requestsClient.create(new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(usersFixture.charlotte()));
 
     renewByIdClient.attemptCreate(

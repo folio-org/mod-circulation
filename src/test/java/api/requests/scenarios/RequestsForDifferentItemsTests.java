@@ -6,6 +6,7 @@ import org.folio.circulation.support.http.client.IndividualResource;
 import org.junit.Test;
 
 import java.net.MalformedURLException;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -22,6 +23,7 @@ public class RequestsForDifferentItemsTests extends APITests {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource nod = itemsFixture.basedUponNod();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     final IndividualResource steve = usersFixture.steve();
 
@@ -31,6 +33,7 @@ public class RequestsForDifferentItemsTests extends APITests {
     final IndividualResource firstRequestForSmallAngryPlanet = requestsClient.create(
       new RequestBuilder()
       .hold()
+      .withPickupServicePointId(pickupServicePointId)
       .forItem(smallAngryPlanet)
       .by(usersFixture.jessica())
       .create());
@@ -38,6 +41,7 @@ public class RequestsForDifferentItemsTests extends APITests {
     final IndividualResource firstRequestForNod = requestsClient.create(
       new RequestBuilder()
       .hold()
+      .withPickupServicePointId(pickupServicePointId)
       .forItem(nod)
       .by(usersFixture.rebecca())
       .create());
@@ -45,6 +49,7 @@ public class RequestsForDifferentItemsTests extends APITests {
     final IndividualResource secondRequestForNod = requestsClient.create(
       new RequestBuilder()
         .hold()
+        .withPickupServicePointId(pickupServicePointId)
         .forItem(nod)
         .by(usersFixture.james())
         .create());
@@ -52,6 +57,7 @@ public class RequestsForDifferentItemsTests extends APITests {
     final IndividualResource secondRequestForSmallAngryPlannet = requestsClient.create(
       new RequestBuilder()
       .hold()
+      .withPickupServicePointId(pickupServicePointId)
       .forItem(smallAngryPlanet)
       .by(usersFixture.charlotte())
       .create());
