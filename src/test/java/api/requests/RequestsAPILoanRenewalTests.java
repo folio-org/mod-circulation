@@ -80,12 +80,14 @@ public class RequestsAPILoanRenewalTests extends APITests {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
 
     requestsClient.create(new RequestBuilder()
       .recall()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(usersFixture.charlotte()));
 
     Response response = renewByIdClient.attemptCreate(
@@ -130,12 +132,14 @@ public class RequestsAPILoanRenewalTests extends APITests {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
 
     requestsClient.create(new RequestBuilder()
       .recall()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(usersFixture.charlotte()));
 
     Response response = overrideRenewalByBarcodeClient.attemptCreate(

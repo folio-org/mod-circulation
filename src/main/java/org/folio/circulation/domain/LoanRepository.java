@@ -165,20 +165,31 @@ public class LoanRepository {
   private HttpResult<MultipleRecords<Loan>> mapResponseToLoans(Response response) {
     return MultipleRecords.from(response, Loan::from, "loans");
   }
-
-
-
+  
   private static JsonObject mapToStorageRepresentation(Loan loan, Item item) {
     JsonObject storageLoan = loan.asJson();
 
-    storageLoan.remove("metadata");
-    storageLoan.remove("item");
-    storageLoan.remove("itemStatus");
-
-    //TODO: Check for null item status
-    storageLoan.put("itemStatus", item.getStatus().getValue());
+    removeChangeMetadata(storageLoan);
+    removeSummaryProperties(storageLoan);
+    keepLatestItemStatus(item, storageLoan);
 
     return storageLoan;
+  }
+
+  private static void keepLatestItemStatus(Item item, JsonObject storageLoan) {
+    //TODO: Check for null item status
+    storageLoan.remove("itemStatus");
+    storageLoan.put("itemStatus", item.getStatus().getValue());
+  }
+
+  private static void removeChangeMetadata(JsonObject storageLoan) {
+    storageLoan.remove("metadata");
+  }
+
+  private static void removeSummaryProperties(JsonObject storageLoan) {
+    storageLoan.remove("item");
+    storageLoan.remove("checkinServicePoint");
+    storageLoan.remove("checkoutServicePoint");
   }
 
   public CompletableFuture<HttpResult<Boolean>> hasOpenLoan(String itemId) {

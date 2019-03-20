@@ -98,6 +98,7 @@ public class FakeOkapi extends AbstractVerticle {
       .withRecordName("loan")
       .withRootPath("/loan-storage/loans")
       .withRequiredProperties("itemId", "loanDate", "action")
+      .withDisallowedProperties("checkinServicePoint", "checkoutServicePoint")
       .withChangeMetadata()
       .create().register(router);
 

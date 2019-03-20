@@ -49,10 +49,10 @@ public class UpdateItem {
 
       String pickupServicePointIdString = request.getPickupServicePointId();
       if (pickupServicePointIdString == null) {
-        return failedResult(
-            "Failed to check in item due to the highest priority " +
-            "request missing a pickup service point",
-            "pickupServicePointId", null);
+          return failedResult(
+              "Failed to check in item due to the highest priority " +
+              "request missing a pickup service point",
+              "pickupServicePointId", null);
       }
 
       UUID pickUpServicePointId = UUID.fromString(pickupServicePointIdString);

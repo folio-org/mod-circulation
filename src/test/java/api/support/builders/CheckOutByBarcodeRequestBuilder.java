@@ -90,6 +90,10 @@ public class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Buil
       checkoutServicePointId);
   }
 
+  public CheckOutByBarcodeRequestBuilder at(IndividualResource checkoutServicePoint) {
+    return at(checkoutServicePoint.getId());
+  }
+
   public CheckOutByBarcodeRequestBuilder at(UUID checkoutServicePointId) {
     return new CheckOutByBarcodeRequestBuilder(
       this.itemBarcode,

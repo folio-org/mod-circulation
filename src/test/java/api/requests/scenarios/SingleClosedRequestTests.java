@@ -7,6 +7,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -31,10 +32,13 @@ public class SingleClosedRequestTests extends APITests {
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
 
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
     IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsClient.create(new RequestBuilder()
       .hold()
+      .withPickupServicePointId(pickupServicePointId)
       .fulfilToHoldShelf()
       .withRequestDate(new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC))
       .fulfilled() //TODO: Replace with closed cancelled when introduced
@@ -66,10 +70,13 @@ public class SingleClosedRequestTests extends APITests {
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource steve = usersFixture.steve();
 
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
     IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsClient.create(new RequestBuilder()
       .hold()
+      .withPickupServicePointId(pickupServicePointId)
       .fulfilToHoldShelf()
       .withRequestDate(new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC))
       .fulfilled() //TODO: Replace with closed cancelled when introduced
