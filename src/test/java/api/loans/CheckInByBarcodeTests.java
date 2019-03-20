@@ -418,7 +418,7 @@ public class CheckInByBarcodeTests extends APITests {
       .pollDelay(1, TimeUnit.SECONDS)
       .untilAsserted(() -> {
         List<JsonObject> sentNotices = patronNoticesClient.getAll();
-        MatcherAssert.assertThat("Check-in notice shouldn't sent if item isn't checked-out",
+        MatcherAssert.assertThat("Check-in notice shouldn't be sent if item isn't checked-out",
           sentNotices, Matchers.empty());
       });
   }
