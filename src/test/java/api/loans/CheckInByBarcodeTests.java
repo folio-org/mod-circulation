@@ -407,9 +407,6 @@ public class CheckInByBarcodeTests extends APITests {
     final IndividualResource nod = itemsFixture.basedUponNod(
       builder -> builder.withTemporaryLocation(homeLocation.getId()));
 
-    loansFixture.checkInByBarcode(
-      nod, new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC),
-      checkInServicePointId);
     final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
       nod, new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC),
       checkInServicePointId);
@@ -418,11 +415,11 @@ public class CheckInByBarcodeTests extends APITests {
       checkInResponse.getJson().containsKey("loan"), is(false));
 
     Awaitility.await()
-      .timeout(1, TimeUnit.SECONDS)
+      .pollDelay(1, TimeUnit.SECONDS)
       .untilAsserted(() -> {
         List<JsonObject> sentNotices = patronNoticesClient.getAll();
-        MatcherAssert.assertThat("Notice shouldn't be sent second time",
-          sentNotices.size(), Matchers.lessThan(2));
+        MatcherAssert.assertThat("Check-in notice shouldn't sent if item isn't checked-out",
+          sentNotices, Matchers.empty());
       });
   }
 }
