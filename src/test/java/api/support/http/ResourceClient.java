@@ -174,6 +174,23 @@ public class ResourceClient {
       "configuration entries", "configs");
   }
 
+  public static ResourceClient forRenewByBarcode(OkapiHttpClient client) {
+    return new ResourceClient(client, subPath -> InterfaceUrls.renewByBarcodeUrl(),
+      "renew by barcode");
+  }
+
+  public static ResourceClient forRenewById(OkapiHttpClient client) {
+    return new ResourceClient(client, subPath -> InterfaceUrls.renewByIdUrl(),
+      "renew by id");
+  }
+
+  public static ResourceClient forOverrideRenewalByBarcode(OkapiHttpClient client) {
+    return new ResourceClient(
+      client, subPath -> InterfaceUrls.overrideRenewalByBarcodeUrl(),
+      "override renewal by barcode"
+    );
+  }
+
   private ResourceClient(
     OkapiHttpClient client,
     UrlMaker urlMaker,

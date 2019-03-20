@@ -10,6 +10,7 @@ import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRenewalService;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.LoanRepresentation;
+import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
@@ -50,6 +51,7 @@ public abstract class RenewalResource extends Resource {
     final LoanRepository loanRepository = new LoanRepository(clients);
     final ItemRepository itemRepository = new ItemRepository(clients, true, true);
     final UserRepository userRepository = new UserRepository(clients);
+    final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
@@ -61,8 +63,13 @@ public abstract class RenewalResource extends Resource {
 
     //TODO: Validation check for same user should be in the domain service
 
-    findLoan(routingContext.getBodyAsJson(), loanRepository, itemRepository, userRepository)
-      .thenApply(r -> r.map(LoanAndRelatedRecords::new))
+    CompletableFuture<HttpResult<Loan>> loan = findLoan(routingContext.getBodyAsJson(),
+      loanRepository,
+      itemRepository,
+      userRepository,
+      requestQueueRepository);
+
+    loan.thenApply(r -> r.map(LoanAndRelatedRecords::new))
       .thenComposeAsync(r -> r.after(configurationRepository::lookupTimeZone))
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenApply(r -> r.next(loanRenewalService::renew))
@@ -77,5 +84,6 @@ public abstract class RenewalResource extends Resource {
     JsonObject request,
     LoanRepository loanRepository,
     ItemRepository itemRepository,
-    UserRepository userRepository);
+    UserRepository userRepository,
+    RequestQueueRepository requestQueueRepository);
 }
