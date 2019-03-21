@@ -19,7 +19,6 @@ import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.LoanPolicyBuilder;
-import api.support.builders.RenewByIdRequestBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.http.InventoryItemResource;
 
@@ -160,21 +159,15 @@ public class RequestsAPILoanRenewalTests extends APITests {
       .hold()
       .forItem(smallAngryPlanet)
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
-      .by(usersFixture.charlotte()))
-    ;
+      .by(usersFixture.charlotte()));
 
-    renewByIdClient.attemptCreate(
-      new RenewByIdRequestBuilder()
-        .forItem(smallAngryPlanet)
-        .forUser(rebecca)
-    );
+    loansFixture.attemptRenewalById(smallAngryPlanet, rebecca);
 
     IndividualResource response = loansFixture.overrideRenewalByBarcode(
       smallAngryPlanet,
       rebecca,
       "Renewal override",
-      "2018-12-21T13:30:00Z"
-    );
+      "2018-12-21T13:30:00Z");
 
     assertThat(response.getJson().getString("action"), is("Renewed through override"));
   }
