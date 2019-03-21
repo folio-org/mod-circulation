@@ -237,7 +237,6 @@ public class FakeOkapi extends AbstractVerticle {
       .withRecordName("patron notice")
       .withCollectionPropertyName("patronnotices")
       .withRootPath("/patron-notice")
-      .disallowCollectionDelete()
       .create()
       .register(router);
 

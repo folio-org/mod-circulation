@@ -29,6 +29,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -654,9 +655,11 @@ public class CheckOutByBarcodeTests extends APITests {
       loan.getString("dueDate"),
       isEquivalentTo(loanDate.plusWeeks(3)));
 
-    List<JsonObject> sentNotices = patronNoticesClient.getAll();
-    assertThat("one notice should have been sent", sentNotices, Matchers.hasSize(1));
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronNoticesClient::getAll, Matchers.hasSize(1));
 
+    List<JsonObject> sentNotices = patronNoticesClient.getAll();
     JsonObject notice = sentNotices.get(0);
     assertThat("sent notice should have template id form notice policy",
       notice.getString("templateId"), is(checkOutTemplateId));

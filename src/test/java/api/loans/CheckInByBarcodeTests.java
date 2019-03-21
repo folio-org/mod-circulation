@@ -15,8 +15,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.CoreMatchers;
@@ -355,9 +357,11 @@ public class CheckInByBarcodeTests extends APITests {
     assertThat("Closed loan should be present",
       loanRepresentation, notNullValue());
 
-    List<JsonObject> sentNotices = patronNoticesClient.getAll();
-    MatcherAssert.assertThat("one notice should have been sent", sentNotices, Matchers.hasSize(1));
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronNoticesClient::getAll, Matchers.hasSize(1));
 
+    List<JsonObject> sentNotices = patronNoticesClient.getAll();
     JsonObject notice = sentNotices.get(0);
     MatcherAssert.assertThat("sent notice should have template id form notice policy",
       notice.getString("templateId"), UUIDMatcher.is(checkInTemplateId));
@@ -403,9 +407,6 @@ public class CheckInByBarcodeTests extends APITests {
     final IndividualResource nod = itemsFixture.basedUponNod(
       builder -> builder.withTemporaryLocation(homeLocation.getId()));
 
-    loansFixture.checkInByBarcode(
-      nod, new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC),
-      checkInServicePointId);
     final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
       nod, new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC),
       checkInServicePointId);
@@ -413,8 +414,9 @@ public class CheckInByBarcodeTests extends APITests {
     assertThat("Response should not include a loan",
       checkInResponse.getJson().containsKey("loan"), is(false));
 
+    TimeUnit.SECONDS.sleep(1);
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
-    MatcherAssert.assertThat("Notice shouldn't be sent second time",
-      sentNotices.size(), Matchers.lessThan(2));
+    assertThat("Check-in notice shouldn't be sent if item isn't checked-out",
+      sentNotices, Matchers.empty());
   }
 }
