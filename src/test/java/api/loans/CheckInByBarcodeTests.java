@@ -358,7 +358,7 @@ public class CheckInByBarcodeTests extends APITests {
       loanRepresentation, notNullValue());
 
     Awaitility.await()
-      .atMost(5, TimeUnit.SECONDS)
+      .atMost(1, TimeUnit.SECONDS)
       .until(patronNoticesClient::getAll, Matchers.hasSize(1));
 
     List<JsonObject> sentNotices = patronNoticesClient.getAll();

@@ -656,7 +656,7 @@ public class CheckOutByBarcodeTests extends APITests {
       isEquivalentTo(loanDate.plusWeeks(3)));
 
     Awaitility.await()
-      .atMost(5, TimeUnit.SECONDS)
+      .atMost(1, TimeUnit.SECONDS)
       .until(patronNoticesClient::getAll, Matchers.hasSize(1));
 
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
