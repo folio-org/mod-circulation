@@ -37,6 +37,7 @@ import io.vertx.core.json.JsonObject;
 public class OverrideRenewByBarcodeTests extends APITests {
   private static final String OVERRIDE_COMMENT = "Comment to override";
   private static final String ITEM_IS_NOT_LOANABLE_MESSAGE = "item is not loanable";
+  private static final String ACTION_COMMENT_KEY = "actionComment";
 
   @Test
   public void cannotOverrideRenewalWhenLoanPolicyDoesNotExist()
@@ -239,7 +240,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
       renewedLoan.getString("action"), is("Renewed through override"));
 
     assertThat("'actionComment' field should contain comment specified for override",
-      renewedLoan.getString("actionComment"), is(OVERRIDE_COMMENT));
+      renewedLoan.getString(ACTION_COMMENT_KEY), is(OVERRIDE_COMMENT));
 
     assertThat("renewal count should be incremented",
       renewedLoan.getInteger("renewalCount"), is(1));
@@ -355,7 +356,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
       renewedLoan.getString("action"), is("Renewed through override"));
 
     assertThat("'actionComment' field should contain comment specified for override",
-      renewedLoan.getString("actionComment"), is(OVERRIDE_COMMENT));
+      renewedLoan.getString(ACTION_COMMENT_KEY), is(OVERRIDE_COMMENT));
 
     assertThat("renewal count should be incremented",
       renewedLoan.getInteger("renewalCount"), is(1));
@@ -436,7 +437,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
       renewedLoan.getString("action"), is("Renewed through override"));
 
     assertThat("'actionComment' field should contain comment specified for override",
-      renewedLoan.getString("actionComment"), is(OVERRIDE_COMMENT));
+      renewedLoan.getString(ACTION_COMMENT_KEY), is(OVERRIDE_COMMENT));
 
     assertThat("renewal count should be incremented",
       renewedLoan.getInteger("renewalCount"), is(1));
@@ -496,7 +497,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
       renewedLoan.getString("action"), is("Renewed through override"));
 
     assertThat("'actionComment' field should contain comment specified for override",
-      renewedLoan.getString("actionComment"), is(OVERRIDE_COMMENT));
+      renewedLoan.getString(ACTION_COMMENT_KEY), is(OVERRIDE_COMMENT));
 
     assertThat("renewal count should be incremented",
       renewedLoan.getInteger("renewalCount"), is(2));
@@ -684,7 +685,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     assertThat("action should be renewed",
       renewedLoan.getString("action"), is("Renewed through override"));
     assertThat("'actionComment' field should contain comment specified for override",
-      renewedLoan.getString("actionComment"), is(OVERRIDE_COMMENT));
+      renewedLoan.getString(ACTION_COMMENT_KEY), is(OVERRIDE_COMMENT));
     assertThat("due date should be 2 weeks from now",
       renewedLoan.getString("dueDate"),
       isEquivalentTo(newDueDate));
@@ -718,10 +719,10 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
   private void assertLoanHasActionComment(JsonObject loan, String actionComment) {
     assertThat("loan should have 'actionComment' property",
-      loan.getString("actionComment"), is(actionComment));
+      loan.getString(ACTION_COMMENT_KEY), is(actionComment));
   }
   private void assertActionCommentIsAbsentInLoan(JsonObject loan) {
     assertThat("'actionComment' property should be absent in loan",
-      loan.getString("actionComment"), nullValue());
+      loan.getString(ACTION_COMMENT_KEY), nullValue());
   }
 }
