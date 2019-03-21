@@ -1,22 +1,5 @@
 package org.folio.circulation.domain.policy;
 
-import io.vertx.core.json.JsonObject;
-import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.domain.Loan;
-import org.folio.circulation.support.ClockManager;
-import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.ServerErrorFailure;
-import org.folio.circulation.support.ValidationErrorFailure;
-import org.folio.circulation.support.http.server.ValidationError;
-import org.joda.time.DateTime;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
@@ -26,6 +9,24 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringP
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+
+import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.domain.Loan;
+import org.folio.circulation.support.ClockManager;
+import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.http.server.ValidationError;
+import org.joda.time.DateTime;
+
+import io.vertx.core.json.JsonObject;
 
 public class LoanPolicy {
 
@@ -64,6 +65,9 @@ public class LoanPolicy {
   public HttpResult<Loan> renew(Loan loan, DateTime systemDate) {
     //TODO: Create HttpResult wrapper that traps exceptions
     try {
+      if (isNotLoanable()) {
+        return failedResult(errorForPolicy("item is not loanable"));
+      }
       if(isNotRenewable()) {
         return failedResult(errorForPolicy("loan is not renewable"));
       }
@@ -103,7 +107,7 @@ public class LoanPolicy {
   public HttpResult<Loan> overrideRenewal(Loan loan, DateTime systemDate,
                                           DateTime overrideDueDate, String comment) {
     try {
-      if (isNotRenewable()) {
+      if (isNotLoanable() || isNotRenewable()) {
         return overrideRenewalForDueDate(loan, overrideDueDate, comment);
       }
       final HttpResult<DateTime> proposedDueDateResult =
@@ -158,6 +162,7 @@ public class LoanPolicy {
 
   private ValidationError errorForNotMatchingOverrideCases() {
     String reason = "Override renewal does not match any of expected cases: " +
+      "item is not loanable, " +
       "item is not renewable, " +
       "reached number of renewals limit or " +
       "renewal date falls outside of the date ranges in the loan policy";
@@ -345,8 +350,8 @@ public class LoanPolicy {
     return withAlternateRenewalSchedules(FixedDueDateSchedules.from(renewalSchedules));
   }
 
-  public boolean isLoanable() {
-    return representation.getBoolean("loanable", false);
+  public boolean isNotLoanable() {
+    return !getBooleanProperty(representation, "loanable");
   }
 
   public FixedDueDateSchedules getFixedDueDateSchedules() {
