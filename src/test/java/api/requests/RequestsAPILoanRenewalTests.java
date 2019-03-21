@@ -1,5 +1,7 @@
 package api.requests;
 
+import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
+import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 import static org.joda.time.DateTimeConstants.APRIL;
@@ -17,16 +19,16 @@ import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.LoanPolicyBuilder;
-import api.support.builders.OverrideRenewalByBarcodeRequestBuilder;
-import api.support.builders.RenewByBarcodeRequestBuilder;
 import api.support.builders.RenewByIdRequestBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.http.InventoryItemResource;
 
 public class RequestsAPILoanRenewalTests extends APITests {
 
+  private static final String ITEMS_CANNOT_BE_RENEWED_MSG = "Items cannot be renewed when there is an active recall request";
+
   @Test
-  public void forbidRenewalLoanByBarcode_firstRequestIsRecall() throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+  public void forbidRenewalLoanByBarcodeWhenFirstRequestInQueueIsRecall() throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
@@ -40,23 +42,13 @@ public class RequestsAPILoanRenewalTests extends APITests {
       .withPickupServicePointId(pickupServicePointId)
       .by(usersFixture.charlotte()));
 
-    Response response = renewByBarcodeClient.attemptCreate(
-      new RenewByBarcodeRequestBuilder()
-        .forItem(smallAngryPlanet)
-        .forUser(rebecca));
+    Response response = loansFixture.attemptRenewal(smallAngryPlanet, rebecca);
 
-    assertThat(response.getStatusCode(), is(422));
-
-    String message = response.getJson()
-      .getJsonArray("errors")
-      .getJsonObject(0)
-      .getString("message");
-
-    assertThat(message, is("Items cannot be renewed when there is an active recall request"));
+    assertThat(response.getJson(), hasErrorWith(hasMessage(ITEMS_CANNOT_BE_RENEWED_MSG)));
   }
 
   @Test
-  public void allowRenewalLoanByBarcode_firstRequestIsHold() throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+  public void allowRenewalLoanByBarcodeWhenFirstRequestInQueueIsHold() throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
@@ -69,17 +61,12 @@ public class RequestsAPILoanRenewalTests extends APITests {
       .withPickupServicePointId(pickupServicePointId)
       .by(usersFixture.charlotte()));
 
-    Response response = renewByBarcodeClient.attemptCreate(
-      new RenewByBarcodeRequestBuilder()
-        .forItem(smallAngryPlanet)
-        .forUser(rebecca));
-
-    assertThat(response.getStatusCode(), is(200));
+    Response response = loansFixture.attemptRenewal(200, smallAngryPlanet, rebecca);
     assertThat(response.getJson().getString("action"), is("renewed"));
   }
 
   @Test
-  public void forbidRenewalLoanById_firstRequestIsRecall() throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+  public void forbidRenewalLoanByIdWhenFirstRequestInQueueIsRecall() throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
@@ -93,46 +80,33 @@ public class RequestsAPILoanRenewalTests extends APITests {
       .withPickupServicePointId(pickupServicePointId)
       .by(usersFixture.charlotte()));
 
-    Response response = renewByIdClient.attemptCreate(
-      new RenewByIdRequestBuilder()
-        .forItem(smallAngryPlanet)
-        .forUser(rebecca));
+    Response response = loansFixture.attemptRenewal(smallAngryPlanet, rebecca);
 
-    assertThat(response.getStatusCode(), is(422));
-
-    String message = response.getJson()
-      .getJsonArray("errors")
-      .getJsonObject(0)
-      .getString("message");
-
-    assertThat(message, is("Items cannot be renewed when there is an active recall request"));
+    assertThat(response.getJson(), hasErrorWith(hasMessage(ITEMS_CANNOT_BE_RENEWED_MSG)));
   }
 
   @Test
-  public void allowRenewalLoanById_firstRequestIsHold() throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+  public void allowRenewalLoanByIdWhenFirstRequestInQueueIsHold() throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
-    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
     requestsClient.create(new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
-      .withPickupServicePointId(pickupServicePointId)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .by(usersFixture.charlotte()));
 
-    Response response = renewByIdClient.attemptCreate(
-      new RenewByIdRequestBuilder()
-        .forItem(smallAngryPlanet)
-        .forUser(rebecca));
 
-    assertThat(response.getStatusCode(), is(200));
+    IndividualResource response = loansFixture.renewLoanById(smallAngryPlanet, rebecca);
+
     assertThat(response.getJson().getString("action"), is("renewed"));
   }
 
   @Test
-  public void forbidOverrideRenewalLoanByBarcode_firstRequestIsRecall() throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+  public void forbidOverrideRenewalLoanByBarcodeWhenFirstRequestInQueueIsRecall() throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
@@ -146,26 +120,18 @@ public class RequestsAPILoanRenewalTests extends APITests {
       .withPickupServicePointId(pickupServicePointId)
       .by(usersFixture.charlotte()));
 
-    Response response = overrideRenewalByBarcodeClient.attemptCreate(
-      new OverrideRenewalByBarcodeRequestBuilder()
-        .forItem(smallAngryPlanet)
-        .forUser(rebecca)
-        .withComment("Renewal override")
-        .withDueDate("2018-12-21T13:30:00Z")
+    Response response = loansFixture.attemptOverride(
+      smallAngryPlanet,
+      rebecca,
+      "Renewal override",
+      "2018-12-21T13:30:00Z"
     );
 
-    assertThat(response.getStatusCode(), is(422));
-
-    String message = response.getJson()
-      .getJsonArray("errors")
-      .getJsonObject(0)
-      .getString("message");
-
-    assertThat(message, is("Items cannot be renewed when there is an active recall request"));
+    assertThat(response.getJson(), hasErrorWith(hasMessage(ITEMS_CANNOT_BE_RENEWED_MSG)));
   }
 
   @Test
-  public void allowOverrideRenewalLoanByBarcode_firstRequestIsHold() throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+  public void allowOverrideRenewalLoanByBarcodeWhenFirstRequestInQueueIsHold() throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
@@ -189,27 +155,27 @@ public class RequestsAPILoanRenewalTests extends APITests {
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
-    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
     requestsClient.create(new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
-      .withPickupServicePointId(pickupServicePointId)
-      .by(usersFixture.charlotte()));
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .by(usersFixture.charlotte()))
+    ;
 
     renewByIdClient.attemptCreate(
       new RenewByIdRequestBuilder()
         .forItem(smallAngryPlanet)
-        .forUser(rebecca));
-
-    Response response = overrideRenewalByBarcodeClient.attemptCreate(
-      new OverrideRenewalByBarcodeRequestBuilder()
-        .forItem(smallAngryPlanet)
         .forUser(rebecca)
-        .withComment("Renewal override")
-        .withDueDate("2019-03-21T13:30:00Z")
     );
 
-    assertThat(response.getStatusCode(), is(200));
+    IndividualResource response = loansFixture.overrideRenewalByBarcode(
+      smallAngryPlanet,
+      rebecca,
+      "Renewal override",
+      "2018-12-21T13:30:00Z"
+    );
+
     assertThat(response.getJson().getString("action"), is("Renewed through override"));
   }
 }

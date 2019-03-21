@@ -2,6 +2,7 @@ package org.folio.circulation.domain.validation;
 
 import static org.folio.circulation.domain.RequestStatus.OPEN_NOT_YET_FILLED;
 import static org.folio.circulation.domain.RequestType.RECALL;
+import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.of;
 import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
@@ -21,12 +22,10 @@ public class BlockRenewalValidator {
   private final RequestQueueRepository requestQueueRepository;
 
   public BlockRenewalValidator(RequestQueueRepository requestQueueRepository) {
-
     this.requestQueueRepository = requestQueueRepository;
   }
 
   public CompletableFuture<HttpResult<Item>> refuseWhenFirstRequestIsRecall(Item item) {
-
     return requestQueueRepository.get(item.getItemId())
       .thenApply(result -> result.combineToResult(of(() -> item), this::checkAndCombine));
   }
@@ -38,10 +37,8 @@ public class BlockRenewalValidator {
 
     if (request.isPresent() && isRecallRequest(request.get())) {
       String reason = "Items cannot be renewed when there is an active recall request";
-
-
       ValidationErrorFailure error = failure(reason, "request id", request.get().getId());
-      return HttpResult.failed(error);
+      return failed(error);
     } else {
       return succeeded(item);
     }
@@ -49,11 +46,8 @@ public class BlockRenewalValidator {
 
 
   private boolean isRecallRequest(Request request) {
-
     return request.getPosition() == 1
       && request.getRequestType() == RECALL
       && request.getStatus() == OPEN_NOT_YET_FILLED;
   }
-
-
 }
