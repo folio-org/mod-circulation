@@ -157,7 +157,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return representation.getString("id");
   }
 
-  RequestType getRequestType() {
+  public RequestType getRequestType() {
     return RequestType.from(representation.getString(REQUEST_TYPE));
   }
 
@@ -169,7 +169,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return getRequestType().toLoanAction();
   }
 
-  RequestStatus getStatus() {
+  public RequestStatus getStatus() {
     return RequestStatus.from(representation.getString(STATUS));
   }
 
