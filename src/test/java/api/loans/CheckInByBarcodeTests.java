@@ -414,12 +414,9 @@ public class CheckInByBarcodeTests extends APITests {
     assertThat("Response should not include a loan",
       checkInResponse.getJson().containsKey("loan"), is(false));
 
-    Awaitility.await()
-      .pollDelay(1, TimeUnit.SECONDS)
-      .untilAsserted(() -> {
-        List<JsonObject> sentNotices = patronNoticesClient.getAll();
-        MatcherAssert.assertThat("Check-in notice shouldn't be sent if item isn't checked-out",
-          sentNotices, Matchers.empty());
-      });
+    Thread.sleep(5000);
+    List<JsonObject> sentNotices = patronNoticesClient.getAll();
+    assertThat("Check-in notice shouldn't be sent if item isn't checked-out",
+      sentNotices, Matchers.empty());
   }
 }
