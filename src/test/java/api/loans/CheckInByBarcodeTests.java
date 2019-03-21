@@ -414,7 +414,7 @@ public class CheckInByBarcodeTests extends APITests {
     assertThat("Response should not include a loan",
       checkInResponse.getJson().containsKey("loan"), is(false));
 
-    Thread.sleep(5000);
+    TimeUnit.SECONDS.sleep(1);
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
     assertThat("Check-in notice shouldn't be sent if item isn't checked-out",
       sentNotices, Matchers.empty());
