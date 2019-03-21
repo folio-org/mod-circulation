@@ -97,14 +97,8 @@ public abstract class APITests {
   protected final ResourceClient patronNoticesClient =
     ResourceClient.forPatronNotices(client);
 
-  protected final ResourceClient renewByBarcodeClient =
-    ResourceClient.forRenewByBarcode(client);
-
   protected final ResourceClient renewByIdClient =
     ResourceClient.forRenewById(client);
-
-  protected final ResourceClient overrideRenewalByBarcodeClient =
-    ResourceClient.forOverrideRenewalByBarcode(client);
 
   protected final ServicePointsFixture servicePointsFixture
     = new ServicePointsFixture(servicePointsClient);
