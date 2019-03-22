@@ -1,15 +1,17 @@
 package org.folio.circulation.domain.policy;
 
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.ValidationErrorFailure;
-import org.joda.time.DateTime;
+import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.function.Supplier;
 
-import static org.folio.circulation.support.HttpResult.failed;
+import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.http.server.ValidationError;
+import org.joda.time.DateTime;
+
+import io.vertx.core.json.JsonObject;
 
 public class Period {
   private final Integer duration;
@@ -44,38 +46,37 @@ public class Period {
     return new Period(duration, interval);
   }
 
-  //TODO: Change this to use ValidationError instead of ValidationErrorFailure
   HttpResult<DateTime> addTo(
     DateTime from,
-    Supplier<ValidationErrorFailure> onUnrecognisedPeriod,
-    Function<String, ValidationErrorFailure> onUnrecognisedInterval,
-    IntFunction<ValidationErrorFailure> onUnrecognisedDuration) {
+    Supplier<ValidationError> onUnrecognisedPeriod,
+    Function<String, ValidationError> onUnrecognisedInterval,
+    IntFunction<ValidationError> onUnrecognisedDuration) {
 
     if(interval == null) {
-      return failed(onUnrecognisedPeriod.get());
+      return failedValidation(onUnrecognisedPeriod.get());
     }
 
     if(duration == null) {
-      return failed(onUnrecognisedPeriod.get());
+      return  failedValidation(onUnrecognisedPeriod.get());
     }
 
     if(duration <= 0) {
-      return failed(onUnrecognisedDuration.apply(duration));
+      return failedValidation(onUnrecognisedDuration.apply(duration));
     }
 
     switch (interval) {
       case "Months":
-        return HttpResult.succeeded(from.plusMonths(duration));
+        return succeeded(from.plusMonths(duration));
       case "Weeks":
-        return HttpResult.succeeded(from.plusWeeks(duration));
+        return succeeded(from.plusWeeks(duration));
       case "Days":
-        return HttpResult.succeeded(from.plusDays(duration));
+        return succeeded(from.plusDays(duration));
       case "Hours":
-        return HttpResult.succeeded(from.plusHours(duration));
+        return succeeded(from.plusHours(duration));
       case "Minutes":
-        return HttpResult.succeeded(from.plusMinutes(duration));
+        return succeeded(from.plusMinutes(duration));
       default:
-        return failed(onUnrecognisedInterval.apply(interval));
+        return failedValidation(onUnrecognisedInterval.apply(interval));
     }
   }
 

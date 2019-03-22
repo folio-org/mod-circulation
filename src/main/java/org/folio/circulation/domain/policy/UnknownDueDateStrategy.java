@@ -1,13 +1,14 @@
 package org.folio.circulation.domain.policy;
 
+import static java.lang.String.format;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+
+import java.util.function.Function;
+
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
-
-import java.util.function.Function;
-
-import static org.folio.circulation.support.HttpResult.failed;
 
 class UnknownDueDateStrategy extends DueDateStrategy {
   private static final String CHECK_OUT_UNRECOGNISED_PROFILE_MESSAGE =
@@ -33,12 +34,12 @@ class UnknownDueDateStrategy extends DueDateStrategy {
   @Override
   HttpResult<DateTime> calculateDueDate(Loan loan) {
     if(isRenewal) {
-      return failed(validationError(
-          String.format(RENEWAL_UNRECOGNISED_PROFILE_MESSAGE, profileId)));
+      return failedValidation(validationError(
+          format(RENEWAL_UNRECOGNISED_PROFILE_MESSAGE, profileId)));
     }
     else {
-      return failed(validationError(
-        String.format(CHECK_OUT_UNRECOGNISED_PROFILE_MESSAGE, profileId)));
+      return failedValidation(validationError(
+        format(CHECK_OUT_UNRECOGNISED_PROFILE_MESSAGE, profileId)));
     }
   }
 }

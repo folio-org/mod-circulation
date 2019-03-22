@@ -1,11 +1,13 @@
 package org.folio.circulation.domain.policy;
 
+import static java.lang.String.format;
+
+import java.util.function.Function;
+
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
-
-import java.util.function.Function;
 
 class RollingCheckOutDueDateStrategy extends DueDateStrategy {
   private static final String NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE =
@@ -46,8 +48,8 @@ class RollingCheckOutDueDateStrategy extends DueDateStrategy {
   private HttpResult<DateTime> initialDueDate(DateTime loanDate) {
     return period.addTo(loanDate,
       () -> validationError(CHECK_OUT_UNRECOGNISED_PERIOD_MESSAGE),
-      interval -> validationError(String.format(CHECK_OUT_UNRECOGNISED_INTERVAL_MESSAGE, interval)),
-      duration -> validationError(String.format(CHECKOUT_INVALID_DURATION_MESSAGE, duration)));
+      interval -> validationError(format(CHECK_OUT_UNRECOGNISED_INTERVAL_MESSAGE, interval)),
+      duration -> validationError(format(CHECKOUT_INVALID_DURATION_MESSAGE, duration)));
   }
 
   private HttpResult<DateTime> truncateDueDateBySchedule(

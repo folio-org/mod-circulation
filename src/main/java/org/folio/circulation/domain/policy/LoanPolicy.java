@@ -1,5 +1,6 @@
 package org.folio.circulation.domain.policy;
 
+import static java.lang.String.format;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
@@ -8,7 +9,6 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getNestedInteger
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -499,9 +499,9 @@ public class LoanPolicy {
 
     if (representation.containsKey(key)) {
       result = getPeriod(representation, key).addTo(initialDateTime,
-          () -> failure(errorForPolicy(String.format("the \"%s\" in the loan policy is not recognized", key))), 
-          interval -> failure(errorForPolicy(String.format("the interval \"%s\" in \"%s\" is not recognized", interval, key))),
-          duration -> failure(errorForPolicy(String.format("the duration \"%s\" in \"%s\" is invalid", duration, key))));
+          () -> errorForPolicy(format("the \"%s\" in the loan policy is not recognized", key)),
+          interval -> errorForPolicy(format("the interval \"%s\" in \"%s\" is not recognized", interval, key)),
+          duration -> errorForPolicy(format("the duration \"%s\" in \"%s\" is invalid", duration, key)));
     } else {
       result = succeeded(defaultDateTime);
     }

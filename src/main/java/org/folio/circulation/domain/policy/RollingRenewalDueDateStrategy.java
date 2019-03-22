@@ -1,14 +1,15 @@
 package org.folio.circulation.domain.policy;
 
+import static java.lang.String.format;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+
+import java.util.function.Function;
+
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
-
-import java.util.function.Function;
-
-import static org.folio.circulation.support.HttpResult.failed;
 
 class RollingRenewalDueDateStrategy extends DueDateStrategy {
   private static final String RENEW_FROM_SYSTEM_DATE = "SYSTEM_DATE";
@@ -53,7 +54,7 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
   @Override
   HttpResult<DateTime> calculateDueDate(Loan loan) {
     if(StringUtils.isBlank(renewFrom)) {
-      return failed(validationError(RENEW_FROM_UNRECOGNISED_MESSAGE));
+      return failedValidation(validationError(RENEW_FROM_UNRECOGNISED_MESSAGE));
     }
 
     switch (renewFrom) {
@@ -62,7 +63,7 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
       case RENEW_FROM_SYSTEM_DATE:
         return calculateDueDate(systemDate, loan.getLoanDate());
       default:
-        return failed(validationError(RENEW_FROM_UNRECOGNISED_MESSAGE));
+        return failedValidation(validationError(RENEW_FROM_UNRECOGNISED_MESSAGE));
     }
   }
 
@@ -74,8 +75,8 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
   HttpResult<DateTime> renewalDueDate(DateTime from) {
     return period.addTo(from,
       () -> validationError(RENEWAL_UNRECOGNISED_PERIOD_MESSAGE),
-      interval -> validationError(String.format(RENEWAL_UNRECOGNISED_INTERVAL_MESSAGE, interval)),
-      duration -> validationError(String.format(RENEWAL_INVALID_DURATION_MESSAGE, duration)));
+      interval -> validationError(format(RENEWAL_UNRECOGNISED_INTERVAL_MESSAGE, interval)),
+      duration -> validationError(format(RENEWAL_INVALID_DURATION_MESSAGE, duration)));
   }
 
   private HttpResult<DateTime> truncateDueDateBySchedule(

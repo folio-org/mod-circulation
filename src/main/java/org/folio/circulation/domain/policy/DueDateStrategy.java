@@ -1,15 +1,14 @@
 package org.folio.circulation.domain.policy;
 
+import java.lang.invoke.MethodHandles;
+import java.util.function.Function;
+
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.lang.invoke.MethodHandles;
-import java.util.function.Function;
 
 abstract class DueDateStrategy {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -30,8 +29,8 @@ abstract class DueDateStrategy {
 
   abstract HttpResult<DateTime> calculateDueDate(Loan loan);
 
-  ValidationErrorFailure validationError(String reason) {
-    return ValidationErrorFailure.failure(errorForPolicy.apply(reason));
+  ValidationError validationError(String reason) {
+    return errorForPolicy.apply(reason);
   }
 
   //TODO: Replace with logging in loan policy, that use toString of strategy
