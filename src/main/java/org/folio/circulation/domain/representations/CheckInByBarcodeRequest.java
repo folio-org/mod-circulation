@@ -4,7 +4,7 @@ import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getUUIDProperty;
-import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.util.UUID;
 
@@ -37,21 +37,21 @@ public class CheckInByBarcodeRequest {
     final String itemBarcode = getProperty(json, ITEM_BARCODE);
 
     if (StringUtils.isBlank(itemBarcode)) {
-      return failedResult("Checkin request must have an item barcode",
+      return failedValidation("Checkin request must have an item barcode",
         ITEM_BARCODE, null);
     }
 
     final UUID servicePointId = getUUIDProperty(json, SERVICE_POINT_ID);
 
     if (servicePointId == null) {
-      return failedResult("Checkin request must have a service point id",
+      return failedValidation("Checkin request must have a service point id",
         SERVICE_POINT_ID, null);
     }
 
     final DateTime checkInDate = getDateTimeProperty(json, CHECK_IN_DATE);
 
     if(checkInDate == null) {
-      return failedResult("Checkin request must have an check in date",
+      return failedValidation("Checkin request must have an check in date",
         CHECK_IN_DATE, null);
     }
 

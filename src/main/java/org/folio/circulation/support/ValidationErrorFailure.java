@@ -19,7 +19,7 @@ public class ValidationErrorFailure implements HttpFailure {
 
   private final Collection<ValidationError> errors = new ArrayList<>();
 
-  public static <T> HttpResult<T> failedResult(
+  public static <T> HttpResult<T> failedValidation(
     String reason,
     String key,
     String value) {
@@ -28,7 +28,7 @@ public class ValidationErrorFailure implements HttpFailure {
       failure(new ValidationError(reason, key, value)));
   }
 
-  public static <T> HttpResult<T> failedResult(ValidationError error) {
+  public static <T> HttpResult<T> failedValidation(ValidationError error) {
     return HttpResult.failed(failure(error));
   }
 

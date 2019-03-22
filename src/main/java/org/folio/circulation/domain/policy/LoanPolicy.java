@@ -7,7 +7,7 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProper
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedIntegerProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 import java.util.ArrayList;
@@ -66,10 +66,10 @@ public class LoanPolicy {
     //TODO: Create HttpResult wrapper that traps exceptions
     try {
       if (isNotLoanable()) {
-        return failedResult(errorForPolicy("item is not loanable"));
+        return failedValidation(errorForPolicy("item is not loanable"));
       }
       if(isNotRenewable()) {
-        return failedResult(errorForPolicy("loan is not renewable"));
+        return failedValidation(errorForPolicy("loan is not renewable"));
       }
 
       final HttpResult<DateTime> proposedDueDateResult =
