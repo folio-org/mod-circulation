@@ -16,14 +16,6 @@ import io.vertx.core.json.JsonObject;
 
 public class RequestRepresentation {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-  private static final String UNABLE_TO_ADD_DELIVERY_ADDRESS_MSG = "Unable to add delivery address. Request is null or request is null or request representation is null.";
-  private static final String UNABLE_TO_ADD_SERVICEPOINT_MSG = "Unable to add servicepoint properties to request {}, servicepoint is null";
-  private static final String ADDING_LOAN_PROPERTIES_MSG = "Adding loan properties to request {}";
-  private static final String UNABLE_TO_ADD_LOAN_PROPERTIES_MSG = "Unable to add loan properties to request {}, loan is {}";
-  private static final String UNABLE_TO_ADD_PROXY_PROPERTIES_MSG = "Unable to add proxy properties to request {}, proxy object is null";
-  private static final String UNABLE_TO_ADD_ITEM_PROPERTIES_MSG = "Unable to add item properties to the request: {}, item is {}";
-  private static final String UNABLE_TO_ADD_REQUESTER_PROPERTIES_MSG = "Unable to add requester properties to the request: {}, requester is null.";
-  private static final String UNABLE_TO_REMOVE_DELIVERY_ADDRESS_MSG = "Unable to remove deliveryAddress, request representation is null";
 
   public JsonObject extendedRepresentation(Request request) {
     final JsonObject requestRepresentation = request.asJson();
@@ -53,7 +45,8 @@ public class RequestRepresentation {
   private static void addStoredItemProperties(JsonObject request, Item item) {
     if (item == null || item.isNotFound()) {
       String reason = isNull(item) ? "null" : "not found";
-      log.info(UNABLE_TO_ADD_ITEM_PROPERTIES_MSG, request.getString("id"), reason);
+      String msg = "Unable to add item properties to the request: {}, item is {}";
+      log.info(msg, request.getString("id"), reason);
       return;
     }
 
@@ -68,7 +61,8 @@ public class RequestRepresentation {
   private static void addStoredRequesterProperties(JsonObject request, User requester) {
 
     if (requester == null) {
-      log.info(UNABLE_TO_ADD_REQUESTER_PROPERTIES_MSG, request.getString("id"));
+      String msg = "Unable to add requester properties to the request: {}, requester is null.";
+      log.info(msg, request.getString("id"));
       return;
     }
     request.put("requester", requester.createUserSummary());
@@ -77,7 +71,8 @@ public class RequestRepresentation {
   private static void addAdditionalRequesterProperties(JsonObject request, User requester) {
 
     if (requester == null) {
-      log.info(UNABLE_TO_ADD_REQUESTER_PROPERTIES_MSG, request.getString("id"));
+      String msg = "Unable to add requester properties to the request: {}, requester is null.";
+      log.info(msg, request.getString("id"));
       return;
     }
 
@@ -92,7 +87,8 @@ public class RequestRepresentation {
 
   private static void addStoredProxyProperties(JsonObject request, User proxy) {
     if (proxy == null) {
-      log.info(UNABLE_TO_ADD_PROXY_PROPERTIES_MSG, request.getString("id"));
+      String msg = "Unable to add proxy properties to request {}, proxy object is null";
+      log.info(msg, request.getString("id"));
       return;
     }
 
@@ -102,7 +98,8 @@ public class RequestRepresentation {
   private static void addAdditionalProxyProperties(JsonObject request, User proxy) {
 
     if (proxy == null) {
-      log.info(UNABLE_TO_ADD_PROXY_PROPERTIES_MSG, request.getString("id"));
+      String msg = "Unable to add proxy properties to request {}, proxy object is null";
+      log.info(msg, request.getString("id"));
       return;
     }
 
@@ -119,7 +116,8 @@ public class RequestRepresentation {
   private static void addAdditionalItemProperties(JsonObject request, Item item) {
     if (item == null || item.isNotFound()) {
       String reason = isNull(item) ? "null" : "not found";
-      log.info(UNABLE_TO_ADD_ITEM_PROPERTIES_MSG, request.getString("id"), reason);
+      String msg = "Unable to add item properties to the request: {}, item is {}";
+      log.info(msg, request.getString("id"), reason);
       return;
     }
 
@@ -169,7 +167,7 @@ public class RequestRepresentation {
     if (isNull(requestRepresentation)
       || isNull(request)
       || isNull(requester)) {
-      log.info(UNABLE_TO_ADD_DELIVERY_ADDRESS_MSG);
+      log.info("Unable to add delivery address. Request is null or request is null or request representation is null.");
       return;
     }
 
@@ -192,7 +190,7 @@ public class RequestRepresentation {
 
   private static void removeDeliveryAddress(JsonObject requestRepresentation) {
     if (requestRepresentation == null) {
-      log.info(UNABLE_TO_REMOVE_DELIVERY_ADDRESS_MSG);
+      log.info("Unable to remove deliveryAddress, request representation is null");
       return;
     }
     requestRepresentation.remove("deliveryAddress");
@@ -201,7 +199,7 @@ public class RequestRepresentation {
   private static void addAdditionalLoanProperties(JsonObject request, Loan loan) {
     if (loan == null || loan.isClosed()) {
       String reason = isNull(loan) ? "null" : "closed";
-      log.info(UNABLE_TO_ADD_LOAN_PROPERTIES_MSG, request.getString("id"), reason);
+      log.info("Unable to add loan properties to request {}, loan is {}", request.getString("id"), reason);
       return;
     }
 
@@ -212,7 +210,7 @@ public class RequestRepresentation {
     if (loan.getDueDate() != null) {
       String dueDate = loan.getDueDate().toString(ISODateTimeFormat.dateTime());
       loanSummary.put("dueDate", dueDate);
-      log.info(ADDING_LOAN_PROPERTIES_MSG, request.getString("id"));
+      log.info("Adding loan properties to request {}", request.getString("id"));
     }
 
     request.put("loan", loanSummary);
@@ -220,7 +218,8 @@ public class RequestRepresentation {
 
   private static void addAdditionalServicePointProperties(JsonObject request, ServicePoint servicePoint) {
     if (servicePoint == null) {
-      log.info(UNABLE_TO_ADD_SERVICEPOINT_MSG, request.getString("id"));
+      String msg = "Unable to add servicepoint properties to request {}, servicepoint is null";
+      log.info(msg, request.getString("id"));
       return;
     }
 
