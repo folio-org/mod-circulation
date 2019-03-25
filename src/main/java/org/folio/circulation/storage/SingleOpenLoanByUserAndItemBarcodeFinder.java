@@ -4,7 +4,7 @@ import static org.folio.circulation.domain.validation.CommonFailures.moreThanOne
 import static org.folio.circulation.domain.validation.CommonFailures.noItemFoundForBarcodeFailure;
 import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -46,7 +46,7 @@ public class SingleOpenLoanByUserAndItemBarcodeFinder {
       moreThanOneOpenLoanFailure(itemBarcode), false);
 
     final UserNotFoundValidator userNotFoundValidator = new UserNotFoundValidator(
-      userId -> failure("user is not found", "userId", userId));
+      userId -> singleValidationError("user is not found", "userId", userId));
 
     final BlockRenewalValidator blockRenewalValidator =
       new BlockRenewalValidator(requestQueueRepository);

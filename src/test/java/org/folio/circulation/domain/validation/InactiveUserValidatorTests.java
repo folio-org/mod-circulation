@@ -3,7 +3,7 @@ package org.folio.circulation.domain.validation;
 import static api.support.fixtures.UserExamples.basedUponStevenJones;
 import static org.folio.circulation.domain.validation.InactiveUserValidator.forUser;
 import static org.folio.circulation.support.HttpResult.succeeded;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -76,7 +76,7 @@ public class InactiveUserValidatorTests {
 
     final InactiveUserValidator validator = new InactiveUserValidator(
       records -> { throw new RuntimeException("Something went wrong"); },
-      "", "", s -> failure("failed", "", ""));
+      "", "", s -> singleValidationError("failed", "", ""));
 
     final HttpResult<LoanAndRelatedRecords> result =
       validator.refuseWhenUserIsInactive(succeeded(new LoanAndRelatedRecords(

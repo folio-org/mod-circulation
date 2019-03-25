@@ -96,7 +96,7 @@ public class LoanPolicy {
         return proposedDueDateResult.map(dueDate -> loan.renew(dueDate, getId()));
       }
       else {
-        return HttpResult.failed(new ValidationErrorFailure(errors));
+        return failedValidation(errors);
       }
     }
     catch(Exception e) {
@@ -130,7 +130,7 @@ public class LoanPolicy {
         return proposedDueDateResult.map(dueDate -> loan.overrideRenewal(dueDate, getId(), comment));
       }
 
-      return HttpResult.failed(new ValidationErrorFailure(errorForNotMatchingOverrideCases()));
+      return failedValidation(errorForNotMatchingOverrideCases());
 
     } catch (Exception e) {
       return failed(new ServerErrorFailure(e));
@@ -139,9 +139,9 @@ public class LoanPolicy {
 
   private HttpResult<Loan> overrideRenewalForDueDate(Loan loan, DateTime overrideDueDate, String comment) {
     if (overrideDueDate == null) {
-      return HttpResult.failed(new ValidationErrorFailure(errorForDueDate()));
+      return failedValidation(errorForDueDate());
     }
-    return HttpResult.succeeded(loan.overrideRenewal(overrideDueDate, getId(), comment));
+    return succeeded(loan.overrideRenewal(overrideDueDate, getId(), comment));
   }
 
   private DueDateStrategy getRollingRenewalOverrideDueDateStrategy(DateTime systemDate) {
@@ -153,11 +153,9 @@ public class LoanPolicy {
   }
 
   private ValidationError errorForDueDate() {
-    HashMap<String, String> parameters = new HashMap<>();
-    parameters.put("dueDate", null);
-
-    String reason = "New due date must be specified when due date calculation fails";
-    return new ValidationError(reason, parameters);
+    return new ValidationError(
+      "New due date must be specified when due date calculation fails",
+      "dueDate", "null");
   }
 
   private ValidationError errorForNotMatchingOverrideCases() {
@@ -166,7 +164,8 @@ public class LoanPolicy {
       "item is not renewable, " +
       "reached number of renewals limit or " +
       "renewal date falls outside of the date ranges in the loan policy";
-    return new ValidationError(reason, new HashMap<>());
+
+    return errorForPolicy(reason);
   }
 
   private ValidationError errorForPolicy(String reason) {
@@ -472,7 +471,7 @@ public class LoanPolicy {
           .combine(recallDueDateResult, this::determineDueDate)
           .map(dueDate -> changeDueDate(dueDate, loan));
     } else {
-      return failed(new ValidationErrorFailure(errors));
+      return failedValidation(errors);
     }
   }
 

@@ -3,7 +3,7 @@ package org.folio.circulation.resources;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -64,16 +64,17 @@ public class LoanCollectionResource extends CollectionResource {
 
     final ProxyRelationshipValidator proxyRelationshipValidator =
       new ProxyRelationshipValidator(clients,
-        () -> failure("proxyUserId is not valid", "proxyUserId", loan.getProxyUserId()));
+        () -> singleValidationError("proxyUserId is not valid", "proxyUserId",
+          loan.getProxyUserId()));
 
     final AwaitingPickupValidator awaitingPickupValidator = new AwaitingPickupValidator(
-      message -> failure(message, "userId", loan.getUserId()));
+      message -> singleValidationError(message, "userId", loan.getUserId()));
 
     final AlreadyCheckedOutValidator alreadyCheckedOutValidator = new AlreadyCheckedOutValidator(
-      message -> failure(message, "itemId", loan.getItemId()));
+      message -> singleValidationError(message, "itemId", loan.getItemId()));
 
     final ItemMissingValidator itemMissingValidator = new ItemMissingValidator(
-      message -> failure(message, "itemId", loan.getItemId()));
+      message -> singleValidationError(message, "itemId", loan.getItemId()));
 
     final ItemNotFoundValidator itemNotFoundValidator = createItemNotFoundValidator(loan);
 
@@ -126,7 +127,7 @@ public class LoanCollectionResource extends CollectionResource {
     final LoanRepository loanRepository = new LoanRepository(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
-      clients, () -> failure("proxyUserId is not valid", "proxyUserId",
+      clients, () -> singleValidationError("proxyUserId is not valid", "proxyUserId",
         loan.getProxyUserId()));
 
     final ItemNotFoundValidator itemNotFoundValidator = createItemNotFoundValidator(loan);
@@ -292,7 +293,8 @@ public class LoanCollectionResource extends CollectionResource {
 
   private ItemNotFoundValidator createItemNotFoundValidator(Loan loan) {
     return new ItemNotFoundValidator(
-      () -> failure(String.format("No item with ID %s could be found", loan.getItemId()),
+      () -> singleValidationError(
+        String.format("No item with ID %s could be found", loan.getItemId()),
         ITEM_ID, loan.getItemId()));
   }
 }

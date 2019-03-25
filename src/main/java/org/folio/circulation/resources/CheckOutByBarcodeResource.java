@@ -3,7 +3,10 @@ package org.folio.circulation.resources;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.applyCLDDMForLoanAndRelatedRecords;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.SERVICE_POINT_ID;
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.USER_BARCODE;
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.util.List;
 import java.util.UUID;
@@ -80,9 +83,9 @@ public class CheckOutByBarcodeResource extends Resource {
     copyOrDefaultLoanDate(request, loanJson);
 
     final String itemBarcode = request.getString(CheckOutByBarcodeRequest.ITEM_BARCODE);
-    final String userBarcode = request.getString(CheckOutByBarcodeRequest.USER_BARCODE);
-    final String proxyUserBarcode = request.getString(CheckOutByBarcodeRequest.PROXY_USER_BARCODE);
-    final String checkoutServicePointId = request.getString(CheckOutByBarcodeRequest.SERVICE_POINT_ID);
+    final String userBarcode = request.getString(USER_BARCODE);
+    final String proxyUserBarcode = request.getString(PROXY_USER_BARCODE);
+    final String checkoutServicePointId = request.getString(SERVICE_POINT_ID);
 
     loanJson.put(LoanProperties.CHECKOUT_SERVICE_POINT_ID, checkoutServicePointId);
     Loan loan = Loan.from(loanJson);
@@ -100,37 +103,35 @@ public class CheckOutByBarcodeResource extends Resource {
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
-      clients, () -> failure(
+      clients, () -> singleValidationError(
       "Cannot check out item via proxy when relationship is invalid",
-      CheckOutByBarcodeRequest.PROXY_USER_BARCODE,
-      proxyUserBarcode));
+      PROXY_USER_BARCODE, proxyUserBarcode));
 
     final ServicePointOfCheckoutPresentValidator servicePointOfCheckoutPresentValidator
-      = new ServicePointOfCheckoutPresentValidator(message -> failure(message,
-      CheckOutByBarcodeRequest.SERVICE_POINT_ID, checkoutServicePointId));
+      = new ServicePointOfCheckoutPresentValidator(message ->
+      singleValidationError(message, SERVICE_POINT_ID, checkoutServicePointId));
 
     final AwaitingPickupValidator awaitingPickupValidator = new AwaitingPickupValidator(
-      message -> failure(message,
-        CheckOutByBarcodeRequest.USER_BARCODE, userBarcode));
+      message -> singleValidationError(message, USER_BARCODE, userBarcode));
 
     final AlreadyCheckedOutValidator alreadyCheckedOutValidator = new AlreadyCheckedOutValidator(
-      message -> failure(message, ITEM_BARCODE, itemBarcode));
+      message -> singleValidationError(message, ITEM_BARCODE, itemBarcode));
 
     final ItemNotFoundValidator itemNotFoundValidator = new ItemNotFoundValidator(
-      () -> failure(String.format("No item with barcode %s could be found", itemBarcode),
+      () -> singleValidationError(String.format("No item with barcode %s could be found", itemBarcode),
         ITEM_BARCODE, itemBarcode));
 
     final ItemMissingValidator itemMissingValidator = new ItemMissingValidator(
-      message -> failure(message, ITEM_BARCODE, itemBarcode));
+      message -> singleValidationError(message, ITEM_BARCODE, itemBarcode));
 
     final InactiveUserValidator inactiveUserValidator = InactiveUserValidator.forUser(userBarcode);
     final InactiveUserValidator inactiveProxyUserValidator = InactiveUserValidator.forProxy(proxyUserBarcode);
 
     final ExistingOpenLoanValidator openLoanValidator = new ExistingOpenLoanValidator(
-      loanRepository, message -> failure(message, ITEM_BARCODE, itemBarcode));
+      loanRepository, message -> singleValidationError(message, ITEM_BARCODE, itemBarcode));
 
     final ItemIsNotLoanableValidator itemIsNotLoanableValidator = new ItemIsNotLoanableValidator(
-      () -> failure("Item is not loanable", ITEM_BARCODE, itemBarcode));
+      () -> singleValidationError("Item is not loanable", ITEM_BARCODE, itemBarcode));
 
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);

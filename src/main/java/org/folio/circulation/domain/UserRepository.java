@@ -1,7 +1,6 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
@@ -18,9 +17,7 @@ import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlHelper;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.server.ValidationError;
 
 public class UserRepository {
   private final CollectionResourceClient usersStorageClient;
@@ -50,8 +47,7 @@ public class UserRepository {
     return FetchSingleRecord.<User>forRecord("user")
       .using(usersStorageClient)
       .mapTo(User::new)
-      .whenNotFound(failed(new ValidationErrorFailure(
-        new ValidationError("user is not found", "userId", userId))))
+      .whenNotFound(failedValidation("user is not found", "userId", userId))
       .fetch(userId);
   }
 
