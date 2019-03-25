@@ -5,7 +5,7 @@ import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.of;
 import static org.folio.circulation.support.HttpResult.succeeded;
-import static org.folio.circulation.support.ValidationErrorFailure.failedResult;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -49,8 +49,8 @@ public class UpdateItem {
 
       String pickupServicePointIdString = request.getPickupServicePointId();
       if (pickupServicePointIdString == null) {
-          return failedResult(
-              "Failed to check in item due to the highest priority " +
+          return failedValidation(
+            "Failed to check in item due to the highest priority " +
               "request missing a pickup service point",
               "pickupServicePointId", null);
       }

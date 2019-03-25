@@ -1,18 +1,18 @@
 package org.folio.circulation.domain.validation;
 
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.USER_BARCODE;
+import static org.folio.circulation.support.HttpResult.failed;
+import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+
+import java.util.function.Function;
+
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
-
-import java.util.function.Function;
-
-import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
-import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.USER_BARCODE;
-import static org.folio.circulation.support.HttpResult.failed;
-import static org.folio.circulation.support.HttpResult.succeeded;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 public class InactiveUserValidator {
   private final Function<String, ValidationErrorFailure> inactiveUserErrorFunction;
@@ -37,7 +37,7 @@ public class InactiveUserValidator {
       LoanAndRelatedRecords::getProxy,
       "Cannot check out via inactive proxying user",
       "Cannot determine if proxying user is active or not",
-      message -> failure(message, PROXY_USER_BARCODE, proxyUserBarcode));
+      message -> singleValidationError(message, PROXY_USER_BARCODE, proxyUserBarcode));
   }
 
   public static InactiveUserValidator forUser(String userBarcode) {
@@ -45,7 +45,7 @@ public class InactiveUserValidator {
       records -> records.getLoan().getUser(),
       "Cannot check out to inactive user",
       "Cannot determine if user is active or not",
-      message -> failure(message, USER_BARCODE, userBarcode));
+      message -> singleValidationError(message, USER_BARCODE, userBarcode));
   }
 
   public HttpResult<LoanAndRelatedRecords> refuseWhenUserIsInactive(

@@ -1,7 +1,8 @@
 package org.folio.circulation.resources;
 
+import static org.folio.circulation.domain.representations.RequestProperties.PROXY_USER_ID;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import org.folio.circulation.domain.CreateRequestService;
 import org.folio.circulation.domain.LoanRepository;
@@ -16,9 +17,8 @@ import org.folio.circulation.domain.UpdateLoanActionHistory;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.UpdateRequestService;
 import org.folio.circulation.domain.UserRepository;
-import org.folio.circulation.domain.policy.RequestPolicyRepository;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
-import org.folio.circulation.domain.representations.RequestProperties;
+import org.folio.circulation.domain.policy.RequestPolicyRepository;
 import org.folio.circulation.domain.validation.ClosedRequestValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
@@ -190,8 +190,8 @@ public class RequestCollectionResource extends CollectionResource {
     JsonObject representation,
     Clients clients) {
 
-    return new ProxyRelationshipValidator(clients, () -> failure(
-      "proxyUserId is not valid", RequestProperties.PROXY_USER_ID,
-      representation.getString(RequestProperties.PROXY_USER_ID)));
+    return new ProxyRelationshipValidator(clients, () ->
+      singleValidationError("proxyUserId is not valid",
+        PROXY_USER_ID, representation.getString(PROXY_USER_ID)));
   }
 }

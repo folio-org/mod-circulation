@@ -1,14 +1,15 @@
 package org.folio.circulation.domain.policy;
 
+import static org.folio.circulation.support.HttpResult.failed;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+
+import java.util.function.Function;
+
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
-
-import java.util.function.Function;
-
-import static org.folio.circulation.support.HttpResult.failed;
 
 class FixedScheduleRenewalDueDateStrategy extends DueDateStrategy {
   private static final String NO_APPLICABLE_DUE_DATE_SCHEDULE_MESSAGE =
@@ -43,8 +44,8 @@ class FixedScheduleRenewalDueDateStrategy extends DueDateStrategy {
     try {
       return fixedDueDateSchedules.findDueDateFor(systemDate)
         .map(HttpResult::succeeded)
-        .orElseGet(() -> failed(
-          validationError(NO_APPLICABLE_DUE_DATE_SCHEDULE_MESSAGE)));
+        .orElseGet(() -> failedValidation(
+          errorForPolicy(NO_APPLICABLE_DUE_DATE_SCHEDULE_MESSAGE)));
     } catch (Exception e) {
       logException(e, "Error occurred during fixed schedule renewal due date calculation");
       return failed(new ServerErrorFailure(e));

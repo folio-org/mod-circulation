@@ -2,9 +2,9 @@ package org.folio.circulation.storage;
 
 import static org.folio.circulation.domain.validation.CommonFailures.moreThanOneOpenLoanFailure;
 import static org.folio.circulation.domain.validation.CommonFailures.noItemFoundForBarcodeFailure;
-import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -46,7 +46,7 @@ public class SingleOpenLoanByUserAndItemBarcodeFinder {
       moreThanOneOpenLoanFailure(itemBarcode), false);
 
     final UserNotFoundValidator userNotFoundValidator = new UserNotFoundValidator(
-      userId -> failure("user is not found", "userId", userId));
+      userId -> singleValidationError("user is not found", "userId", userId));
 
     final BlockRenewalValidator blockRenewalValidator =
       new BlockRenewalValidator(requestQueueRepository);
@@ -66,8 +66,8 @@ public class SingleOpenLoanByUserAndItemBarcodeFinder {
     if (userMatches(loan, barcodeRequest.getUserBarcode())) {
       return succeeded(loan);
     } else {
-      return failed(failure("Cannot renew item checked out to different user",
-        RenewByBarcodeRequest.USER_BARCODE, barcodeRequest.getUserBarcode()));
+      return failedValidation("Cannot renew item checked out to different user",
+        RenewByBarcodeRequest.USER_BARCODE, barcodeRequest.getUserBarcode());
     }
   }
 

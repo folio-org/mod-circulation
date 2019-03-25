@@ -1,20 +1,21 @@
 package org.folio.circulation.domain.validation;
 
-import io.vertx.core.json.JsonObject;
+import static api.support.fixtures.UserExamples.basedUponStevenJones;
+import static org.folio.circulation.domain.validation.InactiveUserValidator.forUser;
+import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ServerErrorFailure;
-import org.folio.circulation.support.ValidationErrorFailure;
 import org.junit.Test;
 
-import static api.support.fixtures.UserExamples.basedUponStevenJones;
-import static org.folio.circulation.domain.validation.InactiveUserValidator.forUser;
-import static org.folio.circulation.support.HttpResult.succeeded;
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import io.vertx.core.json.JsonObject;
 
 public class InactiveUserValidatorTests {
   @Test
@@ -75,8 +76,7 @@ public class InactiveUserValidatorTests {
 
     final InactiveUserValidator validator = new InactiveUserValidator(
       records -> { throw new RuntimeException("Something went wrong"); },
-      "", "", s -> ValidationErrorFailure.failure("failed", "", "")
-    );
+      "", "", s -> singleValidationError("failed", "", ""));
 
     final HttpResult<LoanAndRelatedRecords> result =
       validator.refuseWhenUserIsInactive(succeeded(new LoanAndRelatedRecords(

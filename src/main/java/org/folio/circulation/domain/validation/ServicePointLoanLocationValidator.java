@@ -1,11 +1,11 @@
 package org.folio.circulation.domain.validation;
 
+import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.support.HttpResult;
-import static org.folio.circulation.support.HttpResult.failed;
-import static org.folio.circulation.support.HttpResult.succeeded;
-import org.folio.circulation.support.ValidationErrorFailure;
 
 public class ServicePointLoanLocationValidator {
   public HttpResult<LoanAndRelatedRecords> checkServicePointLoanLocation(
@@ -27,13 +27,13 @@ public class ServicePointLoanLocationValidator {
     }
     
     if(loan.getCheckInServicePointId() != null && loan.getCheckinServicePoint() == null) {
-      return failed(ValidationErrorFailure.failure("Check In Service Point does not exist",
-          "checkinServicePointId", loan.getCheckInServicePointId()));
+      return failedValidation("Check In Service Point does not exist",
+          "checkinServicePointId", loan.getCheckInServicePointId());
     }
     
     if(loan.getCheckoutServicePointId() != null && loan.getCheckoutServicePoint() == null) {
-      return failed(ValidationErrorFailure.failure("Check Out Service Point does not exist",
-          "checkoutServicePointId", loan.getCheckoutServicePointId()));
+      return failedValidation("Check Out Service Point does not exist",
+          "checkoutServicePointId", loan.getCheckoutServicePointId());
     }
     
     return succeeded(larr);

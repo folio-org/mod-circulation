@@ -1,15 +1,17 @@
 package org.folio.circulation.domain;
 
+import static java.lang.String.format;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.HttpResult.failed;
+import static org.folio.circulation.domain.Request.REQUEST_TYPE;
 import static org.folio.circulation.support.HttpResult.succeeded;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.policy.RequestPolicy;
 import org.folio.circulation.domain.policy.RequestPolicyRepository;
 import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.WritableHttpResult;
 
 public class CreateRequestService {
   private final RequestRepository requestRepository;
@@ -61,9 +63,8 @@ public class CreateRequestService {
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     if(requestAndRelatedRecords.getRequest().getItem().isNotFound()) {
-      return failed(failure(
-        "Item does not exist", "itemId",
-        requestAndRelatedRecords.getRequest().getItemId()));
+      return failedValidation("Item does not exist", "itemId",
+        requestAndRelatedRecords.getRequest().getItemId());
     }
     else {
       return succeeded(requestAndRelatedRecords);
@@ -77,9 +78,7 @@ public class CreateRequestService {
     RequestType requestType =  requestAndRelatedRecords.getRequest().getRequestType();
 
     if(!requestPolicy.allowsType(requestType)) {
-      return failed(failure(
-        requestType.getValue() + " requests are not allowed for this patron and item combination", Request.REQUEST_TYPE,
-        requestType.getValue()));
+      return failureDisallowedForRequestType(requestType);
     }
     else {
       return succeeded(requestAndRelatedRecords);
@@ -92,15 +91,21 @@ public class CreateRequestService {
     Request request = requestAndRelatedRecords.getRequest();
 
     if (!request.allowedForItem()) {
-      return failed(failure(
-        String.format("%s requests are not allowed for %s item status combination", request.getRequestType().getValue() , request.getItem().getStatus().getValue()),
-        request.getRequestType().getValue(),
-        request.getItemId()
-      ));
+      return failureDisallowedForRequestType(request.getRequestType());
     }
     else {
       return succeeded(requestAndRelatedRecords);
     }
+  }
+
+  private static WritableHttpResult<RequestAndRelatedRecords> failureDisallowedForRequestType(
+    RequestType requestType) {
+
+    final String requestTypeName = requestType.getValue();
+
+    return failedValidation(format(
+      "%s requests are not allowed for this patron and item combination", requestTypeName),
+      REQUEST_TYPE, requestTypeName);
   }
 
   private static HttpResult<RequestAndRelatedRecords> refuseWhenInvalidUserAndPatronGroup(
@@ -109,16 +114,17 @@ public class CreateRequestService {
     Request request = requestAndRelatedRecords.getRequest();
     User requester = request.getRequester();
 
-    if (requester == null){
-      return failed(failure(
+    //TODO: Investigate whether the parameter used here is correct
+    //Should it be the userId for both of these failures?
+    if (requester == null) {
+      return failedValidation(
         "A valid user and patron group are required. User is null",
-        "User", null
-      ));
+        "userId", null);
+
     } else if (requester.getPatronGroupId() == null) {
-      return failed(failure(
+      return failedValidation(
         "A valid patron group is required. PatronGroup ID is null",
-        "PatronGroupId", null
-      ));
+        "PatronGroupId", null);
     }
     else {
       return succeeded(requestAndRelatedRecords);

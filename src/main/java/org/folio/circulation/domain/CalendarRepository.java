@@ -1,21 +1,21 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
+import static org.folio.circulation.domain.OpeningDay.createClosedDay;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+
+import java.util.Collections;
+import java.util.concurrent.CompletableFuture;
+
 import org.folio.circulation.AdjacentOpeningDays;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.LocalDate;
 
-import java.util.Collections;
-import java.util.concurrent.CompletableFuture;
-
-import static org.folio.circulation.domain.OpeningDay.createClosedDay;
-import static org.folio.circulation.support.HttpResult.failed;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 public class CalendarRepository {
 
@@ -34,11 +34,12 @@ public class CalendarRepository {
   public CompletableFuture<HttpResult<AdjacentOpeningDays>> lookupOpeningDays(LocalDate requestedDate, String servicePointId) {
     String path = String.format(PATH_PARAM_WITH_QUERY, servicePointId, requestedDate);
 
+    //TODO: Validation error should have parameters
     return FetchSingleRecord.<AdjacentOpeningDays>forRecord(RECORD_NAME)
       .using(calendarClient)
       .mapTo(this::createOpeningDays)
-      .whenNotFound(failed(new ValidationErrorFailure(
-        new ValidationError("Calendar open periods are not found", Collections.emptyMap()))))
+      .whenNotFound(failedValidation(
+        new ValidationError("Calendar open periods are not found", Collections.emptyMap())))
       .fetch(path);
   }
 
