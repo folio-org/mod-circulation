@@ -47,9 +47,9 @@ class RollingCheckOutDueDateStrategy extends DueDateStrategy {
 
   private HttpResult<DateTime> initialDueDate(DateTime loanDate) {
     return period.addTo(loanDate,
-      () -> validationError(CHECK_OUT_UNRECOGNISED_PERIOD_MESSAGE),
-      interval -> validationError(format(CHECK_OUT_UNRECOGNISED_INTERVAL_MESSAGE, interval)),
-      duration -> validationError(format(CHECKOUT_INVALID_DURATION_MESSAGE, duration)));
+      () -> errorForPolicy(CHECK_OUT_UNRECOGNISED_PERIOD_MESSAGE),
+      interval -> errorForPolicy(format(CHECK_OUT_UNRECOGNISED_INTERVAL_MESSAGE, interval)),
+      duration -> errorForPolicy(format(CHECKOUT_INVALID_DURATION_MESSAGE, duration)));
   }
 
   private HttpResult<DateTime> truncateDueDateBySchedule(
@@ -57,6 +57,6 @@ class RollingCheckOutDueDateStrategy extends DueDateStrategy {
     DateTime dueDate) {
 
     return dueDateLimitSchedules.truncateDueDate(dueDate, loanDate,
-      () -> validationError(NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE));
+      () -> errorForPolicy(NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE));
   }
 }

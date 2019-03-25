@@ -34,11 +34,11 @@ class UnknownDueDateStrategy extends DueDateStrategy {
   @Override
   HttpResult<DateTime> calculateDueDate(Loan loan) {
     if(isRenewal) {
-      return failedValidation(validationError(
+      return failedValidation(errorForPolicy(
           format(RENEWAL_UNRECOGNISED_PROFILE_MESSAGE, profileId)));
     }
     else {
-      return failedValidation(validationError(
+      return failedValidation(errorForPolicy(
         format(CHECK_OUT_UNRECOGNISED_PROFILE_MESSAGE, profileId)));
     }
   }

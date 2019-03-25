@@ -29,7 +29,7 @@ abstract class DueDateStrategy {
 
   abstract HttpResult<DateTime> calculateDueDate(Loan loan);
 
-  ValidationError validationError(String reason) {
+  ValidationError errorForPolicy(String reason) {
     return errorForPolicy.apply(reason);
   }
 

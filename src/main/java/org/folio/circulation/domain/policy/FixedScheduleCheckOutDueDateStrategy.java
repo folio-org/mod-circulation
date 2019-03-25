@@ -44,7 +44,7 @@ class FixedScheduleCheckOutDueDateStrategy extends DueDateStrategy {
       return fixedDueDateSchedules.findDueDateFor(loanDate)
         .map(HttpResult::succeeded)
         .orElseGet(() -> failedValidation(
-          validationError(NO_APPLICABLE_DUE_DATE_SCHEDULE_MESSAGE)));
+          errorForPolicy(NO_APPLICABLE_DUE_DATE_SCHEDULE_MESSAGE)));
     }
     catch(Exception e) {
       logException(e, "Error occurred during fixed schedule check out due date calculation");

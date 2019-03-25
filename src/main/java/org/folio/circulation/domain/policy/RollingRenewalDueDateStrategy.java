@@ -54,7 +54,7 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
   @Override
   HttpResult<DateTime> calculateDueDate(Loan loan) {
     if(StringUtils.isBlank(renewFrom)) {
-      return failedValidation(validationError(RENEW_FROM_UNRECOGNISED_MESSAGE));
+      return failedValidation(errorForPolicy(RENEW_FROM_UNRECOGNISED_MESSAGE));
     }
 
     switch (renewFrom) {
@@ -63,7 +63,7 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
       case RENEW_FROM_SYSTEM_DATE:
         return calculateDueDate(systemDate, loan.getLoanDate());
       default:
-        return failedValidation(validationError(RENEW_FROM_UNRECOGNISED_MESSAGE));
+        return failedValidation(errorForPolicy(RENEW_FROM_UNRECOGNISED_MESSAGE));
     }
   }
 
@@ -74,9 +74,9 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
 
   HttpResult<DateTime> renewalDueDate(DateTime from) {
     return period.addTo(from,
-      () -> validationError(RENEWAL_UNRECOGNISED_PERIOD_MESSAGE),
-      interval -> validationError(format(RENEWAL_UNRECOGNISED_INTERVAL_MESSAGE, interval)),
-      duration -> validationError(format(RENEWAL_INVALID_DURATION_MESSAGE, duration)));
+      () -> errorForPolicy(RENEWAL_UNRECOGNISED_PERIOD_MESSAGE),
+      interval -> errorForPolicy(format(RENEWAL_UNRECOGNISED_INTERVAL_MESSAGE, interval)),
+      duration -> errorForPolicy(format(RENEWAL_INVALID_DURATION_MESSAGE, duration)));
   }
 
   private HttpResult<DateTime> truncateDueDateBySchedule(
@@ -84,6 +84,6 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
     DateTime dueDate) {
 
     return dueDateLimitSchedules.truncateDueDate(dueDate, loanDate,
-      () -> validationError(NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE));
+      () -> errorForPolicy(NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE));
   }
 }
