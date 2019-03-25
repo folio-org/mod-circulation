@@ -222,7 +222,6 @@ public class RequestRepresentation {
       log.info(msg, request.getString("id"));
       return;
     }
-
     JsonObject spSummary = request.containsKey("pickupServicePoint")
       ? request.getJsonObject("pickupServicePoint")
       : new JsonObject();
