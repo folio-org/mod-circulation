@@ -44,9 +44,7 @@ public class RequestRepresentation {
 
   private static void addStoredItemProperties(JsonObject request, Item item) {
     if (item == null || item.isNotFound()) {
-      String reason = isNull(item) ? "null" : "not found";
-      String msg = "Unable to add item properties to the request: {}, item is {}";
-      log.info(msg, request.getString("id"), reason);
+      logUnableAddItemToTheRequest(request, item);
       return;
     }
 
@@ -115,9 +113,7 @@ public class RequestRepresentation {
 
   private static void addAdditionalItemProperties(JsonObject request, Item item) {
     if (item == null || item.isNotFound()) {
-      String reason = isNull(item) ? "null" : "not found";
-      String msg = "Unable to add item properties to the request: {}, item is {}";
-      log.info(msg, request.getString("id"), reason);
+      logUnableAddItemToTheRequest(request, item);
       return;
     }
 
@@ -162,6 +158,12 @@ public class RequestRepresentation {
     if (copyNumbers != null) {
       itemSummary.put("copyNumbers", copyNumbers);
     }
+  }
+
+  private static void logUnableAddItemToTheRequest(JsonObject request, Item item) {
+    String reason = isNull(item) ? "null" : "not found";
+    String msg = "Unable to add item properties to the request: {}, item is {}";
+    log.info(msg, request.getString("id"), reason);
   }
 
   private static void addDeliveryAddress(
