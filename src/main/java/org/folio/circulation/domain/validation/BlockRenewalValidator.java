@@ -2,10 +2,9 @@ package org.folio.circulation.domain.validation;
 
 import static org.folio.circulation.domain.RequestStatus.OPEN_NOT_YET_FILLED;
 import static org.folio.circulation.domain.RequestType.RECALL;
-import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.of;
 import static org.folio.circulation.support.HttpResult.succeeded;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.util.Comparator;
 import java.util.Optional;
@@ -16,7 +15,6 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.ValidationErrorFailure;
 
 public class BlockRenewalValidator {
   private final RequestQueueRepository requestQueueRepository;
@@ -37,8 +35,8 @@ public class BlockRenewalValidator {
 
     if (request.isPresent() && isRecallRequest(request.get())) {
       String reason = "Items cannot be renewed when there is an active recall request";
-      ValidationErrorFailure error = failure(reason, "request id", request.get().getId());
-      return failed(error);
+
+      return failedValidation(reason, "request id", request.get().getId());
     } else {
       return succeeded(item);
     }

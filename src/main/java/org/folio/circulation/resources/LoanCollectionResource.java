@@ -2,6 +2,7 @@ package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 import java.util.concurrent.CompletableFuture;
@@ -237,8 +238,8 @@ public class LoanCollectionResource extends CollectionResource {
 
     return result.next(loan -> {
       if(loan.getLoan().getItem().doesNotHaveHolding()) {
-        return HttpResult.failed(failure(
-          "Holding does not exist", ITEM_ID, loan.getLoan().getItemId()));
+        return failedValidation("Holding does not exist",
+          ITEM_ID, loan.getLoan().getItemId());
       }
       else {
         return result;

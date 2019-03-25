@@ -1,9 +1,9 @@
 package org.folio.circulation.domain;
 
+import static java.lang.String.format;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -61,9 +61,9 @@ public class CreateRequestService {
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     if(requestAndRelatedRecords.getRequest().getItem().isNotFound()) {
-      return failed(failure(
+      return failedValidation(
         "Item does not exist", "itemId",
-        requestAndRelatedRecords.getRequest().getItemId()));
+        requestAndRelatedRecords.getRequest().getItemId());
     }
     else {
       return succeeded(requestAndRelatedRecords);
@@ -77,9 +77,11 @@ public class CreateRequestService {
     RequestType requestType =  requestAndRelatedRecords.getRequest().getRequestType();
 
     if(!requestPolicy.allowsType(requestType)) {
-      return failed(failure(
-        requestType.getValue() + " requests are not allowed for this patron and item combination", Request.REQUEST_TYPE,
-        requestType.getValue()));
+      final String requestTypeName = requestType.getValue();
+
+      return failedValidation(
+        requestTypeName + " requests are not allowed for this patron and item combination",
+        Request.REQUEST_TYPE, requestTypeName);
     }
     else {
       return succeeded(requestAndRelatedRecords);
@@ -92,11 +94,11 @@ public class CreateRequestService {
     Request request = requestAndRelatedRecords.getRequest();
 
     if (!request.allowedForItem()) {
-      return failed(failure(
-        String.format("%s requests are not allowed for %s item status combination", request.getRequestType().getValue() , request.getItem().getStatus().getValue()),
-        request.getRequestType().getValue(),
-        request.getItemId()
-      ));
+      //TODO: Investigate whether the parameters on this error are correct
+      return failedValidation(
+        format("%s requests are not allowed for %s item status combination",
+          request.getRequestType().getValue() , request.getItem().getStatus().getValue()),
+        request.getRequestType().getValue(), request.getItemId());
     }
     else {
       return succeeded(requestAndRelatedRecords);
@@ -109,16 +111,17 @@ public class CreateRequestService {
     Request request = requestAndRelatedRecords.getRequest();
     User requester = request.getRequester();
 
-    if (requester == null){
-      return failed(failure(
+    //TODO: Investigate whether the parameter used here is correct
+    //Should it be the userId for both of these failures?
+    if (requester == null) {
+      return failedValidation(
         "A valid user and patron group are required. User is null",
-        "User", null
-      ));
+        "userId", null);
+
     } else if (requester.getPatronGroupId() == null) {
-      return failed(failure(
+      return failedValidation(
         "A valid patron group is required. PatronGroup ID is null",
-        "PatronGroupId", null
-      ));
+        "PatronGroupId", null);
     }
     else {
       return succeeded(requestAndRelatedRecords);

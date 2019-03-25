@@ -2,8 +2,8 @@ package org.folio.circulation.resources;
 
 import static org.folio.circulation.domain.validation.CommonFailures.moreThanOneOpenLoanFailure;
 import static org.folio.circulation.domain.validation.CommonFailures.noItemFoundForIdFailure;
-import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.ValidationErrorFailure.failure;
 
 import java.util.concurrent.CompletableFuture;
@@ -73,8 +73,8 @@ public class RenewByIdResource extends RenewalResource {
       return succeeded(loan);
     }
     else {
-      return failed(failure("Cannot renew item checked out to different user",
-        RenewByIdRequest.USER_ID, idRequest.getUserId()));
+      return failedValidation("Cannot renew item checked out to different user",
+        RenewByIdRequest.USER_ID, idRequest.getUserId());
     }
   }
 

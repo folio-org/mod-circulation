@@ -3,7 +3,7 @@ package org.folio.circulation.domain;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.HttpResult.failed;
 import static org.folio.circulation.support.HttpResult.succeeded;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -77,8 +77,9 @@ public class UserRepository {
       .thenApply(response -> MultipleRecords.from(response, User::new, "users")
         .map(MultipleRecords::getRecords)
         .map(users -> users.stream().findFirst())
-        .next(user -> user.map(HttpResult::succeeded).orElseGet(() -> failed(failure(
-          "Could not find user with matching barcode", propertyName, barcode)))));
+        .next(user -> user.map(HttpResult::succeeded).orElseGet(() ->
+          failedValidation("Could not find user with matching barcode",
+            propertyName, barcode))));
   }
 
   CompletableFuture<HttpResult<MultipleRecords<Request>>> findUsersForRequests(
