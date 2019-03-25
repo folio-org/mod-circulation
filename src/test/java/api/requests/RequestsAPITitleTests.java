@@ -29,11 +29,13 @@ public class RequestsAPITitleTests extends APITests {
     MalformedURLException {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOutByBarcode(smallAngryPlanet);
 
     IndividualResource response = requestsClient.create(new RequestBuilder()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(usersFixture.james()));
 
     JsonObject createdRequest = response.getJson();
@@ -67,11 +69,13 @@ public class RequestsAPITitleTests extends APITests {
     MalformedURLException {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOutByBarcode(smallAngryPlanet);
 
     IndividualResource response = requestsClient.create(new RequestBuilder()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(usersFixture.steve()));
 
     JsonObject createdRequest = response.getJson();
@@ -106,11 +110,13 @@ public class RequestsAPITitleTests extends APITests {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOutByBarcode(smallAngryPlanet);
 
     UUID firstRequestId = requestsClient.create(new RequestBuilder()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(usersFixture.james()))
       .getId();
 
@@ -118,6 +124,7 @@ public class RequestsAPITitleTests extends APITests {
 
     UUID secondRequestId = requestsClient.create(new RequestBuilder()
       .forItem(temeraire)
+      .withPickupServicePointId(pickupServicePointId)
       .by(usersFixture.james()))
       .getId();
 

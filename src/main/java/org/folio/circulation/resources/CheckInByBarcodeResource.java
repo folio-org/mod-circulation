@@ -11,6 +11,8 @@ import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.UserRepository;
+import org.folio.circulation.domain.notice.PatronNoticeService;
+import org.folio.circulation.domain.policy.PatronNoticePolicyRepository;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.domain.representations.CheckInByBarcodeResponse;
 import org.folio.circulation.storage.ItemByBarcodeInStorageFinder;
@@ -68,10 +70,13 @@ public class CheckInByBarcodeResource extends Resource {
       = new SingleOpenLoanForItemInStorageFinder(loanRepository, userRepository,
         moreThanOneOpenLoanFailure(itemBarcode), true);
 
+    final PatronNoticePolicyRepository patronNoticePolicyRepository = new PatronNoticePolicyRepository(clients);
+    final PatronNoticeService patronNoticeService = new PatronNoticeService(clients);
+
     final CheckInProcessAdapter processAdapter = new CheckInProcessAdapter(
       itemFinder, singleOpenLoanFinder, loanCheckInService,
       requestQueueRepository, updateItem, requestQueueUpdate, loanRepository,
-      servicePointRepository);
+      servicePointRepository, patronNoticePolicyRepository, patronNoticeService);
 
     checkInRequestResult
       .map(CheckInProcessRecords::new)
@@ -90,6 +95,7 @@ public class CheckInByBarcodeResource extends Resource {
         processAdapter::getDestinationServicePoint, CheckInProcessRecords::withItem))
       .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
         processAdapter::updateLoan, CheckInProcessRecords::withLoan))
+      .thenComposeAsync(updateItemResult -> updateItemResult.after(processAdapter::sendCheckInPatronNotice))
       .thenApply(CheckInByBarcodeResponse::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }

@@ -1,10 +1,11 @@
 package org.folio.circulation.support;
 
-import io.vertx.core.json.JsonObject;
+import java.util.UUID;
+
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
-import java.util.UUID;
+import io.vertx.core.json.JsonObject;
 
 public class JsonPropertyFetcher {
   private JsonPropertyFetcher() {
@@ -48,6 +49,19 @@ public class JsonPropertyFetcher {
       final JsonObject object = representation.getJsonObject(objectName);
 
       return getDateTimeProperty(object, propertyName);
+    } else {
+      return null;
+    }
+  }
+
+  public static JsonObject getNestedObjectProperty(
+    JsonObject representation,
+    String objectName,
+    String propertyName) {
+    if (representation.containsKey(objectName)) {
+      final JsonObject object = representation.getJsonObject(objectName);
+
+      return getObjectProperty(object, propertyName);
     } else {
       return null;
     }

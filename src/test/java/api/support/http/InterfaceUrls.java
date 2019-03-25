@@ -56,6 +56,10 @@ public class InterfaceUrls {
     return APITestContext.viaOkapiModuleUrl("/loan-storage/loans" + subPath);
   }
 
+  static URL requestStorageUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/request-storage/requests" + subPath);
+  }
+
   static URL loanPoliciesStorageUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/loan-policy-storage/loan-policies" + subPath);
   }
@@ -65,7 +69,7 @@ public class InterfaceUrls {
   }
 
   static URL noticePoliciesStorageUrl(String subPath) {
-    return APITestContext.viaOkapiModuleUrl("/notice-policy-storage/notice-policies" + subPath);
+    return APITestContext.viaOkapiModuleUrl("/patron-notice-policy-storage/patron-notice-policies" + subPath);
   }
 
   static URL fixedDueDateSchedulesStorageUrl(String subPath) {
@@ -151,5 +155,13 @@ public class InterfaceUrls {
 
   static URL servicePointsStorageUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/service-points" + subPath);
+  }
+
+  static URL patronNoticesUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/patron-notice" + subPath);
+  }
+
+  static URL configurationUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/configurations/entries" + subPath);
   }
 }

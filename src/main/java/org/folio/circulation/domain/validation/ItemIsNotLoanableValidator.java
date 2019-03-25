@@ -1,12 +1,12 @@
 package org.folio.circulation.domain.validation;
 
-import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.ValidationErrorFailure;
+import static org.folio.circulation.support.HttpResult.succeeded;
 
 import java.util.function.Supplier;
 
-import static org.folio.circulation.support.HttpResult.succeeded;
+import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.ValidationErrorFailure;
 
 public class ItemIsNotLoanableValidator {
 
@@ -21,7 +21,7 @@ public class ItemIsNotLoanableValidator {
     HttpResult<LoanAndRelatedRecords> result) {
 
     return result.failWhen(
-      records -> succeeded(!records.getLoanPolicy().isLoanable()),
+      records -> succeeded(records.getLoanPolicy().isNotLoanable()),
       r -> itemIsNotLoanableFunction.get());
   }
 }

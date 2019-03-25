@@ -114,6 +114,11 @@ public class ResourceClient {
       "storage loans", "loans");
   }
 
+  public static ResourceClient forRequestsStorage(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::requestStorageUrl,
+      "storage requests", "requests");
+  }
+
   public static ResourceClient forMaterialTypes(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::materialTypesStorageUrl,
       "material types", "mtypes");
@@ -162,6 +167,33 @@ public class ResourceClient {
   public static ResourceClient forServicePoints(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::servicePointsStorageUrl,
       "service points", "servicepoints");
+  }
+
+  public static ResourceClient forPatronNotices(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::patronNoticesUrl,
+      "patron notice", "patronnotices");
+  }
+
+  public static ResourceClient forConfiguration(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::configurationUrl,
+      "configuration entries", "configs");
+  }
+
+  public static ResourceClient forRenewByBarcode(OkapiHttpClient client) {
+    return new ResourceClient(client, subPath -> InterfaceUrls.renewByBarcodeUrl(),
+      "renew by barcode");
+  }
+
+  public static ResourceClient forRenewById(OkapiHttpClient client) {
+    return new ResourceClient(client, subPath -> InterfaceUrls.renewByIdUrl(),
+      "renew by id");
+  }
+
+  public static ResourceClient forOverrideRenewalByBarcode(OkapiHttpClient client) {
+    return new ResourceClient(
+      client, subPath -> InterfaceUrls.overrideRenewalByBarcodeUrl(),
+      "override renewal by barcode"
+    );
   }
 
   private ResourceClient(

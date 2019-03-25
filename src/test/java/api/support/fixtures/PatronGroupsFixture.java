@@ -61,4 +61,13 @@ public class PatronGroupsFixture {
 
     return patronGroupRecordCreator.createIfAbsent(PatronGroupExamples.faculty());
   }
+
+  public IndividualResource undergrad()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return patronGroupRecordCreator.createIfAbsent(PatronGroupExamples.undergrad());
+  }
 }

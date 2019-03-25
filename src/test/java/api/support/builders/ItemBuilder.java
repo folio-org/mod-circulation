@@ -1,9 +1,11 @@
 package api.support.builders;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class ItemBuilder extends JsonBuilder implements Builder {
@@ -25,10 +27,11 @@ public class ItemBuilder extends JsonBuilder implements Builder {
   private final UUID permanentLoanTypeId;
   private final UUID temporaryLoanTypeId;
   private String enumeration;
+  private List<String> copyNumbers;
 
   public ItemBuilder() {
     this(UUID.randomUUID(), null, "565578437802", AVAILABLE,
-      null, null, null, null, null, null);
+      null, null, null, null, null, null, null);
   }
 
   private ItemBuilder(
@@ -41,7 +44,8 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     UUID materialTypeId,
     UUID permanentLoanTypeId,
     UUID temporaryLoanTypeId,
-    String enumeration) {
+    String enumeration,
+    List<String> copyNumbers) {
 
     this.id = id;
     this.holdingId = holdingId;
@@ -53,6 +57,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     this.temporaryLoanTypeId = temporaryLoanTypeId;
     this.permanentLoanTypeId = permanentLoanTypeId;
     this.enumeration = enumeration;
+    this.copyNumbers = copyNumbers;
   }
 
   public JsonObject create() {
@@ -68,6 +73,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     put(itemRequest, "temporaryLocationId", temporaryLocationId);
     put(itemRequest, "status", status, new JsonObject().put("name", status));
     put(itemRequest, "enumeration", enumeration);
+    put(itemRequest, "copyNumbers", new JsonArray(copyNumbers));
 
     return itemRequest;
   }
@@ -95,7 +101,8 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.materialTypeId,
       this.permanentLoanTypeId,
       this.temporaryLoanTypeId,
-      this.enumeration);
+      this.enumeration,
+      this.copyNumbers);
   }
 
   public ItemBuilder withBarcode(String barcode) {
@@ -109,7 +116,8 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.materialTypeId,
       this.permanentLoanTypeId,
       this.temporaryLoanTypeId,
-      this.enumeration);
+      this.enumeration,
+      this.copyNumbers);
   }
 
   public ItemBuilder withNoBarcode() {
@@ -131,7 +139,8 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.materialTypeId,
       this.permanentLoanTypeId,
       this.temporaryLoanTypeId,
-      this.enumeration);
+      this.enumeration,
+      this.copyNumbers);
   }
 
   public ItemBuilder withNoPermanentLocation() {
@@ -153,7 +162,8 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.materialTypeId,
       this.permanentLoanTypeId,
       this.temporaryLoanTypeId,
-      this.enumeration);
+      this.enumeration,
+      this.copyNumbers);
   }
 
   public ItemBuilder withNoTemporaryLocation() {
@@ -171,7 +181,8 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.materialTypeId,
       this.permanentLoanTypeId,
       this.temporaryLoanTypeId,
-      this.enumeration);
+      this.enumeration,
+      this.copyNumbers);
   }
 
   public ItemBuilder withMaterialType(UUID materialTypeId) {
@@ -185,7 +196,8 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       materialTypeId,
       this.permanentLoanTypeId,
       this.temporaryLoanTypeId,
-      this.enumeration);
+      this.enumeration,
+      this.copyNumbers);
   }
 
   public ItemBuilder withPermanentLoanType(UUID loanTypeId) {
@@ -199,7 +211,8 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.materialTypeId,
       loanTypeId,
       this.temporaryLoanTypeId,
-      this.enumeration);
+      this.enumeration,
+      this.copyNumbers);
   }
 
   public ItemBuilder withTemporaryLoanType(UUID loanTypeId) {
@@ -213,7 +226,8 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.materialTypeId,
       this.permanentLoanTypeId,
       loanTypeId,
-      this.enumeration);
+      this.enumeration,
+      this.copyNumbers);
   }
 
   public ItemBuilder withId(UUID id) {
@@ -227,12 +241,13 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.materialTypeId,
       this.permanentLoanTypeId,
       this.temporaryLoanTypeId,
-      this.enumeration);
+      this.enumeration,
+      this.copyNumbers);
   }
 
   public ItemBuilder withEnumeration(String enumeration) {
     return new ItemBuilder(
-      id,
+      this.id,
       this.holdingId,
       this.barcode,
       this.status,
@@ -241,6 +256,22 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.materialTypeId,
       this.permanentLoanTypeId,
       this.temporaryLoanTypeId,
-      enumeration);
+      enumeration,
+      this.copyNumbers);
+  }
+
+  public ItemBuilder withCopyNumbers(List<String> copyNumbers) {
+    return new ItemBuilder(
+      this.id,
+      this.holdingId,
+      this.barcode,
+      this.status,
+      this.permanentLocationId,
+      this.temporaryLocationId,
+      this.materialTypeId,
+      this.permanentLoanTypeId,
+      this.temporaryLoanTypeId,
+      this.enumeration,
+      copyNumbers);
   }
 }

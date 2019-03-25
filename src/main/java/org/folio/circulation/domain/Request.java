@@ -29,6 +29,8 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private final Loan loan;
   private final ServicePoint pickupServicePoint;
 
+  public static final String REQUEST_TYPE = "requestType";
+
   private boolean changedPosition = false;
 
   public Request(
@@ -124,7 +126,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
         pickupServicePoint);
   }
 
-  Request withLoan(Loan newLoan) {
+  public Request withLoan(Loan newLoan) {
     return new Request(representation, item, requester, proxy, newLoan,
         pickupServicePoint);
   }
@@ -147,7 +149,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return representation.getString("fulfilmentPreference");
   }
 
-  private RequestFulfilmentPreference getFulfilmentPreference() {
+  public RequestFulfilmentPreference getFulfilmentPreference() {
     return RequestFulfilmentPreference.from(getFulfilmentPreferenceName());
   }
 
@@ -155,8 +157,8 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return representation.getString("id");
   }
 
-  RequestType getRequestType() {
-    return RequestType.from(representation.getString("requestType"));
+  public RequestType getRequestType() {
+    return RequestType.from(representation.getString(REQUEST_TYPE));
   }
 
   Boolean allowedForItem() {
@@ -167,7 +169,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return getRequestType().toLoanAction();
   }
 
-  RequestStatus getStatus() {
+  public RequestStatus getStatus() {
     return RequestStatus.from(representation.getString(STATUS));
   }
 

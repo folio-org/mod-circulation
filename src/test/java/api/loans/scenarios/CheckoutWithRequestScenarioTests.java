@@ -4,6 +4,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -26,10 +27,12 @@ public class CheckoutWithRequestScenarioTests extends APITests {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource charlotte = usersFixture.charlotte();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     requestsClient.create(new RequestBuilder()
       .page()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(charlotte));
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, charlotte);

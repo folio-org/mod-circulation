@@ -157,6 +157,11 @@ public class RequestRepresentation {
     if (callNumber != null) {
       itemSummary.put("callNumber", callNumber);
     }
+
+    JsonArray copyNumbers = item.getCopyNumbers();
+    if (copyNumbers != null) {
+      itemSummary.put("copyNumbers", copyNumbers);
+    }
   }
 
   private static void addDeliveryAddress(

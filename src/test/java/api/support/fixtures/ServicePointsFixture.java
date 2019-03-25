@@ -14,6 +14,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 
+import api.support.builders.ServicePointBuilder;
 import api.support.http.ResourceClient;
 
 public class ServicePointsFixture {
@@ -39,7 +40,7 @@ public class ServicePointsFixture {
       TimeoutException,
       ExecutionException {
 
-    return servicePointRecordCreator.createIfAbsent(basedUponCircDesk1());
+    return create(basedUponCircDesk1());
   }
   
   public IndividualResource cd2()
@@ -48,7 +49,7 @@ public class ServicePointsFixture {
       TimeoutException,
       ExecutionException {
 
-    return servicePointRecordCreator.createIfAbsent(basedUponCircDesk2());
+    return create(basedUponCircDesk2());
   } 
   
   public IndividualResource cd3()
@@ -57,7 +58,7 @@ public class ServicePointsFixture {
       TimeoutException,
       ExecutionException {
 
-    return servicePointRecordCreator.createIfAbsent(basedUponCircDesk3());
+    return create(basedUponCircDesk3());
   }
 
   public IndividualResource cd4()
@@ -66,7 +67,7 @@ public class ServicePointsFixture {
       TimeoutException,
       ExecutionException {
 
-    return servicePointRecordCreator.createIfAbsent(basedUponCircDesk4());
+    return create(basedUponCircDesk4());
   }
 
   public IndividualResource cd5()
@@ -75,7 +76,7 @@ public class ServicePointsFixture {
       TimeoutException,
       ExecutionException {
 
-    return servicePointRecordCreator.createIfAbsent(basedUponCircDesk5());
+    return create(basedUponCircDesk5());
   }
 
   public IndividualResource cd6()
@@ -84,6 +85,15 @@ public class ServicePointsFixture {
       TimeoutException,
       ExecutionException {
 
-    return servicePointRecordCreator.createIfAbsent(basedUponCircDesk6());
+    return create(basedUponCircDesk6());
+  }
+
+  public IndividualResource create(ServicePointBuilder builder)
+      throws InterruptedException,
+      MalformedURLException,
+      TimeoutException,
+      ExecutionException {
+
+    return servicePointRecordCreator.createIfAbsent(builder);
   }
 }

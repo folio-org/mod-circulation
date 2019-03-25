@@ -110,7 +110,8 @@ public class CirculationRulesResource extends Resource {
       internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
       return;
     }
-    CirculationRulesEngineResource.clearCache(new WebContext(routingContext).getTenantId());
+    LoanCirculationRulesEngineResource.clearCache(new WebContext(routingContext).getTenantId());
+    RequestCirculationRulesEngineResource.clearCache(new WebContext(routingContext).getTenantId());
 
     loansRulesClient.put(rulesInput.copy()).thenAccept(response -> {
       if (response.getStatusCode() == 204) {

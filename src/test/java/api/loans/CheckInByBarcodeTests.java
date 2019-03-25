@@ -11,12 +11,19 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Seconds;
@@ -25,6 +32,9 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.CheckInByBarcodeResponse;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
+import api.support.builders.NoticeConfigurationBuilder;
+import api.support.builders.NoticePolicyBuilder;
+import api.support.matchers.UUIDMatcher;
 import io.vertx.core.json.JsonObject;
 
 public class CheckInByBarcodeTests extends APITests {
@@ -296,5 +306,117 @@ public class CheckInByBarcodeTests extends APITests {
 
     assertThat("barcode is included for item",
       itemFromResponse.getString("barcode"), is("565578437802"));
+  }
+
+  @Test
+  public void patronNoticeOnCheckInIsSentWhenCheckInLoanNoticeIsDefinedAndLoanExists()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    UUID checkInTemplateId = UUID.randomUUID();
+    JsonObject checkOutNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(checkInTemplateId)
+      .withCheckInEvent()
+      .create();
+    JsonObject renewNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withEventType("Renew")
+      .create();
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with checkout notice")
+      .withLoanNotices(Arrays.asList(checkOutNoticeConfiguration, renewNoticeConfiguration));
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId());
+
+    DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, DateTimeZone.UTC);
+
+    final IndividualResource james = usersFixture.james();
+
+    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+
+    final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
+      builder -> builder.withPrimaryServicePoint(checkInServicePointId));
+
+    final IndividualResource nod = itemsFixture.basedUponNod(
+      builder -> builder.withTemporaryLocation(homeLocation.getId()));
+
+    loansFixture.checkOut(nod, james, loanDate);
+
+    final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(nod)
+        .on(new DateTime(2018, 3, 5, 14 ,23, 41, DateTimeZone.UTC))
+        .at(checkInServicePointId));
+
+    JsonObject loanRepresentation = checkInResponse.getLoan();
+
+    assertThat("Closed loan should be present",
+      loanRepresentation, notNullValue());
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronNoticesClient::getAll, Matchers.hasSize(1));
+
+    List<JsonObject> sentNotices = patronNoticesClient.getAll();
+    JsonObject notice = sentNotices.get(0);
+    MatcherAssert.assertThat("sent notice should have template id form notice policy",
+      notice.getString("templateId"), UUIDMatcher.is(checkInTemplateId));
+    MatcherAssert.assertThat("sent notice should have email delivery channel",
+      notice.getString("deliveryChannel"), CoreMatchers.is("email"));
+    MatcherAssert.assertThat("sent notice should have output format",
+      notice.getString("outputFormat"), CoreMatchers.is("text/html"));
+
+    JsonObject noticeContext = notice.getJsonObject("context");
+    MatcherAssert.assertThat("sent notice should have context property",
+      noticeContext, notNullValue());
+  }
+
+  @Test
+  public void shouldNotSendPatronNoticeWhenCheckInNoticeIsDefinedAndCheckInDoesNotCloseLoan()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    UUID checkInTemplateId = UUID.randomUUID();
+    JsonObject checkOutNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(checkInTemplateId)
+      .withCheckInEvent()
+      .create();
+    JsonObject renewNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withEventType("Renew")
+      .create();
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with checkout notice")
+      .withLoanNotices(Arrays.asList(checkOutNoticeConfiguration, renewNoticeConfiguration));
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId());
+
+    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+
+    final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
+      builder -> builder.withPrimaryServicePoint(checkInServicePointId));
+
+    final IndividualResource nod = itemsFixture.basedUponNod(
+      builder -> builder.withTemporaryLocation(homeLocation.getId()));
+
+    final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+      nod, new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC),
+      checkInServicePointId);
+
+    assertThat("Response should not include a loan",
+      checkInResponse.getJson().containsKey("loan"), is(false));
+
+    TimeUnit.SECONDS.sleep(1);
+    List<JsonObject> sentNotices = patronNoticesClient.getAll();
+    assertThat("Check-in notice shouldn't be sent if item isn't checked-out",
+      sentNotices, Matchers.empty());
   }
 }

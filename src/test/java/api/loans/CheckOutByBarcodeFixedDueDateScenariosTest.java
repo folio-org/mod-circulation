@@ -62,7 +62,7 @@ public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
       .limitedBySchedule(fixedDueDateSchedulesId);
 
     UUID loanPolicyId = loanPolicyClient.create(loanPolicy).getId();
-    UUID requestPolicyId = requestPoliciesFixture.noAllowedTypes().getId();
+    UUID requestPolicyId = requestPoliciesFixture.allowAllRequestPolicy().getId();
     UUID noticePolicyId = noticePoliciesFixture.activeNotice().getId();
     useLoanPolicyAsFallback(loanPolicyId, requestPolicyId, noticePolicyId);
 
@@ -111,7 +111,7 @@ public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
 
 
     UUID loanPolicyId = loanPolicyClient.create(loanPolicy).getId();
-    UUID requestPolicyId = requestPoliciesFixture.noAllowedTypes().getId();
+    UUID requestPolicyId = requestPoliciesFixture.allowAllRequestPolicy().getId();
     UUID noticePolicyId = noticePoliciesFixture.activeNotice().getId();
     useLoanPolicyAsFallback(loanPolicyId, requestPolicyId, noticePolicyId);
 
@@ -161,7 +161,7 @@ public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
       .limitedBySchedule(fixedDueDateSchedulesId);
 
     UUID loanPolicyId = loanPolicyClient.create(loanPolicy).getId();
-    UUID requestPolicyId = requestPoliciesFixture.noAllowedTypes().getId();
+    UUID requestPolicyId = requestPoliciesFixture.allowAllRequestPolicy().getId();
     UUID noticePolicyId = noticePoliciesFixture.activeNotice().getId();
     useLoanPolicyAsFallback(loanPolicyId, requestPolicyId, noticePolicyId);
 

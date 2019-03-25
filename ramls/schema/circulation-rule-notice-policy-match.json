@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Circulation rule match schema",
+  "description": "Describes a matching rule within a set of rules",
+  "type": "object",
+  "properties": {
+    "ruleLine": {
+      "description": "Line number of the matching rule",
+      "type": "integer"
+    },
+    "noticePolicyId": {
+      "description": "Notice policy id specified by the matching rule",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "ruleLine",
+    "noticePolicyId"
+  ]
+}

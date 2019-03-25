@@ -33,4 +33,16 @@ public class UserExamples {
       .withName("Broadwell", "Charlotte")
       .withBarcode("6430705932");
   }
+
+  static UserBuilder basedUponBobbyBibbin() {
+    return new UserBuilder()
+      .withName("Bibbin", "Bobby")
+      .withBarcode("6630705935");
+  }
+
+  static UserBuilder basedUponHenryHanks() {
+    return new UserBuilder()
+      .withName("Hanks", "Henry")
+      .withBarcode("6430777932");
+  }
 }

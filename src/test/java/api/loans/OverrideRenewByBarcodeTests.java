@@ -10,6 +10,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
@@ -35,6 +36,8 @@ import io.vertx.core.json.JsonObject;
 
 public class OverrideRenewByBarcodeTests extends APITests {
   private static final String OVERRIDE_COMMENT = "Comment to override";
+  private static final String ITEM_IS_NOT_LOANABLE_MESSAGE = "item is not loanable";
+  private static final String ACTION_COMMENT_KEY = "actionComment";
 
   @Test
   public void cannotOverrideRenewalWhenLoanPolicyDoesNotExist()
@@ -53,7 +56,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     useLoanPolicyAsFallback(
       unknownLoanPolicyId,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
 
@@ -174,7 +177,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     useLoanPolicyAsFallback(
       nonRenewablePolicyId,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
 
@@ -212,7 +215,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     useLoanPolicyAsFallback(
       nonRenewablePolicyId,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
 
@@ -237,7 +240,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
       renewedLoan.getString("action"), is("Renewed through override"));
 
     assertThat("'actionComment' field should contain comment specified for override",
-      renewedLoan.getString("actionComment"), is(OVERRIDE_COMMENT));
+      renewedLoan.getString(ACTION_COMMENT_KEY), is(OVERRIDE_COMMENT));
 
     assertThat("renewal count should be incremented",
       renewedLoan.getInteger("renewalCount"), is(1));
@@ -281,7 +284,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     useLoanPolicyAsFallback(
       dueDateLimitedPolicyId,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
 
@@ -327,7 +330,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     useLoanPolicyAsFallback(
       dueDateLimitedPolicyId,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
 
@@ -353,7 +356,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
       renewedLoan.getString("action"), is("Renewed through override"));
 
     assertThat("'actionComment' field should contain comment specified for override",
-      renewedLoan.getString("actionComment"), is(OVERRIDE_COMMENT));
+      renewedLoan.getString(ACTION_COMMENT_KEY), is(OVERRIDE_COMMENT));
 
     assertThat("renewal count should be incremented",
       renewedLoan.getInteger("renewalCount"), is(1));
@@ -408,7 +411,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     useLoanPolicyAsFallback(
       dueDateLimitedPolicyId,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
 
@@ -434,7 +437,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
       renewedLoan.getString("action"), is("Renewed through override"));
 
     assertThat("'actionComment' field should contain comment specified for override",
-      renewedLoan.getString("actionComment"), is(OVERRIDE_COMMENT));
+      renewedLoan.getString(ACTION_COMMENT_KEY), is(OVERRIDE_COMMENT));
 
     assertThat("renewal count should be incremented",
       renewedLoan.getInteger("renewalCount"), is(1));
@@ -465,7 +468,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     useLoanPolicyAsFallback(
       limitedRenewalsPolicyId,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
 
@@ -494,7 +497,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
       renewedLoan.getString("action"), is("Renewed through override"));
 
     assertThat("'actionComment' field should contain comment specified for override",
-      renewedLoan.getString("actionComment"), is(OVERRIDE_COMMENT));
+      renewedLoan.getString(ACTION_COMMENT_KEY), is(OVERRIDE_COMMENT));
 
     assertThat("renewal count should be incremented",
       renewedLoan.getInteger("renewalCount"), is(2));
@@ -528,7 +531,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     useLoanPolicyAsFallback(
       rollingPolicyId,
-      requestPoliciesFixture.noAllowedTypes().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
 
@@ -537,9 +540,155 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Override renewal does not match any of expected cases: " +
+        "item is not loanable, " +
         "item is not renewable, " +
         "reached number of renewals limit or " +
         "renewal date falls outside of the date ranges in the loan policy"))));
+  }
+
+  @Test
+  public void renewalRemovesActionCommentAfterOverride() throws
+    InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    DateTime loanDueDate =
+      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
+
+    LoanPolicyBuilder nonRenewablePolicy = new LoanPolicyBuilder()
+      .withName("Non Renewable Policy")
+      .rolling(Period.days(2))
+      .notRenewable();
+    createLoanPolicyAndSetAsFallback(nonRenewablePolicy);
+
+    loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
+
+    DateTime newDueDate = DateTime.now().plusWeeks(2);
+
+    JsonObject loanAfterOverride =
+      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica,
+        OVERRIDE_COMMENT, newDueDate.toString()).getJson();
+    assertLoanHasActionComment(loanAfterOverride, OVERRIDE_COMMENT);
+
+    LoanPolicyBuilder renewablePolicy = new LoanPolicyBuilder()
+      .withName("Renewable Policy")
+      .rolling(Period.days(2));
+    createLoanPolicyAndSetAsFallback(renewablePolicy);
+
+    JsonObject loanAfterRenewal = loansFixture.renewLoan(smallAngryPlanet, jessica).getJson();
+    assertActionCommentIsAbsentInLoan(loanAfterRenewal);
+  }
+
+  @Test
+  public void checkInRemovesActionCommentAfterOverride() throws
+    InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    DateTime loanDueDate =
+      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
+
+    LoanPolicyBuilder nonRenewablePolicy = new LoanPolicyBuilder()
+      .withName("Non Renewable Policy")
+      .rolling(Period.days(2))
+      .notRenewable();
+    createLoanPolicyAndSetAsFallback(nonRenewablePolicy);
+
+    loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
+
+    DateTime newDueDate = DateTime.now().plusWeeks(2);
+
+    JsonObject loanAfterOverride =
+      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica,
+        OVERRIDE_COMMENT, newDueDate.toString()).getJson();
+    assertLoanHasActionComment(loanAfterOverride, OVERRIDE_COMMENT);
+
+    JsonObject loanAfterCheckIn = loansFixture.checkInByBarcode(smallAngryPlanet).getLoan();
+    assertActionCommentIsAbsentInLoan(loanAfterCheckIn);
+  }
+
+  @Test
+  public void cannotOverrideRenewalWhenItemIsNotLoanableAndNewDueDateIsNotSpecified() throws
+    InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    DateTime loanDueDate =
+      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
+
+    LoanPolicyBuilder notLoanablePolicy = new LoanPolicyBuilder()
+      .withName("Not Loanable Policy")
+      .withLoanable(false);
+    createLoanPolicyAndSetAsFallback(notLoanablePolicy);
+
+    JsonObject renewalResponse =
+      loansFixture.attemptRenewal(422, smallAngryPlanet, jessica).getJson();
+    assertThat(renewalResponse, hasErrorWith(allOf(
+      hasMessage(ITEM_IS_NOT_LOANABLE_MESSAGE))));
+
+    Response response = loansFixture.attemptOverride(smallAngryPlanet, jessica,
+      OVERRIDE_COMMENT, null);
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("New due date must be specified when due date calculation fails"))));
+  }
+
+  @Test
+  public void canOverrideRenewalWhenItemIsNotLoanableAndNewDueDateIsSpecified() throws
+    InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    DateTime loanDueDate =
+      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
+
+    LoanPolicyBuilder notLoanablePolicy = new LoanPolicyBuilder()
+      .withName("Not Loanable Policy")
+      .withLoanable(false);
+    createLoanPolicyAndSetAsFallback(notLoanablePolicy);
+
+    JsonObject renewalResponse =
+      loansFixture.attemptRenewal(422, smallAngryPlanet, jessica).getJson();
+    assertThat(renewalResponse, hasErrorWith(allOf(
+      hasMessage(ITEM_IS_NOT_LOANABLE_MESSAGE))));
+
+    DateTime newDueDate = DateTime.now().plusWeeks(2);
+
+    JsonObject renewedLoan =
+      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica,
+        OVERRIDE_COMMENT, newDueDate.toString()).getJson();
+
+    assertThat("action should be renewed",
+      renewedLoan.getString("action"), is("Renewed through override"));
+    assertThat("'actionComment' field should contain comment specified for override",
+      renewedLoan.getString(ACTION_COMMENT_KEY), is(OVERRIDE_COMMENT));
+    assertThat("due date should be 2 weeks from now",
+      renewedLoan.getString("dueDate"),
+      isEquivalentTo(newDueDate));
   }
 
   private Matcher<ValidationError> hasUserRelatedParameter(IndividualResource user) {
@@ -553,5 +702,27 @@ public class OverrideRenewByBarcodeTests extends APITests {
   private Matcher<ValidationError> hasItemNotFoundMessage(IndividualResource item) {
     return hasMessage(String.format("No item with barcode %s exists",
       item.getJson().getString("barcode")));
+  }
+
+  private void createLoanPolicyAndSetAsFallback(LoanPolicyBuilder loanPolicyBuilder) throws
+    InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+    UUID policyId =
+      loanPoliciesFixture.create(loanPolicyBuilder).getId();
+    useLoanPolicyAsFallback(
+      policyId,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId());
+  }
+
+  private void assertLoanHasActionComment(JsonObject loan, String actionComment) {
+    assertThat("loan should have 'actionComment' property",
+      loan.getString(ACTION_COMMENT_KEY), is(actionComment));
+  }
+  private void assertActionCommentIsAbsentInLoan(JsonObject loan) {
+    assertThat("'actionComment' property should be absent in loan",
+      loan.getString(ACTION_COMMENT_KEY), nullValue());
   }
 }

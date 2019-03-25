@@ -3,11 +3,13 @@ package api.loans;
 import api.support.APITests;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanPolicyBuilder;
+import api.support.fixtures.ConfigurationExample;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.LoansPolicyProfile;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeUtils;
 import org.joda.time.DateTimeZone;
@@ -26,6 +28,7 @@ import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_DAY_ALL_SER
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY;
 import static api.support.fixtures.CalendarExamples.END_TIME_FIRST_PERIOD;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -45,10 +48,41 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
   private static final String POLICY_PROFILE_NAME = LoansPolicyProfile.ROLLING.name();
   private static final String INTERVAL_HOURS = "Hours";
   private static final String INTERVAL_MINUTES = "Minutes";
-  public static final LocalTime TEST_TIME_MORNING = new LocalTime(11, 0);
+  private static final LocalTime TEST_TIME_MORNING = new LocalTime(11, 0);
 
   private final String dueDateManagement =
     DueDateManagement.MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS.getValue();
+
+  @Test
+  public void testRespectSelectedTimezoneForDueDateCalculations() throws Exception {
+    String expectedTimeZone = "America/New_York";
+    int duration = 24;
+
+    Response response = configClient.create(ConfigurationExample.newYorkTimezoneConfiguration())
+      .getResponse();
+    assertThat(response.getBody(), containsString(expectedTimeZone));
+
+    DateTime loanDate = CASE_FRI_SAT_MON_DAY_ALL_PREV_DATE.toDateTime(TEST_TIME_MORNING, DateTimeZone.forID(expectedTimeZone));
+    DateTime expectedDueDate = CASE_FRI_SAT_MON_DAY_ALL_PREV_DATE.plusDays(1)
+      .toDateTime(LocalTime.MIDNIGHT, DateTimeZone.forID(expectedTimeZone));
+
+    checkOffsetTime(loanDate, expectedDueDate, CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID, INTERVAL_HOURS, duration);
+  }
+
+  @Test
+  public void testRespectUtcTimezoneForDueDateCalculations() throws Exception {
+    int duration = 24;
+
+    Response response = configClient.create(ConfigurationExample.utcTimezoneConfiguration())
+      .getResponse();
+    assertThat(response.getBody(), containsString(DateTimeZone.UTC.toString()));
+
+    DateTime loanDate = CASE_FRI_SAT_MON_DAY_ALL_PREV_DATE.toDateTime(TEST_TIME_MORNING, DateTimeZone.UTC);
+    DateTime expectedDueDate = CASE_FRI_SAT_MON_DAY_ALL_PREV_DATE.plusDays(1)
+      .toDateTime(LocalTime.MIDNIGHT, DateTimeZone.UTC);
+
+    checkOffsetTime(loanDate, expectedDueDate, CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID, INTERVAL_HOURS, duration);
+  }
 
   /**
    * Loan period: Hours
@@ -58,14 +92,13 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
    */
   @Test
   public void testHoursLoanPeriodIfCurrentDayIsClosedAndNextAllDayOpen() throws Exception {
-    String servicePointId = CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID;
     int duration = 24;
 
     DateTime loanDate = CASE_FRI_SAT_MON_DAY_ALL_PREV_DATE.toDateTime(TEST_TIME_MORNING, DateTimeZone.UTC);
     DateTime expectedDueDate = CASE_FRI_SAT_MON_DAY_ALL_PREV_DATE.plusDays(1)
       .toDateTime(LocalTime.MIDNIGHT, DateTimeZone.UTC);
 
-    checkOffsetTime(loanDate, expectedDueDate, servicePointId, INTERVAL_HOURS, duration);
+    checkOffsetTime(loanDate, expectedDueDate, CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID, INTERVAL_HOURS, duration);
   }
 
   /**
@@ -110,7 +143,7 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
-    ;
+
     final UUID checkoutServicePointId = UUID.fromString(servicePointId);
 
     JsonObject loanPolicyEntry = createLoanPolicyEntry(duration, interval);
@@ -144,7 +177,6 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
     return dateTime.withSecondOfMinute(0).withMillisOfSecond(0);
   }
 
-
   private String createLoanPolicy(JsonObject loanPolicyEntry)
     throws InterruptedException,
     MalformedURLException,
@@ -152,7 +184,7 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
     ExecutionException {
 
     IndividualResource loanPolicy = loanPoliciesFixture.create(loanPolicyEntry);
-    UUID requestPolicyId = requestPoliciesFixture.noAllowedTypes().getId();
+    UUID requestPolicyId = requestPoliciesFixture.allowAllRequestPolicy().getId();
     UUID noticePolicyId = noticePoliciesFixture.activeNotice().getId();
     useLoanPolicyAsFallback(loanPolicy.getId(), requestPolicyId, noticePolicyId);
 
@@ -172,6 +204,5 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
       .renewFromCurrentDueDate()
       .create();
   }
-
 
 }

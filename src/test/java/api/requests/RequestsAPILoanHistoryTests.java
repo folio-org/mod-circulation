@@ -25,12 +25,14 @@ public class RequestsAPILoanHistoryTests extends APITests {
     MalformedURLException {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     UUID loanId = loansFixture.checkOutByBarcode(smallAngryPlanet).getId();
 
     requestsClient.create(new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(usersFixture.charlotte().getId()));
 
     JsonObject loanFromStorage = loansStorageClient.getById(loanId).getJson();
@@ -50,12 +52,14 @@ public class RequestsAPILoanHistoryTests extends APITests {
     MalformedURLException {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     UUID loanId = loansFixture.checkOutByBarcode(smallAngryPlanet).getId();
 
     requestsClient.create(new RequestBuilder()
       .recall()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(usersFixture.charlotte().getId()));
 
     JsonObject loanFromStorage = loansStorageClient.getById(loanId).getJson();
@@ -72,6 +76,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
     MalformedURLException {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     UUID closedLoanId = loansFixture.checkOutByBarcode(smallAngryPlanet).getId();
 
@@ -82,6 +87,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
     requestsClient.create(new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(usersFixture.charlotte()));
 
     JsonObject closedLoanFromStorage = loansStorageClient.getById(closedLoanId)
@@ -102,6 +108,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
     MalformedURLException {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     UUID closedLoanId = loansFixture.checkOutByBarcode(smallAngryPlanet).getId();
 
@@ -112,6 +119,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
     requestsClient.create(new RequestBuilder()
       .recall()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(usersFixture.charlotte()));
 
     JsonObject closedLoanFromStorage = loansStorageClient.getById(closedLoanId)
@@ -133,6 +141,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final InventoryItemResource nod = itemsFixture.basedUponNod();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOutByBarcode(smallAngryPlanet);
 
@@ -141,6 +150,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
     requestsClient.create(new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(usersFixture.james()));
 
     JsonObject storageLoanForOtherItem = loansStorageClient
@@ -163,6 +173,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final InventoryItemResource nod = itemsFixture.basedUponNod();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOutByBarcode(smallAngryPlanet);
 
@@ -171,6 +182,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
     requestsClient.create(new RequestBuilder()
       .recall()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(usersFixture.james()));
 
     JsonObject storageLoanForOtherItem = loansStorageClient
@@ -192,6 +204,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
     MalformedURLException {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     UUID loanId = loansFixture.checkOutByBarcode(smallAngryPlanet).getId();
 
@@ -200,6 +213,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
     requestsClient.create(new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(usersFixture.charlotte()));
   }
 
@@ -211,6 +225,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
     MalformedURLException {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     UUID loanId = loansFixture.checkOutByBarcode(smallAngryPlanet).getId();
 
@@ -219,6 +234,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
     requestsClient.create(new RequestBuilder()
       .recall()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(usersFixture.charlotte()));
   }
 }

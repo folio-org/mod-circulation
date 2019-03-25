@@ -1,22 +1,34 @@
 package api.support.builders;
 
+import java.util.ArrayList;
 import java.util.UUID;
 
 import org.folio.circulation.domain.RequestType;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class RequestPolicyBuilder extends JsonBuilder implements Builder {
   private final UUID id;
   private final String name;
   private final String description;
-  private final RequestType type;
+  private final ArrayList<RequestType> types;
 
-  public RequestPolicyBuilder() {
+  public RequestPolicyBuilder(ArrayList<RequestType> requestTypes) {
+
     this(UUID.randomUUID(),
       "Example Request Policy",
       "An example request policy",
-      RequestType.HOLD
+      requestTypes
+    );
+  }
+
+  public RequestPolicyBuilder(ArrayList<RequestType> requestTypes, String name, String description) {
+
+    this(UUID.randomUUID(),
+      name,
+      description,
+      requestTypes
     );
   }
 
@@ -24,30 +36,33 @@ public class RequestPolicyBuilder extends JsonBuilder implements Builder {
     UUID id,
     String name,
     String description,
-    RequestType type) {
+    ArrayList<RequestType> types) {
 
     this.id = id;
     this.name = name;
     this.description = description;
-    this.type = type;
+    this.types = types;
   }
 
   @Override
   public JsonObject create() {
-    JsonObject request = new JsonObject();
+    JsonObject requestPolicy = new JsonObject();
 
     if (id != null) {
-      put(request, "id", id.toString());
+      put(requestPolicy, "id", id.toString());
     }
 
-    put(request, "name", this.name);
-    put(request, "description", this.description);
+    put(requestPolicy, "name", this.name);
+    put(requestPolicy, "description", this.description);
 
-    JsonObject requestType = new JsonObject();
-    put(requestType, "type", this.type.name());
+    JsonArray requestTypes = new JsonArray();
 
-    put(request, "requestType", requestType);
+    for(RequestType t : types){
+      requestTypes.add(t.getValue());
+    }
 
-    return request;
+    put(requestPolicy, "requestTypes", requestTypes);
+
+    return requestPolicy;
   }
 }

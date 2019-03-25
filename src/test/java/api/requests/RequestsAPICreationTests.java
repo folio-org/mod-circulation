@@ -166,6 +166,8 @@ public class RequestsAPICreationTests extends APITests {
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
     Response response = requestsClient.attemptCreateAtSpecificLocation(new RequestBuilder()
       .withId(id)
       .open()
@@ -176,6 +178,7 @@ public class RequestsAPICreationTests extends APITests {
       .fulfilToHoldShelf()
       .withRequestExpiration(new LocalDate(2017, 7, 30))
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
+      .withPickupServicePointId(pickupServicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
     assertThat(response.getStatusCode(), is(204));
@@ -253,13 +256,19 @@ public class RequestsAPICreationTests extends APITests {
     MalformedURLException {
 
     UUID itemId = UUID.randomUUID();
+    UUID patronId = usersFixture.charlotte().getId();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
+    //Check RECALL -- should give the same response when placing other types of request.
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .recall()
       .withItemId(itemId)
-      .withRequesterId(usersFixture.charlotte().getId()));
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(patronId));
 
     assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Item does not exist"))));
   }
 
   @Test
@@ -313,6 +322,7 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
     final IndividualResource rebecca = usersFixture.rebecca();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     UUID itemId = smallAngryPlanet.getId();
 
@@ -331,6 +341,7 @@ public class RequestsAPICreationTests extends APITests {
       .withRequestDate(requestDate)
       .forItem(smallAngryPlanet)
       .by(steve)
+      .withPickupServicePointId(pickupServicePointId)
       .fulfilToHoldShelf()
       .withRequestExpiration(new LocalDate(2017, 7, 30))
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
@@ -352,6 +363,7 @@ public class RequestsAPICreationTests extends APITests {
     final InventoryItemResource smallAngryPlanet =
       itemsFixture.basedUponSmallAngryPlanet(itemBuilder -> itemBuilder
         .withBarcode("036000291452"));
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     UUID itemId = smallAngryPlanet.getId();
 
@@ -363,6 +375,7 @@ public class RequestsAPICreationTests extends APITests {
       .recall().fulfilToHoldShelf()
       .withItemId(itemId)
       .withRequesterId(requesterId)
+      .withPickupServicePointId(pickupServicePointId)
       .withStatus(status));
 
     JsonObject representation = request.getJson();
@@ -503,12 +516,14 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
     final IndividualResource steve = usersFixture.steve();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOut(smallAngryPlanet, rebecca);
 
     IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
       .recall().fulfilToHoldShelf()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(steve)
       .withNoStatus());
 
@@ -518,7 +533,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void creatingARequestDoesNotStoreRequesterInformationWhenUserNotFound()
+  public void cannotCreateRequestWithUserBelongingToNoPatronGroup()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -526,27 +541,28 @@ public class RequestsAPICreationTests extends APITests {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    final IndividualResource noUserGroupBob = usersFixture.noUserGroupBob();
 
     loansFixture.checkOut(smallAngryPlanet, jessica);
 
-    UUID nonExistentRequester = UUID.randomUUID();
-
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
-    IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
+    final Response recallResponse = requestsClient.attemptCreate(new RequestBuilder()
       .recall()
-      .withRequestDate(requestDate)
       .forItem(smallAngryPlanet)
-      .withRequesterId(nonExistentRequester));
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequestDate(requestDate)
+      .by(noUserGroupBob));
 
-    JsonObject representation = createdRequest.getJson();
+    assertThat(recallResponse, hasStatus(HTTP_VALIDATION_ERROR));
 
-    assertThat("has no information for missing requesting user",
-      representation.containsKey("requester"), is(false));
+    assertThat(recallResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("A valid patron group is required. PatronGroup ID is null"))));
   }
 
   @Test
-  public void creatingARequestStoresItemInformationWhenRequestingUserNotFound()
+  public void cannotCreateRequestWithoutValidUser()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -554,6 +570,7 @@ public class RequestsAPICreationTests extends APITests {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOut(smallAngryPlanet, steve);
 
@@ -561,27 +578,17 @@ public class RequestsAPICreationTests extends APITests {
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
-    IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
+    final Response recallResponse = requestsClient.attemptCreate(new RequestBuilder()
       .recall()
-      .withRequestDate(requestDate)
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequestDate(requestDate)
       .withRequesterId(nonExistentRequesterId));
 
-    JsonObject representation = createdRequest.getJson();
+    assertThat(recallResponse, hasStatus(HTTP_VALIDATION_ERROR));
 
-    assertThat("has information taken from item",
-      representation.containsKey("item"), is(true));
-
-    assertThat("title is taken from item",
-      representation.getJsonObject("item").getString("title"),
-      is("The Long Way to a Small, Angry Planet"));
-
-    assertThat("barcode is taken from item",
-      representation.getJsonObject("item").getString("barcode"),
-      is("036000291452"));
-
-    assertThat("has no information for missing requesting user",
-      representation.containsKey("requester"), is(false));
+    assertThat(recallResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("A valid user and patron group are required. User is null"))));
   }
 
   @Test
@@ -593,6 +600,7 @@ public class RequestsAPICreationTests extends APITests {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     final IndividualResource steve = usersFixture.steve(
       b -> b.withName("Jones", "Steven", "Anthony"));
@@ -604,6 +612,7 @@ public class RequestsAPICreationTests extends APITests {
     IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
       .recall()
       .withRequestDate(requestDate)
+      .withPickupServicePointId(pickupServicePointId)
       .forItem(smallAngryPlanet)
       .by(steve));
 
@@ -638,6 +647,7 @@ public class RequestsAPICreationTests extends APITests {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource james = usersFixture.james();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     final IndividualResource steveWithNoBarcode = usersFixture.steve(
       UserBuilder::withNoBarcode);
@@ -650,6 +660,7 @@ public class RequestsAPICreationTests extends APITests {
       .recall()
       .withRequestDate(requestDate)
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(steveWithNoBarcode));
 
     JsonObject representation = createdRequest.getJson();
@@ -682,12 +693,14 @@ public class RequestsAPICreationTests extends APITests {
 
     final IndividualResource rebecca = usersFixture.rebecca();
     final IndividualResource charlotte = usersFixture.charlotte();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOut(smallAngryPlanet, rebecca);
 
     IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
       .recall()
       .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
       .by(charlotte));
 
     JsonObject representation = createdRequest.getJson();
@@ -716,6 +729,7 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
     final IndividualResource steve = usersFixture.steve();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     UUID itemId = smallAngryPlanet.getId();
 
@@ -727,6 +741,7 @@ public class RequestsAPICreationTests extends APITests {
       .recall()
       .withRequestDate(requestDate)
       .withItemId(itemId)
+      .withPickupServicePointId(pickupServicePointId)
       .by(steve)
       .create();
 
@@ -769,6 +784,37 @@ public class RequestsAPICreationTests extends APITests {
     assertThat("barcode is taken from requesting user",
       representation.getJsonObject("requester").getString("barcode"),
       is("5694596854"));
+  }
+
+  @Test
+  public void cannotCreateARequestWithoutAPickupLocationServicePoint()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+
+    loansFixture.checkOut(item, usersFixture.jessica());
+
+    IndividualResource requester = usersFixture.steve();
+
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
+      .open()
+      .recall()
+      .forItem(item)
+      .by(requester)
+      .withRequestDate(requestDate)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(new LocalDate(2017, 7, 30))
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
+
+    assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
+
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Hold Shelf Fulfillment Requests require a Pickup Service Point"))));
   }
 
   @Test
@@ -889,7 +935,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(pagedRequest, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = pagedRequest.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.CHECKED_OUT.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is (("Page requests are not allowed for " + ItemStatus.CHECKED_OUT.getValue() + " item status combination").toLowerCase()));
   }
 
   @Test
@@ -913,7 +959,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(pagedRequest2, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = pagedRequest2.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.AWAITING_PICKUP.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is (("Page requests are not allowed for " + ItemStatus.AWAITING_PICKUP.getValue() + " item status combination").toLowerCase()));
   }
 
   @Test
@@ -936,7 +982,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(pagedRequest2, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = pagedRequest2.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.PAGED.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is(("Page requests are not allowed for " + ItemStatus.PAGED.getValue() + " item status combination").toLowerCase()));
   }
 
   @Test
@@ -961,7 +1007,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(pagedRequest2, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = pagedRequest2.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.IN_TRANSIT.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is (("Page requests are not allowed for " + ItemStatus.IN_TRANSIT.getValue() + " item status combination").toLowerCase()));
   }
 
   @Test
@@ -1056,7 +1102,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(recallResponse, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = recallResponse.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.AVAILABLE.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is (("Recall requests are not allowed for " + ItemStatus.AVAILABLE.getValue() + " item status combination").toLowerCase()));
   }
 
   @Test
@@ -1077,7 +1123,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(holdRequest, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = holdRequest.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.MISSING.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is (("Recall requests are not allowed for " + ItemStatus.MISSING.getValue() + " item status combination").toLowerCase()));
   }
 
   @Test
@@ -1098,7 +1144,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(recallResponse, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = recallResponse.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.PAGED.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is (("Recall requests are not allowed for " + ItemStatus.PAGED.getValue() + " item status combination").toLowerCase()));
   }
 
   @Test
@@ -1238,8 +1284,9 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(recallResponse, hasStatus(HTTP_VALIDATION_ERROR));
     JsonArray errors = recallResponse.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is("item is " + ItemStatus.AVAILABLE.toString().toLowerCase()));
+    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is(("Hold requests are not allowed for " + ItemStatus.AVAILABLE.getValue() + " item status combination").toLowerCase()));
   }
+
 
   public static IndividualResource setupPagedItem(IndividualResource requestPickupServicePoint, ItemsFixture itemsFixture,
                                                   ResourceClient requestClient, UsersFixture usersFixture)

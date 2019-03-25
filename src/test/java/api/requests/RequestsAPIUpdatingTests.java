@@ -197,12 +197,14 @@ public class RequestsAPIUpdatingTests extends APITests {
     ExecutionException {
 
     final InventoryItemResource nod = itemsFixture.basedUponNod();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOutByBarcode(nod);
 
     IndividualResource createdRequest = requestsClient.create(
       new RequestBuilder()
         .recall()
+        .withPickupServicePointId(pickupServicePointId)
         .forItem(nod)
         .by(usersFixture.steve()));
 
@@ -233,6 +235,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     ExecutionException {
 
     final InventoryItemResource nod = itemsFixture.basedUponNod();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOutByBarcode(nod);
 
@@ -241,6 +244,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     IndividualResource createdRequest = requestsClient.create(
       new RequestBuilder()
         .recall()
+        .withPickupServicePointId(pickupServicePointId)
         .forItem(nod)
         .by(requester));
 
@@ -266,6 +270,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     ExecutionException {
 
     final InventoryItemResource nod = itemsFixture.basedUponNod();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOutByBarcode(nod);
 
@@ -274,6 +279,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     IndividualResource createdRequest = requestsClient.create(
       new RequestBuilder()
         .recall()
+        .withPickupServicePointId(pickupServicePointId)
         .forItem(nod)
         .by(steve));
 
@@ -319,10 +325,12 @@ public class RequestsAPIUpdatingTests extends APITests {
     loansFixture.checkOutByBarcode(nod);
 
     final IndividualResource steve = usersFixture.steve();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     IndividualResource createdRequest = requestsClient.create(
       new RequestBuilder()
         .recall()
+        .withPickupServicePointId(pickupServicePointId)
         .forItem(nod)
         .by(steve));
 
@@ -366,11 +374,13 @@ public class RequestsAPIUpdatingTests extends APITests {
     ExecutionException {
 
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOutByBarcode(temeraire);
 
     IndividualResource createdRequest = requestsClient.create(new RequestBuilder()
       .recall()
+      .withPickupServicePointId(pickupServicePointId)
       .forItem(temeraire)
       .by(usersFixture.steve()));
 

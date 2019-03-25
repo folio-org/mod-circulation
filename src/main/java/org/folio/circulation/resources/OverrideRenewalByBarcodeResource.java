@@ -1,11 +1,9 @@
 package org.folio.circulation.resources;
 
-import io.vertx.core.http.HttpClient;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.domain.LoanRenewalService;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.LoanRepresentation;
+import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.representations.LoanResponse;
 import org.folio.circulation.storage.SingleOpenLoanByUserAndItemBarcodeFinder;
@@ -14,6 +12,10 @@ import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.WebContext;
+
+import io.vertx.core.http.HttpClient;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
 
 public class OverrideRenewalByBarcodeResource extends Resource {
 
@@ -36,7 +38,7 @@ public class OverrideRenewalByBarcodeResource extends Resource {
     final LoanRepository loanRepository = new LoanRepository(clients);
     final ItemRepository itemRepository = new ItemRepository(clients, true, true);
     final UserRepository userRepository = new UserRepository(clients);
-
+    final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
     final LoanRenewalService renewalService = LoanRenewalService.using(clients);
     final SingleOpenLoanByUserAndItemBarcodeFinder loanFinder = new SingleOpenLoanByUserAndItemBarcodeFinder();
@@ -44,7 +46,12 @@ public class OverrideRenewalByBarcodeResource extends Resource {
     final HttpResult<OverrideByBarcodeRequest> request = OverrideByBarcodeRequest.from(routingContext.getBodyAsJson());
 
     request.after(override ->
-      loanFinder.findLoan(routingContext.getBodyAsJson(), loanRepository, itemRepository, userRepository)
+      loanFinder.findLoan(
+        routingContext.getBodyAsJson(),
+        loanRepository,
+        itemRepository,
+        userRepository,
+        requestQueueRepository)
         .thenComposeAsync(r -> r.after(loan -> renewalService.overrideRenewal(loan, override.getDueDate(), override.getComment())))
         .thenComposeAsync(r -> r.after(loanRepository::updateLoan)))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
