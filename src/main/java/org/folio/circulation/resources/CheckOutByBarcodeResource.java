@@ -6,6 +6,8 @@ import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequ
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.USER_BARCODE;
+import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.util.List;
@@ -138,7 +140,7 @@ public class CheckOutByBarcodeResource extends Resource {
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
-    completedFuture(Result.succeeded(new LoanAndRelatedRecords(loan)))
+    completedFuture(succeeded(new LoanAndRelatedRecords(loan)))
       .thenApply(servicePointOfCheckoutPresentValidator::refuseCheckOutWhenServicePointIsNotPresent)
       .thenCombineAsync(userRepository.getUserByBarcode(userBarcode), this::addUser)
       .thenCombineAsync(userRepository.getProxyUserByBarcode(proxyUserBarcode), this::addProxyUser)
@@ -190,7 +192,7 @@ public class CheckOutByBarcodeResource extends Resource {
 
   private ResponseWritableResult<JsonObject> createdLoanFrom(Result<JsonObject> result) {
     if (result.failed()) {
-      return Result.failed(result.cause());
+      return failed(result.cause());
     } else {
       return new CreatedJsonResponseResult(result.value(),
         String.format("/circulation/loans/%s", result.value().getString("id")));
@@ -229,7 +231,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(r -> r.next(policy -> {
         sendCheckOutPatronNoticeWhenPolicyFound(relatedRecords, policy,
           patronNoticeService);
-        return Result.succeeded(relatedRecords);
+        return succeeded(relatedRecords);
       }));
   }
 

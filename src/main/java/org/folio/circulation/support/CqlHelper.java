@@ -1,5 +1,8 @@
 package org.folio.circulation.support;
 
+import static java.lang.String.valueOf;
+import static org.folio.circulation.support.Result.of;
+
 import java.lang.invoke.MethodHandles;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -23,8 +26,7 @@ public class CqlHelper {
   public static Result<String> encodeQuery(String cqlQuery) {
     log.info("Encoding query {}", cqlQuery);
 
-    return Result.of(() -> URLEncoder.encode(cqlQuery,
-      String.valueOf(StandardCharsets.UTF_8)));
+    return of(() -> URLEncoder.encode(cqlQuery, valueOf(StandardCharsets.UTF_8)));
   }
 
   /**
@@ -55,7 +57,7 @@ public class CqlHelper {
       .collect(Collectors.toList());
 
     if(filteredValues.isEmpty()) {
-      return Result.of(() -> null);
+      return of(() -> null);
     }
 
     String valueQuery = String.format("%s==(%s)",

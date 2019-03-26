@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.ArrayList;
@@ -35,7 +36,7 @@ class PatronGroupRepository {
       return patronGroupsStorageClient.getMany(query, groupsToFetch.size(), 0)
         .thenApply(this::mapResponseToPatronGroups)
         .thenApply(multiplePatronGroupsResult -> multiplePatronGroupsResult.next(
-          patronGroups -> Result.of(() -> matchGroupsToUsers(request, patronGroups))));
+          patronGroups -> of(() -> matchGroupsToUsers(request, patronGroups))));
     });
   }
 
@@ -95,7 +96,7 @@ class PatronGroupRepository {
     MultipleRecords<Request> requests,
     MultipleRecords<PatronGroup> patronGroups) {
 
-    return Result.of(() ->
+    return of(() ->
       requests.mapRecords(request -> matchGroupsToUsers(request, patronGroups)));
   }
 

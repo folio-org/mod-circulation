@@ -1,11 +1,12 @@
 package org.folio.circulation.domain.policy.library;
 
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
+import static org.folio.circulation.support.Result.succeeded;
+
 import org.folio.circulation.AdjacentOpeningDays;
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-
-import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
 
 public class KeepCurrentDateStrategy implements ClosedLibraryStrategy {
 
@@ -17,7 +18,6 @@ public class KeepCurrentDateStrategy implements ClosedLibraryStrategy {
 
   @Override
   public Result<DateTime> calculateDueDate(DateTime requestedDate, AdjacentOpeningDays openingDays) {
-    return Result.succeeded(
-      requestedDate.withZone(zone).withTime(END_OF_A_DAY));
+    return succeeded(requestedDate.withZone(zone).withTime(END_OF_A_DAY));
   }
 }

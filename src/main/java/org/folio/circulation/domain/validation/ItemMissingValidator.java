@@ -32,5 +32,4 @@ public class ItemMissingValidator {
           return itemMissingErrorFunction.apply(message);
         });
   }
-
 }

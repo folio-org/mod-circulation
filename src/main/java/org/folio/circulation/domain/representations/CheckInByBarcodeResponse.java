@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.representations;
 
 import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.Result.failed;
 
 import org.folio.circulation.domain.CheckInProcessRecords;
 import org.folio.circulation.domain.LoanRepresentation;
@@ -16,10 +17,10 @@ public class CheckInByBarcodeResponse {
   public static ResponseWritableResult<JsonObject> from(
     Result<CheckInProcessRecords> recordsResult) {
 
-    //TODO: Rework HttpResult and how writable results work in order to allow this
+    //TODO: Rework Result and how writable results work in order to allow this
     //to be chained with map rather than a clunky if statement
     if(recordsResult.failed()) {
-      return Result.failed(recordsResult.cause());
+      return failed(recordsResult.cause());
     }
     else {
       return mapToResponse(recordsResult.value());

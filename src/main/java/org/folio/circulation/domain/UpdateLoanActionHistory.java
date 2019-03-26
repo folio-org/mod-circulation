@@ -83,7 +83,7 @@ public class UpdateLoanActionHistory {
         changedLoan.put("itemStatus", itemStatus);
 
         return this.loansStorageClient.put(changedLoan.getString("id"), changedLoan)
-          .thenApply(putLoanResponse -> Result.succeeded(requestAndRelatedRecords));
+          .thenApply(putLoanResponse -> succeeded(requestAndRelatedRecords));
       }
       else {
         String moreThanOneOpenLoanError = String.format(

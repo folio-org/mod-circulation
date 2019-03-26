@@ -43,5 +43,4 @@ public class ConfigurationRepository {
     return configurationClient.getMany(query, 1, 0)
       .thenApply(response -> from(response, TimeZoneConfig::new, RECORDS_NAME));
   }
-
 }

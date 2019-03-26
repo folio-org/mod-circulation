@@ -2,6 +2,8 @@ package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
+import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
@@ -83,7 +85,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
-    completedFuture(Result.succeeded(new LoanAndRelatedRecords(loan)))
+    completedFuture(succeeded(new LoanAndRelatedRecords(loan)))
       .thenCompose(larrResult ->
         getServicePointsForLoanAndRelated(larrResult, servicePointRepository))
       .thenApply(this::refuseWhenNotOpenOrClosed)
@@ -135,7 +137,7 @@ public class LoanCollectionResource extends CollectionResource {
     final ServicePointLoanLocationValidator spLoanLocationValidator =
         new ServicePointLoanLocationValidator();
 
-    completedFuture(Result.succeeded(new LoanAndRelatedRecords(loan)))
+    completedFuture(succeeded(new LoanAndRelatedRecords(loan)))
       .thenCompose(larrResult ->
         getServicePointsForLoanAndRelated(larrResult, servicePointRepository))
       .thenApply(this::refuseWhenNotOpenOrClosed)
@@ -288,7 +290,7 @@ public class LoanCollectionResource extends CollectionResource {
     Loan loan,
     ServicePointRepository servicePointRepository) {
 
-    return servicePointRepository.findServicePointsForLoan(Result.of(() -> loan));
+    return servicePointRepository.findServicePointsForLoan(of(() -> loan));
   }
 
   private ItemNotFoundValidator createItemNotFoundValidator(Loan loan) {

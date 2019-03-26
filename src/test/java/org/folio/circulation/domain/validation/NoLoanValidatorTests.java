@@ -21,7 +21,7 @@ public class NoLoanValidatorTests {
       () -> new ServerErrorFailure("No loan"));
 
     final Result<Optional<Loan>> singleLoan
-      = Result.of(() -> Optional.of(generateLoan()));
+      = of(() -> Optional.of(generateLoan()));
 
     final Result<Optional<Loan>> result =
       validator.failWhenNoLoan(singleLoan);

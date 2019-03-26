@@ -119,12 +119,13 @@ class CheckInProcessAdapter {
 
   CompletableFuture<Result<CheckInProcessRecords>> sendCheckInPatronNotice(CheckInProcessRecords records) {
     if (records.getLoan() == null) {
-      return CompletableFuture.completedFuture(Result.succeeded(records));
+      return completedFuture(succeeded(records));
     }
     return patronNoticePolicyRepository.lookupPolicy(records.getLoan())
       .thenApply(r -> r.next(policy -> {
         sendCheckInPatronNoticeWhenPolicyFound(records, policy);
-        return Result.succeeded(records);
+
+        return succeeded(records);
       }));
   }
 

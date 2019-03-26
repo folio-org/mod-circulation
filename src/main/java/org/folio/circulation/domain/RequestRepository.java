@@ -87,9 +87,9 @@ public class RequestRepository {
     return new SingleRecordFetcher<>(requestsStorageClient, "request",
       new SingleRecordMapper<>(request -> true, response -> {
         if (response.getStatusCode() == 404) {
-          return Result.succeeded(false);
+          return succeeded(false);
         } else {
-          return Result.failed(new ForwardOnFailure(response));
+          return failed(new ForwardOnFailure(response));
         }
       }))
       .fetch(id);

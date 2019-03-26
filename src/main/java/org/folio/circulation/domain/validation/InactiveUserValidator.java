@@ -37,7 +37,8 @@ public class InactiveUserValidator {
       LoanAndRelatedRecords::getProxy,
       "Cannot check out via inactive proxying user",
       "Cannot determine if proxying user is active or not",
-      message -> singleValidationError(message, PROXY_USER_BARCODE, proxyUserBarcode));
+      message -> singleValidationError(message,
+        PROXY_USER_BARCODE, proxyUserBarcode));
   }
 
   public static InactiveUserValidator forUser(String userBarcode) {
@@ -69,12 +70,10 @@ public class InactiveUserValidator {
       return succeeded(records);
     }
     else if (user.canDetermineStatus()) {
-      return failed(inactiveUserErrorFunction.apply(
-        cannotDetermineMessage));
+      return failed(inactiveUserErrorFunction.apply(cannotDetermineMessage));
     }
     if (user.isInactive()) {
-      return failed(inactiveUserErrorFunction.apply(
-        inactiveUserMessage));
+      return failed(inactiveUserErrorFunction.apply(inactiveUserMessage));
     } else {
       return succeeded(records);
     }

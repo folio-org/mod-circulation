@@ -36,7 +36,7 @@ public class ServicePointRepository {
     log.info("Attempting to fetch service point with id {}", id);
 
     if(id == null) {
-      return CompletableFuture.completedFuture(Result.succeeded(null));
+      return completedFuture(succeeded(null));
     }
 
     return getServicePointById(id.toString());

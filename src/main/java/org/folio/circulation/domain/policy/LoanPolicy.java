@@ -490,10 +490,12 @@ public class LoanPolicy {
     return loan;
   }
 
-  private Result<DateTime> getDueDate(String key,
-                                      JsonObject representation,
-                                      DateTime initialDateTime,
-                                      DateTime defaultDateTime) {
+  private Result<DateTime> getDueDate(
+    String key,
+    JsonObject representation,
+    DateTime initialDateTime,
+    DateTime defaultDateTime) {
+
     final Result<DateTime> result;
 
     if (representation.containsKey(key)) {

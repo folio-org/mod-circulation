@@ -1,14 +1,16 @@
 package org.folio.circulation.support;
 
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.http.client.Response;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
 import java.util.function.Function;
 
-import static org.folio.circulation.support.Result.failed;
+import org.folio.circulation.support.http.client.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.vertx.core.json.JsonObject;
 
 public class SingleRecordMapper<T> {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -21,7 +23,7 @@ public class SingleRecordMapper<T> {
   }
 
   SingleRecordMapper(Function<JsonObject, T> mapper) {
-    this(mapper, (response -> Result.failed(new ForwardOnFailure(response))));
+    this(mapper, (response -> failed(new ForwardOnFailure(response))));
   }
 
   public SingleRecordMapper(
@@ -37,14 +39,14 @@ public class SingleRecordMapper<T> {
         response.getStatusCode(), response.getBody());
 
       if (response.getStatusCode() == 200) {
-        return Result.succeeded(mapper.apply(response.getJson()));
+        return succeeded(mapper.apply(response.getJson()));
       } else {
         return this.resultOnFailure.apply(response);
       }
     }
     else {
       log.warn("Did not receive response to request");
-      return Result.failed(new ServerErrorFailure("Did not receive response to request"));
+      return failed(new ServerErrorFailure("Did not receive response to request"));
     }
   }
 

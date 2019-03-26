@@ -1,5 +1,6 @@
 package org.folio.circulation.domain.policy;
 
+import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
@@ -61,7 +62,7 @@ public class RequestPolicyRepository {
     String requestPolicyId) {
 
     return SingleRecordFetcher.json(requestPoliciesStorageClient, "request policy",
-      response -> Result.failed(new ServerErrorFailure(
+      response -> failed(new ServerErrorFailure(
         String.format("Request policy %s could not be found, please check circulation rules", requestPolicyId))))
       .fetch(requestPolicyId);
   }
@@ -74,7 +75,7 @@ public class RequestPolicyRepository {
       = new CompletableFuture<>();
 
     if(item.isNotFound()) {
-      return CompletableFuture.completedFuture(Result.failed(
+      return CompletableFuture.completedFuture(failed(
         new ServerErrorFailure("Unable to find matching request rules for unknown item")));
     }
 
@@ -94,10 +95,10 @@ public class RequestPolicyRepository {
 
     circulationRulesResponse.thenAcceptAsync(response -> {
       if (response.getStatusCode() == 404) {
-        findRequestPolicyCompleted.complete(Result.failed(
+        findRequestPolicyCompleted.complete(failed(
           new ServerErrorFailure("Unable to find matching request rules")));
       } else if (response.getStatusCode() != 200) {
-        findRequestPolicyCompleted.complete(Result.failed(
+        findRequestPolicyCompleted.complete(failed(
           new ForwardOnFailure(response)));
       } else {
         findRequestPolicyCompleted.complete(

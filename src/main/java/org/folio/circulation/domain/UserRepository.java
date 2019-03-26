@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
@@ -98,7 +99,7 @@ public class UserRepository {
     return usersStorageClient.getMany(query, requests.size(), 0)
       .thenApply(this::mapResponseToUsers)
       .thenApply(multipleUsersResult -> multipleUsersResult.next(
-        multipleUsers -> Result.of(() ->
+        multipleUsers -> of(() ->
           multipleRequests.mapRecords(request ->
             matchUsersToRequests(request, multipleUsers)))));
   }

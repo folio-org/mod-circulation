@@ -1,8 +1,9 @@
 package org.folio.circulation.support;
 
-import io.vertx.core.http.HttpServerResponse;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.SuccessResponse;
+
+import io.vertx.core.http.HttpServerResponse;
 
 public class NoContentResult implements ResponseWritableResult<Void> {
   @Override

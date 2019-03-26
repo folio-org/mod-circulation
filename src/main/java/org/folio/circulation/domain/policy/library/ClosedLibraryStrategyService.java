@@ -1,5 +1,12 @@
 package org.folio.circulation.domain.policy.library;
 
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.determineClosedLibraryStrategy;
+import static org.folio.circulation.support.Result.succeeded;
+
+import java.util.Comparator;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+
 import org.folio.circulation.AdjacentOpeningDays;
 import org.folio.circulation.domain.CalendarRepository;
 import org.folio.circulation.domain.Loan;
@@ -9,12 +16,6 @@ import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
-
-import java.util.Comparator;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-
-import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.determineClosedLibraryStrategy;
 
 public class ClosedLibraryStrategyService {
 
@@ -54,14 +55,14 @@ public class ClosedLibraryStrategyService {
     Optional<DateTime> optionalDueDateLimit =
       loanPolicy.getScheduleLimit(loan.getLoanDate(), isRenewal, currentDateTime);
     if (!optionalDueDateLimit.isPresent()) {
-      return Result.succeeded(dueDate);
+      return succeeded(dueDate);
     }
 
     DateTime dueDateLimit = optionalDueDateLimit.get();
     Comparator<DateTime> dateComparator =
       Comparator.comparing(dateTime -> dateTime.withZone(timeZone).toLocalDate());
     if (dateComparator.compare(dueDate, dueDateLimit) <= 0) {
-      return Result.succeeded(dueDate);
+      return succeeded(dueDate);
     }
 
     ClosedLibraryStrategy strategy =

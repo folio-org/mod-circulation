@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.policy;
 
 import static org.folio.circulation.support.CqlHelper.multipleRecordsCqlQuery;
+import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.ArrayList;
@@ -83,7 +84,7 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
       schedulesIds.size(), 0)
       .thenApply(schedulesResponse -> {
         if (schedulesResponse.getStatusCode() != 200) {
-          return Result.failed(new ServerErrorFailure(
+          return failed(new ServerErrorFailure(
             String.format("Fixed due date schedules request (%s) failed %s: %s",
               schedulesQuery, schedulesResponse.getStatusCode(),
               schedulesResponse.getBody())));
@@ -106,7 +107,7 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
 
   @Override
   protected Result<LoanPolicy> toPolicy(JsonObject representation) {
-    return Result.succeeded(new LoanPolicy(representation,
+    return succeeded(new LoanPolicy(representation,
       new NoFixedDueDateSchedules(), new NoFixedDueDateSchedules()));
   }
 

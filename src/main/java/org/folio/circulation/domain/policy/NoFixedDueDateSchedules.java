@@ -1,5 +1,7 @@
 package org.folio.circulation.domain.policy;
 
+import static org.folio.circulation.support.Result.succeeded;
+
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -24,6 +26,6 @@ class NoFixedDueDateSchedules extends FixedDueDateSchedules {
     DateTime loanDate,
     Supplier<ValidationError> noApplicableScheduleError) {
 
-    return Result.succeeded(dueDate);
+    return succeeded(dueDate);
   }
 }

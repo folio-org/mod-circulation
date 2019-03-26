@@ -1,10 +1,12 @@
 package org.folio.circulation.domain.policy.library;
 
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.failureForAbsentTimetable;
+import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.succeeded;
+
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-
-import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.failureForAbsentTimetable;
 
 public class EndOfCurrentHoursStrategy extends ShortTermLoansBaseStrategy {
 
@@ -19,11 +21,11 @@ public class EndOfCurrentHoursStrategy extends ShortTermLoansBaseStrategy {
   protected Result<DateTime> calculateIfClosed(LibraryTimetable libraryTimetable, LibraryInterval requestedInterval) {
     LibraryInterval currentTimeInterval = libraryTimetable.findInterval(currentTime);
     if (currentTimeInterval == null) {
-      return Result.failed(failureForAbsentTimetable());
+      return failed(failureForAbsentTimetable());
     }
     if (currentTimeInterval.isOpen()) {
-      return Result.succeeded(currentTimeInterval.getEndTime());
+      return succeeded(currentTimeInterval.getEndTime());
     }
-    return Result.succeeded(currentTimeInterval.getNext().getEndTime());
+    return succeeded(currentTimeInterval.getNext().getEndTime());
   }
 }
