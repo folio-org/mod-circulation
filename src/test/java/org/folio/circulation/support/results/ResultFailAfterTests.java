@@ -3,7 +3,7 @@ package org.folio.circulation.support.results;
 import static api.support.matchers.FailureMatcher.isErrorFailureContaining;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
-import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.results.ResultExamples.alreadyFailed;
 import static org.folio.circulation.support.results.ResultExamples.conditionFailed;
 import static org.folio.circulation.support.results.ResultExamples.exampleFailure;
@@ -13,16 +13,16 @@ import static org.junit.Assert.assertThat;
 
 import java.util.concurrent.ExecutionException;
 
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.junit.Test;
 
-public class HttpResultFailAfterTests {
+public class ResultFailAfterTests {
   @Test
   public void shouldPassThroughResultWhenConditionIsFalse()
     throws ExecutionException,
     InterruptedException {
 
-    final HttpResult<Integer> result = succeeded(10)
+    final Result<Integer> result = succeeded(10)
       .failAfter(value -> completedFuture(succeeded(false)),
         value -> exampleFailure("Specified failure"))
       .get();
@@ -36,7 +36,7 @@ public class HttpResultFailAfterTests {
     throws ExecutionException,
     InterruptedException {
 
-    final HttpResult<Integer> result = succeeded(10)
+    final Result<Integer> result = succeeded(10)
       .failAfter(value -> completedFuture(succeeded(true)),
         value -> exampleFailure("Specified failure"))
       .get();
@@ -49,7 +49,7 @@ public class HttpResultFailAfterTests {
     throws ExecutionException,
     InterruptedException {
 
-    final HttpResult<Integer> result = alreadyFailed()
+    final Result<Integer> result = alreadyFailed()
       .failAfter(value -> completedFuture(succeeded(false)),
         value -> exampleFailure("Specified failure"))
       .get();
@@ -62,7 +62,7 @@ public class HttpResultFailAfterTests {
     throws ExecutionException,
     InterruptedException {
 
-    final HttpResult<Integer> result = succeeded(10)
+    final Result<Integer> result = succeeded(10)
       .failAfter(value -> completedFuture(conditionFailed()),
         value -> exampleFailure("Specified failure"))
       .get();
@@ -75,7 +75,7 @@ public class HttpResultFailAfterTests {
     throws ExecutionException,
     InterruptedException {
 
-    final HttpResult<Integer> result = succeeded(10)
+    final Result<Integer> result = succeeded(10)
       .failAfter(value -> supplyAsync(() -> { throw somethingWentWrong(); }),
         value -> exampleFailure("Specified failure"))
       .get();
@@ -88,7 +88,7 @@ public class HttpResultFailAfterTests {
     throws ExecutionException,
     InterruptedException {
 
-    final HttpResult<Integer> result = succeeded(10)
+    final Result<Integer> result = succeeded(10)
       .failAfter(value -> completedFuture(succeeded(true)),
         value -> { throw somethingWentWrong(); })
       .get();

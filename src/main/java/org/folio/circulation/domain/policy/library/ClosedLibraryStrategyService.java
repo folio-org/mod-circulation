@@ -1,20 +1,21 @@
 package org.folio.circulation.domain.policy.library;
 
-import org.folio.circulation.AdjacentOpeningDays;
-import org.folio.circulation.domain.CalendarRepository;
-import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.policy.LoanPolicy;
-import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.HttpResult;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDate;
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.determineClosedLibraryStrategy;
+import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.determineClosedLibraryStrategy;
+import org.folio.circulation.AdjacentOpeningDays;
+import org.folio.circulation.domain.CalendarRepository;
+import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.policy.LoanPolicy;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.Result;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
 
 public class ClosedLibraryStrategyService {
 
@@ -34,13 +35,13 @@ public class ClosedLibraryStrategyService {
     this.isRenewal = isRenewal;
   }
 
-  public CompletableFuture<HttpResult<DateTime>> applyCLDDM(Loan loan, LoanPolicy loanPolicy, DateTimeZone timeZone) {
+  public CompletableFuture<Result<DateTime>> applyCLDDM(Loan loan, LoanPolicy loanPolicy, DateTimeZone timeZone) {
     LocalDate requestedDate = loan.getDueDate().withZone(timeZone).toLocalDate();
     return calendarRepository.lookupOpeningDays(requestedDate, loan.getCheckoutServicePointId())
       .thenApply(r -> r.next(openingDays -> applyStrategy(loan, loanPolicy, openingDays, timeZone)));
   }
 
-  private HttpResult<DateTime> applyStrategy(
+  private Result<DateTime> applyStrategy(
     Loan loan, LoanPolicy loanPolicy, AdjacentOpeningDays openingDays, DateTimeZone timeZone) {
     DateTime initialDueDate = loan.getDueDate();
     ClosedLibraryStrategy strategy = determineClosedLibraryStrategy(loanPolicy, currentDateTime, timeZone);
@@ -49,19 +50,19 @@ public class ClosedLibraryStrategyService {
       .next(dateTime -> applyFixedDueDateLimit(dateTime, loan, loanPolicy, openingDays, timeZone));
   }
 
-  private HttpResult<DateTime> applyFixedDueDateLimit(
+  private Result<DateTime> applyFixedDueDateLimit(
     DateTime dueDate, Loan loan, LoanPolicy loanPolicy, AdjacentOpeningDays openingDays, DateTimeZone timeZone) {
     Optional<DateTime> optionalDueDateLimit =
       loanPolicy.getScheduleLimit(loan.getLoanDate(), isRenewal, currentDateTime);
     if (!optionalDueDateLimit.isPresent()) {
-      return HttpResult.succeeded(dueDate);
+      return succeeded(dueDate);
     }
 
     DateTime dueDateLimit = optionalDueDateLimit.get();
     Comparator<DateTime> dateComparator =
       Comparator.comparing(dateTime -> dateTime.withZone(timeZone).toLocalDate());
     if (dateComparator.compare(dueDate, dueDateLimit) <= 0) {
-      return HttpResult.succeeded(dueDate);
+      return succeeded(dueDate);
     }
 
     ClosedLibraryStrategy strategy =

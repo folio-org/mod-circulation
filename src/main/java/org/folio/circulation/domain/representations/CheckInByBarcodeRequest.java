@@ -1,6 +1,6 @@
 package org.folio.circulation.domain.representations;
 
-import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getUUIDProperty;
@@ -9,7 +9,7 @@ import static org.folio.circulation.support.ValidationErrorFailure.failedValidat
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
@@ -33,7 +33,7 @@ public class CheckInByBarcodeRequest {
     this.checkInDate = checkInDate;
   }
 
-  public static HttpResult<CheckInByBarcodeRequest> from(JsonObject json) {
+  public static Result<CheckInByBarcodeRequest> from(JsonObject json) {
     final String itemBarcode = getProperty(json, ITEM_BARCODE);
 
     if (StringUtils.isBlank(itemBarcode)) {

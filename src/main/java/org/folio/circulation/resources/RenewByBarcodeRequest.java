@@ -1,11 +1,11 @@
 package org.folio.circulation.resources;
 
-import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 
 import io.vertx.core.json.JsonObject;
 
@@ -21,7 +21,7 @@ public class RenewByBarcodeRequest {
     this.userBarcode = userBarcode;
   }
 
-  public static HttpResult<RenewByBarcodeRequest> from(JsonObject json) {
+  public static Result<RenewByBarcodeRequest> from(JsonObject json) {
     final String itemBarcode = getProperty(json, ITEM_BARCODE);
 
     if(StringUtils.isBlank(itemBarcode)) {

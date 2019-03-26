@@ -1,12 +1,12 @@
 package org.folio.circulation.domain.validation;
 
-import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 
 public class ServicePointOfCheckoutPresentValidator {
@@ -18,8 +18,8 @@ public class ServicePointOfCheckoutPresentValidator {
     this.servicePointOfCheckoutPresentFuntion = servicePointOfCheckoutPresentErrorFunction;
   }
 
-  public HttpResult<LoanAndRelatedRecords> refuseCheckOutWhenServicePointIsNotPresent(
-    HttpResult<LoanAndRelatedRecords> result) {
+  public Result<LoanAndRelatedRecords> refuseCheckOutWhenServicePointIsNotPresent(
+    Result<LoanAndRelatedRecords> result) {
 
     return result.failWhen(
         records -> succeeded(StringUtils.isEmpty(records.getLoan().getCheckoutServicePointId())),

@@ -2,20 +2,22 @@ package org.folio.circulation.domain.notice;
 
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedObjectProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
+import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
 import org.folio.circulation.domain.policy.LoanPolicyPeriod;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.joda.time.Period;
 
 import io.vertx.core.json.JsonObject;
 
-public class PatronNoticePolicyMapper implements Function<JsonObject, HttpResult<PatronNoticePolicy>> {
+public class PatronNoticePolicyMapper implements Function<JsonObject, Result<PatronNoticePolicy>> {
 
   private static final String LOAN_NOTICES = "loanNotices";
   private static final String REQUEST_NOTICES = "requestNotices";
@@ -35,16 +37,16 @@ public class PatronNoticePolicyMapper implements Function<JsonObject, HttpResult
   private static final String RECURRING_FREQUENCY = "Recurring";
 
   @Override
-  public HttpResult<PatronNoticePolicy> apply(JsonObject representation) {
+  public Result<PatronNoticePolicy> apply(JsonObject representation) {
     try {
       List<NoticeConfiguration> loanNoticeConfigurations =
         JsonArrayHelper.mapToList(representation, LOAN_NOTICES, this::toNoticeConfiguration);
       List<NoticeConfiguration> requestNoticeConfigurations =
         JsonArrayHelper.mapToList(representation, REQUEST_NOTICES, this::toNoticeConfiguration);
 
-      return HttpResult.succeeded(new PatronNoticePolicy(loanNoticeConfigurations, requestNoticeConfigurations));
+      return succeeded(new PatronNoticePolicy(loanNoticeConfigurations, requestNoticeConfigurations));
     } catch (IllegalArgumentException ex) {
-      return HttpResult.failed(new ServerErrorFailure("Unable to parse patron notice policy:" + ex.getMessage()));
+      return failed(new ServerErrorFailure("Unable to parse patron notice policy:" + ex.getMessage()));
     }
   }
 

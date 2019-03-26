@@ -1,6 +1,8 @@
 package org.folio.circulation.domain.policy;
 
-import static org.folio.circulation.support.HttpResult.succeeded;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
@@ -11,7 +13,7 @@ import org.folio.circulation.domain.User;
 import org.folio.circulation.support.CirculationRulesClient;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.ForwardOnFailure;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.http.client.Response;
@@ -34,11 +36,11 @@ public abstract class CirculationPolicyRepository<T> {
     this.policyStorageClient = policyStorageClient;
   }
 
-  public CompletableFuture<HttpResult<T>> lookupPolicy(Loan loan) {
+  public CompletableFuture<Result<T>> lookupPolicy(Loan loan) {
     return lookupPolicy(loan.getItem(), loan.getUser());
   }
 
-  private CompletableFuture<HttpResult<T>> lookupPolicy(
+  private CompletableFuture<Result<T>> lookupPolicy(
     Item item,
     User user) {
 
@@ -47,27 +49,28 @@ public abstract class CirculationPolicyRepository<T> {
       .thenApply(result -> result.next(this::toPolicy));
   }
 
-  private CompletableFuture<HttpResult<JsonObject>> lookupPolicy(String policyId) {
+  private CompletableFuture<Result<JsonObject>> lookupPolicy(String policyId) {
 
     return SingleRecordFetcher.json(policyStorageClient, "circulation policy",
-      response -> HttpResult.failed(new ServerErrorFailure(getPolicyNotFoundErrorMessage(policyId))))
+      response -> failed(
+        new ServerErrorFailure(getPolicyNotFoundErrorMessage(policyId))))
       .fetch(policyId);
   }
 
-  private CompletableFuture<HttpResult<String>> lookupPolicyId(
+  private CompletableFuture<Result<String>> lookupPolicyId(
     Item item,
     User user) {
 
-    CompletableFuture<HttpResult<String>> findLoanPolicyCompleted
+    CompletableFuture<Result<String>> findLoanPolicyCompleted
       = new CompletableFuture<>();
 
     if (item.isNotFound()) {
-      return CompletableFuture.completedFuture(HttpResult.failed(
+      return completedFuture(failed(
         new ServerErrorFailure("Unable to apply circulation rules for unknown item")));
     }
 
     if (item.doesNotHaveHolding()) {
-      return CompletableFuture.completedFuture(HttpResult.failed(
+      return completedFuture(failed(
         new ServerErrorFailure("Unable to apply circulation rules for unknown holding")));
     }
 
@@ -87,10 +90,10 @@ public abstract class CirculationPolicyRepository<T> {
 
     circulationRulesResponse.thenAcceptAsync(response -> {
       if (response.getStatusCode() == 404) {
-        findLoanPolicyCompleted.complete(HttpResult.failed(
+        findLoanPolicyCompleted.complete(failed(
           new ServerErrorFailure("Unable to apply circulation rules")));
       } else if (response.getStatusCode() != 200) {
-        findLoanPolicyCompleted.complete(HttpResult.failed(
+        findLoanPolicyCompleted.complete(failed(
           new ForwardOnFailure(response)));
       } else {
         String policyId = fetchPolicyId(response.getJson());
@@ -103,7 +106,7 @@ public abstract class CirculationPolicyRepository<T> {
 
   protected abstract String getPolicyNotFoundErrorMessage(String policyId);
 
-  protected abstract HttpResult<T> toPolicy(JsonObject representation);
+  protected abstract Result<T> toPolicy(JsonObject representation);
 
   protected abstract String fetchPolicyId(JsonObject jsonObject);
 }

@@ -2,7 +2,7 @@ package org.folio.circulation.domain.validation;
 
 import static api.support.fixtures.UserExamples.basedUponStevenJones;
 import static org.folio.circulation.domain.validation.InactiveUserValidator.forUser;
-import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
@@ -11,7 +11,7 @@ import static org.junit.Assert.assertThat;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.junit.Test;
 
@@ -24,7 +24,7 @@ public class InactiveUserValidatorTests {
 
     final InactiveUserValidator validator = forUser(steve.getBarcode());
 
-    final HttpResult<LoanAndRelatedRecords> result =
+    final Result<LoanAndRelatedRecords> result =
       validator.refuseWhenUserIsInactive(steve, null);
 
     assertThat(result.succeeded(), is(true));
@@ -38,7 +38,7 @@ public class InactiveUserValidatorTests {
 
     final InactiveUserValidator validator = forUser(steve.getBarcode());
 
-    final HttpResult<LoanAndRelatedRecords> result =
+    final Result<LoanAndRelatedRecords> result =
       validator.refuseWhenUserIsInactive(steve, null);
 
     assertThat(result.failed(), is(true));
@@ -52,7 +52,7 @@ public class InactiveUserValidatorTests {
 
     final InactiveUserValidator validator = forUser(steve.getBarcode());
 
-    final HttpResult<LoanAndRelatedRecords> result =
+    final Result<LoanAndRelatedRecords> result =
       validator.refuseWhenUserIsInactive(steve, null);
 
     assertThat(result.failed(), is(true));
@@ -62,7 +62,7 @@ public class InactiveUserValidatorTests {
   public void allowNullUser() {
     final InactiveUserValidator validator = forUser("");
 
-    final HttpResult<LoanAndRelatedRecords> result =
+    final Result<LoanAndRelatedRecords> result =
       validator.refuseWhenUserIsInactive(null, null);
 
     assertThat(result.succeeded(), is(true));
@@ -78,7 +78,7 @@ public class InactiveUserValidatorTests {
       records -> { throw new RuntimeException("Something went wrong"); },
       "", "", s -> singleValidationError("failed", "", ""));
 
-    final HttpResult<LoanAndRelatedRecords> result =
+    final Result<LoanAndRelatedRecords> result =
       validator.refuseWhenUserIsInactive(succeeded(new LoanAndRelatedRecords(
         new Loan(new JsonObject(), null, steve, null, null, null))));
 

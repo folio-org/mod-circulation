@@ -7,7 +7,7 @@ import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.storage.SingleOpenLoanByUserAndItemBarcodeFinder;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ItemRepository;
 
 import io.vertx.core.http.HttpClient;
@@ -19,7 +19,7 @@ public class RenewByBarcodeResource extends RenewalResource {
   }
 
   @Override
-  protected CompletableFuture<HttpResult<Loan>> findLoan(
+  protected CompletableFuture<Result<Loan>> findLoan(
     JsonObject request,
     LoanRepository loanRepository,
     ItemRepository itemRepository,

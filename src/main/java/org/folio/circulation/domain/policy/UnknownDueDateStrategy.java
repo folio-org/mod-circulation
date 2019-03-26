@@ -6,7 +6,7 @@ import static org.folio.circulation.support.ValidationErrorFailure.failedValidat
 import java.util.function.Function;
 
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 
@@ -32,7 +32,7 @@ class UnknownDueDateStrategy extends DueDateStrategy {
   }
 
   @Override
-  HttpResult<DateTime> calculateDueDate(Loan loan) {
+  Result<DateTime> calculateDueDate(Loan loan) {
     if(isRenewal) {
       return failedValidation(errorForPolicy(
           format(RENEWAL_UNRECOGNISED_PROFILE_MESSAGE, profileId)));

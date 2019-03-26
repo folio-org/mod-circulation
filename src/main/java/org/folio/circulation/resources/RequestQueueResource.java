@@ -7,7 +7,7 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.RequestRepresentation;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.OkJsonHttpResult;
+import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.http.server.WebContext;
 
 public class RequestQueueResource extends Resource {
@@ -35,7 +35,7 @@ public class RequestQueueResource extends Resource {
         requestQueue.getRequests(), requestQueue.size())))
       .thenApply(r -> r.map(requests ->
         requests.asJson(requestRepresentation::extendedRepresentation, "requests")))
-      .thenApply(OkJsonHttpResult::from)
+      .thenApply(OkJsonResponseResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 }

@@ -1,10 +1,12 @@
 package org.folio.circulation.domain.policy;
 
+import static org.folio.circulation.support.Result.succeeded;
+
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 
@@ -19,11 +21,11 @@ class NoFixedDueDateSchedules extends FixedDueDateSchedules {
   }
 
   @Override
-  HttpResult<DateTime> truncateDueDate(
+  Result<DateTime> truncateDueDate(
     DateTime dueDate,
     DateTime loanDate,
     Supplier<ValidationError> noApplicableScheduleError) {
 
-    return HttpResult.succeeded(dueDate);
+    return succeeded(dueDate);
   }
 }

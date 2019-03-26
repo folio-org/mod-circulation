@@ -4,7 +4,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.function.Function;
 
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -27,7 +27,7 @@ abstract class DueDateStrategy {
     this.errorForPolicy = errorForPolicy;
   }
 
-  abstract HttpResult<DateTime> calculateDueDate(Loan loan);
+  abstract Result<DateTime> calculateDueDate(Loan loan);
 
   ValidationError errorForPolicy(String reason) {
     return errorForPolicy.apply(reason);

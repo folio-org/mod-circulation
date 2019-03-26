@@ -11,7 +11,7 @@ import org.folio.circulation.rules.Drools;
 import org.folio.circulation.rules.Text2Drools;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.OkJsonHttpResult;
+import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.http.server.ClientErrorResponse;
 import org.folio.circulation.support.http.server.ForwardResponse;
 import org.folio.circulation.support.http.server.WebContext;
@@ -253,7 +253,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
         String policyId = getPolicyId(request.params(), drools);
         JsonObject json = new JsonObject().put(getPolicyIdKey(), policyId);
 
-        new OkJsonHttpResult(json)
+        new OkJsonResponseResult(json)
           .writeTo(routingContext.response());
       }
       catch (Exception e) {
@@ -272,7 +272,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
       JsonArray matches = getPolicies(request.params(), drools);
       JsonObject json = new JsonObject().put("circulationRuleMatches", matches);
 
-      new OkJsonHttpResult(json)
+      new OkJsonResponseResult(json)
         .writeTo(routingContext.response());
     }
     catch (Exception e) {
