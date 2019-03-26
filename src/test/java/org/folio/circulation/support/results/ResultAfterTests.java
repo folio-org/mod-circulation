@@ -3,7 +3,7 @@ package org.folio.circulation.support.results;
 import static api.support.matchers.FailureMatcher.isErrorFailureContaining;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
-import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.results.ResultExamples.alreadyFailed;
 import static org.folio.circulation.support.results.ResultExamples.shouldNotExecute;
 import static org.folio.circulation.support.results.ResultExamples.somethingWentWrong;
@@ -12,16 +12,16 @@ import static org.junit.Assert.assertThat;
 
 import java.util.concurrent.ExecutionException;
 
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.junit.Test;
 
-public class HttpResultAfterTests {
+public class ResultAfterTests {
   @Test
   public void shouldSucceedWhenNextStepIsSuccessful()
     throws ExecutionException,
     InterruptedException {
 
-    final HttpResult<Integer> result = succeeded(10)
+    final Result<Integer> result = succeeded(10)
       .after(value -> completedFuture(succeeded(value + 10)))
       .get();
 
@@ -34,7 +34,7 @@ public class HttpResultAfterTests {
     throws ExecutionException,
     InterruptedException {
     
-    final HttpResult<Integer> result = alreadyFailed()
+    final Result<Integer> result = alreadyFailed()
       .<Integer>after(value -> { throw shouldNotExecute(); })
       .get();
 
@@ -46,7 +46,7 @@ public class HttpResultAfterTests {
     throws ExecutionException,
     InterruptedException {
 
-    final HttpResult<Integer> result = succeeded(10)
+    final Result<Integer> result = succeeded(10)
       .<Integer>after(value -> { throw somethingWentWrong(); })
       .get();
 
@@ -58,7 +58,7 @@ public class HttpResultAfterTests {
     throws ExecutionException,
     InterruptedException {
 
-    final HttpResult<Integer> result = succeeded(10)
+    final Result<Integer> result = succeeded(10)
       .<Integer>after(value -> supplyAsync(() -> { throw somethingWentWrong(); }))
       .get();
 

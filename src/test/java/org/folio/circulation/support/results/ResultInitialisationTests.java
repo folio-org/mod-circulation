@@ -10,13 +10,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.junit.Test;
 
-public class HttpResultInitialisationTests {
+public class ResultInitialisationTests {
   @Test
   public void shouldSucceedWhenInitialValue() {
-    final HttpResult<Integer> result = HttpResult.of(() -> 10);
+    final Result<Integer> result = Result.of(() -> 10);
 
     assertThat(result.succeeded(), is(true));
     assertThat(result.value(), is(10));
@@ -24,7 +24,7 @@ public class HttpResultInitialisationTests {
 
   @Test
   public void shouldFailWhenExceptionThrownForInitialValue() {
-    final HttpResult<String> result = HttpResult.of(() -> {
+    final Result<String> result = Result.of(() -> {
       throw exampleException("Initialisation failed");
     });
 
@@ -37,9 +37,9 @@ public class HttpResultInitialisationTests {
     ExecutionException,
     TimeoutException {
 
-    final CompletableFuture<HttpResult<Integer>> futureResult = HttpResult.ofAsync(() -> 10);
+    final CompletableFuture<Result<Integer>> futureResult = Result.ofAsync(() -> 10);
 
-    final HttpResult<Integer> result = futureResult.get(1, TimeUnit.SECONDS);
+    final Result<Integer> result = futureResult.get(1, TimeUnit.SECONDS);
 
     assertThat(result.succeeded(), is(true));
     assertThat(result.value(), is(10));

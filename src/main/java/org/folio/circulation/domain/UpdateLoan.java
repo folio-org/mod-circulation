@@ -2,7 +2,7 @@ package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.applyCLDDMForLoanAndRelatedRecords;
-import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -10,7 +10,7 @@ import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
@@ -36,7 +36,7 @@ public class UpdateLoan {
    * @param requestAndRelatedRecords request and related records. 
    * @return the request and related records with the possibly updated loan.
    */
-  CompletableFuture<HttpResult<RequestAndRelatedRecords>> onRequestCreation(
+  CompletableFuture<Result<RequestAndRelatedRecords>> onRequestCreation(
       RequestAndRelatedRecords requestAndRelatedRecords) {
     Request request = requestAndRelatedRecords.getRequest();
     Loan loan = request.getLoan();
@@ -53,7 +53,7 @@ public class UpdateLoan {
     }
   }
 
-  private HttpResult<LoanAndRelatedRecords> recall(LoanAndRelatedRecords loanAndRelatedRecords) {
+  private Result<LoanAndRelatedRecords> recall(LoanAndRelatedRecords loanAndRelatedRecords) {
     LoanPolicy loanPolicy = loanAndRelatedRecords.getLoanPolicy();
     return loanPolicy.recall(loanAndRelatedRecords.getLoan())
         .map(loanAndRelatedRecords::withLoan);

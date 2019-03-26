@@ -44,11 +44,11 @@ import org.folio.circulation.domain.validation.ItemNotFoundValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointOfCheckoutPresentValidator;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CreatedJsonHttpResult;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.CreatedJsonResponseResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.RouteRegistration;
-import org.folio.circulation.support.WritableHttpResult;
+import org.folio.circulation.support.ResponseWritableResult;
 import org.folio.circulation.support.http.server.WebContext;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -138,7 +138,7 @@ public class CheckOutByBarcodeResource extends Resource {
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
-    completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(loan)))
+    completedFuture(Result.succeeded(new LoanAndRelatedRecords(loan)))
       .thenApply(servicePointOfCheckoutPresentValidator::refuseCheckOutWhenServicePointIsNotPresent)
       .thenCombineAsync(userRepository.getUserByBarcode(userBarcode), this::addUser)
       .thenCombineAsync(userRepository.getProxyUserByBarcode(proxyUserBarcode), this::addProxyUser)
@@ -167,7 +167,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
-  private HttpResult<LoanAndRelatedRecords> calculateDefaultInitialDueDate(LoanAndRelatedRecords loanAndRelatedRecords) {
+  private Result<LoanAndRelatedRecords> calculateDefaultInitialDueDate(LoanAndRelatedRecords loanAndRelatedRecords) {
     Loan loan = loanAndRelatedRecords.getLoan();
     LoanPolicy loanPolicy = loanAndRelatedRecords.getLoanPolicy();
     return loanPolicy.calculateInitialDueDate(loan)
@@ -188,40 +188,40 @@ public class CheckOutByBarcodeResource extends Resource {
     }
   }
 
-  private WritableHttpResult<JsonObject> createdLoanFrom(HttpResult<JsonObject> result) {
+  private ResponseWritableResult<JsonObject> createdLoanFrom(Result<JsonObject> result) {
     if (result.failed()) {
-      return HttpResult.failed(result.cause());
+      return Result.failed(result.cause());
     } else {
-      return new CreatedJsonHttpResult(result.value(),
+      return new CreatedJsonResponseResult(result.value(),
         String.format("/circulation/loans/%s", result.value().getString("id")));
     }
   }
 
-  private HttpResult<LoanAndRelatedRecords> addProxyUser(
-    HttpResult<LoanAndRelatedRecords> loanResult,
-    HttpResult<User> getUserResult) {
+  private Result<LoanAndRelatedRecords> addProxyUser(
+    Result<LoanAndRelatedRecords> loanResult,
+    Result<User> getUserResult) {
 
-    return HttpResult.combine(loanResult, getUserResult,
+    return Result.combine(loanResult, getUserResult,
       LoanAndRelatedRecords::withProxyingUser);
   }
 
-  private HttpResult<LoanAndRelatedRecords> addUser(
-    HttpResult<LoanAndRelatedRecords> loanResult,
-    HttpResult<User> getUserResult) {
+  private Result<LoanAndRelatedRecords> addUser(
+    Result<LoanAndRelatedRecords> loanResult,
+    Result<User> getUserResult) {
 
-    return HttpResult.combine(loanResult, getUserResult,
+    return Result.combine(loanResult, getUserResult,
       LoanAndRelatedRecords::withRequestingUser);
   }
 
-  private HttpResult<LoanAndRelatedRecords> addItem(
-    HttpResult<LoanAndRelatedRecords> loanResult,
-    HttpResult<Item> inventoryRecordsResult) {
+  private Result<LoanAndRelatedRecords> addItem(
+    Result<LoanAndRelatedRecords> loanResult,
+    Result<Item> inventoryRecordsResult) {
 
-    return HttpResult.combine(loanResult, inventoryRecordsResult,
+    return Result.combine(loanResult, inventoryRecordsResult,
       LoanAndRelatedRecords::withItem);
   }
 
-  private CompletableFuture<HttpResult<LoanAndRelatedRecords>> sendCheckOutPatronNotice(
+  private CompletableFuture<Result<LoanAndRelatedRecords>> sendCheckOutPatronNotice(
     LoanAndRelatedRecords relatedRecords,
     PatronNoticePolicyRepository noticePolicyRepository,
     PatronNoticeService patronNoticeService) {
@@ -229,7 +229,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(r -> r.next(policy -> {
         sendCheckOutPatronNoticeWhenPolicyFound(relatedRecords, policy,
           patronNoticeService);
-        return HttpResult.succeeded(relatedRecords);
+        return Result.succeeded(relatedRecords);
       }));
   }
 

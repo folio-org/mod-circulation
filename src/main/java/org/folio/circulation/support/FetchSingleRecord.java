@@ -33,7 +33,7 @@ public class FetchSingleRecord<T> {
     return new FetchSingleRecord<>(recordType, client, mapper);
   }
 
-  public SingleRecordFetcher<T> whenNotFound(HttpResult<T> result) {
+  public SingleRecordFetcher<T> whenNotFound(Result<T> result) {
     return new SingleRecordFetcher<>(client, recordType, notFound(mapper, result));
   }
 }

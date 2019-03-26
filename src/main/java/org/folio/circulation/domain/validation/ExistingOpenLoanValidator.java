@@ -1,13 +1,13 @@
 package org.folio.circulation.domain.validation;
 
-import static org.folio.circulation.support.HttpResult.ofAsync;
+import static org.folio.circulation.support.Result.ofAsync;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepository;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 
 public class ExistingOpenLoanValidator {
@@ -22,7 +22,7 @@ public class ExistingOpenLoanValidator {
     this.existingOpenLoanErrorFunction = existingOpenLoanErrorFunction;
   }
 
-  public CompletableFuture<HttpResult<LoanAndRelatedRecords>> refuseWhenHasOpenLoan(
+  public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenHasOpenLoan(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
     return ofAsync(() -> loanAndRelatedRecords.getLoan().getItemId())

@@ -7,8 +7,8 @@ import static org.folio.circulation.domain.representations.LoanProperties.RETURN
 import static org.folio.circulation.domain.representations.LoanProperties.STATUS;
 import static org.folio.circulation.domain.representations.LoanProperties.SYSTEM_RETURN_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.USER_ID;
-import static org.folio.circulation.support.HttpResult.failed;
-import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
@@ -21,7 +21,7 @@ import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.representations.LoanProperties;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -125,7 +125,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     representation.remove(ACTION_COMMENT);
   }
 
-  public HttpResult<Void> isValidStatus() {
+  public Result<Void> isValidStatus() {
     if (!representation.containsKey(STATUS)) {
       return failed(new ServerErrorFailure("Loan does not have a status"));
     }
@@ -141,7 +141,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     }
   }
 
-  public HttpResult<Void> openLoanHasUserId() {
+  public Result<Void> openLoanHasUserId() {
     if (Objects.equals(getStatus(), "Open") && getUserId() == null) {
       return failedValidation("Open loan must have a user ID",
         USER_ID, getUserId());
@@ -150,7 +150,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     }
   }
 
-  public HttpResult<Void> closedLoanHasCheckInServicePointId() {
+  public Result<Void> closedLoanHasCheckInServicePointId() {
     if (isClosed() && getCheckInServicePointId() == null) {
       return failedValidation("A Closed loan must have a Checkin Service Point",
           CHECKIN_SERVICE_POINT_ID, getCheckInServicePointId());

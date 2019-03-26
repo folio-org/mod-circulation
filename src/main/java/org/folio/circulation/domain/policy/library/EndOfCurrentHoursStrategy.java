@@ -1,6 +1,6 @@
 package org.folio.circulation.domain.policy.library;
 
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
@@ -16,14 +16,14 @@ public class EndOfCurrentHoursStrategy extends ShortTermLoansBaseStrategy {
   }
 
   @Override
-  protected HttpResult<DateTime> calculateIfClosed(LibraryTimetable libraryTimetable, LibraryInterval requestedInterval) {
+  protected Result<DateTime> calculateIfClosed(LibraryTimetable libraryTimetable, LibraryInterval requestedInterval) {
     LibraryInterval currentTimeInterval = libraryTimetable.findInterval(currentTime);
     if (currentTimeInterval == null) {
-      return HttpResult.failed(failureForAbsentTimetable());
+      return Result.failed(failureForAbsentTimetable());
     }
     if (currentTimeInterval.isOpen()) {
-      return HttpResult.succeeded(currentTimeInterval.getEndTime());
+      return Result.succeeded(currentTimeInterval.getEndTime());
     }
-    return HttpResult.succeeded(currentTimeInterval.getNext().getEndTime());
+    return Result.succeeded(currentTimeInterval.getNext().getEndTime());
   }
 }

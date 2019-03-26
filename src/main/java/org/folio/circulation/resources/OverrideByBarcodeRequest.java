@@ -1,12 +1,12 @@
 package org.folio.circulation.resources;
 
-import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
@@ -46,7 +46,7 @@ public class OverrideByBarcodeRequest {
     return dueDate;
   }
 
-  public static HttpResult<OverrideByBarcodeRequest> from(JsonObject json) {
+  public static Result<OverrideByBarcodeRequest> from(JsonObject json) {
     final String itemBarcode = getProperty(json, ITEM_BARCODE);
     if(StringUtils.isBlank(itemBarcode)) {
       return failedValidation("Override renewal request must have an item barcode",

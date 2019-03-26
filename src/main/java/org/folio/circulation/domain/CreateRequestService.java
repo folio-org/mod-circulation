@@ -3,15 +3,15 @@ package org.folio.circulation.domain;
 import static java.lang.String.format;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.Request.REQUEST_TYPE;
-import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.policy.RequestPolicy;
 import org.folio.circulation.domain.policy.RequestPolicyRepository;
-import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.WritableHttpResult;
+import org.folio.circulation.support.Result;
+import org.folio.circulation.support.ResponseWritableResult;
 
 public class CreateRequestService {
   private final RequestRepository requestRepository;
@@ -34,7 +34,7 @@ public class CreateRequestService {
     this.requestPolicyRepository = requestPolicyRepository;
   }
 
-  public CompletableFuture<HttpResult<RequestAndRelatedRecords>> createRequest(
+  public CompletableFuture<Result<RequestAndRelatedRecords>> createRequest(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     return completedFuture(refuseWhenItemDoesNotExist(requestAndRelatedRecords)
@@ -59,7 +59,7 @@ public class CreateRequestService {
     return requestAndRelatedRecords;
   }
 
-  private static HttpResult<RequestAndRelatedRecords> refuseWhenItemDoesNotExist(
+  private static Result<RequestAndRelatedRecords> refuseWhenItemDoesNotExist(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     if(requestAndRelatedRecords.getRequest().getItem().isNotFound()) {
@@ -71,7 +71,7 @@ public class CreateRequestService {
     }
   }
 
-  private static HttpResult<RequestAndRelatedRecords> refuseWhenRequestCannotBeFulfilled(
+  private static Result<RequestAndRelatedRecords> refuseWhenRequestCannotBeFulfilled(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     RequestPolicy requestPolicy = requestAndRelatedRecords.getRequestPolicy();
@@ -85,7 +85,7 @@ public class CreateRequestService {
     }
   }
 
-  private static HttpResult<RequestAndRelatedRecords> refuseWhenItemIsNotValid(
+  private static Result<RequestAndRelatedRecords> refuseWhenItemIsNotValid(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     Request request = requestAndRelatedRecords.getRequest();
@@ -98,7 +98,7 @@ public class CreateRequestService {
     }
   }
 
-  private static WritableHttpResult<RequestAndRelatedRecords> failureDisallowedForRequestType(
+  private static ResponseWritableResult<RequestAndRelatedRecords> failureDisallowedForRequestType(
     RequestType requestType) {
 
     final String requestTypeName = requestType.getValue();
@@ -108,7 +108,7 @@ public class CreateRequestService {
       REQUEST_TYPE, requestTypeName);
   }
 
-  private static HttpResult<RequestAndRelatedRecords> refuseWhenInvalidUserAndPatronGroup(
+  private static Result<RequestAndRelatedRecords> refuseWhenInvalidUserAndPatronGroup(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     Request request = requestAndRelatedRecords.getRequest();

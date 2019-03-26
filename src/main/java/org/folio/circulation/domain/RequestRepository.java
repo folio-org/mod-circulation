@@ -1,14 +1,14 @@
 package org.folio.circulation.domain;
 
-import static org.folio.circulation.support.HttpResult.failed;
-import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.ForwardOnFailure;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.SingleRecordMapper;
@@ -48,7 +48,7 @@ public class RequestRepository {
       new ServicePointRepository(clients), new PatronGroupRepository(clients));
   }
 
-  public CompletableFuture<HttpResult<MultipleRecords<Request>>> findBy(String query) {
+  public CompletableFuture<Result<MultipleRecords<Request>>> findBy(String query) {
     return requestsStorageClient.getManyWithRawQueryStringParameters(query)
       .thenApply(this::mapResponseToRequests)
       .thenComposeAsync(result -> itemRepository.fetchItemsFor(result, Request::withItem))
@@ -59,7 +59,7 @@ public class RequestRepository {
   }
 
   //TODO: try to consolidate this further with above
-  CompletableFuture<HttpResult<MultipleRecords<Request>>> findBy(
+  CompletableFuture<Result<MultipleRecords<Request>>> findBy(
     String query,
     Integer pageLimit) {
 
@@ -69,33 +69,33 @@ public class RequestRepository {
         itemRepository.fetchItemsFor(requests, Request::withItem));
   }
 
-  private HttpResult<MultipleRecords<Request>> mapResponseToRequests(Response response) {
+  private Result<MultipleRecords<Request>> mapResponseToRequests(Response response) {
     return MultipleRecords.from(response, Request::from, "requests");
   }
 
-  public CompletableFuture<HttpResult<Boolean>> exists(
+  public CompletableFuture<Result<Boolean>> exists(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     return exists(requestAndRelatedRecords.getRequest());
   }
 
-  private CompletableFuture<HttpResult<Boolean>> exists(Request request) {
+  private CompletableFuture<Result<Boolean>> exists(Request request) {
     return exists(request.getId());
   }
 
-  private CompletableFuture<HttpResult<Boolean>> exists(String id) {
+  private CompletableFuture<Result<Boolean>> exists(String id) {
     return new SingleRecordFetcher<>(requestsStorageClient, "request",
       new SingleRecordMapper<>(request -> true, response -> {
         if (response.getStatusCode() == 404) {
-          return HttpResult.succeeded(false);
+          return Result.succeeded(false);
         } else {
-          return HttpResult.failed(new ForwardOnFailure(response));
+          return Result.failed(new ForwardOnFailure(response));
         }
       }))
       .fetch(id);
   }
 
-  public CompletableFuture<HttpResult<Request>> getById(String id) {
+  public CompletableFuture<Result<Request>> getById(String id) {
     return fetchRequest(id)
       .thenComposeAsync(result -> result.combineAfter(itemRepository::fetchFor,
         Request::withItem))
@@ -106,13 +106,13 @@ public class RequestRepository {
       .thenComposeAsync(this::fetchPatronGroups);
   }
 
-  private CompletableFuture<HttpResult<Request>> fetchRequest(String id) {
+  private CompletableFuture<Result<Request>> fetchRequest(String id) {
     return new SingleRecordFetcher<>(requestsStorageClient, "request", Request::from)
       .fetch(id);
   }
 
   //TODO: May need to fetch updated representation of request
-  public CompletableFuture<HttpResult<Request>> update(Request request) {
+  public CompletableFuture<Result<Request>> update(Request request) {
     final JsonObject representation = new RequestRepresentation()
       .storedRequest(request);
 
@@ -127,14 +127,14 @@ public class RequestRepository {
     });
   }
 
-  public CompletableFuture<HttpResult<RequestAndRelatedRecords>> update(
+  public CompletableFuture<Result<RequestAndRelatedRecords>> update(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     return update(requestAndRelatedRecords.getRequest())
       .thenApply(r -> r.map(requestAndRelatedRecords::withRequest));
   }
 
-  public CompletableFuture<HttpResult<RequestAndRelatedRecords>> create(
+  public CompletableFuture<Result<RequestAndRelatedRecords>> create(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     final Request request = requestAndRelatedRecords.getRequest();
@@ -155,14 +155,14 @@ public class RequestRepository {
     });
   }
 
-  public CompletableFuture<HttpResult<RequestAndRelatedRecords>> delete(
+  public CompletableFuture<Result<RequestAndRelatedRecords>> delete(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     return delete(requestAndRelatedRecords.getRequest())
       .thenApply(r -> r.map(requestAndRelatedRecords::withRequest));
   }
 
-  public CompletableFuture<HttpResult<Request>> delete(Request request) {
+  public CompletableFuture<Result<Request>> delete(Request request) {
     return requestsStorageClient.delete(request.getId())
       .thenApply(response -> {
         if(response.getStatusCode() == 204) {
@@ -175,35 +175,35 @@ public class RequestRepository {
   }
 
   //TODO: Check if need to request requester
-  private CompletableFuture<HttpResult<Request>> fetchRequester(HttpResult<Request> result) {
+  private CompletableFuture<Result<Request>> fetchRequester(Result<Request> result) {
     return result.combineAfter(request ->
       getUser(request.getUserId()), Request::withRequester);
   }
 
   //TODO: Check if need to request proxy
-  private CompletableFuture<HttpResult<Request>> fetchProxy(HttpResult<Request> result) {
+  private CompletableFuture<Result<Request>> fetchProxy(Result<Request> result) {
     return result.combineAfter(request ->
       getUser(request.getProxyUserId()), Request::withProxy);
   }
   
-  private CompletableFuture<HttpResult<Request>> fetchLoan(HttpResult<Request> result) {
+  private CompletableFuture<Result<Request>> fetchLoan(Result<Request> result) {
     return result.combineAfter(loanRepository::findOpenLoanForRequest, Request::withLoan);
   }
   
-  private CompletableFuture<HttpResult<Request>> fetchPickupServicePoint(HttpResult<Request> result) {
+  private CompletableFuture<Result<Request>> fetchPickupServicePoint(Result<Request> result) {
     return result.combineAfter(request -> getServicePoint(request.getPickupServicePointId()),
         Request::withPickupServicePoint);
   }
   
-  private CompletableFuture<HttpResult<Request>> fetchPatronGroups(HttpResult<Request> result) {
+  private CompletableFuture<Result<Request>> fetchPatronGroups(Result<Request> result) {
     return patronGroupRepository.findPatronGroupsForSingleRequestUsers(result);
   }
   
-  private CompletableFuture<HttpResult<User>> getUser(String proxyUserId) {
+  private CompletableFuture<Result<User>> getUser(String proxyUserId) {
     return userRepository.getUser(proxyUserId);
   }
   
-  private CompletableFuture<HttpResult<ServicePoint>> getServicePoint(String servicePointId) {
+  private CompletableFuture<Result<ServicePoint>> getServicePoint(String servicePointId) {
     return servicePointRepository.getServicePointById(servicePointId);
   }
   

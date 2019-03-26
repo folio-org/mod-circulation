@@ -4,29 +4,29 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import org.folio.circulation.domain.CheckInProcessRecords;
 import org.folio.circulation.domain.LoanRepresentation;
-import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.OkJsonHttpResult;
-import org.folio.circulation.support.WritableHttpResult;
+import org.folio.circulation.support.Result;
+import org.folio.circulation.support.OkJsonResponseResult;
+import org.folio.circulation.support.ResponseWritableResult;
 
 import io.vertx.core.json.JsonObject;
 
 public class CheckInByBarcodeResponse {
   private CheckInByBarcodeResponse() {}
 
-  public static WritableHttpResult<JsonObject> from(
-    HttpResult<CheckInProcessRecords> recordsResult) {
+  public static ResponseWritableResult<JsonObject> from(
+    Result<CheckInProcessRecords> recordsResult) {
 
     //TODO: Rework HttpResult and how writable results work in order to allow this
     //to be chained with map rather than a clunky if statement
     if(recordsResult.failed()) {
-      return HttpResult.failed(recordsResult.cause());
+      return Result.failed(recordsResult.cause());
     }
     else {
       return mapToResponse(recordsResult.value());
     }
   }
 
-  private static WritableHttpResult<JsonObject> mapToResponse(
+  private static ResponseWritableResult<JsonObject> mapToResponse(
     CheckInProcessRecords records) {
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
@@ -40,6 +40,6 @@ public class CheckInByBarcodeResponse {
     write(checkInResponseBody, "item",
       itemRepresentation.createItemSummary(records.getItem()));
 
-    return new OkJsonHttpResult(checkInResponseBody);
+    return new OkJsonResponseResult(checkInResponseBody);
   }
 }

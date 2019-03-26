@@ -2,7 +2,7 @@ package org.folio.circulation.resources;
 
 import static org.folio.circulation.domain.validation.CommonFailures.moreThanOneOpenLoanFailure;
 import static org.folio.circulation.domain.validation.CommonFailures.noItemFoundForIdFailure;
-import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
@@ -17,7 +17,7 @@ import org.folio.circulation.domain.validation.BlockRenewalValidator;
 import org.folio.circulation.domain.validation.UserNotFoundValidator;
 import org.folio.circulation.storage.ItemByIdInStorageFinder;
 import org.folio.circulation.storage.SingleOpenLoanForItemInStorageFinder;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ItemRepository;
 
 import io.vertx.core.http.HttpClient;
@@ -29,14 +29,14 @@ public class RenewByIdResource extends RenewalResource {
   }
 
   @Override
-  protected CompletableFuture<HttpResult<Loan>> findLoan(
+  protected CompletableFuture<Result<Loan>> findLoan(
     JsonObject request,
     LoanRepository loanRepository,
     ItemRepository itemRepository,
     UserRepository userRepository,
     RequestQueueRepository requestQueueRepository) {
 
-    final HttpResult<RenewByIdRequest> requestResult
+    final Result<RenewByIdRequest> requestResult
       = RenewByIdRequest.from(request);
 
     final String itemId = requestResult
@@ -65,7 +65,7 @@ public class RenewByIdResource extends RenewalResource {
         this::refuseWhenUserDoesNotMatch));
   }
 
-  private HttpResult<Loan> refuseWhenUserDoesNotMatch(
+  private Result<Loan> refuseWhenUserDoesNotMatch(
     Loan loan,
     RenewByIdRequest idRequest) {
 

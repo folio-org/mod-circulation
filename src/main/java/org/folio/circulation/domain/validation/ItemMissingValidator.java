@@ -1,12 +1,12 @@
 package org.folio.circulation.domain.validation;
 
-import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.function.Function;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 
 public class ItemMissingValidator {
@@ -18,8 +18,8 @@ public class ItemMissingValidator {
       this.itemMissingErrorFunction = itemMissingErrorFunction;
     }
 
-    public HttpResult<LoanAndRelatedRecords> refuseWhenItemIsMissing(
-      HttpResult<LoanAndRelatedRecords> result) {
+    public Result<LoanAndRelatedRecords> refuseWhenItemIsMissing(
+      Result<LoanAndRelatedRecords> result) {
       return result.failWhen(
         records -> succeeded(records.getLoan().getItem().isMissing()),
         loans -> {

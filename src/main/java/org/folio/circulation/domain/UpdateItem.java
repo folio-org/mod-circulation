@@ -2,9 +2,9 @@ package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
-import static org.folio.circulation.support.HttpResult.failed;
-import static org.folio.circulation.support.HttpResult.of;
-import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.util.UUID;
@@ -12,7 +12,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 
 public class UpdateItem {
@@ -23,7 +23,7 @@ public class UpdateItem {
     itemsStorageClient = clients.itemsStorage();
   }
 
-  public CompletableFuture<HttpResult<Item>> onCheckIn(
+  public CompletableFuture<Result<Item>> onCheckIn(
     Item item,
     RequestQueue requestQueue,
     UUID checkInServicePointId) {
@@ -39,7 +39,7 @@ public class UpdateItem {
       });
   }
 
-  private HttpResult<Item> changeItemOnCheckIn(
+  private Result<Item> changeItemOnCheckIn(
     Item item,
     RequestQueue requestQueue,
     UUID checkInServicePointId) {
@@ -72,7 +72,7 @@ public class UpdateItem {
     }
   }
 
-  public CompletableFuture<HttpResult<LoanAndRelatedRecords>> onCheckOut(
+  public CompletableFuture<Result<LoanAndRelatedRecords>> onCheckOut(
     LoanAndRelatedRecords relatedRecords) {
 
     //Hack for creating returned loan - should distinguish further up the chain
@@ -82,7 +82,7 @@ public class UpdateItem {
       records -> updateItemStatusOnCheckOut(relatedRecords));
   }
 
-  public CompletableFuture<HttpResult<LoanAndRelatedRecords>> onLoanUpdate(
+  public CompletableFuture<Result<LoanAndRelatedRecords>> onLoanUpdate(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
     return onLoanUpdate(loanAndRelatedRecords.getLoan(),
@@ -94,7 +94,7 @@ public class UpdateItem {
     return item.updateDestinationServicePoint(servicePoint);
   }
 
-  private CompletableFuture<HttpResult<Item>> onLoanUpdate(
+  private CompletableFuture<Result<Item>> onLoanUpdate(
     Loan loan,
     RequestQueue requestQueue) {
 
@@ -103,7 +103,7 @@ public class UpdateItem {
         loan.getItem()));
   }
 
-  CompletableFuture<HttpResult<RequestAndRelatedRecords>> onRequestCreation(
+  CompletableFuture<Result<RequestAndRelatedRecords>> onRequestCreation(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     return of(() -> itemStatusOnRequestCreation(requestAndRelatedRecords))
@@ -112,7 +112,7 @@ public class UpdateItem {
       .thenApply(itemResult -> itemResult.map(requestAndRelatedRecords::withItem));
   }
 
-  private CompletableFuture<HttpResult<LoanAndRelatedRecords>> updateItemStatusOnCheckOut(
+  private CompletableFuture<Result<LoanAndRelatedRecords>> updateItemStatusOnCheckOut(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
     return updateItemWhenNotSameStatus(CHECKED_OUT,
@@ -120,7 +120,7 @@ public class UpdateItem {
       .thenApply(itemResult -> itemResult.map(loanAndRelatedRecords::withItem));
   }
 
-  private CompletableFuture<HttpResult<Item>> updateItemWhenNotSameStatus(
+  private CompletableFuture<Result<Item>> updateItemWhenNotSameStatus(
     ItemStatus prospectiveStatus,
     Item item) {
 
@@ -134,7 +134,7 @@ public class UpdateItem {
     }
   }
 
-  private CompletableFuture<HttpResult<Item>> storeItem(Item item) {
+  private CompletableFuture<Result<Item>> storeItem(Item item) {
     return itemsStorageClient.put(item.getItemId(), item.getItem())
       .thenApply(putItemResponse -> {
         if(putItemResponse.getStatusCode() == 204) {
@@ -148,13 +148,13 @@ public class UpdateItem {
       });
   }
 
-  private CompletableFuture<HttpResult<Boolean>> loanIsClosed(
+  private CompletableFuture<Result<Boolean>> loanIsClosed(
     LoanAndRelatedRecords relatedRecords) {
 
     return completedFuture(of(() -> relatedRecords.getLoan().isClosed()));
   }
 
-  private static <T> CompletableFuture<HttpResult<T>> skip(T previousResult) {
+  private static <T> CompletableFuture<Result<T>> skip(T previousResult) {
     return completedFuture(succeeded(previousResult));
   }
 

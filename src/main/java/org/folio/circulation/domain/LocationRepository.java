@@ -19,13 +19,13 @@ public class LocationRepository {
     locationsStorageClient = clients.locationsStorage();
   }
 
-  public CompletableFuture<HttpResult<JsonObject>> getLocation(Item item) {
+  public CompletableFuture<Result<JsonObject>> getLocation(Item item) {
     return SingleRecordFetcher.json(locationsStorageClient, "locations",
-      response -> HttpResult.succeeded(null))
+      response -> Result.succeeded(null))
       .fetch(item.getLocationId());
   }
 
-  public CompletableFuture<HttpResult<Map<String, JsonObject>>> getLocations(
+  public CompletableFuture<Result<Map<String, JsonObject>>> getLocations(
     Collection<Item> inventoryRecords) {
 
     List<String> locationIds = inventoryRecords.stream()

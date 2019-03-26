@@ -10,7 +10,7 @@ import org.folio.circulation.AdjacentOpeningDays;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.LocalDate;
 
@@ -31,7 +31,7 @@ public class CalendarRepository {
   }
 
 
-  public CompletableFuture<HttpResult<AdjacentOpeningDays>> lookupOpeningDays(LocalDate requestedDate, String servicePointId) {
+  public CompletableFuture<Result<AdjacentOpeningDays>> lookupOpeningDays(LocalDate requestedDate, String servicePointId) {
     String path = String.format(PATH_PARAM_WITH_QUERY, servicePointId, requestedDate);
 
     //TODO: Validation error should have parameters

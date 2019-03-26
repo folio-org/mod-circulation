@@ -27,11 +27,11 @@ import org.folio.circulation.domain.validation.ItemNotFoundValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointLoanLocationValidator;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CreatedJsonHttpResult;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.CreatedJsonResponseResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ItemRepository;
-import org.folio.circulation.support.NoContentHttpResult;
-import org.folio.circulation.support.OkJsonHttpResult;
+import org.folio.circulation.support.NoContentResult;
+import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;
@@ -83,7 +83,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
-    completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(loan)))
+    completedFuture(Result.succeeded(new LoanAndRelatedRecords(loan)))
       .thenCompose(larrResult ->
         getServicePointsForLoanAndRelated(larrResult, servicePointRepository))
       .thenApply(this::refuseWhenNotOpenOrClosed)
@@ -104,7 +104,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenComposeAsync(r -> r.after(loanRepository::createLoan))
       .thenApply(r -> r.map(LoanAndRelatedRecords::getLoan))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
-      .thenApply(CreatedJsonHttpResult::from)
+      .thenApply(CreatedJsonResponseResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
@@ -135,7 +135,7 @@ public class LoanCollectionResource extends CollectionResource {
     final ServicePointLoanLocationValidator spLoanLocationValidator =
         new ServicePointLoanLocationValidator();
 
-    completedFuture(HttpResult.succeeded(new LoanAndRelatedRecords(loan)))
+    completedFuture(Result.succeeded(new LoanAndRelatedRecords(loan)))
       .thenCompose(larrResult ->
         getServicePointsForLoanAndRelated(larrResult, servicePointRepository))
       .thenApply(this::refuseWhenNotOpenOrClosed)
@@ -152,7 +152,7 @@ public class LoanCollectionResource extends CollectionResource {
       // due to snapshot of item status stored with the loan
       // as this is how the loan action history is populated
       .thenComposeAsync(result -> result.after(loanRepository::updateLoan))
-      .thenApply(NoContentHttpResult::from)
+      .thenApply(NoContentResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
@@ -169,7 +169,7 @@ public class LoanCollectionResource extends CollectionResource {
     loanRepository.getById(id)
       .thenComposeAsync(servicePointRepository::findServicePointsForLoan)
       .thenApply(loanResult -> loanResult.map(loanRepresentation::extendedLoan))
-      .thenApply(OkJsonHttpResult::from)
+      .thenApply(OkJsonResponseResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
@@ -180,7 +180,7 @@ public class LoanCollectionResource extends CollectionResource {
     String id = routingContext.request().getParam("id");
 
     clients.loansStorage().delete(id)
-      .thenApply(NoContentHttpResult::from)
+      .thenApply(NoContentResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
   }
 
@@ -197,7 +197,7 @@ public class LoanCollectionResource extends CollectionResource {
         multiLoanRecordsResult.after(servicePointRepository::findServicePointsForLoans))
       .thenApply(multipleLoanRecordsResult -> multipleLoanRecordsResult.map(loans ->
         loans.asJson(loanRepresentation::extendedLoan, "loans")))
-      .thenApply(OkJsonHttpResult::from)
+      .thenApply(OkJsonResponseResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
@@ -206,36 +206,36 @@ public class LoanCollectionResource extends CollectionResource {
     Clients clients = Clients.create(context, client);
 
     clients.loansStorage().delete()
-      .thenApply(NoContentHttpResult::from)
+      .thenApply(NoContentResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
   }
 
-  private HttpResult<LoanAndRelatedRecords> addItem(
-    HttpResult<LoanAndRelatedRecords> loanResult,
-    HttpResult<Item> item) {
+  private Result<LoanAndRelatedRecords> addItem(
+    Result<LoanAndRelatedRecords> loanResult,
+    Result<Item> item) {
 
-    return HttpResult.combine(loanResult, item,
+    return Result.combine(loanResult, item,
       LoanAndRelatedRecords::withItem);
   }
 
-  private HttpResult<LoanAndRelatedRecords> addRequestQueue(
-    HttpResult<LoanAndRelatedRecords> loanResult,
-    HttpResult<RequestQueue> requestQueueResult) {
+  private Result<LoanAndRelatedRecords> addRequestQueue(
+    Result<LoanAndRelatedRecords> loanResult,
+    Result<RequestQueue> requestQueueResult) {
 
-    return HttpResult.combine(loanResult, requestQueueResult,
+    return Result.combine(loanResult, requestQueueResult,
       LoanAndRelatedRecords::withRequestQueue);
   }
 
-  private HttpResult<LoanAndRelatedRecords> addUser(
-    HttpResult<LoanAndRelatedRecords> loanResult,
-    HttpResult<User> getUserResult) {
+  private Result<LoanAndRelatedRecords> addUser(
+    Result<LoanAndRelatedRecords> loanResult,
+    Result<User> getUserResult) {
 
-    return HttpResult.combine(loanResult, getUserResult,
+    return Result.combine(loanResult, getUserResult,
       LoanAndRelatedRecords::withRequestingUser);
   }
 
-  private HttpResult<LoanAndRelatedRecords> refuseWhenHoldingDoesNotExist(
-    HttpResult<LoanAndRelatedRecords> result) {
+  private Result<LoanAndRelatedRecords> refuseWhenHoldingDoesNotExist(
+    Result<LoanAndRelatedRecords> result) {
 
     return result.next(loan -> {
       if(loan.getLoan().getItem().doesNotHaveHolding()) {
@@ -248,8 +248,8 @@ public class LoanCollectionResource extends CollectionResource {
     });
   }
 
-  private HttpResult<LoanAndRelatedRecords> refuseWhenClosedAndNoCheckInServicePointId(
-    HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
+  private Result<LoanAndRelatedRecords> refuseWhenClosedAndNoCheckInServicePointId(
+    Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
     return loanAndRelatedRecords
       .map(LoanAndRelatedRecords::getLoan)
@@ -257,8 +257,8 @@ public class LoanCollectionResource extends CollectionResource {
       .next(v -> loanAndRelatedRecords);
   }
 
-  private HttpResult<LoanAndRelatedRecords> refuseWhenNotOpenOrClosed(
-    HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
+  private Result<LoanAndRelatedRecords> refuseWhenNotOpenOrClosed(
+    Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
     return loanAndRelatedRecords
       .map(LoanAndRelatedRecords::getLoan)
@@ -266,8 +266,8 @@ public class LoanCollectionResource extends CollectionResource {
       .next(v -> loanAndRelatedRecords);
   }
 
-  private HttpResult<LoanAndRelatedRecords> refuseWhenOpenAndNoUserId(
-    HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
+  private Result<LoanAndRelatedRecords> refuseWhenOpenAndNoUserId(
+    Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
     return loanAndRelatedRecords
       .map(LoanAndRelatedRecords::getLoan)
@@ -275,8 +275,8 @@ public class LoanCollectionResource extends CollectionResource {
       .next(v -> loanAndRelatedRecords);
   }
 
-  private CompletableFuture<HttpResult<LoanAndRelatedRecords>> getServicePointsForLoanAndRelated(
-    HttpResult<LoanAndRelatedRecords> larrResult,
+  private CompletableFuture<Result<LoanAndRelatedRecords>> getServicePointsForLoanAndRelated(
+    Result<LoanAndRelatedRecords> larrResult,
     ServicePointRepository servicePointRepository) {
 
     return larrResult.combineAfter(loanAndRelatedRecords ->
@@ -284,11 +284,11 @@ public class LoanCollectionResource extends CollectionResource {
       LoanAndRelatedRecords::withLoan);
   }
 
-  private CompletableFuture<HttpResult<Loan>> getServicePointsForLoan(
+  private CompletableFuture<Result<Loan>> getServicePointsForLoan(
     Loan loan,
     ServicePointRepository servicePointRepository) {
 
-    return servicePointRepository.findServicePointsForLoan(HttpResult.of(() -> loan));
+    return servicePointRepository.findServicePointsForLoan(Result.of(() -> loan));
   }
 
   private ItemNotFoundValidator createItemNotFoundValidator(Loan loan) {

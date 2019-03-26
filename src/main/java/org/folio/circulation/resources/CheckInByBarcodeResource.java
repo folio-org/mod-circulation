@@ -18,7 +18,7 @@ import org.folio.circulation.domain.representations.CheckInByBarcodeResponse;
 import org.folio.circulation.storage.ItemByBarcodeInStorageFinder;
 import org.folio.circulation.storage.SingleOpenLoanForItemInStorageFinder;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.WebContext;
@@ -56,7 +56,7 @@ public class CheckInByBarcodeResource extends Resource {
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
 
-    final HttpResult<CheckInByBarcodeRequest> checkInRequestResult
+    final Result<CheckInByBarcodeRequest> checkInRequestResult
       = CheckInByBarcodeRequest.from(routingContext.getBodyAsJson());
 
     final String itemBarcode = checkInRequestResult

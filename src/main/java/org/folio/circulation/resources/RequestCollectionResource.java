@@ -23,10 +23,10 @@ import org.folio.circulation.domain.validation.ClosedRequestValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CreatedJsonHttpResult;
+import org.folio.circulation.support.CreatedJsonResponseResult;
 import org.folio.circulation.support.ItemRepository;
-import org.folio.circulation.support.NoContentHttpResult;
-import org.folio.circulation.support.OkJsonHttpResult;
+import org.folio.circulation.support.NoContentResult;
+import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;
@@ -76,7 +76,7 @@ public class RequestCollectionResource extends CollectionResource {
       .thenComposeAsync(r -> r.after(createRequestService::createRequest))
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
       .thenApply(r -> r.map(requestRepresentation::extendedRepresentation))
-      .thenApply(CreatedJsonHttpResult::from)
+      .thenApply(CreatedJsonResponseResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
@@ -127,7 +127,7 @@ public class RequestCollectionResource extends CollectionResource {
       .thenComposeAsync(r -> r.afterWhen(requestRepository::exists,
         updateRequestService::replaceRequest,
         createRequestService::createRequest))
-      .thenApply(NoContentHttpResult::from)
+      .thenApply(NoContentResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
   }
 
@@ -142,7 +142,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     requestRepository.getById(id)
       .thenApply(r -> r.map(requestRepresentation::extendedRepresentation))
-      .thenApply(OkJsonHttpResult::from)
+      .thenApply(OkJsonResponseResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
@@ -159,7 +159,7 @@ public class RequestCollectionResource extends CollectionResource {
     requestRepository.getById(id)
       .thenComposeAsync(r -> r.after(requestRepository::delete))
       .thenComposeAsync(r -> r.after(updateRequestQueue::onDeletion))
-      .thenApply(NoContentHttpResult::from)
+      .thenApply(NoContentResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
   }
 
@@ -173,7 +173,7 @@ public class RequestCollectionResource extends CollectionResource {
     requestRepository.findBy(routingContext.request().query())
       .thenApply(r -> r.map(requests ->
         requests.asJson(requestRepresentation::extendedRepresentation, "requests")))
-      .thenApply(OkJsonHttpResult::from)
+      .thenApply(OkJsonResponseResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
@@ -182,7 +182,7 @@ public class RequestCollectionResource extends CollectionResource {
     Clients clients = Clients.create(context, client);
 
     clients.requestsStorage().delete()
-      .thenApply(NoContentHttpResult::from)
+      .thenApply(NoContentResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
   }
 

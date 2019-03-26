@@ -2,15 +2,15 @@ package org.folio.circulation.domain.validation;
 
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.USER_BARCODE;
-import static org.folio.circulation.support.HttpResult.failed;
-import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.util.function.Function;
 
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 
@@ -48,8 +48,8 @@ public class InactiveUserValidator {
       message -> singleValidationError(message, USER_BARCODE, userBarcode));
   }
 
-  public HttpResult<LoanAndRelatedRecords> refuseWhenUserIsInactive(
-    HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
+  public Result<LoanAndRelatedRecords> refuseWhenUserIsInactive(
+    Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
     return loanAndRelatedRecords.next(records -> {
       try {
@@ -62,7 +62,7 @@ public class InactiveUserValidator {
     });
   }
 
-  HttpResult<LoanAndRelatedRecords> refuseWhenUserIsInactive(
+  Result<LoanAndRelatedRecords> refuseWhenUserIsInactive(
     User user, LoanAndRelatedRecords records) {
 
     if(user == null) {

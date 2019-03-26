@@ -1,12 +1,12 @@
 package org.folio.circulation.domain.policy;
 
-import static org.folio.circulation.support.HttpResult.failed;
+import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.util.function.Function;
 
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
@@ -38,12 +38,12 @@ class FixedScheduleRenewalDueDateStrategy extends DueDateStrategy {
   }
 
   @Override
-  HttpResult<DateTime> calculateDueDate(Loan loan) {
+  Result<DateTime> calculateDueDate(Loan loan) {
     logApplying("Fixed schedule renewal due date calculation");
 
     try {
       return fixedDueDateSchedules.findDueDateFor(systemDate)
-        .map(HttpResult::succeeded)
+        .map(Result::succeeded)
         .orElseGet(() -> failedValidation(
           errorForPolicy(NO_APPLICABLE_DUE_DATE_SCHEDULE_MESSAGE)));
     } catch (Exception e) {

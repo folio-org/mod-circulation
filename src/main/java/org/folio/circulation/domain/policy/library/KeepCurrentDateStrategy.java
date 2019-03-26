@@ -1,7 +1,7 @@
 package org.folio.circulation.domain.policy.library;
 
 import org.folio.circulation.AdjacentOpeningDays;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
@@ -16,8 +16,8 @@ public class KeepCurrentDateStrategy implements ClosedLibraryStrategy {
   }
 
   @Override
-  public HttpResult<DateTime> calculateDueDate(DateTime requestedDate, AdjacentOpeningDays openingDays) {
-    return HttpResult.succeeded(
+  public Result<DateTime> calculateDueDate(DateTime requestedDate, AdjacentOpeningDays openingDays) {
+    return Result.succeeded(
       requestedDate.withZone(zone).withTime(END_OF_A_DAY));
   }
 }

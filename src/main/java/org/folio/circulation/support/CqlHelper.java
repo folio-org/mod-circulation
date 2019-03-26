@@ -20,10 +20,10 @@ public class CqlHelper {
     return multipleRecordsCqlQuery(null, "id", recordIds).orElse(null);
   }
 
-  public static HttpResult<String> encodeQuery(String cqlQuery) {
+  public static Result<String> encodeQuery(String cqlQuery) {
     log.info("Encoding query {}", cqlQuery);
 
-    return HttpResult.of(() -> URLEncoder.encode(cqlQuery,
+    return Result.of(() -> URLEncoder.encode(cqlQuery,
       String.valueOf(StandardCharsets.UTF_8)));
   }
 
@@ -42,7 +42,7 @@ public class CqlHelper {
    * query that includes a fragment if provided and a clause for matching any
    * of the values
    */
-  public static HttpResult<String> multipleRecordsCqlQuery(
+  public static Result<String> multipleRecordsCqlQuery(
     String prefixQueryFragment,
     String indexName,
     Collection<String> valuesToSearchFor) {
@@ -55,7 +55,7 @@ public class CqlHelper {
       .collect(Collectors.toList());
 
     if(filteredValues.isEmpty()) {
-      return HttpResult.of(() -> null);
+      return Result.of(() -> null);
     }
 
     String valueQuery = String.format("%s==(%s)",

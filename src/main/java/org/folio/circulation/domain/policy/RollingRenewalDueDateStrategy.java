@@ -7,7 +7,7 @@ import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 
@@ -52,7 +52,7 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
   }
 
   @Override
-  HttpResult<DateTime> calculateDueDate(Loan loan) {
+  Result<DateTime> calculateDueDate(Loan loan) {
     if(StringUtils.isBlank(renewFrom)) {
       return failedValidation(errorForPolicy(RENEW_FROM_UNRECOGNISED_MESSAGE));
     }
@@ -67,19 +67,19 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
     }
   }
 
-  protected HttpResult<DateTime> calculateDueDate(DateTime from, DateTime loanDate) {
+  protected Result<DateTime> calculateDueDate(DateTime from, DateTime loanDate) {
     return renewalDueDate(from)
       .next(dueDate -> truncateDueDateBySchedule(loanDate, dueDate));
   }
 
-  HttpResult<DateTime> renewalDueDate(DateTime from) {
+  Result<DateTime> renewalDueDate(DateTime from) {
     return period.addTo(from,
       () -> errorForPolicy(RENEWAL_UNRECOGNISED_PERIOD_MESSAGE),
       interval -> errorForPolicy(format(RENEWAL_UNRECOGNISED_INTERVAL_MESSAGE, interval)),
       duration -> errorForPolicy(format(RENEWAL_INVALID_DURATION_MESSAGE, duration)));
   }
 
-  private HttpResult<DateTime> truncateDueDateBySchedule(
+  private Result<DateTime> truncateDueDateBySchedule(
     DateTime loanDate,
     DateTime dueDate) {
 

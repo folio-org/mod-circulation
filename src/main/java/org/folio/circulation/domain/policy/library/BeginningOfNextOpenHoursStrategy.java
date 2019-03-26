@@ -1,7 +1,7 @@
 package org.folio.circulation.domain.policy.library;
 
 import org.folio.circulation.domain.policy.LoanPolicyPeriod;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Period;
@@ -19,24 +19,24 @@ public class BeginningOfNextOpenHoursStrategy extends ShortTermLoansBaseStrategy
   }
 
   @Override
-  protected HttpResult<DateTime> calculateIfClosed(LibraryTimetable libraryTimetable, LibraryInterval requestedInterval) {
+  protected Result<DateTime> calculateIfClosed(LibraryTimetable libraryTimetable, LibraryInterval requestedInterval) {
     LibraryInterval nextInterval = requestedInterval.getNext();
     if (nextInterval == null) {
-      return HttpResult.failed(failureForAbsentTimetable());
+      return Result.failed(failureForAbsentTimetable());
     }
     DateTime dueDateWithOffset = nextInterval.getStartTime().plus(offsetPeriod);
     if (nextInterval.getInterval().contains(dueDateWithOffset)) {
-      return HttpResult.succeeded(dueDateWithOffset);
+      return Result.succeeded(dueDateWithOffset);
     }
 
     LibraryInterval intervalForDateWithOffset =
       libraryTimetable.findInterval(dueDateWithOffset);
     if (intervalForDateWithOffset == null) {
-      return HttpResult.succeeded(libraryTimetable.getTail().getEndTime());
+      return Result.succeeded(libraryTimetable.getTail().getEndTime());
     }
     if (intervalForDateWithOffset.isOpen()) {
-      return HttpResult.succeeded(dueDateWithOffset);
+      return Result.succeeded(dueDateWithOffset);
     }
-    return HttpResult.succeeded(intervalForDateWithOffset.getPrevious().getEndTime());
+    return Result.succeeded(intervalForDateWithOffset.getPrevious().getEndTime());
   }
 }

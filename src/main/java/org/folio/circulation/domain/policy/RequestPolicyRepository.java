@@ -1,6 +1,6 @@
 package org.folio.circulation.domain.policy;
 
-import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
@@ -13,7 +13,7 @@ import org.folio.circulation.support.CirculationRulesClient;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.ForwardOnFailure;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.http.client.Response;
@@ -34,7 +34,7 @@ public class RequestPolicyRepository {
     this.requestPoliciesStorageClient = clients.requestPoliciesStorage();
   }
 
-  public CompletableFuture<HttpResult<RequestAndRelatedRecords>> lookupRequestPolicy(
+  public CompletableFuture<Result<RequestAndRelatedRecords>> lookupRequestPolicy(
     RequestAndRelatedRecords relatedRecords) {
 
     Request request = relatedRecords.getRequest();
@@ -43,7 +43,7 @@ public class RequestPolicyRepository {
       .thenApply(result -> result.map(relatedRecords::withRequestPolicy));
   }
 
-  private CompletableFuture<HttpResult<RequestPolicy>> lookupRequestPolicy(
+  private CompletableFuture<Result<RequestPolicy>> lookupRequestPolicy(
     Item item,
     User user) {
 
@@ -57,24 +57,24 @@ public class RequestPolicyRepository {
   }
 
 
-  private CompletableFuture<HttpResult<JsonObject>> lookupRequestPolicy(
+  private CompletableFuture<Result<JsonObject>> lookupRequestPolicy(
     String requestPolicyId) {
 
     return SingleRecordFetcher.json(requestPoliciesStorageClient, "request policy",
-      response -> HttpResult.failed(new ServerErrorFailure(
+      response -> Result.failed(new ServerErrorFailure(
         String.format("Request policy %s could not be found, please check circulation rules", requestPolicyId))))
       .fetch(requestPolicyId);
   }
 
-  private CompletableFuture<HttpResult<String>> lookupRequestPolicyId(
+  private CompletableFuture<Result<String>> lookupRequestPolicyId(
     Item item,
     User user) {
 
-    CompletableFuture<HttpResult<String>> findRequestPolicyCompleted
+    CompletableFuture<Result<String>> findRequestPolicyCompleted
       = new CompletableFuture<>();
 
     if(item.isNotFound()) {
-      return CompletableFuture.completedFuture(HttpResult.failed(
+      return CompletableFuture.completedFuture(Result.failed(
         new ServerErrorFailure("Unable to find matching request rules for unknown item")));
     }
 
@@ -94,10 +94,10 @@ public class RequestPolicyRepository {
 
     circulationRulesResponse.thenAcceptAsync(response -> {
       if (response.getStatusCode() == 404) {
-        findRequestPolicyCompleted.complete(HttpResult.failed(
+        findRequestPolicyCompleted.complete(Result.failed(
           new ServerErrorFailure("Unable to find matching request rules")));
       } else if (response.getStatusCode() != 200) {
-        findRequestPolicyCompleted.complete(HttpResult.failed(
+        findRequestPolicyCompleted.complete(Result.failed(
           new ForwardOnFailure(response)));
       } else {
         findRequestPolicyCompleted.complete(
