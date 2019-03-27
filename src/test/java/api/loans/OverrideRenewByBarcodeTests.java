@@ -702,19 +702,17 @@ public class OverrideRenewByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    DateTime loanDueDate = DateTime.now().plusWeeks(8);
-
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, DateTime.now());
 
     LoanPolicyBuilder loanablePolicy = new LoanPolicyBuilder()
       .withName("Loanable Policy")
       .withLoanable(true)
-      .rolling(Period.days(8))
+      .rolling(Period.days(1))
       .limitedRenewals(0)
       .renewFromSystemDate();
     createLoanPolicyAndSetAsFallback(loanablePolicy);
 
-    DateTime newDueDate = DateTime.now();
+    DateTime newDueDate = DateTime.now().plusDays(3);
 
     Response response = loansFixture.attemptOverride(smallAngryPlanet, jessica,
         OVERRIDE_COMMENT, newDueDate.toString());
