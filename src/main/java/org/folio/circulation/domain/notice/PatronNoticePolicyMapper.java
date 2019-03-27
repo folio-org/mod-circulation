@@ -5,13 +5,14 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringP
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
 import org.folio.circulation.domain.policy.LoanPolicyPeriod;
-import org.folio.circulation.support.Result;
 import org.folio.circulation.support.JsonArrayHelper;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.joda.time.Period;
 
@@ -44,12 +45,14 @@ public class PatronNoticePolicyMapper implements Function<JsonObject, Result<Pat
       List<NoticeConfiguration> requestNoticeConfigurations =
         JsonArrayHelper.mapToList(representation, REQUEST_NOTICES, this::toNoticeConfiguration);
 
-      return succeeded(new PatronNoticePolicy(loanNoticeConfigurations, requestNoticeConfigurations));
+      List<NoticeConfiguration> allNoticeConfigurations = new ArrayList<>(loanNoticeConfigurations);
+      allNoticeConfigurations.addAll(requestNoticeConfigurations);
+
+      return succeeded(new PatronNoticePolicy(allNoticeConfigurations));
     } catch (IllegalArgumentException ex) {
       return failed(new ServerErrorFailure("Unable to parse patron notice policy:" + ex.getMessage()));
     }
   }
-
 
   private NoticeConfiguration toNoticeConfiguration(JsonObject representation) {
     NoticeConfigurationBuilder builder = new NoticeConfigurationBuilder();
