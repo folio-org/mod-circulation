@@ -29,8 +29,7 @@ public class RenewByBarcodeResource extends RenewalResource {
 
     return new SingleOpenLoanByUserAndItemBarcodeFinder()
       .findLoan(
-        request,
-        loanRepository,
+        RenewByBarcodeRequest.from(request), loanRepository,
         itemRepository,
         userRepository,
         requestQueueRepository

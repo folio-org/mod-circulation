@@ -19,24 +19,17 @@ import org.folio.circulation.resources.RenewByBarcodeRequest;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ItemRepository;
 
-import io.vertx.core.json.JsonObject;
-
 public class SingleOpenLoanByUserAndItemBarcodeFinder {
-
   public CompletableFuture<Result<Loan>> findLoan(
-    JsonObject request,
+    Result<RenewByBarcodeRequest> request,
     LoanRepository loanRepository,
     ItemRepository itemRepository,
     UserRepository userRepository,
     RequestQueueRepository requestQueueRepository) {
 
-    final Result<RenewByBarcodeRequest> requestResult
-      = RenewByBarcodeRequest.from(request);
-
-    final String itemBarcode = requestResult
+    final String itemBarcode = request
       .map(RenewByBarcodeRequest::getItemBarcode)
       .orElse("unknown barcode");
-
 
     final ItemByBarcodeInStorageFinder itemFinder = new ItemByBarcodeInStorageFinder(
       itemRepository, noItemFoundForBarcodeFailure(itemBarcode));
@@ -51,12 +44,12 @@ public class SingleOpenLoanByUserAndItemBarcodeFinder {
     final BlockRenewalValidator blockRenewalValidator =
       new BlockRenewalValidator(requestQueueRepository);
 
-    return requestResult
+    return request
       .after(checkInRequest -> itemFinder.findItemByBarcode(itemBarcode))
       .thenComposeAsync(itemResult -> itemResult.after(blockRenewalValidator::refuseWhenFirstRequestIsRecall))
       .thenComposeAsync(itemResult -> itemResult.after(singleOpenLoanFinder::findSingleOpenLoan))
       .thenApply(userNotFoundValidator::refuseWhenUserNotFound)
-      .thenApply(loanResult -> loanResult.combineToResult(requestResult, this::refuseWhenUserDoesNotMatch));
+      .thenApply(loanResult -> loanResult.combineToResult(request, this::refuseWhenUserDoesNotMatch));
   }
 
   private Result<Loan> refuseWhenUserDoesNotMatch(

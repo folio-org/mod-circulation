@@ -23,7 +23,12 @@ public class OverrideByBarcodeRequest {
   private final String comment;
   private final DateTime dueDate;
 
-  public OverrideByBarcodeRequest(String itemBarcode, String userBarcode, String comment, DateTime dueDate) {
+  private OverrideByBarcodeRequest(
+    String itemBarcode,
+    String userBarcode,
+    String comment,
+    DateTime dueDate) {
+
     this.itemBarcode = itemBarcode;
     this.userBarcode = userBarcode;
     this.comment = comment;

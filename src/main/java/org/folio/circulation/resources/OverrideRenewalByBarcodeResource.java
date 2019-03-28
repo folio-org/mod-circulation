@@ -47,7 +47,7 @@ public class OverrideRenewalByBarcodeResource extends Resource {
 
     request.after(override ->
       loanFinder.findLoan(
-        routingContext.getBodyAsJson(),
+        RenewByBarcodeRequest.from(routingContext.getBodyAsJson()),
         loanRepository,
         itemRepository,
         userRepository,
