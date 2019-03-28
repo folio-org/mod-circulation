@@ -1,14 +1,19 @@
 package org.folio.circulation.support.http.server;
 
-import io.vertx.core.http.HttpClient;
-import io.vertx.ext.web.RoutingContext;
-import org.folio.circulation.support.InvalidOkapiLocationException;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
+import static org.folio.circulation.support.http.OkapiHeader.OKAPI_URL;
+import static org.folio.circulation.support.http.OkapiHeader.REQUEST_ID;
+import static org.folio.circulation.support.http.OkapiHeader.TENANT;
+import static org.folio.circulation.support.http.OkapiHeader.TOKEN;
+import static org.folio.circulation.support.http.OkapiHeader.USER_ID;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import static org.folio.circulation.support.http.OkapiHeader.*;
+import org.folio.circulation.support.InvalidOkapiLocationException;
+import org.folio.circulation.support.http.client.OkapiHttpClient;
+
+import io.vertx.core.http.HttpClient;
+import io.vertx.ext.web.RoutingContext;
 
 public class WebContext {
   private final RoutingContext routingContext;
@@ -68,10 +73,6 @@ public class WebContext {
 
     return new URL(currentRequestUrl.getProtocol(), currentRequestUrl.getHost(),
       currentRequestUrl.getPort(), path);
-  }
-
-  public OkapiHttpClient createHttpClient() {
-    return createHttpClient(routingContext.vertx().createHttpClient());
   }
 
   public OkapiHttpClient createHttpClient(HttpClient httpClient) {
