@@ -80,7 +80,7 @@ public class RequestCollectionResource extends CollectionResource {
   void replace(RoutingContext routingContext) {
 
     JsonObject representation = routingContext.getBodyAsJson();
-    write(representation, "id", getId(routingContext));
+    write(representation, "id", getRequestId(routingContext));
 
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
@@ -128,7 +128,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final RequestRepository requestRepository = RequestRepository.using(clients);
 
-    String id = getId(routingContext);
+    String id = getRequestId(routingContext);
 
     requestRepository.getById(id)
       .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
@@ -140,7 +140,7 @@ public class RequestCollectionResource extends CollectionResource {
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context, client);
 
-    String id = getId(routingContext);
+    String id = getRequestId(routingContext);
 
     final RequestRepository requestRepository = RequestRepository.using(clients);
 
@@ -189,7 +189,7 @@ public class RequestCollectionResource extends CollectionResource {
         PROXY_USER_ID, representation.getString(PROXY_USER_ID)));
   }
 
-  private String getId(RoutingContext routingContext) {
+  private String getRequestId(RoutingContext routingContext) {
     return routingContext.request().getParam("id");
   }
 
