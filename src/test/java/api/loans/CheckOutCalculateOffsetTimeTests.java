@@ -1,27 +1,5 @@
 package api.loans;
 
-import api.support.APITests;
-import api.support.builders.CheckOutByBarcodeRequestBuilder;
-import api.support.builders.LoanPolicyBuilder;
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.domain.OpeningDay;
-import org.folio.circulation.domain.OpeningDayPeriod;
-import org.folio.circulation.domain.policy.DueDateManagement;
-import org.folio.circulation.domain.policy.LoansPolicyProfile;
-import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.Hours;
-import org.joda.time.LocalDate;
-import org.joda.time.LocalTime;
-import org.junit.Test;
-
-import java.net.MalformedURLException;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_DAY_ALL_CURRENT_DATE;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_CURR_DAY;
@@ -43,6 +21,28 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.joda.time.DateTimeConstants.HOURS_PER_DAY;
 
+import java.net.MalformedURLException;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+
+import org.folio.circulation.domain.OpeningDay;
+import org.folio.circulation.domain.OpeningDayPeriod;
+import org.folio.circulation.domain.policy.DueDateManagement;
+import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.Hours;
+import org.joda.time.LocalDate;
+import org.joda.time.LocalTime;
+import org.junit.Test;
+
+import api.support.APITests;
+import api.support.builders.CheckOutByBarcodeRequestBuilder;
+import api.support.builders.LoanPolicyBuilder;
+import io.vertx.core.json.JsonObject;
+
 /**
  * Test case for Short-term loans
  * Loanable = Y
@@ -56,7 +56,6 @@ import static org.joda.time.DateTimeConstants.HOURS_PER_DAY;
 public class CheckOutCalculateOffsetTimeTests extends APITests {
 
   private static final String LOAN_POLICY_NAME = "Move to the beginning of the next open service point hours";
-  private static final String POLICY_PROFILE_NAME = LoansPolicyProfile.ROLLING.name();
   private static final String INTERVAL_HOURS = "Hours";
   private static final String INTERVAL_MINUTES = "Minutes";
   private static final String OFFSET_INTERVAL_HOURS = "Hours";
@@ -64,7 +63,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
   private static final int START_VAL = 1;
 
   private static final LocalTime TEST_TIME_MORNING = new LocalTime(10, 0);
-  public static final String TIMETABLE_IS_ABSENT_ERROR_MESSAGE = "Calendar timetable is absent for requested date";
+  private static final String TIMETABLE_IS_ABSENT_ERROR_MESSAGE = "Calendar timetable is absent for requested date";
 
   private final String dueDateManagement =
     DueDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS.getValue();
@@ -507,12 +506,15 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
   /**
    * Create a fake json LoanPolicy
    */
-  private JsonObject createLoanPolicyOffsetTimeEntry(int duration, String intervalId,
-                                                     int offsetDuration, String offsetInterval) {
+  private JsonObject createLoanPolicyOffsetTimeEntry(
+    int duration,
+    String intervalId,
+    int offsetDuration,
+    String offsetInterval) {
+
     return new LoanPolicyBuilder()
       .withName(LOAN_POLICY_NAME)
       .withDescription("LoanPolicy")
-      .withLoansProfile(POLICY_PROFILE_NAME)
       .rolling(Period.from(duration, intervalId))
       .withClosedLibraryDueDateManagement(dueDateManagement)
       .withOpeningTimeOffset(Period.from(offsetDuration, offsetInterval))
