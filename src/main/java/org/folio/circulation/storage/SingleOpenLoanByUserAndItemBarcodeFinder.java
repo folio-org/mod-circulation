@@ -7,6 +7,7 @@ import static org.folio.circulation.support.ValidationErrorFailure.failedValidat
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
@@ -16,8 +17,8 @@ import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.validation.BlockRenewalValidator;
 import org.folio.circulation.domain.validation.UserNotFoundValidator;
 import org.folio.circulation.resources.RenewByBarcodeRequest;
-import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.Result;
 
 public class SingleOpenLoanByUserAndItemBarcodeFinder {
   private final LoanRepository loanRepository;
@@ -38,11 +39,8 @@ public class SingleOpenLoanByUserAndItemBarcodeFinder {
   }
 
   public CompletableFuture<Result<Loan>> findLoan(
-    Result<RenewByBarcodeRequest> request) {
-
-    final String itemBarcode = request
-      .map(RenewByBarcodeRequest::getItemBarcode)
-      .orElse("unknown barcode");
+    String itemBarcode,
+    String userBarcode) {
 
     final ItemByBarcodeInStorageFinder itemFinder = new ItemByBarcodeInStorageFinder(
       this.itemRepository, noItemFoundForBarcodeFailure(itemBarcode));
@@ -57,23 +55,29 @@ public class SingleOpenLoanByUserAndItemBarcodeFinder {
     final BlockRenewalValidator blockRenewalValidator =
       new BlockRenewalValidator(this.requestQueueRepository);
 
-    return request
-      .after(checkInRequest -> itemFinder.findItemByBarcode(itemBarcode))
+    return itemFinder.findItemByBarcode(itemBarcode)
       .thenComposeAsync(itemResult -> itemResult.after(blockRenewalValidator::refuseWhenFirstRequestIsRecall))
       .thenComposeAsync(itemResult -> itemResult.after(singleOpenLoanFinder::findSingleOpenLoan))
       .thenApply(userNotFoundValidator::refuseWhenUserNotFound)
-      .thenApply(loanResult -> loanResult.combineToResult(request, this::refuseWhenUserDoesNotMatch));
+      .thenComposeAsync(loanResult -> loanResult.after(refuseWhenUserDoesNotMatch(userBarcode)));
   }
 
-  private Result<Loan> refuseWhenUserDoesNotMatch(
-    Loan loan,
-    RenewByBarcodeRequest barcodeRequest) {
+  private Function<Loan, CompletableFuture<Result<Loan>>> refuseWhenUserDoesNotMatch(
+    String userBarcode) {
 
-    if (userMatches(loan, barcodeRequest.getUserBarcode())) {
-      return succeeded(loan);
+    return loan -> refuseWhenUserDoesNotMatch(loan, userBarcode);
+  }
+
+  private CompletableFuture<Result<Loan>> refuseWhenUserDoesNotMatch(
+    Loan loan,
+    String userBarcode) {
+
+    if (userMatches(loan, userBarcode)) {
+      return CompletableFuture.completedFuture(succeeded(loan));
     } else {
-      return failedValidation("Cannot renew item checked out to different user",
-        RenewByBarcodeRequest.USER_BARCODE, barcodeRequest.getUserBarcode());
+      return CompletableFuture.completedFuture(
+        failedValidation("Cannot renew item checked out to different user",
+        RenewByBarcodeRequest.USER_BARCODE, userBarcode));
     }
   }
 

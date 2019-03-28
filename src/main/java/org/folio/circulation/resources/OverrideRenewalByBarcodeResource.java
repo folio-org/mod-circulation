@@ -49,7 +49,7 @@ public class OverrideRenewalByBarcodeResource extends Resource {
       routingContext.getBodyAsJson());
 
     request.after(override ->
-      loanFinder.findLoan(RenewByBarcodeRequest.from(routingContext.getBodyAsJson()))
+      loanFinder.findLoan(override.getItemBarcode(), override.getUserBarcode())
         .thenComposeAsync(r -> r.after(loan -> renewalService.overrideRenewal(loan, override.getDueDate(), override.getComment())))
         .thenComposeAsync(r -> r.after(loanRepository::updateLoan)))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
