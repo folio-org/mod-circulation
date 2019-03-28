@@ -1,6 +1,6 @@
 package api.support.builders;
 
-import org.folio.circulation.domain.OpeningDayPeriod;
+import api.support.OpeningDayPeriod;
 
 import java.util.Arrays;
 import java.util.List;
