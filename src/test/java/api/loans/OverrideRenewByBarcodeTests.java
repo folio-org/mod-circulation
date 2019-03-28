@@ -691,6 +691,35 @@ public class OverrideRenewByBarcodeTests extends APITests {
       isEquivalentTo(newDueDate));
   }
 
+
+  @Test
+  public void cannotOverrideRenewalWhenDueDateIsEarlierOrSameAsCurrentLoanDueDate() throws
+    InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, DateTime.now());
+
+    LoanPolicyBuilder loanablePolicy = new LoanPolicyBuilder()
+      .withName("Loanable Policy")
+      .withLoanable(true)
+      .rolling(Period.days(1))
+      .limitedRenewals(0)
+      .renewFromSystemDate();
+    createLoanPolicyAndSetAsFallback(loanablePolicy);
+
+    DateTime newDueDate = DateTime.now().plusDays(3);
+
+    Response response = loansFixture.attemptOverride(smallAngryPlanet, jessica,
+        OVERRIDE_COMMENT, newDueDate.toString());
+
+    assertThat(response.getJson(), hasErrorWith(hasRenewalWouldNotChangeDueDateMessage()));
+  }
+
   private Matcher<ValidationError> hasUserRelatedParameter(IndividualResource user) {
     return hasParameter("userBarcode", user.getJson().getString("barcode"));
   }
@@ -702,6 +731,10 @@ public class OverrideRenewByBarcodeTests extends APITests {
   private Matcher<ValidationError> hasItemNotFoundMessage(IndividualResource item) {
     return hasMessage(String.format("No item with barcode %s exists",
       item.getJson().getString("barcode")));
+  }
+
+  private Matcher<ValidationError> hasRenewalWouldNotChangeDueDateMessage() {
+    return hasMessage("renewal would not change the due date");
   }
 
   private void createLoanPolicyAndSetAsFallback(LoanPolicyBuilder loanPolicyBuilder) throws

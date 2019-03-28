@@ -32,6 +32,7 @@ public class LoanPolicy {
 
   private static final String LOANS_POLICY_KEY = "loansPolicy";
   private static final String PERIOD_KEY = "period";
+  private static final String RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE = "renewal would not change the due date";
 
   private final JsonObject representation;
   private final FixedDueDateSchedules fixedDueDateSchedules;
@@ -121,13 +122,12 @@ public class LoanPolicy {
       
       if (proposedDueDateResult.failed() && isRolling(loansPolicy)) {
         DueDateStrategy dueDateStrategy = getRollingRenewalOverrideDueDateStrategy(systemDate);
-        return dueDateStrategy.calculateDueDate(loan)
-          .map(dueDate -> loan.overrideRenewal(dueDate, getId(), comment));
+        return processRenewal(dueDateStrategy.calculateDueDate(loan), loan, comment);
       }
 
       if (proposedDueDateResult.succeeded() &&
         reachedNumberOfRenewalsLimit(loan) && !unlimitedRenewals()) {
-        return proposedDueDateResult.map(dueDate -> loan.overrideRenewal(dueDate, getId(), comment));
+        return processRenewal(proposedDueDateResult, loan, comment);
       }
 
       return failedValidation(errorForNotMatchingOverrideCases());
@@ -135,6 +135,20 @@ public class LoanPolicy {
     } catch (Exception e) {
       return failed(new ServerErrorFailure(e));
     }
+  }
+
+  private Result<Loan> processRenewal(Result<DateTime> calculatedDueDate, Loan loan, String comment) {
+    return calculatedDueDate
+      .next(dueDate -> errorWhenEarlierOrSameDueDate(loan, dueDate))
+      .map(dueDate -> loan.overrideRenewal(dueDate, getId(), comment));
+  }
+
+  private Result<DateTime> errorWhenEarlierOrSameDueDate(Loan loan, DateTime proposedDueDate) {
+    if (isSameOrBefore(loan, proposedDueDate)) {
+      return failedValidation(errorForPolicy(
+        RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE));
+    }
+    return Result.succeeded(proposedDueDate);
   }
 
   private Result<Loan> overrideRenewalForDueDate(Loan loan, DateTime overrideDueDate, String comment) {
