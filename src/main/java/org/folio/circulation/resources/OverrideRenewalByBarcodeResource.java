@@ -41,17 +41,15 @@ public class OverrideRenewalByBarcodeResource extends Resource {
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
     final LoanRenewalService renewalService = LoanRenewalService.using(clients);
-    final SingleOpenLoanByUserAndItemBarcodeFinder loanFinder = new SingleOpenLoanByUserAndItemBarcodeFinder();
+    final SingleOpenLoanByUserAndItemBarcodeFinder loanFinder
+      = new SingleOpenLoanByUserAndItemBarcodeFinder(loanRepository,
+      itemRepository, userRepository, requestQueueRepository);
 
-    final Result<OverrideByBarcodeRequest> request = OverrideByBarcodeRequest.from(routingContext.getBodyAsJson());
+    final Result<OverrideByBarcodeRequest> request = OverrideByBarcodeRequest.from(
+      routingContext.getBodyAsJson());
 
     request.after(override ->
-      loanFinder.findLoan(
-        RenewByBarcodeRequest.from(routingContext.getBodyAsJson()),
-        loanRepository,
-        itemRepository,
-        userRepository,
-        requestQueueRepository)
+      loanFinder.findLoan(RenewByBarcodeRequest.from(routingContext.getBodyAsJson()))
         .thenComposeAsync(r -> r.after(loan -> renewalService.overrideRenewal(loan, override.getDueDate(), override.getComment())))
         .thenComposeAsync(r -> r.after(loanRepository::updateLoan)))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))

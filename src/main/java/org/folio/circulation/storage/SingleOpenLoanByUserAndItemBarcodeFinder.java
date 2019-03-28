@@ -20,29 +20,42 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ItemRepository;
 
 public class SingleOpenLoanByUserAndItemBarcodeFinder {
-  public CompletableFuture<Result<Loan>> findLoan(
-    Result<RenewByBarcodeRequest> request,
+  private final LoanRepository loanRepository;
+  private final ItemRepository itemRepository;
+  private final UserRepository userRepository;
+  private final RequestQueueRepository requestQueueRepository;
+
+  public SingleOpenLoanByUserAndItemBarcodeFinder(
     LoanRepository loanRepository,
     ItemRepository itemRepository,
     UserRepository userRepository,
     RequestQueueRepository requestQueueRepository) {
+
+    this.loanRepository = loanRepository;
+    this.itemRepository = itemRepository;
+    this.userRepository = userRepository;
+    this.requestQueueRepository = requestQueueRepository;
+  }
+
+  public CompletableFuture<Result<Loan>> findLoan(
+    Result<RenewByBarcodeRequest> request) {
 
     final String itemBarcode = request
       .map(RenewByBarcodeRequest::getItemBarcode)
       .orElse("unknown barcode");
 
     final ItemByBarcodeInStorageFinder itemFinder = new ItemByBarcodeInStorageFinder(
-      itemRepository, noItemFoundForBarcodeFailure(itemBarcode));
+      this.itemRepository, noItemFoundForBarcodeFailure(itemBarcode));
 
     final SingleOpenLoanForItemInStorageFinder singleOpenLoanFinder
-      = new SingleOpenLoanForItemInStorageFinder(loanRepository, userRepository,
-      moreThanOneOpenLoanFailure(itemBarcode), false);
+      = new SingleOpenLoanForItemInStorageFinder(this.loanRepository,
+      this.userRepository, moreThanOneOpenLoanFailure(itemBarcode), false);
 
     final UserNotFoundValidator userNotFoundValidator = new UserNotFoundValidator(
       userId -> singleValidationError("user is not found", "userId", userId));
 
     final BlockRenewalValidator blockRenewalValidator =
-      new BlockRenewalValidator(requestQueueRepository);
+      new BlockRenewalValidator(this.requestQueueRepository);
 
     return request
       .after(checkInRequest -> itemFinder.findItemByBarcode(itemBarcode))
