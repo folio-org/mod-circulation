@@ -71,12 +71,12 @@ public class CheckInByBarcodeResource extends Resource {
         moreThanOneOpenLoanFailure(itemBarcode), true);
 
     final PatronNoticePolicyRepository patronNoticePolicyRepository = new PatronNoticePolicyRepository(clients);
-    final PatronNoticeService patronNoticeService = new PatronNoticeService(clients);
+    final PatronNoticeService patronNoticeService = new PatronNoticeService(patronNoticePolicyRepository, clients);
 
     final CheckInProcessAdapter processAdapter = new CheckInProcessAdapter(
       itemFinder, singleOpenLoanFinder, loanCheckInService,
       requestQueueRepository, updateItem, requestQueueUpdate, loanRepository,
-      servicePointRepository, patronNoticePolicyRepository, patronNoticeService);
+      servicePointRepository, patronNoticeService);
 
     checkInRequestResult
       .map(CheckInProcessRecords::new)
@@ -95,7 +95,7 @@ public class CheckInByBarcodeResource extends Resource {
         processAdapter::getDestinationServicePoint, CheckInProcessRecords::withItem))
       .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
         processAdapter::updateLoan, CheckInProcessRecords::withLoan))
-      .thenComposeAsync(updateItemResult -> updateItemResult.after(processAdapter::sendCheckInPatronNotice))
+      .thenApply(updateItemResult -> updateItemResult.next(processAdapter::sendCheckInPatronNotice))
       .thenApply(CheckInByBarcodeResponse::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }

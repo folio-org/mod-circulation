@@ -40,7 +40,7 @@ public abstract class CirculationPolicyRepository<T> {
     return lookupPolicy(loan.getItem(), loan.getUser());
   }
 
-  private CompletableFuture<Result<T>> lookupPolicy(
+  public CompletableFuture<Result<T>> lookupPolicy(
     Item item,
     User user) {
 
