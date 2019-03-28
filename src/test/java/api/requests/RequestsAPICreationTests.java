@@ -1287,6 +1287,65 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is(("Hold requests are not allowed for " + ItemStatus.AVAILABLE.getValue() + " item status combination").toLowerCase()));
   }
 
+  @Test
+  public void cannotCreateTwoRequestsFromTheSameUser()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    final IndividualResource checkedOutItem = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    loansFixture.checkOut(checkedOutItem, jessica);
+
+    requestsClient.create(new RequestBuilder()
+      .recall()
+      .forItem(checkedOutItem)
+      .withPickupServicePointId(requestPickupServicePoint.getId())
+      .by(jessica));
+
+    final Response response = requestsClient.attemptCreate(new RequestBuilder()
+      .recall()
+      .forItem(checkedOutItem)
+      .withPickupServicePointId(requestPickupServicePoint.getId())
+      .by(jessica));
+
+    assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(
+      response.getJson(),
+      hasErrorWith(hasMessage("This requester already has an open request for this item"))
+    );
+  }
+
+  @Test
+  public void canCreateTwoRequestsFromDifferentUsers()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    final IndividualResource checkedOutItem = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    loansFixture.checkOut(checkedOutItem, jessica);
+
+    requestsClient.create(new RequestBuilder()
+      .recall()
+      .forItem(checkedOutItem)
+      .withPickupServicePointId(requestPickupServicePoint.getId())
+      .by(jessica));
+
+    final Response response = requestsClient.attemptCreate(new RequestBuilder()
+      .recall()
+      .forItem(checkedOutItem)
+      .withPickupServicePointId(requestPickupServicePoint.getId())
+      .by(usersFixture.james()));
+
+    assertThat(response, hasStatus(HTTP_CREATED));
+  }
 
   public static IndividualResource setupPagedItem(IndividualResource requestPickupServicePoint, ItemsFixture itemsFixture,
                                                   ResourceClient requestClient, UsersFixture usersFixture)

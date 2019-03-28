@@ -344,26 +344,10 @@ public class RequestsAPIRetrievalTests extends APITests {
     );
 
     requestsClient.create(new RequestBuilder()
-      .withItemId(nod.getId())
-      .withRequesterId(requesterId)
-      .withUserProxyId(proxyId)
-      .withPickupServicePointId(pickupServicePointId)
-      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG)))
-    );
-
-    requestsClient.create(new RequestBuilder()
       .withItemId(uprooted.getId())
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId)
-      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG)))
-    );
-
-    requestsClient.create(new RequestBuilder()
-      .withItemId(temeraire.getId())
-      .withRequesterId(requesterId)
-      .withUserProxyId(proxyId)
-      .withPickupServicePointId(pickupServicePointId2)
       .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG)))
     );
 

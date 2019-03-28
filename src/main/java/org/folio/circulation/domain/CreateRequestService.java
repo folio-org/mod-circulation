@@ -9,6 +9,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.policy.RequestPolicy;
 import org.folio.circulation.domain.policy.RequestPolicyRepository;
+import org.folio.circulation.domain.validation.UniqRequestValidator;
 import org.folio.circulation.support.HttpResult;
 
 public class CreateRequestService {
@@ -17,19 +18,22 @@ public class CreateRequestService {
   private final UpdateLoanActionHistory updateLoanActionHistory;
   private final RequestPolicyRepository requestPolicyRepository;
   private final UpdateLoan updateLoan;
+  private final UniqRequestValidator uniqRequestValidator;
 
   public CreateRequestService(
     RequestRepository requestRepository,
     UpdateItem updateItem,
     UpdateLoanActionHistory updateLoanActionHistory,
     UpdateLoan updateLoan,
-    RequestPolicyRepository requestPolicyRepository) {
+    RequestPolicyRepository requestPolicyRepository,
+    UniqRequestValidator uniqRequestValidator) {
 
     this.requestRepository = requestRepository;
     this.updateItem = updateItem;
     this.updateLoanActionHistory = updateLoanActionHistory;
     this.updateLoan = updateLoan;
     this.requestPolicyRepository = requestPolicyRepository;
+    this.uniqRequestValidator = uniqRequestValidator;
   }
 
   public CompletableFuture<HttpResult<RequestAndRelatedRecords>> createRequest(
@@ -38,8 +42,9 @@ public class CreateRequestService {
     return completedFuture(refuseWhenItemDoesNotExist(requestAndRelatedRecords)
       .next(CreateRequestService::refuseWhenInvalidUserAndPatronGroup)
       .next(CreateRequestService::refuseWhenItemIsNotValid))
-      .thenComposeAsync( r-> r.after(requestPolicyRepository::lookupRequestPolicy))
-      .thenApply( r -> r.next(CreateRequestService::refuseWhenRequestCannotBeFulfilled))
+      .thenApply(r -> r.next(uniqRequestValidator::refuseWhenRequestIsAlreadyExisted))
+      .thenComposeAsync(r -> r.after(requestPolicyRepository::lookupRequestPolicy))
+      .thenApply(r -> r.next(CreateRequestService::refuseWhenRequestCannotBeFulfilled))
       .thenApply(r -> r.map(CreateRequestService::setRequestQueuePosition))
       .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
       .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreation))

@@ -32,6 +32,10 @@ public class ValidationErrorFailure implements HttpFailure {
     return HttpResult.failed(failure(error));
   }
 
+  public static ValidationErrorFailure failure(String reason) {
+    return failure(new ValidationError(reason));
+  }
+
   public static ValidationErrorFailure failure(
     String reason,
     String propertyName,
