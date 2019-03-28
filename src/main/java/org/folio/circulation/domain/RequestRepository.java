@@ -155,13 +155,6 @@ public class RequestRepository {
     });
   }
 
-  public CompletableFuture<Result<RequestAndRelatedRecords>> delete(
-    RequestAndRelatedRecords requestAndRelatedRecords) {
-
-    return delete(requestAndRelatedRecords.getRequest())
-      .thenApply(r -> r.map(requestAndRelatedRecords::withRequest));
-  }
-
   public CompletableFuture<Result<Request>> delete(Request request) {
     return requestsStorageClient.delete(request.getId())
       .thenApply(response -> {
