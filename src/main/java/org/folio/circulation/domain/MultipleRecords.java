@@ -1,9 +1,9 @@
 package org.folio.circulation.domain;
 
 import static java.util.function.Function.identity;
-import static org.folio.circulation.support.HttpResult.failed;
-import static org.folio.circulation.support.HttpResult.succeeded;
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
+import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
@@ -33,7 +33,7 @@ public class MultipleRecords<T> {
     this.totalRecords = totalRecords;
   }
 
-  public static <T> HttpResult<MultipleRecords<T>> from(
+  public static <T> Result<MultipleRecords<T>> from(
     Response response,
     Function<JsonObject, T> mapper,
     String recordsPropertyName) {
@@ -58,9 +58,9 @@ public class MultipleRecords<T> {
     }
   }
 
-  public static <T> HttpResult<MultipleRecords<T>> from(JsonObject representation,
-                                                        Function<JsonObject, T> mapper,
-                                                        String recordsPropertyName) {
+  public static <T> Result<MultipleRecords<T>> from(JsonObject representation,
+                                                    Function<JsonObject, T> mapper,
+                                                    String recordsPropertyName) {
 
     List<T> wrappedRecords = mapToList(representation, recordsPropertyName, mapper);
     Integer totalRecords = representation.getInteger(TOTAL_RECORDS_PROPERTY_NAME);

@@ -8,8 +8,8 @@ import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.representations.LoanResponse;
 import org.folio.circulation.storage.SingleOpenLoanByUserAndItemBarcodeFinder;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.WebContext;
 
@@ -43,7 +43,7 @@ public class OverrideRenewalByBarcodeResource extends Resource {
     final LoanRenewalService renewalService = LoanRenewalService.using(clients);
     final SingleOpenLoanByUserAndItemBarcodeFinder loanFinder = new SingleOpenLoanByUserAndItemBarcodeFinder();
 
-    final HttpResult<OverrideByBarcodeRequest> request = OverrideByBarcodeRequest.from(routingContext.getBodyAsJson());
+    final Result<OverrideByBarcodeRequest> request = OverrideByBarcodeRequest.from(routingContext.getBodyAsJson());
 
     request.after(override ->
       loanFinder.findLoan(

@@ -2,9 +2,9 @@ package org.folio.circulation.storage;
 
 import static org.folio.circulation.domain.validation.CommonFailures.moreThanOneOpenLoanFailure;
 import static org.folio.circulation.domain.validation.CommonFailures.noItemFoundForBarcodeFailure;
-import static org.folio.circulation.support.HttpResult.failed;
-import static org.folio.circulation.support.HttpResult.succeeded;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
+import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -16,21 +16,21 @@ import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.validation.BlockRenewalValidator;
 import org.folio.circulation.domain.validation.UserNotFoundValidator;
 import org.folio.circulation.resources.RenewByBarcodeRequest;
-import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.Result;
 
 import io.vertx.core.json.JsonObject;
 
 public class SingleOpenLoanByUserAndItemBarcodeFinder {
 
-  public CompletableFuture<HttpResult<Loan>> findLoan(
+  public CompletableFuture<Result<Loan>> findLoan(
     JsonObject request,
     LoanRepository loanRepository,
     ItemRepository itemRepository,
     UserRepository userRepository,
     RequestQueueRepository requestQueueRepository) {
 
-    final HttpResult<RenewByBarcodeRequest> requestResult
+    final Result<RenewByBarcodeRequest> requestResult
       = RenewByBarcodeRequest.from(request);
 
     final String itemBarcode = requestResult
@@ -46,7 +46,7 @@ public class SingleOpenLoanByUserAndItemBarcodeFinder {
       moreThanOneOpenLoanFailure(itemBarcode), false);
 
     final UserNotFoundValidator userNotFoundValidator = new UserNotFoundValidator(
-      userId -> failure("user is not found", "userId", userId));
+      userId -> singleValidationError("user is not found", "userId", userId));
 
     final BlockRenewalValidator blockRenewalValidator =
       new BlockRenewalValidator(requestQueueRepository);
@@ -59,15 +59,15 @@ public class SingleOpenLoanByUserAndItemBarcodeFinder {
       .thenApply(loanResult -> loanResult.combineToResult(requestResult, this::refuseWhenUserDoesNotMatch));
   }
 
-  private HttpResult<Loan> refuseWhenUserDoesNotMatch(
+  private Result<Loan> refuseWhenUserDoesNotMatch(
     Loan loan,
     RenewByBarcodeRequest barcodeRequest) {
 
     if (userMatches(loan, barcodeRequest.getUserBarcode())) {
       return succeeded(loan);
     } else {
-      return failed(failure("Cannot renew item checked out to different user",
-        RenewByBarcodeRequest.USER_BARCODE, barcodeRequest.getUserBarcode()));
+      return failedValidation("Cannot renew item checked out to different user",
+        RenewByBarcodeRequest.USER_BARCODE, barcodeRequest.getUserBarcode());
     }
   }
 

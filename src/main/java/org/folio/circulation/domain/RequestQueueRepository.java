@@ -1,17 +1,17 @@
 package org.folio.circulation.domain;
 
-import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.HttpResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.CqlHelper.encodeQuery;
+import static org.folio.circulation.support.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.CqlHelper.encodeQuery;
-import static org.folio.circulation.support.HttpResult.succeeded;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.Result;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RequestQueueRepository {
   private final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -27,18 +27,18 @@ public class RequestQueueRepository {
     return new RequestQueueRepository(RequestRepository.using(clients));
   }
 
-  public CompletableFuture<HttpResult<LoanAndRelatedRecords>> get(
+  public CompletableFuture<Result<LoanAndRelatedRecords>> get(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
     return get(loanAndRelatedRecords.getLoan().getItemId())
       .thenApply(result -> result.map(loanAndRelatedRecords::withRequestQueue));
   }
 
-  public CompletableFuture<HttpResult<RequestQueue>> get(ItemRelatedRecord itemRelatedRecord) {
+  public CompletableFuture<Result<RequestQueue>> get(ItemRelatedRecord itemRelatedRecord) {
     return get(itemRelatedRecord.getItemId());
   }
 
-  public CompletableFuture<HttpResult<RequestQueue>> get(String itemId) {
+  public CompletableFuture<Result<RequestQueue>> get(String itemId) {
       String unencodedQuery = String.format(
         "itemId==%s and status==(\"%s\" or \"%s\" or \"%s\") sortBy position/sort.ascending",
         itemId,
@@ -56,7 +56,7 @@ public class RequestQueueRepository {
         .thenApply(r -> r.map(RequestQueue::new)));
   }
 
-  CompletableFuture<HttpResult<RequestQueue>> updateRequestsWithChangedPositions(
+  CompletableFuture<Result<RequestQueue>> updateRequestsWithChangedPositions(
     RequestQueue requestQueue) {
 
     final Collection<Request> changedRequests = requestQueue.getRequestsWithChangedPosition();
@@ -70,7 +70,7 @@ public class RequestQueueRepository {
     //(Which might be a constraint in storage)
 
     //Need an initial future to hang off
-    CompletableFuture<HttpResult<Request>> requestUpdated = completedFuture(succeeded(null));
+    CompletableFuture<Result<Request>> requestUpdated = completedFuture(succeeded(null));
 
     for (Request request : changedRequests) {
       requestUpdated = requestUpdated.thenComposeAsync(

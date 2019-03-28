@@ -1,10 +1,10 @@
 package org.folio.circulation.support;
 
-import io.vertx.core.json.JsonObject;
+import static org.folio.circulation.support.SingleRecordMapper.notFound;
 
 import java.util.function.Function;
 
-import static org.folio.circulation.support.SingleRecordMapper.*;
+import io.vertx.core.json.JsonObject;
 
 public class FetchSingleRecord<T> {
   private final String recordType;
@@ -33,7 +33,7 @@ public class FetchSingleRecord<T> {
     return new FetchSingleRecord<>(recordType, client, mapper);
   }
 
-  public SingleRecordFetcher<T> whenNotFound(HttpResult<T> result) {
+  public SingleRecordFetcher<T> whenNotFound(Result<T> result) {
     return new SingleRecordFetcher<>(client, recordType, notFound(mapper, result));
   }
 }

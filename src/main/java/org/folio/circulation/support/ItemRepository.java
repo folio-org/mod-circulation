@@ -1,11 +1,9 @@
 package org.folio.circulation.support;
 
-import io.vertx.core.json.JsonObject;
-import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.domain.*;
-import org.folio.circulation.support.http.client.Response;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.function.Function.identity;
+import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -16,10 +14,18 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static java.util.function.Function.identity;
-import static org.folio.circulation.support.HttpResult.failed;
-import static org.folio.circulation.support.HttpResult.succeeded;
+import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.ItemRelatedRecord;
+import org.folio.circulation.domain.LocationRepository;
+import org.folio.circulation.domain.MaterialTypeRepository;
+import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.ServicePointRepository;
+import org.folio.circulation.support.http.client.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.vertx.core.json.JsonObject;
 
 public class ItemRepository {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -67,11 +73,11 @@ public class ItemRepository {
     this.fetchMaterialType = fetchMaterialType;
   }
 
-  public CompletableFuture<HttpResult<Item>> fetchFor(ItemRelatedRecord record) {
+  public CompletableFuture<Result<Item>> fetchFor(ItemRelatedRecord record) {
     return fetchById(record.getItemId());
   }
 
-  private CompletableFuture<HttpResult<Item>> fetchLocation(HttpResult<Item> result) {
+  private CompletableFuture<Result<Item>> fetchLocation(Result<Item> result) {
     return fetchLocation
       ? result.combineAfter(locationRepository::getLocation, Item::withLocation)
           .thenComposeAsync(itemResult ->
@@ -81,24 +87,24 @@ public class ItemRepository {
       : completedFuture(result);
   }
 
-  private CompletableFuture<HttpResult<Item>> fetchMaterialType(HttpResult<Item> result) {
+  private CompletableFuture<Result<Item>> fetchMaterialType(Result<Item> result) {
     return fetchMaterialType
       ? result.combineAfter(materialTypeRepository::getFor, Item::withMaterialType)
       : completedFuture(result);
   }
 
-  public CompletableFuture<HttpResult<Item>> fetchByBarcode(String barcode) {
+  public CompletableFuture<Result<Item>> fetchByBarcode(String barcode) {
     return fetchItemByBarcode(barcode)
       .thenComposeAsync(this::fetchItemRelatedRecords);
   }
 
-  public CompletableFuture<HttpResult<Item>> fetchById(String itemId) {
+  public CompletableFuture<Result<Item>> fetchById(String itemId) {
     return fetchItem(itemId)
       .thenComposeAsync(this::fetchItemRelatedRecords);
   }
 
-  private CompletableFuture<HttpResult<Collection<Item>>> fetchLocations(
-    HttpResult<Collection<Item>> result) {
+  private CompletableFuture<Result<Collection<Item>>> fetchLocations(
+    Result<Collection<Item>> result) {
 
     if(fetchLocation) {
       return result.after(items ->
@@ -113,8 +119,8 @@ public class ItemRepository {
     }
   }
 
-  private CompletableFuture<HttpResult<Collection<Item>>> fetchMaterialTypes(
-    HttpResult<Collection<Item>> result) {
+  private CompletableFuture<Result<Collection<Item>>> fetchMaterialTypes(
+    Result<Collection<Item>> result) {
 
     if(fetchMaterialType) {
       return result.after(items ->
@@ -129,8 +135,8 @@ public class ItemRepository {
     }
   }
 
-  private CompletableFuture<HttpResult<Collection<Item>>> fetchInstances(
-    HttpResult<Collection<Item>> result) {
+  private CompletableFuture<Result<Collection<Item>>> fetchInstances(
+    Result<Collection<Item>> result) {
 
     return result.after(items -> {
       List<String> instanceIds = items.stream()
@@ -150,8 +156,8 @@ public class ItemRepository {
     });
   }
 
-  private CompletableFuture<HttpResult<Collection<Item>>> fetchHoldingRecords(
-    HttpResult<Collection<Item>> result) {
+  private CompletableFuture<Result<Collection<Item>>> fetchHoldingRecords(
+    Result<Collection<Item>> result) {
 
     return result.after(items -> {
       List<String> holdingsIds = items.stream()
@@ -180,7 +186,7 @@ public class ItemRepository {
       .findFirst();
   }
 
-  private CompletableFuture<HttpResult<Collection<Item>>> fetchItems(
+  private CompletableFuture<Result<Collection<Item>>> fetchItems(
     Collection<String> itemIds) {
 
     String itemsQuery = CqlHelper.multipleRecordsCqlQuery(itemIds);
@@ -190,13 +196,13 @@ public class ItemRepository {
       .thenApply(r -> r.map(MultipleRecords::getRecords));
   }
 
-  private CompletableFuture<HttpResult<Item>> fetchItem(String itemId) {
+  private CompletableFuture<Result<Item>> fetchItem(String itemId) {
     return SingleRecordFetcher.jsonOrNull(itemsClient, "item")
       .fetch(itemId)
       .thenApply(r -> r.map(Item::from));
   }
 
-  private CompletableFuture<HttpResult<Item>> fetchItemByBarcode(String barcode) {
+  private CompletableFuture<Result<Item>> fetchItemByBarcode(String barcode) {
     log.info("Fetching item with barcode: {}", barcode);
 
     return itemsClient.getMany(String.format("barcode==%s", barcode), 1, 0)
@@ -205,13 +211,13 @@ public class ItemRepository {
       .exceptionally(e -> failed(new ServerErrorFailure(e)));
   }
 
-  private HttpResult<JsonObject> mapMultipleToResult(Response response) {
+  private Result<JsonObject> mapMultipleToResult(Response response) {
     return MultipleRecords.from(response, identity(), "items")
       .map(items -> items.getRecords().stream().findFirst().orElse(null));
   }
 
-  private CompletableFuture<HttpResult<Item>> fetchHoldingsRecord(
-    HttpResult<Item> result) {
+  private CompletableFuture<Result<Item>> fetchHoldingsRecord(
+    Result<Item> result) {
 
     return result.after(item -> {
       if(item == null || item.isNotFound()) {
@@ -226,7 +232,7 @@ public class ItemRepository {
     });
   }
 
-  private CompletableFuture<HttpResult<Item>> fetchInstance(HttpResult<Item> result) {
+  private CompletableFuture<Result<Item>> fetchInstance(Result<Item> result) {
     return result.after(item -> {
       if(item == null || item.isNotFound() || item.getInstanceId() == null) {
         log.info("Holding was not found, aborting fetching instance");
@@ -241,8 +247,8 @@ public class ItemRepository {
   }
 
   //TODO: Try to remove includeItemMap without introducing unchecked exception
-  public <T extends ItemRelatedRecord> CompletableFuture<HttpResult<MultipleRecords<T>>> fetchItemsFor(
-    HttpResult<MultipleRecords<T>> result,
+  public <T extends ItemRelatedRecord> CompletableFuture<Result<MultipleRecords<T>>> fetchItemsFor(
+    Result<MultipleRecords<T>> result,
     BiFunction<T, Item, T> includeItemMap) {
 
     if (result.failed() || result.value().getRecords().isEmpty()) {
@@ -255,7 +261,7 @@ public class ItemRepository {
         records.getTotalRecords()));
   }
 
-  private CompletableFuture<HttpResult<Collection<Item>>> fetchFor(
+  private CompletableFuture<Result<Collection<Item>>> fetchFor(
     Collection<String> itemIds) {
 
     return fetchItems(itemIds)
@@ -284,8 +290,8 @@ public class ItemRepository {
       .collect(Collectors.toList());
   }
 
-  private CompletableFuture<HttpResult<Item>> fetchItemRelatedRecords(
-    HttpResult<Item> item) {
+  private CompletableFuture<Result<Item>> fetchItemRelatedRecords(
+    Result<Item> item) {
 
     return fetchHoldingsRecord(item)
       .thenComposeAsync(this::fetchInstance)

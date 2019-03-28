@@ -1,13 +1,13 @@
 package org.folio.circulation.domain.policy.library;
 
-import org.folio.circulation.support.HttpResult;
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
+
+import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
 import org.junit.Assert;
 import org.junit.Test;
-
-import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
 
 public class KeepCurrentStrategyTest {
 
@@ -17,7 +17,7 @@ public class KeepCurrentStrategyTest {
     DateTime requestDate =
       new DateTime(2019, DateTimeConstants.JANUARY, 1, 0, 0)
         .withZoneRetainFields(DateTimeZone.UTC);
-    HttpResult<DateTime> calculatedDateTime = keepCurrentStrategy.calculateDueDate(requestDate, null);
+    Result<DateTime> calculatedDateTime = keepCurrentStrategy.calculateDueDate(requestDate, null);
 
     DateTime expectedDate = requestDate.withTime(END_OF_A_DAY);
     Assert.assertEquals(expectedDate, calculatedDateTime.value());
@@ -29,7 +29,7 @@ public class KeepCurrentStrategyTest {
     DateTime requestDate =
       new DateTime(2019, DateTimeConstants.JANUARY, 1, 0, 0)
         .withZoneRetainFields(DateTimeZone.UTC);
-    HttpResult<DateTime> calculatedDateTime = keepCurrentStrategy.calculateDueDate(requestDate, null);
+    Result<DateTime> calculatedDateTime = keepCurrentStrategy.calculateDueDate(requestDate, null);
 
     Assert.assertEquals(requestDate, calculatedDateTime.value());
   }

@@ -3,8 +3,8 @@ package api.requests.scenarios;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static org.folio.HttpStatus.HTTP_INTERNAL_SERVER_ERROR;
-import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -117,9 +117,9 @@ public class RequestPolicyTests extends APITests {
       .withPickupServicePointId(requestPickupServicePoint.getId())
       .by(usersFixture.undergradHenry()));
 
-    assertThat(recallResponse, hasStatus(HTTP_VALIDATION_ERROR));
     assertThat(recallResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("Recall requests are not allowed for this patron and item combination"))));
+      hasMessage("Recall requests are not allowed for this patron and item combination"),
+      hasParameter("requestType", "Recall"))));
   }
 
   @Test
@@ -194,15 +194,15 @@ public class RequestPolicyTests extends APITests {
     final IndividualResource checkedOutItem = itemsFixture.basedUponSmallAngryPlanet();
     loansFixture.checkOut(checkedOutItem, usersFixture.jessica());
 
-    final Response recallResponse = requestsClient.attemptCreate(new RequestBuilder()
+    final Response holdResponse = requestsClient.attemptCreate(new RequestBuilder()
       .hold()
       .forItem(checkedOutItem)
       .withPickupServicePointId(requestPickupServicePoint.getId())
       .by(usersFixture.james()));  //randomly picked James to represent "Any" patron
 
-    assertThat(recallResponse, hasStatus(HTTP_VALIDATION_ERROR));
-    assertThat(recallResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("Hold requests are not allowed for this patron and item combination"))));
+    assertThat(holdResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Hold requests are not allowed for this patron and item combination"),
+      hasParameter("requestType", "Hold"))));
   }
 
   @Test
@@ -264,15 +264,15 @@ public class RequestPolicyTests extends APITests {
     //setting up a checked-out library item to attempt placing a PAGE request
     final IndividualResource availableItem = itemsFixture.basedUponSmallAngryPlanet();
 
-    final Response recallResponse = requestsClient.attemptCreate(new RequestBuilder()
+    final Response pageResponse = requestsClient.attemptCreate(new RequestBuilder()
       .page()
       .forItem(availableItem)
       .withPickupServicePointId(requestPickupServicePoint.getId())
       .by(usersFixture.james()));  //randomly picked James to represent "Any" patron
 
-    assertThat(recallResponse, hasStatus(HTTP_VALIDATION_ERROR));
-    assertThat(recallResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("Page requests are not allowed for this patron and item combination"))));
+    assertThat(pageResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Page requests are not allowed for this patron and item combination"),
+      hasParameter("requestType", "Page"))));
   }
 
   @Test

@@ -1,8 +1,8 @@
 package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.HttpResult.failed;
-import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -16,8 +16,8 @@ import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
 import org.folio.circulation.support.BadRequestFailure;
-import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.Result;
 
 import io.vertx.core.json.JsonObject;
 
@@ -29,7 +29,7 @@ class RequestFromRepresentationService {
   private final ServicePointRepository servicePointRepository;
   private final ProxyRelationshipValidator proxyRelationshipValidator;
   private final ServicePointPickupLocationValidator servicePointPickupLocationValidator;
-  
+
 
   RequestFromRepresentationService(
     ItemRepository itemRepository,
@@ -49,7 +49,7 @@ class RequestFromRepresentationService {
     this.servicePointPickupLocationValidator = servicePointPickupLocationValidator;
   }
 
-  CompletableFuture<HttpResult<RequestAndRelatedRecords>> getRequestFrom(
+  CompletableFuture<Result<RequestAndRelatedRecords>> getRequestFrom(
     JsonObject representation) {
 
     return completedFuture(succeeded(representation))
@@ -68,7 +68,7 @@ class RequestFromRepresentationService {
       .thenApply(servicePointPickupLocationValidator::checkServicePointPickupLocation);
   }
 
-  private HttpResult<JsonObject> validateStatus(JsonObject representation) {
+  private Result<JsonObject> validateStatus(JsonObject representation) {
     RequestStatus status = RequestStatus.from(representation);
 
     if(!status.isValid()) {

@@ -1,19 +1,19 @@
 package org.folio.circulation.support.results;
 
 import static api.support.matchers.FailureMatcher.isErrorFailureContaining;
-import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.results.ResultExamples.alreadyFailed;
 import static org.folio.circulation.support.results.ResultExamples.somethingWentWrong;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.junit.Test;
 
-public class HttpResultMappingTests {
+public class ResultMappingTests {
   @Test
   public void shouldSucceedWhenMapIsApplied() {
-    final HttpResult<Integer> mappedResult = succeeded(10)
+    final Result<Integer> mappedResult = succeeded(10)
       .map(value -> value + 10);
 
     assertThat(mappedResult.succeeded(), is(true));
@@ -22,7 +22,7 @@ public class HttpResultMappingTests {
 
   @Test
   public void shouldFailWhenAlreadyFailed() {
-    final HttpResult<Integer> result = alreadyFailed()
+    final Result<Integer> result = alreadyFailed()
       .map(value -> value + 10);
 
     assertThat(result, isErrorFailureContaining("Already failed"));
@@ -30,7 +30,7 @@ public class HttpResultMappingTests {
 
   @Test
   public void shouldFailWhenExceptionThrownDuringMapping() {
-    final HttpResult<Integer> result = succeeded(10)
+    final Result<Integer> result = succeeded(10)
       .map(value -> { throw somethingWentWrong(); });
 
     assertThat(result, isErrorFailureContaining("Something went wrong"));

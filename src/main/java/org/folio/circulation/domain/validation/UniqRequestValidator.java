@@ -12,7 +12,7 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.support.HttpFailure;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 
 public class UniqRequestValidator {
 
@@ -28,13 +28,13 @@ public class UniqRequestValidator {
     this.errorSupplier = errorSupplier;
   }
 
-  public HttpResult<RequestAndRelatedRecords> refuseWhenRequestIsAlreadyExisted(RequestAndRelatedRecords request) {
-    return HttpResult.of(() -> request)
+  public Result<RequestAndRelatedRecords> refuseWhenRequestIsAlreadyExisted(RequestAndRelatedRecords request) {
+    return Result.of(() -> request)
       .failWhen(this::isRequesterHasAlreadyRequestForTheItem, errorSupplier::apply);
   }
 
-  private HttpResult<Boolean> isRequesterHasAlreadyRequestForTheItem(RequestAndRelatedRecords request) {
-    return HttpResult.of(() ->
+  private Result<Boolean> isRequesterHasAlreadyRequestForTheItem(RequestAndRelatedRecords request) {
+    return Result.of(() ->
       request
         .getRequestQueue()
         .getRequests()

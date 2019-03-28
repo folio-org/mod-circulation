@@ -7,7 +7,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public interface HttpResult<T> {
+public interface Result<T> {
 
   /**
    * Creates a successful result with the supplied value
@@ -16,7 +16,7 @@ public interface HttpResult<T> {
    * @param supplier of the result value
    * @return successful result or failed result with error
    */
-  static <T> HttpResult<T> of(ThrowingSupplier<T, Exception> supplier) {
+  static <T> Result<T> of(ThrowingSupplier<T, Exception> supplier) {
     try {
       return succeeded(supplier.get());
     } catch (Exception e) {
@@ -31,7 +31,7 @@ public interface HttpResult<T> {
    * @param supplier of the result value
    * @return completed future with successful result or failed result with error
    */
-  static <T> CompletableFuture<HttpResult<T>> ofAsync(
+  static <T> CompletableFuture<Result<T>> ofAsync(
     ThrowingSupplier<T, Exception> supplier) {
 
     return completedFuture(of(supplier));
@@ -50,9 +50,9 @@ public interface HttpResult<T> {
    * or successful result with the values combined
    */
   //TODO: Replace with member method below
-  static <T, U, V> HttpResult<V> combine(
-    HttpResult<T> firstResult,
-    HttpResult<U> secondResult,
+  static <T, U, V> Result<V> combine(
+    Result<T> firstResult,
+    Result<U> secondResult,
     BiFunction<T, U, V> combiner) {
 
     return firstResult.combine(secondResult, combiner);
@@ -67,8 +67,8 @@ public interface HttpResult<T> {
    * @return either failure from this result, failure from the other
    * or successful result with the values combined
    */
-  default <U, V> HttpResult<V> combine(
-    HttpResult<U> otherResult,
+  default <U, V> Result<V> combine(
+    Result<U> otherResult,
     BiFunction<T, U, V> combiner) {
 
     return next(firstValue ->
@@ -85,9 +85,9 @@ public interface HttpResult<T> {
    * @return either failure from this result, failure from the other
    * or result of the combination
    */
-  default <U, V> HttpResult<V> combineToResult(
-    HttpResult<U> otherResult,
-    BiFunction<T, U, HttpResult<V>> combiner) {
+  default <U, V> Result<V> combineToResult(
+    Result<U> otherResult,
+    BiFunction<T, U, Result<V>> combiner) {
 
     return next(firstValue ->
       otherResult.next(secondValue ->
@@ -104,8 +104,8 @@ public interface HttpResult<T> {
    * @return either failure from the first result, failure from the action
    * or successful result with the values combined
    */
-  default <U, V> CompletableFuture<HttpResult<V>> combineAfter(
-    Function<T, CompletableFuture<HttpResult<U>>> nextAction,
+  default <U, V> CompletableFuture<Result<V>> combineAfter(
+    Function<T, CompletableFuture<Result<U>>> nextAction,
     BiFunction<T, U, V> combiner) {
 
     return after(nextAction)
@@ -125,10 +125,10 @@ public interface HttpResult<T> {
    * @param whenFalse executed when condition evaluates to false
    * @return Result of whenTrue or whenFalse, unless previous result failed
    */
-  default CompletableFuture<HttpResult<T>> afterWhen(
-    Function<T, CompletableFuture<HttpResult<Boolean>>> conditionFunction,
-    Function<T, CompletableFuture<HttpResult<T>>> whenTrue,
-    Function<T, CompletableFuture<HttpResult<T>>> whenFalse) {
+  default CompletableFuture<Result<T>> afterWhen(
+    Function<T, CompletableFuture<Result<Boolean>>> conditionFunction,
+    Function<T, CompletableFuture<Result<T>>> whenTrue,
+    Function<T, CompletableFuture<Result<T>>> whenFalse) {
 
     return after(value ->
       conditionFunction.apply(value)
@@ -149,8 +149,8 @@ public interface HttpResult<T> {
    * @param failure executed to create failure reason when condition evaluates to true
    * @return success when condition is false, failure otherwise
    */
-  default CompletableFuture<HttpResult<T>> failAfter(
-    Function<T, CompletableFuture<HttpResult<Boolean>>> condition,
+  default CompletableFuture<Result<T>> failAfter(
+    Function<T, CompletableFuture<Result<Boolean>>> condition,
     Function<T, HttpFailure> failure) {
 
     return afterWhen(condition,
@@ -171,10 +171,10 @@ public interface HttpResult<T> {
    * @param whenFalse executed when condition evaluates to false
    * @return Result of whenTrue or whenFalse, unless previous result failed
    */
-  default HttpResult<T> nextWhen(
-    Function<T, HttpResult<Boolean>> condition,
-    Function<T, HttpResult<T>> whenTrue,
-    Function<T, HttpResult<T>> whenFalse) {
+  default Result<T> nextWhen(
+    Function<T, Result<Boolean>> condition,
+    Function<T, Result<T>> whenTrue,
+    Function<T, Result<T>> whenFalse) {
 
     return next(value ->
       when(condition.apply(value),
@@ -195,10 +195,10 @@ public interface HttpResult<T> {
    * @param whenFalse executed when condition evaluates to false
    * @return Result of whenTrue or whenFalse, unless previous result failed
    */
-  static <R> HttpResult<R> when(
-    HttpResult<Boolean> condition,
-    Supplier<HttpResult<R>> whenTrue,
-    Supplier<HttpResult<R>> whenFalse) {
+  static <R> Result<R> when(
+    Result<Boolean> condition,
+    Supplier<Result<R>> whenTrue,
+    Supplier<Result<R>> whenFalse) {
 
     return condition.next(result -> result
       ? whenTrue.get()
@@ -217,13 +217,13 @@ public interface HttpResult<T> {
    * @param failure executed to create failure reason when condition evaluates to true
    * @return success when condition is false, failure otherwise
    */
-  default HttpResult<T> failWhen(
-    Function<T, HttpResult<Boolean>> condition,
+  default Result<T> failWhen(
+    Function<T, Result<Boolean>> condition,
     Function<T, HttpFailure> failure) {
 
     return nextWhen(condition,
       value -> failed(failure.apply(value)),
-      HttpResult::succeeded);
+      Result::succeeded);
   }
 
   boolean failed();
@@ -235,20 +235,20 @@ public interface HttpResult<T> {
     return !failed();
   }
 
-  static <T> HttpResult<T> succeeded(T value) {
-    return new SuccessfulHttpResult<>(value);
+  static <T> Result<T> succeeded(T value) {
+    return new SuccessfulResult<>(value);
   }
 
-  static <T> WritableHttpResult<T> failed(HttpFailure cause) {
-    return new FailedHttpResult<>(cause);
+  static <T> ResponseWritableResult<T> failed(HttpFailure cause) {
+    return new FailedResult<>(cause);
   }
 
-  static <T> HttpResult<T> failed(Throwable e) {
+  static <T> Result<T> failed(Throwable e) {
     return failed(new ServerErrorFailure(e));
   }
 
-  default <R> CompletableFuture<HttpResult<R>> after(
-    Function<T, CompletableFuture<HttpResult<R>>> action) {
+  default <R> CompletableFuture<Result<R>> after(
+    Function<T, CompletableFuture<Result<R>>> action) {
 
     if(failed()) {
       return completedFuture(failed(cause()));
@@ -256,7 +256,7 @@ public interface HttpResult<T> {
 
     try {
       return action.apply(value())
-        .exceptionally(HttpResult::failed);
+        .exceptionally(Result::failed);
     } catch (Exception e) {
       return completedFuture(failed(new ServerErrorFailure(e)));
     }
@@ -271,7 +271,7 @@ public interface HttpResult<T> {
    * @param action action to take after this result
    * @return success when result succeeded and action is applied successfully, failure otherwise
    */
-  default <R> HttpResult<R> next(Function<T, HttpResult<R>> action) {
+  default <R> Result<R> next(Function<T, Result<R>> action) {
     if(failed()) {
       return failed(cause());
     }
@@ -292,7 +292,7 @@ public interface HttpResult<T> {
    * @param map function to apply to value of result
    * @return success when result succeeded and map is applied successfully, failure otherwise
    */
-  default <U> HttpResult<U> map(Function<T, U> map) {
+  default <U> Result<U> map(Function<T, U> map) {
     return next(value -> succeeded(map.apply(value)));
   }
 

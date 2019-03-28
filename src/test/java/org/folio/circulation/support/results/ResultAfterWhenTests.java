@@ -3,7 +3,7 @@ package org.folio.circulation.support.results;
 import static api.support.matchers.FailureMatcher.isErrorFailureContaining;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
-import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.results.ResultExamples.alreadyFailed;
 import static org.folio.circulation.support.results.ResultExamples.conditionFailed;
 import static org.folio.circulation.support.results.ResultExamples.shouldNotExecute;
@@ -13,16 +13,16 @@ import static org.junit.Assert.assertThat;
 
 import java.util.concurrent.ExecutionException;
 
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.junit.Test;
 
-public class HttpResultAfterWhenTests {
+public class ResultAfterWhenTests {
   @Test
   public void shouldApplyWhenTrueActionWhenConditionIsTrue()
     throws ExecutionException,
     InterruptedException {
 
-    final HttpResult<Integer> result = succeeded(10)
+    final Result<Integer> result = succeeded(10)
       .afterWhen(value -> completedFuture(succeeded(true)),
         value -> completedFuture(succeeded(value + 10)),
         value -> { throw shouldNotExecute(); })
@@ -37,7 +37,7 @@ public class HttpResultAfterWhenTests {
     throws ExecutionException,
     InterruptedException {
 
-    final HttpResult<Integer> result = succeeded(10)
+    final Result<Integer> result = succeeded(10)
       .afterWhen(value -> completedFuture(succeeded(false)),
         value -> { throw shouldNotExecute(); },
         value -> completedFuture(succeeded(value + 10)))
@@ -52,7 +52,7 @@ public class HttpResultAfterWhenTests {
     throws ExecutionException,
     InterruptedException {
 
-    final HttpResult<Integer> result = alreadyFailed()
+    final Result<Integer> result = alreadyFailed()
       .afterWhen(value -> completedFuture(succeeded(true)),
         value -> { throw shouldNotExecute(); },
         value -> { throw shouldNotExecute(); })
@@ -66,7 +66,7 @@ public class HttpResultAfterWhenTests {
     throws ExecutionException,
     InterruptedException {
 
-    final HttpResult<Integer> result = succeeded(10)
+    final Result<Integer> result = succeeded(10)
       .afterWhen(value -> completedFuture(conditionFailed()),
         value -> { throw shouldNotExecute(); },
         value -> { throw shouldNotExecute(); })
@@ -80,7 +80,7 @@ public class HttpResultAfterWhenTests {
     throws ExecutionException,
     InterruptedException {
 
-    final HttpResult<Integer> result = succeeded(10)
+    final Result<Integer> result = succeeded(10)
       .afterWhen(value -> completedFuture(succeeded(true)),
         value -> supplyAsync(() -> { throw somethingWentWrong(); }),
         value -> { throw shouldNotExecute(); })
@@ -94,7 +94,7 @@ public class HttpResultAfterWhenTests {
     throws ExecutionException,
     InterruptedException {
 
-    final HttpResult<Integer> result = succeeded(10)
+    final Result<Integer> result = succeeded(10)
       .afterWhen(value -> completedFuture(succeeded(false)),
         value -> { throw shouldNotExecute(); },
         value -> supplyAsync(() -> { throw somethingWentWrong(); }))
@@ -108,7 +108,7 @@ public class HttpResultAfterWhenTests {
     throws ExecutionException,
     InterruptedException {
 
-    final HttpResult<Integer> result = succeeded(10)
+    final Result<Integer> result = succeeded(10)
       .afterWhen(value -> supplyAsync(() -> { throw somethingWentWrong(); }),
         value -> { throw shouldNotExecute(); },
         value -> { throw shouldNotExecute(); })
@@ -122,7 +122,7 @@ public class HttpResultAfterWhenTests {
     throws ExecutionException,
     InterruptedException {
 
-    final HttpResult<Integer> result = succeeded(10)
+    final Result<Integer> result = succeeded(10)
       .afterWhen(value -> completedFuture(succeeded(true)),
         value -> { throw somethingWentWrong(); },
         value -> {throw shouldNotExecute(); })
@@ -136,7 +136,7 @@ public class HttpResultAfterWhenTests {
     throws ExecutionException,
     InterruptedException {
 
-    final HttpResult<Integer> result = succeeded(10)
+    final Result<Integer> result = succeeded(10)
       .afterWhen(value -> completedFuture(succeeded(false)),
         value -> { throw shouldNotExecute(); },
         value -> {throw somethingWentWrong(); })

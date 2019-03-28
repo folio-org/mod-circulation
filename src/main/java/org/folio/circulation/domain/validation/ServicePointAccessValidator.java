@@ -1,11 +1,11 @@
 package org.folio.circulation.domain.validation;
 
-import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.function.Function;
 
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 
 public class ServicePointAccessValidator {
@@ -17,8 +17,8 @@ public class ServicePointAccessValidator {
     this.servicePointAccessFunction = servicePointAccessOutErrorFunction;
   }
 
-  public HttpResult<LoanAndRelatedRecords> refuseWhenUserCannotAccessServicePoint(
-    HttpResult<LoanAndRelatedRecords> result) {
+  public Result<LoanAndRelatedRecords> refuseWhenUserCannotAccessServicePoint(
+    Result<LoanAndRelatedRecords> result) {
 
     // TODO check user permissions (CIRC-150)
     return result.failWhen(

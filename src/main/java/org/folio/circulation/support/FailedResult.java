@@ -1,17 +1,18 @@
 package org.folio.circulation.support;
 
-import io.vertx.core.http.HttpServerResponse;
+import java.lang.invoke.MethodHandles;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.invoke.MethodHandles;
+import io.vertx.core.http.HttpServerResponse;
 
-public class FailedHttpResult<T> implements WritableHttpResult<T> {
+public class FailedResult<T> implements ResponseWritableResult<T> {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final HttpFailure cause;
 
-  FailedHttpResult(HttpFailure cause) {
+  FailedResult(HttpFailure cause) {
     this.cause = cause;
   }
 

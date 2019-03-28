@@ -1,21 +1,22 @@
 package org.folio.circulation.domain.policy;
 
-import api.support.builders.FixedDueDateSchedule;
-import api.support.builders.FixedDueDateSchedulesBuilder;
-import api.support.builders.LoanBuilder;
-import api.support.builders.LoanPolicyBuilder;
+import static api.support.matchers.FailureMatcher.hasValidationFailure;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+
+import java.util.UUID;
+
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
-import java.util.UUID;
-
-import static api.support.matchers.FailureMatcher.hasValidationFailure;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import api.support.builders.FixedDueDateSchedule;
+import api.support.builders.FixedDueDateSchedulesBuilder;
+import api.support.builders.LoanBuilder;
+import api.support.builders.LoanPolicyBuilder;
 
 public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
@@ -35,7 +36,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime renewalDate = new DateTime(2017, 12, 30, 14, 32, 21, DateTimeZone.UTC);
 
-    final HttpResult<Loan> result = loanPolicy.renew(loan, renewalDate);
+    final Result<Loan> result = loanPolicy.renew(loan, renewalDate);
 
     assertThat(result, hasValidationFailure(
       EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
@@ -55,7 +56,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime renewalDate = new DateTime(2019, 1, 1, 8, 10, 45, DateTimeZone.UTC);
 
-    final HttpResult<Loan> result = loanPolicy.renew(loan, renewalDate);
+    final Result<Loan> result = loanPolicy.renew(loan, renewalDate);
 
     assertThat(result, hasValidationFailure(
       EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
@@ -74,7 +75,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime renewalDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    final HttpResult<Loan> result = loanPolicy.renew(loan, renewalDate);
+    final Result<Loan> result = loanPolicy.renew(loan, renewalDate);
 
     assertThat(result.value().getDueDate(), is(new DateTime(2018, 12, 31, 23, 59, 59,
       DateTimeZone.UTC)));
@@ -101,7 +102,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime renewalDate = new DateTime(2018, 2, 8, 11, 14, 54, DateTimeZone.UTC);
 
-    final HttpResult<Loan> result = loanPolicy.renew(loan, renewalDate);
+    final Result<Loan> result = loanPolicy.renew(loan, renewalDate);
 
     assertThat(result.value().getDueDate(), is(expectedSchedule.due));
   }
@@ -123,7 +124,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime renewalDate = new DateTime(2018, 2, 27, 16, 23, 43, DateTimeZone.UTC);
 
-    final HttpResult<Loan> result = loanPolicy.renew(loan, renewalDate);
+    final Result<Loan> result = loanPolicy.renew(loan, renewalDate);
 
     assertThat(result.value().getDueDate(), is(expectedSchedule.due));
   }
@@ -145,7 +146,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime renewalDate = new DateTime(2018, 3, 12, 7, 15, 23, DateTimeZone.UTC);
 
-    final HttpResult<Loan> result = loanPolicy.renew(loan, renewalDate);
+    final Result<Loan> result = loanPolicy.renew(loan, renewalDate);
 
     assertThat(result.value().getDueDate(), is(expectedSchedule.due));
   }
@@ -170,7 +171,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime renewalDate = new DateTime(2018, 2, 5, 14, 22, 32, DateTimeZone.UTC);
 
-    final HttpResult<Loan> result = loanPolicy.renew(loan, renewalDate);
+    final Result<Loan> result = loanPolicy.renew(loan, renewalDate);
 
     assertThat(result.value().getDueDate(), is(expectedSchedule.due));
   }
@@ -191,7 +192,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime renewalDate = new DateTime(2017, 12, 30, 14, 32, 21, DateTimeZone.UTC);
 
-    final HttpResult<Loan> result = loanPolicy.renew(loan, renewalDate);
+    final Result<Loan> result = loanPolicy.renew(loan, renewalDate);
 
     assertThat(result, hasValidationFailure(
       EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
@@ -215,7 +216,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime renewalDate = new DateTime(2018, 1, 3, 8, 12, 32, DateTimeZone.UTC);
 
-    final HttpResult<Loan> result = loanPolicy.renew(loan, renewalDate);
+    final Result<Loan> result = loanPolicy.renew(loan, renewalDate);
 
     assertThat(result,
       hasValidationFailure("renewal would not change the due date"));
@@ -239,7 +240,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime renewalDate = new DateTime(2018, 1, 3, 8, 12, 32, DateTimeZone.UTC);
 
-    final HttpResult<Loan> result = loanPolicy.renew(loan, renewalDate);
+    final Result<Loan> result = loanPolicy.renew(loan, renewalDate);
 
     assertThat(result,
       hasValidationFailure("renewal would not change the due date"));
@@ -268,7 +269,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime renewalDate = new DateTime(2018, 3, 5, 8, 12, 32, DateTimeZone.UTC);
 
-    final HttpResult<Loan> result = loanPolicy.renew(loan, renewalDate);
+    final Result<Loan> result = loanPolicy.renew(loan, renewalDate);
 
     assertThat(result, hasValidationFailure(
       EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
@@ -294,7 +295,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime renewalDate = new DateTime(2018, 4, 1, 6, 34, 21, DateTimeZone.UTC);
 
-    final HttpResult<Loan> result = loanPolicy.renew(loan, renewalDate);
+    final Result<Loan> result = loanPolicy.renew(loan, renewalDate);
 
     assertThat(result, hasValidationFailure(
       EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
@@ -315,7 +316,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime renewalDate = new DateTime(2018, 2, 18, 6, 34, 21, DateTimeZone.UTC);
 
-    final HttpResult<Loan> result = loanPolicy.renew(loan, renewalDate);
+    final Result<Loan> result = loanPolicy.renew(loan, renewalDate);
 
     assertThat(result, hasValidationFailure(
       EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
@@ -334,7 +335,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime renewalDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    final HttpResult<Loan> result = loanPolicy.renew(loan, renewalDate);
+    final Result<Loan> result = loanPolicy.renew(loan, renewalDate);
 
     assertThat(result, hasValidationFailure(
       EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
@@ -351,7 +352,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     Loan loan = existingLoan();
 
-    final HttpResult<DateTime> result = calculator.calculateDueDate(loan);
+    final Result<DateTime> result = calculator.calculateDueDate(loan);
 
     assertThat(result, hasValidationFailure(
       EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
@@ -368,7 +369,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     Loan loan = existingLoan();
 
-    final HttpResult<DateTime> result = calculator.calculateDueDate(loan);
+    final Result<DateTime> result = calculator.calculateDueDate(loan);
 
     assertThat(result, hasValidationFailure(
       EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));

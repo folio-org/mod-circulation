@@ -1,7 +1,7 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
@@ -17,7 +17,7 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlHelper;
 import org.folio.circulation.support.FetchSingleRecord;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,17 +32,17 @@ public class ServicePointRepository {
     servicePointsStorageClient = clients.servicePointsStorage();
   }
 
-  public CompletableFuture<HttpResult<ServicePoint>> getServicePointById(UUID id) {
+  public CompletableFuture<Result<ServicePoint>> getServicePointById(UUID id) {
     log.info("Attempting to fetch service point with id {}", id);
 
     if(id == null) {
-      return CompletableFuture.completedFuture(HttpResult.succeeded(null));
+      return completedFuture(succeeded(null));
     }
 
     return getServicePointById(id.toString());
   }
 
-  CompletableFuture<HttpResult<ServicePoint>> getServicePointById(String id) {
+  CompletableFuture<Result<ServicePoint>> getServicePointById(String id) {
     return FetchSingleRecord.<ServicePoint>forRecord(SERVICE_POINT_TYPE)
         .using(servicePointsStorageClient)
         .mapTo(ServicePoint::new)
@@ -50,16 +50,16 @@ public class ServicePointRepository {
         .fetch(id);
   }
   
-  public CompletableFuture<HttpResult<ServicePoint>> getServicePointForRequest(Request request) {
+  public CompletableFuture<Result<ServicePoint>> getServicePointForRequest(Request request) {
     return getServicePointById(request.getPickupServicePointId());
   } 
   
-  public CompletableFuture<HttpResult<Loan>> findServicePointsForLoan(HttpResult<Loan> loanResult) {    
+  public CompletableFuture<Result<Loan>> findServicePointsForLoan(Result<Loan> loanResult) {
     return findCheckinServicePointForLoan(loanResult)
         .thenComposeAsync(this::findCheckoutServicePointForLoan);   
   }
   
-  private CompletableFuture<HttpResult<Loan>> findCheckinServicePointForLoan(HttpResult<Loan> loanResult) {
+  private CompletableFuture<Result<Loan>> findCheckinServicePointForLoan(Result<Loan> loanResult) {
     return loanResult.after(loan -> {
       String checkinServicePointId = loan.getCheckInServicePointId();
       if(checkinServicePointId == null) {
@@ -79,7 +79,7 @@ public class ServicePointRepository {
     });
   }
   
-  private CompletableFuture<HttpResult<Loan>> findCheckoutServicePointForLoan(HttpResult<Loan> loanResult) {
+  private CompletableFuture<Result<Loan>> findCheckoutServicePointForLoan(Result<Loan> loanResult) {
     return loanResult.after(loan -> {
       String checkoutServicePointId = loan.getCheckoutServicePointId();
       if(checkoutServicePointId == null) {
@@ -100,7 +100,7 @@ public class ServicePointRepository {
       });
   }
 
-  public CompletableFuture<HttpResult<MultipleRecords<Loan>>> findServicePointsForLoans(
+  public CompletableFuture<Result<MultipleRecords<Loan>>> findServicePointsForLoans(
     MultipleRecords<Loan> multipleLoans) {
 
     Collection<Loan> loans = multipleLoans.getRecords();
@@ -151,7 +151,7 @@ public class ServicePointRepository {
           }));
   }
   
-  CompletableFuture<HttpResult<MultipleRecords<Request>>> findServicePointsForRequests(
+  CompletableFuture<Result<MultipleRecords<Request>>> findServicePointsForRequests(
     MultipleRecords<Request> multipleRequests) {
     Collection<Request> requests = multipleRequests.getRecords();
 
@@ -199,7 +199,7 @@ public class ServicePointRepository {
           }));
   }
   
-  private HttpResult<MultipleRecords<ServicePoint>> mapResponseToServicePoints(Response response) {
+  private Result<MultipleRecords<ServicePoint>> mapResponseToServicePoints(Response response) {
     return MultipleRecords.from(response, ServicePoint::from, "servicepoints");
   }
   

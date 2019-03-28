@@ -1,7 +1,8 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -13,7 +14,7 @@ import java.util.stream.Collectors;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlHelper;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.Response;
 
 
@@ -24,8 +25,8 @@ class PatronGroupRepository {
     patronGroupsStorageClient = clients.patronGroupsStorage();
   }
 
-  CompletableFuture<HttpResult<Request>> findPatronGroupsForSingleRequestUsers(
-    HttpResult<Request> result) {
+  CompletableFuture<Result<Request>> findPatronGroupsForSingleRequestUsers(
+    Result<Request> result) {
 
     return result.after(request -> {
       final ArrayList<String> groupsToFetch = getGroupsFromUsers(request);
@@ -35,11 +36,11 @@ class PatronGroupRepository {
       return patronGroupsStorageClient.getMany(query, groupsToFetch.size(), 0)
         .thenApply(this::mapResponseToPatronGroups)
         .thenApply(multiplePatronGroupsResult -> multiplePatronGroupsResult.next(
-          patronGroups -> HttpResult.of(() -> matchGroupsToUsers(request, patronGroups))));
+          patronGroups -> of(() -> matchGroupsToUsers(request, patronGroups))));
     });
   }
 
-  CompletableFuture<HttpResult<MultipleRecords<Request>>> findPatronGroupsForRequestsUsers(
+  CompletableFuture<Result<MultipleRecords<Request>>> findPatronGroupsForRequestsUsers(
     MultipleRecords<Request> multipleRequests) {
 
     Collection<Request> requests = multipleRequests.getRecords();
@@ -62,7 +63,7 @@ class PatronGroupRepository {
         patronGroups -> matchGroupsToUsers(multipleRequests, patronGroups)));
   }
 
-  private HttpResult<MultipleRecords<PatronGroup>> mapResponseToPatronGroups(Response response) {
+  private Result<MultipleRecords<PatronGroup>> mapResponseToPatronGroups(Response response) {
     return MultipleRecords.from(response, PatronGroup::from, "usergroups");
   }
 
@@ -91,11 +92,11 @@ class PatronGroupRepository {
       .withProxy(addGroupToUser(request.getProxy(), groupMap));
   }
 
-  private HttpResult<MultipleRecords<Request>> matchGroupsToUsers(
+  private Result<MultipleRecords<Request>> matchGroupsToUsers(
     MultipleRecords<Request> requests,
     MultipleRecords<PatronGroup> patronGroups) {
 
-    return HttpResult.of(() ->
+    return of(() ->
       requests.mapRecords(request -> matchGroupsToUsers(request, patronGroups)));
   }
 

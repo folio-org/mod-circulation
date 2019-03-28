@@ -7,7 +7,7 @@ import static org.junit.Assert.assertThat;
 import java.util.UUID;
 
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -32,7 +32,7 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate);
 
-    final HttpResult<DateTime> calculationResult = loanPolicy
+    final Result<DateTime> calculationResult = loanPolicy
       .calculateInitialDueDate(loan);
 
     assertThat(calculationResult.value(), is(new DateTime(2018, 12, 31, 23, 59, 59,
@@ -53,7 +53,7 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate);
 
-    final HttpResult<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
+    final Result<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
 
     assertThat(result, hasValidationFailure(
       "loan date falls outside of the date ranges in the loan policy"));
@@ -73,7 +73,7 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate);
 
-    final HttpResult<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
+    final Result<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
 
     assertThat(result, hasValidationFailure(
       "loan date falls outside of the date ranges in the loan policy"));
@@ -96,7 +96,7 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate);
 
-    final HttpResult<DateTime> calculationResult = loanPolicy
+    final Result<DateTime> calculationResult = loanPolicy
       .calculateInitialDueDate(loan);
 
     assertThat(calculationResult.value(), is(expectedSchedule.due));
@@ -119,7 +119,7 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate);
 
-    final HttpResult<DateTime> calculationResult = loanPolicy
+    final Result<DateTime> calculationResult = loanPolicy
       .calculateInitialDueDate(loan);
 
     assertThat(calculationResult.value(), is(expectedSchedule.due));
@@ -142,7 +142,7 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate);
 
-    final HttpResult<DateTime> calculationResult = loanPolicy
+    final Result<DateTime> calculationResult = loanPolicy
       .calculateInitialDueDate(loan);
 
     assertThat(calculationResult.value(), is(expectedSchedule.due));
@@ -164,7 +164,7 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate);
 
-    final HttpResult<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
+    final Result<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
 
     assertThat(result, hasValidationFailure(
       "loan date falls outside of the date ranges in the loan policy"));
@@ -186,7 +186,7 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate);
 
-    final HttpResult<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
+    final Result<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
 
     assertThat(result, hasValidationFailure(
       "loan date falls outside of the date ranges in the loan policy"));
@@ -207,7 +207,7 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate);
 
-    final HttpResult<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
+    final Result<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
 
     assertThat(result, hasValidationFailure(
       "loan date falls outside of the date ranges in the loan policy"));
@@ -225,7 +225,7 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate);
 
-    final HttpResult<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
+    final Result<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
 
     assertThat(result, hasValidationFailure(
       "loan date falls outside of the date ranges in the loan policy"));
@@ -241,7 +241,7 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate);
 
-    final HttpResult<DateTime> result = calculator.calculateDueDate(loan);
+    final Result<DateTime> result = calculator.calculateDueDate(loan);
 
     assertThat(result.failed(), is(true));
     assertThat(result, hasValidationFailure(
@@ -259,7 +259,7 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate);
 
-    final HttpResult<DateTime> result = calculator.calculateDueDate(loan);
+    final Result<DateTime> result = calculator.calculateDueDate(loan);
 
     assertThat(result, hasValidationFailure(
       "loan date falls outside of the date ranges in the loan policy"));

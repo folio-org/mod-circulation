@@ -1,18 +1,18 @@
 package org.folio.circulation.domain.validation;
 
-import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.domain.User;
-import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.ServerErrorFailure;
-import org.folio.circulation.support.ValidationErrorFailure;
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.USER_BARCODE;
+import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.util.function.Function;
 
-import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
-import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.USER_BARCODE;
-import static org.folio.circulation.support.HttpResult.failed;
-import static org.folio.circulation.support.HttpResult.succeeded;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
+import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.User;
+import org.folio.circulation.support.Result;
+import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.ValidationErrorFailure;
 
 public class InactiveUserValidator {
   private final Function<String, ValidationErrorFailure> inactiveUserErrorFunction;
@@ -37,7 +37,8 @@ public class InactiveUserValidator {
       LoanAndRelatedRecords::getProxy,
       "Cannot check out via inactive proxying user",
       "Cannot determine if proxying user is active or not",
-      message -> failure(message, PROXY_USER_BARCODE, proxyUserBarcode));
+      message -> singleValidationError(message,
+        PROXY_USER_BARCODE, proxyUserBarcode));
   }
 
   public static InactiveUserValidator forUser(String userBarcode) {
@@ -45,11 +46,11 @@ public class InactiveUserValidator {
       records -> records.getLoan().getUser(),
       "Cannot check out to inactive user",
       "Cannot determine if user is active or not",
-      message -> failure(message, USER_BARCODE, userBarcode));
+      message -> singleValidationError(message, USER_BARCODE, userBarcode));
   }
 
-  public HttpResult<LoanAndRelatedRecords> refuseWhenUserIsInactive(
-    HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
+  public Result<LoanAndRelatedRecords> refuseWhenUserIsInactive(
+    Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
     return loanAndRelatedRecords.next(records -> {
       try {
@@ -62,19 +63,17 @@ public class InactiveUserValidator {
     });
   }
 
-  HttpResult<LoanAndRelatedRecords> refuseWhenUserIsInactive(
+  Result<LoanAndRelatedRecords> refuseWhenUserIsInactive(
     User user, LoanAndRelatedRecords records) {
 
     if(user == null) {
       return succeeded(records);
     }
     else if (user.canDetermineStatus()) {
-      return failed(inactiveUserErrorFunction.apply(
-        cannotDetermineMessage));
+      return failed(inactiveUserErrorFunction.apply(cannotDetermineMessage));
     }
     if (user.isInactive()) {
-      return failed(inactiveUserErrorFunction.apply(
-        inactiveUserMessage));
+      return failed(inactiveUserErrorFunction.apply(inactiveUserMessage));
     } else {
       return succeeded(records);
     }

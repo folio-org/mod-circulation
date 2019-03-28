@@ -5,13 +5,13 @@ import java.util.function.Function;
 import org.folio.circulation.domain.notice.PatronNoticePolicy;
 import org.folio.circulation.domain.notice.PatronNoticePolicyMapper;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 
 import io.vertx.core.json.JsonObject;
 
 public class PatronNoticePolicyRepository extends CirculationPolicyRepository<PatronNoticePolicy> {
 
-  private final Function<JsonObject, HttpResult<PatronNoticePolicy>> patronNoticePolicyMapper;
+  private final Function<JsonObject, Result<PatronNoticePolicy>> patronNoticePolicyMapper;
 
   public PatronNoticePolicyRepository(Clients clients) {
     this(clients, new PatronNoticePolicyMapper());
@@ -19,7 +19,7 @@ public class PatronNoticePolicyRepository extends CirculationPolicyRepository<Pa
 
   private PatronNoticePolicyRepository(
     Clients clients,
-    Function<JsonObject, HttpResult<PatronNoticePolicy>> patronNoticePolicyMapper) {
+    Function<JsonObject, Result<PatronNoticePolicy>> patronNoticePolicyMapper) {
     super(clients.circulationNoticeRules(), clients.patronNoticePolicesStorageClient());
     this.patronNoticePolicyMapper = patronNoticePolicyMapper;
   }
@@ -30,7 +30,7 @@ public class PatronNoticePolicyRepository extends CirculationPolicyRepository<Pa
   }
 
   @Override
-  protected HttpResult<PatronNoticePolicy> toPolicy(JsonObject representation) {
+  protected Result<PatronNoticePolicy> toPolicy(JsonObject representation) {
     return patronNoticePolicyMapper.apply(representation);
   }
 

@@ -1,21 +1,21 @@
 package org.folio.circulation.support.results;
 
 import static api.support.matchers.FailureMatcher.isErrorFailureContaining;
-import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.results.ResultExamples.alreadyFailed;
 import static org.folio.circulation.support.results.ResultExamples.conditionFailed;
-import static org.folio.circulation.support.results.ResultExamples.throwOnExecution;
 import static org.folio.circulation.support.results.ResultExamples.somethingWentWrong;
+import static org.folio.circulation.support.results.ResultExamples.throwOnExecution;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.junit.Test;
 
-public class HttpResultNextWhenTests {
+public class ResultNextWhenTests {
   @Test
   public void shouldApplyWhenTrueActionWhenConditionIsTrue() {
-    final HttpResult<Integer> result = succeeded(10)
+    final Result<Integer> result = succeeded(10)
       .nextWhen(value -> succeeded(true),
         value -> succeeded(value + 10),
         value -> throwOnExecution());
@@ -26,7 +26,7 @@ public class HttpResultNextWhenTests {
 
   @Test
   public void shouldApplyWhenFalseActionWhenConditionIsFalse() {
-    final HttpResult<Integer> result = succeeded(10)
+    final Result<Integer> result = succeeded(10)
       .nextWhen(value -> succeeded(false),
         value -> throwOnExecution(),
         value -> succeeded(value + 10));
@@ -37,7 +37,7 @@ public class HttpResultNextWhenTests {
 
   @Test
   public void shouldFailWhenAlreadyFailed() {
-    final HttpResult<Integer> result = alreadyFailed()
+    final Result<Integer> result = alreadyFailed()
       .nextWhen(value -> succeeded(true),
         value -> throwOnExecution(),
         value -> throwOnExecution());
@@ -47,7 +47,7 @@ public class HttpResultNextWhenTests {
 
   @Test
   public void shouldFailWhenConditionFailed() {
-    final HttpResult<Integer> result = succeeded(10)
+    final Result<Integer> result = succeeded(10)
       .nextWhen(value -> conditionFailed(),
         value -> succeeded(value + 10),
         value -> succeeded(value + 10));
@@ -57,7 +57,7 @@ public class HttpResultNextWhenTests {
 
   @Test
   public void shouldFailWhenTrueActionFailed() {
-    final HttpResult<Integer> result = succeeded(10)
+    final Result<Integer> result = succeeded(10)
       .nextWhen(value -> succeeded(true),
         value -> {throw somethingWentWrong(); },
         value -> throwOnExecution());
@@ -67,7 +67,7 @@ public class HttpResultNextWhenTests {
 
   @Test
   public void shouldFailWhenFalseActionFailed() {
-    final HttpResult<Integer> result = succeeded(10)
+    final Result<Integer> result = succeeded(10)
       .nextWhen(value -> succeeded(false),
         value -> throwOnExecution(),
         value -> {throw somethingWentWrong(); });

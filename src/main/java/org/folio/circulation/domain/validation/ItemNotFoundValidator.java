@@ -1,12 +1,12 @@
 package org.folio.circulation.domain.validation;
 
-import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.ValidationErrorFailure;
+import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.function.Supplier;
 
-import static org.folio.circulation.support.HttpResult.succeeded;
+import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.support.Result;
+import org.folio.circulation.support.ValidationErrorFailure;
 
 public class ItemNotFoundValidator {
   private final Supplier<ValidationErrorFailure> itemNotFoundErrorFunction;
@@ -17,8 +17,8 @@ public class ItemNotFoundValidator {
     this.itemNotFoundErrorFunction = itemNotFoundErrorFunction;
   }
 
-  public HttpResult<LoanAndRelatedRecords> refuseWhenItemNotFound(
-    HttpResult<LoanAndRelatedRecords> result) {
+  public Result<LoanAndRelatedRecords> refuseWhenItemNotFound(
+    Result<LoanAndRelatedRecords> result) {
 
     return result.failWhen(
       records -> succeeded(records.getLoan().getItem().isNotFound()),

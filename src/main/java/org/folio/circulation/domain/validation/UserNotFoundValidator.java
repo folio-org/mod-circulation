@@ -1,12 +1,12 @@
 package org.folio.circulation.domain.validation;
 
-import org.folio.circulation.domain.Loan;
-import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.ValidationErrorFailure;
+import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.function.Function;
 
-import static org.folio.circulation.support.HttpResult.succeeded;
+import org.folio.circulation.domain.Loan;
+import org.folio.circulation.support.Result;
+import org.folio.circulation.support.ValidationErrorFailure;
 
 public class UserNotFoundValidator {
   private final Function<String, ValidationErrorFailure> userNotFoundErrorFunction;
@@ -17,7 +17,7 @@ public class UserNotFoundValidator {
     this.userNotFoundErrorFunction = userNotFoundErrorFunction;
   }
 
-  public HttpResult<Loan> refuseWhenUserNotFound(HttpResult<Loan> result) {
+  public Result<Loan> refuseWhenUserNotFound(Result<Loan> result) {
     return result.failWhen(loan -> succeeded(loan.getUser() == null),
       loan -> userNotFoundErrorFunction.apply(loan.getUserId()));
   }

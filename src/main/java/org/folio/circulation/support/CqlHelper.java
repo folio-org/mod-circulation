@@ -1,5 +1,8 @@
 package org.folio.circulation.support;
 
+import static java.lang.String.valueOf;
+import static org.folio.circulation.support.Result.of;
+
 import java.lang.invoke.MethodHandles;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -20,11 +23,10 @@ public class CqlHelper {
     return multipleRecordsCqlQuery(null, "id", recordIds).orElse(null);
   }
 
-  public static HttpResult<String> encodeQuery(String cqlQuery) {
+  public static Result<String> encodeQuery(String cqlQuery) {
     log.info("Encoding query {}", cqlQuery);
 
-    return HttpResult.of(() -> URLEncoder.encode(cqlQuery,
-      String.valueOf(StandardCharsets.UTF_8)));
+    return of(() -> URLEncoder.encode(cqlQuery, valueOf(StandardCharsets.UTF_8)));
   }
 
   /**
@@ -42,7 +44,7 @@ public class CqlHelper {
    * query that includes a fragment if provided and a clause for matching any
    * of the values
    */
-  public static HttpResult<String> multipleRecordsCqlQuery(
+  public static Result<String> multipleRecordsCqlQuery(
     String prefixQueryFragment,
     String indexName,
     Collection<String> valuesToSearchFor) {
@@ -55,7 +57,7 @@ public class CqlHelper {
       .collect(Collectors.toList());
 
     if(filteredValues.isEmpty()) {
-      return HttpResult.of(() -> null);
+      return of(() -> null);
     }
 
     String valueQuery = String.format("%s==(%s)",

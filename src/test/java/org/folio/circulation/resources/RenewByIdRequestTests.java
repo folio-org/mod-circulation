@@ -1,14 +1,15 @@
 package org.folio.circulation.resources;
 
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.HttpResult;
-import org.junit.Test;
-
-import java.util.UUID;
-
 import static api.support.matchers.FailureMatchers.errorResultFor;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+
+import java.util.UUID;
+
+import org.folio.circulation.support.Result;
+import org.junit.Test;
+
+import io.vertx.core.json.JsonObject;
 
 public class RenewByIdRequestTests {
   @Test
@@ -16,7 +17,7 @@ public class RenewByIdRequestTests {
     final UUID itemId = UUID.randomUUID();
     final UUID userId = UUID.randomUUID();
 
-    final HttpResult<RenewByIdRequest> request = RenewByIdRequest.from(
+    final Result<RenewByIdRequest> request = RenewByIdRequest.from(
       new JsonObject()
         .put("userId", userId.toString())
         .put("itemId", itemId.toString()));
@@ -28,7 +29,7 @@ public class RenewByIdRequestTests {
 
   @Test
   public void failWhenNoItemBarcode() {
-    final HttpResult<RenewByIdRequest> result = RenewByIdRequest.from(
+    final Result<RenewByIdRequest> result = RenewByIdRequest.from(
       new JsonObject()
         .put("userId", UUID.randomUUID().toString()));
 
@@ -38,7 +39,7 @@ public class RenewByIdRequestTests {
 
   @Test
   public void failWhenNoUserBarcode() {
-    final HttpResult<RenewByIdRequest> result = RenewByIdRequest.from(
+    final Result<RenewByIdRequest> result = RenewByIdRequest.from(
       new JsonObject()
         .put("itemId", UUID.randomUUID().toString()));
 

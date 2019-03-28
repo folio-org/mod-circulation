@@ -2,7 +2,7 @@ package api.support.matchers;
 
 import static org.hamcrest.core.StringContains.containsString;
 
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.hamcrest.Description;
@@ -10,8 +10,8 @@ import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
 
 public class FailureMatcher {
-  public static <T> Matcher<HttpResult<T>> hasValidationFailure(String expectedReason) {
-    return new TypeSafeDiagnosingMatcher<HttpResult<T>>() {
+  public static <T> Matcher<Result<T>> hasValidationFailure(String expectedReason) {
+    return new TypeSafeDiagnosingMatcher<Result<T>>() {
       @Override
       public void describeTo(Description description) {
         description.appendText(String.format(
@@ -19,7 +19,7 @@ public class FailureMatcher {
       }
 
       @Override
-      protected boolean matchesSafely(HttpResult<T> failedResult, Description description) {
+      protected boolean matchesSafely(Result<T> failedResult, Description description) {
         if(!failedResult.failed()) {
           return false;
         }
@@ -35,8 +35,8 @@ public class FailureMatcher {
     };
   }
 
-  public static <T> Matcher<HttpResult<T>> isErrorFailureContaining(String expectedReason) {
-    return new TypeSafeDiagnosingMatcher<HttpResult<T>>() {
+  public static <T> Matcher<Result<T>> isErrorFailureContaining(String expectedReason) {
+    return new TypeSafeDiagnosingMatcher<Result<T>>() {
       @Override
       public void describeTo(Description description) {
         description.appendText(String.format(
@@ -44,7 +44,7 @@ public class FailureMatcher {
       }
 
       @Override
-      protected boolean matchesSafely(HttpResult<T> failedResult, Description description) {
+      protected boolean matchesSafely(Result<T> failedResult, Description description) {
         if(!failedResult.failed()) {
           description.appendText("but is a successful result");
           return false;

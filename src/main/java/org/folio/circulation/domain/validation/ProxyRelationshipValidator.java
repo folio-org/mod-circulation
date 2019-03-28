@@ -1,17 +1,20 @@
 package org.folio.circulation.domain.validation;
 
-import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.ProxyRelationship;
-import org.folio.circulation.domain.UserRelatedRecord;
-import org.folio.circulation.support.*;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.Result.succeeded;
 
 import java.net.URLEncoder;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.HttpResult.succeeded;
+import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.ProxyRelationship;
+import org.folio.circulation.domain.UserRelatedRecord;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.Result;
+import org.folio.circulation.support.ValidationErrorFailure;
 
 public class ProxyRelationshipValidator {
   private final CollectionResourceClient proxyRelationshipsClient;
@@ -25,7 +28,7 @@ public class ProxyRelationshipValidator {
     this.invalidRelationshipErrorSupplier = invalidRelationshipErrorSupplier;
   }
 
-  public <T extends UserRelatedRecord> CompletableFuture<HttpResult<T>> refuseWhenInvalid(
+  public <T extends UserRelatedRecord> CompletableFuture<Result<T>> refuseWhenInvalid(
     T userRelatedRecord) {
 
     //No need to validate as not proxied activity
@@ -38,7 +41,7 @@ public class ProxyRelationshipValidator {
         v -> invalidRelationshipErrorSupplier.get());
   }
 
-  private CompletableFuture<HttpResult<Boolean>> doesNotHaveActiveProxyRelationship(
+  private CompletableFuture<Result<Boolean>> doesNotHaveActiveProxyRelationship(
     UserRelatedRecord record) {
 
     return proxyRelationshipQuery(record.getProxyUserId(), record.getUserId())
@@ -49,14 +52,14 @@ public class ProxyRelationshipValidator {
           .noneMatch(ProxyRelationship::isActive))));
   }
 
-  private HttpResult<String> proxyRelationshipQuery(
+  private Result<String> proxyRelationshipQuery(
     String proxyUserId,
     String sponsorUserId) {
 
     String validateProxyQuery = String.format("proxyUserId==%s and userId==%s",
       proxyUserId, sponsorUserId);
 
-    return HttpResult.of(() ->
+    return Result.of(() ->
       URLEncoder.encode(validateProxyQuery, String.valueOf(UTF_8)));
   }
 }

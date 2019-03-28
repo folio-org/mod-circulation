@@ -1,11 +1,11 @@
 package org.folio.circulation.domain;
 
-import org.folio.circulation.domain.validation.ClosedRequestValidator;
-import org.folio.circulation.support.HttpResult;
+import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
 
-import static org.folio.circulation.support.HttpResult.succeeded;
+import org.folio.circulation.domain.validation.ClosedRequestValidator;
+import org.folio.circulation.support.Result;
 
 public class UpdateRequestService {
   private final RequestRepository requestRepository;
@@ -22,7 +22,7 @@ public class UpdateRequestService {
     this.closedRequestValidator = closedRequestValidator;
   }
 
-  public CompletableFuture<HttpResult<RequestAndRelatedRecords>> replaceRequest(
+  public CompletableFuture<Result<RequestAndRelatedRecords>> replaceRequest(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     return closedRequestValidator.refuseWhenAlreadyClosed(requestAndRelatedRecords)
@@ -31,7 +31,7 @@ public class UpdateRequestService {
       .thenComposeAsync(r -> r.after(updateRequestQueue::onCancellation));
   }
 
-  private HttpResult<RequestAndRelatedRecords> removeRequestQueuePositionWhenCancelled(
+  private Result<RequestAndRelatedRecords> removeRequestQueuePositionWhenCancelled(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     final Request request = requestAndRelatedRecords.getRequest();

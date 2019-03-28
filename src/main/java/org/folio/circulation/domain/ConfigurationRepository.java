@@ -7,7 +7,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.joda.time.DateTimeZone;
 
 public class ConfigurationRepository {
@@ -23,12 +23,12 @@ public class ConfigurationRepository {
     configurationClient = clients.configurationStorageClient();
   }
 
-  public CompletableFuture<HttpResult<LoanAndRelatedRecords>> lookupTimeZone(LoanAndRelatedRecords relatedRecords) {
+  public CompletableFuture<Result<LoanAndRelatedRecords>> lookupTimeZone(LoanAndRelatedRecords relatedRecords) {
     return findTimeZoneConfiguration()
       .thenApply(result -> result.map(relatedRecords::withTimeZone));
   }
 
-  private CompletableFuture<HttpResult<DateTimeZone>> findTimeZoneConfiguration() {
+  private CompletableFuture<Result<DateTimeZone>> findTimeZoneConfiguration() {
 
     final ConfigurationService configurationService = new ConfigurationService();
     String unEncodedQuery = String.format(QUERY_PARAMETERS, MODULE_VAL, LOCALE_SETTINGS_VAL);
@@ -39,9 +39,8 @@ public class ConfigurationRepository {
           configurationService.findDateTimeZone(configurations.getRecords()))));
   }
 
-  private CompletableFuture<HttpResult<MultipleRecords<TimeZoneConfig>>> findBy(String query) {
+  private CompletableFuture<Result<MultipleRecords<TimeZoneConfig>>> findBy(String query) {
     return configurationClient.getMany(query, 1, 0)
       .thenApply(response -> from(response, TimeZoneConfig::new, RECORDS_NAME));
   }
-
 }

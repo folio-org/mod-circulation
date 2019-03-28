@@ -1,5 +1,7 @@
 package api.support.fakes;
 
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -14,9 +16,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.support.CreatedJsonHttpResult;
-import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.CreatedJsonResponseResult;
 import org.folio.circulation.support.http.server.ClientErrorResponse;
 import org.folio.circulation.support.http.server.SuccessResponse;
 import org.folio.circulation.support.http.server.ValidationError;
@@ -131,7 +131,7 @@ public class FakeStorageModule extends AbstractVerticle {
     System.out.println(
       String.format("Created %s resource: %s", recordTypeName, id));
 
-    new CreatedJsonHttpResult(body, null)
+    new CreatedJsonResponseResult(body, null)
       .writeTo(routingContext.response());
   }
 
@@ -360,8 +360,7 @@ public class FakeStorageModule extends AbstractVerticle {
       routingContext.next();
     }
     else {
-      HttpResult.failed(ValidationErrorFailure.failure(errors))
-        .writeTo(routingContext.response());
+      failedValidation(errors).writeTo(routingContext.response());
     }
   }
 
@@ -388,8 +387,7 @@ public class FakeStorageModule extends AbstractVerticle {
           String.format("%s with this %s already exists", recordTypeName, uniqueProperty),
           uniqueProperty, proposedValue));
 
-        HttpResult.failed(ValidationErrorFailure.failure(errors))
-          .writeTo(routingContext.response());
+        failedValidation(errors).writeTo(routingContext.response());
       }
     });
 
@@ -414,8 +412,7 @@ public class FakeStorageModule extends AbstractVerticle {
           String.format("Unrecognised field \"%s\"", disallowedProperty),
           disallowedProperty, null));
 
-        HttpResult.failed(ValidationErrorFailure.failure(errors))
-          .writeTo(routingContext.response());
+        failedValidation(errors).writeTo(routingContext.response());
       }
     });
 

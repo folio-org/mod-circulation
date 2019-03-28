@@ -1,15 +1,15 @@
 package api.support.matchers;
 
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
 
 public class FailureMatchers {
-  public static <T> TypeSafeDiagnosingMatcher<HttpResult<T>> errorResultFor(
+  public static <T> TypeSafeDiagnosingMatcher<Result<T>> errorResultFor(
     String propertyName,
     String reason) {
-    return new TypeSafeDiagnosingMatcher<HttpResult<T>>() {
+    return new TypeSafeDiagnosingMatcher<Result<T>>() {
       @Override
       public void describeTo(Description description) {
         description.appendValue(reason)
@@ -17,7 +17,7 @@ public class FailureMatchers {
       }
 
       @Override
-      protected boolean matchesSafely(HttpResult<T> failure, Description description) {
+      protected boolean matchesSafely(Result<T> failure, Description description) {
         if(failure.succeeded()) {
           description.appendText("is not a failed result");
           return false;

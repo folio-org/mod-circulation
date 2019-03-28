@@ -6,6 +6,7 @@ import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static java.util.Arrays.asList;
 import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
@@ -46,7 +47,6 @@ import api.support.fixtures.RequestsFixture;
 import api.support.fixtures.UsersFixture;
 import api.support.http.InventoryItemResource;
 import api.support.http.ResourceClient;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
@@ -933,9 +933,9 @@ public class RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(servicePoint.getId())
       .by(usersFixture.jessica()));
 
-    assertThat(pagedRequest, hasStatus(HTTP_VALIDATION_ERROR));
-    JsonArray errors = pagedRequest.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is (("Page requests are not allowed for " + ItemStatus.CHECKED_OUT.getValue() + " item status combination").toLowerCase()));
+    assertThat(pagedRequest.getJson(), hasErrorWith(allOf(
+      hasMessage("Page requests are not allowed for this patron and item combination"),
+      hasParameter("requestType", "Page"))));
   }
 
   @Test
@@ -957,9 +957,9 @@ public class RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(servicePoint.getId())
       .by(usersFixture.jessica()));
 
-    assertThat(pagedRequest2, hasStatus(HTTP_VALIDATION_ERROR));
-    JsonArray errors = pagedRequest2.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is (("Page requests are not allowed for " + ItemStatus.AWAITING_PICKUP.getValue() + " item status combination").toLowerCase()));
+    assertThat(pagedRequest2.getJson(), hasErrorWith(allOf(
+      hasMessage("Page requests are not allowed for this patron and item combination"),
+      hasParameter("requestType", "Page"))));
   }
 
   @Test
@@ -980,9 +980,9 @@ public class RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(servicePoint.getId())
       .by(usersFixture.jessica()));
 
-    assertThat(pagedRequest2, hasStatus(HTTP_VALIDATION_ERROR));
-    JsonArray errors = pagedRequest2.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is(("Page requests are not allowed for " + ItemStatus.PAGED.getValue() + " item status combination").toLowerCase()));
+    assertThat(pagedRequest2.getJson(), hasErrorWith(allOf(
+      hasMessage("Page requests are not allowed for this patron and item combination"),
+      hasParameter("requestType", "Page"))));
   }
 
   @Test
@@ -1005,9 +1005,9 @@ public class RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(requestPickupServicePoint.getId())
       .by(usersFixture.jessica()));
 
-    assertThat(pagedRequest2, hasStatus(HTTP_VALIDATION_ERROR));
-    JsonArray errors = pagedRequest2.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is (("Page requests are not allowed for " + ItemStatus.IN_TRANSIT.getValue() + " item status combination").toLowerCase()));
+    assertThat(pagedRequest2.getJson(), hasErrorWith(allOf(
+      hasMessage("Page requests are not allowed for this patron and item combination"),
+      hasParameter("requestType", "Page"))));
   }
 
   @Test
@@ -1100,9 +1100,9 @@ public class RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(requestPickupServicePoint.getId())
       .by(usersFixture.james()));
 
-    assertThat(recallResponse, hasStatus(HTTP_VALIDATION_ERROR));
-    JsonArray errors = recallResponse.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is (("Recall requests are not allowed for " + ItemStatus.AVAILABLE.getValue() + " item status combination").toLowerCase()));
+    assertThat(recallResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Recall requests are not allowed for this patron and item combination"),
+      hasParameter("requestType", "Recall"))));
   }
 
   @Test
@@ -1114,16 +1114,15 @@ public class RequestsAPICreationTests extends APITests {
 
     final IndividualResource missingItem = setupMissingItem(itemsFixture);
 
-    //create a Recall request
-    final Response holdRequest = requestsClient.attemptCreate(new RequestBuilder()
+    final Response recallRequest = requestsClient.attemptCreate(new RequestBuilder()
       .recall()
       .forItem(missingItem)
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .by(usersFixture.jessica()));
 
-    assertThat(holdRequest, hasStatus(HTTP_VALIDATION_ERROR));
-    JsonArray errors = holdRequest.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is (("Recall requests are not allowed for " + ItemStatus.MISSING.getValue() + " item status combination").toLowerCase()));
+    assertThat(recallRequest.getJson(), hasErrorWith(allOf(
+      hasMessage("Recall requests are not allowed for this patron and item combination"),
+      hasParameter("requestType", "Recall"))));
   }
 
   @Test
@@ -1142,9 +1141,9 @@ public class RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(requestPickupServicePoint.getId())
       .by(usersFixture.jessica()));
 
-    assertThat(recallResponse, hasStatus(HTTP_VALIDATION_ERROR));
-    JsonArray errors = recallResponse.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is (("Recall requests are not allowed for " + ItemStatus.PAGED.getValue() + " item status combination").toLowerCase()));
+    assertThat(recallResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Recall requests are not allowed for this patron and item combination"),
+      hasParameter("requestType", "Recall"))));
   }
 
   @Test
@@ -1276,15 +1275,15 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource availableItem = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
 
-    final Response recallResponse = requestsClient.attemptCreate(new RequestBuilder()
+    final Response holdResponse = requestsClient.attemptCreate(new RequestBuilder()
       .hold()
       .forItem(availableItem)
       .withPickupServicePointId(requestPickupServicePoint.getId())
       .by(usersFixture.james()));
 
-    assertThat(recallResponse, hasStatus(HTTP_VALIDATION_ERROR));
-    JsonArray errors = recallResponse.getJson().getJsonArray("errors");
-    assertThat(errors.getJsonObject(0).getString("message").toLowerCase(), is(("Hold requests are not allowed for " + ItemStatus.AVAILABLE.getValue() + " item status combination").toLowerCase()));
+    assertThat(holdResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Hold requests are not allowed for this patron and item combination"),
+      hasParameter("requestType", "Hold"))));
   }
 
   @Test

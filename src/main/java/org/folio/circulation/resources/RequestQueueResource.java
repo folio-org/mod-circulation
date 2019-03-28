@@ -1,14 +1,15 @@
 package org.folio.circulation.resources;
 
-import io.vertx.core.http.HttpClient;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.RequestRepresentation;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.OkJsonHttpResult;
+import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.http.server.WebContext;
+
+import io.vertx.core.http.HttpClient;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
 
 public class RequestQueueResource extends Resource {
   public RequestQueueResource(HttpClient client) {
@@ -35,7 +36,7 @@ public class RequestQueueResource extends Resource {
         requestQueue.getRequests(), requestQueue.size())))
       .thenApply(r -> r.map(requests ->
         requests.asJson(requestRepresentation::extendedRepresentation, "requests")))
-      .thenApply(OkJsonHttpResult::from)
+      .thenApply(OkJsonResponseResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 }

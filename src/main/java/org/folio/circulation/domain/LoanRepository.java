@@ -1,9 +1,9 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.HttpResult.failed;
-import static org.folio.circulation.support.HttpResult.of;
-import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -19,8 +19,8 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlHelper;
 import org.folio.circulation.support.ForwardOnFailure;
-import org.folio.circulation.support.HttpResult;
 import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.http.client.Response;
@@ -41,7 +41,7 @@ public class LoanRepository {
     userRepository = new UserRepository(clients);
   }
 
-  public CompletableFuture<HttpResult<LoanAndRelatedRecords>> createLoan(
+  public CompletableFuture<Result<LoanAndRelatedRecords>> createLoan(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
     JsonObject storageLoan = mapToStorageRepresentation(
@@ -64,21 +64,21 @@ public class LoanRepository {
     });
   }
 
-  public CompletableFuture<HttpResult<LoanAndRelatedRecords>> updateLoan(
+  public CompletableFuture<Result<LoanAndRelatedRecords>> updateLoan(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
     return updateLoan(loanAndRelatedRecords.getLoan())
       .thenApply(r -> r.map(loanAndRelatedRecords::withLoan));
   }
 
-  public CompletableFuture<HttpResult<Loan>> updateLoan(Loan loan) {
+  public CompletableFuture<Result<Loan>> updateLoan(Loan loan) {
     if(loan == null) {
       return completedFuture(of(() -> null));
     }
 
     JsonObject storageLoan = mapToStorageRepresentation(loan, loan.getItem());
 
-    final Function<Response, HttpResult<Loan>> mapResponse = response -> {
+    final Function<Response, Result<Loan>> mapResponse = response -> {
       if (response.getStatusCode() == 204) {
         return succeeded(loan);
       } else {
@@ -102,7 +102,7 @@ public class LoanRepository {
    * success with null if the no open loan is found,
    * failure if more than one open loan for the item found
    */
-  public CompletableFuture<HttpResult<Loan>> findOpenLoanForRequest(Request request) {
+  public CompletableFuture<Result<Loan>> findOpenLoanForRequest(Request request) {
     return findOpenLoans(request.getItemId())
       .thenApply(loansResult -> loansResult.next(loans -> {
         //TODO: Consider introducing an unknown loan class, instead of null
@@ -122,20 +122,20 @@ public class LoanRepository {
       }));
   }
 
-  public CompletableFuture<HttpResult<Loan>> getById(String id) {
+  public CompletableFuture<Result<Loan>> getById(String id) {
     return fetchLoan(id)
       .thenComposeAsync(this::fetchItem)
       .thenComposeAsync(this::fetchUser)
       .exceptionally(e -> failed(new ServerErrorFailure(e)));
   }
 
-  private CompletableFuture<HttpResult<Loan>> fetchLoan(String id) {
+  private CompletableFuture<Result<Loan>> fetchLoan(String id) {
     return new SingleRecordFetcher<>(
       loansStorageClient, "loan", Loan::from)
       .fetch(id);
   }
 
-  private CompletableFuture<HttpResult<Loan>> fetchLoan(
+  private CompletableFuture<Result<Loan>> fetchLoan(
     String id,
     Item item,
     User user) {
@@ -145,27 +145,27 @@ public class LoanRepository {
       .fetch(id);
   }
 
-  private CompletableFuture<HttpResult<Loan>> fetchItem(HttpResult<Loan> result) {
+  private CompletableFuture<Result<Loan>> fetchItem(Result<Loan> result) {
     return result.combineAfter(itemRepository::fetchFor, Loan::withItem);
   }
 
   //TODO: Check if user not found should result in failure?
-  private CompletableFuture<HttpResult<Loan>> fetchUser(HttpResult<Loan> result) {
+  private CompletableFuture<Result<Loan>> fetchUser(Result<Loan> result) {
     return result.combineAfter(userRepository::getUser,
       (loan, user) -> Loan.from(loan.asJson(), loan.getItem(), user, null));
   }
 
-  public CompletableFuture<HttpResult<MultipleRecords<Loan>>> findBy(String query) {
+  public CompletableFuture<Result<MultipleRecords<Loan>>> findBy(String query) {
     //TODO: Should fetch users for all loans
     return loansStorageClient.getManyWithRawQueryStringParameters(query)
       .thenApply(this::mapResponseToLoans)
       .thenComposeAsync(loans -> itemRepository.fetchItemsFor(loans, Loan::withItem));
   }
 
-  private HttpResult<MultipleRecords<Loan>> mapResponseToLoans(Response response) {
+  private Result<MultipleRecords<Loan>> mapResponseToLoans(Response response) {
     return MultipleRecords.from(response, Loan::from, "loans");
   }
-  
+
   private static JsonObject mapToStorageRepresentation(Loan loan, Item item) {
     JsonObject storageLoan = loan.asJson();
 
@@ -192,16 +192,16 @@ public class LoanRepository {
     storageLoan.remove("checkoutServicePoint");
   }
 
-  public CompletableFuture<HttpResult<Boolean>> hasOpenLoan(String itemId) {
+  public CompletableFuture<Result<Boolean>> hasOpenLoan(String itemId) {
     return findOpenLoans(itemId)
       .thenApply(r -> r.map(loans -> !loans.getRecords().isEmpty()));
   }
 
-  public CompletableFuture<HttpResult<MultipleRecords<Loan>>> findOpenLoans(Item item) {
+  public CompletableFuture<Result<MultipleRecords<Loan>>> findOpenLoans(Item item) {
     return findOpenLoans(item.getItemId());
   }
 
-  private CompletableFuture<HttpResult<MultipleRecords<Loan>>> findOpenLoans(String itemId) {
+  private CompletableFuture<Result<MultipleRecords<Loan>>> findOpenLoans(String itemId) {
     final String openLoans = String.format(
       "itemId==%s and status.name==\"%s\"", itemId, "Open");
     log.info("Querying open loan with query {}", openLoans);
@@ -211,7 +211,7 @@ public class LoanRepository {
         .thenApply(this::mapResponseToLoans));
   }
 
-  CompletableFuture<HttpResult<MultipleRecords<Request>>> findOpenLoansFor(
+  CompletableFuture<Result<MultipleRecords<Request>>> findOpenLoansFor(
     MultipleRecords<Request> multipleRequests) {
 
     //TODO: Need to handle multiple open loans for same item (with failure?)
@@ -231,7 +231,7 @@ public class LoanRepository {
       return completedFuture(succeeded(multipleRequests));
     }
 
-    HttpResult<String> queryResult = CqlHelper.multipleRecordsCqlQuery(
+    Result<String> queryResult = CqlHelper.multipleRecordsCqlQuery(
       String.format("status.name==\"%s\" and ", "Open"),
       "itemId", itemsToFetchLoansFor);
 
@@ -241,7 +241,7 @@ public class LoanRepository {
         loans -> matchLoansToRequests(multipleRequests, loans))));
   }
 
-  private HttpResult<MultipleRecords<Request>> matchLoansToRequests(
+  private Result<MultipleRecords<Request>> matchLoansToRequests(
     MultipleRecords<Request> requests,
     MultipleRecords<Loan> loans) {
 

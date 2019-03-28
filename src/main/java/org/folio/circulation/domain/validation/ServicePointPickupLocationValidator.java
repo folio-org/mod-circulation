@@ -1,29 +1,28 @@
 package org.folio.circulation.domain.validation;
 
-import static org.folio.circulation.support.HttpResult.failed;
-import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.lang.invoke.MethodHandles;
 
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestFulfilmentPreference;
-import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ServicePointPickupLocationValidator {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  public HttpResult<RequestAndRelatedRecords> checkServicePointPickupLocation(
-      HttpResult<RequestAndRelatedRecords> requestAndRelatedRecordsResult) {
+  public Result<RequestAndRelatedRecords> checkServicePointPickupLocation(
+      Result<RequestAndRelatedRecords> requestAndRelatedRecordsResult) {
 
     return requestAndRelatedRecordsResult.next(
       this::refuseInvalidPickupServicePoint);
   }
 
-  private HttpResult<RequestAndRelatedRecords> refuseInvalidPickupServicePoint(
+  private Result<RequestAndRelatedRecords> refuseInvalidPickupServicePoint(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     Request request = null;
@@ -40,9 +39,9 @@ public class ServicePointPickupLocationValidator {
     if(request.getPickupServicePointId() == null) {
       if(request.getFulfilmentPreference() == RequestFulfilmentPreference.HOLD_SHELF) {
         log.info("Hold Shelf Fulfillment Requests require a Pickup Service Point");
-        return failed(ValidationErrorFailure.failure(
-              "Hold Shelf Fulfillment Requests require a Pickup Service Point", "id",
-              request.getId()));
+        return failedValidation(
+          "Hold Shelf Fulfillment Requests require a Pickup Service Point",
+          "id", request.getId());
       } else {
         log.info("No pickup service point specified for request");
         return succeeded(requestAndRelatedRecords);
@@ -50,9 +49,8 @@ public class ServicePointPickupLocationValidator {
     }
 
     if(request.getPickupServicePointId() != null && request.getPickupServicePoint() == null) {
-      return failed(ValidationErrorFailure.failure(
-        "Pickup service point does not exist", "pickupServicePointId",
-        request.getPickupServicePointId()));
+      return failedValidation("Pickup service point does not exist",
+        "pickupServicePointId", request.getPickupServicePointId());
     }
 
     if(request.getPickupServicePoint() != null) {
@@ -64,9 +62,9 @@ public class ServicePointPickupLocationValidator {
         log.info("Request {} has {} as a pickup location which is an invalid service point",
             request.getId(), request.getPickupServicePointId());
 
-        return failed(ValidationErrorFailure.failure(
-            "Service point is not a pickup location", "pickupServicePointId",
-            request.getPickupServicePointId()));
+        return failedValidation(
+            "Service point is not a pickup location",
+          "pickupServicePointId", request.getPickupServicePointId());
       }
     }
     else {
