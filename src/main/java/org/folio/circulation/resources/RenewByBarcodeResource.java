@@ -1,5 +1,7 @@
 package org.folio.circulation.resources;
 
+import static org.folio.circulation.resources.RenewByBarcodeRequest.renewalRequestFrom;
+
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
@@ -30,9 +32,7 @@ public class RenewByBarcodeResource extends RenewalResource {
       = new SingleOpenLoanByUserAndItemBarcodeFinder(loanRepository,
       itemRepository, userRepository, requestQueueRepository);
 
-    final Result<RenewByBarcodeRequest> renewalRequest = RenewByBarcodeRequest.from(request);
-
-    return renewalRequest.after(renewal ->
+    return renewalRequestFrom(request).after(renewal ->
       finder.findLoan(renewal.getItemBarcode(), renewal.getUserBarcode()));
   }
 }
