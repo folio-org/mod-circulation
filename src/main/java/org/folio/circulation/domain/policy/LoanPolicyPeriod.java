@@ -1,11 +1,12 @@
 package org.folio.circulation.domain.policy;
 
-import org.joda.time.Period;
-
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.function.Predicate;
 
+import org.joda.time.Period;
+
+//TODO: Can this be combined with Period class?
 public enum LoanPolicyPeriod {
 
   MONTHS, WEEKS, DAYS, HOURS, MINUTES, INCORRECT;
@@ -17,12 +18,7 @@ public enum LoanPolicyPeriod {
       .orElse(INCORRECT);
   }
 
-  private static final EnumSet<LoanPolicyPeriod> LONG_TERM_LOANS = EnumSet.of(MONTHS, WEEKS, DAYS);
   private static final EnumSet<LoanPolicyPeriod> SHORT_TERM_LOANS = EnumSet.of(HOURS, MINUTES);
-
-  public static boolean isLongTermLoans(LoanPolicyPeriod period) {
-    return LONG_TERM_LOANS.contains(period);
-  }
 
   public static boolean isShortTermLoans(LoanPolicyPeriod period) {
     return SHORT_TERM_LOANS.contains(period);
