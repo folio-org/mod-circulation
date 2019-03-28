@@ -1,26 +1,5 @@
 package api.loans;
 
-import api.support.APITests;
-import api.support.builders.CheckOutByBarcodeRequestBuilder;
-import api.support.builders.LoanPolicyBuilder;
-import api.support.fixtures.ConfigurationExample;
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.domain.policy.DueDateManagement;
-import org.folio.circulation.domain.policy.LoansPolicyProfile;
-import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeUtils;
-import org.joda.time.DateTimeZone;
-import org.joda.time.LocalTime;
-import org.junit.Test;
-
-import java.net.MalformedURLException;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
 import static api.support.fixtures.CalendarExamples.CASE_CURRENT_IS_OPEN;
 import static api.support.fixtures.CalendarExamples.CASE_CURRENT_IS_OPEN_PREV_DAY;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_DAY_ALL_PREV_DATE;
@@ -31,6 +10,27 @@ import static api.support.fixtures.CalendarExamples.END_TIME_FIRST_PERIOD;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+
+import java.net.MalformedURLException;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+
+import org.folio.circulation.domain.policy.DueDateManagement;
+import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeUtils;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalTime;
+import org.junit.Test;
+
+import api.support.APITests;
+import api.support.builders.CheckOutByBarcodeRequestBuilder;
+import api.support.builders.LoanPolicyBuilder;
+import api.support.fixtures.ConfigurationExample;
+import io.vertx.core.json.JsonObject;
 
 /**
  * Test case for Short-term loans
@@ -45,7 +45,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class CheckOutCalculateDueDateShortTermTests extends APITests {
 
   private static final String LOAN_POLICY_NAME = "Move to the end of the current service point hours";
-  private static final String POLICY_PROFILE_NAME = LoansPolicyProfile.ROLLING.name();
   private static final String INTERVAL_HOURS = "Hours";
   private static final String INTERVAL_MINUTES = "Minutes";
   private static final LocalTime TEST_TIME_MORNING = new LocalTime(11, 0);
@@ -198,7 +197,6 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
     return new LoanPolicyBuilder()
       .withName(LOAN_POLICY_NAME)
       .withDescription("LoanPolicy")
-      .withLoansProfile(POLICY_PROFILE_NAME)
       .rolling(Period.from(duration, intervalId))
       .withClosedLibraryDueDateManagement(dueDateManagement)
       .renewFromCurrentDueDate()
