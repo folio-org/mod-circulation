@@ -1,9 +1,9 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.HttpResult.failed;
-import static org.folio.circulation.support.HttpResult.succeeded;
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
+import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,10 +17,8 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlHelper;
 import org.folio.circulation.support.FetchSingleRecord;
-import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.server.ValidationError;
 
 public class UserRepository {
   private final CollectionResourceClient usersStorageClient;
@@ -29,15 +27,15 @@ public class UserRepository {
     usersStorageClient = clients.usersStorage();
   }
 
-  public CompletableFuture<HttpResult<User>> getUser(UserRelatedRecord userRelatedRecord) {
+  public CompletableFuture<Result<User>> getUser(UserRelatedRecord userRelatedRecord) {
     return getUser(userRelatedRecord.getUserId());
   }
 
-  public CompletableFuture<HttpResult<User>> getProxyUser(UserRelatedRecord userRelatedRecord) {
+  public CompletableFuture<Result<User>> getProxyUser(UserRelatedRecord userRelatedRecord) {
     return getUser(userRelatedRecord.getProxyUserId());
   }
 
-  CompletableFuture<HttpResult<User>> getUser(String userId) {
+  CompletableFuture<Result<User>> getUser(String userId) {
     return FetchSingleRecord.<User>forRecord("user")
       .using(usersStorageClient)
       .mapTo(User::new)
@@ -46,16 +44,15 @@ public class UserRepository {
   }
 
   //TODO: Replace this with validator
-  public CompletableFuture<HttpResult<User>> getUserFailOnNotFound(String userId) {
+  public CompletableFuture<Result<User>> getUserFailOnNotFound(String userId) {
     return FetchSingleRecord.<User>forRecord("user")
       .using(usersStorageClient)
       .mapTo(User::new)
-      .whenNotFound(failed(new ValidationErrorFailure(
-        new ValidationError("user is not found", "userId", userId))))
+      .whenNotFound(failedValidation("user is not found", "userId", userId))
       .fetch(userId);
   }
 
-  public CompletableFuture<HttpResult<User>> getProxyUserByBarcode(String barcode) {
+  public CompletableFuture<Result<User>> getProxyUserByBarcode(String barcode) {
     //Not proxying, so no need to get proxy user
     if(StringUtils.isBlank(barcode)) {
       return completedFuture(succeeded(null));
@@ -65,11 +62,11 @@ public class UserRepository {
     }
   }
 
-  public CompletableFuture<HttpResult<User>> getUserByBarcode(String barcode) {
+  public CompletableFuture<Result<User>> getUserByBarcode(String barcode) {
     return getUserByBarcode(barcode, "userBarcode");
   }
 
-  private CompletableFuture<HttpResult<User>> getUserByBarcode(
+  private CompletableFuture<Result<User>> getUserByBarcode(
     String barcode,
     String propertyName) {
 
@@ -77,11 +74,12 @@ public class UserRepository {
       .thenApply(response -> MultipleRecords.from(response, User::new, "users")
         .map(MultipleRecords::getRecords)
         .map(users -> users.stream().findFirst())
-        .next(user -> user.map(HttpResult::succeeded).orElseGet(() -> failed(failure(
-          "Could not find user with matching barcode", propertyName, barcode)))));
+        .next(user -> user.map(Result::succeeded).orElseGet(() ->
+          failedValidation("Could not find user with matching barcode",
+            propertyName, barcode))));
   }
 
-  CompletableFuture<HttpResult<MultipleRecords<Request>>> findUsersForRequests(
+  CompletableFuture<Result<MultipleRecords<Request>>> findUsersForRequests(
     MultipleRecords<Request> multipleRequests) {
 
     Collection<Request> requests = multipleRequests.getRecords();
@@ -101,7 +99,7 @@ public class UserRepository {
     return usersStorageClient.getMany(query, requests.size(), 0)
       .thenApply(this::mapResponseToUsers)
       .thenApply(multipleUsersResult -> multipleUsersResult.next(
-        multipleUsers -> HttpResult.of(() ->
+        multipleUsers -> of(() ->
           multipleRequests.mapRecords(request ->
             matchUsersToRequests(request, multipleUsers)))));
   }
@@ -132,7 +130,7 @@ public class UserRepository {
   }
 
 
-  private HttpResult<MultipleRecords<User>> mapResponseToUsers(Response response) {
+  private Result<MultipleRecords<User>> mapResponseToUsers(Response response) {
     return MultipleRecords.from(response, User::from, "users");
   }
 }

@@ -1,5 +1,7 @@
 package org.folio.circulation.support;
 
+import static org.folio.circulation.support.Result.failed;
+
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,44 +21,45 @@ public class ValidationErrorFailure implements HttpFailure {
 
   private final Collection<ValidationError> errors = new ArrayList<>();
 
-  public static <T> HttpResult<T> failedResult(
+  public static <T> ResponseWritableResult<T> failedValidation(
     String reason,
     String key,
     String value) {
 
-    return HttpResult.failed(
-      failure(new ValidationError(reason, key, value)));
+    return failedValidation(new ValidationError(reason, key, value));
   }
 
-  public static <T> HttpResult<T> failedResult(ValidationError error) {
-    return HttpResult.failed(failure(error));
+  public static <T> ResponseWritableResult<T> failedValidation(ValidationError error) {
+    return failed(singleValidationError(error));
+  }
+  public static ValidationErrorFailure singleValidationError(String reason) {
+    return singleValidationError(new ValidationError(reason));
   }
 
-  public static ValidationErrorFailure failure(String reason) {
-    return failure(new ValidationError(reason));
+  public static <T> ResponseWritableResult<T> failedValidation(
+    Collection<ValidationError> errors) {
+
+    return failed(new ValidationErrorFailure(errors));
   }
 
-  public static ValidationErrorFailure failure(
+  public static ValidationErrorFailure singleValidationError(
     String reason,
     String propertyName,
     String propertyValue) {
 
-    return failure(new ValidationError(reason, propertyName, propertyValue));
+    return singleValidationError(
+      new ValidationError(reason, propertyName, propertyValue));
   }
 
-  public static ValidationErrorFailure failure(ValidationError error) {
+  public static ValidationErrorFailure singleValidationError(ValidationError error) {
     return new ValidationErrorFailure(error);
   }
 
-  public static ValidationErrorFailure failure(Collection<ValidationError> errors) {
-    return new ValidationErrorFailure(errors);
-  }
-
-  public ValidationErrorFailure(ValidationError error) {
+  private ValidationErrorFailure(ValidationError error) {
     this.errors.add(error);
   }
 
-  public ValidationErrorFailure(Collection<ValidationError> errors) {
+  private ValidationErrorFailure(Collection<ValidationError> errors) {
     this.errors.addAll(errors);
   }
 
@@ -66,7 +69,7 @@ public class ValidationErrorFailure implements HttpFailure {
 
     log.info("Writing validation error: '{}'", jsonErrors);
 
-    new JsonHttpResult(422, jsonErrors, null).writeTo(response);
+    new JsonResponseResult(422, jsonErrors, null).writeTo(response);
   }
 
   private JsonObject asJson() {

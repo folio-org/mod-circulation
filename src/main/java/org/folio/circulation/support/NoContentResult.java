@@ -1,10 +1,11 @@
 package org.folio.circulation.support;
 
-import io.vertx.core.http.HttpServerResponse;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.SuccessResponse;
 
-public class NoContentHttpResult implements WritableHttpResult<Void> {
+import io.vertx.core.http.HttpServerResponse;
+
+public class NoContentResult implements ResponseWritableResult<Void> {
   @Override
   public boolean failed() {
     return false;
@@ -25,28 +26,28 @@ public class NoContentHttpResult implements WritableHttpResult<Void> {
     SuccessResponse.noContent(response);
   }
 
-  public static <T>  WritableHttpResult<Void> from(HttpResult<T> result) {
+  public static <T> ResponseWritableResult<Void> from(Result<T> result) {
     if(result.failed()) {
-      return HttpResult.failed(result.cause());
+      return Result.failed(result.cause());
     }
     else {
-      return new NoContentHttpResult();
+      return new NoContentResult();
     }
   }
 
-  public static WritableHttpResult<Void> from(Response response) {
+  public static ResponseWritableResult<Void> from(Response response) {
     return from(response, 204);
   }
 
-  public static WritableHttpResult<Void> from(
+  public static ResponseWritableResult<Void> from(
     Response response,
     Integer expectedStatusCode) {
 
     if(response.getStatusCode() == expectedStatusCode) {
-      return new NoContentHttpResult();
+      return new NoContentResult();
     }
     else {
-      return HttpResult.failed(new ForwardOnFailure(response));
+      return Result.failed(new ForwardOnFailure(response));
     }
   }
 }

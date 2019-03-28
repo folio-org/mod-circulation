@@ -2,12 +2,10 @@ package org.folio.circulation.domain.notice;
 
 import java.util.List;
 
-import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.User;
+import org.folio.circulation.domain.policy.PatronNoticePolicyRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.joda.time.DateTimeZone;
+import org.folio.circulation.support.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,41 +15,36 @@ public class PatronNoticeService {
 
   private static final Logger log = LoggerFactory.getLogger(PatronNoticeService.class);
 
+  private PatronNoticePolicyRepository noticePolicyRepository;
   private CollectionResourceClient patronNoticeClient;
 
-  public PatronNoticeService(Clients clients) {
+  public PatronNoticeService(PatronNoticePolicyRepository noticePolicyRepository, Clients clients) {
+    this.noticePolicyRepository = noticePolicyRepository;
     this.patronNoticeClient = clients.patronNoticeClient();
   }
 
-  public void sendPatronNotice(List<NoticeConfiguration> noticeConfigurations, String recipientId, JsonObject context) {
+  public void acceptNoticeEvent(PatronNoticeEvent event) {
+    noticePolicyRepository.lookupPolicy(event.getItem(), event.getUser())
+      .thenAccept(r -> r.next(policy -> applyNoticePolicy(event, policy)));
+  }
+
+  private Result<PatronNoticePolicy> applyNoticePolicy(
+    PatronNoticeEvent event, PatronNoticePolicy policy) {
+
+    List<NoticeConfiguration> matchingNoticeConfiguration =
+      policy.lookupNoticeConfiguration(event.getEventType(), event.getTiming());
+    String recipientId = event.getUser().getId();
+
+    sendPatronNotices(matchingNoticeConfiguration, recipientId, event.getNoticeContext());
+    return Result.succeeded(policy);
+  }
+
+  private void sendPatronNotices(List<NoticeConfiguration> noticeConfigurations, String recipientId, JsonObject context) {
     noticeConfigurations.stream()
       .map(this::toPatronNotice)
       .map(n -> n.setRecipientId(recipientId))
       .map(n -> n.setContext(context))
       .forEach(this::sendNotice);
-  }
-
-  public JsonObject createNoticeContextFromLoan(Loan loan) {
-    return createNoticeContextFromLoan(loan, DateTimeZone.UTC);
-  }
-
-  public JsonObject createNoticeContextFromLoan(Loan loan, DateTimeZone timeZone) {
-    User user = loan.getUser();
-    Item item = loan.getItem();
-
-    JsonObject patron = new JsonObject()
-      .put("firstName", user.getFirstName())
-      .put("lastName", user.getLastName())
-      .put("barcode", user.getBarcode());
-
-    JsonObject itemContext = new JsonObject()
-      .put("title", item.getTitle())
-      .put("barcode", item.getBarcode());
-
-    return new JsonObject()
-      .put("patron", patron)
-      .put("item", itemContext)
-      .put("dueDate", loan.getDueDate().withZone(timeZone).toString());
   }
 
   private PatronNotice toPatronNotice(NoticeConfiguration noticeConfiguration) {

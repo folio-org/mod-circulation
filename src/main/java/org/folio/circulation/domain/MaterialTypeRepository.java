@@ -11,6 +11,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static java.util.function.Function.identity;
+import static org.folio.circulation.support.Result.succeeded;
 
 public class MaterialTypeRepository {
   private final CollectionResourceClient materialTypesStorageClient;
@@ -19,13 +20,13 @@ public class MaterialTypeRepository {
     materialTypesStorageClient = clients.materialTypesStorage();
   }
 
-  public CompletableFuture<HttpResult<JsonObject>> getFor(Item item) {
+  public CompletableFuture<Result<JsonObject>> getFor(Item item) {
     return SingleRecordFetcher.json(materialTypesStorageClient, "material types",
-      response -> HttpResult.succeeded(null))
+      response -> succeeded(null))
       .fetch(item.getMaterialTypeId());
   }
 
-  public CompletableFuture<HttpResult<Map<String, JsonObject>>> getMaterialTypes(
+  public CompletableFuture<Result<Map<String, JsonObject>>> getMaterialTypes(
     Collection<Item> inventoryRecords) {
 
     List<String> materialTypeIds = inventoryRecords.stream()

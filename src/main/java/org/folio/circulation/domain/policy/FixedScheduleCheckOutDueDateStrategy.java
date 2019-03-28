@@ -1,14 +1,15 @@
 package org.folio.circulation.domain.policy;
 
-import org.folio.circulation.domain.Loan;
-import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.ServerErrorFailure;
-import org.folio.circulation.support.http.server.ValidationError;
-import org.joda.time.DateTime;
+import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.util.function.Function;
 
-import static org.folio.circulation.support.HttpResult.failed;
+import org.folio.circulation.domain.Loan;
+import org.folio.circulation.support.Result;
+import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.http.server.ValidationError;
+import org.joda.time.DateTime;
 
 class FixedScheduleCheckOutDueDateStrategy extends DueDateStrategy {
   private static final String NO_APPLICABLE_DUE_DATE_SCHEDULE_MESSAGE =
@@ -34,16 +35,16 @@ class FixedScheduleCheckOutDueDateStrategy extends DueDateStrategy {
   }
 
   @Override
-  HttpResult<DateTime> calculateDueDate(Loan loan) {
+  Result<DateTime> calculateDueDate(Loan loan) {
     final DateTime loanDate = loan.getLoanDate();
 
     logApplying("Fixed schedule check out due date calculation");
 
     try {
       return fixedDueDateSchedules.findDueDateFor(loanDate)
-        .map(HttpResult::succeeded)
-        .orElseGet(() -> failed(
-          validationError(NO_APPLICABLE_DUE_DATE_SCHEDULE_MESSAGE)));
+        .map(Result::succeeded)
+        .orElseGet(() -> failedValidation(
+          errorForPolicy(NO_APPLICABLE_DUE_DATE_SCHEDULE_MESSAGE)));
     }
     catch(Exception e) {
       logException(e, "Error occurred during fixed schedule check out due date calculation");

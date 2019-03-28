@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.validation;
 
-import static org.folio.circulation.support.ValidationErrorFailure.failure;
+import static java.lang.String.format;
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.util.function.Supplier;
 
@@ -12,18 +13,17 @@ public class CommonFailures {
 
   public static Supplier<HttpFailure> moreThanOneOpenLoanFailure(String itemBarcode) {
     return () -> new ServerErrorFailure(
-      String.format("More than one open loan for item %s", itemBarcode));
+      format("More than one open loan for item %s", itemBarcode));
   }
 
   public static Supplier<HttpFailure> noItemFoundForBarcodeFailure(String itemBarcode) {
-    return () -> failure(
-      String.format("No item with barcode %s exists", itemBarcode),
+    return () -> singleValidationError(
+      format("No item with barcode %s exists", itemBarcode),
       "itemBarcode", itemBarcode);
   }
 
   public static Supplier<HttpFailure> noItemFoundForIdFailure(String itemId) {
-    return () -> failure(
-      String.format("No item with ID %s exists", itemId),
+    return () -> singleValidationError(format("No item with ID %s exists", itemId),
       "itemId", itemId);
   }
 }

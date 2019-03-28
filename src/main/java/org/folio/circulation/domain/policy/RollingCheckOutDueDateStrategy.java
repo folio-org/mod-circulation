@@ -1,11 +1,13 @@
 package org.folio.circulation.domain.policy;
 
-import org.folio.circulation.domain.Loan;
-import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.http.server.ValidationError;
-import org.joda.time.DateTime;
+import static java.lang.String.format;
 
 import java.util.function.Function;
+
+import org.folio.circulation.domain.Loan;
+import org.folio.circulation.support.Result;
+import org.folio.circulation.support.http.server.ValidationError;
+import org.joda.time.DateTime;
 
 class RollingCheckOutDueDateStrategy extends DueDateStrategy {
   private static final String NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE =
@@ -36,25 +38,25 @@ class RollingCheckOutDueDateStrategy extends DueDateStrategy {
   }
 
   @Override
-  HttpResult<DateTime> calculateDueDate(Loan loan) {
+  Result<DateTime> calculateDueDate(Loan loan) {
     final DateTime loanDate = loan.getLoanDate();
 
     return initialDueDate(loanDate)
       .next(dueDate -> truncateDueDateBySchedule(loanDate, dueDate));
   }
 
-  private HttpResult<DateTime> initialDueDate(DateTime loanDate) {
+  private Result<DateTime> initialDueDate(DateTime loanDate) {
     return period.addTo(loanDate,
-      () -> validationError(CHECK_OUT_UNRECOGNISED_PERIOD_MESSAGE),
-      interval -> validationError(String.format(CHECK_OUT_UNRECOGNISED_INTERVAL_MESSAGE, interval)),
-      duration -> validationError(String.format(CHECKOUT_INVALID_DURATION_MESSAGE, duration)));
+      () -> errorForPolicy(CHECK_OUT_UNRECOGNISED_PERIOD_MESSAGE),
+      interval -> errorForPolicy(format(CHECK_OUT_UNRECOGNISED_INTERVAL_MESSAGE, interval)),
+      duration -> errorForPolicy(format(CHECKOUT_INVALID_DURATION_MESSAGE, duration)));
   }
 
-  private HttpResult<DateTime> truncateDueDateBySchedule(
+  private Result<DateTime> truncateDueDateBySchedule(
     DateTime loanDate,
     DateTime dueDate) {
 
     return dueDateLimitSchedules.truncateDueDate(dueDate, loanDate,
-      () -> validationError(NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE));
+      () -> errorForPolicy(NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE));
   }
 }

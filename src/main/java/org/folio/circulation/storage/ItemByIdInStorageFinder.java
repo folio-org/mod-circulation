@@ -1,13 +1,13 @@
 package org.folio.circulation.storage;
 
-import static org.folio.circulation.support.HttpResult.of;
+import static org.folio.circulation.support.Result.of;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.support.HttpFailure;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ItemRepository;
 
 public class ItemByIdInStorageFinder {
@@ -22,14 +22,14 @@ public class ItemByIdInStorageFinder {
     this.itemNotFoundFailureSupplier = itemNotFoundFailureSupplier;
   }
 
-  public CompletableFuture<HttpResult<Item>> findItemById(String itemId) {
+  public CompletableFuture<Result<Item>> findItemById(String itemId) {
     return itemRepository.fetchById(itemId)
       .thenApply(itemResult -> failWhenNoItemFoundForId(itemResult,
         itemNotFoundFailureSupplier));
   }
 
-  private static HttpResult<Item> failWhenNoItemFoundForId(
-    HttpResult<Item> itemResult,
+  private static Result<Item> failWhenNoItemFoundForId(
+    Result<Item> itemResult,
     Supplier<HttpFailure> itemNotFoundFailureSupplier) {
 
     return itemResult.failWhen(item -> of(item::isNotFound),

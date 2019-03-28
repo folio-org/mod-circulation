@@ -2,12 +2,12 @@ package org.folio.circulation.domain.validation;
 
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 
 import java.util.function.Function;
 
-import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.Result.succeeded;
 
 public class AwaitingPickupValidator {
   private final Function<String, ValidationErrorFailure> awaitingPickupErrorFunction;
@@ -18,8 +18,8 @@ public class AwaitingPickupValidator {
     awaitingPickupErrorFunction = stringValidationErrorFailureFunction;
   }
 
-  public HttpResult<LoanAndRelatedRecords> refuseWhenUserIsNotAwaitingPickup(
-    HttpResult<LoanAndRelatedRecords> loanAndRelatedRecords) {
+  public Result<LoanAndRelatedRecords> refuseWhenUserIsNotAwaitingPickup(
+    Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
     return loanAndRelatedRecords.next(loan -> {
       String itemTitle = loan.getLoan().getItem().getTitle();
@@ -34,7 +34,7 @@ public class AwaitingPickupValidator {
     });
   }
 
-  private HttpResult<Boolean> isAwaitingPickupForOtherPatron(
+  private Result<Boolean> isAwaitingPickupForOtherPatron(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
     return succeeded(loanAndRelatedRecords.getRequestQueue()

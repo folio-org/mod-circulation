@@ -1,17 +1,18 @@
 package org.folio.circulation.domain.policy;
 
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.HttpResult;
-import org.folio.circulation.support.JsonArrayHelper;
-import org.folio.circulation.support.ValidationErrorFailure;
-import org.joda.time.DateTime;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import static org.folio.circulation.support.HttpResult.failed;
+import org.folio.circulation.support.Result;
+import org.folio.circulation.support.JsonArrayHelper;
+import org.folio.circulation.support.http.server.ValidationError;
+import org.joda.time.DateTime;
+
+import io.vertx.core.json.JsonObject;
 
 public class FixedDueDateSchedules {
   private final List<JsonObject> schedules;
@@ -58,15 +59,15 @@ public class FixedDueDateSchedules {
     return schedules.isEmpty();
   }
 
-  HttpResult<DateTime> truncateDueDate(
+  Result<DateTime> truncateDueDate(
     DateTime dueDate,
     DateTime loanDate,
-    Supplier<ValidationErrorFailure> noApplicableScheduleError) {
+    Supplier<ValidationError> noApplicableScheduleError) {
 
     return findDueDateFor(loanDate)
       .map(limit -> earliest(dueDate, limit))
-      .map(HttpResult::succeeded)
-      .orElseGet(() -> failed(noApplicableScheduleError.get()));
+      .map(Result::succeeded)
+      .orElseGet(() -> failedValidation(noApplicableScheduleError.get()));
   }
 
   private DateTime earliest(DateTime rollingDueDate, DateTime limit) {

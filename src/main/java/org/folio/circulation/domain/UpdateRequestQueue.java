@@ -1,7 +1,7 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
@@ -9,7 +9,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ClockManager;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
@@ -39,7 +39,7 @@ public class UpdateRequestQueue {
       new ServicePointRepository(clients));
   }
 
-  public CompletableFuture<HttpResult<LoanAndRelatedRecords>> onCheckIn(
+  public CompletableFuture<Result<LoanAndRelatedRecords>> onCheckIn(
     LoanAndRelatedRecords relatedRecords) {
 
     final RequestQueue requestQueue = relatedRecords.getRequestQueue();
@@ -48,7 +48,7 @@ public class UpdateRequestQueue {
       .thenApply(result -> result.map(relatedRecords::withRequestQueue));
   }
 
-  public CompletableFuture<HttpResult<RequestQueue>> onCheckIn(
+  public CompletableFuture<Result<RequestQueue>> onCheckIn(
     RequestQueue requestQueue, String checkInServicePointId) {
 
     if (requestQueue.hasOutstandingFulfillableRequests()) {
@@ -91,14 +91,14 @@ public class UpdateRequestQueue {
     }
   }
 
-  public CompletableFuture<HttpResult<LoanAndRelatedRecords>> onCheckOut(
+  public CompletableFuture<Result<LoanAndRelatedRecords>> onCheckOut(
     LoanAndRelatedRecords relatedRecords) {
 
     return onCheckOut(relatedRecords.getRequestQueue())
       .thenApply(result -> result.map(relatedRecords::withRequestQueue));
   }
 
-  private CompletableFuture<HttpResult<RequestQueue>> onCheckOut(RequestQueue requestQueue) {
+  private CompletableFuture<Result<RequestQueue>> onCheckOut(RequestQueue requestQueue) {
     if (requestQueue.hasOutstandingFulfillableRequests()) {
       Request firstRequest = requestQueue.getHighestPriorityFulfillableRequest();
 
@@ -117,7 +117,7 @@ public class UpdateRequestQueue {
     }
   }
 
-  CompletableFuture<HttpResult<RequestAndRelatedRecords>> onCancellation(
+  CompletableFuture<Result<RequestAndRelatedRecords>> onCancellation(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     if(requestAndRelatedRecords.getRequest().isCancelled()) {
@@ -130,7 +130,7 @@ public class UpdateRequestQueue {
     }
   }
 
-  public CompletableFuture<HttpResult<Request>> onDeletion(Request request) {
+  public CompletableFuture<Result<Request>> onDeletion(Request request) {
     return requestQueueRepository.get(request.getItemId())
       .thenApply(r -> r.map(requestQueue -> {
         requestQueue.remove(request);

@@ -1,12 +1,14 @@
 package org.folio.circulation.domain.policy.library;
 
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.failureForAbsentTimetable;
+import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.succeeded;
+
 import org.folio.circulation.domain.policy.LoanPolicyPeriod;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Period;
-
-import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.failureForAbsentTimetable;
 
 public class BeginningOfNextOpenHoursStrategy extends ShortTermLoansBaseStrategy {
 
@@ -19,24 +21,24 @@ public class BeginningOfNextOpenHoursStrategy extends ShortTermLoansBaseStrategy
   }
 
   @Override
-  protected HttpResult<DateTime> calculateIfClosed(LibraryTimetable libraryTimetable, LibraryInterval requestedInterval) {
+  protected Result<DateTime> calculateIfClosed(LibraryTimetable libraryTimetable, LibraryInterval requestedInterval) {
     LibraryInterval nextInterval = requestedInterval.getNext();
     if (nextInterval == null) {
-      return HttpResult.failed(failureForAbsentTimetable());
+      return failed(failureForAbsentTimetable());
     }
     DateTime dueDateWithOffset = nextInterval.getStartTime().plus(offsetPeriod);
     if (nextInterval.getInterval().contains(dueDateWithOffset)) {
-      return HttpResult.succeeded(dueDateWithOffset);
+      return succeeded(dueDateWithOffset);
     }
 
     LibraryInterval intervalForDateWithOffset =
       libraryTimetable.findInterval(dueDateWithOffset);
     if (intervalForDateWithOffset == null) {
-      return HttpResult.succeeded(libraryTimetable.getTail().getEndTime());
+      return succeeded(libraryTimetable.getTail().getEndTime());
     }
     if (intervalForDateWithOffset.isOpen()) {
-      return HttpResult.succeeded(dueDateWithOffset);
+      return succeeded(dueDateWithOffset);
     }
-    return HttpResult.succeeded(intervalForDateWithOffset.getPrevious().getEndTime());
+    return succeeded(intervalForDateWithOffset.getPrevious().getEndTime());
   }
 }
