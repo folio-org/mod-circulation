@@ -24,11 +24,6 @@ public class ValidationError {
     this.parameters = parameters;
   }
 
-  public ValidationError(String message) {
-    this.message = message;
-    this.parameters = new HashMap<>(0);
-  }
-
   public JsonObject toJson() {
     JsonArray mappedParameters = new JsonArray(
       parameters.keySet().stream()

@@ -22,7 +22,6 @@ import org.folio.circulation.domain.policy.RequestPolicyRepository;
 import org.folio.circulation.domain.validation.ClosedRequestValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
-import org.folio.circulation.domain.validation.UniqRequestValidator;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CreatedJsonResponseResult;
 import org.folio.circulation.support.ItemRepository;
@@ -54,8 +53,7 @@ public class RequestCollectionResource extends CollectionResource {
       new UpdateItem(clients),
       new UpdateLoanActionHistory(clients),
       new UpdateLoan(clients, loanRepository, new LoanPolicyRepository(clients)),
-      new RequestPolicyRepository(clients),
-      getUniqRequestValidator()
+      new RequestPolicyRepository(clients)
     );
 
     final RequestFromRepresentationService requestFromRepresentationService =
@@ -93,8 +91,7 @@ public class RequestCollectionResource extends CollectionResource {
       new UpdateItem(clients),
       new UpdateLoanActionHistory(clients),
       new UpdateLoan(clients, loanRepository, new LoanPolicyRepository(clients)),
-      new RequestPolicyRepository(clients),
-      getUniqRequestValidator()
+      new RequestPolicyRepository(clients)
     );
 
     final UpdateRequestService updateRequestService = new UpdateRequestService(
@@ -191,11 +188,5 @@ public class RequestCollectionResource extends CollectionResource {
 
   private String getRequestId(RoutingContext routingContext) {
     return routingContext.request().getParam("id");
-  }
-
-  private UniqRequestValidator getUniqRequestValidator() {
-    return new UniqRequestValidator(
-      request -> singleValidationError("This requester already has an open request for this item")
-    );
   }
 }

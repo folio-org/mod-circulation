@@ -32,9 +32,6 @@ public class ValidationErrorFailure implements HttpFailure {
   public static <T> ResponseWritableResult<T> failedValidation(ValidationError error) {
     return failed(singleValidationError(error));
   }
-  public static ValidationErrorFailure singleValidationError(String reason) {
-    return singleValidationError(new ValidationError(reason));
-  }
 
   public static <T> ResponseWritableResult<T> failedValidation(
     Collection<ValidationError> errors) {

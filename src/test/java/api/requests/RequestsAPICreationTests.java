@@ -1287,7 +1287,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void cannotCreateTwoRequestsFromTheSameUser()
+  public void cannotCreateTwoRequestsFromTheSameUserForTheSameItem()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -1319,7 +1319,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void canCreateTwoRequestsFromDifferentUsers()
+  public void canCreateTwoRequestsFromDifferentUsersForTheSameItem()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
