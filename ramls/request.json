@@ -123,6 +123,9 @@
           "type": "string"
         }
       },
+      "enumeration": {
+        "type": "string"
+      },
       "additionalProperties": false
     },
     "requester": {
