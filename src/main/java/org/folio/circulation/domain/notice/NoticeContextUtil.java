@@ -20,14 +20,8 @@ public class NoticeContextUtil {
     User user = loan.getUser();
     Item item = loan.getItem();
 
-    JsonObject patron = new JsonObject()
-      .put("firstName", user.getFirstName())
-      .put("lastName", user.getLastName())
-      .put("barcode", user.getBarcode());
-
-    JsonObject itemContext = new JsonObject()
-      .put("title", item.getTitle())
-      .put("barcode", item.getBarcode());
+    JsonObject patron = createPatron(user);
+    JsonObject itemContext = createItemContext(item);
 
     return new JsonObject()
       .put("patron", patron)
@@ -35,4 +29,26 @@ public class NoticeContextUtil {
       .put("dueDate", loan.getDueDate().withZone(timeZone).toString());
   }
 
+  public static JsonObject createNoticeContextFromItem(Item item, User user) {
+    JsonObject patron = createPatron(user);
+    JsonObject itemContext = createItemContext(item);
+
+    return new JsonObject()
+      .put("patron", patron)
+      .put("item", itemContext);
+  }
+
+  private static JsonObject createPatron(User user) {
+    return new JsonObject()
+      .put("firstName", user.getFirstName())
+      .put("lastName", user.getLastName())
+      .put("barcode", user.getBarcode());
+  }
+
+  private static JsonObject createItemContext(Item item) {
+    return new JsonObject()
+      .put("title", item.getTitle())
+      .put("barcode", item.getBarcode())
+      .put("status", item.getStatus());
+  }
 }
