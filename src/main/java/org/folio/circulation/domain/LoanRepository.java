@@ -48,11 +48,27 @@ public class LoanRepository {
       loanAndRelatedRecords.getLoan(), loanAndRelatedRecords.getLoan().getItem());
 
     if(loanAndRelatedRecords.getLoanPolicy() != null) {
+    
       storageLoan.put("loanPolicyId", loanAndRelatedRecords.getLoanPolicy().getId());
+    
     }
 
     User user = loanAndRelatedRecords.getLoan().getUser();
     User proxy = loanAndRelatedRecords.getLoan().getProxy();
+    
+    RequestQueue requestQueue = loanAndRelatedRecords.getRequestQueue();
+
+    if(requestQueue.getRequests().size() > 0) {
+      
+      Request request = requestQueue.getHighestPriorityFulfillableRequest();
+
+      if(request.getPosition() == 1) {
+        System.out.println("\n\n\n\n RquestType = " + request.getRequestType().getValue());
+      }
+    } else {
+      System.out.println("NO REQUESTS!!!!!");
+    }
+    
     return loansStorageClient.post(storageLoan).thenApply(response -> {
       if (response.getStatusCode() == 201) {
         return succeeded(
