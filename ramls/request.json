@@ -124,6 +124,7 @@
         }
       },
       "enumeration": {
+        "description": "The volume and/or issue number for the item",
         "type": "string"
       },
       "additionalProperties": false
