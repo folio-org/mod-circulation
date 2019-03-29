@@ -312,6 +312,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     loansFixture.checkOut(uprooted, jessica);
 
     requestsClient.create(new RequestBuilder()
+      .hold()
       .withItemId(smallAngryPlanet.getId())
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
@@ -320,6 +321,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     );
 
     requestsClient.create(new RequestBuilder()
+      .hold()
       .withItemId(nod.getId())
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
@@ -328,6 +330,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     );
 
     requestsClient.create(new RequestBuilder()
+      .hold()
       .withItemId(interestingTimes.getId())
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
@@ -336,6 +339,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     );
 
     requestsClient.create(new RequestBuilder()
+      .hold()
       .withItemId(temeraire.getId())
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
@@ -344,6 +348,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     );
 
     requestsClient.create(new RequestBuilder()
+      .recall()
       .withItemId(uprooted.getId())
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
@@ -788,9 +793,9 @@ public class RequestsAPIRetrievalTests extends APITests {
 
 
   private void requestHasTags(JsonObject request) {
-    hasProperty("tags",request,"tags");
+    hasProperty("tags", request, "tags");
 
-    hasProperty("tagList",request.getJsonObject("tags"),"List");
+    hasProperty("tagList", request.getJsonObject("tags"), "List");
 
   }
 

@@ -68,11 +68,10 @@ public class CreateRequestService {
   private static Result<RequestAndRelatedRecords> refuseWhenItemDoesNotExist(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    if(requestAndRelatedRecords.getRequest().getItem().isNotFound()) {
+    if (requestAndRelatedRecords.getRequest().getItem().isNotFound()) {
       return failedValidation("Item does not exist", "itemId",
         requestAndRelatedRecords.getRequest().getItemId());
-    }
-    else {
+    } else {
       return succeeded(requestAndRelatedRecords);
     }
   }
@@ -81,12 +80,11 @@ public class CreateRequestService {
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     RequestPolicy requestPolicy = requestAndRelatedRecords.getRequestPolicy();
-    RequestType requestType =  requestAndRelatedRecords.getRequest().getRequestType();
+    RequestType requestType = requestAndRelatedRecords.getRequest().getRequestType();
 
-    if(!requestPolicy.allowsType(requestType)) {
+    if (!requestPolicy.allowsType(requestType)) {
       return failureDisallowedForRequestType(requestType);
-    }
-    else {
+    } else {
       return succeeded(requestAndRelatedRecords);
     }
   }
@@ -98,8 +96,7 @@ public class CreateRequestService {
 
     if (!request.allowedForItem()) {
       return failureDisallowedForRequestType(request.getRequestType());
-    }
-    else {
+    } else {
       return succeeded(requestAndRelatedRecords);
     }
   }
@@ -131,8 +128,7 @@ public class CreateRequestService {
       return failedValidation(
         "A valid patron group is required. PatronGroup ID is null",
         "PatronGroupId", null);
-    }
-    else {
+    } else {
       return succeeded(requestAndRelatedRecords);
     }
   }
@@ -146,8 +142,9 @@ public class CreateRequestService {
 
     if (requestOptional.isPresent()) {
       Map<String, String> parameters = new HashMap<>();
-      parameters.put("requesterId", requestOptional.get().getUserId());
-      parameters.put("itemId", requestOptional.get().getItemId());
+      parameters.put("requesterId", request.getRequest().getUserId());
+      parameters.put("itemId", request.getRequest().getItemId());
+      parameters.put("requestId", requestOptional.get().getId());
       String message = "This requester already has an open request for this item";
       return failedValidation(new ValidationError(message, parameters));
     } else {
