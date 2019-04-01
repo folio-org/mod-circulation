@@ -6,12 +6,17 @@ import static org.folio.circulation.domain.Request.REQUEST_TYPE;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.policy.RequestPolicy;
 import org.folio.circulation.domain.policy.RequestPolicyRepository;
-import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ResponseWritableResult;
+import org.folio.circulation.support.Result;
+import org.folio.circulation.support.http.server.ValidationError;
 
 public class CreateRequestService {
   private final RequestRepository requestRepository;
@@ -39,9 +44,10 @@ public class CreateRequestService {
 
     return completedFuture(refuseWhenItemDoesNotExist(requestAndRelatedRecords)
       .next(CreateRequestService::refuseWhenInvalidUserAndPatronGroup)
-      .next(CreateRequestService::refuseWhenItemIsNotValid))
-      .thenComposeAsync( r-> r.after(requestPolicyRepository::lookupRequestPolicy))
-      .thenApply( r -> r.next(CreateRequestService::refuseWhenRequestCannotBeFulfilled))
+      .next(CreateRequestService::refuseWhenItemIsNotValid)
+      .next(CreateRequestService::refuseWhenUserHasAlreadyRequestedItem))
+      .thenComposeAsync(r -> r.after(requestPolicyRepository::lookupRequestPolicy))
+      .thenApply(r -> r.next(CreateRequestService::refuseWhenRequestCannotBeFulfilled))
       .thenApply(r -> r.map(CreateRequestService::setRequestQueuePosition))
       .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
       .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreation))
@@ -62,11 +68,10 @@ public class CreateRequestService {
   private static Result<RequestAndRelatedRecords> refuseWhenItemDoesNotExist(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    if(requestAndRelatedRecords.getRequest().getItem().isNotFound()) {
+    if (requestAndRelatedRecords.getRequest().getItem().isNotFound()) {
       return failedValidation("Item does not exist", "itemId",
         requestAndRelatedRecords.getRequest().getItemId());
-    }
-    else {
+    } else {
       return succeeded(requestAndRelatedRecords);
     }
   }
@@ -75,12 +80,11 @@ public class CreateRequestService {
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     RequestPolicy requestPolicy = requestAndRelatedRecords.getRequestPolicy();
-    RequestType requestType =  requestAndRelatedRecords.getRequest().getRequestType();
+    RequestType requestType = requestAndRelatedRecords.getRequest().getRequestType();
 
-    if(!requestPolicy.allowsType(requestType)) {
+    if (!requestPolicy.allowsType(requestType)) {
       return failureDisallowedForRequestType(requestType);
-    }
-    else {
+    } else {
       return succeeded(requestAndRelatedRecords);
     }
   }
@@ -92,8 +96,7 @@ public class CreateRequestService {
 
     if (!request.allowedForItem()) {
       return failureDisallowedForRequestType(request.getRequestType());
-    }
-    else {
+    } else {
       return succeeded(requestAndRelatedRecords);
     }
   }
@@ -125,9 +128,31 @@ public class CreateRequestService {
       return failedValidation(
         "A valid patron group is required. PatronGroup ID is null",
         "PatronGroupId", null);
-    }
-    else {
+    } else {
       return succeeded(requestAndRelatedRecords);
     }
+  }
+
+  public static Result<RequestAndRelatedRecords> refuseWhenUserHasAlreadyRequestedItem(RequestAndRelatedRecords request) {
+
+    Optional<Request> requestOptional = request.getRequestQueue().getRequests()
+      .stream()
+      .filter(it -> isTheSameRequester(request, it) && it.isOpen())
+      .findFirst();
+
+    if (requestOptional.isPresent()) {
+      Map<String, String> parameters = new HashMap<>();
+      parameters.put("requesterId", request.getRequest().getUserId());
+      parameters.put("itemId", request.getRequest().getItemId());
+      parameters.put("requestId", requestOptional.get().getId());
+      String message = "This requester already has an open request for this item";
+      return failedValidation(new ValidationError(message, parameters));
+    } else {
+      return Result.of(() -> request);
+    }
+  }
+
+  private static boolean isTheSameRequester(RequestAndRelatedRecords it, Request that) {
+    return Objects.equals(it.getUserId(), that.getUserId());
   }
 }
