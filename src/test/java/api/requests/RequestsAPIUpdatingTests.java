@@ -1,5 +1,6 @@
 package api.requests;
 
+import static api.support.matchers.PatronNoticeMatcher.equalsToEmailPatronNotice;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
@@ -9,6 +10,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -16,12 +18,18 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
@@ -29,6 +37,8 @@ import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.Address;
+import api.support.builders.NoticeConfigurationBuilder;
+import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
@@ -477,4 +487,51 @@ public class RequestsAPIUpdatingTests extends APITests {
       hasMessage("Pickup service point does not exist"),
       hasUUIDParameter("pickupServicePointId", badServicePointId))));
   }
-}
+
+  @Test
+  public void requestCancellationNoticeIsSentWhenPolicyDefinesCancelledRequestNoticeConfiguration()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    UUID requestCancellationTemplateId = UUID.randomUUID();
+    JsonObject requestCancellationConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(requestCancellationTemplateId)
+      .withEventType(REQUEST_CANCELLATION)
+      .create();
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with page notice")
+      .withLoanNotices(Collections.singletonList(requestCancellationConfiguration));
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId());
+
+    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+    final IndividualResource requester = usersFixture.steve();
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
+    IndividualResource createdRequest = requestsClient.create(
+      new RequestBuilder()
+        .page()
+        .withRequestDate(requestDate)
+        .forItem(temeraire)
+        .by(requester)
+        .fulfilToHoldShelf()
+        .withPickupServicePointId(exampleServicePoint.getId())
+        .withRequestExpiration(new LocalDate(2017, 7, 30))
+        .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
+
+    requestsClient.replace(createdRequest.getId(),
+      RequestBuilder.from(createdRequest).cancelled());
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronNoticesClient::getAll, Matchers.hasSize(1));
+    List<JsonObject> sentNotices = patronNoticesClient.getAll();
+    MatcherAssert.assertThat(sentNotices,
+      hasItems(
+        equalsToEmailPatronNotice(requester.getId(), requestCancellationTemplateId)));
+  }
+  }
