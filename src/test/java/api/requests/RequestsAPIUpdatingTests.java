@@ -501,7 +501,7 @@ public class RequestsAPIUpdatingTests extends APITests {
       .withEventType(REQUEST_CANCELLATION)
       .create();
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
-      .withName("Policy with page notice")
+      .withName("Policy with request cancellation notice")
       .withLoanNotices(Collections.singletonList(requestCancellationConfiguration));
     useLoanPolicyAsFallback(
       loanPoliciesFixture.canCirculateRolling().getId(),
