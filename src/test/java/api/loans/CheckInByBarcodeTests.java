@@ -426,24 +426,24 @@ public class CheckInByBarcodeTests extends APITests {
 
   @Test
   public void patronNoticeOnCheckInAfterCheckOutAndRequestToItem() throws Exception {
-    IndividualResource expectedItem = itemsFixture.basedUponSmallAngryPlanet();
-    loansFixture.checkOut(expectedItem, usersFixture.jessica());
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    loansFixture.checkOut(item, usersFixture.jessica());
 
-    UUID idRequest = UUID.randomUUID();
     DateTime requestDate = new DateTime(2019, 7, 22, 10, 22, 54, DateTimeZone.UTC);
     UUID servicePointId = servicePointsFixture.cd1().getId();
-    IndividualResource expectedRequester = usersFixture.steve();
-    JsonObject expectedPersonalData = expectedRequester.getJson().getJsonObject("personal");
+    IndividualResource requester = usersFixture.steve();
+
+    //recall request
     requestsFixture.place(new RequestBuilder()
-      .withId(idRequest)
+      .withId(UUID.randomUUID())
       .open()
       .recall()
-      .forItem(expectedItem)
-      .by(expectedRequester)
+      .forItem(item)
+      .by(requester)
       .withRequestDate(requestDate)
       .fulfilToHoldShelf()
-      .withRequestExpiration(new LocalDate(2017, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
+      .withRequestExpiration(new LocalDate(2019, 7, 30))
+      .withHoldShelfExpiration(new LocalDate(2019, 8, 31))
       .withPickupServicePointId(servicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
@@ -458,9 +458,52 @@ public class CheckInByBarcodeTests extends APITests {
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId());
 
-    DateTime checkInDate = new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC);
-    loansFixture.checkInByBarcode(expectedItem, checkInDate, servicePointId);
+    DateTime checkInDate = new DateTime(2019, 7, 25, 14, 23, 41, DateTimeZone.UTC);
+    loansFixture.checkInByBarcode(item, checkInDate, servicePointId);
 
+    checkPatronNoticeEvent(item, requester);
+  }
+
+  @Test
+  public void patronNoticeOnCheckInAfterRequestToItem() throws Exception {
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    DateTime requestDate = new DateTime(2019, 5, 5, 10, 22, 54, DateTimeZone.UTC);
+    UUID servicePointId = servicePointsFixture.cd1().getId();
+    IndividualResource requester = usersFixture.steve();
+
+    // page request
+    requestsFixture.place(new RequestBuilder()
+      .withId(UUID.randomUUID())
+      .open()
+      .page()
+      .forItem(item)
+      .by(requester)
+      .withRequestDate(requestDate)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(new LocalDate(2019, 5, 1))
+      .withHoldShelfExpiration(new LocalDate(2019, 6, 1))
+      .withPickupServicePointId(servicePointId)
+      .withTags(new RequestBuilder.Tags(asList("new", "important"))));
+
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy notice")
+      .withLoanNotices(Collections
+        .singletonList(new NoticeConfigurationBuilder()
+          .withTemplateId(UUID.randomUUID()).withEventType("Available").create()));
+
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId());
+
+    loansFixture.checkInByBarcode(item,
+      new DateTime(2019, 5, 10, 14, 23, 41, DateTimeZone.UTC),
+      servicePointId);
+
+    checkPatronNoticeEvent(item, requester);
+  }
+
+  private void checkPatronNoticeEvent(IndividualResource item, IndividualResource requester) throws Exception {
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(patronNoticesClient::getAll, Matchers.hasSize(1));
@@ -469,22 +512,23 @@ public class CheckInByBarcodeTests extends APITests {
     JsonObject notice = sentNotices.get(0);
 
     assertThat("sent notice should have recipient id",
-      notice.getString("recipientId"), UUIDMatcher.is(expectedRequester.getId()));
+      notice.getString("recipientId"), UUIDMatcher.is(requester.getId()));
 
     JsonObject noticeContext = notice.getJsonObject("context");
     MatcherAssert.assertThat("sent notice should have context property",
       noticeContext, notNullValue());
 
     JsonObject actualPatron = noticeContext.getJsonObject("patron");
+    JsonObject personalData = requester.getJson().getJsonObject("personal");
     assertThat("sent notice should have user barcode",
-      actualPatron.getString("barcode"), is(expectedRequester.getJson().getString("barcode")));
+      actualPatron.getString("barcode"), is(requester.getJson().getString("barcode")));
     assertThat("sent notice should have firstName",
-      actualPatron.getString("firstName"), is(expectedPersonalData.getString("firstName")));
+      actualPatron.getString("firstName"), is(personalData.getString("firstName")));
     assertThat("sent notice should have lastName",
-      actualPatron.getString("lastName"), is(expectedPersonalData.getString("lastName")));
+      actualPatron.getString("lastName"), is(personalData.getString("lastName")));
 
     JsonObject actualItem = noticeContext.getJsonObject("item");
     assertThat("sent notice should have item barcode",
-      actualItem.getString("barcode"), is(expectedItem.getJson().getString("barcode")));
+      actualItem.getString("barcode"), is(item.getJson().getString("barcode")));
   }
 }
