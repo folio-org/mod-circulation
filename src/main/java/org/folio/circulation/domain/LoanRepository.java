@@ -48,14 +48,14 @@ public class LoanRepository {
     RequestQueue requestQueue = loanAndRelatedRecords.getRequestQueue();
     Collection<Request> requests = requestQueue.getRequests();
 
-    if(requests.size() > 0) {
+    if(!requests.isEmpty()) {
       /* 
         This gets the top request, since UpdateRequestQueue.java#L106 updates the request queue prior to loan creation.
         If that sequesnse changes, the following will need to be updated to requests.stream().skip(1).findFirst().orElse(null)
         and the condition above could do a > 1 comparison. (CIRC-277)
       */
       Request nextRequestInQueue = requests.stream().findFirst().orElse(null);
-      if(nextRequestInQueue.getRequestType() == RequestType.RECALL) {
+      if(nextRequestInQueue != null && nextRequestInQueue.getRequestType() == RequestType.RECALL) {
         LoanPolicy loanPolicy = loanAndRelatedRecords.getLoanPolicy();
         Result<LoanAndRelatedRecords> httpResult = loanPolicy.recall(loanAndRelatedRecords.getLoan())
           .map(loanAndRelatedRecords::withLoan);
