@@ -15,6 +15,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlHelper;
@@ -42,38 +43,44 @@ public class LoanRepository {
   }
 
   public CompletableFuture<HttpResult<LoanAndRelatedRecords>> createLoan(
+
     LoanAndRelatedRecords loanAndRelatedRecords) {
+    LoanAndRelatedRecords recalledLoanandRelatedRecords = null;
+    RequestQueue requestQueue = loanAndRelatedRecords.getRequestQueue();
+    Collection<Request> requests = requestQueue.getRequests();
+
+    if(requests.size() > 0) {
+      /* 
+        This gets the top request, since UpdateRequestQueue.java#L106 updates the request queue prior to loan creation.
+        If that sequesnse changes, the following will need to be updated to requests.stream().skip(1).findFirst().orElse(null)
+        and the condition above could do a > 1 comparison. (CIRC-277)
+      */
+      Request nextRequestInQueue = requests.stream().findFirst().orElse(null);
+      if(nextRequestInQueue.getRequestType() == RequestType.RECALL) {
+        LoanPolicy loanPolicy = loanAndRelatedRecords.getLoanPolicy();
+        HttpResult<LoanAndRelatedRecords> httpResult = loanPolicy.recall(loanAndRelatedRecords.getLoan())
+          .map(loanAndRelatedRecords::withLoan);
+        recalledLoanandRelatedRecords = httpResult.value();
+      } 
+    }
+
+    LoanAndRelatedRecords newLoanAndRelatedRecords = recalledLoanandRelatedRecords == null ? loanAndRelatedRecords : recalledLoanandRelatedRecords;
 
     JsonObject storageLoan = mapToStorageRepresentation(
-      loanAndRelatedRecords.getLoan(), loanAndRelatedRecords.getLoan().getItem());
+      newLoanAndRelatedRecords.getLoan(), newLoanAndRelatedRecords.getLoan().getItem());
 
-    if(loanAndRelatedRecords.getLoanPolicy() != null) {
-    
-      storageLoan.put("loanPolicyId", loanAndRelatedRecords.getLoanPolicy().getId());
-    
+    if(newLoanAndRelatedRecords.getLoanPolicy() != null) {
+      storageLoan.put("loanPolicyId", newLoanAndRelatedRecords.getLoanPolicy().getId());
     }
 
-    User user = loanAndRelatedRecords.getLoan().getUser();
-    User proxy = loanAndRelatedRecords.getLoan().getProxy();
-    
-    RequestQueue requestQueue = loanAndRelatedRecords.getRequestQueue();
-
-    if(requestQueue.getRequests().size() > 0) {
-      
-      Request request = requestQueue.getHighestPriorityFulfillableRequest();
-
-      if(request.getPosition() == 1) {
-        System.out.println("\n\n\n\n RquestType = " + request.getRequestType().getValue());
-      }
-    } else {
-      System.out.println("NO REQUESTS!!!!!");
-    }
-    
+    User user = newLoanAndRelatedRecords.getLoan().getUser();
+    User proxy = newLoanAndRelatedRecords.getLoan().getProxy();
+        
     return loansStorageClient.post(storageLoan).thenApply(response -> {
       if (response.getStatusCode() == 201) {
         return succeeded(
-          loanAndRelatedRecords.withLoan(Loan.from(response.getJson(),
-            loanAndRelatedRecords.getLoan().getItem(), user, proxy)));
+          newLoanAndRelatedRecords.withLoan(Loan.from(response.getJson(),
+          newLoanAndRelatedRecords.getLoan().getItem(), user, proxy)));
       } else {
         return failed(new ForwardOnFailure(response));
       }
