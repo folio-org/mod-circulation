@@ -71,11 +71,11 @@ public class RequestCollectionResource extends CollectionResource {
 
     final PatronNoticePolicyRepository noticePolicyRepository = new PatronNoticePolicyRepository(clients);
     final PatronNoticeService patronNoticeService = new PatronNoticeService(noticePolicyRepository, clients);
-    final RequestNoticeAdapter requestNoticeAdapter = new RequestNoticeAdapter(patronNoticeService);
+    final RequestNoticeSender requestNoticeSender = new RequestNoticeSender(patronNoticeService);
 
     requestFromRepresentationService.getRequestFrom(representation)
       .thenComposeAsync(r -> r.after(createRequestService::createRequest))
-      .thenApply(r -> r.next(requestNoticeAdapter::sendNoticeOnRequestCreated))
+      .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestCreated))
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
       .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
       .thenApply(CreatedJsonResponseResult::from)
@@ -120,13 +120,13 @@ public class RequestCollectionResource extends CollectionResource {
 
     final PatronNoticePolicyRepository noticePolicyRepository = new PatronNoticePolicyRepository(clients);
     final PatronNoticeService patronNoticeService = new PatronNoticeService(noticePolicyRepository, clients);
-    final RequestNoticeAdapter requestNoticeAdapter = new RequestNoticeAdapter(patronNoticeService);
+    final RequestNoticeSender requestNoticeSender = new RequestNoticeSender(patronNoticeService);
 
     requestFromRepresentationService.getRequestFrom(representation)
       .thenComposeAsync(r -> r.afterWhen(requestRepository::exists,
         updateRequestService::replaceRequest,
         createRequestService::createRequest))
-      .thenApply(r -> r.next(requestNoticeAdapter::sendNoticeOnRequestUpdated))
+      .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestUpdated))
       .thenApply(NoContentResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
   }

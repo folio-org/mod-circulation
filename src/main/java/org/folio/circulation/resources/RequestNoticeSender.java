@@ -21,7 +21,7 @@ import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.support.Result;
 
-public class RequestNoticeAdapter {
+public class RequestNoticeSender {
 
   private static Map<RequestType, NoticeEventType> requestTypeToEventMap;
 
@@ -35,7 +35,7 @@ public class RequestNoticeAdapter {
 
   private final PatronNoticeService patronNoticeService;
 
-  public RequestNoticeAdapter(PatronNoticeService patronNoticeService) {
+  public RequestNoticeSender(PatronNoticeService patronNoticeService) {
     this.patronNoticeService = patronNoticeService;
   }
 
