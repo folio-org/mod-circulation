@@ -197,9 +197,12 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return requester;
   }
 
-  public String getRequesterBarcode(){
-    JsonObject userData = asJson().getJsonObject("requester", new JsonObject());
-    return userData.getString("barcode", StringUtils.EMPTY);
+  public JsonObject getRequesterFromRepresentation() {
+    return representation.getJsonObject("requester");
+  }
+
+  public String getRequesterBarcode() {
+    return getRequesterFromRepresentation().getString("barcode", StringUtils.EMPTY);
   }
 
   public User getProxy() {

@@ -155,7 +155,7 @@ class CheckInProcessAdapter {
 
   private Function<User, Result<User>> sendPatronNotice(Item item) {
     return user -> {
-      if (AWAITING_PICKUP == item.getStatus()) {
+      if (item.isAwaitingPickup()) {
         PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
           .withItem(item)
           .withUser(user)
