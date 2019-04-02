@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.support.CreatedJsonHttpResult;
+import org.folio.circulation.support.CreatedJsonResponseResult;
 import org.folio.circulation.support.http.server.ClientErrorResponse;
 import org.folio.circulation.support.http.server.SuccessResponse;
 import org.folio.circulation.support.http.server.ValidationError;
@@ -131,7 +131,7 @@ public class FakeStorageModule extends AbstractVerticle {
     System.out.println(
       String.format("Created %s resource: %s", recordTypeName, id));
 
-    new CreatedJsonHttpResult(body, null)
+    new CreatedJsonResponseResult(body, null)
       .writeTo(routingContext.response());
   }
 

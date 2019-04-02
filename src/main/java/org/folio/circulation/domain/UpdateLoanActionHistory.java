@@ -1,8 +1,8 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.HttpResult.failed;
-import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
 import java.util.List;
@@ -11,7 +11,7 @@ import java.util.concurrent.CompletableFuture;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.http.client.Response;
@@ -29,12 +29,12 @@ public class UpdateLoanActionHistory {
     loansStorageClient = clients.loansStorage();
   }
 
-  private static <T> CompletableFuture<HttpResult<T>> skip(T previousResult) {
+  private static <T> CompletableFuture<Result<T>> skip(T previousResult) {
     return completedFuture(succeeded(previousResult));
   }
 
   //Updates the single open loan for the item related to a request
-  CompletableFuture<HttpResult<RequestAndRelatedRecords>> onRequestCreation(
+  CompletableFuture<Result<RequestAndRelatedRecords>> onRequestCreation(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     String action = requestAndRelatedRecords.getRequest().actionOnCreation();
@@ -59,7 +59,7 @@ public class UpdateLoanActionHistory {
         itemStatus, itemId, getLoansResponse));
   }
 
-  private CompletableFuture<HttpResult<RequestAndRelatedRecords>> updateLatestLoan(
+  private CompletableFuture<Result<RequestAndRelatedRecords>> updateLatestLoan(
     RequestAndRelatedRecords requestAndRelatedRecords,
     String action,
     String itemStatus,
@@ -83,7 +83,7 @@ public class UpdateLoanActionHistory {
         changedLoan.put("itemStatus", itemStatus);
 
         return this.loansStorageClient.put(changedLoan.getString("id"), changedLoan)
-          .thenApply(putLoanResponse -> HttpResult.succeeded(requestAndRelatedRecords));
+          .thenApply(putLoanResponse -> succeeded(requestAndRelatedRecords));
       }
       else {
         String moreThanOneOpenLoanError = String.format(

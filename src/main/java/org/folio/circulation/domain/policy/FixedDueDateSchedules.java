@@ -7,7 +7,7 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
@@ -59,14 +59,14 @@ public class FixedDueDateSchedules {
     return schedules.isEmpty();
   }
 
-  HttpResult<DateTime> truncateDueDate(
+  Result<DateTime> truncateDueDate(
     DateTime dueDate,
     DateTime loanDate,
     Supplier<ValidationError> noApplicableScheduleError) {
 
     return findDueDateFor(loanDate)
       .map(limit -> earliest(dueDate, limit))
-      .map(HttpResult::succeeded)
+      .map(Result::succeeded)
       .orElseGet(() -> failedValidation(noApplicableScheduleError.get()));
   }
 

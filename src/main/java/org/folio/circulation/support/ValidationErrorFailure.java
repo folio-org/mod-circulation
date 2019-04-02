@@ -1,6 +1,6 @@
 package org.folio.circulation.support;
 
-import static org.folio.circulation.support.HttpResult.failed;
+import static org.folio.circulation.support.Result.failed;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
@@ -21,7 +21,7 @@ public class ValidationErrorFailure implements HttpFailure {
 
   private final Collection<ValidationError> errors = new ArrayList<>();
 
-  public static <T> WritableHttpResult<T> failedValidation(
+  public static <T> ResponseWritableResult<T> failedValidation(
     String reason,
     String key,
     String value) {
@@ -29,11 +29,11 @@ public class ValidationErrorFailure implements HttpFailure {
     return failedValidation(new ValidationError(reason, key, value));
   }
 
-  public static <T> WritableHttpResult<T> failedValidation(ValidationError error) {
+  public static <T> ResponseWritableResult<T> failedValidation(ValidationError error) {
     return failed(singleValidationError(error));
   }
 
-  public static <T> WritableHttpResult<T> failedValidation(
+  public static <T> ResponseWritableResult<T> failedValidation(
     Collection<ValidationError> errors) {
 
     return failed(new ValidationErrorFailure(errors));
@@ -66,7 +66,7 @@ public class ValidationErrorFailure implements HttpFailure {
 
     log.info("Writing validation error: '{}'", jsonErrors);
 
-    new JsonHttpResult(422, jsonErrors, null).writeTo(response);
+    new JsonResponseResult(422, jsonErrors, null).writeTo(response);
   }
 
   private JsonObject asJson() {

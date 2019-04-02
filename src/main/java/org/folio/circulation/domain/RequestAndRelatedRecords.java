@@ -55,7 +55,7 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
     return request;
   }
 
-  RequestQueue getRequestQueue() {
+  public RequestQueue getRequestQueue() {
     return requestQueue;
   }
 

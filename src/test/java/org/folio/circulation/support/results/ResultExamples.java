@@ -1,25 +1,25 @@
 package org.folio.circulation.support.results;
 
-import static org.folio.circulation.support.HttpResult.failed;
+import static org.folio.circulation.support.Result.failed;
 
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
-import org.folio.circulation.support.WritableHttpResult;
+import org.folio.circulation.support.ResponseWritableResult;
 
 class ResultExamples {
-  static WritableHttpResult<Integer> alreadyFailed() {
+  static ResponseWritableResult<Integer> alreadyFailed() {
     return failed(exampleFailure("Already failed"));
   }
 
-  static WritableHttpResult<Boolean> conditionFailed() {
+  static ResponseWritableResult<Boolean> conditionFailed() {
     return failed(exampleFailure("Condition failed"));
   }
 
-  static <T> WritableHttpResult<T> actionFailed() {
+  static <T> ResponseWritableResult<T> actionFailed() {
     return failed(exampleFailure("Action failed"));
   }
 
-  static HttpResult<Integer> throwOnExecution() {
+  static Result<Integer> throwOnExecution() {
     throw shouldNotExecute();
   }
 

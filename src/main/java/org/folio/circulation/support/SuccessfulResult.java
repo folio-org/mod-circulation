@@ -1,9 +1,9 @@
 package org.folio.circulation.support;
 
-public class SuccessfulHttpResult<T> implements HttpResult<T> {
+public class SuccessfulResult<T> implements Result<T> {
   private final T value;
 
-  SuccessfulHttpResult(T value) {
+  SuccessfulResult(T value) {
     this.value = value;
   }
 

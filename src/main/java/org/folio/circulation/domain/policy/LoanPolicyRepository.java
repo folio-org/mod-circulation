@@ -1,7 +1,8 @@
 package org.folio.circulation.domain.policy;
 
 import static org.folio.circulation.support.CqlHelper.multipleRecordsCqlQuery;
-import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -14,7 +15,7 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.ServerErrorFailure;
 
@@ -29,7 +30,7 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
     this.fixedDueDateSchedulesStorageClient = clients.fixedDueDateSchedules();
   }
 
-  public CompletableFuture<HttpResult<LoanAndRelatedRecords>> lookupLoanPolicy(
+  public CompletableFuture<Result<LoanAndRelatedRecords>> lookupLoanPolicy(
     LoanAndRelatedRecords relatedRecords) {
 
     return lookupPolicy(relatedRecords.getLoan())
@@ -37,12 +38,12 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
   }
 
   @Override
-  public CompletableFuture<HttpResult<LoanPolicy>> lookupPolicy(Loan loan) {
+  public CompletableFuture<Result<LoanPolicy>> lookupPolicy(Loan loan) {
     return super.lookupPolicy(loan)
       .thenComposeAsync(r -> r.after(this::lookupSchedules));
   }
 
-  private CompletableFuture<HttpResult<LoanPolicy>> lookupSchedules(LoanPolicy loanPolicy) {
+  private CompletableFuture<Result<LoanPolicy>> lookupSchedules(LoanPolicy loanPolicy) {
     List<String> scheduleIds = new ArrayList<>();
 
     final String loanScheduleId = loanPolicy.getLoansFixedDueDateScheduleId();
@@ -74,7 +75,7 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
       }));
   }
 
-  private CompletableFuture<HttpResult<Map<String, FixedDueDateSchedules>>> getSchedules(
+  private CompletableFuture<Result<Map<String, FixedDueDateSchedules>>> getSchedules(
     Collection<String> schedulesIds) {
 
     String schedulesQuery = multipleRecordsCqlQuery(schedulesIds);
@@ -83,7 +84,7 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
       schedulesIds.size(), 0)
       .thenApply(schedulesResponse -> {
         if (schedulesResponse.getStatusCode() != 200) {
-          return HttpResult.failed(new ServerErrorFailure(
+          return failed(new ServerErrorFailure(
             String.format("Fixed due date schedules request (%s) failed %s: %s",
               schedulesQuery, schedulesResponse.getStatusCode(),
               schedulesResponse.getBody())));
@@ -105,8 +106,8 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
   }
 
   @Override
-  protected HttpResult<LoanPolicy> toPolicy(JsonObject representation) {
-    return HttpResult.succeeded(new LoanPolicy(representation,
+  protected Result<LoanPolicy> toPolicy(JsonObject representation) {
+    return succeeded(new LoanPolicy(representation,
       new NoFixedDueDateSchedules(), new NoFixedDueDateSchedules()));
   }
 

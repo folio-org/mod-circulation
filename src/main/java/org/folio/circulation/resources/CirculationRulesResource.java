@@ -9,8 +9,8 @@ import org.folio.circulation.rules.CirculationRulesException;
 import org.folio.circulation.rules.Text2Drools;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.JsonHttpResult;
-import org.folio.circulation.support.OkJsonHttpResult;
+import org.folio.circulation.support.JsonResponseResult;
+import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.http.server.ForwardResponse;
 import org.folio.circulation.support.http.server.SuccessResponse;
 import org.folio.circulation.support.http.server.WebContext;
@@ -74,7 +74,7 @@ public class CirculationRulesResource extends Resource {
         }
         JsonObject circulationRules = new JsonObject(response.getBody());
 
-        new OkJsonHttpResult(circulationRules)
+        new OkJsonResponseResult(circulationRules)
           .writeTo(routingContext.response());
       }
       catch (Exception e) {
@@ -127,12 +127,12 @@ public class CirculationRulesResource extends Resource {
     body.put("message", e.getMessage());
     body.put("line", e.getLine());
     body.put("column", e.getColumn());
-    new JsonHttpResult(422, body, null).writeTo(response);
+    new JsonResponseResult(422, body, null).writeTo(response);
   }
 
   private static void circulationRulesError(HttpServerResponse response, DecodeException e) {
     JsonObject body = new JsonObject();
     body.put("message", e.getMessage());  // already contains line and column number
-    new JsonHttpResult(422, body, null).writeTo(response);
+    new JsonResponseResult(422, body, null).writeTo(response);
   }
 }

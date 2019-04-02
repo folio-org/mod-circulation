@@ -1,13 +1,13 @@
 package org.folio.circulation.domain.policy;
 
-import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.function.Supplier;
 
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 
@@ -46,7 +46,7 @@ public class Period {
     return new Period(duration, interval);
   }
 
-  HttpResult<DateTime> addTo(
+  Result<DateTime> addTo(
     DateTime from,
     Supplier<ValidationError> onUnrecognisedPeriod,
     Function<String, ValidationError> onUnrecognisedInterval,

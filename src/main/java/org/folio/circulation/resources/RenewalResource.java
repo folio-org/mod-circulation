@@ -16,7 +16,7 @@ import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.domain.representations.LoanResponse;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.WebContext;
@@ -63,7 +63,7 @@ public abstract class RenewalResource extends Resource {
 
     //TODO: Validation check for same user should be in the domain service
 
-    CompletableFuture<HttpResult<Loan>> loan = findLoan(routingContext.getBodyAsJson(),
+    CompletableFuture<Result<Loan>> loan = findLoan(routingContext.getBodyAsJson(),
       loanRepository,
       itemRepository,
       userRepository,
@@ -80,7 +80,7 @@ public abstract class RenewalResource extends Resource {
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
-  protected abstract CompletableFuture<HttpResult<Loan>> findLoan(
+  protected abstract CompletableFuture<Result<Loan>> findLoan(
     JsonObject request,
     LoanRepository loanRepository,
     ItemRepository itemRepository,

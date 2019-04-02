@@ -2,8 +2,8 @@ package org.folio.circulation.domain.validation;
 
 import static org.folio.circulation.domain.RequestStatus.OPEN_NOT_YET_FILLED;
 import static org.folio.circulation.domain.RequestType.RECALL;
-import static org.folio.circulation.support.HttpResult.of;
-import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.util.Comparator;
@@ -14,7 +14,7 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestQueueRepository;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 
 public class BlockRenewalValidator {
   private final RequestQueueRepository requestQueueRepository;
@@ -23,12 +23,12 @@ public class BlockRenewalValidator {
     this.requestQueueRepository = requestQueueRepository;
   }
 
-  public CompletableFuture<HttpResult<Item>> refuseWhenFirstRequestIsRecall(Item item) {
+  public CompletableFuture<Result<Item>> refuseWhenFirstRequestIsRecall(Item item) {
     return requestQueueRepository.get(item.getItemId())
       .thenApply(result -> result.combineToResult(of(() -> item), this::checkAndCombine));
   }
 
-  private HttpResult<Item> checkAndCombine(RequestQueue requestQueue, Item item) {
+  private Result<Item> checkAndCombine(RequestQueue requestQueue, Item item) {
     Optional<Request> request = requestQueue.getRequests()
       .stream()
       .min(Comparator.comparing(Request::getPosition));

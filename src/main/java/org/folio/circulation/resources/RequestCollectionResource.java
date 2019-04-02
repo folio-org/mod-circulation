@@ -23,10 +23,10 @@ import org.folio.circulation.domain.validation.ClosedRequestValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CreatedJsonHttpResult;
+import org.folio.circulation.support.CreatedJsonResponseResult;
 import org.folio.circulation.support.ItemRepository;
-import org.folio.circulation.support.NoContentHttpResult;
-import org.folio.circulation.support.OkJsonHttpResult;
+import org.folio.circulation.support.NoContentResult;
+import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;
@@ -45,89 +45,77 @@ public class RequestCollectionResource extends CollectionResource {
 
     final Clients clients = Clients.create(context, client);
 
-    final ItemRepository itemRepository = new ItemRepository(clients, true, false);
-    final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
-    final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
-    final RequestRepository requestRepository = RequestRepository.using(clients);
     final UserRepository userRepository = new UserRepository(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
-    final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
-    final RequestPolicyRepository requestPolicyRepository = new RequestPolicyRepository(clients);
-    final UpdateItem updateItem = new UpdateItem(clients);
-    final UpdateLoanActionHistory updateLoanActionHistory = new UpdateLoanActionHistory(clients);
-    final UpdateLoan updateLoan = new UpdateLoan(clients, loanRepository, loanPolicyRepository);
-    final ServicePointPickupLocationValidator servicePointPickupLocationValidator
-        = new ServicePointPickupLocationValidator();
-
-    final ProxyRelationshipValidator proxyRelationshipValidator =
-      createProxyRelationshipValidator(representation, clients);
 
     final CreateRequestService createRequestService = new CreateRequestService(
-      requestRepository, updateItem, updateLoanActionHistory, updateLoan, requestPolicyRepository);
+      RequestRepository.using(clients),
+      new UpdateItem(clients),
+      new UpdateLoanActionHistory(clients),
+      new UpdateLoan(clients, loanRepository, new LoanPolicyRepository(clients)),
+      new RequestPolicyRepository(clients)
+    );
 
-    final RequestRepresentation requestRepresentation = new RequestRepresentation();
-
-    final RequestFromRepresentationService requestFromRepresentationService
-      = new RequestFromRepresentationService(itemRepository, requestQueueRepository,
-          userRepository, loanRepository, servicePointRepository,
-          proxyRelationshipValidator, servicePointPickupLocationValidator);
+    final RequestFromRepresentationService requestFromRepresentationService =
+      new RequestFromRepresentationService(
+        new ItemRepository(clients, true, false),
+        RequestQueueRepository.using(clients),
+        userRepository,
+        loanRepository,
+        new ServicePointRepository(clients),
+        createProxyRelationshipValidator(representation, clients),
+        new ServicePointPickupLocationValidator()
+      );
 
     requestFromRepresentationService.getRequestFrom(representation)
       .thenComposeAsync(r -> r.after(createRequestService::createRequest))
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
-      .thenApply(r -> r.map(requestRepresentation::extendedRepresentation))
-      .thenApply(CreatedJsonHttpResult::from)
+      .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
+      .thenApply(CreatedJsonResponseResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
   void replace(RoutingContext routingContext) {
-    final WebContext context = new WebContext(routingContext);
 
     JsonObject representation = routingContext.getBodyAsJson();
+    write(representation, "id", getRequestId(routingContext));
 
+    final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
 
-    final ItemRepository itemRepository = new ItemRepository(clients, false, false);
-    final UserRepository userRepository = new UserRepository(clients);
     final RequestRepository requestRepository = RequestRepository.using(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
-    final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
-    final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
-    final RequestPolicyRepository requestPolicyRepository =  new RequestPolicyRepository(clients);
-    final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
-    final UpdateRequestQueue updateRequestQueue = UpdateRequestQueue.using(clients);
-    final UpdateItem updateItem = new UpdateItem(clients);
-    final UpdateLoan updateLoan = new UpdateLoan(clients, loanRepository, loanPolicyRepository);
-    final UpdateLoanActionHistory updateLoanActionHistory = new UpdateLoanActionHistory(clients);
-    final ServicePointPickupLocationValidator servicePointPickupLocationValidator
-        = new ServicePointPickupLocationValidator();
-
-    final ProxyRelationshipValidator proxyRelationshipValidator =
-      createProxyRelationshipValidator(representation, clients);
-
-    final ClosedRequestValidator closedRequestValidator = new ClosedRequestValidator(
-      RequestRepository.using(clients));
 
     final CreateRequestService createRequestService = new CreateRequestService(
-      requestRepository, updateItem, updateLoanActionHistory, updateLoan, requestPolicyRepository);
-
+      requestRepository,
+      new UpdateItem(clients),
+      new UpdateLoanActionHistory(clients),
+      new UpdateLoan(clients, loanRepository, new LoanPolicyRepository(clients)),
+      new RequestPolicyRepository(clients)
+    );
 
     final UpdateRequestService updateRequestService = new UpdateRequestService(
-      requestRepository, updateRequestQueue, closedRequestValidator);
+      requestRepository,
+      UpdateRequestQueue.using(clients),
+      new ClosedRequestValidator(RequestRepository.using(clients))
+    );
 
-    String id = routingContext.request().getParam("id");
-    write(representation, "id", id);
-
-    final RequestFromRepresentationService requestFromRepresentationService
-      = new RequestFromRepresentationService(itemRepository,
-        requestQueueRepository, userRepository, loanRepository, servicePointRepository,
-          proxyRelationshipValidator, servicePointPickupLocationValidator);
+    final RequestFromRepresentationService requestFromRepresentationService =
+      new RequestFromRepresentationService(
+        new ItemRepository(clients, false, false),
+        RequestQueueRepository.using(clients),
+        new UserRepository(clients),
+        loanRepository,
+        new ServicePointRepository(clients),
+        createProxyRelationshipValidator(representation, clients),
+        new ServicePointPickupLocationValidator()
+      );
 
     requestFromRepresentationService.getRequestFrom(representation)
       .thenComposeAsync(r -> r.afterWhen(requestRepository::exists,
         updateRequestService::replaceRequest,
         createRequestService::createRequest))
-      .thenApply(NoContentHttpResult::from)
+      .thenApply(NoContentResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
   }
 
@@ -136,13 +124,12 @@ public class RequestCollectionResource extends CollectionResource {
     Clients clients = Clients.create(context, client);
 
     final RequestRepository requestRepository = RequestRepository.using(clients);
-    final RequestRepresentation requestRepresentation = new RequestRepresentation();
 
-    String id = routingContext.request().getParam("id");
+    String id = getRequestId(routingContext);
 
     requestRepository.getById(id)
-      .thenApply(r -> r.map(requestRepresentation::extendedRepresentation))
-      .thenApply(OkJsonHttpResult::from)
+      .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
+      .thenApply(OkJsonResponseResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
@@ -150,16 +137,20 @@ public class RequestCollectionResource extends CollectionResource {
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context, client);
 
-    String id = routingContext.request().getParam("id");
+    String id = getRequestId(routingContext);
 
     final RequestRepository requestRepository = RequestRepository.using(clients);
+
     final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(
-      RequestQueueRepository.using(clients), requestRepository, new ServicePointRepository(clients));
+      RequestQueueRepository.using(clients),
+      requestRepository,
+      new ServicePointRepository(clients)
+    );
 
     requestRepository.getById(id)
       .thenComposeAsync(r -> r.after(requestRepository::delete))
       .thenComposeAsync(r -> r.after(updateRequestQueue::onDeletion))
-      .thenApply(NoContentHttpResult::from)
+      .thenApply(NoContentResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
   }
 
@@ -173,7 +164,7 @@ public class RequestCollectionResource extends CollectionResource {
     requestRepository.findBy(routingContext.request().query())
       .thenApply(r -> r.map(requests ->
         requests.asJson(requestRepresentation::extendedRepresentation, "requests")))
-      .thenApply(OkJsonHttpResult::from)
+      .thenApply(OkJsonResponseResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
@@ -182,7 +173,7 @@ public class RequestCollectionResource extends CollectionResource {
     Clients clients = Clients.create(context, client);
 
     clients.requestsStorage().delete()
-      .thenApply(NoContentHttpResult::from)
+      .thenApply(NoContentResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
   }
 
@@ -193,5 +184,9 @@ public class RequestCollectionResource extends CollectionResource {
     return new ProxyRelationshipValidator(clients, () ->
       singleValidationError("proxyUserId is not valid",
         PROXY_USER_ID, representation.getString(PROXY_USER_ID)));
+  }
+
+  private String getRequestId(RoutingContext routingContext) {
+    return routingContext.request().getParam("id");
   }
 }

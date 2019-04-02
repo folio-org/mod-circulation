@@ -1,8 +1,8 @@
 package org.folio.circulation.domain.policy;
 
 import static java.lang.String.format;
-import static org.folio.circulation.support.HttpResult.failed;
-import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedIntegerProperty;
@@ -20,7 +20,7 @@ import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.ClockManager;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
@@ -32,6 +32,7 @@ public class LoanPolicy {
 
   private static final String LOANS_POLICY_KEY = "loansPolicy";
   private static final String PERIOD_KEY = "period";
+  private static final String RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE = "renewal would not change the due date";
 
   private final JsonObject representation;
   private final FixedDueDateSchedules fixedDueDateSchedules;
@@ -58,11 +59,11 @@ public class LoanPolicy {
   }
 
   //TODO: make this have similar signature to renew
-  public HttpResult<DateTime> calculateInitialDueDate(Loan loan) {
+  public Result<DateTime> calculateInitialDueDate(Loan loan) {
     return determineStrategy(false, null).calculateDueDate(loan);
   }
 
-  public HttpResult<Loan> renew(Loan loan, DateTime systemDate) {
+  public Result<Loan> renew(Loan loan, DateTime systemDate) {
     //TODO: Create HttpResult wrapper that traps exceptions
     try {
       if (isNotLoanable()) {
@@ -72,7 +73,7 @@ public class LoanPolicy {
         return failedValidation(errorForPolicy("loan is not renewable"));
       }
 
-      final HttpResult<DateTime> proposedDueDateResult =
+      final Result<DateTime> proposedDueDateResult =
         determineStrategy(true, systemDate).calculateDueDate(loan);
 
       List<ValidationError> errors = new ArrayList<>();
@@ -104,13 +105,13 @@ public class LoanPolicy {
     }
   }
 
-  public HttpResult<Loan> overrideRenewal(Loan loan, DateTime systemDate,
-                                          DateTime overrideDueDate, String comment) {
+  public Result<Loan> overrideRenewal(Loan loan, DateTime systemDate,
+                                      DateTime overrideDueDate, String comment) {
     try {
       if (isNotLoanable() || isNotRenewable()) {
         return overrideRenewalForDueDate(loan, overrideDueDate, comment);
       }
-      final HttpResult<DateTime> proposedDueDateResult =
+      final Result<DateTime> proposedDueDateResult =
         determineStrategy(true, systemDate).calculateDueDate(loan);
 
       final JsonObject loansPolicy = getLoansPolicy();
@@ -121,13 +122,12 @@ public class LoanPolicy {
       
       if (proposedDueDateResult.failed() && isRolling(loansPolicy)) {
         DueDateStrategy dueDateStrategy = getRollingRenewalOverrideDueDateStrategy(systemDate);
-        return dueDateStrategy.calculateDueDate(loan)
-          .map(dueDate -> loan.overrideRenewal(dueDate, getId(), comment));
+        return processRenewal(dueDateStrategy.calculateDueDate(loan), loan, comment);
       }
 
       if (proposedDueDateResult.succeeded() &&
         reachedNumberOfRenewalsLimit(loan) && !unlimitedRenewals()) {
-        return proposedDueDateResult.map(dueDate -> loan.overrideRenewal(dueDate, getId(), comment));
+        return processRenewal(proposedDueDateResult, loan, comment);
       }
 
       return failedValidation(errorForNotMatchingOverrideCases());
@@ -137,7 +137,21 @@ public class LoanPolicy {
     }
   }
 
-  private HttpResult<Loan> overrideRenewalForDueDate(Loan loan, DateTime overrideDueDate, String comment) {
+  private Result<Loan> processRenewal(Result<DateTime> calculatedDueDate, Loan loan, String comment) {
+    return calculatedDueDate
+      .next(dueDate -> errorWhenEarlierOrSameDueDate(loan, dueDate))
+      .map(dueDate -> loan.overrideRenewal(dueDate, getId(), comment));
+  }
+
+  private Result<DateTime> errorWhenEarlierOrSameDueDate(Loan loan, DateTime proposedDueDate) {
+    if (isSameOrBefore(loan, proposedDueDate)) {
+      return failedValidation(errorForPolicy(
+        RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE));
+    }
+    return Result.succeeded(proposedDueDate);
+  }
+
+  private Result<Loan> overrideRenewalForDueDate(Loan loan, DateTime overrideDueDate, String comment) {
     if (overrideDueDate == null) {
       return failedValidation(errorForDueDate());
     }
@@ -447,18 +461,18 @@ public class LoanPolicy {
     }
   }
 
-  public HttpResult<Loan> recall(Loan loan) {
+  public Result<Loan> recall(Loan loan) {
     final JsonObject recalls = representation
         .getJsonObject("requestManagement", new JsonObject())
         .getJsonObject("recalls", new JsonObject());
 
-    final HttpResult<DateTime> minimumDueDateResult =
+    final Result<DateTime> minimumDueDateResult =
         getDueDate("minimumGuaranteedLoanPeriod", recalls,
             loan.getLoanDate(), null);
 
     final DateTime systemDate = ClockManager.getClockManager().getDateTime();
 
-    final HttpResult<DateTime> recallDueDateResult =
+    final Result<DateTime> recallDueDateResult =
         getDueDate("recallReturnInterval", recalls, systemDate, systemDate);
 
     final List<ValidationError> errors = new ArrayList<>();
@@ -490,11 +504,13 @@ public class LoanPolicy {
     return loan;
   }
 
-  private HttpResult<DateTime> getDueDate(String key,
-      JsonObject representation,
-      DateTime initialDateTime,
-      DateTime defaultDateTime) {
-    final HttpResult<DateTime> result;
+  private Result<DateTime> getDueDate(
+    String key,
+    JsonObject representation,
+    DateTime initialDateTime,
+    DateTime defaultDateTime) {
+
+    final Result<DateTime> result;
 
     if (representation.containsKey(key)) {
       result = getPeriod(representation, key).addTo(initialDateTime,
@@ -508,7 +524,7 @@ public class LoanPolicy {
     return result;
   }
 
-  private List<ValidationError> combineValidationErrors(HttpResult<?> result) {
+  private List<ValidationError> combineValidationErrors(Result<?> result) {
     if(result.failed() && result.cause() instanceof ValidationErrorFailure) {
       final ValidationErrorFailure failureCause =
           (ValidationErrorFailure) result.cause();

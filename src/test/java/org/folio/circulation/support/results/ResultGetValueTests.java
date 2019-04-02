@@ -1,13 +1,13 @@
 package org.folio.circulation.support.results;
 
-import static org.folio.circulation.support.HttpResult.succeeded;
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.results.ResultExamples.alreadyFailed;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 import org.junit.Test;
 
-public class HttpResultGetValueTests {
+public class ResultGetValueTests {
   @Test
   public void shouldBeValueWhenSucceeded() {
     final Integer result = succeeded(10)

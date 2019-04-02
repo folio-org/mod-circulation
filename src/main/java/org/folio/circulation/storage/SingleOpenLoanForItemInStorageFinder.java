@@ -2,7 +2,7 @@ package org.folio.circulation.storage;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
-import static org.folio.circulation.support.HttpResult.of;
+import static org.folio.circulation.support.Result.of;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -18,7 +18,7 @@ import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.validation.MoreThanOneLoanValidator;
 import org.folio.circulation.domain.validation.NoLoanValidator;
 import org.folio.circulation.support.HttpFailure;
-import org.folio.circulation.support.HttpResult;
+import org.folio.circulation.support.Result;
 
 public class SingleOpenLoanForItemInStorageFinder {
   private final LoanRepository loanRepository;
@@ -38,7 +38,7 @@ public class SingleOpenLoanForItemInStorageFinder {
     this.allowNoLoanToBeFound = allowNoLoanToBeFound;
   }
 
-  public CompletableFuture<HttpResult<Loan>> findSingleOpenLoan(Item item) {
+  public CompletableFuture<Result<Loan>> findSingleOpenLoan(Item item) {
     //Use same error for no loans and more than one loan to maintain compatibility
     final MoreThanOneLoanValidator moreThanOneLoanValidator
       = new MoreThanOneLoanValidator(incorrectNumberOfLoansFailureSupplier);
@@ -63,7 +63,7 @@ public class SingleOpenLoanForItemInStorageFinder {
   }
 
   //TODO: Improve how this is made optional
-  private Function<HttpResult<Optional<Loan>>, HttpResult<Optional<Loan>>> checkForNoLoanIfNeeded(
+  private Function<Result<Optional<Loan>>, Result<Optional<Loan>>> checkForNoLoanIfNeeded(
     NoLoanValidator noLoanValidator, Boolean allowNoLoan) {
 
     if(allowNoLoan) {
@@ -73,15 +73,15 @@ public class SingleOpenLoanForItemInStorageFinder {
     return noLoanValidator::failWhenNoLoan;
   }
 
-  private CompletableFuture<HttpResult<Optional<Loan>>> fetchUser(
-    HttpResult<Optional<Loan>> result) {
+  private CompletableFuture<Result<Optional<Loan>>> fetchUser(
+    Result<Optional<Loan>> result) {
 
     return result.combineAfter(this::fetchUser,
       (possibleLoan, user) -> possibleLoan.map(
         loan -> loan.withUser(user)));
   }
 
-  private CompletableFuture<HttpResult<User>> fetchUser(
+  private CompletableFuture<Result<User>> fetchUser(
     Optional<Loan> possibleLoan) {
 
     if(!possibleLoan.isPresent()) {
