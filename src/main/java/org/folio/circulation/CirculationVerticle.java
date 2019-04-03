@@ -3,12 +3,13 @@ package org.folio.circulation;
 import java.lang.invoke.MethodHandles;
 
 import org.folio.circulation.resources.CheckInByBarcodeResource;
-import org.folio.circulation.resources.CheckOutByBarcodeResource;
 import org.folio.circulation.resources.CirculationRulesResource;
 import org.folio.circulation.resources.LoanCirculationRulesEngineResource;
 import org.folio.circulation.resources.LoanCollectionResource;
 import org.folio.circulation.resources.NoticeCirculationRulesEngineResource;
+import org.folio.circulation.resources.OverrideCheckOutByBarcodeResource;
 import org.folio.circulation.resources.OverrideRenewalByBarcodeResource;
+import org.folio.circulation.resources.RegularCheckOutByBarcodeResource;
 import org.folio.circulation.resources.RenewByBarcodeResource;
 import org.folio.circulation.resources.RenewByIdResource;
 import org.folio.circulation.resources.RequestCirculationRulesEngineResource;
@@ -42,7 +43,8 @@ public class CirculationVerticle extends AbstractVerticle {
 
     this.server = vertx.createHttpServer();
 
-    new CheckOutByBarcodeResource(client).register(router);
+    new RegularCheckOutByBarcodeResource(client).register(router);
+    new OverrideCheckOutByBarcodeResource(client).register(router);
     new CheckInByBarcodeResource(client).register(router);
     new RenewByBarcodeResource(client).register(router);
     new RenewByIdResource(client).register(router);

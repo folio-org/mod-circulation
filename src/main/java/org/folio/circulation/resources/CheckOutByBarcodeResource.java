@@ -11,6 +11,7 @@ import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.ConfigurationRepository;
 import org.folio.circulation.domain.Item;
@@ -28,7 +29,6 @@ import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
-import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.policy.PatronNoticePolicyRepository;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
@@ -38,7 +38,6 @@ import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
 import org.folio.circulation.domain.validation.AwaitingPickupValidator;
 import org.folio.circulation.domain.validation.ExistingOpenLoanValidator;
 import org.folio.circulation.domain.validation.InactiveUserValidator;
-import org.folio.circulation.domain.validation.ItemIsNotLoanableValidator;
 import org.folio.circulation.domain.validation.ItemMissingValidator;
 import org.folio.circulation.domain.validation.ItemNotFoundValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
@@ -59,15 +58,18 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
-public class CheckOutByBarcodeResource extends Resource {
+public abstract class CheckOutByBarcodeResource extends Resource {
 
-  public CheckOutByBarcodeResource(HttpClient client) {
+  private String rootPath;
+
+  public CheckOutByBarcodeResource(HttpClient client, String rootPath) {
     super(client);
+    this.rootPath = rootPath;
   }
 
   public void register(Router router) {
     RouteRegistration routeRegistration = new RouteRegistration(
-      "/circulation/check-out-by-barcode", router);
+      rootPath, router);
 
     routeRegistration.create(this::checkOut);
   }
@@ -130,9 +132,6 @@ public class CheckOutByBarcodeResource extends Resource {
     final ExistingOpenLoanValidator openLoanValidator = new ExistingOpenLoanValidator(
       loanRepository, message -> singleValidationError(message, ITEM_BARCODE, itemBarcode));
 
-    final ItemIsNotLoanableValidator itemIsNotLoanableValidator = new ItemIsNotLoanableValidator(
-      () -> singleValidationError("Item is not loanable", ITEM_BARCODE, itemBarcode));
-
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
 
@@ -154,9 +153,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(awaitingPickupValidator::refuseWhenUserIsNotAwaitingPickup)
       .thenComposeAsync(r -> r.after(configurationRepository::lookupTimeZone))
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
-      .thenApply(itemIsNotLoanableValidator::refuseWhenItemIsNotLoanable)
-      .thenApply(r -> r.next(this::calculateDefaultInitialDueDate))
-      .thenComposeAsync(r -> r.after(strategyService::applyCLDDM))
+      .thenComposeAsync(r -> r.after(relatedRecords -> applyLoanPolicy(relatedRecords, strategyService)))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
       .thenComposeAsync(r -> r.after(loanRepository::createLoan))
@@ -167,15 +164,8 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
-  private Result<LoanAndRelatedRecords> calculateDefaultInitialDueDate(LoanAndRelatedRecords loanAndRelatedRecords) {
-    Loan loan = loanAndRelatedRecords.getLoan();
-    LoanPolicy loanPolicy = loanAndRelatedRecords.getLoanPolicy();
-    return loanPolicy.calculateInitialDueDate(loan)
-      .map(dueDate -> {
-        loanAndRelatedRecords.getLoan().changeDueDate(dueDate);
-        return loanAndRelatedRecords;
-      });
-  }
+  abstract CompletableFuture<Result<LoanAndRelatedRecords>> applyLoanPolicy(LoanAndRelatedRecords relatedRecords,
+                                                                            ClosedLibraryStrategyService strategyService);
 
   private void copyOrDefaultLoanDate(JsonObject request, JsonObject loan) {
     final String loanDateProperty = "loanDate";
