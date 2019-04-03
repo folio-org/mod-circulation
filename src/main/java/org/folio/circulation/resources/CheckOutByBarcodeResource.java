@@ -2,7 +2,6 @@ package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.notice.NoticeContextUtil.createNoticeContextFromLoan;
-import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.applyCLDDMForLoanAndRelatedRecords;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.SERVICE_POINT_ID;
@@ -46,10 +45,10 @@ import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointOfCheckoutPresentValidator;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CreatedJsonResponseResult;
-import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ItemRepository;
-import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.ResponseWritableResult;
+import org.folio.circulation.support.Result;
+import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.WebContext;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -157,7 +156,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenApply(itemIsNotLoanableValidator::refuseWhenItemIsNotLoanable)
       .thenApply(r -> r.next(this::calculateDefaultInitialDueDate))
-      .thenComposeAsync(r -> r.after(records -> applyCLDDMForLoanAndRelatedRecords(strategyService, records)))
+      .thenComposeAsync(r -> r.after(strategyService::applyCLDDM))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
       .thenComposeAsync(r -> r.after(loanRepository::createLoan))

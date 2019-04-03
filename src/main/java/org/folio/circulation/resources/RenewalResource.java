@@ -1,7 +1,5 @@
 package org.folio.circulation.resources;
 
-import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.applyCLDDMForLoanAndRelatedRecords;
-
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.ConfigurationRepository;
@@ -16,8 +14,8 @@ import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.domain.representations.LoanResponse;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.WebContext;
 import org.joda.time.DateTime;
@@ -73,7 +71,7 @@ public abstract class RenewalResource extends Resource {
       .thenComposeAsync(r -> r.after(configurationRepository::lookupTimeZone))
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenApply(r -> r.next(loanRenewalService::renew))
-      .thenComposeAsync(r -> r.after(records -> applyCLDDMForLoanAndRelatedRecords(strategyService, records)))
+      .thenComposeAsync(r -> r.after(strategyService::applyCLDDM))
       .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(LoanResponse::from)
