@@ -105,7 +105,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     write(representation, SYSTEM_RETURN_DATE, systemReturnDate);
   }
 
-  private void changeAction(String action) {
+  public void changeAction(String action) {
     representation.put(LoanProperties.ACTION, action);
   }
 
@@ -117,7 +117,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     representation.put(STATUS, new JsonObject().put("name", status));
   }
 
-  private void changeActionComment(String comment) {
+  public void changeActionComment(String comment) {
     representation.put(ACTION_COMMENT, comment);
   }
 

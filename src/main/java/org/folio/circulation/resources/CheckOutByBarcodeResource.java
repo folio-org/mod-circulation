@@ -2,6 +2,8 @@ package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.notice.NoticeContextUtil.createNoticeContextFromLoan;
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.COMMENT;
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.DUE_DATE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.SERVICE_POINT_ID;
@@ -32,7 +34,6 @@ import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.policy.PatronNoticePolicyRepository;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
-import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
 import org.folio.circulation.domain.validation.AwaitingPickupValidator;
@@ -84,10 +85,12 @@ public abstract class CheckOutByBarcodeResource extends Resource {
 
     copyOrDefaultLoanDate(request, loanJson);
 
-    final String itemBarcode = request.getString(CheckOutByBarcodeRequest.ITEM_BARCODE);
+    final String itemBarcode = request.getString(ITEM_BARCODE);
     final String userBarcode = request.getString(USER_BARCODE);
     final String proxyUserBarcode = request.getString(PROXY_USER_BARCODE);
     final String checkoutServicePointId = request.getString(SERVICE_POINT_ID);
+    final String dueDate = request.getString(DUE_DATE);
+    final String comment = request.getString(COMMENT);
 
     loanJson.put(LoanProperties.CHECKOUT_SERVICE_POINT_ID, checkoutServicePointId);
     Loan loan = Loan.from(loanJson);
@@ -153,7 +156,7 @@ public abstract class CheckOutByBarcodeResource extends Resource {
       .thenApply(awaitingPickupValidator::refuseWhenUserIsNotAwaitingPickup)
       .thenComposeAsync(r -> r.after(configurationRepository::lookupTimeZone))
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
-      .thenComposeAsync(r -> r.after(relatedRecords -> applyLoanPolicy(relatedRecords, strategyService)))
+      .thenComposeAsync(r -> r.after(relatedRecords -> applyLoanPolicy(relatedRecords, strategyService, dueDate, comment)))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
       .thenComposeAsync(r -> r.after(loanRepository::createLoan))
@@ -165,7 +168,9 @@ public abstract class CheckOutByBarcodeResource extends Resource {
   }
 
   abstract CompletableFuture<Result<LoanAndRelatedRecords>> applyLoanPolicy(LoanAndRelatedRecords relatedRecords,
-                                                                            ClosedLibraryStrategyService strategyService);
+                                                                            ClosedLibraryStrategyService strategyService,
+                                                                            String dueDate,
+                                                                            String comment);
 
   private void copyOrDefaultLoanDate(JsonObject request, JsonObject loan) {
     final String loanDateProperty = "loanDate";

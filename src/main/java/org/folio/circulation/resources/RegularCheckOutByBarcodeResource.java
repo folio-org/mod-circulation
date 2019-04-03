@@ -1,5 +1,6 @@
 package org.folio.circulation.resources;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
@@ -23,8 +24,10 @@ public class RegularCheckOutByBarcodeResource extends CheckOutByBarcodeResource 
 
   @Override
   CompletableFuture<Result<LoanAndRelatedRecords>> applyLoanPolicy(LoanAndRelatedRecords relatedRecords,
-                                                                   ClosedLibraryStrategyService strategyService) {
-    return CompletableFuture.completedFuture(succeeded(relatedRecords))
+                                                                   ClosedLibraryStrategyService strategyService,
+                                                                   String dueDate,
+                                                                   String comment) {
+    return completedFuture(succeeded(relatedRecords))
       .thenApply(r -> r.next(this::refuseWhenItemIsNotLoanable))
       .thenApply(r -> r.next(this::calculateDefaultInitialDueDate))
       .thenCompose(r -> r.after(strategyService::applyCLDDM));

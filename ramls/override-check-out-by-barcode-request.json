@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "description": "Request to check out an item to a loanee using barcodes",
+  "properties": {
+    "itemBarcode": {
+      "description": "Barcode of the item to be lent to the patron",
+      "type": "string"
+    },
+    "userBarcode": {
+      "description": "Barcode of the user (representing the patron) the item is to be lent to",
+      "type": "string"
+    },
+    "proxyUserBarcode": {
+      "description": "Barcode of the user representing a proxy for the patron",
+      "type": "string"
+    },
+    "loanDate": {
+      "description": "When the loan is to begin, defaults to current date and time",
+      "type": "string",
+      "format": "date-time"
+    },
+    "servicePointId": {
+      "description": "Service point where the item has been checked out",
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+    },
+    "dueDate": {
+      "description": "New due date for overridden checkout",
+      "type": "string",
+      "format": "date-time"
+    },
+    "comment": {
+      "description": "Comment to override action stored in loan history",
+      "type": "string"
+    }
+  },
+  "required": [
+    "itemBarcode",
+    "userBarcode",
+    "servicePointId",
+    "dueDate",
+    "comment"
+  ]
+}
