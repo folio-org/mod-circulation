@@ -28,21 +28,26 @@ public class OverrideCheckOutByBarcodeResource extends CheckOutByBarcodeResource
   @Override
   CompletableFuture<Result<LoanAndRelatedRecords>> applyLoanPolicy(LoanAndRelatedRecords relatedRecords,
                                                                    ClosedLibraryStrategyService strategyService,
-                                                                   String dueDate,
+                                                                   String dueDateParameter,
                                                                    String comment) {
 
     if (comment == null) {
-      ValidationError error = new ValidationError("Override should be performed with the comment specified", COMMENT, null);
+      ValidationError error = new ValidationError(
+        "Override should be performed with the comment specified", COMMENT, null);
       return completedFuture(failed(singleValidationError(error)));
     }
 
-    if (dueDate == null) {
-      ValidationError error = new ValidationError("Override should be performed with due date specified", DUE_DATE, null);
+    if (dueDateParameter == null) {
+      ValidationError error = new ValidationError(
+        "Override should be performed with due date specified", DUE_DATE, null);
       return completedFuture(failed(singleValidationError(error)));
     }
 
-    if (DateTime.parse(dueDate).isBefore(relatedRecords.getLoan().getLoanDate())) {
-      ValidationError error = new ValidationError("Due date should be later than loan date", DUE_DATE, dueDate);
+    DateTime loanDate = relatedRecords.getLoan().getLoanDate();
+    DateTime dueDate = DateTime.parse(dueDateParameter);
+    if (!dueDate.isAfter(loanDate)) {
+      ValidationError error = new ValidationError(
+        "Due date should be later than loan date", DUE_DATE, dueDateParameter);
       return completedFuture(failed(singleValidationError(error)));
     }
 
@@ -55,13 +60,14 @@ public class OverrideCheckOutByBarcodeResource extends CheckOutByBarcodeResource
   private Result<LoanAndRelatedRecords> refuseWhenItemIsLoanable(LoanAndRelatedRecords relatedRecords) {
     if (relatedRecords.getLoanPolicy().isNotLoanable()) {
       String itemBarcode = relatedRecords.getLoan().getItem().getBarcode();
-      return failed(singleValidationError("Override is not allowed when item is loanable", ITEM_BARCODE, itemBarcode));
+      return failed(singleValidationError(
+        "Override is not allowed when item is loanable", ITEM_BARCODE, itemBarcode));
     }
     return succeeded(relatedRecords);
   }
 
-  private Result<LoanAndRelatedRecords> changeDueDate(LoanAndRelatedRecords loanAndRelatedRecords, String dueDate) {
-    loanAndRelatedRecords.getLoan().changeDueDate(DateTime.parse(dueDate));
+  private Result<LoanAndRelatedRecords> changeDueDate(LoanAndRelatedRecords loanAndRelatedRecords, DateTime dueDate) {
+    loanAndRelatedRecords.getLoan().changeDueDate(dueDate);
     return succeeded(loanAndRelatedRecords);
   }
 

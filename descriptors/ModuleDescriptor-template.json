@@ -58,8 +58,6 @@
           ],
           "modulePermissions": [
             "circulation-storage.loans.item.post",
-            "calendar.collection.get",
-            "calendar.collection.add",
             "circulation-storage.loans.item.get",
             "circulation-storage.loans.collection.get",
             "circulation.rules.loan-policy.get",
