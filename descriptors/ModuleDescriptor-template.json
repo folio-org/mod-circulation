@@ -45,6 +45,7 @@
             "circulation-storage.fixed-due-date-schedules.collection.get",
             "circulation-storage.patron-notice-policies.item.get",
             "patron-notice.post",
+            "circulation.rules.notice-policy.get",
             "configuration.entries.collection.get",
             "users.collection.get"
           ]
@@ -86,6 +87,7 @@
             "circulation-storage.fixed-due-date-schedules.collection.get",
             "circulation-storage.patron-notice-policies.item.get",
             "patron-notice.post",
+            "circulation.rules.notice-policy.get",
             "configuration.entries.collection.get",
             "users.collection.get"
           ]
@@ -127,7 +129,8 @@
             "circulation-storage.fixed-due-date-schedules.item.get",
             "circulation-storage.fixed-due-date-schedules.collection.get",
             "circulation-storage.patron-notice-policies.item.get",
-            "patron-notice.post"
+            "patron-notice.post",
+            "circulation.rules.notice-policy.get"
           ]
         },
         {
@@ -546,7 +549,10 @@
             "users.collection.get",
             "usergroups.collection.get",
             "usergroups.item.get",
-            "proxiesfor.collection.get"
+            "proxiesfor.collection.get",
+            "circulation.rules.notice-policy.get",
+            "circulation-storage.patron-notice-policies.item.get",
+            "patron-notice.post"
           ]
         },
         {
@@ -620,7 +626,10 @@
             "users.collection.get",
             "usergroups.collection.get",
             "usergroups.item.get",
-            "proxiesfor.collection.get"
+            "proxiesfor.collection.get",
+            "circulation.rules.notice-policy.get",
+            "circulation-storage.patron-notice-policies.item.get",
+            "patron-notice.post"
           ]
         },
         {
