@@ -2,10 +2,13 @@ package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.notice.NoticeContextUtil.createLoanNoticeContext;
+import static org.folio.circulation.domain.notice.NoticeContextUtil.createNoticeContextFromItemAndPatron;
 import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.UUID;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 import org.folio.circulation.domain.CheckInProcessRecords;
 import org.folio.circulation.domain.Item;
@@ -17,6 +20,8 @@ import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateRequestQueue;
+import org.folio.circulation.domain.User;
+import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticeEvent;
@@ -36,6 +41,7 @@ class CheckInProcessAdapter {
   private final LoanRepository loanRepository;
   private final ServicePointRepository servicePointRepository;
   private final PatronNoticeService patronNoticeService;
+  private final UserRepository userRepository;
 
   @SuppressWarnings("squid:S00107")
   CheckInProcessAdapter(
@@ -45,7 +51,7 @@ class CheckInProcessAdapter {
     RequestQueueRepository requestQueueRepository,
     UpdateItem updateItem, UpdateRequestQueue requestQueueUpdate,
     LoanRepository loanRepository, ServicePointRepository servicePointRepository,
-    PatronNoticeService patronNoticeService) {
+    PatronNoticeService patronNoticeService, UserRepository userRepository) {
 
     this.itemFinder = itemFinder;
     this.singleOpenLoanFinder = singleOpenLoanFinder;
@@ -56,6 +62,7 @@ class CheckInProcessAdapter {
     this.loanRepository = loanRepository;
     this.servicePointRepository = servicePointRepository;
     this.patronNoticeService = patronNoticeService;
+    this.userRepository = userRepository;
   }
 
   CompletableFuture<Result<Item>> findItem(CheckInProcessRecords records) {
@@ -127,4 +134,37 @@ class CheckInProcessAdapter {
     return succeeded(records);
   }
 
+  Result<CheckInProcessRecords> sendItemStatusPatronNotice(CheckInProcessRecords records) {
+    RequestQueue requestQueue = records.getRequestQueue();
+    if (Objects.isNull(requestQueue)) {
+      return succeeded(records);
+    }
+
+    requestQueue.getRequests().stream()
+      .findFirst()
+      .ifPresent(
+        firstRequest -> {
+          String barcode = firstRequest.getRequesterBarcode();
+          userRepository.getUserByBarcode(barcode)
+            .thenAccept(r -> r.next(sendPatronNotice(records.getItem())));
+        }
+      );
+    return succeeded(records);
+  }
+
+  private Function<User, Result<User>> sendPatronNotice(Item item) {
+    return user -> {
+      if (item.isAwaitingPickup()) {
+        PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
+          .withItem(item)
+          .withUser(user)
+          .withEventType(NoticeEventType.AVAILABLE)
+          .withTiming(NoticeTiming.UPON_AT)
+          .withNoticeContext(createNoticeContextFromItemAndPatron(item, user))
+          .build();
+        patronNoticeService.acceptNoticeEvent(noticeEvent);
+      }
+      return succeeded(user);
+    };
+  }
 }
