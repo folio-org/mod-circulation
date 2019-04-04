@@ -52,6 +52,29 @@ resourceTypes:
           body:
             text/plain:
               example: "Internal server error"
+  /override-check-out-by-barcode:
+    displayName: Check out override using barcode for item and loanee
+    post:
+      description: Creates a loan by checking out an item to a loanee
+      is: [
+        language,
+        validate
+      ]
+      body:
+        application/json:
+          type: !include override-check-out-by-barcode-request.json
+          example: !include examples/override-check-out-by-barcode-request.json
+      responses:
+        201:
+          body:
+            application/json:
+              type: loan
+              example: !include examples/loan.json
+        500:
+          description: "Internal server error"
+          body:
+            text/plain:
+              example: "Internal server error"
   /renew-by-barcode:
     displayName: Renew an existing loan using barcode for item and loanee
     post:
