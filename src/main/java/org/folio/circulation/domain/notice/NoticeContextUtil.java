@@ -9,36 +9,45 @@ import io.vertx.core.json.JsonObject;
 
 public class NoticeContextUtil {
 
+  private static final String PATRON = "patron";
+  private static final String ITEM = "item";
+  private static final String DUE_DATE = "dueDate";
+
   private NoticeContextUtil() {
   }
 
   public static JsonObject createNoticeContextFromLoan(Loan loan) {
-    return createNoticeContextFromLoan(loan, DateTimeZone.UTC);
+    return createLoanNoticeContext(loan, DateTimeZone.UTC);
+  }
+
+  public static JsonObject createLoanNoticeContext(Loan loan, DateTimeZone timeZone) {
+    return createNoticeContextFromItemAndPatron(loan.getItem(), loan.getUser())
+      .put(DUE_DATE, loan.getDueDate().withZone(timeZone).toString());
+  }
+
+  public static JsonObject createNoticeContextFromItemAndPatron(Item item, User user) {
+    JsonObject patron = createPatronContext(user);
+    JsonObject itemContext = createItemContext(item);
+
+    return new JsonObject()
+      .put(PATRON, patron)
+      .put(ITEM, itemContext);
   }
 
   public static JsonObject createNoticeContextFromLoan(Loan loan, DateTimeZone timeZone) {
     User user = loan.getUser();
     Item item = loan.getItem();
 
-    JsonObject patron = createPatron(user);
+    JsonObject patron = createPatronContext(user);
     JsonObject itemContext = createItemContext(item);
 
     return new JsonObject()
-      .put("patron", patron)
-      .put("item", itemContext)
-      .put("dueDate", loan.getDueDate().withZone(timeZone).toString());
+      .put(PATRON, patron)
+      .put(ITEM, itemContext)
+      .put(DUE_DATE, loan.getDueDate().withZone(timeZone).toString());
   }
 
-  public static JsonObject createNoticeContextFromItem(Item item, User user) {
-    JsonObject patron = createPatron(user);
-    JsonObject itemContext = createItemContext(item);
-
-    return new JsonObject()
-      .put("patron", patron)
-      .put("item", itemContext);
-  }
-
-  private static JsonObject createPatron(User user) {
+  private static JsonObject createPatronContext(User user) {
     return new JsonObject()
       .put("firstName", user.getFirstName())
       .put("lastName", user.getLastName())
