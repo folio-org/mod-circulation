@@ -53,7 +53,8 @@ public class RequestCollectionResource extends CollectionResource {
       new UpdateItem(clients),
       new UpdateLoanActionHistory(clients),
       new UpdateLoan(clients, loanRepository, new LoanPolicyRepository(clients)),
-      new RequestPolicyRepository(clients)
+      new RequestPolicyRepository(clients),
+      loanRepository
     );
 
     final RequestFromRepresentationService requestFromRepresentationService =
@@ -91,7 +92,8 @@ public class RequestCollectionResource extends CollectionResource {
       new UpdateItem(clients),
       new UpdateLoanActionHistory(clients),
       new UpdateLoan(clients, loanRepository, new LoanPolicyRepository(clients)),
-      new RequestPolicyRepository(clients)
+      new RequestPolicyRepository(clients),
+      loanRepository
     );
 
     final UpdateRequestService updateRequestService = new UpdateRequestService(
