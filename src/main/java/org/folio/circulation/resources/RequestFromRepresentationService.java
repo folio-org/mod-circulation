@@ -6,18 +6,20 @@ import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.ServicePointRepository;
+import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
 import org.folio.circulation.support.BadRequestFailure;
-import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.Result;
 
 import io.vertx.core.json.JsonObject;
 
@@ -61,11 +63,27 @@ class RequestFromRepresentationService {
       .thenComposeAsync(r -> r.combineAfter(userRepository::getProxyUser, Request::withProxy))
       .thenComposeAsync(r -> r.combineAfter(servicePointRepository::getServicePointForRequest, Request::withPickupServicePoint))
       .thenComposeAsync(r -> r.combineAfter(loanRepository::findOpenLoanForRequest, Request::withLoan))
+      .thenComposeAsync(r -> r.combineAfter(this::getUserForExistingLoan, this::addUserToLoan))
       .thenApply(r -> r.map(RequestAndRelatedRecords::new))
       .thenComposeAsync(r -> r.combineAfter(requestQueueRepository::get,
         RequestAndRelatedRecords::withRequestQueue))
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenApply(servicePointPickupLocationValidator::checkServicePointPickupLocation);
+  }
+
+  private CompletableFuture<Result<User>> getUserForExistingLoan(Request request) {
+    Loan loan = request.getLoan();
+    if (loan == null) {
+      return CompletableFuture.completedFuture(succeeded(null));
+    }
+    return userRepository.getUser(loan.getUserId());
+  }
+
+  private Request addUserToLoan(Request request, User user) {
+    if (request.getLoan() == null) {
+      return request;
+    }
+    return request.withLoan(request.getLoan().withUser(user));
   }
 
   private Result<JsonObject> validateStatus(JsonObject representation) {

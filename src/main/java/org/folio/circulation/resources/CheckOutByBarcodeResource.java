@@ -1,7 +1,7 @@
 package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.notice.NoticeContextUtil.createNoticeContextFromLoan;
+import static org.folio.circulation.domain.notice.NoticeContextUtil.createLoanNoticeContext;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.COMMENT;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.DUE_DATE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
@@ -221,7 +221,7 @@ public abstract class CheckOutByBarcodeResource extends Resource {
     PatronNoticeService patronNoticeService) {
 
     JsonObject noticeContext =
-      createNoticeContextFromLoan(relatedRecords.getLoan(), relatedRecords.getTimeZone());
+      createLoanNoticeContext(relatedRecords.getLoan(), relatedRecords.getTimeZone());
 
     PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
       .withItem(relatedRecords.getLoan().getItem())

@@ -35,7 +35,7 @@ public class UserRepository {
     return getUser(userRelatedRecord.getProxyUserId());
   }
 
-  CompletableFuture<Result<User>> getUser(String userId) {
+  public CompletableFuture<Result<User>> getUser(String userId) {
     return FetchSingleRecord.<User>forRecord("user")
       .using(usersStorageClient)
       .mapTo(User::new)
