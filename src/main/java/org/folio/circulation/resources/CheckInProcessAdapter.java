@@ -2,6 +2,7 @@ package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.notice.NoticeContextUtil.createLoanNoticeContext;
+import static org.folio.circulation.domain.notice.NoticeContextUtil.createNoticeContextFromItemAndPatron;
 import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.UUID;
