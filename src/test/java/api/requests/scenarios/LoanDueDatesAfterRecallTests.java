@@ -391,4 +391,53 @@ public class LoanDueDatesAfterRecallTests extends APITests {
         response.getJson().getJsonArray("errors").getJsonObject(0).getString("message"),
         is(expectedMessage));
   }
+
+  @Test
+  public void initialLoanDueDateOnCreateWithPrexistingRequests()
+      throws 
+      MalformedURLException, 
+      InterruptedException, 
+      TimeoutException, 
+      ExecutionException {
+
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource requestServicePoint = servicePointsFixture.cd1();
+    final IndividualResource steve = usersFixture.steve();
+    final IndividualResource jessica = usersFixture.jessica();
+    final IndividualResource charlotte = usersFixture.charlotte();
+
+    final LoanPolicyBuilder canCirculateRollingPolicy = new LoanPolicyBuilder()
+        .withName("Can Circulate Rolling With Recalls")
+        .withDescription("Can circulate item With Recalls")
+        .rolling(Period.weeks(3))
+        .unlimitedRenewals()
+        .renewFromSystemDate()
+        .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(2))
+        .withRecallsRecallReturnInterval(Period.months(2));
+
+    final IndividualResource loanPolicy = loanPoliciesFixture.create(canCirculateRollingPolicy);
+
+    useLoanPolicyAsFallback(loanPolicy.getId(),
+        requestPoliciesFixture.allowAllRequestPolicy().getId(),
+        noticePoliciesFixture.activeNotice().getId());
+
+    loansFixture.checkOut(smallAngryPlanet, charlotte, DateTime.now(DateTimeZone.UTC));
+
+    requestsFixture.placeHoldShelfRequest(smallAngryPlanet, steve,
+      DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Recall");
+
+    requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
+      DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Recall");
+
+    loansFixture.checkInByBarcode(smallAngryPlanet);
+
+    final IndividualResource loan = loansFixture.checkOut(smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
+
+    final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
+
+    final String expectedDueDate = ClockManager.getClockManager().getDateTime().plusMonths(2).toString(ISODateTimeFormat.dateTime());
+    assertThat("due date is not the recall due date (2 months)",
+        storedLoan.getString("dueDate"), is(expectedDueDate));
+
+  }
 }
