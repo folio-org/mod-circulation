@@ -1,6 +1,8 @@
 package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.COMMENT;
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.DUE_DATE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
@@ -12,6 +14,7 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 
 import io.vertx.core.http.HttpClient;
@@ -27,6 +30,21 @@ public class OverrideCheckOutByBarcodeResource extends CheckOutByBarcodeResource
                                                                    ClosedLibraryStrategyService strategyService,
                                                                    String dueDate,
                                                                    String comment) {
+
+    if (comment == null) {
+      ValidationError error = new ValidationError("Override should be performed with the comment specified", COMMENT, null);
+      return completedFuture(failed(singleValidationError(error)));
+    }
+
+    if (dueDate == null) {
+      ValidationError error = new ValidationError("Override should be performed with due date specified", DUE_DATE, null);
+      return completedFuture(failed(singleValidationError(error)));
+    }
+
+    if (DateTime.parse(dueDate).isBefore(relatedRecords.getLoan().getLoanDate())) {
+      ValidationError error = new ValidationError("Due date should be later than loan date", DUE_DATE, dueDate);
+      return completedFuture(failed(singleValidationError(error)));
+    }
 
     return completedFuture(succeeded(relatedRecords))
       .thenApply(r -> r.next(this::refuseWhenItemIsLoanable))
