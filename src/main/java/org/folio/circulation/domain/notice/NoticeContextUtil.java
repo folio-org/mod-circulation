@@ -2,6 +2,7 @@ package org.folio.circulation.domain.notice;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.User;
 import org.joda.time.DateTimeZone;
 
@@ -11,18 +12,21 @@ public class NoticeContextUtil {
 
   private static final String PATRON = "patron";
   private static final String ITEM = "item";
-  private static final String DUE_DATE = "dueDate";
 
   private NoticeContextUtil() {
   }
 
-  public static JsonObject createNoticeContextFromLoan(Loan loan) {
+  public static JsonObject createLoanNoticeContext(Loan loan) {
     return createLoanNoticeContext(loan, DateTimeZone.UTC);
   }
 
   public static JsonObject createLoanNoticeContext(Loan loan, DateTimeZone timeZone) {
     return createNoticeContextFromItemAndPatron(loan.getItem(), loan.getUser())
-      .put(DUE_DATE, loan.getDueDate().withZone(timeZone).toString());
+      .put("dueDate", loan.getDueDate().withZone(timeZone).toString());
+  }
+
+  public static JsonObject createRequestNoticeContext(Request request) {
+    return createNoticeContextFromItemAndPatron(request.getItem(), request.getRequester());
   }
 
   public static JsonObject createNoticeContextFromItemAndPatron(Item item, User user) {
@@ -32,19 +36,6 @@ public class NoticeContextUtil {
     return new JsonObject()
       .put(PATRON, patron)
       .put(ITEM, itemContext);
-  }
-
-  public static JsonObject createNoticeContextFromLoan(Loan loan, DateTimeZone timeZone) {
-    User user = loan.getUser();
-    Item item = loan.getItem();
-
-    JsonObject patron = createPatronContext(user);
-    JsonObject itemContext = createItemContext(item);
-
-    return new JsonObject()
-      .put(PATRON, patron)
-      .put(ITEM, itemContext)
-      .put(DUE_DATE, loan.getDueDate().withZone(timeZone).toString());
   }
 
   private static JsonObject createPatronContext(User user) {

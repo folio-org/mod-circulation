@@ -1,6 +1,7 @@
 package api.requests;
 
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
+import static api.support.matchers.PatronNoticeMatcher.equalsToEmailPatronNotice;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
@@ -13,6 +14,7 @@ import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
 import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.not;
@@ -20,16 +22,22 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.awaitility.Awaitility;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
@@ -39,6 +47,8 @@ import org.junit.runner.RunWith;
 import api.support.APITests;
 import api.support.builders.Address;
 import api.support.builders.ItemBuilder;
+import api.support.builders.NoticeConfigurationBuilder;
+import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import api.support.fixtures.ItemsFixture;
@@ -53,6 +63,11 @@ import junitparams.Parameters;
 
 @RunWith(JUnitParamsRunner.class)
 public class RequestsAPICreationTests extends APITests {
+
+  private static final String PAGING_REQUEST_EVENT = "Paging request";
+  private static final String HOLD_REQUEST_EVENT = "Hold request";
+  private static final String RECALL_REQUEST_EVENT = "Recall request";
+  private static final String RECALL_TO_LOANEE = "Recall loanee";
 
   @Test
   public void canCreateARequest()
@@ -1437,5 +1452,173 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(missingItem.getResponse().getJson().getJsonObject("status").getString("name"), is(ItemStatus.MISSING.getValue()));
 
     return missingItem;
+  }
+
+  @Test
+  public void pageRequestNoticeIsSentWhenPolicyDefinesPageRequestNoticeConfiguration()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID pageConfirmationTemplateId = UUID.randomUUID();
+    JsonObject pageConfirmationConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(pageConfirmationTemplateId)
+      .withEventType(PAGING_REQUEST_EVENT)
+      .create();
+    JsonObject holdConfirmationConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withEventType(HOLD_REQUEST_EVENT)
+      .create();
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with page notice")
+      .withLoanNotices(Arrays.asList(pageConfirmationConfiguration, holdConfirmationConfiguration));
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId());
+
+
+    UUID id = UUID.randomUUID();
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource requester = usersFixture.steve();
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    requestsFixture.place(new RequestBuilder()
+      .withId(id)
+      .open()
+      .page()
+      .forItem(item)
+      .by(requester)
+      .withRequestDate(requestDate)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(new LocalDate(2017, 7, 30))
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
+      .withPickupServicePointId(pickupServicePointId)
+      .withTags(new RequestBuilder.Tags(asList("new", "important"))));
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronNoticesClient::getAll, Matchers.hasSize(1));
+    List<JsonObject> sentNotices = patronNoticesClient.getAll();
+    MatcherAssert.assertThat(sentNotices,
+      hasItems(
+        equalsToEmailPatronNotice(requester.getId(), pageConfirmationTemplateId)));
+  }
+
+  @Test
+  public void holdRequestNoticeIsSentWhenPolicyDefinesHoldRequestNoticeConfiguration()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID holdConfirmationTemplateId = UUID.randomUUID();
+    JsonObject holdConfirmationConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(holdConfirmationTemplateId)
+      .withEventType(HOLD_REQUEST_EVENT)
+      .create();
+    JsonObject recallConfirmationConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withEventType(RECALL_REQUEST_EVENT)
+      .create();
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with hold notice")
+      .withLoanNotices(Arrays.asList(holdConfirmationConfiguration, recallConfirmationConfiguration));
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId());
+
+
+    UUID id = UUID.randomUUID();
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource requester = usersFixture.steve();
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    loansFixture.checkOut(item, usersFixture.jessica());
+    requestsFixture.place(new RequestBuilder()
+      .withId(id)
+      .open()
+      .hold()
+      .forItem(item)
+      .by(requester)
+      .withRequestDate(requestDate)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(new LocalDate(2017, 7, 30))
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
+      .withPickupServicePointId(pickupServicePointId)
+      .withTags(new RequestBuilder.Tags(asList("new", "important"))));
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronNoticesClient::getAll, Matchers.hasSize(1));
+    List<JsonObject> sentNotices = patronNoticesClient.getAll();
+    MatcherAssert.assertThat(sentNotices,
+      hasItems(
+        equalsToEmailPatronNotice(requester.getId(), holdConfirmationTemplateId)));
+  }
+
+  @Test
+  public void recallRequestNoticeIsSentWhenPolicyDefinesRecallRequestNoticeConfiguration()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID recallConfirmationTemplateId = UUID.randomUUID();
+    UUID recallToLoaneeTemplateId = UUID.randomUUID();
+    JsonObject recallConfirmationConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(recallConfirmationTemplateId)
+      .withEventType(RECALL_REQUEST_EVENT)
+      .create();
+    JsonObject recallToLoaneeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(recallToLoaneeTemplateId)
+      .withEventType(RECALL_TO_LOANEE)
+      .create();
+    JsonObject pageConfirmationConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withEventType(PAGING_REQUEST_EVENT)
+      .create();
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with recall notice")
+      .withLoanNotices(Arrays.asList(
+        recallConfirmationConfiguration,
+        recallToLoaneeConfiguration,
+        pageConfirmationConfiguration));
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId());
+
+
+    UUID id = UUID.randomUUID();
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource requester = usersFixture.steve();
+    IndividualResource loanOwner = usersFixture.jessica();
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    loansFixture.checkOut(item, loanOwner);
+    requestsFixture.place(new RequestBuilder()
+      .withId(id)
+      .open()
+      .recall()
+      .forItem(item)
+      .by(requester)
+      .withRequestDate(requestDate)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(new LocalDate(2017, 7, 30))
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
+      .withPickupServicePointId(pickupServicePointId)
+      .withTags(new RequestBuilder.Tags(asList("new", "important"))));
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronNoticesClient::getAll, Matchers.hasSize(2));
+    List<JsonObject> sentNotices = patronNoticesClient.getAll();
+    MatcherAssert.assertThat(sentNotices,
+      hasItems(
+        equalsToEmailPatronNotice(requester.getId(), recallConfirmationTemplateId),
+        equalsToEmailPatronNotice(loanOwner.getId(), recallToLoaneeTemplateId)));
   }
 }

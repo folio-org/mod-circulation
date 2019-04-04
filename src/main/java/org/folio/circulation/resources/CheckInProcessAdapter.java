@@ -1,8 +1,7 @@
 package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.notice.NoticeContextUtil.createNoticeContextFromItemAndPatron;
-import static org.folio.circulation.domain.notice.NoticeContextUtil.createNoticeContextFromLoan;
+import static org.folio.circulation.domain.notice.NoticeContextUtil.createLoanNoticeContext;
 import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.UUID;
@@ -128,7 +127,7 @@ class CheckInProcessAdapter {
       .withUser(records.getLoan().getUser())
       .withEventType(NoticeEventType.CHECK_IN)
       .withTiming(NoticeTiming.UPON_AT)
-      .withNoticeContext(createNoticeContextFromLoan(records.getLoan()))
+      .withNoticeContext(createLoanNoticeContext(records.getLoan()))
       .build();
     patronNoticeService.acceptNoticeEvent(noticeEvent);
     return succeeded(records);

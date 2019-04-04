@@ -1,7 +1,7 @@
 package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.notice.NoticeContextUtil.createNoticeContextFromLoan;
+import static org.folio.circulation.domain.notice.NoticeContextUtil.createLoanNoticeContext;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.applyCLDDMForLoanAndRelatedRecords;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
@@ -227,7 +227,7 @@ public class CheckOutByBarcodeResource extends Resource {
     PatronNoticeService patronNoticeService) {
 
     JsonObject noticeContext =
-      createNoticeContextFromLoan(relatedRecords.getLoan(), relatedRecords.getTimeZone());
+      createLoanNoticeContext(relatedRecords.getLoan(), relatedRecords.getTimeZone());
 
     PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
       .withItem(relatedRecords.getLoan().getItem())
