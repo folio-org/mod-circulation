@@ -45,7 +45,8 @@
             "circulation-storage.fixed-due-date-schedules.collection.get",
             "circulation-storage.patron-notice-policies.item.get",
             "patron-notice.post",
-            "configuration.entries.collection.get"
+            "configuration.entries.collection.get",
+            "users.collection.get"
           ]
         },
         {
@@ -85,7 +86,8 @@
             "circulation-storage.fixed-due-date-schedules.collection.get",
             "circulation-storage.patron-notice-policies.item.get",
             "patron-notice.post",
-            "configuration.entries.collection.get"
+            "configuration.entries.collection.get",
+            "users.collection.get"
           ]
         },
         {

@@ -58,7 +58,7 @@ public class OverrideCheckOutByBarcodeResource extends CheckOutByBarcodeResource
   }
 
   private Result<LoanAndRelatedRecords> refuseWhenItemIsLoanable(LoanAndRelatedRecords relatedRecords) {
-    if (relatedRecords.getLoanPolicy().isNotLoanable()) {
+    if (relatedRecords.getLoanPolicy().isLoanable()) {
       String itemBarcode = relatedRecords.getLoan().getItem().getBarcode();
       return failed(singleValidationError(
         "Override is not allowed when item is loanable", ITEM_BARCODE, itemBarcode));

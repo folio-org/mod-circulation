@@ -48,6 +48,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
     IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.randomUUID();
 
+    setNotLoanablePolicy();
     IndividualResource response = loansFixture.overrideCheckOutByBarcode(
       new OverrideCheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
@@ -85,10 +86,6 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
 
     assertThat("loan date should be as supplied",
       loan.getString("loanDate"), isEquivalentTo(TEST_LOAN_DATE));
-
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"),
-      UUIDMatcher.is(loanPoliciesFixture.canCirculateRolling().getId()));
 
     assertThat("due date should be 3 weeks after loan date, based upon loan policy",
       loan.getString("dueDate"), isEquivalentTo(TEST_DUE_DATE));
@@ -156,14 +153,6 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    LoanPolicyBuilder notLoanablePolicy = new LoanPolicyBuilder()
-      .withName("Not Loanable Policy")
-      .withLoanable(false);
-    useLoanPolicyAsFallback(
-      loanPoliciesFixture.create(notLoanablePolicy).getId(),
-      requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.activeNotice().getId());
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.randomUUID();
@@ -193,6 +182,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
     IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.randomUUID();
 
+    setNotLoanablePolicy();
     Response response = loansFixture.attemptOverrideCheckOutByBarcode(
       new OverrideCheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
@@ -218,6 +208,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
     IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.randomUUID();
 
+    setNotLoanablePolicy();
     Response response = loansFixture.attemptOverrideCheckOutByBarcode(
       new OverrideCheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
@@ -243,6 +234,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
     IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.randomUUID();
 
+    setNotLoanablePolicy();
     Response response = loansFixture.attemptOverrideCheckOutByBarcode(
       new OverrideCheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
@@ -257,7 +249,19 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
       hasParameter("comment", null))));
   }
 
+  private void setNotLoanablePolicy()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
 
-
+    LoanPolicyBuilder notLoanablePolicy = new LoanPolicyBuilder()
+      .withName("Not Loanable Policy")
+      .withLoanable(false);
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.create(notLoanablePolicy).getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId());
+  }
 
 }
