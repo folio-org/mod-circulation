@@ -47,7 +47,7 @@ public class CreateRequestService {
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> createRequest(
-      RequestAndRelatedRecords requestAndRelatedRecords) throws InterruptedException {
+      RequestAndRelatedRecords requestAndRelatedRecords) {
 
     return completedFuture(refuseWhenItemDoesNotExist(requestAndRelatedRecords)
         .next(CreateRequestService::refuseWhenInvalidUserAndPatronGroup)
