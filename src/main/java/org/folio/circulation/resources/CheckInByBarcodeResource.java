@@ -76,7 +76,7 @@ public class CheckInByBarcodeResource extends Resource {
     final CheckInProcessAdapter processAdapter = new CheckInProcessAdapter(
       itemFinder, singleOpenLoanFinder, loanCheckInService,
       requestQueueRepository, updateItem, requestQueueUpdate, loanRepository,
-      servicePointRepository, patronNoticeService);
+      servicePointRepository, patronNoticeService, userRepository);
 
     checkInRequestResult
       .map(CheckInProcessRecords::new)
@@ -91,6 +91,7 @@ public class CheckInByBarcodeResource extends Resource {
         processAdapter::updateRequestQueue, CheckInProcessRecords::withRequestQueue))
       .thenComposeAsync(updateRequestQueueResult -> updateRequestQueueResult.combineAfter(
         processAdapter::updateItem, CheckInProcessRecords::withItem))
+      .thenApply(handleItemStatus -> handleItemStatus.next(processAdapter::sendItemStatusPatronNotice))
       .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
         processAdapter::getDestinationServicePoint, CheckInProcessRecords::withItem))
       .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
