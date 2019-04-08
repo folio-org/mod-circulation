@@ -61,6 +61,10 @@ public class Item {
     return getStatus().equals(ItemStatus.MISSING);
   }
 
+  public boolean isAwaitingPickup() {
+    return getStatus().equals(ItemStatus.AWAITING_PICKUP);
+  }
+
   Boolean isNotSameStatus(ItemStatus prospectiveStatus) {
     return !Objects.equals(getStatus(), prospectiveStatus);
   }
