@@ -46,8 +46,7 @@ public class CreateRequestService {
         .next(CreateRequestService::refuseWhenInvalidUserAndPatronGroup)
         .next(CreateRequestService::refuseWhenItemIsNotValid)
         .next(CreateRequestService::refuseWhenUserHasAlreadyRequestedItem))
-            .thenApply(r -> CreateRequestService.findOpenLoanForRequest(r.value(), loanRepository))
-            .thenApply(CreateRequestService::refuseWhenUserHasAlreadyBeenLoanedItem)
+            .thenApply(r-> refuseWhenUserHasAlreadyBeenLoanedItem(r, loanRepository))
             .thenComposeAsync(r -> r.after(requestPolicyRepository::lookupRequestPolicy))
             .thenApply(r -> r.next(CreateRequestService::refuseWhenRequestCannotBeFulfilled))
             .thenApply(r -> r.map(CreateRequestService::setRequestQueuePosition))
@@ -150,45 +149,40 @@ public class CreateRequestService {
     return Objects.equals(it.getUserId(), that.getUserId());
   }
 
-  private static Result<RequestAndRelatedRecords> refuseWhenUserHasAlreadyBeenLoanedItem(
-      LoanAndRequestAndRelatedRecords loanAndRequestAndRelatedRecords) {
+  private Result<RequestAndRelatedRecords> refuseWhenUserHasAlreadyBeenLoanedItem(Result<RequestAndRelatedRecords> result,
+      LoanRepository loanRepository) {
 
-    final RequestAndRelatedRecords requestAndRelatedRecords = loanAndRequestAndRelatedRecords.requestAndRelatedRecords;
+    RequestAndRelatedRecords requestAndRelatedRecords = result.value();
 
-    Request request = requestAndRelatedRecords.getRequest();
-    Loan loan = loanAndRequestAndRelatedRecords.loan;
-
-    String userId = request.getProxyUserId() == null ? request.getUserId() : request.getProxyUserId();
-
-    if (loan.getUserId().equals(userId)) {
-      Map<String, String> parameters = new HashMap<>();
-      parameters.put("userId", userId);
-      parameters.put("loanId", loan.getId());
-      String message = "This requester has already been loaned this item.";
-      return failedValidation(new ValidationError(message, parameters));
+    if(requestAndRelatedRecords != null) {
+      Request request = requestAndRelatedRecords.getRequest();
+    
+      Loan loan = null;
+      try {
+        loan = loanRepository
+                .findOpenLoanForRequest(request)
+                .get()
+                .value();
+      } catch (InterruptedException | ExecutionException e) {
+        e.printStackTrace();
+        Map<String, String> parameters = new HashMap<>();
+        String message = "The loan associated with this request could not be validated.";
+        return failedValidation(new ValidationError(message, parameters));
+      }
+  
+      String userId = request.getProxyUserId() == null ? request.getUserId() : request.getProxyUserId();
+  
+      if (loan != null && loan.getUserId().equals(userId)) {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("userId", userId);
+        parameters.put("loanId", loan.getId());
+        String message = "This requester currently has this item on loan.";
+        return failedValidation(new ValidationError(message, parameters));
+      } else {
+        return Result.of(() -> requestAndRelatedRecords);
+      }
     } else {
-      return Result.of(() -> requestAndRelatedRecords);
-    }
-  }
-
-  private static LoanAndRequestAndRelatedRecords findOpenLoanForRequest(
-      RequestAndRelatedRecords requestAndRelatedRecords, LoanRepository loanRepository) {
-    try {
-      return loanRepository.findOpenLoanForRequest(requestAndRelatedRecords.getRequest()).thenApply(l -> {
-        return new LoanAndRequestAndRelatedRecords(l.value(), requestAndRelatedRecords);
-      }).get();
-    } catch (InterruptedException | ExecutionException e) {
-      e.printStackTrace();
-    }
-    return null;
-  }
-
-  private static class LoanAndRequestAndRelatedRecords {
-    Loan loan;
-    RequestAndRelatedRecords requestAndRelatedRecords;
-    public LoanAndRequestAndRelatedRecords(Loan l, RequestAndRelatedRecords requestAndRelatedRecords) {
-      this.loan = l;
-      this.requestAndRelatedRecords = requestAndRelatedRecords;
+      return result;
     }
   }
 }
