@@ -6,6 +6,7 @@ import static org.folio.circulation.domain.Request.REQUEST_TYPE;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
+import java.lang.invoke.MethodHandles;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -19,7 +20,13 @@ import org.folio.circulation.support.ResponseWritableResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.ValidationError;
 
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
+
 public class CreateRequestService {
+
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
   private final RequestRepository requestRepository;
   private final UpdateItem updateItem;
   private final UpdateLoanActionHistory updateLoanActionHistory;
@@ -40,7 +47,7 @@ public class CreateRequestService {
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> createRequest(
-      RequestAndRelatedRecords requestAndRelatedRecords) {
+      RequestAndRelatedRecords requestAndRelatedRecords) throws InterruptedException {
 
     return completedFuture(refuseWhenItemDoesNotExist(requestAndRelatedRecords)
         .next(CreateRequestService::refuseWhenInvalidUserAndPatronGroup)
@@ -163,8 +170,11 @@ public class CreateRequestService {
                 .findOpenLoanForRequest(request)
                 .get()
                 .value();
-      } catch (InterruptedException | ExecutionException e) {
-        e.printStackTrace();
+      } catch (InterruptedException e) {
+        log.error(e.getMessage(), e);
+        Thread.currentThread().interrupt();
+      } catch (ExecutionException e) {
+        log.error(e.getMessage(), e);
         Map<String, String> parameters = new HashMap<>();
         String message = "The loan associated with this request could not be validated.";
         return failedValidation(new ValidationError(message, parameters));
