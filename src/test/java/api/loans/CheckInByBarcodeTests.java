@@ -5,6 +5,7 @@ import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static java.util.Arrays.asList;
 import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.core.Is.is;
@@ -12,12 +13,14 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import api.support.builders.RequestBuilder;
 import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -26,6 +29,7 @@ import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
 import org.joda.time.Seconds;
 import org.junit.Test;
 
@@ -418,5 +422,113 @@ public class CheckInByBarcodeTests extends APITests {
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
     assertThat("Check-in notice shouldn't be sent if item isn't checked-out",
       sentNotices, Matchers.empty());
+  }
+
+  @Test
+  public void patronNoticeOnCheckInAfterCheckOutAndRequestToItem() throws Exception {
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    loansFixture.checkOut(item, usersFixture.jessica());
+
+    DateTime requestDate = new DateTime(2019, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    UUID servicePointId = servicePointsFixture.cd1().getId();
+    IndividualResource requester = usersFixture.steve();
+
+    //recall request
+    requestsFixture.place(new RequestBuilder()
+      .withId(UUID.randomUUID())
+      .open()
+      .recall()
+      .forItem(item)
+      .by(requester)
+      .withRequestDate(requestDate)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(new LocalDate(2019, 7, 30))
+      .withHoldShelfExpiration(new LocalDate(2019, 8, 31))
+      .withPickupServicePointId(servicePointId)
+      .withTags(new RequestBuilder.Tags(asList("new", "important"))));
+
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy notice")
+      .withLoanNotices(Collections
+        .singletonList(new NoticeConfigurationBuilder()
+          .withTemplateId(UUID.randomUUID()).withEventType("Available").create()));
+
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId());
+
+    DateTime checkInDate = new DateTime(2019, 7, 25, 14, 23, 41, DateTimeZone.UTC);
+    loansFixture.checkInByBarcode(item, checkInDate, servicePointId);
+
+    checkPatronNoticeEvent(item, requester);
+  }
+
+  @Test
+  public void patronNoticeOnCheckInAfterRequestToItem() throws Exception {
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    DateTime requestDate = new DateTime(2019, 5, 5, 10, 22, 54, DateTimeZone.UTC);
+    UUID servicePointId = servicePointsFixture.cd1().getId();
+    IndividualResource requester = usersFixture.steve();
+
+    // page request
+    requestsFixture.place(new RequestBuilder()
+      .withId(UUID.randomUUID())
+      .open()
+      .page()
+      .forItem(item)
+      .by(requester)
+      .withRequestDate(requestDate)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(new LocalDate(2019, 5, 1))
+      .withHoldShelfExpiration(new LocalDate(2019, 6, 1))
+      .withPickupServicePointId(servicePointId)
+      .withTags(new RequestBuilder.Tags(asList("new", "important"))));
+
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy notice")
+      .withLoanNotices(Collections
+        .singletonList(new NoticeConfigurationBuilder()
+          .withTemplateId(UUID.randomUUID()).withEventType("Available").create()));
+
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId());
+
+    loansFixture.checkInByBarcode(item,
+      new DateTime(2019, 5, 10, 14, 23, 41, DateTimeZone.UTC),
+      servicePointId);
+
+    checkPatronNoticeEvent(item, requester);
+  }
+
+  private void checkPatronNoticeEvent(IndividualResource item, IndividualResource requester) throws Exception {
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronNoticesClient::getAll, Matchers.hasSize(1));
+
+    List<JsonObject> sentNotices = patronNoticesClient.getAll();
+    JsonObject notice = sentNotices.get(0);
+
+    assertThat("sent notice should have recipient id",
+      notice.getString("recipientId"), UUIDMatcher.is(requester.getId()));
+
+    JsonObject noticeContext = notice.getJsonObject("context");
+    MatcherAssert.assertThat("sent notice should have context property",
+      noticeContext, notNullValue());
+
+    JsonObject actualPatron = noticeContext.getJsonObject("patron");
+    JsonObject personalData = requester.getJson().getJsonObject("personal");
+    assertThat("sent notice should have user barcode",
+      actualPatron.getString("barcode"), is(requester.getJson().getString("barcode")));
+    assertThat("sent notice should have firstName",
+      actualPatron.getString("firstName"), is(personalData.getString("firstName")));
+    assertThat("sent notice should have lastName",
+      actualPatron.getString("lastName"), is(personalData.getString("lastName")));
+
+    JsonObject actualItem = noticeContext.getJsonObject("item");
+    assertThat("sent notice should have item barcode",
+      actualItem.getString("barcode"), is(item.getJson().getString("barcode")));
   }
 }
