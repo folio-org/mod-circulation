@@ -974,7 +974,7 @@ public class RequestsAPICreationTests extends APITests {
       .page()
       .forItem(smallAngryPlanet)
       .withPickupServicePointId(servicePoint.getId())
-      .by(usersFixture.jessica()));
+      .by(usersFixture.james()));
 
     assertThat(pagedRequest.getJson(), hasErrorWith(allOf(
       hasMessage("Page requests are not allowed for this patron and item combination"),
