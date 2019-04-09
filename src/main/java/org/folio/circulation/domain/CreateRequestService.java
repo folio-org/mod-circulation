@@ -53,14 +53,14 @@ public class CreateRequestService {
         .next(CreateRequestService::refuseWhenInvalidUserAndPatronGroup)
         .next(CreateRequestService::refuseWhenItemIsNotValid)
         .next(CreateRequestService::refuseWhenUserHasAlreadyRequestedItem))
-            .thenApply(r-> refuseWhenUserHasAlreadyBeenLoanedItem(r, loanRepository))
-            .thenComposeAsync(r -> r.after(requestPolicyRepository::lookupRequestPolicy))
-            .thenApply(r -> r.next(CreateRequestService::refuseWhenRequestCannotBeFulfilled))
-            .thenApply(r -> r.map(CreateRequestService::setRequestQueuePosition))
-            .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
-            .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreation))
-            .thenComposeAsync(r -> r.after(updateLoan::onRequestCreation))
-            .thenComposeAsync(r -> r.after(requestRepository::create));
+          .thenApply(r-> refuseWhenItemAlreadyLoanedToUser(r, loanRepository))
+          .thenComposeAsync(r -> r.after(requestPolicyRepository::lookupRequestPolicy))
+          .thenApply(r -> r.next(CreateRequestService::refuseWhenRequestCannotBeFulfilled))
+          .thenApply(r -> r.map(CreateRequestService::setRequestQueuePosition))
+          .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
+          .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreation))
+          .thenComposeAsync(r -> r.after(updateLoan::onRequestCreation))
+          .thenComposeAsync(r -> r.after(requestRepository::create));
   }
 
   private static RequestAndRelatedRecords setRequestQueuePosition(RequestAndRelatedRecords requestAndRelatedRecords) {
@@ -76,7 +76,8 @@ public class CreateRequestService {
       RequestAndRelatedRecords requestAndRelatedRecords) {
 
     if (requestAndRelatedRecords.getRequest().getItem().isNotFound()) {
-      return failedValidation("Item does not exist", "itemId", requestAndRelatedRecords.getRequest().getItemId());
+      return failedValidation("Item does not exist", "itemId", 
+        requestAndRelatedRecords.getRequest().getItemId());
     } else {
       return succeeded(requestAndRelatedRecords);
     }
@@ -112,8 +113,9 @@ public class CreateRequestService {
 
     final String requestTypeName = requestType.getValue();
 
-    return failedValidation(format("%s requests are not allowed for this patron and item combination", requestTypeName),
-        REQUEST_TYPE, requestTypeName);
+    return failedValidation(format(
+      "%s requests are not allowed for this patron and item combination", requestTypeName),
+      REQUEST_TYPE, requestTypeName);
   }
 
   private static Result<RequestAndRelatedRecords> refuseWhenInvalidUserAndPatronGroup(
@@ -137,8 +139,12 @@ public class CreateRequestService {
   public static Result<RequestAndRelatedRecords> refuseWhenUserHasAlreadyRequestedItem(
       RequestAndRelatedRecords request) {
 
-    Optional<Request> requestOptional = request.getRequestQueue().getRequests().stream()
-        .filter(it -> isTheSameRequester(request, it) && it.isOpen()).findFirst();
+    Optional<Request> requestOptional = request.getRequestQueue()
+      .getRequests()
+      .stream()
+      .filter(
+        it -> isTheSameRequester(request, it) && it.isOpen())
+      .findFirst();
 
     if (requestOptional.isPresent()) {
       Map<String, String> parameters = new HashMap<>();
@@ -156,7 +162,7 @@ public class CreateRequestService {
     return Objects.equals(it.getUserId(), that.getUserId());
   }
 
-  private Result<RequestAndRelatedRecords> refuseWhenUserHasAlreadyBeenLoanedItem(Result<RequestAndRelatedRecords> result,
+  private Result<RequestAndRelatedRecords> refuseWhenItemAlreadyLoanedToUser(Result<RequestAndRelatedRecords> result,
       LoanRepository loanRepository) {
 
     RequestAndRelatedRecords requestAndRelatedRecords = result.value();
@@ -180,7 +186,7 @@ public class CreateRequestService {
         return failedValidation(new ValidationError(message, parameters));
       }
   
-      String userId = request.getProxyUserId() == null ? request.getUserId() : request.getProxyUserId();
+      String userId = request.getUserId();
   
       if (loan != null && loan.getUserId().equals(userId)) {
         Map<String, String> parameters = new HashMap<>();

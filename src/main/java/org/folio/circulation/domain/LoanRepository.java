@@ -117,11 +117,6 @@ public class LoanRepository {
         l -> fetchLoan(l.getId(), loan.getItem(), loan.getUser())));
   }
 
-
-  public CompletableFuture<Result<Loan>> findOpenLoanForRequestAndRelatedRecords(RequestAndRelatedRecords requestAndRelatedRecords) {
-    return findOpenLoanForRequest(requestAndRelatedRecords.getRequest());
-  }
-
   /**
    *
    * @param request the request to fetch the open loan for the same item for
