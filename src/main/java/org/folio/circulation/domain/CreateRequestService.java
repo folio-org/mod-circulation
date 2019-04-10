@@ -17,6 +17,8 @@ import org.folio.circulation.support.ResponseWritableResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.ValidationError;
 
+import io.vertx.core.impl.FailedFuture;
+
 public class CreateRequestService {
 
   private final RequestRepository requestRepository;
@@ -27,8 +29,8 @@ public class CreateRequestService {
   private final UpdateLoan updateLoan;
 
   public CreateRequestService(RequestRepository requestRepository, UpdateItem updateItem,
-      UpdateLoanActionHistory updateLoanActionHistory, UpdateLoan updateLoan,
-      RequestPolicyRepository requestPolicyRepository, LoanRepository loanRepository) {
+    UpdateLoanActionHistory updateLoanActionHistory, UpdateLoan updateLoan,
+    RequestPolicyRepository requestPolicyRepository, LoanRepository loanRepository) {
 
     this.requestRepository = requestRepository;
     this.updateItem = updateItem;
@@ -39,11 +41,12 @@ public class CreateRequestService {
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> createRequest(
-      RequestAndRelatedRecords requestAndRelatedRecords) {
+    RequestAndRelatedRecords requestAndRelatedRecords) {
 
     return findOpenLoanWithRequest(requestAndRelatedRecords, loanRepository)
       .thenApply(loanResult ->
-         refuseWhenUserHasAlreadyBeenLoanedItem(requestAndRelatedRecords, loanResult)
+         refuseWhenLoanRequestFails(requestAndRelatedRecords, loanResult) 
+           .next(r->refuseWhenUserHasAlreadyBeenLoanedItem(requestAndRelatedRecords, loanResult))
            .next(CreateRequestService::refuseWhenItemDoesNotExist)
            .next(CreateRequestService::refuseWhenInvalidUserAndPatronGroup)
            .next(CreateRequestService::refuseWhenItemIsNotValid)
@@ -58,7 +61,6 @@ public class CreateRequestService {
   }
 
   private static RequestAndRelatedRecords setRequestQueuePosition(RequestAndRelatedRecords requestAndRelatedRecords) {
-
     // TODO: Extract to method to add to queue
     requestAndRelatedRecords.withRequest(requestAndRelatedRecords.getRequest()
         .changePosition(requestAndRelatedRecords.getRequestQueue().nextAvailablePosition()));
@@ -67,7 +69,7 @@ public class CreateRequestService {
   }
 
   private static Result<RequestAndRelatedRecords> refuseWhenItemDoesNotExist(
-      RequestAndRelatedRecords requestAndRelatedRecords) {
+    RequestAndRelatedRecords requestAndRelatedRecords) {
 
     if (requestAndRelatedRecords.getRequest().getItem().isNotFound()) {
       return failedValidation("Item does not exist", "itemId", requestAndRelatedRecords.getRequest().getItemId());
@@ -77,7 +79,7 @@ public class CreateRequestService {
   }
 
   private static Result<RequestAndRelatedRecords> refuseWhenRequestCannotBeFulfilled(
-      RequestAndRelatedRecords requestAndRelatedRecords) {
+    RequestAndRelatedRecords requestAndRelatedRecords) {
 
     RequestPolicy requestPolicy = requestAndRelatedRecords.getRequestPolicy();
     RequestType requestType = requestAndRelatedRecords.getRequest().getRequestType();
@@ -90,7 +92,7 @@ public class CreateRequestService {
   }
 
   private static Result<RequestAndRelatedRecords> refuseWhenItemIsNotValid(
-      RequestAndRelatedRecords requestAndRelatedRecords) {
+    RequestAndRelatedRecords requestAndRelatedRecords) {
 
     Request request = requestAndRelatedRecords.getRequest();
 
@@ -102,7 +104,7 @@ public class CreateRequestService {
   }
 
   private static ResponseWritableResult<RequestAndRelatedRecords> failureDisallowedForRequestType(
-      RequestType requestType) {
+    RequestType requestType) {
 
     final String requestTypeName = requestType.getValue();
 
@@ -111,7 +113,7 @@ public class CreateRequestService {
   }
 
   private static Result<RequestAndRelatedRecords> refuseWhenInvalidUserAndPatronGroup(
-      RequestAndRelatedRecords requestAndRelatedRecords) {
+    RequestAndRelatedRecords requestAndRelatedRecords) {
 
     Request request = requestAndRelatedRecords.getRequest();
     User requester = request.getRequester();
@@ -129,7 +131,7 @@ public class CreateRequestService {
   }
 
   public static Result<RequestAndRelatedRecords> refuseWhenUserHasAlreadyRequestedItem(
-      RequestAndRelatedRecords request) {
+    RequestAndRelatedRecords request) {
 
     Optional<Request> requestOptional = request.getRequestQueue().getRequests().stream()
       .filter(it -> isTheSameRequester(request, it) && it.isOpen()).findFirst();
@@ -151,15 +153,22 @@ public class CreateRequestService {
   }
   
   private static CompletableFuture<Result<Loan>> findOpenLoanWithRequest(RequestAndRelatedRecords requestAndRelatedRecords,
-      LoanRepository loanRepository) {
-
+    LoanRepository loanRepository) {
     Request request = requestAndRelatedRecords.getRequest();
-
     return loanRepository.findOpenLoanForRequest(request);
   }
 
+  private static Result<RequestAndRelatedRecords> refuseWhenLoanRequestFails(RequestAndRelatedRecords requestAndRelatedRecords,
+    Result<Loan> loanResult) {
+    if (loanResult.failed()) {
+      return Result.failed(loanResult.cause());
+    } else {
+      return Result.of(() -> requestAndRelatedRecords);
+    }
+  } 
+
   private static Result<RequestAndRelatedRecords> refuseWhenUserHasAlreadyBeenLoanedItem(RequestAndRelatedRecords requestAndRelatedRecords,
-      Result<Loan> loanResult) {
+    Result<Loan> loanResult) {
 
     Request request = requestAndRelatedRecords.getRequest();
 
@@ -176,6 +185,7 @@ public class CreateRequestService {
     } else {
       return Result.of(() -> requestAndRelatedRecords);
     }
+    
   }
 
 }
