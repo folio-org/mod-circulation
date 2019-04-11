@@ -324,6 +324,33 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
   }
 
+  @Test
+  public void cannotCreateRequestItemAlreadyCheckedOutToRequestor()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource rebecca = usersFixture.rebecca();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    loansFixture.checkOut(smallAngryPlanet, rebecca);
+  
+    //Check RECALL -- should give the same response when placing other types of request.
+    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
+      .recall()
+      .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(rebecca.getId()));
+
+    assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("This requester currently has this item on loan."),
+      hasUUIDParameter("itemId", smallAngryPlanet.getId()),
+      hasUUIDParameter("userId", rebecca.getId()))));
+  }
+
   //TODO: Remove this once sample data is updated, temporary to aid change of item status case
   @Test()
   public void canCreateARequestEvenWithDifferentCaseCheckedOutStatus()
@@ -946,7 +973,7 @@ public class RequestsAPICreationTests extends APITests {
       .page()
       .forItem(smallAngryPlanet)
       .withPickupServicePointId(servicePoint.getId())
-      .by(usersFixture.jessica()));
+      .by(usersFixture.james()));
 
     assertThat(pagedRequest.getJson(), hasErrorWith(allOf(
       hasMessage("Page requests are not allowed for this patron and item combination"),
@@ -1310,9 +1337,10 @@ public class RequestsAPICreationTests extends APITests {
 
     final IndividualResource checkedOutItem = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
+    final IndividualResource charlotte = usersFixture.charlotte();
     final IndividualResource jessica = usersFixture.jessica();
 
-    loansFixture.checkOut(checkedOutItem, jessica);
+    loansFixture.checkOut(checkedOutItem, charlotte);
 
     requestsClient.create(new RequestBuilder()
       .recall()
@@ -1342,15 +1370,15 @@ public class RequestsAPICreationTests extends APITests {
 
     final IndividualResource checkedOutItem = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
-    final IndividualResource jessica = usersFixture.jessica();
+    final IndividualResource charlotte = usersFixture.charlotte();
 
-    loansFixture.checkOut(checkedOutItem, jessica);
+    loansFixture.checkOut(checkedOutItem, charlotte);
 
     requestsClient.create(new RequestBuilder()
       .recall()
       .forItem(checkedOutItem)
       .withPickupServicePointId(requestPickupServicePoint.getId())
-      .by(jessica));
+      .by(usersFixture.jessica()));
 
     final Response response = requestsClient.attemptCreate(new RequestBuilder()
       .recall()
