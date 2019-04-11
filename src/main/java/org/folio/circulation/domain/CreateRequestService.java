@@ -174,7 +174,7 @@ public class CreateRequestService {
 
     Loan loan = loanResult.value();
 
-    String userId = request.getProxyUserId() == null ? request.getUserId() : request.getProxyUserId();
+    String userId = request.getUserId();
 
     if (loan != null && loan.getUserId().equals(userId)) {
       Map<String, String> parameters = new HashMap<>();
