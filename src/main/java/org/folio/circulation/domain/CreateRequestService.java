@@ -2,8 +2,10 @@ package org.folio.circulation.domain;
 
 import static java.lang.String.format;
 import static org.folio.circulation.domain.Request.REQUEST_TYPE;
+import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -41,21 +43,19 @@ public class CreateRequestService {
   public CompletableFuture<Result<RequestAndRelatedRecords>> createRequest(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    return findOpenLoanWithRequest(requestAndRelatedRecords, loanRepository)
-      .thenApply(loanResult ->
-         refuseWhenLoanRequestFails(requestAndRelatedRecords, loanResult) 
-           .next(r->refuseWhenUserHasAlreadyBeenLoanedItem(requestAndRelatedRecords, loanResult))
-           .next(CreateRequestService::refuseWhenItemDoesNotExist)
-           .next(CreateRequestService::refuseWhenInvalidUserAndPatronGroup)
-           .next(CreateRequestService::refuseWhenItemIsNotValid)
-           .next(CreateRequestService::refuseWhenUserHasAlreadyRequestedItem)
-       ).thenComposeAsync(r -> r.after(requestPolicyRepository::lookupRequestPolicy))
-        .thenApply(r -> r.next(CreateRequestService::refuseWhenRequestCannotBeFulfilled))
-        .thenApply(r -> r.map(CreateRequestService::setRequestQueuePosition))
-        .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
-        .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreation))
-        .thenComposeAsync(r -> r.after(updateLoan::onRequestCreation))
-        .thenComposeAsync(r -> r.after(requestRepository::create));
+    return of(() -> requestAndRelatedRecords)
+      .next(CreateRequestService::refuseWhenItemDoesNotExist)
+      .next(CreateRequestService::refuseWhenInvalidUserAndPatronGroup)
+      .next(CreateRequestService::refuseWhenItemIsNotValid)
+      .next(CreateRequestService::refuseWhenUserHasAlreadyRequestedItem)
+      .after(this::refuseWhenUserHasAlreadyBeenLoanedItem)
+      .thenComposeAsync(r -> r.after(requestPolicyRepository::lookupRequestPolicy))
+      .thenApply(r -> r.next(CreateRequestService::refuseWhenRequestCannotBeFulfilled))
+      .thenApply(r -> r.map(CreateRequestService::setRequestQueuePosition))
+      .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
+      .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreation))
+      .thenComposeAsync(r -> r.after(updateLoan::onRequestCreation))
+      .thenComposeAsync(r -> r.after(requestRepository::create));
   }
 
   private static RequestAndRelatedRecords setRequestQueuePosition(RequestAndRelatedRecords requestAndRelatedRecords) {
@@ -142,50 +142,32 @@ public class CreateRequestService {
       String message = "This requester already has an open request for this item";
       return failedValidation(new ValidationError(message, parameters));
     } else {
-      return Result.of(() -> request);
+      return of(() -> request);
     }
   }
 
   private static boolean isTheSameRequester(RequestAndRelatedRecords it, Request that) {
     return Objects.equals(it.getUserId(), that.getUserId());
   }
-  
-  private static CompletableFuture<Result<Loan>> findOpenLoanWithRequest(RequestAndRelatedRecords requestAndRelatedRecords,
-    LoanRepository loanRepository) {
-    Request request = requestAndRelatedRecords.getRequest();
-    return loanRepository.findOpenLoanForRequest(request);
+
+  private CompletableFuture<Result<RequestAndRelatedRecords>> refuseWhenUserHasAlreadyBeenLoanedItem(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    final Request request = requestAndRelatedRecords.getRequest();
+
+    return loanRepository.findOpenLoanForRequest(request)
+      .thenApply(loanResult -> loanResult.failWhen(
+        loan -> of(() -> loan != null && loan.getUserId().equals(request.getUserId())),
+        loan -> {
+          Map<String, String> parameters = new HashMap<>();
+          parameters.put("itemId", request.getItemId());
+          parameters.put("userId", request.getUserId());
+          parameters.put("loanId", loan.getId());
+
+          String message = "This requester currently has this item on loan.";
+
+          return singleValidationError(new ValidationError(message, parameters));
+        })
+        .map(loan -> requestAndRelatedRecords));
   }
-
-  private static Result<RequestAndRelatedRecords> refuseWhenLoanRequestFails(RequestAndRelatedRecords requestAndRelatedRecords,
-    Result<Loan> loanResult) {
-    if (loanResult.failed()) {
-      return Result.failed(loanResult.cause());
-    } else {
-      return Result.of(() -> requestAndRelatedRecords);
-    }
-  }
-
-  private static Result<RequestAndRelatedRecords> refuseWhenUserHasAlreadyBeenLoanedItem(RequestAndRelatedRecords requestAndRelatedRecords,
-    Result<Loan> loanResult) {
-
-    Request request = requestAndRelatedRecords.getRequest();
-
-    Loan loan = loanResult.value();
-
-    String userId = request.getUserId();
-
-    if (loan != null && loan.getUserId().equals(userId)) {
-      Map<String, String> parameters = new HashMap<>();
-      parameters.put("itemId", request.getItemId());
-      parameters.put("userId", userId);
-      parameters.put("loanId", loan.getId());
-
-      String message = "This requester currently has this item on loan.";
-
-      return failedValidation(new ValidationError(message, parameters));
-    } else {
-      return Result.of(() -> requestAndRelatedRecords);
-    }
-  }
-
 }
