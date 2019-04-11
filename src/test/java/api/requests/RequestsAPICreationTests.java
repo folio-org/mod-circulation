@@ -351,8 +351,6 @@ public class RequestsAPICreationTests extends APITests {
       hasMessage("This requester currently has this item on loan."),
       hasUUIDParameter("itemId", smallAngryPlanet.getId()),
       hasUUIDParameter("userId", rebecca.getId()))));
-        hasMessage("This requester currently has this item on loan."))
-      ));
   }
 
   //TODO: Remove this once sample data is updated, temporary to aid change of item status case
