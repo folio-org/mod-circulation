@@ -120,9 +120,9 @@ public class JsonPropertyFetcher {
   }
 
 
-  public static Boolean getBooleanProperty(JsonObject representation, String propertyName) {
+  public static boolean getBooleanProperty(JsonObject representation, String propertyName) {
     if (representation != null) {
-      return representation.getBoolean(propertyName);
+      return representation.getBoolean(propertyName, false);
     } else {
       return false;
     }
