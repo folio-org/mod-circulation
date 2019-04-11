@@ -347,7 +347,10 @@ public class RequestsAPICreationTests extends APITests {
         .withRequesterId(rebecca.getId()));
 
       assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
-      assertThat(postResponse.getJson(), hasErrorWith(allOf(
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("This requester currently has this item on loan."),
+      hasUUIDParameter("itemId", smallAngryPlanet.getId()),
+      hasUUIDParameter("userId", rebecca.getId()))));
         hasMessage("This requester currently has this item on loan."))
       ));
   }
