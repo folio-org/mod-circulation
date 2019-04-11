@@ -165,7 +165,7 @@ public class CreateRequestService {
     } else {
       return Result.of(() -> requestAndRelatedRecords);
     }
-  } 
+  }
 
   private static Result<RequestAndRelatedRecords> refuseWhenUserHasAlreadyBeenLoanedItem(RequestAndRelatedRecords requestAndRelatedRecords,
     Result<Loan> loanResult) {
@@ -185,7 +185,7 @@ public class CreateRequestService {
     } else {
       return Result.of(() -> requestAndRelatedRecords);
     }
-    
+
   }
 
 }
