@@ -172,12 +172,11 @@ public class CreateRequestService {
 
     Loan loan = loanResult.value();
 
-    String userId = request.getProxyUserId() == null ? request.getUserId() : request.getProxyUserId();
+    if (loan != null && loan.getUserId().equals(request.getUserId())) {
 
-    if (loan != null && loan.getUserId().equals(userId)) {
       Map<String, String> parameters = new HashMap<>();
       parameters.put("itemId", request.getItemId());
-      parameters.put("userId", userId);
+      parameters.put("userId", request.getUserId());
       parameters.put("loanId", loan.getId());
 
       String message = "This requester currently has this item on loan.";
