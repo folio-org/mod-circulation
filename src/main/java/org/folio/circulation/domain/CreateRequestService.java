@@ -61,7 +61,7 @@ public class CreateRequestService {
   private static RequestAndRelatedRecords setRequestQueuePosition(RequestAndRelatedRecords requestAndRelatedRecords) {
     // TODO: Extract to method to add to queue
     requestAndRelatedRecords.withRequest(requestAndRelatedRecords.getRequest()
-        .changePosition(requestAndRelatedRecords.getRequestQueue().nextAvailablePosition()));
+      .changePosition(requestAndRelatedRecords.getRequestQueue().nextAvailablePosition()));
 
     return requestAndRelatedRecords;
   }
@@ -107,7 +107,7 @@ public class CreateRequestService {
     final String requestTypeName = requestType.getValue();
 
     return failedValidation(format("%s requests are not allowed for this patron and item combination", requestTypeName),
-        REQUEST_TYPE, requestTypeName);
+      REQUEST_TYPE, requestTypeName);
   }
 
   private static Result<RequestAndRelatedRecords> refuseWhenInvalidUserAndPatronGroup(
