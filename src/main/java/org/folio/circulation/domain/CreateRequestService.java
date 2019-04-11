@@ -17,8 +17,6 @@ import org.folio.circulation.support.ResponseWritableResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.ValidationError;
 
-import io.vertx.core.impl.FailedFuture;
-
 public class CreateRequestService {
 
   private final RequestRepository requestRepository;
@@ -178,9 +176,12 @@ public class CreateRequestService {
 
     if (loan != null && loan.getUserId().equals(userId)) {
       Map<String, String> parameters = new HashMap<>();
+      parameters.put("itemId", request.getItemId());
       parameters.put("userId", userId);
       parameters.put("loanId", loan.getId());
+
       String message = "This requester currently has this item on loan.";
+
       return failedValidation(new ValidationError(message, parameters));
     } else {
       return Result.of(() -> requestAndRelatedRecords);

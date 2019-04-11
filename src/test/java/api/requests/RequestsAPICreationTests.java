@@ -331,25 +331,24 @@ public class RequestsAPICreationTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-      final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-      final IndividualResource rebecca = usersFixture.rebecca();
-      final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-  
-      UUID itemId = smallAngryPlanet.getId();
-  
-      loansFixture.checkOut(smallAngryPlanet, rebecca);
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource rebecca = usersFixture.rebecca();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    loansFixture.checkOut(smallAngryPlanet, rebecca);
   
     //Check RECALL -- should give the same response when placing other types of request.
-      Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
-        .recall()
-        .withItemId(itemId)
-        .withPickupServicePointId(pickupServicePointId)
-        .withRequesterId(rebecca.getId()));
+    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
+      .recall()
+      .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(rebecca.getId()));
 
-      assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
-      assertThat(postResponse.getJson(), hasErrorWith(allOf(
-        hasMessage("This requester currently has this item on loan."))
-      ));
+    assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("This requester currently has this item on loan."),
+      hasUUIDParameter("itemId", smallAngryPlanet.getId()),
+      hasUUIDParameter("userId", rebecca.getId()))));
   }
 
   //TODO: Remove this once sample data is updated, temporary to aid change of item status case
