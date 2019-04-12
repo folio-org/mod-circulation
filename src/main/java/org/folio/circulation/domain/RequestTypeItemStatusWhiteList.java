@@ -44,8 +44,8 @@ public class RequestTypeItemStatusWhiteList {
     holdRules.put(ItemStatus.IN_TRANSIT, true);
     holdRules.put(ItemStatus.MISSING, true);
     holdRules.put(ItemStatus.PAGED, true);
-    recallRules.put(ItemStatus.ON_ORDER, true);
-    recallRules.put(ItemStatus.IN_PROCESS, true);
+    holdRules.put(ItemStatus.ON_ORDER, true);
+    holdRules.put(ItemStatus.IN_PROCESS, true);
     holdRules.put(ItemStatus.NONE, true);
   }
 
@@ -57,8 +57,8 @@ public class RequestTypeItemStatusWhiteList {
     pageRules.put(ItemStatus.IN_TRANSIT, false);
     pageRules.put(ItemStatus.MISSING, false);
     pageRules.put(ItemStatus.PAGED, false);
-    recallRules.put(ItemStatus.ON_ORDER, false);
-    recallRules.put(ItemStatus.IN_PROCESS, false);
+    pageRules.put(ItemStatus.ON_ORDER, false);
+    pageRules.put(ItemStatus.IN_PROCESS, false);
     pageRules.put(ItemStatus.NONE, false);
   }
 
@@ -70,8 +70,8 @@ public class RequestTypeItemStatusWhiteList {
     noneRules.put(ItemStatus.IN_TRANSIT, false);
     noneRules.put(ItemStatus.MISSING, false);
     noneRules.put(ItemStatus.PAGED, false);
-    recallRules.put(ItemStatus.ON_ORDER, false);
-    recallRules.put(ItemStatus.IN_PROCESS, false);
+    noneRules.put(ItemStatus.ON_ORDER, false);
+    noneRules.put(ItemStatus.IN_PROCESS, false);
     noneRules.put(ItemStatus.NONE, false);
   }
 
