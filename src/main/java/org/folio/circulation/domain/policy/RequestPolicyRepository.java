@@ -50,13 +50,8 @@ public class RequestPolicyRepository {
 
     return lookupRequestPolicyId(item, user)
       .thenComposeAsync(r -> r.after(this::lookupRequestPolicy))
-      .thenApply(result -> result.map(this::toRequestPolicy));
+      .thenApply(result -> result.map(RequestPolicy::from));
   }
-
-  private RequestPolicy toRequestPolicy(JsonObject representation) {
-    return new RequestPolicy(representation);
-  }
-
 
   private CompletableFuture<Result<JsonObject>> lookupRequestPolicy(
     String requestPolicyId) {

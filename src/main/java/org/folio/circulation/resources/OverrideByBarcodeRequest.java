@@ -11,31 +11,23 @@ import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
-public class OverrideByBarcodeRequest {
+public class OverrideByBarcodeRequest extends RenewByBarcodeRequest {
+  private static final String COMMENT_PROPERTY = "comment";
+  private static final String DUE_DATE = "dueDate";
 
-  public static final String USER_BARCODE = "userBarcode";
-  public static final String ITEM_BARCODE = "itemBarcode";
-  public static final String COMMENT_PROPERTY = "comment";
-  public static final String DUE_DATE = "dueDate";
-
-  private final String itemBarcode;
-  private final String userBarcode;
   private final String comment;
   private final DateTime dueDate;
 
-  public OverrideByBarcodeRequest(String itemBarcode, String userBarcode, String comment, DateTime dueDate) {
-    this.itemBarcode = itemBarcode;
-    this.userBarcode = userBarcode;
+  private OverrideByBarcodeRequest(
+    String itemBarcode,
+    String userBarcode,
+    String comment,
+    DateTime dueDate) {
+
+    super(itemBarcode, userBarcode);
+
     this.comment = comment;
     this.dueDate = dueDate;
-  }
-
-  public String getItemBarcode() {
-    return itemBarcode;
-  }
-
-  public String getUserBarcode() {
-    return userBarcode;
   }
 
   public String getComment() {
@@ -46,7 +38,7 @@ public class OverrideByBarcodeRequest {
     return dueDate;
   }
 
-  public static Result<OverrideByBarcodeRequest> from(JsonObject json) {
+  static Result<OverrideByBarcodeRequest> renewalOverrideRequestFrom(JsonObject json) {
     final String itemBarcode = getProperty(json, ITEM_BARCODE);
     if(StringUtils.isBlank(itemBarcode)) {
       return failedValidation("Override renewal request must have an item barcode",
@@ -69,5 +61,4 @@ public class OverrideByBarcodeRequest {
     return succeeded(new OverrideByBarcodeRequest(itemBarcode, userBarcode,
       comment, dueDate));
   }
-
 }

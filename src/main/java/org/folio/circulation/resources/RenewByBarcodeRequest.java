@@ -10,18 +10,19 @@ import org.folio.circulation.support.Result;
 import io.vertx.core.json.JsonObject;
 
 public class RenewByBarcodeRequest {
+  static final String ITEM_BARCODE = "itemBarcode";
+
   public static final String USER_BARCODE = "userBarcode";
-  public static final String ITEM_BARCODE = "itemBarcode";
 
   private final String itemBarcode;
   private final String userBarcode;
 
-  private RenewByBarcodeRequest(String itemBarcode, String userBarcode) {
+  RenewByBarcodeRequest(String itemBarcode, String userBarcode) {
     this.itemBarcode = itemBarcode;
     this.userBarcode = userBarcode;
   }
 
-  public static Result<RenewByBarcodeRequest> from(JsonObject json) {
+  static Result<RenewByBarcodeRequest> renewalRequestFrom(JsonObject json) {
     final String itemBarcode = getProperty(json, ITEM_BARCODE);
 
     if(StringUtils.isBlank(itemBarcode)) {

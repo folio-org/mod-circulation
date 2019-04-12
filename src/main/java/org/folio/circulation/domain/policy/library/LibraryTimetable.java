@@ -1,14 +1,16 @@
 package org.folio.circulation.domain.policy.library;
 
+import java.util.List;
+
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.joda.time.DateTime;
 
-import java.util.List;
+class LibraryTimetable {
+  private final LibraryInterval head;
+  private final LibraryInterval tail;
 
-public class LibraryTimetable {
-
-  public static LibraryInterval findInterval(DateTime dateTime, LibraryInterval head) {
+  private static LibraryInterval findInterval(DateTime dateTime, LibraryInterval head) {
     for (LibraryInterval node = head; node != null; node = node.getNext()) {
       if (node.getInterval().contains(dateTime)) {
         return node;
@@ -32,36 +34,27 @@ public class LibraryTimetable {
     return new ImmutablePair<>(head, prevNode);
   }
 
-
-  private final LibraryInterval head;
-
-  private final LibraryInterval tail;
-
-  public LibraryTimetable(LibraryInterval head) {
+  LibraryTimetable(LibraryInterval head) {
     this.head = head;
     this.tail = head;
   }
 
-  public LibraryTimetable() {
+  LibraryTimetable() {
     this.head = null;
     this.tail = null;
   }
 
-  public LibraryTimetable(List<LibraryInterval> intervalList) {
+  LibraryTimetable(List<LibraryInterval> intervalList) {
     Pair<LibraryInterval, LibraryInterval> headAndTail = getHeadAndTail(intervalList);
     this.head = headAndTail.getKey();
     this.tail = headAndTail.getValue();
   }
 
-  public LibraryInterval findInterval(DateTime dateTime) {
+  LibraryInterval findInterval(DateTime dateTime) {
     return findInterval(dateTime, head);
   }
 
-  public LibraryInterval getHead() {
-    return head;
-  }
-
-  public LibraryInterval getTail() {
+  LibraryInterval getTail() {
     return tail;
   }
 }
