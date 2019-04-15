@@ -737,7 +737,7 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource charlotte = usersFixture.charlotte();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOut(smallAngryPlanet, rebecca);
+    loansFixture.createLoan(smallAngryPlanet, rebecca);
 
     IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
       .recall()

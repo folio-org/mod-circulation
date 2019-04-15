@@ -46,7 +46,7 @@ public class LoansFixture {
     this.servicePointsFixture = servicePointsFixture;
   }
 
-  public IndividualResource checkOut(
+  public IndividualResource createLoan(
     IndividualResource item,
     IndividualResource to)
     throws MalformedURLException,
@@ -64,7 +64,7 @@ public class LoansFixture {
       .withDueDate(loanDate.plusWeeks(3)));
   }
 
-  public Response attemptCheckOut(
+  public Response attemptToCreateLoan(
     IndividualResource item,
     IndividualResource to)
     throws InterruptedException,
