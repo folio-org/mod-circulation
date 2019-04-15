@@ -9,7 +9,6 @@ import static api.support.http.InterfaceUrls.loansUrl;
 import static api.support.http.InterfaceUrls.overrideRenewalByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByIdUrl;
-import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -288,22 +287,6 @@ public class LoansFixture {
 
     return from(post(builder.create(), checkInByBarcodeUrl(),
         "check-in-by-barcode-request"));
-  }
-
-  public Response attemptCheckInByBarcode(
-    IndividualResource item,
-    DateTime checkInDate,
-    UUID servicePointId) {
-
-    final JsonObject checkInRequest = new JsonObject();
-
-    write(checkInRequest, "itemBarcode",
-      item.getJson().getString("barcode"));
-    write(checkInRequest, "checkInDate", checkInDate);
-    write(checkInRequest, "servicePointId", servicePointId);
-
-    return from(post(checkInRequest, checkInByBarcodeUrl(),
-      "check-in-by-barcode-request"));
   }
 
   public CheckInByBarcodeResponse checkInByBarcode(
