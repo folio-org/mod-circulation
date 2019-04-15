@@ -54,17 +54,7 @@ public class LoansFixture {
     ExecutionException,
     TimeoutException {
 
-    return checkOut(item, to, DateTime.now());
-  }
-
-  private IndividualResource checkOut(
-    IndividualResource item,
-    IndividualResource to,
-    DateTime loanDate)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+    DateTime loanDate = DateTime.now();
 
     return loansClient.create(new LoanBuilder()
       .open()
