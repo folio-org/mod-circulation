@@ -94,7 +94,8 @@ class CheckInProcessAdapter {
   CompletableFuture<Result<RequestQueue>> updateRequestQueue(
     CheckInProcessRecords records) {
 
-    return requestQueueUpdate.onCheckIn(records.getRequestQueue(), records.getCheckInServicePointId().toString());
+    return requestQueueUpdate.onCheckIn(records.getRequestQueue(),
+      records.getCheckInServicePointId().toString());
   }
 
   CompletableFuture<Result<Loan>> updateLoan(CheckInProcessRecords records) {

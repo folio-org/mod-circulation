@@ -1,7 +1,10 @@
 package org.folio.circulation.domain;
 
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
+import static org.folio.circulation.domain.ItemStatus.AWAITING_PICKUP;
+import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
+import static org.folio.circulation.domain.ItemStatus.MISSING;
 import static org.folio.circulation.domain.representations.ItemProperties.IN_TRANSIT_DESTINATION_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.TEMPORARY_LOCATION_ID;
@@ -54,16 +57,25 @@ public class Item {
   }
 
   public boolean isCheckedOut() {
-    return getStatus().equals(ItemStatus.CHECKED_OUT);
+    return isStatus(CHECKED_OUT);
   }
 
   public boolean isMissing() {
-    return getStatus().equals(ItemStatus.MISSING);
+    return isStatus(MISSING);
   }
 
   public boolean isAwaitingPickup() {
-    return getStatus().equals(ItemStatus.AWAITING_PICKUP);
+    return isStatus(AWAITING_PICKUP);
   }
+
+  private boolean isInTransitPickup() {
+    return isStatus(IN_TRANSIT);
+  }
+
+  private boolean isStatus(ItemStatus inTransit) {
+    return getStatus().equals(inTransit);
+  }
+
 
   Boolean isNotSameStatus(ItemStatus prospectiveStatus) {
     return !Objects.equals(getStatus(), prospectiveStatus);
@@ -224,7 +236,14 @@ public class Item {
 
     changed = true;
 
-    return this;
+    //TODO: Remove this hack to remove destination service point
+    // needs refactoring of how in transit for pickup is done
+    if(!isInTransitPickup()) {
+      return removeDestination();
+    }
+    else {
+      return this;
+    }
   }
 
   Item available() {
