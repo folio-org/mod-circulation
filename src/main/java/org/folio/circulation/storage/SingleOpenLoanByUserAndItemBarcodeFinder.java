@@ -7,6 +7,7 @@ import static org.folio.circulation.support.ValidationErrorFailure.failedValidat
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
@@ -16,58 +17,67 @@ import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.validation.BlockRenewalValidator;
 import org.folio.circulation.domain.validation.UserNotFoundValidator;
 import org.folio.circulation.resources.RenewByBarcodeRequest;
-import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ItemRepository;
-
-import io.vertx.core.json.JsonObject;
+import org.folio.circulation.support.Result;
 
 public class SingleOpenLoanByUserAndItemBarcodeFinder {
+  private final LoanRepository loanRepository;
+  private final ItemRepository itemRepository;
+  private final UserRepository userRepository;
+  private final RequestQueueRepository requestQueueRepository;
 
-  public CompletableFuture<Result<Loan>> findLoan(
-    JsonObject request,
+  public SingleOpenLoanByUserAndItemBarcodeFinder(
     LoanRepository loanRepository,
     ItemRepository itemRepository,
     UserRepository userRepository,
     RequestQueueRepository requestQueueRepository) {
 
-    final Result<RenewByBarcodeRequest> requestResult
-      = RenewByBarcodeRequest.from(request);
+    this.loanRepository = loanRepository;
+    this.itemRepository = itemRepository;
+    this.userRepository = userRepository;
+    this.requestQueueRepository = requestQueueRepository;
+  }
 
-    final String itemBarcode = requestResult
-      .map(RenewByBarcodeRequest::getItemBarcode)
-      .orElse("unknown barcode");
-
+  public CompletableFuture<Result<Loan>> findLoan(
+    String itemBarcode,
+    String userBarcode) {
 
     final ItemByBarcodeInStorageFinder itemFinder = new ItemByBarcodeInStorageFinder(
-      itemRepository, noItemFoundForBarcodeFailure(itemBarcode));
+      this.itemRepository, noItemFoundForBarcodeFailure(itemBarcode));
 
     final SingleOpenLoanForItemInStorageFinder singleOpenLoanFinder
-      = new SingleOpenLoanForItemInStorageFinder(loanRepository, userRepository,
-      moreThanOneOpenLoanFailure(itemBarcode), false);
+      = new SingleOpenLoanForItemInStorageFinder(this.loanRepository,
+      this.userRepository, moreThanOneOpenLoanFailure(itemBarcode), false);
 
     final UserNotFoundValidator userNotFoundValidator = new UserNotFoundValidator(
       userId -> singleValidationError("user is not found", "userId", userId));
 
     final BlockRenewalValidator blockRenewalValidator =
-      new BlockRenewalValidator(requestQueueRepository);
+      new BlockRenewalValidator(this.requestQueueRepository);
 
-    return requestResult
-      .after(checkInRequest -> itemFinder.findItemByBarcode(itemBarcode))
+    return itemFinder.findItemByBarcode(itemBarcode)
       .thenComposeAsync(itemResult -> itemResult.after(blockRenewalValidator::refuseWhenFirstRequestIsRecall))
       .thenComposeAsync(itemResult -> itemResult.after(singleOpenLoanFinder::findSingleOpenLoan))
       .thenApply(userNotFoundValidator::refuseWhenUserNotFound)
-      .thenApply(loanResult -> loanResult.combineToResult(requestResult, this::refuseWhenUserDoesNotMatch));
+      .thenComposeAsync(loanResult -> loanResult.after(refuseWhenUserDoesNotMatch(userBarcode)));
   }
 
-  private Result<Loan> refuseWhenUserDoesNotMatch(
-    Loan loan,
-    RenewByBarcodeRequest barcodeRequest) {
+  private Function<Loan, CompletableFuture<Result<Loan>>> refuseWhenUserDoesNotMatch(
+    String userBarcode) {
 
-    if (userMatches(loan, barcodeRequest.getUserBarcode())) {
-      return succeeded(loan);
+    return loan -> refuseWhenUserDoesNotMatch(loan, userBarcode);
+  }
+
+  private CompletableFuture<Result<Loan>> refuseWhenUserDoesNotMatch(
+    Loan loan,
+    String userBarcode) {
+
+    if (userMatches(loan, userBarcode)) {
+      return CompletableFuture.completedFuture(succeeded(loan));
     } else {
-      return failedValidation("Cannot renew item checked out to different user",
-        RenewByBarcodeRequest.USER_BARCODE, barcodeRequest.getUserBarcode());
+      return CompletableFuture.completedFuture(
+        failedValidation("Cannot renew item checked out to different user",
+        RenewByBarcodeRequest.USER_BARCODE, userBarcode));
     }
   }
 

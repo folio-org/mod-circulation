@@ -1,7 +1,11 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collector;
+
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
@@ -9,15 +13,11 @@ import org.joda.time.LocalTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collector;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 public class OpeningDay {
-
-  public static OpeningDay createClosedDay() {
+  static OpeningDay createClosedDay() {
     return createOpeningDay(Collections.emptyList(), null, true, false);
   }
 
@@ -91,7 +91,7 @@ public class OpeningDay {
       .collect(Collector.of(JsonArray::new, JsonArray::add, JsonArray::add));
   }
 
-  JsonObject toJson() {
+  public JsonObject toJson() {
     DateTime dateTime = date.toDateTime(LocalTime.MIDNIGHT, DateTimeZone.UTC);
     return new JsonObject()
       .put(DATE_KEY, DATE_TIME_FORMATTER.print(dateTime))

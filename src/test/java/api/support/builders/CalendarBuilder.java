@@ -2,7 +2,7 @@ package api.support.builders;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.domain.OpeningDayPeriod;
+import api.support.OpeningDayPeriod;
 
 import org.joda.time.DateTime;
 import java.util.List;

@@ -9,20 +9,19 @@ import org.folio.circulation.support.JsonStringArrayHelper;
 import io.vertx.core.json.JsonObject;
 
 public class RequestPolicy {
+  private final List<String> requestTypes;
 
-  private List<String> requestTypes;
-
-  public RequestPolicy(JsonObject representation){
-    this.requestTypes = JsonStringArrayHelper
-      .toStream(representation, "requestTypes")
-      .collect(Collectors.toList());
+  private RequestPolicy(List<String> requestTypes) {
+    this.requestTypes = requestTypes;
   }
 
   static RequestPolicy from(JsonObject representation) {
-    return new RequestPolicy(representation);
+    return new RequestPolicy(JsonStringArrayHelper
+      .toStream(representation, "requestTypes")
+      .collect(Collectors.toList()));
   }
 
-  public boolean allowsType(RequestType type){
+  public boolean allowsType(RequestType type) {
     for (String requestType : requestTypes) {
       if (type.nameMatches(requestType))
         return true;

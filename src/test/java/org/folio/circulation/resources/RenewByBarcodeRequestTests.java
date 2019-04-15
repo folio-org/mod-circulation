@@ -11,7 +11,7 @@ import static org.junit.Assert.assertThat;
 public class RenewByBarcodeRequestTests {
   @Test
   public void propertiesAreReadFromJson() {
-    final Result<RenewByBarcodeRequest> request = RenewByBarcodeRequest.from(
+    final Result<RenewByBarcodeRequest> request = RenewByBarcodeRequest.renewalRequestFrom(
       new JsonObject()
         .put("userBarcode", "534364324553")
         .put("itemBarcode", "659464843534564648"));
@@ -23,7 +23,7 @@ public class RenewByBarcodeRequestTests {
 
   @Test
   public void failWhenNoItemBarcode() {
-    final Result<RenewByBarcodeRequest> result = RenewByBarcodeRequest.from(
+    final Result<RenewByBarcodeRequest> result = RenewByBarcodeRequest.renewalRequestFrom(
       new JsonObject()
         .put("userBarcode", "534364324553"));
 
@@ -33,7 +33,7 @@ public class RenewByBarcodeRequestTests {
 
   @Test
   public void failWhenNoUserBarcode() {
-    final Result<RenewByBarcodeRequest> result = RenewByBarcodeRequest.from(
+    final Result<RenewByBarcodeRequest> result = RenewByBarcodeRequest.renewalRequestFrom(
       new JsonObject()
         .put("itemBarcode", "6404865493223234"));
 
