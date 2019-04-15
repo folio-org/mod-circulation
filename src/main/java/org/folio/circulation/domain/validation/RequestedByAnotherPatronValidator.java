@@ -35,7 +35,7 @@ public class RequestedByAnotherPatronValidator {
 
   private String requestedByAnotherPatronMessage(Item item, User checkingOutUser) {
     return String.format("%s (Barcode: %s) cannot be checked out to user %s" +
-        " because it is awaiting pickup by another patron",
+    " because it has been requested by another patron",
       item.getTitle(), item.getBarcode(), checkingOutUser.getPersonalName());
   }
 

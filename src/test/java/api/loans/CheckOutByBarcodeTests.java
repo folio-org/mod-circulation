@@ -485,7 +485,7 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("The Long Way to a Small, Angry Planet (Barcode: 036000291452) " +
         "cannot be checked out to user Stuart, Rebecca " +
-        "because it is awaiting pickup by another patron"),
+        "because it has been requested by another patron"),
       hasUserBarcodeParameter(rebecca))));
 
     Response request = requestsClient.getById(requestByJessica.getId());
