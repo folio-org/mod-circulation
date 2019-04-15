@@ -81,7 +81,7 @@ public class RequestsAPICreationTests extends APITests {
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
 
-    loansFixture.checkOut(item, usersFixture.jessica());
+    loansFixture.checkOutByBarcode(item, usersFixture.jessica());
 
     IndividualResource requester = usersFixture.steve();
 
@@ -175,7 +175,7 @@ public class RequestsAPICreationTests extends APITests {
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
 
-    loansFixture.checkOut(item, usersFixture.jessica());
+    loansFixture.checkOutByBarcode(item, usersFixture.jessica());
 
     IndividualResource requester = usersFixture.steve();
 
@@ -335,7 +335,7 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource rebecca = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOut(smallAngryPlanet, rebecca);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
   
     //Check RECALL -- should give the same response when placing other types of request.
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
@@ -368,7 +368,7 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID itemId = smallAngryPlanet.getId();
 
-    loansFixture.checkOut(smallAngryPlanet, rebecca);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
 
     JsonObject itemWithChangedStatus = smallAngryPlanet.copyJson()
       .put("status", new JsonObject().put("name", "Checked Out"));
@@ -442,7 +442,7 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource jessica = usersFixture.jessica();
     final IndividualResource steve = usersFixture.steve();
 
-    loansFixture.checkOut(smallAngryPlanet, jessica);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
     Response response = requestsClient.attemptCreate(
       new RequestBuilder()
@@ -477,7 +477,7 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource jessica = usersFixture.jessica();
     final IndividualResource steve = usersFixture.steve();
 
-    loansFixture.checkOut(smallAngryPlanet, jessica);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
     Response response = requestsClient.attemptCreateAtSpecificLocation(
       new RequestBuilder()
@@ -519,7 +519,7 @@ public class RequestsAPICreationTests extends APITests {
 
     final IndividualResource james = usersFixture.james();
 
-    loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
       .recall()
@@ -560,7 +560,7 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource steve = usersFixture.steve();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOut(smallAngryPlanet, rebecca);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
 
     IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
       .recall().fulfilToHoldShelf()
@@ -586,7 +586,7 @@ public class RequestsAPICreationTests extends APITests {
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     final IndividualResource noUserGroupBob = usersFixture.noUserGroupBob();
 
-    loansFixture.checkOut(smallAngryPlanet, jessica);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
@@ -614,7 +614,7 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource steve = usersFixture.steve();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOut(smallAngryPlanet, steve);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, steve);
 
     UUID nonExistentRequesterId = UUID.randomUUID();
 
@@ -647,7 +647,7 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource steve = usersFixture.steve(
       b -> b.withName("Jones", "Steven", "Anthony"));
 
-    loansFixture.checkOut(smallAngryPlanet, jessica);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
@@ -694,7 +694,7 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource steveWithNoBarcode = usersFixture.steve(
       UserBuilder::withNoBarcode);
 
-    loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
@@ -737,7 +737,7 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource charlotte = usersFixture.charlotte();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOut(smallAngryPlanet, rebecca);
+    loansFixture.createLoan(smallAngryPlanet, rebecca);
 
     IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
       .recall()
@@ -775,7 +775,7 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID itemId = smallAngryPlanet.getId();
 
-    loansFixture.checkOut(smallAngryPlanet, rebecca);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
@@ -837,7 +837,7 @@ public class RequestsAPICreationTests extends APITests {
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
 
-    loansFixture.checkOut(item, usersFixture.jessica());
+    loansFixture.checkOutByBarcode(item, usersFixture.jessica());
 
     IndividualResource requester = usersFixture.steve();
 
@@ -870,7 +870,7 @@ public class RequestsAPICreationTests extends APITests {
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
 
-    loansFixture.checkOut(item, usersFixture.jessica());
+    loansFixture.checkOutByBarcode(item, usersFixture.jessica());
 
     IndividualResource requester = usersFixture.steve();
 
@@ -905,7 +905,7 @@ public class RequestsAPICreationTests extends APITests {
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
 
-    loansFixture.checkOut(item, usersFixture.jessica());
+    loansFixture.checkOutByBarcode(item, usersFixture.jessica());
 
     IndividualResource requester = usersFixture.steve();
 
@@ -964,8 +964,8 @@ public class RequestsAPICreationTests extends APITests {
 
     //Set up the item's initial status to be CHECKED OUT
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource checkedOutItem = loansFixture.checkOut(smallAngryPlanet, usersFixture.jessica());
-    assertThat(checkedOutItem.getResponse().getJson().getJsonObject("item").getJsonObject("status").getString("name"), is(ItemStatus.CHECKED_OUT.getValue()));
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.jessica());
 
     //Attempt to create a page request on it.
     final IndividualResource servicePoint = servicePointsFixture.cd1();
@@ -1062,7 +1062,7 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource checkedOutItem = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
 
-    loansFixture.checkOut(checkedOutItem, usersFixture.jessica());
+    loansFixture.checkOutByBarcode(checkedOutItem, usersFixture.jessica());
 
     final IndividualResource recallRequest = requestsClient.create(new RequestBuilder()
       .recall()
@@ -1198,7 +1198,7 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource checkedOutItem = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
 
-    loansFixture.checkOut(checkedOutItem, usersFixture.jessica());
+    loansFixture.checkOutByBarcode(checkedOutItem, usersFixture.jessica());
 
     final IndividualResource holdRequest = requestsClient.create(new RequestBuilder()
       .hold()
@@ -1340,7 +1340,7 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource charlotte = usersFixture.charlotte();
     final IndividualResource jessica = usersFixture.jessica();
 
-    loansFixture.checkOut(checkedOutItem, charlotte);
+    loansFixture.checkOutByBarcode(checkedOutItem, charlotte);
 
     requestsClient.create(new RequestBuilder()
       .recall()
@@ -1372,7 +1372,7 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
     final IndividualResource charlotte = usersFixture.charlotte();
 
-    loansFixture.checkOut(checkedOutItem, charlotte);
+    loansFixture.checkOutByBarcode(checkedOutItem, charlotte);
 
     requestsClient.create(new RequestBuilder()
       .recall()
@@ -1564,7 +1564,9 @@ public class RequestsAPICreationTests extends APITests {
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource requester = usersFixture.steve();
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-    loansFixture.checkOut(item, usersFixture.jessica());
+
+    loansFixture.checkOutByBarcode(item, usersFixture.jessica());
+
     requestsFixture.place(new RequestBuilder()
       .withId(id)
       .open()
@@ -1619,14 +1621,15 @@ public class RequestsAPICreationTests extends APITests {
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId());
 
-
     UUID id = UUID.randomUUID();
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource requester = usersFixture.steve();
     IndividualResource loanOwner = usersFixture.jessica();
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-    loansFixture.checkOut(item, loanOwner);
+
+    loansFixture.checkOutByBarcode(item, loanOwner);
+
     requestsFixture.place(new RequestBuilder()
       .withId(id)
       .open()

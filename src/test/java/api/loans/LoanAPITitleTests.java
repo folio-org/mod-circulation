@@ -30,7 +30,7 @@ public class LoanAPITitleTests extends APITests {
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
 
-    IndividualResource response = loansFixture.checkOut(smallAngryPlanet,
+    IndividualResource response = loansFixture.createLoan(smallAngryPlanet,
       usersFixture.steve());
 
     UUID loanId = response.getId();
@@ -67,11 +67,11 @@ public class LoanAPITitleTests extends APITests {
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
 
-    final UUID firstLoanId = loansFixture.checkOut(smallAngryPlanet,
+    final UUID firstLoanId = loansFixture.createLoan(smallAngryPlanet,
       usersFixture.rebecca()).getId();
 
 
-    UUID secondLoanId = loansFixture.checkOut(temeraire, usersFixture.steve())
+    UUID secondLoanId = loansFixture.createLoan(temeraire, usersFixture.steve())
       .getId();
 
     List<JsonObject> fetchedLoansResponse = loansClient.getAll();

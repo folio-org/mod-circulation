@@ -34,7 +34,7 @@ public class SingleClosedRequestTests extends APITests {
 
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsClient.create(new RequestBuilder()
       .hold()
@@ -47,7 +47,7 @@ public class SingleClosedRequestTests extends APITests {
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
-    loansFixture.checkOut(smallAngryPlanet, jessica);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
     Response request = requestsClient.getById(requestByJessica.getId());
 
@@ -72,7 +72,7 @@ public class SingleClosedRequestTests extends APITests {
 
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    IndividualResource loanToJames = loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsClient.create(new RequestBuilder()
       .hold()
@@ -85,7 +85,7 @@ public class SingleClosedRequestTests extends APITests {
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
-    loansFixture.checkOut(smallAngryPlanet, steve);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, steve);
 
     Response request = requestsClient.getById(requestByJessica.getId());
 

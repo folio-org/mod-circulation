@@ -139,7 +139,7 @@ public abstract class APITests {
     patronGroupsFixture);
 
   protected final LoansFixture loansFixture = new LoansFixture(loansClient,
-    client, usersFixture, servicePointsFixture);
+    usersFixture, servicePointsFixture);
 
   protected final CancellationReasonsFixture cancellationReasonsFixture
     = new CancellationReasonsFixture(ResourceClient.forCancellationReasons(client));

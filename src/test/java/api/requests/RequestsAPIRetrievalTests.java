@@ -229,7 +229,7 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     final IndividualResource james = usersFixture.james();
 
-    loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
       .recall()
@@ -305,11 +305,11 @@ public class RequestsAPIRetrievalTests extends APITests {
     final IndividualResource temeraire = itemsFixture.basedUponTemeraire();
     final IndividualResource uprooted = itemsFixture.basedUponUprooted();
 
-    loansFixture.checkOut(smallAngryPlanet, jessica);
-    loansFixture.checkOut(nod, charlotte);
-    loansFixture.checkOut(interestingTimes, charlotte);
-    loansFixture.checkOut(temeraire, jessica);
-    loansFixture.checkOut(uprooted, jessica);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
+    loansFixture.checkOutByBarcode(nod, charlotte);
+    loansFixture.checkOutByBarcode(interestingTimes, charlotte);
+    loansFixture.checkOutByBarcode(temeraire, jessica);
+    loansFixture.checkOutByBarcode(uprooted, jessica);
 
     requestsClient.create(new RequestBuilder()
       .hold()
@@ -399,7 +399,7 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     final IndividualResource james = usersFixture.james();
 
-    loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     requestsFixture.place(new RequestBuilder()
       .recall()
@@ -445,7 +445,7 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     final IndividualResource james = usersFixture.james();
 
-    loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     final IndividualResource workAddressType = addressTypesFixture.work();
 
