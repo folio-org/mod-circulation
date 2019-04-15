@@ -20,7 +20,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import api.support.builders.RequestBuilder;
 import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -38,6 +37,7 @@ import api.support.CheckInByBarcodeResponse;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.builders.RequestBuilder;
 import api.support.matchers.UUIDMatcher;
 import io.vertx.core.json.JsonObject;
 
@@ -49,8 +49,6 @@ public class CheckInByBarcodeTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, DateTimeZone.UTC);
-
     final IndividualResource james = usersFixture.james();
 
     final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
@@ -61,7 +59,8 @@ public class CheckInByBarcodeTests extends APITests {
     final IndividualResource nod = itemsFixture.basedUponNod(
       builder -> builder.withTemporaryLocation(homeLocation.getId()));
 
-    final IndividualResource loan = loansFixture.checkOut(nod, james, loanDate);
+    final IndividualResource loan = loansFixture.checkOutByBarcode(nod, james,
+      new DateTime(2018, 3, 1, 13, 25, 46, DateTimeZone.UTC));
 
     DateTime expectedSystemReturnDate = DateTime.now(DateTimeZone.UTC);
 
@@ -162,7 +161,7 @@ public class CheckInByBarcodeTests extends APITests {
     final IndividualResource james = usersFixture.james();
     final IndividualResource nod = itemsFixture.basedUponNod();
 
-    loansFixture.checkOut(nod, james, loanDate);
+    loansFixture.checkOutByBarcode(nod, james, loanDate);
 
     final Response response = loansFixture.attemptCheckInByBarcode(
       new CheckInByBarcodeRequestBuilder()
@@ -188,7 +187,7 @@ public class CheckInByBarcodeTests extends APITests {
     final IndividualResource james = usersFixture.james();
     final IndividualResource nod = itemsFixture.basedUponNod();
 
-    loansFixture.checkOut(nod, james, loanDate);
+    loansFixture.checkOutByBarcode(nod, james, loanDate);
 
     final Response response = loansFixture.attemptCheckInByBarcode(
       new CheckInByBarcodeRequestBuilder()
@@ -214,7 +213,7 @@ public class CheckInByBarcodeTests extends APITests {
     final IndividualResource james = usersFixture.james();
     final IndividualResource nod = itemsFixture.basedUponNod();
 
-    loansFixture.checkOut(nod, james, loanDate);
+    loansFixture.checkOutByBarcode(nod, james, loanDate);
 
     final Response response = loansFixture.attemptCheckInByBarcode(
       new CheckInByBarcodeRequestBuilder()
@@ -284,7 +283,7 @@ public class CheckInByBarcodeTests extends APITests {
     final IndividualResource nod = itemsFixture.basedUponNod(
       builder -> builder.withTemporaryLocation(homeLocation.getId()));
 
-    loansFixture.checkOut(nod, james, loanDate);
+    loansFixture.checkOutByBarcode(nod, james, loanDate);
 
     loansFixture.checkInByBarcode(nod,
       new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC),
@@ -348,7 +347,7 @@ public class CheckInByBarcodeTests extends APITests {
     final IndividualResource nod = itemsFixture.basedUponNod(
       builder -> builder.withTemporaryLocation(homeLocation.getId()));
 
-    loansFixture.checkOut(nod, james, loanDate);
+    loansFixture.checkOutByBarcode(nod, james, loanDate);
 
     final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
@@ -427,7 +426,8 @@ public class CheckInByBarcodeTests extends APITests {
   @Test
   public void patronNoticeOnCheckInAfterCheckOutAndRequestToItem() throws Exception {
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
-    loansFixture.checkOut(item, usersFixture.jessica());
+
+    loansFixture.checkOutByBarcode(item, usersFixture.jessica());
 
     DateTime requestDate = new DateTime(2019, 7, 22, 10, 22, 54, DateTimeZone.UTC);
     UUID servicePointId = servicePointsFixture.cd1().getId();

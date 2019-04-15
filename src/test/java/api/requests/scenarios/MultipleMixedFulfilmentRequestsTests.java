@@ -9,7 +9,6 @@ import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
-import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -40,7 +39,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource steve = usersFixture.steve();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource deliveryRequestByRebecca = requestsFixture.placeDeliveryRequest(
       smallAngryPlanet, rebecca, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
@@ -83,7 +82,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource steve = usersFixture.steve();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource deliveryRequestByRebecca = requestsFixture.placeDeliveryRequest(
       smallAngryPlanet, rebecca, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
@@ -96,7 +95,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
-    loansFixture.checkOut(smallAngryPlanet, jessica);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
     deliveryRequestByRebecca = requestsClient.get(deliveryRequestByRebecca);
 
@@ -129,7 +128,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource steve = usersFixture.steve();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource deliveryRequestByRebecca = requestsFixture.placeDeliveryRequest(
       smallAngryPlanet, rebecca, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
@@ -142,7 +141,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
-    loansFixture.checkOut(smallAngryPlanet, jessica);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
@@ -176,7 +175,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource steve = usersFixture.steve();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByRebecca = requestsFixture.placeDeliveryRequest(
       smallAngryPlanet, rebecca, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
@@ -189,13 +188,13 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
-    Response response = loansFixture.attemptCheckOut(smallAngryPlanet, rebecca);
+    Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, rebecca);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("The Long Way to a Small, Angry Planet (Barcode: 036000291452) " +
         "cannot be checked out to user Stuart, Rebecca " +
         "because it is awaiting pickup by another patron"),
-      hasUUIDParameter("userId", rebecca.getId()))));
+      hasParameter("userBarcode", rebecca.getBarcode()))));
 
     requestByRebecca = requestsClient.get(requestByRebecca);
 
@@ -228,7 +227,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource rebecca = usersFixture.rebecca();
     IndividualResource charlotte = usersFixture.charlotte();
 
-    loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByRebecca = requestsFixture.placeDeliveryRequest(
       smallAngryPlanet, rebecca, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
@@ -241,13 +240,13 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
-    Response response = loansFixture.attemptCheckOut(smallAngryPlanet, charlotte);
+    Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, charlotte);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("The Long Way to a Small, Angry Planet (Barcode: 036000291452) " +
         "cannot be checked out to user Broadwell, Charlotte " +
         "because it is awaiting pickup by another patron"),
-      hasUUIDParameter("userId", charlotte.getId()))));
+      hasParameter("userBarcode", charlotte.getBarcode()))));
 
     requestByRebecca = requestsClient.get(requestByRebecca);
 
@@ -279,7 +278,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource steve = usersFixture.steve();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource deliveryRequestByRebecca = requestsFixture.placeDeliveryRequest(
       smallAngryPlanet, rebecca, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
@@ -292,13 +291,13 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
-    Response response = loansFixture.attemptCheckOut(smallAngryPlanet, steve);
+    Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, steve);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("The Long Way to a Small, Angry Planet (Barcode: 036000291452) " +
         "cannot be checked out to user Jones, Steven " +
         "because it is awaiting pickup by another patron"),
-      hasUUIDParameter("userId", steve.getId()))));
+      hasParameter("userBarcode", steve.getBarcode()))));
 
     deliveryRequestByRebecca = requestsClient.get(deliveryRequestByRebecca);
 

@@ -1,17 +1,18 @@
 package api.requests.scenarios;
 
-import api.support.APITests;
-import api.support.builders.RequestBuilder;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.junit.Test;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.junit.Test;
+
+import api.support.APITests;
+import api.support.builders.RequestBuilder;
 
 public class RequestsForDifferentItemsTests extends APITests {
   @Test
@@ -27,8 +28,8 @@ public class RequestsForDifferentItemsTests extends APITests {
 
     final IndividualResource steve = usersFixture.steve();
 
-    loansFixture.checkOut(smallAngryPlanet, steve);
-    loansFixture.checkOut(nod, steve);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, steve);
+    loansFixture.checkOutByBarcode(nod, steve);
 
     final IndividualResource firstRequestForSmallAngryPlanet = requestsClient.create(
       new RequestBuilder()

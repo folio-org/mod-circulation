@@ -28,7 +28,7 @@ public class RequestsAPICreateMultipleRequestsTests extends APITests {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOut(smallAngryPlanet, usersFixture.steve());
+    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.steve());
 
     final IndividualResource firstRequest = requestsClient.create(new RequestBuilder()
       .hold()
@@ -63,7 +63,7 @@ public class RequestsAPICreateMultipleRequestsTests extends APITests {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOut(smallAngryPlanet, usersFixture.rebecca());
+    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.rebecca());
 
     final IndividualResource firstRequest = requestsClient.create(new RequestBuilder()
       .hold()
@@ -98,7 +98,7 @@ public class RequestsAPICreateMultipleRequestsTests extends APITests {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOut(smallAngryPlanet, usersFixture.rebecca());
+    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.rebecca());
 
     final IndividualResource firstRequest = requestsClient.create(new RequestBuilder()
       .hold()
@@ -136,7 +136,7 @@ public class RequestsAPICreateMultipleRequestsTests extends APITests {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOut(smallAngryPlanet, usersFixture.steve());
+    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.steve());
 
     final IndividualResource firstRequest = requestsClient.createAtSpecificLocation(
       new RequestBuilder()

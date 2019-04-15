@@ -41,7 +41,7 @@ public class ServicePointCheckOutTests extends APITests {
     final IndividualResource nod = itemsFixture.basedUponNod(builder ->
       builder.withPermanentLocation(homeLocation.getId()));
 
-    loansFixture.checkOut(nod, james);
+    loansFixture.checkOutByBarcode(nod, james);
 
     final IndividualResource request = requestsFixture.placeHoldShelfRequest(nod, jessica,
         DateTime.now(DateTimeZone.UTC), requestServicePoint.getId());
