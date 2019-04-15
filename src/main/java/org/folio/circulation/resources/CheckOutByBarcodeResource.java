@@ -36,7 +36,7 @@ import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
-import org.folio.circulation.domain.validation.AwaitingPickupValidator;
+import org.folio.circulation.domain.validation.RequestedByAnotherPatronValidator;
 import org.folio.circulation.domain.validation.ExistingOpenLoanValidator;
 import org.folio.circulation.domain.validation.InactiveUserValidator;
 import org.folio.circulation.domain.validation.ItemIsNotLoanableValidator;
@@ -112,7 +112,7 @@ public class CheckOutByBarcodeResource extends Resource {
       = new ServicePointOfCheckoutPresentValidator(message ->
       singleValidationError(message, SERVICE_POINT_ID, checkoutServicePointId));
 
-    final AwaitingPickupValidator awaitingPickupValidator = new AwaitingPickupValidator(
+    final RequestedByAnotherPatronValidator requestedByAnotherPatronValidator = new RequestedByAnotherPatronValidator(
       message -> singleValidationError(message, USER_BARCODE, userBarcode));
 
     final AlreadyCheckedOutValidator alreadyCheckedOutValidator = new AlreadyCheckedOutValidator(
@@ -152,7 +152,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenComposeAsync(r -> r.after(openLoanValidator::refuseWhenHasOpenLoan))
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
-      .thenApply(awaitingPickupValidator::refuseWhenUserIsNotAwaitingPickup)
+      .thenApply(requestedByAnotherPatronValidator::refuseWhenRequestedByAnotherPatron)
       .thenComposeAsync(r -> r.after(configurationRepository::lookupTimeZone))
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenApply(itemIsNotLoanableValidator::refuseWhenItemIsNotLoanable)
