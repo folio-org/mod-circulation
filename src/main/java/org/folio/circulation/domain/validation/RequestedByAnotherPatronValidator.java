@@ -4,6 +4,8 @@ import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.function.Function;
 
+import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.support.Result;
@@ -19,19 +21,22 @@ public class RequestedByAnotherPatronValidator {
   }
 
   public Result<LoanAndRelatedRecords> refuseWhenRequestedByAnotherPatron(
-    Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
+    Result<LoanAndRelatedRecords> result) {
 
-    return loanAndRelatedRecords.next(loan -> {
-      String itemTitle = loan.getLoan().getItem().getTitle();
-      String itemBarcode = loan.getLoan().getItem().getBarcode();
-      final User requestingUser = loan.getLoan().getUser();
+    return result.failWhen(
+      this::isRequestedByAnotherPatron,
+      records -> requestedByAnotherPatronError(records.getLoan()));
+  }
 
-      return loanAndRelatedRecords.failWhen(
-        this::isRequestedByAnotherPatron,
-        records -> errorFunction.apply(
-        String.format("%s (Barcode: %s) cannot be checked out to user %s because it is awaiting pickup by another patron",
-          itemTitle, itemBarcode, requestingUser.getPersonalName())));
-    });
+  private ValidationErrorFailure requestedByAnotherPatronError(Loan loan) {
+    return errorFunction.apply(requestedByAnotherPatronMessage(
+      loan.getItem(), loan.getUser()));
+  }
+
+  private String requestedByAnotherPatronMessage(Item item, User checkingOutUser) {
+    return String.format("%s (Barcode: %s) cannot be checked out to user %s" +
+        " because it is awaiting pickup by another patron",
+      item.getTitle(), item.getBarcode(), checkingOutUser.getPersonalName());
   }
 
   private Result<Boolean> isRequestedByAnotherPatron(
