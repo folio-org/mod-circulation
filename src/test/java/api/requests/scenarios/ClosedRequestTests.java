@@ -35,7 +35,7 @@ public class ClosedRequestTests extends APITests {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
-    loansFixture.checkOut(smallAngryPlanet, usersFixture.jessica());
+    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.jessica());
 
     IndividualResource requester = usersFixture.steve();
 
@@ -75,7 +75,7 @@ public class ClosedRequestTests extends APITests {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
-    loansFixture.checkOut(smallAngryPlanet, usersFixture.jessica());
+    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.jessica());
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
@@ -108,7 +108,7 @@ public class ClosedRequestTests extends APITests {
     final IndividualResource jessica = usersFixture.jessica();
     final IndividualResource steve = usersFixture.steve();
 
-    loansFixture.checkOut(smallAngryPlanet, jessica);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
     DateTime requestDate = new DateTime(2018, 6, 22, 10, 22, 54, DateTimeZone.UTC);
 
@@ -118,7 +118,7 @@ public class ClosedRequestTests extends APITests {
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
-    loansFixture.checkOut(smallAngryPlanet, steve,
+    loansFixture.checkOutByBarcode(smallAngryPlanet, steve,
       new DateTime(2018, 7, 5, 14, 48, 23, DateTimeZone.UTC));
 
     Response response = requestsClient.attemptReplace(request.getId(),

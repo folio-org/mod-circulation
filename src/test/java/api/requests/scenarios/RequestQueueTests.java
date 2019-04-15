@@ -38,7 +38,7 @@ public class RequestQueueTests extends APITests {
     IndividualResource charlotte = usersFixture.charlotte();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
@@ -94,7 +94,7 @@ public class RequestQueueTests extends APITests {
     IndividualResource charlotte = usersFixture.charlotte();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
@@ -110,7 +110,7 @@ public class RequestQueueTests extends APITests {
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
-    loansFixture.checkOut(smallAngryPlanet, jessica);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
     requestByJessica = requestsClient.get(requestByJessica);
 
@@ -159,7 +159,7 @@ public class RequestQueueTests extends APITests {
     IndividualResource charlotte = usersFixture.charlotte();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
@@ -212,7 +212,7 @@ public class RequestQueueTests extends APITests {
     IndividualResource charlotte = usersFixture.charlotte();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));

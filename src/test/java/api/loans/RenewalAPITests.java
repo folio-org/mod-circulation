@@ -835,7 +835,7 @@ abstract class RenewalAPITests extends APITests {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    loansFixture.checkOut(smallAngryPlanet, steve);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, steve);
 
     usersFixture.remove(steve);
 
@@ -857,7 +857,7 @@ abstract class RenewalAPITests extends APITests {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    loansFixture.checkOut(smallAngryPlanet, steve);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, steve);
 
     itemsClient.delete(smallAngryPlanet.getId());
 

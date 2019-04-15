@@ -74,7 +74,8 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     final IndividualResource steve = usersFixture.steve();
     final IndividualResource jessica = usersFixture.jessica();
 
-    final IndividualResource loan = loansFixture.checkOut(smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
+    final IndividualResource loan = loansFixture.checkOutByBarcode(
+      smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
@@ -117,7 +118,8 @@ public class LoanDueDatesAfterRecallTests extends APITests {
         requestPoliciesFixture.allowAllRequestPolicy().getId(),
         noticePoliciesFixture.activeNotice().getId());
 
-    final IndividualResource loan = loansFixture.checkOut(smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
+    final IndividualResource loan = loansFixture.checkOutByBarcode(
+      smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
@@ -163,8 +165,8 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     // We use the loan date to calculate the MGD
     final DateTime loanDate = DateTime.now(DateTimeZone.UTC);
 
-    final IndividualResource loan =
-        loansFixture.checkOut(smallAngryPlanet, steve, loanDate);
+    final IndividualResource loan = loansFixture.checkOutByBarcode(
+      smallAngryPlanet, steve, loanDate);
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
@@ -209,8 +211,8 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     // We use the loan date to calculate the minimum guaranteed due date (MGD)
     final DateTime loanDate = DateTime.now(DateTimeZone.UTC);
 
-    final IndividualResource loan =
-        loansFixture.checkOut(smallAngryPlanet, steve, loanDate);
+    final IndividualResource loan = loansFixture.checkOutByBarcode(
+      smallAngryPlanet, steve, loanDate);
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
@@ -255,8 +257,8 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     // We use the loan date to calculate the minimum guaranteed due date (MGD)
     final DateTime loanDate = DateTime.now(DateTimeZone.UTC);
 
-    final IndividualResource loan =
-        loansFixture.checkOut(smallAngryPlanet, steve, loanDate);
+    final IndividualResource loan = loansFixture.checkOutByBarcode(
+      smallAngryPlanet, steve, loanDate);
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
@@ -379,7 +381,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     // We use the loan date to calculate the minimum guaranteed due date (MGD)
     final DateTime loanDate = DateTime.now(DateTimeZone.UTC);
 
-    loansFixture.checkOut(smallAngryPlanet, steve, loanDate);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, steve, loanDate);
 
     final Response response = requestsFixture.attemptPlaceHoldShelfRequest(smallAngryPlanet, jessica,
         DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Recall");
@@ -421,7 +423,8 @@ public class LoanDueDatesAfterRecallTests extends APITests {
         requestPoliciesFixture.allowAllRequestPolicy().getId(),
         noticePoliciesFixture.activeNotice().getId());
 
-    loansFixture.checkOut(smallAngryPlanet, charlotte, DateTime.now(DateTimeZone.UTC));
+    loansFixture.checkOutByBarcode(smallAngryPlanet, charlotte,
+      DateTime.now(DateTimeZone.UTC));
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, steve,
       DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Recall");
@@ -431,7 +434,8 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
-    final IndividualResource loan = loansFixture.checkOut(smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
+    final IndividualResource loan = loansFixture.checkOutByBarcode(
+      smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 

@@ -8,7 +8,6 @@ import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
-import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.Matchers.is;
@@ -40,7 +39,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource steve = usersFixture.steve();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource deliveryRequestByRebecca = requestsFixture.placeDeliveryRequest(
       smallAngryPlanet, rebecca, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
@@ -83,7 +82,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource steve = usersFixture.steve();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource deliveryRequestByRebecca = requestsFixture.placeDeliveryRequest(
       smallAngryPlanet, rebecca, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
@@ -96,7 +95,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
-    loansFixture.checkOut(smallAngryPlanet, jessica);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
     deliveryRequestByRebecca = requestsClient.get(deliveryRequestByRebecca);
 
@@ -129,7 +128,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource steve = usersFixture.steve();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource deliveryRequestByRebecca = requestsFixture.placeDeliveryRequest(
       smallAngryPlanet, rebecca, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
@@ -142,7 +141,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
-    loansFixture.checkOut(smallAngryPlanet, jessica);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
@@ -176,7 +175,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource steve = usersFixture.steve();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByRebecca = requestsFixture.placeDeliveryRequest(
       smallAngryPlanet, rebecca, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
@@ -228,7 +227,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource rebecca = usersFixture.rebecca();
     IndividualResource charlotte = usersFixture.charlotte();
 
-    loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByRebecca = requestsFixture.placeDeliveryRequest(
       smallAngryPlanet, rebecca, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
@@ -279,7 +278,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource steve = usersFixture.steve();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource deliveryRequestByRebecca = requestsFixture.placeDeliveryRequest(
       smallAngryPlanet, rebecca, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));

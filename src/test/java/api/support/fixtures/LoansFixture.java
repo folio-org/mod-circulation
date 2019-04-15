@@ -57,7 +57,7 @@ public class LoansFixture {
     return checkOut(item, to, DateTime.now());
   }
 
-  public IndividualResource checkOut(
+  private IndividualResource checkOut(
     IndividualResource item,
     IndividualResource to,
     DateTime loanDate)

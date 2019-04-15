@@ -41,7 +41,7 @@ public class RequestsAPILocationTests extends APITests {
         .withTemporaryLocation(secondFloorEconomics)
     );
 
-    loansFixture.checkOut(smallAngryPlanet, usersFixture.jessica());
+    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.jessica());
 
     IndividualResource requester = usersFixture.steve();
 
@@ -93,7 +93,7 @@ public class RequestsAPILocationTests extends APITests {
       itemBuilder -> itemBuilder
         .withPermanentLocation(thirdFloor));
 
-    loansFixture.checkOut(smallAngryPlanet, usersFixture.james());
+    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.james());
 
     IndividualResource firstRequest = requestsFixture.place(new RequestBuilder()
       .open()
@@ -110,7 +110,7 @@ public class RequestsAPILocationTests extends APITests {
         .withNoPermanentLocation()
         .withNoTemporaryLocation());
 
-    loansFixture.checkOut(temeraire, usersFixture.jessica());
+    loansFixture.checkOutByBarcode(temeraire, usersFixture.jessica());
 
     IndividualResource secondRequest = requestsFixture.place(new RequestBuilder()
       .open()
