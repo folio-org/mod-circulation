@@ -5,7 +5,6 @@ import static api.support.RestAssuredClient.post;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.InterfaceUrls.checkInByBarcodeUrl;
 import static api.support.http.InterfaceUrls.checkOutByBarcodeUrl;
-import static api.support.http.InterfaceUrls.loansUrl;
 import static api.support.http.InterfaceUrls.overrideRenewalByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByIdUrl;
@@ -14,15 +13,11 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
@@ -38,18 +33,15 @@ import io.vertx.core.json.JsonObject;
 
 public class LoansFixture {
   private final ResourceClient loansClient;
-  private final OkapiHttpClient client;
   private final UsersFixture usersFixture;
   private final ServicePointsFixture servicePointsFixture;
 
   public LoansFixture(
     ResourceClient loansClient,
-    OkapiHttpClient client,
     UsersFixture usersFixture,
     ServicePointsFixture servicePointsFixture) {
 
     this.loansClient = loansClient;
-    this.client = client;
     this.usersFixture = usersFixture;
     this.servicePointsFixture = servicePointsFixture;
   }
@@ -87,18 +79,13 @@ public class LoansFixture {
     IndividualResource to)
     throws InterruptedException,
     ExecutionException,
-    TimeoutException {
+    TimeoutException,
+    MalformedURLException {
 
-    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
-
-    //TODO: Remplace with attemptCreate
-    client.post(loansUrl(), new LoanBuilder()
-        .open()
-        .withItemId(item.getId())
-        .withUserId(to.getId()).create(),
-      ResponseHandler.json(createCompleted));
-
-    final Response response = createCompleted.get(5, TimeUnit.SECONDS);
+    final Response response = loansClient.attemptCreate(new LoanBuilder()
+      .open()
+      .withItemId(item.getId())
+      .withUserId(to.getId()));
 
     assertThat(
       String.format("Should not be able to create loan: %s", response.getBody()),
