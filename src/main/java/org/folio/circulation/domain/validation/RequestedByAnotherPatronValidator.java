@@ -43,6 +43,6 @@ public class RequestedByAnotherPatronValidator {
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
     return succeeded(loanAndRelatedRecords.getRequestQueue()
-      .hasAwaitingPickupRequestForOtherPatron(loanAndRelatedRecords.getLoan().getUser()));
+      .isRequestedByOtherPatron(loanAndRelatedRecords.getLoan().getUser()));
   }
 }
