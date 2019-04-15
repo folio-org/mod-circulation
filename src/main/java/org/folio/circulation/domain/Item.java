@@ -57,28 +57,27 @@ public class Item {
   }
 
   public boolean isCheckedOut() {
-    return isStatus(CHECKED_OUT);
+    return isInStatus(CHECKED_OUT);
   }
 
   public boolean isMissing() {
-    return isStatus(MISSING);
+    return isInStatus(MISSING);
   }
 
   public boolean isAwaitingPickup() {
-    return isStatus(AWAITING_PICKUP);
+    return isInStatus(AWAITING_PICKUP);
   }
 
-  private boolean isInTransitPickup() {
-    return isStatus(IN_TRANSIT);
+  private boolean isInTransit() {
+    return isInStatus(IN_TRANSIT);
   }
 
-  private boolean isStatus(ItemStatus inTransit) {
+  boolean isNotSameStatus(ItemStatus prospectiveStatus) {
+    return !isInStatus(prospectiveStatus);
+  }
+
+  private boolean isInStatus(ItemStatus inTransit) {
     return getStatus().equals(inTransit);
-  }
-
-
-  Boolean isNotSameStatus(ItemStatus prospectiveStatus) {
-    return !Objects.equals(getStatus(), prospectiveStatus);
   }
 
   boolean hasChanged() {
@@ -238,7 +237,7 @@ public class Item {
 
     //TODO: Remove this hack to remove destination service point
     // needs refactoring of how in transit for pickup is done
-    if(!isInTransitPickup()) {
+    if(!isInTransit()) {
       return removeDestination();
     }
     else {
