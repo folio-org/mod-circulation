@@ -58,11 +58,11 @@ public class LoansFixture {
   public IndividualResource checkOut(
     IndividualResource item,
     IndividualResource to)
-
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
     TimeoutException {
+
     return checkOut(item, to, DateTime.now());
   }
 
@@ -81,28 +81,6 @@ public class LoansFixture {
       .withUserId(to.getId())
       .withLoanDate(loanDate)
       .withDueDate(loanDate.plusWeeks(3)));
-  }
-
-  private IndividualResource checkOutItem(UUID itemId, UUID loanId)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    return loansClient.create(new LoanBuilder()
-      .withId(loanId)
-      .open()
-      .withItemId(itemId)
-      .withDueDate(new DateTime(2018, 12, 3, 11, 22, 43, DateTimeZone.UTC)));
-  }
-
-  public IndividualResource checkOutItem(UUID itemId)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    return checkOutItem(itemId, UUID.randomUUID());
   }
 
   public Response attemptCheckOut(
