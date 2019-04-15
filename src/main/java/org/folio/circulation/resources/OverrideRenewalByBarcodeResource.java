@@ -1,5 +1,7 @@
 package org.folio.circulation.resources;
 
+import static org.folio.circulation.resources.OverrideByBarcodeRequest.renewalOverrideRequestFrom;
+
 import org.folio.circulation.domain.LoanRenewalService;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.LoanRepresentation;
@@ -8,7 +10,6 @@ import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.representations.LoanResponse;
 import org.folio.circulation.storage.SingleOpenLoanByUserAndItemBarcodeFinder;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.WebContext;
@@ -41,19 +42,14 @@ public class OverrideRenewalByBarcodeResource extends Resource {
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
     final LoanRenewalService renewalService = LoanRenewalService.using(clients);
-    final SingleOpenLoanByUserAndItemBarcodeFinder loanFinder = new SingleOpenLoanByUserAndItemBarcodeFinder();
+    final SingleOpenLoanByUserAndItemBarcodeFinder loanFinder
+      = new SingleOpenLoanByUserAndItemBarcodeFinder(loanRepository,
+      itemRepository, userRepository, requestQueueRepository);
 
-    final Result<OverrideByBarcodeRequest> request = OverrideByBarcodeRequest.from(routingContext.getBodyAsJson());
-
-    request.after(override ->
-      loanFinder.findLoan(
-        routingContext.getBodyAsJson(),
-        loanRepository,
-        itemRepository,
-        userRepository,
-        requestQueueRepository)
-        .thenComposeAsync(r -> r.after(loan -> renewalService.overrideRenewal(loan, override.getDueDate(), override.getComment())))
-        .thenComposeAsync(r -> r.after(loanRepository::updateLoan)))
+    renewalOverrideRequestFrom(routingContext.getBodyAsJson())
+      .after(override -> loanFinder.findLoan(override.getItemBarcode(), override.getUserBarcode())
+      .thenComposeAsync(r -> r.after(loan -> renewalService.overrideRenewal(loan, override.getDueDate(), override.getComment())))
+      .thenComposeAsync(r -> r.after(loanRepository::updateLoan)))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(LoanResponse::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));

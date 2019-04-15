@@ -4,7 +4,7 @@ import api.support.builders.CalendarBuilder;
 import api.support.builders.OpeningDayPeriodBuilder;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.CaseInsensitiveHeaders;
-import org.folio.circulation.domain.OpeningDayPeriod;
+import api.support.OpeningDayPeriod;
 import org.folio.circulation.domain.OpeningHour;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.folio.circulation.domain.OpeningDay.createOpeningDay;
-import static org.folio.circulation.domain.OpeningDayPeriod.createDayPeriod;
+import static api.support.OpeningDayPeriod.createDayPeriod;
 
 public class CalendarExamples {
 

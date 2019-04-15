@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import io.vertx.core.json.JsonObject;
 
 class ConfigurationService {
-
   private final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private static final DateTimeZone DEFAULT_DATE_TIME_ZONE = DateTimeZone.UTC;
@@ -50,5 +49,4 @@ class ConfigurationService {
       ? DEFAULT_DATE_TIME_ZONE
       : DateTimeZone.forID(timezone);
   }
-
 }
