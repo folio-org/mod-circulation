@@ -48,7 +48,6 @@ public class CreateRequestService {
       .next(CreateRequestService::refuseWhenItemDoesNotExist)
       .next(CreateRequestService::refuseWhenInvalidUserAndPatronGroup)
       .next(CreateRequestService::refuseWhenItemIsNotValid)
-      .next(CreateRequestService::refuseWhenItemStatusDisallowedByWhitelist)
       .next(CreateRequestService::refuseWhenUserHasAlreadyRequestedItem)
       .after(this::refuseWhenUserHasAlreadyBeenLoanedItem)
       .thenComposeAsync(r -> r.after(requestPolicyRepository::lookupRequestPolicy))
@@ -109,31 +108,6 @@ public class CreateRequestService {
     final String requestTypeName = requestType.getValue();
 
     return failedValidation(format("%s requests are not allowed for this patron and item combination", requestTypeName),
-      REQUEST_TYPE, requestTypeName);
-  }
-
-  private static Result<RequestAndRelatedRecords> refuseWhenItemStatusDisallowedByWhitelist(
-    RequestAndRelatedRecords requestAndRelatedRecords) {
-
-    Request request = requestAndRelatedRecords.getRequest();
-    Item item = request.getItem();
-
-    boolean isWhiteListed = canCreateRequestForItem(item.getStatus(), request.getRequestType());
-
-    if (!isWhiteListed) {
-      return failureRequestNotWhitelisted(request.getRequestType(), item.getStatus());
-    } else {
-      return succeeded(requestAndRelatedRecords);
-    }
-  }
-
-  private static ResponseWritableResult<RequestAndRelatedRecords> failureRequestNotWhitelisted(
-    RequestType requestType, ItemStatus itemStatus) {
-
-    final String requestTypeName = requestType.getValue();
-    final String itemStatusName = itemStatus.getValue();
-
-    return failedValidation(format("%s requests are not allowed for items of status %s", requestTypeName, itemStatusName),
       REQUEST_TYPE, requestTypeName);
   }
 

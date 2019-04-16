@@ -29,10 +29,9 @@ public class RequestTypeItemStatusWhiteList {
     recallRules.put(ItemStatus.AWAITING_PICKUP, true);
     recallRules.put(ItemStatus.IN_TRANSIT, true);
     recallRules.put(ItemStatus.MISSING, false);
-    recallRules.put(ItemStatus.PAGED, false);
+    recallRules.put(ItemStatus.PAGED, true);
     recallRules.put(ItemStatus.ON_ORDER, true);
     recallRules.put(ItemStatus.IN_PROCESS, true);
-    recallRules.put(ItemStatus.PAGED, false);
     recallRules.put(ItemStatus.NONE, false);
   }
 
