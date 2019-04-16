@@ -77,7 +77,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    loansFixture.checkOut(smallAngryPlanet, steve);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, steve);
 
     usersClient.delete(steve.getId());
 
@@ -100,7 +100,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    loansFixture.checkOut(smallAngryPlanet, steve);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, steve);
 
     itemsClient.delete(smallAngryPlanet.getId());
 

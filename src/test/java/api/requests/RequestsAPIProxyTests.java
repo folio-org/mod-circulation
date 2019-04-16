@@ -95,7 +95,7 @@ public class RequestsAPIProxyTests extends APITests {
 
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOut(item, usersFixture.steve());
+    loansFixture.checkOutByBarcode(item, usersFixture.steve());
 
     IndividualResource sponsor = usersFixture.jessica();
     IndividualResource proxy = usersFixture.james();

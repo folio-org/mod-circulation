@@ -7,7 +7,7 @@ import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
-import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
+import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -42,7 +42,7 @@ public class MultipleHoldShelfRequestsTests extends APITests {
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource steve = usersFixture.steve();
 
-    loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
@@ -83,15 +83,17 @@ public class MultipleHoldShelfRequestsTests extends APITests {
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource steve = usersFixture.steve();
 
-    loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+
     IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, steve, new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC), requestType);
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
-    loansFixture.checkOut(smallAngryPlanet, jessica);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
     requestByJessica = requestsClient.get(requestByJessica);
 
@@ -117,7 +119,7 @@ public class MultipleHoldShelfRequestsTests extends APITests {
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource steve = usersFixture.steve();
 
-    loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
@@ -127,7 +129,7 @@ public class MultipleHoldShelfRequestsTests extends APITests {
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
-    loansFixture.checkOut(smallAngryPlanet, jessica);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
@@ -157,7 +159,7 @@ public class MultipleHoldShelfRequestsTests extends APITests {
     IndividualResource steve = usersFixture.steve();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
@@ -167,13 +169,13 @@ public class MultipleHoldShelfRequestsTests extends APITests {
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
-    Response response = loansFixture.attemptCheckOut(smallAngryPlanet, rebecca);
+    Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, rebecca);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("The Long Way to a Small, Angry Planet (Barcode: 036000291452) " +
         "cannot be checked out to user Stuart, Rebecca " +
         "because it is awaiting pickup by another patron"),
-      hasUUIDParameter("userId", rebecca.getId()))));
+      hasParameter("userBarcode", rebecca.getBarcode()))));
 
     requestByJessica = requestsClient.get(requestByJessica);
 
@@ -200,7 +202,7 @@ public class MultipleHoldShelfRequestsTests extends APITests {
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource steve = usersFixture.steve();
 
-    loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
@@ -210,13 +212,13 @@ public class MultipleHoldShelfRequestsTests extends APITests {
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
-    Response response = loansFixture.attemptCheckOut(smallAngryPlanet, steve);
+    Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, steve);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("The Long Way to a Small, Angry Planet (Barcode: 036000291452) " +
         "cannot be checked out to user Jones, Steven " +
         "because it is awaiting pickup by another patron"),
-      hasUUIDParameter("userId", steve.getId()))));
+      hasParameter("userBarcode", steve.getBarcode()))));
 
     requestByJessica = requestsClient.get(requestByJessica);
 

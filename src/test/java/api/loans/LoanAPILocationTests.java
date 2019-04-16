@@ -36,7 +36,7 @@ public class LoanAPILocationTests extends APITests {
         .withTemporaryLocation(secondFloorEconomics)
     );
 
-    final IndividualResource checkOutResponse = loansFixture.checkOut(item,
+    final IndividualResource checkOutResponse = loansFixture.createLoan(item,
       usersFixture.jessica());
 
     UUID loanId = checkOutResponse.getId();
@@ -79,7 +79,7 @@ public class LoanAPILocationTests extends APITests {
       itemBuilder -> itemBuilder
         .withPermanentLocation(thirdFloor));
 
-    UUID firstLoanId = loansFixture.checkOut(firstItem, usersFixture.jessica())
+    UUID firstLoanId = loansFixture.createLoan(firstItem, usersFixture.jessica())
       .getId();
 
     final IndividualResource mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
@@ -93,7 +93,7 @@ public class LoanAPILocationTests extends APITests {
         .withNoTemporaryLocation()
     );
 
-    UUID secondLoanId = loansFixture.checkOut(secondItem, usersFixture.james())
+    UUID secondLoanId = loansFixture.createLoan(secondItem, usersFixture.james())
       .getId();
 
     List<JsonObject> fetchedLoansResponse = loansClient.getAll();

@@ -595,9 +595,9 @@ public class LoanAPITests extends APITests {
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
 
-    loansFixture.checkOut(smallAngryPlanet, james);
+    loansFixture.createLoan(smallAngryPlanet, james);
 
-    Response response = loansFixture.attemptCheckOut(smallAngryPlanet, jessica);
+    Response response = loansFixture.attemptToCreateLoan(smallAngryPlanet, jessica);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Item is already checked out"),
@@ -614,7 +614,7 @@ public class LoanAPITests extends APITests {
     final IndividualResource missingItem = setupMissingItem(itemsFixture);
     final IndividualResource steve = usersFixture.steve();
 
-    Response response = loansFixture.attemptCheckOut(missingItem, steve);
+    Response response = loansFixture.attemptToCreateLoan(missingItem, steve);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessageContaining("has the item status Missing"),
@@ -868,7 +868,7 @@ public class LoanAPITests extends APITests {
 
     final InventoryItemResource item = itemsFixture.basedUponNod();
 
-    final UUID loanId = loansFixture.checkOut(item, usersFixture.rebecca()).getId();
+    final UUID loanId = loansFixture.createLoan(item, usersFixture.rebecca()).getId();
 
     itemsClient.delete(item.getId());
 
@@ -939,7 +939,7 @@ public class LoanAPITests extends APITests {
 
     final InventoryItemResource item = itemsFixture.basedUponNod();
 
-    IndividualResource loan = loansFixture.checkOut(item, usersFixture.rebecca());
+    IndividualResource loan = loansFixture.createLoan(item, usersFixture.rebecca());
 
     JsonObject loanToRenew = loan.copyJson();
 
@@ -1078,7 +1078,7 @@ public class LoanAPITests extends APITests {
 
     final InventoryItemResource item = itemsFixture.basedUponNod();
 
-    final IndividualResource checkOutResponse = loansFixture.checkOut(item,
+    final IndividualResource checkOutResponse = loansFixture.createLoan(item,
       usersFixture.jessica());
 
     JsonObject fetchedItem = itemsClient.getById(item.getId()).getJson();
@@ -1118,7 +1118,7 @@ public class LoanAPITests extends APITests {
 
     final InventoryItemResource item = itemsFixture.basedUponNod();
 
-    loansFixture.checkOut(item, usersFixture.jessica());
+    loansFixture.createLoan(item, usersFixture.jessica());
 
     itemsClient.delete(item.getId());
 
@@ -1455,7 +1455,7 @@ public class LoanAPITests extends APITests {
 
     final InventoryItemResource item = itemsFixture.basedUponNod();
 
-    final UUID loanId = loansFixture.checkOut(item, usersFixture.rebecca()).getId();
+    final UUID loanId = loansFixture.createLoan(item, usersFixture.rebecca()).getId();
 
     CompletableFuture<Response> deleteCompleted = new CompletableFuture<>();
 
