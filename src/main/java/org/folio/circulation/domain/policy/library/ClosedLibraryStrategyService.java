@@ -1,12 +1,5 @@
 package org.folio.circulation.domain.policy.library;
 
-import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.determineClosedLibraryStrategy;
-import static org.folio.circulation.support.Result.succeeded;
-
-import java.util.Comparator;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-
 import org.folio.circulation.AdjacentOpeningDays;
 import org.folio.circulation.domain.CalendarRepository;
 import org.folio.circulation.domain.Loan;
@@ -17,6 +10,13 @@ import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
+
+import java.util.Comparator;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.determineClosedLibraryStrategy;
+import static org.folio.circulation.support.Result.succeeded;
 
 public class ClosedLibraryStrategyService {
 
@@ -36,17 +36,17 @@ public class ClosedLibraryStrategyService {
     this.isRenewal = isRenewal;
   }
 
-  public CompletableFuture<Result<LoanAndRelatedRecords>> applyCLDDM(
+  public CompletableFuture<Result<LoanAndRelatedRecords>> applyClosedLibraryDueDateManagement(
     LoanAndRelatedRecords relatedRecords) {
 
-    return applyCLDDM(relatedRecords.getLoan(), relatedRecords.getLoanPolicy(), relatedRecords.getTimeZone())
+    return applyClosedLibraryDueDateManagement(relatedRecords.getLoan(), relatedRecords.getLoanPolicy(), relatedRecords.getTimeZone())
       .thenApply(r -> r.map(dateTime -> {
         relatedRecords.getLoan().changeDueDate(dateTime);
         return relatedRecords;
       }));
   }
 
-  public CompletableFuture<Result<DateTime>> applyCLDDM(Loan loan, LoanPolicy loanPolicy, DateTimeZone timeZone) {
+  public CompletableFuture<Result<DateTime>> applyClosedLibraryDueDateManagement(Loan loan, LoanPolicy loanPolicy, DateTimeZone timeZone) {
     LocalDate requestedDate = loan.getDueDate().withZone(timeZone).toLocalDate();
     return calendarRepository.lookupOpeningDays(requestedDate, loan.getCheckoutServicePointId())
       .thenApply(r -> r.next(openingDays -> applyStrategy(loan, loanPolicy, openingDays, timeZone)));

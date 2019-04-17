@@ -44,7 +44,7 @@ public class UpdateLoan {
           .thenApply(r -> r.map(LoanAndRelatedRecords::new))
           .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
           .thenApply(r -> r.next(this::recall))
-          .thenComposeAsync(r -> r.after(closedLibraryStrategyService::applyCLDDM))
+          .thenComposeAsync(r -> r.after(closedLibraryStrategyService::applyClosedLibraryDueDateManagement))
           .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
           .thenApply(r -> r.map(v -> requestAndRelatedRecords));
     } else {

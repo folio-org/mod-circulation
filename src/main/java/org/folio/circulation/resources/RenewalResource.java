@@ -1,7 +1,9 @@
 package org.folio.circulation.resources;
 
-import java.util.concurrent.CompletableFuture;
-
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.domain.ConfigurationRepository;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
@@ -21,10 +23,7 @@ import org.folio.circulation.support.http.server.WebContext;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
+import java.util.concurrent.CompletableFuture;
 
 public abstract class RenewalResource extends Resource {
   private final String rootPath;
@@ -71,7 +70,7 @@ public abstract class RenewalResource extends Resource {
       .thenComposeAsync(r -> r.after(configurationRepository::lookupTimeZone))
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenApply(r -> r.next(loanRenewalService::renew))
-      .thenComposeAsync(r -> r.after(strategyService::applyCLDDM))
+      .thenComposeAsync(r -> r.after(strategyService::applyClosedLibraryDueDateManagement))
       .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(LoanResponse::from)

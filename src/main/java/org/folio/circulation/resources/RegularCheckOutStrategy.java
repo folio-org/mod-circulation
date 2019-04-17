@@ -1,13 +1,6 @@
 package org.folio.circulation.resources;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
-import static org.folio.circulation.support.Result.failed;
-import static org.folio.circulation.support.Result.succeeded;
-import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
-
-import java.util.concurrent.CompletableFuture;
-
+import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.policy.LoanPolicy;
@@ -16,7 +9,13 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 
-import io.vertx.core.json.JsonObject;
+import java.util.concurrent.CompletableFuture;
+
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
+import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 /**
  * Checkout strategy for the loanable items.
@@ -36,7 +35,7 @@ public class RegularCheckOutStrategy implements CheckOutStrategy {
     return completedFuture(succeeded(relatedRecords))
       .thenApply(r -> r.next(this::refuseWhenItemIsNotLoanable))
       .thenApply(r -> r.next(this::calculateDefaultInitialDueDate))
-      .thenCompose(r -> r.after(strategyService::applyCLDDM));
+      .thenCompose(r -> r.after(strategyService::applyClosedLibraryDueDateManagement));
   }
 
   private Result<LoanAndRelatedRecords> refuseWhenItemIsNotLoanable(LoanAndRelatedRecords relatedRecords) {
