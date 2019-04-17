@@ -18,7 +18,6 @@ public class RequestTypeItemStatusWhiteListTests {
   @Test
   public void canCreateRecallRequestWhenItemStatusCheckedOut() {
     assertTrue(RequestTypeItemStatusWhiteList.canCreateRequestForItem(ItemStatus.CHECKED_OUT, RequestType.RECALL));
-
   }
 
   @Test
@@ -39,7 +38,6 @@ public class RequestTypeItemStatusWhiteListTests {
   @Test
   public void canCreateRecallRequestWhenItemStatusOnOrder() {
     assertTrue(RequestTypeItemStatusWhiteList.canCreateRequestForItem(ItemStatus.ON_ORDER, RequestType.RECALL));
-
   }
 
   @Test
@@ -56,7 +54,6 @@ public class RequestTypeItemStatusWhiteListTests {
   @Test
   public void canCreateRecallRequestWhenItemStatusInProcess() {
     assertTrue(RequestTypeItemStatusWhiteList.canCreateRequestForItem(ItemStatus.IN_PROCESS, RequestType.RECALL));
-
   }
 
   @Test
