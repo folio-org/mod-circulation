@@ -363,7 +363,7 @@ public class LoanPolicy {
   }
 
   public boolean isNotLoanable() {
-    return !getBooleanProperty(representation, "loanable");
+    return !isLoanable();
   }
 
   public DueDateManagement getDueDateManagement() {
