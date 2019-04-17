@@ -36,6 +36,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
   private static final DateTime TEST_DUE_DATE =
     new DateTime(2019, 4, 20, 11, 30, 0, DateTimeZone.UTC);
   private static final String TEST_COMMENT = "Some comment";
+  private static final String CHECKED_OUT_THROUGH_OVERRIDE = "checkedOutThroughOverride";
 
   @Test
   public void canOverrideCheckoutWhenItemIsNotLoanable()
@@ -61,8 +62,8 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
 
     final JsonObject loan = response.getJson();
 
-    assertThat("action should be checkedoutThroughOverride",
-      loan.getString("action"), is("checkedoutThroughOverride"));
+    assertThat("action should be checkedOutThroughOverride",
+      loan.getString("action"), is(CHECKED_OUT_THROUGH_OVERRIDE));
 
     assertThat("due date should equal to due date from request",
       loan.getString("dueDate"), isEquivalentTo(TEST_DUE_DATE));
@@ -82,7 +83,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
       loan.getJsonObject("status").getString("name"), is("Open"));
 
     assertThat("action should be checkedout",
-      loan.getString("action"), is("checkedoutThroughOverride"));
+      loan.getString("action"), is(CHECKED_OUT_THROUGH_OVERRIDE));
 
     assertThat("loan date should be as supplied",
       loan.getString("loanDate"), isEquivalentTo(TEST_LOAN_DATE));

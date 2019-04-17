@@ -254,7 +254,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   public Loan overrideRenewal(DateTime dueDate,
                               String basedUponLoanPolicyId,
                               String actionComment) {
-    changeAction("Renewed through override");
+    changeAction("renewedThroughOverride");
     changeLoanPolicy(basedUponLoanPolicyId);
     changeDueDate(dueDate);
     incrementRenewalCount();

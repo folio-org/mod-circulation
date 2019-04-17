@@ -57,7 +57,7 @@ public class OverrideCheckOutStrategy implements CheckOutStrategy {
 
     return completedFuture(succeeded(relatedRecords))
       .thenApply(r -> r.next(this::refuseWhenItemIsLoanable))
-      .thenApply(r -> r.next(records -> setLoanStatus(records, dueDate)))
+      .thenApply(r -> r.next(records -> setDueDate(records, dueDate)))
       .thenApply(r -> r.next(records -> setLoanAction(records, comment)));
   }
 
@@ -70,14 +70,14 @@ public class OverrideCheckOutStrategy implements CheckOutStrategy {
     return succeeded(relatedRecords);
   }
 
-  private Result<LoanAndRelatedRecords> setLoanStatus(LoanAndRelatedRecords loanAndRelatedRecords, DateTime dueDate) {
+  private Result<LoanAndRelatedRecords> setDueDate(LoanAndRelatedRecords loanAndRelatedRecords, DateTime dueDate) {
     loanAndRelatedRecords.getLoan().changeDueDate(dueDate);
     return succeeded(loanAndRelatedRecords);
   }
 
   private Result<LoanAndRelatedRecords> setLoanAction(LoanAndRelatedRecords loanAndRelatedRecords, String comment) {
     Loan loan = loanAndRelatedRecords.getLoan();
-    loan.changeAction("checkedoutThroughOverride");
+    loan.changeAction("checkedOutThroughOverride");
     loan.changeActionComment(comment);
     return succeeded(loanAndRelatedRecords);
   }
