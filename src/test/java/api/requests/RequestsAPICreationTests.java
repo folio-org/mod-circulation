@@ -1175,7 +1175,8 @@ public class RequestsAPICreationTests extends APITests {
     MalformedURLException {
 
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
-    final IndividualResource pagedItem = itemsClient.get(setupPagedItem(requestPickupServicePoint, itemsFixture, requestsClient, usersFixture));;
+    final IndividualResource smallAngryPlannet = setupPagedItem(requestPickupServicePoint, itemsFixture, requestsClient, usersFixture);
+    final IndividualResource pagedItem = itemsClient.get(smallAngryPlannet);
     
     final Response recallResponse = requestsClient.attemptCreate(new RequestBuilder()
       .recall()
