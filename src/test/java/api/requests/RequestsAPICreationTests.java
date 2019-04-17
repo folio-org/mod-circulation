@@ -1168,24 +1168,24 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void cannotCreateRecallRequestWhenItemIsPaged()
+  public void canCreateRecallRequestWhenItemIsPaged()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
     MalformedURLException {
 
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
-    final IndividualResource pagedItem = setupPagedItem(requestPickupServicePoint, itemsFixture, requestsClient, usersFixture);
-
+    final IndividualResource pagedItem = itemsClient.get(setupPagedItem(requestPickupServicePoint, itemsFixture, requestsClient, usersFixture));;
+    
     final Response recallResponse = requestsClient.attemptCreate(new RequestBuilder()
       .recall()
       .forItem(pagedItem)
       .withPickupServicePointId(requestPickupServicePoint.getId())
       .by(usersFixture.jessica()));
 
-    assertThat(recallResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("Recall requests are not allowed for this patron and item combination"),
-      hasParameter("requestType", "Recall"))));
+      assertThat(recallResponse.getJson().getString("requestType"), is(RequestType.RECALL.getValue()));
+      assertThat(pagedItem.getResponse().getJson().getJsonObject("status").getString("name"), is(ItemStatus.PAGED.getValue()));
+      assertThat(recallResponse.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }
 
   @Test
