@@ -3,6 +3,7 @@ package api.loans;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
@@ -25,7 +26,6 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.OverrideCheckOutByBarcodeRequestBuilder;
-import api.support.matchers.UUIDMatcher;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -74,10 +74,10 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
     assertThat(loan.getString("id"), is(notNullValue()));
 
     assertThat("user ID should match barcode",
-      loan.getString("userId"), UUIDMatcher.is(steve.getId()));
+      loan.getString("userId"), is(steve.getId()));
 
     assertThat("item ID should match barcode",
-      loan.getString("itemId"), UUIDMatcher.is(smallAngryPlanet.getId()));
+      loan.getString("itemId"), is(smallAngryPlanet.getId()));
 
     assertThat("status should be open",
       loan.getJsonObject("status").getString("name"), is("Open"));
@@ -92,7 +92,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
       loan.getString("dueDate"), isEquivalentTo(TEST_DUE_DATE));
 
     assertThat("Checkout service point should be stored",
-      loan.getString("checkoutServicePointId"), UUIDMatcher.is(checkoutServicePointId));
+      loan.getString("checkoutServicePointId"), is(checkoutServicePointId));
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
@@ -199,7 +199,35 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideCheckoutWhenDueDateIsSameOrBeforeLoanDate()
+  public void cannotOverrideCheckoutWhenDueDateIsBeforeLoanDate()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource steve = usersFixture.steve();
+    final UUID checkoutServicePointId = UUID.randomUUID();
+
+    setNotLoanablePolicy();
+    DateTime invalidDueDate = TEST_LOAN_DATE.minusDays(2);
+    Response response = loansFixture.attemptOverrideCheckOutByBarcode(
+      new OverrideCheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .at(checkoutServicePointId)
+        .on(TEST_LOAN_DATE)
+        .withDueDate(invalidDueDate)
+        .withComment(TEST_COMMENT)
+    );
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Due date should be later than loan date"),
+      hasParameter("dueDate", invalidDueDate.toString()))));
+  }
+
+  @Test
+  public void cannotOverrideCheckoutWhenDueDateIsTheSameAsLoanDate()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -216,12 +244,13 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
         .to(steve)
         .at(checkoutServicePointId)
         .on(TEST_LOAN_DATE)
-        .withDueDate(TEST_LOAN_DATE.minusDays(2))
+        .withDueDate(TEST_LOAN_DATE)
         .withComment(TEST_COMMENT)
     );
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Due date should be later than loan date"))));
+      hasMessage("Due date should be later than loan date"),
+      hasParameter("dueDate", TEST_LOAN_DATE.toString()))));
   }
 
   @Test
