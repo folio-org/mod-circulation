@@ -13,7 +13,7 @@ public enum ItemStatus {
   MISSING("Missing"),
   PAGED("Paged"),
   ON_ORDER("On order"),
-  IN_PROCESS("In Process");
+  IN_PROCESS("In process");
 
   public static ItemStatus from(String value) {
     return Arrays.stream(values())
