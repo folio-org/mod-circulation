@@ -76,8 +76,8 @@ public class Item {
     return !isInStatus(prospectiveStatus);
   }
 
-  private boolean isInStatus(ItemStatus inTransit) {
-    return getStatus().equals(inTransit);
+  private boolean isInStatus(ItemStatus status) {
+    return getStatus().equals(status);
   }
 
   boolean hasChanged() {
