@@ -2,8 +2,6 @@ package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.notice.NoticeContextUtil.createLoanNoticeContext;
-import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.COMMENT;
-import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.DUE_DATE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.SERVICE_POINT_ID;
@@ -13,7 +11,6 @@ import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.ConfigurationRepository;
 import org.folio.circulation.domain.Item;
@@ -33,7 +30,6 @@ import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.policy.PatronNoticePolicyRepository;
-import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
 import org.folio.circulation.domain.validation.AwaitingPickupValidator;
@@ -59,13 +55,15 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
-public abstract class CheckOutByBarcodeResource extends Resource {
+public class CheckOutByBarcodeResource extends Resource {
 
-  private String rootPath;
+  private final String rootPath;
+  private final CheckOutStrategy checkOutStrategy;
 
-  public CheckOutByBarcodeResource(HttpClient client, String rootPath) {
+  public CheckOutByBarcodeResource(String rootPath, HttpClient client, CheckOutStrategy checkOutStrategy) {
     super(client);
     this.rootPath = rootPath;
+    this.checkOutStrategy = checkOutStrategy;
   }
 
   public void register(Router router) {
@@ -89,8 +87,6 @@ public abstract class CheckOutByBarcodeResource extends Resource {
     final String userBarcode = request.getString(USER_BARCODE);
     final String proxyUserBarcode = request.getString(PROXY_USER_BARCODE);
     final String checkoutServicePointId = request.getString(SERVICE_POINT_ID);
-    final String dueDate = request.getString(DUE_DATE);
-    final String comment = request.getString(COMMENT);
 
     loanJson.put(LoanProperties.CHECKOUT_SERVICE_POINT_ID, checkoutServicePointId);
     Loan loan = Loan.from(loanJson);
@@ -102,7 +98,6 @@ public abstract class CheckOutByBarcodeResource extends Resource {
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
-    final ClosedLibraryStrategyService strategyService = ClosedLibraryStrategyService.using(clients, loan.getLoanDate(), false);
     final PatronNoticePolicyRepository patronNoticePolicyRepository = new PatronNoticePolicyRepository(clients);
     final PatronNoticeService patronNoticeService = new PatronNoticeService(patronNoticePolicyRepository, clients);
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
@@ -156,7 +151,7 @@ public abstract class CheckOutByBarcodeResource extends Resource {
       .thenApply(awaitingPickupValidator::refuseWhenUserIsNotAwaitingPickup)
       .thenComposeAsync(r -> r.after(configurationRepository::lookupTimeZone))
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
-      .thenComposeAsync(r -> r.after(relatedRecords -> applyLoanPolicy(relatedRecords, strategyService, dueDate, comment)))
+      .thenComposeAsync(r -> r.after(relatedRecords -> checkOutStrategy.checkOut(relatedRecords, request, clients)))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
       .thenComposeAsync(r -> r.after(loanRepository::createLoan))
@@ -166,11 +161,6 @@ public abstract class CheckOutByBarcodeResource extends Resource {
       .thenApply(this::createdLoanFrom)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
-
-  abstract CompletableFuture<Result<LoanAndRelatedRecords>> applyLoanPolicy(LoanAndRelatedRecords relatedRecords,
-                                                                            ClosedLibraryStrategyService strategyService,
-                                                                            String dueDate,
-                                                                            String comment);
 
   private void copyOrDefaultLoanDate(JsonObject request, JsonObject loan) {
     final String loanDateProperty = "loanDate";

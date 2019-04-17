@@ -12,21 +12,27 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
+import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
+import org.joda.time.DateTime;
 
-import io.vertx.core.http.HttpClient;
+import io.vertx.core.json.JsonObject;
 
-public class RegularCheckOutByBarcodeResource extends CheckOutByBarcodeResource {
-
-  public RegularCheckOutByBarcodeResource(HttpClient client) {
-    super(client, "/circulation/check-out-by-barcode");
-  }
+/**
+ * Checkout strategy for the loanable items.
+ * Calculates due date based on loan policy and closed library due date management.
+ * Refuses request if an item is not loanable
+ */
+public class RegularCheckOutStrategy implements CheckOutStrategy {
 
   @Override
-  CompletableFuture<Result<LoanAndRelatedRecords>> applyLoanPolicy(LoanAndRelatedRecords relatedRecords,
-                                                                   ClosedLibraryStrategyService strategyService,
-                                                                   String dueDate,
-                                                                   String comment) {
+  public CompletableFuture<Result<LoanAndRelatedRecords>> checkOut(LoanAndRelatedRecords relatedRecords,
+                                                                   JsonObject request,
+                                                                   Clients clients) {
+    DateTime loanDate = relatedRecords.getLoan().getLoanDate();
+    final ClosedLibraryStrategyService strategyService =
+      ClosedLibraryStrategyService.using(clients, loanDate, false);
+
     return completedFuture(succeeded(relatedRecords))
       .thenApply(r -> r.next(this::refuseWhenItemIsNotLoanable))
       .thenApply(r -> r.next(this::calculateDefaultInitialDueDate))

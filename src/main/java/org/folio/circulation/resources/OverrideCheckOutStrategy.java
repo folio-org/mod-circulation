@@ -1,8 +1,6 @@
 package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.COMMENT;
-import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.DUE_DATE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
@@ -12,24 +10,30 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
+import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 
-import io.vertx.core.http.HttpClient;
+import io.vertx.core.json.JsonObject;
 
-public class OverrideCheckOutByBarcodeResource extends CheckOutByBarcodeResource {
+/**
+ * Checkout strategy for non loanable items.
+ * Sets due date passed in request body.
+ * Refuses request if an item is loanable
+ */
+public class OverrideCheckOutStrategy implements CheckOutStrategy {
 
-  public OverrideCheckOutByBarcodeResource(HttpClient client) {
-    super(client, "/circulation/override-check-out-by-barcode");
-  }
+  private static final String DUE_DATE = "dueDate";
+  private static final String COMMENT = "comment";
+
 
   @Override
-  CompletableFuture<Result<LoanAndRelatedRecords>> applyLoanPolicy(LoanAndRelatedRecords relatedRecords,
-                                                                   ClosedLibraryStrategyService strategyService,
-                                                                   String dueDateParameter,
-                                                                   String comment) {
+  public CompletableFuture<Result<LoanAndRelatedRecords>> checkOut(LoanAndRelatedRecords relatedRecords,
+                                                                   JsonObject request,
+                                                                   Clients clients) {
+    String comment = request.getString(COMMENT);
+    String dueDateParameter = request.getString(DUE_DATE);
 
     if (comment == null) {
       ValidationError error = new ValidationError(
@@ -53,8 +57,8 @@ public class OverrideCheckOutByBarcodeResource extends CheckOutByBarcodeResource
 
     return completedFuture(succeeded(relatedRecords))
       .thenApply(r -> r.next(this::refuseWhenItemIsLoanable))
-      .thenApply(r -> r.next(records -> changeDueDate(records, dueDate)))
-      .thenApply(r -> r.next(records -> changeStatus(records, comment)));
+      .thenApply(r -> r.next(records -> setLoanStatus(records, dueDate)))
+      .thenApply(r -> r.next(records -> setLoanAction(records, comment)));
   }
 
   private Result<LoanAndRelatedRecords> refuseWhenItemIsLoanable(LoanAndRelatedRecords relatedRecords) {
@@ -66,17 +70,16 @@ public class OverrideCheckOutByBarcodeResource extends CheckOutByBarcodeResource
     return succeeded(relatedRecords);
   }
 
-  private Result<LoanAndRelatedRecords> changeDueDate(LoanAndRelatedRecords loanAndRelatedRecords, DateTime dueDate) {
+  private Result<LoanAndRelatedRecords> setLoanStatus(LoanAndRelatedRecords loanAndRelatedRecords, DateTime dueDate) {
     loanAndRelatedRecords.getLoan().changeDueDate(dueDate);
     return succeeded(loanAndRelatedRecords);
   }
 
-  private Result<LoanAndRelatedRecords> changeStatus(LoanAndRelatedRecords loanAndRelatedRecords, String comment) {
+  private Result<LoanAndRelatedRecords> setLoanAction(LoanAndRelatedRecords loanAndRelatedRecords, String comment) {
     Loan loan = loanAndRelatedRecords.getLoan();
     loan.changeAction("checkedoutThroughOverride");
     loan.changeActionComment(comment);
     return succeeded(loanAndRelatedRecords);
   }
-
 
 }
