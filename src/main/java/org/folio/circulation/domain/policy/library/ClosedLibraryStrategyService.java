@@ -10,6 +10,7 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.AdjacentOpeningDays;
 import org.folio.circulation.domain.CalendarRepository;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
@@ -35,7 +36,17 @@ public class ClosedLibraryStrategyService {
     this.isRenewal = isRenewal;
   }
 
-  public CompletableFuture<Result<DateTime>> applyCLDDM(Loan loan, LoanPolicy loanPolicy, DateTimeZone timeZone) {
+  public CompletableFuture<Result<LoanAndRelatedRecords>> applyClosedLibraryDueDateManagement(
+    LoanAndRelatedRecords relatedRecords) {
+
+    return applyClosedLibraryDueDateManagement(relatedRecords.getLoan(), relatedRecords.getLoanPolicy(), relatedRecords.getTimeZone())
+      .thenApply(r -> r.map(dateTime -> {
+        relatedRecords.getLoan().changeDueDate(dateTime);
+        return relatedRecords;
+      }));
+  }
+
+  public CompletableFuture<Result<DateTime>> applyClosedLibraryDueDateManagement(Loan loan, LoanPolicy loanPolicy, DateTimeZone timeZone) {
     LocalDate requestedDate = loan.getDueDate().withZone(timeZone).toLocalDate();
     return calendarRepository.lookupOpeningDays(requestedDate, loan.getCheckoutServicePointId())
       .thenApply(r -> r.next(openingDays -> applyStrategy(loan, loanPolicy, openingDays, timeZone)));
