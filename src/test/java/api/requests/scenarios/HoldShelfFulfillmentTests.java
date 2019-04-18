@@ -29,7 +29,6 @@ import api.support.APITests;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 
 public class HoldShelfFulfillmentTests extends APITests {
-
   @Test
   public void itemIsReadyForPickUpWhenCheckedInAtPickupServicePoint()
     throws InterruptedException,
@@ -72,6 +71,8 @@ public class HoldShelfFulfillmentTests extends APITests {
     TimeoutException,
     ExecutionException {
 
+    final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
+
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
@@ -79,9 +80,12 @@ public class HoldShelfFulfillmentTests extends APITests {
     loansFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+      smallAngryPlanet, jessica,
+      new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC),
+      pickupServicePoint.getId());
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    loansFixture.checkInByBarcode(smallAngryPlanet,
+      DateTime.now(DateTimeZone.UTC), pickupServicePoint.getId());
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
@@ -130,6 +134,41 @@ public class HoldShelfFulfillmentTests extends APITests {
 
     assertThat("in transit item should have a destination",
       destinationServicePoint, is(pickupServicePoint.getId()));
+  }
+
+  @Test
+  public void canBeCheckedOutToRequestingPatronWhenInTransit()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
+    final IndividualResource checkInServicePoint = servicePointsFixture.cd2();
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource james = usersFixture.james();
+    IndividualResource jessica = usersFixture.jessica();
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+
+    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+      smallAngryPlanet, jessica,
+      new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC),
+      pickupServicePoint.getId());
+
+    loansFixture.checkInByBarcode(smallAngryPlanet,
+      DateTime.now(DateTimeZone.UTC), checkInServicePoint.getId());
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
+
+    Response request = requestsClient.getById(requestByJessica.getId());
+
+    assertThat(request.getJson().getString("status"), is(CLOSED_FILLED));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+
+    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
   }
 
   @Test
