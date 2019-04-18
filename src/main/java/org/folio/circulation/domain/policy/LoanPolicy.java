@@ -358,8 +358,12 @@ public class LoanPolicy {
     return withAlternateRenewalSchedules(FixedDueDateSchedules.from(renewalSchedules));
   }
 
+  public boolean isLoanable() {
+    return getBooleanProperty(representation, "loanable");
+  }
+
   public boolean isNotLoanable() {
-    return !getBooleanProperty(representation, "loanable");
+    return !isLoanable();
   }
 
   public DueDateManagement getDueDateManagement() {

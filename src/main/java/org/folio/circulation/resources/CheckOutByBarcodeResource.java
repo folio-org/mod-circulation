@@ -2,7 +2,6 @@ package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.notice.NoticeContextUtil.createLoanNoticeContext;
-import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.applyCLDDMForLoanAndRelatedRecords;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.SERVICE_POINT_ID;
@@ -29,27 +28,23 @@ import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
-import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.policy.PatronNoticePolicyRepository;
-import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
-import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
 import org.folio.circulation.domain.validation.RequestedByAnotherPatronValidator;
 import org.folio.circulation.domain.validation.ExistingOpenLoanValidator;
 import org.folio.circulation.domain.validation.InactiveUserValidator;
-import org.folio.circulation.domain.validation.ItemIsNotLoanableValidator;
 import org.folio.circulation.domain.validation.ItemMissingValidator;
 import org.folio.circulation.domain.validation.ItemNotFoundValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointOfCheckoutPresentValidator;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CreatedJsonResponseResult;
-import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ItemRepository;
-import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.ResponseWritableResult;
+import org.folio.circulation.support.Result;
+import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.WebContext;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -62,13 +57,18 @@ import io.vertx.ext.web.RoutingContext;
 
 public class CheckOutByBarcodeResource extends Resource {
 
-  public CheckOutByBarcodeResource(HttpClient client) {
+  private final String rootPath;
+  private final CheckOutStrategy checkOutStrategy;
+
+  public CheckOutByBarcodeResource(String rootPath, HttpClient client, CheckOutStrategy checkOutStrategy) {
     super(client);
+    this.rootPath = rootPath;
+    this.checkOutStrategy = checkOutStrategy;
   }
 
   public void register(Router router) {
     RouteRegistration routeRegistration = new RouteRegistration(
-      "/circulation/check-out-by-barcode", router);
+      rootPath, router);
 
     routeRegistration.create(this::checkOut);
   }
@@ -83,7 +83,7 @@ public class CheckOutByBarcodeResource extends Resource {
 
     copyOrDefaultLoanDate(request, loanJson);
 
-    final String itemBarcode = request.getString(CheckOutByBarcodeRequest.ITEM_BARCODE);
+    final String itemBarcode = request.getString(ITEM_BARCODE);
     final String userBarcode = request.getString(USER_BARCODE);
     final String proxyUserBarcode = request.getString(PROXY_USER_BARCODE);
     final String checkoutServicePointId = request.getString(SERVICE_POINT_ID);
@@ -98,7 +98,6 @@ public class CheckOutByBarcodeResource extends Resource {
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
-    final ClosedLibraryStrategyService strategyService = ClosedLibraryStrategyService.using(clients, loan.getLoanDate(), false);
     final PatronNoticePolicyRepository patronNoticePolicyRepository = new PatronNoticePolicyRepository(clients);
     final PatronNoticeService patronNoticeService = new PatronNoticeService(patronNoticePolicyRepository, clients);
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
@@ -131,9 +130,6 @@ public class CheckOutByBarcodeResource extends Resource {
     final ExistingOpenLoanValidator openLoanValidator = new ExistingOpenLoanValidator(
       loanRepository, message -> singleValidationError(message, ITEM_BARCODE, itemBarcode));
 
-    final ItemIsNotLoanableValidator itemIsNotLoanableValidator = new ItemIsNotLoanableValidator(
-      () -> singleValidationError("Item is not loanable", ITEM_BARCODE, itemBarcode));
-
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
 
@@ -155,9 +151,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(requestedByAnotherPatronValidator::refuseWhenRequestedByAnotherPatron)
       .thenComposeAsync(r -> r.after(configurationRepository::lookupTimeZone))
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
-      .thenApply(itemIsNotLoanableValidator::refuseWhenItemIsNotLoanable)
-      .thenApply(r -> r.next(this::calculateDefaultInitialDueDate))
-      .thenComposeAsync(r -> r.after(records -> applyCLDDMForLoanAndRelatedRecords(strategyService, records)))
+      .thenComposeAsync(r -> r.after(relatedRecords -> checkOutStrategy.checkOut(relatedRecords, request, clients)))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
       .thenComposeAsync(r -> r.after(loanRepository::createLoan))
@@ -166,16 +160,6 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(this::createdLoanFrom)
       .thenAccept(result -> result.writeTo(routingContext.response()));
-  }
-
-  private Result<LoanAndRelatedRecords> calculateDefaultInitialDueDate(LoanAndRelatedRecords loanAndRelatedRecords) {
-    Loan loan = loanAndRelatedRecords.getLoan();
-    LoanPolicy loanPolicy = loanAndRelatedRecords.getLoanPolicy();
-    return loanPolicy.calculateInitialDueDate(loan)
-      .map(dueDate -> {
-        loanAndRelatedRecords.getLoan().changeDueDate(dueDate);
-        return loanAndRelatedRecords;
-      });
   }
 
   private void copyOrDefaultLoanDate(JsonObject request, JsonObject loan) {

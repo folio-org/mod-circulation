@@ -169,6 +169,6 @@ public class RequestsAPILoanRenewalTests extends APITests {
       "Renewal override",
       "2018-12-21T13:30:00Z");
 
-    assertThat(response.getJson().getString("action"), is("Renewed through override"));
+    assertThat(response.getJson().getString("action"), is("renewedThroughOverride"));
   }
 }

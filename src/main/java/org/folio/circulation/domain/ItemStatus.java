@@ -11,7 +11,9 @@ public enum ItemStatus {
   CHECKED_OUT("Checked out"),
   IN_TRANSIT("In transit"),
   MISSING("Missing"),
-  PAGED("Paged");
+  PAGED("Paged"),
+  ON_ORDER("On order"),
+  IN_PROCESS("In process");
 
   public static ItemStatus from(String value) {
     return Arrays.stream(values())

@@ -38,6 +38,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   private static final String OVERRIDE_COMMENT = "Comment to override";
   private static final String ITEM_IS_NOT_LOANABLE_MESSAGE = "item is not loanable";
   private static final String ACTION_COMMENT_KEY = "actionComment";
+  private static final String RENEWED_THROUGH_OVERRIDE = "renewedThroughOverride";
 
   @Test
   public void cannotOverrideRenewalWhenLoanPolicyDoesNotExist()
@@ -237,7 +238,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
       renewedLoan.getJsonObject("status").getString("name"), is("Open"));
 
     assertThat("action should be renewed",
-      renewedLoan.getString("action"), is("Renewed through override"));
+      renewedLoan.getString("action"), is(RENEWED_THROUGH_OVERRIDE));
 
     assertThat("'actionComment' field should contain comment specified for override",
       renewedLoan.getString(ACTION_COMMENT_KEY), is(OVERRIDE_COMMENT));
@@ -353,7 +354,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
       renewedLoan.getJsonObject("status").getString("name"), is("Open"));
 
     assertThat("action should be renewed",
-      renewedLoan.getString("action"), is("Renewed through override"));
+      renewedLoan.getString("action"), is(RENEWED_THROUGH_OVERRIDE));
 
     assertThat("'actionComment' field should contain comment specified for override",
       renewedLoan.getString(ACTION_COMMENT_KEY), is(OVERRIDE_COMMENT));
@@ -434,7 +435,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
       renewedLoan.getJsonObject("status").getString("name"), is("Open"));
 
     assertThat("action should be renewed",
-      renewedLoan.getString("action"), is("Renewed through override"));
+      renewedLoan.getString("action"), is(RENEWED_THROUGH_OVERRIDE));
 
     assertThat("'actionComment' field should contain comment specified for override",
       renewedLoan.getString(ACTION_COMMENT_KEY), is(OVERRIDE_COMMENT));
@@ -494,7 +495,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
       renewedLoan.getJsonObject("status").getString("name"), is("Open"));
 
     assertThat("action should be renewed",
-      renewedLoan.getString("action"), is("Renewed through override"));
+      renewedLoan.getString("action"), is(RENEWED_THROUGH_OVERRIDE));
 
     assertThat("'actionComment' field should contain comment specified for override",
       renewedLoan.getString(ACTION_COMMENT_KEY), is(OVERRIDE_COMMENT));
@@ -683,7 +684,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
         OVERRIDE_COMMENT, newDueDate.toString()).getJson();
 
     assertThat("action should be renewed",
-      renewedLoan.getString("action"), is("Renewed through override"));
+      renewedLoan.getString("action"), is(RENEWED_THROUGH_OVERRIDE));
     assertThat("'actionComment' field should contain comment specified for override",
       renewedLoan.getString(ACTION_COMMENT_KEY), is(OVERRIDE_COMMENT));
     assertThat("due date should be 2 weeks from now",
