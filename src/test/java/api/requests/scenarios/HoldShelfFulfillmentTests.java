@@ -24,7 +24,7 @@ import api.support.APITests;
 public class HoldShelfFulfillmentTests extends APITests {
 
   @Test
-  public void canBePickedUpWhenCheckedInAtPickupServicePoint()
+  public void itemIsReadyForPickUpWhenCheckedInAtPickupServicePoint()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -57,7 +57,7 @@ public class HoldShelfFulfillmentTests extends APITests {
       smallAngryPlanet.getJson().containsKey("inTransitDestinationServicePointId"),
       is(false));
   }
-
+  
   @Test
   public void checkInAtDifferentServicePointPlacesItemInTransit()
     throws InterruptedException,
@@ -97,7 +97,7 @@ public class HoldShelfFulfillmentTests extends APITests {
   }
 
   @Test
-  public void canBePickedUpWhenCheckedInAtPickupServicePointAfterTransit()
+  public void itemIsReadyForPickUpWhenCheckedInAtPickupServicePointAfterTransit()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
