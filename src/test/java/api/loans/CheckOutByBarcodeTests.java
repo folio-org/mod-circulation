@@ -2,10 +2,11 @@ package api.loans;
 
 import static api.requests.RequestsAPICreationTests.setupMissingItem;
 import static api.support.APITestContext.END_OF_2019_DUE_DATE;
-import static api.support.builders.ItemBuilder.AWAITING_PICKUP;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
-import static api.support.builders.RequestBuilder.CLOSED_FILLED;
-import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
+import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasItemBarcodeParameter;
+import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasProxyUserBarcodeParameter;
+import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasServicePointParameter;
+import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasUserBarcodeParameter;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
@@ -13,7 +14,6 @@ import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasMessageContaining;
-import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
@@ -34,8 +34,6 @@ import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
-import org.folio.circulation.support.http.server.ValidationError;
-import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -56,7 +54,6 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class CheckOutByBarcodeTests extends APITests {
-
   @Test
   public void canCheckOutUsingItemAndUserBarcode()
     throws InterruptedException,
@@ -462,71 +459,6 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutToOtherPatronWhenRequestIsAwaitingPickup()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource james = usersFixture.james();
-    IndividualResource jessica = usersFixture.jessica();
-    IndividualResource rebecca = usersFixture.rebecca();
-
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
-
-    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
-
-    loansFixture.checkInByBarcode(smallAngryPlanet);
-
-    Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, rebecca);
-
-    assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("The Long Way to a Small, Angry Planet (Barcode: 036000291452) " +
-        "cannot be checked out to user Stuart, Rebecca " +
-        "because it is awaiting pickup by another patron"),
-      hasUserBarcodeParameter(rebecca))));
-
-    Response request = requestsClient.getById(requestByJessica.getId());
-
-    assertThat(request.getJson().getString("status"), is(OPEN_AWAITING_PICKUP));
-
-    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
-
-    assertThat(smallAngryPlanet, hasItemStatus(AWAITING_PICKUP));
-  }
-
-  @Test
-  public void canCheckOutToRequester()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource james = usersFixture.james();
-    IndividualResource jessica = usersFixture.jessica();
-
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
-
-    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
-
-    loansFixture.checkInByBarcode(smallAngryPlanet);
-
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
-
-    Response request = requestsClient.getById(requestByJessica.getId());
-
-    assertThat(request.getJson().getString("status"), is(CLOSED_FILLED));
-
-    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
-
-    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
-  }
-
-  @Test
   public void canCheckOutViaProxy()
     throws InterruptedException,
     ExecutionException,
@@ -674,21 +606,5 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat("sent notice context should have dueDate property",
       noticeContext.getString("dueDate"),
       isEquivalentTo(loanDate.plusWeeks(3)));
-  }
-
-  private Matcher<ValidationError> hasUserBarcodeParameter(IndividualResource user) {
-    return hasParameter("userBarcode", user.getJson().getString("barcode"));
-  }
-
-  private Matcher<ValidationError> hasItemBarcodeParameter(IndividualResource item) {
-    return hasParameter("itemBarcode", item.getJson().getString("barcode"));
-  }
-
-  private Matcher<ValidationError> hasProxyUserBarcodeParameter(IndividualResource proxyUser) {
-    return hasParameter("proxyUserBarcode", proxyUser.getJson().getString("barcode"));
-  }
-
-  private Matcher<ValidationError> hasServicePointParameter(String servicePoint) {
-    return hasParameter("checkoutServicePointId", servicePoint);
   }
 }
