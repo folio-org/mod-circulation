@@ -8,6 +8,10 @@ import static api.support.builders.ItemBuilder.IN_TRANSIT;
 import static api.support.builders.RequestBuilder.CLOSED_FILLED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.builders.RequestBuilder.OPEN_IN_TRANSIT;
+import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasItemBarcodeParameter;
+import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasProxyUserBarcodeParameter;
+import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasServicePointParameter;
+import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasUserBarcodeParameter;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
@@ -15,7 +19,6 @@ import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasMessageContaining;
-import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
@@ -36,8 +39,6 @@ import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
-import org.folio.circulation.support.http.server.ValidationError;
-import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -55,6 +56,7 @@ import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.UserBuilder;
+import api.support.matchers.CheckOutByBarcodeResponseMatchers;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -722,19 +724,4 @@ public class CheckOutByBarcodeTests extends APITests {
       isEquivalentTo(loanDate.plusWeeks(3)));
   }
 
-  private Matcher<ValidationError> hasUserBarcodeParameter(IndividualResource user) {
-    return hasParameter("userBarcode", user.getJson().getString("barcode"));
-  }
-
-  private Matcher<ValidationError> hasItemBarcodeParameter(IndividualResource item) {
-    return hasParameter("itemBarcode", item.getJson().getString("barcode"));
-  }
-
-  private Matcher<ValidationError> hasProxyUserBarcodeParameter(IndividualResource proxyUser) {
-    return hasParameter("proxyUserBarcode", proxyUser.getJson().getString("barcode"));
-  }
-
-  private Matcher<ValidationError> hasServicePointParameter(String servicePoint) {
-    return hasParameter("checkoutServicePointId", servicePoint);
-  }
 }
