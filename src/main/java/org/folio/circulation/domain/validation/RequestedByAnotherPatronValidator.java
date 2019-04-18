@@ -1,5 +1,6 @@
 package org.folio.circulation.domain.validation;
 
+import static java.lang.String.format;
 import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.function.Function;
@@ -7,7 +8,6 @@ import java.util.function.Function;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.domain.User;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 
@@ -29,14 +29,11 @@ public class RequestedByAnotherPatronValidator {
   }
 
   private ValidationErrorFailure requestedByAnotherPatronError(Loan loan) {
-    return errorFunction.apply(requestedByAnotherPatronMessage(
-      loan.getItem(), loan.getUser()));
-  }
-
-  private String requestedByAnotherPatronMessage(Item item, User checkingOutUser) {
-    return String.format("%s (Barcode: %s) cannot be checked out to user %s" +
-    " because it has been requested by another patron",
-      item.getTitle(), item.getBarcode(), checkingOutUser.getPersonalName());
+    Item item = loan.getItem();
+    return errorFunction.apply(format(
+      "%s (Barcode: %s) cannot be checked out to user %s" +
+        " because it has been requested by another patron",
+      item.getTitle(), item.getBarcode(), loan.getUser().getPersonalName()));
   }
 
   private Result<Boolean> isRequestedByAnotherPatron(
