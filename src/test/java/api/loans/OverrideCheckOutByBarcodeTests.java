@@ -17,6 +17,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
@@ -153,6 +154,14 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
     MalformedURLException,
     TimeoutException,
     ExecutionException {
+
+    LoanPolicyBuilder loanablePolicy = new LoanPolicyBuilder()
+      .withName("Loanable Policy")
+      .rolling(Period.days(2));
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.create(loanablePolicy).getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId());
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource steve = usersFixture.steve();
