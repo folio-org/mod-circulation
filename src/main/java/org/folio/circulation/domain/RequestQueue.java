@@ -28,17 +28,14 @@ public class RequestQueue {
     return fulfillableRequests().get(0);
   }
 
-  public boolean hasAwaitingPickupRequestForOtherPatron(
-    User requestingUser) {
-
+  public boolean isRequestedByOtherPatron(User requestingUser) {
     if(!hasOutstandingFulfillableRequests()) {
       return false;
     }
     else {
       final Request highestPriority = getHighestPriorityFulfillableRequest();
 
-      return highestPriority.isAwaitingPickup()
-        && !highestPriority.isFor(requestingUser);
+      return !highestPriority.isFor(requestingUser);
     }
   }
 

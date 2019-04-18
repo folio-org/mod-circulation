@@ -58,6 +58,7 @@ public class UpdateRequestQueue {
 
       if (checkInServicePointId.equalsIgnoreCase(requestPickupServicePointId)) {
         firstRequest.changeStatus(RequestStatus.OPEN_AWAITING_PICKUP);
+
         if (firstRequest.getHoldShelfExpirationDate() == null) {
           return servicePointRepository.getServicePointById(requestPickupServicePointId)
               .thenApply(servicePointResult -> servicePointResult.map(firstRequest::withPickupServicePoint))

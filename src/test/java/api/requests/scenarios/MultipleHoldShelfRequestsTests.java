@@ -174,7 +174,7 @@ public class MultipleHoldShelfRequestsTests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("The Long Way to a Small, Angry Planet (Barcode: 036000291452) " +
         "cannot be checked out to user Stuart, Rebecca " +
-        "because it is awaiting pickup by another patron"),
+        "because it has been requested by another patron"),
       hasParameter("userBarcode", rebecca.getBarcode()))));
 
     requestByJessica = requestsClient.get(requestByJessica);
@@ -217,7 +217,7 @@ public class MultipleHoldShelfRequestsTests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("The Long Way to a Small, Angry Planet (Barcode: 036000291452) " +
         "cannot be checked out to user Jones, Steven " +
-        "because it is awaiting pickup by another patron"),
+        "because it has been requested by another patron"),
       hasParameter("userBarcode", steve.getBarcode()))));
 
     requestByJessica = requestsClient.get(requestByJessica);
