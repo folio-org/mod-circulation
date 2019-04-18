@@ -2,12 +2,7 @@ package api.loans;
 
 import static api.requests.RequestsAPICreationTests.setupMissingItem;
 import static api.support.APITestContext.END_OF_2019_DUE_DATE;
-import static api.support.builders.ItemBuilder.AWAITING_PICKUP;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
-import static api.support.builders.ItemBuilder.IN_TRANSIT;
-import static api.support.builders.RequestBuilder.CLOSED_FILLED;
-import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
-import static api.support.builders.RequestBuilder.OPEN_IN_TRANSIT;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasItemBarcodeParameter;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasProxyUserBarcodeParameter;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasServicePointParameter;
@@ -47,7 +42,6 @@ import org.junit.Test;
 
 import api.support.APITestContext;
 import api.support.APITests;
-import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.FixedDueDateSchedule;
 import api.support.builders.FixedDueDateSchedulesBuilder;
@@ -56,12 +50,10 @@ import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.UserBuilder;
-import api.support.matchers.CheckOutByBarcodeResponseMatchers;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class CheckOutByBarcodeTests extends APITests {
-
   @Test
   public void canCheckOutUsingItemAndUserBarcode()
     throws InterruptedException,
@@ -467,114 +459,6 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutToOtherPatronWhenRequestIsAwaitingPickup()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource james = usersFixture.james();
-    IndividualResource jessica = usersFixture.jessica();
-    IndividualResource rebecca = usersFixture.rebecca();
-
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
-
-    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
-
-    loansFixture.checkInByBarcode(smallAngryPlanet);
-
-    Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, rebecca);
-
-    assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("The Long Way to a Small, Angry Planet (Barcode: 036000291452) " +
-        "cannot be checked out to user Stuart, Rebecca " +
-        "because it has been requested by another patron"),
-      hasUserBarcodeParameter(rebecca))));
-
-    Response request = requestsClient.getById(requestByJessica.getId());
-
-    assertThat(request.getJson().getString("status"), is(OPEN_AWAITING_PICKUP));
-
-    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
-
-    assertThat(smallAngryPlanet, hasItemStatus(AWAITING_PICKUP));
-  }
-
-  @Test
-  public void cannotCheckOutToOtherPatronWhenRequestIsInTransitForPickup()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    final IndividualResource requestServicePoint = servicePointsFixture.cd1();
-    final IndividualResource checkInServicePoint = servicePointsFixture.cd2();
-
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource james = usersFixture.james();
-    IndividualResource jessica = usersFixture.jessica();
-    IndividualResource rebecca = usersFixture.rebecca();
-
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
-
-    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, DateTime.now(DateTimeZone.UTC),
-      requestServicePoint.getId());
-
-    loansFixture.checkInByBarcode(
-      new CheckInByBarcodeRequestBuilder()
-        .forItem(smallAngryPlanet)
-        .at(checkInServicePoint.getId()));
-
-    Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, rebecca);
-
-    assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("The Long Way to a Small, Angry Planet (Barcode: 036000291452) " +
-        "cannot be checked out to user Stuart, Rebecca " +
-        "because it has been requested by another patron"),
-      hasUserBarcodeParameter(rebecca))));
-
-    Response request = requestsClient.getById(requestByJessica.getId());
-
-    assertThat(request.getJson().getString("status"), is(OPEN_IN_TRANSIT));
-
-    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
-
-    assertThat(smallAngryPlanet, hasItemStatus(IN_TRANSIT));
-  }
-
-  @Test
-  public void canCheckOutToRequester()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource james = usersFixture.james();
-    IndividualResource jessica = usersFixture.jessica();
-
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
-
-    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
-
-    loansFixture.checkInByBarcode(smallAngryPlanet);
-
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
-
-    Response request = requestsClient.getById(requestByJessica.getId());
-
-    assertThat(request.getJson().getString("status"), is(CLOSED_FILLED));
-
-    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
-
-    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
-  }
-
-  @Test
   public void canCheckOutViaProxy()
     throws InterruptedException,
     ExecutionException,
@@ -723,5 +607,4 @@ public class CheckOutByBarcodeTests extends APITests {
       noticeContext.getString("dueDate"),
       isEquivalentTo(loanDate.plusWeeks(3)));
   }
-
 }
