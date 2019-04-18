@@ -5,6 +5,8 @@ import static api.support.RestAssuredClient.post;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.InterfaceUrls.checkInByBarcodeUrl;
 import static api.support.http.InterfaceUrls.checkOutByBarcodeUrl;
+import static api.support.http.InterfaceUrls.loansUrl;
+import static api.support.http.InterfaceUrls.overrideCheckOutByBarcodeUrl;
 import static api.support.http.InterfaceUrls.overrideRenewalByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByIdUrl;
@@ -25,6 +27,7 @@ import api.support.CheckInByBarcodeResponse;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanBuilder;
+import api.support.builders.OverrideCheckOutByBarcodeRequestBuilder;
 import api.support.builders.OverrideRenewalByBarcodeRequestBuilder;
 import api.support.builders.RenewByBarcodeRequestBuilder;
 import api.support.builders.RenewByIdRequestBuilder;
@@ -304,5 +307,31 @@ public class LoansFixture {
     ExecutionException {
 
     return servicePointsFixture.cd1();
+  }
+
+  public IndividualResource overrideCheckOutByBarcode(
+    OverrideCheckOutByBarcodeRequestBuilder builder) {
+
+    JsonObject request = builder.create();
+
+    return new IndividualResource(
+      from(post(request, overrideCheckOutByBarcodeUrl(), 201,
+        "override-check-out-by-barcode-request")));
+  }
+
+  public Response attemptOverrideCheckOutByBarcode(
+    OverrideCheckOutByBarcodeRequestBuilder builder) {
+
+    return attemptOverrideCheckOutByBarcode(422, builder);
+  }
+
+  public Response attemptOverrideCheckOutByBarcode(
+    int expectedStatusCode,
+    OverrideCheckOutByBarcodeRequestBuilder builder) {
+
+    JsonObject request = builder.create();
+
+    return from(post(request, overrideCheckOutByBarcodeUrl(),
+      expectedStatusCode, "override-check-out-by-barcode-request"));
   }
 }

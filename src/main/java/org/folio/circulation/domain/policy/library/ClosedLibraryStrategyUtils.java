@@ -4,13 +4,9 @@ import static java.util.Collections.emptyMap;
 import static org.folio.circulation.domain.policy.LoanPolicyPeriod.isShortTermLoans;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
-import java.util.concurrent.CompletableFuture;
-
-import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.LoanPolicyPeriod;
-import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
@@ -61,15 +57,5 @@ public final class ClosedLibraryStrategyUtils {
   static ValidationErrorFailure failureForAbsentTimetable() {
     String message = "Calendar timetable is absent for requested date";
     return singleValidationError(new ValidationError(message, emptyMap()));
-  }
-
-  public static CompletableFuture<Result<LoanAndRelatedRecords>> applyCLDDMForLoanAndRelatedRecords(
-    ClosedLibraryStrategyService strategyService, LoanAndRelatedRecords relatedRecords) {
-    return strategyService
-      .applyCLDDM(relatedRecords.getLoan(), relatedRecords.getLoanPolicy(), relatedRecords.getTimeZone())
-      .thenApply(r -> r.map(dateTime -> {
-        relatedRecords.getLoan().changeDueDate(dateTime);
-        return relatedRecords;
-      }));
   }
 }

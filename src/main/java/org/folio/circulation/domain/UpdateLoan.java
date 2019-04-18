@@ -1,7 +1,6 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.applyCLDDMForLoanAndRelatedRecords;
 import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
@@ -45,7 +44,7 @@ public class UpdateLoan {
           .thenApply(r -> r.map(LoanAndRelatedRecords::new))
           .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
           .thenApply(r -> r.next(this::recall))
-          .thenComposeAsync(r -> r.after(records -> applyCLDDMForLoanAndRelatedRecords(closedLibraryStrategyService, records)))
+          .thenComposeAsync(r -> r.after(closedLibraryStrategyService::applyClosedLibraryDueDateManagement))
           .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
           .thenApply(r -> r.map(v -> requestAndRelatedRecords));
     } else {
