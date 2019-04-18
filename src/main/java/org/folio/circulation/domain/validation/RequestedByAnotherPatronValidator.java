@@ -30,6 +30,7 @@ public class RequestedByAnotherPatronValidator {
 
   private ValidationErrorFailure requestedByAnotherPatronError(Loan loan) {
     Item item = loan.getItem();
+
     return errorFunction.apply(format(
       "%s (Barcode: %s) cannot be checked out to user %s" +
         " because it has been requested by another patron",
