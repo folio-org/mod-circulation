@@ -735,6 +735,46 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
+  public void cannotRenewWhenRollingLoanPolicyHasDueDateInPast() throws Exception {
+    String expectedName = "Non Renewable";
+    String expectedErrorMsgNotRenewable = "loan is not renewable";
+    String expectedErrorMsgCannotDetermine = "renewal date falls outside of date ranges in rolling loan policy";
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    DateTime loanDueDate =
+      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
+
+    LoanPolicyBuilder nonRenewablePolicy = new LoanPolicyBuilder()
+      .withName(expectedName)
+      .rolling(Period.days(2))
+      .notRenewable();
+
+    UUID notRenewablePolicyId = loanPoliciesFixture
+      .create(nonRenewablePolicy).getId();
+
+    useLoanPolicyAsFallback(
+      notRenewablePolicyId,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId());
+
+    JsonObject jsonResponse = loansFixture.attemptRenewal(422, smallAngryPlanet, jessica).getJson();
+
+    assertThat(jsonResponse, hasErrorWith(allOf(
+      hasMessage(expectedErrorMsgNotRenewable),
+      hasLoanPolicyIdParameter(notRenewablePolicyId),
+      hasLoanPolicyNameParameter(expectedName))));
+
+    assertThat(jsonResponse, hasErrorWith(allOf(
+      hasMessage(expectedErrorMsgCannotDetermine),
+      hasLoanPolicyIdParameter(notRenewablePolicyId),
+      hasLoanPolicyNameParameter(expectedName))));
+  }
+
+  @Test
   public void cannotRenewWhenNonRenewableFixedPolicy()
     throws InterruptedException,
     MalformedURLException,

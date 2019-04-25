@@ -65,18 +65,17 @@ public class LoanPolicy {
 
   public Result<Loan> renew(Loan loan, DateTime systemDate) {
     //TODO: Create HttpResult wrapper that traps exceptions
+    List<ValidationError> errors = new ArrayList<>();
     try {
       if (isNotLoanable()) {
-        return failedValidation(errorForPolicy("item is not loanable"));
+        errors.add(errorForPolicy("item is not loanable"));
       }
       if(isNotRenewable()) {
-        return failedValidation(errorForPolicy("loan is not renewable"));
+        errors.add(errorForPolicy("loan is not renewable"));
       }
 
       final Result<DateTime> proposedDueDateResult =
         determineStrategy(true, systemDate).calculateDueDate(loan);
-
-      List<ValidationError> errors = new ArrayList<>();
 
       //TODO: Need a more elegent way of combining validation errors
       if(proposedDueDateResult.failed()) {

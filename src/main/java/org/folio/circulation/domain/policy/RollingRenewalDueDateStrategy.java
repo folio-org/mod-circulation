@@ -54,7 +54,9 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
   @Override
   Result<DateTime> calculateDueDate(Loan loan) {
     if(StringUtils.isBlank(renewFrom)) {
-      return failedValidation(errorForPolicy(RENEW_FROM_UNRECOGNISED_MESSAGE));
+      return isDueDateAfterLoanDate(loan)
+        ? failedValidation(errorForPolicy(NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE))
+        : failedValidation(errorForPolicy(RENEW_FROM_UNRECOGNISED_MESSAGE));
     }
 
     switch (renewFrom) {
@@ -65,6 +67,10 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
       default:
         return failedValidation(errorForPolicy(RENEW_FROM_UNRECOGNISED_MESSAGE));
     }
+  }
+
+  private boolean isDueDateAfterLoanDate(Loan loan) {
+    return loan.getDueDate().isAfter(loan.getLoanDate());
   }
 
   protected Result<DateTime> calculateDueDate(DateTime from, DateTime loanDate) {
