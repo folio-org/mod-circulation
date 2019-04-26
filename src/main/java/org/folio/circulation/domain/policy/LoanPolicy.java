@@ -69,9 +69,10 @@ public class LoanPolicy {
     try {
       if (isNotLoanable()) {
         errors.add(errorForPolicy("item is not loanable"));
-      }
-      if(isNotRenewable()) {
+      } else if (isNotRenewable()) {
         errors.add(errorForPolicy("loan is not renewable"));
+      } else {
+        errorWhenReachedRenewalLimit(loan, errors);
       }
 
       final Result<DateTime> proposedDueDateResult =
@@ -89,8 +90,6 @@ public class LoanPolicy {
       else {
         errorWhenEarlierOrSameDueDate(loan, proposedDueDateResult.value(), errors);
       }
-
-      errorWhenReachedRenewalLimit(loan, errors);
 
       if(errors.isEmpty()) {
         return proposedDueDateResult.map(dueDate -> loan.renew(dueDate, getId()));
