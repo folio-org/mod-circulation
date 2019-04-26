@@ -68,7 +68,7 @@ public class LoanPolicy {
     List<ValidationError> errors = new ArrayList<>();
     try {
       if (isNotLoanable()) {
-        errors.add(errorForPolicy("item is not loanable"));
+        return failedValidation(errorForPolicy("item is not loanable"));
       } else if (isNotRenewable()) {
         errors.add(errorForPolicy("loan is not renewable"));
       } else {
