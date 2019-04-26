@@ -3,6 +3,7 @@ package org.folio.circulation.domain.policy;
 import static java.lang.String.format;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
+import java.util.Optional;
 import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
@@ -54,7 +55,8 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
   @Override
   Result<DateTime> calculateDueDate(Loan loan) {
     if(StringUtils.isBlank(renewFrom)) {
-      return isDueDateAfterLoanDate(loan)
+      DateTime dueDate = Optional.ofNullable(loan.getDueDate()).orElse(systemDate);
+      return calculateDueDate(dueDate, loan.getLoanDate()).failed()
         ? failedValidation(errorForPolicy(NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE))
         : failedValidation(errorForPolicy(RENEW_FROM_UNRECOGNISED_MESSAGE));
     }
@@ -67,10 +69,6 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
       default:
         return failedValidation(errorForPolicy(RENEW_FROM_UNRECOGNISED_MESSAGE));
     }
-  }
-
-  private boolean isDueDateAfterLoanDate(Loan loan) {
-    return loan.getDueDate().isAfter(loan.getLoanDate());
   }
 
   protected Result<DateTime> calculateDueDate(DateTime from, DateTime loanDate) {

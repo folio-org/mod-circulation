@@ -735,10 +735,10 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void cannotRenewWhenRollingLoanPolicyHasDueDateInPast() throws Exception {
+  public void cannotRenewWhenRollingLoanPolicyCannotDetermineRenewFrom() throws Exception {
     String expectedName = "Non Renewable";
     String expectedErrorMsgNotRenewable = "loan is not renewable";
-    String expectedErrorMsgCannotDetermine = "renewal date falls outside of date ranges in rolling loan policy";
+    String expectedErrorMsgCannotDetermine = "cannot determine when to renew from";
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -755,6 +755,55 @@ abstract class RenewalAPITests extends APITests {
 
     UUID notRenewablePolicyId = loanPoliciesFixture
       .create(nonRenewablePolicy).getId();
+
+    useLoanPolicyAsFallback(
+      notRenewablePolicyId,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId());
+
+    JsonObject jsonResponse = loansFixture.attemptRenewal(422, smallAngryPlanet, jessica).getJson();
+
+    assertThat(jsonResponse, hasErrorWith(allOf(
+      hasMessage(expectedErrorMsgNotRenewable),
+      hasLoanPolicyIdParameter(notRenewablePolicyId),
+      hasLoanPolicyNameParameter(expectedName))));
+
+    assertThat(jsonResponse, hasErrorWith(allOf(
+      hasMessage(expectedErrorMsgCannotDetermine),
+      hasLoanPolicyIdParameter(notRenewablePolicyId),
+      hasLoanPolicyNameParameter(expectedName))));
+  }
+
+
+  @Test
+  public void cannotRenewWhenRollingLoanPolicyHasDueDateInPast() throws Exception {
+    String expectedName = "Non Renewable";
+    String expectedErrorMsgNotRenewable = "loan is not renewable";
+    String expectedErrorMsgCannotDetermine = "renewal date falls outside of date ranges in rolling loan policy";
+
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    DateTime loanDueDate =
+      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
+
+    FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
+      .withName("Past March Only Due Date Limit")
+      .addSchedule(wholeMonth(2001, 3));
+
+    final UUID dueDateLimitScheduleId = loanPoliciesFixture.createSchedule(
+      dueDateLimitSchedule).getId();
+
+    LoanPolicyBuilder dueDateLimitedPolicy = new LoanPolicyBuilder()
+      .withName(expectedName)
+      .rolling(Period.weeks(2))
+      .limitedBySchedule(dueDateLimitScheduleId)
+      .notRenewable();
+
+    UUID notRenewablePolicyId = loanPoliciesFixture
+      .create(dueDateLimitedPolicy).getId();
 
     useLoanPolicyAsFallback(
       notRenewablePolicyId,
