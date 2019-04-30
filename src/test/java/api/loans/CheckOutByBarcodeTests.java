@@ -15,7 +15,6 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasMessageContaining;
 import static java.net.HttpURLConnection.HTTP_OK;
-import static org.folio.HttpStatus.HTTP_INTERNAL_SERVER_ERROR;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -610,7 +609,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void failsWhenCheckOutIsAttemptedUsingItemBarcodeThatContainsSpaces()
+  public void canCheckOutUsingItemBarcodeThatContainsSpaces()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -620,14 +619,27 @@ public class CheckOutByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet
       = itemsFixture.basedUponSmallAngryPlanet(item -> item.withBarcode("12345 67890"));
 
-    final Response response = loansFixture.attemptCheckOutByBarcode(
-      HTTP_INTERNAL_SERVER_ERROR,
+    final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
         .at(servicePointsFixture.cd1()));
 
-    assertThat(response.getBody(),
-      is("Failed to contact storage module: io.vertx.core.VertxException: Connection was closed"));
+    final JsonObject loan = response.getJson();
+
+    assertThat(loan.getString("id"), is(notNullValue()));
+
+    assertThat("user ID should match barcode",
+      loan.getString("userId"), is(steve.getId()));
+
+    assertThat("item ID should match barcode",
+      loan.getString("itemId"), is(smallAngryPlanet.getId()));
+
+    assertThat("status should be open",
+      loan.getJsonObject("status").getString("name"), is("Open"));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+
+    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
   }
 }
