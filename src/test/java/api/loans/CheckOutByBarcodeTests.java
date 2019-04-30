@@ -15,6 +15,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasMessageContaining;
 import static java.net.HttpURLConnection.HTTP_OK;
+import static org.folio.HttpStatus.HTTP_INTERNAL_SERVER_ERROR;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -641,5 +642,56 @@ public class CheckOutByBarcodeTests extends APITests {
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
     assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+  }
+
+  @Test
+  public void failsWhenCheckOutIsAttemptedUsingUserBarcodeThatContainsSpaces()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+
+    final IndividualResource steve
+      = usersFixture.steve(user -> user.withBarcode("12345 67890"));
+
+    final Response response = loansFixture.attemptCheckOutByBarcode(
+      HTTP_INTERNAL_SERVER_ERROR,
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .at(servicePointsFixture.cd1()));
+
+    assertThat(response.getBody(),
+      is("Failed to contact storage module: io.vertx.core.VertxException: Connection was closed"));
+  }
+
+  @Test
+  public void failsWhenCheckOutIsAttemptedUsingProxyUserBarcodeThatContainsSpaces()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+
+    final IndividualResource jessica = usersFixture.jessica();
+
+    final IndividualResource steve
+      = usersFixture.steve(user -> user.withBarcode("12345 67890"));
+
+    proxyRelationshipsFixture.currentProxyFor(jessica, steve);
+
+    final Response response = loansFixture.attemptCheckOutByBarcode(
+      HTTP_INTERNAL_SERVER_ERROR,
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(jessica)
+        .proxiedBy(steve)
+        .at(servicePointsFixture.cd1()));
+
+    assertThat(response.getBody(),
+      is("Failed to contact storage module: io.vertx.core.VertxException: Connection was closed"));
   }
 }
