@@ -1,6 +1,7 @@
 package org.folio.circulation.support;
 
 import static java.lang.String.valueOf;
+import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.of;
 
 import java.lang.invoke.MethodHandles;
@@ -57,7 +58,8 @@ public class CqlHelper {
       .collect(Collectors.toList());
 
     if(filteredValues.isEmpty()) {
-      return of(() -> null);
+      return failed(new ServerErrorFailure(
+        "Cannot fetch multiple records when no IDs are provided"));
     }
 
     String valueQuery = String.format("%s==(%s)",
