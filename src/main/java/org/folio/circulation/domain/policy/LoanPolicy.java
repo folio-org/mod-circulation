@@ -19,6 +19,10 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.RequestQueue;
+import org.folio.circulation.domain.RequestStatus;
+import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
@@ -59,8 +63,8 @@ public class LoanPolicy {
   }
 
   //TODO: make this have similar signature to renew
-  public Result<DateTime> calculateInitialDueDate(Loan loan) {
-    return determineStrategy(false, null).calculateDueDate(loan);
+  public Result<DateTime> calculateInitialDueDate(Loan loan, RequestQueue requestQueue) {
+    return determineStrategy(requestQueue, false, null).calculateDueDate(loan);
   }
 
   public Result<Loan> renew(Loan loan, DateTime systemDate) {
@@ -74,7 +78,7 @@ public class LoanPolicy {
       }
 
       final Result<DateTime> proposedDueDateResult =
-        determineStrategy(true, systemDate).calculateDueDate(loan);
+        determineStrategy(null, true, systemDate).calculateDueDate(loan);
 
       List<ValidationError> errors = new ArrayList<>();
 
@@ -112,7 +116,7 @@ public class LoanPolicy {
         return overrideRenewalForDueDate(loan, overrideDueDate, comment);
       }
       final Result<DateTime> proposedDueDateResult =
-        determineStrategy(true, systemDate).calculateDueDate(loan);
+        determineStrategy(null, true, systemDate).calculateDueDate(loan);
 
       final JsonObject loansPolicy = getLoansPolicy();
 
@@ -227,7 +231,7 @@ public class LoanPolicy {
     return getIntegerProperty(getRenewalsPolicy(), "numberAllowed", 0);
   }
 
-  private DueDateStrategy determineStrategy(boolean isRenewal, DateTime systemDate) {
+  private DueDateStrategy determineStrategy(RequestQueue requestQueue, boolean isRenewal, DateTime systemDate) {
     final JsonObject loansPolicy = getLoansPolicy();
     final JsonObject renewalsPolicy = getRenewalsPolicy();
 
@@ -244,6 +248,10 @@ public class LoanPolicy {
           getRenewalDueDateLimitSchedules(), this::errorForPolicy);
       }
       else {
+        if(isAlternateRenewal(requestQueue)) {
+          return new RollingCheckOutDueDateStrategy(getId(), getName(),
+          getPeriod(loansPolicy), alternateRenewalFixedDueDateSchedules, this::errorForPolicy);
+        }
         return new RollingCheckOutDueDateStrategy(getId(), getName(),
           getPeriod(loansPolicy), fixedDueDateSchedules, this::errorForPolicy);
       }
@@ -254,6 +262,10 @@ public class LoanPolicy {
           getRenewalFixedDueDateSchedules(), systemDate, this::errorForPolicy);
       }
       else {
+        if(isAlternateRenewal(requestQueue)) {
+          return new RollingCheckOutDueDateStrategy(getId(), getName(),
+          getPeriod(loansPolicy), alternateRenewalFixedDueDateSchedules, this::errorForPolicy);
+        }
         return new FixedScheduleCheckOutDueDateStrategy(getId(), getName(),
           fixedDueDateSchedules, this::errorForPolicy);
       }
@@ -262,6 +274,20 @@ public class LoanPolicy {
       return new UnknownDueDateStrategy(getId(), getName(),
         getProfileId(loansPolicy), isRenewal, this::errorForPolicy);
     }
+  }
+
+  private boolean isAlternateRenewal(RequestQueue requestQueue) {
+    Optional<Request> potentialRequest = requestQueue.getRequests().stream().skip(1).findFirst();
+    boolean isAlternateRenewal = false;
+    if(potentialRequest.isPresent()) {
+      Request request = potentialRequest.get();
+      boolean isHold = request.getRequestType() == RequestType.HOLD;
+      boolean isOpenNotYetFilled = request.getStatus() == RequestStatus.OPEN_NOT_YET_FILLED;
+      if(isHold && isOpenNotYetFilled) {
+        return isAlternateRenewal = true;
+      }
+    }
+    return isAlternateRenewal;
   }
 
   private JsonObject getLoansPolicy() {

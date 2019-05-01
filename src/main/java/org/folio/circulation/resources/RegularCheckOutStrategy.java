@@ -6,10 +6,15 @@ import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.RequestQueue;
+import org.folio.circulation.domain.RequestStatus;
+import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.support.Clients;
@@ -50,10 +55,12 @@ public class RegularCheckOutStrategy implements CheckOutStrategy {
   private Result<LoanAndRelatedRecords> calculateDefaultInitialDueDate(LoanAndRelatedRecords loanAndRelatedRecords) {
     Loan loan = loanAndRelatedRecords.getLoan();
     LoanPolicy loanPolicy = loanAndRelatedRecords.getLoanPolicy();
-    return loanPolicy.calculateInitialDueDate(loan)
+    RequestQueue requestQueue = loanAndRelatedRecords.getRequestQueue();
+    return loanPolicy.calculateInitialDueDate(loan, requestQueue)
       .map(dueDate -> {
         loanAndRelatedRecords.getLoan().changeDueDate(dueDate);
         return loanAndRelatedRecords;
       });
   }
+  
 }
