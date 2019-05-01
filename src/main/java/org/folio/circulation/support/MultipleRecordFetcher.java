@@ -1,5 +1,9 @@
 package org.folio.circulation.support;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.CqlHelper.unencodedMultipleRecordsCqlQuery;
+import static org.folio.circulation.support.Result.of;
+
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -24,17 +28,18 @@ public class MultipleRecordFetcher<T> {
     this.recordMapper = recordMapper;
   }
 
-  public CompletableFuture<Result<MultipleRecords<T>>> findByIds(
-    List<String> idList) {
+  public CompletableFuture<Result<MultipleRecords<T>>> findByIds(List<String> idList) {
+    if(idList.isEmpty()) {
+      return completedFuture(of(MultipleRecords::empty));
+    }
 
-    String locationsQuery = CqlHelper.multipleRecordsCqlQuery(idList);
-
-    return client.getMany(locationsQuery, idList.size(), 0)
-      .thenApply(this::mapToRecords);
+    return unencodedMultipleRecordsCqlQuery(null, "id", idList)
+      .map(CqlQuery::new)
+      .after(query -> client.getMany(query, idList.size()))
+      .thenApply(result -> result.next(this::mapToRecords));
   }
 
   private Result<MultipleRecords<T>> mapToRecords(Response response) {
-    return MultipleRecords.from(response, recordMapper,
-      recordsPropertyName);
+    return MultipleRecords.from(response, recordMapper, recordsPropertyName);
   }
 }

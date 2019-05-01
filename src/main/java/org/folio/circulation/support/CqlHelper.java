@@ -8,6 +8,7 @@ import java.lang.invoke.MethodHandles;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -21,7 +22,9 @@ public class CqlHelper {
   private CqlHelper() { }
 
   public static String multipleRecordsCqlQuery(Collection<String> recordIds) {
-    return multipleRecordsCqlQuery(null, "id", recordIds).orElse(null);
+    return unencodedMultipleRecordsCqlQuery(null, "id", recordIds)
+      .next(CqlHelper::encodeQuery)
+      .orElse(null);
   }
 
   static Result<String> encodeQuery(String cqlQuery) {
@@ -45,25 +48,29 @@ public class CqlHelper {
    * query that includes a fragment if provided and a clause for matching any
    * of the values
    */
-  public static Result<String> multipleRecordsCqlQuery(
+  public static Result<String> unencodedMultipleRecordsCqlQuery(
     String prefixQueryFragment,
     String indexName,
     Collection<String> valuesToSearchFor) {
 
-    final Collection<String> filteredValues = valuesToSearchFor.stream()
-      .filter(Objects::nonNull)
-      .map(String::toString)
-      .filter(StringUtils::isNotBlank)
-      .distinct()
-      .collect(Collectors.toList());
+    final Collection<String> filteredValues = filterNullValues(valuesToSearchFor);
 
     if(filteredValues.isEmpty()) {
       return failed(new ServerErrorFailure(
         "Cannot fetch multiple records when no IDs are provided"));
     }
 
-    return encodeQuery(multipleRecordsUnencodedCqlQuery(
-      prefixQueryFragment, indexName, filteredValues));
+    return Result.of(() ->
+      multipleRecordsUnencodedCqlQuery(prefixQueryFragment, indexName, filteredValues));
+  }
+
+  private static List<String> filterNullValues(Collection<String> values) {
+    return values.stream()
+      .filter(Objects::nonNull)
+      .map(String::toString)
+      .filter(StringUtils::isNotBlank)
+      .distinct()
+      .collect(Collectors.toList());
   }
 
   private static String multipleRecordsUnencodedCqlQuery(

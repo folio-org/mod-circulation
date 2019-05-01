@@ -254,14 +254,16 @@ public class LoanRepository {
       return completedFuture(succeeded(multipleRequests));
     }
 
-    Result<String> queryResult = CqlHelper.multipleRecordsCqlQuery(
+    Result<String> queryResult = CqlHelper.unencodedMultipleRecordsCqlQuery(
       String.format("status.name==\"%s\" and ", "Open"),
       "itemId", itemsToFetchLoansFor);
 
-    return queryResult.after(query -> loansStorageClient.getMany(query, requests.size(), 0)
-        .thenApply(this::mapResponseToLoans)
+    return queryResult
+      .map(CqlQuery::new)
+      .after(query -> loansStorageClient.getMany(query, requests.size()))
+      .thenApply(result -> result.next(this::mapResponseToLoans))
       .thenApply(multipleLoansResult -> multipleLoansResult.next(
-        loans -> matchLoansToRequests(multipleRequests, loans))));
+        loans -> matchLoansToRequests(multipleRequests, loans)));
   }
 
   private Result<MultipleRecords<Request>> matchLoansToRequests(

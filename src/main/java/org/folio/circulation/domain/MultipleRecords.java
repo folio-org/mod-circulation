@@ -1,11 +1,12 @@
 package org.folio.circulation.domain;
 
 import static java.util.function.Function.identity;
+import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
-import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 
 import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +32,10 @@ public class MultipleRecords<T> {
   public MultipleRecords(Collection<T> records, Integer totalRecords) {
     this.records = records;
     this.totalRecords = totalRecords;
+  }
+
+  public static <T> MultipleRecords<T> empty() {
+    return new MultipleRecords<>(new ArrayList<>(), 0);
   }
 
   public static <T> Result<MultipleRecords<T>> from(
