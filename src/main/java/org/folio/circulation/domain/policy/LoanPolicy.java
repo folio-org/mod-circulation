@@ -284,7 +284,7 @@ public class LoanPolicy {
       boolean isHold = request.getRequestType() == RequestType.HOLD;
       boolean isOpenNotYetFilled = request.getStatus() == RequestStatus.OPEN_NOT_YET_FILLED;
       if(isHold && isOpenNotYetFilled) {
-        return isAlternateRenewal = true;
+        isAlternateRenewal = true;
       }
     }
     return isAlternateRenewal;
