@@ -23,7 +23,7 @@ public class CqlHelper {
     return multipleRecordsCqlQuery(null, "id", recordIds).orElse(null);
   }
 
-  public static Result<String> encodeQuery(String cqlQuery) {
+  static Result<String> encodeQuery(String cqlQuery) {
     log.info("Encoding query {}", cqlQuery);
 
     return of(() -> URLEncoder.encode(cqlQuery, valueOf(StandardCharsets.UTF_8)));
