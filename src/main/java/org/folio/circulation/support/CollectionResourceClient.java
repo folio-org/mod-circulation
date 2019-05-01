@@ -126,6 +126,14 @@ public class CollectionResourceClient {
     return future;
   }
 
+  public CompletableFuture<Result<Response>> getMany(
+    CqlQuery cqlQuery, Integer pageLimit) {
+
+    return cqlQuery.encode()
+      .after(encodedQuery -> getMany(encodedQuery, pageLimit, 0)
+        .thenApply(Result::succeeded));
+  }
+
   public CompletableFuture<Response> getMany(
     String urlEncodedCqlQuery,
     Integer pageLimit,
