@@ -1,17 +1,17 @@
 package org.folio.circulation.domain;
 
-import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.Result;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.CqlHelper.encodeQuery;
-import static org.folio.circulation.support.Result.succeeded;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.CqlQuery;
+import org.folio.circulation.support.Result;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RequestQueueRepository {
   private final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -50,10 +50,9 @@ public class RequestQueueRepository {
 
     log.info("Fetching request queue: '{}'", unencodedQuery);
 
-    return encodeQuery(unencodedQuery).after(
-      query -> requestRepository.findBy(query, maximumSupportedRequestQueueSize)
+    return requestRepository.findBy(new CqlQuery(unencodedQuery), maximumSupportedRequestQueueSize)
         .thenApply(r -> r.map(MultipleRecords::getRecords))
-        .thenApply(r -> r.map(RequestQueue::new)));
+        .thenApply(r -> r.map(RequestQueue::new));
   }
 
   CompletableFuture<Result<RequestQueue>> updateRequestsWithChangedPositions(
