@@ -62,15 +62,22 @@ public class CqlHelper {
         "Cannot fetch multiple records when no IDs are provided"));
     }
 
+    return encodeQuery(multipleRecordsUnencodedCqlQuery(
+      prefixQueryFragment, indexName, filteredValues));
+  }
+
+  private static String multipleRecordsUnencodedCqlQuery(
+    String prefixQueryFragment, String indexName,
+    Collection<String> filteredValues) {
+
     String valueQuery = String.format("%s==(%s)",
       indexName, String.join(" or ", filteredValues));
 
     if(StringUtils.isBlank(prefixQueryFragment)) {
-      return encodeQuery(valueQuery);
+      return valueQuery;
     }
     else {
-      return encodeQuery(
-        String.format("%s %s", prefixQueryFragment, valueQuery));
+      return String.format("%s %s", prefixQueryFragment, valueQuery);
     }
   }
 }
