@@ -39,12 +39,18 @@ public class LocationRepository {
       .filter(StringUtils::isNotBlank)
       .collect(Collectors.toList());
 
-    String locationsQuery = CqlHelper.multipleRecordsCqlQuery(locationIds);
-
-    return locationsStorageClient.getMany(locationsQuery, locationIds.size(), 0)
-      .thenApply(response ->
-        MultipleRecords.from(response, identity(), "locations"))
+    return findByIds(locationIds)
       .thenApply(r -> r.map(locations ->
         locations.toMap(record -> record.getString("id"))));
+  }
+
+  private CompletableFuture<Result<MultipleRecords<JsonObject>>> findByIds(
+    List<String> idList) {
+
+    String locationsQuery = CqlHelper.multipleRecordsCqlQuery(idList);
+
+    return locationsStorageClient.getMany(locationsQuery, idList.size(), 0)
+      .thenApply(response ->
+        MultipleRecords.from(response, identity(), "locations"));
   }
 }
