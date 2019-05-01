@@ -41,7 +41,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
     Loan loan = loanFor(loanDate);
 
     final Result<DateTime> calculationResult = loanPolicy
-      .calculateInitialDueDate(loan);
+      .calculateInitialDueDate(loan, null);
 
     assertThat(calculationResult.value(), is(loanDate.plusMonths(duration)));
   }
@@ -65,7 +65,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
     Loan loan = loanFor(loanDate);
 
     final Result<DateTime> calculationResult = loanPolicy
-      .calculateInitialDueDate(loan);
+      .calculateInitialDueDate(loan, null);
 
     assertThat(calculationResult.value(), is(loanDate.plusWeeks(duration)));
   }
@@ -90,7 +90,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
     Loan loan = loanFor(loanDate);
 
     final Result<DateTime> calculationResult = loanPolicy
-      .calculateInitialDueDate(loan);
+      .calculateInitialDueDate(loan, null);
 
     assertThat(calculationResult.value(), is(loanDate.plusDays(duration)));
   }
@@ -115,7 +115,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
     Loan loan = loanFor(loanDate);
 
     final Result<DateTime> calculationResult = loanPolicy
-      .calculateInitialDueDate(loan);
+      .calculateInitialDueDate(loan, null);
 
     assertThat(calculationResult.value(), is(loanDate.plusHours(duration)));
   }
@@ -138,7 +138,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
     Loan loan = loanFor(loanDate);
 
     final Result<DateTime> calculationResult = loanPolicy
-      .calculateInitialDueDate(loan);
+      .calculateInitialDueDate(loan, null);
 
     assertThat(calculationResult.value(), is(loanDate.plusMinutes(duration)));
   }
@@ -154,7 +154,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate);
 
-    final Result<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
+    final Result<DateTime> result = loanPolicy.calculateInitialDueDate(loan, null);
 
     assertThat(result, hasValidationFailure(
       "the interval \"Unknown\" in the loan policy is not recognised"));
@@ -175,7 +175,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate);
 
-    final Result<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
+    final Result<DateTime> result = loanPolicy.calculateInitialDueDate(loan, null);
 
     assertThat(result, hasValidationFailure(
       "the loan period in the loan policy is not recognised"));
@@ -196,7 +196,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate);
 
-    final Result<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
+    final Result<DateTime> result = loanPolicy.calculateInitialDueDate(loan, null);
 
     assertThat(result, hasValidationFailure(
       "the loan period in the loan policy is not recognised"));
@@ -217,7 +217,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate);
 
-    final Result<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
+    final Result<DateTime> result = loanPolicy.calculateInitialDueDate(loan, null);
 
     assertThat(result, hasValidationFailure(
       "the loan period in the loan policy is not recognised"));
@@ -240,7 +240,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate);
 
-    final Result<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
+    final Result<DateTime> result = loanPolicy.calculateInitialDueDate(loan, null);
 
     assertThat(result, hasValidationFailure(
       String.format(
@@ -264,7 +264,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate);
 
-    final Result<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
+    final Result<DateTime> result = loanPolicy.calculateInitialDueDate(loan, null);
 
     assertThat(result.value(), is(new DateTime(2018, 4, 10, 23, 59, 59, DateTimeZone.UTC)));
   }
@@ -285,7 +285,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate);
 
-    final Result<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
+    final Result<DateTime> result = loanPolicy.calculateInitialDueDate(loan, null);
 
     assertThat(result.value(), is(new DateTime(2018, 3, 25, 16, 21, 43, DateTimeZone.UTC)));
   }
@@ -308,7 +308,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate);
 
-    final Result<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
+    final Result<DateTime> result = loanPolicy.calculateInitialDueDate(loan, null);
 
     assertThat(result, hasValidationFailure(
       "loan date falls outside of the date ranges in the loan policy"));
@@ -329,7 +329,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate);
 
-    final Result<DateTime> result = loanPolicy.calculateInitialDueDate(loan);
+    final Result<DateTime> result = loanPolicy.calculateInitialDueDate(loan, null);
 
     assertThat(result, hasValidationFailure(
       "loan date falls outside of the date ranges in the loan policy"));

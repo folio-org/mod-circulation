@@ -248,7 +248,9 @@ public class LoanPolicy {
           getRenewalDueDateLimitSchedules(), this::errorForPolicy);
       }
       else {
-        FixedDueDateSchedules fixedDueDateSchedules = isAlternateRenewal(requestQueue) 
+        FixedDueDateSchedules fixedDueDateSchedules = Objects.nonNull(alternateRenewalFixedDueDateSchedules)
+          && Objects.nonNull(requestQueue)
+          && isAlternateRenewal(requestQueue)
           ? alternateRenewalFixedDueDateSchedules 
           : this.fixedDueDateSchedules;
         return new RollingCheckOutDueDateStrategy(getId(), getName(), 
@@ -261,7 +263,9 @@ public class LoanPolicy {
           getRenewalFixedDueDateSchedules(), systemDate, this::errorForPolicy);
       }
       else {
-        FixedDueDateSchedules fixedDueDateSchedules = isAlternateRenewal(requestQueue) 
+        FixedDueDateSchedules fixedDueDateSchedules = Objects.nonNull(alternateRenewalFixedDueDateSchedules)
+          && Objects.nonNull(requestQueue)
+          && isAlternateRenewal(requestQueue) 
           ? alternateRenewalFixedDueDateSchedules 
           : this.fixedDueDateSchedules;
         return new FixedScheduleCheckOutDueDateStrategy(getId(), getName(),
