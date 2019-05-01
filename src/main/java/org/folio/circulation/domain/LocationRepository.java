@@ -39,9 +39,11 @@ public class LocationRepository {
       .filter(StringUtils::isNotBlank)
       .collect(Collectors.toList());
 
-    return MultipleRecordFetcher.findByIds(locationIds, identity(), "locations", locationsStorageClient)
-      .thenApply(r -> r.map(locations ->
+    final MultipleRecordFetcher<JsonObject> fetcher = new MultipleRecordFetcher<>(
+      locationsStorageClient, "locations", identity());
+
+    return fetcher.findByIds(locationIds)
+      .thenApply(result -> result.map(locations ->
         locations.toMap(record -> record.getString("id"))));
   }
-
 }
