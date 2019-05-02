@@ -27,7 +27,7 @@ public class CqlHelper {
    * query that includes a fragment if provided and a clause for matching any
    * of the values
    */
-  public static Result<String> unencodedMultipleRecordsCqlQuery(
+  public static Result<CqlQuery> multipleRecordsCqlQuery(
     String prefixQueryFragment,
     String indexName,
     Collection<String> valuesToSearchFor) {
@@ -39,17 +39,8 @@ public class CqlHelper {
         "Cannot fetch multiple records when no IDs are provided"));
     }
 
-    return Result.of(() ->
-      multipleRecordsUnencodedCqlQuery(prefixQueryFragment, indexName, filteredValues));
-  }
-
-  private static List<String> filterNullValues(Collection<String> values) {
-    return values.stream()
-      .filter(Objects::nonNull)
-      .map(String::toString)
-      .filter(StringUtils::isNotBlank)
-      .distinct()
-      .collect(Collectors.toList());
+    return Result.of(() -> new CqlQuery(
+      multipleRecordsUnencodedCqlQuery(prefixQueryFragment, indexName, filteredValues)));
   }
 
   private static String multipleRecordsUnencodedCqlQuery(
@@ -65,5 +56,14 @@ public class CqlHelper {
     else {
       return String.format("%s %s", prefixQueryFragment, valueQuery);
     }
+  }
+
+  private static List<String> filterNullValues(Collection<String> values) {
+    return values.stream()
+      .filter(Objects::nonNull)
+      .map(String::toString)
+      .filter(StringUtils::isNotBlank)
+      .distinct()
+      .collect(Collectors.toList());
   }
 }

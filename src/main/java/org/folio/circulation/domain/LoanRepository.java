@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.CqlHelper.multipleRecordsCqlQuery;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
@@ -18,11 +19,10 @@ import java.util.stream.Collectors;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.CqlHelper;
 import org.folio.circulation.support.CqlQuery;
 import org.folio.circulation.support.ForwardOnFailure;
-import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.http.client.Response;
@@ -254,12 +254,11 @@ public class LoanRepository {
       return completedFuture(succeeded(multipleRequests));
     }
 
-    Result<String> queryResult = CqlHelper.unencodedMultipleRecordsCqlQuery(
+    Result<CqlQuery> queryResult = multipleRecordsCqlQuery(
       String.format("status.name==\"%s\" and ", "Open"),
       "itemId", itemsToFetchLoansFor);
 
     return queryResult
-      .map(CqlQuery::new)
       .after(query -> loansStorageClient.getMany(query, requests.size()))
       .thenApply(result -> result.next(this::mapResponseToLoans))
       .thenApply(multipleLoansResult -> multipleLoansResult.next(
