@@ -1,7 +1,6 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.CqlHelper.multipleRecordsCqlQuery;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
@@ -18,6 +17,7 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlQuery;
 import org.folio.circulation.support.FetchSingleRecord;
+import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.Response;
 
@@ -97,10 +97,10 @@ public class UserRepository {
       return completedFuture(succeeded(multipleRequests));
     }
 
-    final String query = multipleRecordsCqlQuery(usersToFetch);
+    final MultipleRecordFetcher<User> fetcher
+      = new MultipleRecordFetcher<>(usersStorageClient, "users", User::from);
 
-    return usersStorageClient.getMany(query, requests.size(), 0)
-      .thenApply(this::mapResponseToUsers)
+    return fetcher.findByIds(usersToFetch)
       .thenApply(multipleUsersResult -> multipleUsersResult.next(
         multipleUsers -> of(() ->
           multipleRequests.mapRecords(request ->
