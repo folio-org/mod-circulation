@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import static java.util.function.Function.identity;
+import static org.folio.circulation.support.JsonKeys.byId;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 
@@ -8,7 +9,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -45,10 +45,6 @@ public class LocationRepository {
       locationsStorageClient, "locations", identity());
 
     return fetcher.findByIds(locationIds)
-      .thenApply(mapResult(locations -> locations.toMap(indexById())));
-  }
-
-  private Function<JsonObject, String> indexById() {
-    return record -> record.getString("id");
+      .thenApply(mapResult(locations -> locations.toMap(byId())));
   }
 }
