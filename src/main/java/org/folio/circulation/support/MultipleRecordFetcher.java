@@ -4,7 +4,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.CqlHelper.unencodedMultipleRecordsCqlQuery;
 import static org.folio.circulation.support.Result.of;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -28,7 +28,7 @@ public class MultipleRecordFetcher<T> {
     this.recordMapper = recordMapper;
   }
 
-  public CompletableFuture<Result<MultipleRecords<T>>> findByIds(List<String> idList) {
+  public CompletableFuture<Result<MultipleRecords<T>>> findByIds(Collection<String> idList) {
     if(idList.isEmpty()) {
       return completedFuture(of(MultipleRecords::empty));
     }

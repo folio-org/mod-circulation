@@ -74,7 +74,7 @@ public class MultipleRecords<T> {
       wrappedRecords, totalRecords));
   }
 
-  Map<String, T> toMap(Function<T, String> keyMapper) {
+  public Map<String, T> toMap(Function<T, String> keyMapper) {
     return getRecords().stream().collect(
       Collectors.toMap(keyMapper, identity()));
   }
