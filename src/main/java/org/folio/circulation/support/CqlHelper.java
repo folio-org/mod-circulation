@@ -21,12 +21,6 @@ public class CqlHelper {
 
   private CqlHelper() { }
 
-  public static String multipleRecordsCqlQuery(Collection<String> recordIds) {
-    return unencodedMultipleRecordsCqlQuery(null, "id", recordIds)
-      .next(CqlHelper::encodeQuery)
-      .orElse(null);
-  }
-
   static Result<String> encodeQuery(String cqlQuery) {
     log.info("Encoding query {}", cqlQuery);
 

@@ -145,11 +145,10 @@ public class ItemRepository {
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
 
-      String instancesQuery = CqlHelper.multipleRecordsCqlQuery(instanceIds);
+      final MultipleRecordFetcher<JsonObject> fetcher
+        = new MultipleRecordFetcher<>(instancesClient, "instances", identity());
 
-      return instancesClient.getMany(instancesQuery, instanceIds.size(), 0)
-        .thenApply(instancesResponse ->
-          MultipleRecords.from(instancesResponse, identity(), "instances"))
+      return fetcher.findByIds(instanceIds)
         .thenApply(r -> r.map(instances -> items.stream()
           .map(item -> item.withInstance(
             findById(item.getInstanceId(), instances.getRecords()).orElse(null)))
@@ -166,11 +165,10 @@ public class ItemRepository {
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
 
-      String holdingsQuery = CqlHelper.multipleRecordsCqlQuery(holdingsIds);
+      final MultipleRecordFetcher<JsonObject> fetcher
+        = new MultipleRecordFetcher<>(holdingsClient, "holdingsRecords", identity());
 
-      return holdingsClient.getMany(holdingsQuery, holdingsIds.size(), 0)
-        .thenApply(holdingsResponse ->
-          MultipleRecords.from(holdingsResponse, identity(), "holdingsRecords"))
+      return fetcher.findByIds(holdingsIds)
         .thenApply(r -> r.map(holdings -> items.stream()
           .map(item -> item.withHoldingsRecord(
             findById(item.getHoldingsRecordId(), holdings.getRecords()).orElse(null)))
@@ -190,10 +188,10 @@ public class ItemRepository {
   private CompletableFuture<Result<Collection<Item>>> fetchItems(
     Collection<String> itemIds) {
 
-    String itemsQuery = CqlHelper.multipleRecordsCqlQuery(itemIds);
+    final MultipleRecordFetcher<Item> fetcher
+      = new MultipleRecordFetcher<>(itemsClient, "items", Item::from);
 
-    return itemsClient.getMany(itemsQuery, itemIds.size(), 0)
-      .thenApply(r -> MultipleRecords.from(r, Item::from, "items"))
+    return fetcher.findByIds(itemIds)
       .thenApply(r -> r.map(MultipleRecords::getRecords));
   }
 
