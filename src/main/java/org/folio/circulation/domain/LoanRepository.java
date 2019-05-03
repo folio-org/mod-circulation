@@ -255,7 +255,7 @@ public class LoanRepository {
     }
 
     Result<CqlQuery> queryResult = multipleRecordsCqlQuery(
-      CqlQuery.exactMatch("status.name", "Open").asText(),
+      CqlQuery.exactMatch("status.name", "Open"),
       "itemId", itemsToFetchLoansFor);
 
     return queryResult

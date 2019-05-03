@@ -18,7 +18,7 @@ public class CqlHelper {
    * intended to return multiple records. Typically used when fetching related
    * records e.g. fetching all groups for users, or items for loans
    *
-   * @param prefixQueryFragment fragment of CQL to include at the beginning
+   * @param prefixQuery fragment of CQL to include at the beginning
    *                            e.g. status.name=="Open" AND
    * @param indexName Name of the index (property) to match values to
    * @param valuesToSearchFor Values to search for, query should match any
@@ -28,7 +28,7 @@ public class CqlHelper {
    * of the values
    */
   public static Result<CqlQuery> multipleRecordsCqlQuery(
-    String prefixQueryFragment,
+    CqlQuery prefixQuery,
     String indexName,
     Collection<String> valuesToSearchFor) {
 
@@ -40,22 +40,22 @@ public class CqlHelper {
     }
 
     return Result.of(() -> new CqlQuery(
-      multipleRecordsUnencodedCqlQuery(prefixQueryFragment, indexName, filteredValues)));
+      multipleRecordsUnencodedCqlQuery(prefixQuery, indexName, filteredValues)));
   }
 
   private static String multipleRecordsUnencodedCqlQuery(
-    String prefixQuery,
+    CqlQuery prefixQuery,
     String indexName,
     Collection<String> filteredValues) {
 
     String valueQuery = String.format("%s==(%s)",
       indexName, String.join(" or ", filteredValues));
 
-    if(StringUtils.isBlank(prefixQuery)) {
+    if(Objects.isNull(prefixQuery)) {
       return valueQuery;
     }
     else {
-      return String.format("%s and %s", prefixQuery, valueQuery);
+      return String.format("%s and %s", prefixQuery.asText(), valueQuery);
     }
   }
 
