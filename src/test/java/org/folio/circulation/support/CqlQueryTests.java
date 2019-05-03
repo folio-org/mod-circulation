@@ -27,7 +27,7 @@ public class CqlQueryTests {
   //TODO: Add test for no values
   @Test
   public void canExactlyMatchAnyOfMultipleValues() {
-    final CqlQuery query = CqlQuery.exactMatchAny("barcode",
+    final Result<CqlQuery> query = CqlQuery.exactMatchAny("barcode",
       new ArrayList<String>() {
         {
           add("12345");
@@ -35,7 +35,7 @@ public class CqlQueryTests {
         }
     });
 
-    assertThat(query.asText(), is("barcode==(12345 or 67890)"));
+    assertThat(query.value().asText(), is("barcode==(12345 or 67890)"));
   }
 
   @Test

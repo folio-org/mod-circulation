@@ -39,22 +39,21 @@ public class CqlHelper {
         "Cannot fetch multiple records when no IDs are provided"));
     }
 
-    return Result.of(() ->
-      multipleRecordsUnencodedCqlQuery(prefixQuery, indexName, filteredValues));
+    return multipleRecordsUnencodedCqlQuery(prefixQuery, indexName, filteredValues);
   }
 
-  private static CqlQuery multipleRecordsUnencodedCqlQuery(
+  private static Result<CqlQuery> multipleRecordsUnencodedCqlQuery(
     CqlQuery prefixQuery,
     String indexName,
     Collection<String> filteredValues) {
 
-    CqlQuery valueQuery = CqlQuery.exactMatchAny(indexName, filteredValues);
+    Result<CqlQuery> valueQuery = CqlQuery.exactMatchAny(indexName, filteredValues);
 
     if(Objects.isNull(prefixQuery)) {
       return valueQuery;
     }
     else {
-      return prefixQuery.and(valueQuery);
+      return valueQuery.map(prefixQuery::and);
     }
   }
 

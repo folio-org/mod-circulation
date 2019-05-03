@@ -22,8 +22,9 @@ public class CqlQuery {
     return new CqlQuery(String.format("%s==\"%s\"", index, value));
   }
 
-  static CqlQuery exactMatchAny(String indexName, Collection<String> values) {
-    return new CqlQuery(format("%s==(%s)", indexName, join(" or ", values)));
+  static Result<CqlQuery> exactMatchAny(String indexName, Collection<String> values) {
+    return Result.of(() -> new CqlQuery(
+      format("%s==(%s)", indexName, join(" or ", values))));
   }
 
   public CqlQuery(String query) {
