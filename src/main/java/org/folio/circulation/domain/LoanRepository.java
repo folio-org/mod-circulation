@@ -255,7 +255,7 @@ public class LoanRepository {
     }
 
     Result<CqlQuery> queryResult = multipleRecordsCqlQuery(
-      String.format("status.name==\"%s\" and ", "Open"),
+      String.format("status.name==\"%s\"", "Open"),
       "itemId", itemsToFetchLoansFor);
 
     return queryResult

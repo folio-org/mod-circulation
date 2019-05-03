@@ -40,21 +40,23 @@ public class CqlHelper {
     }
 
     return Result.of(() -> new CqlQuery(
-      multipleRecordsUnencodedCqlQuery(prefixQueryFragment, indexName, filteredValues)));
+      multipleRecordsUnencodedCqlQuery(prefixQueryFragment,
+        indexName, filteredValues)));
   }
 
   private static String multipleRecordsUnencodedCqlQuery(
-    String prefixQueryFragment, String indexName,
+    String prefixQuery,
+    String indexName,
     Collection<String> filteredValues) {
 
     String valueQuery = String.format("%s==(%s)",
       indexName, String.join(" or ", filteredValues));
 
-    if(StringUtils.isBlank(prefixQueryFragment)) {
+    if(StringUtils.isBlank(prefixQuery)) {
       return valueQuery;
     }
     else {
-      return String.format("%s %s", prefixQueryFragment, valueQuery);
+      return String.format("%s and %s", prefixQuery, valueQuery);
     }
   }
 
