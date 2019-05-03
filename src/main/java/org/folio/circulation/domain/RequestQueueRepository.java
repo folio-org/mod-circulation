@@ -1,15 +1,18 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.CqlQuery.exactMatch;
+import static org.folio.circulation.support.CqlQuery.exactMatchAny;
+import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CqlQuery;
-import org.folio.circulation.support.CqlSortBy;
 import org.folio.circulation.support.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,22 +43,22 @@ public class RequestQueueRepository {
   }
 
   public CompletableFuture<Result<RequestQueue>> get(String itemId) {
-      String unencodedQuery = String.format(
-        "itemId==%s and status==(\"%s\" or \"%s\" or \"%s\")",
-        itemId,
-        RequestStatus.OPEN_AWAITING_PICKUP.getValue(),
-        RequestStatus.OPEN_NOT_YET_FILLED.getValue(),
-        RequestStatus.OPEN_IN_TRANSIT.getValue());
+    final ArrayList<String> openStates = new ArrayList<>();
+
+    openStates.add(RequestStatus.OPEN_AWAITING_PICKUP.getValue());
+    openStates.add(RequestStatus.OPEN_NOT_YET_FILLED.getValue());
+    openStates.add(RequestStatus.OPEN_IN_TRANSIT.getValue());
+    
+    final Result<CqlQuery> itemIdQuery = exactMatch("itemId", itemId);
+    final Result<CqlQuery> statusQuery = exactMatchAny("status", openStates);
 
     final int maximumSupportedRequestQueueSize = 1000;
 
-    log.info("Fetching request queue: '{}'", unencodedQuery);
-
-    final CqlQuery query = new CqlQuery(unencodedQuery, CqlSortBy.ascending("position"));
-    
-    return requestRepository.findBy(query, maximumSupportedRequestQueueSize)
-        .thenApply(r -> r.map(MultipleRecords::getRecords))
-        .thenApply(r -> r.map(RequestQueue::new));
+    return itemIdQuery.combine(statusQuery, CqlQuery::and)
+      .map(q -> q.sortBy(ascending("position")))
+      .after(query -> requestRepository.findBy(query, maximumSupportedRequestQueueSize))
+      .thenApply(r -> r.map(MultipleRecords::getRecords))
+      .thenApply(r -> r.map(RequestQueue::new));
   }
 
   CompletableFuture<Result<RequestQueue>> updateRequestsWithChangedPositions(

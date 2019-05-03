@@ -226,12 +226,11 @@ public class LoanRepository {
   }
 
   private CompletableFuture<Result<MultipleRecords<Loan>>> findOpenLoans(String itemId) {
-    final String openLoans = String.format(
-      "itemId==%s and status.name==\"%s\"", itemId, "Open");
+    final Result<CqlQuery> statusQuery = exactMatch("status.name", "Open");
+    final Result<CqlQuery> itemIdQuery = exactMatch("itemId", itemId);
 
-    log.info("Querying open loan with query {}", openLoans);
-
-    return loansStorageClient.getMany(new CqlQuery(openLoans), 1)
+    return statusQuery.combine(itemIdQuery, CqlQuery::and)
+      .after(query -> loansStorageClient.getMany(query, 1))
       .thenApply(result -> result.next(this::mapResponseToLoans));
   }
 

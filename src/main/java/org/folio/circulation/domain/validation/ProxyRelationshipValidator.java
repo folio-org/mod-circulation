@@ -1,7 +1,7 @@
 package org.folio.circulation.domain.validation;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.CqlQuery.exactMatch;
 import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
@@ -54,12 +54,11 @@ public class ProxyRelationshipValidator {
   }
 
   private Result<CqlQuery> proxyRelationshipQuery(
-    String proxyUserId,
-    String sponsorUserId) {
+    String proxyUserId, String sponsorUserId) {
 
-    String validateProxyQuery = String.format("proxyUserId==%s and userId==%s",
-      proxyUserId, sponsorUserId);
+    final Result<CqlQuery> proxyUserIdQuery = exactMatch("proxyUserId", proxyUserId);
+    final Result<CqlQuery> userIdQuery = exactMatch("userId", sponsorUserId);
 
-    return of(() -> new CqlQuery(validateProxyQuery));
+    return proxyUserIdQuery.combine(userIdQuery, CqlQuery::and);
   }
 }

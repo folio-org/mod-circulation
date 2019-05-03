@@ -50,7 +50,7 @@ public class CqlQuery {
       .collect(Collectors.toList());
   }
 
-  public CqlQuery(String query, CqlSortBy sortBy) {
+  private CqlQuery(String query, CqlSortBy sortBy) {
     this.query = query;
     this.sortBy = sortBy;
   }
@@ -59,7 +59,7 @@ public class CqlQuery {
     return new CqlQuery(format("%s and %s", asText(), other.asText()), sortBy);
   }
 
-  CqlQuery sortBy(CqlSortBy sortBy) {
+  public CqlQuery sortBy(CqlSortBy sortBy) {
     return new CqlQuery(query, sortBy);
   }
 

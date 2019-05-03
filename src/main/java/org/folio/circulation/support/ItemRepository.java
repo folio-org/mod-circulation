@@ -1,6 +1,5 @@
 package org.folio.circulation.support;
 
-import static java.lang.String.format;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.support.Result.failed;
@@ -204,9 +203,8 @@ public class ItemRepository {
   private CompletableFuture<Result<Item>> fetchItemByBarcode(String barcode) {
     log.info("Fetching item with barcode: {}", barcode);
 
-    final CqlQuery barcodeQuery = new CqlQuery(format("barcode==%s", barcode));
-
-    return itemsClient.getMany(barcodeQuery, 1)
+    return CqlQuery.exactMatch("barcode", barcode)
+       .after(query -> itemsClient.getMany(query, 1))
       .thenApply(result -> result.next(this::mapMultipleToResult))
       .thenApply(r -> r.map(Item::from))
       .exceptionally(e -> failed(new ServerErrorFailure(e)));

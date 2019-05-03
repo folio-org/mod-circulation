@@ -71,9 +71,8 @@ public class UserRepository {
     String barcode,
     String propertyName) {
 
-    final String barcodeQuery = String.format("barcode==%s", barcode);
-
-    return usersStorageClient.getMany(new CqlQuery(barcodeQuery), 1)
+    return CqlQuery.exactMatch("barcode", barcode)
+      .after(query -> usersStorageClient.getMany(query, 1))
       .thenApply(result -> result.next(this::mapResponseToUsers)
         .map(MultipleRecords::getRecords)
         .map(users -> users.stream().findFirst())
