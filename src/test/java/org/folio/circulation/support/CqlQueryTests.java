@@ -1,5 +1,6 @@
 package org.folio.circulation.support;
 
+import static org.folio.circulation.support.CqlQuery.exactMatch;
 import static org.folio.circulation.support.CqlQuery.exactMatchAny;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
@@ -21,9 +22,9 @@ public class CqlQueryTests {
 
   @Test
   public void canExactlyMatchSingleValue() {
-    final CqlQuery query = CqlQuery.exactMatch("barcode", "12345");
+    final Result<CqlQuery> query = exactMatch("barcode", "12345");
 
-    assertThat(query.asText(), is("barcode==\"12345\""));
+    assertThat(query.value().asText(), is("barcode==\"12345\""));
   }
 
   @Test
@@ -63,12 +64,13 @@ public class CqlQueryTests {
 
   @Test
   public void canApplyAndOperatorToTwoQueries() {
-    final CqlQuery query = CqlQuery.exactMatch("barcode", "12345");
+    final Result<CqlQuery> query = exactMatch("barcode", "12345");
 
-    final CqlQuery secondQuery = CqlQuery.exactMatch("status", "Open");
+    final Result<CqlQuery> secondQuery = exactMatch("status", "Open");
 
-    final CqlQuery combinedQuery = query.and(secondQuery);
+    final Result<CqlQuery> combinedQuery = query.combine(secondQuery, CqlQuery::and);
 
-    assertThat(combinedQuery.asText(), is("barcode==\"12345\" and status==\"Open\""));
+    assertThat(combinedQuery.value().asText(),
+      is("barcode==\"12345\" and status==\"Open\""));
   }
 }

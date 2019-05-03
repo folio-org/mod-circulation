@@ -1,7 +1,8 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.CqlHelper.multipleRecordsCqlQuery;
+import static org.folio.circulation.support.CqlQuery.exactMatch;
+import static org.folio.circulation.support.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
@@ -254,11 +255,10 @@ public class LoanRepository {
       return completedFuture(succeeded(multipleRequests));
     }
 
-    Result<CqlQuery> queryResult = multipleRecordsCqlQuery(
-      CqlQuery.exactMatch("status.name", "Open"),
-      "itemId", itemsToFetchLoansFor);
+    final Result<CqlQuery> statusQuery = exactMatch("status.name", "Open");
+    final Result<CqlQuery> itemIdQuery = exactMatchAny("itemId", itemsToFetchLoansFor);
 
-    return queryResult
+    return statusQuery.combine(itemIdQuery, CqlQuery::and)
       .after(query -> loansStorageClient.getMany(query, requests.size()))
       .thenApply(result -> result.next(this::mapResponseToLoans))
       .thenApply(multipleLoansResult -> multipleLoansResult.next(

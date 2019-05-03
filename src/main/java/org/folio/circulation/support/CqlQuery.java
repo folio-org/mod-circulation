@@ -23,11 +23,11 @@ public class CqlQuery {
 
   private final String query;
 
-  public static CqlQuery exactMatch(String index, String value) {
-    return new CqlQuery(format("%s==\"%s\"", index, value));
+  public static Result<CqlQuery> exactMatch(String index, String value) {
+    return Result.of(() -> new CqlQuery(format("%s==\"%s\"", index, value)));
   }
 
-  static Result<CqlQuery> exactMatchAny(String indexName, Collection<String> values) {
+  public static Result<CqlQuery> exactMatchAny(String indexName, Collection<String> values) {
     final List<String> filteredValues = filterNullValues(values);
 
     if(filteredValues.isEmpty()) {
@@ -39,7 +39,7 @@ public class CqlQuery {
       format("%s==(%s)", indexName, join(" or ", filteredValues))));
   }
 
-  static List<String> filterNullValues(Collection<String> values) {
+  private static List<String> filterNullValues(Collection<String> values) {
     return values.stream()
       .filter(Objects::nonNull)
       .map(String::toString)
@@ -52,7 +52,7 @@ public class CqlQuery {
     this.query = query;
   }
 
-  CqlQuery and(CqlQuery other) {
+  public CqlQuery and(CqlQuery other) {
     return new CqlQuery(format("%s and %s", asText(), other.asText()));
   }
 

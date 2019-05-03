@@ -1,7 +1,7 @@
 package org.folio.circulation.support;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.CqlHelper.multipleRecordsCqlQuery;
+import static org.folio.circulation.support.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.Result.of;
 
 import java.util.Collection;
@@ -33,7 +33,7 @@ public class MultipleRecordFetcher<T> {
       return completedFuture(of(MultipleRecords::empty));
     }
 
-    return multipleRecordsCqlQuery(null, "id", idList)
+    return exactMatchAny("id", idList)
       .after(query -> client.getMany(query, idList.size()))
       .thenApply(result -> result.next(this::mapToRecords));
   }
