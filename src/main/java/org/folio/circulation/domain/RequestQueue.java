@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 public class RequestQueue {
   private Collection<Request> requests;
 
-  RequestQueue(Collection<Request> requests) {
+  public RequestQueue(Collection<Request> requests) {
     this.requests = requests;
   }
 

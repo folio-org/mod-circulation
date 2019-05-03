@@ -2,11 +2,15 @@ package org.folio.circulation.domain.policy;
 
 import static api.support.matchers.FailureMatcher.hasValidationFailure;
 import static org.hamcrest.CoreMatchers.is;
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertThat;
 
 import java.util.UUID;
 
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.RequestQueue;
+import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -17,6 +21,7 @@ import api.support.builders.FixedDueDateSchedule;
 import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
+import api.support.builders.RequestBuilder;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
@@ -141,6 +146,46 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
       .calculateInitialDueDate(loan, null);
 
     assertThat(calculationResult.value(), is(loanDate.plusMinutes(duration)));
+  }
+
+  @Test
+  public void shouldApplyAlternateScheduleWhenQueuedRequestIsHoldAndRolling() {
+    final FixedDueDateSchedule alternateSchedule = FixedDueDateSchedule.wholeMonth(2018, 1);
+
+    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
+      .rolling(Period.months(1))
+      .create())
+      .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
+        .addSchedule(FixedDueDateSchedule.wholeYear(2018))
+        .create())
+      .withAlternateRenewalSchedules(new FixedDueDateSchedulesBuilder()
+        .addSchedule(alternateSchedule)
+        .create());
+
+    Loan loan = new LoanBuilder()
+      .open()
+      .withLoanDate(new DateTime(2018, 1, 20, 13, 45, 21, DateTimeZone.UTC))
+      .withDueDate(new DateTime(2018, 1, 31, 23, 59, 59, DateTimeZone.UTC))
+      .asDomainObject();
+
+    Request requestOne = Request.from(new RequestBuilder()
+      .withId(UUID.randomUUID())
+      .withPosition(1)
+      .create());
+
+    Request requestTwo = Request.from(new RequestBuilder()
+      .withId(UUID.randomUUID())
+      .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+      .hold()
+      .withItemId(UUID.fromString(loan.getItemId()))
+      .withPosition(2)
+      .create());
+
+    RequestQueue requestQueue = new RequestQueue(asList(requestOne, requestTwo));
+
+    Result<DateTime> initialDueDateResult = loanPolicy.calculateInitialDueDate(loan, requestQueue);
+
+    assertThat(initialDueDateResult.value(), is(alternateSchedule.due));
   }
 
   @Test
