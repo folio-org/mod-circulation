@@ -1648,7 +1648,7 @@ public class RequestsAPICreationTests extends APITests {
     loansFixture.checkOutByBarcode(item, loanOwner, loanDate);
 
     DateTime requestDate = loanDate.plusDays(1);
-    mockClockManagerToFixedDate(requestDate);
+    mockClockManagerToReturnFixedTime(requestDate);
 
     requestsFixture.place(new RequestBuilder()
       .withId(id)
@@ -1712,7 +1712,7 @@ public class RequestsAPICreationTests extends APITests {
     loansFixture.checkOutByBarcode(item, loanOwner, loanDate);
 
     DateTime requestDate = loanDate.plusDays(1);
-    mockClockManagerToFixedDate(requestDate);
+    mockClockManagerToReturnFixedTime(requestDate);
 
     requestsFixture.place(new RequestBuilder()
       .withId(id)
@@ -1733,7 +1733,7 @@ public class RequestsAPICreationTests extends APITests {
       sentNotices, Matchers.empty());
   }
 
-  private void mockClockManagerToFixedDate(DateTime dateTime) {
+  private void mockClockManagerToReturnFixedTime(DateTime dateTime) {
     ClockManager.getClockManager().setClock(
       Clock.fixed(
         Instant.ofEpochMilli(dateTime.getMillis()),
