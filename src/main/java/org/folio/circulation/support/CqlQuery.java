@@ -1,11 +1,14 @@
 package org.folio.circulation.support;
 
+import static java.lang.String.format;
+import static java.lang.String.join;
 import static java.lang.String.valueOf;
 import static org.folio.circulation.support.Result.of;
 
 import java.lang.invoke.MethodHandles;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Collection;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +22,10 @@ public class CqlQuery {
     return new CqlQuery(String.format("%s==\"%s\"", index, value));
   }
 
+  static CqlQuery exactMatchAny(String indexName, Collection<String> values) {
+    return new CqlQuery(format("%s==(%s)", indexName, join(" or ", values)));
+  }
+
   public CqlQuery(String query) {
     this.query = query;
   }
@@ -29,7 +36,7 @@ public class CqlQuery {
     return of(() -> URLEncoder.encode(query, valueOf(StandardCharsets.UTF_8)));
   }
 
-  public String asText() {
+  String asText() {
     return query;
   }
 }

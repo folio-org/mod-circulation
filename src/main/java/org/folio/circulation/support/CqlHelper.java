@@ -1,5 +1,6 @@
 package org.folio.circulation.support;
 
+import static java.lang.String.format;
 import static org.folio.circulation.support.Result.failed;
 
 import java.util.Collection;
@@ -48,14 +49,13 @@ public class CqlHelper {
     String indexName,
     Collection<String> filteredValues) {
 
-    String valueQuery = String.format("%s==(%s)",
-      indexName, String.join(" or ", filteredValues));
+    CqlQuery valueQuery = CqlQuery.exactMatchAny(indexName, filteredValues);
 
     if(Objects.isNull(prefixQuery)) {
-      return valueQuery;
+      return valueQuery.asText();
     }
     else {
-      return String.format("%s and %s", prefixQuery.asText(), valueQuery);
+      return format("%s and %s", prefixQuery.asText(), valueQuery.asText());
     }
   }
 
