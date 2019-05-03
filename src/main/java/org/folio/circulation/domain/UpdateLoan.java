@@ -5,8 +5,15 @@ import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.domain.notice.NoticeContextUtil;
+import org.folio.circulation.domain.notice.NoticeEventType;
+import org.folio.circulation.domain.notice.NoticeTiming;
+import org.folio.circulation.domain.notice.PatronNoticeEvent;
+import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
+import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
+import org.folio.circulation.domain.policy.PatronNoticePolicyRepository;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
@@ -17,6 +24,7 @@ public class UpdateLoan {
   private final ClosedLibraryStrategyService closedLibraryStrategyService;
   private final LoanRepository loanRepository;
   private final LoanPolicyRepository loanPolicyRepository;
+  private final PatronNoticeService patronNoticeService;
 
   public UpdateLoan(Clients clients,
       LoanRepository loanRepository,
@@ -25,6 +33,8 @@ public class UpdateLoan {
         DateTime.now(DateTimeZone.UTC), false);
     this.loanPolicyRepository = loanPolicyRepository;
     this.loanRepository = loanRepository;
+    this.patronNoticeService = new PatronNoticeService(
+      new PatronNoticePolicyRepository(clients), clients);
   }
 
   /**
@@ -40,12 +50,14 @@ public class UpdateLoan {
     Request request = requestAndRelatedRecords.getRequest();
     Loan loan = request.getLoan();
     if (request.getRequestType() == RequestType.RECALL && loan != null) {
+      DateTime dueDateBeforeRecall = loan.getDueDate();
       return loanRepository.getById(loan.getId())
           .thenApply(r -> r.map(LoanAndRelatedRecords::new))
           .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
           .thenApply(r -> r.next(this::recall))
           .thenComposeAsync(r -> r.after(closedLibraryStrategyService::applyClosedLibraryDueDateManagement))
           .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
+          .thenApply(r -> r.next(records -> sendRecallNotice(records, dueDateBeforeRecall)))
           .thenApply(r -> r.map(v -> requestAndRelatedRecords));
     } else {
       return completedFuture(succeeded(requestAndRelatedRecords));
@@ -56,5 +68,22 @@ public class UpdateLoan {
     LoanPolicy loanPolicy = loanAndRelatedRecords.getLoanPolicy();
     return loanPolicy.recall(loanAndRelatedRecords.getLoan())
         .map(loanAndRelatedRecords::withLoan);
+  }
+
+  private Result<LoanAndRelatedRecords> sendRecallNotice(
+    LoanAndRelatedRecords loanAndRelatedRecords, DateTime dueDateBeforeRecall) {
+
+    Loan loan = loanAndRelatedRecords.getLoan();
+    if (!loan.getDueDate().equals(dueDateBeforeRecall)) {
+      PatronNoticeEvent itemRecalledEvent = new PatronNoticeEventBuilder()
+        .withItem(loan.getItem())
+        .withUser(loan.getUser())
+        .withEventType(NoticeEventType.RECALL_TO_LOANEE)
+        .withTiming(NoticeTiming.UPON_AT)
+        .withNoticeContext(NoticeContextUtil.createLoanNoticeContext(loan))
+        .build();
+      patronNoticeService.acceptNoticeEvent(itemRecalledEvent);
+    }
+    return succeeded(loanAndRelatedRecords);
   }
 }

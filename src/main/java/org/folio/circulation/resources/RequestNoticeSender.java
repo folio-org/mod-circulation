@@ -7,13 +7,11 @@ import java.util.EnumMap;
 import java.util.Map;
 
 import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.domain.notice.NoticeContextUtil;
 import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticeEvent;
@@ -57,20 +55,6 @@ public class RequestNoticeSender {
       .withNoticeContext(createRequestNoticeContext(request))
       .build();
     patronNoticeService.acceptNoticeEvent(requestCreatedEvent);
-
-    if (request.getRequestType() == RequestType.RECALL &&
-      request.getLoan() != null) {
-      Loan loan = request.getLoan();
-
-      PatronNoticeEvent itemRecalledEvent = new PatronNoticeEventBuilder()
-        .withItem(loan.getItem())
-        .withUser(loan.getUser())
-        .withEventType(NoticeEventType.RECALL_TO_LOANEE)
-        .withTiming(NoticeTiming.UPON_AT)
-        .withNoticeContext(NoticeContextUtil.createLoanNoticeContext(loan))
-        .build();
-      patronNoticeService.acceptNoticeEvent(itemRecalledEvent);
-    }
     return Result.succeeded(relatedRecords);
   }
 
