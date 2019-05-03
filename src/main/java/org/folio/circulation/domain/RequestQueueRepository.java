@@ -9,6 +9,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CqlQuery;
+import org.folio.circulation.support.CqlSortBy;
 import org.folio.circulation.support.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +41,7 @@ public class RequestQueueRepository {
 
   public CompletableFuture<Result<RequestQueue>> get(String itemId) {
       String unencodedQuery = String.format(
-        "itemId==%s and status==(\"%s\" or \"%s\" or \"%s\") sortBy position/sort.ascending",
+        "itemId==%s and status==(\"%s\" or \"%s\" or \"%s\")",
         itemId,
         RequestStatus.OPEN_AWAITING_PICKUP.getValue(),
         RequestStatus.OPEN_NOT_YET_FILLED.getValue(),
@@ -50,7 +51,9 @@ public class RequestQueueRepository {
 
     log.info("Fetching request queue: '{}'", unencodedQuery);
 
-    return requestRepository.findBy(new CqlQuery(unencodedQuery), maximumSupportedRequestQueueSize)
+    final CqlQuery query = new CqlQuery(unencodedQuery, CqlSortBy.ascending("position"));
+    
+    return requestRepository.findBy(query, maximumSupportedRequestQueueSize)
         .thenApply(r -> r.map(MultipleRecords::getRecords))
         .thenApply(r -> r.map(RequestQueue::new));
   }

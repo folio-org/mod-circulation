@@ -3,6 +3,7 @@ package org.folio.circulation.support;
 import static java.lang.String.format;
 import static java.lang.String.join;
 import static java.lang.String.valueOf;
+import static org.folio.circulation.support.CqlSortBy.none;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.of;
 
@@ -22,9 +23,10 @@ public class CqlQuery {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final String query;
+  private final CqlSortBy sortBy;
 
   public static Result<CqlQuery> exactMatch(String index, String value) {
-    return Result.of(() -> new CqlQuery(format("%s==\"%s\"", index, value)));
+    return Result.of(() -> new CqlQuery(format("%s==\"%s\"", index, value), none()));
   }
 
   public static Result<CqlQuery> exactMatchAny(String indexName, Collection<String> values) {
@@ -36,7 +38,7 @@ public class CqlQuery {
     }
 
     return Result.of(() -> new CqlQuery(
-      format("%s==(%s)", indexName, join(" or ", filteredValues))));
+      format("%s==(%s)", indexName, join(" or ", filteredValues)), none()));
   }
 
   private static List<String> filterNullValues(Collection<String> values) {
@@ -48,21 +50,28 @@ public class CqlQuery {
       .collect(Collectors.toList());
   }
 
-  public CqlQuery(String query) {
+  public CqlQuery(String query, CqlSortBy sortBy) {
     this.query = query;
+    this.sortBy = sortBy;
   }
 
   public CqlQuery and(CqlQuery other) {
-    return new CqlQuery(format("%s and %s", asText(), other.asText()));
+    return new CqlQuery(format("%s and %s", asText(), other.asText()), sortBy);
+  }
+
+  CqlQuery sortBy(CqlSortBy sortBy) {
+    return new CqlQuery(query, sortBy);
   }
 
   Result<String> encode() {
-    log.info("Encoding query {}", query);
+    final String sortedQuery = sortBy.applyTo(query);
 
-    return of(() -> URLEncoder.encode(query, valueOf(StandardCharsets.UTF_8)));
+    log.info("Encoding query {}", sortedQuery);
+
+    return of(() -> URLEncoder.encode(sortedQuery, valueOf(StandardCharsets.UTF_8)));
   }
 
   String asText() {
-    return query;
+    return sortBy.applyTo(query);
   }
 }
