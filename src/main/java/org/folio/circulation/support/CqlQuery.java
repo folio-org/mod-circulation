@@ -15,6 +15,10 @@ public class CqlQuery {
 
   private final String query;
 
+  public static CqlQuery exactMatch(String index, String value) {
+    return new CqlQuery(String.format("%s==\"%s\"", index, value));
+  }
+
   public CqlQuery(String query) {
     this.query = query;
   }
@@ -23,5 +27,9 @@ public class CqlQuery {
     log.info("Encoding query {}", query);
 
     return of(() -> URLEncoder.encode(query, valueOf(StandardCharsets.UTF_8)));
+  }
+
+  public String asText() {
+    return query;
   }
 }

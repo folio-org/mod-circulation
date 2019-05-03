@@ -40,8 +40,7 @@ public class CqlHelper {
     }
 
     return Result.of(() -> new CqlQuery(
-      multipleRecordsUnencodedCqlQuery(prefixQueryFragment,
-        indexName, filteredValues)));
+      multipleRecordsUnencodedCqlQuery(prefixQueryFragment, indexName, filteredValues)));
   }
 
   private static String multipleRecordsUnencodedCqlQuery(

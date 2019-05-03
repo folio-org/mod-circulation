@@ -14,4 +14,11 @@ public class CqlQueryTests {
 
     assertThat(encodedQueryResult.value(), is("barcode%3D%3D%22++12345++%22"));
   }
+
+  @Test
+  public void canCreateExactMatchQuery() {
+    final CqlQuery query = CqlQuery.exactMatch("barcode", "12345");
+
+    assertThat(query.asText(), is("barcode==\"12345\""));
+  }
 }
