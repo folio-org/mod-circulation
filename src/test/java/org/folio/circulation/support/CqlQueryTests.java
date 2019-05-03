@@ -37,4 +37,15 @@ public class CqlQueryTests {
 
     assertThat(query.asText(), is("barcode==(12345 or 67890)"));
   }
+
+  @Test
+  public void canApplyAndOperatorToTwoQueries() {
+    final CqlQuery query = CqlQuery.exactMatch("barcode", "12345");
+
+    final CqlQuery secondQuery = CqlQuery.exactMatch("status", "Open");
+
+    final CqlQuery combinedQuery = query.and(secondQuery);
+
+    assertThat(combinedQuery.asText(), is("barcode==\"12345\" and status==\"Open\""));
+  }
 }

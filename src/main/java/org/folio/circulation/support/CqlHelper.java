@@ -1,6 +1,5 @@
 package org.folio.circulation.support;
 
-import static java.lang.String.format;
 import static org.folio.circulation.support.Result.failed;
 
 import java.util.Collection;
@@ -40,11 +39,11 @@ public class CqlHelper {
         "Cannot fetch multiple records when no IDs are provided"));
     }
 
-    return Result.of(() -> new CqlQuery(
-      multipleRecordsUnencodedCqlQuery(prefixQuery, indexName, filteredValues)));
+    return Result.of(() ->
+      multipleRecordsUnencodedCqlQuery(prefixQuery, indexName, filteredValues));
   }
 
-  private static String multipleRecordsUnencodedCqlQuery(
+  private static CqlQuery multipleRecordsUnencodedCqlQuery(
     CqlQuery prefixQuery,
     String indexName,
     Collection<String> filteredValues) {
@@ -52,10 +51,10 @@ public class CqlHelper {
     CqlQuery valueQuery = CqlQuery.exactMatchAny(indexName, filteredValues);
 
     if(Objects.isNull(prefixQuery)) {
-      return valueQuery.asText();
+      return valueQuery;
     }
     else {
-      return format("%s and %s", prefixQuery.asText(), valueQuery.asText());
+      return prefixQuery.and(valueQuery);
     }
   }
 

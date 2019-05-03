@@ -30,6 +30,10 @@ public class CqlQuery {
     this.query = query;
   }
 
+  CqlQuery and(CqlQuery other) {
+    return new CqlQuery(format("%s and %s", asText(), other.asText()));
+  }
+
   Result<String> encode() {
     log.info("Encoding query {}", query);
 
