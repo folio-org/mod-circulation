@@ -1,5 +1,7 @@
 package org.folio.circulation.support;
 
+import static org.folio.circulation.support.CqlQuery.exactMatchAny;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
@@ -24,10 +26,9 @@ public class CqlQueryTests {
     assertThat(query.asText(), is("barcode==\"12345\""));
   }
 
-  //TODO: Add test for no values
   @Test
   public void canExactlyMatchAnyOfMultipleValues() {
-    final Result<CqlQuery> query = CqlQuery.exactMatchAny("barcode",
+    final Result<CqlQuery> query = exactMatchAny("barcode",
       new ArrayList<String>() {
         {
           add("12345");
@@ -36,6 +37,28 @@ public class CqlQueryTests {
     });
 
     assertThat(query.value().asText(), is("barcode==(12345 or 67890)"));
+  }
+
+  @Test
+  public void cannotExactlyMatchNoValues() {
+    final Result<CqlQuery> queryResult = exactMatchAny("barcode", new ArrayList<>());
+
+    assertThat(queryResult.failed(), is(true));
+    assertThat(queryResult.cause(), is(instanceOf(ServerErrorFailure.class)));
+  }
+
+  @Test
+  public void cannotExactlyMatchNullValues() {
+    final Result<CqlQuery> queryResult = exactMatchAny("barcode",
+      new ArrayList<String>() {
+      {
+        add(null);
+        add(null);
+      }
+    });
+
+    assertThat(queryResult.failed(), is(true));
+    assertThat(queryResult.cause(), is(instanceOf(ServerErrorFailure.class)));
   }
 
   @Test

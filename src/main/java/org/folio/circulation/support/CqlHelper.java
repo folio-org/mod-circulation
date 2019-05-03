@@ -1,13 +1,7 @@
 package org.folio.circulation.support;
 
-import static org.folio.circulation.support.Result.failed;
-
 import java.util.Collection;
-import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
-
-import org.apache.commons.lang3.StringUtils;
 
 public class CqlHelper {
   private CqlHelper() { }
@@ -32,22 +26,7 @@ public class CqlHelper {
     String indexName,
     Collection<String> valuesToSearchFor) {
 
-    final Collection<String> filteredValues = filterNullValues(valuesToSearchFor);
-
-    if(filteredValues.isEmpty()) {
-      return failed(new ServerErrorFailure(
-        "Cannot fetch multiple records when no IDs are provided"));
-    }
-
-    return multipleRecordsUnencodedCqlQuery(prefixQuery, indexName, filteredValues);
-  }
-
-  private static Result<CqlQuery> multipleRecordsUnencodedCqlQuery(
-    CqlQuery prefixQuery,
-    String indexName,
-    Collection<String> filteredValues) {
-
-    Result<CqlQuery> valueQuery = CqlQuery.exactMatchAny(indexName, filteredValues);
+    Result<CqlQuery> valueQuery = CqlQuery.exactMatchAny(indexName, valuesToSearchFor);
 
     if(Objects.isNull(prefixQuery)) {
       return valueQuery;
@@ -55,14 +34,5 @@ public class CqlHelper {
     else {
       return valueQuery.map(prefixQuery::and);
     }
-  }
-
-  private static List<String> filterNullValues(Collection<String> values) {
-    return values.stream()
-      .filter(Objects::nonNull)
-      .map(String::toString)
-      .filter(StringUtils::isNotBlank)
-      .distinct()
-      .collect(Collectors.toList());
   }
 }
