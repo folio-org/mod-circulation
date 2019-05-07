@@ -607,4 +607,119 @@ public class CheckOutByBarcodeTests extends APITests {
       noticeContext.getString("dueDate"),
       isEquivalentTo(loanDate.plusWeeks(3)));
   }
+
+  @Test
+  public void canCheckOutUsingItemBarcodeThatContainsSpaces()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final IndividualResource steve = usersFixture.steve();
+    IndividualResource smallAngryPlanet
+      = itemsFixture.basedUponSmallAngryPlanet(item -> item.withBarcode("12345 67890"));
+
+    final IndividualResource response = loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .at(servicePointsFixture.cd1()));
+
+    final JsonObject loan = response.getJson();
+
+    assertThat(loan.getString("id"), is(notNullValue()));
+
+    assertThat("user ID should match barcode",
+      loan.getString("userId"), is(steve.getId()));
+
+    assertThat("item ID should match barcode",
+      loan.getString("itemId"), is(smallAngryPlanet.getId()));
+
+    assertThat("status should be open",
+      loan.getJsonObject("status").getString("name"), is("Open"));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+
+    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+  }
+
+  @Test
+  public void canCheckOutUsingUserBarcodeThatContainsSpaces()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+
+    final IndividualResource steve
+      = usersFixture.steve(user -> user.withBarcode("12345 67890"));
+
+    final IndividualResource response = loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .at(servicePointsFixture.cd1()));
+
+    final JsonObject loan = response.getJson();
+
+    assertThat(loan.getString("id"), is(notNullValue()));
+
+    assertThat("user ID should match barcode",
+      loan.getString("userId"), is(steve.getId()));
+
+    assertThat("item ID should match barcode",
+      loan.getString("itemId"), is(smallAngryPlanet.getId()));
+
+    assertThat("status should be open",
+      loan.getJsonObject("status").getString("name"), is("Open"));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+
+    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+  }
+
+  @Test
+  public void canCheckOutUsingProxyUserBarcodeThatContainsSpaces()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+
+    final IndividualResource jessica = usersFixture.jessica();
+
+    final IndividualResource steve
+      = usersFixture.steve(user -> user.withBarcode("12345 67890"));
+
+    proxyRelationshipsFixture.currentProxyFor(jessica, steve);
+
+    final IndividualResource response = loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(jessica)
+        .proxiedBy(steve)
+        .at(servicePointsFixture.cd1()));
+
+    final JsonObject loan = response.getJson();
+
+    assertThat(loan.getString("id"), is(notNullValue()));
+
+    assertThat("user ID should match barcode",
+      loan.getString("userId"), is(jessica.getId()));
+
+    assertThat("proxy user ID should match barcode",
+      loan.getString("proxyUserId"), is(steve.getId()));
+
+    assertThat("item ID should match barcode",
+      loan.getString("itemId"), is(smallAngryPlanet.getId()));
+
+    assertThat("status should be open",
+      loan.getJsonObject("status").getString("name"), is("Open"));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+
+    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+  }
 }
