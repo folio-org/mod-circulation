@@ -130,6 +130,15 @@ public class Item {
     return getProperty(holdingRepresentation, "callNumber");
   }
 
+  public String getCallNumberPrefix() {
+    return getProperty(holdingRepresentation, "callNumberPrefix");
+  }
+
+  public String getCallNumberSuffix() {
+    return getProperty(holdingRepresentation, "callNumberSuffix");
+  }
+
+
   public ItemStatus getStatus() {
     return ItemStatus.from(getStatusName());
   }
@@ -201,7 +210,7 @@ public class Item {
     }
   }
 
-  String getEnumeration() {
+  public String getEnumeration() {
     return getProperty(getItem(), "enumeration");
   }
 
@@ -215,6 +224,22 @@ public class Item {
     }
 
     return inTransitDestinationServicePoint;
+  }
+
+  public String getVolume() {
+    return getProperty(getItem(), "volume");
+  }
+
+  public String getChronology() {
+    return getProperty(getItem(), "chronology");
+  }
+
+  public String getNumberOfPieces() {
+    return getProperty(getItem(), "numberOfPieces");
+  }
+
+  public String getDescriptionOfPieces() {
+    return getProperty(getItem(), "descriptionOfPieces");
   }
 
   private ServicePoint getPrimaryServicePoint() {

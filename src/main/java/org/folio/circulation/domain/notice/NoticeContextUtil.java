@@ -49,6 +49,17 @@ public class NoticeContextUtil {
     return new JsonObject()
       .put("title", item.getTitle())
       .put("barcode", item.getBarcode())
-      .put("status", item.getStatus());
+      .put("status", item.getStatus())
+      .put("allContributors", item.getContributorNames())
+      .put("callNumber", item.getCallNumber())
+      .put("callNumberPrefix", item.getCallNumberPrefix())
+      .put("callNumberSuffix", item.getCallNumberSuffix())
+      .put("enumeration", item.getEnumeration())
+      .put("volume", item.getVolume())
+      .put("chronology", item.getChronology())
+      .put("materialType", item.getMaterialType())
+      .put("copy", item.getCopyNumbers())
+      .put("numberOfPieces", item.getNumberOfPieces())
+      .put("descriptionOfPieces", item.getDescriptionOfPieces());
   }
 }
