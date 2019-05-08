@@ -1,17 +1,19 @@
 package org.folio.circulation.domain.notice;
 
+import io.vertx.core.json.JsonObject;
+
+import org.joda.time.DateTimeZone;
+
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.User;
-import org.joda.time.DateTimeZone;
-
-import io.vertx.core.json.JsonObject;
 
 public class NoticeContextUtil {
 
-  private static final String PATRON = "patron";
+  private static final String USER = "user";
   private static final String ITEM = "item";
+  private static final String REQUEST = "request";
 
   private NoticeContextUtil() {
   }
@@ -26,7 +28,10 @@ public class NoticeContextUtil {
   }
 
   public static JsonObject createRequestNoticeContext(Request request) {
-    return createNoticeContextFromItemAndPatron(request.getItem(), request.getRequester());
+    return new JsonObject()
+      .put(USER, createPatronContext(request.getRequester()))
+      .put(ITEM, createItemContext(request.getItem()))
+      .put(REQUEST, createRequestContext(request));
   }
 
   public static JsonObject createNoticeContextFromItemAndPatron(Item item, User user) {
@@ -34,7 +39,7 @@ public class NoticeContextUtil {
     JsonObject itemContext = createItemContext(item);
 
     return new JsonObject()
-      .put(PATRON, patron)
+      .put(USER, patron)
       .put(ITEM, itemContext);
   }
 
@@ -42,6 +47,7 @@ public class NoticeContextUtil {
     return new JsonObject()
       .put("firstName", user.getFirstName())
       .put("lastName", user.getLastName())
+      .put("middleName", user.getMiddleName())
       .put("barcode", user.getBarcode());
   }
 
@@ -61,5 +67,13 @@ public class NoticeContextUtil {
       .put("copy", item.getCopyNumbers())
       .put("numberOfPieces", item.getNumberOfPieces())
       .put("descriptionOfPieces", item.getDescriptionOfPieces());
+  }
+
+  private static JsonObject createRequestContext(Request request) {
+    return new JsonObject()
+      .put("servicePointPickup", request.getPickupServicePoint())
+      .put("requestExpirationDate", request.getRequestExpirationDate())
+      .put("holdShelfExpirationDate", request.getHoldShelfExpirationDate())
+      .put("additionalInfo", request.getCancellationAdditionalInformation());
   }
 }

@@ -8,19 +8,22 @@ import static org.folio.circulation.domain.RequestStatus.CLOSED_UNFILLED;
 import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
 import static org.folio.circulation.domain.RequestStatus.OPEN_IN_TRANSIT;
 import static org.folio.circulation.domain.RequestStatus.OPEN_NOT_YET_FILLED;
+import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_ADDITIONAL_INFORMATION;
 import static org.folio.circulation.domain.representations.RequestProperties.HOLD_SHELF_EXPIRATION_DATE;
 import static org.folio.circulation.domain.representations.RequestProperties.POSITION;
+import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_EXPIRATION_DATE;
 import static org.folio.circulation.domain.representations.RequestProperties.STATUS;
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.util.Objects;
 
+import io.vertx.core.json.JsonObject;
+
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
-
-import io.vertx.core.json.JsonObject;
 
 public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private final JsonObject representation;
@@ -260,5 +263,13 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   public DateTime getHoldShelfExpirationDate() {
     return getDateTimeProperty(representation, HOLD_SHELF_EXPIRATION_DATE);
+  }
+
+  public DateTime getRequestExpirationDate() {
+    return getDateTimeProperty(representation, REQUEST_EXPIRATION_DATE);
+  }
+
+  public String getCancellationAdditionalInformation() {
+    return getProperty(representation, CANCELLATION_ADDITIONAL_INFORMATION);
   }
 }
