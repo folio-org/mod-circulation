@@ -322,7 +322,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return checkinServicePointId;
   }
 
-  public boolean isDueDateChanged() {
+  public boolean hasDueDateChanged() {
     return dueDateChanged;
   }
 }

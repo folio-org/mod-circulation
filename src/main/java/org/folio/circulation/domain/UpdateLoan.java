@@ -73,7 +73,7 @@ public class UpdateLoan {
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
     Loan loan = loanAndRelatedRecords.getLoan();
-    if (loan.isDueDateChanged()) {
+    if (loan.hasDueDateChanged()) {
       PatronNoticeEvent itemRecalledEvent = new PatronNoticeEventBuilder()
         .withItem(loan.getItem())
         .withUser(loan.getUser())
