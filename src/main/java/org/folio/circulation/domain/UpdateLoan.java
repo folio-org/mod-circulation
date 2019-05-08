@@ -50,14 +50,13 @@ public class UpdateLoan {
     Request request = requestAndRelatedRecords.getRequest();
     Loan loan = request.getLoan();
     if (request.getRequestType() == RequestType.RECALL && loan != null) {
-      DateTime dueDateBeforeRecall = loan.getDueDate();
       return loanRepository.getById(loan.getId())
           .thenApply(r -> r.map(LoanAndRelatedRecords::new))
           .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
           .thenApply(r -> r.next(this::recall))
           .thenComposeAsync(r -> r.after(closedLibraryStrategyService::applyClosedLibraryDueDateManagement))
           .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
-          .thenApply(r -> r.next(records -> sendRecallNotice(records, dueDateBeforeRecall)))
+          .thenApply(r -> r.next(this::sendRecallNotice))
           .thenApply(r -> r.map(v -> requestAndRelatedRecords));
     } else {
       return completedFuture(succeeded(requestAndRelatedRecords));
@@ -71,10 +70,10 @@ public class UpdateLoan {
   }
 
   private Result<LoanAndRelatedRecords> sendRecallNotice(
-    LoanAndRelatedRecords loanAndRelatedRecords, DateTime dueDateBeforeRecall) {
+    LoanAndRelatedRecords loanAndRelatedRecords) {
 
     Loan loan = loanAndRelatedRecords.getLoan();
-    if (!loan.getDueDate().equals(dueDateBeforeRecall)) {
+    if (loan.isDueDateChanged()) {
       PatronNoticeEvent itemRecalledEvent = new PatronNoticeEventBuilder()
         .withItem(loan.getItem())
         .withUser(loan.getUser())
