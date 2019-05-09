@@ -142,7 +142,7 @@
     <dependency>
       <groupId>org.jacoco</groupId>
       <artifactId>jacoco-maven-plugin</artifactId>
-      <version>0.8.0</version>
+      <version>0.8.3</version>
     </dependency>
   </dependencies>
 
@@ -336,7 +336,7 @@
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.8.0</version>
+        <version>0.8.3</version>
         <configuration>
           <excludes>**org.drools**</excludes>
         </configuration>
