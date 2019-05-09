@@ -5,7 +5,6 @@ import static api.support.RestAssuredClient.post;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.InterfaceUrls.checkInByBarcodeUrl;
 import static api.support.http.InterfaceUrls.checkOutByBarcodeUrl;
-import static api.support.http.InterfaceUrls.loansUrl;
 import static api.support.http.InterfaceUrls.overrideCheckOutByBarcodeUrl;
 import static api.support.http.InterfaceUrls.overrideRenewalByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByBarcodeUrl;
@@ -18,6 +17,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import org.folio.HttpStatus;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
@@ -150,6 +150,16 @@ public class LoansFixture {
     CheckOutByBarcodeRequestBuilder builder) {
 
     return attemptCheckOutByBarcode(422, builder);
+  }
+
+  public Response attemptCheckOutByBarcode(
+    HttpStatus expectedStatusCode,
+    CheckOutByBarcodeRequestBuilder builder) {
+
+    JsonObject request = builder.create();
+
+    return from(post(request, checkOutByBarcodeUrl(),
+      expectedStatusCode.toInt(), "check-out-by-barcode-request"));
   }
 
   public Response attemptCheckOutByBarcode(

@@ -1,11 +1,11 @@
 package org.folio.circulation.support;
 
-import io.vertx.core.json.JsonObject;
-import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.domain.*;
-import org.folio.circulation.support.http.client.Response;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static java.lang.String.format;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.function.Function.identity;
+import static org.folio.circulation.support.CqlHelper.encodeQuery;
+import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -16,10 +16,18 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static java.util.function.Function.identity;
-import static org.folio.circulation.support.Result.failed;
-import static org.folio.circulation.support.Result.succeeded;
+import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.ItemRelatedRecord;
+import org.folio.circulation.domain.LocationRepository;
+import org.folio.circulation.domain.MaterialTypeRepository;
+import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.ServicePointRepository;
+import org.folio.circulation.support.http.client.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.vertx.core.json.JsonObject;
 
 public class ItemRepository {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -199,8 +207,9 @@ public class ItemRepository {
   private CompletableFuture<Result<Item>> fetchItemByBarcode(String barcode) {
     log.info("Fetching item with barcode: {}", barcode);
 
-    return itemsClient.getMany(String.format("barcode==%s", barcode), 1, 0)
-      .thenApply(this::mapMultipleToResult)
+    return encodeQuery(format("barcode==%s", barcode))
+      .after(query -> itemsClient.getMany(query, 1, 0)
+        .thenApply(this::mapMultipleToResult))
       .thenApply(r -> r.map(Item::from))
       .exceptionally(e -> failed(new ServerErrorFailure(e)));
   }
