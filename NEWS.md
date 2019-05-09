@@ -1,3 +1,23 @@
+## 16.0.0 2019-05-09
+
+* Block loan renewal when item is recalled (CIRC-202)
+* Can override loan policy when checking out an item (CIRC-211)
+* Replacing a loan ignores the derived service point properties (CIRC-237)
+* Better validation error message when trying to create a request for an item that does not exist (CIRC-241)
+* Pickup service point is required for requests fulfilled to the hold shelf (CIRC-243)
+* Can override renewal for items which are not loanable (CIRC-249)
+* Do not attempt to fetch related records when no requests are found (CIRC-250)
+* Clear loan action after overriding renewal (CIRC-251)
+* Stop a patron having more than a single open request for an item (CIRC-255)
+* Stop a patron from requesting an item they have on loan (CIRC-258) 
+* Send request related patron notices (CIRC-256, CIRC-262)
+* Truncate loan due date when item is recalled (CIRC-259)
+* Paged items can only be checked out by the requester (CIRC-260)
+* Disallow overridden renewal if due date would not change (CIRC-261)
+* Can check out an item with a barcode containing whitespace (CIRC-284)
+* Allow requests for items on order or in process (CIRC-275)
+* Provides `circulation 7.5`
+
 ## 15.0.0 2019-03-15
 
 * Introduces endpoints to determine request and patron notice policies (CIRC-187, CIRC-196, CIRC-197)
