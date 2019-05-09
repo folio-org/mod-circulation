@@ -19,7 +19,7 @@
   </repositories>
 
   <properties>
-    <antlr4.version>4.7.1</antlr4.version>
+    <antlr4.version>4.7.2</antlr4.version>
     <drools.version>7.0.0.Final</drools.version>
     <rmb.version>24.0.0</rmb.version>
     <vertx.version>3.7.0</vertx.version>
