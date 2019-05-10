@@ -114,7 +114,7 @@ public class LoanRepository {
       .thenApply(mapResponse)
       .thenComposeAsync(r -> r.after(
         //Fetch updated loan without having to get the item and the user again
-        l -> fetchLoan(l.getId(), loan.getItem(), loan.getUser())));
+        l -> fetchLoan(l.getId(), loan.getItem(), loan.getUser(), loan.hasDueDateChanged())));
   }
 
   /**
@@ -160,10 +160,11 @@ public class LoanRepository {
   private CompletableFuture<Result<Loan>> fetchLoan(
     String id,
     Item item,
-    User user) {
+    User user,
+    boolean loanDueDateHasBeenChanged) {
 
-    return new SingleRecordFetcher<>(
-      loansStorageClient, "loan", representation -> Loan.from(representation, item, user, null))
+    return new SingleRecordFetcher<>(loansStorageClient, "loan",
+      representation -> Loan.from(representation, item, user, null, loanDueDateHasBeenChanged))
       .fetch(id);
   }
 
