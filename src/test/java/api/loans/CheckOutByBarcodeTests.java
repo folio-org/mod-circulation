@@ -49,6 +49,7 @@ import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -711,6 +712,160 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat("proxy user ID should match barcode",
       loan.getString("proxyUserId"), is(steve.getId()));
+
+    assertThat("item ID should match barcode",
+      loan.getString("itemId"), is(smallAngryPlanet.getId()));
+
+    assertThat("status should be open",
+      loan.getJsonObject("status").getString("name"), is("Open"));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+
+    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+  }
+
+  @Test
+  public void canCheckOutOnOrderItem()
+    throws MalformedURLException,
+    InterruptedException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(item -> item.onOrder());
+
+    final IndividualResource jessica = usersFixture.jessica();
+
+    final IndividualResource response = loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(jessica)
+        .at(servicePointsFixture.cd1()));
+
+    final JsonObject loan = response.getJson();
+
+    assertThat(loan.getString("id"), is(notNullValue()));
+
+    assertThat("user ID should match barcode",
+      loan.getString("userId"), is(jessica.getId()));
+
+    assertThat("item ID should match barcode",
+      loan.getString("itemId"), is(smallAngryPlanet.getId()));
+
+    assertThat("status should be open",
+      loan.getJsonObject("status").getString("name"), is("Open"));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+
+    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+  }
+
+  @Test
+  public void canCheckOutOnOrderItemWithRequest()
+    throws MalformedURLException,
+    InterruptedException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(item -> item.onOrder());
+
+    final IndividualResource jessica = usersFixture.jessica();
+
+    requestsFixture.place(
+      new RequestBuilder()
+        .withItemId(smallAngryPlanet.getId())
+        .withRequesterId(jessica.getId())
+        .withPickupServicePoint(servicePointsFixture.cd1())
+    );
+
+    final IndividualResource response = loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(jessica)
+        .at(servicePointsFixture.cd1()));
+
+    final JsonObject loan = response.getJson();
+
+    assertThat(loan.getString("id"), is(notNullValue()));
+
+    assertThat("user ID should match barcode",
+      loan.getString("userId"), is(jessica.getId()));
+
+    assertThat("item ID should match barcode",
+      loan.getString("itemId"), is(smallAngryPlanet.getId()));
+
+    assertThat("status should be open",
+      loan.getJsonObject("status").getString("name"), is("Open"));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+
+    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+  }
+
+  @Test
+  public void canCheckOutInProcessItem()
+    throws MalformedURLException,
+    InterruptedException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(item -> item.inProcess());
+
+    final IndividualResource jessica = usersFixture.jessica();
+
+    final IndividualResource response = loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(jessica)
+        .at(servicePointsFixture.cd1()));
+
+    final JsonObject loan = response.getJson();
+
+    assertThat(loan.getString("id"), is(notNullValue()));
+
+    assertThat("user ID should match barcode",
+      loan.getString("userId"), is(jessica.getId()));
+
+    assertThat("item ID should match barcode",
+      loan.getString("itemId"), is(smallAngryPlanet.getId()));
+
+    assertThat("status should be open",
+      loan.getJsonObject("status").getString("name"), is("Open"));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+
+    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+  }
+
+  @Test
+  public void canCheckOutInProcessItemWithRequest()
+    throws MalformedURLException,
+    InterruptedException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(item -> item.inProcess());
+
+    final IndividualResource jessica = usersFixture.jessica();
+
+    requestsFixture.place(
+      new RequestBuilder()
+        .withItemId(smallAngryPlanet.getId())
+        .withRequesterId(jessica.getId())
+        .withPickupServicePoint(servicePointsFixture.cd1())
+    );
+
+    final IndividualResource response = loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(jessica)
+        .at(servicePointsFixture.cd1()));
+
+    final JsonObject loan = response.getJson();
+
+    assertThat(loan.getString("id"), is(notNullValue()));
+
+    assertThat("user ID should match barcode",
+      loan.getString("userId"), is(jessica.getId()));
 
     assertThat("item ID should match barcode",
       loan.getString("itemId"), is(smallAngryPlanet.getId()));
