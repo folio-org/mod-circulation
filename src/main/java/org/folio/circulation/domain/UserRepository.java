@@ -1,8 +1,6 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.CqlHelper.encodeQuery;
-import static org.folio.circulation.support.CqlHelper.multipleRecordsCqlQuery;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
@@ -17,7 +15,9 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.CqlQuery;
 import org.folio.circulation.support.FetchSingleRecord;
+import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.Response;
 
@@ -71,16 +71,14 @@ public class UserRepository {
     String barcode,
     String propertyName) {
 
-    final String barcodeQuery = String.format("barcode==%s", barcode);
-
-    return encodeQuery(barcodeQuery)
-      .after(query -> usersStorageClient.getMany(query, 1, 0)
-        .thenApply(response -> MultipleRecords.from(response, User::new, "users")
+    return CqlQuery.exactMatch("barcode", barcode)
+      .after(query -> usersStorageClient.getMany(query, 1))
+      .thenApply(result -> result.next(this::mapResponseToUsers)
         .map(MultipleRecords::getRecords)
         .map(users -> users.stream().findFirst())
         .next(user -> user.map(Result::succeeded).orElseGet(() ->
           failedValidation("Could not find user with matching barcode",
-            propertyName, barcode)))));
+            propertyName, barcode))));
   }
 
   CompletableFuture<Result<MultipleRecords<Request>>> findUsersForRequests(
@@ -98,10 +96,10 @@ public class UserRepository {
       return completedFuture(succeeded(multipleRequests));
     }
 
-    final String query = multipleRecordsCqlQuery(usersToFetch);
+    final MultipleRecordFetcher<User> fetcher
+      = new MultipleRecordFetcher<>(usersStorageClient, "users", User::from);
 
-    return usersStorageClient.getMany(query, requests.size(), 0)
-      .thenApply(this::mapResponseToUsers)
+    return fetcher.findByIds(usersToFetch)
       .thenApply(multipleUsersResult -> multipleUsersResult.next(
         multipleUsers -> of(() ->
           multipleRequests.mapRecords(request ->
@@ -132,7 +130,6 @@ public class UserRepository {
       .withRequester(userMap.getOrDefault(request.getUserId(), null))
       .withProxy(userMap.getOrDefault(request.getProxyUserId(), null));
   }
-
 
   private Result<MultipleRecords<User>> mapResponseToUsers(Response response) {
     return MultipleRecords.from(response, User::from, "users");

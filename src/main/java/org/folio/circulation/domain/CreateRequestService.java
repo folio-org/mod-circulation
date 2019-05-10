@@ -6,7 +6,6 @@ import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
-import static org.folio.circulation.domain.RequestTypeItemStatusWhiteList.canCreateRequestForItem;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,6 +15,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.policy.RequestPolicy;
 import org.folio.circulation.domain.policy.RequestPolicyRepository;
+import org.folio.circulation.resources.RequestNoticeSender;
 import org.folio.circulation.support.ResponseWritableResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.ValidationError;
@@ -28,10 +28,12 @@ public class CreateRequestService {
   private final RequestPolicyRepository requestPolicyRepository;
   private final LoanRepository loanRepository;
   private final UpdateLoan updateLoan;
+  private final RequestNoticeSender requestNoticeSender;
 
   public CreateRequestService(RequestRepository requestRepository, UpdateItem updateItem,
-    UpdateLoanActionHistory updateLoanActionHistory, UpdateLoan updateLoan,
-    RequestPolicyRepository requestPolicyRepository, LoanRepository loanRepository) {
+                              UpdateLoanActionHistory updateLoanActionHistory, UpdateLoan updateLoan,
+                              RequestPolicyRepository requestPolicyRepository,
+                              LoanRepository loanRepository, RequestNoticeSender requestNoticeSender) {
 
     this.requestRepository = requestRepository;
     this.updateItem = updateItem;
@@ -39,6 +41,7 @@ public class CreateRequestService {
     this.updateLoan = updateLoan;
     this.requestPolicyRepository = requestPolicyRepository;
     this.loanRepository = loanRepository;
+    this.requestNoticeSender = requestNoticeSender;
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> createRequest(
@@ -56,7 +59,8 @@ public class CreateRequestService {
       .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
       .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreation))
       .thenComposeAsync(r -> r.after(updateLoan::onRequestCreation))
-      .thenComposeAsync(r -> r.after(requestRepository::create));
+      .thenComposeAsync(r -> r.after(requestRepository::create))
+      .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestCreated));
   }
 
   private static RequestAndRelatedRecords setRequestQueuePosition(RequestAndRelatedRecords requestAndRelatedRecords) {

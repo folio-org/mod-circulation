@@ -16,6 +16,8 @@ public class ItemBuilder extends JsonBuilder implements Builder {
   public static final String IN_TRANSIT = "In transit";
   public static final String PAGED = "Paged";
   public static final String MISSING = "Missing";
+  public static final String ON_ORDER = "On order";
+  public static final String IN_PROCESS = "In process";
 
   private final UUID id;
   private final UUID holdingId;
@@ -88,6 +90,14 @@ public class ItemBuilder extends JsonBuilder implements Builder {
 
   public ItemBuilder missing() {
     return withStatus(MISSING);
+  }
+
+  public ItemBuilder onOrder() {
+    return withStatus(ON_ORDER);
+  }
+
+  public ItemBuilder inProcess() {
+    return withStatus(IN_PROCESS);
   }
 
   private ItemBuilder withStatus(String status) {

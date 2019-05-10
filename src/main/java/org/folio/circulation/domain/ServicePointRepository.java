@@ -15,16 +15,14 @@ import java.util.stream.Stream;
 
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.CqlHelper;
 import org.folio.circulation.support.FetchSingleRecord;
+import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.Result;
-import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ServicePointRepository {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-  private static final String SERVICE_POINT_TYPE = "servicepoint";
 
   private final CollectionResourceClient servicePointsStorageClient;
 
@@ -43,7 +41,7 @@ public class ServicePointRepository {
   }
 
   CompletableFuture<Result<ServicePoint>> getServicePointById(String id) {
-    return FetchSingleRecord.<ServicePoint>forRecord(SERVICE_POINT_TYPE)
+    return FetchSingleRecord.<ServicePoint>forRecord("servicepoint")
         .using(servicePointsStorageClient)
         .mapTo(ServicePoint::new)
         .whenNotFound(succeeded(null))
@@ -124,12 +122,11 @@ public class ServicePointRepository {
       log.info("No service points to query for loans");
       return completedFuture(succeeded(multipleLoans));
     }
+
+    final MultipleRecordFetcher<ServicePoint> fetcher = createServicePointsFetcher();
     
-    String query = CqlHelper.multipleRecordsCqlQuery(servicePointsToFetch);
-    
-    return servicePointsStorageClient.getMany(query, loans.size(), 0)
-        .thenApply(this::mapResponseToServicePoints)
-        .thenApply(multipleServicePointsResult -> multipleServicePointsResult.next(
+    return fetcher.findByIds(servicePointsToFetch)
+      .thenApply(multipleServicePointsResult -> multipleServicePointsResult.next(
           multipleServicePoints -> {
             List<Loan> newLoanList = new ArrayList<>();
             Collection<ServicePoint> spCollection = multipleServicePoints.getRecords();
@@ -166,11 +163,10 @@ public class ServicePointRepository {
       log.info("No service points to query");
       return completedFuture(succeeded(multipleRequests));
     }
-    
-    String query = CqlHelper.multipleRecordsCqlQuery(servicePointsToFetch);
 
-    return servicePointsStorageClient.getMany(query, requests.size(), 0)
-        .thenApply(this::mapResponseToServicePoints)
+    final MultipleRecordFetcher<ServicePoint> fetcher = createServicePointsFetcher();
+
+    return fetcher.findByIds(servicePointsToFetch)
         .thenApply(multipleServicePointsResult -> multipleServicePointsResult.next(
           multipleServicePoints -> {
             List<Request> newRequestList = new ArrayList<>();
@@ -198,9 +194,9 @@ public class ServicePointRepository {
               new MultipleRecords<>(newRequestList, multipleRequests.getTotalRecords()));
           }));
   }
-  
-  private Result<MultipleRecords<ServicePoint>> mapResponseToServicePoints(Response response) {
-    return MultipleRecords.from(response, ServicePoint::from, "servicepoints");
+
+  private MultipleRecordFetcher<ServicePoint> createServicePointsFetcher() {
+    return new MultipleRecordFetcher<>(
+      servicePointsStorageClient, "servicepoints", ServicePoint::from);
   }
-  
 }

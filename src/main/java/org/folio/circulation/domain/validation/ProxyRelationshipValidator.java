@@ -1,17 +1,20 @@
 package org.folio.circulation.domain.validation;
 
-import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.ProxyRelationship;
-import org.folio.circulation.domain.UserRelatedRecord;
-import org.folio.circulation.support.*;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.CqlQuery.exactMatch;
+import static org.folio.circulation.support.Result.succeeded;
 
-import java.net.URLEncoder;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.Result.succeeded;
+import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.ProxyRelationship;
+import org.folio.circulation.domain.UserRelatedRecord;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.CqlQuery;
+import org.folio.circulation.support.Result;
+import org.folio.circulation.support.ValidationErrorFailure;
 
 public class ProxyRelationshipValidator {
   private final CollectionResourceClient proxyRelationshipsClient;
@@ -42,21 +45,20 @@ public class ProxyRelationshipValidator {
     UserRelatedRecord record) {
 
     return proxyRelationshipQuery(record.getProxyUserId(), record.getUserId())
-      .after(query -> proxyRelationshipsClient.getMany(query, 1000, 0)
-        .thenApply(r -> MultipleRecords.from(r, ProxyRelationship::new, "proxiesFor")
-        .map(MultipleRecords::getRecords)
+      .after(query -> proxyRelationshipsClient.getMany(query, 1000)
+      .thenApply(result -> result.next(
+        response -> MultipleRecords.from(response, ProxyRelationship::new, "proxiesFor"))
+      .map(MultipleRecords::getRecords)
         .map(relationships -> relationships.stream()
           .noneMatch(ProxyRelationship::isActive))));
   }
 
-  private Result<String> proxyRelationshipQuery(
-    String proxyUserId,
-    String sponsorUserId) {
+  private Result<CqlQuery> proxyRelationshipQuery(
+    String proxyUserId, String sponsorUserId) {
 
-    String validateProxyQuery = String.format("proxyUserId==%s and userId==%s",
-      proxyUserId, sponsorUserId);
+    final Result<CqlQuery> proxyUserIdQuery = exactMatch("proxyUserId", proxyUserId);
+    final Result<CqlQuery> userIdQuery = exactMatch("userId", sponsorUserId);
 
-    return Result.of(() ->
-      URLEncoder.encode(validateProxyQuery, String.valueOf(UTF_8)));
+    return proxyUserIdQuery.combine(userIdQuery, CqlQuery::and);
   }
 }
