@@ -5,21 +5,25 @@ import static org.folio.circulation.support.Result.succeeded;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.validation.ClosedRequestValidator;
+import org.folio.circulation.resources.RequestNoticeSender;
 import org.folio.circulation.support.Result;
 
 public class UpdateRequestService {
   private final RequestRepository requestRepository;
   private final UpdateRequestQueue updateRequestQueue;
   private final ClosedRequestValidator closedRequestValidator;
+  private final RequestNoticeSender requestNoticeSender;
 
   public UpdateRequestService(
     RequestRepository requestRepository,
     UpdateRequestQueue updateRequestQueue,
-    ClosedRequestValidator closedRequestValidator) {
+    ClosedRequestValidator closedRequestValidator,
+    RequestNoticeSender requestNoticeSender) {
 
     this.requestRepository = requestRepository;
     this.updateRequestQueue = updateRequestQueue;
     this.closedRequestValidator = closedRequestValidator;
+    this.requestNoticeSender = requestNoticeSender;
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> replaceRequest(
@@ -28,7 +32,8 @@ public class UpdateRequestService {
     return closedRequestValidator.refuseWhenAlreadyClosed(requestAndRelatedRecords)
       .thenApply(r -> r.next(this::removeRequestQueuePositionWhenCancelled))
       .thenComposeAsync(r -> r.after(requestRepository::update))
-      .thenComposeAsync(r -> r.after(updateRequestQueue::onCancellation));
+      .thenComposeAsync(r -> r.after(updateRequestQueue::onCancellation))
+      .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestUpdated));
   }
 
   private Result<RequestAndRelatedRecords> removeRequestQueuePositionWhenCancelled(
