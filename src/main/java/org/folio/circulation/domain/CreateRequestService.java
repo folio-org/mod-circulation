@@ -2,18 +2,26 @@ package org.folio.circulation.domain;
 
 import static java.lang.String.format;
 import static org.folio.circulation.domain.Request.REQUEST_TYPE;
+import static org.folio.circulation.domain.notice.NoticeContextUtil.createRequestNoticeContext;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
-import static org.folio.circulation.domain.RequestTypeItemStatusWhiteList.canCreateRequestForItem;
 
+import java.util.Collections;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.domain.notice.NoticeContextUtil;
+import org.folio.circulation.domain.notice.NoticeEventType;
+import org.folio.circulation.domain.notice.NoticeTiming;
+import org.folio.circulation.domain.notice.PatronNoticeEvent;
+import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
+import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.policy.RequestPolicy;
 import org.folio.circulation.domain.policy.RequestPolicyRepository;
 import org.folio.circulation.support.ResponseWritableResult;
@@ -22,16 +30,28 @@ import org.folio.circulation.support.http.server.ValidationError;
 
 public class CreateRequestService {
 
+  private static Map<RequestType, NoticeEventType> requestTypeToEventMap;
+
+  static {
+    Map<RequestType, NoticeEventType> map = new EnumMap<>(RequestType.class);
+    map.put(RequestType.PAGE, NoticeEventType.PAGING_REQUEST);
+    map.put(RequestType.HOLD, NoticeEventType.HOLD_REQUEST);
+    map.put(RequestType.RECALL, NoticeEventType.RECALL_REQUEST);
+    requestTypeToEventMap = Collections.unmodifiableMap(map);
+  }
+
   private final RequestRepository requestRepository;
   private final UpdateItem updateItem;
   private final UpdateLoanActionHistory updateLoanActionHistory;
   private final RequestPolicyRepository requestPolicyRepository;
   private final LoanRepository loanRepository;
   private final UpdateLoan updateLoan;
+  private final PatronNoticeService patronNoticeService;
 
   public CreateRequestService(RequestRepository requestRepository, UpdateItem updateItem,
     UpdateLoanActionHistory updateLoanActionHistory, UpdateLoan updateLoan,
-    RequestPolicyRepository requestPolicyRepository, LoanRepository loanRepository) {
+    RequestPolicyRepository requestPolicyRepository, LoanRepository loanRepository,
+    PatronNoticeService patronNoticeService) {
 
     this.requestRepository = requestRepository;
     this.updateItem = updateItem;
@@ -39,6 +59,7 @@ public class CreateRequestService {
     this.updateLoan = updateLoan;
     this.requestPolicyRepository = requestPolicyRepository;
     this.loanRepository = loanRepository;
+    this.patronNoticeService = patronNoticeService;
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> createRequest(
@@ -56,7 +77,41 @@ public class CreateRequestService {
       .thenComposeAsync(r -> r.after(updateItem::onRequestCreation))
       .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreation))
       .thenComposeAsync(r -> r.after(updateLoan::onRequestCreation))
-      .thenComposeAsync(r -> r.after(requestRepository::create));
+      .thenComposeAsync(r -> r.after(requestRepository::create))
+      .thenApply(r -> r.next(this::sendRequestCreatedNotice));
+  }
+
+  private Result<RequestAndRelatedRecords> sendRequestCreatedNotice(
+    RequestAndRelatedRecords relatedRecords) {
+
+    Request request = relatedRecords.getRequest();
+    Item item = request.getItem();
+    User requester = request.getRequester();
+    NoticeEventType eventType =
+      requestTypeToEventMap.getOrDefault(request.getRequestType(), NoticeEventType.UNKNOWN);
+
+    PatronNoticeEvent requestCreatedEvent = new PatronNoticeEventBuilder()
+      .withItem(item)
+      .withUser(requester)
+      .withEventType(eventType)
+      .withTiming(NoticeTiming.UPON_AT)
+      .withNoticeContext(createRequestNoticeContext(request))
+      .build();
+    patronNoticeService.acceptNoticeEvent(requestCreatedEvent);
+
+    Loan loan = relatedRecords.getRequest().getLoan();
+    if (request.getRequestType() == RequestType.RECALL && loan != null &&
+      loan.hasDueDateChanged()) {
+      PatronNoticeEvent itemRecalledEvent = new PatronNoticeEventBuilder()
+        .withItem(loan.getItem())
+        .withUser(loan.getUser())
+        .withEventType(NoticeEventType.RECALL_TO_LOANEE)
+        .withTiming(NoticeTiming.UPON_AT)
+        .withNoticeContext(NoticeContextUtil.createLoanNoticeContext(loan))
+        .build();
+      patronNoticeService.acceptNoticeEvent(itemRecalledEvent);
+    }
+    return succeeded(relatedRecords);
   }
 
   private static RequestAndRelatedRecords setRequestQueuePosition(RequestAndRelatedRecords requestAndRelatedRecords) {
