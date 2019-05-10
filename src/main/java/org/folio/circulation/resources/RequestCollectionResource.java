@@ -50,16 +50,14 @@ public class RequestCollectionResource extends CollectionResource {
     final UserRepository userRepository = new UserRepository(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
 
-    final PatronNoticePolicyRepository noticePolicyRepository = new PatronNoticePolicyRepository(clients);
-    final PatronNoticeService patronNoticeService = new PatronNoticeService(noticePolicyRepository, clients);
-
     final CreateRequestService createRequestService = new CreateRequestService(
       RequestRepository.using(clients),
       new UpdateItem(clients),
       new UpdateLoanActionHistory(clients),
       new UpdateLoan(clients, loanRepository, new LoanPolicyRepository(clients)),
       new RequestPolicyRepository(clients),
-      loanRepository, patronNoticeService);
+      loanRepository
+    );
 
     final RequestFromRepresentationService requestFromRepresentationService =
       new RequestFromRepresentationService(
@@ -72,8 +70,13 @@ public class RequestCollectionResource extends CollectionResource {
         new ServicePointPickupLocationValidator()
       );
 
+    final PatronNoticePolicyRepository noticePolicyRepository = new PatronNoticePolicyRepository(clients);
+    final PatronNoticeService patronNoticeService = new PatronNoticeService(noticePolicyRepository, clients);
+    final RequestNoticeSender requestNoticeSender = new RequestNoticeSender(patronNoticeService);
+
     requestFromRepresentationService.getRequestFrom(representation)
       .thenComposeAsync(r -> r.after(createRequestService::createRequest))
+      .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestCreated))
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
       .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
       .thenApply(CreatedJsonResponseResult::from)
@@ -91,22 +94,20 @@ public class RequestCollectionResource extends CollectionResource {
     final RequestRepository requestRepository = RequestRepository.using(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
 
-    final PatronNoticePolicyRepository noticePolicyRepository = new PatronNoticePolicyRepository(clients);
-    final PatronNoticeService patronNoticeService = new PatronNoticeService(noticePolicyRepository, clients);
-
     final CreateRequestService createRequestService = new CreateRequestService(
       requestRepository,
       new UpdateItem(clients),
       new UpdateLoanActionHistory(clients),
       new UpdateLoan(clients, loanRepository, new LoanPolicyRepository(clients)),
       new RequestPolicyRepository(clients),
-      loanRepository, patronNoticeService);
+      loanRepository
+    );
 
     final UpdateRequestService updateRequestService = new UpdateRequestService(
       requestRepository,
       UpdateRequestQueue.using(clients),
-      new ClosedRequestValidator(RequestRepository.using(clients)),
-      patronNoticeService);
+      new ClosedRequestValidator(RequestRepository.using(clients))
+    );
 
     final RequestFromRepresentationService requestFromRepresentationService =
       new RequestFromRepresentationService(
@@ -119,10 +120,15 @@ public class RequestCollectionResource extends CollectionResource {
         new ServicePointPickupLocationValidator()
       );
 
+    final PatronNoticePolicyRepository noticePolicyRepository = new PatronNoticePolicyRepository(clients);
+    final PatronNoticeService patronNoticeService = new PatronNoticeService(noticePolicyRepository, clients);
+    final RequestNoticeSender requestNoticeSender = new RequestNoticeSender(patronNoticeService);
+
     requestFromRepresentationService.getRequestFrom(representation)
       .thenComposeAsync(r -> r.afterWhen(requestRepository::exists,
         updateRequestService::replaceRequest,
         createRequestService::createRequest))
+      .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestUpdated))
       .thenApply(NoContentResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
   }
