@@ -72,14 +72,14 @@ public class RequestNoticeSender {
     Item item = request.getItem();
     User requester = request.getRequester();
 
-    PatronNoticeEvent requestCanceledEvent = new PatronNoticeEventBuilder()
+    PatronNoticeEvent requestCancelledEvent = new PatronNoticeEventBuilder()
       .withItem(item)
       .withUser(requester)
       .withEventType(NoticeEventType.REQUEST_CANCELLATION)
       .withTiming(NoticeTiming.UPON_AT)
       .withNoticeContext(createRequestNoticeContext(request))
       .build();
-    patronNoticeService.acceptNoticeEvent(requestCanceledEvent);
+    patronNoticeService.acceptNoticeEvent(requestCancelledEvent);
   }
 
 
