@@ -74,6 +74,7 @@ public class NoticeContextUtil {
       .put("servicePointPickup", request.getPickupServicePoint())
       .put("requestExpirationDate", request.getRequestExpirationDate())
       .put("holdShelfExpirationDate", request.getHoldShelfExpirationDate())
-      .put("additionalInfo", request.getCancellationAdditionalInformation());
+      .put("additionalInfo", request.getCancellationAdditionalInformation())
+      .put("cancellationReason", request.getCancellationReasonName());
   }
 }
