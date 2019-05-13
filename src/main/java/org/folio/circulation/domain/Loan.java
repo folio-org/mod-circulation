@@ -40,12 +40,22 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   private ServicePoint checkoutServicePoint;
   private ServicePoint checkinServicePoint;
 
+  /**
+   * True if the due date has been changed during this object's lifetime
+   */
+  private boolean dueDateChanged;
+
   public Loan(JsonObject representation) {
-    this(representation, null, null, null, null, null);
+    this(representation, null, null, null, null, null, false);
   }
 
-  public Loan(JsonObject representation, Item item, User user, User proxy, 
-      ServicePoint checkinServicePoint, ServicePoint checkoutServicePoint) {
+  public Loan(JsonObject representation, Item item, User user, User proxy,
+              ServicePoint checkinServicePoint, ServicePoint checkoutServicePoint) {
+    this(representation, item, user, proxy, checkinServicePoint, checkoutServicePoint, false);
+  }
+
+  public Loan(JsonObject representation, Item item, User user, User proxy,
+      ServicePoint checkinServicePoint, ServicePoint checkoutServicePoint, boolean dueDateChanged) {
 
     this.representation = representation;
     this.item = item;
@@ -56,6 +66,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
     this.checkoutServicePointId = getProperty(representation, LoanProperties.CHECKOUT_SERVICE_POINT_ID);
     this.checkinServicePointId = getProperty(representation, CHECKIN_SERVICE_POINT_ID);
+
+    this.dueDateChanged = dueDateChanged;
 
     // TODO: Refuse if ID does not match property in representation,
     // and possibly convert isFound to unknown item class
@@ -84,17 +96,23 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public static Loan from(JsonObject representation, Item item, User user, User proxy) {
+    return from(representation, item, user, proxy, false);
+  }
 
+  public static Loan from(JsonObject representation, Item item, User user, User proxy, boolean dueDateChanged) {
     defaultStatusAndAction(representation);
-    return new Loan(representation, item, user, proxy, null, null);
+    return new Loan(representation, item, user, proxy, null, null, dueDateChanged);
   }
 
   JsonObject asJson() {
     return representation.copy();
   }
 
-  public void changeDueDate(DateTime dueDate) {
-    write(representation, DUE_DATE, dueDate);
+  public void changeDueDate(DateTime newDueDate) {
+    if (!Objects.equals(newDueDate, getDueDate())) {
+      dueDateChanged = true;
+    }
+    write(representation, DUE_DATE, newDueDate);
   }
 
   private void changeReturnDate(DateTime returnDate) {
@@ -302,5 +320,9 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public String getCheckInServicePointId() {
     return checkinServicePointId;
+  }
+
+  public boolean hasDueDateChanged() {
+    return dueDateChanged;
   }
 }

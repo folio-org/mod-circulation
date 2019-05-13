@@ -1,7 +1,9 @@
 package org.folio.circulation.domain;
 
 import static java.util.function.Function.identity;
+import static org.folio.circulation.support.JsonKeys.byId;
 import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.ResultBinding.mapResult;
 
 import java.util.Collection;
 import java.util.List;
@@ -12,7 +14,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.CqlHelper;
+import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
 
@@ -39,12 +41,10 @@ public class LocationRepository {
       .filter(StringUtils::isNotBlank)
       .collect(Collectors.toList());
 
-    String locationsQuery = CqlHelper.multipleRecordsCqlQuery(locationIds);
+    final MultipleRecordFetcher<JsonObject> fetcher = new MultipleRecordFetcher<>(
+      locationsStorageClient, "locations", identity());
 
-    return locationsStorageClient.getMany(locationsQuery, locationIds.size(), 0)
-      .thenApply(response ->
-        MultipleRecords.from(response, identity(), "locations"))
-      .thenApply(r -> r.map(locations ->
-        locations.toMap(record -> record.getString("id"))));
+    return fetcher.findByIds(locationIds)
+      .thenApply(mapResult(locations -> locations.toMap(byId())));
   }
 }

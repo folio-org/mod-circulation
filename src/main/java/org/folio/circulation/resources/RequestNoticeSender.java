@@ -19,6 +19,7 @@ import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
+import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 
 public class RequestNoticeSender {
@@ -32,6 +33,11 @@ public class RequestNoticeSender {
     map.put(RequestType.RECALL, NoticeEventType.RECALL_REQUEST);
     requestTypeToEventMap = Collections.unmodifiableMap(map);
   }
+
+  public static RequestNoticeSender using(Clients clients) {
+    return new RequestNoticeSender(PatronNoticeService.using(clients));
+  }
+
 
   private final PatronNoticeService patronNoticeService;
 
@@ -58,9 +64,9 @@ public class RequestNoticeSender {
       .build();
     patronNoticeService.acceptNoticeEvent(requestCreatedEvent);
 
+    Loan loan = request.getLoan();
     if (request.getRequestType() == RequestType.RECALL &&
-      request.getLoan() != null) {
-      Loan loan = request.getLoan();
+      loan != null && loan.hasDueDateChanged()) {
 
       PatronNoticeEvent itemRecalledEvent = new PatronNoticeEventBuilder()
         .withItem(loan.getItem())
@@ -88,14 +94,14 @@ public class RequestNoticeSender {
     Item item = request.getItem();
     User requester = request.getRequester();
 
-    PatronNoticeEvent requestCanceledEvent = new PatronNoticeEventBuilder()
+    PatronNoticeEvent requestCancelledEvent = new PatronNoticeEventBuilder()
       .withItem(item)
       .withUser(requester)
       .withEventType(NoticeEventType.REQUEST_CANCELLATION)
       .withTiming(NoticeTiming.UPON_AT)
       .withNoticeContext(createRequestNoticeContext(request))
       .build();
-    patronNoticeService.acceptNoticeEvent(requestCanceledEvent);
+    patronNoticeService.acceptNoticeEvent(requestCancelledEvent);
   }
 
 

@@ -1,11 +1,13 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.domain.representations.RequestProperties;
+import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
-import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
+import org.folio.circulation.domain.representations.RequestProperties;
+
+import io.vertx.core.json.JsonObject;
 
 public enum RequestStatus {
   NONE(""),
@@ -42,6 +44,16 @@ public enum RequestStatus {
 
   RequestStatus(String value) {
     this.value = value;
+  }
+
+  static ArrayList<String> openStates() {
+    final ArrayList<String> openStates = new ArrayList<>();
+
+    openStates.add(OPEN_AWAITING_PICKUP.getValue());
+    openStates.add(OPEN_NOT_YET_FILLED.getValue());
+    openStates.add(OPEN_IN_TRANSIT.getValue());
+
+    return openStates;
   }
 
   public boolean isValid() {

@@ -12,7 +12,7 @@ import org.joda.time.DateTime;
 
 class NoFixedDueDateSchedules extends FixedDueDateSchedules {
   NoFixedDueDateSchedules() {
-    super(new ArrayList<>());
+    super(null, new ArrayList<>());
   }
 
   @Override

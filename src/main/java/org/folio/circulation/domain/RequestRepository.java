@@ -7,6 +7,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.CqlQuery;
 import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ItemRepository;
@@ -60,11 +61,10 @@ public class RequestRepository {
 
   //TODO: try to consolidate this further with above
   CompletableFuture<Result<MultipleRecords<Request>>> findBy(
-    String query,
-    Integer pageLimit) {
+    CqlQuery query, Integer pageLimit) {
 
-    return requestsStorageClient.getMany(query, pageLimit, 0)
-      .thenApply(this::mapResponseToRequests)
+    return requestsStorageClient.getMany(query, pageLimit)
+      .thenApply(result -> result.next(this::mapResponseToRequests))
       .thenComposeAsync(requests ->
         itemRepository.fetchItemsFor(requests, Request::withItem));
   }

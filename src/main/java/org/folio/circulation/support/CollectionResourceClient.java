@@ -126,19 +126,18 @@ public class CollectionResourceClient {
     return future;
   }
 
-  public CompletableFuture<Response> getMany(
-    String urlEncodedCqlQuery,
-    Integer pageLimit,
-    Integer pageOffset) {
+  public CompletableFuture<Result<Response>> getMany(
+    CqlQuery cqlQuery, Integer pageLimit) {
 
-    final CompletableFuture<Response> future = new CompletableFuture<>();
+    return cqlQuery.encode().after(encodedQuery -> {
+        final CompletableFuture<Response> future = new CompletableFuture<>();
 
-    String url = collectionRoot + createQueryString(
-      urlEncodedCqlQuery, pageLimit, pageOffset);
+        String url = collectionRoot + createQueryString(encodedQuery, pageLimit, 0);
 
-    client.get(url, responseConversationHandler(future::complete));
+        client.get(url, responseConversationHandler(future::complete));
 
-    return future;
+        return future.thenApply(Result::succeeded);
+      });
   }
 
   private static boolean isProvided(String query) {
@@ -183,8 +182,7 @@ public class CollectionResourceClient {
   private Handler<HttpClientResponse> responseConversationHandler(
     Consumer<Response> responseHandler) {
 
-    return response ->
-      response
+    return response -> response
       .bodyHandler(buffer -> responseHandler.accept(Response.from(response, buffer)))
       .exceptionHandler(ex -> {
         log.error("Unhandled exception in body handler", ex);

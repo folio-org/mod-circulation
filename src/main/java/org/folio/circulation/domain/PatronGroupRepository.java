@@ -1,8 +1,6 @@
 package org.folio.circulation.domain;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.Result.of;
-import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -13,10 +11,8 @@ import java.util.stream.Collectors;
 
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.CqlHelper;
+import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.Result;
-import org.folio.circulation.support.http.client.Response;
-
 
 class PatronGroupRepository {
   private final CollectionResourceClient patronGroupsStorageClient;
@@ -31,10 +27,9 @@ class PatronGroupRepository {
     return result.after(request -> {
       final ArrayList<String> groupsToFetch = getGroupsFromUsers(request);
 
-      final String query = CqlHelper.multipleRecordsCqlQuery(groupsToFetch);
+      final MultipleRecordFetcher<PatronGroup> fetcher = createGroupsFetcher();
 
-      return patronGroupsStorageClient.getMany(query, groupsToFetch.size(), 0)
-        .thenApply(this::mapResponseToPatronGroups)
+      return fetcher.findByIds(groupsToFetch)
         .thenApply(multiplePatronGroupsResult -> multiplePatronGroupsResult.next(
           patronGroups -> of(() -> matchGroupsToUsers(request, patronGroups))));
     });
@@ -51,20 +46,11 @@ class PatronGroupRepository {
       .distinct()
       .collect(Collectors.toList());
 
-    if (groupsToFetch.isEmpty()) {
-      return completedFuture(succeeded(multipleRequests));
-    }
+    final MultipleRecordFetcher<PatronGroup> fetcher = createGroupsFetcher();
 
-    final String query = CqlHelper.multipleRecordsCqlQuery(groupsToFetch);
-
-    return patronGroupsStorageClient.getMany(query, groupsToFetch.size(), 0)
-      .thenApply(this::mapResponseToPatronGroups)
+    return fetcher.findByIds(groupsToFetch)
       .thenApply(multiplePatronGroupsResult -> multiplePatronGroupsResult.next(
         patronGroups -> matchGroupsToUsers(multipleRequests, patronGroups)));
-  }
-
-  private Result<MultipleRecords<PatronGroup>> mapResponseToPatronGroups(Response response) {
-    return MultipleRecords.from(response, PatronGroup::from, "usergroups");
   }
 
   private ArrayList<String> getGroupsFromUsers(Request request) {
@@ -107,5 +93,10 @@ class PatronGroupRepository {
 
     return user.withPatronGroup(
       groupMap.getOrDefault(user.getPatronGroupId(), null));
+  }
+
+  private MultipleRecordFetcher<PatronGroup> createGroupsFetcher() {
+    return new MultipleRecordFetcher<>(patronGroupsStorageClient,
+      "usergroups", PatronGroup::from);
   }
 }
