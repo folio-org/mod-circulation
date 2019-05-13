@@ -5,8 +5,6 @@ import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
 
-import io.vertx.core.json.JsonObject;
-
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlQuery;
@@ -17,6 +15,8 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.SingleRecordMapper;
 import org.folio.circulation.support.http.client.Response;
+
+import io.vertx.core.json.JsonObject;
 
 public class RequestRepository {
   private final CollectionResourceClient requestsStorageClient;
@@ -177,7 +177,7 @@ public class RequestRepository {
     return FetchSingleRecord.<Request>forRecord("cancellationreason")
       .using(cancellationReasonStorageClient)
       .mapTo(request::withCancellationReasonJsonRepresentation)
-      .whenNotFound(succeeded(null))
+      .whenNotFound(succeeded(request))
       .fetch(request.getCancellationReasonId());
   }
 

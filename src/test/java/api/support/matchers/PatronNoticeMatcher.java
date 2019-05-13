@@ -34,6 +34,7 @@ public class PatronNoticeMatcher extends TypeSafeDiagnosingMatcher<JsonObject> {
   private String expectedTemplateId;
   private String expectedDeliveryChannel;
   private String expectedOutputFormat;
+  private JsonObject jsonObject;
 
 
   private PatronNoticeMatcher(

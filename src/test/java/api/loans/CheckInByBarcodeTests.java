@@ -518,7 +518,7 @@ public class CheckInByBarcodeTests extends APITests {
     MatcherAssert.assertThat("sent notice should have context property",
       noticeContext, notNullValue());
 
-    JsonObject actualPatron = noticeContext.getJsonObject("patron");
+    JsonObject actualPatron = noticeContext.getJsonObject("user");
     JsonObject personalData = requester.getJson().getJsonObject("personal");
     assertThat("sent notice should have user barcode",
       actualPatron.getString("barcode"), is(requester.getJson().getString("barcode")));

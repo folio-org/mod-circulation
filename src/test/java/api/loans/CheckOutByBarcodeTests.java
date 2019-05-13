@@ -605,7 +605,7 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat("sent notice should have context property",
       noticeContext, notNullValue());
     assertThat("sent notice context should have dueDate property",
-      noticeContext.getString("dueDate"),
+      noticeContext.getJsonObject("loan").getString("dueDate"),
       isEquivalentTo(loanDate.plusWeeks(3)));
   }
 
