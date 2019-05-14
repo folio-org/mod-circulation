@@ -11,7 +11,6 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
-
 import io.vertx.core.json.JsonObject;
 
 public class FixedDueDateSchedules {
@@ -30,8 +29,17 @@ public class FixedDueDateSchedules {
     }
   }
 
+  public List<JsonObject> getSchedules() {
+    return schedules;
+  }
+
   public Optional<DateTime> findDueDateFor(DateTime date) {
     return findScheduleFor(date)
+      .map(this::getDueDate);
+  }
+
+  public Optional<DateTime> findEarliestDueDateFor(DateTime date) {
+    return findEarliestScheduleFor(date)
       .map(this::getDueDate);
   }
 
@@ -40,6 +48,13 @@ public class FixedDueDateSchedules {
       .stream()
       .filter(isWithin(date))
       .findFirst();
+  }
+
+  private Optional<JsonObject> findEarliestScheduleFor(DateTime date) {
+    return schedules
+      .stream()
+      .filter(isWithin(date))
+      .min(new ScheduleDueDateComparator());
   }
 
   private Predicate<? super JsonObject> isWithin(DateTime date) {

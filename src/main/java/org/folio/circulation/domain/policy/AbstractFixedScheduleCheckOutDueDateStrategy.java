@@ -3,6 +3,7 @@ package org.folio.circulation.domain.policy;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
+import java.util.Optional;
 import java.util.function.Function;
 
 import org.folio.circulation.domain.Loan;
@@ -11,13 +12,13 @@ import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 
-class FixedScheduleCheckOutDueDateStrategy extends DueDateStrategy {
+abstract class AbstractFixedScheduleCheckOutDueDateStrategy extends DueDateStrategy {
   private static final String NO_APPLICABLE_DUE_DATE_SCHEDULE_MESSAGE =
     "loan date falls outside of the date ranges in the loan policy";
 
-  private final FixedDueDateSchedules fixedDueDateSchedules;
+  protected final FixedDueDateSchedules fixedDueDateSchedules;
 
-  FixedScheduleCheckOutDueDateStrategy(
+  AbstractFixedScheduleCheckOutDueDateStrategy(
     String loanPolicyId,
     String loanPolicyName,
     FixedDueDateSchedules fixedDueDateSchedules, Function<String,
@@ -34,6 +35,8 @@ class FixedScheduleCheckOutDueDateStrategy extends DueDateStrategy {
     }
   }
 
+  abstract Optional<DateTime> getDueDate(DateTime loanDate);
+
   @Override
   Result<DateTime> calculateDueDate(Loan loan) {
     final DateTime loanDate = loan.getLoanDate();
@@ -41,7 +44,7 @@ class FixedScheduleCheckOutDueDateStrategy extends DueDateStrategy {
     logApplying("Fixed schedule check out due date calculation");
 
     try {
-      return fixedDueDateSchedules.findDueDateFor(loanDate)
+      return getDueDate(loanDate)
         .map(Result::succeeded)
         .orElseGet(() -> failedValidation(
           errorForPolicy(NO_APPLICABLE_DUE_DATE_SCHEDULE_MESSAGE)));

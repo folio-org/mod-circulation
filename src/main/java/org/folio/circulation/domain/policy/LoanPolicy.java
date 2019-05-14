@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -234,6 +235,7 @@ public class LoanPolicy {
   private DueDateStrategy determineStrategy(RequestQueue requestQueue, boolean isRenewal, DateTime systemDate) {
     final JsonObject loansPolicy = getLoansPolicy();
     final JsonObject renewalsPolicy = getRenewalsPolicy();
+    final JsonObject holds = getHolds();
 
     //TODO: Temporary until have better logic for missing loans policy
     if(loansPolicy == null) {
@@ -248,13 +250,9 @@ public class LoanPolicy {
           getRenewalDueDateLimitSchedules(), this::errorForPolicy);
       }
       else {
-        FixedDueDateSchedules appliedDueDateSchedules = Objects.nonNull(alternateRenewalFixedDueDateSchedules)
-          && Objects.nonNull(requestQueue)
-          && isAlternateRenewal(requestQueue)
-          ? alternateRenewalFixedDueDateSchedules 
-          : fixedDueDateSchedules;
         return new RollingCheckOutDueDateStrategy(getId(), getName(), 
-          getPeriod(loansPolicy), appliedDueDateSchedules, this::errorForPolicy);
+          isAlternateDueDateSchedule(requestQueue) ? getPeriod(holds) : getPeriod(loansPolicy),
+          fixedDueDateSchedules, this::errorForPolicy);
       }
     }
     else if(isFixed(loansPolicy)) {
@@ -263,13 +261,19 @@ public class LoanPolicy {
           getRenewalFixedDueDateSchedules(), systemDate, this::errorForPolicy);
       }
       else {
-        FixedDueDateSchedules appliedDueDateSchedules = Objects.nonNull(alternateRenewalFixedDueDateSchedules)
-          && Objects.nonNull(requestQueue)
-          && isAlternateRenewal(requestQueue) 
-          ? alternateRenewalFixedDueDateSchedules 
-          : fixedDueDateSchedules;
-        return new FixedScheduleCheckOutDueDateStrategy(getId(), getName(),
-          appliedDueDateSchedules, this::errorForPolicy);
+        if(isAlternateDueDateSchedule(requestQueue)) {
+          List<JsonObject> schedules =
+            new ArrayList<JsonObject>(fixedDueDateSchedules.getSchedules());
+          schedules.add(0, buildSchedule(systemDate, holds));
+          FixedDueDateSchedules alternateFixedDueDateSchedules =
+            new FixedDueDateSchedules(schedules);
+          return new AlternateFixedScheduleCheckOutDueDateStrategy(getId(), getName(),
+            alternateFixedDueDateSchedules, this::errorForPolicy);
+        }
+        else {
+          return new DefaultFixedScheduleCheckOutDueDateStrategy(getId(), getName(),
+            fixedDueDateSchedules, this::errorForPolicy);
+        }
       }
     }
     else {
@@ -278,18 +282,35 @@ public class LoanPolicy {
     }
   }
 
-  private boolean isAlternateRenewal(RequestQueue requestQueue) {
+  private boolean isAlternateDueDateSchedule(RequestQueue requestQueue) {
+    if(Objects.isNull(requestQueue)) {
+      return false;
+    }
     Optional<Request> potentialRequest = requestQueue.getRequests().stream().skip(1).findFirst();
-    boolean isAlternateRenewal = false;
+    boolean isAlternateDueDateSchedule = false;
     if(potentialRequest.isPresent()) {
       Request request = potentialRequest.get();
       boolean isHold = request.getRequestType() == RequestType.HOLD;
       boolean isOpenNotYetFilled = request.getStatus() == RequestStatus.OPEN_NOT_YET_FILLED;
       if(isHold && isOpenNotYetFilled) {
-        isAlternateRenewal = true;
+        isAlternateDueDateSchedule = true;
       }
     }
-    return isAlternateRenewal;
+    return isAlternateDueDateSchedule;
+  }
+
+  private JsonObject buildSchedule(DateTime systemDate, JsonObject request) {
+    String durrationValue = getPeriod(request).asJson().getString("duration");
+    DateTime durration = DateTime.parse(durrationValue);
+    DateTime dueDate = systemDate.plus(durration.getMillisOfSecond());
+
+    Map<String, Object> scheduleProperties = new HashMap<String, Object>();
+    // Ensure the schedule contains the system date
+    scheduleProperties.put("from", systemDate.minusDays(1).toString());
+    scheduleProperties.put("to", systemDate.plus(2 * durration.getMillisOfSecond()).toString());
+    scheduleProperties.put("due", dueDate.toString());
+    return new JsonObject(scheduleProperties);
+    
   }
 
   private JsonObject getLoansPolicy() {
@@ -298,6 +319,12 @@ public class LoanPolicy {
 
   private JsonObject getRenewalsPolicy() {
     return representation.getJsonObject("renewalsPolicy");
+  }
+
+  private JsonObject getHolds() {
+    return representation
+      .getJsonObject("requestManagement", new JsonObject())
+      .getJsonObject("holds", new JsonObject());
   }
 
   private FixedDueDateSchedules getRenewalDueDateLimitSchedules() {
