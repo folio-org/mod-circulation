@@ -26,6 +26,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -1582,6 +1583,27 @@ public class LoanAPITests extends APITests {
 
   }
 
+  @Test
+  public void SingleLoanContainBorrowerInformation()
+      throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+    IndividualResource steve = usersFixture.steve();
+    InventoryItemResource inventoryItemResource = itemsFixture.basedUponDunkirk();
+    IndividualResource individualResource = loansFixture.checkOutByBarcode(inventoryItemResource, steve);
+    Response loan = loansClient.getById(individualResource.getId());
+    loanHasExpectedProperties(loan.getJson());
+  }
+
+  @Test
+  public void MultipleLoansContainBorrowerInformation()
+      throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+    IndividualResource steve = usersFixture.steve();
+    InventoryItemResource book1 = itemsFixture.basedUponDunkirk();
+    InventoryItemResource book2 = itemsFixture.basedUponNod();
+    loansFixture.checkOutByBarcode(book1, steve);
+    loansFixture.checkOutByBarcode(book2, steve);
+    loansClient.getAll().forEach(this::loanHasExpectedProperties);
+  }
+
   private void loanHasExpectedProperties(JsonObject loan) {
     hasProperty("id", loan, "loan");
     hasProperty("userId", loan, "loan");
@@ -1590,6 +1612,14 @@ public class LoanAPITests extends APITests {
     hasProperty("status", loan, "loan");
     hasProperty("action", loan, "loan");
     hasProperty("item", loan, "loan");
+    hasProperty(LoanProperties.BORROWER, loan, "loan");
+    
+    JsonObject borrower = loan.getJsonObject(LoanProperties.BORROWER);
+
+    hasProperty("firstName", borrower, "borrower");
+    hasProperty("lastName", borrower, "borrower");
+    hasProperty("middleName", borrower, "borrower");
+    hasProperty("barcode", borrower, "borrower");
 
     JsonObject item = loan.getJsonObject("item");
 

@@ -3,6 +3,7 @@ package org.folio.circulation.domain;
 import java.lang.invoke.MethodHandles;
 
 import org.folio.circulation.domain.representations.ItemSummaryRepresentation;
+import org.folio.circulation.domain.representations.LoanProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +26,11 @@ public class LoanRepresentation {
     if(loan.getCheckoutServicePoint() != null) {
       addAdditionalServicePointProperties(extendedRepresentation, loan.getCheckoutServicePoint(), "checkoutServicePoint");
     }
-    
+
+    if (loan.getUser() != null) {
+      additionalBorrowerProperties(extendedRepresentation, loan.getUser());
+    }
+
     return extendedRepresentation;
   }
 
@@ -66,8 +71,26 @@ public class LoanRepresentation {
     spSummary.put("discoveryDisplayName", servicePoint.getDiscoveryDisplayName());
     spSummary.put("description", servicePoint.getDescription());
     spSummary.put("shelvingLagTime", servicePoint.getShelvingLagTime());
-    spSummary.put("pickupLocation", servicePoint.getPickupLocation());    
-    
+    spSummary.put("pickupLocation", servicePoint.getPickupLocation());
+
     loanRepresentation.put(fieldName, spSummary);
+  }
+
+  private void additionalBorrowerProperties(JsonObject loanRepresentation, User borrower) {
+    if (borrower == null) {
+      log.info("Unable to add borrower properties to loan {},"
+        + " borrower is null", loanRepresentation.getString("id"));
+      return;
+    }
+
+    JsonObject borrowerSummary = loanRepresentation.containsKey(LoanProperties.BORROWER)
+        ? loanRepresentation.getJsonObject(LoanProperties.BORROWER)
+        : new JsonObject();
+    borrowerSummary.put("firstName", borrower.getFirstName());
+    borrowerSummary.put("lastName", borrower.getLastName());
+    borrowerSummary.put("middleName", borrower.getMiddleName());
+    borrowerSummary.put("barcode", borrower.getBarcode());
+
+    loanRepresentation.put(LoanProperties.BORROWER, borrowerSummary);
   }
 }
