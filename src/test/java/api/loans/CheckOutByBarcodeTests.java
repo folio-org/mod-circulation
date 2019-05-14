@@ -8,6 +8,7 @@ import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasProxyUse
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasServicePointParameter;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasUserBarcodeParameter;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
+import static api.support.matchers.PatronNoticeMatcher.equalsToEmailPatronNotice;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.UUIDMatcher.is;
@@ -16,11 +17,13 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasMessageContaining;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -34,6 +37,7 @@ import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
+import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -51,6 +55,7 @@ import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
+import api.support.fixtures.NoticeTokens;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -591,19 +596,19 @@ public class CheckOutByBarcodeTests extends APITests {
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(patronNoticesClient::getAll, Matchers.hasSize(1));
-
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
-    JsonObject notice = sentNotices.get(0);
-    assertThat("sent notice should have template id form notice policy",
-      notice.getString("templateId"), is(checkOutTemplateId));
-    assertThat("sent notice should have email delivery channel",
-      notice.getString("deliveryChannel"), is("email"));
-    assertThat("sent notice should have output format",
-      notice.getString("outputFormat"), is("text/html"));
 
+    List<String> expectedContextPaths =
+      new ArrayList<>(NoticeTokens.EXPECTED_USER_TOKENS);
+    expectedContextPaths.addAll(NoticeTokens.EXPECTED_ITEM_TOKENS);
+    expectedContextPaths.addAll(NoticeTokens.EXPECTED_LOAN_TOKENS);
+    expectedContextPaths.addAll(NoticeTokens.EXPECTED_LOAN_POLICY_TOKENS);
+    MatcherAssert.assertThat(sentNotices,
+      hasItems(
+        equalsToEmailPatronNotice(steve.getId(), checkOutTemplateId, expectedContextPaths)));
+
+    JsonObject notice = sentNotices.get(0);
     JsonObject noticeContext = notice.getJsonObject("context");
-    assertThat("sent notice should have context property",
-      noticeContext, notNullValue());
     assertThat("sent notice context should have dueDate property",
       noticeContext.getJsonObject("loan").getString("dueDate"),
       isEquivalentTo(loanDate.plusWeeks(3)));

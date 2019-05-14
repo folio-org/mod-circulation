@@ -629,7 +629,8 @@
             "proxiesfor.collection.get",
             "circulation.rules.notice-policy.get",
             "circulation-storage.patron-notice-policies.item.get",
-            "patron-notice.post"
+            "patron-notice.post",
+            "circulation-storage.cancellation-reasons.item.get"
           ]
         },
         {

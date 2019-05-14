@@ -180,6 +180,10 @@ public class Item {
     return materialTypeRepresentation;
   }
 
+  public String getMaterialTypeName() {
+    return getProperty(materialTypeRepresentation, "name");
+  }
+
   public JsonArray getCopyNumbers() {
     return getItem() == null ? new JsonArray() : getItem().getJsonArray("copyNumbers");
   }

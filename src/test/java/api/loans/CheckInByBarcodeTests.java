@@ -1,5 +1,6 @@
 package api.loans;
 
+import static api.support.matchers.PatronNoticeMatcher.equalsToEmailPatronNotice;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.UUIDMatcher.is;
@@ -7,11 +8,13 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static java.util.Arrays.asList;
 import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
+import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -23,7 +26,6 @@ import java.util.concurrent.TimeoutException;
 import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
@@ -38,7 +40,7 @@ import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
-import api.support.matchers.UUIDMatcher;
+import api.support.fixtures.NoticeTokens;
 import io.vertx.core.json.JsonObject;
 
 public class CheckInByBarcodeTests extends APITests {
@@ -363,19 +365,15 @@ public class CheckInByBarcodeTests extends APITests {
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(patronNoticesClient::getAll, Matchers.hasSize(1));
-
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
-    JsonObject notice = sentNotices.get(0);
-    MatcherAssert.assertThat("sent notice should have template id form notice policy",
-      notice.getString("templateId"), UUIDMatcher.is(checkInTemplateId));
-    MatcherAssert.assertThat("sent notice should have email delivery channel",
-      notice.getString("deliveryChannel"), CoreMatchers.is("email"));
-    MatcherAssert.assertThat("sent notice should have output format",
-      notice.getString("outputFormat"), CoreMatchers.is("text/html"));
 
-    JsonObject noticeContext = notice.getJsonObject("context");
-    MatcherAssert.assertThat("sent notice should have context property",
-      noticeContext, notNullValue());
+    List<String> expectedContextPaths =
+      new ArrayList<>(NoticeTokens.EXPECTED_USER_TOKENS);
+    expectedContextPaths.addAll(NoticeTokens.EXPECTED_ITEM_TOKENS);
+    expectedContextPaths.addAll(NoticeTokens.EXPECTED_LOAN_TOKENS);
+    MatcherAssert.assertThat(sentNotices,
+      hasItems(
+        equalsToEmailPatronNotice(james.getId(), checkInTemplateId, expectedContextPaths)));
   }
 
   @Test
@@ -447,11 +445,12 @@ public class CheckInByBarcodeTests extends APITests {
       .withPickupServicePointId(servicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
+    UUID availableNoticeTemplateId = UUID.randomUUID();
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy notice")
       .withLoanNotices(Collections
         .singletonList(new NoticeConfigurationBuilder()
-          .withTemplateId(UUID.randomUUID()).withEventType("Available").create()));
+          .withTemplateId(availableNoticeTemplateId).withEventType("Available").create()));
 
     useLoanPolicyAsFallback(
       loanPoliciesFixture.canCirculateRolling().getId(),
@@ -461,7 +460,7 @@ public class CheckInByBarcodeTests extends APITests {
     DateTime checkInDate = new DateTime(2019, 7, 25, 14, 23, 41, DateTimeZone.UTC);
     loansFixture.checkInByBarcode(item, checkInDate, servicePointId);
 
-    checkPatronNoticeEvent(item, requester);
+    checkPatronNoticeEvent(requester, availableNoticeTemplateId);
   }
 
   @Test
@@ -485,11 +484,12 @@ public class CheckInByBarcodeTests extends APITests {
       .withPickupServicePointId(servicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
+    UUID availableNoticeTemplateId = UUID.randomUUID();
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy notice")
       .withLoanNotices(Collections
         .singletonList(new NoticeConfigurationBuilder()
-          .withTemplateId(UUID.randomUUID()).withEventType("Available").create()));
+          .withTemplateId(availableNoticeTemplateId).withEventType("Available").create()));
 
     useLoanPolicyAsFallback(
       loanPoliciesFixture.canCirculateRolling().getId(),
@@ -500,35 +500,24 @@ public class CheckInByBarcodeTests extends APITests {
       new DateTime(2019, 5, 10, 14, 23, 41, DateTimeZone.UTC),
       servicePointId);
 
-    checkPatronNoticeEvent(item, requester);
+    checkPatronNoticeEvent(requester, availableNoticeTemplateId);
   }
 
-  private void checkPatronNoticeEvent(IndividualResource item, IndividualResource requester) throws Exception {
+  private void checkPatronNoticeEvent(
+    IndividualResource requester, UUID expectedTemplateId)
+    throws Exception {
+
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(patronNoticesClient::getAll, Matchers.hasSize(1));
 
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
-    JsonObject notice = sentNotices.get(0);
 
-    assertThat("sent notice should have recipient id",
-      notice.getString("recipientId"), UUIDMatcher.is(requester.getId()));
-
-    JsonObject noticeContext = notice.getJsonObject("context");
-    MatcherAssert.assertThat("sent notice should have context property",
-      noticeContext, notNullValue());
-
-    JsonObject actualPatron = noticeContext.getJsonObject("user");
-    JsonObject personalData = requester.getJson().getJsonObject("personal");
-    assertThat("sent notice should have user barcode",
-      actualPatron.getString("barcode"), is(requester.getJson().getString("barcode")));
-    assertThat("sent notice should have firstName",
-      actualPatron.getString("firstName"), is(personalData.getString("firstName")));
-    assertThat("sent notice should have lastName",
-      actualPatron.getString("lastName"), is(personalData.getString("lastName")));
-
-    JsonObject actualItem = noticeContext.getJsonObject("item");
-    assertThat("sent notice should have item barcode",
-      actualItem.getString("barcode"), is(item.getJson().getString("barcode")));
+  List<String> expectedContextPaths =
+    new ArrayList<>(NoticeTokens.EXPECTED_USER_TOKENS);
+  expectedContextPaths.addAll(NoticeTokens.EXPECTED_ITEM_TOKENS);
+  MatcherAssert.assertThat(sentNotices,
+    hasItems(
+      equalsToEmailPatronNotice(requester.getId(), expectedTemplateId, expectedContextPaths)));
   }
 }

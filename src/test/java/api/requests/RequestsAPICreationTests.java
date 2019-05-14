@@ -27,6 +27,7 @@ import java.net.MalformedURLException;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -62,6 +63,7 @@ import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import api.support.fixtures.ItemsFixture;
 import api.support.fixtures.LoansFixture;
+import api.support.fixtures.NoticeTokens;
 import api.support.fixtures.RequestsFixture;
 import api.support.fixtures.UsersFixture;
 import api.support.http.InventoryItemResource;
@@ -1539,9 +1541,14 @@ public class RequestsAPICreationTests extends APITests {
       .atMost(1, TimeUnit.SECONDS)
       .until(patronNoticesClient::getAll, Matchers.hasSize(1));
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
+
+    List<String> expectedContextPaths =
+      new ArrayList<>(NoticeTokens.EXPECTED_USER_TOKENS);
+    expectedContextPaths.addAll(NoticeTokens.EXPECTED_ITEM_TOKENS);
+    expectedContextPaths.addAll(NoticeTokens.EXPECTED_REQUEST_TOKENS);
     MatcherAssert.assertThat(sentNotices,
       hasItems(
-        equalsToEmailPatronNotice(requester.getId(), pageConfirmationTemplateId)));
+        equalsToEmailPatronNotice(requester.getId(), pageConfirmationTemplateId, expectedContextPaths)));
   }
 
   @Test
@@ -1594,9 +1601,14 @@ public class RequestsAPICreationTests extends APITests {
       .atMost(1, TimeUnit.SECONDS)
       .until(patronNoticesClient::getAll, Matchers.hasSize(1));
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
+
+    List<String> expectedContextPaths =
+      new ArrayList<>(NoticeTokens.EXPECTED_USER_TOKENS);
+    expectedContextPaths.addAll(NoticeTokens.EXPECTED_ITEM_TOKENS);
+    expectedContextPaths.addAll(NoticeTokens.EXPECTED_REQUEST_TOKENS);
     MatcherAssert.assertThat(sentNotices,
       hasItems(
-        equalsToEmailPatronNotice(requester.getId(), holdConfirmationTemplateId)));
+        equalsToEmailPatronNotice(requester.getId(), holdConfirmationTemplateId, expectedContextPaths)));
   }
 
   @Test
@@ -1667,10 +1679,23 @@ public class RequestsAPICreationTests extends APITests {
       .atMost(1, TimeUnit.SECONDS)
       .until(patronNoticesClient::getAll, Matchers.hasSize(2));
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
+
+    List<String> recallConfirmationExpectedContextPaths =
+      new ArrayList<>(NoticeTokens.EXPECTED_USER_TOKENS);
+    recallConfirmationExpectedContextPaths.addAll(NoticeTokens.EXPECTED_ITEM_TOKENS);
+    recallConfirmationExpectedContextPaths.addAll(NoticeTokens.EXPECTED_REQUEST_TOKENS);
+    recallConfirmationExpectedContextPaths.addAll(NoticeTokens.EXPECTED_LOAN_TOKENS);
+
+    List<String> recallNotificationExpectedContextPaths =
+      new ArrayList<>(NoticeTokens.EXPECTED_USER_TOKENS);
+    recallNotificationExpectedContextPaths.addAll(NoticeTokens.EXPECTED_ITEM_TOKENS);
+    recallNotificationExpectedContextPaths.addAll(NoticeTokens.EXPECTED_LOAN_TOKENS);
     MatcherAssert.assertThat(sentNotices,
       hasItems(
-        equalsToEmailPatronNotice(requester.getId(), recallConfirmationTemplateId),
-        equalsToEmailPatronNotice(loanOwner.getId(), recallToLoaneeTemplateId)));
+        equalsToEmailPatronNotice(requester.getId(), recallConfirmationTemplateId,
+          recallConfirmationExpectedContextPaths),
+        equalsToEmailPatronNotice(loanOwner.getId(), recallToLoaneeTemplateId,
+          recallNotificationExpectedContextPaths)));
   }
 
   @Test

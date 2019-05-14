@@ -17,6 +17,7 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -40,6 +41,7 @@ import api.support.builders.Address;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.fixtures.NoticeTokens;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
@@ -524,14 +526,23 @@ public class RequestsAPIUpdatingTests extends APITests {
         .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
     requestsClient.replace(createdRequest.getId(),
-      RequestBuilder.from(createdRequest).cancelled());
+      RequestBuilder.from(createdRequest)
+        .cancelled()
+        .withCancellationReasonId(cancellationReasonsFixture.courseReserves().getId())
+        .withCancellationAdditionalInformation("Cancellation info"));
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(patronNoticesClient::getAll, Matchers.hasSize(1));
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
+
+    List<String> expectedContextPaths =
+      new ArrayList<>(NoticeTokens.EXPECTED_USER_TOKENS);
+    expectedContextPaths.addAll(NoticeTokens.EXPECTED_ITEM_TOKENS);
+    expectedContextPaths.addAll(NoticeTokens.EXPECTED_REQUEST_TOKENS);
+    expectedContextPaths.addAll(NoticeTokens.EXPECTED_TOKENS_FOR_CANCELLED_REQUEST);
     MatcherAssert.assertThat(sentNotices,
       hasItems(
-        equalsToEmailPatronNotice(requester.getId(), requestCancellationTemplateId)));
+        equalsToEmailPatronNotice(requester.getId(), requestCancellationTemplateId, expectedContextPaths)));
   }
   }

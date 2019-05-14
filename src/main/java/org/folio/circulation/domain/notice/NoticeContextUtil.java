@@ -5,6 +5,7 @@ import java.util.Optional;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.policy.LoanPolicy;
@@ -39,10 +40,15 @@ public class NoticeContextUtil {
   }
 
   public static JsonObject createRequestNoticeContext(Request request) {
-    return new JsonObject()
+    JsonObject requestNoticeContext = new JsonObject()
       .put(USER, createPatronContext(request.getRequester()))
       .put(ITEM, createItemContext(request.getItem()))
       .put(REQUEST, createRequestContext(request));
+
+    if (request.getRequestType() == RequestType.RECALL && request.getLoan() != null) {
+      requestNoticeContext.put(LOAN, createLoanContext(request.getLoan()));
+    }
+    return requestNoticeContext;
   }
 
   public static JsonObject createAvailableNoticeContext(Item item, User user) {
@@ -63,7 +69,7 @@ public class NoticeContextUtil {
     return new JsonObject()
       .put("title", item.getTitle())
       .put("barcode", item.getBarcode())
-      .put("status", item.getStatus())
+      .put("status", item.getStatus().getValue())
       .put("allContributors", item.getContributorNames())
       .put("callNumber", item.getCallNumber())
       .put("callNumberPrefix", item.getCallNumberPrefix())
@@ -71,7 +77,7 @@ public class NoticeContextUtil {
       .put("enumeration", item.getEnumeration())
       .put("volume", item.getVolume())
       .put("chronology", item.getChronology())
-      .put("materialType", item.getMaterialType())
+      .put("materialType", item.getMaterialTypeName())
       .put("copy", item.getCopyNumbers())
       .put("numberOfPieces", item.getNumberOfPieces())
       .put("descriptionOfPieces", item.getDescriptionOfPieces());
@@ -101,6 +107,10 @@ public class NoticeContextUtil {
       .ifPresent(value -> requestContext.put("cancellationReason", value));
 
     return requestContext;
+  }
+
+  private static JsonObject createLoanContext(Loan loan) {
+    return createLoanContext(loan, null, DateTimeZone.UTC);
   }
 
   private static JsonObject createLoanContext(
