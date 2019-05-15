@@ -94,7 +94,7 @@ public class CheckOutByBarcodeResource extends Resource {
     final Clients clients = Clients.create(context, client);
 
     final UserRepository userRepository = new UserRepository(clients);
-    final ItemRepository itemRepository = new ItemRepository(clients, true, true);
+    final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);

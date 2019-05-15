@@ -49,7 +49,7 @@ public class RequestRepository {
   public static RequestRepository using(Clients clients) {
     return new RequestRepository(clients.requestsStorage(),
       clients.cancellationReasonStorage(),
-      new ItemRepository(clients, true, false),
+      new ItemRepository(clients, true, false, true),
       new UserRepository(clients), new LoanRepository(clients),
       new ServicePointRepository(clients), new PatronGroupRepository(clients));
   }

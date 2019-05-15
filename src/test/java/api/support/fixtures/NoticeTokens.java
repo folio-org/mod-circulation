@@ -14,7 +14,7 @@ public class NoticeTokens {
 
   public static final List<String> EXPECTED_ITEM_TOKENS = Arrays.asList(
     "item.title", "item.allContributors", "item.barcode", "item.callNumber",
-    "item.materialType");
+    "item.materialType", "item.loanType");
 
   public static final List<String> EXPECTED_LOAN_TOKENS = Arrays.asList(
     "loan.initialBorrowDate", "loan.numberOfRenewalsTaken", "loan.dueDate");

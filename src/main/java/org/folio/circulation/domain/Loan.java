@@ -325,4 +325,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   public boolean hasDueDateChanged() {
     return dueDateChanged;
   }
+
+  public DateTime getSystemReturnDate() {
+    return getDateTimeProperty(representation, SYSTEM_RETURN_DATE);
+  }
 }

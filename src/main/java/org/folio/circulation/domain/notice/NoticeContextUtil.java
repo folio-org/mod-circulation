@@ -70,6 +70,7 @@ public class NoticeContextUtil {
       .put("title", item.getTitle())
       .put("barcode", item.getBarcode())
       .put("status", item.getStatus().getValue())
+      .put("primaryContributor", item.getPrimaryContributorName())
       .put("allContributors", item.getContributorNames())
       .put("callNumber", item.getCallNumber())
       .put("callNumberPrefix", item.getCallNumberPrefix())
@@ -77,7 +78,9 @@ public class NoticeContextUtil {
       .put("enumeration", item.getEnumeration())
       .put("volume", item.getVolume())
       .put("chronology", item.getChronology())
+      .put("yearCaption", item.getYearCaption())
       .put("materialType", item.getMaterialTypeName())
+      .put("loanType", item.getLoanTypeName())
       .put("copy", item.getCopyNumbers())
       .put("numberOfPieces", item.getNumberOfPieces())
       .put("descriptionOfPieces", item.getDescriptionOfPieces());
@@ -121,6 +124,9 @@ public class NoticeContextUtil {
     loanContext.put("numberOfRenewalsTaken", loan.getRenewalCount());
     loanContext.put("dueDate", loan.getDueDate().withZone(timeZone).toString());
 
+    if (loan.getSystemReturnDate() != null) {
+      loanContext.put("checkinDate", loan.getSystemReturnDate().toString());
+    }
     if (loanPolicy != null) {
       if (loanPolicy.unlimitedRenewals()) {
         loanContext.put("numberOfRenewalsAllowed", UNLIMITED);
