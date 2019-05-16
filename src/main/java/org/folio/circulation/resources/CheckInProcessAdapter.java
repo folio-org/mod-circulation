@@ -8,7 +8,6 @@ import static org.folio.circulation.support.Result.succeeded;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 
 import org.folio.circulation.domain.CheckInProcessRecords;
 import org.folio.circulation.domain.Item;
@@ -112,10 +111,10 @@ class CheckInProcessAdapter {
     if (item.getInTransitDestinationServicePointId() != null && item.getInTransitDestinationServicePoint() == null) {
       final UUID inTransitDestinationServicePointId = UUID.fromString(item.getInTransitDestinationServicePointId());
       return servicePointRepository.getServicePointById(inTransitDestinationServicePointId)
-          .thenCompose(result ->
-            result.after(servicePoint ->
-              completedFuture(succeeded(updateItem.onDestinationServicePointUpdate(item, servicePoint))))
-          );
+        .thenCompose(result ->
+          result.after(servicePoint ->
+            completedFuture(succeeded(updateItem.onDestinationServicePointUpdate(item, servicePoint))))
+        );
     }
 
     return completedFuture(succeeded(item));
@@ -144,29 +143,30 @@ class CheckInProcessAdapter {
 
     requestQueue.getRequests().stream()
       .findFirst()
-      .ifPresent(
-        firstRequest -> {
-          String barcode = firstRequest.getRequesterBarcode();
-          userRepository.getUserByBarcode(barcode)
-            .thenAccept(r -> r.next(sendPatronNotice(records.getItem(), firstRequest)));
-        }
-      );
+      .ifPresent(firstRequest -> sendAvailableNotice(records, firstRequest));
     return succeeded(records);
   }
 
-  private Function<User, Result<User>> sendPatronNotice(Item item, Request request) {
-    return user -> {
-      if (item.isAwaitingPickup()) {
-        PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
-          .withItem(item)
-          .withUser(user)
-          .withEventType(NoticeEventType.AVAILABLE)
-          .withTiming(NoticeTiming.UPON_AT)
-          .withNoticeContext(createAvailableNoticeContext(item, user, request))
-          .build();
-        patronNoticeService.acceptNoticeEvent(noticeEvent);
-      }
-      return succeeded(user);
-    };
+  private void sendAvailableNotice(CheckInProcessRecords records, Request firstRequest) {
+    servicePointRepository.getServicePointForRequest(firstRequest)
+      .thenApply(r -> r.map(firstRequest::withPickupServicePoint))
+      .thenCombine(userRepository.getUserByBarcode(firstRequest.getRequesterBarcode()),
+        (requestResult, userResult) -> Result.combine(requestResult, userResult,
+          (request, user) -> sendAvailableNotice(request, user, records)));
+  }
+
+  private Result<CheckInProcessRecords> sendAvailableNotice(Request request, User user, CheckInProcessRecords records) {
+    Item item = records.getItem();
+    if (item.isAwaitingPickup()) {
+      PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
+        .withItem(item)
+        .withUser(user)
+        .withEventType(NoticeEventType.AVAILABLE)
+        .withTiming(NoticeTiming.UPON_AT)
+        .withNoticeContext(createAvailableNoticeContext(item, user, request))
+        .build();
+      patronNoticeService.acceptNoticeEvent(noticeEvent);
+    }
+    return succeeded(records);
   }
 }
