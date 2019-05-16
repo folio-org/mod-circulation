@@ -27,6 +27,7 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.http.client.Response;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,7 +117,7 @@ public class LoanRepository {
       .thenApply(mapResponse)
       .thenComposeAsync(r -> r.after(
         //Fetch updated loan without having to get the item and the user again
-        l -> fetchLoan(l.getId(), loan.getItem(), loan.getUser(), loan.hasDueDateChanged())));
+        l -> fetchLoan(l.getId(), loan.getItem(), loan.getUser(), loan.getOriginalDueDate())));
   }
 
   /**
@@ -163,10 +164,10 @@ public class LoanRepository {
     String id,
     Item item,
     User user,
-    boolean loanDueDateHasBeenChanged) {
+    DateTime oldDueDate) {
 
     return new SingleRecordFetcher<>(loansStorageClient, "loan",
-      representation -> Loan.from(representation, item, user, null, loanDueDateHasBeenChanged))
+      representation -> Loan.from(representation, item, user, null, oldDueDate))
       .fetch(id);
   }
 
