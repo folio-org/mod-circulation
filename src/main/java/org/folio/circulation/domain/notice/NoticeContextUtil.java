@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.notice;
 
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
@@ -9,6 +10,8 @@ import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.policy.LoanPolicy;
+import org.folio.circulation.support.JsonArrayHelper;
+import org.folio.circulation.support.JsonStringArrayHelper;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
@@ -51,10 +54,11 @@ public class NoticeContextUtil {
     return requestNoticeContext;
   }
 
-  public static JsonObject createAvailableNoticeContext(Item item, User user) {
+  public static JsonObject createAvailableNoticeContext(Item item, User user, Request request) {
     return new JsonObject()
       .put(USER, createPatronContext(user))
-      .put(ITEM, createItemContext(item));
+      .put(ITEM, createItemContext(item))
+      .put(REQUEST, createRequestContext(request));
   }
 
   private static JsonObject createPatronContext(User user) {
@@ -66,22 +70,31 @@ public class NoticeContextUtil {
   }
 
   private static JsonObject createItemContext(Item item) {
+    String contributorNamesToken = JsonArrayHelper.toStream(item.getContributorNames())
+      .map(o -> o.getString("name"))
+      .collect(Collectors.joining("; "));
+
+    String yearCaptionsToken = String.join("; ", item.getYearCaption());
+
+    String captionsToken = JsonStringArrayHelper.toStream(item.getCopyNumbers())
+      .collect(Collectors.joining("; "));
+
     return new JsonObject()
       .put("title", item.getTitle())
       .put("barcode", item.getBarcode())
       .put("status", item.getStatus().getValue())
       .put("primaryContributor", item.getPrimaryContributorName())
-      .put("allContributors", item.getContributorNames())
+      .put("allContributors", contributorNamesToken)
       .put("callNumber", item.getCallNumber())
       .put("callNumberPrefix", item.getCallNumberPrefix())
       .put("callNumberSuffix", item.getCallNumberSuffix())
       .put("enumeration", item.getEnumeration())
       .put("volume", item.getVolume())
       .put("chronology", item.getChronology())
-      .put("yearCaption", item.getYearCaption())
+      .put("yearCaption", yearCaptionsToken)
       .put("materialType", item.getMaterialTypeName())
       .put("loanType", item.getLoanTypeName())
-      .put("copy", item.getCopyNumbers())
+      .put("copy", captionsToken)
       .put("numberOfPieces", item.getNumberOfPieces())
       .put("descriptionOfPieces", item.getDescriptionOfPieces());
   }
@@ -124,8 +137,8 @@ public class NoticeContextUtil {
     loanContext.put("numberOfRenewalsTaken", loan.getRenewalCount());
     loanContext.put("dueDate", loan.getDueDate().withZone(timeZone).toString());
 
-    if (loan.getSystemReturnDate() != null) {
-      loanContext.put("checkinDate", loan.getSystemReturnDate().toString());
+    if (loan.getReturnDate() != null) {
+      loanContext.put("checkinDate", loan.getReturnDate().toString());
     }
     if (loanPolicy != null) {
       if (loanPolicy.unlimitedRenewals()) {

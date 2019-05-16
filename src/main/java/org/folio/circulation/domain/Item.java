@@ -11,6 +11,7 @@ import static org.folio.circulation.domain.representations.ItemProperties.PERMAN
 import static org.folio.circulation.domain.representations.ItemProperties.TEMPORARY_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.TITLE_PROPERTY;
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
+import static org.folio.circulation.support.JsonPropertyFetcher.getArrayProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getUUIDProperty;
@@ -18,8 +19,10 @@ import static org.folio.circulation.support.JsonPropertyWriter.remove;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.JsonStringArrayHelper.toStream;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.representations.ItemProperties;
 import org.folio.circulation.support.JsonArrayHelper;
@@ -198,7 +201,7 @@ public class Item {
   }
 
   public JsonArray getCopyNumbers() {
-    return getItem() == null ? new JsonArray() : getItem().getJsonArray("copyNumbers");
+    return getArrayProperty(getItem(), "copyNumbers");
   }
 
   public String getMaterialTypeId() {
@@ -259,8 +262,9 @@ public class Item {
     return getProperty(getItem(), "descriptionOfPieces");
   }
 
-  public JsonArray getYearCaption() {
-    return instanceRepresentation.getJsonArray("yearCaption", new JsonArray());
+  public List<String> getYearCaption() {
+    return toStream(itemRepresentation, "yearCaption")
+      .collect(Collectors.toList());
   }
 
   private ServicePoint getPrimaryServicePoint() {

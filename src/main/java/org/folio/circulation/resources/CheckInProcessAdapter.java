@@ -15,6 +15,7 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanCheckInService;
 import org.folio.circulation.domain.LoanRepository;
+import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.ServicePointRepository;
@@ -147,13 +148,13 @@ class CheckInProcessAdapter {
         firstRequest -> {
           String barcode = firstRequest.getRequesterBarcode();
           userRepository.getUserByBarcode(barcode)
-            .thenAccept(r -> r.next(sendPatronNotice(records.getItem())));
+            .thenAccept(r -> r.next(sendPatronNotice(records.getItem(), firstRequest)));
         }
       );
     return succeeded(records);
   }
 
-  private Function<User, Result<User>> sendPatronNotice(Item item) {
+  private Function<User, Result<User>> sendPatronNotice(Item item, Request request) {
     return user -> {
       if (item.isAwaitingPickup()) {
         PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
@@ -161,7 +162,7 @@ class CheckInProcessAdapter {
           .withUser(user)
           .withEventType(NoticeEventType.AVAILABLE)
           .withTiming(NoticeTiming.UPON_AT)
-          .withNoticeContext(createAvailableNoticeContext(item, user))
+          .withNoticeContext(createAvailableNoticeContext(item, user, request))
           .build();
         patronNoticeService.acceptNoticeEvent(noticeEvent);
       }
