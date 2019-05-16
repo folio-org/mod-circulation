@@ -40,6 +40,7 @@ import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
+import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -1694,6 +1695,7 @@ public class RequestsAPICreationTests extends APITests {
       .withName("Policy with recall notice")
       .withDescription("Recall configuration has no effect on due date")
       .rolling(Period.weeks(3))
+      .withClosedLibraryDueDateManagement(DueDateManagement.KEEP_THE_CURRENT_DUE_DATE.getValue())
       .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(3))
       .withRecallsRecallReturnInterval(Period.weeks(1));
 
