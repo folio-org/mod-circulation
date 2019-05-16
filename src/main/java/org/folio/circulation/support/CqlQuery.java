@@ -3,6 +3,8 @@ package org.folio.circulation.support;
 import static java.lang.String.format;
 import static java.lang.String.join;
 import static java.lang.String.valueOf;
+import static java.util.stream.Collectors.toList;
+
 import static org.folio.circulation.support.CqlSortBy.none;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.of;
@@ -13,7 +15,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -38,7 +39,7 @@ public class CqlQuery {
     }
 
     return Result.of(() -> new CqlQuery(
-      format("%s==(%s)", indexName, join(" or ", filteredValues)), none()));
+      format("%s==(%s)", indexName, join(" or ", wrapValuesInQuotes(filteredValues))), none()));
   }
 
   private static List<String> filterNullValues(Collection<String> values) {
@@ -47,7 +48,13 @@ public class CqlQuery {
       .map(String::toString)
       .filter(StringUtils::isNotBlank)
       .distinct()
-      .collect(Collectors.toList());
+      .collect(toList());
+  }
+
+  private static List<String> wrapValuesInQuotes(List<String> values) {
+    return values.stream()
+      .map(value -> format("\"%s\"", value))
+      .collect(toList());
   }
 
   private CqlQuery(String query, CqlSortBy sortBy) {
