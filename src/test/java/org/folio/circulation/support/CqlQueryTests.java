@@ -40,7 +40,7 @@ public class CqlQueryTests {
         }
     });
 
-    assertThat(query.value().asText(), is("barcode==(12345 or 67890)"));
+    assertThat(query.value().asText(), is("barcode==(\"12345\" or \"67890\")"));
   }
 
   @Test
