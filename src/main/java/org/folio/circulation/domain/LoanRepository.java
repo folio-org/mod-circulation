@@ -117,7 +117,7 @@ public class LoanRepository {
       .thenApply(mapResponse)
       .thenComposeAsync(r -> r.after(
         //Fetch updated loan without having to get the item and the user again
-        l -> fetchLoan(l.getId(), loan.getItem(), loan.getUser(), loan.getOldDueDate())));
+        l -> fetchLoan(l.getId(), loan.getItem(), loan.getUser(), loan.getOriginalDueDate())));
   }
 
   /**
