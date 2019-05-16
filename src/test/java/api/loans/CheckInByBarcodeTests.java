@@ -517,6 +517,7 @@ public class CheckInByBarcodeTests extends APITests {
   List<String> expectedContextPaths =
     new ArrayList<>(NoticeTokens.EXPECTED_USER_TOKENS);
   expectedContextPaths.addAll(NoticeTokens.EXPECTED_ITEM_TOKENS);
+  expectedContextPaths.addAll(NoticeTokens.EXPECTED_REQUEST_TOKENS);
   MatcherAssert.assertThat(sentNotices,
     hasItems(
       equalsToEmailPatronNotice(requester.getId(), expectedTemplateId, expectedContextPaths)));
