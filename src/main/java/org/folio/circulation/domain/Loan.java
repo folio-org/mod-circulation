@@ -222,35 +222,43 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return new Loan(representation, item, user, newProxy, checkinServicePoint,
       checkoutServicePoint, originalDueDate);
   }
-  
+
   public Loan withCheckinServicePoint(ServicePoint newCheckinServicePoint) {
     return new Loan(representation, item, user, proxy, newCheckinServicePoint,
       checkoutServicePoint, originalDueDate);
   }
-  
+
   public Loan withCheckoutServicePoint(ServicePoint newCheckoutServicePoint) {
     return new Loan(representation, item, user, proxy, checkinServicePoint,
       newCheckoutServicePoint, originalDueDate);
   }
 
-  private void changeLoanPolicy(String newLoanPolicyId) {
+  private void changeLoanPolicyId(String newLoanPolicyId) {
     if (newLoanPolicyId != null) {
       representation.put("loanPolicyId", newLoanPolicyId);
     }
   }
-  
+
+  private void changeLoanPolicyName(String newLoanPolicyName) {
+    if (newLoanPolicyName != null) {
+      representation.put("loanPolicyName", newLoanPolicyName);
+    }
+  }
+
   public ServicePoint getCheckinServicePoint() {
     return this.checkinServicePoint;
   }
-  
+
   public ServicePoint getCheckoutServicePoint() {
     return this.checkoutServicePoint;
   }
 
-  public Loan renew(DateTime dueDate, String basedUponLoanPolicyId) {
+  public Loan renew(DateTime dueDate, String basedUponLoanPolicyId,
+                    String basedUponLoanPolicyName) {
     changeAction("renewed");
     removeActionComment();
-    changeLoanPolicy(basedUponLoanPolicyId);
+    changeLoanPolicyId(basedUponLoanPolicyId);
+    changeLoanPolicyName(basedUponLoanPolicyName);
     changeDueDate(dueDate);
     incrementRenewalCount();
 
@@ -261,7 +269,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
                               String basedUponLoanPolicyId,
                               String actionComment) {
     changeAction("renewedThroughOverride");
-    changeLoanPolicy(basedUponLoanPolicyId);
+    changeLoanPolicyId(basedUponLoanPolicyId);
     changeDueDate(dueDate);
     incrementRenewalCount();
     changeActionComment(actionComment);

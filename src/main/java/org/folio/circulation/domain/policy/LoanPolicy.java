@@ -94,7 +94,7 @@ public class LoanPolicy {
       errorWhenReachedRenewalLimit(loan, errors);
 
       if(errors.isEmpty()) {
-        return proposedDueDateResult.map(dueDate -> loan.renew(dueDate, getId()));
+        return proposedDueDateResult.map(dueDate -> loan.renew(dueDate, getId(),getName()));
       }
       else {
         return failedValidation(errors);

@@ -53,6 +53,10 @@
       "description": "ID of last policy used in relation to this loan",
       "type": "string"
     },
+    "loanPolicyName": {
+      "description": "Name of last policy used in relation to this loan",
+      "type": "string"
+    },
     "item": {
       "description": "Additional information about the item",
       "type": "object",
