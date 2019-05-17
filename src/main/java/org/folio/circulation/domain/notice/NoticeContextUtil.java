@@ -37,14 +37,14 @@ public class NoticeContextUtil {
     Loan loan, LoanPolicy loanPolicy, DateTimeZone timeZone) {
 
     return new JsonObject()
-      .put(USER, createPatronContext(loan.getUser()))
+      .put(USER, createUserContext(loan.getUser()))
       .put(ITEM, createItemContext(loan.getItem()))
       .put(LOAN, createLoanContext(loan, loanPolicy, timeZone));
   }
 
   public static JsonObject createRequestNoticeContext(Request request) {
     JsonObject requestNoticeContext = new JsonObject()
-      .put(USER, createPatronContext(request.getRequester()))
+      .put(USER, createUserContext(request.getRequester()))
       .put(ITEM, createItemContext(request.getItem()))
       .put(REQUEST, createRequestContext(request));
 
@@ -56,12 +56,12 @@ public class NoticeContextUtil {
 
   public static JsonObject createAvailableNoticeContext(Item item, User user, Request request) {
     return new JsonObject()
-      .put(USER, createPatronContext(user))
+      .put(USER, createUserContext(user))
       .put(ITEM, createItemContext(item))
       .put(REQUEST, createRequestContext(request));
   }
 
-  private static JsonObject createPatronContext(User user) {
+  private static JsonObject createUserContext(User user) {
     return new JsonObject()
       .put("firstName", user.getFirstName())
       .put("lastName", user.getLastName())
