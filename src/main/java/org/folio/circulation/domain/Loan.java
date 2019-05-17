@@ -240,7 +240,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   private void changeLoanPolicyName(String newLoanPolicyName) {
-    if (newLoanPolicyName != null) {
+    if (Objects.nonNull(newLoanPolicyName) ) {
       representation.put("loanPolicyName", newLoanPolicyName);
     }
   }
