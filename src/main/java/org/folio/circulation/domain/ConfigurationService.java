@@ -11,14 +11,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import io.vertx.core.json.JsonObject;
 
-class ConfigurationService {
+public class ConfigurationService {
   private final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private static final DateTimeZone DEFAULT_DATE_TIME_ZONE = DateTimeZone.UTC;
   private static final String TIMEZONE_KEY = "timezone";
   private static final String RECORDS_NAME = "configs";
 
-  DateTimeZone findDateTimeZone(JsonObject representation) {
+  public DateTimeZone findDateTimeZone(JsonObject representation) {
     return from(representation, TimeZoneConfig::new, RECORDS_NAME)
       .map(MultipleRecords::getRecords)
       .map(this::findDateTimeZone)

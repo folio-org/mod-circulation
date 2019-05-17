@@ -19,6 +19,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.domain.ConfigurationService;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
@@ -42,6 +43,7 @@ public class LoanPolicy {
   private final JsonObject representation;
   private final FixedDueDateSchedules fixedDueDateSchedules;
   private final FixedDueDateSchedules alternateRenewalFixedDueDateSchedules;
+  private final ConfigurationService configuationService = new ConfigurationService();
 
   private LoanPolicy(JsonObject representation) {
     this(representation,
@@ -65,7 +67,8 @@ public class LoanPolicy {
 
   //TODO: make this have similar signature to renew
   public Result<DateTime> calculateInitialDueDate(Loan loan, RequestQueue requestQueue) {
-    return determineStrategy(requestQueue, false, null).calculateDueDate(loan);
+    DateTime systemTime = DateTime.now(configuationService.findDateTimeZone(representation));
+    return determineStrategy(requestQueue, false, systemTime).calculateDueDate(loan);
   }
 
   public Result<Loan> renew(Loan loan, DateTime systemDate) {
@@ -250,9 +253,12 @@ public class LoanPolicy {
           getRenewalDueDateLimitSchedules(), this::errorForPolicy);
       }
       else {
+        FixedDueDateSchedules rollingSchedules = fixedDueDateSchedules;
+        if(isAlternateDueDateSchedule(requestQueue)) {
+          rollingSchedules = buildAlternateDueDateSchedules(systemDate, holds);
+        }
         return new RollingCheckOutDueDateStrategy(getId(), getName(), 
-          isAlternateDueDateSchedule(requestQueue) ? getPeriod(holds) : getPeriod(loansPolicy),
-          fixedDueDateSchedules, this::errorForPolicy);
+          getPeriod(loansPolicy), rollingSchedules, this::errorForPolicy);
       }
     }
     else if(isFixed(loansPolicy)) {
@@ -262,13 +268,8 @@ public class LoanPolicy {
       }
       else {
         if(isAlternateDueDateSchedule(requestQueue)) {
-          List<JsonObject> schedules =
-            new ArrayList<JsonObject>(fixedDueDateSchedules.getSchedules());
-          schedules.add(0, buildSchedule(systemDate, holds));
-          FixedDueDateSchedules alternateFixedDueDateSchedules =
-            new FixedDueDateSchedules(schedules);
           return new AlternateFixedScheduleCheckOutDueDateStrategy(getId(), getName(),
-            alternateFixedDueDateSchedules, this::errorForPolicy);
+              buildAlternateDueDateSchedules(systemDate, holds), this::errorForPolicy);
         }
         else {
           return new DefaultFixedScheduleCheckOutDueDateStrategy(getId(), getName(),
@@ -280,6 +281,13 @@ public class LoanPolicy {
       return new UnknownDueDateStrategy(getId(), getName(),
         getProfileId(loansPolicy), isRenewal, this::errorForPolicy);
     }
+  }
+  
+  private FixedDueDateSchedules buildAlternateDueDateSchedules(DateTime systemDate, JsonObject holds) {
+    List<JsonObject> schedules =
+      new ArrayList<JsonObject>(fixedDueDateSchedules.getSchedules());
+    schedules.add(0, buildSchedule(systemDate, holds));
+    return new FixedDueDateSchedules(schedules);
   }
 
   private boolean isAlternateDueDateSchedule(RequestQueue requestQueue) {
@@ -300,15 +308,25 @@ public class LoanPolicy {
   }
 
   private JsonObject buildSchedule(DateTime systemDate, JsonObject request) {
-    String durrationValue = getPeriod(request).asJson().getString("duration");
-    DateTime durration = DateTime.parse(durrationValue);
-    DateTime dueDate = systemDate.plus(durration.getMillisOfSecond());
+    String key = "alternateCheckoutLoanPeriod";
+    Period duration = getPeriod(request, key);
+    DateTime dueDate = duration.addTo(
+        systemDate,
+        () -> errorForPolicy(format("the \"%s\" in the holds is not recognized", key)),
+        interval -> errorForPolicy(format("the interval \"%s\" in \"%s\" is not recognized", interval, key)),
+        dur -> errorForPolicy(format("the duration \"%s\" in \"%s\" is invalid", dur, key)))
+          .value();
 
     Map<String, Object> scheduleProperties = new HashMap<String, Object>();
     // Ensure the schedule contains the system date
     scheduleProperties.put("from", systemDate.minusDays(1).toString());
-    scheduleProperties.put("to", systemDate.plus(2 * durration.getMillisOfSecond()).toString());
     scheduleProperties.put("due", dueDate.toString());
+    scheduleProperties.put("to", duration.addTo(
+        dueDate,
+        () -> errorForPolicy(format("the \"%s\" in the holds is not recognized", key)),
+        interval -> errorForPolicy(format("the interval \"%s\" in \"%s\" is not recognized", interval, key)),
+        dur -> errorForPolicy(format("the duration \"%s\" in \"%s\" is invalid", dur, key)))
+        .value().toString());
     return new JsonObject(scheduleProperties);
     
   }
@@ -400,7 +418,7 @@ public class LoanPolicy {
   }
 
   //TODO: potentially remove this, when builder can create class or JSON representation
-  LoanPolicy withDueDateSchedules(JsonObject fixedDueDateSchedules) {
+  public LoanPolicy withDueDateSchedules(JsonObject fixedDueDateSchedules) {
     return withDueDateSchedules(FixedDueDateSchedules.from(fixedDueDateSchedules));
   }
 
@@ -409,7 +427,7 @@ public class LoanPolicy {
   }
 
   //TODO: potentially remove this, when builder can create class or JSON representation
-  LoanPolicy withAlternateRenewalSchedules(JsonObject renewalSchedules) {
+  public LoanPolicy withAlternateRenewalSchedules(JsonObject renewalSchedules) {
     return withAlternateRenewalSchedules(FixedDueDateSchedules.from(renewalSchedules));
   }
 
