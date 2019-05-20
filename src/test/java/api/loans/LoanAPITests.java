@@ -157,6 +157,8 @@ public class LoanAPITests extends APITests {
     assertThat("item status snapshot in storage is not checked out",
       loansStorageClient.getById(id).getJson().getString("itemStatus"),
       is("Checked out"));
+
+    loanHasExpectedProperties(loan);
   }
 
   @Test
@@ -858,6 +860,8 @@ public class LoanAPITests extends APITests {
 
     assertThat("Should not have snapshot of item status, as current status is included",
       loan.containsKey("itemStatus"), is(false));
+
+    loanHasExpectedProperties(getResponse.getJson());
   }
 
   @Test
@@ -1581,27 +1585,6 @@ public class LoanAPITests extends APITests {
     loanList.forEach(this::loanHasCheckinServicePointProperties);
     loanList.forEach(this::loanHasCheckoutServicePointProperties);
 
-  }
-
-  @Test
-  public void SingleLoanContainBorrowerInformation()
-      throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
-    IndividualResource steve = usersFixture.steve();
-    InventoryItemResource inventoryItemResource = itemsFixture.basedUponDunkirk();
-    IndividualResource individualResource = loansFixture.checkOutByBarcode(inventoryItemResource, steve);
-    Response loan = loansClient.getById(individualResource.getId());
-    loanHasExpectedProperties(loan.getJson());
-  }
-
-  @Test
-  public void MultipleLoansContainBorrowerInformation()
-      throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
-    IndividualResource steve = usersFixture.steve();
-    InventoryItemResource book1 = itemsFixture.basedUponDunkirk();
-    InventoryItemResource book2 = itemsFixture.basedUponNod();
-    loansFixture.checkOutByBarcode(book1, steve);
-    loansFixture.checkOutByBarcode(book2, steve);
-    loansClient.getAll().forEach(this::loanHasExpectedProperties);
   }
 
   private void loanHasExpectedProperties(JsonObject loan) {
