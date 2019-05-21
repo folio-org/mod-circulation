@@ -201,9 +201,16 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
         .addSchedule(FixedDueDateSchedule.wholeYear(2018))
         .create());
 
-    Item item = Item.from(new ItemBuilder().checkOut().withId(UUID.randomUUID()).create());
-    
-    Loan loan = Loan.from(new LoanBuilder().withItemId(UUID.fromString(item.getItemId())).withLoanDate(systemTime).create());
+    Item item = Item.from(
+      new ItemBuilder()
+        .checkOut()
+        .withId(UUID.randomUUID())
+        .create());
+    Loan loan = Loan.from(
+      new LoanBuilder()
+        .withItemId(UUID.fromString(item.getItemId()))
+        .withLoanDate(systemTime)
+        .create());
 
     Request requestOne = Request.from(new RequestBuilder()
       .withId(UUID.randomUUID())
