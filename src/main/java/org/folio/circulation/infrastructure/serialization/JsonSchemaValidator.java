@@ -1,10 +1,14 @@
 package org.folio.circulation.infrastructure.serialization;
 
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+
 import java.io.IOException;
 import java.io.InputStream;
 
 import org.everit.json.schema.Schema;
+import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
+import org.folio.circulation.support.Result;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
@@ -31,7 +35,14 @@ class JsonSchemaValidator {
     }
   }
 
-  void validate(String json) {
-    schema.validate(new JSONObject(json));
+  Result<String> validate(String json) {
+    try {
+      schema.validate(new JSONObject(json));
+
+      return Result.succeeded(json);
+    }
+    catch (ValidationException e) {
+      return failedValidation(String.format(e.getMessage()), null, null);
+    }
   }
 }
