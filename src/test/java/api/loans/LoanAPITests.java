@@ -1031,7 +1031,6 @@ public class LoanAPITests extends APITests {
 
     JsonObject updatedLoanRequest = loan.copyJson();
 
-    //TODO: Replace this with builder from response
     updatedLoanRequest.getJsonObject("status").put("name", "Closed");
     updatedLoanRequest.remove("userId");
 
@@ -1042,9 +1041,49 @@ public class LoanAPITests extends APITests {
     assertThat("Should be closed",
       updatedLoan.getJsonObject("status").getString("name"), is("Closed"));
 
-    assertThat("Should not have a user ID",
-      updatedLoan.containsKey("userId"), is(false));
+    hasNoBorrowerProperties(updatedLoan);
   }
+  @Test
+  public void multipleClosedLoansHaveNoBorrowerInformtion()
+          throws InterruptedException,
+          MalformedURLException,
+          TimeoutException,
+          ExecutionException {
+
+    UUID smallAngryPlanetId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    UUID nodId = itemsFixture.basedUponNod().getId();
+
+    UUID checkinServicePointId = servicePointsFixture.cd1().getId();
+    UUID checkinServicePointId2 = servicePointsFixture.cd2().getId();
+
+    final IndividualResource user = usersFixture.jessica();
+
+    final IndividualResource loan1 = loansClient.createAtSpecificLocation(new LoanBuilder()
+            .withItemId(smallAngryPlanetId)
+            .withCheckinServicePointId(checkinServicePointId)
+            .closed()
+            .withUserId(user.getId()));
+
+    final IndividualResource loan2 = loansClient.createAtSpecificLocation(new LoanBuilder()
+            .withItemId(nodId)
+            .closed()
+            .withCheckinServicePointId(checkinServicePointId2)
+            .withUserId(user.getId()));
+    JsonObject updatedLoanRequest = loan1.copyJson();
+    updatedLoanRequest.getJsonObject("status").put("name", "Closed");
+    updatedLoanRequest.remove("userId");
+    loansClient.replace(loan1.getId(), updatedLoanRequest);
+
+    updatedLoanRequest = loan2.copyJson();
+    updatedLoanRequest.getJsonObject("status").put("name", "Closed");
+    updatedLoanRequest.remove("userId");
+    loansClient.replace(loan2.getId(), updatedLoanRequest);
+
+    List<JsonObject> loans = loansClient.getAll();
+
+    loans.forEach(this::hasNoBorrowerProperties);
+  }
+
 
   @Test
   public void cannotUpdateAnOpenLoanWithoutAUserId()
@@ -1455,9 +1494,7 @@ public class LoanAPITests extends APITests {
     assertThat("Should have two loans",
       multipleLoans.size(), is(2));
 
-    //TODO: Replace with collection matcher
-    assertThat(multipleLoans.get(0).containsKey("userId"), is(false));
-    assertThat(multipleLoans.get(1).containsKey("userId"), is(false));
+    multipleLoans.forEach(this::hasNoBorrowerProperties);
   }
 
   @Test
@@ -1657,6 +1694,17 @@ public class LoanAPITests extends APITests {
     assertThat(String.format("%s should have an %s: %s",
       type, property, resource),
       resource.getMap().get(property), equalTo(value));
+  }
+
+  private void hasNoBorrowerProperties(JsonObject loanJson) {
+    hasNotProperty("userId", loanJson, "loan");
+    hasNotProperty(LoanProperties.BORROWER, loanJson, "loan");
+  }
+
+  private void hasNotProperty(String property, JsonObject resource, String type) {
+    assertThat(String.format("%s should NOT have an %s: %s",
+            type, property, resource),
+            resource.getValue(property), is(nullValue()));
   }
 
   private void hasProperty(String property, JsonObject resource, String type) {
