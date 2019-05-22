@@ -165,11 +165,13 @@ public class LoanCollectionResource extends CollectionResource {
     final LoanRepository loanRepository = new LoanRepository(clients);
     final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
+    final UserRepository userRepository = new UserRepository(clients);
 
     String id = routingContext.request().getParam("id");
 
     loanRepository.getById(id)
       .thenComposeAsync(servicePointRepository::findServicePointsForLoan)
+      .thenComposeAsync(userRepository::findUserForLoan)
       .thenApply(loanResult -> loanResult.map(loanRepresentation::extendedLoan))
       .thenApply(OkJsonResponseResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
@@ -193,10 +195,13 @@ public class LoanCollectionResource extends CollectionResource {
     final LoanRepository loanRepository = new LoanRepository(clients);
     final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
+    final UserRepository userRepository = new UserRepository(clients);
 
     loanRepository.findBy(routingContext.request().query())
       .thenCompose(multiLoanRecordsResult ->
         multiLoanRecordsResult.after(servicePointRepository::findServicePointsForLoans))
+      .thenCompose(multiLoanRecordsResult ->
+        multiLoanRecordsResult.after(userRepository::findUsersForLoans))
       .thenApply(multipleLoanRecordsResult -> multipleLoanRecordsResult.map(loans ->
         loans.asJson(loanRepresentation::extendedLoan, "loans")))
       .thenApply(OkJsonResponseResult::from)

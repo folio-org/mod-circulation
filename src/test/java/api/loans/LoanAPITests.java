@@ -11,7 +11,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessageContaining;
 import static api.support.matchers.ValidationErrorMatchers.hasNullParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -26,6 +26,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -56,7 +57,8 @@ public class LoanAPITests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    UUID userId = usersFixture.charlotte().getId();
+    IndividualResource user = usersFixture.charlotte();
+    UUID userId = user.getId();
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
@@ -156,6 +158,9 @@ public class LoanAPITests extends APITests {
     assertThat("item status snapshot in storage is not checked out",
       loansStorageClient.getById(id).getJson().getString("itemStatus"),
       is("Checked out"));
+
+    loanHasExpectedProperties(loan, user);
+
   }
 
   @Test
@@ -766,7 +771,8 @@ public class LoanAPITests extends APITests {
         .withBarcode("036000291452"))
       .getId();
 
-    UUID userId = usersFixture.charlotte().getId();
+    IndividualResource user = usersFixture.charlotte();
+    UUID userId = user.getId();
 
     DateTime dueDate = new DateTime(2016, 11, 15, 8, 26, 53, DateTimeZone.UTC);
 
@@ -857,6 +863,9 @@ public class LoanAPITests extends APITests {
 
     assertThat("Should not have snapshot of item status, as current status is included",
       loan.containsKey("itemStatus"), is(false));
+
+    loanHasExpectedProperties(loan, user);
+
   }
 
   @Test
@@ -1022,7 +1031,6 @@ public class LoanAPITests extends APITests {
 
     JsonObject updatedLoanRequest = loan.copyJson();
 
-    //TODO: Replace this with builder from response
     updatedLoanRequest.getJsonObject("status").put("name", "Closed");
     updatedLoanRequest.remove("userId");
 
@@ -1033,9 +1041,49 @@ public class LoanAPITests extends APITests {
     assertThat("Should be closed",
       updatedLoan.getJsonObject("status").getString("name"), is("Closed"));
 
-    assertThat("Should not have a user ID",
-      updatedLoan.containsKey("userId"), is(false));
+    hasNoBorrowerProperties(updatedLoan);
   }
+  @Test
+  public void multipleClosedLoansHaveNoBorrowerInformtion()
+          throws InterruptedException,
+          MalformedURLException,
+          TimeoutException,
+          ExecutionException {
+
+    UUID smallAngryPlanetId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    UUID nodId = itemsFixture.basedUponNod().getId();
+
+    UUID checkinServicePointId = servicePointsFixture.cd1().getId();
+    UUID checkinServicePointId2 = servicePointsFixture.cd2().getId();
+
+    final IndividualResource user = usersFixture.jessica();
+
+    final IndividualResource loan1 = loansClient.createAtSpecificLocation(new LoanBuilder()
+            .withItemId(smallAngryPlanetId)
+            .withCheckinServicePointId(checkinServicePointId)
+            .closed()
+            .withUserId(user.getId()));
+
+    final IndividualResource loan2 = loansClient.createAtSpecificLocation(new LoanBuilder()
+            .withItemId(nodId)
+            .closed()
+            .withCheckinServicePointId(checkinServicePointId2)
+            .withUserId(user.getId()));
+    JsonObject updatedLoanRequest = loan1.copyJson();
+    updatedLoanRequest.getJsonObject("status").put("name", "Closed");
+    updatedLoanRequest.remove("userId");
+    loansClient.replace(loan1.getId(), updatedLoanRequest);
+
+    updatedLoanRequest = loan2.copyJson();
+    updatedLoanRequest.getJsonObject("status").put("name", "Closed");
+    updatedLoanRequest.remove("userId");
+    loansClient.replace(loan2.getId(), updatedLoanRequest);
+
+    List<JsonObject> loans = loansClient.getAll();
+
+    loans.forEach(this::hasNoBorrowerProperties);
+  }
+
 
   @Test
   public void cannotUpdateAnOpenLoanWithoutAUserId()
@@ -1148,11 +1196,13 @@ public class LoanAPITests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    loansFixture.checkOutByBarcode(itemsFixture.basedUponSmallAngryPlanet());
-    loansFixture.checkOutByBarcode(itemsFixture.basedUponNod());
-    loansFixture.checkOutByBarcode(itemsFixture.basedUponTemeraire());
-    loansFixture.checkOutByBarcode(itemsFixture.basedUponUprooted());
-    loansFixture.checkOutByBarcode(itemsFixture.basedUponInterestingTimes());
+    IndividualResource user = usersFixture.steve();
+
+    loansFixture.checkOutByBarcode(itemsFixture.basedUponSmallAngryPlanet(), user);
+    loansFixture.checkOutByBarcode(itemsFixture.basedUponNod(), user);
+    loansFixture.checkOutByBarcode(itemsFixture.basedUponTemeraire(),user);
+    loansFixture.checkOutByBarcode(itemsFixture.basedUponUprooted(),user);
+    loansFixture.checkOutByBarcode(itemsFixture.basedUponInterestingTimes(),user);
 
     CompletableFuture<Response> firstPageCompleted = new CompletableFuture<>();
     CompletableFuture<Response> secondPageCompleted = new CompletableFuture<>();
@@ -1186,8 +1236,8 @@ public class LoanAPITests extends APITests {
     assertThat(secondPageLoans.size(), is(2));
     assertThat(secondPage.getInteger("totalRecords"), is(5));
 
-    firstPageLoans.forEach(this::loanHasExpectedProperties);
-    secondPageLoans.forEach(this::loanHasExpectedProperties);
+    firstPageLoans.forEach(loan -> loanHasExpectedProperties(loan, user));
+    secondPageLoans.forEach(loan -> loanHasExpectedProperties(loan, user));
 
     assertThat(countOfDistinctTitles(firstPageLoans), is(greaterThan(1)));
     assertThat(countOfDistinctTitles(secondPageLoans), is(greaterThan(1)));
@@ -1200,8 +1250,10 @@ public class LoanAPITests extends APITests {
     ExecutionException,
     TimeoutException {
 
-    UUID firstUserId = usersFixture.steve().getId();
-    UUID secondUserId = usersFixture.jessica().getId();
+    IndividualResource firstUser = usersFixture.steve();
+    UUID firstUserId = firstUser.getId();
+    IndividualResource secondUser = usersFixture.jessica();
+    UUID secondUserId = secondUser.getId();
 
     String queryTemplate = loansUrl() + "?query=userId=%s";
 
@@ -1265,8 +1317,8 @@ public class LoanAPITests extends APITests {
     assertThat(secondPageLoans.size(), is(3));
     assertThat(secondPage.getInteger("totalRecords"), is(3));
 
-    firstPageLoans.forEach(this::loanHasExpectedProperties);
-    secondPageLoans.forEach(this::loanHasExpectedProperties);
+    firstPageLoans.forEach(loan -> loanHasExpectedProperties(loan, firstUser));
+    secondPageLoans.forEach(loan -> loanHasExpectedProperties(loan, secondUser));
 
     assertThat(countOfDistinctTitles(firstPageLoans), is(greaterThan(1)));
     assertThat(countOfDistinctTitles(secondPageLoans), is(greaterThan(1)));
@@ -1324,7 +1376,8 @@ public class LoanAPITests extends APITests {
     TimeoutException,
     UnsupportedEncodingException {
 
-    UUID userId = usersFixture.charlotte().getId();
+    IndividualResource user = usersFixture.charlotte();
+    UUID userId = user.getId();
 
     String queryTemplate = "userId=\"%s\" and status.name=\"%s\"";
 
@@ -1399,10 +1452,10 @@ public class LoanAPITests extends APITests {
     assertThat(closedLoans.size(), is(4));
     assertThat(closedLoansPage.getInteger("totalRecords"), is(4));
 
-    openLoans.forEach(this::loanHasExpectedProperties);
+    openLoans.forEach(loan1 -> loanHasExpectedProperties(loan1, user));
 
     closedLoans.forEach(loan -> {
-        loanHasExpectedProperties(loan);
+        loanHasExpectedProperties(loan, user);
         hasProperty("returnDate", loan, "loan");
       }
     );
@@ -1441,9 +1494,7 @@ public class LoanAPITests extends APITests {
     assertThat("Should have two loans",
       multipleLoans.size(), is(2));
 
-    //TODO: Replace with collection matcher
-    assertThat(multipleLoans.get(0).containsKey("userId"), is(false));
-    assertThat(multipleLoans.get(1).containsKey("userId"), is(false));
+    multipleLoans.forEach(this::hasNoBorrowerProperties);
   }
 
   @Test
@@ -1582,6 +1633,24 @@ public class LoanAPITests extends APITests {
 
   }
 
+  private void loanHasExpectedProperties(JsonObject loan, IndividualResource user) {
+    loanHasExpectedProperties(loan);
+
+    if (user == null) {
+      return;
+    }
+
+    JsonObject borrower = loan.getJsonObject(LoanProperties.BORROWER);
+    JsonObject personalInfo = user.getJson().getJsonObject("personal");
+
+    hasProperty(LoanProperties.BORROWER, loan, "loan");
+    hasProperty("firstName", borrower, "borrower", personalInfo.getString("firstName"));
+    hasProperty("lastName", borrower, "borrower", personalInfo.getString("lastName"));
+    hasProperty("middleName", borrower, "borrower", personalInfo.getString("middleName"));
+    hasProperty("barcode", borrower, "borrower", user.getBarcode());
+
+  }
+
   private void loanHasExpectedProperties(JsonObject loan) {
     hasProperty("id", loan, "loan");
     hasProperty("userId", loan, "loan");
@@ -1619,6 +1688,23 @@ public class LoanAPITests extends APITests {
 
     assertThat("Should not have snapshot of item status, as current status is included",
       loan.containsKey("itemStatus"), is(false));
+  }
+
+  private void hasProperty(String property, JsonObject resource, String type, Object value) {
+    assertThat(String.format("%s should have an %s: %s",
+      type, property, resource),
+      resource.getMap().get(property), equalTo(value));
+  }
+
+  private void hasNoBorrowerProperties(JsonObject loanJson) {
+    doesNotHaveProperty("userId", loanJson, "loan");
+    doesNotHaveProperty(LoanProperties.BORROWER, loanJson, "loan");
+  }
+
+  private void doesNotHaveProperty(String property, JsonObject resource, String type) {
+    assertThat(String.format("%s should NOT have an %s: %s",
+            type, property, resource),
+            resource.getValue(property), is(nullValue()));
   }
 
   private void hasProperty(String property, JsonObject resource, String type) {
