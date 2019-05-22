@@ -1697,11 +1697,11 @@ public class LoanAPITests extends APITests {
   }
 
   private void hasNoBorrowerProperties(JsonObject loanJson) {
-    hasNotProperty("userId", loanJson, "loan");
-    hasNotProperty(LoanProperties.BORROWER, loanJson, "loan");
+    doesNotHaveProperty("userId", loanJson, "loan");
+    doesNotHaveProperty(LoanProperties.BORROWER, loanJson, "loan");
   }
 
-  private void hasNotProperty(String property, JsonObject resource, String type) {
+  private void doesNotHaveProperty(String property, JsonObject resource, String type) {
     assertThat(String.format("%s should NOT have an %s: %s",
             type, property, resource),
             resource.getValue(property), is(nullValue()));
