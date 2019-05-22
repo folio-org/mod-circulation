@@ -20,9 +20,11 @@ import api.support.builders.CheckInByBarcodeRequestBuilder;
 import io.vertx.core.json.JsonObject;
 
 public class JsonSchemaValidationTest {
+
   @Test
   public void validationSucceedWithCompleteExample() throws IOException {
-    Schema schema = getCheckInByBarcodeSchema();
+    final Schema schema = getSchema("/check-in-by-barcode-request.json");
+    final JsonSchemaValidator validator = new JsonSchemaValidator(schema);
 
     final JsonObject checkInRequest = new CheckInByBarcodeRequestBuilder()
       .withItemBarcode("246650492")
@@ -30,9 +32,7 @@ public class JsonSchemaValidationTest {
       .at(UUID.randomUUID())
       .create();
 
-    final JSONObject example = new JSONObject(checkInRequest.encodePrettily());
-
-    schema.validate(example);
+    validator.validate(checkInRequest.encodePrettily());
   }
 
   @Rule
@@ -40,7 +40,8 @@ public class JsonSchemaValidationTest {
 
   @Test
   public void validationFailsWhenRequiredPropertyMissing() throws IOException {
-    Schema schema = getCheckInByBarcodeSchema();
+    final Schema schema = getSchema("/check-in-by-barcode-request.json");
+    final JsonSchemaValidator validator = new JsonSchemaValidator(schema);
 
     final JsonObject checkInRequest = new CheckInByBarcodeRequestBuilder()
       .withItemBarcode("246650492")
@@ -48,17 +49,15 @@ public class JsonSchemaValidationTest {
       .atNoServicePoint()
       .create();
 
-    final JSONObject example = new JSONObject(checkInRequest.encodePrettily());
-
     exceptionRule.expect(ValidationException.class);
     exceptionRule.expectMessage(is("#: required key [servicePointId] not found"));
 
-    schema.validate(example);
+    validator.validate(checkInRequest.encodePrettily());
   }
 
-  private Schema getCheckInByBarcodeSchema() throws IOException {
+  private Schema getSchema(String path) throws IOException {
     try (InputStream inputStream = getClass()
-        .getResourceAsStream("/check-in-by-barcode-request.json")) {
+        .getResourceAsStream(path)) {
 
       JSONObject rawSchema = new JSONObject(new JSONTokener(inputStream));
 
