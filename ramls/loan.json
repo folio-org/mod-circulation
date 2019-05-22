@@ -12,6 +12,34 @@
       "description": "ID of the patron the item was lent to. Required for open loans, not required for closed loans (for anonymization).",
       "type": "string"
     },
+    "borrower": {
+      "description": "Additional information about the borrower of the item, taken from the user referred to by the userId",
+      "readonly": true,
+      "type": "object",
+      "properties": {
+        "firstName": {
+          "description": "first name of the borrower (read only, defined by the server)",
+          "type": "string",
+          "readonly": true
+        },
+        "lastName": {
+          "description": "last name of the borrower (read only, defined by the server)",
+          "type": "string",
+          "readonly": true
+        },
+        "middleName": {
+          "description": "middle name of the borrower (read only, defined by the server)",
+          "type": "string",
+          "readonly": true
+        },
+        "barcode": {
+          "description": "barcode used to identify the borrower (read only, defined by the server)",
+          "type": "string",
+          "readonly": true
+        }
+       },
+      "additionalProperties": false
+    },
     "proxyUserId": {
       "description": "ID of the user representing a proxy for the patron",
       "type": "string",
