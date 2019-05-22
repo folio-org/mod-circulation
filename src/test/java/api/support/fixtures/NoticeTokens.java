@@ -11,7 +11,6 @@ public class NoticeTokens {
   public static final List<String> EXPECTED_USER_TOKENS = Arrays.asList(
     "user.firstName", "user.lastName", "user.barcode");
 
-
   public static final List<String> EXPECTED_ITEM_TOKENS = Arrays.asList(
     "item.title", "item.allContributors", "item.barcode", "item.callNumber",
     "item.materialType", "item.loanType");
