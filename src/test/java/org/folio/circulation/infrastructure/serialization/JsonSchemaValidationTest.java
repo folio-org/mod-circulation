@@ -10,23 +10,27 @@ import org.everit.json.schema.Schema;
 import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
 import org.joda.time.DateTime;
-import org.joda.time.format.ISODateTimeFormat;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import api.support.builders.CheckInByBarcodeRequestBuilder;
+import io.vertx.core.json.JsonObject;
+
 public class JsonSchemaValidationTest {
   @Test
   public void validationSucceedWithCompleteExample() throws IOException {
     Schema schema = getCheckInByBarcodeSchema();
 
-    final JSONObject example = new JSONObject();
+    final JsonObject checkInRequest = new CheckInByBarcodeRequestBuilder()
+      .withItemBarcode("246650492")
+      .on(DateTime.now())
+      .at(UUID.randomUUID())
+      .create();
 
-    example.put("itemBarcode", "246650492");
-    example.put("servicePointId", UUID.randomUUID().toString());
-    example.put("checkInDate", DateTime.now().toString(ISODateTimeFormat.dateTime()));
+    final JSONObject example = new JSONObject(checkInRequest.encodePrettily());
 
     schema.validate(example);
   }
@@ -38,10 +42,13 @@ public class JsonSchemaValidationTest {
   public void validationFailsWhenRequiredPropertyMissing() throws IOException {
     Schema schema = getCheckInByBarcodeSchema();
 
-    final JSONObject example = new JSONObject();
+    final JsonObject checkInRequest = new CheckInByBarcodeRequestBuilder()
+      .withItemBarcode("246650492")
+      .on(DateTime.now())
+      .atNoServicePoint()
+      .create();
 
-    example.put("itemBarcode", "246650492");
-    example.put("checkInDate", DateTime.now().toString(ISODateTimeFormat.dateTime()));
+    final JSONObject example = new JSONObject(checkInRequest.encodePrettily());
 
     exceptionRule.expect(ValidationException.class);
     exceptionRule.expectMessage(is("#: required key [servicePointId] not found"));
