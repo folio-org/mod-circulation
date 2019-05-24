@@ -1,13 +1,14 @@
 package api.support.matchers;
 
-import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
+import org.hamcrest.SelfDescribing;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
 
 import io.restassured.path.json.JsonPath;
@@ -21,42 +22,42 @@ public class PatronNoticeMatcher extends TypeSafeDiagnosingMatcher<JsonObject> {
   private static final String OUTPUT_FORMAT = "outputFormat";
   private static final String CONTEXT = "context";
 
-  public static Matcher<JsonObject> equalsToEmailPatronNotice(
-    UUID expectedRecipientId, UUID expectedTemplateId, String... expectedContextPaths) {
-    return equalsToPatronNotice(expectedRecipientId.toString(), expectedTemplateId.toString(),
-      "email", "text/html", Arrays.asList(expectedContextPaths));
-  }
 
-  public static Matcher<JsonObject> equalsToEmailPatronNotice(
-    UUID expectedRecipientId, UUID expectedTemplateId, List<String> expectedContextPaths) {
-    return equalsToPatronNotice(expectedRecipientId.toString(), expectedTemplateId.toString(),
-      "email", "text/html", expectedContextPaths);
-  }
+  public static Matcher<JsonObject> hasEmailNoticeProperties(
+    UUID expectedRecipientId, UUID expectedTemplateId,
+    Map<String, Matcher<String>> contextMatchers) {
 
-  public static Matcher<JsonObject> equalsToPatronNotice(
-    String expectedRecipientId, String expectedTemplateId,
-    String expectedDeliveryChannel, String expectedOutputFormat, List<String> expectedContextPaths) {
-    return new PatronNoticeMatcher(
+    return hasNoticeProperties(
       expectedRecipientId, expectedTemplateId,
-      expectedDeliveryChannel, expectedOutputFormat, expectedContextPaths);
+      "email", "text/html", contextMatchers);
+  }
+
+  public static Matcher<JsonObject> hasNoticeProperties(
+    UUID expectedRecipientId, UUID expectedTemplateId,
+    String expectedDeliveryChannel, String expectedOutputFormat,
+    Map<String, Matcher<String>> contextMatchers) {
+
+    return new PatronNoticeMatcher(
+      expectedRecipientId.toString(), expectedTemplateId.toString(),
+      expectedDeliveryChannel, expectedOutputFormat, contextMatchers);
   }
 
   private String expectedRecipientId;
   private String expectedTemplateId;
   private String expectedDeliveryChannel;
   private String expectedOutputFormat;
-  private List<String> expectedContextPaths;
+  private Map<String, Matcher<String>> contextMatchers;
 
 
   private PatronNoticeMatcher(
     String expectedRecipientId, String expectedTemplateId,
     String expectedDeliveryChannel, String expectedOutputFormat,
-    List<String> expectedContextPaths) {
+    Map<String, Matcher<String>> contextMatchers) {
     this.expectedRecipientId = expectedRecipientId;
     this.expectedTemplateId = expectedTemplateId;
     this.expectedDeliveryChannel = expectedDeliveryChannel;
     this.expectedOutputFormat = expectedOutputFormat;
-    this.expectedContextPaths = expectedContextPaths;
+    this.contextMatchers = contextMatchers;
   }
 
   @Override
@@ -98,17 +99,29 @@ public class PatronNoticeMatcher extends TypeSafeDiagnosingMatcher<JsonObject> {
     JsonPath context =
       JsonPath.from(item.getJsonObject(CONTEXT).encode());
 
-    List<String> notMatchedPaths = expectedContextPaths.stream()
-      .filter(path -> context.get(path) == null)
-      .collect(Collectors.toList());
-    if (!notMatchedPaths.isEmpty()) {
-      mismatchDescription
-        .appendText("context does not contain the following paths: ")
-        .appendValue(notMatchedPaths);
+    Map<String, Matcher<String>> notMatchedKeys = contextMatchers.entrySet().stream()
+      .filter(e -> !e.getValue().matches(context.getString(e.getKey())))
+      .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+    if (!notMatchedKeys.isEmpty()) {
+      List<SelfDescribing> mismatchedKeysDescribing = notMatchedKeys.entrySet().stream()
+        .map(e -> getSelfDescribingForContextPathMismatch(e.getKey(), context.get(e.getKey()), e.getValue()))
+        .collect(Collectors.toList());
+      mismatchDescription.appendText("not matched context paths: ")
+        .appendList("<", ", ", ">", mismatchedKeysDescribing);
+      mismatchDescription.appendText("> ");
       return false;
     }
 
     return true;
+  }
+
+  private SelfDescribing getSelfDescribingForContextPathMismatch(
+    String key, String actual, Matcher<String> matcher) {
+    return description -> description
+      .appendText(" expected ").appendDescriptionOf(matcher)
+      .appendText(" by path ").appendValue(key)
+      .appendText(" but was ").appendValue(actual);
   }
 
   @Override
@@ -121,7 +134,7 @@ public class PatronNoticeMatcher extends TypeSafeDiagnosingMatcher<JsonObject> {
 
     description.appendText("a notice with body: ")
       .appendValue(expectedNotice.encode())
-      .appendText("context containing the following paths: ")
-      .appendValue(expectedContextPaths);
+      .appendText(" and context containing the following paths: ")
+      .appendValue(contextMatchers.keySet());
   }
 }

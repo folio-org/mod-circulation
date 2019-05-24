@@ -1,7 +1,7 @@
 package api.requests;
 
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
-import static api.support.matchers.PatronNoticeMatcher.equalsToEmailPatronNotice;
+import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
@@ -27,10 +27,11 @@ import java.net.MalformedURLException;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -46,6 +47,7 @@ import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
+import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
@@ -64,7 +66,7 @@ import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import api.support.fixtures.ItemsFixture;
 import api.support.fixtures.LoansFixture;
-import api.support.fixtures.NoticeTokens;
+import api.support.fixtures.NoticeMatchers;
 import api.support.fixtures.RequestsFixture;
 import api.support.fixtures.UsersFixture;
 import api.support.http.InventoryItemResource;
@@ -1525,7 +1527,7 @@ public class RequestsAPICreationTests extends APITests {
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource requester = usersFixture.steve();
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-    requestsFixture.place(new RequestBuilder()
+    IndividualResource request = requestsFixture.place(new RequestBuilder()
       .withId(id)
       .open()
       .page()
@@ -1543,13 +1545,13 @@ public class RequestsAPICreationTests extends APITests {
       .until(patronNoticesClient::getAll, Matchers.hasSize(1));
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
 
-    List<String> expectedContextPaths =
-      new ArrayList<>(NoticeTokens.EXPECTED_USER_TOKENS);
-    expectedContextPaths.addAll(NoticeTokens.EXPECTED_ITEM_TOKENS);
-    expectedContextPaths.addAll(NoticeTokens.EXPECTED_REQUEST_TOKENS);
+    Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
+    noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(requester));
+    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item));
+    noticeContextMatchers.putAll(NoticeMatchers.getRequestContextMatchers(request));
     MatcherAssert.assertThat(sentNotices,
       hasItems(
-        equalsToEmailPatronNotice(requester.getId(), pageConfirmationTemplateId, expectedContextPaths)));
+        hasEmailNoticeProperties(requester.getId(), pageConfirmationTemplateId, noticeContextMatchers)));
   }
 
   @Test
@@ -1585,7 +1587,7 @@ public class RequestsAPICreationTests extends APITests {
 
     loansFixture.checkOutByBarcode(item, usersFixture.jessica());
 
-    requestsFixture.place(new RequestBuilder()
+    IndividualResource request = requestsFixture.place(new RequestBuilder()
       .withId(id)
       .open()
       .hold()
@@ -1603,13 +1605,13 @@ public class RequestsAPICreationTests extends APITests {
       .until(patronNoticesClient::getAll, Matchers.hasSize(1));
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
 
-    List<String> expectedContextPaths =
-      new ArrayList<>(NoticeTokens.EXPECTED_USER_TOKENS);
-    expectedContextPaths.addAll(NoticeTokens.EXPECTED_ITEM_TOKENS);
-    expectedContextPaths.addAll(NoticeTokens.EXPECTED_REQUEST_TOKENS);
+    Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
+    noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(requester));
+    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item));
+    noticeContextMatchers.putAll(NoticeMatchers.getRequestContextMatchers(request));
     MatcherAssert.assertThat(sentNotices,
       hasItems(
-        equalsToEmailPatronNotice(requester.getId(), holdConfirmationTemplateId, expectedContextPaths)));
+        hasEmailNoticeProperties(requester.getId(), holdConfirmationTemplateId, noticeContextMatchers)));
   }
 
   @Test
@@ -1658,12 +1660,12 @@ public class RequestsAPICreationTests extends APITests {
     IndividualResource loanOwner = usersFixture.jessica();
 
     DateTime loanDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-    loansFixture.checkOutByBarcode(item, loanOwner, loanDate);
+    IndividualResource loan = loansFixture.checkOutByBarcode(item, loanOwner, loanDate);
 
     DateTime requestDate = loanDate.plusDays(1);
     mockClockManagerToReturnFixedTime(requestDate);
 
-    requestsFixture.place(new RequestBuilder()
+    IndividualResource request = requestsFixture.place(new RequestBuilder()
       .withId(id)
       .open()
       .recall()
@@ -1675,28 +1677,28 @@ public class RequestsAPICreationTests extends APITests {
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
+    IndividualResource loanAfterRecall = loansClient.get(loan.getId());
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(patronNoticesClient::getAll, Matchers.hasSize(2));
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
 
-    List<String> recallConfirmationExpectedContextPaths =
-      new ArrayList<>(NoticeTokens.EXPECTED_USER_TOKENS);
-    recallConfirmationExpectedContextPaths.addAll(NoticeTokens.EXPECTED_ITEM_TOKENS);
-    recallConfirmationExpectedContextPaths.addAll(NoticeTokens.EXPECTED_REQUEST_TOKENS);
-    recallConfirmationExpectedContextPaths.addAll(NoticeTokens.EXPECTED_LOAN_TOKENS);
-
-    List<String> recallNotificationExpectedContextPaths =
-      new ArrayList<>(NoticeTokens.EXPECTED_USER_TOKENS);
-    recallNotificationExpectedContextPaths.addAll(NoticeTokens.EXPECTED_ITEM_TOKENS);
-    recallNotificationExpectedContextPaths.addAll(NoticeTokens.EXPECTED_LOAN_TOKENS);
+    Map<String, Matcher<String>> recallConfirmationContextMatchers = new HashMap<>();
+    recallConfirmationContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(requester));
+    recallConfirmationContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item));
+    recallConfirmationContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(loanAfterRecall, 0));
+    recallConfirmationContextMatchers.putAll(NoticeMatchers.getRequestContextMatchers(request));
+    Map<String, Matcher<String>> recallNotificationContextMatchers = new HashMap<>();
+    recallNotificationContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(loanOwner));
+    recallNotificationContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item));
+    recallNotificationContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(loanAfterRecall, 0));
     MatcherAssert.assertThat(sentNotices,
       hasItems(
-        equalsToEmailPatronNotice(requester.getId(), recallConfirmationTemplateId,
-          recallConfirmationExpectedContextPaths),
-        equalsToEmailPatronNotice(loanOwner.getId(), recallToLoaneeTemplateId,
-          recallNotificationExpectedContextPaths)));
+        hasEmailNoticeProperties(requester.getId(), recallConfirmationTemplateId,
+          recallConfirmationContextMatchers),
+        hasEmailNoticeProperties(loanOwner.getId(), recallToLoaneeTemplateId,
+          recallNotificationContextMatchers)));
   }
 
   @Test

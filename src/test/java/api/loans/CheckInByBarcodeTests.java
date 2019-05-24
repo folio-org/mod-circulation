@@ -1,6 +1,6 @@
 package api.loans;
 
-import static api.support.matchers.PatronNoticeMatcher.equalsToEmailPatronNotice;
+import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.UUIDMatcher.is;
@@ -14,10 +14,11 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -26,6 +27,7 @@ import java.util.concurrent.TimeoutException;
 import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
+import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
@@ -40,7 +42,7 @@ import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
-import api.support.fixtures.NoticeTokens;
+import api.support.fixtures.NoticeMatchers;
 import io.vertx.core.json.JsonObject;
 
 public class CheckInByBarcodeTests extends APITests {
@@ -351,10 +353,11 @@ public class CheckInByBarcodeTests extends APITests {
 
     loansFixture.checkOutByBarcode(nod, james, loanDate);
 
+    DateTime checkInDate = new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC);
     final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
-        .on(new DateTime(2018, 3, 5, 14 ,23, 41, DateTimeZone.UTC))
+        .on(checkInDate)
         .at(checkInServicePointId));
 
     JsonObject loanRepresentation = checkInResponse.getLoan();
@@ -367,14 +370,15 @@ public class CheckInByBarcodeTests extends APITests {
       .until(patronNoticesClient::getAll, Matchers.hasSize(1));
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
 
-    List<String> expectedContextPaths =
-      new ArrayList<>(NoticeTokens.EXPECTED_USER_TOKENS);
-    expectedContextPaths.addAll(NoticeTokens.EXPECTED_ITEM_TOKENS);
-    expectedContextPaths.addAll(NoticeTokens.EXPECTED_LOAN_TOKENS);
-    expectedContextPaths.add("loan.checkinDate");
+    Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
+    noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(james));
+    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(nod));
+    noticeContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(checkInResponse.getLoan(), 0));
+    noticeContextMatchers.put("loan.checkinDate",
+      withinSecondsAfter(Seconds.seconds(10), checkInDate));
     MatcherAssert.assertThat(sentNotices,
       hasItems(
-        equalsToEmailPatronNotice(james.getId(), checkInTemplateId, expectedContextPaths)));
+        hasEmailNoticeProperties(james.getId(), checkInTemplateId, noticeContextMatchers)));
   }
 
   @Test
@@ -433,7 +437,7 @@ public class CheckInByBarcodeTests extends APITests {
     IndividualResource requester = usersFixture.steve();
 
     //recall request
-    requestsFixture.place(new RequestBuilder()
+    IndividualResource request = requestsFixture.place(new RequestBuilder()
       .withId(UUID.randomUUID())
       .open()
       .recall()
@@ -461,7 +465,7 @@ public class CheckInByBarcodeTests extends APITests {
     DateTime checkInDate = new DateTime(2019, 7, 25, 14, 23, 41, DateTimeZone.UTC);
     loansFixture.checkInByBarcode(item, checkInDate, servicePointId);
 
-    checkPatronNoticeEvent(requester, availableNoticeTemplateId);
+    checkPatronNoticeEvent(request, requester, item, availableNoticeTemplateId);
   }
 
   @Test
@@ -472,7 +476,7 @@ public class CheckInByBarcodeTests extends APITests {
     IndividualResource requester = usersFixture.steve();
 
     // page request
-    requestsFixture.place(new RequestBuilder()
+    IndividualResource request = requestsFixture.place(new RequestBuilder()
       .withId(UUID.randomUUID())
       .open()
       .page()
@@ -501,11 +505,12 @@ public class CheckInByBarcodeTests extends APITests {
       new DateTime(2019, 5, 10, 14, 23, 41, DateTimeZone.UTC),
       servicePointId);
 
-    checkPatronNoticeEvent(requester, availableNoticeTemplateId);
+    checkPatronNoticeEvent(request, requester, item, availableNoticeTemplateId);
   }
 
   private void checkPatronNoticeEvent(
-    IndividualResource requester, UUID expectedTemplateId)
+    IndividualResource request, IndividualResource requester,
+    IndividualResource item, UUID expectedTemplateId)
     throws Exception {
 
     Awaitility.await()
@@ -514,12 +519,12 @@ public class CheckInByBarcodeTests extends APITests {
 
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
 
-  List<String> expectedContextPaths =
-    new ArrayList<>(NoticeTokens.EXPECTED_USER_TOKENS);
-  expectedContextPaths.addAll(NoticeTokens.EXPECTED_ITEM_TOKENS);
-  expectedContextPaths.addAll(NoticeTokens.EXPECTED_REQUEST_TOKENS);
-  MatcherAssert.assertThat(sentNotices,
-    hasItems(
-      equalsToEmailPatronNotice(requester.getId(), expectedTemplateId, expectedContextPaths)));
+    Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
+    noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(requester));
+    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item));
+    noticeContextMatchers.putAll(NoticeMatchers.getRequestContextMatchers(request));
+    MatcherAssert.assertThat(sentNotices,
+      hasItems(
+        hasEmailNoticeProperties(requester.getId(), expectedTemplateId, noticeContextMatchers)));
   }
 }

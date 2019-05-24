@@ -8,7 +8,7 @@ import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasProxyUse
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasServicePointParameter;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasUserBarcodeParameter;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
-import static api.support.matchers.PatronNoticeMatcher.equalsToEmailPatronNotice;
+import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.UUIDMatcher.is;
@@ -23,9 +23,10 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -37,6 +38,7 @@ import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
+import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
@@ -55,7 +57,7 @@ import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
-import api.support.fixtures.NoticeTokens;
+import api.support.fixtures.NoticeMatchers;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -580,38 +582,27 @@ public class CheckOutByBarcodeTests extends APITests {
     final DateTime loanDate =
       new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
 
-    final IndividualResource response = loansFixture.checkOutByBarcode(
+    final IndividualResource loan = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
         .on(loanDate)
         .at(UUID.randomUUID()));
 
-    final JsonObject loan = response.getJson();
-
-    assertThat("due date should 3 weeks from loan date",
-      loan.getString("dueDate"),
-      isEquivalentTo(loanDate.plusWeeks(3)));
-
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(patronNoticesClient::getAll, Matchers.hasSize(1));
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
 
-    List<String> expectedContextPaths =
-      new ArrayList<>(NoticeTokens.EXPECTED_USER_TOKENS);
-    expectedContextPaths.addAll(NoticeTokens.EXPECTED_ITEM_TOKENS);
-    expectedContextPaths.addAll(NoticeTokens.EXPECTED_LOAN_TOKENS);
-    expectedContextPaths.addAll(NoticeTokens.EXPECTED_LOAN_POLICY_TOKENS);
+    Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
+    noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(steve));
+    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(smallAngryPlanet));
+    noticeContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(loan, 0));
+    noticeContextMatchers.putAll(NoticeMatchers.getLoanPolicyContextMatchers(
+      loanPoliciesFixture.canCirculateRolling(), 0));
     MatcherAssert.assertThat(sentNotices,
       hasItems(
-        equalsToEmailPatronNotice(steve.getId(), checkOutTemplateId, expectedContextPaths)));
-
-    JsonObject notice = sentNotices.get(0);
-    JsonObject noticeContext = notice.getJsonObject("context");
-    assertThat("sent notice context should have dueDate property",
-      noticeContext.getJsonObject("loan").getString("dueDate"),
-      isEquivalentTo(loanDate.plusWeeks(3)));
+        hasEmailNoticeProperties(steve.getId(), checkOutTemplateId, noticeContextMatchers)));
   }
 
   @Test
