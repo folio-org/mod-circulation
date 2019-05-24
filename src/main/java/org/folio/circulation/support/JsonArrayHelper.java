@@ -60,7 +60,7 @@ public class JsonArrayHelper {
     return toStream(within.getJsonArray(arrayPropertyName));
   }
 
-  private static Stream<JsonObject> toStream(JsonArray array) {
+  public static Stream<JsonObject> toStream(JsonArray array) {
     return array
       .stream()
       .map(castToJsonObject())

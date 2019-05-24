@@ -1,6 +1,6 @@
 package api.requests;
 
-import static api.support.matchers.PatronNoticeMatcher.equalsToEmailPatronNotice;
+import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
@@ -19,7 +19,9 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -28,6 +30,7 @@ import java.util.concurrent.TimeoutException;
 import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
+import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
@@ -40,6 +43,7 @@ import api.support.builders.Address;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.fixtures.NoticeMatchers;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
@@ -523,15 +527,25 @@ public class RequestsAPIUpdatingTests extends APITests {
         .withRequestExpiration(new LocalDate(2017, 7, 30))
         .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
-    requestsClient.replace(createdRequest.getId(),
-      RequestBuilder.from(createdRequest).cancelled());
+    JsonObject updatedRequest = RequestBuilder.from(createdRequest)
+      .cancelled()
+      .withCancellationReasonId(cancellationReasonsFixture.courseReserves().getId())
+      .withCancellationAdditionalInformation("Cancellation info")
+      .create();
+    requestsClient.replace(createdRequest.getId(), updatedRequest);
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(patronNoticesClient::getAll, Matchers.hasSize(1));
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
+
+    Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
+    noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(requester));
+    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(temeraire));
+    noticeContextMatchers.putAll(NoticeMatchers.getRequestContextMatchers(updatedRequest));
+    noticeContextMatchers.putAll(NoticeMatchers.getCancelledRequestContextMatchers(updatedRequest));
     MatcherAssert.assertThat(sentNotices,
       hasItems(
-        equalsToEmailPatronNotice(requester.getId(), requestCancellationTemplateId)));
+        hasEmailNoticeProperties(requester.getId(), requestCancellationTemplateId, noticeContextMatchers)));
   }
-  }
+}

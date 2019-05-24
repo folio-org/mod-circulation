@@ -5,11 +5,13 @@ import static org.folio.circulation.domain.ItemStatus.AWAITING_PICKUP;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
 import static org.folio.circulation.domain.ItemStatus.MISSING;
+import static org.folio.circulation.domain.representations.InstanceProperties.CONTRIBUTORS;
 import static org.folio.circulation.domain.representations.ItemProperties.IN_TRANSIT_DESTINATION_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.TEMPORARY_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.TITLE_PROPERTY;
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
+import static org.folio.circulation.support.JsonPropertyFetcher.getArrayProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getUUIDProperty;
@@ -17,10 +19,13 @@ import static org.folio.circulation.support.JsonPropertyWriter.remove;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.JsonStringArrayHelper.toStream;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.representations.ItemProperties;
+import org.folio.circulation.support.JsonArrayHelper;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -33,6 +38,7 @@ public class Item {
   private JsonObject materialTypeRepresentation;
   private ServicePoint primaryServicePoint;
   private ServicePoint inTransitDestinationServicePoint;
+  private JsonObject loanTypeRepresentation;
 
   private boolean changed = false;
 
@@ -42,7 +48,8 @@ public class Item {
     JsonObject instanceRepresentation,
     JsonObject locationRepresentation,
     JsonObject materialTypeRepresentation,
-    ServicePoint servicePoint) {
+    ServicePoint servicePoint,
+    JsonObject loanTypeRepresentation) {
 
     this.itemRepresentation = itemRepresentation;
     this.holdingRepresentation = holdingRepresentation;
@@ -50,10 +57,11 @@ public class Item {
     this.locationRepresentation = locationRepresentation;
     this.materialTypeRepresentation = materialTypeRepresentation;
     this.primaryServicePoint = servicePoint;
+    this.loanTypeRepresentation = loanTypeRepresentation;
   }
 
   public static Item from(JsonObject representation) {
-    return new Item(representation, null, null, null, null, null);
+    return new Item(representation, null, null, null, null, null, null);
   }
 
   public boolean isCheckedOut() {
@@ -106,8 +114,16 @@ public class Item {
       return new JsonArray();
     }
 
-    return new JsonArray(mapToList(instanceRepresentation, "contributors",
+    return new JsonArray(mapToList(instanceRepresentation, CONTRIBUTORS,
       contributor -> new JsonObject().put("name", contributor.getString("name"))));
+  }
+
+  public String getPrimaryContributorName() {
+    return JsonArrayHelper.toStream(instanceRepresentation, CONTRIBUTORS)
+      .filter(c -> c.getBoolean("primary", false))
+      .findFirst()
+      .map(c -> c.getString("name"))
+      .orElse(null);
   }
 
   public String getBarcode() {
@@ -129,6 +145,15 @@ public class Item {
   public String getCallNumber() {
     return getProperty(holdingRepresentation, "callNumber");
   }
+
+  public String getCallNumberPrefix() {
+    return getProperty(holdingRepresentation, "callNumberPrefix");
+  }
+
+  public String getCallNumberSuffix() {
+    return getProperty(holdingRepresentation, "callNumberSuffix");
+  }
+
 
   public ItemStatus getStatus() {
     return ItemStatus.from(getStatusName());
@@ -171,8 +196,12 @@ public class Item {
     return materialTypeRepresentation;
   }
 
+  public String getMaterialTypeName() {
+    return getProperty(materialTypeRepresentation, "name");
+  }
+
   public JsonArray getCopyNumbers() {
-    return getItem() == null ? new JsonArray() : getItem().getJsonArray("copyNumbers");
+    return getArrayProperty(getItem(), "copyNumbers");
   }
 
   public String getMaterialTypeId() {
@@ -201,7 +230,7 @@ public class Item {
     }
   }
 
-  String getEnumeration() {
+  public String getEnumeration() {
     return getProperty(getItem(), "enumeration");
   }
 
@@ -217,6 +246,27 @@ public class Item {
     return inTransitDestinationServicePoint;
   }
 
+  public String getVolume() {
+    return getProperty(getItem(), "volume");
+  }
+
+  public String getChronology() {
+    return getProperty(getItem(), "chronology");
+  }
+
+  public String getNumberOfPieces() {
+    return getProperty(getItem(), "numberOfPieces");
+  }
+
+  public String getDescriptionOfPieces() {
+    return getProperty(getItem(), "descriptionOfPieces");
+  }
+
+  public List<String> getYearCaption() {
+    return toStream(itemRepresentation, "yearCaption")
+      .collect(Collectors.toList());
+  }
+
   private ServicePoint getPrimaryServicePoint() {
     return primaryServicePoint;
   }
@@ -227,6 +277,11 @@ public class Item {
       ? getItem().getString(ItemProperties.TEMPORARY_LOAN_TYPE_ID)
       : getItem().getString(ItemProperties.PERMANENT_LOAN_TYPE_ID);
   }
+
+  public String getLoanTypeName() {
+    return getProperty(loanTypeRepresentation, "name");
+  }
+
 
   Item changeStatus(ItemStatus newStatus) {
     //TODO: Check if status is null
@@ -306,7 +361,8 @@ public class Item {
       this.instanceRepresentation,
       newLocation,
       this.materialTypeRepresentation,
-      this.primaryServicePoint);
+      this.primaryServicePoint,
+      this.loanTypeRepresentation);
   }
 
   public Item withMaterialType(JsonObject newMaterialType) {
@@ -316,7 +372,8 @@ public class Item {
       this.instanceRepresentation,
       this.locationRepresentation,
       newMaterialType,
-      this.primaryServicePoint);
+      this.primaryServicePoint,
+      this.loanTypeRepresentation);
   }
 
   public Item withHoldingsRecord(JsonObject newHoldingsRecordRepresentation) {
@@ -326,7 +383,8 @@ public class Item {
       this.instanceRepresentation,
       this.locationRepresentation,
       this.materialTypeRepresentation,
-      this.primaryServicePoint);
+      this.primaryServicePoint,
+      this.loanTypeRepresentation);
   }
 
   public Item withInstance(JsonObject newInstanceRepresentation) {
@@ -336,7 +394,8 @@ public class Item {
       newInstanceRepresentation,
       this.locationRepresentation,
       this.materialTypeRepresentation,
-      this.primaryServicePoint);
+      this.primaryServicePoint,
+      this.loanTypeRepresentation);
   }
 
   public Item withPrimaryServicePoint(ServicePoint servicePoint) {
@@ -346,6 +405,18 @@ public class Item {
       this.instanceRepresentation,
       this.locationRepresentation,
       this.materialTypeRepresentation,
-      servicePoint);
+      servicePoint,
+      this.loanTypeRepresentation);
+  }
+
+  public Item withLoanType(JsonObject newLoanTypeRepresentation) {
+    return new Item(
+      this.itemRepresentation,
+      this.holdingRepresentation,
+      this.instanceRepresentation,
+      this.locationRepresentation,
+      this.materialTypeRepresentation,
+      this.primaryServicePoint,
+      newLoanTypeRepresentation);
   }
 }

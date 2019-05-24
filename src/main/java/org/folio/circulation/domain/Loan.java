@@ -317,4 +317,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   public DateTime getOriginalDueDate() {
     return originalDueDate;
   }
+
+  public DateTime getReturnDate() {
+    return getDateTimeProperty(representation, RETURN_DATE);
+  }
 }
