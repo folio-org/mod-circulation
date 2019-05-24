@@ -1,14 +1,18 @@
 package org.folio.circulation.infrastructure.serialization;
 
+import static java.util.stream.Collectors.collectingAndThen;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.stream.Collectors;
 
 import org.everit.json.schema.Schema;
 import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
@@ -42,7 +46,19 @@ class JsonSchemaValidator {
       return Result.succeeded(json);
     }
     catch (ValidationException e) {
-      return failedValidation(String.format(e.getMessage()), null, null);
+      if(e.getViolationCount() == 1) {
+        return failedValidation(toValidationError(e));
+      }
+
+      return e.getCausingExceptions()
+        .stream()
+        .map(this::toValidationError)
+        .collect(collectingAndThen(Collectors.toList(),
+          ValidationErrorFailure::failedValidation));
     }
+  }
+
+  private ValidationError toValidationError(ValidationException validationException) {
+    return new ValidationError(validationException.getMessage(), null, null);
   }
 }

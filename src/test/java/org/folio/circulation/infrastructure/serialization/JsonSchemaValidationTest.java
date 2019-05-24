@@ -46,6 +46,7 @@ public class JsonSchemaValidationTest {
     final Result<String> result = validator.validate(checkInRequest.encode());
 
     assertThat(result.succeeded(), is(false));
+
     assertThat(result.cause(), isErrorWith(allOf(
       hasMessage("#: required key [servicePointId] not found"),
       hasParameter(null, null))));
@@ -67,8 +68,35 @@ public class JsonSchemaValidationTest {
     final Result<String> result = validator.validate(checkInRequest.encode());
 
     assertThat(result.succeeded(), is(false));
+
     assertThat(result.cause(), isErrorWith(allOf(
       hasMessage("#: extraneous key [unexpectedProperty] is not permitted"),
+      hasParameter(null, null))));
+  }
+
+  @Test
+  public void validationFailsForMultipleReasons() throws IOException {
+    final JsonSchemaValidator validator = JsonSchemaValidator
+      .fromResource("/check-in-by-barcode-request.json");
+
+    final JsonObject checkInRequest = new CheckInByBarcodeRequestBuilder()
+      .withItemBarcode("246650492")
+      .on(DateTime.now())
+      .atNoServicePoint()
+      .create();
+
+    checkInRequest.put("unexpectedProperty", "foo");
+
+    final Result<String> result = validator.validate(checkInRequest.encode());
+
+    assertThat(result.succeeded(), is(false));
+
+    assertThat(result.cause(), isErrorWith(allOf(
+      hasMessage("#: extraneous key [unexpectedProperty] is not permitted"),
+      hasParameter(null, null))));
+
+    assertThat(result.cause(), isErrorWith(allOf(
+      hasMessage("#: required key [servicePointId] not found"),
       hasParameter(null, null))));
   }
 }
