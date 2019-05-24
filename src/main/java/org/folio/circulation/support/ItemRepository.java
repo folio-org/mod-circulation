@@ -33,44 +33,52 @@ public class ItemRepository {
   private final CollectionResourceClient itemsClient;
   private final CollectionResourceClient holdingsClient;
   private final CollectionResourceClient instancesClient;
+  private final CollectionResourceClient loanTypesClient;
   private final LocationRepository locationRepository;
   private final MaterialTypeRepository materialTypeRepository;
   private final ServicePointRepository servicePointRepository;
   private final boolean fetchLocation;
   private final boolean fetchMaterialType;
+  private final boolean fetchLoanType;
 
   public ItemRepository(
     Clients clients,
     boolean fetchLocation,
-    boolean fetchMaterialType) {
+    boolean fetchMaterialType,
+    boolean fetchLoanType) {
 
     this(clients.itemsStorage(),
       clients.holdingsStorage(),
       clients.instancesStorage(),
+      clients.loanTypesStorage(),
       new LocationRepository(clients),
       new MaterialTypeRepository(clients),
       new ServicePointRepository(clients),
-      fetchLocation, fetchMaterialType);
+      fetchLocation, fetchMaterialType, fetchLoanType);
   }
 
   private ItemRepository(
     CollectionResourceClient itemsClient,
     CollectionResourceClient holdingsClient,
     CollectionResourceClient instancesClient,
+    CollectionResourceClient loanTypesClient,
     LocationRepository locationRepository,
     MaterialTypeRepository materialTypeRepository,
     ServicePointRepository servicePointRepository,
     boolean fetchLocation,
-    boolean fetchMaterialType) {
+    boolean fetchMaterialType,
+    boolean fetchLoanType) {
 
     this.itemsClient = itemsClient;
     this.holdingsClient = holdingsClient;
     this.instancesClient = instancesClient;
+    this.loanTypesClient = loanTypesClient;
     this.locationRepository = locationRepository;
     this.materialTypeRepository = materialTypeRepository;
     this.servicePointRepository = servicePointRepository;
     this.fetchLocation = fetchLocation;
     this.fetchMaterialType = fetchMaterialType;
+    this.fetchLoanType = fetchLoanType;
   }
 
   public CompletableFuture<Result<Item>> fetchFor(ItemRelatedRecord record) {
@@ -91,6 +99,22 @@ public class ItemRepository {
     return fetchMaterialType
       ? result.combineAfter(materialTypeRepository::getFor, Item::withMaterialType)
       : completedFuture(result);
+  }
+
+  private CompletableFuture<Result<Item>> fetchLoanType(Result<Item> result) {
+    if (!fetchLoanType) {
+      return completedFuture(result);
+    }
+    return result.combineAfter(this::getLoanType, Item::withLoanType);
+  }
+
+  private CompletableFuture<Result<JsonObject>> getLoanType(Item item) {
+    if (item.getItem() == null) {
+      return completedFuture(succeeded(null));
+    }
+    return SingleRecordFetcher.json(loanTypesClient, "loan types",
+      response -> succeeded(null))
+      .fetch(item.determineLoanTypeForItem());
   }
 
   public CompletableFuture<Result<Item>> fetchByBarcode(String barcode) {
@@ -295,6 +319,7 @@ public class ItemRepository {
     return fetchHoldingsRecord(item)
       .thenComposeAsync(this::fetchInstance)
       .thenComposeAsync(this::fetchLocation)
-      .thenComposeAsync(this::fetchMaterialType);
+      .thenComposeAsync(this::fetchMaterialType)
+      .thenComposeAsync(this::fetchLoanType);
   }
 }

@@ -59,7 +59,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final RequestFromRepresentationService requestFromRepresentationService =
       new RequestFromRepresentationService(
-        new ItemRepository(clients, true, false),
+        new ItemRepository(clients, true, true, true),
         RequestQueueRepository.using(clients),
         userRepository,
         loanRepository,
@@ -104,7 +104,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final RequestFromRepresentationService requestFromRepresentationService =
       new RequestFromRepresentationService(
-        new ItemRepository(clients, false, false),
+        new ItemRepository(clients, false, true, true),
         RequestQueueRepository.using(clients),
         new UserRepository(clients),
         loanRepository,

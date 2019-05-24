@@ -5,6 +5,7 @@ import java.util.UUID;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class JsonPropertyFetcher {
@@ -109,6 +110,14 @@ public class JsonPropertyFetcher {
     } else {
       return null;
     }
+  }
+
+  public static JsonArray getArrayProperty(JsonObject representation, String propertyName) {
+    if (representation == null) {
+      return new JsonArray();
+    }
+    JsonArray val = representation.getJsonArray(propertyName);
+    return val != null ? val : new JsonArray();
   }
 
   public static String getProperty(JsonObject representation, String propertyName) {

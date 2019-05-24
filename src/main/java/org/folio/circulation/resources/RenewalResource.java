@@ -47,7 +47,7 @@ public abstract class RenewalResource extends Resource {
     final Clients clients = Clients.create(context, client);
 
     final LoanRepository loanRepository = new LoanRepository(clients);
-    final ItemRepository itemRepository = new ItemRepository(clients, true, true);
+    final ItemRepository itemRepository = new ItemRepository(clients, true, true, false);
     final UserRepository userRepository = new UserRepository(clients);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);

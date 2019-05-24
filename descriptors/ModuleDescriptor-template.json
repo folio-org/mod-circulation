@@ -47,7 +47,8 @@
             "patron-notice.post",
             "circulation.rules.notice-policy.get",
             "configuration.entries.collection.get",
-            "users.collection.get"
+            "users.collection.get",
+            "inventory-storage.loan-types.item.get"
           ]
         },
         {
@@ -89,7 +90,8 @@
             "patron-notice.post",
             "circulation.rules.notice-policy.get",
             "configuration.entries.collection.get",
-            "users.collection.get"
+            "users.collection.get",
+            "inventory-storage.loan-types.item.get"
           ]
         },
         {
@@ -130,7 +132,8 @@
             "circulation-storage.fixed-due-date-schedules.collection.get",
             "circulation-storage.patron-notice-policies.item.get",
             "patron-notice.post",
-            "circulation.rules.notice-policy.get"
+            "circulation.rules.notice-policy.get",
+            "inventory-storage.loan-types.item.get"
           ]
         },
         {
@@ -168,7 +171,8 @@
             "circulation-storage.loan-policies.item.get",
             "circulation-storage.request-policies.item.get",
             "circulation-storage.fixed-due-date-schedules.item.get",
-            "circulation-storage.fixed-due-date-schedules.collection.get"
+            "circulation-storage.fixed-due-date-schedules.collection.get",
+            "calendar.collection.get"
           ]
         },
         {
@@ -245,7 +249,8 @@
             "circulation-storage.loan-policies.item.get",
             "circulation-storage.request-policies.item.get",
             "circulation-storage.fixed-due-date-schedules.item.get",
-            "circulation-storage.fixed-due-date-schedules.collection.get"
+            "circulation-storage.fixed-due-date-schedules.collection.get",
+            "calendar.collection.get"
           ]
         },
         {
@@ -552,7 +557,9 @@
             "proxiesfor.collection.get",
             "circulation.rules.notice-policy.get",
             "circulation-storage.patron-notice-policies.item.get",
-            "patron-notice.post"
+            "patron-notice.post",
+            "inventory-storage.loan-types.item.get",
+            "calendar.collection.get"
           ]
         },
         {
@@ -629,7 +636,9 @@
             "proxiesfor.collection.get",
             "circulation.rules.notice-policy.get",
             "circulation-storage.patron-notice-policies.item.get",
-            "patron-notice.post"
+            "patron-notice.post",
+            "circulation-storage.cancellation-reasons.item.get",
+            "inventory-storage.loan-types.item.get"
           ]
         },
         {
@@ -754,6 +763,14 @@
     {
       "id": "configuration",
       "version": "2.0"
+    },
+    {
+      "id" : "cancellation-reason-storage",
+      "version": "1.1"
+    },
+    {
+      "id": "loan-types",
+      "version": "2.2"
     }
   ],
   "permissionSets": [

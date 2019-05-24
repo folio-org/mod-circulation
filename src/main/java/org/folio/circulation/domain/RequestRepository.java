@@ -8,9 +8,10 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlQuery;
+import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.ForwardOnFailure;
-import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.SingleRecordMapper;
 import org.folio.circulation.support.http.client.Response;
@@ -19,6 +20,7 @@ import io.vertx.core.json.JsonObject;
 
 public class RequestRepository {
   private final CollectionResourceClient requestsStorageClient;
+  private final CollectionResourceClient cancellationReasonStorageClient;
   private final ItemRepository itemRepository;
   private final UserRepository userRepository;
   private final LoanRepository loanRepository;
@@ -28,6 +30,7 @@ public class RequestRepository {
 
   private RequestRepository(
     CollectionResourceClient requestsStorageClient,
+    CollectionResourceClient cancellationReasonStorageClient,
     ItemRepository itemRepository,
     UserRepository userRepository,
     LoanRepository loanRepository,
@@ -35,6 +38,7 @@ public class RequestRepository {
     PatronGroupRepository patronGroupRepository) {
 
     this.requestsStorageClient = requestsStorageClient;
+    this.cancellationReasonStorageClient = cancellationReasonStorageClient;
     this.itemRepository = itemRepository;
     this.userRepository = userRepository;
     this.loanRepository = loanRepository;
@@ -44,7 +48,8 @@ public class RequestRepository {
 
   public static RequestRepository using(Clients clients) {
     return new RequestRepository(clients.requestsStorage(),
-      new ItemRepository(clients, true, false),
+      clients.cancellationReasonStorage(),
+      new ItemRepository(clients, true, false, true),
       new UserRepository(clients), new LoanRepository(clients),
       new ServicePointRepository(clients), new PatronGroupRepository(clients));
   }
@@ -147,7 +152,7 @@ public class RequestRepository {
         if (response.getStatusCode() == 201) {
           //Retain all of the previously fetched related records
           return succeeded(requestAndRelatedRecords.withRequest(
-            request.withJsonRepresentation(response.getJson())
+            request.withRequestJsonRepresentation(response.getJson())
           ));
         } else {
           return failed(new ForwardOnFailure(response));
@@ -165,6 +170,15 @@ public class RequestRepository {
           return failed(new ForwardOnFailure(response));
         }
     });
+  }
+
+  public CompletableFuture<Result<Request>> loadCancellationReason(Request request) {
+
+    return FetchSingleRecord.<Request>forRecord("cancellationreason")
+      .using(cancellationReasonStorageClient)
+      .mapTo(request::withCancellationReasonJsonRepresentation)
+      .whenNotFound(succeeded(request))
+      .fetch(request.getCancellationReasonId());
   }
 
   //TODO: Check if need to request requester
