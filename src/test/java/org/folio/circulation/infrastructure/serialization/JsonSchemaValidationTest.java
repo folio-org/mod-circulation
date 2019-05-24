@@ -4,12 +4,14 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.isErrorWith;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.io.IOException;
 import java.util.UUID;
 
+import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 import org.junit.Test;
@@ -98,5 +100,21 @@ public class JsonSchemaValidationTest {
     assertThat(result.cause(), isErrorWith(allOf(
       hasMessage("#: required key [servicePointId] not found"),
       hasParameter(null, null))));
+  }
+
+  @Test
+  public void validationFailsForInvalidJson() throws IOException {
+    final JsonSchemaValidator validator = JsonSchemaValidator
+      .fromResource("/check-in-by-barcode-request.json");
+
+    final Result<String> result = validator.validate("foo blah");
+
+    assertThat(result.succeeded(), is(false));
+
+    assertThat(result.cause(), instanceOf(BadRequestFailure.class));
+
+    final BadRequestFailure badRequestFailure = (BadRequestFailure)result.cause();
+
+    assertThat(badRequestFailure.getReason(), is("Cannot parse \"foo blah\" as JSON"));
   }
 }

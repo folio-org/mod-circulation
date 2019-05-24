@@ -1,7 +1,10 @@
 package org.folio.circulation.infrastructure.serialization;
 
 import static java.util.stream.Collectors.collectingAndThen;
+import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,9 +13,11 @@ import java.util.stream.Collectors;
 import org.everit.json.schema.Schema;
 import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
+import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
@@ -43,7 +48,7 @@ class JsonSchemaValidator {
     try {
       schema.validate(new JSONObject(json));
 
-      return Result.succeeded(json);
+      return succeeded(json);
     }
     catch (ValidationException e) {
       if(e.getViolationCount() == 1) {
@@ -55,6 +60,13 @@ class JsonSchemaValidator {
         .map(this::toValidationError)
         .collect(collectingAndThen(Collectors.toList(),
           ValidationErrorFailure::failedValidation));
+    }
+    catch(JSONException e) {
+      return failed(new BadRequestFailure(
+        String.format("Cannot parse \"%s\" as JSON", json)));
+    }
+    catch(Exception e) {
+      return failedDueToServerError(e);
     }
   }
 

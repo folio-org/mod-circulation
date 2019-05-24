@@ -1,7 +1,8 @@
 package org.folio.circulation.support;
 
-import io.vertx.core.http.HttpServerResponse;
 import org.folio.circulation.support.http.server.ClientErrorResponse;
+
+import io.vertx.core.http.HttpServerResponse;
 
 public class BadRequestFailure implements HttpFailure {
   private final String reason;
