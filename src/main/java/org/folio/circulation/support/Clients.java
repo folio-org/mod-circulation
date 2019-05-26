@@ -81,7 +81,7 @@ public class Clients {
 
   public CollectionResourceClient requestPoliciesStorage() { return requestPoliciesStorageClient; }
 
-  CollectionResourceClient itemsStorage() {
+  public CollectionResourceClient itemsStorage() {
     return itemsStorageClient;
   }
 
