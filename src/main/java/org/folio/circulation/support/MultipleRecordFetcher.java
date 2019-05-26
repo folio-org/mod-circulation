@@ -33,7 +33,15 @@ public class MultipleRecordFetcher<T> {
       return completedFuture(of(MultipleRecords::empty));
     }
 
-    return exactMatchAny("id", idList)
+    return findByIndexName(idList, "id");
+  }
+
+  public CompletableFuture<Result<MultipleRecords<T>>> findByIndexName(Collection<String> idList, String indexName) {
+    if(idList.isEmpty()) {
+      return completedFuture(of(MultipleRecords::empty));
+    }
+
+    return exactMatchAny(indexName, idList)
       .after(query -> client.getMany(query, idList.size()))
       .thenApply(result -> result.next(this::mapToRecords));
   }

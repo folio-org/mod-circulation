@@ -30,6 +30,7 @@ public class Clients {
   private final CollectionResourceClient patronNoticePolicesStorageClient;
   private final CollectionResourceClient patronNoticeClient;
   private final CollectionResourceClient configurationStorageClient;
+  private final CollectionResourceClient inventoryItemsClient;
 
   public static Clients create(WebContext context, HttpClient httpClient) {
     return new Clients(context.createHttpClient(httpClient), context);
@@ -59,6 +60,7 @@ public class Clients {
       patronNoticePolicesStorageClient = createPatronNoticePolicesStorageClient(client, context);
       patronNoticeClient = createPatronNoticeClient(client, context);
       configurationStorageClient = createConfigurationStorageClient(client, context);
+      inventoryItemsClient = createInventoryItemsClient(client, context);
     }
     catch(MalformedURLException e) {
       throw new InvalidOkapiLocationException(context.getOkapiLocation(), e);
@@ -71,15 +73,19 @@ public class Clients {
 
   public CollectionResourceClient requestPoliciesStorage() { return requestPoliciesStorageClient; }
 
-  public CollectionResourceClient itemsStorage() {
+  CollectionResourceClient itemsStorage() {
     return itemsStorageClient;
   }
 
-  CollectionResourceClient holdingsStorage() {
+  CollectionResourceClient inventoryItems() {
+    return inventoryItemsClient;
+  }
+
+  public CollectionResourceClient holdingsStorage() {
     return holdingsStorageClient;
   }
 
-  CollectionResourceClient instancesStorage() {
+  public CollectionResourceClient instancesStorage() {
     return instancesStorageClient;
   }
 
@@ -198,6 +204,14 @@ public class Clients {
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/item-storage/items");
+  }
+
+  private static CollectionResourceClient createInventoryItemsClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context, "/inventory/items");
   }
 
   private static CollectionResourceClient createHoldingsStorageClient(

@@ -5,11 +5,11 @@ import java.util.Comparator;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
 
-public class AvailableItemComparator implements Comparator<Item> {
+public class UnAvailableItemComparator implements Comparator<Item> {
 
     private String pickupLocationId;
 
-    public AvailableItemComparator(String pickupLocationId) {
+    public UnAvailableItemComparator(String pickupLocationId) {
       this.pickupLocationId = pickupLocationId;
     }
 

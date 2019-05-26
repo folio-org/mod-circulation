@@ -1,9 +1,12 @@
 package api.support.builders;
 
+import java.util.List;
 import java.util.UUID;
 
+import org.folio.circulation.domain.Item;
 import org.folio.circulation.support.http.client.IndividualResource;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class HoldingBuilder extends JsonBuilder implements Builder {
@@ -11,21 +14,24 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
   private final UUID permanentLocationId;
   private final UUID temporaryLocationId;
   private final String callNumber;
+  private final List<Item> holdingsItems;
 
   public HoldingBuilder() {
-    this(null, null, null, null);
+    this(null, null, null, null, null);
   }
 
   private HoldingBuilder(
     UUID instanceId,
     UUID permanentLocationId,
     UUID temporaryLocationId,
-    String callNumber) {
+    String callNumber,
+    List<Item> holdingsItems) {
 
     this.instanceId = instanceId;
     this.permanentLocationId = permanentLocationId;
     this.temporaryLocationId = temporaryLocationId;
     this.callNumber = callNumber;
+    this.holdingsItems = holdingsItems;
   }
 
   @Override
@@ -36,6 +42,7 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
     put(holdings, "permanentLocationId", permanentLocationId);
     put(holdings, "temporaryLocationId", temporaryLocationId);
     put(holdings, "callNumber", callNumber);
+    put(holdings, "holdingsItems", toJsonHoldingItems(holdingsItems));
 
     return holdings;
   }
@@ -45,7 +52,8 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
       instanceId,
       this.permanentLocationId,
       this.temporaryLocationId,
-      this.callNumber);
+      this.callNumber,
+      this.holdingsItems);
   }
 
   public HoldingBuilder withPermanentLocation(IndividualResource location) {
@@ -57,7 +65,8 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
       this.instanceId,
       locationId,
       this.temporaryLocationId,
-      this.callNumber);
+      this.callNumber,
+      this.holdingsItems);
   }
 
   public HoldingBuilder withNoPermanentLocation() {
@@ -73,7 +82,8 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
       this.instanceId,
       this.permanentLocationId,
       locationId,
-      this.callNumber);
+      this.callNumber,
+      this.holdingsItems);
   }
 
   public HoldingBuilder withNoTemporaryLocation() {
@@ -85,7 +95,26 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
       this.instanceId,
       this.permanentLocationId,
       this.temporaryLocationId,
-      callNumber
+      callNumber,
+      this.holdingsItems
     );
+  }
+
+  public HoldingBuilder withHoldingsItems(List<Item> holdingsItems) {
+    return new HoldingBuilder(
+      this.instanceId,
+      this.permanentLocationId,
+      this.temporaryLocationId,
+      this.callNumber,
+      holdingsItems
+    );
+  }
+
+  private JsonArray toJsonHoldingItems(List<Item> holdingsItems) {
+    JsonArray holdingsItemJsonArr = new JsonArray();
+    for( Item item : holdingsItems) {
+      holdingsItemJsonArr.add(item.getItem());
+    }
+    return holdingsItemJsonArr;
   }
 }
