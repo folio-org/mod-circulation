@@ -9,6 +9,7 @@ import io.vertx.core.http.HttpClient;
 
 public class Clients {
   private final CollectionResourceClient requestsStorageClient;
+  private final CollectionResourceClient cancellationReasonStorageClient;
   private final CollectionResourceClient itemsStorageClient;
   private final CollectionResourceClient holdingsStorageClient;
   private final CollectionResourceClient instancesStorageClient;
@@ -16,6 +17,7 @@ public class Clients {
   private final CollectionResourceClient loansStorageClient;
   private final CollectionResourceClient locationsStorageClient;
   private final CollectionResourceClient materialTypesStorageClient;
+  private final CollectionResourceClient loanTypesStorageClient;
   private final CollectionResourceClient proxiesForClient;
   private final CollectionResourceClient loanPoliciesStorageClient;
   private final CollectionResourceClient fixedDueDateSchedulesStorageClient;
@@ -39,6 +41,7 @@ public class Clients {
   private Clients(OkapiHttpClient client, WebContext context) {
     try {
       requestsStorageClient = createRequestsStorageClient(client, context);
+      cancellationReasonStorageClient = createCancellationReasonStorageClient(client, context);
       itemsStorageClient = createItemsStorageClient(client, context);
       holdingsStorageClient = createHoldingsStorageClient(client, context);
       instancesStorageClient = createInstanceStorageClient(client, context);
@@ -46,6 +49,7 @@ public class Clients {
       loansStorageClient = createLoansStorageClient(client, context);
       locationsStorageClient = createLocationsStorageClient(client, context);
       materialTypesStorageClient = createMaterialTypesStorageClient(client, context);
+      loanTypesStorageClient = createLoanTypesStorageClient(client, context);
       proxiesForClient = createProxyUsersStorageClient(client, context);
       circulationLoanRulesClient = createCirculationLoanRulesClient(client, context);
       circulationRequestRulesClient = createCirculationRequestRulesClient(client, context);
@@ -69,6 +73,10 @@ public class Clients {
 
   public CollectionResourceClient requestsStorage() {
     return requestsStorageClient;
+  }
+
+  public CollectionResourceClient cancellationReasonStorage() {
+    return cancellationReasonStorageClient;
   }
 
   public CollectionResourceClient requestPoliciesStorage() { return requestPoliciesStorageClient; }
@@ -103,6 +111,10 @@ public class Clients {
 
   public CollectionResourceClient materialTypesStorage() {
     return materialTypesStorageClient;
+  }
+
+  public CollectionResourceClient loanTypesStorage() {
+    return loanTypesStorageClient;
   }
 
   public CollectionResourceClient loanPoliciesStorage() {
@@ -198,6 +210,14 @@ public class Clients {
     return getCollectionResourceClient(client, context, "/request-storage/requests");
   }
 
+  private static CollectionResourceClient createCancellationReasonStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context, "/cancellation-reason-storage/cancellation-reasons");
+  }
+
   private static CollectionResourceClient createItemsStorageClient(
     OkapiHttpClient client,
     WebContext context)
@@ -270,6 +290,14 @@ public class Clients {
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/material-types");
+  }
+
+  private CollectionResourceClient createLoanTypesStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context, "/loan-types");
   }
 
   private CollectionResourceClient createLoanPoliciesStorageClient(

@@ -41,7 +41,7 @@ public class LoanRepository {
 
   public LoanRepository(Clients clients) {
     loansStorageClient = clients.loansStorage();
-    itemRepository = new ItemRepository(clients, true, true);
+    itemRepository = new ItemRepository(clients, true, true, true);
     userRepository = new UserRepository(clients);
   }
 

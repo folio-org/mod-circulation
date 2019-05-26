@@ -85,8 +85,8 @@ for the ability to reorder the queue manually.
 #### Creating an already closed loan
 
 It is not possible to create a loan that is already closed via POST
-due to checks that are performed during this request. 
-However it can be done when creating a loan in a specific location via PUT 
+due to checks that are performed during this request.
+However it can be done when creating a loan in a specific location via PUT
 
 #### API Tests
 
@@ -97,7 +97,7 @@ For example, previously there were tests that verified that some of the APIs
 could handle missing inventory records. As mod-inventory-storage does not allow
 used holdings or instance records to be deleted, these tests were removed.
 
-These tests need to be replaced by tests that use specialised implementations 
+These tests need to be replaced by tests that use specialised implementations
 of the storage interfaces, separate to the fakes used for general API tests.
 
 #### Tenant-selected timezone and locale support
@@ -410,8 +410,29 @@ Requests include information from the item, including holdingsRecordId and insta
 
 Other [modules](https://dev.folio.org/source-code/#server-side).
 
+Other FOLIO Developer documentation is at [dev.folio.org](https://dev.folio.org/)
+
+### Issue tracker
+
 See project [CIRC](https://issues.folio.org/browse/CIRC)
 at the [FOLIO issue tracker](https://dev.folio.org/guidelines/issue-tracker/).
 
-Other FOLIO Developer documentation is at [dev.folio.org](https://dev.folio.org/)
+### ModuleDescriptor
+
+See the built `target/ModuleDescriptor.json` for the interfaces that this module
+requires and provides, the permissions, and the additional module metadata.
+
+### API documentation
+
+This module's [API documentation](https://dev.folio.org/reference/api/#mod-circulation).
+
+### Code analysis
+
+[SonarQube analysis](https://sonarcloud.io/dashboard?id=org.folio%3Amod-circulation).
+
+### Download and configuration
+
+The built artifacts for this module are available.
+See [configuration](https://dev.folio.org/download/artifacts) for repository access,
+and the [Docker image](https://hub.docker.com/r/folioorg/mod-circulation/).
 

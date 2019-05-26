@@ -21,7 +21,7 @@ public class JsonStringArrayHelper {
     return toStream(within.getJsonArray(arrayPropertyName));
   }
 
-  private static Stream<String> toStream(JsonArray array) {
+  public static Stream<String> toStream(JsonArray array) {
     return array
       .stream()
       .filter(Objects::nonNull)

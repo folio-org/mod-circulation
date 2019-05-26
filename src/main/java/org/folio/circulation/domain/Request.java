@@ -8,22 +8,27 @@ import static org.folio.circulation.domain.RequestStatus.CLOSED_UNFILLED;
 import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
 import static org.folio.circulation.domain.RequestStatus.OPEN_IN_TRANSIT;
 import static org.folio.circulation.domain.RequestStatus.OPEN_NOT_YET_FILLED;
+import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_ADDITIONAL_INFORMATION;
+import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.HOLD_SHELF_EXPIRATION_DATE;
+import static org.folio.circulation.domain.representations.RequestProperties.NAME;
 import static org.folio.circulation.domain.representations.RequestProperties.POSITION;
+import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_EXPIRATION_DATE;
 import static org.folio.circulation.domain.representations.RequestProperties.STATUS;
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.util.Objects;
 
+import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 
-import io.vertx.core.json.JsonObject;
-
 public class Request implements ItemRelatedRecord, UserRelatedRecord {
-  private final JsonObject representation;
+  private final JsonObject requestRepresentation;
+  private final JsonObject cancellationReasonRepresentation;
   private final Item item;
   private final User requester;
   private final User proxy;
@@ -35,14 +40,16 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private boolean changedPosition = false;
 
   public Request(
-    JsonObject representation,
+    JsonObject requestRepresentation,
+    JsonObject cancellationReasonRepresentation,
     Item item,
     User requester,
     User proxy,
     Loan loan,
     ServicePoint pickupServicePoint) {
 
-    this.representation = representation;
+    this.requestRepresentation = requestRepresentation;
+    this.cancellationReasonRepresentation = cancellationReasonRepresentation;
     this.item = item;
     this.requester = requester;
     this.proxy = proxy;
@@ -51,11 +58,22 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public static Request from(JsonObject representation) {
-    return new Request(representation, null, null, null, null, null);
+    return new Request(representation, null, null, null, null, null, null);
   }
 
-  Request withJsonRepresentation(JsonObject representation) {
+  Request withRequestJsonRepresentation(JsonObject representation) {
     return new Request(representation,
+      cancellationReasonRepresentation,
+      getItem(),
+      getRequester(),
+      getProxy(),
+      getLoan(),
+      getPickupServicePoint());
+  }
+
+  Request withCancellationReasonJsonRepresentation(JsonObject representation) {
+    return new Request(requestRepresentation,
+      representation,
       getItem(),
       getRequester(),
       getProxy(),
@@ -64,7 +82,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public JsonObject asJson() {
-    return representation.copy();
+    return requestRepresentation.copy();
   }
 
   boolean isFulfillable() {
@@ -114,46 +132,46 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   @Override
   public String getItemId() {
-    return representation.getString("itemId");
+    return requestRepresentation.getString("itemId");
   }
 
   public Request withItem(Item newItem) {
-    return new Request(representation, newItem, requester, proxy, loan,
+    return new Request(requestRepresentation, cancellationReasonRepresentation, newItem, requester, proxy, loan,
       pickupServicePoint);
   }
 
   public Request withRequester(User newRequester) {
-    return new Request(representation, item, newRequester, proxy, loan,
+    return new Request(requestRepresentation, cancellationReasonRepresentation, item, newRequester, proxy, loan,
       pickupServicePoint);
   }
 
   public Request withProxy(User newProxy) {
-    return new Request(representation, item, requester, newProxy, loan,
+    return new Request(requestRepresentation, cancellationReasonRepresentation, item, requester, newProxy, loan,
       pickupServicePoint);
   }
 
   public Request withLoan(Loan newLoan) {
-    return new Request(representation, item, requester, proxy, newLoan,
+    return new Request(requestRepresentation, cancellationReasonRepresentation, item, requester, proxy, newLoan,
       pickupServicePoint);
   }
 
   public Request withPickupServicePoint(ServicePoint newPickupServicePoint) {
-    return new Request(representation, item, requester, proxy, loan,
+    return new Request(requestRepresentation, cancellationReasonRepresentation, item, requester, proxy, loan,
       newPickupServicePoint);
   }
 
   @Override
   public String getUserId() {
-    return representation.getString("requesterId");
+    return requestRepresentation.getString("requesterId");
   }
 
   @Override
   public String getProxyUserId() {
-    return representation.getString("proxyUserId");
+    return requestRepresentation.getString("proxyUserId");
   }
 
   private String getFulfilmentPreferenceName() {
-    return representation.getString("fulfilmentPreference");
+    return requestRepresentation.getString("fulfilmentPreference");
   }
 
   public RequestFulfilmentPreference getFulfilmentPreference() {
@@ -161,11 +179,11 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public String getId() {
-    return representation.getString("id");
+    return requestRepresentation.getString("id");
   }
 
   public RequestType getRequestType() {
-    return RequestType.from(representation.getString(REQUEST_TYPE));
+    return RequestType.from(requestRepresentation.getString(REQUEST_TYPE));
   }
 
   Boolean allowedForItem() {
@@ -177,12 +195,12 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public RequestStatus getStatus() {
-    return RequestStatus.from(representation.getString(STATUS));
+    return RequestStatus.from(requestRepresentation.getString(STATUS));
   }
 
   void changeStatus(RequestStatus status) {
     //TODO: Check for null status
-    status.writeTo(representation);
+    status.writeTo(requestRepresentation);
   }
 
   public Item getItem() {
@@ -198,7 +216,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public JsonObject getRequesterFromRepresentation() {
-    return representation.getJsonObject("requester");
+    return requestRepresentation.getJsonObject("requester");
   }
 
   public String getRequesterBarcode() {
@@ -210,7 +228,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public String getPickupServicePointId() {
-    return representation.getString("pickupServicePointId");
+    return requestRepresentation.getString("pickupServicePointId");
   }
 
   public ServicePoint getPickupServicePoint() {
@@ -219,7 +237,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   Request changePosition(Integer newPosition) {
     if (!Objects.equals(getPosition(), newPosition)) {
-      write(representation, POSITION, newPosition);
+      write(requestRepresentation, POSITION, newPosition);
       changedPosition = true;
     }
 
@@ -227,12 +245,12 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   void removePosition() {
-    representation.remove(POSITION);
+    requestRepresentation.remove(POSITION);
     changedPosition = true;
   }
 
   public Integer getPosition() {
-    return getIntegerProperty(representation, POSITION, null);
+    return getIntegerProperty(requestRepresentation, POSITION, null);
   }
 
   boolean hasChangedPosition() {
@@ -244,21 +262,37 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   String getDeliveryAddressType() {
-    return representation.getString("deliveryAddressTypeId");
+    return requestRepresentation.getString("deliveryAddressTypeId");
   }
 
   Request changeHoldShelfExpirationDate(DateTime holdShelfExpirationDate) {
-    write(representation, HOLD_SHELF_EXPIRATION_DATE,
+    write(requestRepresentation, HOLD_SHELF_EXPIRATION_DATE,
       holdShelfExpirationDate);
 
     return this;
   }
 
   void removeHoldShelfExpirationDate() {
-    representation.remove(HOLD_SHELF_EXPIRATION_DATE);
+    requestRepresentation.remove(HOLD_SHELF_EXPIRATION_DATE);
   }
 
   public DateTime getHoldShelfExpirationDate() {
-    return getDateTimeProperty(representation, HOLD_SHELF_EXPIRATION_DATE);
+    return getDateTimeProperty(requestRepresentation, HOLD_SHELF_EXPIRATION_DATE);
+  }
+
+  public DateTime getRequestExpirationDate() {
+    return getDateTimeProperty(requestRepresentation, REQUEST_EXPIRATION_DATE);
+  }
+
+  public String getCancellationAdditionalInformation() {
+    return getProperty(requestRepresentation, CANCELLATION_ADDITIONAL_INFORMATION);
+  }
+
+  public String getCancellationReasonId() {
+    return getProperty(requestRepresentation, CANCELLATION_REASON_ID);
+  }
+
+  public String getCancellationReasonName() {
+    return getProperty(cancellationReasonRepresentation, NAME);
   }
 }
