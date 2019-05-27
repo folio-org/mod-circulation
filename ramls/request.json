@@ -316,12 +316,12 @@
           "description": "Is this service point a pickup location?",
           "type": "boolean"
         }
-      },
-      "tags": {
-        "type": "object",
-        "description": "Tags",
-        "$ref": "raml-util/schemas/tags.schema"
       }
+    },
+    "tags": {
+      "type": "object",
+      "description": "Tags",
+      "$ref": "raml-util/schemas/tags.schema"
     },
     "metadata": {
       "description": "Metadata about creation and changes to requests, provided by the server (client should not provide)",
