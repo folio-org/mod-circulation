@@ -161,6 +161,7 @@
         "patronGroup": {
           "description": "record for the user's patron group",
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "id": {
               "description": "ID of the patron group",
@@ -211,6 +212,7 @@
         "patronGroup": {
           "description": "record for the user's patrongroup",
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "id": {
               "description": "ID of the patrongroup",
