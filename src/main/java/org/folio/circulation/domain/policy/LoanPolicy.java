@@ -287,7 +287,7 @@ public class LoanPolicy {
     List<JsonObject> schedules =
       new ArrayList<JsonObject>(fixedDueDateSchedules.getSchedules());
     schedules.add(0, buildSchedule(systemDate, holds));
-    return new FixedDueDateSchedules(schedules);
+    return new FixedDueDateSchedules("alternateDueDateSchedule", schedules);
   }
 
   private boolean isAlternateDueDateSchedule(RequestQueue requestQueue) {
