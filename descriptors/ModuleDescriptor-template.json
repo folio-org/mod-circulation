@@ -4,7 +4,7 @@
   "provides": [
     {
       "id": "circulation",
-      "version": "7.5",
+      "version": "7.6",
       "handlers": [
         {
           "methods": [
@@ -681,6 +681,16 @@
             "usergroups.collection.get",
             "usergroups.item.get"
           ]
+        },
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/circulation/requests/instances",
+          "permissionsRequired": [
+            "circulation.requests.instances.item.post"
+          ],
+          "modulePermissions": []
         }
       ]
     }
@@ -900,6 +910,11 @@
       "description": "get request queue for an item"
     },
     {
+      "permissionName": "circulation.requests.instances.item.post",
+      "displayName": "circulation - create instance level request",
+      "description": "create a request given an instance"
+    },
+    {
       "permissionName": "circulation.all",
       "displayName": "circulation - all permissions",
       "description": "Entire set of permissions needed to use the circulation",
@@ -930,7 +945,8 @@
         "circulation.requests.item.put",
         "circulation.requests.item.delete",
         "circulation.requests.collection.delete",
-        "circulation.requests.queue.collection.get"
+        "circulation.requests.queue.collection.get",
+        "circulation.requests.instances.item.post"
       ]
     }
   ],

@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -47,12 +48,14 @@ import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
 import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
+import org.joda.time.format.ISODateTimeFormat;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -69,6 +72,7 @@ import api.support.fixtures.LoansFixture;
 import api.support.fixtures.NoticeMatchers;
 import api.support.fixtures.RequestsFixture;
 import api.support.fixtures.UsersFixture;
+import api.support.http.InterfaceUrls;
 import api.support.http.InventoryItemResource;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
@@ -176,6 +180,87 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(tagsRepresentation.containsKey("tagList"), is(true));
     assertThat(tagsRepresentation.getJsonArray("tagList"), contains("new", "important"));
+  }
+
+  @Test
+  public void canCreateATitleLevelRequest()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID instanceId = UUID.randomUUID();
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    UUID requesterId = usersFixture.jessica().getId();
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    DateTime requestExpirationDate = requestDate.plusDays(30);
+
+    JsonObject requestBody = new JsonObject();
+    requestBody.put("instanceId", instanceId.toString());
+    requestBody.put("requestDate", requestDate.toString(ISODateTimeFormat.dateTime()));
+    requestBody.put("requesterId", requesterId.toString());
+    requestBody.put("pickupServicePointId", pickupServicePointId.toString());
+    requestBody.put("fulfilmentPreference", "Hold Shelf");
+    requestBody.put("requestExpirationDate",
+        requestExpirationDate.toString(ISODateTimeFormat.dateTime()));
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(InterfaceUrls.requestsUrl("/instances"), requestBody,
+        ResponseHandler.any(postCompleted));
+
+    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
+
+    JsonObject representation = postResponse.getJson();
+
+    assertThat(representation.getString("id"), Matchers.notNullValue(String.class));
+    assertThat(representation.getString("requestType"), is("Hold"));
+    assertThat(representation.getString("requestDate"), isEquivalentTo(requestDate));
+    assertThat(representation.getString("itemId"), Matchers.notNullValue(String.class));
+    assertThat(representation.getString("requesterId"), is(requesterId.toString()));
+    assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
+    assertThat(representation.getString("requestExpirationDate"),
+        isEquivalentTo(requestExpirationDate));
+    assertThat(representation.getString("status"), is("Open - Not yet filled"));
+    assertThat(representation.getString("pickupServicePointId"),
+        is(pickupServicePointId.toString()));
+
+    assertThat("has information taken from item",
+      representation.containsKey("item"), is(true));
+
+    assertThat("instanceId taken from item",
+        representation.getJsonObject("item").getString("instanceId"),
+        is(instanceId.toString()));
+
+    assertThat("title is taken from item",
+      representation.getJsonObject("item").getString("title"),
+      is("Title Level Request"));
+
+    assertThat("barcode is taken from item",
+      representation.getJsonObject("item").getString("barcode"),
+      Matchers.notNullValue());
+
+    assertThat("has information taken from requesting user",
+      representation.containsKey("requester"), is(true));
+
+    assertThat("last name is taken from requesting user",
+      representation.getJsonObject("requester").getString("lastName"),
+      is("Public"));
+
+    assertThat("first name is taken from requesting user",
+      representation.getJsonObject("requester").getString("firstName"),
+      is("John"));
+
+    assertThat("middle name is not taken from requesting user",
+      representation.getJsonObject("requester").getString("middleName"),
+      is("Q"));
+
+    assertThat("barcode is taken from requesting user",
+      representation.getJsonObject("requester").getString("barcode"),
+      Matchers.notNullValue());
+
+    assertThat("does not have information taken from proxying user",
+      representation.containsKey("proxy"), is(false));
   }
 
   @Test
