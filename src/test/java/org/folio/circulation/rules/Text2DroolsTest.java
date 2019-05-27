@@ -46,7 +46,7 @@ public class Text2DroolsTest {
       "    g undergrad: l in-house r request-5 n notice-5",
       "m book cd dvd + t special-items: l in-house r request-6 n notice-6",
       "t special-items: l policy-d r request-7 n notice-7",
-      "    g visitor: l in-house r request-8 n notice-8"
+      "    g visitor alumni: l in-house r request-8 n notice-8"
       );
   private String [][] loanTestCases = new String[][] {
     // item type,   loan type,      patron type,   loan policies
@@ -57,6 +57,8 @@ public class Text2DroolsTest {
     { "newspaper", "regular",       "undergrad",                                      "policy-c", "no-loan" },
     { "newspaper", "special-items", "undergrad",                          "policy-d", "policy-c", "no-loan" },
     { "newspaper", "special-items", "visitor",                "in-house", "policy-d", "policy-c", "no-loan" },
+    { "dvd",       "special-items", "undergrad",  "in-house",             "policy-d", "policy-a", "no-loan" },
+    { "map",       "special-items", "alumni",                 "in-house", "policy-d",             "no-loan" },
   };
 
   private String[][] requestTestCases = new String[][] {

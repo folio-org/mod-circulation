@@ -8,6 +8,7 @@ import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasProxyUse
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasServicePointParameter;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasUserBarcodeParameter;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
+import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.UUIDMatcher.is;
@@ -16,13 +17,16 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasMessageContaining;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -34,6 +38,8 @@ import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
+import org.hamcrest.Matcher;
+import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -49,7 +55,9 @@ import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
+import api.support.fixtures.NoticeMatchers;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -574,38 +582,27 @@ public class CheckOutByBarcodeTests extends APITests {
     final DateTime loanDate =
       new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
 
-    final IndividualResource response = loansFixture.checkOutByBarcode(
+    final IndividualResource loan = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
         .on(loanDate)
         .at(UUID.randomUUID()));
 
-    final JsonObject loan = response.getJson();
-
-    assertThat("due date should 3 weeks from loan date",
-      loan.getString("dueDate"),
-      isEquivalentTo(loanDate.plusWeeks(3)));
-
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(patronNoticesClient::getAll, Matchers.hasSize(1));
-
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
-    JsonObject notice = sentNotices.get(0);
-    assertThat("sent notice should have template id form notice policy",
-      notice.getString("templateId"), is(checkOutTemplateId));
-    assertThat("sent notice should have email delivery channel",
-      notice.getString("deliveryChannel"), is("email"));
-    assertThat("sent notice should have output format",
-      notice.getString("outputFormat"), is("text/html"));
 
-    JsonObject noticeContext = notice.getJsonObject("context");
-    assertThat("sent notice should have context property",
-      noticeContext, notNullValue());
-    assertThat("sent notice context should have dueDate property",
-      noticeContext.getString("dueDate"),
-      isEquivalentTo(loanDate.plusWeeks(3)));
+    Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
+    noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(steve));
+    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(smallAngryPlanet));
+    noticeContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(loan, 0));
+    noticeContextMatchers.putAll(NoticeMatchers.getLoanPolicyContextMatchers(
+      loanPoliciesFixture.canCirculateRolling(), 0));
+    MatcherAssert.assertThat(sentNotices,
+      hasItems(
+        hasEmailNoticeProperties(steve.getId(), checkOutTemplateId, noticeContextMatchers)));
   }
 
   @Test
@@ -711,6 +708,160 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat("proxy user ID should match barcode",
       loan.getString("proxyUserId"), is(steve.getId()));
+
+    assertThat("item ID should match barcode",
+      loan.getString("itemId"), is(smallAngryPlanet.getId()));
+
+    assertThat("status should be open",
+      loan.getJsonObject("status").getString("name"), is("Open"));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+
+    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+  }
+
+  @Test
+  public void canCheckOutOnOrderItem()
+    throws MalformedURLException,
+    InterruptedException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(item -> item.onOrder());
+
+    final IndividualResource jessica = usersFixture.jessica();
+
+    final IndividualResource response = loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(jessica)
+        .at(servicePointsFixture.cd1()));
+
+    final JsonObject loan = response.getJson();
+
+    assertThat(loan.getString("id"), is(notNullValue()));
+
+    assertThat("user ID should match barcode",
+      loan.getString("userId"), is(jessica.getId()));
+
+    assertThat("item ID should match barcode",
+      loan.getString("itemId"), is(smallAngryPlanet.getId()));
+
+    assertThat("status should be open",
+      loan.getJsonObject("status").getString("name"), is("Open"));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+
+    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+  }
+
+  @Test
+  public void canCheckOutOnOrderItemWithRequest()
+    throws MalformedURLException,
+    InterruptedException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(item -> item.onOrder());
+
+    final IndividualResource jessica = usersFixture.jessica();
+
+    requestsFixture.place(
+      new RequestBuilder()
+        .withItemId(smallAngryPlanet.getId())
+        .withRequesterId(jessica.getId())
+        .withPickupServicePoint(servicePointsFixture.cd1())
+    );
+
+    final IndividualResource response = loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(jessica)
+        .at(servicePointsFixture.cd1()));
+
+    final JsonObject loan = response.getJson();
+
+    assertThat(loan.getString("id"), is(notNullValue()));
+
+    assertThat("user ID should match barcode",
+      loan.getString("userId"), is(jessica.getId()));
+
+    assertThat("item ID should match barcode",
+      loan.getString("itemId"), is(smallAngryPlanet.getId()));
+
+    assertThat("status should be open",
+      loan.getJsonObject("status").getString("name"), is("Open"));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+
+    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+  }
+
+  @Test
+  public void canCheckOutInProcessItem()
+    throws MalformedURLException,
+    InterruptedException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(item -> item.inProcess());
+
+    final IndividualResource jessica = usersFixture.jessica();
+
+    final IndividualResource response = loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(jessica)
+        .at(servicePointsFixture.cd1()));
+
+    final JsonObject loan = response.getJson();
+
+    assertThat(loan.getString("id"), is(notNullValue()));
+
+    assertThat("user ID should match barcode",
+      loan.getString("userId"), is(jessica.getId()));
+
+    assertThat("item ID should match barcode",
+      loan.getString("itemId"), is(smallAngryPlanet.getId()));
+
+    assertThat("status should be open",
+      loan.getJsonObject("status").getString("name"), is("Open"));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+
+    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+  }
+
+  @Test
+  public void canCheckOutInProcessItemWithRequest()
+    throws MalformedURLException,
+    InterruptedException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(item -> item.inProcess());
+
+    final IndividualResource jessica = usersFixture.jessica();
+
+    requestsFixture.place(
+      new RequestBuilder()
+        .withItemId(smallAngryPlanet.getId())
+        .withRequesterId(jessica.getId())
+        .withPickupServicePoint(servicePointsFixture.cd1())
+    );
+
+    final IndividualResource response = loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(jessica)
+        .at(servicePointsFixture.cd1()));
+
+    final JsonObject loan = response.getJson();
+
+    assertThat(loan.getString("id"), is(notNullValue()));
+
+    assertThat("user ID should match barcode",
+      loan.getString("userId"), is(jessica.getId()));
 
     assertThat("item ID should match barcode",
       loan.getString("itemId"), is(smallAngryPlanet.getId()));

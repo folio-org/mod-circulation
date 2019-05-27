@@ -227,11 +227,11 @@ public class LoanPolicy {
     return loan.getRenewalCount() >= getRenewalLimit();
   }
 
-  private boolean unlimitedRenewals() {
+  public boolean unlimitedRenewals() {
     return getBooleanProperty(getRenewalsPolicy(), "unlimited");
   }
 
-  private Integer getRenewalLimit() {
+  public Integer getRenewalLimit() {
     return getIntegerProperty(getRenewalsPolicy(), "numberAllowed", 0);
   }
 

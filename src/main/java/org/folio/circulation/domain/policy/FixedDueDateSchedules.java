@@ -1,5 +1,6 @@
 package org.folio.circulation.domain.policy;
 
+import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.util.List;
@@ -7,16 +8,18 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import org.folio.circulation.support.Result;
 import org.folio.circulation.support.JsonArrayHelper;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 import io.vertx.core.json.JsonObject;
 
 public class FixedDueDateSchedules {
   private final List<JsonObject> schedules;
+  private final String id;
 
-  FixedDueDateSchedules(List<JsonObject> schedules) {
+  FixedDueDateSchedules(String id, List<JsonObject> schedules) {
+    this.id = id;
     this.schedules = schedules;
   }
 
@@ -24,8 +27,8 @@ public class FixedDueDateSchedules {
     if (representation == null) {
       return new NoFixedDueDateSchedules();
     } else {
-      return new FixedDueDateSchedules(JsonArrayHelper.toList(
-        representation.getJsonArray("schedules")));
+      return new FixedDueDateSchedules(getProperty(representation, "id"),
+        JsonArrayHelper.toList(representation.getJsonArray("schedules")));
     }
   }
 
@@ -89,5 +92,9 @@ public class FixedDueDateSchedules {
     return limit.isBefore(rollingDueDate)
       ? limit
       : rollingDueDate;
+  }
+
+  public String getId() {
+    return id;
   }
 }

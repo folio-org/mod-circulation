@@ -94,7 +94,7 @@ public class CheckOutByBarcodeResource extends Resource {
     final Clients clients = Clients.create(context, client);
 
     final UserRepository userRepository = new UserRepository(clients);
-    final ItemRepository itemRepository = new ItemRepository(clients, true, true);
+    final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
@@ -210,8 +210,10 @@ public class CheckOutByBarcodeResource extends Resource {
     LoanAndRelatedRecords relatedRecords,
     PatronNoticeService patronNoticeService) {
 
-    JsonObject noticeContext =
-      createLoanNoticeContext(relatedRecords.getLoan(), relatedRecords.getTimeZone());
+    JsonObject noticeContext = createLoanNoticeContext(
+      relatedRecords.getLoan(),
+      relatedRecords.getLoanPolicy(),
+      relatedRecords.getTimeZone());
 
     PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
       .withItem(relatedRecords.getLoan().getItem())

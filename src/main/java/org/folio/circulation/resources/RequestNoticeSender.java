@@ -10,6 +10,7 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
+import org.folio.circulation.domain.RequestRepository;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.User;
@@ -19,6 +20,7 @@ import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
+import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 
 public class RequestNoticeSender {
@@ -33,10 +35,16 @@ public class RequestNoticeSender {
     requestTypeToEventMap = Collections.unmodifiableMap(map);
   }
 
-  private final PatronNoticeService patronNoticeService;
+  public static RequestNoticeSender using(Clients clients) {
+    return new RequestNoticeSender(PatronNoticeService.using(clients), RequestRepository.using(clients));
+  }
 
-  public RequestNoticeSender(PatronNoticeService patronNoticeService) {
+  private final PatronNoticeService patronNoticeService;
+  private final RequestRepository requestRepository;
+
+  public RequestNoticeSender(PatronNoticeService patronNoticeService, RequestRepository requestRepository) {
     this.patronNoticeService = patronNoticeService;
+    this.requestRepository = requestRepository;
   }
 
 
@@ -58,16 +66,16 @@ public class RequestNoticeSender {
       .build();
     patronNoticeService.acceptNoticeEvent(requestCreatedEvent);
 
+    Loan loan = request.getLoan();
     if (request.getRequestType() == RequestType.RECALL &&
-      request.getLoan() != null) {
-      Loan loan = request.getLoan();
+      loan != null && loan.hasDueDateChanged()) {
 
       PatronNoticeEvent itemRecalledEvent = new PatronNoticeEventBuilder()
         .withItem(loan.getItem())
         .withUser(loan.getUser())
         .withEventType(NoticeEventType.RECALL_TO_LOANEE)
         .withTiming(NoticeTiming.UPON_AT)
-        .withNoticeContext(NoticeContextUtil.createLoanNoticeContext(loan))
+        .withNoticeContext(NoticeContextUtil.createLoanNoticeContext(loan, null))
         .build();
       patronNoticeService.acceptNoticeEvent(itemRecalledEvent);
     }
@@ -78,26 +86,29 @@ public class RequestNoticeSender {
   public Result<RequestAndRelatedRecords> sendNoticeOnRequestUpdated(
     RequestAndRelatedRecords relatedRecords) {
     if (relatedRecords.getRequest().getStatus() == RequestStatus.CLOSED_CANCELLED) {
-      sendNoticeOnRequestCancelled(relatedRecords);
+      requestRepository.loadCancellationReason(relatedRecords.getRequest())
+        .thenApply(r -> r.map(relatedRecords::withRequest))
+        .thenAccept(r -> r.next(this::sendNoticeOnRequestCancelled));
     }
     return Result.succeeded(relatedRecords);
   }
 
-  private void sendNoticeOnRequestCancelled(RequestAndRelatedRecords relatedRecords) {
+  private Result<Void> sendNoticeOnRequestCancelled(RequestAndRelatedRecords relatedRecords) {
     Request request = relatedRecords.getRequest();
     Item item = request.getItem();
     User requester = request.getRequester();
 
-    PatronNoticeEvent requestCanceledEvent = new PatronNoticeEventBuilder()
+    PatronNoticeEvent requestCancelledEvent = new PatronNoticeEventBuilder()
       .withItem(item)
       .withUser(requester)
       .withEventType(NoticeEventType.REQUEST_CANCELLATION)
       .withTiming(NoticeTiming.UPON_AT)
       .withNoticeContext(createRequestNoticeContext(request))
       .build();
-    patronNoticeService.acceptNoticeEvent(requestCanceledEvent);
-  }
+    patronNoticeService.acceptNoticeEvent(requestCancelledEvent);
 
+    return Result.succeeded(null);
+  }
 
 }
 

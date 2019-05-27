@@ -1,8 +1,9 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonObject;
-import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.support.*;
+import static java.util.function.Function.identity;
+import static org.folio.circulation.support.JsonKeys.byId;
+import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.ResultBinding.mapResult;
 
 import java.util.Collection;
 import java.util.List;
@@ -10,8 +11,14 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import static java.util.function.Function.identity;
-import static org.folio.circulation.support.Result.succeeded;
+import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.MultipleRecordFetcher;
+import org.folio.circulation.support.Result;
+import org.folio.circulation.support.SingleRecordFetcher;
+
+import io.vertx.core.json.JsonObject;
 
 public class MaterialTypeRepository {
   private final CollectionResourceClient materialTypesStorageClient;
@@ -34,12 +41,10 @@ public class MaterialTypeRepository {
       .filter(StringUtils::isNotBlank)
       .collect(Collectors.toList());
 
-    String materialTypesQuery = CqlHelper.multipleRecordsCqlQuery(materialTypeIds);
+    final MultipleRecordFetcher<JsonObject> fetcher = new MultipleRecordFetcher<>(
+      materialTypesStorageClient, "mtypes", identity());
 
-    return materialTypesStorageClient.getMany(materialTypesQuery, materialTypeIds.size(), 0)
-      .thenApply(response ->
-        MultipleRecords.from(response, identity(), "mtypes"))
-      .thenApply(r -> r.map(materialTypes ->
-        materialTypes.toMap(record -> record.getString("id"))));
+    return fetcher.findByIds(materialTypeIds)
+      .thenApply(mapResult(materialTypes -> materialTypes.toMap(byId())));
   }
 }

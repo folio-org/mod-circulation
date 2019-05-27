@@ -1,7 +1,7 @@
 package api.requests;
 
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
-import static api.support.matchers.PatronNoticeMatcher.equalsToEmailPatronNotice;
+import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
@@ -24,8 +24,14 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -36,8 +42,12 @@ import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
+import org.folio.circulation.domain.policy.DueDateManagement;
+import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
+import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
@@ -49,12 +59,14 @@ import org.junit.runner.RunWith;
 import api.support.APITests;
 import api.support.builders.Address;
 import api.support.builders.ItemBuilder;
+import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import api.support.fixtures.ItemsFixture;
 import api.support.fixtures.LoansFixture;
+import api.support.fixtures.NoticeMatchers;
 import api.support.fixtures.RequestsFixture;
 import api.support.fixtures.UsersFixture;
 import api.support.http.InventoryItemResource;
@@ -338,7 +350,7 @@ public class RequestsAPICreationTests extends APITests {
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
-  
+
     //Check RECALL -- should give the same response when placing other types of request.
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .recall()
@@ -1179,7 +1191,7 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
     final IndividualResource smallAngryPlannet = setupPagedItem(requestPickupServicePoint, itemsFixture, requestsClient, usersFixture);
     final IndividualResource pagedItem = itemsClient.get(smallAngryPlannet);
-    
+
     final Response recallResponse = requestsClient.attemptCreate(new RequestBuilder()
       .recall()
       .forItem(pagedItem)
@@ -1515,7 +1527,7 @@ public class RequestsAPICreationTests extends APITests {
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource requester = usersFixture.steve();
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-    requestsFixture.place(new RequestBuilder()
+    IndividualResource request = requestsFixture.place(new RequestBuilder()
       .withId(id)
       .open()
       .page()
@@ -1532,9 +1544,14 @@ public class RequestsAPICreationTests extends APITests {
       .atMost(1, TimeUnit.SECONDS)
       .until(patronNoticesClient::getAll, Matchers.hasSize(1));
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
+
+    Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
+    noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(requester));
+    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item));
+    noticeContextMatchers.putAll(NoticeMatchers.getRequestContextMatchers(request));
     MatcherAssert.assertThat(sentNotices,
       hasItems(
-        equalsToEmailPatronNotice(requester.getId(), pageConfirmationTemplateId)));
+        hasEmailNoticeProperties(requester.getId(), pageConfirmationTemplateId, noticeContextMatchers)));
   }
 
   @Test
@@ -1570,7 +1587,7 @@ public class RequestsAPICreationTests extends APITests {
 
     loansFixture.checkOutByBarcode(item, usersFixture.jessica());
 
-    requestsFixture.place(new RequestBuilder()
+    IndividualResource request = requestsFixture.place(new RequestBuilder()
       .withId(id)
       .open()
       .hold()
@@ -1587,9 +1604,14 @@ public class RequestsAPICreationTests extends APITests {
       .atMost(1, TimeUnit.SECONDS)
       .until(patronNoticesClient::getAll, Matchers.hasSize(1));
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
+
+    Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
+    noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(requester));
+    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item));
+    noticeContextMatchers.putAll(NoticeMatchers.getRequestContextMatchers(request));
     MatcherAssert.assertThat(sentNotices,
       hasItems(
-        equalsToEmailPatronNotice(requester.getId(), holdConfirmationTemplateId)));
+        hasEmailNoticeProperties(requester.getId(), holdConfirmationTemplateId, noticeContextMatchers)));
   }
 
   @Test
@@ -1619,8 +1641,15 @@ public class RequestsAPICreationTests extends APITests {
         recallConfirmationConfiguration,
         recallToLoaneeConfiguration,
         pageConfirmationConfiguration));
+
+    LoanPolicyBuilder loanPolicy = new LoanPolicyBuilder()
+      .withName("Can Circulate Rolling With Recalls")
+      .rolling(Period.weeks(3))
+      .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(2))
+      .withRecallsRecallReturnInterval(Period.weeks(1));
+
     useLoanPolicyAsFallback(
-      loanPoliciesFixture.canCirculateRolling().getId(),
+      loanPoliciesFixture.create(loanPolicy).getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId());
 
@@ -1629,9 +1658,90 @@ public class RequestsAPICreationTests extends APITests {
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource requester = usersFixture.steve();
     IndividualResource loanOwner = usersFixture.jessica();
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
-    loansFixture.checkOutByBarcode(item, loanOwner);
+    DateTime loanDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    IndividualResource loan = loansFixture.checkOutByBarcode(item, loanOwner, loanDate);
+
+    DateTime requestDate = loanDate.plusDays(1);
+    mockClockManagerToReturnFixedTime(requestDate);
+
+    IndividualResource request = requestsFixture.place(new RequestBuilder()
+      .withId(id)
+      .open()
+      .recall()
+      .forItem(item)
+      .by(requester)
+      .withRequestDate(requestDate)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(new LocalDate(2017, 7, 30))
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
+      .withPickupServicePointId(pickupServicePointId)
+      .withTags(new RequestBuilder.Tags(asList("new", "important"))));
+    IndividualResource loanAfterRecall = loansClient.get(loan.getId());
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronNoticesClient::getAll, Matchers.hasSize(2));
+    List<JsonObject> sentNotices = patronNoticesClient.getAll();
+
+    Map<String, Matcher<String>> recallConfirmationContextMatchers = new HashMap<>();
+    recallConfirmationContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(requester));
+    recallConfirmationContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item));
+    recallConfirmationContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(loanAfterRecall, 0));
+    recallConfirmationContextMatchers.putAll(NoticeMatchers.getRequestContextMatchers(request));
+    Map<String, Matcher<String>> recallNotificationContextMatchers = new HashMap<>();
+    recallNotificationContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(loanOwner));
+    recallNotificationContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item));
+    recallNotificationContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(loanAfterRecall, 0));
+    MatcherAssert.assertThat(sentNotices,
+      hasItems(
+        hasEmailNoticeProperties(requester.getId(), recallConfirmationTemplateId,
+          recallConfirmationContextMatchers),
+        hasEmailNoticeProperties(loanOwner.getId(), recallToLoaneeTemplateId,
+          recallNotificationContextMatchers)));
+  }
+
+  @Test
+  public void recallNoticeToLoanOwnerIsNotSendWhenDueDateIsNotChanged()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID recallToLoanOwnerTemplateId = UUID.randomUUID();
+    JsonObject recallToLoanOwnerNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(recallToLoanOwnerTemplateId)
+      .withEventType(RECALL_TO_LOANEE)
+      .create();
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with recall notice")
+      .withLoanNotices(Collections.singletonList(
+        recallToLoanOwnerNoticeConfiguration));
+
+    LoanPolicyBuilder loanPolicy = new LoanPolicyBuilder()
+      .withName("Policy with recall notice")
+      .withDescription("Recall configuration has no effect on due date")
+      .rolling(Period.weeks(3))
+      .withClosedLibraryDueDateManagement(DueDateManagement.KEEP_THE_CURRENT_DUE_DATE.getValue())
+      .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(3))
+      .withRecallsRecallReturnInterval(Period.weeks(1));
+
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.create(loanPolicy).getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId());
+
+    UUID id = UUID.randomUUID();
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource requester = usersFixture.steve();
+    IndividualResource loanOwner = usersFixture.jessica();
+
+    DateTime loanDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    loansFixture.checkOutByBarcode(item, loanOwner, loanDate);
+
+    DateTime requestDate = loanDate.plusDays(1);
+    mockClockManagerToReturnFixedTime(requestDate);
 
     requestsFixture.place(new RequestBuilder()
       .withId(id)
@@ -1646,13 +1756,16 @@ public class RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(pickupServicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
-      .until(patronNoticesClient::getAll, Matchers.hasSize(2));
+    TimeUnit.SECONDS.sleep(1);
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
-    MatcherAssert.assertThat(sentNotices,
-      hasItems(
-        equalsToEmailPatronNotice(requester.getId(), recallConfirmationTemplateId),
-        equalsToEmailPatronNotice(loanOwner.getId(), recallToLoaneeTemplateId)));
+    assertThat("Recall notice to loan owner shouldn't be sent when due date hasn't been changed",
+      sentNotices, Matchers.empty());
+  }
+
+  private void mockClockManagerToReturnFixedTime(DateTime dateTime) {
+    ClockManager.getClockManager().setClock(
+      Clock.fixed(
+        Instant.ofEpochMilli(dateTime.getMillis()),
+        ZoneOffset.UTC));
   }
 }

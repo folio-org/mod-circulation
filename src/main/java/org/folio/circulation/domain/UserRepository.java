@@ -1,27 +1,35 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.CqlHelper.encodeQuery;
-import static org.folio.circulation.support.CqlHelper.multipleRecordsCqlQuery;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.CqlQuery;
 import org.folio.circulation.support.FetchSingleRecord;
+import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class UserRepository {
+
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final String USERS_RECORD_PROPERTY = "users";
+
   private final CollectionResourceClient usersStorageClient;
 
   public UserRepository(Clients clients) {
@@ -44,6 +52,66 @@ public class UserRepository {
       .fetch(userId);
   }
 
+  public CompletableFuture<Result<Loan>> findUserForLoan(Result<Loan> loanResult) {
+    return loanResult.after(loan -> {
+      String userId = loan.getUserId();
+      if (userId == null) {
+        return completedFuture(loanResult);
+      }
+      return getUser(userId)
+        .thenApply(userResult ->
+          userResult.map(user -> {
+            if (user == null) {
+              log.info("No user found for loan {}", loan.getId());
+            } else {
+              log.info("User with username {} found for loan {}",
+                loan.getUser().getUsername(), loan.getId());
+            }
+            return loan.withUser(user);
+          }));
+    });
+  }
+
+
+  public CompletableFuture<Result<MultipleRecords<Loan>>> findUsersForLoans(
+    MultipleRecords<Loan> multipleLoans) {
+    Collection<Loan> loans = multipleLoans.getRecords();
+
+    final List<String> usersToFetch =
+      loans.stream()
+        .filter(Objects::nonNull)
+        .map(Loan::getUserId)
+        .filter(Objects::nonNull)
+        .distinct()
+        .collect(Collectors.toList());
+
+    if (usersToFetch.isEmpty()) {
+      log.info("No users to query for loans");
+      return completedFuture(succeeded(multipleLoans));
+    }
+
+    final MultipleRecordFetcher<User> fetcher = createUsersFetcher();
+
+    return fetcher.findByIds(usersToFetch)
+      .thenApply(multipleUsersResult -> multipleUsersResult.next(
+        multipleUsers -> {
+          List<Loan> newLoanList = new ArrayList<>();
+          Collection<User> users = multipleUsers.getRecords();
+          for (Loan loan : loans) {
+            Loan newLoan = loan;
+            for (User user : users) {
+              newLoan = newLoan.withUser(user);
+            }
+            newLoanList.add(newLoan);
+          }
+          return succeeded(new MultipleRecords<>(newLoanList, multipleLoans.getTotalRecords()));
+        }));
+  }
+
+  private MultipleRecordFetcher<User> createUsersFetcher() {
+    return new MultipleRecordFetcher<>(usersStorageClient, USERS_RECORD_PROPERTY, User::from);
+  }
+
   //TODO: Replace this with validator
   public CompletableFuture<Result<User>> getUserFailOnNotFound(String userId) {
     return FetchSingleRecord.<User>forRecord("user")
@@ -55,10 +123,9 @@ public class UserRepository {
 
   public CompletableFuture<Result<User>> getProxyUserByBarcode(String barcode) {
     //Not proxying, so no need to get proxy user
-    if(StringUtils.isBlank(barcode)) {
+    if (StringUtils.isBlank(barcode)) {
       return completedFuture(succeeded(null));
-    }
-    else {
+    } else {
       return getUserByBarcode(barcode, "proxyUserBarcode");
     }
   }
@@ -71,16 +138,14 @@ public class UserRepository {
     String barcode,
     String propertyName) {
 
-    final String barcodeQuery = String.format("barcode==%s", barcode);
-
-    return encodeQuery(barcodeQuery)
-      .after(query -> usersStorageClient.getMany(query, 1, 0)
-        .thenApply(response -> MultipleRecords.from(response, User::new, "users")
+    return CqlQuery.exactMatch("barcode", barcode)
+      .after(query -> usersStorageClient.getMany(query, 1))
+      .thenApply(result -> result.next(this::mapResponseToUsers)
         .map(MultipleRecords::getRecords)
         .map(users -> users.stream().findFirst())
         .next(user -> user.map(Result::succeeded).orElseGet(() ->
           failedValidation("Could not find user with matching barcode",
-            propertyName, barcode)))));
+            propertyName, barcode))));
   }
 
   CompletableFuture<Result<MultipleRecords<Request>>> findUsersForRequests(
@@ -98,10 +163,10 @@ public class UserRepository {
       return completedFuture(succeeded(multipleRequests));
     }
 
-    final String query = multipleRecordsCqlQuery(usersToFetch);
+    final MultipleRecordFetcher<User> fetcher
+      = new MultipleRecordFetcher<>(usersStorageClient, "users", User::from);
 
-    return usersStorageClient.getMany(query, requests.size(), 0)
-      .thenApply(this::mapResponseToUsers)
+    return fetcher.findByIds(usersToFetch)
       .thenApply(multipleUsersResult -> multipleUsersResult.next(
         multipleUsers -> of(() ->
           multipleRequests.mapRecords(request ->
@@ -111,11 +176,11 @@ public class UserRepository {
   private ArrayList<String> getUsersFromRequest(Request request) {
     final ArrayList<String> usersToFetch = new ArrayList<>();
 
-    if(request.getUserId() != null) {
+    if (request.getUserId() != null) {
       usersToFetch.add(request.getUserId());
     }
 
-    if(request.getProxyUserId() != null) {
+    if (request.getProxyUserId() != null) {
       usersToFetch.add(request.getProxyUserId());
     }
 
@@ -132,7 +197,6 @@ public class UserRepository {
       .withRequester(userMap.getOrDefault(request.getUserId(), null))
       .withProxy(userMap.getOrDefault(request.getProxyUserId(), null));
   }
-
 
   private Result<MultipleRecords<User>> mapResponseToUsers(Response response) {
     return MultipleRecords.from(response, User::from, "users");

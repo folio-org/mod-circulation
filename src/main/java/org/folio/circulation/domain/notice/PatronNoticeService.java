@@ -15,6 +15,11 @@ public class PatronNoticeService {
 
   private static final Logger log = LoggerFactory.getLogger(PatronNoticeService.class);
 
+  public static PatronNoticeService using(Clients clients) {
+    return new PatronNoticeService(new PatronNoticePolicyRepository(clients), clients);
+  }
+
+
   private PatronNoticePolicyRepository noticePolicyRepository;
   private CollectionResourceClient patronNoticeClient;
 

@@ -1,9 +1,7 @@
 package org.folio.circulation.support;
 
-import static java.lang.String.format;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
-import static org.folio.circulation.support.CqlHelper.encodeQuery;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 
@@ -35,44 +33,52 @@ public class ItemRepository {
   private final CollectionResourceClient itemsClient;
   private final CollectionResourceClient holdingsClient;
   private final CollectionResourceClient instancesClient;
+  private final CollectionResourceClient loanTypesClient;
   private final LocationRepository locationRepository;
   private final MaterialTypeRepository materialTypeRepository;
   private final ServicePointRepository servicePointRepository;
   private final boolean fetchLocation;
   private final boolean fetchMaterialType;
+  private final boolean fetchLoanType;
 
   public ItemRepository(
     Clients clients,
     boolean fetchLocation,
-    boolean fetchMaterialType) {
+    boolean fetchMaterialType,
+    boolean fetchLoanType) {
 
     this(clients.itemsStorage(),
       clients.holdingsStorage(),
       clients.instancesStorage(),
+      clients.loanTypesStorage(),
       new LocationRepository(clients),
       new MaterialTypeRepository(clients),
       new ServicePointRepository(clients),
-      fetchLocation, fetchMaterialType);
+      fetchLocation, fetchMaterialType, fetchLoanType);
   }
 
   private ItemRepository(
     CollectionResourceClient itemsClient,
     CollectionResourceClient holdingsClient,
     CollectionResourceClient instancesClient,
+    CollectionResourceClient loanTypesClient,
     LocationRepository locationRepository,
     MaterialTypeRepository materialTypeRepository,
     ServicePointRepository servicePointRepository,
     boolean fetchLocation,
-    boolean fetchMaterialType) {
+    boolean fetchMaterialType,
+    boolean fetchLoanType) {
 
     this.itemsClient = itemsClient;
     this.holdingsClient = holdingsClient;
     this.instancesClient = instancesClient;
+    this.loanTypesClient = loanTypesClient;
     this.locationRepository = locationRepository;
     this.materialTypeRepository = materialTypeRepository;
     this.servicePointRepository = servicePointRepository;
     this.fetchLocation = fetchLocation;
     this.fetchMaterialType = fetchMaterialType;
+    this.fetchLoanType = fetchLoanType;
   }
 
   public CompletableFuture<Result<Item>> fetchFor(ItemRelatedRecord record) {
@@ -93,6 +99,22 @@ public class ItemRepository {
     return fetchMaterialType
       ? result.combineAfter(materialTypeRepository::getFor, Item::withMaterialType)
       : completedFuture(result);
+  }
+
+  private CompletableFuture<Result<Item>> fetchLoanType(Result<Item> result) {
+    if (!fetchLoanType) {
+      return completedFuture(result);
+    }
+    return result.combineAfter(this::getLoanType, Item::withLoanType);
+  }
+
+  private CompletableFuture<Result<JsonObject>> getLoanType(Item item) {
+    if (item.getItem() == null) {
+      return completedFuture(succeeded(null));
+    }
+    return SingleRecordFetcher.json(loanTypesClient, "loan types",
+      response -> succeeded(null))
+      .fetch(item.determineLoanTypeForItem());
   }
 
   public CompletableFuture<Result<Item>> fetchByBarcode(String barcode) {
@@ -146,11 +168,10 @@ public class ItemRepository {
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
 
-      String instancesQuery = CqlHelper.multipleRecordsCqlQuery(instanceIds);
+      final MultipleRecordFetcher<JsonObject> fetcher
+        = new MultipleRecordFetcher<>(instancesClient, "instances", identity());
 
-      return instancesClient.getMany(instancesQuery, instanceIds.size(), 0)
-        .thenApply(instancesResponse ->
-          MultipleRecords.from(instancesResponse, identity(), "instances"))
+      return fetcher.findByIds(instanceIds)
         .thenApply(r -> r.map(instances -> items.stream()
           .map(item -> item.withInstance(
             findById(item.getInstanceId(), instances.getRecords()).orElse(null)))
@@ -167,11 +188,10 @@ public class ItemRepository {
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
 
-      String holdingsQuery = CqlHelper.multipleRecordsCqlQuery(holdingsIds);
+      final MultipleRecordFetcher<JsonObject> fetcher
+        = new MultipleRecordFetcher<>(holdingsClient, "holdingsRecords", identity());
 
-      return holdingsClient.getMany(holdingsQuery, holdingsIds.size(), 0)
-        .thenApply(holdingsResponse ->
-          MultipleRecords.from(holdingsResponse, identity(), "holdingsRecords"))
+      return fetcher.findByIds(holdingsIds)
         .thenApply(r -> r.map(holdings -> items.stream()
           .map(item -> item.withHoldingsRecord(
             findById(item.getHoldingsRecordId(), holdings.getRecords()).orElse(null)))
@@ -191,10 +211,10 @@ public class ItemRepository {
   private CompletableFuture<Result<Collection<Item>>> fetchItems(
     Collection<String> itemIds) {
 
-    String itemsQuery = CqlHelper.multipleRecordsCqlQuery(itemIds);
+    final MultipleRecordFetcher<Item> fetcher
+      = new MultipleRecordFetcher<>(itemsClient, "items", Item::from);
 
-    return itemsClient.getMany(itemsQuery, itemIds.size(), 0)
-      .thenApply(r -> MultipleRecords.from(r, Item::from, "items"))
+    return fetcher.findByIds(itemIds)
       .thenApply(r -> r.map(MultipleRecords::getRecords));
   }
 
@@ -207,9 +227,9 @@ public class ItemRepository {
   private CompletableFuture<Result<Item>> fetchItemByBarcode(String barcode) {
     log.info("Fetching item with barcode: {}", barcode);
 
-    return encodeQuery(format("barcode==%s", barcode))
-      .after(query -> itemsClient.getMany(query, 1, 0)
-        .thenApply(this::mapMultipleToResult))
+    return CqlQuery.exactMatch("barcode", barcode)
+       .after(query -> itemsClient.getMany(query, 1))
+      .thenApply(result -> result.next(this::mapMultipleToResult))
       .thenApply(r -> r.map(Item::from))
       .exceptionally(e -> failed(new ServerErrorFailure(e)));
   }
@@ -299,6 +319,7 @@ public class ItemRepository {
     return fetchHoldingsRecord(item)
       .thenComposeAsync(this::fetchInstance)
       .thenComposeAsync(this::fetchLocation)
-      .thenComposeAsync(this::fetchMaterialType);
+      .thenComposeAsync(this::fetchMaterialType)
+      .thenComposeAsync(this::fetchLoanType);
   }
 }
