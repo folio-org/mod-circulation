@@ -291,7 +291,13 @@ public class LoanPolicy {
   }
 
   private boolean isAlternateDueDateSchedule(RequestQueue requestQueue) {
-    if(Objects.isNull(requestQueue)) {
+    String key = "alternateCheckoutLoanPeriod";
+    final JsonObject holds = getHolds();
+    String interval = getNestedStringProperty(holds, key, "intervalId");
+    Integer duration = getNestedIntegerProperty(holds, key, "duration");
+    if(Objects.isNull(requestQueue)
+      || Objects.isNull(duration)
+      || Objects.isNull(interval)) {
       return false;
     }
     Optional<Request> potentialRequest = requestQueue.getRequests().stream().skip(1).findFirst();
