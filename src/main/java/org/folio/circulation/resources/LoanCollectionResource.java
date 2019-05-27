@@ -35,8 +35,6 @@ import org.folio.circulation.support.NoContentResult;
 import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.WebContext;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
@@ -168,18 +166,12 @@ public class LoanCollectionResource extends CollectionResource {
     final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
     final UserRepository userRepository = new UserRepository(clients);
-    final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
 
     String id = routingContext.request().getParam("id");
 
     loanRepository.getById(id)
       .thenComposeAsync(servicePointRepository::findServicePointsForLoan)
       .thenComposeAsync(userRepository::findUserForLoan)
-      .thenComposeAsync(result -> loanPolicyRepository.lookupLoanPolicy(
-         new LoanAndRelatedRecords(result.value())).thenApply(loanAndRelatedRecords ->
-             loanAndRelatedRecords.value().getLoanPolicy()
-               .renew(loanAndRelatedRecords.value().getLoan(),
-                 DateTime.now(DateTimeZone.UTC))))
       .thenApply(loanResult -> loanResult.map(loanRepresentation::extendedLoan))
       .thenApply(OkJsonResponseResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));

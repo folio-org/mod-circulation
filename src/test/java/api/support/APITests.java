@@ -1,6 +1,8 @@
 package api.support;
 
 import static api.support.APITestContext.createClient;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -12,9 +14,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
+import org.hamcrest.CustomTypeSafeMatcher;
+import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -355,4 +360,34 @@ public abstract class APITests {
     ResourceClient.forCancellationReasons(client).deleteAllIndividually();
   }
 
+
+  protected Matcher<JsonObject> hasProperty(String key, String value) {
+
+    return new CustomTypeSafeMatcher<JsonObject>(key) {
+
+      @Override protected boolean matchesSafely(JsonObject item) {
+        return item.getValue(key).equals(value);
+      }
+    };
+  }
+
+  protected void hasProperty(String property, JsonObject resource, String type) {
+    assertThat(String.format("%s should have an %s: %s",
+      type, property, resource),
+      resource.containsKey(property), is(true));
+  }
+
+
+  protected void hasProperty(String property, JsonObject resource, String type, Object value) {
+    assertThat(String.format("%s should have an %s: %s",
+      type, property, resource),
+      resource.getMap().get(property), equalTo(value));
+  }
+
+
+  protected void doesNotHaveProperty(String property, JsonObject resource, String type) {
+    assertThat(String.format("%s should NOT have an %s: %s",
+            type, property, resource),
+            resource.getValue(property), is(nullValue()));
+  }
 }

@@ -18,6 +18,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.policy.LoanPolicy;
+import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlQuery;
@@ -73,6 +74,9 @@ public class LoanRepository {
 
     if(newLoanAndRelatedRecords.getLoanPolicy() != null) {
       storageLoan.put("loanPolicyId", newLoanAndRelatedRecords.getLoanPolicy().getId());
+      if (Objects.nonNull(newLoanAndRelatedRecords.getLoanPolicy())) {
+        storageLoan.put(LoanProperties.LOAN_POLICY_NAME, newLoanAndRelatedRecords.getLoanPolicy().getName());
+      }
     }
 
     User user = newLoanAndRelatedRecords.getLoan().getUser();

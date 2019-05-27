@@ -19,6 +19,7 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
@@ -185,7 +186,7 @@ public class LoanPolicy {
   private ValidationError errorForPolicy(String reason) {
     HashMap<String, String> parameters = new HashMap<>();
     parameters.put("loanPolicyId", getId());
-    parameters.put("loanPolicyName", getName());
+    parameters.put(LoanProperties.LOAN_POLICY_NAME, getName());
 
     return new ValidationError(reason, parameters);
   }
@@ -323,7 +324,7 @@ public class LoanPolicy {
     return loansPolicy.getString("profileId");
   }
 
-  private String getName() {
+  public String getName() {
     return representation.getString("name");
   }
 

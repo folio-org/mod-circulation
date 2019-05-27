@@ -1690,27 +1690,9 @@ public class LoanAPITests extends APITests {
       loan.containsKey("itemStatus"), is(false));
   }
 
-  private void hasProperty(String property, JsonObject resource, String type, Object value) {
-    assertThat(String.format("%s should have an %s: %s",
-      type, property, resource),
-      resource.getMap().get(property), equalTo(value));
-  }
-
   private void hasNoBorrowerProperties(JsonObject loanJson) {
     doesNotHaveProperty("userId", loanJson, "loan");
     doesNotHaveProperty(LoanProperties.BORROWER, loanJson, "loan");
-  }
-
-  private void doesNotHaveProperty(String property, JsonObject resource, String type) {
-    assertThat(String.format("%s should NOT have an %s: %s",
-            type, property, resource),
-            resource.getValue(property), is(nullValue()));
-  }
-
-  private void hasProperty(String property, JsonObject resource, String type) {
-    assertThat(String.format("%s should have an %s: %s",
-      type, property, resource),
-      resource.containsKey(property), is(true));
   }
 
   private void loanHasCheckinServicePointProperties(JsonObject loanJson) {

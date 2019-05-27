@@ -35,6 +35,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
@@ -609,6 +610,42 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
+  public void canRenewLoanWithAnotherLoanPolicyName()
+          throws InterruptedException,
+          MalformedURLException,
+          TimeoutException,
+          ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    final String policyName = "Limited Renewals Policy";
+    LoanPolicyBuilder limitedRenewalsPolicy = new LoanPolicyBuilder().withName(policyName)
+      .rolling(Period.days(2))
+      .renewFromCurrentDueDate()
+      .limitedRenewals(3);
+
+    final IndividualResource loanPolicyResponse = loanPoliciesFixture.create(limitedRenewalsPolicy);
+    UUID limitedRenewalsPolicyId = loanPolicyResponse.getId();
+
+    IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+        new DateTime(2019, 4, 21, 11, 21, 43, DateTimeZone.UTC));
+
+    assertThat(loan.getJson(), hasProperty(LoanProperties.LOAN_POLICY_NAME, "Can Circulate Rolling"));
+
+    useLoanPolicyAsFallback(
+            limitedRenewalsPolicyId,
+            requestPoliciesFixture.allowAllRequestPolicy().getId(),
+            noticePoliciesFixture.activeNotice().getId()
+    );
+
+    loan = renew(smallAngryPlanet, jessica);
+
+    assertThat(loan.getJson(), hasProperty(LoanProperties.LOAN_POLICY_NAME, policyName));
+
+  }
+
+  @Test
   public void cannotRenewWhenRenewalLimitReached()
     throws InterruptedException,
     MalformedURLException,
@@ -1158,6 +1195,6 @@ abstract class RenewalAPITests extends APITests {
   }
 
   private Matcher<ValidationError> hasLoanPolicyNameParameter(String policyName) {
-    return hasParameter("loanPolicyName", policyName);
+    return hasParameter(LoanProperties.LOAN_POLICY_NAME, policyName);
   }
 }
