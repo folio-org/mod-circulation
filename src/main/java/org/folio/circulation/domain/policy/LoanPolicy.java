@@ -39,6 +39,12 @@ public class LoanPolicy {
   private static final String LOANS_POLICY_KEY = "loansPolicy";
   private static final String PERIOD_KEY = "period";
   private static final String RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE = "renewal would not change the due date";
+  private static final String INTERVAL_ID = "intervalId";
+  private static final String DURATION = "duration";
+
+  private static final String KEY_ERROR_TEXT = "the \"%s\" in the holds is not recognized";
+  private static final String INTERVAL_ERROR_TEXT = "the interval \"%s\" in \"%s\" is not recognized";
+  private static final String DURATION_ERROR_TEXT = "the duration \"%s\" in \"%s\" is invalid";
 
   private final JsonObject representation;
   private final FixedDueDateSchedules fixedDueDateSchedules;
@@ -285,7 +291,7 @@ public class LoanPolicy {
   
   private FixedDueDateSchedules buildAlternateDueDateSchedules(DateTime systemDate, JsonObject holds) {
     List<JsonObject> schedules =
-      new ArrayList<JsonObject>(fixedDueDateSchedules.getSchedules());
+      new ArrayList<>(fixedDueDateSchedules.getSchedules());
     schedules.add(0, buildSchedule(systemDate, holds));
     return new FixedDueDateSchedules("alternateDueDateSchedule", schedules);
   }
@@ -293,8 +299,8 @@ public class LoanPolicy {
   private boolean isAlternateDueDateSchedule(RequestQueue requestQueue) {
     String key = "alternateCheckoutLoanPeriod";
     final JsonObject holds = getHolds();
-    String interval = getNestedStringProperty(holds, key, "intervalId");
-    Integer duration = getNestedIntegerProperty(holds, key, "duration");
+    String interval = getNestedStringProperty(holds, key, INTERVAL_ID);
+    Integer duration = getNestedIntegerProperty(holds, key, DURATION);
     if(Objects.isNull(requestQueue)
       || Objects.isNull(duration)
       || Objects.isNull(interval)) {
@@ -318,20 +324,20 @@ public class LoanPolicy {
     Period duration = getPeriod(request, key);
     DateTime dueDate = duration.addTo(
         systemDate,
-        () -> errorForPolicy(format("the \"%s\" in the holds is not recognized", key)),
-        interval -> errorForPolicy(format("the interval \"%s\" in \"%s\" is not recognized", interval, key)),
-        dur -> errorForPolicy(format("the duration \"%s\" in \"%s\" is invalid", dur, key)))
+        () -> errorForPolicy(format(KEY_ERROR_TEXT, key)),
+        interval -> errorForPolicy(format(INTERVAL_ERROR_TEXT, interval, key)),
+        dur -> errorForPolicy(format(DURATION_ERROR_TEXT, dur, key)))
           .value();
 
-    Map<String, Object> scheduleProperties = new HashMap<String, Object>();
+    Map<String, Object> scheduleProperties = new HashMap<>();
     // Ensure the schedule contains the system date
     scheduleProperties.put("from", systemDate.minusDays(1).toString());
     scheduleProperties.put("due", dueDate.toString());
     scheduleProperties.put("to", duration.addTo(
         dueDate,
-        () -> errorForPolicy(format("the \"%s\" in the holds is not recognized", key)),
-        interval -> errorForPolicy(format("the interval \"%s\" in \"%s\" is not recognized", interval, key)),
-        dur -> errorForPolicy(format("the duration \"%s\" in \"%s\" is invalid", dur, key)))
+        () -> errorForPolicy(format(KEY_ERROR_TEXT, key)),
+        interval -> errorForPolicy(format(INTERVAL_ERROR_TEXT, interval, key)),
+        dur -> errorForPolicy(format(DURATION_ERROR_TEXT, dur, key)))
         .value().toString());
     return new JsonObject(scheduleProperties);
     
@@ -379,8 +385,8 @@ public class LoanPolicy {
   }
 
   private Period getPeriod(JsonObject policy, String periodKey) {
-    String interval = getNestedStringProperty(policy, periodKey, "intervalId");
-    Integer duration = getNestedIntegerProperty(policy, periodKey, "duration");
+    String interval = getNestedStringProperty(policy, periodKey, INTERVAL_ID);
+    Integer duration = getNestedIntegerProperty(policy, periodKey, DURATION);
     return Period.from(duration, interval);
   }
 
@@ -478,7 +484,7 @@ public class LoanPolicy {
       return LoanPolicyPeriod.INCORRECT;
     }
 
-    String intervalId = period.getString("intervalId");
+    String intervalId = period.getString(INTERVAL_ID);
     return LoanPolicyPeriod.getProfileByName(intervalId);
   }
 
@@ -488,7 +494,7 @@ public class LoanPolicy {
     if (Objects.isNull(period)) {
       return 0;
     }
-    return period.getInteger("duration");
+    return period.getInteger(DURATION);
   }
 
   public String getId() {
@@ -585,8 +591,8 @@ public class LoanPolicy {
     if (representation.containsKey(key)) {
       result = getPeriod(representation, key).addTo(initialDateTime,
           () -> errorForPolicy(format("the \"%s\" in the loan policy is not recognized", key)),
-          interval -> errorForPolicy(format("the interval \"%s\" in \"%s\" is not recognized", interval, key)),
-          duration -> errorForPolicy(format("the duration \"%s\" in \"%s\" is invalid", duration, key)));
+          interval -> errorForPolicy(format(INTERVAL_ERROR_TEXT, interval, key)),
+          duration -> errorForPolicy(format(DURATION_ERROR_TEXT, duration, key)));
     } else {
       result = succeeded(defaultDateTime);
     }
