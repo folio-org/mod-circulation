@@ -291,6 +291,7 @@
     },
     "pickupServicePoint": {
       "description": "The full object of the Service Point record from pickupServicePointId",
+      "additionalProperties": false,
       "properties": {
         "name": {
           "description": "Unique name for the service point",
