@@ -106,13 +106,14 @@ public class RequestCollectionResource extends CollectionResource {
 
       String pickupServicePointId = instanceRequestRepresentation.getString("pickupServicePointId");
 
-      Collection<Item> sortedAvaialbleItems = getSortedAvailableItems(items.get().value());
-      final CompletableFuture<Collection<Item>> itemsWithMatchingServicePointId = InstanceRequestsHelper.findItemsWithMatchingServicePointId(pickupServicePointId, sortedAvaialbleItems, locationRepository);
+      Collection<Item> sortedAvailableItems = getSortedAvailableItems(items.get().value());
+      final CompletableFuture<Collection<Item>> itemsWithMatchingServicePointId =
+            InstanceRequestsHelper.findItemsWithMatchingServicePointId(pickupServicePointId, sortedAvailableItems, locationRepository);
 
       if (itemsWithMatchingServicePointId != null
           && !itemsWithMatchingServicePointId.get().isEmpty()) {
         //compose request object
-        Collection<JsonObject> itemRequestRepresentations = instanceToItemRequestObjects(instanceRequestRepresentation, sortedAvaialbleItems);
+        Collection<JsonObject> itemRequestRepresentations = instanceToItemRequestObjects(instanceRequestRepresentation, sortedAvailableItems);
 
         final UserRepository userRepository = new UserRepository(clients);
         final LoanRepository loanRepository = new LoanRepository(clients);

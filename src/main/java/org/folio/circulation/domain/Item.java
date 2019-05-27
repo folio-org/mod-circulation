@@ -20,7 +20,6 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.JsonStringArrayHelper.toStream;
 
 import java.util.List;
-import java.io.Serializable;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;

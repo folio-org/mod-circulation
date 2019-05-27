@@ -112,8 +112,10 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
 
   private JsonArray toJsonHoldingItems(List<Item> holdingsItems) {
     JsonArray holdingsItemJsonArr = new JsonArray();
-    for( Item item : holdingsItems) {
-      holdingsItemJsonArr.add(item.getItem());
+    if (holdingsItems != null && !holdingsItems.isEmpty()) {
+      for (Item item : holdingsItems) {
+        holdingsItemJsonArr.add(item.getItem());
+      }
     }
     return holdingsItemJsonArr;
   }
