@@ -95,6 +95,7 @@
           "description": "The effective location of the item",
           "type": "object",
           "readonly": true,
+          "additionalProperties": false,
           "properties": {
             "name": {
               "type": "string",
