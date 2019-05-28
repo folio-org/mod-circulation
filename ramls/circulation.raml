@@ -561,6 +561,22 @@ resourceTypes:
         responses:
           501:
             description: "Not implemented yet"
+      /move:
+        displayName: Move a Request from one Item to another
+        put:
+          description: Move Request to specified Item
+          body:
+            application/json:
+              type: !include move-request-request.json
+              example: !include examples/move-request-request.json
+          responses:
+            204:
+              description: "Request has been moved"
+            500:
+              description: "Internal server error"
+              body:
+                text/plain:
+                  example: "Internal server error"
     /queue:
       /{itemId}:
         type:
