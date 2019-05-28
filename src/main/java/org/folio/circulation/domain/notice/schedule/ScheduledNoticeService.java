@@ -27,19 +27,23 @@ public class ScheduledNoticeService {
     this.noticePolicyRepository = noticePolicyRepository;
   }
 
-  public Result<LoanAndRelatedRecords> scheduleLoanNoticesOnCheckOut(
+  public Result<LoanAndRelatedRecords> scheduleNoticesForLoanDueDate(
     LoanAndRelatedRecords relatedRecords) {
-    noticePolicyRepository.lookupPolicy(relatedRecords.getLoan())
-      .thenAccept(r -> r.next(policy -> scheduleDueDateNoticesBasedOnPolicy(relatedRecords, policy)));
+    scheduleNoticesForLoanDueDate(relatedRecords.getLoan());
     return succeeded(relatedRecords);
   }
 
+  private void scheduleNoticesForLoanDueDate(Loan loan) {
+    noticePolicyRepository.lookupPolicy(loan)
+      .thenAccept(r -> r.next(policy -> scheduleDueDateNoticesBasedOnPolicy(loan, policy)));
+  }
+
   private Result<PatronNoticePolicy> scheduleDueDateNoticesBasedOnPolicy(
-    LoanAndRelatedRecords relatedRecords, PatronNoticePolicy noticePolicy) {
+    Loan loan, PatronNoticePolicy noticePolicy) {
 
     List<ScheduledNotice> scheduledNotices = noticePolicy.getNoticeConfigurations().stream()
       .filter(c -> c.getNoticeEventType() == NoticeEventType.DUE_DATE)
-      .map(c -> createDueDateScheduledNotice(c, relatedRecords.getLoan()))
+      .map(c -> createDueDateScheduledNotice(c, loan))
       .collect(Collectors.toList());
 
     scheduledNoticeRepository.createBatch(scheduledNotices);

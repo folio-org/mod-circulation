@@ -32,7 +32,7 @@ public class Clients {
   private final CollectionResourceClient patronNoticePolicesStorageClient;
   private final CollectionResourceClient patronNoticeClient;
   private final CollectionResourceClient configurationStorageClient;
-  private final CollectionResourceClient scheduledNoticesBulkClient;
+  private final CollectionResourceClient scheduledNoticeStorageClient;
 
   public static Clients create(WebContext context, HttpClient httpClient) {
     return new Clients(context.createHttpClient(httpClient), context);
@@ -64,7 +64,7 @@ public class Clients {
       patronNoticePolicesStorageClient = createPatronNoticePolicesStorageClient(client, context);
       patronNoticeClient = createPatronNoticeClient(client, context);
       configurationStorageClient = createConfigurationStorageClient(client, context);
-      scheduledNoticesBulkClient = createScheduledNoticesBulkClient(client, context);
+      scheduledNoticeStorageClient = createScheduledNoticeStorageClient(client, context);
     }
     catch(MalformedURLException e) {
       throw new InvalidOkapiLocationException(context.getOkapiLocation(), e);
@@ -165,8 +165,8 @@ public class Clients {
     return patronNoticeClient;
   }
 
-  public CollectionResourceClient scheduledNoticesBulkClient() {
-    return scheduledNoticesBulkClient;
+  public CollectionResourceClient scheduledNoticeStorageClient() {
+    return scheduledNoticeStorageClient;
   }
 
   private static CollectionResourceClient getCollectionResourceClient(
@@ -373,10 +373,10 @@ public class Clients {
     return getCollectionResourceClient(client, context, "/configurations/entries");
   }
 
-  private CollectionResourceClient createScheduledNoticesBulkClient(
+  private CollectionResourceClient createScheduledNoticeStorageClient(
     OkapiHttpClient client,
     WebContext context)
     throws MalformedURLException {
-    return getCollectionResourceClient(client, context, "/scheduled-notice-storage/bulk-save");
+    return getCollectionResourceClient(client, context, "/scheduled-notice-storage/scheduled-notices");
   }
 }

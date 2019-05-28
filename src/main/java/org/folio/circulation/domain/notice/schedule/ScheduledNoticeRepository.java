@@ -1,5 +1,6 @@
 package org.folio.circulation.domain.notice.schedule;
 
+import static org.folio.circulation.domain.notice.schedule.JsonScheduledNoticeMapper.mapFromJson;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 
@@ -14,7 +15,6 @@ import org.folio.circulation.support.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class ScheduledNoticeRepository {
@@ -23,37 +23,40 @@ public class ScheduledNoticeRepository {
 
   public static ScheduledNoticeRepository using(Clients clients) {
     return new ScheduledNoticeRepository(
-      clients.scheduledNoticesBulkClient());
+      clients.scheduledNoticeStorageClient());
   }
 
-  private final CollectionResourceClient scheduledNoticesBulkClient;
+  private final CollectionResourceClient scheduledNoticeStorageClient;
 
 
   public ScheduledNoticeRepository(
-    CollectionResourceClient scheduledNoticesBulkClient) {
+    CollectionResourceClient scheduledNoticeStorageClient) {
 
-    this.scheduledNoticesBulkClient = scheduledNoticesBulkClient;
+    this.scheduledNoticeStorageClient = scheduledNoticeStorageClient;
   }
 
-  public CompletableFuture<Result<List<ScheduledNotice>>> createBatch(
-    List<ScheduledNotice> scheduledNotices) {
+  private static Result<List<ScheduledNotice>> apply(Result<List<ScheduledNotice>> listResult, Result<List<ScheduledNotice>> listResult2) {
+    return listResult;
+  }
 
-    List<JsonObject> noticesList = scheduledNotices.stream()
-      .map(JsonScheduledNoticeMapper::mapToJson)
-      .collect(Collectors.toList());
-    JsonObject representation = new JsonObject()
-      .put("scheduledNotices", new JsonArray(noticesList));
-
-    return scheduledNoticesBulkClient.post(representation).thenApply(response -> {
+  public CompletableFuture<Result<ScheduledNotice>> create(ScheduledNotice scheduledNotice) {
+    JsonObject representation = JsonScheduledNoticeMapper.mapToJson(scheduledNotice);
+    return scheduledNoticeStorageClient.post(representation).thenApply(response -> {
       if (response.getStatusCode() == 201) {
-        return succeeded(scheduledNotices);
+        return succeeded(mapFromJson(response.getJson()));
       } else {
-        log.error("Failed to save scheduled notices. Status: {} Body: {}",
-          response.getStatusCode(),
-          response.getBody());
         return failed(new ForwardOnFailure(response));
       }
     });
   }
 
+  public CompletableFuture<Result<List<ScheduledNotice>>> createBatch(
+    List<ScheduledNotice> scheduledNotices) {
+
+    List<CompletableFuture<Result<ScheduledNotice>>> futures =
+      scheduledNotices.stream()
+        .map(this::create)
+        .collect(Collectors.toList());
+    return Result.allOf(futures);
+  }
 }

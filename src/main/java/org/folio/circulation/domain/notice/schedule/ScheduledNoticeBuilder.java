@@ -1,7 +1,5 @@
 package org.folio.circulation.domain.notice.schedule;
 
-import java.util.UUID;
-
 public class ScheduledNoticeBuilder {
 
   private String id;
@@ -9,10 +7,6 @@ public class ScheduledNoticeBuilder {
   private String requestId;
   private long nextRunTime;
   private ScheduledNoticeConfig noticeConfig;
-
-  public ScheduledNoticeBuilder() {
-    this.id = UUID.randomUUID().toString();
-  }
 
   public ScheduledNoticeBuilder setId(String id) {
     this.id = id;

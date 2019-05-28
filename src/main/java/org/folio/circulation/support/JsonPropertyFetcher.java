@@ -149,6 +149,16 @@ public class JsonPropertyFetcher {
     }
   }
 
+  public static Long getLongProperty(
+    JsonObject representation, String propertyName) {
+    if (representation != null) {
+      return representation.getLong(propertyName);
+    } else {
+      return null;
+
+    }
+  }
+
   public static void copyProperty(
     JsonObject from,
     JsonObject to,

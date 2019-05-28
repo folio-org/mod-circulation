@@ -11,9 +11,6 @@ public class ScheduledNoticeConfigBuilder {
   private NoticeFormat format;
   private boolean sendInRealTime;
 
-  public ScheduledNoticeConfigBuilder() {
-  }
-
   public ScheduledNoticeConfigBuilder setTiming(NoticeTiming timing) {
     this.timing = timing;
     return this;
