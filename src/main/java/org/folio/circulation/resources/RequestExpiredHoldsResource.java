@@ -51,7 +51,6 @@ public class RequestExpiredHoldsResource extends Resource {
   private static final String SERVICE_POINT_ID_PARAM = "servicePointId";
   private static final String ITEMS_KEY = "items";
   private static final String ITEM_ID_KEY = "itemId";
-  private static final String REQUEST_KEY = "request";
   private static final String REQUESTS_KEY = "requests";
   private static final String STATUS_KEY = "status";
   private static final String STATUS_NAME_KEY = "status.name";
@@ -259,7 +258,7 @@ public class RequestExpiredHoldsResource extends Resource {
         .map(ExpiredHoldsRequest::asJson)
         .collect(Collector.of(JsonArray::new, JsonArray::add, JsonArray::add));
       return new JsonObject()
-        .put(REQUEST_KEY, jsonArray)
+        .put(REQUESTS_KEY, jsonArray)
         .put(TOTAL_RECORDS_KEY, r.size());
     });
   }
