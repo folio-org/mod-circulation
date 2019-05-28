@@ -15,6 +15,7 @@ import org.folio.circulation.resources.RenewByBarcodeResource;
 import org.folio.circulation.resources.RenewByIdResource;
 import org.folio.circulation.resources.RequestCirculationRulesEngineResource;
 import org.folio.circulation.resources.RequestCollectionResource;
+import org.folio.circulation.resources.RequestExpiredHoldsResource;
 import org.folio.circulation.resources.RequestQueueResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,6 +57,8 @@ public class CirculationVerticle extends AbstractVerticle {
     new RequestQueueResource(client).register(router);
     new OverrideRenewalByBarcodeResource(client).register(router);
 
+    new RequestExpiredHoldsResource("/circulation/requests-report/expired-holds/:servicePointId", client)
+      .register(router);
     new CirculationRulesResource("/circulation/rules", client)
       .register(router);
     new LoanCirculationRulesEngineResource(

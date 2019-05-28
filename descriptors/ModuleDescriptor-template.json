@@ -281,6 +281,25 @@
         },
         {
           "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/requests-report/expired-holds/{id}",
+          "permissionsRequired": [
+            "circulation.requests.report.get"
+          ],
+          "modulePermissions": [
+            "inventory-storage.items.item.get",
+            "inventory-storage.items.collection.get",
+            "inventory-storage.service-points.collection.get",
+            "inventory-storage.service-points.item.get",
+            "circulation-storage.requests.item.get",
+            "circulation-storage.requests.collection.get",
+            "users.collection.get",
+            "users.item.get"
+          ]
+        },
+        {
+          "methods": [
             "POST"
           ],
           "pathPattern": "/circulation/loans",
@@ -900,6 +919,11 @@
       "description": "get request queue for an item"
     },
     {
+      "permissionName": "circulation.requests.report.get",
+      "displayName": "circulation - request hold expiration report",
+      "description": "get first pass hold expiration report"
+    },
+    {
       "permissionName": "circulation.all",
       "displayName": "circulation - all permissions",
       "description": "Entire set of permissions needed to use the circulation",
@@ -930,7 +954,8 @@
         "circulation.requests.item.put",
         "circulation.requests.item.delete",
         "circulation.requests.collection.delete",
-        "circulation.requests.queue.collection.get"
+        "circulation.requests.queue.collection.get",
+        "circulation.requests.report.get"
       ]
     }
   ],
