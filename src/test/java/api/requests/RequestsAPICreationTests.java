@@ -200,7 +200,6 @@ public class RequestsAPICreationTests extends APITests {
     requestBody.put("requestDate", requestDate.toString(ISODateTimeFormat.dateTime()));
     requestBody.put("requesterId", requesterId.toString());
     requestBody.put("pickupServicePointId", pickupServicePointId.toString());
-    requestBody.put("fulfilmentPreference", "Hold Shelf");
     requestBody.put("requestExpirationDate",
         requestExpirationDate.toString(ISODateTimeFormat.dateTime()));
 

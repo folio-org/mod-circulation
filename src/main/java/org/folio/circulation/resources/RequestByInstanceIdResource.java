@@ -4,9 +4,11 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.RandomStringUtils;
+import org.folio.circulation.domain.RequestFulfilmentPreference;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.representations.RequestByInstanceIdRequest;
 import org.folio.circulation.support.CreatedJsonResponseResult;
+import org.folio.circulation.support.JsonPropertyWriter;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.joda.time.format.ISODateTimeFormat;
@@ -73,15 +75,10 @@ public class RequestByInstanceIdResource extends Resource {
 
         responseBody.put("requester", requester);
 
-        responseBody.put("fulfilmentPreference", request.getFulfilmentPreference().getValue());
-        if (request.getHoldShelfExpirationDate() != null) {
-          responseBody.put("holdShelfExpirationDate",
-              request.getHoldShelfExpirationDate().toString(ISODateTimeFormat.dateTime()));
-        }
-        if (request.getRequestExpirationDate() != null) {
-          responseBody.put("requestExpirationDate",
-              request.getRequestExpirationDate().toString(ISODateTimeFormat.dateTime()));
-        }
+        responseBody.put("fulfilmentPreference", RequestFulfilmentPreference.HOLD_SHELF.getValue());
+
+        JsonPropertyWriter.write(responseBody, "requestExpirationDate",
+            request.getRequestExpirationDate());
         responseBody.put("pickupServicePointId", request.getPickupServicePointId().toString());
         return responseBody;
       }))
