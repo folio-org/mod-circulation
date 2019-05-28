@@ -873,4 +873,77 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
   }
+
+  @Test
+  public void newTest()
+    throws MalformedURLException,
+    InterruptedException,
+    TimeoutException,
+    ExecutionException {
+
+    UUID checkOutTemplateId = UUID.randomUUID();
+    JsonObject checkOutNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(checkOutTemplateId)
+      .withCheckOutEvent()
+      .create();
+    JsonObject checkInNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withCheckInEvent()
+      .create();
+    JsonObject beforeDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withDueDateEvent()
+      .withBeforeTiming(Period.days(2))
+      .recurring(Period.hours(4))
+      .create();
+    JsonObject uponAtDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withDueDateEvent()
+      .withUponAtTiming()
+      .sendInRealTime(false)
+      .create();
+    JsonObject afterDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withDueDateEvent()
+      .withAfterTiming(Period.days(3))
+      .recurring(Period.hours(4))
+      .create();
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with checkout notice")
+      .withLoanNotices(Arrays.asList(checkOutNoticeConfiguration, checkInNoticeConfiguration,
+        beforeDueDateNoticeConfiguration, uponAtDueDateNoticeConfiguration, afterDueDateNoticeConfiguration));
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId());
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+
+    final DateTime loanDate =
+      new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
+
+    final IndividualResource loan = loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .on(loanDate)
+        .at(UUID.randomUUID()));
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronNoticesClient::getAll, Matchers.hasSize(1));
+    List<JsonObject> sentNotices = patronNoticesClient.getAll();
+
+    Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
+    noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(steve));
+    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(smallAngryPlanet));
+    noticeContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(loan, 0));
+    noticeContextMatchers.putAll(NoticeMatchers.getLoanPolicyContextMatchers(
+      loanPoliciesFixture.canCirculateRolling(), 0));
+    MatcherAssert.assertThat(sentNotices,
+      hasItems(
+        hasEmailNoticeProperties(steve.getId(), checkOutTemplateId, noticeContextMatchers)));
+
+  }
 }

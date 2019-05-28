@@ -11,6 +11,7 @@ public class NoticeConfigurationBuilder {
   private Period timingPeriod;
   private boolean recurring;
   private Period recurringPeriod;
+  private boolean sendInRealTime;
 
   public NoticeConfigurationBuilder setTemplateId(String templateId) {
     this.templateId = templateId;
@@ -47,9 +48,14 @@ public class NoticeConfigurationBuilder {
     return this;
   }
 
+  public NoticeConfigurationBuilder setSendInRealTime(boolean sendInRealTime) {
+    this.sendInRealTime = sendInRealTime;
+    return this;
+  }
+
   public NoticeConfiguration build() {
     return new NoticeConfiguration(
       templateId, noticeFormat, noticeEventType,
-      timing, timingPeriod, recurring, recurringPeriod);
+      timing, timingPeriod, recurring, recurringPeriod, sendInRealTime);
   }
 }

@@ -1,5 +1,6 @@
 package org.folio.circulation.domain.notice;
 
+import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedObjectProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.Result.failed;
@@ -31,6 +32,7 @@ public class PatronNoticePolicyMapper implements Function<JsonObject, Result<Pat
   private static final String SEND_BY = "sendBy";
   private static final String FREQUENCY = "frequency";
   private static final String SEND_EVERY = "sendEvery";
+  private static final String REAL_TIME = "realTime";
 
   private static final String DURATION = "duration";
   private static final String INTERVAL_ID = "intervalId";
@@ -89,6 +91,7 @@ public class PatronNoticePolicyMapper implements Function<JsonObject, Result<Pat
       builder.setRecurringPeriod(
         getNestedPeriodProperty(representation, SEND_OPTIONS, SEND_EVERY));
     }
+    builder.setSendInRealTime(getBooleanProperty(representation, REAL_TIME));
 
     return builder.build();
   }

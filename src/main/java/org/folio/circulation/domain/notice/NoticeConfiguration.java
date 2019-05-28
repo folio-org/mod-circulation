@@ -18,10 +18,12 @@ public class NoticeConfiguration {
 
   private Period recurringPeriod;
 
+  private boolean sendInRealTime;
+
   public NoticeConfiguration(
     String templateId, NoticeFormat noticeFormat, NoticeEventType noticeEventType,
     NoticeTiming timing, Period timingPeriod,
-    boolean recurring, Period recurringPeriod) {
+    boolean recurring, Period recurringPeriod, boolean sendInRealTime) {
 
     this.templateId = templateId;
     this.noticeFormat = noticeFormat;
@@ -30,6 +32,7 @@ public class NoticeConfiguration {
     this.timingPeriod = timingPeriod;
     this.recurring = recurring;
     this.recurringPeriod = recurringPeriod;
+    this.sendInRealTime = sendInRealTime;
   }
 
   public String getTemplateId() {
@@ -60,4 +63,7 @@ public class NoticeConfiguration {
     return recurringPeriod;
   }
 
+  public boolean sendInRealTime() {
+    return sendInRealTime;
+  }
 }

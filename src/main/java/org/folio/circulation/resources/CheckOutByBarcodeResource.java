@@ -28,16 +28,18 @@ import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
+import org.folio.circulation.domain.notice.schedule.ScheduledNoticeRepository;
+import org.folio.circulation.domain.notice.schedule.ScheduledNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.policy.PatronNoticePolicyRepository;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
-import org.folio.circulation.domain.validation.RequestedByAnotherPatronValidator;
 import org.folio.circulation.domain.validation.ExistingOpenLoanValidator;
 import org.folio.circulation.domain.validation.InactiveUserValidator;
 import org.folio.circulation.domain.validation.ItemMissingValidator;
 import org.folio.circulation.domain.validation.ItemNotFoundValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
+import org.folio.circulation.domain.validation.RequestedByAnotherPatronValidator;
 import org.folio.circulation.domain.validation.ServicePointOfCheckoutPresentValidator;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CreatedJsonResponseResult;
@@ -101,6 +103,9 @@ public class CheckOutByBarcodeResource extends Resource {
     final PatronNoticePolicyRepository patronNoticePolicyRepository = new PatronNoticePolicyRepository(clients);
     final PatronNoticeService patronNoticeService = new PatronNoticeService(patronNoticePolicyRepository, clients);
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
+    final ScheduledNoticeRepository scheduledNoticeRepository = ScheduledNoticeRepository.using(clients);
+    final ScheduledNoticeService scheduledNoticeService =
+      new ScheduledNoticeService(scheduledNoticeRepository, patronNoticePolicyRepository);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> singleValidationError(
@@ -156,6 +161,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
       .thenComposeAsync(r -> r.after(loanRepository::createLoan))
       .thenApply(r -> r.next(records -> sendCheckOutPatronNotice(records, patronNoticeService)))
+      .thenApply(r -> r.next(scheduledNoticeService::scheduleLoanNoticesOnCheckOut))
       .thenApply(r -> r.map(LoanAndRelatedRecords::getLoan))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(this::createdLoanFrom)
