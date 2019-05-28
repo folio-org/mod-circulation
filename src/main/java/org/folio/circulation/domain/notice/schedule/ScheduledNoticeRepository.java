@@ -12,14 +12,10 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.Result;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.vertx.core.json.JsonObject;
 
 public class ScheduledNoticeRepository {
-
-  private static final Logger log = LoggerFactory.getLogger(ScheduledNoticeRepository.class);
 
   public static ScheduledNoticeRepository using(Clients clients) {
     return new ScheduledNoticeRepository(
@@ -33,10 +29,6 @@ public class ScheduledNoticeRepository {
     CollectionResourceClient scheduledNoticeStorageClient) {
 
     this.scheduledNoticeStorageClient = scheduledNoticeStorageClient;
-  }
-
-  private static Result<List<ScheduledNotice>> apply(Result<List<ScheduledNotice>> listResult, Result<List<ScheduledNotice>> listResult2) {
-    return listResult;
   }
 
   public CompletableFuture<Result<ScheduledNotice>> create(ScheduledNotice scheduledNotice) {
