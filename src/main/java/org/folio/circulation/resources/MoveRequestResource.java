@@ -16,7 +16,7 @@ public class MoveRequestResource extends Resource {
   @Override
   public void register(Router router) {
     RouteRegistration routeRegistration = new RouteRegistration(
-        "/circulation/requests/:requestid/move", router);
+        "/circulation/requests/:id/move", router);
 
     routeRegistration.create(this::moveRequest);
   }

@@ -657,6 +657,16 @@
         },
         {
           "methods": [
+            "PUT"
+          ],
+          "pathPattern": "circulation/requests/{id}/move",
+          "permissionsRequired": [
+            "circulation.requests.collection.get",
+            "circulation.requests.collection.put"
+          ]
+        },
+        {
+          "methods": [
             "GET"
           ],
           "pathPattern": "/circulation/requests/queue/{id}",
