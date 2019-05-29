@@ -198,7 +198,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
       .withAlternateCheckoutLoanPeriod(alternateCheckoutLoanPeriod)
       .create())
       .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
-        .addSchedule(FixedDueDateSchedule.wholeYear(2018))
+        .addSchedule(FixedDueDateSchedule.wholeYear(systemTime.getYear()))
         .create());
 
     Item item = Item.from(
