@@ -1,9 +1,9 @@
 package org.folio.circulation.domain.policy;
 
 import static api.support.matchers.FailureMatcher.hasValidationFailure;
-import static org.hamcrest.CoreMatchers.is;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.number.IsCloseTo.closeTo;
 import static org.junit.Assert.assertThat;
 
@@ -165,7 +165,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
       .withAlternateCheckoutLoanPeriod(alternateCheckoutLoanPeriod)
       .create())
       .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
-        .addSchedule(FixedDueDateSchedule.wholeYear(2018))
+        .addSchedule(FixedDueDateSchedule.wholeYear(systemTime.getYear()))
         .create());
 
     Item item = Item.from(

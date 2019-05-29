@@ -214,6 +214,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     Request requestOne = Request.from(new RequestBuilder()
       .withId(UUID.randomUUID())
+      .withItemId(UUID.fromString(loan.getItemId()))
       .withPosition(1)
       .create());
 
@@ -237,7 +238,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
           .value();
     Long result = initialDueDateResult.value().getMillis();
     Long expected = expectedDueDate.getMillis();
-    assertThat(result.doubleValue(), closeTo(expected.doubleValue(), 10000));
+    assertThat(result.doubleValue(), closeTo(expected.doubleValue(), 60000));
   }
 
   private ValidationError errorForLoanPeriod(String reason) {
