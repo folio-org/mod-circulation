@@ -6,10 +6,13 @@ import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.CqlQuery;
 import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,5 +47,16 @@ public class ScheduledNoticeRepository {
         return failed(new ForwardOnFailure(response));
       }
     });
+  }
+
+  public CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findScheduledNoticesWithNextRunTimeLessThanNow() {
+
+    return CqlQuery.lessThan("nextRunTime", System.currentTimeMillis())
+      .after(query -> scheduledNoticeStorageClient.getMany(query, 1000))
+      .thenApply(r -> r.next(this::mapResponseToScheduledNotices));
+  }
+
+  private Result<MultipleRecords<ScheduledNotice>> mapResponseToScheduledNotices(Response response) {
+    return MultipleRecords.from(response, ScheduledNotice::from, "scheduledNotices");
   }
 }
