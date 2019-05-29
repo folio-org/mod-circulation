@@ -95,6 +95,7 @@
           "description": "The effective location of the item",
           "type": "object",
           "readonly": true,
+          "additionalProperties": false,
           "properties": {
             "name": {
               "type": "string",
@@ -108,6 +109,7 @@
           "type": "array",
           "items": {
             "type": "object",
+            "additionalProperties": false,
             "properties": {
               "name": {
                 "description": "The contributor name",
@@ -115,17 +117,17 @@
               }
             }
           }
-        }
-      },
-      "copyNumbers": {
-        "type": "array",
-        "items": {
+        },
+        "copyNumbers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "enumeration": {
+          "description": "The volume and/or issue number for the item",
           "type": "string"
         }
-      },
-      "enumeration": {
-        "description": "The volume and/or issue number for the item",
-        "type": "string"
       },
       "additionalProperties": false
     },
@@ -161,6 +163,7 @@
         "patronGroup": {
           "description": "record for the user's patron group",
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "id": {
               "description": "ID of the patron group",
@@ -211,6 +214,7 @@
         "patronGroup": {
           "description": "record for the user's patrongroup",
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "id": {
               "description": "ID of the patrongroup",
@@ -291,6 +295,7 @@
     },
     "pickupServicePoint": {
       "description": "The full object of the Service Point record from pickupServicePointId",
+      "additionalProperties": false,
       "properties": {
         "name": {
           "description": "Unique name for the service point",
@@ -316,12 +321,12 @@
           "description": "Is this service point a pickup location?",
           "type": "boolean"
         }
-      },
-      "tags": {
-        "type": "object",
-        "description": "Tags",
-        "$ref": "raml-util/schemas/tags.schema"
       }
+    },
+    "tags": {
+      "type": "object",
+      "description": "Tags",
+      "$ref": "raml-util/schemas/tags.schema"
     },
     "metadata": {
       "description": "Metadata about creation and changes to requests, provided by the server (client should not provide)",
