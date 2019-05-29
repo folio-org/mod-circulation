@@ -3,6 +3,7 @@ package org.folio.circulation.domain.notice.schedule;
 import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.Loan;
@@ -46,12 +47,13 @@ public class ScheduledNoticeService {
       .map(c -> createDueDateScheduledNotice(c, loan))
       .collect(Collectors.toList());
 
-    scheduledNoticeRepository.createBatch(scheduledNotices);
+    scheduledNotices.forEach(scheduledNoticeRepository::create);
     return succeeded(noticePolicy);
   }
 
   private ScheduledNotice createDueDateScheduledNotice(NoticeConfiguration configuration, Loan loan) {
     return new ScheduledNoticeBuilder()
+      .setId(UUID.randomUUID().toString())
       .setLoanId(loan.getId())
       .setNextRunTime(determineNextRunTime(configuration, loan))
       .setNoticeConfig(createScheduledNoticeConfig(configuration))

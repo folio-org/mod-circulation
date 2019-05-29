@@ -88,4 +88,20 @@ public class Period {
 
     return representation;
   }
+
+  public org.joda.time.Period toTimePeriod() {
+    switch (interval) {
+      case "Months":
+        return org.joda.time.Period.months(duration);
+      case "Weeks":
+        return org.joda.time.Period.weeks(duration);
+      case "Days":
+        return org.joda.time.Period.days(duration);
+      case "Hours":
+        return org.joda.time.Period.hours(duration);
+      case "Minutes":
+      default:
+        return org.joda.time.Period.minutes(duration);
+    }
+  }
 }
