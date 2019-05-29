@@ -42,7 +42,7 @@ public class CqlQuery {
   }
 
   public static Result<CqlQuery> lessThan(String index, Object value) {
-    return Result.of(() -> new CqlQuery(format("%s>\"%s\"", index, value), none()));
+    return Result.of(() -> new CqlQuery(format("%s<\"%s\"", index, value), none()));
   }
 
   private static List<String> filterNullValues(Collection<String> values) {
