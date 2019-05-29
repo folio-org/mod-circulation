@@ -685,6 +685,25 @@
           ]
         }
       ]
+    },
+    {
+      "id": "test-timer",
+      "version": "1.0",
+      "handlers": [
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/circulation/process-scheduled-notices",
+          "modulePermissions": [
+            "circulation-storage.all",
+            "inventory-storage.all",
+            "configuration.entries.collection.get",
+            "circulation.rules.loan-policy.get",
+            "patron-notice.post"
+          ]
+        }
+      ]
     }
   ],
   "requires": [

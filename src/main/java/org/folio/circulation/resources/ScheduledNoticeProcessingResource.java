@@ -1,7 +1,13 @@
 package org.folio.circulation.resources;
 
+import static org.folio.circulation.support.Result.failed;
+
+import org.folio.circulation.domain.notice.schedule.ScheduledNoticeHandler;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticeRepository;
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.NoContentResult;
+import org.folio.circulation.support.ResponseWritableResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.WebContext;
 
@@ -31,7 +37,19 @@ public class ScheduledNoticeProcessingResource extends Resource {
     final ScheduledNoticeRepository scheduledNoticeRepository =
       new ScheduledNoticeRepository(clients.scheduledNoticeStorageClient());
 
-    scheduledNoticeRepository.findScheduledNoticesWithNextRunTimeLessThanNow();
-    routingContext.response().end();
+    final ScheduledNoticeHandler noticeHandler = ScheduledNoticeHandler.using(clients);
+
+    scheduledNoticeRepository.findScheduledNoticesWithNextRunTimeLessThanNow()
+      .thenCompose(r -> r.after(notices -> noticeHandler.handleNotices(notices.getRecords())))
+      .thenApply(this::createWritableResult)
+      .thenAccept(result -> result.writeTo(routingContext.response()));
+  }
+
+  private ResponseWritableResult<Void> createWritableResult(Result<?> result) {
+    if (result.failed()) {
+      return failed(result.cause());
+    } else {
+      return new NoContentResult();
+    }
   }
 }

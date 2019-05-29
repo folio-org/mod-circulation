@@ -57,6 +57,17 @@ public class ScheduledNoticeRepository {
   }
 
   private Result<MultipleRecords<ScheduledNotice>> mapResponseToScheduledNotices(Response response) {
-    return MultipleRecords.from(response, ScheduledNotice::from, "scheduledNotices");
+    return MultipleRecords.from(response, JsonScheduledNoticeMapper::mapFromJson, "scheduledNotices");
+  }
+
+  public CompletableFuture<Result<ScheduledNotice>> delete(ScheduledNotice scheduledNotice) {
+    return scheduledNoticeStorageClient.delete(scheduledNotice.getId())
+      .thenApply(response -> {
+        if (response.getStatusCode() == 204) {
+          return succeeded(scheduledNotice);
+        } else {
+          return failed(new ForwardOnFailure(response));
+        }
+      });
   }
 }
