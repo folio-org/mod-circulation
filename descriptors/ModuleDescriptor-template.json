@@ -659,7 +659,7 @@
           "methods": [
             "PUT"
           ],
-          "pathPattern": "circulation/requests/{id}/move",
+          "pathPattern": "/circulation/requests/{id}/move",
           "permissionsRequired": [
             "circulation.requests.collection.get",
             "circulation.requests.collection.put"
