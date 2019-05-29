@@ -118,7 +118,7 @@ public class CheckOutByBarcodeScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void severalBeforeDueDateNoticesShouldBeScheduledOnCheckout()
+  public void multipleBeforeDueDateNoticesShouldBeScheduledOnCheckout()
     throws MalformedURLException,
     InterruptedException,
     TimeoutException,
@@ -185,7 +185,7 @@ public class CheckOutByBarcodeScheduledNoticesTests extends APITests {
 
 
   @Test
-  public void noNoticesShouldBeScheduledWhenPolicyDoesNotDefineTimeBasedNotics()
+  public void noNoticesShouldBeScheduledOnCheckOutWhenPolicyDoesNotDefineTimeBasedNotices()
     throws MalformedURLException,
     InterruptedException,
     TimeoutException,

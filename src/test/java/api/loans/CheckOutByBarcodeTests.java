@@ -873,5 +873,4 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
   }
-
 }

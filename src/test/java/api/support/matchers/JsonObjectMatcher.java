@@ -15,7 +15,6 @@ import io.vertx.core.json.JsonObject;
 
 public class JsonObjectMatcher extends TypeSafeDiagnosingMatcher<JsonObject> {
 
-
   @SafeVarargs
   public static Matcher<JsonObject> allOfPaths(Matcher<? super ReadContext>... jsonPathMatchers) {
     return new JsonObjectMatcher(Arrays.asList(jsonPathMatchers));

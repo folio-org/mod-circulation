@@ -155,7 +155,6 @@ public class JsonPropertyFetcher {
       return representation.getLong(propertyName);
     } else {
       return null;
-
     }
   }
 
