@@ -193,10 +193,12 @@ public class RequestExpiredHoldsResource extends Resource {
       .map(Request::getItemId)
       .collect(Collectors.toList());
 
-    return batchItemIds.stream()
+    List<String> itemIds = batchItemIds.stream()
       .flatMap(Collection::stream)
-      .filter(id -> !awaitingPickupItemIds.contains(id))
       .collect(Collectors.toList());
+
+    itemIds.removeAll(awaitingPickupItemIds);
+    return itemIds;
   }
 
   private CompletableFuture<Result<List<Request>>> findExpiredOrCancelledRequestByItemIds(CollectionResourceClient client,
