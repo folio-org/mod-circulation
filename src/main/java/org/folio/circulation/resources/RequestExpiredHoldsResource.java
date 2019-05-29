@@ -15,7 +15,7 @@ import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlQuery;
-import org.folio.circulation.support.CreatedJsonResponseResult;
+import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.client.Response;
@@ -86,7 +86,7 @@ public class RequestExpiredHoldsResource extends Resource {
       .thenComposeAsync(r -> findExpiredOrCancelledItemsIds(requestsStorage, servicePointId, r.value()))
       .thenComposeAsync(r -> findExpiredOrCancelledRequestByItemIds(requestsStorage, servicePointId, r.value()))
       .thenApply(this::mapResultToExpiredHoldsRequests)
-      .thenApply(CreatedJsonResponseResult::from)
+      .thenApply(OkJsonResponseResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
   }
 
