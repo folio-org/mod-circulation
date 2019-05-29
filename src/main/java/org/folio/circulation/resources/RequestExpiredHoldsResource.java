@@ -11,7 +11,6 @@ import org.folio.circulation.domain.ExpiredHoldsRequest;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
-import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlQuery;
@@ -26,7 +25,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Predicate;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -164,10 +162,9 @@ public class RequestExpiredHoldsResource extends Resource {
   private CompletableFuture<Result<List<String>>> findExpiredOrCancelledItemsIds(CollectionResourceClient client,
                                                                                  String servicePointId,
                                                                                  List<List<String>> batchItemIds) {
-    List<Result<MultipleRecords<Request>>> recordsResult = finAwaitingPickupRequests(client, servicePointId, batchItemIds);
-    List<String> expiredItemsIds = findExpiredOrCancelledItemsIdsInRequests(recordsResult);
+    List<Result<MultipleRecords<Request>>> awaitingPickupRequests = finAwaitingPickupRequests(client, servicePointId, batchItemIds);
     return CompletableFuture.completedFuture(Result.succeeded(
-      findDifferenceBetweenAvailableItemsAndExpired(batchItemIds, expiredItemsIds)));
+      findDifferenceBetweenAvailableItemsAndExpired(batchItemIds, awaitingPickupRequests)));
   }
 
   private List<Result<MultipleRecords<Request>>> finAwaitingPickupRequests(CollectionResourceClient client,
@@ -189,25 +186,17 @@ public class RequestExpiredHoldsResource extends Resource {
       .collect(Collectors.toList());
   }
 
-  private List<String> findExpiredOrCancelledItemsIdsInRequests(List<Result<MultipleRecords<Request>>> multipleRecordsResult) {
-    return multipleRecordsResult.stream()
+  private List<String> findDifferenceBetweenAvailableItemsAndExpired(List<List<String>> batchItemIds,
+                                                                     List<Result<MultipleRecords<Request>>> requests) {
+    List<String> awaitingPickupItemIds = requests.stream()
       .flatMap(records -> records.value().getRecords().stream())
-      .filter(isNotOpenAwaitingPickupRequest())
       .map(Request::getItemId)
       .collect(Collectors.toList());
-  }
 
-  private Predicate<Request> isNotOpenAwaitingPickupRequest() {
-    return r -> RequestStatus.OPEN_AWAITING_PICKUP != r.getStatus();
-  }
-
-  private List<String> findDifferenceBetweenAvailableItemsAndExpired(List<List<String>> batchItemIds,
-                                                                     List<String> expiredItemsIds) {
-    List<String> awaitingPickupItemsIds = batchItemIds.stream()
+    return batchItemIds.stream()
       .flatMap(Collection::stream)
+      .filter(id -> !awaitingPickupItemIds.contains(id))
       .collect(Collectors.toList());
-    awaitingPickupItemsIds.removeAll(expiredItemsIds);
-    return awaitingPickupItemsIds;
   }
 
   private CompletableFuture<Result<List<Request>>> findExpiredOrCancelledRequestByItemIds(CollectionResourceClient client,
