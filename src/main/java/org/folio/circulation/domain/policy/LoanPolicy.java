@@ -263,7 +263,7 @@ public class LoanPolicy {
           rollingPeriod = getPeriod(holds, ALTERNATE_CHECKOUT_LOAN_PERIOD_KEY);
         }
         return new RollingCheckOutDueDateStrategy(getId(), getName(),
-            rollingPeriod, fixedDueDateSchedules, this::errorForPolicy);
+          rollingPeriod, fixedDueDateSchedules, this::errorForPolicy);
       }
     }
     else if(isFixed(loansPolicy)) {
@@ -274,7 +274,7 @@ public class LoanPolicy {
       else {
         if(isAlternateDueDateSchedule(requestQueue)) {
           return new AlternateFixedScheduleCheckOutDueDateStrategy(getId(), getName(),
-              buildAlternateDueDateSchedules(systemDate, holds), this::errorForPolicy);
+            buildAlternateDueDateSchedules(systemDate, holds), this::errorForPolicy);
         }
         else {
           return new DefaultFixedScheduleCheckOutDueDateStrategy(getId(), getName(),
@@ -296,13 +296,9 @@ public class LoanPolicy {
   }
 
   private boolean isAlternateDueDateSchedule(RequestQueue requestQueue) {
-    String key = ALTERNATE_CHECKOUT_LOAN_PERIOD_KEY;
     final JsonObject holds = getHolds();
-    String interval = getNestedStringProperty(holds, key, INTERVAL_ID);
-    Integer duration = getNestedIntegerProperty(holds, key, DURATION);
     if(Objects.isNull(requestQueue)
-      || Objects.isNull(duration)
-      || Objects.isNull(interval)) {
+      || !holds.containsKey(ALTERNATE_CHECKOUT_LOAN_PERIOD_KEY)) {
       return false;
     }
     Optional<Request> potentialRequest = requestQueue.getRequests().stream().skip(1).findFirst();
