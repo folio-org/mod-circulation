@@ -3,6 +3,7 @@ package org.folio.circulation.domain;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.ResultBinding.mapResult;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.lang.invoke.MethodHandles;
@@ -10,9 +11,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.Clients;
@@ -93,22 +94,13 @@ public class UserRepository {
     final MultipleRecordFetcher<User> fetcher = createUsersFetcher();
 
     return fetcher.findByIds(usersToFetch)
-      .thenApply(multipleUsersResult -> multipleUsersResult.next(
-        multipleUsers -> {
-          List<Loan> newLoanList = new ArrayList<>();
-          Collection<User> users = multipleUsers.getRecords();
-          for (Loan loan : loans) {
-            Loan newLoan = loan;
-            for (User user : users) {
-              if(Objects.equals(user.getId(), newLoan.getUserId())){
-                newLoan = newLoan.withUser(user);
-                break;
-              }
-            }
-            newLoanList.add(newLoan);
-          }
-          return succeeded(new MultipleRecords<>(newLoanList, multipleLoans.getTotalRecords()));
-        }));
+      .thenApply(mapResult(users -> users.toMap(User::getId)))
+      .thenApply(r -> r.map(users -> loans.stream()
+        .map(loan -> loan.withUser(
+          users.getOrDefault(loan.getUserId(), null)))
+        .collect(Collectors.toList())))
+      .thenApply(updatedLoansResult -> updatedLoansResult.map(
+        l -> new MultipleRecords<>(l, multipleLoans.getTotalRecords())));
   }
 
   private MultipleRecordFetcher<User> createUsersFetcher() {
