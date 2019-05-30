@@ -103,7 +103,7 @@ public class CheckOutByBarcodeScheduledNoticesTests extends APITests {
     MatcherAssert.assertThat(scheduledNotices,
       hasItems(
         hasScheduledLoanNoticeProperties(
-          loan.getId(), dueDate.minus(beforePeriod.toTimePeriod()),
+          loan.getId(), dueDate.minus(beforePeriod.timePeriod()),
           BEFORE_TIMING, beforeTemplateId,
           beforeRecurringPeriod, true),
         hasScheduledLoanNoticeProperties(
@@ -111,7 +111,7 @@ public class CheckOutByBarcodeScheduledNoticesTests extends APITests {
           UPON_AT_TIMING, uponAtTemplateId,
           null, false),
         hasScheduledLoanNoticeProperties(
-          loan.getId(), dueDate.plus(afterPeriod.toTimePeriod()),
+          loan.getId(), dueDate.plus(afterPeriod.timePeriod()),
           AFTER_TIMING, afterTemplateId,
           afterRecurringPeriod, true)
       ));
@@ -173,11 +173,11 @@ public class CheckOutByBarcodeScheduledNoticesTests extends APITests {
     MatcherAssert.assertThat(scheduledNotices,
       hasItems(
         hasScheduledLoanNoticeProperties(
-          loan.getId(), dueDate.minus(firstBeforePeriod.toTimePeriod()),
+          loan.getId(), dueDate.minus(firstBeforePeriod.timePeriod()),
           BEFORE_TIMING, firstBeforeTemplateId,
           null, false),
         hasScheduledLoanNoticeProperties(
-          loan.getId(), dueDate.minus(secondBeforePeriod.toTimePeriod()),
+          loan.getId(), dueDate.minus(secondBeforePeriod.timePeriod()),
           BEFORE_TIMING, secondBeforeTemplateId,
           null, true)
       ));

@@ -2,7 +2,6 @@ package org.folio.circulation.domain.notice.schedule;
 
 import static org.folio.circulation.domain.notice.schedule.JsonScheduledNoticeMapper.mapFromJson;
 import static org.folio.circulation.support.Result.failed;
-import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -36,7 +35,7 @@ public class ScheduledNoticeRepository {
     JsonObject representation = JsonScheduledNoticeMapper.mapToJson(scheduledNotice);
     return scheduledNoticeStorageClient.post(representation).thenApply(response -> {
       if (response.getStatusCode() == 201) {
-        return succeeded(mapFromJson(response.getJson()));
+        return mapFromJson(response.getJson());
       } else {
         log.error("Failed to create scheduled notice. Status: {} Body: {}",
           response.getStatusCode(),

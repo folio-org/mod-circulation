@@ -1,11 +1,13 @@
 package org.folio.circulation.domain.notice.schedule;
 
+import org.joda.time.DateTime;
+
 public class ScheduledNoticeBuilder {
 
   private String id;
   private String loanId;
   private String requestId;
-  private long nextRunTime;
+  private DateTime nextRunTime;
   private ScheduledNoticeConfig noticeConfig;
 
   public ScheduledNoticeBuilder setId(String id) {
@@ -23,7 +25,7 @@ public class ScheduledNoticeBuilder {
     return this;
   }
 
-  public ScheduledNoticeBuilder setNextRunTime(long nextRunTime) {
+  public ScheduledNoticeBuilder setNextRunTime(DateTime nextRunTime) {
     this.nextRunTime = nextRunTime;
     return this;
   }

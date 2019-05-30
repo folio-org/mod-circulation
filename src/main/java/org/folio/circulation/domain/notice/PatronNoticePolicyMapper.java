@@ -1,21 +1,22 @@
 package org.folio.circulation.domain.notice;
 
+import static java.lang.String.format;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedObjectProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
-import org.folio.circulation.domain.policy.LoanPolicyPeriod;
+import org.apache.commons.collections4.ListUtils;
+import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
-import org.joda.time.Period;
 
 import io.vertx.core.json.JsonObject;
 
@@ -34,82 +35,95 @@ public class PatronNoticePolicyMapper implements Function<JsonObject, Result<Pat
   private static final String SEND_EVERY = "sendEvery";
   private static final String REAL_TIME = "realTime";
 
-  private static final String DURATION = "duration";
-  private static final String INTERVAL_ID = "intervalId";
-
   private static final String RECURRING_FREQUENCY = "Recurring";
 
   @Override
   public Result<PatronNoticePolicy> apply(JsonObject representation) {
-    try {
-      List<NoticeConfiguration> loanNoticeConfigurations =
-        JsonArrayHelper.mapToList(representation, LOAN_NOTICES, this::toNoticeConfiguration);
-      List<NoticeConfiguration> requestNoticeConfigurations =
-        JsonArrayHelper.mapToList(representation, REQUEST_NOTICES, this::toNoticeConfiguration);
+    List<Result<NoticeConfiguration>> loanNoticeConfigurations =
+      JsonArrayHelper.mapToList(representation, LOAN_NOTICES, this::toNoticeConfiguration);
+    List<Result<NoticeConfiguration>> requestNoticeConfigurations =
+      JsonArrayHelper.mapToList(representation, REQUEST_NOTICES, this::toNoticeConfiguration);
 
-      List<NoticeConfiguration> allNoticeConfigurations = new ArrayList<>(loanNoticeConfigurations);
-      allNoticeConfigurations.addAll(requestNoticeConfigurations);
+    Result<List<NoticeConfiguration>> allNoticeConfigurations = Result.combine(
+      Result.combineAll(loanNoticeConfigurations),
+      Result.combineAll(requestNoticeConfigurations), ListUtils::union);
 
-      return succeeded(new PatronNoticePolicy(allNoticeConfigurations));
-    } catch (IllegalArgumentException ex) {
-      return failed(new ServerErrorFailure("Unable to parse patron notice policy:" + ex.getMessage()));
-    }
+    return allNoticeConfigurations.map(PatronNoticePolicy::new);
   }
 
-  private NoticeConfiguration toNoticeConfiguration(JsonObject representation) {
-    NoticeConfigurationBuilder builder = new NoticeConfigurationBuilder();
 
+  private Result<NoticeConfiguration> toNoticeConfiguration(JsonObject representation) {
+    return succeeded(new NoticeConfigurationBuilder())
+      .combine(getTemplateId(representation), NoticeConfigurationBuilder::setTemplateId)
+      .combine(getNoticeFormat(representation), NoticeConfigurationBuilder::setNoticeFormat)
+      .map(b -> b.setNoticeEventType(getNoticeEventType(representation)))
+      .map(b -> b.setTiming(getNoticeTiming(representation)))
+      .next(b -> setTimingPeriod(b, representation))
+      .map(b -> b.setRecurring(getRecurring(representation)))
+      .next(b -> setRecurringTiming(b, representation))
+      .map(b -> b.setSendInRealTime(getBooleanProperty(representation, REAL_TIME)))
+      .map(NoticeConfigurationBuilder::build);
+  }
+
+  private Result<String> getTemplateId(JsonObject representation) {
     String templateId = representation.getString(TEMPLATE_ID);
     if (templateId == null) {
-      throw new IllegalArgumentException("templateId must not be null");
+      return failed(getPolicyParsingFailure("templateId must not be null"));
     }
-    builder.setTemplateId(representation.getString(TEMPLATE_ID));
+    return succeeded(templateId);
+  }
 
+  private Result<NoticeFormat> getNoticeFormat(JsonObject representation) {
     NoticeFormat noticeFormat = NoticeFormat.from(representation.getString(FORMAT));
     if (noticeFormat == NoticeFormat.UNKNOWN) {
-      throw new IllegalArgumentException("unexpected notice format");
+      return failed(getPolicyParsingFailure("unexpected notice format"));
     }
-    builder.setNoticeFormat(noticeFormat);
+    return succeeded(noticeFormat);
+  }
 
-    builder.setNoticeEventType(
-      NoticeEventType.from(
-        getNestedStringProperty(representation, SEND_OPTIONS, SEND_WHEN)));
+  private NoticeEventType getNoticeEventType(JsonObject representation) {
+    return NoticeEventType.from(
+      getNestedStringProperty(representation, SEND_OPTIONS, SEND_WHEN));
+  }
 
-    NoticeTiming noticeTiming = NoticeTiming.from(
+  private NoticeTiming getNoticeTiming(JsonObject representation) {
+    return NoticeTiming.from(
       getNestedStringProperty(representation, SEND_OPTIONS, SEND_HOW));
-    builder.setTiming(noticeTiming);
-
-    if (noticeTiming.requiresPeriod()) {
-      builder.setTimingPeriod(
-        getNestedPeriodProperty(representation, SEND_OPTIONS, SEND_BY));
-    }
-
-    boolean recurring =
-      Objects.equals(representation.getString(FREQUENCY), RECURRING_FREQUENCY);
-    builder.setRecurring(recurring);
-    if (recurring) {
-      builder.setRecurringPeriod(
-        getNestedPeriodProperty(representation, SEND_OPTIONS, SEND_EVERY));
-    }
-    builder.setSendInRealTime(getBooleanProperty(representation, REAL_TIME));
-
-    return builder.build();
   }
 
-  private Period getNestedPeriodProperty(
-    JsonObject representation,
-    String objectName,
-    String propertyName) {
-    return mapToPeriod(getNestedObjectProperty(representation, objectName, propertyName));
+  private Result<NoticeConfigurationBuilder> setTimingPeriod(
+    NoticeConfigurationBuilder builder, JsonObject representation) {
+
+    if (getNoticeTiming(representation).requiresPeriod()) {
+      return getNestedPeriodProperty(representation, SEND_OPTIONS, SEND_BY)
+        .map(builder::setTimingPeriod);
+    }
+    return succeeded(builder);
   }
 
-  private Period mapToPeriod(JsonObject jsonObject) {
-    if (jsonObject == null) {
-      return Period.millis(0);
+  private boolean getRecurring(JsonObject representation) {
+    return Objects.equals(representation.getString(FREQUENCY), RECURRING_FREQUENCY);
+  }
+
+  private Result<NoticeConfigurationBuilder> setRecurringTiming(
+    NoticeConfigurationBuilder builder, JsonObject representation) {
+
+    if (getRecurring(representation)) {
+      return getNestedPeriodProperty(representation, SEND_OPTIONS, SEND_EVERY)
+        .map(builder::setRecurringPeriod);
     }
-    LoanPolicyPeriod intervalId =
-      LoanPolicyPeriod.getProfileByName(jsonObject.getString(INTERVAL_ID));
-    Integer duration = jsonObject.getInteger(DURATION, 0);
-    return LoanPolicyPeriod.calculatePeriod(intervalId, duration);
+    return succeeded(builder);
+  }
+
+  private Result<Period> getNestedPeriodProperty(
+    JsonObject representation, String objectName, String propertyName) {
+    return Period.from(getNestedObjectProperty(representation, objectName, propertyName),
+      () -> getPolicyParsingFailure("the loan period is not recognised"),
+      interval -> getPolicyParsingFailure(format("the interval \"%s\" is not recognised", interval)),
+      duration -> getPolicyParsingFailure(format("the duration \"%s\"  is invalid", duration)));
+  }
+
+  private HttpFailure getPolicyParsingFailure(String message) {
+    return new ServerErrorFailure("Unable to parse patron notice policy: " + message);
   }
 }

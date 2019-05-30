@@ -10,6 +10,7 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.notice.NoticeConfiguration;
 import org.folio.circulation.domain.notice.NoticeEventType;
+import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticePolicy;
 import org.folio.circulation.domain.policy.PatronNoticePolicyRepository;
 import org.folio.circulation.support.Result;
@@ -60,30 +61,29 @@ public class ScheduledNoticeService {
       .build();
   }
 
-  private long determineNextRunTime(NoticeConfiguration configuration, Loan loan) {
+  private DateTime determineNextRunTime(NoticeConfiguration configuration, Loan loan) {
+    if (configuration.getTiming() == NoticeTiming.UPON_AT) {
+      return loan.getDueDate();
+    }
     DateTime dueDate = loan.getDueDate();
-    Period timingPeriod = configuration.getTimingPeriod();
+    Period timingPeriod = configuration.getTimingPeriod().timePeriod();
 
     switch (configuration.getTiming()) {
       case BEFORE:
-        return dueDate.minus(timingPeriod).getMillis();
+        return dueDate.minus(timingPeriod);
       case AFTER:
-        return dueDate.plus(timingPeriod).getMillis();
-      case UPON_AT:
+        return dueDate.plus(timingPeriod);
       default:
-        return dueDate.getMillis();
+        return dueDate;
     }
   }
 
   private ScheduledNoticeConfig createScheduledNoticeConfig(NoticeConfiguration configuration) {
-    Long recurringPeriod = configuration.isRecurring()
-      ? configuration.getRecurringPeriod().toStandardDuration().getMillis()
-      : null;
     return new ScheduledNoticeConfigBuilder()
       .setTemplateId(configuration.getTemplateId())
       .setTiming(configuration.getTiming())
       .setFormat(configuration.getNoticeFormat())
-      .setRecurringPeriod(recurringPeriod)
+      .setRecurringPeriod(configuration.getRecurringPeriod())
       .setSendInRealTime(configuration.sendInRealTime())
       .build();
   }
