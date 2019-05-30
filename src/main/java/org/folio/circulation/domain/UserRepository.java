@@ -100,7 +100,9 @@ public class UserRepository {
           for (Loan loan : loans) {
             Loan newLoan = loan;
             for (User user : users) {
-              newLoan = newLoan.withUser(user);
+              if(Objects.equals(user.getId(), newLoan.getUserId())){
+                newLoan = newLoan.withUser(user);
+              }
             }
             newLoanList.add(newLoan);
           }
