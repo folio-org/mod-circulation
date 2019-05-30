@@ -76,7 +76,20 @@ public class UserRepository {
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findUsersForLoans(
     MultipleRecords<Loan> multipleLoans) {
+
     Collection<Loan> loans = multipleLoans.getRecords();
+
+    return getUsersForLoans(loans)
+      .thenApply(r -> r.map(users -> loans.stream()
+        .map(loan -> loan.withUser(
+          users.getOrDefault(loan.getUserId(), null)))
+        .collect(Collectors.toList())))
+      .thenApply(updatedLoansResult -> updatedLoansResult.map(
+        l -> new MultipleRecords<>(l, multipleLoans.getTotalRecords())));
+  }
+
+  private CompletableFuture<Result<Map<String, User>>> getUsersForLoans(
+    Collection<Loan> loans) {
 
     final List<String> usersToFetch =
       loans.stream()
@@ -86,21 +99,10 @@ public class UserRepository {
         .distinct()
         .collect(Collectors.toList());
 
-    if (usersToFetch.isEmpty()) {
-      log.info("No users to query for loans");
-      return completedFuture(succeeded(multipleLoans));
-    }
-
     final MultipleRecordFetcher<User> fetcher = createUsersFetcher();
 
     return fetcher.findByIds(usersToFetch)
-      .thenApply(mapResult(users -> users.toMap(User::getId)))
-      .thenApply(r -> r.map(users -> loans.stream()
-        .map(loan -> loan.withUser(
-          users.getOrDefault(loan.getUserId(), null)))
-        .collect(Collectors.toList())))
-      .thenApply(updatedLoansResult -> updatedLoansResult.map(
-        l -> new MultipleRecords<>(l, multipleLoans.getTotalRecords())));
+      .thenApply(mapResult(users -> users.toMap(User::getId)));
   }
 
   private MultipleRecordFetcher<User> createUsersFetcher() {
