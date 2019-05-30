@@ -80,12 +80,8 @@ public class UserRepository {
     Collection<Loan> loans = multipleLoans.getRecords();
 
     return getUsersForLoans(loans)
-      .thenApply(r -> r.map(users -> loans.stream()
-        .map(loan -> loan.withUser(
-          users.getOrDefault(loan.getUserId(), null)))
-        .collect(Collectors.toList())))
-      .thenApply(updatedLoansResult -> updatedLoansResult.map(
-        l -> new MultipleRecords<>(l, multipleLoans.getTotalRecords())));
+      .thenApply(r -> r.map(users -> multipleLoans.mapRecords(
+        loan -> loan.withUser(users.getOrDefault(loan.getUserId(), null)))));
   }
 
   private CompletableFuture<Result<Map<String, User>>> getUsersForLoans(
