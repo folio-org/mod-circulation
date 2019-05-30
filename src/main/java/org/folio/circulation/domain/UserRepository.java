@@ -157,7 +157,7 @@ public class UserRepository {
     }
 
     final MultipleRecordFetcher<User> fetcher
-      = new MultipleRecordFetcher<>(usersStorageClient, "users", User::from);
+      = new MultipleRecordFetcher<>(usersStorageClient, USERS_RECORD_PROPERTY, User::from);
 
     return fetcher.findByIds(usersToFetch)
       .thenApply(multipleUsersResult -> multipleUsersResult.next(
