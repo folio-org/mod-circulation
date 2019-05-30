@@ -29,8 +29,8 @@ public class Period {
   private static final String HOURS = "Hours";
   private static final String MINUTES = "Minutes";
 
-  private static final String DURATION = "duration";
-  private static final String INTERVAL_ID = "intervalId";
+  private static final String DURATION_KEY = "duration";
+  private static final String INTERVAL_ID_KEY = "intervalId";
 
   private static final Set<String> SUPPORTED_INTERVAL_IDS = Collections.unmodifiableSet(
     new HashSet<>(Arrays.asList(MONTHS, WEEKS, DAYS, HOURS, MINUTES)));
@@ -74,8 +74,8 @@ public class Period {
     Function<String, HttpFailure> onUnrecognisedInterval,
     IntFunction<HttpFailure> onUnrecognisedDuration) {
 
-    String intervalId = getProperty(jsonObject, INTERVAL_ID);
-    Integer duration = getIntegerProperty(jsonObject, DURATION, null);
+    String intervalId = getProperty(jsonObject, INTERVAL_ID_KEY);
+    Integer duration = getIntegerProperty(jsonObject, DURATION_KEY, null);
 
     if (intervalId == null) {
       return failed(onUnrecognisedPeriod.get());
@@ -130,8 +130,8 @@ public class Period {
   public JsonObject asJson() {
     JsonObject representation = new JsonObject();
 
-    representation.put(DURATION, duration);
-    representation.put(INTERVAL_ID, interval);
+    representation.put(DURATION_KEY, duration);
+    representation.put(INTERVAL_ID_KEY, interval);
 
     return representation;
   }
