@@ -162,12 +162,12 @@ public class RequestExpiredHoldsResource extends Resource {
   private CompletableFuture<Result<List<String>>> findExpiredOrCancelledItemsIds(CollectionResourceClient client,
                                                                                  String servicePointId,
                                                                                  List<List<String>> batchItemIds) {
-    List<Result<MultipleRecords<Request>>> awaitingPickupRequests = finAwaitingPickupRequests(client, servicePointId, batchItemIds);
+    List<Result<MultipleRecords<Request>>> awaitingPickupRequests = findAwaitingPickupRequests(client, servicePointId, batchItemIds);
     return CompletableFuture.completedFuture(Result.succeeded(
       findDifferenceBetweenAvailableItemsAndExpired(batchItemIds, awaitingPickupRequests)));
   }
 
-  private List<Result<MultipleRecords<Request>>> finAwaitingPickupRequests(CollectionResourceClient client,
+  private List<Result<MultipleRecords<Request>>> findAwaitingPickupRequests(CollectionResourceClient client,
                                                                            String servicePointId,
                                                                            List<List<String>> batchItemIds) {
     return batchItemIds.stream()
