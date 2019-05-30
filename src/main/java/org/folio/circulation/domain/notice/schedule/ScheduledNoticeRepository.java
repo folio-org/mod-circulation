@@ -2,8 +2,10 @@ package org.folio.circulation.domain.notice.schedule;
 
 import static org.folio.circulation.domain.notice.schedule.JsonScheduledNoticeMapper.mapFromJson;
 import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.Clients;
@@ -11,7 +13,8 @@ import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlQuery;
 import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.Result;
-import org.folio.circulation.support.http.client.Response;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,14 +52,11 @@ public class ScheduledNoticeRepository {
   }
 
   public CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findScheduledNoticesWithNextRunTimeLessThanNow() {
-
-    return CqlQuery.lessThan("nextRunTime", System.currentTimeMillis())
+    return CqlQuery.lessThan("nextRunTime", DateTime.now(DateTimeZone.UTC))
       .after(query -> scheduledNoticeStorageClient.getMany(query, 1000))
-      .thenApply(r -> r.next(this::mapResponseToScheduledNotices));
-  }
-
-  private Result<MultipleRecords<ScheduledNotice>> mapResponseToScheduledNotices(Response response) {
-    return MultipleRecords.from(response, JsonScheduledNoticeMapper::mapFromJson, "scheduledNotices");
+      .thenApply(r -> r.next(response ->
+        MultipleRecords.from(response, Function.identity(), "scheduledNotices")))
+      .thenApply(r -> r.next(records -> records.map(JsonScheduledNoticeMapper::mapFromJson)));
   }
 
   public CompletableFuture<Result<ScheduledNotice>> delete(ScheduledNotice scheduledNotice) {

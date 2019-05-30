@@ -109,7 +109,8 @@ public class ScheduledNoticeHandler {
     ScheduledNotice nextRecurringNotice = new ScheduledNoticeBuilder()
       .setId(UUID.randomUUID().toString())
       .setLoanId(loan.getId())
-      .setNextRunTime(scheduledNotice.getNextRunTime() + noticeConfig.getRecurringPeriod())
+      .setNextRunTime(scheduledNotice.getNextRunTime()
+        .plus(noticeConfig.getRecurringPeriod().timePeriod()))
       .setNoticeConfig(noticeConfig)
       .build();
 

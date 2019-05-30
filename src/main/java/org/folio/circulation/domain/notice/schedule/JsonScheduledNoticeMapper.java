@@ -56,6 +56,9 @@ public class JsonScheduledNoticeMapper {
   }
 
   private static Result<Period> getPeriod(JsonObject jsonObject) {
+    if (jsonObject == null) {
+      return succeeded(null);
+    }
     return Period.from(jsonObject,
       () -> getParsingFailure("the loan period is not recognised"),
       interval -> getParsingFailure(format("the interval \"%s\" is not recognised", interval)),

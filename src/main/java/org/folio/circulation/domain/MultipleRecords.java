@@ -113,4 +113,12 @@ public class MultipleRecords<T> {
   public Integer getTotalRecords() {
     return totalRecords;
   }
+
+  public <R> Result<MultipleRecords<R>> map(Function<T, Result<R>> mapper) {
+    List<Result<R>> mappedRecordsList = records.stream()
+      .map(mapper).collect(Collectors.toList());
+
+    Result<List<R>> combinedResult = Result.combineAll(mappedRecordsList);
+    return combinedResult.map(list -> new MultipleRecords<>(list, totalRecords));
+  }
 }
