@@ -129,7 +129,8 @@ public class RequestRepresentation {
 
     if (location != null && location.containsKey("name")) {
       itemSummary.put("location", new JsonObject()
-        .put("name", location.getString("name")));
+        .put("name", location.getString("name"))
+        .put("code", location.getString("code")));
     }
     request.put("item", itemSummary);
 
