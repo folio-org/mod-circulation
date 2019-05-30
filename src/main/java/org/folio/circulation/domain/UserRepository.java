@@ -102,6 +102,7 @@ public class UserRepository {
             for (User user : users) {
               if(Objects.equals(user.getId(), newLoan.getUserId())){
                 newLoan = newLoan.withUser(user);
+                break;
               }
             }
             newLoanList.add(newLoan);
