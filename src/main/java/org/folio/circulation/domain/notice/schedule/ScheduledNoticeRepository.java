@@ -55,7 +55,7 @@ public class ScheduledNoticeRepository {
 
   public CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findScheduledNoticesWithNextRunTimeLessThanNow() {
     return CqlQuery.lessThan("nextRunTime", DateTime.now(DateTimeZone.UTC))
-      .after(query -> scheduledNoticeStorageClient.getMany(query, 1000))
+      .after(query -> scheduledNoticeStorageClient.getMany(query, 100))
       .thenApply(r -> r.next(response ->
         MultipleRecords.from(response, Function.identity(), "scheduledNotices")))
       .thenApply(r -> r.next(records -> records.map(JsonScheduledNoticeMapper::mapFromJson)));

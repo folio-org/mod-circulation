@@ -20,10 +20,10 @@ import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
-public class ScheduledNoticeHandler {
+public class ScheduledDueDateNoticeHandler {
 
-  public static ScheduledNoticeHandler using(Clients clients) {
-    return new ScheduledNoticeHandler(
+  public static ScheduledDueDateNoticeHandler using(Clients clients) {
+    return new ScheduledDueDateNoticeHandler(
       new LoanRepository(clients),
       new LoanPolicyRepository(clients),
       new ConfigurationRepository(clients),
@@ -37,7 +37,7 @@ public class ScheduledNoticeHandler {
   private PatronNoticeService patronNoticeService;
   private ScheduledNoticeRepository scheduledNoticeRepository;
 
-  public ScheduledNoticeHandler(
+  public ScheduledDueDateNoticeHandler(
     LoanRepository loanRepository, LoanPolicyRepository loanPolicyRepository,
     ConfigurationRepository configurationRepository,
     PatronNoticeService patronNoticeService,

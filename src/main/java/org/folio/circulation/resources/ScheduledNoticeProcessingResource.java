@@ -2,7 +2,8 @@ package org.folio.circulation.resources;
 
 import static org.folio.circulation.support.Result.failed;
 
-import org.folio.circulation.domain.notice.schedule.ScheduledNoticeHandler;
+import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.notice.schedule.ScheduledDueDateNoticeHandler;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticeRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.NoContentResult;
@@ -37,10 +38,12 @@ public class ScheduledNoticeProcessingResource extends Resource {
     final ScheduledNoticeRepository scheduledNoticeRepository =
       new ScheduledNoticeRepository(clients.scheduledNoticeStorageClient());
 
-    final ScheduledNoticeHandler noticeHandler = ScheduledNoticeHandler.using(clients);
+    final ScheduledDueDateNoticeHandler dueDateNoticeHandler =
+      ScheduledDueDateNoticeHandler.using(clients);
 
     scheduledNoticeRepository.findScheduledNoticesWithNextRunTimeLessThanNow()
-      .thenCompose(r -> r.after(notices -> noticeHandler.handleNotices(notices.getRecords())))
+      .thenApply(r -> r.map(MultipleRecords::getRecords))
+      .thenCompose(r -> r.after(dueDateNoticeHandler::handleNotices))
       .thenApply(this::createWritableResult)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
