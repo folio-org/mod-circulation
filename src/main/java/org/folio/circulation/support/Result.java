@@ -2,10 +2,14 @@ package org.folio.circulation.support;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
+
+import org.apache.commons.collections4.ListUtils;
 
 public interface Result<T> {
 
@@ -56,6 +60,14 @@ public interface Result<T> {
     BiFunction<T, U, V> combiner) {
 
     return firstResult.combine(secondResult, combiner);
+  }
+
+  static <T> Result<List<T>> combineAll(List<Result<T>> results) {
+    return results.stream()
+      .map(r -> r.map(Collections::singletonList))
+      .reduce((results1, results2) ->
+        Result.combine(results1, results2, ListUtils::union))
+      .orElse(succeeded(Collections.emptyList()));
   }
 
   /**

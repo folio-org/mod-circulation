@@ -1,20 +1,14 @@
 package org.folio.circulation.domain.notice.schedule;
 
-import io.vertx.core.json.JsonObject;
+import org.joda.time.DateTime;
 
 public class ScheduledNoticeBuilder {
 
-  private JsonObject representation;
   private String id;
   private String loanId;
   private String requestId;
-  private long nextRunTime;
+  private DateTime nextRunTime;
   private ScheduledNoticeConfig noticeConfig;
-
-  public ScheduledNoticeBuilder setRepresentation(JsonObject representation) {
-    this.representation = representation;
-    return this;
-  }
 
   public ScheduledNoticeBuilder setId(String id) {
     this.id = id;
@@ -31,7 +25,7 @@ public class ScheduledNoticeBuilder {
     return this;
   }
 
-  public ScheduledNoticeBuilder setNextRunTime(long nextRunTime) {
+  public ScheduledNoticeBuilder setNextRunTime(DateTime nextRunTime) {
     this.nextRunTime = nextRunTime;
     return this;
   }
@@ -42,6 +36,6 @@ public class ScheduledNoticeBuilder {
   }
 
   public ScheduledNotice build() {
-    return new ScheduledNotice(representation, id, loanId, requestId, nextRunTime, noticeConfig);
+    return new ScheduledNotice(id, loanId, requestId, nextRunTime, noticeConfig);
   }
 }

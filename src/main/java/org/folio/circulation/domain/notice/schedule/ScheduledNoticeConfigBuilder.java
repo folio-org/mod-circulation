@@ -2,11 +2,12 @@ package org.folio.circulation.domain.notice.schedule;
 
 import org.folio.circulation.domain.notice.NoticeFormat;
 import org.folio.circulation.domain.notice.NoticeTiming;
+import org.folio.circulation.domain.policy.Period;
 
 public class ScheduledNoticeConfigBuilder {
 
   private NoticeTiming timing;
-  private Long recurringPeriod;
+  private Period recurringPeriod;
   private String templateId;
   private NoticeFormat format;
   private boolean sendInRealTime;
@@ -16,7 +17,7 @@ public class ScheduledNoticeConfigBuilder {
     return this;
   }
 
-  public ScheduledNoticeConfigBuilder setRecurringPeriod(Long recurringPeriod) {
+  public ScheduledNoticeConfigBuilder setRecurringPeriod(Period recurringPeriod) {
     this.recurringPeriod = recurringPeriod;
     return this;
   }

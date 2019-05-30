@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.notice;
 
-import org.joda.time.Period;
+
+import org.folio.circulation.domain.policy.Period;
 
 public class NoticeConfigurationBuilder {
 

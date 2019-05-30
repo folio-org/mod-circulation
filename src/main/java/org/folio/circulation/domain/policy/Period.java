@@ -1,12 +1,20 @@
 package org.folio.circulation.domain.policy;
 
+import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.function.Supplier;
 
+import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
@@ -20,6 +28,12 @@ public class Period {
   private static final String DAYS = "Days";
   private static final String HOURS = "Hours";
   private static final String MINUTES = "Minutes";
+
+  private static final String DURATION = "duration";
+  private static final String INTERVAL_ID = "intervalId";
+
+  private static final Set<String> SUPPORTED_INTERVAL_IDS = Collections.unmodifiableSet(
+    new HashSet<>(Arrays.asList(MONTHS, WEEKS, DAYS, HOURS, MINUTES)));
 
 
   private final Integer duration;
@@ -52,6 +66,31 @@ public class Period {
 
   public static Period from(Integer duration, String interval) {
     return new Period(duration, interval);
+  }
+
+  public static Result<Period> from(
+    JsonObject jsonObject,
+    Supplier<HttpFailure> onUnrecognisedPeriod,
+    Function<String, HttpFailure> onUnrecognisedInterval,
+    IntFunction<HttpFailure> onUnrecognisedDuration) {
+
+    String intervalId = getProperty(jsonObject, INTERVAL_ID);
+    Integer duration = getIntegerProperty(jsonObject, DURATION, null);
+
+    if (intervalId == null) {
+      return failed(onUnrecognisedPeriod.get());
+    }
+    if (!SUPPORTED_INTERVAL_IDS.contains(intervalId)) {
+      return failed(onUnrecognisedInterval.apply(intervalId));
+    }
+    if (duration == null) {
+      return failed(onUnrecognisedPeriod.get());
+    }
+    if (duration <= 0) {
+      return failed(onUnrecognisedDuration.apply(duration));
+    }
+
+    return succeeded(Period.from(duration, intervalId));
   }
 
   Result<DateTime> addTo(
@@ -91,13 +130,13 @@ public class Period {
   public JsonObject asJson() {
     JsonObject representation = new JsonObject();
 
-    representation.put("duration", duration);
-    representation.put("intervalId", interval);
+    representation.put(DURATION, duration);
+    representation.put(INTERVAL_ID, interval);
 
     return representation;
   }
 
-  public org.joda.time.Period toTimePeriod() {
+  public org.joda.time.Period timePeriod() {
     switch (interval) {
       case MONTHS:
         return org.joda.time.Period.months(duration);

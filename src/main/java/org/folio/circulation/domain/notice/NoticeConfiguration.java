@@ -1,26 +1,21 @@
 package org.folio.circulation.domain.notice;
 
-import org.joda.time.Period;
+
+import org.folio.circulation.domain.policy.Period;
 
 public class NoticeConfiguration {
 
-  private String templateId;
+  private final String templateId;
+  private final NoticeFormat noticeFormat;
+  private final NoticeEventType noticeEventType;
+  private final NoticeTiming timing;
+  private final Period timingPeriod;
+  private final boolean recurring;
+  private final Period recurringPeriod;
+  private final boolean sendInRealTime;
 
-  private NoticeFormat noticeFormat;
-
-  private NoticeEventType noticeEventType;
-
-  private NoticeTiming timing;
-
-  private Period timingPeriod;
-
-  private boolean recurring;
-
-  private Period recurringPeriod;
-
-  private boolean sendInRealTime;
-
-  public NoticeConfiguration(
+  @SuppressWarnings("squid:S00107")
+  NoticeConfiguration(
     String templateId, NoticeFormat noticeFormat, NoticeEventType noticeEventType,
     NoticeTiming timing, Period timingPeriod,
     boolean recurring, Period recurringPeriod, boolean sendInRealTime) {
