@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.notice.schedule;
 
 import static org.folio.circulation.domain.notice.schedule.JsonScheduledNoticeMapper.mapFromJson;
+import static org.folio.circulation.domain.notice.schedule.JsonScheduledNoticeMapper.mapToJson;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 
@@ -13,6 +14,7 @@ import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlQuery;
 import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.ServerErrorFailure;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
@@ -38,7 +40,7 @@ public class ScheduledNoticeRepository {
   }
 
   public CompletableFuture<Result<ScheduledNotice>> create(ScheduledNotice scheduledNotice) {
-    JsonObject representation = JsonScheduledNoticeMapper.mapToJson(scheduledNotice);
+    JsonObject representation = mapToJson(scheduledNotice);
     return scheduledNoticeStorageClient.post(representation).thenApply(response -> {
       if (response.getStatusCode() == 201) {
         return mapFromJson(response.getJson());
@@ -57,6 +59,19 @@ public class ScheduledNoticeRepository {
       .thenApply(r -> r.next(response ->
         MultipleRecords.from(response, Function.identity(), "scheduledNotices")))
       .thenApply(r -> r.next(records -> records.map(JsonScheduledNoticeMapper::mapFromJson)));
+  }
+
+  public CompletableFuture<Result<ScheduledNotice>> update(ScheduledNotice scheduledNotice) {
+    return scheduledNoticeStorageClient.put(scheduledNotice.getId(), mapToJson(scheduledNotice))
+      .thenApply(response -> {
+        if (response.getStatusCode() == 204) {
+          return succeeded(scheduledNotice);
+        } else {
+          return failed(
+            new ServerErrorFailure(String.format("Failed to update scheduled notice (%s:%s)",
+              response.getStatusCode(), response.getBody())));
+        }
+      });
   }
 
   public CompletableFuture<Result<ScheduledNotice>> delete(ScheduledNotice scheduledNotice) {

@@ -38,4 +38,8 @@ public class ScheduledNotice {
   public ScheduledNoticeConfig getNoticeConfig() {
     return noticeConfig;
   }
+
+  public ScheduledNotice withNextRunTime(DateTime nextRunTime) {
+    return new ScheduledNotice(id, loanId, requestId, nextRunTime, noticeConfig);
+  }
 }
