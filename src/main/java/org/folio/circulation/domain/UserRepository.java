@@ -192,6 +192,6 @@ public class UserRepository {
   }
 
   private Result<MultipleRecords<User>> mapResponseToUsers(Response response) {
-    return MultipleRecords.from(response, User::from, "users");
+    return MultipleRecords.from(response, User::from, USERS_RECORD_PROPERTY);
   }
 }
