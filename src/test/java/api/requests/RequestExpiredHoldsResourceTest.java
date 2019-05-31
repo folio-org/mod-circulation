@@ -63,7 +63,7 @@ public class RequestExpiredHoldsResourceTest extends APITests {
   }
 
   @Test
-  public void multipleRequestsAwaitingPickupOnItems()
+  public void requestsAwaitingPickupAreNotIncludedInReport()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
