@@ -22,7 +22,7 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 public class RequestExpiredHoldsResourceTest extends APITests {
 
   @Test
-  public void regularRequestForEmptyData()
+  public void reportIsEmptyWhenThereAreNoRequests()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
