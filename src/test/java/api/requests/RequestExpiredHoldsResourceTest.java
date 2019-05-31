@@ -38,7 +38,7 @@ public class ExpiredHoldsReportTests extends APITests {
   }
 
   @Test
-  public void regularRequestWhenItemIsCheckedOut()
+  public void openUnfulfilledRequestNotIncludedInReport()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
