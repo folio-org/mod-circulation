@@ -285,7 +285,7 @@
           ],
           "pathPattern": "/circulation/requests-report/expired-holds/{id}",
           "permissionsRequired": [
-            "circulation.requests.report.get"
+            "circulation.requests.expired-holds-report.get"
           ],
           "modulePermissions": [
             "inventory-storage.items.item.get",
@@ -919,7 +919,7 @@
       "description": "get request queue for an item"
     },
     {
-      "permissionName": "circulation.requests.report.get",
+      "permissionName": "circulation.requests.expired-holds-report.get",
       "displayName": "circulation - request hold expiration report",
       "description": "get first pass hold expiration report"
     },
@@ -955,7 +955,7 @@
         "circulation.requests.item.delete",
         "circulation.requests.collection.delete",
         "circulation.requests.queue.collection.get",
-        "circulation.requests.report.get"
+        "circulation.requests.expired-holds-report.get"
       ]
     }
   ],
