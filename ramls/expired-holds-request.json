@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Expired hold request",
+  "description": "Request item for a expired hold report",
+  "type": "object",
+  "properties": {
+    "requesterName": {
+      "description": "Requester name: lastName and firstName",
+      "type": "string"
+    },
+    "requesterBarcode": {
+      "description": "Requester barcode",
+      "type": "string"
+    },
+    "itemTitle": {
+      "description": "title of the item",
+      "type": "string"
+    },
+    "itemBarcode": {
+      "description": "barcode of the item",
+      "type": "string"
+    },
+    "callNumber": {
+      "description": "Call number",
+      "type": "string"
+    },
+    "requestStatus": {
+      "description": "Request status",
+      "type": "string"
+    },
+    "holdShelfExpirationDate": {
+      "description": "Date when an item returned to the hold shelf expires",
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": false
+}

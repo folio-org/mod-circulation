@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "The hold expiration report",
+  "description": "The hold expiration report that can be used by staff to clear expired and canceled holds from the shelf and put them back into circulation",
+  "type": "object",
+  "properties": {
+    "requests": {
+      "description": "Expired hold request",
+      "id": "requests",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "$ref": "expired-holds-request.json"
+      }
+    },
+    "totalRecords": {
+      "description": "Total number of item requests",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "requests",
+    "totalRecords"
+  ]
+}
